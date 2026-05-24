@@ -8,6 +8,7 @@ import Badge from '@/components/ui/Badge'
 import Pagination from '@/components/ui/Pagination'
 import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
+import Checkbox from '@/components/ui/Checkbox'
 import Dialog from '@/components/ui/Dialog'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
@@ -60,6 +61,9 @@ const Page = () => {
     const [editItem, setEditItem] = useState(null)
     const [deleteConfirm, setDeleteConfirm] = useState(null)
     const [saving, setSaving] = useState(false)
+    const [selected, setSelected] = useState(new Set())
+    const [bulkDeleting, setBulkDeleting] = useState(false)
+    const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
 
     const fetchData = useCallback(async () => {
         setLoading(true)
@@ -163,6 +167,51 @@ const Page = () => {
         }
     }
 
+    const toggleSelect = (id) => {
+        setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+    }
+
+    const toggleSelectAll = () => {
+        if (selected.size === filtered.length) {
+            setSelected(new Set())
+        } else {
+            setSelected(new Set(filtered.map(s => s.id)))
+        }
+    }
+
+    const bulkMarkRead = async (read) => {
+        if (!selected.size) return
+        const ids = [...selected]
+        let ok = 0
+        for (const id of ids) {
+            try {
+                await fetch(`/api/submissions/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ read }) })
+                ok++
+            } catch {}
+        }
+        setSubmissions(prev => prev.map(s => selected.has(s.id) ? { ...s, read } : s))
+        setSelected(new Set())
+        toast.push(<Notification type="success" title={read ? 'Marked as read' : 'Marked as unread'}>{ok}/{ids.length} updated</Notification>)
+    }
+
+    const bulkDelete = async () => {
+        setBulkDeleteConfirm(false)
+        if (!selected.size) return
+        setBulkDeleting(true)
+        const ids = [...selected]
+        let ok = 0
+        for (const id of ids) {
+            try {
+                await fetch(`/api/submissions/${id}`, { method: 'DELETE' })
+                ok++
+            } catch {}
+        }
+        setSubmissions(prev => prev.filter(s => !selected.has(s.id)))
+        setSelected(new Set())
+        setBulkDeleting(false)
+        toast.push(<Notification type="success" title="Bulk Delete">{ok}/{ids.length} deleted</Notification>)
+    }
+
     const fmtDate = (d) => {
         if (!d) return ''
         const dt = new Date(d)
@@ -207,6 +256,14 @@ const Page = () => {
                     </Segment>
                     <Button size="sm" variant="plain" icon={<TbRefresh />} onClick={fetchData}>Refresh</Button>
                 </div>
+                {selected.size > 0 && (
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <span className="text-sm text-gray-500">{selected.size} selected</span>
+                        <Button size="sm" variant="solid" color="emerald" onClick={() => bulkMarkRead(true)}>Mark Read</Button>
+                        <Button size="sm" variant="solid" onClick={() => bulkMarkRead(false)}>Mark Unread</Button>
+                        <Button size="sm" variant="solid" color="red" loading={bulkDeleting} onClick={() => setBulkDeleteConfirm(true)}>Delete</Button>
+                    </div>
+                )}
             </Card>
 
             {/* Table */}
@@ -215,6 +272,7 @@ const Page = () => {
                     <Table compact>
                         <THead>
                             <Tr>
+                                <Th className="w-8"><Checkbox checked={selected.size === filtered.length && filtered.length > 0} onChange={toggleSelectAll} /></Th>
                                 <Th className="w-8"></Th>
                                 <Th>Name</Th>
                                 <Th>Email</Th>
@@ -225,11 +283,12 @@ const Page = () => {
                         </THead>
                         <TBody>
                             {loading ? (
-                                <Tr><Td colSpan={6} className="text-center py-8 text-gray-400">Loading...</Td></Tr>
+                                <Tr><Td colSpan={7} className="text-center py-8 text-gray-400">Loading...</Td></Tr>
                             ) : paged.length === 0 ? (
-                                <Tr><Td colSpan={6} className="text-center py-8 text-gray-400">No submissions</Td></Tr>
+                                <Tr><Td colSpan={7} className="text-center py-8 text-gray-400">No submissions</Td></Tr>
                             ) : paged.map(s => (
                                 <Tr key={s.id} className={!s.read ? 'font-semibold' : 'opacity-75'}>
+                                    <Td><Checkbox checked={selected.has(s.id)} onChange={() => toggleSelect(s.id)} /></Td>
                                     <Td>{!s.read ? <TbMail className="text-red-500" size={16} /> : <TbMailOpened className="text-gray-400" size={16} />}</Td>
                                     <Td><div className="truncate max-w-[160px]">{s.name || '—'}</div></Td>
                                     <Td><div className="truncate max-w-[200px] text-sm">{s.email || '—'}</div></Td>
@@ -256,7 +315,7 @@ const Page = () => {
             </Card>
 
             {/* Detail Dialog */}
-            <Dialog isOpen={!!detail} onClose={() => setDetail(null)} onRequestClose={() => setDetail(null)} width={520}>
+            <Dialog isOpen={!!detail} onClose={() => setDetail(null)} onRequestClose={() => setDetail(null)} width={960}>
                 {detail && (
                     <>
                         <div className="flex items-center justify-between mb-4">
@@ -383,6 +442,19 @@ const Page = () => {
                 cancelText="Cancel"
             >
                 <p>Are you sure you want to delete the submission from <strong>{deleteConfirm?.name}</strong>? This action cannot be undone.</p>
+            </ConfirmDialog>
+
+            {/* Bulk Delete Confirmation */}
+            <ConfirmDialog
+                type="danger"
+                title="Bulk Delete Submissions"
+                isOpen={bulkDeleteConfirm}
+                onCancel={() => setBulkDeleteConfirm(false)}
+                onConfirm={bulkDelete}
+                confirmText="Delete All"
+                cancelText="Cancel"
+            >
+                <p>Are you sure you want to delete <strong>{selected.size} submissions</strong>? This action cannot be undone.</p>
             </ConfirmDialog>
         </div>
     )

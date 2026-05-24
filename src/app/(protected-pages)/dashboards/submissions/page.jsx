@@ -7,12 +7,15 @@ import Input from '@/components/ui/Input'
 import Badge from '@/components/ui/Badge'
 import Pagination from '@/components/ui/Pagination'
 import Segment from '@/components/ui/Segment'
+import Select from '@/components/ui/Select'
 import Dialog from '@/components/ui/Dialog'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import {
     TbMail, TbMailOpened, TbSearch, TbRefresh,
-    TbInbox, TbEye, TbFilter,
+    TbInbox, TbEye,
+    TbEdit, TbTrash,
 } from 'react-icons/tb'
 
 const { Tr, Th, Td, THead, TBody } = Table
@@ -33,6 +36,20 @@ const formColors = {
     candidature: 'bg-lime-600',
 }
 
+const formOptions = [
+    { value: 'contact', label: 'Contact' },
+    { value: 'audit-seo', label: 'Audit SEO' },
+    { value: 'audit-ads', label: 'Audit Ads' },
+    { value: 'audit-web', label: 'Audit Web' },
+    { value: 'audit-social', label: 'Audit Social' },
+    { value: 'audit-aeo', label: 'Audit AEO' },
+    { value: 'audit-analytics', label: 'Audit Analytics' },
+    { value: 'audit-gratuit', label: 'Audit Gratuit' },
+    { value: 'newsletter', label: 'Newsletter' },
+    { value: 'lead', label: 'Lead' },
+    { value: 'candidature', label: 'Candidature' },
+]
+
 const Page = () => {
     const [submissions, setSubmissions] = useState([])
     const [loading, setLoading] = useState(true)
@@ -40,6 +57,9 @@ const Page = () => {
     const [readFilter, setReadFilter] = useState('all')
     const [page, setPage] = useState(1)
     const [detail, setDetail] = useState(null)
+    const [editItem, setEditItem] = useState(null)
+    const [deleteConfirm, setDeleteConfirm] = useState(null)
+    const [saving, setSaving] = useState(false)
 
     const fetchData = useCallback(async () => {
         setLoading(true)
@@ -90,6 +110,57 @@ const Page = () => {
     const openDetail = (s) => {
         setDetail(s)
         if (!s.read) markRead(s.id, true)
+    }
+
+    const openEdit = (s) => {
+        setEditItem({ ...s })
+    }
+
+    const saveEdit = async () => {
+        if (!editItem) return
+        setSaving(true)
+        try {
+            const res = await fetch(`/api/submissions/${editItem.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: editItem.name,
+                    email: editItem.email,
+                    phone: editItem.phone,
+                    company: editItem.company,
+                    website: editItem.website,
+                    needs: editItem.needs,
+                    budget: editItem.budget,
+                    deadline: editItem.deadline,
+                    message: editItem.message,
+                    form: editItem.form,
+                }),
+            })
+            const json = await res.json()
+            if (json.data) {
+                setSubmissions(prev => prev.map(s => s.id === editItem.id ? json.data : s))
+                if (detail?.id === editItem.id) setDetail(json.data)
+                toast.push(<Notification type="success" title="Updated">Submission updated</Notification>)
+            }
+            setEditItem(null)
+        } catch {
+            toast.push(<Notification type="danger" title="Error">Failed to update</Notification>)
+        }
+        setSaving(false)
+    }
+
+    const deleteItem = async () => {
+        if (!deleteConfirm) return
+        const id = deleteConfirm.id
+        setDeleteConfirm(null)
+        try {
+            await fetch(`/api/submissions/${id}`, { method: 'DELETE' })
+            setSubmissions(prev => prev.filter(s => s.id !== id))
+            if (detail?.id === id) setDetail(null)
+            toast.push(<Notification type="success" title="Deleted">Submission removed</Notification>)
+        } catch {
+            toast.push(<Notification type="danger" title="Error">Failed to delete</Notification>)
+        }
     }
 
     const fmtDate = (d) => {
@@ -149,7 +220,7 @@ const Page = () => {
                                 <Th>Email</Th>
                                 <Th className="w-28">Form</Th>
                                 <Th className="w-36">Date</Th>
-                                <Th className="w-20">Action</Th>
+                                <Th className="w-28">Actions</Th>
                             </Tr>
                         </THead>
                         <TBody>
@@ -165,9 +236,11 @@ const Page = () => {
                                     <Td><Badge className={formColors[s.form] || 'bg-gray-400'} content={s.form} /></Td>
                                     <Td><span className="text-xs">{fmtDate(s.date)}</span></Td>
                                     <Td>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-0.5">
                                             <Button size="xs" variant="plain" icon={<TbEye />} onClick={() => openDetail(s)} />
                                             <Button size="xs" variant="plain" icon={s.read ? <TbMail /> : <TbMailOpened />} onClick={() => markRead(s.id, !s.read)} />
+                                            <Button size="xs" variant="plain" icon={<TbEdit />} onClick={() => openEdit(s)} />
+                                            <Button size="xs" variant="plain" className="text-red-400 hover:text-red-600" icon={<TbTrash />} onClick={() => setDeleteConfirm(s)} />
                                         </div>
                                     </Td>
                                 </Tr>
@@ -214,15 +287,103 @@ const Page = () => {
                                 </div>
                             )}
                         </div>
-                        <div className="flex justify-end gap-2 mt-6">
-                            <Button size="sm" variant="plain" onClick={() => markRead(detail.id, !detail.read)}>
-                                {detail.read ? 'Mark Unread' : 'Mark Read'}
-                            </Button>
-                            <Button size="sm" variant="solid" onClick={() => setDetail(null)}>Close</Button>
+                        <div className="flex justify-between gap-2 mt-6">
+                            <div className="flex gap-2">
+                                <Button size="sm" variant="plain" className="text-red-400 hover:text-red-600" icon={<TbTrash />} onClick={() => { setDetail(null); setDeleteConfirm(detail) }}>Delete</Button>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button size="sm" variant="plain" onClick={() => { setDetail(null); openEdit(detail) }}>
+                                    Edit
+                                </Button>
+                                <Button size="sm" variant="plain" onClick={() => markRead(detail.id, !detail.read)}>
+                                    {detail.read ? 'Mark Unread' : 'Mark Read'}
+                                </Button>
+                                <Button size="sm" variant="solid" onClick={() => setDetail(null)}>Close</Button>
+                            </div>
                         </div>
                     </>
                 )}
             </Dialog>
+
+            {/* Edit Dialog */}
+            <Dialog isOpen={!!editItem} onClose={() => setEditItem(null)} onRequestClose={() => setEditItem(null)} width={520}>
+                {editItem && (
+                    <>
+                        <h5 className="mb-4">Edit Submission</h5>
+                        <div className="flex flex-col gap-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs text-gray-500 mb-1">Name</label>
+                                    <Input size="sm" value={editItem.name || ''} onChange={e => setEditItem({ ...editItem, name: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-gray-500 mb-1">Email</label>
+                                    <Input size="sm" value={editItem.email || ''} onChange={e => setEditItem({ ...editItem, email: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs text-gray-500 mb-1">Phone</label>
+                                    <Input size="sm" value={editItem.phone || ''} onChange={e => setEditItem({ ...editItem, phone: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-gray-500 mb-1">Company</label>
+                                    <Input size="sm" value={editItem.company || ''} onChange={e => setEditItem({ ...editItem, company: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs text-gray-500 mb-1">Website</label>
+                                    <Input size="sm" value={editItem.website || ''} onChange={e => setEditItem({ ...editItem, website: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-gray-500 mb-1">Form Type</label>
+                                    <Select
+                                        size="sm"
+                                        value={formOptions.find(o => o.value === editItem.form)}
+                                        options={formOptions}
+                                        onChange={o => setEditItem({ ...editItem, form: o.value })}
+                                        isSearchable={false}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Needs</label>
+                                <Input size="sm" value={editItem.needs || ''} onChange={e => setEditItem({ ...editItem, needs: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Budget</label>
+                                <Input size="sm" value={editItem.budget || ''} onChange={e => setEditItem({ ...editItem, budget: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Deadline</label>
+                                <Input size="sm" value={editItem.deadline || ''} onChange={e => setEditItem({ ...editItem, deadline: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Message</label>
+                                <Input textArea size="sm" value={editItem.message || ''} onChange={e => setEditItem({ ...editItem, message: e.target.value })} />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 mt-6">
+                            <Button size="sm" variant="plain" onClick={() => setEditItem(null)}>Cancel</Button>
+                            <Button size="sm" variant="solid" loading={saving} onClick={saveEdit}>Save</Button>
+                        </div>
+                    </>
+                )}
+            </Dialog>
+
+            {/* Delete Confirmation */}
+            <ConfirmDialog
+                type="danger"
+                title="Delete Submission"
+                isOpen={!!deleteConfirm}
+                onCancel={() => setDeleteConfirm(null)}
+                onConfirm={deleteItem}
+                confirmText="Delete"
+                cancelText="Cancel"
+            >
+                <p>Are you sure you want to delete the submission from <strong>{deleteConfirm?.name}</strong>? This action cannot be undone.</p>
+            </ConfirmDialog>
         </div>
     )
 }

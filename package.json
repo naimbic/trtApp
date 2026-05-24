@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "NODE_OPTIONS='--no-deprecation' next dev --turbopack",
-    "build": "NODE_OPTIONS='--openssl-legacy-provider' next build",
-    "gcp-build": "NODE_OPTIONS='--max-old-space-size=8192 --openssl-legacy-provider' npm run build",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096 --openssl-legacy-provider' next build",
+    "gcp-build": "NODE_OPTIONS='--max-old-space-size=8192 --openssl-legacy-provider' next build",
     "start": "NODE_OPTIONS='--openssl-legacy-provider' next start",
     "lint": "next lint",
     "prettier": "npx prettier src --check",

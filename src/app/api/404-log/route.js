@@ -1,34 +1,26 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { corsHeaders, corsResponse } from '@/lib/cors'
+import { corsResponse, refreshCors } from '@/lib/cors'
+import { guardIngest } from '@/lib/platform/ingest'
 
 export const dynamic = 'force-dynamic'
 
-// In-memory rate limit: 1 per 5s per IP
-const rateLimitMap = new Map()
-
 export async function OPTIONS(request) {
+    await refreshCors()
     return corsResponse(request)
 }
 
-// POST /api/404-log — log 404 errors (public, CORS)
-// Aggregates by path: upserts hitCount instead of creating one row per hit
+// POST /api/404-log — log 404 errors (public, CORS, site-aware)
+// Aggregates by (site, path): upserts hitCount instead of one row per hit
 export async function POST(request) {
-    const headers = corsHeaders(request)
+    const { slug, headers, error } = await guardIngest(request, { rateMs: 5000 })
+    if (error) {
+        return NextResponse.json(
+            { data: null, error: error.message },
+            { status: error.status, headers }
+        )
+    }
     try {
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-        const now = Date.now()
-
-        // Rate limit
-        const last = rateLimitMap.get(ip)
-        if (last && now - last < 5000) {
-            return NextResponse.json(
-                { data: null, error: 'Rate limited. Try again in 5s.' },
-                { status: 429, headers }
-            )
-        }
-        rateLimitMap.set(ip, now)
-
         const body = await request.json()
         const path = body.path
         if (!path) {
@@ -38,15 +30,16 @@ export async function POST(request) {
             )
         }
 
-        // Upsert: increment hitCount if path exists, create otherwise
+        // Upsert on the compound (site, path) unique key
         await prisma.errorLog.upsert({
-            where: { path },
+            where: { site_path: { site: slug, path } },
             update: {
                 hitCount: { increment: 1 },
                 referrer: body.referrer || undefined,
                 userAgent: body.ua || undefined,
             },
             create: {
+                site: slug,
                 path,
                 hitCount: 1,
                 referrer: body.referrer || null,

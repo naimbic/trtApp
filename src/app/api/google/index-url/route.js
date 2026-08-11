@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { auth } from '@/auth'
 import { requestIndexing, requestRemoval, inspectUrl } from '@/lib/google-apis'
 
 export async function POST(request) {
     try {
+        // Admin-only: this triggers Google Indexing/Removal writes.
+        const session = await auth()
+        if (!session?.user) {
+            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const { url, slug, action } = await request.json()
         if (!url) {
             return NextResponse.json({ data: null, error: 'URL is required' }, { status: 400 })

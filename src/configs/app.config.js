@@ -1,6 +1,6 @@
 const appConfig = {
     apiPrefix: '/api',
-    authenticatedEntryPath: '/dashboards/ecommerce',
+    authenticatedEntryPath: '/dashboards/analytic',
     unAuthenticatedEntryPath: '/sign-in',
     locale: 'en',
     activeNavTranslation: true,

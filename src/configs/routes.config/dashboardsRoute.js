@@ -44,6 +44,13 @@ const dashboardsRoute = {
             pageContainerType: 'contained',
         },
     },
+    '/dashboards/sites': {
+        key: 'dashboard.sites',
+        authority: [ADMIN],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
 }
 
 export default dashboardsRoute

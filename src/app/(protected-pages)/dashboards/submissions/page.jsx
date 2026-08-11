@@ -17,6 +17,7 @@ import {
     TbMail, TbMailOpened, TbSearch, TbRefresh,
     TbInbox, TbEye,
     TbEdit, TbTrash,
+    TbChevronUp, TbChevronDown, TbSelector,
 } from 'react-icons/tb'
 
 const { Tr, Th, Td, THead, TBody } = Table
@@ -56,6 +57,8 @@ const Page = () => {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [readFilter, setReadFilter] = useState('all')
+    const [siteFilter, setSiteFilter] = useState('all')
+    const [sort, setSort] = useState({ key: 'date', dir: 'desc' })
     const [page, setPage] = useState(1)
     const [detail, setDetail] = useState(null)
     const [editItem, setEditItem] = useState(null)
@@ -77,21 +80,62 @@ const Page = () => {
     }, [readFilter])
 
     useEffect(() => { fetchData() }, [fetchData])
-    useEffect(() => { setPage(1) }, [search, readFilter])
+    useEffect(() => { setPage(1) }, [search, readFilter, siteFilter, sort])
+
+    // Site categories: each site slug with its submission count (for the filter chips)
+    const siteCategories = useMemo(() => {
+        const m = {}
+        submissions.forEach(s => { const k = s.site || 'trtmaroc'; m[k] = (m[k] || 0) + 1 })
+        return [
+            { value: 'all', label: 'All sites', count: submissions.length },
+            ...Object.keys(m).sort().map(k => ({ value: k, label: k, count: m[k] })),
+        ]
+    }, [submissions])
+
+    const toggleSort = (key) => setSort(cur =>
+        cur.key === key
+            ? { key, dir: cur.dir === 'asc' ? 'desc' : 'asc' }
+            : { key, dir: key === 'date' ? 'desc' : 'asc' }
+    )
+    const sortIcon = (k) => sort.key === k
+        ? (sort.dir === 'asc' ? <TbChevronUp size={12} /> : <TbChevronDown size={12} />)
+        : <TbSelector size={12} className="opacity-40" />
 
     const filtered = useMemo(() => {
-        if (!search) return submissions
-        const q = search.toLowerCase()
-        return submissions.filter(s =>
-            (s.name || '').toLowerCase().includes(q) ||
-            (s.email || '').toLowerCase().includes(q) ||
-            (s.form || '').toLowerCase().includes(q) ||
-            (s.company || '').toLowerCase().includes(q) ||
-            (s.message || '').toLowerCase().includes(q)
-        )
-    }, [submissions, search])
+        let list = submissions
+        if (siteFilter !== 'all') list = list.filter(s => (s.site || 'trtmaroc') === siteFilter)
+        if (search) {
+            const q = search.toLowerCase()
+            list = list.filter(s =>
+                (s.name || '').toLowerCase().includes(q) ||
+                (s.email || '').toLowerCase().includes(q) ||
+                (s.form || '').toLowerCase().includes(q) ||
+                (s.company || '').toLowerCase().includes(q) ||
+                (s.message || '').toLowerCase().includes(q)
+            )
+        }
+        return list
+    }, [submissions, search, siteFilter])
 
-    const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    const sorted = useMemo(() => {
+        const { key, dir } = sort
+        const mul = dir === 'asc' ? 1 : -1
+        return [...filtered].sort((a, b) => {
+            let av, bv
+            if (key === 'date') {
+                av = new Date(a.date || 0).getTime(); bv = new Date(b.date || 0).getTime()
+            } else if (key === 'site') {
+                av = (a.site || 'trtmaroc').toLowerCase(); bv = (b.site || 'trtmaroc').toLowerCase()
+            } else {
+                av = (a[key] || '').toString().toLowerCase(); bv = (b[key] || '').toString().toLowerCase()
+            }
+            if (av < bv) return -1 * mul
+            if (av > bv) return 1 * mul
+            return 0
+        })
+    }, [filtered, sort])
+
+    const paged = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
     const unreadCount = submissions.filter(s => !s.read).length
     const totalCount = submissions.length
@@ -256,6 +300,24 @@ const Page = () => {
                     </Segment>
                     <Button size="sm" variant="plain" icon={<TbRefresh />} onClick={fetchData}>Refresh</Button>
                 </div>
+                {/* Site categories — filter by source site */}
+                <div className="flex flex-wrap gap-2 mt-3">
+                    {siteCategories.map(c => (
+                        <button
+                            key={c.value}
+                            type="button"
+                            onClick={() => setSiteFilter(c.value)}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                                siteFilter === c.value
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
+                            }`}
+                        >
+                            {c.label}
+                            <span className={`rounded-full px-1.5 ${siteFilter === c.value ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-600'}`}>{c.count}</span>
+                        </button>
+                    ))}
+                </div>
                 {selected.size > 0 && (
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                         <span className="text-sm text-gray-500">{selected.size} selected</span>
@@ -274,18 +336,29 @@ const Page = () => {
                             <Tr>
                                 <Th className="w-8"><Checkbox checked={selected.size === filtered.length && filtered.length > 0} onChange={toggleSelectAll} /></Th>
                                 <Th className="w-8"></Th>
-                                <Th>Name</Th>
-                                <Th>Email</Th>
-                                <Th className="w-28">Form</Th>
-                                <Th className="w-36">Date</Th>
+                                <Th className="cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                                    <span className="inline-flex items-center gap-1">Name {sortIcon('name')}</span>
+                                </Th>
+                                <Th className="cursor-pointer select-none" onClick={() => toggleSort('email')}>
+                                    <span className="inline-flex items-center gap-1">Email {sortIcon('email')}</span>
+                                </Th>
+                                <Th className="w-28 cursor-pointer select-none" onClick={() => toggleSort('form')}>
+                                    <span className="inline-flex items-center gap-1">Form {sortIcon('form')}</span>
+                                </Th>
+                                <Th className="w-24 cursor-pointer select-none" onClick={() => toggleSort('site')}>
+                                    <span className="inline-flex items-center gap-1">Site {sortIcon('site')}</span>
+                                </Th>
+                                <Th className="w-36 cursor-pointer select-none" onClick={() => toggleSort('date')}>
+                                    <span className="inline-flex items-center gap-1">Date {sortIcon('date')}</span>
+                                </Th>
                                 <Th className="w-28">Actions</Th>
                             </Tr>
                         </THead>
                         <TBody>
                             {loading ? (
-                                <Tr><Td colSpan={7} className="text-center py-8 text-gray-400">Loading...</Td></Tr>
+                                <Tr><Td colSpan={8} className="text-center py-8 text-gray-400">Loading...</Td></Tr>
                             ) : paged.length === 0 ? (
-                                <Tr><Td colSpan={7} className="text-center py-8 text-gray-400">No submissions</Td></Tr>
+                                <Tr><Td colSpan={8} className="text-center py-8 text-gray-400">No submissions</Td></Tr>
                             ) : paged.map(s => (
                                 <Tr key={s.id} className={!s.read ? 'font-semibold' : 'opacity-75'}>
                                     <Td><Checkbox checked={selected.has(s.id)} onChange={() => toggleSelect(s.id)} /></Td>
@@ -293,6 +366,7 @@ const Page = () => {
                                     <Td><div className="truncate max-w-[160px]">{s.name || '—'}</div></Td>
                                     <Td><div className="truncate max-w-[200px] text-sm">{s.email || '—'}</div></Td>
                                     <Td><Badge className={formColors[s.form] || 'bg-gray-400'} content={s.form} /></Td>
+                                    <Td><span className="text-xs text-gray-500">{s.site || 'trtmaroc'}</span></Td>
                                     <Td><span className="text-xs">{fmtDate(s.date)}</span></Td>
                                     <Td>
                                         <div className="flex gap-0.5">
@@ -324,6 +398,7 @@ const Page = () => {
                         </div>
                         <div className="flex flex-col gap-2 text-sm">
                             {[
+                                ['Site', detail.site],
                                 ['Name', detail.name],
                                 ['Email', detail.email],
                                 ['Phone', detail.phone],
@@ -339,6 +414,12 @@ const Page = () => {
                                     <span className="break-all">{v}</span>
                                 </div>
                             ))}
+                            {detail.page && (
+                                <div className="flex gap-2">
+                                    <span className="text-gray-500 w-20 shrink-0">Page</span>
+                                    <a href={detail.page} target="_blank" rel="noopener noreferrer" className="break-all text-blue-500 hover:underline">{detail.page}</a>
+                                </div>
+                            )}
                             {detail.message && (
                                 <div className="mt-2">
                                     <span className="text-gray-500 block mb-1">Message</span>

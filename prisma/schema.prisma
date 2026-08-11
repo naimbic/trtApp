@@ -427,25 +427,34 @@ model File {
 
 // Page interactions (views, likes, shares)
 model PageStat {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  slug     String @unique
-  views    Int    @default(0)
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  site     String? // source site slug (null = legacy trtmaroc)
+  slug     String
+  views    Int     @default(0)
   likes    Int    @default(0)
   shares   Int    @default(0)
   aiClicks Json?
 
+  @@unique([site, slug])
   @@map("page_stats")
 }
 
 // Page interaction events (timeline for analytics chart)
 model PageEvent {
-  id   String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug String
-  type String   // view, like, share
-  date DateTime @default(now())
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  site     String? // source site slug (null = legacy trtmaroc)
+  slug     String
+  type     String // view, like, share
+  device   String? // desktop, mobile, tablet
+  channel  String? // direct, organic, social, referral, paid, email
+  referrer String?
+  country  String?
+  ua       String?
+  date     DateTime @default(now())
 
   @@index([date])
   @@index([slug])
+  @@index([site])
   @@map("page_events")
 }
 
@@ -481,6 +490,7 @@ model Comment {
 // Form submissions (contact, audit, newsletter, lead, candidature)
 model Submission {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  site           String?  // source site slug (null = legacy trtmaroc)
   form           String?  // contact, audit-gratuit, audit-seo, audit-ads, audit-web, audit-social, audit-aeo, audit-analytics, newsletter, candidature, lead
   name           String?
   email          String?
@@ -494,18 +504,21 @@ model Submission {
   deadline       String?
   deadlineMonths String?
   message        String?
+  page           String?  // full URL of the page the form was submitted from
   read           Boolean  @default(false)
   date           DateTime @default(now())
 
   @@index([form])
   @@index([date])
+  @@index([site])
   @@map("submissions")
 }
 
 // 404 error logs (aggregated by path)
 model ErrorLog {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  path       String   @unique
+  site       String? // source site slug (null = legacy trtmaroc)
+  path       String
   hitCount   Int      @default(1)
   redirectId String?
   referrer   String?
@@ -513,6 +526,7 @@ model ErrorLog {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  @@unique([site, path])
   @@index([hitCount])
   @@map("error_logs")
 }
@@ -530,6 +544,23 @@ model Redirect {
   updatedAt DateTime @updatedAt
 
   @@map("redirects")
+}
+
+// A managed TRT website (spoke) that talks to this hub via the Platform API.
+model Site {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String // display name e.g. "TRT Digital"
+  slug         String   @unique // stable id used to tag leads/events e.g. "trtdigital"
+  domain       String? // primary domain e.g. "trtdigital.com"
+  origins      String[] // allowed CORS origins e.g. ["https://trtdigital.com"]
+  apiKeyHash   String? // sha256 hash of the secret API key (never store the raw key)
+  apiKeyPrefix String? // first chars of the key, shown in UI to identify it
+  active       Boolean  @default(true)
+  color        String? // optional badge color for the dashboard
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("sites")
 }
 
 // ==================== CALENDAR ====================

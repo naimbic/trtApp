@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { unstable_noStore as noStore } from 'next/cache'
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
-import { corsHeaders, corsResponse } from '@/lib/cors'
+import { corsResponse, refreshCors } from '@/lib/cors'
+import { guardIngest } from '@/lib/platform/ingest'
 import { sendMail, buildSubmissionEmail } from '@/lib/mailer'
 import { createNotification } from '@/lib/notify'
 
@@ -14,29 +15,22 @@ const VALID_FORMS = [
     'contact', 'newsletter', 'lead', 'candidature',
 ]
 
-// In-memory rate limit: 1 per 30s per IP
-const rateLimitMap = new Map()
-
 export async function OPTIONS(request) {
+    await refreshCors()
     return corsResponse(request)
 }
 
-// POST /api/submissions — receive form submission (public, CORS)
+// POST /api/submissions — receive form submission (public, CORS, site-aware)
 export async function POST(request) {
-    const headers = corsHeaders(request)
+    // CORS + site resolution + key enforcement + rate limit (1 per 30s per site/IP)
+    const { slug, source, headers, error } = await guardIngest(request, { rateMs: 30000 })
+    if (error) {
+        return NextResponse.json(
+            { data: null, error: error.message },
+            { status: error.status, headers }
+        )
+    }
     try {
-        // Rate limit
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-        const now = Date.now()
-        const last = rateLimitMap.get(ip)
-        if (last && now - last < 30000) {
-            return NextResponse.json(
-                { data: null, error: 'Rate limited. Try again in 30s.' },
-                { status: 429, headers }
-            )
-        }
-        rateLimitMap.set(ip, now)
-
         const body = await request.json()
         const formType = body.form || body.formType
         const name = body.name
@@ -57,6 +51,7 @@ export async function POST(request) {
 
         const submission = await prisma.submission.create({
             data: {
+                site: slug,
                 form: formType,
                 name,
                 email,
@@ -65,17 +60,26 @@ export async function POST(request) {
                 website: body.website || null,
                 needs: body.needs || null,
                 budget: body.budget || null,
+                budgetMin: body.budgetMin || null,
+                budgetMax: body.budgetMax || null,
                 deadline: body.deadline || null,
+                deadlineMonths: body.deadlineMonths || null,
                 message: body.message || null,
+                page: body.pageUrl || body.page || null,
                 read: false,
             },
         })
 
-        // Fire-and-forget: send email notification to team
-        sendMail(
-            `New ${formType} submission from ${name}`,
-            buildSubmissionEmail({ form: formType, name, email, ...body }),
-        ).catch(() => {})
+        // Fire-and-forget: send email notification to team.
+        // Skip it for keyed spoke submissions — the spoke already sent its own
+        // email; the hub only needs to store + notify in-dashboard. Legacy
+        // (non-key, trtmaroc frontend) submissions still get the hub email.
+        if (source !== 'key') {
+            sendMail(
+                `New ${formType} submission from ${name} [${slug}]`,
+                buildSubmissionEmail({ form: formType, site: slug, name, email, ...body }),
+            ).catch(() => {})
+        }
 
         // Fire-and-forget: notify all admin users in the dashboard
         prisma.user.findMany({
@@ -86,7 +90,7 @@ export async function POST(request) {
                 createNotification(
                     admin.id,
                     name,
-                    `New ${formType} submission from ${email}`,
+                    `New ${formType} submission from ${email} (${slug})`,
                     'info',
                     null,
                 )
@@ -117,10 +121,12 @@ export async function GET(request) {
 
         const { searchParams } = new URL(request.url)
         const readFilter = searchParams.get('read')
+        const siteFilter = searchParams.get('site')
 
         const where = {}
         if (readFilter === 'false') where.read = false
         if (readFilter === 'true') where.read = true
+        if (siteFilter && siteFilter !== 'all') where.site = siteFilter
 
         const submissions = await prisma.submission.findMany({
             where,

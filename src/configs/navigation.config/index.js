@@ -1,17 +1,12 @@
 import dashboardsNavigationConfig from './dashboards.navigation.config'
-import uiComponentNavigationConfig from './ui-components.navigation.config'
-import conceptsNavigationConfig from './concepts.navigation.config'
-import authNavigationConfig from './auth.navigation.config'
 import othersNavigationConfig from './others.navigation.config'
-import guideNavigationConfig from './guide.navigation.config'
 
+// Only the real TRT tools are shown in the sidebar. The Ecme template's demo
+// sections (concepts, ui-components, guide, auth) are intentionally excluded to
+// keep the dashboard focused. Their pages still exist under src/app if needed.
 const navigationConfig = [
     ...dashboardsNavigationConfig,
-    ...conceptsNavigationConfig,
-    ...uiComponentNavigationConfig,
-    ...authNavigationConfig,
     ...othersNavigationConfig,
-    ...guideNavigationConfig,
 ]
 
 export default navigationConfig

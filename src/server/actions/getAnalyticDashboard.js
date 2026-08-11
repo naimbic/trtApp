@@ -67,29 +67,35 @@ function bucketEvents(events, period) {
 }
 
 // Raw MongoDB aggregate — uses $ifNull to coalesce `date` and `createdAt`,
-// because the frontend writes `createdAt` while Prisma schema expects `date`.
-async function queryEvents(start, end) {
+// because legacy frontend events wrote `createdAt` while new ingest writes `date`.
+// Optionally scoped to a single site slug.
+async function queryEvents(start, end, site) {
+    const match = { _ts: { $gte: { $date: start.toISOString() }, $lte: { $date: end.toISOString() } } }
+    if (site && site !== 'all') match.site = site
     const result = await prisma.$runCommandRaw({
         aggregate: 'page_events',
         pipeline: [
             { $addFields: { _ts: { $ifNull: ['$date', '$createdAt'] } } },
-            { $match: { _ts: { $gte: { $date: start.toISOString() }, $lte: { $date: end.toISOString() } } } },
-            { $project: { slug: 1, type: 1, _ts: 1, _id: 0 } },
+            { $match: match },
+            { $project: { slug: 1, type: 1, _ts: 1, device: 1, channel: 1, referrer: 1, _id: 0 } },
         ],
         cursor: { batchSize: 20000 },
     })
     return (result.cursor?.firstBatch || []).map(e => ({
         slug: e.slug,
         type: e.type,
+        device: e.device || null,
+        channel: e.channel || null,
+        referrer: e.referrer || null,
         date: e._ts?.$date || e._ts || null,
     })).filter(e => e.date != null)
 }
 
-async function buildPeriodData(period) {
+async function buildPeriodData(period, site) {
     const { start, end, prevStart, prevEnd } = getDateRange(period)
 
-    const currentEvents = await queryEvents(start, end)
-    const prevEvents = await queryEvents(prevStart, prevEnd)
+    const currentEvents = await queryEvents(start, end, site)
+    const prevEvents = await queryEvents(prevStart, prevEnd, site)
 
     const currentViews = currentEvents.filter(e => e.type === 'view')
     const currentLikes = currentEvents.filter(e => e.type === 'like')
@@ -165,53 +171,111 @@ async function buildPeriodData(period) {
             }
         })
 
-    // Top channel — derive from PageStat totals (no referrer data, use proportional estimates)
-    const totalInteractions = currentViews.length + currentLikes.length + currentShares.length
-    const topChannel = {
-        visitors: currentViews.length,
-        channels: [
-            { id: 'google', name: 'Google', img: '/img/others/google.png', total: Math.round(totalInteractions * 0.45), percentage: 45 },
-            { id: 'instagram', name: 'Instagram', img: '/img/thumbs/instagram.png', total: Math.round(totalInteractions * 0.25), percentage: 25 },
-            { id: 'facebook', name: 'Facebook', img: '/img/thumbs/facebook.png', total: Math.round(totalInteractions * 0.18), percentage: 18 },
-            { id: 'x', name: 'X', img: '/img/thumbs/x.png', total: Math.round(totalInteractions * 0.12), percentage: 12 },
-        ],
+    // ---- Top channel — real brand-level referrer breakdown (fallback to estimate) ----
+    const BRANDS = [
+        { id: 'google', name: 'Google', img: '/img/others/google.png', test: /google\.|bing\.|yahoo|duckduckgo|yandex|baidu|ecosia/ },
+        { id: 'instagram', name: 'Instagram', img: '/img/thumbs/instagram.png', test: /instagram/ },
+        { id: 'facebook', name: 'Facebook', img: '/img/thumbs/facebook.png', test: /facebook|fb\./ },
+        { id: 'x', name: 'X', img: '/img/thumbs/x.png', test: /twitter|t\.co|x\.com/ },
+    ]
+    const brandCounts = Object.fromEntries(BRANDS.map(b => [b.id, 0]))
+    let brandTotal = 0
+    currentViews.forEach(e => {
+        const r = (e.referrer || '').toLowerCase()
+        if (!r) return
+        const b = BRANDS.find(b => b.test.test(r))
+        if (b) { brandCounts[b.id]++; brandTotal++ }
+    })
+    let channels
+    if (brandTotal > 0) {
+        channels = BRANDS.map(b => ({
+            id: b.id, name: b.name, img: b.img,
+            total: brandCounts[b.id],
+            percentage: Math.round((brandCounts[b.id] / brandTotal) * 1000) / 10,
+        }))
+    } else {
+        const ti = currentViews.length + currentLikes.length + currentShares.length
+        channels = [
+            { id: 'google', name: 'Google', img: '/img/others/google.png', total: Math.round(ti * 0.45), percentage: 45 },
+            { id: 'instagram', name: 'Instagram', img: '/img/thumbs/instagram.png', total: Math.round(ti * 0.25), percentage: 25 },
+            { id: 'facebook', name: 'Facebook', img: '/img/thumbs/facebook.png', total: Math.round(ti * 0.18), percentage: 18 },
+            { id: 'x', name: 'X', img: '/img/thumbs/x.png', total: Math.round(ti * 0.12), percentage: 12 },
+        ]
     }
+    const topChannel = { visitors: currentViews.length, channels, estimated: brandTotal === 0 }
 
-    // Device session — no UA parsing in DB, use reasonable web defaults
-    const total = currentViews.length || 1
-    const desktop = Math.round(total * 0.42)
-    const mobile = Math.round(total * 0.39)
-    const tablet = total - desktop - mobile
+    // ---- Device session — real from captured UA (fallback to estimate) ----
+    const deviceCounts = { desktop: 0, mobile: 0, tablet: 0 }
+    currentViews.forEach(e => { if (e.device && deviceCounts[e.device] != null) deviceCounts[e.device]++ })
+    const knownDevices = deviceCounts.desktop + deviceCounts.mobile + deviceCounts.tablet
+    let desktop, mobile, tablet
+    if (knownDevices > 0) {
+        ({ desktop, mobile, tablet } = deviceCounts)
+    } else {
+        const t = currentViews.length || 1
+        desktop = Math.round(t * 0.42); mobile = Math.round(t * 0.39); tablet = t - desktop - mobile
+    }
+    const dTotal = (desktop + mobile + tablet) || 1
     const deviceSession = {
         labels: ['Desktop', 'Mobile', 'Tablet'],
         series: [desktop, mobile, tablet],
         percentage: [
-            Math.round((desktop / total) * 1000) / 10,
-            Math.round((mobile / total) * 1000) / 10,
-            Math.round((tablet / total) * 1000) / 10,
+            Math.round((desktop / dTotal) * 1000) / 10,
+            Math.round((mobile / dTotal) * 1000) / 10,
+            Math.round((tablet / dTotal) * 1000) / 10,
         ],
+        estimated: knownDevices === 0,
     }
 
-    // Traffic table — synthetic from real totals
-    const traffic = [
-        { source: 'Direct', visits: Math.round(total * 0.30), uniqueVisitors: Math.round(total * 0.25), bounceRate: '38%', avgSessionDuration: '00:03:45', progress: 62 },
-        { source: 'Organic Search', visits: Math.round(total * 0.35), uniqueVisitors: Math.round(total * 0.30), bounceRate: '34%', avgSessionDuration: '00:04:20', progress: 76 },
-        { source: 'Social Media', visits: Math.round(total * 0.20), uniqueVisitors: Math.round(total * 0.17), bounceRate: '48%', avgSessionDuration: '00:02:50', progress: 43 },
-        { source: 'Referral', visits: Math.round(total * 0.10), uniqueVisitors: Math.round(total * 0.08), bounceRate: '42%', avgSessionDuration: '00:03:10', progress: 55 },
-        { source: 'Email', visits: Math.round(total * 0.05), uniqueVisitors: Math.round(total * 0.04), bounceRate: '29%', avgSessionDuration: '00:05:00', progress: 58 },
+    // ---- Traffic table — real channel-category breakdown (fallback to estimate) ----
+    const CHANNELS = [
+        { source: 'Direct', key: 'direct' },
+        { source: 'Organic Search', key: 'organic' },
+        { source: 'Social Media', key: 'social' },
+        { source: 'Referral', key: 'referral' },
+        { source: 'Email', key: 'email' },
+        { source: 'Paid', key: 'paid' },
     ]
+    const channelCounts = {}
+    let channelTotal = 0
+    currentViews.forEach(e => { if (e.channel) { channelCounts[e.channel] = (channelCounts[e.channel] || 0) + 1; channelTotal++ } })
+    let traffic
+    if (channelTotal > 0) {
+        traffic = CHANNELS
+            .map(c => {
+                const visits = channelCounts[c.key] || 0
+                return {
+                    source: c.source,
+                    visits,
+                    uniqueVisitors: Math.round(visits * 0.8),
+                    bounceRate: '-',
+                    avgSessionDuration: '-',
+                    progress: Math.round((visits / channelTotal) * 100),
+                }
+            })
+            .filter(r => r.visits > 0)
+    } else {
+        const t = currentViews.length || 1
+        traffic = [
+            { source: 'Direct', visits: Math.round(t * 0.30), uniqueVisitors: Math.round(t * 0.25), bounceRate: '-', avgSessionDuration: '-', progress: 30 },
+            { source: 'Organic Search', visits: Math.round(t * 0.35), uniqueVisitors: Math.round(t * 0.30), bounceRate: '-', avgSessionDuration: '-', progress: 35 },
+            { source: 'Social Media', visits: Math.round(t * 0.20), uniqueVisitors: Math.round(t * 0.17), bounceRate: '-', avgSessionDuration: '-', progress: 20 },
+            { source: 'Referral', visits: Math.round(t * 0.10), uniqueVisitors: Math.round(t * 0.08), bounceRate: '-', avgSessionDuration: '-', progress: 10 },
+            { source: 'Email', visits: Math.round(t * 0.05), uniqueVisitors: Math.round(t * 0.04), bounceRate: '-', avgSessionDuration: '-', progress: 5 },
+        ]
+    }
 
     return { metrics, webAnalytic, topPages, topChannel, deviceSession, traffic }
 }
 
-async function getAnalyticDashboard() {
+async function getAnalyticDashboard(site = 'all') {
     noStore()
     try {
         const [thisMonth, thisWeek, thisYear, today] = await Promise.all([
-            buildPeriodData('thisMonth'),
-            buildPeriodData('thisWeek'),
-            buildPeriodData('thisYear'),
-            buildPeriodData('today'),
+            buildPeriodData('thisMonth', site),
+            buildPeriodData('thisWeek', site),
+            buildPeriodData('thisYear', site),
+            buildPeriodData('today', site),
         ])
         return { thisMonth, thisWeek, thisYear, today }
     } catch (error) {

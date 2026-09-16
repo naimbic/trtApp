@@ -78,7 +78,7 @@ export async function POST(request) {
             const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || ''
             const userAgent = (request.headers.get('user-agent') || '').slice(0, 300)
             sendMail(
-                `New ${formType} submission from ${name} [${slug}]`,
+                `${slug} - ${body.needs || formType} - ${name}`,
                 buildSubmissionEmail({ form: formType, site: slug, name, email, ...body, ip, userAgent }),
             ).catch(() => {})
         }

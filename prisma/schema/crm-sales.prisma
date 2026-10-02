@@ -1,0 +1,621 @@
+// ============================================================================
+// Perfex CRM port — SALES & BILLING domain (see docs/perfex/ARCHITECTURE.md)
+// Cross-domain FKs (clients, staff, currencies, taxes, payment modes, projects,
+// leads) are plain ObjectId strings WITHOUT @relation. Money = Float (2 decimals).
+// Purchasing (pur_*) tables are NOT typed: they live in CrmLegacyRow.
+// ============================================================================
+
+model CrmItemGroup {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String
+  items     CrmItem[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("crm_items_groups")
+}
+
+/// tblitems — product / service catalogue
+model CrmItem {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId        Int?
+  description     String
+  longDescription String?
+  rate            Float         @default(0)
+  taxId           String?       @db.ObjectId // -> crm taxes (admin domain)
+  tax2Id          String?       @db.ObjectId
+  unit            String?
+  groupId         String?       @db.ObjectId
+  group           CrmItemGroup? @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([groupId])
+  @@index([taxId])
+  @@index([tax2Id])
+  @@map("crm_items")
+}
+
+/// tblitemable — document lines. relType: invoice | estimate | proposal | credit_note
+model CrmItemable {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId        Int?
+  relType         String
+  relId           String?      @db.ObjectId // invoice / estimate / proposal / creditnote id, per relType
+  description     String
+  longDescription String?
+  qty             Float        @default(0)
+  rate            Float        @default(0)
+  unit            String?
+  itemOrder       Int          @default(0)
+  taxes           CrmItemTax[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([relType, relId])
+  @@map("crm_itemable")
+}
+
+/// tblitem_tax — taxes applied to one line (itemable). Perfex stores name + rate snapshot.
+model CrmItemTax {
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId   Int?
+  itemableId String?     @db.ObjectId // tblitem_tax.itemid
+  itemable   CrmItemable? @relation(fields: [itemableId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relType    String
+  relId      String?     @db.ObjectId // document id per relType
+  taxRate    Float       @default(0)
+  taxName    String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([itemableId])
+  @@index([relType, relId])
+  @@map("crm_item_tax")
+}
+
+/// tblinvoices. createdAt <- datecreated.
+/// status: 1 unpaid, 2 paid, 3 partially paid, 4 overdue, 5 cancelled, 6 draft
+model CrmInvoice {
+  id                     String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId               Int?
+  sent                   Boolean   @default(false)
+  dateSend               DateTime?
+  clientId               String?   @db.ObjectId
+  deletedCustomerName    String?
+  number                 Int       @default(0)
+  prefix                 String?
+  numberFormat           Int       @default(1)
+  date                   DateTime?
+  dueDate                DateTime?
+  currencyId             String?   @db.ObjectId
+  subtotal               Float     @default(0)
+  totalTax               Float     @default(0)
+  total                  Float     @default(0)
+  adjustment             Float?
+  addedFrom              String?   @db.ObjectId
+  hash                   String?
+  status                 Int       @default(1)
+  clientNote             String?
+  adminNote              String?
+  lastOverdueReminder    DateTime?
+  cancelOverdueReminders Boolean   @default(false)
+  allowedPaymentModes    String? // PHP-serialized array of payment mode ids, kept raw
+  token                  String?
+  discountPercent        Float     @default(0)
+  discountTotal          Float     @default(0)
+  discountType           String? // before_tax | after_tax | ''
+  recurring              Int       @default(0) // repeat every N (recurring_type units)
+  recurringType          String? // day | week | month | year
+  customRecurring        Boolean   @default(false)
+  cycles                 Int       @default(0)
+  totalCycles            Int       @default(0)
+  isRecurringFrom        String?   @db.ObjectId // -> CrmInvoice (parent recurring invoice)
+  lastRecurringDate      DateTime?
+  terms                  String?
+  saleAgentId            String?   @db.ObjectId
+  billingStreet          String?
+  billingCity            String?
+  billingState           String?
+  billingZip             String?
+  billingCountry         Int? // Perfex tblcountries id (kept as legacy int)
+  shippingStreet         String?
+  shippingCity           String?
+  shippingState          String?
+  shippingZip            String?
+  shippingCountry        Int?
+  includeShipping        Boolean   @default(false)
+  showShippingOnInvoice  Boolean   @default(true)
+  showQuantityAs         Int       @default(1)
+  projectId              String?   @db.ObjectId
+  subscriptionId         String?   @db.ObjectId
+  shortLink              String?
+  payments               CrmPayment[]
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([date])
+  @@index([dueDate])
+  @@index([prefix, number])
+  @@index([currencyId])
+  @@index([projectId])
+  @@index([subscriptionId])
+  @@index([isRecurringFrom])
+  @@index([saleAgentId])
+  @@index([addedFrom])
+  @@index([hash])
+  @@map("crm_invoices")
+}
+
+/// tblinvoicepaymentrecords. createdAt <- daterecorded; paymentDate <- date.
+model CrmPayment {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId      Int?
+  invoiceId     String?     @db.ObjectId
+  invoice       CrmInvoice? @relation(fields: [invoiceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  amount        Float       @default(0)
+  paymentModeId String?     @db.ObjectId
+  paymentMethod String? // free text (e.g. gateway label)
+  paymentDate   DateTime?
+  note          String?
+  transactionId String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([invoiceId])
+  @@index([paymentModeId])
+  @@index([paymentDate])
+  @@map("crm_invoicepaymentrecords")
+}
+
+/// tblestimates. createdAt <- datecreated.
+/// status: 1 draft, 2 sent, 3 declined, 4 accepted, 5 expired
+model CrmEstimate {
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId              Int?
+  sent                  Boolean   @default(false)
+  dateSend              DateTime?
+  clientId              String?   @db.ObjectId
+  deletedCustomerName   String?
+  projectId             String?   @db.ObjectId
+  number                Int       @default(0)
+  prefix                String?
+  numberFormat          Int       @default(1)
+  hash                  String?
+  date                  DateTime?
+  expiryDate            DateTime?
+  currencyId            String?   @db.ObjectId
+  subtotal              Float     @default(0)
+  totalTax              Float     @default(0)
+  total                 Float     @default(0)
+  adjustment            Float?
+  addedFrom             String?   @db.ObjectId
+  status                Int       @default(1)
+  clientNote            String?
+  adminNote             String?
+  discountPercent       Float     @default(0)
+  discountTotal         Float     @default(0)
+  discountType          String?
+  invoiceId             String?   @db.ObjectId // -> CrmInvoice (converted)
+  invoicedDate          DateTime?
+  terms                 String?
+  referenceNo           String?
+  saleAgentId           String?   @db.ObjectId
+  billingStreet         String?
+  billingCity           String?
+  billingState          String?
+  billingZip            String?
+  billingCountry        Int?
+  shippingStreet        String?
+  shippingCity          String?
+  shippingState         String?
+  shippingZip           String?
+  shippingCountry       Int?
+  includeShipping       Boolean   @default(false)
+  showShippingOnEstimate Boolean  @default(true)
+  showQuantityAs        Int       @default(1)
+  pipelineOrder         Int       @default(1)
+  isExpiryNotified      Boolean   @default(false)
+  acceptanceFirstname   String?
+  acceptanceLastname    String?
+  acceptanceEmail       String?
+  acceptanceDate        DateTime?
+  acceptanceIp          String?
+  signature             String?
+  shortLink             String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([date])
+  @@index([prefix, number])
+  @@index([invoiceId])
+  @@index([projectId])
+  @@index([saleAgentId])
+  @@index([currencyId])
+  @@map("crm_estimates")
+}
+
+/// tblproposals. createdAt <- datecreated. relType: lead | customer
+/// status: 1 open, 2 declined, 3 accepted, 4 sent, 5 revised, 6 draft
+model CrmProposal {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId            Int?
+  subject             String?
+  content             String?
+  addedFrom           String?   @db.ObjectId
+  total               Float?
+  subtotal            Float     @default(0)
+  totalTax            Float     @default(0)
+  adjustment          Float?
+  discountPercent     Float     @default(0)
+  discountTotal       Float     @default(0)
+  discountType        String?
+  showQuantityAs      Int       @default(1)
+  currencyId          String?   @db.ObjectId
+  openTill            DateTime?
+  date                DateTime?
+  relType             String? // lead | customer
+  relId               String?   @db.ObjectId // -> leads / clients per relType
+  assignedId          String?   @db.ObjectId
+  hash                String?
+  proposalTo          String?
+  country             Int?
+  zip                 String?
+  state               String?
+  city                String?
+  address             String?
+  email               String?
+  phone               String?
+  allowComments       Boolean   @default(true)
+  status              Int       @default(6)
+  estimateId          String?   @db.ObjectId
+  invoiceId           String?   @db.ObjectId
+  dateConverted       DateTime?
+  pipelineOrder       Int       @default(1)
+  isExpiryNotified    Boolean   @default(false)
+  acceptanceFirstname String?
+  acceptanceLastname  String?
+  acceptanceEmail     String?
+  acceptanceDate      DateTime?
+  acceptanceIp        String?
+  signature           String?
+  comments            CrmProposalComment[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([relType, relId])
+  @@index([status])
+  @@index([assignedId])
+  @@index([addedFrom])
+  @@index([estimateId])
+  @@index([invoiceId])
+  @@index([currencyId])
+  @@map("crm_proposals")
+}
+
+/// tblproposal_comments. createdAt <- dateadded
+model CrmProposalComment {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId   Int?
+  content    String?
+  proposalId String?      @db.ObjectId
+  proposal   CrmProposal? @relation(fields: [proposalId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  staffId    String?      @db.ObjectId // 0 => customer comment
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([proposalId])
+  @@index([staffId])
+  @@map("crm_proposal_comments")
+}
+
+model CrmContractType {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String
+  contracts CrmContract[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("crm_contract_types")
+}
+
+/// tblcontracts. createdAt <- dateadded
+model CrmContract {
+  id                  String             @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId            Int?
+  content             String?
+  description         String?
+  subject             String?
+  clientId            String?            @db.ObjectId
+  dateStart           DateTime?
+  dateEnd             DateTime?
+  contractTypeId      String?            @db.ObjectId
+  contractType        CrmContractType?   @relation(fields: [contractTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  projectId           String?            @db.ObjectId
+  addedFrom           String?            @db.ObjectId
+  isExpiryNotified    Boolean            @default(false)
+  contractValue       Float?
+  trash               Boolean            @default(false)
+  notVisibleToClient  Boolean            @default(false)
+  hash                String?
+  signed              Boolean            @default(false)
+  signature           String?
+  markedAsSigned      Boolean            @default(false)
+  acceptanceFirstname String?
+  acceptanceLastname  String?
+  acceptanceEmail     String?
+  acceptanceDate      DateTime?
+  acceptanceIp        String?
+  shortLink           String?
+  comments            CrmContractComment[]
+  renewals            CrmContractRenewal[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([clientId])
+  @@index([contractTypeId])
+  @@index([projectId])
+  @@index([dateEnd])
+  @@index([addedFrom])
+  @@map("crm_contracts")
+}
+
+model CrmContractComment {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId   Int?
+  content    String?
+  contractId String?      @db.ObjectId
+  contract   CrmContract? @relation(fields: [contractId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  staffId    String?      @db.ObjectId
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([contractId])
+  @@map("crm_contract_comments")
+}
+
+model CrmContractRenewal {
+  id                     String       @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId               Int?
+  contractId             String?      @db.ObjectId
+  contract               CrmContract? @relation(fields: [contractId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  oldStartDate           DateTime?
+  newStartDate           DateTime?
+  oldEndDate             DateTime?
+  newEndDate             DateTime?
+  oldValue               Float?
+  newValue               Float?
+  dateRenewed            DateTime?
+  renewedBy              String? // staff full name snapshot
+  renewedByStaffId       String?      @db.ObjectId
+  isOnOldExpiryNotified  Boolean      @default(false)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  @@index([contractId])
+  @@map("crm_contract_renewals")
+}
+
+/// tblcreditnotes. createdAt <- datecreated. status: 1 open, 2 closed, 3 void
+model CrmCreditNote {
+  id                      String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId                Int?
+  clientId                String?   @db.ObjectId
+  deletedCustomerName     String?
+  number                  Int       @default(0)
+  prefix                  String?
+  numberFormat            Int       @default(1)
+  date                    DateTime?
+  adminNote               String?
+  terms                   String?
+  clientNote              String?
+  currencyId              String?   @db.ObjectId
+  subtotal                Float     @default(0)
+  totalTax                Float     @default(0)
+  total                   Float     @default(0)
+  adjustment              Float?
+  addedFrom               String?   @db.ObjectId
+  status                  Int       @default(1)
+  projectId               String?   @db.ObjectId
+  discountPercent         Float     @default(0)
+  discountTotal           Float     @default(0)
+  discountType            String?
+  billingStreet           String?
+  billingCity             String?
+  billingState            String?
+  billingZip              String?
+  billingCountry          Int?
+  shippingStreet          String?
+  shippingCity            String?
+  shippingState           String?
+  shippingZip             String?
+  shippingCountry         Int?
+  includeShipping         Boolean   @default(false)
+  showShippingOnCreditNote Boolean  @default(true)
+  showQuantityAs          Int       @default(1)
+  referenceNo             String?
+  refunds                 CrmCreditNoteRefund[]
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([prefix, number])
+  @@index([projectId])
+  @@index([currencyId])
+  @@map("crm_creditnotes")
+}
+
+/// tblcreditnote_refunds. createdAt <- created_at (refunded_on kept as refundedOn)
+model CrmCreditNoteRefund {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId      Int?
+  creditNoteId  String?        @db.ObjectId
+  creditNote    CrmCreditNote? @relation(fields: [creditNoteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  staffId       String?        @db.ObjectId
+  refundedOn    DateTime?
+  paymentModeId String?        @db.ObjectId
+  note          String?
+  amount        Float          @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([creditNoteId])
+  @@index([paymentModeId])
+  @@map("crm_creditnote_refunds")
+}
+
+/// tblcredits — credit note applied to an invoice. createdAt <- date_applied
+model CrmCredit {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?
+  invoiceId    String?   @db.ObjectId // -> CrmInvoice
+  creditId     String?   @db.ObjectId // -> CrmCreditNote
+  staffId      String?   @db.ObjectId
+  date         DateTime?
+  amount       Float     @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([invoiceId])
+  @@index([creditId])
+  @@map("crm_credits")
+}
+
+model CrmExpenseCategory {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  name        String
+  description String?
+  expenses    CrmExpense[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("crm_expenses_categories")
+}
+
+/// tblexpenses. createdAt <- dateadded; date = expense date.
+model CrmExpense {
+  id                    String              @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId              Int?
+  categoryId            String?             @db.ObjectId
+  category              CrmExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  currencyId            String?             @db.ObjectId
+  amount                Float               @default(0)
+  taxId                 String?             @db.ObjectId
+  tax2Id                String?             @db.ObjectId
+  referenceNo           String?
+  note                  String?
+  expenseName           String?
+  clientId              String?             @db.ObjectId
+  projectId             String?             @db.ObjectId
+  billable              Boolean             @default(false)
+  invoiceId             String?             @db.ObjectId
+  paymentModeId         String?             @db.ObjectId
+  date                  DateTime?
+  recurringType         String?
+  repeatEvery           Int?
+  recurring             Boolean             @default(false)
+  cycles                Int                 @default(0)
+  totalCycles           Int                 @default(0)
+  customRecurring       Boolean             @default(false)
+  lastRecurringDate     DateTime?
+  createInvoiceBillable Boolean             @default(false)
+  sendInvoiceToCustomer Boolean             @default(false)
+  recurringFrom         String?             @db.ObjectId // -> CrmExpense
+  addedFrom             String?             @db.ObjectId
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([categoryId])
+  @@index([clientId])
+  @@index([projectId])
+  @@index([invoiceId])
+  @@index([paymentModeId])
+  @@index([currencyId])
+  @@index([date])
+  @@index([recurringFrom])
+  @@index([addedFrom])
+  @@map("crm_expenses")
+}
+
+/// tblsubscriptions. createdAt <- created.
+model CrmSubscription {
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId              Int?
+  name                  String
+  description           String?
+  descriptionInItem     Boolean   @default(false)
+  clientId              String?   @db.ObjectId
+  date                  DateTime?
+  terms                 String?
+  currencyId            String?   @db.ObjectId
+  taxId                 String?   @db.ObjectId
+  stripeTaxId           String?
+  tax2Id                String?   @db.ObjectId
+  stripeTax2Id          String?
+  stripePlanId          String?
+  stripeSubscriptionId  String?
+  nextBillingCycle      Int? // unix timestamp (kept raw)
+  endsAt                Int? // unix timestamp (kept raw)
+  status                String? // Stripe status: active, canceled, future, incomplete, ...
+  quantity              Int       @default(1)
+  projectId             String?   @db.ObjectId
+  hash                  String?
+  createdFrom           String?   @db.ObjectId // staff
+  dateSubscribed        DateTime?
+  inTestEnvironment     Boolean   @default(false)
+  lastSentInvoiceDate   DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([status])
+  @@index([currencyId])
+  @@map("crm_subscriptions")
+}
+
+/// tblsales_activity. relType: invoice | estimate | proposal | credit_note | expense ...
+model CrmSalesActivity {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId       Int?
+  relType        String
+  relId          String?  @db.ObjectId
+  description    String?
+  additionalData String? // serialized PHP, kept raw
+  staffId        String?  @db.ObjectId
+  fullName       String?
+  date           DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([relType, relId])
+  @@index([staffId])
+  @@map("crm_sales_activity")
+}
+
+/// tblscheduled_emails. createdAt <- scheduled_at is NOT used; scheduledAt kept.
+model CrmScheduledEmail {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  relId       String?   @db.ObjectId
+  relType     String? // invoice | estimate | contract | credit_note | ...
+  scheduledAt DateTime?
+  contacts    String?
+  cc          String?
+  attachPdf   Boolean   @default(false)
+  template    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([relType, relId])
+  @@index([scheduledAt])
+  @@map("crm_scheduled_emails")
+}

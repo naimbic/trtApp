@@ -1,4 +1,5 @@
 import dashboardsNavigationConfig from './dashboards.navigation.config'
+import crmNavigationConfig from './crm.navigation.config'
 import othersNavigationConfig from './others.navigation.config'
 
 // Only the real TRT tools are shown in the sidebar. The Ecme template's demo
@@ -6,6 +7,7 @@ import othersNavigationConfig from './others.navigation.config'
 // keep the dashboard focused. Their pages still exist under src/app if needed.
 const navigationConfig = [
     ...dashboardsNavigationConfig,
+    ...crmNavigationConfig,
     ...othersNavigationConfig,
 ]
 

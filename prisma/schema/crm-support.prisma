@@ -1,0 +1,315 @@
+// ============================================================================
+// Perfex CRM port — support & content domain (tickets, knowledge base, mail).
+// Conventions: docs/perfex/ARCHITECTURE.md. Cross-domain FKs (client, contact,
+// staff, project, department) are plain ObjectId strings WITHOUT @relation.
+// ============================================================================
+
+/// tbltickets_status. Perfex built-ins: 1 Open, 2 In progress, 3 Answered, 4 On Hold, 5 Closed.
+model CrmTicketStatus {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  name        String
+  isDefault   Boolean     @default(false)
+  statusColor String?
+  statusOrder Int?
+  tickets     CrmTicket[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([legacyId])
+  @@map("crm_tickets_status")
+}
+
+/// tbltickets_priorities. Built-ins: 1 Low, 2 Medium, 3 High.
+model CrmTicketPriority {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String
+  tickets   CrmTicket[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([legacyId])
+  @@map("crm_tickets_priorities")
+}
+
+/// tblservices (ticket services)
+model CrmService {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String
+  tickets   CrmTicket[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([legacyId])
+  @@map("crm_services")
+}
+
+/// tbltickets. tickets.date -> createdAt.
+model CrmTicket {
+  id              String              @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId        Int?
+  /// staff id currently typing a reply (adminreplying), 0 = nobody
+  adminReplying   Int                 @default(0)
+  /// tickets.userid -> CrmClient (cross-domain)
+  clientId        String?             @db.ObjectId
+  /// tickets.contactid -> CrmContact (cross-domain)
+  contactId       String?             @db.ObjectId
+  email           String?
+  name            String?
+  /// tickets.department -> CrmDepartment (admin domain)
+  departmentId    String?             @db.ObjectId
+  priorityId      String?             @db.ObjectId
+  priority        CrmTicketPriority?  @relation(fields: [priorityId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  statusId        String?             @db.ObjectId
+  status          CrmTicketStatus?    @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  serviceId       String?             @db.ObjectId
+  service         CrmService?         @relation(fields: [serviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ticketKey       String?
+  subject         String?
+  message         String?
+  /// tickets.admin -> CrmStaff who opened the ticket (cross-domain)
+  adminId         String?             @db.ObjectId
+  /// project id (cross-domain)
+  projectId       String?             @db.ObjectId
+  lastReply       DateTime?
+  /// 1 = client has read the last reply
+  clientRead      Int                 @default(0)
+  /// 1 = staff has read the ticket
+  adminRead       Int                 @default(0)
+  /// tickets.assigned -> CrmStaff (cross-domain)
+  assignedId      String?             @db.ObjectId
+  /// comma separated CC emails
+  cc              String?
+  /// tickets.merged_ticket_id -> CrmTicket (same table, kept as plain FK)
+  mergedTicketId  String?             @db.ObjectId
+  replies         CrmTicketReply[]
+  attachments     CrmTicketAttachment[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([legacyId])
+  @@index([clientId])
+  @@index([contactId])
+  @@index([departmentId])
+  @@index([priorityId])
+  @@index([statusId])
+  @@index([serviceId])
+  @@index([adminId])
+  @@index([assignedId])
+  @@index([projectId])
+  @@index([mergedTicketId])
+  @@index([ticketKey])
+  @@map("crm_tickets")
+}
+
+/// tblticket_replies. ticket_replies.date -> createdAt. adminId set = staff reply.
+model CrmTicketReply {
+  id          String                @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  ticketId    String                @db.ObjectId
+  ticket      CrmTicket             @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  /// ticket_replies.userid -> CrmClient (cross-domain)
+  clientId    String?               @db.ObjectId
+  contactId   String?               @db.ObjectId
+  name        String?
+  email       String?
+  message     String?
+  /// ticket_replies.attachment (legacy flag/int)
+  attachment  Int?
+  /// ticket_replies.admin -> CrmStaff (cross-domain); null = customer reply
+  adminId     String?               @db.ObjectId
+  ip          String?
+  attachments CrmTicketAttachment[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@index([legacyId])
+  @@index([ticketId])
+  @@index([clientId])
+  @@index([contactId])
+  @@index([adminId])
+  @@map("crm_ticket_replies")
+}
+
+/// tblticket_attachments. dateadded -> createdAt. `missing` = file absent from the backup.
+model CrmTicketAttachment {
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  ticketId  String          @db.ObjectId
+  ticket    CrmTicket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  replyId   String?         @db.ObjectId
+  reply     CrmTicketReply? @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileType  String?
+  missing   Boolean         @default(false)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([legacyId])
+  @@index([ticketId])
+  @@index([replyId])
+  @@map("crm_ticket_attachments")
+}
+
+/// tbltickets_pipe_log (mail piping log). date -> createdAt.
+model CrmTicketPipeLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  emailTo   String?
+  name      String?
+  subject   String?
+  message   String?
+  email     String?
+  status    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@map("crm_tickets_pipe_log")
+}
+
+/// tblpredefined_replies
+model CrmPredefinedReply {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String
+  message   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@map("crm_predefined_replies")
+}
+
+/// tblspam_filters. type: 'sender' | 'subject' | 'phrase'; relType: 'tickets' | 'leads'.
+model CrmSpamFilter {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  type      String
+  value     String
+  relType   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([relType])
+  @@map("crm_spam_filters")
+}
+
+/// tblknowledge_base_groups
+model CrmKnowledgeBaseGroup {
+  id          String                @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  name        String
+  groupSlug   String?
+  description String?
+  active      Boolean               @default(true)
+  color       String?
+  groupOrder  Int?
+  articles    CrmKnowledgeBaseArticle[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@index([legacyId])
+  @@index([groupSlug])
+  @@map("crm_knowledge_base_groups")
+}
+
+/// tblknowledge_base. datecreated -> createdAt.
+model CrmKnowledgeBaseArticle {
+  id           String                @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?
+  groupId      String?               @db.ObjectId
+  group        CrmKnowledgeBaseGroup? @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subject      String
+  description  String?
+  slug         String?
+  active       Boolean               @default(true)
+  articleOrder Int?
+  /// 1 = staff-only article
+  staffArticle Boolean               @default(false)
+  feedback     CrmKnowledgeBaseArticleFeedback[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([legacyId])
+  @@index([groupId])
+  @@index([slug])
+  @@map("crm_knowledge_base")
+}
+
+/// tblknowledge_base_article_feedback. answer: 1 = helpful, 0 = not helpful. date -> createdAt.
+model CrmKnowledgeBaseArticleFeedback {
+  id        String                  @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  articleId String                  @db.ObjectId
+  article   CrmKnowledgeBaseArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  answer    Int?
+  ip        String?
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  @@index([legacyId])
+  @@index([articleId])
+  @@map("crm_knowledge_base_article_feedback")
+}
+
+/// tbltracked_mails (open tracking of emails sent for invoices, estimates, ...). date -> createdAt.
+model CrmTrackedMail {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId   Int?
+  uid        String?
+  relType    String?
+  relId      String?   @db.ObjectId
+  email      String?
+  opened     Boolean   @default(false)
+  dateOpened DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([legacyId])
+  @@index([uid])
+  @@index([relType, relId])
+  @@map("crm_tracked_mails")
+}
+
+/// tblmail_queue (outgoing email queue). status: pending | sending | sent | failed (as stored).
+model CrmMailQueue {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId   Int?
+  engine     String?
+  email      String?
+  cc         String?
+  bcc        String?
+  message    String?
+  altMessage String?
+  status     String?
+  /// serialized PHP / JSON, kept raw
+  headers    String?
+  /// serialized PHP / JSON, kept raw
+  attachments String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([status])
+  @@map("crm_mail_queue")
+}
+
+/// tbluser_api (REST API module tokens). Token is a secret: the importer drops it unless --keep-passwords.
+model CrmUserApi {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId         Int?
+  user             String?
+  name             String?
+  token            String?
+  expirationDate   DateTime?
+  permissionEnable Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([legacyId])
+  @@map("crm_user_api")
+}

@@ -1,0 +1,444 @@
+// ============================================================================
+// Perfex CRM port — CRM domain (clients, contacts, leads, vault, consents).
+// Conventions: docs/perfex/ARCHITECTURE.md. Cross-domain FKs (staff, currency,
+// permissions, tags...) are plain ObjectId strings without @relation.
+// ============================================================================
+
+/// tblclients
+model CrmClient {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId              Int?     // userid
+  createdAt             DateTime @default(now()) // datecreated
+  updatedAt             DateTime @updatedAt
+
+  company               String?
+  vat                   String?
+  phoneNumber           String?  // phonenumber
+  country               Int?     // legacy tblcountries.country_id
+  city                  String?
+  zip                   String?
+  state                 String?
+  address               String?
+  website               String?
+  active                Boolean  @default(true)
+  /// tblleads.id this client was converted from (plain FK, see CrmLead.clientId for the relation)
+  leadId                String?  @db.ObjectId
+  billingStreet         String?
+  billingCity           String?
+  billingState          String?
+  billingZip            String?
+  billingCountry        Int?
+  shippingStreet        String?
+  shippingCity          String?
+  shippingState         String?
+  shippingZip           String?
+  shippingCountry       Int?
+  longitude             String?
+  latitude              String?
+  defaultLanguage       String?
+  /// tblcurrencies.id (admin domain)
+  defaultCurrencyId     String?  @db.ObjectId
+  showPrimaryContact    Boolean  @default(false)
+  stripeId              String?
+  registrationConfirmed Boolean  @default(true)
+  /// tblstaff.id (admin domain)
+  addedFrom             String?  @db.ObjectId
+
+  contacts              CrmContact[]
+  groupLinks            CrmCustomerGroupLink[]
+  admins                CrmCustomerAdmin[]
+  vaultEntries          CrmVaultEntry[]
+  leads                 CrmLead[]
+
+  @@index([legacyId])
+  @@index([company])
+  @@index([active])
+  @@index([leadId])
+  @@index([addedFrom])
+  @@index([defaultCurrencyId])
+  @@map("crm_clients")
+}
+
+/// tblcontacts
+model CrmContact {
+  id                      String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId                Int?
+  createdAt               DateTime  @default(now()) // datecreated
+  updatedAt               DateTime  @updatedAt
+
+  clientId                String    @db.ObjectId // userid
+  client                  CrmClient @relation(fields: [clientId], references: [id])
+  isPrimary               Boolean   @default(true)
+  firstName               String?
+  lastName                String?
+  email                   String?
+  phoneNumber             String?
+  title                   String?
+  /// bcrypt hash (tblcontacts.password); only kept with --keep-passwords
+  passwordHash            String?
+  newPassKey              String?
+  newPassKeyRequested     DateTime?
+  emailVerifiedAt         DateTime?
+  emailVerificationKey    String?
+  emailVerificationSentAt DateTime?
+  lastIp                  String?
+  lastLogin               DateTime?
+  lastPasswordChange      DateTime?
+  active                  Boolean   @default(true)
+  profileImage            String?
+  direction               String?
+  invoiceEmails           Boolean   @default(true)
+  estimateEmails          Boolean   @default(true)
+  creditNoteEmails        Boolean   @default(true)
+  contractEmails          Boolean   @default(true)
+  taskEmails              Boolean   @default(true)
+  projectEmails           Boolean   @default(true)
+  ticketEmails            Boolean   @default(true)
+
+  permissions             CrmContactPermission[]
+  consents                CrmConsent[]
+
+  @@index([clientId])
+  @@index([email])
+  @@index([isPrimary])
+  @@index([legacyId])
+  @@map("crm_contacts")
+}
+
+/// tblcontact_permissions (contact <-> tblpermissions)
+model CrmContactPermission {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  /// tblpermissions.id (admin domain)
+  permissionId String?    @db.ObjectId
+  contactId    String     @db.ObjectId // userid
+  contact      CrmContact @relation(fields: [contactId], references: [id])
+
+  @@index([contactId])
+  @@index([permissionId])
+  @@map("crm_contact_permissions")
+}
+
+/// tblcustomer_groups
+model CrmCustomerGroup {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name      String
+
+  links     CrmCustomerGroupLink[]
+
+  @@index([name])
+  @@map("crm_customer_groups")
+}
+
+/// tblcustomers_groups (client <-> group)
+model CrmCustomerGroupLink {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  groupId   String           @db.ObjectId
+  group     CrmCustomerGroup @relation(fields: [groupId], references: [id])
+  clientId  String           @db.ObjectId // customer_id
+  client    CrmClient        @relation(fields: [clientId], references: [id])
+
+  @@index([groupId])
+  @@index([clientId])
+  @@map("crm_customers_groups")
+}
+
+/// tblcustomer_admins (staff assigned to a client). Composite source key (staff_id, customer_id).
+model CrmCustomerAdmin {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  /// tblstaff.id (admin domain)
+  staffId      String    @db.ObjectId
+  clientId     String    @db.ObjectId // customer_id
+  client       CrmClient @relation(fields: [clientId], references: [id])
+  dateAssigned DateTime?
+
+  @@index([staffId])
+  @@index([clientId])
+  @@map("crm_customer_admins")
+}
+
+/// tblleads_sources
+model CrmLeadSource {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name      String
+
+  leads     CrmLead[]
+
+  @@index([name])
+  @@map("crm_leads_sources")
+}
+
+/// tblleads_status
+model CrmLeadStatus {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  name        String
+  statusOrder Int?     // statusorder
+  color       String?
+  isDefault   Boolean  @default(false) // isdefault
+
+  leads       CrmLead[]
+
+  @@index([statusOrder])
+  @@map("crm_leads_status")
+}
+
+/// tblleads
+model CrmLead {
+  id                             String         @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId                       Int?
+  createdAt                      DateTime       @default(now()) // dateadded
+  updatedAt                      DateTime       @updatedAt
+
+  name                           String
+  title                          String?
+  company                        String?
+  description                    String?
+  country                        Int?           // legacy tblcountries.country_id
+  zip                            String?
+  city                           String?
+  state                          String?
+  address                        String?
+  /// tblstaff.id (admin domain)
+  assigned                       String?        @db.ObjectId
+  /// tblleads_web_to_lead.id (plain FK)
+  fromFormId                     String?        @db.ObjectId
+  statusId                       String?        @db.ObjectId // status
+  status                         CrmLeadStatus? @relation(fields: [statusId], references: [id])
+  sourceId                       String?        @db.ObjectId // source
+  source                         CrmLeadSource? @relation(fields: [sourceId], references: [id])
+  lastContact                    DateTime?
+  dateAssigned                   DateTime?
+  lastStatusChange               DateTime?
+  /// tblstaff.id (admin domain)
+  addedFrom                      String?        @db.ObjectId
+  email                          String?
+  website                        String?
+  leadOrder                      Int?           @default(1) // kanban order
+  phoneNumber                    String?
+  dateConverted                  DateTime?
+  lost                           Boolean        @default(false)
+  junk                           Boolean        @default(false)
+  /// last status id before lost/junk (plain FK to tblleads_status)
+  lastLeadStatusId               String?        @db.ObjectId
+  isImportedFromEmailIntegration Boolean        @default(false)
+  emailIntegrationUid            String?
+  isPublic                       Boolean        @default(false)
+  defaultLanguage                String?
+  /// converted client (tblleads.client_id)
+  clientId                       String?        @db.ObjectId
+  client                         CrmClient?     @relation(fields: [clientId], references: [id])
+
+  activityLog                    CrmLeadActivityLog[]
+  integrationEmails              CrmLeadIntegrationEmail[]
+  consents                       CrmConsent[]
+
+  @@index([legacyId])
+  @@index([statusId])
+  @@index([sourceId])
+  @@index([assigned])
+  @@index([addedFrom])
+  @@index([clientId])
+  @@index([fromFormId])
+  @@index([email])
+  @@index([lost])
+  @@index([junk])
+  @@map("crm_leads")
+}
+
+/// tbllead_activity_log
+model CrmLeadActivityLog {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId       Int?
+  createdAt      DateTime @default(now()) // date
+  updatedAt      DateTime @updatedAt
+
+  leadId         String   @db.ObjectId
+  lead           CrmLead  @relation(fields: [leadId], references: [id])
+  description    String
+  additionalData String?
+  /// tblstaff.id (admin domain); 0 for system/web-to-lead
+  staffId        String?  @db.ObjectId
+  fullName       String?
+  customActivity Boolean  @default(false)
+
+  @@index([leadId])
+  @@index([staffId])
+  @@map("crm_lead_activity_log")
+}
+
+/// tbllead_integration_emails
+model CrmLeadIntegrationEmail {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  createdAt DateTime @default(now()) // dateadded
+  updatedAt DateTime @updatedAt
+
+  subject   String?
+  body      String?
+  leadId    String?  @db.ObjectId
+  lead      CrmLead? @relation(fields: [leadId], references: [id])
+  emailId   Int?     // legacy tblemails id / IMAP ref
+
+  @@index([leadId])
+  @@map("crm_lead_integration_emails")
+}
+
+/// tblleads_email_integration (single-row IMAP settings)
+model CrmLeadEmailIntegration {
+  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId                 Int?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  active                   Boolean   @default(false)
+  email                    String?
+  imapServer               String?
+  /// encrypted by Perfex (app key); kept verbatim
+  password                 String?
+  checkEvery               Int?
+  /// tblstaff.id (admin domain)
+  responsible              String?   @db.ObjectId
+  leadSourceId             String?   @db.ObjectId // lead_source
+  leadStatusId             String?   @db.ObjectId // lead_status
+  encryption               String?
+  folder                   String?
+  lastRun                  String?   // unix timestamp string in Perfex
+  notifyLeadImported       Boolean   @default(true)
+  notifyLeadContacted      Boolean   @default(true)
+  notifyType               String?
+  notifyIds                String?   // serialized staff/role ids
+  markPublic               Boolean   @default(false)
+  onlyLoopOnUnseenEmails   Boolean   @default(true)
+  deleteAfterImport        Boolean   @default(false)
+  createTaskIfCustomer     Boolean   @default(true)
+
+  @@map("crm_leads_email_integration")
+}
+
+/// tblweb_to_lead (lead capture forms)
+model CrmWebToLead {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId              Int?
+  createdAt             DateTime @default(now()) // dateadded
+  updatedAt             DateTime @updatedAt
+
+  formKey               String?
+  leadSourceId          String?  @db.ObjectId // lead_source
+  leadStatusId          String?  @db.ObjectId // lead_status
+  notifyLeadImported    Boolean  @default(true)
+  notifyType            String?
+  notifyIds             String?
+  /// tblstaff.id (admin domain)
+  responsible           String?  @db.ObjectId
+  name                  String
+  /// JSON form builder definition
+  formData              String?
+  recaptcha             Boolean  @default(false)
+  submitBtnName         String?
+  submitBtnBgColor      String?
+  submitBtnTextColor    String?
+  successSubmitMsg      String?
+  language              String?
+  allowDuplicate        Boolean  @default(true)
+  markPublic            Boolean  @default(false)
+  trackDuplicateField   String?
+  trackDuplicateFieldAnd String?
+  createTaskOnDuplicate Boolean  @default(false)
+
+  @@index([formKey])
+  @@index([leadSourceId])
+  @@index([leadStatusId])
+  @@map("crm_web_to_lead")
+}
+
+/// tblvault (customer credentials vault)
+model CrmVaultEntry {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId        Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  clientId        String    @db.ObjectId // customer_id
+  client          CrmClient @relation(fields: [clientId], references: [id])
+  serverAddress   String?
+  port            Int?
+  username        String?
+  /// encrypted by Perfex (app key); kept verbatim
+  password        String?
+  description     String?
+  /// tblstaff.id (admin domain)
+  creator         String?   @db.ObjectId
+  creatorName     String?
+  visibility      Int?      // 1 = creator only, 2 = admins, 3 = all with customer access (Perfex)
+  shareInProjects Boolean   @default(false)
+  lastUpdated     DateTime?
+  lastUpdatedFrom String?
+
+  @@index([clientId])
+  @@index([creator])
+  @@map("crm_vault")
+}
+
+/// tblconsent_purposes
+model CrmConsentPurpose {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  createdAt   DateTime @default(now()) // date_created
+  updatedAt   DateTime @updatedAt
+
+  name        String
+  description String?
+
+  consents    CrmConsent[]
+
+  @@map("crm_consent_purposes")
+}
+
+/// tblconsents (GDPR consent history)
+model CrmConsent {
+  id                       String             @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId                 Int?
+  createdAt                DateTime           @default(now()) // date
+  updatedAt                DateTime           @updatedAt
+
+  /// 'opt-in' | 'opt-out'
+  action                   String?
+  ip                       String?
+  contactAgent             String?
+  description              String?
+  optInPurposeDescription  String?
+  purposeId                String?            @db.ObjectId
+  purpose                  CrmConsentPurpose? @relation(fields: [purposeId], references: [id])
+  leadId                   String?            @db.ObjectId
+  lead                     CrmLead?           @relation(fields: [leadId], references: [id])
+  contactId                String?            @db.ObjectId
+  contact                  CrmContact?        @relation(fields: [contactId], references: [id])
+  staffName                String?
+
+  @@index([purposeId])
+  @@index([leadId])
+  @@index([contactId])
+  @@map("crm_consents")
+}

@@ -105,5 +105,8 @@
     "react-syntax-highlighter": {
       "prismjs": "1.30.0"
     }
+  },
+  "prisma": {
+    "schema": "prisma/schema"
   }
 }

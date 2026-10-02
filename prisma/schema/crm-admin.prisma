@@ -1,0 +1,771 @@
+// ============================================================================
+// Perfex CRM port — ADMIN / SYSTEM domain.
+// Conventions: docs/perfex/ARCHITECTURE.md. Cross-domain references are plain
+// `String @db.ObjectId` fields (no @relation); @relation only between models here.
+// Perfex tables (tbl prefix omitted) -> staff, staff_permissions, permissions, roles,
+// departments, staff_departments, options, currencies, taxes, payment_modes,
+// emailtemplates, customfields, customfieldsvalues, tags, taggables, notes, reminders,
+// activity_log, announcements, dismissed_announcements, todos, events, notifications,
+// files, modules, user_meta, user_auto_login, posts(+comments,likes), goals,
+// surveys(+form_questions, boxes, results), views_tracking, countries.
+// ============================================================================
+
+// ---------------------------------------------------------------- staff / roles
+model CrmStaff {
+  id                      String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId                Int?     // staff.staffid
+  /// Link to the template's `User` (login). Plain field, no @relation.
+  userId                  String?  @db.ObjectId
+  email                   String?
+  firstName               String?
+  lastName                String?
+  facebook                String?
+  linkedin                String?
+  phoneNumber             String?
+  skype                   String?
+  /// Perfex password hash (phpass/bcrypt). Kept only with --keep-passwords.
+  passwordHash            String?
+  profileImage            String?
+  lastIp                  String?
+  lastLogin               DateTime?
+  lastActivity            DateTime?
+  lastPasswordChange      DateTime?
+  /// staff.admin: 1 => super admin (implies every permission)
+  admin                   Boolean  @default(false)
+  roleId                  String?  @db.ObjectId
+  role                    CrmRole? @relation(fields: [roleId], references: [id])
+  active                  Boolean  @default(true)
+  defaultLanguage         String?
+  direction               String?  // 'rtl' | 'ltr' | ''
+  mediaPathSlug           String?
+  /// staff.is_not_staff: 1 => external user (not counted as staff)
+  isNotStaff              Boolean  @default(false)
+  hourlyRate              Float    @default(0)
+  twoFactorAuthEnabled    Boolean  @default(false)
+  emailSignature          String?
+  createdAt               DateTime @default(now()) // staff.datecreated
+  updatedAt               DateTime @updatedAt
+
+  departments             CrmStaffDepartment[]
+  permissions             CrmStaffPermission[]
+
+  @@index([legacyId])
+  @@index([userId])
+  @@index([email])
+  @@index([roleId])
+  @@index([active])
+  @@map("crm_staff")
+}
+
+model CrmRole {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId       Int?     // roles.roleid
+  name           String
+  /// roles.permissions: PHP-serialized array feature => [capabilities]. Kept raw (parsed by importer step).
+  permissionsRaw String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  staff          CrmStaff[]
+
+  @@index([legacyId])
+  @@index([name])
+  @@map("crm_roles")
+}
+
+/// Catalogue of permission features (tblpermissions: permissionid, name, shortname).
+model CrmPermission {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String
+  shortName String?  // e.g. 'invoices'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([shortName])
+  @@map("crm_permissions")
+}
+
+/// staff_permissions: per-staff (feature, capability) grants. Composite source key.
+model CrmStaffPermission {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  staffId      String    @db.ObjectId
+  staff        CrmStaff  @relation(fields: [staffId], references: [id])
+  permissionId String?   @db.ObjectId // legacy permissionid (older schema)
+  feature      String?   // e.g. 'invoices'
+  capability   String?   // view | view_own | create | edit | delete | ...
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([staffId])
+  @@index([feature, capability])
+  @@map("crm_staff_permissions")
+}
+
+model CrmDepartment {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId         Int?     // departments.departmentid
+  name             String
+  imapUsername     String?
+  email            String?
+  emailFromHeader  String?
+  host             String?
+  encryption       String?
+  folder           String?
+  deleteAfterImport Boolean @default(false)
+  calendarId       String?
+  hideFromClient   Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  staff            CrmStaffDepartment[]
+
+  @@index([legacyId])
+  @@index([name])
+  @@map("crm_departments")
+}
+
+model CrmStaffDepartment {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?          // staff_departments.staffdepartmentid
+  staffId      String        @db.ObjectId
+  staff        CrmStaff      @relation(fields: [staffId], references: [id])
+  departmentId String        @db.ObjectId
+  department   CrmDepartment @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([staffId])
+  @@index([departmentId])
+  @@map("crm_staff_departments")
+}
+
+// ---------------------------------------------------------------- settings / setup
+model CrmOption {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String   @unique
+  value     String?
+  autoload  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("crm_options")
+}
+
+model CrmCurrency {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId          Int?
+  symbol            String?
+  name              String
+  decimalSeparator  String?
+  thousandSeparator String?
+  placement         String?  // 'before' | 'after'
+  isDefault         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([name])
+  @@map("crm_currencies")
+}
+
+model CrmTax {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String
+  taxRate   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@map("crm_taxes")
+}
+
+model CrmPaymentMode {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId          Int?
+  name              String
+  description       String?
+  showOnPdf         Boolean  @default(false)
+  invoicesOnly      Boolean  @default(false)
+  expensesOnly      Boolean  @default(false)
+  selectedByDefault Boolean  @default(true)
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([active])
+  @@map("crm_payment_modes")
+}
+
+model CrmEmailTemplate {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?     // emailtemplates.emailtemplateid
+  type      String?  // client | staff | ticket | invoice | estimate | ...
+  slug      String?
+  language  String?
+  name      String?
+  subject   String?
+  message   String?
+  fromName  String?
+  fromEmail String?
+  plainText Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) // emailtemplates.order
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([type])
+  @@index([slug, language])
+  @@map("crm_emailtemplates")
+}
+
+model CrmCustomField {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId              Int?
+  /// customfields.fieldto: customers | contacts | staff | company | leads | tasks | projects | items |
+  /// tickets | invoice | estimate | contract | proposal | expenses | credit_note | ...
+  fieldTo               String
+  name                  String
+  slug                  String?
+  required              Boolean  @default(false)
+  /// input | textarea | select | multiselect | checkbox | date_picker | date_picker_time | colorpicker | link | number
+  type                  String?
+  /// comma separated options for select/multiselect/checkbox
+  options               String?
+  displayInline         Boolean  @default(false)
+  fieldOrder            Int?
+  active                Boolean  @default(true)
+  showOnPdf             Boolean  @default(false)
+  showOnTicketForm      Boolean  @default(false)
+  onlyAdmin             Boolean  @default(false)
+  showOnTable           Boolean  @default(false)
+  showOnClientPortal    Boolean  @default(false)
+  disallowClientToEdit  Boolean  @default(false)
+  bsColumn              Int?
+  defaultValue          String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([fieldTo])
+  @@index([slug])
+  @@map("crm_customfields")
+}
+
+model CrmCustomFieldValue {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  /// owner row of the value, resolved by `fieldTo`
+  relId     String?  @db.ObjectId
+  fieldId   String   @db.ObjectId // -> CrmCustomField
+  fieldTo   String
+  value     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([fieldId])
+  @@index([fieldTo, relId])
+  @@map("crm_customfieldsvalues")
+}
+
+model CrmTag {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  taggables CrmTaggable[]
+
+  @@index([legacyId])
+  @@index([name])
+  @@map("crm_tags")
+}
+
+/// Pure link table: tag attached to any record (composite key rel_id+rel_type+tag_id).
+model CrmTaggable {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  relType   String   // customer | lead | task | proposal | estimate | invoice | ticket | project | ...
+  relId     String?  @db.ObjectId
+  tagId     String   @db.ObjectId
+  tag       CrmTag   @relation(fields: [tagId], references: [id])
+  tagOrder  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tagId])
+  @@index([relType, relId])
+  @@map("crm_taggables")
+}
+
+model CrmModule {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId         Int?
+  moduleName       String   @unique
+  installedVersion String?
+  active           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("crm_modules")
+}
+
+model CrmCountry {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?     // countries.country_id
+  iso2        String?
+  shortName   String?
+  longName    String?
+  iso3        String?
+  numCode     String?
+  unMember    String?
+  callingCode String?
+  cctld       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([iso2])
+  @@map("crm_countries")
+}
+
+// ---------------------------------------------------------------- utilities
+model CrmNote {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId      Int?
+  relType       String    // customer | lead | proposal | estimate | invoice | ticket | expense | contract | ...
+  relId         String?   @db.ObjectId
+  description   String?
+  dateContacted DateTime?
+  addedFrom     String?   @db.ObjectId // staff
+  createdAt     DateTime  @default(now()) // notes.dateadded
+  updatedAt     DateTime  @updatedAt
+
+  @@index([legacyId])
+  @@index([relType, relId])
+  @@index([addedFrom])
+  @@map("crm_notes")
+}
+
+model CrmReminder {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId      Int?
+  description   String?
+  date          DateTime?
+  isNotified    Boolean  @default(false)
+  relType       String?
+  relId         String?  @db.ObjectId
+  staffId       String?  @db.ObjectId // staff to remind
+  notifyByEmail Boolean  @default(true)
+  creatorId     String?  @db.ObjectId // staff
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([relType, relId])
+  @@index([staffId])
+  @@index([date])
+  @@map("crm_reminders")
+}
+
+model CrmActivityLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  description String?
+  staffId     String?  @db.ObjectId
+  /// raw staffid value when it is not numeric (e.g. '[CRON]')
+  staffName   String?
+  fullName    String?
+  createdAt   DateTime @default(now()) // activity_log.date
+  updatedAt   DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([staffId])
+  @@index([createdAt])
+  @@map("crm_activity_log")
+}
+
+model CrmAnnouncement {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?     // announcements.announcementid
+  name        String
+  message     String?
+  showToUsers Boolean  @default(false)
+  showToStaff Boolean  @default(false)
+  showName    Boolean  @default(false)
+  userAdded   String?  // author display name (varchar in Perfex)
+  createdAt   DateTime @default(now()) // announcements.dateadded
+  updatedAt   DateTime @updatedAt
+
+  @@index([legacyId])
+  @@map("crm_announcements")
+}
+
+model CrmDismissedAnnouncement {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId       Int?     // dismissedannouncementid
+  announcementId String   @db.ObjectId
+  /// 1 => userId is a staff id, 0 => a contact id
+  isStaff        Boolean  @default(false)
+  userId         String?  @db.ObjectId
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([announcementId])
+  @@index([userId])
+  @@map("crm_dismissed_announcements")
+}
+
+model CrmTodo {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?      // todos.todoid
+  description  String?
+  staffId      String?   @db.ObjectId
+  finished     Boolean   @default(false)
+  dateFinished DateTime?
+  itemOrder    Int?
+  createdAt    DateTime  @default(now()) // todos.dateadded
+  updatedAt    DateTime  @updatedAt
+
+  @@index([legacyId])
+  @@index([staffId, finished])
+  @@map("crm_todos")
+}
+
+/// Calendar events (tblevents)
+model CrmEvent {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId           Int?      // events.eventid
+  title              String
+  description        String?
+  userId             String?   @db.ObjectId // staff
+  start              DateTime?
+  end                DateTime?
+  isPublic           Boolean   @default(false)
+  color              String?
+  isStartNotified    Boolean   @default(false)
+  reminderBefore     Int?
+  reminderBeforeType String?   // minutes | hours | days | weeks
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([legacyId])
+  @@index([userId])
+  @@index([start])
+  @@map("crm_events")
+}
+
+model CrmNotification {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?
+  isRead       Boolean  @default(false)
+  isReadInline Boolean  @default(false)
+  description  String?
+  fromUserId   String?  @db.ObjectId // staff
+  fromClientId String?  @db.ObjectId // contact
+  fromFullName String?
+  toUserId     String?  @db.ObjectId // staff
+  fromCompany  Boolean  @default(false)
+  link         String?
+  additionalData String? // serialized/JSON text
+  createdAt    DateTime @default(now()) // notifications.date
+  updatedAt    DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([toUserId, isRead])
+  @@map("crm_notifications")
+}
+
+/// Generic attachment (tblfiles): rel_type = customer | project | task | invoice | estimate | proposal | contract | lead | expense | ticket | credit_note | kb_article | ...
+model CrmFile {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId          Int?
+  relType           String?
+  relId             String?  @db.ObjectId
+  fileName          String?
+  fileType          String?
+  visibleToCustomer Boolean  @default(false)
+  attachmentKey     String?
+  external          String?  // external provider name (e.g. 'dropbox') or null
+  externalLink      String?
+  thumbnailLink     String?
+  staffId           String?  @db.ObjectId
+  contactId         String?  @db.ObjectId
+  taskCommentId     String?  @db.ObjectId
+  createdAt         DateTime @default(now()) // files.dateadded
+  updatedAt         DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([relType, relId])
+  @@index([staffId])
+  @@index([contactId])
+  @@map("crm_files")
+}
+
+model CrmUserMeta {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?     // user_meta.umeta_id
+  staffId   String?  @db.ObjectId
+  clientId  String?  @db.ObjectId // client_id (customer company)
+  contactId String?  @db.ObjectId
+  metaKey   String?
+  metaValue String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([staffId, metaKey])
+  @@index([contactId, metaKey])
+  @@index([clientId])
+  @@map("crm_user_meta")
+}
+
+model CrmUserAutoLogin {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  keyId     String?   // user_auto_login.key_id (remember-me token hash)
+  userId    String?   @db.ObjectId
+  /// 1 => userId is a staff id, 0 => a contact id
+  isStaff   Boolean   @default(false)
+  userAgent String?
+  lastIp    String?
+  lastUsed  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([keyId])
+  @@map("crm_user_auto_login")
+}
+
+model CrmViewTracking {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  relType   String?
+  relId     String?  @db.ObjectId
+  viewIp    String?
+  createdAt DateTime @default(now()) // views_tracking.date
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([relType, relId])
+  @@map("crm_views_tracking")
+}
+
+// ---------------------------------------------------------------- newsfeed
+model CrmPost {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?      // posts.postid
+  creatorId   String?   @db.ObjectId // staff
+  visibility  String?   // 'all' | comma separated department ids
+  pinned      Boolean   @default(false)
+  datePinned  DateTime?
+  content     String?
+  createdAt   DateTime  @default(now()) // posts.datecreated
+  updatedAt   DateTime  @updatedAt
+
+  comments    CrmPostComment[]
+  likes       CrmPostLike[]
+
+  @@index([legacyId])
+  @@index([creatorId])
+  @@map("crm_posts")
+}
+
+model CrmPostComment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  content   String?
+  userId    String?  @db.ObjectId // staff
+  postId    String   @db.ObjectId
+  post      CrmPost  @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now()) // dateadded
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([postId])
+  @@index([userId])
+  @@map("crm_post_comments")
+}
+
+model CrmPostLike {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  postId    String   @db.ObjectId
+  post      CrmPost  @relation(fields: [postId], references: [id])
+  userId    String?  @db.ObjectId // staff
+  createdAt DateTime @default(now()) // dateliked
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([userId])
+  @@map("crm_post_likes")
+}
+
+model CrmPostCommentLike {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  postId    String?  @db.ObjectId
+  commentId String?  @db.ObjectId
+  userId    String?  @db.ObjectId // staff
+  createdAt DateTime @default(now()) // dateliked
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([commentId])
+  @@index([userId])
+  @@map("crm_post_comment_likes")
+}
+
+// ---------------------------------------------------------------- goals
+model CrmGoal {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId         Int?
+  subject          String
+  description      String?
+  startDate        DateTime?
+  endDate          DateTime?
+  /// 1 total income, 2 invoiced total, 3 new customers, 4 new contracts, 5 contracts value,
+  /// 6 new leads, 7 converted leads, 8 new projects, 9 new tasks, 10 new tickets, ... (Perfex goal types)
+  goalType         Int?
+  contractType     Int?      // contract type id (legacy int) when goalType concerns contracts
+  achievement      Float?    // target
+  notifyWhenFail   Boolean   @default(false)
+  notifyWhenAchieve Boolean  @default(false)
+  notified         Boolean   @default(false)
+  staffId          String?   @db.ObjectId // 0 => whole company
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([legacyId])
+  @@index([staffId])
+  @@map("crm_goals")
+}
+
+// ---------------------------------------------------------------- surveys
+model CrmSurvey {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId        Int?     // surveys.surveyid
+  subject         String
+  slug            String?
+  description     String?
+  viewDescription String?
+  redirectUrl     String?
+  send            Boolean  @default(false)
+  ipRestrict      Boolean  @default(false)
+  active          Boolean  @default(true)
+  hash            String?
+  onlyForLoggedIn Boolean  @default(false)
+  createdAt       DateTime @default(now()) // surveys.datecreated
+  updatedAt       DateTime @updatedAt
+
+  sendLogs        CrmSurveySendLog[]
+  resultSets      CrmSurveyResultSet[]
+
+  @@index([legacyId])
+  @@index([slug])
+  @@map("crm_surveys")
+}
+
+model CrmSurveySendLog {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId       Int?
+  staffId        String?   @db.ObjectId
+  surveyId       String    @db.ObjectId
+  survey         CrmSurvey @relation(fields: [surveyId], references: [id])
+  isCronFinished Boolean   @default(false)
+  createdAt      DateTime  @default(now()) // surveysendlog.date
+  updatedAt      DateTime  @updatedAt
+
+  @@index([surveyId])
+  @@index([staffId])
+  @@map("crm_surveysendlog")
+}
+
+model CrmSurveyResultSet {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?      // resultsetid
+  surveyId  String    @db.ObjectId
+  survey    CrmSurvey @relation(fields: [surveyId], references: [id])
+  ip        String?
+  userAgent String?
+  createdAt DateTime  @default(now()) // surveyresultsets.date
+  updatedAt DateTime  @updatedAt
+
+  @@index([surveyId])
+  @@map("crm_surveyresultsets")
+}
+
+model CrmSurveyResult {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?     // resultid
+  surveyId    String?  @db.ObjectId
+  questionId  String?  @db.ObjectId
+  boxId       String?  @db.ObjectId
+  boxDescriptionId String? @db.ObjectId
+  resultSetId String?  @db.ObjectId
+  answer      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([surveyId])
+  @@index([questionId])
+  @@index([resultSetId])
+  @@map("crm_surveyresults")
+}
+
+/// form_questions: survey questions (rel_type = 'survey')
+model CrmFormQuestion {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId      Int?     // questionid
+  relType       String?  // 'survey'
+  relId         String?  @db.ObjectId
+  question      String?
+  required      Boolean  @default(false)
+  questionOrder Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  boxes         CrmFormQuestionBox[]
+
+  @@index([legacyId])
+  @@index([relType, relId])
+  @@map("crm_form_questions")
+}
+
+model CrmFormQuestionBox {
+  id         String          @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId   Int?            // boxid
+  boxType    String?         // checkbox | radio | input | textarea
+  questionId String          @db.ObjectId
+  question   CrmFormQuestion @relation(fields: [questionId], references: [id])
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  descriptions CrmFormQuestionBoxDescription[]
+
+  @@index([legacyId])
+  @@index([questionId])
+  @@map("crm_form_question_box")
+}
+
+model CrmFormQuestionBoxDescription {
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?               // questionboxdescriptionid
+  description String?
+  boxId       String             @db.ObjectId
+  box         CrmFormQuestionBox @relation(fields: [boxId], references: [id])
+  questionId  String?            @db.ObjectId
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([legacyId])
+  @@index([boxId])
+  @@index([questionId])
+  @@map("crm_form_question_box_description")
+}

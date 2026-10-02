@@ -1,0 +1,401 @@
+// ============================================================================
+// Perfex CRM port — WORK domain: projects, tasks, timers, timesheets module.
+// Conventions: docs/perfex/ARCHITECTURE.md. Cross-domain ids (staff, clients,
+// contacts, invoices...) are plain ObjectId strings WITHOUT @relation.
+// ============================================================================
+
+// ---------------------------------------------------------------- PROJECTS --
+
+model CrmProject {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId           Int?
+  name               String
+  description        String?
+  /// 1 not started, 2 in progress, 3 on hold, 4 cancelled, 5 finished
+  status             Int       @default(1)
+  clientId           String?   @db.ObjectId
+  /// 1 fixed rate, 2 project hours, 3 task hours
+  billingType        Int       @default(1)
+  startDate          DateTime?
+  deadline           DateTime?
+  dateFinished       DateTime?
+  progress           Int       @default(0)
+  progressFromTasks  Boolean   @default(true)
+  projectCost        Float?
+  projectRatePerHour Float?
+  estimatedHours     Float?
+  addedFrom          String?   @db.ObjectId
+  contactNotification Int      @default(1)
+  notifyContacts     String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  members     CrmProjectMember[]
+  files       CrmProjectFile[]
+  discussions CrmProjectDiscussion[]
+  notes       CrmProjectNote[]
+  activities  CrmProjectActivity[]
+  settings    CrmProjectSetting[]
+  milestones  CrmMilestone[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([addedFrom])
+  @@index([legacyId])
+  @@map("crm_projects")
+}
+
+model CrmProjectMember {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  projectId String     @db.ObjectId
+  staffId   String     @db.ObjectId
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  project   CrmProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([staffId])
+  @@map("crm_project_members")
+}
+
+model CrmProjectFile {
+  id                String     @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId          Int?
+  projectId         String     @db.ObjectId
+  fileName          String
+  subject           String?
+  description       String?
+  fileType          String?
+  lastActivity      DateTime?
+  visibleToCustomer Boolean    @default(false)
+  staffId           String?    @db.ObjectId
+  contactId         String?    @db.ObjectId
+  external          String?
+  externalLink      String?
+  thumbnailLink     String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  project           CrmProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([staffId])
+  @@map("crm_project_files")
+}
+
+model CrmProjectDiscussion {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?
+  projectId    String     @db.ObjectId
+  subject      String
+  description  String?
+  showToCustomer Boolean  @default(false)
+  lastActivity DateTime?
+  staffId      String?    @db.ObjectId
+  contactId    String?    @db.ObjectId
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  project      CrmProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("crm_project_discussions")
+}
+
+/// discussionType 'regular' => discussionId is a CrmProjectDiscussion, 'file' => a CrmProjectFile (polymorphic, no relation)
+model CrmProjectDiscussionComment {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId       Int?
+  discussionId   String?   @db.ObjectId
+  discussionType String
+  parentId       String?   @db.ObjectId
+  modified       DateTime?
+  content        String?
+  staffId        String?   @db.ObjectId
+  contactId      String?   @db.ObjectId
+  fullName       String?
+  fileName       String?
+  fileMimeType   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([discussionId, discussionType])
+  @@index([parentId])
+  @@map("crm_project_discussion_comments")
+}
+
+model CrmProjectNote {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  projectId String     @db.ObjectId
+  content   String?
+  staffId   String?    @db.ObjectId
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  project   CrmProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([staffId])
+  @@map("crm_project_notes")
+}
+
+model CrmProjectActivity {
+  id                String     @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId          Int?
+  projectId         String     @db.ObjectId
+  staffId           String?    @db.ObjectId
+  contactId         String?    @db.ObjectId
+  fullName          String?
+  visibleToCustomer Boolean    @default(false)
+  descriptionKey    String?
+  additionalData    String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  project           CrmProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("crm_project_activity")
+}
+
+model CrmProjectSetting {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  projectId String     @db.ObjectId
+  name      String
+  value     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  project   CrmProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("crm_project_settings")
+}
+
+model CrmMilestone {
+  id                       String     @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId                 Int?
+  name                     String
+  description              String?
+  descriptionVisibleToCustomer Boolean @default(false)
+  dueDate                  DateTime?
+  projectId                String     @db.ObjectId
+  color                    String?
+  milestoneOrder           Int        @default(0)
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
+  project                  CrmProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("crm_milestones")
+}
+
+// ------------------------------------------------------------------- TASKS --
+
+model CrmTask {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId           Int?
+  name               String
+  description        String?
+  /// 1 low, 2 medium, 3 high, 4 urgent
+  priority           Int       @default(2)
+  startDate          DateTime?
+  dueDate            DateTime?
+  dateFinished       DateTime?
+  addedFrom          String?   @db.ObjectId
+  isAddedFromContact Boolean   @default(false)
+  /// 1 not started, 2 awaiting feedback, 3 testing, 4 in progress, 5 complete
+  status             Int       @default(1)
+  recurringType      String?
+  repeatEvery        Int       @default(0)
+  recurring          Boolean   @default(false)
+  /// id of the task this one was generated from (recurring)
+  isRecurringFrom    String?   @db.ObjectId
+  cycles             Int       @default(0)
+  totalCycles        Int       @default(0)
+  customRecurring    Boolean   @default(false)
+  lastRecurringDate  DateTime?
+  /// project, customer, lead, invoice, proposal, ticket, expense, estimate, contract, credit_note, subscription, or '' (none)
+  relType            String?
+  relId              String?   @db.ObjectId
+  isPublic           Boolean   @default(false)
+  billable           Boolean   @default(false)
+  billed             Boolean   @default(false)
+  invoiceId          String?   @db.ObjectId
+  hourlyRate         Float     @default(0)
+  milestoneId        String?   @db.ObjectId
+  kanbanOrder        Int       @default(0)
+  milestoneOrder     Int       @default(0)
+  visibleToClient    Boolean   @default(false)
+  deadlineNotified   Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  assignees      CrmTaskAssigned[]
+  followers      CrmTaskFollower[]
+  comments       CrmTaskComment[]
+  checklistItems CrmTaskChecklistItem[]
+  timers         CrmTaskTimer[]
+
+  @@index([status])
+  @@index([relType, relId])
+  @@index([milestoneId])
+  @@index([addedFrom])
+  @@index([invoiceId])
+  @@index([dueDate])
+  @@index([legacyId])
+  @@map("crm_tasks")
+}
+
+model CrmTaskAssigned {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId              Int?
+  taskId                String   @db.ObjectId
+  staffId               String   @db.ObjectId
+  assignedFrom          String?  @db.ObjectId
+  isAssignedFromContact Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  task                  CrmTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([staffId])
+  @@map("crm_task_assigned")
+}
+
+model CrmTaskFollower {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  taskId    String   @db.ObjectId
+  staffId   String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      CrmTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([staffId])
+  @@map("crm_task_followers")
+}
+
+model CrmTaskComment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  taskId    String   @db.ObjectId
+  content   String?
+  staffId   String?  @db.ObjectId
+  contactId String?  @db.ObjectId
+  fileId    String?  @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      CrmTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([staffId])
+  @@map("crm_task_comments")
+}
+
+/// Source table: task_checklist_items
+model CrmTaskChecklistItem {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?
+  taskId       String    @db.ObjectId
+  description  String?
+  finished     Boolean   @default(false)
+  addedFrom    String?   @db.ObjectId
+  finishedFrom String?   @db.ObjectId
+  listOrder    Int       @default(0)
+  /// staff id the item is assigned to
+  assigned     String?   @db.ObjectId
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  task         CrmTask   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("crm_task_checklist_items")
+}
+
+/// Source table: checklist_templates (Perfex 3.x; reusable checklist item descriptions)
+model CrmChecklistTemplate {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId    Int?
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("crm_checklist_templates")
+}
+
+/// Source table: taskstimers. start/end are UNIX timestamps in Perfex; stored as DateTime here.
+model CrmTaskTimer {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId   Int?
+  taskId     String    @db.ObjectId
+  startTime  DateTime?
+  endTime    DateTime?
+  staffId    String?   @db.ObjectId
+  hourlyRate Float     @default(0)
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  task       CrmTask   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([staffId])
+  @@index([startTime])
+  @@map("crm_taskstimers")
+}
+
+// ------------------------------------------------- TIMESHEETS MODULE (best effort) --
+// Column sets of the timesheets module are not certain; unrecognised columns
+// are preserved in `extra` by the importer.
+
+/// Source table: timesheets_timesheet (daily attendance value per staff)
+model CrmTimesheet {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  staffId   String?   @db.ObjectId
+  dateWork  DateTime?
+  value     String?
+  addedFrom String?   @db.ObjectId
+  type      String?
+  relateId  String?
+  extra     Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([staffId])
+  @@index([dateWork])
+  @@map("crm_timesheets_timesheet")
+}
+
+/// Source table: timesheets_requisition_leave
+model CrmLeaveRequest {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId     Int?
+  subject      String?
+  staffId      String?   @db.ObjectId
+  startTime    DateTime?
+  endTime      DateTime?
+  reason       String?
+  status       Int?
+  numberOfDays Float?
+  extra        Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([staffId])
+  @@index([status])
+  @@map("crm_timesheets_requisition_leave")
+}
+
+/// Source table: timesheets_day_off (holidays / company days off)
+model CrmDayOff {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  legacyId  Int?
+  reason    String?
+  offDate   DateTime?
+  extra     Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([offDate])
+  @@map("crm_timesheets_day_off")
+}

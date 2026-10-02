@@ -4,6 +4,7 @@ import appConfig from '@/configs/app.config'
 import authConfig from '@/configs/auth.config'
 import validateCredential from '@/server/actions/user/validateCredential'
 import prisma from '@/lib/prisma'
+import { buildCrmAuthority } from '@/lib/crm/authority'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     trustHost: true,
@@ -46,6 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                             }
                         }
                     }
+                    authority.push(...(await buildCrmAuthority(token.sub)).authority)
                     token.authority = authority
                 }
             }

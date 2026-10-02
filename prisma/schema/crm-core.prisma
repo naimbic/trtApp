@@ -1,0 +1,21 @@
+// ============================================================================
+// Perfex CRM port — shared core.
+// Conventions: see docs/perfex/ARCHITECTURE.md
+//  - every Perfex-derived model is prefixed `Crm`, collection prefixed `crm_`
+//  - `legacyId` keeps the original Perfex primary key (Int) for traceability
+//  - _id of imported rows is a deterministic ObjectId (see src/lib/crm/legacyId.js)
+// ============================================================================
+
+/// Safety net: any Perfex table (of the 217 in the source dump) that has no
+/// typed model yet is stored verbatim here, so no data is ever dropped.
+model CrmLegacyRow {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  table     String   // original table name WITHOUT prefix, e.g. "hrm_timesheet"
+  legacyId  String?  // original primary key as string (composite keys joined by ":")
+  data      Json     // original row, column -> value (strings/numbers/null)
+  createdAt DateTime @default(now())
+
+  @@unique([table, legacyId])
+  @@index([table])
+  @@map("crm_legacy_rows")
+}

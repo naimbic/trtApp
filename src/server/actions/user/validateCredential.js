@@ -1,6 +1,7 @@
 'use server'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { buildCrmAuthority } from '@/lib/crm/authority'
 
 const validateCredential = async (values) => {
     const { email, password } = values
@@ -29,6 +30,10 @@ const validateCredential = async (values) => {
             }
         }
     }
+
+    const crm = await buildCrmAuthority(user.id)
+    if (crm.blocked) return null
+    authority.push(...crm.authority)
 
     return {
         id: user.id,

@@ -25,7 +25,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (trigger === 'update') {
                 const dbUser = await prisma.user.findUnique({
                     where: { id: token.sub },
-                    select: { image: true, name: true, email: true, role: true },
+                    select: { image: true, name: true, email: true, role: true, authority: true },
                 })
                 if (dbUser) {
                     token.picture = dbUser.image
@@ -33,7 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     token.email = dbUser.email
 
                     // Rebuild authority from role's accessRight
-                    const authority = [dbUser.role || 'user']
+                    const authority = [...new Set([dbUser.role || 'user', ...(dbUser.authority || [])])]
                     const role = await prisma.role.findUnique({
                         where: { roleId: dbUser.role || 'user' },
                     })

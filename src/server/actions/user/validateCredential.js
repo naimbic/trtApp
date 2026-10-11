@@ -16,7 +16,7 @@ const validateCredential = async (values) => {
     if (!isValid) return null
 
     // Build granular authority from role's accessRight
-    const authority = [user.role || 'user']
+    const authority = [...new Set([user.role || 'user', ...(user.authority || [])])]
     const role = await prisma.role.findUnique({
         where: { roleId: user.role || 'user' },
     })

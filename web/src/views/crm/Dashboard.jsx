@@ -6,7 +6,6 @@ import Segment from '@/components/ui/Segment'
 import Skeleton from '@/components/ui/Skeleton'
 import Tag from '@/components/ui/Tag'
 import Chart from '@/components/shared/Chart'
-import { COLORS } from '@/constants/chart.constant'
 import {
     PiReceiptDuotone,
     PiHandCoinsDuotone,
@@ -20,30 +19,141 @@ import {
     PiFileTextDuotone,
 } from 'react-icons/pi'
 
+// ---------- formatting
 const nf = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const compact = (v) => Number(v || 0).toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 2 })
 const nfi = (v) => Number(v || 0).toLocaleString('en-US')
 const monthLabel = (m) => dayjs(`${m}-01`).format('MMM YY')
 
-const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to }) => {
-    const tones = {
-        blue: 'bg-blue-100 text-blue-600',
-        green: 'bg-emerald-100 text-emerald-600',
-        amber: 'bg-amber-100 text-amber-600',
-        red: 'bg-red-100 text-red-600',
-        purple: 'bg-purple-100 text-purple-600',
-        teal: 'bg-teal-100 text-teal-600',
-    }
+// ---------- chart styling shared by every chart
+const PALETTE = { blue: '#3b82f6', green: '#10b981', amber: '#f59e0b', red: '#ef4444', purple: '#8b5cf6', teal: '#14b8a6', pink: '#ec4899', slate: '#64748b' }
+const SERIES = [PALETTE.blue, PALETTE.green, PALETTE.red, PALETTE.purple, PALETTE.amber, PALETTE.teal, PALETTE.pink, PALETTE.slate]
+const grid = { borderColor: 'rgba(148,163,184,0.25)', strokeDashArray: 4, padding: { left: 8, right: 8 } }
+const axisText = { style: { colors: '#94a3b8', fontSize: '12px' } }
+
+// Status → colour so the same status looks the same on every chart.
+const STATUS_COLOR = {
+    Paid: PALETTE.green, Complete: PALETTE.green, Finished: PALETTE.green, Closed: PALETTE.green, Accepted: PALETTE.green, Qualified: PALETTE.green,
+    'Partially paid': PALETTE.blue, 'In progress': PALETTE.blue, Answered: PALETTE.blue, Contacted: PALETTE.blue, Testing: PALETTE.purple,
+    Unpaid: PALETTE.amber, Open: PALETTE.amber, 'Not started': PALETTE.slate, New: PALETTE.slate, Draft: PALETTE.slate, 'On hold': PALETTE.amber,
+    'Awaiting feedback': PALETTE.amber, 'Proposal sent': PALETTE.purple, Negotiation: PALETTE.pink, Sent: PALETTE.blue,
+    Overdue: PALETTE.red, Cancelled: PALETTE.red, Declined: PALETTE.red, Expired: PALETTE.red,
+}
+const statusColor = (name, i) => STATUS_COLOR[name] || SERIES[i % SERIES.length]
+
+const TrendChart = ({ labels, series, colors = SERIES, height = 320, money, type = 'area' }) => (
+    <Chart
+        type={type}
+        height={height}
+        series={series}
+        xAxis={labels}
+        customOptions={{
+            colors,
+            chart: { toolbar: { show: false }, zoom: { enabled: false }, animations: { speed: 500 }, fontFamily: 'inherit' },
+            stroke: { width: 3, curve: 'smooth' },
+            fill: type === 'area' ? { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 95, 100] } } : { opacity: 1 },
+            markers: { size: 0, hover: { size: 6 }, strokeWidth: 2, strokeColors: '#fff' },
+            dataLabels: { enabled: false },
+            grid,
+            legend: { position: 'top', horizontalAlign: 'left', fontSize: '13px', markers: { radius: 12 }, itemMargin: { horizontal: 12 } },
+            xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: axisText },
+            yaxis: { min: 0, labels: { ...axisText, formatter: (v) => compact(v) } },
+            tooltip: { shared: true, intersect: false, y: { formatter: (v) => (money ? money(v) : nfi(v)) } },
+        }}
+    />
+)
+
+const ColumnChart = ({ labels, series, colors, height = 260, money, negativeColor }) => (
+    <Chart
+        type="bar"
+        height={height}
+        series={series}
+        xAxis={labels}
+        customOptions={{
+            colors,
+            chart: { toolbar: { show: false }, fontFamily: 'inherit' },
+            plotOptions: {
+                bar: {
+                    borderRadius: 6,
+                    borderRadiusApplication: 'end',
+                    columnWidth: '52%',
+                    ...(negativeColor ? { colors: { ranges: [{ from: -1e12, to: -0.01, color: negativeColor }] } } : {}),
+                },
+            },
+            dataLabels: { enabled: false },
+            grid,
+            legend: { show: false },
+            xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: { ...axisText, rotate: 0, hideOverlappingLabels: true, trim: false } },
+            yaxis: { labels: { ...axisText, formatter: (v) => compact(v) } },
+            tooltip: { y: { formatter: (v) => (money ? money(v) : nfi(v)) } },
+        }}
+    />
+)
+
+/** Distribution by status as horizontal bars with the count at the end of each bar. */
+const StatusBars = ({ data, height }) => {
+    const names = Object.keys(data || {}).sort((a, b) => data[b] - data[a])
+    if (!names.length || names.every((n) => !data[n])) return <Empty />
+    return (
+        <Chart
+            type="bar"
+            height={height || Math.max(150, names.length * 44 + 20)}
+            series={[{ name: 'Count', data: names.map((n) => data[n]) }]}
+            xAxis={names}
+            customOptions={{
+                colors: names.map((n, i) => statusColor(n, i)),
+                chart: { toolbar: { show: false }, fontFamily: 'inherit' },
+                plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 6, borderRadiusApplication: 'end', barHeight: '62%' } },
+                dataLabels: { enabled: true, textAnchor: 'start', offsetX: 6, style: { fontSize: '12px', fontWeight: 600, colors: ['#334155'] }, formatter: (v) => nfi(v) },
+                grid: { show: false, padding: { left: 4, right: 28 } },
+                legend: { show: false },
+                xaxis: { categories: names, labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { labels: { ...axisText, style: { colors: '#475569', fontSize: '13px' }, maxWidth: 130 } },
+                tooltip: { y: { formatter: (v) => nfi(v) } },
+            }}
+        />
+    )
+}
+
+const Sparkline = ({ data, color }) => (
+    <Chart
+        type="area"
+        height={44}
+        width="100%"
+        series={[{ name: '', data }]}
+        xAxis={data.map((_, i) => i)}
+        customOptions={{
+            colors: [color],
+            chart: { sparkline: { enabled: true }, animations: { enabled: false } },
+            stroke: { width: 2, curve: 'smooth' },
+            fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0 } },
+            tooltip: { enabled: false },
+        }}
+    />
+)
+
+// ---------- small building blocks
+const TONES = {
+    blue: ['bg-blue-100 text-blue-600', PALETTE.blue],
+    green: ['bg-emerald-100 text-emerald-600', PALETTE.green],
+    amber: ['bg-amber-100 text-amber-600', PALETTE.amber],
+    red: ['bg-red-100 text-red-600', PALETTE.red],
+    purple: ['bg-purple-100 text-purple-600', PALETTE.purple],
+    teal: ['bg-teal-100 text-teal-600', PALETTE.teal],
+}
+
+const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark }) => {
     const body = (
-        <Card className="h-full">
+        <Card className="h-full overflow-hidden" bodyClass="p-4 flex flex-col h-full">
             <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                     <div className="text-sm text-gray-500">{label}</div>
                     <h3 className="mt-1 truncate" title={title || undefined}>{value}</h3>
                     {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
                 </div>
-                <div className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl ${tones[tone]}`}>{icon}</div>
+                <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-2xl ${TONES[tone][0]}`}>{icon}</div>
             </div>
+            {spark && spark.length > 1 && <div className="-mx-4 -mb-4 mt-2"><Sparkline data={spark} color={TONES[tone][1]} /></div>}
         </Card>
     )
     return to ? <Link to={to}>{body}</Link> : body
@@ -51,26 +161,13 @@ const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to }) => {
 
 const Empty = ({ children = 'No data yet' }) => <div className="text-sm text-gray-400 py-6 text-center">{children}</div>
 
-const Donut = ({ data, title }) => {
-    const labels = Object.keys(data || {})
-    const series = labels.map((l) => data[l])
-    if (!series.length || series.every((v) => !v)) return <Empty />
-    return <Chart type="donut" series={series} height={260} donutTitle={title} customOptions={{ labels, legend: { position: 'bottom' } }} />
-}
-
-const Bars = ({ data, color = COLORS[0] }) => {
-    const labels = Object.keys(data || {})
-    if (!labels.length) return <Empty />
-    return (
-        <Chart
-            type="bar"
-            height={260}
-            series={[{ name: 'Count', data: labels.map((l) => data[l]) }]}
-            xAxis={labels}
-            customOptions={{ colors: [color], plotOptions: { bar: { borderRadius: 4, columnWidth: '45%', distributed: false } } }}
-        />
-    )
-}
+const Panel = ({ title, subtitle, className = '', children }) => (
+    <Card className={className}>
+        <h4>{title}</h4>
+        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+        <div className="mt-4">{children}</div>
+    </Card>
+)
 
 const List = ({ rows, empty, render }) =>
     rows?.length ? (
@@ -85,6 +182,7 @@ const List = ({ rows, empty, render }) =>
         <Empty>{empty}</Empty>
     )
 
+// ---------- page
 const Dashboard = () => {
     const [data, setData] = useState(null)
     const [error, setError] = useState(null)
@@ -103,17 +201,14 @@ const Dashboard = () => {
     }, [])
 
     const cur = useMemo(() => data?.currencies.find((c) => c.id === currencyId), [data, currencyId])
-    const money = (v, id = currencyId) => {
+    const fmt = (v, id, short) => {
         const c = data?.currencies.find((x) => x.id === id) || cur
         const s = c?.symbol || c?.name || ''
-        return c?.placement === 'after' ? `${nf(v)} ${s}` : `${s ? s + ' ' : ''}${nf(v)}`
+        const n = short ? compact(v) : nf(v)
+        return c?.placement === 'after' ? `${n} ${s}` : `${s ? s + ' ' : ''}${n}`
     }
-
-    const moneyShort = (v, id = currencyId) => {
-        const c = data?.currencies.find((x) => x.id === id) || cur
-        const s = c?.symbol || c?.name || ''
-        return c?.placement === 'after' ? `${compact(v)} ${s}` : `${s ? s + ' ' : ''}${compact(v)}`
-    }
+    const money = (v, id = currencyId) => fmt(v, id, false)
+    const moneyShort = (v, id = currencyId) => fmt(v, id, true)
 
     if (error) return <Card>Could not load the dashboard: {error}</Card>
     if (!data) {
@@ -121,9 +216,9 @@ const Dashboard = () => {
             <div className="flex flex-col gap-4">
                 <Skeleton height={28} width={220} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={96} />)}
+                    {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={120} />)}
                 </div>
-                <Skeleton height={320} />
+                <Skeleton height={340} />
             </div>
         )
     }
@@ -133,7 +228,15 @@ const Dashboard = () => {
     const usedCurrencies = data.currencies.filter((c) => data.invoices?.byCurrency?.[c.id])
     const months = data.months
     const labels = months.map(monthLabel)
-    const profit = inv ? months.map((m) => (inv.collectedByMonth[m] || 0) - (exp?.[m] || 0)) : []
+    const invoicedSeries = inv ? months.map((m) => inv.invoicedByMonth[m] || 0) : []
+    const collectedSeries = inv ? months.map((m) => inv.collectedByMonth[m] || 0) : []
+    const expenseSeries = exp ? months.map((m) => exp[m] || 0) : months.map(() => 0)
+    const net = collectedSeries.map((v, i) => Math.round((v - expenseSeries[i]) * 100) / 100)
+    let run = 0
+    const cumCollected = collectedSeries.map((v) => (run += v))
+    run = 0
+    const cumInvoiced = invoicedSeries.map((v) => (run += v))
+    const newClients = months.map((m) => data.clients?.byMonth?.[m] || 0)
 
     return (
         <div className="flex flex-col gap-4">
@@ -153,15 +256,15 @@ const Dashboard = () => {
 
             {data.invoices && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    <StatCard icon={<PiReceiptDuotone />} label="Total invoiced" value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub="Excl. drafts & cancelled" tone="blue" to="/crm/invoices" />
-                    <StatCard icon={<PiHandCoinsDuotone />} label="Collected" value={moneyShort(inv?.paid)} title={money(inv?.paid)} sub={inv?.invoiced ? `${Math.round((inv.paid / inv.invoiced) * 100)}% of invoiced` : ''} tone="green" to="/crm/payments" />
-                    <StatCard icon={<PiHourglassHighDuotone />} label="Outstanding" value={moneyShort(inv?.outstanding)} title={money(inv?.outstanding)} sub="Still to collect" tone="amber" />
+                    <StatCard icon={<PiReceiptDuotone />} label="Total invoiced" value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub="Excl. drafts & cancelled" tone="blue" to="/crm/invoices" spark={invoicedSeries} />
+                    <StatCard icon={<PiHandCoinsDuotone />} label="Collected" value={moneyShort(inv?.paid)} title={money(inv?.paid)} sub={inv?.invoiced ? `${Math.round((inv.paid / inv.invoiced) * 100)}% of invoiced` : ''} tone="green" to="/crm/payments" spark={collectedSeries} />
+                    <StatCard icon={<PiHourglassHighDuotone />} label="Outstanding" value={moneyShort(inv?.outstanding)} title={money(inv?.outstanding)} sub="Still to collect" tone="amber" spark={cumInvoiced.map((v, i) => Math.max(v - cumCollected[i], 0))} />
                     <StatCard icon={<PiWarningCircleDuotone />} label="Overdue" value={moneyShort(inv?.overdue)} title={money(inv?.overdue)} sub={`${nfi(inv?.overdueCount)} invoice(s)`} tone="red" />
                 </div>
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                {data.clients && <StatCard icon={<PiUsersThreeDuotone />} label="Clients" value={nfi(data.clients.total)} sub={`${nfi(data.clients.active)} active`} tone="blue" to="/crm/clients" />}
+                {data.clients && <StatCard icon={<PiUsersThreeDuotone />} label="Clients" value={nfi(data.clients.total)} sub={`${nfi(data.clients.active)} active`} tone="blue" to="/crm/clients" spark={newClients} />}
                 {data.leads && <StatCard icon={<PiFunnelDuotone />} label="Open leads" value={nfi(data.leads.open)} sub={`${nfi(data.leads.converted)} converted`} tone="purple" to="/crm/leads" />}
                 {data.projects && <StatCard icon={<PiKanbanDuotone />} label="Projects" value={nfi(data.projects.total)} sub={`${nfi(data.projects.byStatus?.['In progress'])} in progress`} tone="teal" to="/crm/projects" />}
                 {data.tasks && <StatCard icon={<PiCheckSquareDuotone />} label="Open tasks" value={nfi(data.tasks.open)} sub={`${nfi(data.tasks.overdue)} overdue`} tone={data.tasks.overdue ? 'red' : 'green'} to="/crm/tasks" />}
@@ -171,70 +274,56 @@ const Dashboard = () => {
 
             {inv && (
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                    <Card className="xl:col-span-2">
-                        <h4 className="mb-1">Revenue · last 12 months</h4>
-                        <p className="text-sm text-gray-500 mb-4">Invoiced vs collected vs expenses ({cur?.name})</p>
-                        <Chart
-                            type="area"
-                            height={320}
+                    <Panel className="xl:col-span-2" title="Revenue · last 12 months" subtitle={`Invoiced vs collected vs expenses (${cur?.name})`}>
+                        <TrendChart
+                            labels={labels}
+                            money={money}
+                            colors={[PALETTE.blue, PALETTE.green, PALETTE.red]}
                             series={[
-                                { name: 'Invoiced', data: months.map((m) => inv.invoicedByMonth[m] || 0) },
-                                { name: 'Collected', data: months.map((m) => inv.collectedByMonth[m] || 0) },
-                                ...(exp ? [{ name: 'Expenses', data: months.map((m) => exp[m] || 0) }] : []),
+                                { name: 'Invoiced', data: invoicedSeries },
+                                { name: 'Collected', data: collectedSeries },
+                                { name: 'Expenses', data: expenseSeries },
                             ]}
-                            xAxis={labels}
-                            customOptions={{ legend: { position: 'top' }, yaxis: { min: 0, labels: { formatter: (v) => compact(v) } } }}
                         />
-                    </Card>
-                    <Card>
-                        <h4 className="mb-4">Invoices by status</h4>
-                        <Donut data={inv.byStatus} title="Invoices" />
-                    </Card>
+                    </Panel>
+                    <Panel title="Invoices by status" subtitle="Excl. drafts & cancelled">
+                        <StatusBars data={inv.byStatus} height={300} />
+                    </Panel>
+                </div>
+            )}
+
+            {inv && (
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                    <Panel className="xl:col-span-2" title="Cumulative cash position" subtitle={`Running total invoiced vs collected (${cur?.name}) — the gap is what is still owed`}>
+                        <TrendChart
+                            labels={labels}
+                            money={money}
+                            colors={[PALETTE.purple, PALETTE.teal]}
+                            height={280}
+                            series={[
+                                { name: 'Invoiced (cumulative)', data: cumInvoiced },
+                                { name: 'Collected (cumulative)', data: cumCollected },
+                            ]}
+                        />
+                    </Panel>
+                    <Panel title="Net cash flow" subtitle="Collected minus expenses">
+                        <ColumnChart labels={labels} money={money} colors={[PALETTE.teal]} negativeColor={PALETTE.red} height={280} series={[{ name: 'Net', data: net }]} />
+                    </Panel>
                 </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {data.leads && (
-                    <Card>
-                        <h4 className="mb-4">Open leads by status</h4>
-                        <Donut data={data.leads.byStatus} title="Leads" />
-                    </Card>
-                )}
-                {data.tasks && (
-                    <Card>
-                        <h4 className="mb-4">Tasks by status</h4>
-                        <Bars data={data.tasks.byStatus} color={COLORS[1]} />
-                    </Card>
-                )}
-                {data.projects && (
-                    <Card>
-                        <h4 className="mb-4">Projects by status</h4>
-                        <Donut data={data.projects.byStatus} title="Projects" />
-                    </Card>
-                )}
-                {data.tickets && (
-                    <Card>
-                        <h4 className="mb-4">Tickets by status</h4>
-                        <Bars data={data.tickets.byStatus} color={COLORS[4]} />
-                    </Card>
-                )}
+                {data.leads && <Panel title="Open leads by status"><StatusBars data={data.leads.byStatus} /></Panel>}
+                {data.tasks && <Panel title="Tasks by status"><StatusBars data={data.tasks.byStatus} /></Panel>}
+                {data.projects && <Panel title="Projects by status"><StatusBars data={data.projects.byStatus} /></Panel>}
+                {data.tickets && <Panel title="Tickets by status"><StatusBars data={data.tickets.byStatus} /></Panel>}
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                {data.clients && (
-                    <Card>
-                        <h4 className="mb-4">New clients per month</h4>
-                        <Chart type="bar" height={240} series={[{ name: 'Clients', data: months.map((m) => data.clients.byMonth[m] || 0) }]} xAxis={labels} customOptions={{ colors: [COLORS[3]], plotOptions: { bar: { borderRadius: 4, columnWidth: '45%' } } }} />
-                    </Card>
-                )}
-                {inv && profit.length > 0 && (
-                    <Card className="xl:col-span-2">
-                        <h4 className="mb-1">Net cash flow</h4>
-                        <p className="text-sm text-gray-500 mb-4">Collected minus expenses per month ({cur?.name})</p>
-                        <Chart type="bar" height={240} series={[{ name: 'Net', data: profit.map((v) => Math.round(v * 100) / 100) }]} xAxis={labels} customOptions={{ colors: [COLORS[5]], plotOptions: { bar: { borderRadius: 4, columnWidth: '45%', colors: { ranges: [{ from: -1e12, to: -0.01, color: COLORS[2] }] } } } }} />
-                    </Card>
-                )}
-            </div>
+            {data.clients && (
+                <Panel title="New clients per month" subtitle="Client acquisition trend">
+                    <TrendChart labels={labels} colors={[PALETTE.purple]} height={220} series={[{ name: 'New clients', data: newClients }]} />
+                </Panel>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {data.invoices && (
@@ -257,7 +346,7 @@ const Dashboard = () => {
                         <h4 className="mb-2">Overdue invoices</h4>
                         <List
                             rows={data.invoices.overdueList}
-                            empty="Nothing overdue 🎉"
+                            empty="Nothing overdue"
                             render={(i) => (
                                 <>
                                     <div className="min-w-0">

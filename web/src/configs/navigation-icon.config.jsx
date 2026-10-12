@@ -1,0 +1,43 @@
+import {
+    PiBuildingsDuotone,
+    PiAddressBookDuotone,
+    PiFunnelDuotone,
+    PiKanbanDuotone,
+    PiCheckSquareDuotone,
+    PiReceiptDuotone,
+    PiShoppingBagDuotone,
+    PiLifebuoyDuotone,
+    PiBooksDuotone,
+    PiGearSixDuotone,
+    PiSlidersHorizontalDuotone,
+    PiToolboxDuotone,
+    PiHouseLineDuotone,
+    PiArrowsInDuotone,
+    PiBookOpenUserDuotone,
+    PiBookBookmarkDuotone,
+    PiAcornDuotone,
+    PiBagSimpleDuotone,
+} from 'react-icons/pi'
+
+const navigationIcon = {
+    home: <PiHouseLineDuotone />,
+    singleMenu: <PiAcornDuotone />,
+    collapseMenu: <PiArrowsInDuotone />,
+    groupSingleMenu: <PiBookOpenUserDuotone />,
+    groupCollapseMenu: <PiBookBookmarkDuotone />,
+    groupMenu: <PiBagSimpleDuotone />,
+    crm: <PiBuildingsDuotone />,
+    crmCustomers: <PiAddressBookDuotone />,
+    crmLeads: <PiFunnelDuotone />,
+    crmProjects: <PiKanbanDuotone />,
+    crmTasks: <PiCheckSquareDuotone />,
+    crmSales: <PiReceiptDuotone />,
+    crmPurchases: <PiShoppingBagDuotone />,
+    crmSupport: <PiLifebuoyDuotone />,
+    crmKnowledgeBase: <PiBooksDuotone />,
+    crmAdministration: <PiGearSixDuotone />,
+    crmSetup: <PiSlidersHorizontalDuotone />,
+    crmUtilities: <PiToolboxDuotone />,
+}
+
+export default navigationIcon

@@ -1,0 +1,281 @@
+'use server'
+
+import prisma from '@/lib/prisma'
+import { requirePermission, getStaffId } from '@/lib/crm/permissions'
+import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
+
+const REL = 'invoice'
+const plain = (v) => JSON.parse(JSON.stringify(v))
+const fail = (message) => ({ success: false, message })
+
+const option = async (name, fallback) => {
+    const row = await prisma.crmOption.findUnique({ where: { name } })
+    return row?.value ?? fallback
+}
+
+const logActivity = async (invoiceId, description, staffId) => {
+    try {
+        await prisma.crmSalesActivity.create({
+            data: { relType: REL, relId: invoiceId, description, staffId: staffId || undefined, date: new Date() },
+        })
+    } catch {
+        /* activity logging must never break a write */
+    }
+}
+
+const loadLines = async (invoiceId) => {
+    const lines = await prisma.crmItemable.findMany({
+        where: { relType: REL, relId: invoiceId },
+        orderBy: { itemOrder: 'asc' },
+        include: { taxes: true },
+    })
+    return lines.map((l) => ({
+        id: l.id,
+        description: l.description,
+        longDescription: l.longDescription || '',
+        qty: l.qty,
+        rate: l.rate,
+        unit: l.unit || '',
+        taxes: l.taxes.map((t) => ({ name: t.taxName, rate: t.taxRate })),
+    }))
+}
+
+const paidSum = async (invoiceId) => {
+    const rows = await prisma.crmPayment.findMany({ where: { invoiceId }, select: { amount: true } })
+    return round2(rows.reduce((s, p) => s + (p.amount || 0), 0))
+}
+
+/** Recompute and persist the Perfex status from payments (cancelled stays cancelled). */
+const refreshStatus = async (invoiceId) => {
+    const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId } })
+    if (!invoice) return null
+    const payments = await prisma.crmPayment.findMany({ where: { invoiceId }, select: { amount: true } })
+    const status = invoiceStatusFromPayments(invoice, payments)
+    if (status !== invoice.status) await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status } })
+    return status
+}
+
+/** Lookups for the editor: taxes, currencies, payment modes. */
+export async function getInvoiceLookups() {
+    await requirePermission('invoices', 'view')
+    const [taxes, currencies, paymentModes] = await Promise.all([
+        prisma.crmTax.findMany({ orderBy: { name: 'asc' } }),
+        prisma.crmCurrency.findMany({ orderBy: { name: 'asc' } }),
+        prisma.crmPaymentMode.findMany({ orderBy: { name: 'asc' } }),
+    ])
+    return plain({
+        taxes: taxes.map((t) => ({ name: t.name, rate: t.taxRate })),
+        currencies: currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, isDefault: c.isDefault, placement: c.placement })),
+        paymentModes: paymentModes.map((m) => ({ id: m.id, name: m.name })),
+    })
+}
+
+/** Full invoice for the view/edit pages. */
+export async function getInvoiceDocument(id) {
+    await requirePermission('invoices', 'view')
+    const invoice = await prisma.crmInvoice.findUnique({ where: { id } })
+    if (!invoice) return null
+    const [items, payments, client, currency, activity] = await Promise.all([
+        loadLines(id),
+        prisma.crmPayment.findMany({ where: { invoiceId: id }, orderBy: { paymentDate: 'desc' } }),
+        invoice.clientId ? prisma.crmClient.findUnique({ where: { id: invoice.clientId }, select: { id: true, company: true } }) : null,
+        invoice.currencyId ? prisma.crmCurrency.findUnique({ where: { id: invoice.currencyId } }) : null,
+        prisma.crmSalesActivity.findMany({ where: { relType: REL, relId: id }, orderBy: { date: 'desc' }, take: 50 }),
+    ])
+    const paid = round2(payments.reduce((s, p) => s + (p.amount || 0), 0))
+    return plain({
+        invoice: {
+            ...invoice,
+            displayNumber: formatDocumentNumber({
+                prefix: invoice.prefix,
+                number: invoice.number,
+                numberFormat: invoice.numberFormat,
+                date: invoice.date,
+            }),
+        },
+        items,
+        payments,
+        client,
+        currency,
+        activity,
+        paid,
+        balance: round2(invoice.total - paid),
+    })
+}
+
+/**
+ * Create or update an invoice with its lines. Totals are always computed server-side.
+ * input: { id?, clientId, date, dueDate, currencyId, discountPercent, discountFixed, discountType,
+ *          adjustment, clientNote, adminNote, terms, draft, items: [{description, longDescription, qty, rate, unit, taxes:[{name,rate}]}] }
+ */
+export async function saveInvoice(input) {
+    const isNew = !input.id
+    const session = await requirePermission('invoices', isNew ? 'create' : 'edit')
+    const staffId = await getStaffId(session)
+
+    if (!input.clientId) return fail('Client is required')
+    const items = (input.items || []).filter((i) => String(i.description || '').trim())
+    if (!items.length) return fail('Add at least one line item')
+
+    const discountType = input.discountType || 'before_tax'
+    const totals = calcDocument({
+        items,
+        discountPercent: input.discountPercent,
+        discountFixed: input.discountFixed,
+        discountType,
+        adjustment: input.adjustment,
+    })
+    const pct = Number(input.discountPercent) || 0
+
+    const data = {
+        clientId: input.clientId,
+        date: input.date ? new Date(input.date) : new Date(),
+        dueDate: input.dueDate ? new Date(input.dueDate) : null,
+        currencyId: input.currencyId || null,
+        subtotal: totals.subtotal,
+        totalTax: totals.totalTax,
+        total: totals.total,
+        discountPercent: pct,
+        discountTotal: totals.discountTotal,
+        discountType,
+        adjustment: Number(input.adjustment) || 0,
+        clientNote: input.clientNote || null,
+        adminNote: input.adminNote || null,
+        terms: input.terms || null,
+    }
+
+    let invoice
+    if (isNew) {
+        const prefix = await option('invoice_prefix', 'INV-')
+        const numberFormat = Number(await option('invoice_number_format', '1')) || 1
+        const next = Number(await option('next_invoice_number', '0')) || 0
+        const last = await prisma.crmInvoice.findFirst({ orderBy: { number: 'desc' }, select: { number: true } })
+        const number = Math.max(next, (last?.number || 0) + 1)
+        invoice = await prisma.crmInvoice.create({
+            data: {
+                ...data,
+                number,
+                prefix,
+                numberFormat,
+                status: input.draft ? INVOICE_STATUS.DRAFT : INVOICE_STATUS.UNPAID,
+                addedFrom: staffId || undefined,
+                hash: crypto.randomUUID().replace(/-/g, ''),
+            },
+        })
+        await prisma.crmOption.upsert({
+            where: { name: 'next_invoice_number' },
+            update: { value: String(number + 1) },
+            create: { name: 'next_invoice_number', value: String(number + 1) },
+        })
+    } else {
+        const existing = await prisma.crmInvoice.findUnique({ where: { id: input.id } })
+        if (!existing) return fail('Invoice not found')
+        invoice = await prisma.crmInvoice.update({ where: { id: input.id }, data })
+        const oldLines = await prisma.crmItemable.findMany({ where: { relType: REL, relId: invoice.id }, select: { id: true } })
+        await prisma.crmItemTax.deleteMany({ where: { relType: REL, relId: invoice.id } })
+        await prisma.crmItemable.deleteMany({ where: { id: { in: oldLines.map((l) => l.id) } } })
+    }
+
+    for (const [idx, it] of items.entries()) {
+        const line = await prisma.crmItemable.create({
+            data: {
+                relType: REL,
+                relId: invoice.id,
+                description: String(it.description).trim(),
+                longDescription: it.longDescription || null,
+                qty: Number(it.qty) || 0,
+                rate: Number(it.rate) || 0,
+                unit: it.unit || null,
+                itemOrder: idx + 1,
+            },
+        })
+        for (const t of it.taxes || []) {
+            await prisma.crmItemTax.create({
+                data: { itemableId: line.id, relType: REL, relId: invoice.id, taxName: t.name || `${t.rate}%`, taxRate: Number(t.rate) || 0 },
+            })
+        }
+    }
+
+    if (!isNew) await refreshStatus(invoice.id)
+    await logActivity(invoice.id, isNew ? 'Invoice created' : 'Invoice updated', staffId)
+    return { success: true, id: invoice.id }
+}
+
+/** Record a payment and update the invoice status like Perfex. */
+export async function recordPayment(invoiceId, { amount, paymentModeId, paymentDate, note, transactionId } = {}) {
+    const session = await requirePermission('payments', 'create')
+    const staffId = await getStaffId(session)
+
+    const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId } })
+    if (!invoice) return fail('Invoice not found')
+    if (invoice.status === INVOICE_STATUS.CANCELLED) return fail('Cannot add a payment to a cancelled invoice')
+
+    const value = round2(amount)
+    if (!(value > 0)) return fail('Amount must be greater than zero')
+    const balance = round2(invoice.total - (await paidSum(invoiceId)))
+    if (value > balance) return fail(`Amount exceeds the balance due (${balance.toFixed(2)})`)
+
+    await prisma.crmPayment.create({
+        data: {
+            invoiceId,
+            amount: value,
+            paymentModeId: paymentModeId || undefined,
+            paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
+            note: note || null,
+            transactionId: transactionId || null,
+        },
+    })
+    await refreshStatus(invoiceId)
+    await logActivity(invoiceId, `Payment of ${value.toFixed(2)} recorded`, staffId)
+    return { success: true }
+}
+
+export async function deletePayment(paymentId) {
+    const session = await requirePermission('payments', 'delete')
+    const staffId = await getStaffId(session)
+    const payment = await prisma.crmPayment.findUnique({ where: { id: paymentId } })
+    if (!payment) return fail('Payment not found')
+    await prisma.crmPayment.delete({ where: { id: paymentId } })
+    if (payment.invoiceId) {
+        // A draft only stays a draft while it has no payments, so re-evaluate from UNPAID.
+        const invoice = await prisma.crmInvoice.findUnique({ where: { id: payment.invoiceId } })
+        if (invoice && invoice.status !== INVOICE_STATUS.CANCELLED && invoice.status !== INVOICE_STATUS.DRAFT) {
+            await prisma.crmInvoice.update({ where: { id: invoice.id }, data: { status: INVOICE_STATUS.UNPAID } })
+        }
+        await refreshStatus(payment.invoiceId)
+        await logActivity(payment.invoiceId, `Payment of ${(payment.amount || 0).toFixed(2)} deleted`, staffId)
+    }
+    return { success: true }
+}
+
+/** action: 'cancel' | 'uncancel' | 'markSent' | 'markUnpaid' (draft -> unpaid). */
+export async function setInvoiceState(invoiceId, action) {
+    const session = await requirePermission('invoices', 'edit')
+    const staffId = await getStaffId(session)
+    const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId } })
+    if (!invoice) return fail('Invoice not found')
+
+    if (action === 'cancel') {
+        if ((await paidSum(invoiceId)) > 0) return fail('Cannot cancel an invoice that has payments')
+        await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status: INVOICE_STATUS.CANCELLED } })
+        await logActivity(invoiceId, 'Invoice cancelled', staffId)
+    } else if (action === 'uncancel') {
+        await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status: INVOICE_STATUS.UNPAID } })
+        await refreshStatus(invoiceId)
+        await logActivity(invoiceId, 'Invoice marked as not cancelled', staffId)
+    } else if (action === 'markSent') {
+        await prisma.crmInvoice.update({
+            where: { id: invoiceId },
+            data: {
+                sent: true,
+                dateSend: new Date(),
+                ...(invoice.status === INVOICE_STATUS.DRAFT ? { status: INVOICE_STATUS.UNPAID } : {}),
+            },
+        })
+        await refreshStatus(invoiceId)
+        await logActivity(invoiceId, 'Invoice marked as sent', staffId)
+    } else {
+        return fail('Unknown action')
+    }
+    return { success: true }
+}

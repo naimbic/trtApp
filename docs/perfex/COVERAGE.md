@@ -13,9 +13,14 @@ Everything else in the dump (purchasing `pur_*`, other module tables) is stored 
 UI: every resource has list (search/filter/sort/paging), create, detail with child tabs, edit, delete, RBAC
 (Perfex features → `crm.<feature>.<cap>`), plus Tasks board and Ticket thread pages.
 
+## Invoices (done)
+Hand-built editor + view for `/crm/invoices` (line items, per-line taxes, discount before/after tax, adjustment,
+live totals via `calcDocument`, auto numbering from `invoice_prefix`/`next_invoice_number`, record/delete payment,
+Perfex status automation, cancel/mark sent, activity log). Server actions: `src/server/actions/crm/sales/invoices.js`;
+UI: `crm/_components/sales/Invoice{Editor,View}.jsx`, wired from the generic `[resource]` pages.
+
 ## NOT done yet (functions, not data)
-- Invoice/estimate/proposal editor with line items, tax/discount calc UI, PDF, email sending, payment
-  recording, status automation (`src/lib/crm/sales/calc.js` has the tested logic; actions are declared but unwired).
+- Same editor for estimates/proposals/credit notes (reuse Invoice components), PDF, email sending, status automation jobs.
 - Lead kanban + convert button (server action exists: `server/actions/crm/crm/convertLead.js`), lead email import.
 - Cron jobs (recurring invoices/tasks, reminders, overdue notices), email templates rendering, SMTP/IMAP.
 - Client (contact) portal, reports, dashboards, calendar view, global search, custom-field rendering on forms.

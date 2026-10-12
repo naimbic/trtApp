@@ -7,6 +7,12 @@ export const publicRoutes = [...authRoute]
 // Every CRM resource shares one generic route; hand-built screens get their own entry first.
 export const protectedRoutes = [
     {
+        key: 'dashboard',
+        path: '/dashboard',
+        component: lazy(() => import('@/views/crm/Dashboard')),
+        authority: [],
+    },
+    {
         key: 'crm.tasks-board',
         path: '/crm/tasks-board',
         component: lazy(() => import('@/views/crm/ResourcePage')),

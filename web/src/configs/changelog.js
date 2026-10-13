@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.20.0',
+        date: '2026-10-13',
+        title: 'Client profile with follow-up',
+        items: ['Client page now tells the lead-to-client story: where the client came from, who owned it, how many days it took, and each step (first contact, proposal, conversion, first invoice, first payment)', 'Needs attention: overdue and unpaid invoices, unanswered proposals and estimates, open tickets and tasks, contracts ending soon', 'Document views with the IP address of the client (invoices, estimates, proposals) plus last client-area login and IP per contact; new views are recorded from the public links', 'Activity tab: one timeline of everything (billing, sales, work, notes, views and logins) with filters', 'Quick actions: follow-up note or reminder, new invoice, estimate, proposal, ticket or project, email, call, WhatsApp'],
+    },
+    {
         version: '0.19.2',
         date: '2026-10-13',
         title: 'Client pages like the template',

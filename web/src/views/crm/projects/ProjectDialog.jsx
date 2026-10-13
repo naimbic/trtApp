@@ -13,12 +13,12 @@ const EMPTY = { name: '', clientId: null, status: 1, billingType: 1, startDate: 
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 
 /** Create dialog (the demo's "Add new project"). */
-const ProjectDialog = ({ open, onClose, onCreated }) => {
+const ProjectDialog = ({ open, onClose, onCreated, presets }) => {
     const staff = useStaff()
     const [v, setV] = useState(EMPTY)
     const [saving, setSaving] = useState(false)
     const set = (p) => setV((x) => ({ ...x, ...p }))
-    useEffect(() => { if (open) setV(EMPTY) }, [open])
+    useEffect(() => { if (open) setV({ ...EMPTY, ...(presets || {}) }) }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
     const opts = staff.map((s) => ({ value: s.id, label: s.name }))
     const save = async () => {
         setSaving(true)

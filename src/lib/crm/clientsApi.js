@@ -8,7 +8,7 @@ const str = (v) => (v === undefined || v === null || String(v).trim() === '' ? n
 const num = (v) => (v === undefined || v === null || v === '' || Number.isNaN(Number(v)) ? null : Number(v))
 
 /** Clients the user may see: everything, or only the clients they are admin of (view_own). */
-async function scope(session) {
+export async function scope(session) {
     const s = viewScope(session.user.authority || [], 'customers')
     if (s === 'all') return {}
     const staffId = await getStaffId(session)

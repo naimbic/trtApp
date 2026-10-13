@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPencil, TbPlus, TbTrash, TbFileInvoice, TbMail, TbPhone } from 'react-icons/tb'
+import { TbPencil, TbPlus, TbTrash, TbFileInvoice, TbMail, TbPhone, TbFileText, TbPresentation, TbLifebuoy, TbBriefcase, TbNotes, TbBell, TbBrandWhatsapp, TbTargetArrow, TbLogin } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import Tooltip from '@/components/ui/Tooltip'
@@ -19,6 +19,9 @@ import ResourceTable from '../kit/ResourceTable'
 import RecordDrawer from '../kit/RecordDrawer'
 import { api, notify, qs, useCan } from '../kit/api'
 import { useClientLookups, makeMoney } from './shared'
+import { Section, LeadJourney, Attention, Engagement, Reminders, Timeline, FollowUpDialog, QuickAction } from './ProfileParts'
+import NewTicketDialog from '../tickets/NewTicketDialog'
+import ProjectDialog from '../projects/ProjectDialog'
 
 const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
@@ -92,15 +95,23 @@ const ClientDetail = () => {
     const [tab, setTab] = useState('overview')
     const [cur, setCur] = useState(null)
     const [confirmDel, setConfirmDel] = useState(false)
+    const [profile, setProfile] = useState(null)
+    const [followUp, setFollowUp] = useState(null)
+    const [ticketDialog, setTicketDialog] = useState(false)
+    const [projectDialog, setProjectDialog] = useState(false)
+    const [ticketLk, setTicketLk] = useState({ departments: [], priorities: [], staff: [] })
 
     const load = useCallback(() => api(`/api/crm/customers/${id}`).then((d) => { setC(d); setError(''); setCur((x) => x || Object.keys(d.money)[0] || null) }).catch((e) => setError(e.message)), [id])
-    useEffect(() => { load() }, [load])
+    const loadProfile = useCallback(() => api(`/api/crm/customers/${id}/profile`).then(setProfile).catch(() => {}), [id])
+    useEffect(() => { load(); loadProfile() }, [load, loadProfile])
+    useEffect(() => { if (ticketDialog && !ticketLk.departments.length) api('/api/crm/support/tickets/lookups').then(setTicketLk).catch(() => {}) }, [ticketDialog]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const tabs = useMemo(() => {
         if (!c) return []
         const where = { clientId: id }
         return [
             { key: 'overview', label: 'Overview' },
+            { key: 'activity', label: 'Activity' },
             { key: 'contacts', label: 'Contacts', count: c.counts.contacts, rel: { resource: 'contacts', where, initial: { clientId: id }, hide: ['clientId'], columns: getResource('contacts').columns.filter((x) => x.key !== 'clientId') }, feature: 'customers' },
             { key: 'invoices', label: 'Invoices', count: c.counts.invoices, rel: { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: getResource('invoices').columns.filter((x) => x.key !== 'clientId') }, feature: 'invoices' },
             { key: 'payments', label: 'Payments', feature: 'payments' },
@@ -144,7 +155,7 @@ const ClientDetail = () => {
                         <div className="mx-auto flex h-full flex-col xl:justify-between 2xl:min-w-[360px]">
                             <div className="mt-6 flex items-center gap-4 xl:flex-col">
                                 <ImageUpload url={c.logoUrl} name={c.company} shape="circle" size={90} uploadUrl={`/api/crm/customers/${id}/logo`} canEdit={can('customers', 'edit')} onChange={(url) => setC((x) => ({ ...x, logoUrl: url }))} />
-                                <div className="text-center"><h4 className="font-bold">{c.company}</h4><div className="mt-2 flex flex-wrap justify-center gap-1"><Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? 'Active' : 'Inactive'}</Tag>{c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>)}</div></div>
+                                <div className="text-center"><h4 className="font-bold">{c.company}</h4><div className="mt-2 flex flex-wrap justify-center gap-1"><Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? 'Active' : 'Inactive'}</Tag>{c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>)}</div>{profile?.lead && <div className="mt-3"><Tag className="gap-1 bg-blue-50 text-blue-700"><TbTargetArrow className="inline" /> Converted from lead{profile.lead.daysToConvert !== null ? ` · ${profile.lead.daysToConvert}d` : ''}</Tag></div>}</div>
                             </div>
                             <div className="mt-10 grid grid-cols-1 gap-x-4 gap-y-7 sm:grid-cols-2 xl:grid-cols-1">
                                 <Info title="Email">{primary?.email}</Info>
@@ -157,11 +168,24 @@ const ClientDetail = () => {
                                 <Info title="Language">{c.language}</Info>
                                 <Info title="Customer admins">{c.admins.map((a) => a.name).join(', ')}</Info>
                                 <Info title="Client since">{dayjs(c.createdAt).format('DD MMM YYYY')}</Info>
+                                {profile?.lastLogin && <Info title="Last seen in the client area">{dayjs(profile.lastLogin.date).format('DD MMM YYYY, HH:mm')}{profile.lastLogin.ip && <span className="block font-mono text-xs font-normal text-gray-500">IP {profile.lastLogin.ip}</span>}</Info>}
+                                {profile?.engagement.total > 0 && <Info title="Opened documents">{profile.engagement.total} view{profile.engagement.total === 1 ? '' : 's'} · last {dayjs(profile.engagement.last).format('DD MMM YYYY')}</Info>}
                             </div>
-                            <div className="mt-8 flex flex-col gap-4">
-                                {primary?.email && <Button block variant="solid" icon={<TbMail />} onClick={() => { window.location.href = `mailto:${primary.email}` }}>Send email</Button>}
-                                {can('invoices', 'create') && <Button block icon={<TbFileInvoice />} onClick={() => navigate(`/crm/invoices/new?clientId=${id}`)}>New invoice</Button>}
-                                {can('customers', 'delete') && <Button block customColorClass={() => 'text-error hover:border-error hover:ring-1 ring-error hover:text-error'} icon={<TbTrash />} onClick={() => setConfirmDel(true)}>Delete</Button>}
+                            <div className="mt-8">
+                                <h6 className="mb-3 text-gray-500">Quick actions</h6>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {can('customers', 'edit') && <QuickAction icon={<TbBell />} label="Follow up" onClick={() => setFollowUp('note')} />}
+                                    {can('invoices', 'create') && <QuickAction icon={<TbFileInvoice />} label="Invoice" onClick={() => navigate(`/crm/invoices/new?clientId=${id}`)} />}
+                                    {can('estimates', 'create') && <QuickAction icon={<TbFileText />} label="Estimate" onClick={() => navigate(`/crm/estimates/new?clientId=${id}`)} />}
+                                    {can('proposals', 'create') && <QuickAction icon={<TbPresentation />} label="Proposal" onClick={() => navigate(`/crm/proposals/new?clientId=${id}`)} />}
+                                    {can('tickets', 'create') && <QuickAction icon={<TbLifebuoy />} label="Ticket" onClick={() => setTicketDialog(true)} />}
+                                    {can('projects', 'create') && <QuickAction icon={<TbBriefcase />} label="Project" onClick={() => setProjectDialog(true)} />}
+                                    {can('customers', 'edit') && <QuickAction icon={<TbNotes />} label="Add note" onClick={() => setFollowUp('note')} />}
+                                    {primary?.email && <QuickAction icon={<TbMail />} label="Email" href={`mailto:${primary.email}`} />}
+                                    {(c.phone || primary?.phone) && <QuickAction icon={<TbPhone />} label="Call" href={`tel:${(c.phone || primary.phone).replace(/\s/g, '')}`} />}
+                                    {(c.phone || primary?.phone) && <QuickAction icon={<TbBrandWhatsapp />} label="WhatsApp" onClick={() => window.open(`https://wa.me/${(c.phone || primary.phone).replace(/[^0-9]/g, '')}`, '_blank', 'noopener')} />}
+                                </div>
+                                {can('customers', 'delete') && <Button block className="mt-4" customColorClass={() => 'text-error hover:border-error hover:ring-1 ring-error hover:text-error'} icon={<TbTrash />} onClick={() => setConfirmDel(true)}>Delete client</Button>}
                             </div>
                         </div>
                     </Card>
@@ -186,28 +210,47 @@ const ClientDetail = () => {
                                             </div>
                                         </div>
                                     ) : <p className="text-gray-400">No invoices yet.</p>}
+
+                                    {profile && <Section title="From lead to client"><LeadJourney journey={profile.journey} lead={profile.lead} /></Section>}
+                                    {profile && <Section title={`Needs attention${profile.attention.length ? ` (${profile.attention.length})` : ''}`}><Attention items={profile.attention} /></Section>}
+
+                                    <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+                                        {profile && <Section title="Document views & IP"><Engagement data={profile.engagement} lastLogin={profile.lastLogin} /></Section>}
+                                        {profile && <Section title="Reminders" action={profile.can.reminder && <Button size="xs" icon={<TbPlus />} onClick={() => setFollowUp('reminder')}>New</Button>}><Reminders items={profile.reminders} clientId={id} canEdit={profile.can.reminder} onChanged={loadProfile} /></Section>}
+                                    </div>
+
                                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                                        <div><h6 className="mb-3 text-gray-500">Billing address</h6><p>{addrLine(c.billing) || <span className="text-gray-400">—</span>}</p></div>
-                                        <div><h6 className="mb-3 text-gray-500">Shipping address</h6><p>{addrLine(c.shipping) || <span className="text-gray-400">—</span>}</p></div>
+                                        <Section title="Billing address"><p>{addrLine(c.billing) || <span className="text-gray-400">—</span>}</p></Section>
+                                        <Section title="Shipping address"><p>{addrLine(c.shipping) || <span className="text-gray-400">—</span>}</p></Section>
                                     </div>
-                                    <div>
-                                        <h6 className="mb-3 text-gray-500">Contacts</h6>
+                                    <Section title="Contacts">
                                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                            {c.contacts.length ? c.contacts.map((k) => (
-                                                <div key={k.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600"><div className="flex items-center gap-2 font-semibold">{k.name}{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">Primary</Tag>}{!k.active && <Tag>Inactive</Tag>}</div><div className="mt-1 space-y-0.5 text-sm text-gray-500">{k.title && <div>{k.title}</div>}{k.email && <div className="flex items-center gap-1"><TbMail />{k.email}</div>}{k.phone && <div className="flex items-center gap-1"><TbPhone />{k.phone}</div>}</div></div>
-                                            )) : <span className="text-gray-400">No contacts yet</span>}
+                                            {c.contacts.length ? c.contacts.map((k) => {
+                                                const pk = profile?.contacts.find((x) => x.id === k.id)
+                                                return (
+                                                    <div key={k.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600"><div className="flex items-center gap-2 font-semibold">{k.name}{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">Primary</Tag>}{!k.active && <Tag>Inactive</Tag>}</div>
+                                                        <div className="mt-1 space-y-0.5 text-sm text-gray-500">{k.title && <div>{k.title}</div>}{k.email && <div className="flex items-center gap-1"><TbMail />{k.email}</div>}{k.phone && <div className="flex items-center gap-1"><TbPhone />{k.phone}</div>}
+                                                            {pk?.lastLogin && <div className="flex items-center gap-1 pt-1 text-xs"><TbLogin />Last login {dayjs(pk.lastLogin).format('DD MMM YYYY, HH:mm')}{pk.ip && <span className="font-mono"> · {pk.ip}</span>}</div>}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }) : <span className="text-gray-400">No contacts yet</span>}
                                         </div>
-                                    </div>
+                                    </Section>
                                 </div>
                             )}
+                            {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">Loading…</p>)}
                             {tab === 'payments' && <PaymentsTab id={id} money={money} />}
                             {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
-                            {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={load} /> : null })()}
+                            {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}
                         </div>
                     </Tabs>
                 </Card>
             </div>
 
+            <FollowUpDialog key={followUp || 'none'} open={!!followUp} initialType={followUp || 'note'} clientId={id} onClose={() => setFollowUp(null)} onSaved={() => { loadProfile(); load() }} />
+            <NewTicketDialog open={ticketDialog} onClose={() => setTicketDialog(false)} lookups={ticketLk} presets={{ clientId: id }} onCreated={(tid) => navigate(`/crm/tickets/${tid}`)} />
+            <ProjectDialog open={projectDialog} onClose={() => setProjectDialog(false)} presets={{ clientId: id }} onCreated={(pid) => navigate(`/crm/projects/${pid}`)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this client?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
                 <p>{c.company} and its contacts will be removed. Clients that still have invoices, estimates, contracts, projects or tickets cannot be deleted — deactivate them instead.</p>
             </ConfirmDialog>

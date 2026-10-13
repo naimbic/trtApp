@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.24.0',
+        date: '2026-10-13',
+        title: 'Password vault',
+        items: ['Password vault under Utilities: the team’s shared logins with name, category, client, URL, username, password, notes, tags and a "change before" date', 'Choose who sees each entry: only me, selected people (viewers and editors) or the whole team; owner and administrators manage the sharing', 'Passwords are encrypted, never listed; show or copy them on demand, every reveal and copy is logged in the entry history', 'Optional 2FA secret: the team copies the live 6-digit code; built-in password generator with strength meter; manage categories with colours', 'New permission "Password vault" in Roles'],
+    },
+    {
         version: '0.23.0',
         date: '2026-10-13',
         title: 'Contracts with e-signature',

@@ -33,6 +33,11 @@ const hotp = (secret, counter) => {
     const o = h[h.length - 1] & 15
     return String(((h.readUInt32BE(o) & 0x7fffffff) % 1_000_000)).padStart(6, '0')
 }
+/** The 6-digit code valid right now for a base32 secret, and the seconds it stays valid. */
+export function totpNow(secretB32) {
+    const step = Math.floor(Date.now() / 30000)
+    return { code: hotp(b32decode(secretB32), step), remaining: 30 - (Math.floor(Date.now() / 1000) % 30) }
+}
 /** Returns the accepted step (to remember it) or null. Allows one step of clock drift either way. */
 export function checkTotp(secretB32, code, afterStep = -1) {
     if (!/^\d{6}$/.test(code || '')) return null

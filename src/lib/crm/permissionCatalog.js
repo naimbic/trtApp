@@ -53,6 +53,12 @@ export const PERMISSION_GROUPS = [
         ],
     },
     {
+        group: 'Team',
+        features: [
+            { key: 'passwords', label: 'Password vault', caps: CRUD, auto: { view_own: 'Staff only see the entries shared with them or created by them' } },
+        ],
+    },
+    {
         group: 'Work',
         features: [
             { key: 'projects', label: 'Projects', caps: [...CRUD, 'create_milestones', 'edit_milestones', 'delete_milestones'], auto: { view_own: 'Based on the projects the staff member is a member of' } },

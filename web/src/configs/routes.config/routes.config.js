@@ -107,6 +107,7 @@ export const protectedRoutes = [
     { key: 'crm.tickets', path: '/crm/tickets', component: lazy(() => import('@/views/crm/tickets/TicketsList')), authority: [] },
     { key: 'crm.tickets.view', path: '/crm/tickets/:id', component: lazy(() => import('@/views/crm/tickets/TicketView')), authority: [] },
     { key: 'crm.expenses', path: '/crm/expenses', component: lazy(() => import('@/views/crm/expenses/ExpensesList')), authority: [] },
+    { key: 'crm.passwords', path: '/crm/passwords', component: lazy(() => import('@/views/crm/vault/PasswordVault')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
     {
         key: 'crm.resource',

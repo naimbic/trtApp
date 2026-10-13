@@ -444,3 +444,59 @@ model CrmConsent {
   @@index([contactId])
   @@map("crm_consents")
 }
+
+
+// ---------------------------------------------------------------- team password vault
+/// Internal credentials the team shares (platforms, hosting, social accounts, client logins...). Secrets are AES-256-GCM sealed.
+model CrmPasswordCategory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("crm_password_categories")
+}
+
+model CrmPasswordEntry {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  categoryId     String?   @db.ObjectId
+  clientId       String?   @db.ObjectId
+  url            String?
+  username       String?
+  /// sealed with seal() from twoFactor.js
+  passwordEnc    String?
+  totpEnc        String?
+  notes          String?
+  tags           String[]
+  /// private = creator only, team = every staff member with vault access, selected = viewerIds + editorIds
+  access         String    @default("private")
+  viewerIds      String[]  @db.ObjectId
+  editorIds      String[]  @db.ObjectId
+  createdBy      String?   @db.ObjectId
+  changedAt      DateTime?
+  changedBy      String?   @db.ObjectId
+  lastRevealedAt DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([categoryId])
+  @@index([clientId])
+  @@index([createdBy])
+  @@map("crm_password_entries")
+}
+
+model CrmPasswordLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  entryId   String   @db.ObjectId
+  staffId   String?  @db.ObjectId
+  action    String
+  detail    String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([entryId])
+  @@map("crm_password_log")
+}

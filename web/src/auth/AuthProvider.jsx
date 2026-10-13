@@ -72,11 +72,14 @@ function AuthProvider({ children }) {
     const signIn = async ({ email, password }) => {
         try {
             const { csrfToken } = await (await fetch('/api/auth/csrf', { credentials: 'include' })).json()
+            // redirect: 'manual' — NextAuth answers with a redirect (possibly to another origin via a stale
+            // callback-url cookie); we only need the session cookie it sets, never to follow that redirect.
             await fetch('/api/auth/callback/credentials', {
                 method: 'POST',
                 credentials: 'include',
+                redirect: 'manual',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ csrfToken, email, password, json: 'true' }),
+                body: new URLSearchParams({ csrfToken, email, password, callbackUrl: window.location.origin, json: 'true' }),
             })
             const u = await fetchSession()
             if (!u) {
@@ -103,6 +106,7 @@ function AuthProvider({ children }) {
             await fetch('/api/auth/signout', {
                 method: 'POST',
                 credentials: 'include',
+                redirect: 'manual',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ csrfToken, json: 'true' }),
             })

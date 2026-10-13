@@ -10,7 +10,7 @@ import { apiChangePassword, apiSignOutEverywhere } from '@/services/AuthService'
 import { useAuth } from '@/auth'
 import { useSessionUser } from '@/store/authStore'
 
-const Security = () => {
+const Security = ({ embedded = false }) => {
     const { signOut } = useAuth()
     const user = useSessionUser((s) => s.user)
     const [v, setV] = useState({ current: '', next: '', confirm: '' })
@@ -42,12 +42,15 @@ const Security = () => {
         }
     }
 
+    const Wrap = embedded ? 'div' : Container
     return (
-        <Container>
-            <div className="mb-4">
-                <h3>Account security</h3>
-                <p className="text-sm text-gray-500">{user.userName} · {user.email}</p>
-            </div>
+        <Wrap>
+            {!embedded && (
+                <div className="mb-4">
+                    <h3>Account security</h3>
+                    <p className="text-sm text-gray-500">{user.userName} · {user.email}</p>
+                </div>
+            )}
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 <Card>
                     <h5 className="mb-1">Change password</h5>
@@ -75,7 +78,7 @@ const Security = () => {
             <ConfirmDialog isOpen={confirmAll} type="warning" title="Sign out of all devices?" confirmText="Sign out everywhere" onClose={() => setConfirmAll(false)} onRequestClose={() => setConfirmAll(false)} onCancel={() => setConfirmAll(false)} onConfirm={endAll}>
                 <p>You will be signed out here too and need to sign in again.</p>
             </ConfirmDialog>
-        </Container>
+        </Wrap>
     )
 }
 

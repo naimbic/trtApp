@@ -9,7 +9,8 @@ import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
 
 const dropdownItemList = [
-    { label: 'My account & security', path: '/account/security', icon: <PiShieldCheckDuotone /> },
+    { label: 'My profile', path: '/account/profile', icon: <PiUserDuotone /> },
+    { label: 'Password & security', path: '/account/profile?tab=security', icon: <PiShieldCheckDuotone /> },
     { label: 'Team & roles', path: '/team', icon: <PiUsersThreeDuotone /> },
     { label: 'Mail settings', path: '/crm/mails?tab=settings', icon: <PiEnvelopeSimpleDuotone /> },
     { label: 'Calendar sync', path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone /> },
@@ -28,7 +29,7 @@ const _UserDropdown = () => {
     }
 
     const avatarProps = {
-        ...(avatar ? { src: avatar } : { icon: <PiUserDuotone /> }),
+        ...(me?.image ? { src: me.image } : { icon: <PiUserDuotone /> }),
     }
 
     return (

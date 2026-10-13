@@ -20,6 +20,8 @@ model CrmClient {
   state                 String?
   address               String?
   website               String?
+  logoUrl               String?
+  industry              String?
   active                Boolean  @default(true)
   /// tblleads.id this client was converted from (plain FK, see CrmLead.clientId for the relation)
   leadId                String?  @db.ObjectId

@@ -15,6 +15,7 @@ import { api, notify, useCan } from '../kit/api'
 import { makeMoney } from '../clients/shared'
 import { StatusTag, fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
+import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 
 /** Effective status for display (overdue derives from the due date, like the list). */
 const effective = (inv, paid) => {
@@ -152,6 +153,11 @@ const InvoiceView = () => {
                             ))}</tbody>
                         </table>
                     ) : <p className="text-sm text-gray-500">No payments yet.</p>}
+                </Card>
+
+                <Card>
+                    <h4 className="mb-3">Files</h4>
+                    <AttachmentsPanel relType="invoice" relId={id} canEdit={can('invoices', 'edit')} showClientToggle />
                 </Card>
 
                 {(invoice.clientNote || invoice.adminNote || invoice.terms) && (

@@ -14,6 +14,7 @@ import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EventDialog from './EventDialog'
 import SyncDialog from './SyncDialog'
+import useMe from '@/utils/hooks/useMe'
 import './calendar.css'
 
 const LAYER_META = {
@@ -91,6 +92,8 @@ const Calendar = () => {
     const [dialog, setDialog] = useState({ open: false, selected: { type: 'NEW' } })
     const [saving, setSaving] = useState(false)
     const [staff, setStaff] = useState([])
+    const me = useMe()
+    const display = me?.display || {}
     const [params, setParams] = useSearchParams()
     const [syncOpen, setSyncOpen] = useState(params.get('sync') === '1')
     useEffect(() => { if (params.get('sync') === '1') { setSyncOpen(true); setParams({}, { replace: true }) } }, [params, setParams])
@@ -207,7 +210,7 @@ const Calendar = () => {
                 </Segment>
             </div>
             <AdaptiveCard>
-                <CalendarView eventContent={renderEvent} dayMaxEvents={3} firstDay={1} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
+                <CalendarView eventContent={renderEvent} dayMaxEvents={3} firstDay={display.weekStart ?? 1} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12: display.timeFormat === '12h' }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12: display.timeFormat === '12h' }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
             </AdaptiveCard>
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this event?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>

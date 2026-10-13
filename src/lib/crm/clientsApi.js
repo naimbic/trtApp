@@ -94,7 +94,7 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
         list: rows.map((c) => {
             const primary = c.contacts.find((x) => x.isPrimary) || c.contacts[0]
             return {
-                id: c.id, company: c.company || '(no name)', vat: c.vat, phone: c.phoneNumber, city: c.city, website: c.website, active: c.active, createdAt: c.createdAt,
+                id: c.id, company: c.company || '(no name)', vat: c.vat, phone: c.phoneNumber, city: c.city, website: c.website, logoUrl: c.logoUrl, active: c.active, createdAt: c.createdAt,
                 primaryContact: primary ? { name: contactName(primary), email: primary.email, phone: primary.phoneNumber } : null,
                 contactsCount: c.contacts.length,
                 groups: c.groupLinks.map((l) => ({ id: l.groupId, name: l.group?.name || '' })),
@@ -127,7 +127,7 @@ export async function getClientDetail(id) {
     ])
     const money = (await moneyFor([id]))[id] || {}
     return {
-        id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId,
+        id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId,
         address: c.address, city: c.city, state: c.state, zip: c.zip, country: c.country, countryName: cname[c.country] || '',
         billing: { street: c.billingStreet, city: c.billingCity, state: c.billingState, zip: c.billingZip, country: c.billingCountry, countryName: cname[c.billingCountry] || '' },
         shipping: { street: c.shippingStreet, city: c.shippingCity, state: c.shippingState, zip: c.shippingZip, country: c.shippingCountry, countryName: cname[c.shippingCountry] || '' },
@@ -147,6 +147,7 @@ const fieldsFrom = (b) => {
     set('vat', b.vat === undefined ? undefined : str(b.vat))
     set('phoneNumber', b.phone === undefined ? undefined : str(b.phone))
     set('website', b.website === undefined ? undefined : str(b.website))
+    set('industry', b.industry === undefined ? undefined : str(b.industry))
     set('address', b.address === undefined ? undefined : str(b.address))
     set('city', b.city === undefined ? undefined : str(b.city))
     set('state', b.state === undefined ? undefined : str(b.state))

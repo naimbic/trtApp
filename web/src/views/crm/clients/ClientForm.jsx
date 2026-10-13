@@ -7,11 +7,12 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import { Form, FormItem } from '@/components/ui/Form'
+import ImageUpload from '@/components/crm/ImageUpload'
 import { api, notify } from '../kit/api'
 import { useClientLookups } from './shared'
 
 const addr = { street: '', city: '', state: '', zip: '', country: null }
-const blank = { company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
+const blank = { logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
 
 const Address = ({ title, value, onChange, countries }) => (
     <div>
@@ -39,7 +40,7 @@ const ClientForm = () => {
     useEffect(() => {
         if (!id) return
         api(`/api/crm/customers/${id}`).then((c) => {
-            setV({ ...blank, company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
+            setV({ ...blank, logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
         }).catch((e) => setError(e.message)).finally(() => setLoading(false))
     }, [id])
 
@@ -49,6 +50,7 @@ const ClientForm = () => {
         setError('')
         try {
             const body = { ...v }
+            delete body.logoUrl
             if (id) delete body.contact
             const res = id ? await api(`/api/crm/customers/${id}`, { method: 'PATCH', body }) : await api('/api/crm/customers', { method: 'POST', body })
             notify('success', id ? 'Client saved' : 'Client created')
@@ -70,11 +72,15 @@ const ClientForm = () => {
             {loading ? <div className="py-16 text-center text-gray-400">Loading…</div> : (
                 <Form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-4">
                     <Card>
-                        <h5 className="mb-4">Company</h5>
+                        <div className="mb-5 flex items-center gap-5">
+                            {id ? <ImageUpload url={v.logoUrl} name={v.company} shape="square" size={88} uploadUrl={`/api/crm/customers/${id}/logo`} onChange={(logoUrl) => set({ logoUrl })} /> : <div className="flex h-[88px] w-[88px] items-center justify-center rounded-2xl bg-gray-100 text-center text-[11px] text-gray-400 dark:bg-gray-700">Logo after saving</div>}
+                            <div><h5>Company</h5><p className="text-sm text-gray-500">The logo is optimised to WebP and shown on the client page and lists.</p></div>
+                        </div>
                         <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
                             <FormItem label="Company name" asterisk><Input value={v.company} onChange={(e) => set({ company: e.target.value })} /></FormItem>
                             <FormItem label="VAT / ICE"><Input value={v.vat} onChange={(e) => set({ vat: e.target.value })} /></FormItem>
                             <FormItem label="Phone"><Input value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></FormItem>
+                            <FormItem label="Industry"><Input placeholder="e.g. Real estate, Retail…" value={v.industry} onChange={(e) => set({ industry: e.target.value })} /></FormItem>
                             <FormItem label="Website"><Input type="url" value={v.website} onChange={(e) => set({ website: e.target.value })} /></FormItem>
                             <FormItem label="Default currency"><Select isClearable options={currencyOptions} value={currencyOptions.find((o) => o.value === v.currencyId) || null} onChange={(o) => set({ currencyId: o ? o.value : null })} /></FormItem>
                             <FormItem label="Default language"><Input placeholder="e.g. french" value={v.language} onChange={(e) => set({ language: e.target.value })} /></FormItem>

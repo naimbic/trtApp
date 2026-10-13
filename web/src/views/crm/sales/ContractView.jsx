@@ -18,6 +18,7 @@ import { useClientLookups, makeMoney } from '../clients/shared'
 import { StateTag } from './ContractsList'
 import { fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
+import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 
 const { TabList, TabNav } = Tabs
 const Field = ({ label, children }) => (<div><div className="mb-0.5 text-xs uppercase tracking-wide text-gray-400">{label}</div><div>{children || <span className="text-gray-400">—</span>}</div></div>)
@@ -95,8 +96,10 @@ const ContractView = () => {
                         <TabNav value="comments">Comments{c.comments.length ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{c.comments.length}</span> : null}</TabNav>
                         <TabNav value="renewals">Renewals{c.renewals.length ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{c.renewals.length}</span> : null}</TabNav>
                         <TabNav value="signature">Signature</TabNav>
+                        <TabNav value="files">Files</TabNav>
                     </TabList>
                     <div className="pt-5">
+                        {tab === 'files' && <AttachmentsPanel relType="contract" relId={id} canEdit={can('contracts', 'edit')} showClientToggle />}
                         {tab === 'content' && (c.content ? <iframe title="Contract content" sandbox="" srcDoc={`<base target="_blank"><style>body{font-family:system-ui,sans-serif;font-size:14px;line-height:1.55;color:#222;margin:16px}</style>${c.content}`} className="h-[640px] w-full rounded-xl border border-gray-200 bg-white dark:border-gray-600" /> : <p className="text-gray-400">This contract has no content yet. Use Edit to add it.</p>)}
                         {tab === 'comments' && (
                             <div className="flex flex-col gap-4">

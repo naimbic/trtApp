@@ -13,3 +13,6 @@ export default function useMe() {
     }, [])
     return me
 }
+
+/** Forget the cached user (call after changing the name or picture) so the menus reload it. */
+export const resetMe = () => { cache = null; pending = null }

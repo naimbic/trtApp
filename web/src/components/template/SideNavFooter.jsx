@@ -40,13 +40,14 @@ const SideNavFooter = ({ collapsed }) => {
     const me = useMe()
     const name = me?.name || user.userName || 'Account'
     const role = me?.role || ''
-    const avatar = user.avatar ? { src: user.avatar } : { icon: <PiUserDuotone /> }
+    const picture = me ? me.image : null
+    const avatar = picture ? { src: picture } : { icon: <PiUserDuotone /> }
 
     if (collapsed) {
         return (
             <div className="flex flex-col items-center gap-2 border-t border-gray-200 py-3 dark:border-gray-700">
                 <Tooltip title={`${name}${role ? ` · ${role}` : ''}`} placement="right">
-                    <Link to="/account/security"><Avatar size={34} {...avatar} /></Link>
+                    <Link to="/account/profile"><Avatar size={34} {...avatar} /></Link>
                 </Tooltip>
                 <Tooltip title="Sign out" placement="right">
                     <button type="button" onClick={() => signOut()} className="flex h-8 w-8 items-center justify-center rounded-lg text-xl text-gray-500 hover:bg-gray-100 hover:text-red-500 dark:hover:bg-gray-700"><PiSignOutDuotone /></button>
@@ -59,7 +60,7 @@ const SideNavFooter = ({ collapsed }) => {
     return (
         <div className="border-t border-gray-200 p-3 dark:border-gray-700">
             <div className="flex items-center gap-3 rounded-xl p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <Link to="/account/security" className="flex min-w-0 flex-1 items-center gap-3">
+                <Link to="/account/profile" className="flex min-w-0 flex-1 items-center gap-3">
                     <Avatar size={38} {...avatar} />
                     <div className="min-w-0 leading-tight">
                         <div className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{name}</div>

@@ -216,7 +216,7 @@ const Team = () => {
                                 <Tr key={m.id}>
                                     <Td>
                                         <div className="flex items-center gap-3">
-                                            <Avatar shape="circle" size={36}>{initials(m)}</Avatar>
+                                            <Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar>
                                             <div className="min-w-0">
                                                 <div className="font-semibold heading-text">{m.name}</div>
                                                 <div className="truncate text-xs text-gray-500">{m.email}{m.phone ? ` · ${m.phone}` : ''}</div>

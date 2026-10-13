@@ -28,3 +28,13 @@ export const useCan = () => {
 }
 
 export const qs = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== '')).toString()
+
+/** Multipart upload (files). Returns the parsed JSON; throws Error(message) like api(). */
+export async function upload(url, formData, method = 'POST') {
+    const res = await fetch(url, { method, credentials: 'include', body: formData })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`)
+    return json
+}
+
+export const formatBytes = (n = 0) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : n < 1073741824 ? `${(n / 1048576).toFixed(1)} MB` : `${(n / 1073741824).toFixed(2)} GB`)

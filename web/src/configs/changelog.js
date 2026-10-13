@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.10.0',
+        date: '2026-10-13',
+        title: 'Files in DigitalOcean Spaces, profile and company pages',
+        items: [
+            'File manager: folders, upload by drag and drop, rename, move, search and preview; everything is stored in DigitalOcean Spaces',
+            'Images are converted to WebP and optimised automatically (avatars cropped square, EXIF rotation fixed)',
+            'Attachments on clients, invoices and contracts',
+            'New profile page: picture, personal details, contact, online links, language and time zone, signature, notifications, display preferences',
+            'Team members and clients get pictures / logos and more fields',
+            'Company page: logo, signature and the details printed on documents',
+        ],
+    },
+    {
         version: '0.9.0',
         date: '2026-10-13',
         title: 'trtCRM branding, new menu layout',

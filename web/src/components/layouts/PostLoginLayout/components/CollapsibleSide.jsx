@@ -5,6 +5,7 @@ import MobileNav from '@/components/template/MobileNav'
 import UserProfileDropdown from '@/components//template/UserProfileDropdown'
 import LanguageSelector from '@/components/template/LanguageSelector'
 import SettingsMenu from '@/components/template/SettingsMenu'
+import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components//template/LayoutBase'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { LAYOUT_COLLAPSIBLE_SIDE } from '@/constants/theme.constant'
@@ -17,6 +18,7 @@ const CollapsibleSide = ({ children }) => {
             type={LAYOUT_COLLAPSIBLE_SIDE}
             className="app-layout-collapsible-side flex flex-auto flex-col"
         >
+            <PreferencesApplier />
             <div className="flex flex-auto min-w-0">
                 {larger.lg && <SideNav />}
                 <div className="flex flex-col flex-auto min-h-screen min-w-0 relative w-full">

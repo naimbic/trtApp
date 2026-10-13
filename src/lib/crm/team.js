@@ -31,6 +31,15 @@ const shape = (s) => ({
     role: s.role ? { id: s.role.id, name: s.role.name } : null,
     roleId: s.roleId || null,
     departments: (s.departments || []).map((d) => ({ id: d.departmentId, name: d.department?.name || '' })),
+    image: s.profileImage || null,
+    jobTitle: s.jobTitle || '',
+    bio: s.bio || '',
+    timezone: s.timezone || '',
+    website: s.website || '',
+    whatsapp: s.whatsapp || '',
+    facebook: s.facebook || '',
+    linkedin: s.linkedin || '',
+    skype: s.skype || '',
     lastLogin: s.lastLogin,
     createdAt: s.createdAt,
 })
@@ -138,6 +147,13 @@ export async function updateMember(id, body) {
     if (body.phone !== undefined) data.phoneNumber = body.phone || null
     if (body.hourlyRate !== undefined) data.hourlyRate = Number(body.hourlyRate) || 0
     if (body.language !== undefined) data.defaultLanguage = body.language || null
+    const text = (k, max, field = k) => { if (body[k] !== undefined) data[field] = String(body[k] ?? '').trim().slice(0, max) || null }
+    text('jobTitle', 80); text('bio', 500); text('timezone', 60); text('skype', 80); text('whatsapp', 25)
+    for (const k of ['website', 'facebook', 'linkedin']) if (body[k] !== undefined) {
+        const v = String(body[k] ?? '').trim().slice(0, 200)
+        if (v && !/^https?:\/\/[^\s]+$/i.test(v)) throw httpError(`${k[0].toUpperCase() + k.slice(1)} must be a full link starting with https://`)
+        data[k] = v || null
+    }
     if (body.email !== undefined && body.email.toLowerCase() !== s.email) {
         const email = String(body.email).trim().toLowerCase()
         if (!EMAIL.test(email)) throw httpError('A valid email is required')

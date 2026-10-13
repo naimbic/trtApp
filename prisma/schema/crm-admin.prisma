@@ -43,6 +43,12 @@ model CrmStaff {
   hourlyRate              Float    @default(0)
   twoFactorAuthEnabled    Boolean  @default(false)
   emailSignature          String?
+  jobTitle                String?
+  bio                     String?
+  timezone                String?
+  website                 String?
+  whatsapp                String?
+  preferences             String? // JSON: notification, theme and display choices
   createdAt               DateTime @default(now()) // staff.datecreated
   updatedAt               DateTime @updatedAt
 
@@ -810,4 +816,33 @@ model CrmShortLink {
 
   @@index([relType, relId])
   @@map("crm_short_links")
+}
+
+/// File manager / attachments. Files live in DigitalOcean Spaces; this row is the index (folders are rows too).
+model CrmMedia {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  isFolder        Boolean  @default(false)
+  parentId        String?  @db.ObjectId
+  key             String?  // object key in the Space (empty for folders)
+  url             String?
+  mime            String?
+  kind            String?  // image | pdf | doc | sheet | slides | archive | video | audio | text | other
+  size            Int      @default(0)
+  originalSize    Int?
+  width           Int?
+  height          Int?
+  purpose         String?  // library | attachment | avatar | logo
+  relType         String?
+  relId           String?  @db.ObjectId
+  visibleToClient Boolean  @default(false)
+  uploadedBy      String?  @db.ObjectId // staff id
+  uploaderName    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([relType, relId])
+  @@index([createdAt])
+  @@map("crm_media")
 }

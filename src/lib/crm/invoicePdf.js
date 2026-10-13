@@ -9,6 +9,7 @@ import { getInvoiceDocument } from '@/server/actions/crm/sales/invoices'
 import { getOptions } from '@/lib/crm/mailer'
 import { formatDocumentNumber, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
+import { companyImageDataUri } from '@/lib/crm/company'
 
 const run = promisify(execFile)
 // Item descriptions are stored as small HTML snippets: keep basic formatting, drop everything else.
@@ -105,7 +106,7 @@ export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
     const modeName = Object.fromEntries(modes.map((m) => [m.id, m.name]))
     const unpaid = ![2, 5].includes(invoice.status)
     const showModes = unpaid ? modes.filter((m) => m.showOnPdf && m.active !== false && m.description) : []
-    const logo = logoDataUri(o('company_logo'))
+    const logo = await companyImageDataUri('logo', logoDataUri(o('company_logo')))
     const org = organizationInfo(o)
     const bill = await customerInfo(client, invoice, L)
 

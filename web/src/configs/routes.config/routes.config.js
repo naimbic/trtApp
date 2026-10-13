@@ -19,6 +19,9 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/crm/calendar/Calendar')),
         authority: [],
     },
+    { key: 'account.profile', path: '/account/profile', component: lazy(() => import('@/views/account/Profile')), authority: [] },
+    { key: 'crm.company', path: '/crm/company', component: lazy(() => import('@/views/crm/company/Company')), authority: [] },
+    { key: 'crm.file-manager', path: '/crm/file-manager', component: lazy(() => import('@/views/crm/files/FileManager')), authority: [] },
     {
         key: 'account.security',
         path: '/account/security',

@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
 import { TbArrowLeft, TbPencil, TbPlus, TbTrash, TbFileInvoice } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
+import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
+import ImageUpload from '@/components/crm/ImageUpload'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -107,6 +109,7 @@ const ClientDetail = () => {
             { key: 'contracts', label: 'Contracts', count: c.counts.contracts, rel: { resource: 'contracts', where, initial: { clientId: id }, hide: ['clientId'], columns: getResource('contracts').columns.filter((x) => x.key !== 'clientId') }, feature: 'contracts' },
             { key: 'projects', label: 'Projects', count: c.counts.projects, rel: { resource: 'projects', where, initial: { clientId: id }, hide: ['clientId'], columns: getResource('projects').columns.filter((x) => x.key !== 'clientId') }, feature: 'projects' },
             { key: 'tickets', label: 'Tickets', count: c.counts.tickets, rel: { resource: 'tickets', where, initial: { clientId: id }, hide: ['clientId'], columns: getResource('tickets').columns.filter((x) => x.key !== 'clientId') }, feature: 'tickets' },
+            { key: 'files', label: 'Files' },
             { key: 'notes', label: 'Notes', count: c.counts.notes, rel: { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') } },
         ].filter((t) => !t.feature || can(t.feature, 'view'))
     }, [c, id, can])
@@ -132,6 +135,7 @@ const ClientDetail = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center gap-3">
                 <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/clients')} />
+                <ImageUpload url={c.logoUrl} name={c.company} shape="square" size={56} uploadUrl={`/api/crm/customers/${id}/logo`} canEdit={can('customers', 'edit')} onChange={(url) => setC((x) => ({ ...x, logoUrl: url }))} />
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2"><h3 className="truncate">{c.company}</h3><Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? 'Active' : 'Inactive'}</Tag>{c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>)}</div>
                     <p className="text-sm text-gray-500">Client since {dayjs(c.createdAt).format('MMM D, YYYY')}{c.vat ? ` · VAT ${c.vat}` : ''}</p>
@@ -167,7 +171,7 @@ const ClientDetail = () => {
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                                 <div className="flex flex-col gap-4">
                                     <h6 className="text-gray-500">Company</h6>
-                                    <Field label="Phone">{c.phone}</Field><Field label="Website">{c.website && <a className="text-primary hover:underline" href={c.website.startsWith('http') ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">{c.website}</a>}</Field>
+                                    <Field label="Industry">{c.industry}</Field><Field label="Phone">{c.phone}</Field><Field label="Website">{c.website && <a className="text-primary hover:underline" href={c.website.startsWith('http') ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">{c.website}</a>}</Field>
                                     <Field label="Default currency">{lookups.currencies.find((x) => x.id === c.currencyId)?.name}</Field><Field label="Language">{c.language}</Field>
                                     <Field label="Customer admins">{c.admins.map((a) => a.name).join(', ')}</Field>
                                 </div>
@@ -185,6 +189,7 @@ const ClientDetail = () => {
                             </div>
                         )}
                         {tab === 'payments' && <PaymentsTab id={id} money={money} />}
+                        {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
                         {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={load} /> : null })()}
                     </div>
                 </Tabs>

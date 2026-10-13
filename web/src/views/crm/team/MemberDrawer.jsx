@@ -6,8 +6,9 @@ import Switcher from '@/components/ui/Switcher'
 import Checkbox from '@/components/ui/Checkbox'
 import Button from '@/components/ui/Button'
 import { Form, FormItem } from '@/components/ui/Form'
+import ImageUpload from '@/components/crm/ImageUpload'
 
-const blank = { firstName: '', lastName: '', email: '', phone: '', roleId: null, departmentIds: [], admin: false, active: true, hourlyRate: '', password: '', applyRolePermissions: true, invite: false }
+const blank = { image: null, jobTitle: '', bio: '', website: '', whatsapp: '', linkedin: '', facebook: '', skype: '', firstName: '', lastName: '', email: '', phone: '', roleId: null, departmentIds: [], admin: false, active: true, hourlyRate: '', password: '', applyRolePermissions: true, invite: false }
 
 /** props: open, member (null = new), lookups {roles, departments}, canAdmin, saving, error, onSubmit(values), onClose() */
 const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit, onClose }) => {
@@ -16,7 +17,7 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
 
     useEffect(() => {
         if (!open) return
-        setV(member ? { ...blank, firstName: member.firstName, lastName: member.lastName, email: member.email || '', phone: member.phone, roleId: member.roleId, departmentIds: member.departments.map((d) => d.id), admin: member.admin, active: member.active, hourlyRate: member.hourlyRate || '' } : blank)
+        setV(member ? { ...blank, image: member.image, jobTitle: member.jobTitle || '', bio: member.bio || '', website: member.website || '', whatsapp: member.whatsapp || '', linkedin: member.linkedin || '', facebook: member.facebook || '', skype: member.skype || '', firstName: member.firstName, lastName: member.lastName, email: member.email || '', phone: member.phone, roleId: member.roleId, departmentIds: member.departments.map((d) => d.id), admin: member.admin, active: member.active, hourlyRate: member.hourlyRate || '' } : blank)
     }, [open, member])
 
     const roleOptions = lookups.roles.map((r) => ({ value: r.id, label: r.name }))
@@ -40,6 +41,7 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
         >
             <Form className="flex flex-col" onSubmit={(e) => e.preventDefault()}>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
+                {edit && <div className="mb-5 flex justify-center"><ImageUpload url={v.image} name={`${v.firstName} ${v.lastName}`} size={96} uploadUrl={`/api/crm/team/${member.id}/avatar`} onChange={(image) => set({ image })} /></div>}
                 <div className="grid grid-cols-2 gap-x-4">
                     <FormItem label="First name" asterisk>
                         <Input value={v.firstName} onChange={(e) => set({ firstName: e.target.value })} autoComplete="off" />
@@ -59,6 +61,7 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
                         <Input type="number" step="0.01" value={v.hourlyRate} onChange={(e) => set({ hourlyRate: e.target.value })} />
                     </FormItem>
                 </div>
+                {edit && <FormItem label="Job title"><Input value={v.jobTitle} onChange={(e) => set({ jobTitle: e.target.value })} placeholder="e.g. Account manager" /></FormItem>}
                 <FormItem label="Role">
                     <Select isClearable placeholder="No role" options={roleOptions} value={roleOptions.find((o) => o.value === v.roleId) || null} onChange={(o) => set({ roleId: o?.value || null })} />
                 </FormItem>
@@ -82,7 +85,20 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
                         <Input type="password" autoComplete="new-password" value={v.password} onChange={(e) => set({ password: e.target.value })} placeholder="Min. 8 characters" />
                     </FormItem>
                 )}
-                <div className="mt-2 flex flex-col gap-4 rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+                {edit && (
+                    <div className="mt-2 rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+                        <div className="mb-3 font-semibold">More details</div>
+                        <FormItem label="About"><Input textArea rows={2} maxLength={500} value={v.bio} onChange={(e) => set({ bio: e.target.value })} /></FormItem>
+                        <div className="grid grid-cols-2 gap-x-4">
+                            <FormItem label="WhatsApp"><Input value={v.whatsapp} onChange={(e) => set({ whatsapp: e.target.value })} /></FormItem>
+                            <FormItem label="Skype"><Input value={v.skype} onChange={(e) => set({ skype: e.target.value })} /></FormItem>
+                        </div>
+                        <FormItem label="Website"><Input placeholder="https://" value={v.website} onChange={(e) => set({ website: e.target.value })} /></FormItem>
+                        <FormItem label="LinkedIn"><Input placeholder="https://linkedin.com/in/…" value={v.linkedin} onChange={(e) => set({ linkedin: e.target.value })} /></FormItem>
+                        <FormItem label="Facebook"><Input placeholder="https://facebook.com/…" value={v.facebook} onChange={(e) => set({ facebook: e.target.value })} /></FormItem>
+                    </div>
+                )}
+                <div className="mt-4 flex flex-col gap-4 rounded-xl border border-gray-200 p-4 dark:border-gray-600">
                     <div className="flex items-center justify-between gap-4">
                         <div><div className="font-semibold">Active</div><div className="text-sm text-gray-500">Inactive members cannot sign in</div></div>
                         <Switcher checked={v.active} onChange={(c) => set({ active: c })} />

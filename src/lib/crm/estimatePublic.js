@@ -3,6 +3,7 @@ import { calcDocument, round2, formatDocumentNumber } from '@/lib/crm/sales/calc
 import { numberPadding } from '@/lib/crm/numbering'
 import { getOptions, buildHtml, mergeFields, deliver, findTemplate, companyLanguage, baseData } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
+import { companyImageDataUri } from '@/lib/crm/company'
 import { esc, safeHtml, stripTags, money, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf } from '@/lib/crm/invoicePdf'
 
 export const ESTIMATE = { DRAFT: 1, SENT: 2, DECLINED: 3, ACCEPTED: 4, EXPIRED: 5 }
@@ -54,7 +55,7 @@ async function documentHtml(d, lang) {
     const e = d.estimate
     const totals = calcDocument({ items: d.items, discountPercent: e.discountPercent, discountFixed: e.discountPercent > 0 ? 0 : e.discountTotal, discountType: e.discountType || 'before_tax', adjustment: e.adjustment })
     const head = o('pdf_table_heading_color', '#323a45'), headText = o('pdf_table_heading_text_color', '#ffffff')
-    const logo = logoDataUri(o('company_logo'))
+    const logo = await companyImageDataUri('logo', logoDataUri(o('company_logo')))
     const bill = await customerInfo(d.client, e, L)
     const info = `<div class="info"><div class="lbl">${L.billTo}</div>${bill}<div class="dates"><div>${L.date}: <strong>${D(e.date)}</strong></div>${e.expiryDate ? `<div>${T.valid}: <strong>${D(e.expiryDate)}</strong></div>` : ''}${e.referenceNo ? `<div>${T.reference}: <strong>${esc(e.referenceNo)}</strong></div>` : ''}</div></div>`
     const org = `<div class="info org">${organizationInfo(o)}</div>`

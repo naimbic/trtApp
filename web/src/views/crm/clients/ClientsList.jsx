@@ -100,7 +100,7 @@ const ClientsList = () => {
                         <TBody>
                             {data.list.map((c) => (
                                 <Tr key={c.id} className="cursor-pointer" onClick={() => navigate(`/crm/clients/${c.id}`)}>
-                                    <Td><div className="font-semibold heading-text">{c.company}</div><div className="text-xs text-gray-500">{[c.city, c.vat && `VAT ${c.vat}`].filter(Boolean).join(' · ')}</div></Td>
+                                    <Td><div className="flex items-center gap-3">{c.logoUrl ? <img src={c.logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" loading="lazy" /> : <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 dark:bg-gray-700">{(c.company || '?').slice(0, 2).toUpperCase()}</span>}<div className="min-w-0"><div className="font-semibold heading-text">{c.company}</div><div className="text-xs text-gray-500">{[c.city, c.vat && `VAT ${c.vat}`].filter(Boolean).join(' · ')}</div></div></div></Td>
                                     <Td>{c.primaryContact ? <><div>{c.primaryContact.name}</div><div className="text-xs text-gray-500">{c.primaryContact.email}</div></> : <span className="text-gray-400">—</span>}</Td>
                                     <Td className="whitespace-nowrap">{c.phone || c.primaryContact?.phone || <span className="text-gray-400">—</span>}</Td>
                                     <Td><div className="flex flex-wrap gap-1">{c.groups.length ? c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>) : <span className="text-gray-400">—</span>}</div></Td>

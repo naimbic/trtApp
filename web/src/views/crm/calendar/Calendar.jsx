@@ -14,6 +14,7 @@ import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EventDialog from './EventDialog'
 import SyncDialog from './SyncDialog'
+import './calendar.css'
 
 const LAYER_META = {
     events: { label: 'Events', dot: 'bg-blue-400' },

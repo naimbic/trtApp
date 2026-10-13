@@ -1,0 +1,4 @@
+/* 12px of space around the date and events inside every day square */
+.calendar .fc .fc-daygrid-day-frame { padding: 12px; }
+.calendar .fc .fc-daygrid-day-top { margin-bottom: 4px; }
+.calendar .fc .fc-daygrid-day-number { padding: 0; }

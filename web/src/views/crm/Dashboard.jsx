@@ -4,175 +4,58 @@ import dayjs from 'dayjs'
 import Card from '@/components/ui/Card'
 import Segment from '@/components/ui/Segment'
 import Skeleton from '@/components/ui/Skeleton'
-import Tag from '@/components/ui/Tag'
 import Chart from '@/components/shared/Chart'
 import {
     PiReceiptDuotone,
-    PiHandCoinsDuotone,
-    PiHourglassHighDuotone,
-    PiWarningCircleDuotone,
-    PiUsersThreeDuotone,
-    PiFunnelDuotone,
-    PiCheckSquareDuotone,
-    PiLifebuoyDuotone,
+    PiUserSwitchDuotone,
     PiKanbanDuotone,
-    PiFileTextDuotone,
+    PiCheckSquareDuotone,
 } from 'react-icons/pi'
 
-// ---------- formatting
+// Layout modelled on the Perfex CRM admin dashboard:
+//   quick stats (count / total + progress) → finance overview (invoices, estimates, proposals)
+//   → payment statistics + leads overview → projects / tasks / tickets overview → recent lists.
+
 const nf = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-const compact = (v) => Number(v || 0).toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 2 })
 const nfi = (v) => Number(v || 0).toLocaleString('en-US')
-const monthLabel = (m) => dayjs(`${m}-01`).format('MMM YY')
+const compact = (v) => Number(v || 0).toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 1 })
+const monthLabel = (m) => dayjs(`${m}-01`).format('MMM YYYY')
 
-// ---------- chart styling shared by every chart
-const PALETTE = { blue: '#3b82f6', green: '#10b981', amber: '#f59e0b', red: '#ef4444', purple: '#8b5cf6', teal: '#14b8a6', pink: '#ec4899', slate: '#64748b' }
-const SERIES = [PALETTE.blue, PALETTE.green, PALETTE.red, PALETTE.purple, PALETTE.amber, PALETTE.teal, PALETTE.pink, PALETTE.slate]
-const grid = { borderColor: 'rgba(148,163,184,0.25)', strokeDashArray: 4, padding: { left: 8, right: 8 } }
-const axisText = { style: { colors: '#94a3b8', fontSize: '12px' } }
-
-// Status → colour so the same status looks the same on every chart.
+// Perfex colour set
+const C = { success: '#84c529', info: '#03a9f4', warning: '#ff6f00', danger: '#fc2d42', muted: '#9ca3af', primary: '#2563eb', purple: '#8b5cf6' }
 const STATUS_COLOR = {
-    Paid: PALETTE.green, Complete: PALETTE.green, Finished: PALETTE.green, Closed: PALETTE.green, Accepted: PALETTE.green, Qualified: PALETTE.green,
-    'Partially paid': PALETTE.blue, 'In progress': PALETTE.blue, Answered: PALETTE.blue, Contacted: PALETTE.blue, Testing: PALETTE.purple,
-    Unpaid: PALETTE.amber, Open: PALETTE.amber, 'Not started': PALETTE.slate, New: PALETTE.slate, Draft: PALETTE.slate, 'On hold': PALETTE.amber,
-    'Awaiting feedback': PALETTE.amber, 'Proposal sent': PALETTE.purple, Negotiation: PALETTE.pink, Sent: PALETTE.blue,
-    Overdue: PALETTE.red, Cancelled: PALETTE.red, Declined: PALETTE.red, Expired: PALETTE.red,
+    // invoices
+    Draft: C.muted, 'Not sent': '#64748b', Unpaid: C.danger, 'Partially paid': C.info, Overdue: C.warning, Paid: C.success,
+    // estimates / proposals
+    Sent: C.info, Declined: C.danger, Accepted: C.success, Expired: C.warning, Open: C.info, Revised: C.warning,
+    // projects / tasks / tickets / leads
+    'Not started': C.muted, 'In progress': C.info, 'On hold': C.warning, Cancelled: C.danger, Finished: C.success,
+    'Awaiting feedback': C.warning, Testing: C.purple, Complete: C.success, Closed: C.success, Answered: C.info,
+    New: C.muted, Contacted: C.info, Qualified: C.success, 'Proposal sent': C.purple, Negotiation: C.warning,
 }
-const statusColor = (name, i) => STATUS_COLOR[name] || SERIES[i % SERIES.length]
+const FALLBACK = [C.info, C.success, C.warning, C.danger, C.purple, C.muted]
+const colorFor = (name, i = 0) => STATUS_COLOR[name] || FALLBACK[i % FALLBACK.length]
 
-const TrendChart = ({ labels, series, colors = SERIES, height = 320, money, type = 'area' }) => (
-    <Chart
-        type={type}
-        height={height}
-        series={series}
-        xAxis={labels}
-        customOptions={{
-            colors,
-            chart: { toolbar: { show: false }, zoom: { enabled: false }, animations: { speed: 500 }, fontFamily: 'inherit' },
-            stroke: { width: 3, curve: 'smooth' },
-            fill: type === 'area' ? { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 95, 100] } } : { opacity: 1 },
-            markers: { size: 0, hover: { size: 6 }, strokeWidth: 2, strokeColors: '#fff' },
-            dataLabels: { enabled: false },
-            grid,
-            legend: { position: 'top', horizontalAlign: 'left', fontSize: '13px', markers: { radius: 12 }, itemMargin: { horizontal: 12 } },
-            xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: axisText },
-            yaxis: { min: 0, labels: { ...axisText, formatter: (v) => compact(v) } },
-            tooltip: { shared: true, intersect: false, y: { formatter: (v) => (money ? money(v) : nfi(v)) } },
-        }}
-    />
+const Line = ({ pct, color, height = 6 }) => (
+    <div className="w-full rounded-full bg-gray-200/70 dark:bg-gray-600/50 overflow-hidden" style={{ height }}>
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(Math.max(pct, 0), 100)}%`, background: color }} />
+    </div>
 )
 
-const ColumnChart = ({ labels, series, colors, height = 260, money, negativeColor }) => (
-    <Chart
-        type="bar"
-        height={height}
-        series={series}
-        xAxis={labels}
-        customOptions={{
-            colors,
-            chart: { toolbar: { show: false }, fontFamily: 'inherit' },
-            plotOptions: {
-                bar: {
-                    borderRadius: 6,
-                    borderRadiusApplication: 'end',
-                    columnWidth: '52%',
-                    ...(negativeColor ? { colors: { ranges: [{ from: -1e12, to: -0.01, color: negativeColor }] } } : {}),
-                },
-            },
-            dataLabels: { enabled: false },
-            grid,
-            legend: { show: false },
-            xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: { ...axisText, rotate: 0, hideOverlappingLabels: true, trim: false } },
-            yaxis: { labels: { ...axisText, formatter: (v) => compact(v) } },
-            tooltip: { y: { formatter: (v) => (money ? money(v) : nfi(v)) } },
-        }}
-    />
-)
-
-/** Status breakdown as a stacked summary line plus one progress line per status (Perfex / Ecme style). */
-const StatusBars = ({ data, totalLabel = 'Total' }) => {
-    const names = Object.keys(data || {}).sort((a, b) => data[b] - data[a])
-    const total = names.reduce((sum, n) => sum + (data[n] || 0), 0)
-    if (!names.length || !total) return <Empty />
-    return (
-        <div>
-            <div className="flex items-end justify-between mb-3">
-                <div>
-                    <div className="text-3xl font-bold leading-none">{nfi(total)}</div>
-                    <div className="text-xs text-gray-500 mt-1">{totalLabel}</div>
-                </div>
-            </div>
-            <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 mb-5">
-                {names.map((n, i) => (
-                    <div key={n} title={`${n}: ${data[n]}`} style={{ width: `${(data[n] / total) * 100}%`, background: statusColor(n, i) }} />
-                ))}
-            </div>
-            <ul className="flex flex-col gap-3.5">
-                {names.map((n, i) => {
-                    const pct = (data[n] / total) * 100
-                    return (
-                        <li key={n}>
-                            <div className="flex items-center justify-between text-sm mb-1.5">
-                                <span className="flex items-center gap-2 min-w-0">
-                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: statusColor(n, i) }} />
-                                    <span className="truncate">{n}</span>
-                                </span>
-                                <span className="shrink-0 ml-3">
-                                    <b>{nfi(data[n])}</b>
-                                    <span className="text-gray-400"> / {nfi(total)} · {pct < 10 ? pct.toFixed(1) : Math.round(pct)}%</span>
-                                </span>
-                            </div>
-                            <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                                <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 1.5)}%`, background: statusColor(n, i) }} />
-                            </div>
-                        </li>
-                    )
-                })}
-            </ul>
-        </div>
-    )
-}
-
-const Sparkline = ({ data, color }) => (
-    <Chart
-        type="area"
-        height={44}
-        width="100%"
-        series={[{ name: '', data }]}
-        xAxis={data.map((_, i) => i)}
-        customOptions={{
-            colors: [color],
-            chart: { sparkline: { enabled: true }, animations: { enabled: false } },
-            stroke: { width: 2, curve: 'smooth' },
-            fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0 } },
-            tooltip: { enabled: false },
-        }}
-    />
-)
-
-// ---------- small building blocks
-const TONES = {
-    blue: ['bg-blue-100 text-blue-600', PALETTE.blue],
-    green: ['bg-emerald-100 text-emerald-600', PALETTE.green],
-    amber: ['bg-amber-100 text-amber-600', PALETTE.amber],
-    red: ['bg-red-100 text-red-600', PALETTE.red],
-    purple: ['bg-purple-100 text-purple-600', PALETTE.purple],
-    teal: ['bg-teal-100 text-teal-600', PALETTE.teal],
-}
-
-const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark }) => {
+/** Top row: "Invoices Awaiting Payment   3 / 10" with a progress bar and percentage. */
+const QuickStat = ({ icon, label, value, total, color, to }) => {
+    const pct = total ? (value / total) * 100 : 0
     const body = (
-        <Card className="h-full overflow-hidden" bodyClass="p-4 flex flex-col h-full">
-            <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                    <div className="text-sm text-gray-500">{label}</div>
-                    <h3 className="mt-1 truncate" title={title || undefined}>{value}</h3>
-                    {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
-                </div>
-                <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-2xl ${TONES[tone][0]}`}>{icon}</div>
+        <Card className="h-full" bodyClass="p-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="flex items-center gap-2 font-medium min-w-0">
+                    <span className="text-xl shrink-0" style={{ color }}>{icon}</span>
+                    <span className="leading-tight">{label}</span>
+                </span>
+                <span className="font-semibold shrink-0">{nfi(value)} / {nfi(total)}</span>
             </div>
-            {spark && spark.length > 1 && <div className="-mx-4 -mb-4 mt-2"><Sparkline data={spark} color={TONES[tone][1]} /></div>}
+            <Line pct={pct} color={color} />
+            <div className="text-right text-xs text-gray-500 mt-1.5">{Math.round(pct)}%</div>
         </Card>
     )
     return to ? <Link to={to}>{body}</Link> : body
@@ -180,13 +63,38 @@ const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark }) 
 
 const Empty = ({ children = 'No data yet' }) => <div className="text-sm text-gray-400 py-6 text-center">{children}</div>
 
-const Panel = ({ title, subtitle, className = '', children }) => (
-    <Card className={className}>
-        <h4>{title}</h4>
-        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
-        <div className="mt-4">{children}</div>
-    </Card>
-)
+/** "Invoices Overview" style box: one `Status  n / total` row with a coloured progress line per status. */
+const Overview = ({ title, order, counts, total, to, footer }) => {
+    const names = order || Object.keys(counts || {})
+    const sum = total ?? names.reduce((s, n) => s + (counts?.[n] || 0), 0)
+    return (
+        <Card className="h-full">
+            <div className="flex items-center justify-between mb-4">
+                <h5>{title}</h5>
+                {to && <Link className="text-sm text-primary hover:underline" to={to}>View all</Link>}
+            </div>
+            {sum ? (
+                <ul className="flex flex-col gap-3.5">
+                    {names.map((n, i) => {
+                        const v = counts?.[n] || 0
+                        return (
+                            <li key={n}>
+                                <div className="flex items-center justify-between text-sm mb-1.5">
+                                    <span style={{ color: colorFor(n, i) }} className="font-medium">{n}</span>
+                                    <span className="text-gray-600 dark:text-gray-300">{nfi(v)} / {nfi(sum)}</span>
+                                </div>
+                                <Line pct={sum ? (v / sum) * 100 : 0} color={colorFor(n, i)} />
+                            </li>
+                        )
+                    })}
+                </ul>
+            ) : (
+                <Empty />
+            )}
+            {footer}
+        </Card>
+    )
+}
 
 const List = ({ rows, empty, render }) =>
     rows?.length ? (
@@ -201,7 +109,16 @@ const List = ({ rows, empty, render }) =>
         <Empty>{empty}</Empty>
     )
 
-// ---------- page
+const ListCard = ({ title, to, children, className = '' }) => (
+    <Card className={className}>
+        <div className="flex items-center justify-between mb-2">
+            <h5>{title}</h5>
+            {to && <Link className="text-sm text-primary hover:underline" to={to}>View all</Link>}
+        </div>
+        {children}
+    </Card>
+)
+
 const Dashboard = () => {
     const [data, setData] = useState(null)
     const [error, setError] = useState(null)
@@ -220,14 +137,11 @@ const Dashboard = () => {
     }, [])
 
     const cur = useMemo(() => data?.currencies.find((c) => c.id === currencyId), [data, currencyId])
-    const fmt = (v, id, short) => {
+    const money = (v, id = currencyId) => {
         const c = data?.currencies.find((x) => x.id === id) || cur
         const s = c?.symbol || c?.name || ''
-        const n = short ? compact(v) : nf(v)
-        return c?.placement === 'after' ? `${n} ${s}` : `${s ? s + ' ' : ''}${n}`
+        return c?.placement === 'after' ? `${nf(v)} ${s}` : `${s ? s + ' ' : ''}${nf(v)}`
     }
-    const money = (v, id = currencyId) => fmt(v, id, false)
-    const moneyShort = (v, id = currencyId) => fmt(v, id, true)
 
     if (error) return <Card>Could not load the dashboard: {error}</Card>
     if (!data) {
@@ -235,35 +149,24 @@ const Dashboard = () => {
             <div className="flex flex-col gap-4">
                 <Skeleton height={28} width={220} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={120} />)}
+                    {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={96} />)}
                 </div>
-                <Skeleton height={340} />
+                <Skeleton height={300} />
             </div>
         )
     }
 
     const inv = data.invoices?.byCurrency?.[currencyId]
-    const exp = data.expenses?.byCurrency?.[currencyId]
     const usedCurrencies = data.currencies.filter((c) => data.invoices?.byCurrency?.[c.id])
     const months = data.months
     const labels = months.map(monthLabel)
-    const invoicedSeries = inv ? months.map((m) => inv.invoicedByMonth[m] || 0) : []
-    const collectedSeries = inv ? months.map((m) => inv.collectedByMonth[m] || 0) : []
-    const expenseSeries = exp ? months.map((m) => exp[m] || 0) : months.map(() => 0)
-    const net = collectedSeries.map((v, i) => Math.round((v - expenseSeries[i]) * 100) / 100)
-    let run = 0
-    const cumCollected = collectedSeries.map((v) => (run += v))
-    run = 0
-    const cumInvoiced = invoicedSeries.map((v) => (run += v))
-    const newClients = months.map((m) => data.clients?.byMonth?.[m] || 0)
+    const collected = inv ? months.map((m) => inv.collectedByMonth[m] || 0) : []
+    const sumCounts = (o) => Object.values(o || {}).reduce((s, n) => s + n, 0)
 
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h3>Dashboard</h3>
-                    <p className="text-sm text-gray-500">Business overview · updated {dayjs(data.generatedAt).format('HH:mm')}</p>
-                </div>
+                <h3>Dashboard</h3>
                 {usedCurrencies.length > 1 && (
                     <Segment value={currencyId} size="sm" onChange={(v) => setCurrencyId(v)}>
                         {usedCurrencies.map((c) => (
@@ -273,81 +176,113 @@ const Dashboard = () => {
                 )}
             </div>
 
-            {data.invoices && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    <StatCard icon={<PiReceiptDuotone />} label="Total invoiced" value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub="Excl. drafts & cancelled" tone="blue" to="/crm/invoices" spark={invoicedSeries} />
-                    <StatCard icon={<PiHandCoinsDuotone />} label="Collected" value={moneyShort(inv?.paid)} title={money(inv?.paid)} sub={inv?.invoiced ? `${Math.round((inv.paid / inv.invoiced) * 100)}% of invoiced` : ''} tone="green" to="/crm/payments" spark={collectedSeries} />
-                    <StatCard icon={<PiHourglassHighDuotone />} label="Outstanding" value={moneyShort(inv?.outstanding)} title={money(inv?.outstanding)} sub="Still to collect" tone="amber" spark={cumInvoiced.map((v, i) => Math.max(v - cumCollected[i], 0))} />
-                    <StatCard icon={<PiWarningCircleDuotone />} label="Overdue" value={moneyShort(inv?.overdue)} title={money(inv?.overdue)} sub={`${nfi(inv?.overdueCount)} invoice(s)`} tone="red" />
-                </div>
-            )}
-
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                {data.clients && <StatCard icon={<PiUsersThreeDuotone />} label="Clients" value={nfi(data.clients.total)} sub={`${nfi(data.clients.active)} active`} tone="blue" to="/crm/clients" spark={newClients} />}
-                {data.leads && <StatCard icon={<PiFunnelDuotone />} label="Open leads" value={nfi(data.leads.open)} sub={`${nfi(data.leads.converted)} converted`} tone="purple" to="/crm/leads" />}
-                {data.projects && <StatCard icon={<PiKanbanDuotone />} label="Projects" value={nfi(data.projects.total)} sub={`${nfi(data.projects.byStatus?.['In progress'])} in progress`} tone="teal" to="/crm/projects" />}
-                {data.tasks && <StatCard icon={<PiCheckSquareDuotone />} label="Open tasks" value={nfi(data.tasks.open)} sub={`${nfi(data.tasks.overdue)} overdue`} tone={data.tasks.overdue ? 'red' : 'green'} to="/crm/tasks" />}
-                {data.tickets && <StatCard icon={<PiLifebuoyDuotone />} label="Open tickets" value={nfi(data.tickets.open)} sub={`${nfi(data.tickets.total)} total`} tone="amber" to="/crm/tickets" />}
-                {data.estimates && <StatCard icon={<PiFileTextDuotone />} label="Estimates" value={nfi(data.estimates.total)} sub={`${nfi(data.estimates.byStatus?.Sent)} sent`} tone="blue" to="/crm/estimates" />}
+            {/* quick stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                {data.invoices && <QuickStat icon={<PiReceiptDuotone />} label="Invoices Awaiting Payment" value={data.invoices.awaiting} total={data.invoices.activeInvoices} color={C.success} to="/crm/invoices" />}
+                {data.leads && <QuickStat icon={<PiUserSwitchDuotone />} label="Converted Leads" value={data.leads.converted} total={data.leads.total} color={C.info} to="/crm/leads" />}
+                {data.projects && <QuickStat icon={<PiKanbanDuotone />} label="Projects In Progress" value={data.projects.byStatus?.['In progress'] || 0} total={data.projects.total} color={C.warning} to="/crm/projects" />}
+                {data.tasks && <QuickStat icon={<PiCheckSquareDuotone />} label="Tasks Not Finished" value={data.tasks.open} total={data.tasks.total} color={C.danger} to="/crm/tasks" />}
             </div>
 
-            {inv && (
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                    <Panel className="xl:col-span-2" title="Revenue · last 12 months" subtitle={`Invoiced vs collected vs expenses (${cur?.name})`}>
-                        <TrendChart
-                            labels={labels}
-                            money={money}
-                            colors={[PALETTE.blue, PALETTE.green, PALETTE.red]}
-                            series={[
-                                { name: 'Invoiced', data: invoicedSeries },
-                                { name: 'Collected', data: collectedSeries },
-                                { name: 'Expenses', data: expenseSeries },
-                            ]}
-                        />
-                    </Panel>
-                    <Panel title="Invoices by status" subtitle="Excl. drafts & cancelled">
-                        <StatusBars data={inv.byStatus} totalLabel="Invoices" />
-                    </Panel>
-                </div>
-            )}
-
-            {inv && (
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                    <Panel className="xl:col-span-2" title="Cumulative cash position" subtitle={`Running total invoiced vs collected (${cur?.name}) — the gap is what is still owed`}>
-                        <TrendChart
-                            labels={labels}
-                            money={money}
-                            colors={[PALETTE.purple, PALETTE.teal]}
-                            height={280}
-                            series={[
-                                { name: 'Invoiced (cumulative)', data: cumInvoiced },
-                                { name: 'Collected (cumulative)', data: cumCollected },
-                            ]}
-                        />
-                    </Panel>
-                    <Panel title="Net cash flow" subtitle="Collected minus expenses">
-                        <ColumnChart labels={labels} money={money} colors={[PALETTE.teal]} negativeColor={PALETTE.red} height={280} series={[{ name: 'Net', data: net }]} />
-                    </Panel>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {data.leads && <Panel title="Open leads by status"><StatusBars data={data.leads.byStatus} totalLabel="Open leads" /></Panel>}
-                {data.tasks && <Panel title="Tasks by status"><StatusBars data={data.tasks.byStatus} totalLabel="Tasks" /></Panel>}
-                {data.projects && <Panel title="Projects by status"><StatusBars data={data.projects.byStatus} totalLabel="Projects" /></Panel>}
-                {data.tickets && <Panel title="Tickets by status"><StatusBars data={data.tickets.byStatus} totalLabel="Tickets" /></Panel>}
+            {/* finance overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {data.invoices && (
+                    <Overview
+                        title="Invoices Overview"
+                        to="/crm/invoices"
+                        order={['Draft', 'Not sent', 'Unpaid', 'Partially paid', 'Overdue', 'Paid']}
+                        counts={data.invoices.statusCounts}
+                        total={data.invoices.activeInvoices}
+                        footer={
+                            inv && (
+                                <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-3 gap-2 text-sm">
+                                    <div><div className="text-gray-500 text-xs">Outstanding</div><b>{money(inv.outstanding)}</b></div>
+                                    <div><div className="text-gray-500 text-xs">Past due</div><b style={{ color: C.warning }}>{money(inv.overdue)}</b></div>
+                                    <div><div className="text-gray-500 text-xs">Paid</div><b style={{ color: C.success }}>{money(inv.paid)}</b></div>
+                                </div>
+                            )
+                        }
+                    />
+                )}
+                {data.estimates && <Overview title="Estimates Overview" to="/crm/estimates" order={['Draft', 'Sent', 'Declined', 'Accepted', 'Expired']} counts={data.estimates.byStatus} total={data.estimates.total} />}
+                {data.proposals && <Overview title="Proposals Overview" to="/crm/proposals" order={['Draft', 'Sent', 'Open', 'Revised', 'Declined', 'Accepted']} counts={data.proposals.byStatus} total={data.proposals.total} />}
             </div>
 
-            {data.clients && (
-                <Panel title="New clients per month" subtitle="Client acquisition trend">
-                    <TrendChart labels={labels} colors={[PALETTE.purple]} height={220} series={[{ name: 'New clients', data: newClients }]} />
-                </Panel>
-            )}
+            {/* payment statistics + leads overview */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                {inv && (
+                    <Card className="xl:col-span-2">
+                        <div className="flex items-center justify-between mb-4">
+                            <h5>Payment Statistics</h5>
+                            <span className="text-sm text-gray-500">Last 12 months · {cur?.name}</span>
+                        </div>
+                        <Chart
+                            type="bar"
+                            height={320}
+                            series={[{ name: 'Payments', data: collected }]}
+                            xAxis={labels}
+                            customOptions={{
+                                colors: [C.info],
+                                chart: { toolbar: { show: false }, fontFamily: 'inherit' },
+                                plotOptions: { bar: { columnWidth: '55%', borderRadius: 2 } },
+                                dataLabels: { enabled: false },
+                                grid: { borderColor: 'rgba(148,163,184,0.25)', strokeDashArray: 3 },
+                                legend: { show: false },
+                                xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: { rotate: -45, rotateAlways: true, style: { colors: '#94a3b8', fontSize: '11px' } } },
+                                yaxis: { labels: { style: { colors: '#94a3b8', fontSize: '12px' }, formatter: (v) => compact(v) } },
+                                tooltip: { y: { formatter: (v) => money(v) } },
+                            }}
+                        />
+                    </Card>
+                )}
+                {data.leads && <Overview title="Leads Overview" to="/crm/leads" counts={data.leads.byStatus} total={sumCounts(data.leads.byStatus)} />}
+            </div>
 
+            {/* work / support overviews */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {data.projects && <Overview title="Projects Overview" to="/crm/projects" order={['Not started', 'In progress', 'On hold', 'Cancelled', 'Finished']} counts={data.projects.byStatus} total={data.projects.total} />}
+                {data.tasks && <Overview title="Tasks Overview" to="/crm/tasks" order={['Not started', 'In progress', 'Testing', 'Awaiting feedback', 'Complete']} counts={data.tasks.byStatus} total={data.tasks.total} />}
+                {data.tickets && <Overview title="Tickets Overview" to="/crm/tickets" counts={data.tickets.byStatus} total={data.tickets.total} />}
+            </div>
+
+            {/* recent lists */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {data.invoices && (
-                    <Card>
-                        <h4 className="mb-2">Top clients by invoiced</h4>
+                    <ListCard title="Overdue Invoices" to="/crm/invoices">
+                        <List
+                            rows={data.invoices.overdueList}
+                            empty="Nothing overdue"
+                            render={(i) => (
+                                <>
+                                    <div className="min-w-0">
+                                        <Link className="font-medium hover:underline" to={`/crm/invoices/${i.id}`}>{i.number}</Link>
+                                        <div className="text-xs text-gray-500 truncate">{i.company} · due {dayjs(i.dueDate).format('YYYY-MM-DD')}</div>
+                                    </div>
+                                    <span className="font-semibold shrink-0" style={{ color: C.danger }}>{money(i.due, i.currencyId)}</span>
+                                </>
+                            )}
+                        />
+                    </ListCard>
+                )}
+                {data.recent && (
+                    <ListCard title="Latest Payments" to="/crm/payments">
+                        <List
+                            rows={data.recent.payments}
+                            empty="No payments yet"
+                            render={(p) => (
+                                <>
+                                    <div className="min-w-0">
+                                        <Link className="font-medium hover:underline" to={`/crm/invoices/${p.invoiceId}`}>{p.invoiceNumber || 'Payment'}</Link>
+                                        <div className="text-xs text-gray-500">{p.date ? dayjs(p.date).format('YYYY-MM-DD') : ''}</div>
+                                    </div>
+                                    <span className="font-semibold shrink-0" style={{ color: C.success }}>{money(p.amount, p.currencyId)}</span>
+                                </>
+                            )}
+                        />
+                    </ListCard>
+                )}
+                {data.invoices && (
+                    <ListCard title="Top Clients">
                         <List
                             rows={data.invoices.topClients.filter((c) => (c.currencyId || 'none') === (currencyId || 'none'))}
                             empty="No invoices yet"
@@ -358,47 +293,10 @@ const Dashboard = () => {
                                 </>
                             )}
                         />
-                    </Card>
-                )}
-                {data.invoices && (
-                    <Card>
-                        <h4 className="mb-2">Overdue invoices</h4>
-                        <List
-                            rows={data.invoices.overdueList}
-                            empty="Nothing overdue"
-                            render={(i) => (
-                                <>
-                                    <div className="min-w-0">
-                                        <Link className="font-medium hover:underline" to={`/crm/invoices/${i.id}`}>{i.number}</Link>
-                                        <div className="text-xs text-gray-500 truncate">{i.company} · due {dayjs(i.dueDate).format('YYYY-MM-DD')}</div>
-                                    </div>
-                                    <Tag className="bg-red-200 text-gray-900 shrink-0">{money(i.due, i.currencyId)}</Tag>
-                                </>
-                            )}
-                        />
-                    </Card>
-                )}
-                {data.recent && (
-                    <Card>
-                        <h4 className="mb-2">Recent payments</h4>
-                        <List
-                            rows={data.recent.payments}
-                            empty="No payments yet"
-                            render={(p) => (
-                                <>
-                                    <div className="min-w-0">
-                                        <Link className="font-medium hover:underline" to={`/crm/invoices/${p.invoiceId}`}>{p.invoiceNumber || 'Payment'}</Link>
-                                        <div className="text-xs text-gray-500">{p.date ? dayjs(p.date).format('YYYY-MM-DD') : ''}</div>
-                                    </div>
-                                    <span className="font-semibold text-emerald-600 shrink-0">+{money(p.amount, p.currencyId)}</span>
-                                </>
-                            )}
-                        />
-                    </Card>
+                    </ListCard>
                 )}
                 {data.tasks && (
-                    <Card>
-                        <h4 className="mb-2">Tasks due this week</h4>
+                    <ListCard title="Tasks Due This Week" to="/crm/tasks">
                         <List
                             rows={data.tasks.upcoming}
                             empty="No tasks due in the next 7 days"
@@ -409,11 +307,10 @@ const Dashboard = () => {
                                 </>
                             )}
                         />
-                    </Card>
+                    </ListCard>
                 )}
                 {data.recent && (
-                    <Card className="xl:col-span-2">
-                        <h4 className="mb-2">Recent sales activity</h4>
+                    <ListCard title="Recent Activity" className="xl:col-span-2">
                         <List
                             rows={data.recent.activity}
                             empty="No activity yet"
@@ -424,7 +321,7 @@ const Dashboard = () => {
                                 </>
                             )}
                         />
-                    </Card>
+                    </ListCard>
                 )}
             </div>
 

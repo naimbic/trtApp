@@ -49,12 +49,33 @@ export async function getDashboardMetrics() {
 
     await section('invoices', 'invoices', async () => {
         const invoices = await prisma.crmInvoice.findMany({
-            select: { id: true, clientId: true, number: true, prefix: true, currencyId: true, total: true, status: true, date: true, dueDate: true },
+            select: { id: true, clientId: true, number: true, prefix: true, currencyId: true, total: true, status: true, sent: true, date: true, dueDate: true },
         })
         const payments = await prisma.crmPayment.findMany({ select: { invoiceId: true, amount: true, paymentDate: true } })
         const invById = Object.fromEntries(invoices.map((i) => [i.id, i]))
         const paidByInvoice = {}
         for (const p of payments) paidByInvoice[p.invoiceId] = round2((paidByInvoice[p.invoiceId] || 0) + (p.amount || 0))
+
+        // Perfex-style overview: effective status per invoice (overdue is derived from the due date)
+        const statusCounts = { Draft: 0, 'Not sent': 0, Unpaid: 0, 'Partially paid': 0, Overdue: 0, Paid: 0 }
+        let activeInvoices = 0
+        for (const i of invoices) {
+            if (i.status === 5) continue
+            activeInvoices += 1
+            if (i.status === 6) {
+                statusCounts.Draft += 1
+                continue
+            }
+            const paid = paidByInvoice[i.id] || 0
+            const due = round2(i.total - paid)
+            const overdue = due > 0 && i.dueDate && new Date(i.dueDate) < startOfToday
+            if (due <= 0) statusCounts.Paid += 1
+            else if (overdue) statusCounts.Overdue += 1
+            else if (paid > 0) statusCounts['Partially paid'] += 1
+            else statusCounts.Unpaid += 1
+            if (!i.sent && due > 0) statusCounts['Not sent'] += 1
+        }
+        const awaiting = statusCounts.Unpaid + statusCounts['Partially paid'] + statusCounts.Overdue
 
         const byCurrency = {}
         const bucket = (cid) =>
@@ -118,7 +139,7 @@ export async function getDashboardMetrics() {
             .slice(0, 8)
             .map((i) => ({ id: i.id, number: `${i.prefix || ''}${String(i.number).padStart(6, '0')}`, company: clientName[i.clientId] || '', dueDate: i.dueDate, due: round2(i.total - (paidByInvoice[i.id] || 0)), currencyId: i.currencyId }))
 
-        return { byCurrency, topClients, overdueList }
+        return { byCurrency, topClients, overdueList, statusCounts, activeInvoices, awaiting }
     })
 
     await section('expenses', 'expenses', async () => {
@@ -202,6 +223,12 @@ export async function getDashboardMetrics() {
     await section('estimates', 'estimates', async () => {
         const rows = await prisma.crmEstimate.findMany({ select: { status: true } })
         return { total: rows.length, byStatus: count(rows, (e) => ESTIMATE_STATUS[e.status] || String(e.status)) }
+    })
+
+    await section('proposals', 'proposals', async () => {
+        const rows = await prisma.crmProposal.findMany({ select: { status: true } })
+        const names = { 1: 'Open', 2: 'Declined', 3: 'Accepted', 4: 'Sent', 5: 'Revised', 6: 'Draft' }
+        return { total: rows.length, byStatus: count(rows, (p) => names[p.status] || String(p.status)) }
     })
 
     await section('recent', 'payments', async () => {

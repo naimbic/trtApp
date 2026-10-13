@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.16.0',
+        date: '2026-10-13',
+        title: 'Tasks board',
+        items: ['Tasks kanban board: drag cards between Not started, In progress, Testing, Awaiting feedback and Complete', 'Board or list view, search, assignee, priority, My tasks and Show completed filters', 'Task panel with details, checklist, comments and a start/stop timer with time log', 'Assign team members and followers, link a task to a client, lead or project, repeat tasks'],
+    },
+    {
         version: '0.15.0',
         date: '2026-10-13',
         title: 'Proposals',

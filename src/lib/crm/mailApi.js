@@ -127,9 +127,9 @@ async function loadContext(kind, id) {
         const cur = doc.currencyId ? await prisma.crmCurrency.findUnique({ where: { id: doc.currencyId } }) : null
         const pre = (await getOptions(['proposal_number_prefix']))('proposal_number_prefix', 'PRO-')
         data = {
-            proposal_number: `${pre}${String(doc.legacyId ?? '').padStart(padding, '0')}`,
-            proposal_id: doc.legacyId ?? '', proposal_subject: doc.subject || '', proposal_proposal_to: doc.proposalTo || '',
-            proposal_link: await shortLink({ prefix: 'prop', relType: 'proposal', relId: id, label: doc.subject || 'proposal', target: `/proposal/${id}/${await ensureHash('crmProposal', doc)}` }), proposal_open_till: fmtDate(doc.openTill),
+            proposal_number: `${pre}${String(doc.number ?? doc.legacyId ?? '').padStart(padding, '0')}`,
+            proposal_id: doc.number ?? doc.legacyId ?? '', proposal_subject: doc.subject || '', proposal_proposal_to: doc.proposalTo || '',
+            proposal_link: await shortLink({ prefix: 'prop', relType: 'proposal', relId: id, label: doc.subject || 'proposal', target: `/api/crm/public/proposal/${id}/${await ensureHash('crmProposal', doc)}` }), proposal_open_till: fmtDate(doc.openTill),
             proposal_status: PROPOSAL_LABEL[doc.status] || '', proposal_total: money(doc.total, cur), proposal_subtotal: money(doc.subtotal, cur),
             proposal_assigned: '',
         }

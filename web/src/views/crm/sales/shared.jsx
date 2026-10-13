@@ -28,3 +28,14 @@ export const PO_STATUS = {
     5: { label: 'Cancelled', cls: 'bg-red-100 text-red-700' },
 }
 export const PoStatusTag = ({ status }) => <Tag className={PO_STATUS[status]?.cls}>{PO_STATUS[status]?.label || status}</Tag>
+
+export const PROPOSAL_STATUS = {
+    6: { label: 'Draft', cls: 'bg-gray-200 text-gray-600' },
+    1: { label: 'Open', cls: 'bg-sky-100 text-sky-700' },
+    4: { label: 'Sent', cls: 'bg-blue-100 text-blue-700' },
+    5: { label: 'Revised', cls: 'bg-violet-100 text-violet-700' },
+    3: { label: 'Accepted', cls: 'bg-emerald-100 text-emerald-700' },
+    2: { label: 'Declined', cls: 'bg-red-100 text-red-700' },
+    7: { label: 'Expired', cls: 'bg-amber-100 text-amber-700' },
+}
+export const ProposalStatusTag = ({ status }) => <Tag className={PROPOSAL_STATUS[status]?.cls}>{PROPOSAL_STATUS[status]?.label || status}</Tag>

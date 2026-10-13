@@ -12,7 +12,7 @@ import { createInvoiceFromEstimate } from '@/lib/crm/sales/convert'
 export const ESTIMATE = { DRAFT: 1, SENT: 2, DECLINED: 3, ACCEPTED: 4, EXPIRED: 5 }
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }) }
 
-const TXT = {
+export const TXT = {
     french: { estimate: 'DEVIS', valid: "Valable jusqu'au", reference: 'Référence', accept: 'Accepter', refuse: 'Refuser', pdf: 'Télécharger le PDF', accepted: 'Devis accepté', declined: 'Devis refusé', expired: 'Ce devis a expiré', acceptedBy: 'Accepté par', on: 'le', declinedOn: 'Refusé le', comments: 'Commentaires', noComments: 'Aucun commentaire pour le moment.', yourName: 'Votre nom', yourComment: 'Écrire un commentaire…', send: 'Envoyer', team: 'Équipe', first: 'Prénom', last: 'Nom', email: 'E-mail', sign: 'Signez ici', clear: 'Effacer', confirmAccept: 'Accepter le devis', confirmRefuse: 'Refuser le devis', reason: 'Raison (facultatif)', cancel: 'Annuler', acceptTitle: 'Accepter ce devis', refuseTitle: 'Refuser ce devis', acceptText: 'Confirmez votre identité et signez pour accepter ce devis.', refuseText: 'Souhaitez-vous vraiment refuser ce devis ?', thanks: 'Merci ! Votre réponse a été enregistrée.', required: 'Merci de remplir tous les champs et de signer.', draft: 'Brouillon' },
     english: { estimate: 'ESTIMATE', valid: 'Valid until', reference: 'Reference', accept: 'Accept', refuse: 'Refuse', pdf: 'Download PDF', accepted: 'Estimate accepted', declined: 'Estimate declined', expired: 'This estimate has expired', acceptedBy: 'Accepted by', on: 'on', declinedOn: 'Declined on', comments: 'Comments', noComments: 'No comments yet.', yourName: 'Your name', yourComment: 'Write a comment…', send: 'Send', team: 'Team', first: 'First name', last: 'Last name', email: 'Email', sign: 'Sign here', clear: 'Clear', confirmAccept: 'Accept estimate', confirmRefuse: 'Refuse estimate', reason: 'Reason (optional)', cancel: 'Cancel', acceptTitle: 'Accept this estimate', refuseTitle: 'Refuse this estimate', acceptText: 'Confirm your identity and sign to accept this estimate.', refuseText: 'Do you really want to refuse this estimate?', thanks: 'Thank you! Your answer has been recorded.', required: 'Please fill in every field and sign.', draft: 'Draft' },
 }
@@ -42,7 +42,7 @@ export async function loadEstimateDoc(id, hash, staff = false) {
     return { estimate, items, client, currency, comments, number, status: effectiveStatus(estimate) }
 }
 
-const CSS = `
+export const CSS = `
 .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.logo{text-align:right}.top img{max-width:62%;height:auto}.title{text-align:left}.title h1{margin:0;font-size:2.7em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}
 table{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;font-size:.95em}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
@@ -86,7 +86,43 @@ export async function estimatePdf(id, hash, staff = false) {
     return { pdf: await htmlToPdf(html), name: `${d.number.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}.pdf` }
 }
 
-const initials = (n) => String(n || '?').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase()
+export const initials = (n) => String(n || '?').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase()
+
+/** The public page (document + Accept / Refuse + comments) shared by estimates and proposals. */
+export function renderPublicPage(p) {
+    const { T, contact } = p
+    return `<!doctype html><html lang="${p.lang === 'french' ? 'fr' : 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(p.number)} – ${esc(p.companyName)}</title><style>
+${CSS}
+body{background:#f3f4f6;font-size:14px}.wrap{max-width:920px;margin:0 auto;padding:20px 14px 60px}
+.bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 14px}.bar .in{max-width:920px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.bar .sp{flex:1}.bar b{font-size:15px}
+.btn{border:0;border-radius:9px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}.ok-b{background:#059669;color:#fff}.no-b{background:#fff;color:#dc2626;border:1px solid #fca5a5}.gr-b{background:#fff;color:#374151;border:1px solid #d1d5db}.pr-b{background:#2563eb;color:#fff}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:34px;margin-top:16px}.banner{border-radius:12px;padding:14px 18px;margin-top:16px}.banner.ok{background:#ecfdf5;color:#065f46}.banner.no{background:#fef2f2;color:#991b1b}.banner.exp{background:#f3f4f6;color:#4b5563}.sig{display:block;max-height:70px;margin-top:8px}
+h3{margin:0 0 14px;font-size:17px}.cm{display:flex;gap:12px;padding:12px 0;border-top:1px solid #f1f5f9}.cm:first-of-type{border-top:0}.av{flex:0 0 36px;height:36px;border-radius:50%;background:#e0e7ff;color:#3730a3;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}.av.st{background:#dcfce7;color:#166534}.meta{font-size:12.5px;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.meta strong{color:#111827;font-size:13.5px}.tag{background:#dcfce7;color:#166534;border-radius:5px;padding:0 6px;font-size:11px}.txt{white-space:pre-line;margin-top:2px;font-size:14px}.muted{color:#9ca3af}
+input,textarea{width:100%;border:1px solid #d1d5db;border-radius:9px;padding:10px 12px;font:inherit;margin-top:6px}label{font-size:13px;font-weight:600;color:#374151;display:block;margin-top:12px}
+.fm{display:grid;gap:10px}.fm .row{display:flex;gap:10px}.fm .row>*{flex:1}
+dialog{border:0;border-radius:16px;padding:26px;max-width:480px;width:calc(100% - 28px);box-shadow:0 20px 60px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(17,24,39,.5)}dialog h3{margin-bottom:6px}.pad{border:1px dashed #9ca3af;border-radius:10px;background:#fafafa;touch-action:none;width:100%;height:150px;display:block;margin-top:6px}.err{color:#dc2626;font-size:13px;margin-top:8px;min-height:18px}.acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+@media(max-width:640px){.card{padding:18px}.cols{flex-direction:column;gap:14px}.tot{width:100%}.items th:nth-child(1),.items td:nth-child(1){display:none}}
+@media print{.bar,.no-print{display:none}body{background:#fff}.card{border:0;padding:0}}
+</style></head><body>
+<div class="bar"><div class="in"><b>${esc(p.companyName)}</b><span class="sp"></span><a class="btn gr-b" href="${p.base}/pdf">${T.pdf}</a>${p.acting ? `<button class="btn no-b" onclick="document.getElementById('refuse').showModal()">${T.refuse}</button><button class="btn ok-b" onclick="document.getElementById('accept').showModal()">${T.accept}</button>` : ''}</div></div>
+<div class="wrap">${p.banner}<div class="card">${p.docHtml}</div>
+<div class="card no-print"><h3>${T.comments} (${p.commentsCount})</h3>${p.commentsHtml}
+<form id="cf" class="fm" style="margin-top:14px"><input name="name" placeholder="${T.yourName}" maxlength="80" value="${esc([contact?.firstName, contact?.lastName].filter(Boolean).join(' '))}"><textarea name="content" rows="3" placeholder="${T.yourComment}" maxlength="2000" required></textarea><div style="text-align:right"><button class="btn pr-b" type="submit">${T.send}</button></div><div class="err" id="ce"></div></form></div></div>
+<dialog id="accept"><h3>${T.acceptTitle}</h3><p class="muted" style="margin:0 0 4px">${T.acceptText}</p><div class="fm"><div class="row"><div><label>${T.first}</label><input id="fn" value="${esc(contact?.firstName || '')}"></div><div><label>${T.last}</label><input id="ln" value="${esc(contact?.lastName || '')}"></div></div><div><label>${T.email}</label><input id="em" type="email" value="${esc(contact?.email || '')}"></div>${p.identity ? `<div><label>${T.sign} <a href="#" id="clr" style="font-weight:400;float:right">${T.clear}</a></label><canvas class="pad" id="pad"></canvas></div>` : ''}</div>${p.legalText ? `<p class="muted" style="font-size:12px;margin:10px 0 0">${esc(p.legalText)}</p>` : ''}<div class="err" id="ae"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('accept').close()">${T.cancel}</button><button class="btn ok-b" id="aok">${T.confirmAccept}</button></div></dialog>
+<dialog id="refuse"><h3>${T.refuseTitle}</h3><p class="muted" style="margin:0">${T.refuseText}</p><label>${T.reason}</label><textarea id="rr" rows="3" maxlength="500"></textarea><div class="err" id="re"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('refuse').close()">${T.cancel}</button><button class="btn no-b" id="rok">${T.confirmRefuse}</button></div></dialog>
+<script>
+const base=${JSON.stringify(p.base)},identity=${p.identity},reqMsg=${JSON.stringify(T.required)};
+const post=async(p,b)=>{const r=await fetch(base+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j};
+document.getElementById('cf').onsubmit=async(e)=>{e.preventDefault();const f=e.target;try{await post('/comments',{name:f.name.value,content:f.content.value});location.reload()}catch(x){document.getElementById('ce').textContent=x.message}};
+let drawn=false;const cv=document.getElementById('pad');
+if(cv){const ctx=cv.getContext('2d');const fit=()=>{const r=cv.getBoundingClientRect();cv.width=r.width*2;cv.height=r.height*2;ctx.scale(2,2);ctx.lineWidth=2.2;ctx.lineCap='round';ctx.strokeStyle='#111'};
+document.getElementById('accept').addEventListener('toggle',fit);let down=false;const pos=(e)=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+cv.onpointerdown=(e)=>{down=true;drawn=true;const[p,q]=pos(e);ctx.beginPath();ctx.moveTo(p,q);cv.setPointerCapture(e.pointerId)};cv.onpointermove=(e)=>{if(!down)return;const[p,q]=pos(e);ctx.lineTo(p,q);ctx.stroke()};cv.onpointerup=()=>{down=false};
+document.getElementById('clr').onclick=(e)=>{e.preventDefault();ctx.clearRect(0,0,cv.width,cv.height);drawn=false}}
+document.getElementById('aok').onclick=async()=>{const b={firstName:fn.value.trim(),lastName:ln.value.trim(),email:em.value.trim()};if(identity){if(!drawn){ae.textContent=reqMsg;return}b.signature=cv.toDataURL('image/png')}if(!b.firstName||!b.lastName||!b.email){ae.textContent=reqMsg;return}try{await post('/accept',b);location.reload()}catch(x){ae.textContent=x.message}};
+document.getElementById('rok').onclick=async()=>{try{await post('/decline',{reason:rr.value});location.reload()}catch(x){re.textContent=x.message}};
+</script></body></html>`
+}
 
 /** The public estimate page: document + Accept / Refuse + comments. */
 export async function estimatePage(id, hash) {
@@ -105,37 +141,7 @@ export async function estimatePage(id, hash) {
     const comments = d.comments.length ? d.comments.map((c) => `<div class="cm"><div class="av ${c.staffId ? 'st' : ''}">${esc(initials(c.authorName))}</div><div><div class="meta"><strong>${esc(c.authorName || (c.staffId ? T.team : ''))}</strong>${c.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(c.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${esc(c.content)}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
     const base = `/api/crm/public/estimate/${id}/${hash}`
     const identity = o('estimate_accept_identity_confirmation', '1') === '1'
-    return `<!doctype html><html lang="${lang === 'french' ? 'fr' : 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(d.number)} – ${esc(o('companyname'))}</title><style>
-${CSS}
-body{background:#f3f4f6;font-size:14px}.wrap{max-width:920px;margin:0 auto;padding:20px 14px 60px}
-.bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 14px}.bar .in{max-width:920px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.bar .sp{flex:1}.bar b{font-size:15px}
-.btn{border:0;border-radius:9px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}.ok-b{background:#059669;color:#fff}.no-b{background:#fff;color:#dc2626;border:1px solid #fca5a5}.gr-b{background:#fff;color:#374151;border:1px solid #d1d5db}.pr-b{background:#2563eb;color:#fff}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:34px;margin-top:16px}.banner{border-radius:12px;padding:14px 18px;margin-top:16px}.banner.ok{background:#ecfdf5;color:#065f46}.banner.no{background:#fef2f2;color:#991b1b}.banner.exp{background:#f3f4f6;color:#4b5563}.sig{display:block;max-height:70px;margin-top:8px}
-h3{margin:0 0 14px;font-size:17px}.cm{display:flex;gap:12px;padding:12px 0;border-top:1px solid #f1f5f9}.cm:first-of-type{border-top:0}.av{flex:0 0 36px;height:36px;border-radius:50%;background:#e0e7ff;color:#3730a3;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}.av.st{background:#dcfce7;color:#166534}.meta{font-size:12.5px;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.meta strong{color:#111827;font-size:13.5px}.tag{background:#dcfce7;color:#166534;border-radius:5px;padding:0 6px;font-size:11px}.txt{white-space:pre-line;margin-top:2px;font-size:14px}.muted{color:#9ca3af}
-input,textarea{width:100%;border:1px solid #d1d5db;border-radius:9px;padding:10px 12px;font:inherit;margin-top:6px}label{font-size:13px;font-weight:600;color:#374151;display:block;margin-top:12px}
-.fm{display:grid;gap:10px}.fm .row{display:flex;gap:10px}.fm .row>*{flex:1}
-dialog{border:0;border-radius:16px;padding:26px;max-width:480px;width:calc(100% - 28px);box-shadow:0 20px 60px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(17,24,39,.5)}dialog h3{margin-bottom:6px}.pad{border:1px dashed #9ca3af;border-radius:10px;background:#fafafa;touch-action:none;width:100%;height:150px;display:block;margin-top:6px}.err{color:#dc2626;font-size:13px;margin-top:8px;min-height:18px}.acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
-@media(max-width:640px){.card{padding:18px}.cols{flex-direction:column;gap:14px}.tot{width:100%}.items th:nth-child(1),.items td:nth-child(1){display:none}}
-@media print{.bar,.no-print{display:none}body{background:#fff}.card{border:0;padding:0}}
-</style></head><body>
-<div class="bar"><div class="in"><b>${esc(o('companyname'))}</b><span class="sp"></span><a class="btn gr-b" href="${base}/pdf">${T.pdf}</a>${acting ? `<button class="btn no-b" onclick="document.getElementById('refuse').showModal()">${T.refuse}</button><button class="btn ok-b" onclick="document.getElementById('accept').showModal()">${T.accept}</button>` : ''}</div></div>
-<div class="wrap">${banner}<div class="card">${await documentHtml(d, lang, S)}</div>
-<div class="card no-print"><h3>${T.comments} (${d.comments.length})</h3>${comments}
-<form id="cf" class="fm" style="margin-top:14px"><input name="name" placeholder="${T.yourName}" maxlength="80" value="${esc([contact?.firstName, contact?.lastName].filter(Boolean).join(' '))}"><textarea name="content" rows="3" placeholder="${T.yourComment}" maxlength="2000" required></textarea><div style="text-align:right"><button class="btn pr-b" type="submit">${T.send}</button></div><div class="err" id="ce"></div></form></div></div>
-<dialog id="accept"><h3>${T.acceptTitle}</h3><p class="muted" style="margin:0 0 4px">${T.acceptText}</p><div class="fm"><div class="row"><div><label>${T.first}</label><input id="fn" value="${esc(contact?.firstName || '')}"></div><div><label>${T.last}</label><input id="ln" value="${esc(contact?.lastName || '')}"></div></div><div><label>${T.email}</label><input id="em" type="email" value="${esc(contact?.email || '')}"></div>${identity ? `<div><label>${T.sign} <a href="#" id="clr" style="font-weight:400;float:right">${T.clear}</a></label><canvas class="pad" id="pad"></canvas></div>` : ''}</div>${o('e_sign_legal_text') ? `<p class="muted" style="font-size:12px;margin:10px 0 0">${esc(o('e_sign_legal_text'))}</p>` : ''}<div class="err" id="ae"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('accept').close()">${T.cancel}</button><button class="btn ok-b" id="aok">${T.confirmAccept}</button></div></dialog>
-<dialog id="refuse"><h3>${T.refuseTitle}</h3><p class="muted" style="margin:0">${T.refuseText}</p><label>${T.reason}</label><textarea id="rr" rows="3" maxlength="500"></textarea><div class="err" id="re"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('refuse').close()">${T.cancel}</button><button class="btn no-b" id="rok">${T.confirmRefuse}</button></div></dialog>
-<script>
-const base=${JSON.stringify(base)},identity=${identity},reqMsg=${JSON.stringify(T.required)};
-const post=async(p,b)=>{const r=await fetch(base+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j};
-document.getElementById('cf').onsubmit=async(e)=>{e.preventDefault();const f=e.target;try{await post('/comments',{name:f.name.value,content:f.content.value});location.reload()}catch(x){document.getElementById('ce').textContent=x.message}};
-let drawn=false;const cv=document.getElementById('pad');
-if(cv){const ctx=cv.getContext('2d');const fit=()=>{const r=cv.getBoundingClientRect();cv.width=r.width*2;cv.height=r.height*2;ctx.scale(2,2);ctx.lineWidth=2.2;ctx.lineCap='round';ctx.strokeStyle='#111'};
-document.getElementById('accept').addEventListener('toggle',fit);let down=false;const pos=(e)=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
-cv.onpointerdown=(e)=>{down=true;drawn=true;const[p,q]=pos(e);ctx.beginPath();ctx.moveTo(p,q);cv.setPointerCapture(e.pointerId)};cv.onpointermove=(e)=>{if(!down)return;const[p,q]=pos(e);ctx.lineTo(p,q);ctx.stroke()};cv.onpointerup=()=>{down=false};
-document.getElementById('clr').onclick=(e)=>{e.preventDefault();ctx.clearRect(0,0,cv.width,cv.height);drawn=false}}
-document.getElementById('aok').onclick=async()=>{const b={firstName:fn.value.trim(),lastName:ln.value.trim(),email:em.value.trim()};if(identity){if(!drawn){ae.textContent=reqMsg;return}b.signature=cv.toDataURL('image/png')}if(!b.firstName||!b.lastName||!b.email){ae.textContent=reqMsg;return}try{await post('/accept',b);location.reload()}catch(x){ae.textContent=x.message}};
-document.getElementById('rok').onclick=async()=>{try{await post('/decline',{reason:rr.value});location.reload()}catch(x){re.textContent=x.message}};
-</script></body></html>`
+    return renderPublicPage({ lang, T, number: d.number, companyName: o('companyname'), banner, commentsHtml: comments, commentsCount: d.comments.length, docHtml: await documentHtml(d, lang, S), base, acting, identity, legalText: o('e_sign_legal_text'), contact })
 }
 
 /* ---------------- actions ---------------- */

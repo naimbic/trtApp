@@ -222,7 +222,7 @@ export const GROUPS = {
                 f('proposals_pipeline_limit', 'Pipeline limit per status', 'number', { min: 1, soon: true }),
             ] },
             { title: 'Client answers', fields: [
-                yes('proposal_auto_convert_to_invoice_on_client_accept', 'Create an invoice automatically when the client accepts', { soon: true }),
+                yes('proposal_auto_convert_to_invoice_on_client_accept', 'Create an invoice automatically when the client accepts', { hint: 'Only for proposals made for a client (not a lead).' }),
                 yes('exclude_proposal_from_client_area_with_draft_status', 'Hide draft proposals from clients'),
                 yes('show_project_on_proposal', 'Show the project name on the document'),
                 yes('allow_staff_view_proposals_assigned', 'Staff can see proposals they are assigned to', { soon: true }),
@@ -443,7 +443,7 @@ export const GROUPS = {
         label: 'E-signature', icon: 'TbSignature', desc: 'Signing invoices, estimates, proposals and contracts',
         cards: [{ title: 'Signing', fields: [
             yes('estimate_accept_identity_confirmation', 'Estimates: ask for name, email and signature to accept'),
-            yes('proposal_accept_identity_confirmation', 'Proposals: ask for name, email and signature to accept', { soon: true }),
+            yes('proposal_accept_identity_confirmation', 'Proposals: ask for name, email and signature to accept', { default: '1' }),
             yes('contract_sign_identity_confirmation', 'Contracts: ask for name, email and signature to sign', { soon: true, default: '1' }),
             yes('invoice_accept_identity_confirmation', 'Invoices: ask for a signature on acknowledgement', { soon: true }),
             f('e_sign_legal_text', 'Legal text next to the signature', 'textarea', { rows: 4, hint: 'Shown to the client when they sign.' }),

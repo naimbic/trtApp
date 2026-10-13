@@ -248,6 +248,7 @@ model CrmProposal {
   legacyId            Int?
   subject             String?
   content             String?
+  number              Int?
   addedFrom           String?   @db.ObjectId
   total               Float?
   subtotal            Float     @default(0)
@@ -307,6 +308,7 @@ model CrmProposalComment {
   proposalId String?      @db.ObjectId
   proposal   CrmProposal? @relation(fields: [proposalId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   staffId    String?      @db.ObjectId // 0 => customer comment
+  authorName  String?
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 

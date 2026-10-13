@@ -2,7 +2,9 @@ import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { allocateNumber } from '@/lib/crm/sales/docNumbering'
 
-const LINK = { estimate: 'crmEstimate', purchase_order: 'crmPurchaseOrder' }
+const LINK = { estimate: 'crmEstimate', purchase_order: 'crmPurchaseOrder', proposal: 'crmProposal' }
+const LABEL = { estimate: 'estimate', purchase_order: 'purchase order', proposal: 'proposal' }
+const clientOf = (kind, d) => (kind === 'proposal' ? (d.relType === 'customer' ? d.relId : null) : d.clientId)
 const copyLines = async (fromType, fromId, toType, toId) => {
     const lines = await prisma.crmItemable.findMany({ where: { relType: fromType, relId: fromId }, include: { taxes: true } })
     for (const l of lines) {
@@ -20,14 +22,14 @@ export async function createInvoiceFromDocument(kind, doc, { label, staffId = nu
     const { number, prefix, numberFormat } = await allocateNumber('invoice', now)
     const d = doc
     const inv = await prisma.crmInvoice.create({ data: {
-        clientId: d.clientId, number, prefix, numberFormat, date: now, dueDate: dueAfter > 0 ? new Date(now.getTime() + dueAfter * 86400000) : null, currencyId: d.currencyId,
+        clientId: clientOf(kind, d), number, prefix, numberFormat, date: now, dueDate: dueAfter > 0 ? new Date(now.getTime() + dueAfter * 86400000) : null, currencyId: d.currencyId,
         subtotal: d.subtotal, totalTax: d.totalTax, total: d.total, discountPercent: d.discountPercent, discountTotal: d.discountTotal, discountType: d.discountType, adjustment: d.adjustment,
-        clientNote: d.clientNote, terms: d.terms, adminNote: label ? `Created from ${kind === 'estimate' ? 'estimate' : 'purchase order'} ${label}` : null,
-        status: 1, hash: crypto.randomUUID().replace(/-/g, ''), sent: false, addedFrom: staffId || d.saleAgentId || d.addedFrom || undefined, saleAgentId: d.saleAgentId || undefined, projectId: d.projectId || undefined,
+        clientNote: d.clientNote, terms: d.terms, adminNote: label ? `Created from ${LABEL[kind]} ${label}` : null,
+        status: 1, hash: crypto.randomUUID().replace(/-/g, ''), sent: false, addedFrom: staffId || d.saleAgentId || d.assignedId || d.addedFrom || undefined, saleAgentId: d.saleAgentId || d.assignedId || undefined, projectId: d.projectId || undefined,
     } })
     await copyLines(kind, d.id, 'invoice', inv.id)
-    await prisma[LINK[kind]].update({ where: { id: d.id }, data: { invoiceId: inv.id, invoicedDate: now } })
-    await activity('invoice', inv.id, `Invoice created from ${kind === 'estimate' ? 'estimate' : 'purchase order'} ${label || ''}`.trim(), actor, staffId)
+    await prisma[LINK[kind]].update({ where: { id: d.id }, data: kind === 'proposal' ? { invoiceId: inv.id, dateConverted: now } : { invoiceId: inv.id, invoicedDate: now } })
+    await activity('invoice', inv.id, `Invoice created from ${LABEL[kind]} ${label || ''}`.trim(), actor, staffId)
     await activity(kind, d.id, `Invoice ${prefix}${number} created`, actor, staffId)
     return { ...inv, prefix, number }
 }
@@ -51,4 +53,25 @@ export async function createPurchaseOrderFromEstimate(estimate, { label, staffId
     await activity('purchase_order', po.id, `Created from estimate ${label || ''}`.trim(), actor, staffId)
     await activity('estimate', e.id, `Purchase order ${prefix}${number} created`, actor, staffId)
     return { ...po, prefix, number }
+}
+
+/** Creates a draft estimate with the lines of a proposal (the proposal must belong to a client). */
+export async function createEstimateFromProposal(proposal, { label, staffId = null, actor = 'Staff' } = {}) {
+    const clientId = clientOf('proposal', proposal)
+    if (!clientId) throw Object.assign(new Error('This proposal is for a lead. Make the lead a client first.'), { status: 400 })
+    if (proposal.estimateId) throw Object.assign(new Error('An estimate was already created from this proposal'), { status: 400 })
+    const now = new Date()
+    const days = Number((await prisma.crmOption.findUnique({ where: { name: 'estimate_due_after' } }))?.value) || 0
+    const { number, prefix, numberFormat } = await allocateNumber('estimate', now)
+    const d = proposal
+    const est = await prisma.crmEstimate.create({ data: {
+        clientId, number, prefix, numberFormat, date: now, expiryDate: days > 0 ? new Date(now.getTime() + days * 86400000) : null, currencyId: d.currencyId,
+        subtotal: d.subtotal, totalTax: d.totalTax, total: d.total || 0, discountPercent: d.discountPercent, discountTotal: d.discountTotal, discountType: d.discountType, adjustment: d.adjustment,
+        adminNote: label ? `Created from proposal ${label}` : null, status: 1, sent: false, hash: crypto.randomUUID().replace(/-/g, ''), addedFrom: staffId || d.addedFrom || undefined, saleAgentId: d.assignedId || undefined,
+    } })
+    await copyLines('proposal', d.id, 'estimate', est.id)
+    await prisma.crmProposal.update({ where: { id: d.id }, data: { estimateId: est.id, dateConverted: now } })
+    await activity('estimate', est.id, `Created from proposal ${label || ''}`.trim(), actor, staffId)
+    await activity('proposal', d.id, `Estimate ${prefix}${number} created`, actor, staffId)
+    return { ...est, prefix, number }
 }

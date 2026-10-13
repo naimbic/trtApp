@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.15.0',
+        date: '2026-10-13',
+        title: 'Proposals',
+        items: ['Proposals: list, editor with a visual text editor, PDF and email; for clients or leads', 'Public proposal page with accept, refuse and comments (signature, like estimates)', 'Turn a proposal into an estimate or an invoice; automatic invoice on acceptance is now a setting', 'Imported proposals keep their {proposal_items} text and print correctly'],
+    },
+    {
         version: '0.14.0',
         date: '2026-10-13',
         title: 'Purchase orders (bons de commande)',

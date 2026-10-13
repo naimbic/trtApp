@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.17.1',
+        date: '2026-10-13',
+        title: 'Lead pipeline cleanup',
+        items: ['Lead statuses are now real stages: New, Contacted, À rappeler, En attente, Planifié, Proposal sent, Customer', 'Channels that were used as statuses (Social Media, WhatsApp, Popups / Forms, Via XY…) moved to the lead source', 'Each changed lead has a "Pipeline cleanup" line in its activity'],
+    },
+    {
         version: '0.17.0',
         date: '2026-10-13',
         title: 'Leads board',

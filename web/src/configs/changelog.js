@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.19.0',
+        date: '2026-10-13',
+        title: 'Support tickets',
+        items: ['Tickets list with status counts, filters (priority, department, assignee, Mine, hide closed) and search by subject or number', 'Ticket page as a conversation: client and team messages, attachments, saved replies, and reply with a status change', 'Reply emails use the Ticket reply template; opening a ticket can notify the client and the assignee', 'Change status, priority, department, service and assignee in one click; open tickets for clients or plain email addresses'],
+    },
+    {
         version: '0.18.0',
         date: '2026-10-13',
         title: 'Projects',

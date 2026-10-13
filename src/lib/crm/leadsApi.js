@@ -40,7 +40,7 @@ export async function listLeads(p = {}) {
     const opt = await getOptions(['leads_kanban_limit', 'default_leads_kanban_sort'])
     const limit = Math.min(Math.max(parseInt(p.limit, 10) || parseInt(opt.leads_kanban_limit, 10) || 50, 5), 500)
     const sort = opt.default_leads_kanban_sort || 'leadorder'
-    const orderBy = sort === 'dateadded' ? [{ createdAt: 'desc' }] : sort === 'lastcontact' ? [{ lastContact: { sort: 'desc', nulls: 'last' } }] : [{ leadOrder: 'asc' }, { createdAt: 'desc' }]
+    const orderBy = sort === 'dateadded' ? [{ createdAt: 'desc' }] : sort === 'lastcontact' ? [{ lastContact: 'desc' }] : [{ leadOrder: 'asc' }, { createdAt: 'desc' }]
     const and = [visible(a)]
     const show = p.show || ''
     if (show === 'lost') and.push({ lost: true }); else if (show === 'junk') and.push({ junk: true }); else if (show === 'converted') and.push({ clientId: { not: null } }); else and.push({ lost: false, junk: false })

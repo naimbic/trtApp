@@ -4,8 +4,8 @@ export const PROJECT_STATUS = [
     { value: '1', label: 'Not Started' },
     { value: '2', label: 'In Progress' },
     { value: '3', label: 'On Hold' },
-    { value: '4', label: 'Cancelled' },
-    { value: '5', label: 'Finished' },
+    { value: '4', label: 'Finished' },
+    { value: '5', label: 'Cancelled' },
 ]
 
 export const BILLING_TYPES = [

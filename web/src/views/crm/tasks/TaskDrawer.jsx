@@ -19,7 +19,7 @@ const EMPTY = { name: '', description: '', status: 1, priority: 2, startDate: nu
 const toDate = (d) => (d ? new Date(d) : null)
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 
-const TaskDrawer = ({ open, id, staff, onClose, onChanged }) => {
+const TaskDrawer = ({ open, id, staff, presets, onClose, onChanged }) => {
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
     const [saving, setSaving] = useState(false)
@@ -43,7 +43,7 @@ const TaskDrawer = ({ open, id, staff, onClose, onChanged }) => {
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    useEffect(() => { if (!open) return; setDetail(null); setItem(''); setComment(''); if (id) load(); else setV(EMPTY) }, [open, id, load])
+    useEffect(() => { if (!open) return; setDetail(null); setItem(''); setComment(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load]) // eslint-disable-line react-hooks/exhaustive-deps
     // live clock while a timer is running
     useEffect(() => { if (!detail?.running) return; const t = setInterval(() => setTick((n) => n + 1), 1000); return () => clearInterval(t) }, [detail?.running])
     const mounted = useRef(true)

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.18.0',
+        date: '2026-10-13',
+        title: 'Projects',
+        items: ['Projects list like the template: favourites, progress bars, team avatars, task counts, status filter', 'Project page with Overview, Tasks board, Files, Discussions, Notes, Activity and Settings', 'Create, edit and delete projects; assign a team; progress from tasks or set by hand', 'Fixed project statuses: Finished and Cancelled were swapped by the import'],
+    },
+    {
         version: '0.17.1',
         date: '2026-10-13',
         title: 'Lead pipeline cleanup',

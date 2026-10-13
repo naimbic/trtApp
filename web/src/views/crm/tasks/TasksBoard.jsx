@@ -16,6 +16,8 @@ import TaskDrawer from './TaskDrawer'
 
 const { Tr, Th, Td, THead, TBody } = Table
 
+const Plain = ({ children }) => <div>{children}</div>
+
 const TaskCard = ({ t, onOpen }) => (
     <div onClick={() => onOpen(t.id)} className="group cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
         <div className={cn('h-1', prioOf(t.priority).bar)} />
@@ -34,7 +36,7 @@ const TaskCard = ({ t, onOpen }) => (
     </div>
 )
 
-const TasksBoard = () => {
+const TasksBoard = ({ projectId = null }) => {
     const [params, setParams] = useSearchParams()
     const [data, setData] = useState({ list: [], counts: {}, can: {} })
     const [lookups, setLookups] = useState({ staff: [] })
@@ -44,7 +46,7 @@ const TasksBoard = () => {
     const [mine, setMine] = useState(false)
     const [assignee, setAssignee] = useState(null)
     const [priority, setPriority] = useState(null)
-    const [done, setDone] = useState(false)
+    const [done, setDone] = useState(!!projectId)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [drawer, setDrawer] = useState({ open: false, id: null })
@@ -55,10 +57,10 @@ const TasksBoard = () => {
 
     const load = useCallback(async () => {
         try {
-            setData(await api(`/api/crm/work/tasks?${qs({ query, mine: mine ? '1' : '', assignee: assignee || '', priority: priority || '', done: done ? '1' : '' })}`))
+            setData(await api(`/api/crm/work/tasks?${qs({ query, mine: mine ? '1' : '', assignee: assignee || '', priority: priority || '', done: done ? '1' : '', ...(projectId ? { relType: 'project', relId: projectId } : {}) })}`))
             setError('')
         } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [query, mine, assignee, priority, done])
+    }, [query, mine, assignee, priority, done, projectId])
     useEffect(() => { load() }, [load])
 
     const setViewSaved = (v) => { setView(v); try { localStorage.setItem('tasks.view', v) } catch { /* private mode */ } }
@@ -90,10 +92,11 @@ const TasksBoard = () => {
     const close = () => { setDrawer((d) => ({ ...d, open: false })); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
     const staffOptions = lookups.staff.map((s) => ({ value: s.id, label: s.name }))
 
+    const Wrap = projectId ? Plain : Container
     return (
-        <Container>
+        <Wrap>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Tasks</h3><p className="text-sm text-gray-500">{data.list.length} task{data.list.length === 1 ? '' : 's'} shown</p></div>
+                <div>{projectId ? <h5>Tasks</h5> : <h3>Tasks</h3>}<p className="text-sm text-gray-500">{data.list.length} task{data.list.length === 1 ? '' : 's'} shown</p></div>
                 <div className="flex items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
                         <Segment.Item value="board"><span className="inline-flex items-center gap-1"><TbLayoutKanban />Board</span></Segment.Item>
@@ -157,8 +160,8 @@ const TasksBoard = () => {
                 </div>
             )}
 
-            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} onClose={close} onChanged={load} />
-        </Container>
+            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={projectId ? { relType: 'project', relId: projectId } : null} onClose={close} onChanged={load} />
+        </Wrap>
     )
 }
 

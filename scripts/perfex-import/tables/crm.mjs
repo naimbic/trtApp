@@ -88,7 +88,7 @@ export default {
         }),
     },
 
-    customer_groups: {
+    customers_groups: {
         model: 'crmCustomerGroup',
         id: 'id',
         map: (r) => ({
@@ -98,7 +98,7 @@ export default {
         }),
     },
 
-    customers_groups: {
+    customer_groups: {
         model: 'crmCustomerGroupLink',
         id: 'id',
         map: (r) => ({
@@ -231,7 +231,7 @@ export default {
             folder: str(r.folder),
             lastRun: str(r.last_run),
             notifyLeadImported: toBool(r.notify_lead_imported),
-            notifyLeadContacted: toBool(r.notify_lead_contacted),
+            notifyLeadContacted: toBool(r.notify_lead_contact_more_times),
             notifyType: str(r.notify_type),
             notifyIds: str(r.notify_ids),
             markPublic: toBool(r.mark_public),

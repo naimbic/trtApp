@@ -4,7 +4,9 @@ import appConfig from '@/configs/app.config'
 import authConfig from '@/configs/auth.config'
 import validateCredential from '@/server/actions/user/validateCredential'
 import prisma from '@/lib/prisma'
-import { buildCrmAuthority } from '@/lib/crm/authority'
+import { buildUserAuthority } from '@/lib/crm/authBuild'
+
+const SESSION_RECHECK_MS = 30 * 1000
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     trustHost: true,
@@ -20,36 +22,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (user) {
                 token.authority = user.authority
                 token.picture = user.image
+                token.sv = user.sv || 0
+                token.chk = Date.now()
+                return token
             }
-            // Called when useSession().update() is triggered
-            if (trigger === 'update') {
-                const dbUser = await prisma.user.findUnique({
-                    where: { id: token.sub },
-                    select: { image: true, name: true, email: true, role: true, authority: true },
-                })
-                if (dbUser) {
-                    token.picture = dbUser.image
-                    token.name = dbUser.name
-                    token.email = dbUser.email
 
-                    // Rebuild authority from role's accessRight
-                    const authority = [...new Set([dbUser.role || 'user', ...(dbUser.authority || [])])]
-                    const role = await prisma.role.findUnique({
-                        where: { roleId: dbUser.role || 'user' },
-                    })
-                    if (role?.accessRight) {
-                        const ar = typeof role.accessRight === 'string' ? JSON.parse(role.accessRight) : role.accessRight
-                        for (const [mod, perms] of Object.entries(ar)) {
-                            if (Array.isArray(perms)) {
-                                for (const perm of perms) {
-                                    authority.push(`${mod}.${perm}`)
-                                }
-                            }
-                        }
-                    }
-                    authority.push(...(await buildCrmAuthority(token.sub)).authority)
-                    token.authority = authority
-                }
+            // Re-check the account at most every 30s: honours "sign out everywhere", deactivation and
+            // permission changes without waiting for the user to sign in again.
+            if (token.sub && (trigger === 'update' || !token.chk || Date.now() - token.chk > SESSION_RECHECK_MS)) {
+                const dbUser = await prisma.user.findUnique({ where: { id: token.sub } })
+                if (!dbUser) return null
+                if ((dbUser.sessionVersion || 0) !== (token.sv || 0)) return null // signed out everywhere
+                const { authority, blocked } = await buildUserAuthority(dbUser)
+                if (blocked) return null // deactivated
+                token.authority = authority
+                token.picture = dbUser.image
+                token.name = dbUser.name
+                token.email = dbUser.email
+                token.chk = Date.now()
             }
             return token
         },
@@ -80,6 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     email: user.email,
                     image: user.avatar,
                     authority: user.authority,
+                    sv: user.sv,
                 }
             },
         }),

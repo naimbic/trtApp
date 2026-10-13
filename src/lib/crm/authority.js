@@ -7,6 +7,9 @@ import prisma from '@/lib/prisma'
  * Returns { authority: string[], blocked: boolean }. `blocked` is true when the user is
  * linked to an INACTIVE Perfex staff member (inactive accounts must never sign in).
  */
+// Capabilities Perfex grants every active staff member without a checkbox (see permissionCatalog `auto`).
+const IMPLICIT = ['customers.view_own', 'payments.view_own', 'projects.view_own', 'tasks.view_own', 'leads.view_own', 'leads.create', 'leads.edit']
+
 export async function buildCrmAuthority(userId) {
     try {
         const staff = await prisma.crmStaff.findFirst({
@@ -19,7 +22,7 @@ export async function buildCrmAuthority(userId) {
         const authority = staff.permissions
             .filter((p) => p.feature && p.capability)
             .map((p) => `crm.${p.feature}.${p.capability}`)
-        return { authority: [...new Set(authority)], blocked: false }
+        return { authority: [...new Set([...authority, ...IMPLICIT.map((c) => `crm.${c}`)])], blocked: false }
     } catch {
         return { authority: [], blocked: false }
     }

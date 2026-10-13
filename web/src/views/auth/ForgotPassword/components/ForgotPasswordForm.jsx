@@ -31,7 +31,7 @@ const ForgotPasswordForm = (props) => {
             const resp = await apiForgotPassword({ email })
             if (resp) {
                 setSubmitting(false)
-                setEmailSent?.(true)
+                setEmailSent?.(resp.mailConfigured ? 'email' : 'admin')
             }
         } catch (errors) {
             setMessage?.(

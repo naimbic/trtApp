@@ -30,6 +30,8 @@ model User {
   postcode       String?
   birthday       String?
   role           String?  @default("user")
+  /// bumped to sign the user out of every device (null = 0)
+  sessionVersion Int?
   status         String?  @default("active")
   lastOnline     Int?
   title          String?

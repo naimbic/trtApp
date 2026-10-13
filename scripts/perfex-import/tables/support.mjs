@@ -37,7 +37,7 @@ export default {
                 statusId: fk('tickets_status', r.status),
                 serviceId: fk('services', r.service),
                 ticketKey: str(r.ticketkey), subject: str(r.subject), message: str(r.message),
-                adminId: fk('staff', r.admin), projectId: fk('projects', r.projectid),
+                adminId: fk('staff', r.admin), projectId: fk('projects', r.project_id),
                 lastReply: toDate(r.lastreply),
                 clientRead: toInt(r.clientread, 0), adminRead: toInt(r.adminread, 0),
                 assignedId: fk('staff', r.assigned), cc: str(r.cc),

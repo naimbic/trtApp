@@ -1,4 +1,5 @@
 import Checkbox from '@/components/ui/Checkbox'
+import Tooltip from '@/components/ui/Tooltip'
 import { CAPABILITIES, EXTRA_LABELS, PERMISSION_GROUPS, cleanPermissions } from '@/lib/crm/permissionCatalog'
 
 /** Features × capabilities grid. value = { feature: [capabilities] }; view and view own are mutually exclusive. */
@@ -79,6 +80,8 @@ const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
                                             <td key={cap} className="px-2 py-2.5 text-center">
                                                 {f.caps.includes(cap) ? (
                                                     <Checkbox disabled={disabled} checked={has(f.key, cap)} onChange={(c) => set(f.key, cap, c)} />
+                                                ) : f.auto?.[cap] ? (
+                                                    <Tooltip title={f.auto[cap]}><span className="cursor-help text-xs text-gray-400">auto</span></Tooltip>
                                                 ) : (
                                                     <span className="text-gray-300">–</span>
                                                 )}

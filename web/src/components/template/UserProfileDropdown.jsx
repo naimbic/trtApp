@@ -3,10 +3,10 @@ import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useSessionUser } from '@/store/authStore'
 import { Link } from 'react-router'
-import { PiUserDuotone, PiSignOutDuotone } from 'react-icons/pi'
+import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone } from 'react-icons/pi'
 import { useAuth } from '@/auth'
 
-const dropdownItemList = []
+const dropdownItemList = [{ label: 'Account security', path: '/account/security', icon: <PiShieldCheckDuotone /> }]
 
 const _UserDropdown = () => {
     const { avatar, userName, email } = useSessionUser((state) => state.user)

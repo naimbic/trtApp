@@ -1,5 +1,9 @@
 // Permission features and the capabilities that make sense for each one (shared by the API and the editor UI).
 // Reconstructed from stock Perfex 3.x + the features this app checks (see docs/perfex/ARCHITECTURE.md).
+// Permission features and the capabilities that make sense for each one (shared by the API and the editor UI).
+// Source of truth: Perfex 3.x application/helpers/staff_helper.php (get_available_staff_permissions), plus the
+// features this app adds (tickets, goals, surveys). `auto` capabilities have no checkbox: Perfex applies them
+// implicitly (e.g. every staff member sees the tasks they are assigned to).
 const STD = ['view', 'view_own', 'create', 'edit', 'delete']
 const CRUD = ['view', 'create', 'edit', 'delete']
 
@@ -12,28 +16,35 @@ export const CAPABILITIES = [
 ]
 
 export const EXTRA_LABELS = {
-    create_timesheets: 'Create timesheets',
-    edit_timesheets: 'Edit timesheets',
-    delete_timesheets: 'Delete timesheets',
+    view_all_templates: 'View all templates',
+    create_milestones: 'Create milestones',
+    edit_milestones: 'Edit milestones',
+    delete_milestones: 'Delete milestones',
+    edit_timesheet: 'Edit timesheets',
+    edit_own_timesheet: 'Edit own timesheets',
+    delete_timesheet: 'Delete timesheets',
+    delete_own_timesheet: 'Delete own timesheets',
+    'view-timesheets': 'View timesheet report',
 }
 
 export const PERMISSION_GROUPS = [
     {
         group: 'Customers & leads',
         features: [
-            { key: 'customers', label: 'Customers', caps: STD },
-            { key: 'leads', label: 'Leads', caps: CRUD },
+            { key: 'customers', label: 'Customers', caps: CRUD, auto: { view_own: 'Staff always see the customers they are an admin of' } },
+            { key: 'leads', label: 'Leads', caps: ['view', 'delete'], auto: { view_own: 'Staff always see leads assigned to or added by them, and can add and edit those', create: 'Any staff member can add leads', edit: 'Any staff member can edit their own leads' } },
+            { key: 'estimate_request', label: 'Estimate requests', caps: STD },
         ],
     },
     {
         group: 'Sales',
         features: [
             { key: 'invoices', label: 'Invoices', caps: STD },
-            { key: 'payments', label: 'Payments', caps: STD },
+            { key: 'payments', label: 'Payments', caps: CRUD, auto: { view_own: 'Based on the invoices the staff member can see' } },
             { key: 'estimates', label: 'Estimates', caps: STD },
-            { key: 'proposals', label: 'Proposals', caps: STD },
+            { key: 'proposals', label: 'Proposals', caps: [...STD, 'view_all_templates'] },
             { key: 'credit_notes', label: 'Credit notes', caps: STD },
-            { key: 'contracts', label: 'Contracts', caps: STD },
+            { key: 'contracts', label: 'Contracts', caps: [...STD, 'view_all_templates'] },
             { key: 'subscriptions', label: 'Subscriptions', caps: STD },
             { key: 'expenses', label: 'Expenses', caps: STD },
             { key: 'items', label: 'Items', caps: CRUD },
@@ -42,9 +53,9 @@ export const PERMISSION_GROUPS = [
     {
         group: 'Work',
         features: [
-            { key: 'projects', label: 'Projects', caps: [...STD, 'create_timesheets', 'edit_timesheets', 'delete_timesheets'] },
-            { key: 'tasks', label: 'Tasks', caps: STD },
-            { key: 'checklist_templates', label: 'Checklist templates', caps: CRUD },
+            { key: 'projects', label: 'Projects', caps: [...CRUD, 'create_milestones', 'edit_milestones', 'delete_milestones'], auto: { view_own: 'Based on the projects the staff member is a member of' } },
+            { key: 'tasks', label: 'Tasks', caps: [...CRUD, 'edit_timesheet', 'edit_own_timesheet', 'delete_timesheet', 'delete_own_timesheet'], auto: { view_own: 'Based on the tasks assigned to or followed by the staff member' } },
+            { key: 'checklist_templates', label: 'Checklist templates', caps: ['create', 'delete'] },
             { key: 'goals', label: 'Goals', caps: CRUD },
             { key: 'surveys', label: 'Surveys', caps: CRUD },
         ],
@@ -64,7 +75,7 @@ export const PERMISSION_GROUPS = [
             { key: 'settings', label: 'Settings', caps: ['view', 'edit'] },
             { key: 'email_templates', label: 'Email templates', caps: ['view', 'edit'] },
             { key: 'bulk_pdf_exporter', label: 'Bulk PDF exporter', caps: ['view'] },
-            { key: 'reports', label: 'Reports', caps: ['view'] },
+            { key: 'reports', label: 'Reports', caps: ['view', 'view-timesheets'] },
         ],
     },
 ]

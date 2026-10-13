@@ -7,7 +7,7 @@ import Checkbox from '@/components/ui/Checkbox'
 import Button from '@/components/ui/Button'
 import { Form, FormItem } from '@/components/ui/Form'
 
-const blank = { firstName: '', lastName: '', email: '', phone: '', roleId: null, departmentIds: [], admin: false, active: true, hourlyRate: '', password: '', applyRolePermissions: true }
+const blank = { firstName: '', lastName: '', email: '', phone: '', roleId: null, departmentIds: [], admin: false, active: true, hourlyRate: '', password: '', applyRolePermissions: true, invite: false }
 
 /** props: open, member (null = new), lookups {roles, departments}, canAdmin, saving, error, onSubmit(values), onClose() */
 const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit, onClose }) => {
@@ -72,6 +72,12 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
                     <Select isMulti placeholder="Select departments" options={deptOptions} value={deptOptions.filter((o) => v.departmentIds.includes(o.value))} onChange={(opts) => set({ departmentIds: (opts || []).map((o) => o.value) })} />
                 </FormItem>
                 {!edit && (
+                    <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+                        <div><div className="font-semibold">Invite by link</div><div className="text-sm text-gray-500">The member chooses their own password through a one-time link (valid 7 days)</div></div>
+                        <Switcher checked={v.invite} onChange={(c) => set({ invite: c, password: '' })} />
+                    </div>
+                )}
+                {!edit && !v.invite && (
                     <FormItem label="Password" extra={<span className="ml-2 text-xs font-normal text-gray-400">Leave empty to generate a one-time password</span>}>
                         <Input type="password" autoComplete="new-password" value={v.password} onChange={(e) => set({ password: e.target.value })} placeholder="Min. 8 characters" />
                     </FormItem>

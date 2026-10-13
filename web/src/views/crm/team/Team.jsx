@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { useLocation } from 'react-router'
-import { TbPlus, TbSearch, TbPencil, TbKey, TbCopy, TbShieldLock } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbPencil, TbKey, TbCopy, TbShieldLock, TbLink, TbLogout } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -59,7 +59,7 @@ const Team = () => {
     const [tab, setTab] = useState(location.pathname.endsWith('/roles') ? 'roles' : 'members')
     const [access, setAccess] = useState({ open: false, id: null })
     const [confirm, setConfirm] = useState(null) // { member, kind: 'reset' }
-    const [secret, setSecret] = useState(null) // { name, email, password }
+    const [secret, setSecret] = useState(null) // { name, email, password } or { name, email, link, invite }
 
     useEffect(() => {
         const t = setTimeout(() => setQuery(search.trim()), 300)
@@ -97,6 +97,7 @@ const Team = () => {
                 const res = await api('/api/crm/team', { method: 'POST', body: JSON.stringify(body) })
                 notify('success', 'Member created')
                 if (res.tempPassword) setSecret({ name: res.member.name, email: res.member.email, password: res.tempPassword })
+                else if (res.inviteLink) setSecret({ name: res.member.name, email: res.member.email, link: res.inviteLink, invite: true, emailed: res.emailed })
             }
             setDrawer({ open: false, member: null })
             load()
@@ -123,7 +124,13 @@ const Team = () => {
     const runConfirm = async () => {
         const { member, kind } = confirm
         try {
-            if (kind === 'reset') {
+            if (kind === 'link') {
+                const res = await api(`/api/crm/team/${member.id}/reset-link`, { method: 'POST', body: JSON.stringify({ purpose: 'reset' }) })
+                setSecret({ name: member.name, email: member.email, link: res.link, emailed: res.emailed })
+            } else if (kind === 'signout') {
+                await api(`/api/crm/team/${member.id}/sign-out`, { method: 'POST' })
+                notify('success', `${member.name} was signed out on every device`)
+            } else if (kind === 'reset') {
                 const res = await api(`/api/crm/team/${member.id}/reset-password`, { method: 'POST' })
                 setSecret({ name: member.name, email: member.email, password: res.tempPassword })
             }
@@ -239,7 +246,9 @@ const Team = () => {
                                         <div className="flex items-center justify-end gap-1">
                                             <Tooltip title="Edit"><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
                                             <Tooltip title="Permissions"><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
-                                            {m.hasLogin && <Tooltip title="Reset password"><Button size="sm" variant="plain" icon={<TbKey />} onClick={() => setConfirm({ member: m, kind: 'reset' })} /></Tooltip>}
+                                            {m.hasLogin && <Tooltip title="Reset link (member sets own password)"><Button size="sm" variant="plain" icon={<TbLink />} onClick={() => setConfirm({ member: m, kind: 'link' })} /></Tooltip>}
+                                            {m.hasLogin && <Tooltip title="One-time password"><Button size="sm" variant="plain" icon={<TbKey />} onClick={() => setConfirm({ member: m, kind: 'reset' })} /></Tooltip>}
+                                            {m.hasLogin && <Tooltip title="Sign out everywhere"><Button size="sm" variant="plain" icon={<TbLogout />} onClick={() => setConfirm({ member: m, kind: 'signout' })} /></Tooltip>}
                                         </div>
                                     </Td>
                                 </Tr>
@@ -260,28 +269,36 @@ const Team = () => {
             <ConfirmDialog
                 isOpen={!!confirm}
                 type="warning"
-                title="Reset password?"
-                confirmText="Reset password"
+                title={confirm?.kind === 'link' ? 'Create a reset link?' : confirm?.kind === 'signout' ? 'Sign out everywhere?' : 'Generate a one-time password?'}
+                confirmText={confirm?.kind === 'link' ? 'Create link' : confirm?.kind === 'signout' ? 'Sign out' : 'Generate password'}
                 onClose={() => setConfirm(null)}
                 onRequestClose={() => setConfirm(null)}
                 onCancel={() => setConfirm(null)}
                 onConfirm={runConfirm}
             >
                 <p>
-                    A new one-time password will be generated for {confirm?.member.name}. Their current password stops working immediately.
+                    {confirm?.kind === 'link'
+                        ? `A one-time link (valid for 1 hour) will be created so ${confirm?.member.name} can choose a new password. Their current password keeps working until they use it. It is emailed when mail is configured, and shown here either way.`
+                        : confirm?.kind === 'signout'
+                          ? `${confirm?.member.name} will be signed out on every device and must sign in again.`
+                          : `A new one-time password will be generated for ${confirm?.member.name}. Their current password stops working immediately.`}
                 </p>
             </ConfirmDialog>
 
             <Dialog isOpen={!!secret} onClose={() => setSecret(null)} onRequestClose={() => setSecret(null)}>
-                <h5 className="mb-2">One-time password</h5>
-                <p className="mb-4 text-sm text-gray-500">Share these sign-in details with {secret?.name}. The password is shown only once — it cannot be retrieved later.</p>
+                <h5 className="mb-2">{secret?.link ? (secret.invite ? 'Invite link' : 'Reset link') : 'One-time password'}</h5>
+                <p className="mb-4 text-sm text-gray-500">
+                    {secret?.link
+                        ? `Send this link to ${secret?.name}${secret?.emailed ? ' (it was also emailed)' : ''}. It works once and expires (${secret?.invite ? '7 days' : '1 hour'}).`
+                        : `Share these sign-in details with ${secret?.name}. The password is shown only once — it cannot be retrieved later.`}
+                </p>
                 <div className="flex flex-col gap-3">
                     <div><div className="mb-1 text-xs text-gray-500">Email</div><div className="font-semibold">{secret?.email}</div></div>
                     <div>
-                        <div className="mb-1 text-xs text-gray-500">Password</div>
+                        <div className="mb-1 text-xs text-gray-500">{secret?.link ? 'Link' : 'Password'}</div>
                         <div className="flex items-center gap-2">
-                            <code className="flex-1 rounded-lg bg-gray-100 px-3 py-2 font-mono text-sm dark:bg-gray-700">{secret?.password}</code>
-                            <Button size="sm" icon={<TbCopy />} onClick={() => copy(secret.password)}>Copy</Button>
+                            <code className="flex-1 break-all rounded-lg bg-gray-100 px-3 py-2 font-mono text-xs dark:bg-gray-700">{secret?.link || secret?.password}</code>
+                            <Button size="sm" icon={<TbCopy />} onClick={() => copy(secret.link || secret.password)}>Copy</Button>
                         </div>
                     </div>
                 </div>

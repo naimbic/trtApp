@@ -1,0 +1,30 @@
+// Sign-in protection and one-time links (password reset / invite).
+
+/// Failed sign-in counter per email (lower-cased). Lives in the same record whether or not the account exists,
+/// so lock state never reveals which emails are registered.
+model LoginAttempt {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  key         String    @unique
+  count       Int       @default(0)
+  firstAt     DateTime  @default(now())
+  lockedUntil DateTime?
+  lastIp      String?
+  updatedAt   DateTime  @updatedAt
+
+  @@map("login_attempts")
+}
+
+/// One-time token for password reset or first-login invite. Only the SHA-256 hash is stored.
+model AuthToken {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @db.ObjectId
+  tokenHash String    @unique
+  purpose   String // reset | invite
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdBy String?   @db.ObjectId
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("auth_tokens")
+}

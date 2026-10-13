@@ -24,18 +24,32 @@ export async function apiSignOut() {
     })
 }
 
-export async function apiForgotPassword(data) {
-    return ApiService.fetchDataWithAxios({
-        url: endpointConfig.forgotPassword,
-        method: 'post',
-        data,
-    })
+const post = async (url, body) => {
+    const res = await fetch(url, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) throw json.error || 'Something went wrong'
+    return json
 }
 
+/** Asks for a reset link. Answers the same whether or not the email exists. Returns { ok, mailConfigured }. */
+export async function apiForgotPassword(data) {
+    return post('/api/crm/auth/forgot-password', data)
+}
+
+/** data: { token, password } */
 export async function apiResetPassword(data) {
-    return ApiService.fetchDataWithAxios({
-        url: endpointConfig.resetPassword,
-        method: 'post',
-        data,
-    })
+    return post('/api/crm/auth/reset-password', data)
+}
+
+export async function apiCheckResetToken(token) {
+    const res = await fetch(`/api/crm/auth/reset-password?token=${encodeURIComponent(token || '')}`, { credentials: 'include' })
+    return res.json()
+}
+
+export async function apiChangePassword(data) {
+    return post('/api/crm/auth/change-password', data)
+}
+
+export async function apiSignOutEverywhere() {
+    return post('/api/crm/auth/sign-out-everywhere', {})
 }

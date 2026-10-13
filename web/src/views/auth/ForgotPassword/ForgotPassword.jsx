@@ -23,15 +23,16 @@ export const ForgotPasswordBase = ({ signInUrl = '/sign-in' }) => {
                     <>
                         <h3 className="mb-2">Check your email</h3>
                         <p className="font-semibold heading-text">
-                            We have sent a password recovery to your email
+                            {emailSent === 'email'
+                                ? 'If an account exists for that email, we have sent a link to reset the password. It is valid for 1 hour.'
+                                : 'If an account exists for that email, a reset link has been prepared. Email delivery is not set up yet, so please ask your administrator to send you the reset link.'}
                         </p>
                     </>
                 ) : (
                     <>
                         <h3 className="mb-2">Forgot Password</h3>
                         <p className="font-semibold heading-text">
-                            Please enter your email to receive a verification
-                            code
+                            Enter your account email and we will help you choose a new password
                         </p>
                     </>
                 )}

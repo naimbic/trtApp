@@ -13,7 +13,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        return NextResponse.json(await createMember(await request.json()), { status: 201 })
+        return NextResponse.json(await createMember(await request.json(), request), { status: 201 })
     } catch (e) {
         return errorResponse(e)
     }

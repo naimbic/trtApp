@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import Button from '@/components/ui/Button'
 import { FormItem, Form } from '@/components/ui/Form'
 import PasswordInput from '@/components/shared/PasswordInput'
@@ -9,7 +10,7 @@ import { z } from 'zod'
 
 const validationSchema = z
     .object({
-        newPassword: z.string().min(1, 'Please enter your password'),
+        newPassword: z.string().min(8, 'Use at least 8 characters'),
         confirmPassword: z.string().min(1, 'Confirm Password Required'),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
@@ -19,6 +20,8 @@ const validationSchema = z
 
 const ResetPasswordForm = (props) => {
     const [isSubmitting, setSubmitting] = useState(false)
+    const [params] = useSearchParams()
+    const token = params.get('token')
 
     const { className, setMessage, setResetComplete, resetComplete, children } =
         props
@@ -33,9 +36,11 @@ const ResetPasswordForm = (props) => {
 
     const onResetPassword = async (values) => {
         const { newPassword } = values
+        setSubmitting(true)
 
         try {
             const resp = await apiResetPassword({
+                token,
                 password: newPassword,
             })
             if (resp) {

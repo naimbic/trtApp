@@ -1,50 +1,48 @@
 'use server'
-import prisma from '@/lib/prisma'
+import { headers } from 'next/headers'
 import bcrypt from 'bcryptjs'
-import { buildCrmAuthority } from '@/lib/crm/authority'
+import prisma from '@/lib/prisma'
+import { buildUserAuthority } from '@/lib/crm/authBuild'
+import { lockState, recordFailure, clearFailures } from '@/lib/crm/loginGuard'
 
+// Compared against when the email is unknown so response time does not reveal which emails exist.
+const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8.4Q0n5y7Q5xk9bP7r6bUQ8g8m3m5W'
+
+const clientIp = async () => {
+    try {
+        const h = await headers()
+        return (h.get('x-forwarded-for') || '').split(',')[0].trim() || h.get('x-real-ip') || null
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Credentials check used by NextAuth. Applies the failed-attempt lock, blocks inactive team members and
+ * records the sign-in. Returns null on any failure (the UI asks /api/crm/auth/status why).
+ */
 const validateCredential = async (values) => {
-    const { email, password } = values
+    const email = String(values?.email || '').trim().toLowerCase()
+    const password = String(values?.password || '')
+    if (!email || !password) return null
 
-    const user = await prisma.user.findUnique({
-        where: { email },
-    })
+    if ((await lockState(email)).locked) return null
 
-    if (!user || !user.password) return null
-
-    const isValid = await bcrypt.compare(password, user.password)
-    if (!isValid) return null
-
-    // Build granular authority from role's accessRight
-    const authority = [...new Set([user.role || 'user', ...(user.authority || [])])]
-    const role = await prisma.role.findUnique({
-        where: { roleId: user.role || 'user' },
-    })
-    if (role?.accessRight) {
-        const ar = typeof role.accessRight === 'string' ? JSON.parse(role.accessRight) : role.accessRight
-        for (const [module, perms] of Object.entries(ar)) {
-            if (Array.isArray(perms)) {
-                for (const perm of perms) {
-                    authority.push(`${module}.${perm}`)
-                }
-            }
-        }
+    const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } })
+    const ok = await bcrypt.compare(password, user?.password || DUMMY_HASH)
+    if (!user || !user.password || !ok) {
+        await recordFailure(email, await clientIp())
+        return null
     }
 
-    const crm = await buildCrmAuthority(user.id)
-    if (crm.blocked) return null
-    authority.push(...crm.authority)
+    const { authority, blocked } = await buildUserAuthority(user)
+    if (blocked) return null // inactive team member
+    await clearFailures(email)
 
     // team members: remember when they last signed in
     prisma.crmStaff.updateMany({ where: { userId: user.id }, data: { lastLogin: new Date(), lastActivity: new Date() } }).catch(() => {})
 
-    return {
-        id: user.id,
-        userName: user.name,
-        email: user.email,
-        avatar: user.image,
-        authority,
-    }
+    return { id: user.id, userName: user.name, email: user.email, avatar: user.image, authority, sv: user.sessionVersion || 0 }
 }
 
 export default validateCredential

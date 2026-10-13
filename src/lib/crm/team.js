@@ -3,6 +3,9 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { requirePermission, isCrmAdmin, getStaffId } from '@/lib/crm/permissions'
 import { parseRolePermissions, toPermissionRows } from '@/lib/crm/rolePermissions'
+import { createAuthToken, signOutEverywhere } from '@/lib/crm/authTokens'
+import { webBaseUrl } from '@/lib/crm/account'
+import { sendMail, isMailConfigured } from '@/lib/mail'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -74,7 +77,7 @@ async function setDepartments(staffId, ids = []) {
 }
 
 /** Create a team member and their login account. Returns { member, tempPassword } (password shown once). */
-export async function createMember(body) {
+export async function createMember(body, request) {
     const session = await requirePermission('staff', 'create')
     const admin = isCrmAdmin(session.user.authority || [])
     const email = String(body.email || '').trim().toLowerCase()
@@ -85,8 +88,10 @@ export async function createMember(body) {
     if ((await prisma.crmStaff.findFirst({ where: { email } })) || (await prisma.user.findUnique({ where: { email } }))) throw httpError('A user with this email already exists', 409)
     if (body.admin && !admin) throw httpError('Only an administrator can create another administrator', 403)
 
-    const tempPassword = body.password ? null : generatePassword()
-    const hash = await bcrypt.hash(body.password || tempPassword, 10)
+    // invite: the member chooses their own password through a one-time link (nobody ever sees a password)
+    const invite = !!body.invite && !body.password
+    const tempPassword = body.password || invite ? null : generatePassword()
+    const hash = await bcrypt.hash(body.password || tempPassword || generatePassword(), 10)
     const lastName = String(body.lastName || '').trim()
     const user = await prisma.user.create({
         data: { name: `${firstName} ${lastName}`.trim(), email, password: hash, authority: ['user'], role: 'user', status: 'active', image: '/img/avatars/thumb-1.jpg' },
@@ -101,7 +106,13 @@ export async function createMember(body) {
     await applyRolePermissions(staff.id, staff.roleId)
     await setDepartments(staff.id, body.departmentIds)
     const full = await prisma.crmStaff.findUnique({ where: { id: staff.id }, include })
-    return { member: shape(full), tempPassword }
+    let inviteLink = null
+    if (invite) {
+        const { token } = await createAuthToken(user.id, 'invite', session.user.id)
+        inviteLink = `${webBaseUrl(request)}/reset-password?token=${token}`
+        if (isMailConfigured()) sendMail({ to: email, subject: 'You have been invited', text: `Hello ${firstName},\n\nYou have been added to the team. Choose your password here (valid for 7 days):\n${inviteLink}` }).catch((e) => console.error('[team] invite email failed:', e.message))
+    }
+    return { member: shape(full), tempPassword, inviteLink, emailed: !!inviteLink && isMailConfigured() }
 }
 
 export async function updateMember(id, body) {
@@ -168,4 +179,33 @@ export async function resetMemberPassword(id) {
     await prisma.user.update({ where: { id: s.userId }, data: { password: await bcrypt.hash(tempPassword, 10) } })
     await prisma.crmStaff.update({ where: { id }, data: { lastPasswordChange: new Date() } })
     return { tempPassword }
+}
+
+/** One-time link to set a new password (purpose 'reset', 1 h) or first password (purpose 'invite', 7 days). */
+export async function createMemberLink(id, purpose, request) {
+    const session = await requirePermission('staff', 'edit')
+    const s = await prisma.crmStaff.findUnique({ where: { id } })
+    if (!s) throw httpError('Member not found', 404)
+    if (!s.userId) throw httpError('This member has no login account', 400)
+    const { token, expiresAt } = await createAuthToken(s.userId, purpose === 'invite' ? 'invite' : 'reset', session.user.id)
+    const link = `${webBaseUrl(request)}/reset-password?token=${token}`
+    let emailed = false
+    if (isMailConfigured() && s.email) {
+        try {
+            await sendMail({ to: s.email, subject: purpose === 'invite' ? 'You have been invited' : 'Reset your password', text: `Hello ${s.firstName || ''},\n\nChoose a new password here:\n${link}` })
+            emailed = true
+        } catch (e) {
+            console.error('[team] link email failed:', e.message)
+        }
+    }
+    return { link, expiresAt, emailed }
+}
+
+/** End every session of a member (they must sign in again). */
+export async function signOutMember(id) {
+    await requirePermission('staff', 'edit')
+    const s = await prisma.crmStaff.findUnique({ where: { id } })
+    if (!s) throw httpError('Member not found', 404)
+    if (!s.userId) throw httpError('This member has no login account', 400)
+    return signOutEverywhere(s.userId)
 }

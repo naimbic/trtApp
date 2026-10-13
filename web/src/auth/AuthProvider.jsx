@@ -79,7 +79,13 @@ function AuthProvider({ children }) {
                 body: new URLSearchParams({ csrfToken, email, password, json: 'true' }),
             })
             const u = await fetchSession()
-            if (!u) return { status: 'failed', message: 'Invalid email or password' }
+            if (!u) {
+                const st = await fetch(`/api/crm/auth/status?email=${encodeURIComponent(email)}`).then((r) => r.json()).catch(() => ({}))
+                return {
+                    status: 'failed',
+                    message: st.locked ? `Too many failed attempts. Try again in ${st.minutes} minute${st.minutes === 1 ? '' : 's'}.` : 'Invalid email or password, or the account is inactive',
+                }
+            }
             setUser(u)
             setSessionSignedIn(true)
             redirect()

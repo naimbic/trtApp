@@ -128,7 +128,7 @@ export default {
         model: 'crmStaffDepartment',
         id: 'staffdepartmentid',
         map: (r) => {
-            const staffId = fk('staff', r.staff_id)
+            const staffId = fk('staff', r.staffid)
             const departmentId = fk('departments', r.departmentid)
             if (!staffId || !departmentId) return null
             return {
@@ -472,7 +472,7 @@ export default {
                 isStaff,
                 userAgent: str(r.user_agent),
                 lastIp: str(r.last_ip),
-                lastUsed: toDate(r.last_used),
+                lastUsed: toDate(r.last_login),
             }
         },
     },

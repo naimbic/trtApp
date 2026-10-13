@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbPencil, TbKey, TbUserOff, TbUserCheck, TbCopy } from 'react-icons/tb'
+import { useLocation } from 'react-router'
+import { TbPlus, TbSearch, TbPencil, TbKey, TbCopy, TbShieldLock } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -10,6 +11,7 @@ import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Segment from '@/components/ui/Segment'
+import Switcher from '@/components/ui/Switcher'
 import Table from '@/components/ui/Table'
 import Tag from '@/components/ui/Tag'
 import Tooltip from '@/components/ui/Tooltip'
@@ -17,6 +19,8 @@ import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { useSessionUser } from '@/store/authStore'
 import MemberDrawer from './MemberDrawer'
+import MemberAccessDrawer from './MemberAccessDrawer'
+import RolesPanel from './RolesPanel'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const notify = (type, msg) => toast.push(<Notification type={type}>{msg}</Notification>, { placement: 'top-center' })
@@ -51,7 +55,10 @@ const Team = () => {
     const [drawer, setDrawer] = useState({ open: false, member: null })
     const [saving, setSaving] = useState(false)
     const [formError, setFormError] = useState('')
-    const [confirm, setConfirm] = useState(null) // { member, kind: 'active'|'reset' }
+    const location = useLocation()
+    const [tab, setTab] = useState(location.pathname.endsWith('/roles') ? 'roles' : 'members')
+    const [access, setAccess] = useState({ open: false, id: null })
+    const [confirm, setConfirm] = useState(null) // { member, kind: 'reset' }
     const [secret, setSecret] = useState(null) // { name, email, password }
 
     useEffect(() => {
@@ -100,13 +107,23 @@ const Team = () => {
         }
     }
 
+    const toggleActive = async (member, checked) => {
+        // optimistic: flip immediately, roll back if the server refuses (e.g. your own account, last admin)
+        setData((d) => ({ ...d, members: d.members.map((m) => (m.id === member.id ? { ...m, active: checked } : m)) }))
+        try {
+            await api(`/api/crm/team/${member.id}`, { method: 'PATCH', body: JSON.stringify({ active: checked }) })
+            notify('success', checked ? `${member.name} activated` : `${member.name} deactivated`)
+            load()
+        } catch (e) {
+            setData((d) => ({ ...d, members: d.members.map((m) => (m.id === member.id ? { ...m, active: member.active } : m)) }))
+            notify('danger', e.message)
+        }
+    }
+
     const runConfirm = async () => {
         const { member, kind } = confirm
         try {
-            if (kind === 'active') {
-                await api(`/api/crm/team/${member.id}`, { method: 'PATCH', body: JSON.stringify({ active: !member.active }) })
-                notify('success', member.active ? `${member.name} deactivated` : `${member.name} activated`)
-            } else {
+            if (kind === 'reset') {
                 const res = await api(`/api/crm/team/${member.id}/reset-password`, { method: 'POST' })
                 setSecret({ name: member.name, email: member.email, password: res.tempPassword })
             }
@@ -138,8 +155,20 @@ const Team = () => {
                     <h3>Team</h3>
                     <p className="text-sm text-gray-500">Manage members, roles, departments and sign-in access</p>
                 </div>
-                <Button variant="solid" icon={<TbPlus />} onClick={openNew}>Add member</Button>
+                {tab === 'members' && <Button variant="solid" icon={<TbPlus />} onClick={openNew}>Add member</Button>}
             </div>
+
+            <div className="mb-4">
+                <Segment value={tab} onChange={(v) => v && setTab(v)}>
+                    <Segment.Item value="members">Members</Segment.Item>
+                    <Segment.Item value="roles">Roles &amp; permissions</Segment.Item>
+                </Segment>
+            </div>
+
+            {tab === 'roles' ? (
+                <RolesPanel />
+            ) : (
+                <>
 
             <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
                 <Stat label="Team members" value={s.total ?? '–'} />
@@ -199,8 +228,9 @@ const Team = () => {
                                         </div>
                                     </Td>
                                     <Td>
-                                        <div className="flex items-center gap-1.5">
-                                            <Tag className={m.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{m.active ? 'Active' : 'Inactive'}</Tag>
+                                        <div className="flex items-center gap-2.5">
+                                            <Switcher checked={m.active} onChange={(checked) => toggleActive(m, checked)} />
+                                            <span className={m.active ? 'text-emerald-600' : 'text-gray-400'}>{m.active ? 'Active' : 'Inactive'}</span>
                                             {!m.hasLogin && <Tooltip title="No login account yet"><Tag className="bg-amber-100 text-amber-700">No login</Tag></Tooltip>}
                                         </div>
                                     </Td>
@@ -208,10 +238,8 @@ const Team = () => {
                                     <Td>
                                         <div className="flex items-center justify-end gap-1">
                                             <Tooltip title="Edit"><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
+                                            <Tooltip title="Permissions"><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
                                             {m.hasLogin && <Tooltip title="Reset password"><Button size="sm" variant="plain" icon={<TbKey />} onClick={() => setConfirm({ member: m, kind: 'reset' })} /></Tooltip>}
-                                            <Tooltip title={m.active ? 'Deactivate' : 'Activate'}>
-                                                <Button size="sm" variant="plain" icon={m.active ? <TbUserOff /> : <TbUserCheck />} onClick={() => setConfirm({ member: m, kind: 'active' })} />
-                                            </Tooltip>
                                         </div>
                                     </Td>
                                 </Tr>
@@ -223,24 +251,24 @@ const Team = () => {
                 </div>
             </AdaptiveCard>
 
+                </>
+            )}
+
+            <MemberAccessDrawer open={access.open} memberId={access.id} onClose={() => setAccess({ open: false, id: null })} onSaved={load} />
             <MemberDrawer open={drawer.open} member={drawer.member} lookups={lookups} canAdmin={canAdmin} saving={saving} error={formError} onSubmit={submit} onClose={() => setDrawer({ open: false, member: null })} />
 
             <ConfirmDialog
                 isOpen={!!confirm}
-                type={confirm?.kind === 'active' && confirm.member.active ? 'danger' : 'warning'}
-                title={confirm?.kind === 'reset' ? 'Reset password?' : confirm?.member.active ? 'Deactivate member?' : 'Activate member?'}
-                confirmText={confirm?.kind === 'reset' ? 'Reset password' : confirm?.member.active ? 'Deactivate' : 'Activate'}
+                type="warning"
+                title="Reset password?"
+                confirmText="Reset password"
                 onClose={() => setConfirm(null)}
                 onRequestClose={() => setConfirm(null)}
                 onCancel={() => setConfirm(null)}
                 onConfirm={runConfirm}
             >
                 <p>
-                    {confirm?.kind === 'reset'
-                        ? `A new one-time password will be generated for ${confirm?.member.name}. Their current password stops working immediately.`
-                        : confirm?.member.active
-                          ? `${confirm?.member.name} will no longer be able to sign in. Their data is kept.`
-                          : `${confirm?.member.name} will be able to sign in again.`}
+                    A new one-time password will be generated for {confirm?.member.name}. Their current password stops working immediately.
                 </p>
             </ConfirmDialog>
 

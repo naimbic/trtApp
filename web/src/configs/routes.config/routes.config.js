@@ -31,6 +31,12 @@ export const protectedRoutes = [
         authority: [],
     },
     {
+        key: 'crm.roles',
+        path: '/crm/roles',
+        component: lazy(() => import('@/views/crm/team/Team')),
+        authority: [],
+    },
+    {
         key: 'crm.tasks-board',
         path: '/crm/tasks-board',
         component: lazy(() => import('@/views/crm/ResourcePage')),

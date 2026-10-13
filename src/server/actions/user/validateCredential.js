@@ -35,6 +35,9 @@ const validateCredential = async (values) => {
     if (crm.blocked) return null
     authority.push(...crm.authority)
 
+    // team members: remember when they last signed in
+    prisma.crmStaff.updateMany({ where: { userId: user.id }, data: { lastLogin: new Date(), lastActivity: new Date() } }).catch(() => {})
+
     return {
         id: user.id,
         userName: user.name,

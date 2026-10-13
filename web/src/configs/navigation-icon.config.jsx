@@ -1,4 +1,5 @@
 import {
+    PiUsersFourDuotone,
     PiCalendarBlankDuotone,
     PiChartPieSliceDuotone,
     PiBuildingsDuotone,
@@ -30,6 +31,7 @@ const navigationIcon = {
     groupMenu: <PiBagSimpleDuotone />,
     dashboard: <PiChartPieSliceDuotone />,
     calendar: <PiCalendarBlankDuotone />,
+    team: <PiUsersFourDuotone />,
     crm: <PiBuildingsDuotone />,
     crmCustomers: <PiAddressBookDuotone />,
     crmLeads: <PiFunnelDuotone />,

@@ -22,6 +22,16 @@ const navigationConfig = [
         authority: [],
         subMenu: [],
     },
+    {
+        key: 'team',
+        path: '/team',
+        title: 'Team',
+        translateKey: 'nav.team',
+        icon: 'team',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: ['admin', 'crm.admin', 'crm.staff.view', 'crm.staff.view_own'],
+        subMenu: [],
+    },
     ...crmNavigationConfig,
 ]
 

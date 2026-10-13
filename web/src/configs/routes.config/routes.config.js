@@ -97,6 +97,8 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/crm/tasks/TasksBoard')),
         authority: [],
     },
+    { key: 'crm.leads', path: '/crm/leads', component: lazy(() => import('@/views/crm/leads/LeadsBoard')), authority: [] },
+    { key: 'crm.leads.view', path: '/crm/leads/:id', component: lazy(() => import('@/views/crm/leads/LeadsBoard')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
     {
         key: 'crm.resource',

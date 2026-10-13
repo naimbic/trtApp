@@ -32,6 +32,7 @@ const FileManager = () => {
     const [parentId, setParentId] = useState(null)
     const [data, setData] = useState({ list: [], total: 0, path: [] })
     const [stats, setStats] = useState(null)
+    const [recent, setRecent] = useState([])
     const [view, setView] = useState('grid')
     const [kind, setKind] = useState('')
     const [search, setSearch] = useState('')
@@ -59,6 +60,7 @@ const FileManager = () => {
         try {
             setData(await api(`/api/crm/media?${qs({ parentId, query, kind, pageSize: 200 })}`))
             setStats(await api('/api/crm/media/stats'))
+            if (!parentId && !query && !kind) setRecent((await api('/api/crm/media?recent=20')).list); else setRecent([])
         } catch (e) { notify('danger', e.message) } finally { setLoading(false) }
     }, [parentId, query, kind])
     useEffect(() => { load() }, [load])
@@ -98,7 +100,7 @@ const FileManager = () => {
     const doMove = async () => { if (await act({ action: 'move', id: move.id, parentId: moveTo }, 'Moved')) setMove(null) }
     const copyLink = async (f) => { try { await navigator.clipboard.writeText(f.url); notify('success', 'Link copied') } catch { notify('danger', 'Could not copy') } }
     const open = (f) => { if (f.isFolder) { setParentId(f.id); setSearch(''); setSelected(null) } else window.open(f.url, '_blank', 'noopener') }
-    const current = data.list.find((f) => f.id === selected) || null
+    const current = data.list.find((f) => f.id === selected) || recent.find((f) => f.id === selected) || null
     const doUpload = async () => { const files = pending.map((p) => p); setUploadOpen(false); setPending([]); await send(files) }
 
     const Menu = ({ f }) => (
@@ -114,7 +116,8 @@ const FileManager = () => {
 
     const folderOptions = [{ value: null, label: 'Main folder' }, ...folders.map((f) => ({ value: f.id, label: f.name }))]
     const folderList = data.list.filter((f) => f.isFolder)
-    const fileList = data.list.filter((f) => !f.isFolder)
+    const atRoot = !parentId && !query && !kind
+    const fileList = atRoot ? recent : data.list.filter((f) => !f.isFolder)
     const click = (f) => (f.isFolder ? open(f) : setSelected(f.id))
 
     const Segmentcard = ({ f }) => (
@@ -169,9 +172,9 @@ const FileManager = () => {
             </div>
 
             <div className={`relative mt-6 min-h-[260px] rounded-xl transition ${drag ? 'bg-primary/5 outline-dashed outline-2 outline-primary' : ''}`} onDragOver={(e) => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); send(e.dataTransfer.files) }}>
-                {loading && !data.list.length ? <div className="flex h-60 items-center justify-center"><Spinner size={32} /></div> : !data.list.length ? (
+                {loading && !data.list.length && !recent.length ? <div className="flex h-60 items-center justify-center"><Spinner size={32} /></div> : !data.list.length ? (
                     <div className="flex h-60 flex-col items-center justify-center gap-2 text-gray-400"><TbUpload className="text-4xl" /><div>{query || kind ? 'Nothing matches' : 'Drop files here or press Upload'}</div></div>
-                ) : (<><Section title="Folders" list={folderList} /><Section title="Files" list={fileList} /></>)}
+                ) : (<><Section title="Folders" list={folderList} /><Section title={atRoot ? 'Recent files' : 'Files'} list={fileList} /></>)}
             </div>
 
             <Drawer title={null} closable={false} isOpen={!!current} showBackdrop={false} width={350} onClose={() => setSelected(null)} onRequestClose={() => setSelected(null)}>

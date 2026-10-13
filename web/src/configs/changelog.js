@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.17.0',
+        date: '2026-10-13',
+        title: 'Leads board',
+        items: ['Leads kanban board: drag a lead between pipeline statuses, with load more per column', 'Board or list view; filters for owner, source, My leads, and Lost, Junk or Converted leads', 'Lead panel: profile, notes, related proposals and tasks, activity history', 'Convert a lead to a client (copying notes), mark lost or junk, restore', 'Cards per column and board order from Settings now apply', 'File manager shows the 20 most recent files under Folders'],
+    },
+    {
         version: '0.16.1',
         date: '2026-10-13',
         title: 'File manager redesign',

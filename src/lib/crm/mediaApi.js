@@ -36,8 +36,9 @@ const shape = (m) => ({
 })
 
 /** Folder contents (or attachments of one record), newest first, folders on top. */
-export async function listMedia({ parentId, query, relType, relId, kind, foldersOnly, pageIndex = 1, pageSize = 60 } = {}) {
+export async function listMedia({ parentId, query, relType, relId, kind, foldersOnly, recent, pageIndex = 1, pageSize = 60 } = {}) {
     const ctx = await who()
+    if (recent) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: false, relType: null }, orderBy: { createdAt: 'desc' }, take: Math.min(parseInt(recent, 10) || 20, 100) })).map(shape), total: 0, path: [] })
     if (foldersOnly) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: true, relType: null }, orderBy: { name: 'asc' }, take: 500 })).map(shape), total: 0, path: [] })
     relAccess(ctx, relType, 'view')
     const where = relType ? { relType, relId } : { relType: null, ...(query || kind ? {} : { parentId: OID.test(parentId || '') ? parentId : null }) }

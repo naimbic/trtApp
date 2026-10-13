@@ -290,7 +290,7 @@ const mappers = {
         }),
     },
 
-    contract_types: {
+    contracts_types: {
         model: 'crmContractType',
         id: 'id',
         map: (r) => ({ id: oid('contract_types', r.id), legacyId: toInt(r.id), name: str(r.name) ?? '' }),

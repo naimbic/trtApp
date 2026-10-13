@@ -43,6 +43,30 @@ export const protectedRoutes = [
         authority: [],
     },
     {
+        key: 'crm.clients',
+        path: '/crm/clients',
+        component: lazy(() => import('@/views/crm/clients/ClientsList')),
+        authority: [],
+    },
+    {
+        key: 'crm.clients.new',
+        path: '/crm/clients/new',
+        component: lazy(() => import('@/views/crm/clients/ClientForm')),
+        authority: [],
+    },
+    {
+        key: 'crm.clients.edit',
+        path: '/crm/clients/:id/edit',
+        component: lazy(() => import('@/views/crm/clients/ClientForm')),
+        authority: [],
+    },
+    {
+        key: 'crm.clients.detail',
+        path: '/crm/clients/:id',
+        component: lazy(() => import('@/views/crm/clients/ClientDetail')),
+        authority: [],
+    },
+    {
         key: 'crm.tasks-board',
         path: '/crm/tasks-board',
         component: lazy(() => import('@/views/crm/ResourcePage')),

@@ -490,7 +490,7 @@ export default {
     },
 
     // ------------------------------------------------------------ newsfeed (table names: posts, post_comments, post_likes, post_comment_likes|comment_likes)
-    posts: {
+    newsfeed_posts: {
         model: 'crmPost',
         id: 'postid',
         map: (r) => ({

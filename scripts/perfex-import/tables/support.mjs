@@ -115,7 +115,7 @@ export default {
             }
         },
     },
-    knowledge_base_article_feedback: {
+    knowedge_base_article_feedback: {
         model: 'crmKnowledgeBaseArticleFeedback', id: 'articleanswerid',
         map: (r) => {
             const created = toDate(r.date)

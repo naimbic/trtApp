@@ -107,7 +107,7 @@ export default {
         }),
     },
 
-    project_discussions: {
+    projectdiscussions: {
         model: 'crmProjectDiscussion',
         id: 'id',
         map: (r) => ({
@@ -124,7 +124,7 @@ export default {
         }),
     },
 
-    project_discussion_comments: {
+    projectdiscussioncomments: {
         model: 'crmProjectDiscussionComment',
         id: 'id',
         map: (r) => ({

@@ -54,7 +54,7 @@ const Control = ({ f, value, onChange, disabled }) => {
  * Create / edit a record of any resource from its field config.
  * props: resource, open, id (edit) | null (new), initial (prefill when new), canEdit, canDelete, onClose, onSaved(record), onDeleted()
  */
-const RecordDrawer = ({ resource, open, id, initial = {}, canEdit = true, canDelete = false, onClose, onSaved, onDeleted }) => {
+const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = true, canDelete = false, onClose, onSaved, onDeleted }) => {
     const fields = useMemo(() => (resource.fields || []).filter((f) => !f.hidden), [resource])
     const [v, setV] = useState({})
     const [loading, setLoading] = useState(false)
@@ -83,9 +83,9 @@ const RecordDrawer = ({ resource, open, id, initial = {}, canEdit = true, canDel
 
     const sections = useMemo(() => {
         const m = new Map()
-        fields.forEach((f) => { const s = f.section || 'General'; if (!m.has(s)) m.set(s, []); m.get(s).push(f) })
+        fields.filter((f) => !hide.includes(f.key)).forEach((f) => { const s = f.section || 'General'; if (!m.has(s)) m.set(s, []); m.get(s).push(f) })
         return [...m.entries()]
-    }, [fields])
+    }, [fields, hide])
 
     const save = async () => {
         setSaving(true)

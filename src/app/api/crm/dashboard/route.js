@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getDashboardMetrics } from '@/lib/crm/dashboard'
 
-export async function GET() {
+// GET /api/crm/dashboard?range=today|7d|30d|month|lastmonth|year|12m|custom&from=YYYY-MM-DD&to=YYYY-MM-DD
+export async function GET(request) {
     try {
-        const data = await getDashboardMetrics()
+        const sp = Object.fromEntries(request.nextUrl.searchParams)
+        const data = await getDashboardMetrics(sp)
         if (!data) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         return NextResponse.json(data)
     } catch (e) {

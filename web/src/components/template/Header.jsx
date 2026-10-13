@@ -1,5 +1,7 @@
 import classNames from '@/utils/classNames'
 import { HEADER_HEIGHT } from '@/constants/theme.constant'
+import { useLocation } from 'react-router'
+import DashboardFilters from './DashboardFilters'
 
 const Header = (props) => {
     const {
@@ -10,6 +12,10 @@ const Header = (props) => {
         container,
         wrapperClass,
     } = props
+
+    // The dashboard puts its date / currency / colour filters in the top bar.
+    const { pathname } = useLocation()
+    const middle = headerMiddle || (pathname === '/dashboard' ? <DashboardFilters /> : null)
 
     return (
         <header className={classNames('header', className)}>
@@ -24,9 +30,9 @@ const Header = (props) => {
                 <div className="header-action header-action-start">
                     {headerStart}
                 </div>
-                {headerMiddle && (
-                    <div className="header-action header-action-middle">
-                        {headerMiddle}
+                {middle && (
+                    <div className="header-action header-action-middle min-w-0 flex-1 justify-center px-2">
+                        {middle}
                     </div>
                 )}
                 <div className="header-action header-action-end">

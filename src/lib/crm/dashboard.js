@@ -3,13 +3,39 @@ import { auth } from '@/auth'
 import { viewScope } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 
-const MONTHS = 12
+const iso = (d) => d.toISOString().slice(0, 10)
 const monthKey = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
-const lastMonths = (n) => {
-    const out = []
-    const now = new Date()
-    for (let i = n - 1; i >= 0; i--) out.push(monthKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1))))
-    return out
+const utcDay = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+const addDaysTo = (d, n) => new Date(d.getTime() + n * 86400000)
+const PRESET_LABEL = { today: 'Today', '7d': 'Last 7 days', '30d': 'Last 30 days', month: 'This month', lastmonth: 'Last month', year: 'This year', '12m': 'Last 12 months', custom: 'Custom' }
+
+/** Resolve ?range=today|7d|30d|month|lastmonth|year|12m|custom&from&to into a UTC window and its chart buckets. */
+export function resolveRange({ range = '12m', from, to } = {}) {
+    const today = utcDay(new Date())
+    let key = PRESET_LABEL[range] ? range : '12m'
+    let f, t
+    if (key === 'today') [f, t] = [today, today]
+    else if (key === '7d') [f, t] = [addDaysTo(today, -6), today]
+    else if (key === '30d') [f, t] = [addDaysTo(today, -29), today]
+    else if (key === 'month') [f, t] = [new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)), today]
+    else if (key === 'lastmonth') {
+        f = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1))
+        t = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 0))
+    } else if (key === 'year') [f, t] = [new Date(Date.UTC(today.getUTCFullYear(), 0, 1)), today]
+    else if (key === 'custom' && /^\d{4}-\d{2}-\d{2}$/.test(from || '') && /^\d{4}-\d{2}-\d{2}$/.test(to || '') && from <= to) [f, t] = [new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`)]
+    else {
+        key = '12m'
+        f = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 11, 1))
+        t = today
+    }
+    const days = Math.round((t - f) / 86400000) + 1
+    const granularity = days <= 62 ? 'day' : 'month'
+    const keys = []
+    if (granularity === 'day') for (let i = 0; i < days; i++) keys.push(iso(addDaysTo(f, i)))
+    else {
+        for (let d = new Date(Date.UTC(f.getUTCFullYear(), f.getUTCMonth(), 1)); d <= t && keys.length < 60; d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1))) keys.push(monthKey(d))
+    }
+    return { key, label: key === 'custom' ? `${iso(f)} → ${iso(t)}` : PRESET_LABEL[key], from: f, until: addDaysTo(t, 1), fromIso: iso(f), toIso: iso(t), granularity, keys }
 }
 const count = (rows, fn) => rows.reduce((m, r) => {
     const k = fn(r)
@@ -23,16 +49,20 @@ const ESTIMATE_STATUS = { 1: 'Draft', 2: 'Sent', 3: 'Declined', 4: 'Accepted', 5
 const INVOICE_STATUS = { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft' }
 
 /** Aggregated CRM metrics. Each section is built only if the user may view all records of that feature. */
-export async function getDashboardMetrics() {
+export async function getDashboardMetrics(params = {}) {
     const session = await auth()
     if (!session?.user?.id) return null
     const authority = session.user.authority || []
     const can = (feature) => viewScope(authority, feature) === 'all'
-    const months = lastMonths(MONTHS)
-    const since = new Date(Date.UTC(Number(months[0].slice(0, 4)), Number(months[0].slice(5)) - 1, 1))
+    const R = resolveRange(params)
+    const months = R.keys // chart buckets: YYYY-MM-DD (short ranges) or YYYY-MM
+    const bk = (d) => (R.granularity === 'day' ? iso(new Date(d)) : monthKey(new Date(d)))
+    const since = R.from
+    const until = R.until
+    const inRange = (d) => d && new Date(d) >= since && new Date(d) < until
     const today = new Date()
     const startOfToday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
-    const data = { generatedAt: new Date().toISOString(), months, sections: [] }
+    const data = { generatedAt: new Date().toISOString(), months, granularity: R.granularity, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso }, sections: [] }
 
     const section = async (name, feature, fn) => {
         if (feature && !can(feature)) return
@@ -74,30 +104,32 @@ export async function getDashboardMetrics() {
             const b = bucket(i.currencyId)
             const paid = paidByInvoice[i.id] || 0
             const due = round2(i.total - paid)
-            b.invoiced = round2(b.invoiced + i.total)
-            b.paid = round2(b.paid + paid)
+            // snapshots (as of today, independent of the date filter)
             b.outstanding = round2(b.outstanding + Math.max(due, 0))
             const overdue = due > 0 && i.dueDate && new Date(i.dueDate) < startOfToday
             if (overdue) {
                 b.overdue = round2(b.overdue + due)
                 b.overdueCount += 1
             }
+            // period figures: invoices dated inside the selected range
+            if (!inRange(i.date)) continue
+            b.invoiced = round2(b.invoiced + i.total)
             const st = INVOICE_STATUS[i.status] || String(i.status)
             b.byStatus[st] = (b.byStatus[st] || 0) + 1
-            if (i.date) {
-                const mk = monthKey(new Date(i.date))
-                if (mk in b.invoicedByMonth) b.invoicedByMonth[mk] = round2(b.invoicedByMonth[mk] + i.total)
-            }
+            const mk = bk(i.date)
+            if (mk in b.invoicedByMonth) b.invoicedByMonth[mk] = round2(b.invoicedByMonth[mk] + i.total)
             if (i.clientId) {
                 const k = `${i.clientId}|${i.currencyId || 'none'}`
                 clientTotals[k] = round2((clientTotals[k] || 0) + i.total)
             }
         }
+        // collected = payments dated inside the selected range
         for (const p of payments) {
             const inv = invById[p.invoiceId]
-            if (!inv || !p.paymentDate) continue
+            if (!inv || !inRange(p.paymentDate)) continue
             const b = bucket(inv.currencyId)
-            const mk = monthKey(new Date(p.paymentDate))
+            b.paid = round2(b.paid + (p.amount || 0))
+            const mk = bk(p.paymentDate)
             if (mk in b.collectedByMonth) b.collectedByMonth[mk] = round2(b.collectedByMonth[mk] + (p.amount || 0))
         }
 
@@ -122,11 +154,11 @@ export async function getDashboardMetrics() {
     })
 
     await section('expenses', 'expenses', async () => {
-        const rows = await prisma.crmExpense.findMany({ where: { date: { gte: since } }, select: { amount: true, currencyId: true, date: true } })
+        const rows = await prisma.crmExpense.findMany({ where: { date: { gte: since, lt: until } }, select: { amount: true, currencyId: true, date: true } })
         const byCurrency = {}
         for (const e of rows) {
             const b = (byCurrency[e.currencyId || 'none'] ||= Object.fromEntries(months.map((m) => [m, 0])))
-            const mk = monthKey(new Date(e.date))
+            const mk = bk(e.date)
             if (mk in b) b[mk] = round2(b[mk] + (e.amount || 0))
         }
         return { byCurrency }
@@ -136,11 +168,11 @@ export async function getDashboardMetrics() {
         const [total, active, newByMonthRows] = await Promise.all([
             prisma.crmClient.count(),
             prisma.crmClient.count({ where: { active: true } }),
-            prisma.crmClient.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+            prisma.crmClient.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { createdAt: true } }),
         ])
         const byMonth = Object.fromEntries(months.map((m) => [m, 0]))
         for (const c of newByMonthRows) {
-            const mk = monthKey(new Date(c.createdAt))
+            const mk = bk(c.createdAt)
             if (mk in byMonth) byMonth[mk] += 1
         }
         return { total, active, byMonth }
@@ -148,7 +180,7 @@ export async function getDashboardMetrics() {
 
     await section('leads', 'leads', async () => {
         const [leads, statuses] = await Promise.all([
-            prisma.crmLead.findMany({ select: { statusId: true, lost: true, junk: true, clientId: true, createdAt: true } }),
+            prisma.crmLead.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { statusId: true, lost: true, junk: true, clientId: true, createdAt: true } }),
             prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' } }),
         ])
         const name = Object.fromEntries(statuses.map((s) => [s.id, s.name]))
@@ -165,12 +197,12 @@ export async function getDashboardMetrics() {
     })
 
     await section('projects', 'projects', async () => {
-        const rows = await prisma.crmProject.findMany({ select: { status: true } })
+        const rows = await prisma.crmProject.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { status: true } })
         return { total: rows.length, byStatus: count(rows, (p) => PROJECT_STATUS[p.status] || String(p.status)) }
     })
 
     await section('tasks', 'tasks', async () => {
-        const rows = await prisma.crmTask.findMany({ select: { id: true, name: true, status: true, dueDate: true, priority: true } })
+        const rows = await prisma.crmTask.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { id: true, name: true, status: true, dueDate: true, priority: true } })
         const open = rows.filter((t) => t.status !== 5)
         const overdue = open.filter((t) => t.dueDate && new Date(t.dueDate) < startOfToday)
         const week = new Date(startOfToday.getTime() + 7 * 86400000)
@@ -190,7 +222,7 @@ export async function getDashboardMetrics() {
 
     await section('tickets', 'tickets', async () => {
         const [rows, statuses] = await Promise.all([
-            prisma.crmTicket.findMany({ select: { statusId: true } }),
+            prisma.crmTicket.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { statusId: true } }),
             prisma.crmTicketStatus.findMany({ orderBy: { statusOrder: 'asc' } }),
         ])
         const name = Object.fromEntries(statuses.map((s) => [s.id, s.name]))
@@ -200,13 +232,13 @@ export async function getDashboardMetrics() {
     })
 
     await section('estimates', 'estimates', async () => {
-        const rows = await prisma.crmEstimate.findMany({ select: { status: true } })
+        const rows = await prisma.crmEstimate.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { status: true } })
         return { total: rows.length, byStatus: count(rows, (e) => ESTIMATE_STATUS[e.status] || String(e.status)) }
     })
 
     await section('recent', 'payments', async () => {
         const [payments, activity] = await Promise.all([
-            prisma.crmPayment.findMany({ orderBy: { paymentDate: 'desc' }, take: 8, include: { invoice: { select: { id: true, number: true, prefix: true, currencyId: true } } } }),
+            prisma.crmPayment.findMany({ where: { paymentDate: { gte: since, lt: until } }, orderBy: { paymentDate: 'desc' }, take: 8, include: { invoice: { select: { id: true, number: true, prefix: true, currencyId: true } } } }),
             prisma.crmSalesActivity.findMany({ orderBy: { date: 'desc' }, take: 8 }),
         ])
         return {

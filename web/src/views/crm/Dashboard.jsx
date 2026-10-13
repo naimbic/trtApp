@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import dayjs from 'dayjs'
 import Card from '@/components/ui/Card'
-import Segment from '@/components/ui/Segment'
+import { useDashFilters, accentHex } from '@/store/dashFilterStore'
 import Skeleton from '@/components/ui/Skeleton'
 import Tag from '@/components/ui/Tag'
 import Chart from '@/components/shared/Chart'
@@ -23,7 +23,7 @@ import {
 const nf = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const compact = (v) => Number(v || 0).toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 2 })
 const nfi = (v) => Number(v || 0).toLocaleString('en-US')
-const monthLabel = (m) => dayjs(`${m}-01`).format('MMM YY')
+const monthLabel = (m) => (m.length === 10 ? dayjs(m).format('D MMM') : dayjs(`${m}-01`).format('MMM YY'))
 
 // ---------- chart styling shared by every chart
 const PALETTE = { blue: '#3b82f6', green: '#10b981', amber: '#f59e0b', red: '#ef4444', purple: '#8b5cf6', teal: '#14b8a6', pink: '#ec4899', slate: '#64748b' }
@@ -161,7 +161,9 @@ const TONES = {
     teal: ['bg-teal-100 text-teal-600', PALETTE.teal],
 }
 
-const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark }) => {
+const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark, accent }) => {
+    const useAccent = accent && tone !== 'red'
+    const color = useAccent ? accent : TONES[tone][1]
     const body = (
         <Card className="h-full overflow-hidden" bodyClass="p-4 flex flex-col h-full">
             <div className="flex items-center justify-between gap-3">
@@ -170,9 +172,9 @@ const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark }) 
                     <h3 className="mt-1 truncate" title={title || undefined}>{value}</h3>
                     {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
                 </div>
-                <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-2xl ${TONES[tone][0]}`}>{icon}</div>
+                <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-2xl ${useAccent ? '' : TONES[tone][0]}`} style={useAccent ? { background: `${accent}1f`, color: accent } : undefined}>{icon}</div>
             </div>
-            {spark && spark.length > 1 && <div className="-mx-4 -mb-4 mt-2"><Sparkline data={spark} color={TONES[tone][1]} /></div>}
+            {spark && spark.length > 1 && <div className="-mx-4 -mb-4 mt-2"><Sparkline data={spark} color={color} /></div>}
         </Card>
     )
     return to ? <Link to={to}>{body}</Link> : body
@@ -205,19 +207,41 @@ const List = ({ rows, empty, render }) =>
 const Dashboard = () => {
     const [data, setData] = useState(null)
     const [error, setError] = useState(null)
-    const [currencyId, setCurrencyId] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const { range, from, to, currencyId: pickedCurrency, accent: accentKey, setCurrency, setCurrencies } = useDashFilters()
+    const accent = accentHex(accentKey)
+    // secondary series must never match the accent (e.g. green accent + green "collected")
+    const second = [PALETTE.green, PALETTE.blue, PALETTE.amber, PALETTE.purple].find((c) => c.toLowerCase() !== accent.toLowerCase())
+    const third = [PALETTE.red, PALETTE.slate, PALETTE.pink].find((c) => c.toLowerCase() !== accent.toLowerCase() && c !== second)
 
+    // Custom range waits until both dates are set.
+    const ready = range !== 'custom' || (from && to && from <= to)
     useEffect(() => {
-        fetch('/api/crm/dashboard', { credentials: 'include' })
+        if (!ready) return undefined
+        let alive = true
+        setLoading(true)
+        const qs = new URLSearchParams({ range, ...(range === 'custom' ? { from, to } : {}) })
+        fetch(`/api/crm/dashboard?${qs}`, { credentials: 'include' })
             .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`Dashboard failed (${r.status})`))))
             .then((d) => {
+                if (!alive) return
                 setData(d)
+                setError(null)
                 const used = Object.keys(d.invoices?.byCurrency || {})
-                const def = d.currencies.find((c) => c.isDefault && used.includes(c.id)) || d.currencies.find((c) => used.includes(c.id))
-                setCurrencyId(def?.id || used[0] || null)
+                setCurrencies(d.currencies.filter((c) => used.includes(c.id)))
+                if (!used.includes(useDashFilters.getState().currencyId)) {
+                    const def = d.currencies.find((c) => c.isDefault && used.includes(c.id)) || d.currencies.find((c) => used.includes(c.id))
+                    setCurrency(def?.id || used[0] || null)
+                }
             })
-            .catch((e) => setError(e.message))
-    }, [])
+            .catch((e) => alive && setError(e.message))
+            .finally(() => alive && setLoading(false))
+        return () => {
+            alive = false
+        }
+    }, [range, from, to, ready, setCurrency, setCurrencies])
+
+    const currencyId = pickedCurrency
 
     const cur = useMemo(() => data?.currencies.find((c) => c.id === currencyId), [data, currencyId])
     const fmt = (v, id, short) => {
@@ -262,42 +286,35 @@ const Dashboard = () => {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h3>Dashboard</h3>
-                    <p className="text-sm text-gray-500">Business overview · updated {dayjs(data.generatedAt).format('HH:mm')}</p>
+                    <p className="text-sm text-gray-500">{data.range?.key === 'custom' ? '' : `${data.range?.label} · `}{data.range?.from} → {data.range?.to}{loading ? ' · updating…' : ''}</p>
                 </div>
-                {usedCurrencies.length > 1 && (
-                    <Segment value={currencyId} size="sm" onChange={(v) => setCurrencyId(v)}>
-                        {usedCurrencies.map((c) => (
-                            <Segment.Item key={c.id} value={c.id}>{c.name}</Segment.Item>
-                        ))}
-                    </Segment>
-                )}
             </div>
 
             {data.invoices && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    <StatCard icon={<PiReceiptDuotone />} label="Total invoiced" value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub="Excl. drafts & cancelled" tone="blue" to="/crm/invoices" spark={invoicedSeries} />
-                    <StatCard icon={<PiHandCoinsDuotone />} label="Collected" value={moneyShort(inv?.paid)} title={money(inv?.paid)} sub={inv?.invoiced ? `${Math.round((inv.paid / inv.invoiced) * 100)}% of invoiced` : ''} tone="green" to="/crm/payments" spark={collectedSeries} />
-                    <StatCard icon={<PiHourglassHighDuotone />} label="Outstanding" value={moneyShort(inv?.outstanding)} title={money(inv?.outstanding)} sub="Still to collect" tone="amber" spark={cumInvoiced.map((v, i) => Math.max(v - cumCollected[i], 0))} />
-                    <StatCard icon={<PiWarningCircleDuotone />} label="Overdue" value={moneyShort(inv?.overdue)} title={money(inv?.overdue)} sub={`${nfi(inv?.overdueCount)} invoice(s)`} tone="red" />
+                    <StatCard accent={accent} icon={<PiReceiptDuotone />} label="Total invoiced" value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub="Excl. drafts & cancelled" tone="blue" to="/crm/invoices" spark={invoicedSeries} />
+                    <StatCard accent={accent} icon={<PiHandCoinsDuotone />} label="Collected" value={moneyShort(inv?.paid)} title={money(inv?.paid)} sub={inv?.invoiced ? `${Math.round((inv.paid / inv.invoiced) * 100)}% of invoiced` : ''} tone="green" to="/crm/payments" spark={collectedSeries} />
+                    <StatCard accent={accent} icon={<PiHourglassHighDuotone />} label="Outstanding" value={moneyShort(inv?.outstanding)} title={money(inv?.outstanding)} sub="Still to collect" tone="amber" spark={cumInvoiced.map((v, i) => Math.max(v - cumCollected[i], 0))} />
+                    <StatCard accent={accent} icon={<PiWarningCircleDuotone />} label="Overdue" value={moneyShort(inv?.overdue)} title={money(inv?.overdue)} sub={`${nfi(inv?.overdueCount)} invoice(s)`} tone="red" />
                 </div>
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                {data.clients && <StatCard icon={<PiUsersThreeDuotone />} label="Clients" value={nfi(data.clients.total)} sub={`${nfi(data.clients.active)} active`} tone="blue" to="/crm/clients" spark={newClients} />}
-                {data.leads && <StatCard icon={<PiFunnelDuotone />} label="Open leads" value={nfi(data.leads.open)} sub={`${nfi(data.leads.converted)} converted`} tone="purple" to="/crm/leads" />}
-                {data.projects && <StatCard icon={<PiKanbanDuotone />} label="Projects" value={nfi(data.projects.total)} sub={`${nfi(data.projects.byStatus?.['In progress'])} in progress`} tone="teal" to="/crm/projects" />}
-                {data.tasks && <StatCard icon={<PiCheckSquareDuotone />} label="Open tasks" value={nfi(data.tasks.open)} sub={`${nfi(data.tasks.overdue)} overdue`} tone={data.tasks.overdue ? 'red' : 'green'} to="/crm/tasks" />}
-                {data.tickets && <StatCard icon={<PiLifebuoyDuotone />} label="Open tickets" value={nfi(data.tickets.open)} sub={`${nfi(data.tickets.total)} total`} tone="amber" to="/crm/tickets" />}
-                {data.estimates && <StatCard icon={<PiFileTextDuotone />} label="Estimates" value={nfi(data.estimates.total)} sub={`${nfi(data.estimates.byStatus?.Sent)} sent`} tone="blue" to="/crm/estimates" />}
+                {data.clients && <StatCard accent={accent} icon={<PiUsersThreeDuotone />} label="Clients" value={nfi(data.clients.total)} sub={`${nfi(data.clients.active)} active`} tone="blue" to="/crm/clients" spark={newClients} />}
+                {data.leads && <StatCard accent={accent} icon={<PiFunnelDuotone />} label="Open leads" value={nfi(data.leads.open)} sub={`${nfi(data.leads.converted)} converted`} tone="purple" to="/crm/leads" />}
+                {data.projects && <StatCard accent={accent} icon={<PiKanbanDuotone />} label="Projects" value={nfi(data.projects.total)} sub={`${nfi(data.projects.byStatus?.['In progress'])} in progress`} tone="teal" to="/crm/projects" />}
+                {data.tasks && <StatCard accent={accent} icon={<PiCheckSquareDuotone />} label="Open tasks" value={nfi(data.tasks.open)} sub={`${nfi(data.tasks.overdue)} overdue`} tone={data.tasks.overdue ? 'red' : 'green'} to="/crm/tasks" />}
+                {data.tickets && <StatCard accent={accent} icon={<PiLifebuoyDuotone />} label="Open tickets" value={nfi(data.tickets.open)} sub={`${nfi(data.tickets.total)} total`} tone="amber" to="/crm/tickets" />}
+                {data.estimates && <StatCard accent={accent} icon={<PiFileTextDuotone />} label="Estimates" value={nfi(data.estimates.total)} sub={`${nfi(data.estimates.byStatus?.Sent)} sent`} tone="blue" to="/crm/estimates" />}
             </div>
 
             {inv && (
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                    <Panel className="xl:col-span-2" title="Revenue · last 12 months" subtitle={`Invoiced vs collected vs expenses (${cur?.name})`}>
+                    <Panel className="xl:col-span-2" title={`Revenue · ${data.range?.label?.toLowerCase()}`} subtitle={`Invoiced vs collected vs expenses (${cur?.name})`}>
                         <TrendChart
                             labels={labels}
                             money={money}
-                            colors={[PALETTE.blue, PALETTE.green, PALETTE.red]}
+                            colors={[accent, second, third]}
                             series={[
                                 { name: 'Invoiced', data: invoicedSeries },
                                 { name: 'Collected', data: collectedSeries },
@@ -317,7 +334,7 @@ const Dashboard = () => {
                         <TrendChart
                             labels={labels}
                             money={money}
-                            colors={[PALETTE.purple, PALETTE.teal]}
+                            colors={[accent, second]}
                             height={280}
                             series={[
                                 { name: 'Invoiced (cumulative)', data: cumInvoiced },
@@ -340,7 +357,7 @@ const Dashboard = () => {
 
             {data.clients && (
                 <Panel title="New clients per month" subtitle="Client acquisition trend">
-                    <TrendChart labels={labels} colors={[PALETTE.purple]} height={220} series={[{ name: 'New clients', data: newClients }]} />
+                    <TrendChart labels={labels} colors={[accent]} height={220} series={[{ name: 'New clients', data: newClients }]} />
                 </Panel>
             )}
 

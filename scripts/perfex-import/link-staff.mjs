@@ -14,7 +14,8 @@ const keep = process.argv.includes('--keep-passwords')
 const prisma = new PrismaClient()
 let created = 0, linked = 0, skipped = 0
 
-for (const s of await prisma.crmStaff.findMany({ where: { userId: null, isNotStaff: false } })) {
+// filter in JS: Prisma's `userId: null` does not match MongoDB documents where the field was never stored
+for (const s of (await prisma.crmStaff.findMany({ where: { isNotStaff: false } })).filter((x) => !x.userId)) {
     if (!s.email) { skipped++; continue }
     const name = [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email
     let user = await prisma.user.findUnique({ where: { email: s.email } })

@@ -42,3 +42,7 @@ next-env.d.ts
 .qodo
 
 /src/generated/prisma
+
+# import reports (local run output)
+perfex-import-report.json
+perfex-import-apply-report.json

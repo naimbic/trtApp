@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.19.2',
+        date: '2026-10-13',
+        title: 'Client pages like the template',
+        items: ['Client page: profile card on the left (logo, contact details, address, admins, send email, new invoice, delete) and tabs on the right, starting with an Overview of billing totals, addresses and contacts', 'New and edit client use the template form layout with a sticky Save bar; Perfex fields kept (VAT/ICE, industry, currency, language, groups, admins, billing and shipping addresses, primary contact)'],
+    },
+    {
         version: '0.19.1',
         date: '2026-10-13',
         title: 'Projects dashboard',

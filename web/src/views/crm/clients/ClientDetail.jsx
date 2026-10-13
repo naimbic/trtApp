@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbPencil, TbPlus, TbTrash, TbFileInvoice } from 'react-icons/tb'
+import { TbPencil, TbPlus, TbTrash, TbFileInvoice, TbMail, TbPhone } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
+import Tooltip from '@/components/ui/Tooltip'
 import ImageUpload from '@/components/crm/ImageUpload'
-import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -20,7 +20,7 @@ import RecordDrawer from '../kit/RecordDrawer'
 import { api, notify, qs, useCan } from '../kit/api'
 import { useClientLookups, makeMoney } from './shared'
 
-const { TabList, TabNav, TabContent } = Tabs
+const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
 
 const Field = ({ label, children }) => (<div><div className="mb-0.5 text-xs uppercase tracking-wide text-gray-400">{label}</div><div>{children || <span className="text-gray-400">—</span>}</div></div>)
@@ -89,7 +89,7 @@ const ClientDetail = () => {
     const money = makeMoney(lookups.currencies)
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState('profile')
+    const [tab, setTab] = useState('overview')
     const [cur, setCur] = useState(null)
     const [confirmDel, setConfirmDel] = useState(false)
 
@@ -100,7 +100,7 @@ const ClientDetail = () => {
         if (!c) return []
         const where = { clientId: id }
         return [
-            { key: 'profile', label: 'Profile' },
+            { key: 'overview', label: 'Overview' },
             { key: 'contacts', label: 'Contacts', count: c.counts.contacts, rel: { resource: 'contacts', where, initial: { clientId: id }, hide: ['clientId'], columns: getResource('contacts').columns.filter((x) => x.key !== 'clientId') }, feature: 'customers' },
             { key: 'invoices', label: 'Invoices', count: c.counts.invoices, rel: { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: getResource('invoices').columns.filter((x) => x.key !== 'clientId') }, feature: 'invoices' },
             { key: 'payments', label: 'Payments', feature: 'payments' },
@@ -125,75 +125,88 @@ const ClientDetail = () => {
         }
     }
 
-    if (error) return <Container><AdaptiveCard><div className="text-red-500">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/clients')}>Back to clients</Button></AdaptiveCard></Container>
+    if (error) return <Container><Card><div className="text-red-500">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/clients')}>Back to clients</Button></Card></Container>
     if (!c) return <Container><div className="py-20 text-center text-gray-400">Loading…</div></Container>
 
     const m = c.money[cur]
     const currencies = Object.keys(c.money)
+    const primary = c.contacts.find((k) => k.isPrimary) || c.contacts[0]
+    const Info = ({ title, children }) => (children ? <div><span className="font-semibold">{title}</span><p className="heading-text font-bold break-words">{children}</p></div> : null)
 
     return (
         <Container>
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-                <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/clients')} />
-                <ImageUpload url={c.logoUrl} name={c.company} shape="square" size={56} uploadUrl={`/api/crm/customers/${id}/logo`} canEdit={can('customers', 'edit')} onChange={(url) => setC((x) => ({ ...x, logoUrl: url }))} />
-                <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2"><h3 className="truncate">{c.company}</h3><Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? 'Active' : 'Inactive'}</Tag>{c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>)}</div>
-                    <p className="text-sm text-gray-500">Client since {dayjs(c.createdAt).format('MMM D, YYYY')}{c.vat ? ` · VAT ${c.vat}` : ''}</p>
-                </div>
-                <div className="ml-auto flex flex-wrap gap-2">
-                    {can('invoices', 'create') && <Button size="sm" icon={<TbFileInvoice />} onClick={() => navigate(`/crm/invoices/new?clientId=${id}`)}>New invoice</Button>}
-                    {can('customers', 'edit') && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/clients/${id}/edit`)}>Edit</Button>}
-                    {can('customers', 'delete') && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDel(true)}>Delete</Button>}
-                </div>
-            </div>
-
-            {currencies.length > 0 && (
-                <div className="mb-4">
-                    {currencies.length > 1 && (
-                        <div className="mb-3"><Segment size="sm" value={cur} onChange={(v) => v && setCur(v)}>{currencies.map((k) => <Segment.Item key={k} value={k}>{lookups.currencies.find((x) => x.id === k)?.name || '?'}</Segment.Item>)}</Segment></div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                        <Card bodyClass="p-4"><div className="text-sm text-gray-500">Invoiced</div><h4 className="mt-1">{money(m?.invoiced, cur)}</h4><div className="text-xs text-gray-500">{m?.invoices} invoices</div></Card>
-                        <Card bodyClass="p-4"><div className="text-sm text-gray-500">Paid</div><h4 className="mt-1 text-emerald-600">{money(m?.paid, cur)}</h4></Card>
-                        <Card bodyClass="p-4"><div className="text-sm text-gray-500">Outstanding</div><h4 className="mt-1">{money(m?.outstanding, cur)}</h4></Card>
-                        <Card bodyClass="p-4"><div className="text-sm text-gray-500">Overdue</div><h4 className={`mt-1 ${m?.overdue > 0 ? 'text-red-500' : ''}`}>{money(m?.overdue, cur)}</h4></Card>
-                    </div>
-                </div>
-            )}
-
-            <AdaptiveCard>
-                <Tabs value={tab} onChange={setTab}>
-                    <TabList>
-                        {tabs.map((t) => <TabNav key={t.key} value={t.key}>{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
-                    </TabList>
-                    <div className="pt-5">
-                        {tab === 'profile' && (
-                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                                <div className="flex flex-col gap-4">
-                                    <h6 className="text-gray-500">Company</h6>
-                                    <Field label="Industry">{c.industry}</Field><Field label="Phone">{c.phone}</Field><Field label="Website">{c.website && <a className="text-primary hover:underline" href={c.website.startsWith('http') ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">{c.website}</a>}</Field>
-                                    <Field label="Default currency">{lookups.currencies.find((x) => x.id === c.currencyId)?.name}</Field><Field label="Language">{c.language}</Field>
-                                    <Field label="Customer admins">{c.admins.map((a) => a.name).join(', ')}</Field>
-                                </div>
-                                <div className="flex flex-col gap-4">
-                                    <h6 className="text-gray-500">Address</h6>
-                                    <Field label="Address">{addrLine({ street: c.address, city: c.city, state: c.state, zip: c.zip, countryName: c.countryName })}</Field>
-                                    <Field label="Billing">{addrLine(c.billing)}</Field><Field label="Shipping">{addrLine(c.shipping)}</Field>
-                                </div>
-                                <div className="flex flex-col gap-3">
-                                    <h6 className="text-gray-500">Contacts</h6>
-                                    {c.contacts.length ? c.contacts.map((k) => (
-                                        <div key={k.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600"><div className="flex items-center gap-2 font-semibold">{k.name}{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">Primary</Tag>}{!k.active && <Tag>Inactive</Tag>}</div><div className="text-sm text-gray-500">{[k.title, k.email, k.phone].filter(Boolean).join(' · ')}</div></div>
-                                    )) : <span className="text-gray-400">No contacts yet</span>}
-                                </div>
+            <div className="flex flex-col gap-4 xl:flex-row">
+                <div className="min-w-[330px] 2xl:min-w-[400px]">
+                    <Card className="w-full">
+                        <div className="flex justify-end">
+                            {can('customers', 'edit') && <Tooltip title="Edit client"><button className="close-button button-press-feedback" type="button" onClick={() => navigate(`/crm/clients/${id}/edit`)}><TbPencil /></button></Tooltip>}
+                        </div>
+                        <div className="mx-auto flex h-full flex-col xl:justify-between 2xl:min-w-[360px]">
+                            <div className="mt-6 flex items-center gap-4 xl:flex-col">
+                                <ImageUpload url={c.logoUrl} name={c.company} shape="circle" size={90} uploadUrl={`/api/crm/customers/${id}/logo`} canEdit={can('customers', 'edit')} onChange={(url) => setC((x) => ({ ...x, logoUrl: url }))} />
+                                <div className="text-center"><h4 className="font-bold">{c.company}</h4><div className="mt-2 flex flex-wrap justify-center gap-1"><Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? 'Active' : 'Inactive'}</Tag>{c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>)}</div></div>
                             </div>
-                        )}
-                        {tab === 'payments' && <PaymentsTab id={id} money={money} />}
-                        {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
-                        {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={load} /> : null })()}
-                    </div>
-                </Tabs>
-            </AdaptiveCard>
+                            <div className="mt-10 grid grid-cols-1 gap-x-4 gap-y-7 sm:grid-cols-2 xl:grid-cols-1">
+                                <Info title="Email">{primary?.email}</Info>
+                                <Info title="Phone">{c.phone || primary?.phone}</Info>
+                                <Info title="Website">{c.website && <a className="text-primary hover:underline" href={c.website.startsWith('http') ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">{c.website}</a>}</Info>
+                                <Info title="VAT / ICE">{c.vat}</Info>
+                                <Info title="Industry">{c.industry}</Info>
+                                <Info title="Address">{addrLine({ street: c.address, city: c.city, state: c.state, zip: c.zip, countryName: c.countryName })}</Info>
+                                <Info title="Default currency">{lookups.currencies.find((x) => x.id === c.currencyId)?.name}</Info>
+                                <Info title="Language">{c.language}</Info>
+                                <Info title="Customer admins">{c.admins.map((a) => a.name).join(', ')}</Info>
+                                <Info title="Client since">{dayjs(c.createdAt).format('DD MMM YYYY')}</Info>
+                            </div>
+                            <div className="mt-8 flex flex-col gap-4">
+                                {primary?.email && <Button block variant="solid" icon={<TbMail />} onClick={() => { window.location.href = `mailto:${primary.email}` }}>Send email</Button>}
+                                {can('invoices', 'create') && <Button block icon={<TbFileInvoice />} onClick={() => navigate(`/crm/invoices/new?clientId=${id}`)}>New invoice</Button>}
+                                {can('customers', 'delete') && <Button block customColorClass={() => 'text-error hover:border-error hover:ring-1 ring-error hover:text-error'} icon={<TbTrash />} onClick={() => setConfirmDel(true)}>Delete</Button>}
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
+                <Card className="w-full min-w-0">
+                    <Tabs value={tab} onChange={setTab}>
+                        <TabList>
+                            {tabs.map((t) => <TabNav key={t.key} value={t.key}>{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
+                        </TabList>
+                        <div className="p-4">
+                            {tab === 'overview' && (
+                                <div className="flex flex-col gap-8">
+                                    {currencies.length > 0 ? (
+                                        <div>
+                                            {currencies.length > 1 && <div className="mb-3"><Segment size="sm" value={cur} onChange={(v) => v && setCur(v)}>{currencies.map((k) => <Segment.Item key={k} value={k}>{lookups.currencies.find((x) => x.id === k)?.name || '?'}</Segment.Item>)}</Segment></div>}
+                                            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                                                <div className="rounded-2xl bg-sky-100 p-4 dark:bg-sky-100/10"><div className="font-bold text-gray-900 dark:text-gray-100">Invoiced</div><h4 className="mt-2">{money(m?.invoiced, cur)}</h4><div className="text-xs text-gray-600 dark:text-gray-400">{m?.invoices} invoices</div></div>
+                                                <div className="rounded-2xl bg-emerald-100 p-4 dark:bg-emerald-100/10"><div className="font-bold text-gray-900 dark:text-gray-100">Paid</div><h4 className="mt-2">{money(m?.paid, cur)}</h4></div>
+                                                <div className="rounded-2xl bg-purple-100 p-4 dark:bg-purple-100/10"><div className="font-bold text-gray-900 dark:text-gray-100">Outstanding</div><h4 className="mt-2">{money(m?.outstanding, cur)}</h4></div>
+                                                <div className="rounded-2xl bg-red-100 p-4 dark:bg-red-100/10"><div className="font-bold text-gray-900 dark:text-gray-100">Overdue</div><h4 className={`mt-2 ${m?.overdue > 0 ? 'text-red-600' : ''}`}>{money(m?.overdue, cur)}</h4></div>
+                                            </div>
+                                        </div>
+                                    ) : <p className="text-gray-400">No invoices yet.</p>}
+                                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                                        <div><h6 className="mb-3 text-gray-500">Billing address</h6><p>{addrLine(c.billing) || <span className="text-gray-400">—</span>}</p></div>
+                                        <div><h6 className="mb-3 text-gray-500">Shipping address</h6><p>{addrLine(c.shipping) || <span className="text-gray-400">—</span>}</p></div>
+                                    </div>
+                                    <div>
+                                        <h6 className="mb-3 text-gray-500">Contacts</h6>
+                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                            {c.contacts.length ? c.contacts.map((k) => (
+                                                <div key={k.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600"><div className="flex items-center gap-2 font-semibold">{k.name}{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">Primary</Tag>}{!k.active && <Tag>Inactive</Tag>}</div><div className="mt-1 space-y-0.5 text-sm text-gray-500">{k.title && <div>{k.title}</div>}{k.email && <div className="flex items-center gap-1"><TbMail />{k.email}</div>}{k.phone && <div className="flex items-center gap-1"><TbPhone />{k.phone}</div>}</div></div>
+                                            )) : <span className="text-gray-400">No contacts yet</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {tab === 'payments' && <PaymentsTab id={id} money={money} />}
+                            {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
+                            {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={load} /> : null })()}
+                        </div>
+                    </Tabs>
+                </Card>
+            </div>
 
             <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this client?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
                 <p>{c.company} and its contacts will be removed. Clients that still have invoices, estimates, contracts, projects or tickets cannot be deleted — deactivate them instead.</p>

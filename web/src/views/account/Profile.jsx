@@ -211,9 +211,9 @@ const Profile = () => {
                             <p className="mb-5 text-sm text-gray-500">How the CRM looks and behaves for you.</p>
                             <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
                                 <Field label="Theme"><Segment value={p.display.theme} onChange={(v) => v && setD('theme', v)}><Segment.Item value="light">Light</Segment.Item><Segment.Item value="dark">Dark</Segment.Item><Segment.Item value="system">Automatic</Segment.Item></Segment></Field>
-                                <Field label="Time format" hint="Used in the calendar"><Segment value={p.display.timeFormat} onChange={(v) => v && setD('timeFormat', v)}><Segment.Item value="24h">24 hours</Segment.Item><Segment.Item value="12h">12 hours</Segment.Item></Segment></Field>
+                                <Field label="Time format" hint="Used in the calendar"><Segment value={p.display.timeFormat || 'default'} onChange={(v) => v && setD('timeFormat', v === 'default' ? '' : v)}><Segment.Item value="default">Platform default</Segment.Item><Segment.Item value="24h">24 hours</Segment.Item><Segment.Item value="12h">12 hours</Segment.Item></Segment></Field>
                                 <Field label="Week starts on" hint="Used in the calendar">
-                                    <Segment value={String(p.display.weekStart)} onChange={(v) => v && setD('weekStart', Number(v))}><Segment.Item value="1">Monday</Segment.Item><Segment.Item value="0">Sunday</Segment.Item><Segment.Item value="6">Saturday</Segment.Item></Segment>
+                                    <Segment value={p.display.weekStart === '' ? 'default' : String(p.display.weekStart)} onChange={(v) => v && setD('weekStart', v === 'default' ? '' : Number(v))}><Segment.Item value="default">Platform default</Segment.Item><Segment.Item value="1">Monday</Segment.Item><Segment.Item value="0">Sunday</Segment.Item><Segment.Item value="6">Saturday</Segment.Item></Segment>
                                 </Field>
                             </div>
                         </Card>

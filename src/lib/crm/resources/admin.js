@@ -216,7 +216,7 @@ const resources = [
 
     // ---------------------------------------------------------------- Setup
     {
-        key: 'settings', model: 'crmOption', label: 'Setting', plural: 'Settings',
+        key: 'settings', model: 'crmOption', nav: false, label: 'Setting', plural: 'Settings',
         group: 'Setup', icon: 'TbSettings', feature: 'settings',
         titleField: 'name', search: ['name', 'value'], defaultSort: { name: 'asc' },
         columns: [

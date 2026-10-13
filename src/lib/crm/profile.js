@@ -15,9 +15,9 @@ const URL_RE = /^https?:\/\/[^\s]+$/i
 
 export const DEFAULT_PREFS = {
     notify: { invoicePaid: true, taskAssigned: true, ticketReply: true, eventReminder: true, dailyDigest: false, desktop: true },
-    display: { theme: 'system', dateFormat: 'DD/MM/YYYY', timeFormat: '24h', weekStart: 1, landing: '/dashboard' },
+    display: { theme: 'system', dateFormat: 'DD/MM/YYYY', timeFormat: '', weekStart: '', landing: '/dashboard' },
 }
-const THEMES = ['light', 'dark', 'system'], DATES = ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'], TIMES = ['24h', '12h'], WEEK = [0, 1, 6]
+const THEMES = ['light', 'dark', 'system'], DATES = ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'], TIMES = ['', '24h', '12h'], WEEK = ['', 0, 1, 6]
 const LANDINGS = ['/dashboard', '/calendar', '/crm/invoices', '/crm/clients', '/crm/contracts', '/crm/tasks-board']
 
 function mergePrefs(raw) {
@@ -94,7 +94,7 @@ export async function updateProfile(body) {
         if (THEMES.includes(d.theme)) next.display.theme = d.theme
         if (DATES.includes(d.dateFormat)) next.display.dateFormat = d.dateFormat
         if (TIMES.includes(d.timeFormat)) next.display.timeFormat = d.timeFormat
-        if (WEEK.includes(Number(d.weekStart))) next.display.weekStart = Number(d.weekStart)
+        if (d.weekStart === '' || WEEK.includes(Number(d.weekStart))) next.display.weekStart = d.weekStart === '' ? '' : Number(d.weekStart)
         if (LANDINGS.includes(d.landing)) next.display.landing = d.landing
         staffData.preferences = JSON.stringify(next)
     }

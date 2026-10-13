@@ -64,9 +64,11 @@ export async function removeCompanyImage(kind) {
 
 // ---- used by the PDF / public pages: the logo as a data URI (so documents render and print without outside requests)
 const cache = new Map()
-export async function companyImageDataUri(kind, fallbackFile) {
-    const spec = IMAGES[kind]
-    const url = (await getOptions([spec[0]]))(spec[0])
+export async function companyImageDataUri(kind, fallbackFile, keys) {
+    const spec = IMAGES[kind] || IMAGES.logo
+    const lookup = keys || [spec[0]]
+    const get = await getOptions(lookup)
+    const url = lookup.map((k) => get(k)).find(Boolean) || ''
     if (url) {
         const hit = cache.get(url)
         if (hit && Date.now() - hit.at < 600000) return hit.uri

@@ -33,17 +33,20 @@ const InvoiceEditor = () => {
                 setDoc(d)
                 const inv = d?.invoice
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
+                const dd = l.defaults || {}
+                const dueAfter = dd.dueAfter !== '' && dd.dueAfter != null ? Number(dd.dueAfter) : 30
+                const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
                 setV({
                     clientId: inv?.clientId || params.get('clientId') || null,
                     date: day(inv?.date) || day(new Date()),
-                    dueDate: day(inv?.dueDate) || day(dayjs().add(30, 'day')),
+                    dueDate: day(inv?.dueDate) || day(dayjs().add(dueAfter, 'day')),
                     currencyId: inv?.currencyId || def?.id || null,
                     discountPercent: inv?.discountPercent || 0,
                     discountFixed: inv && !inv.discountPercent ? inv.discountTotal || 0 : 0,
                     discountType: inv?.discountType || 'before_tax',
                     adjustment: inv?.adjustment || 0,
-                    clientNote: inv?.clientNote || '', adminNote: inv?.adminNote || '', terms: inv?.terms || '',
-                    items: d?.items?.length ? d.items : [emptyLine()],
+                    clientNote: inv ? inv.clientNote || '' : dd.clientNote || '', adminNote: inv?.adminNote || '', terms: inv ? inv.terms || '' : dd.terms || '',
+                    items: d?.items?.length ? d.items : [baseLine()],
                 })
             })
             .catch((e) => setError(e.message))
@@ -57,6 +60,7 @@ const InvoiceEditor = () => {
 
     const currency = lookups.currencies.find((c) => c.id === v.currencyId)
     const money = (n) => makeMoney(lookups.currencies)(n, v.currencyId)
+    const newLine = () => ({ ...emptyLine(), taxes: (lookups.defaults?.taxes || []).filter((t) => lookups.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
     const set = (patch) => setV((s) => ({ ...s, ...patch }))
     const setLine = (i, patch) => set({ items: v.items.map((r, idx) => (idx === i ? { ...r, ...patch } : r)) })
     const num = (key) => (e) => set({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
@@ -119,13 +123,13 @@ const InvoiceEditor = () => {
                                         <td className="pb-3 pr-2"><Input type="number" step="0.01" value={it.rate} onChange={(e) => setLine(i, { rate: e.target.value === '' ? '' : Number(e.target.value) })} /></td>
                                         <td className="pb-3 pr-2"><Select isMulti options={taxOptions} value={taxOptions.filter((o) => it.taxes.some((t) => `${t.name}|${t.rate}` === o.value))} onChange={(opts) => setLine(i, { taxes: (opts || []).map((o) => o.tax) })} /></td>
                                         <td className="pb-3 pr-2 pt-2 text-right tabular-nums">{money2((Number(it.qty) || 0) * (Number(it.rate) || 0))}</td>
-                                        <td className="pb-3"><Button size="sm" variant="plain" icon={<TbTrash />} onClick={() => set({ items: v.items.length > 1 ? v.items.filter((_, x) => x !== i) : [emptyLine()] })} /></td>
+                                        <td className="pb-3"><Button size="sm" variant="plain" icon={<TbTrash />} onClick={() => set({ items: v.items.length > 1 ? v.items.filter((_, x) => x !== i) : [newLine()] })} /></td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    <Button size="sm" icon={<TbPlus />} onClick={() => set({ items: [...v.items, emptyLine()] })}>Add line</Button>
+                    <Button size="sm" icon={<TbPlus />} onClick={() => set({ items: [...v.items, newLine()] })}>Add line</Button>
 
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="grid grid-cols-2 content-start gap-4">

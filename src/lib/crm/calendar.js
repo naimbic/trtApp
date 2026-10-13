@@ -92,39 +92,41 @@ export async function getCalendarItems({ from, to }) {
         })
     }
 
+    const lay = await getOptions(['show_tasks_on_calendar', 'show_invoices_on_calendar', 'show_estimates_on_calendar', 'show_proposals_on_calendar', 'show_contracts_on_calendar', 'show_projects_on_calendar'])
+    const on = (k) => lay(k, '1') !== '0'
     const range = { gte: start, lt: end }
     const day = (d) => new Date(d).toISOString().slice(0, 10)
     const allClients = Object.fromEntries((await prisma.crmClient.findMany({ select: { id: true, company: true } })).map((c) => [c.id, c.company]))
     const add = (type, id, title, date, color, href, detail = '', clientId = null) => items.push({ id: `${type}:${id}`, title, start: day(date), allDay: true, eventColor: color, type, editable: false, href, detail, clientName: clientId ? allClients[clientId] || '' : '' })
 
-    if (ctx.can('tasks')) {
+    if (ctx.can('tasks') && on('show_tasks_on_calendar')) {
         layers.push('tasks')
         const rows = await prisma.crmTask.findMany({ where: { dueDate: range, status: { not: 5 } }, select: { id: true, name: true, dueDate: true } })
         rows.forEach((t) => add('tasks', t.id, `Task: ${t.name}`, t.dueDate, 'orange', `/crm/tasks/${t.id}`, 'Task due'))
     }
-    if (ctx.can('invoices')) {
+    if (ctx.can('invoices') && on('show_invoices_on_calendar')) {
         layers.push('invoices')
         const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, status: true, dueDate: true, total: true } })
         const pad = await numberPadding()
         rows.forEach((i) => add('invoices', i.id, `Invoice ${docNumberOf(i, pad)} due · ${round2(i.total).toLocaleString('en-US')}`, i.dueDate, 'red', `/crm/invoices/${i.id}`, `Invoice due · ${round2(i.total).toLocaleString('en-US')}`, i.clientId))
     }
-    if (ctx.can('projects')) {
+    if (ctx.can('projects') && on('show_projects_on_calendar')) {
         layers.push('projects')
         const rows = await prisma.crmProject.findMany({ where: { deadline: range, status: { notIn: [4, 5] } }, select: { id: true, name: true, deadline: true } })
         rows.forEach((p) => add('projects', p.id, `Project deadline: ${p.name}`, p.deadline, 'purple', `/crm/projects/${p.id}`))
     }
-    if (ctx.can('estimates')) {
+    if (ctx.can('estimates') && on('show_estimates_on_calendar')) {
         layers.push('estimates')
         const rows = await prisma.crmEstimate.findMany({ where: { expiryDate: range, status: { in: [1, 2] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, expiryDate: true } })
         const epad = await numberPadding()
         rows.forEach((e) => add('estimates', e.id, `Estimate ${docNumberOf(e, epad, null)} expires`, e.expiryDate, 'yellow', `/crm/estimates/${e.id}`, 'Estimate expires', e.clientId))
     }
-    if (ctx.can('proposals')) {
+    if (ctx.can('proposals') && on('show_proposals_on_calendar')) {
         layers.push('proposals')
         const rows = await prisma.crmProposal.findMany({ where: { openTill: range, status: { in: [1, 4, 5] } }, select: { id: true, subject: true, openTill: true } })
         rows.forEach((p) => add('proposals', p.id, `Proposal open till: ${p.subject || ''}`, p.openTill, 'green', `/crm/proposals/${p.id}`))
     }
-    if (ctx.can('contracts')) {
+    if (ctx.can('contracts') && on('show_contracts_on_calendar')) {
         layers.push('contracts')
         const rows = await prisma.crmContract.findMany({ where: { dateEnd: range }, select: { id: true, clientId: true, subject: true, dateEnd: true } })
         rows.forEach((c) => add('contracts', c.id, `Contract ends: ${c.subject || ''}`, c.dateEnd, 'blue', `/crm/contracts/${c.id}`, 'Contract ends', c.clientId))

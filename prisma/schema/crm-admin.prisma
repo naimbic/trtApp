@@ -846,3 +846,17 @@ model CrmMedia {
   @@index([createdAt])
   @@map("crm_media")
 }
+
+/// One run of the cron job (scheduled call or "Run cron manually").
+model CrmCronRun {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  startedAt  DateTime @default(now())
+  trigger    String   // http | manual
+  ok         Boolean  @default(true)
+  summary    String?
+  lines      String[]
+  ms         Int      @default(0)
+
+  @@index([startedAt])
+  @@map("crm_cron_runs")
+}

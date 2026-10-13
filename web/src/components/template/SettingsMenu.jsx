@@ -5,7 +5,7 @@ import { PiGearSixDuotone, PiEnvelopeSimpleDuotone, PiUsersThreeDuotone, PiShiel
 import { useSessionUser } from '@/store/authStore'
 
 const ITEMS = [
-    { label: 'Company & logo', desc: 'Details printed on documents', path: '/crm/company', icon: <PiBuildingsDuotone />, need: ['settings'] },
+    { label: 'Company & logos', desc: 'Details printed on documents', path: '/crm/settings?group=company', icon: <PiBuildingsDuotone />, need: ['settings'] },
     { label: 'File manager', desc: 'Uploads in DigitalOcean Spaces', path: '/crm/file-manager', icon: <PiFolderOpenDuotone />, need: [] },
     { label: 'Mail server & templates', desc: 'SMTP, email designs, sent log', path: '/crm/mails', icon: <PiEnvelopeSimpleDuotone />, need: ['email_templates'] },
     { label: 'Team members', desc: 'Accounts and access', path: '/team', icon: <PiUsersThreeDuotone />, need: ['staff'] },

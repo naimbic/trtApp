@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
+import { allocateNumber, checkDeletable, afterDelete } from '@/lib/crm/sales/docNumbering'
 
 const REL = 'invoice'
 const plain = (v) => JSON.parse(JSON.stringify(v))
@@ -64,7 +65,10 @@ export async function getInvoiceLookups() {
         prisma.crmCurrency.findMany({ orderBy: { name: 'asc' } }),
         prisma.crmPaymentMode.findMany({ orderBy: { name: 'asc' } }),
     ])
+    const o = async (n, fb = '') => (await prisma.crmOption.findUnique({ where: { name: n } }))?.value ?? fb
+    const defaultTaxes = [...String(await o('default_tax')).matchAll(/s:\d+:"([^"]*)"/g)].map((m) => { const [name, rate] = m[1].split('|'); return { name, rate: Number(rate) } })
     return plain({
+        defaults: { dueAfter: await o('invoice_due_after'), clientNote: await o('predefined_clientnote_invoice'), terms: await o('predefined_terms_invoice'), taxes: defaultTaxes },
         taxes: taxes.map((t) => ({ name: t.name, rate: t.taxRate })),
         currencies: currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, isDefault: c.isDefault, placement: c.placement })),
         paymentModes: paymentModes.map((m) => ({ id: m.id, name: m.name })),
@@ -149,14 +153,8 @@ export async function saveInvoice(input) {
 
     let invoice
     if (isNew) {
-        const prefix = await option('invoice_prefix', 'INV-')
-        const numberFormat = Number(await option('invoice_number_format', '1')) || 1
-        const next = Number(await option('next_invoice_number', '0')) || 0
-        // Perfex numbering: the `next_invoice_number` option is the sequence (it may restart, e.g. each year);
-        // only fall back to "highest real number + 1" when the option is missing. Drafts use placeholder numbers
-        // around 1,000,000,000 which must never feed the sequence.
-        const last = await prisma.crmInvoice.findFirst({ where: { number: { lt: 1000000000 } }, orderBy: { number: 'desc' }, select: { number: true } })
-        const number = next > 0 ? next : (last?.number || 0) + 1
+        // prefix, format, next number and the restart rule all come from Settings → Billing → Invoices
+        const { number, prefix, numberFormat } = await allocateNumber('invoice', data.date)
         invoice = await prisma.crmInvoice.create({
             data: {
                 ...data,
@@ -167,11 +165,6 @@ export async function saveInvoice(input) {
                 addedFrom: staffId || undefined,
                 hash: crypto.randomUUID().replace(/-/g, ''),
             },
-        })
-        await prisma.crmOption.upsert({
-            where: { name: 'next_invoice_number' },
-            update: { value: String(number + 1) },
-            create: { name: 'next_invoice_number', value: String(number + 1) },
         })
     } else {
         const existing = await prisma.crmInvoice.findUnique({ where: { id: input.id } })
@@ -292,11 +285,14 @@ export async function deleteInvoice(id) {
     const invoice = await prisma.crmInvoice.findUnique({ where: { id } })
     if (!invoice) return fail('Invoice not found')
     if ((await prisma.crmPayment.count({ where: { invoiceId: id } })) > 0) return fail('This invoice has payments. Delete the payments first, or cancel the invoice instead.')
+    const blocked = await checkDeletable('invoice', invoice)
+    if (blocked) return fail(blocked)
     const lines = await prisma.crmItemable.findMany({ where: { relType: REL, relId: id }, select: { id: true } })
     await prisma.crmItemTax.deleteMany({ where: { relType: REL, relId: id } })
     await prisma.crmItemable.deleteMany({ where: { id: { in: lines.map((l) => l.id) } } })
     await prisma.crmSalesActivity.deleteMany({ where: { relType: REL, relId: id } })
     await prisma.crmInvoice.delete({ where: { id } })
+    await afterDelete('invoice', invoice)
     void session
     return { success: true }
 }

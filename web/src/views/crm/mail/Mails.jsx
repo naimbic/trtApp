@@ -273,4 +273,5 @@ const Mails = () => {
     )
 }
 
+export { Settings as MailServerSettings }
 export default Mails

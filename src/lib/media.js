@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import sharp from 'sharp'
 import { PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import spaces, { BUCKET, CDN_URL } from '@/lib/spaces'
+import prisma from '@/lib/prisma'
 
 /**
  * Everything that touches the Space: validation, image optimisation (always WebP), upload and deletion.
@@ -18,6 +19,7 @@ export const PRESETS = {
     logo: { w: 900, h: 400, fit: 'inside', quality: 90, nearLossless: true },
     signature: { w: 700, h: 300, fit: 'inside', quality: 90, nearLossless: true },
     cover: { w: 1600, h: 600, fit: 'cover', quality: 80 },
+    favicon: { w: 192, h: 192, fit: 'contain', quality: 92, nearLossless: true, background: { r: 0, g: 0, b: 0, alpha: 0 } },
     attachment: { w: 2400, h: 2400, fit: 'inside', quality: 82 },
     library: { w: 2400, h: 2400, fit: 'inside', quality: 82 },
 }
@@ -31,6 +33,17 @@ const FILE_TYPES = {
     mp4: ['video', 'video/mp4'], mov: ['video', 'video/quicktime'], webm: ['video', 'video/webm'], mp3: ['audio', 'audio/mpeg'], wav: ['audio', 'audio/wav'], m4a: ['audio', 'audio/mp4'],
 }
 const IMAGE_FORMATS = new Set(['jpeg', 'png', 'webp', 'gif', 'avif', 'tiff', 'heif'])
+
+let cfgCache = { at: 0, allowed: null, maxMb: null }
+/** Settings → General → Files: allowed extensions and the largest upload (cached for 30 s). */
+async function uploadConfig() {
+    if (Date.now() - cfgCache.at < 30000) return cfgCache
+    const rows = await prisma.crmOption.findMany({ where: { name: { in: ['allowed_files', 'media_max_file_size_upload'] } } }).catch(() => [])
+    const m = Object.fromEntries(rows.map((r) => [r.name, r.value]))
+    const list = String(m.allowed_files || '').split(/[,;\s]+/).map((x) => x.replace(/^\./, '').toLowerCase()).filter(Boolean)
+    cfgCache = { at: Date.now(), allowed: list.length ? new Set(list) : null, maxMb: Number(m.media_max_file_size_upload) > 0 ? Number(m.media_max_file_size_upload) : null }
+    return cfgCache
+}
 
 export class MediaError extends Error {
     constructor(message, status = 400) { super(message); this.status = status }
@@ -51,6 +64,9 @@ export async function processUpload(file, { purpose = 'library', imageOnly = fal
     if (!file || typeof file.arrayBuffer !== 'function') throw new MediaError('No file received')
     const name = safeName(file.name)
     const ext = extOf(name)
+    const cfg = await uploadConfig()
+    if (cfg.allowed && !cfg.allowed.has(ext) && !(ext === 'jpg' && cfg.allowed.has('jpeg')) && !(ext === 'jpeg' && cfg.allowed.has('jpg'))) throw new MediaError(`".${ext || 'unknown'}" files are not allowed in Settings → General → Files`)
+    if (cfg.maxMb && file.size > cfg.maxMb * MB) throw new MediaError(`"${name}" is larger than ${cfg.maxMb} MB (Settings → General → Files)`)
     const raw = Buffer.from(await file.arrayBuffer())
     if (!raw.length) throw new MediaError(`"${name}" is empty`)
 
@@ -63,7 +79,7 @@ export async function processUpload(file, { purpose = 'library', imageOnly = fal
         const preset = PRESETS[purpose] || PRESETS.library
         const animated = (meta.pages || 1) > 1 && ['gif', 'webp'].includes(meta.format)
         let pipeline = sharp(raw, { failOn: 'none', animated, limitInputPixels: 100e6 }).rotate()
-        pipeline = pipeline.resize({ width: preset.w, height: preset.h, fit: preset.fit, position: 'attention', withoutEnlargement: preset.fit !== 'cover' })
+        pipeline = pipeline.resize({ width: preset.w, height: preset.h, fit: preset.fit, position: 'attention', background: preset.background, withoutEnlargement: preset.fit === 'inside' })
         const out = await pipeline.webp({ quality: preset.quality, effort: 5, smartSubsample: true, alphaQuality: 100, ...(preset.nearLossless ? { nearLossless: true } : {}) }).toBuffer({ resolveWithObject: true })
         // keep the original if it was already a smaller WebP and needed no resize
         let buffer = out.data, width = out.info.width, height = out.info.height

@@ -10,6 +10,9 @@ import { getOptions } from '@/lib/crm/mailer'
 import { formatDocumentNumber, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import { companyImageDataUri } from '@/lib/crm/company'
+import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
+import { amountInWords } from '@/lib/crm/numberWords'
+import { companyTokenData, renderInfoFormat, clientTokenData, phpDate, COMPANY_KEYS } from '@/lib/crm/docTokens'
 
 const run = promisify(execFile)
 // Item descriptions are stored as small HTML snippets: keep basic formatting, drop everything else.
@@ -24,15 +27,7 @@ const LABELS = {
 }
 const STATUS_COLOR = { 1: '#d97706', 2: '#059669', 3: '#2563eb', 4: '#dc2626', 5: '#6b7280', 6: '#6b7280' }
 
-const fmtNumber = (n, cur, sep) => {
-    const [i, d] = Math.abs(Number(n) || 0).toFixed(2).split('.')
-    return `${n < 0 ? '-' : ''}${i.replace(/\B(?=(\d{3})+(?!\d))/g, sep.thousand)}${sep.decimal}${d}`
-}
-const money = (n, cur, sep) => {
-    const v = fmtNumber(n, cur, sep)
-    const sym = cur?.symbol || cur?.name || ''
-    return cur?.placement === 'before' ? `${sym}${v}` : `${v} ${sym}`.trim()
-}
+const money = (n, cur, sep) => formatMoney(n, cur, { sep, trimZero: false })
 
 function logoDataUri(file) {
     const candidates = [file && path.join(process.cwd(), 'storage', 'company', file)]
@@ -44,29 +39,23 @@ function logoDataUri(file) {
     return ''
 }
 
-const fmtDate = (d, fmt) => {
-    if (!d) return ''
-    const x = new Date(d)
-    const dd = String(x.getUTCDate()).padStart(2, '0'), mm = String(x.getUTCMonth() + 1).padStart(2, '0'), yy = x.getUTCFullYear()
-    return /^d\/m\/Y/.test(fmt || '') || !fmt ? `${dd}/${mm}/${yy}` : `${yy}-${mm}-${dd}`
-}
+const fmtDate = (d, fmt, tz) => phpDate(d, fmt, tz)
 
-/** The Perfex "Organization info" block, built from company_info_format or from the invoice_company_* options. */
-function organizationInfo(o) {
+/** The company block at the top of documents: company_info_format with merge terms, or a built-in fallback. */
+async function organizationInfo(o) {
+    const get = await getOptions(COMPANY_KEYS)
+    const data = companyTokenData(get)
     const fmt = o('company_info_format')
-    if (fmt) return fmt
-    const lines = [o('invoice_company_name', o('companyname')), o('invoice_company_address'), [o('invoice_company_postal_code'), o('invoice_company_city')].filter(Boolean).join(' '), o('invoice_company_phonenumber'), o('company_vat') && `VAT: ${o('company_vat')}`]
+    if (fmt) return renderInfoFormat(fmt, data)
+    const lines = [data.company_name, data.address, [data.zip_code, data.city].filter(Boolean).join(' '), data.phone, data.vat_number_with_label]
     return lines.filter(Boolean).map(esc).join('<br />')
 }
 
-async function customerInfo(client, invoice, L) {
-    const street = invoice.billingStreet || client?.billingStreet || client?.address
-    const city = invoice.billingCity || client?.billingCity || client?.city
-    const state = invoice.billingState || client?.billingState || client?.state
-    const zip = invoice.billingZip || client?.billingZip || client?.zip
-    const countryId = invoice.billingCountry ?? client?.billingCountry ?? client?.country
-    const country = countryId ? await prisma.crmCountry.findFirst({ where: { legacyId: countryId }, select: { shortName: true } }) : null
-    const lines = [`<strong>${esc(client?.company || invoice.deletedCustomerName || '')}</strong>`, street && esc(street), [city, state, zip].filter(Boolean).map(esc).join(' '), country?.shortName && esc(country.shortName), client?.phoneNumber && esc(client.phoneNumber), client?.vat && `${L.vat}: ${esc(client.vat)}`]
+async function customerInfo(client, doc, L) {
+    const fmt = (await getOptions(['customer_info_format']))('customer_info_format')
+    const data = await clientTokenData(client, doc, L.vat)
+    if (fmt) return renderInfoFormat(fmt, data).replace(/^(.*?)(<br \/>|$)/, '<strong>$1</strong>$2')
+    const lines = [`<strong>${esc(data.company_name)}</strong>`, data.street && esc(data.street), [data.city, data.state, data.zip_code].filter(Boolean).map(esc).join(' '), data.country_name && esc(data.country_name), data.phone && esc(data.phone), data.vat_number_with_label && esc(data.vat_number_with_label)]
     return lines.filter(Boolean).join('<br />')
 }
 
@@ -93,30 +82,40 @@ export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
     const doc = hash ? await loadPublicDocument(id, hash) : await getInvoiceDocument(id)
     if (!doc) return null
     const { invoice, items, payments, client, currency, paid } = doc
-    const o = await getOptions(['active_language', 'company_logo', 'company_logo_dark', 'companyname', 'company_info_format', 'invoice_company_name', 'invoice_company_address', 'invoice_company_city', 'invoice_company_postal_code', 'invoice_company_phonenumber', 'company_vat', 'pdf_table_heading_color', 'pdf_table_heading_text_color', 'pdf_logo_width', 'decimal_separator', 'thousand_separator', 'dateformat', 'swap_pdf_info', 'show_status_on_pdf_ei', 'show_total_paid_on_invoice', 'show_amount_due_on_invoice', 'show_transactions_on_invoice_pdf', 'show_tax_per_item', 'footer_text'])
-    const L = LABELS[o('active_language') === 'french' ? 'french' : 'english']
-    const sep = { decimal: o('decimal_separator', ','), thousand: o('thousand_separator', ' ') || ' ' }
-    const M = (n) => money(n, currency, sep)
-    const D = (d) => fmtDate(d, o('dateformat'))
-    const head = o('pdf_table_heading_color', '#323a45'), headText = o('pdf_table_heading_text_color', '#ffffff')
-    const perItemTax = o('show_tax_per_item') === '1'
+    const S = await pdfSettings('invoice')
+    const { o } = S
+    const og = await getOptions(['company_info_format', 'show_total_paid_on_invoice', 'show_amount_due_on_invoice', 'show_transactions_on_invoice_pdf', 'show_status_on_pdf_ei', 'show_sale_agent_on_invoices', 'show_project_on_invoice', 'company_logo', 'companyname'])
+    const L = LABELS[S.lang]
+    const M = (n) => formatMoney(n, currency, S)
+    const Mi = (n) => formatMoney(n, currency, S, { noSymbol: S.itemsNoSymbol })
+    const D = (d) => fmtDate(d, S.dateFormat, S.timezone)
 
     const totals = calcDocument({ items, discountPercent: invoice.discountPercent, discountFixed: invoice.discountPercent > 0 ? 0 : invoice.discountTotal, discountType: invoice.discountType || 'before_tax', adjustment: invoice.adjustment })
     const modes = await prisma.crmPaymentMode.findMany()
     const modeName = Object.fromEntries(modes.map((m) => [m.id, m.name]))
     const unpaid = ![2, 5].includes(invoice.status)
     const showModes = unpaid ? modes.filter((m) => m.showOnPdf && m.active !== false && m.description) : []
-    const logo = await companyImageDataUri('logo', logoDataUri(o('company_logo')))
-    const org = organizationInfo(o)
+    const logo = await companyImageDataUri('logo', logoDataUri(og('company_logo')), S.logoKeys)
+    const signature = S.showSignature ? await companyImageDataUri('signature', '') : ''
+    const org = await organizationInfo(og)
     const bill = await customerInfo(client, invoice, L)
 
-    const infoBlock = `<div class="info"><div class="lbl">${L.billTo}</div>${bill}<div class="dates"><div>${L.date}: <strong>${D(invoice.date)}</strong></div>${invoice.dueDate ? `<div>${L.due}: <strong>${D(invoice.dueDate)}</strong></div>` : ''}</div></div>`
+    const extra = []
+    if (og('show_sale_agent_on_invoices') === '1' && invoice.saleAgentId) {
+        const a = await prisma.crmStaff.findUnique({ where: { id: invoice.saleAgentId }, select: { firstName: true, lastName: true } }).catch(() => null)
+        if (a) extra.push(`${S.lang === 'french' ? 'Commercial' : 'Sale agent'}: <strong>${esc(`${a.firstName || ''} ${a.lastName || ''}`.trim())}</strong>`)
+    }
+    if (og('show_project_on_invoice') === '1' && invoice.projectId) {
+        const pr = await prisma.crmProject.findUnique({ where: { id: invoice.projectId }, select: { name: true } }).catch(() => null)
+        if (pr) extra.push(`${S.lang === 'french' ? 'Projet' : 'Project'}: <strong>${esc(pr.name)}</strong>`)
+    }
+    const infoBlock = `<div class="info"><div class="lbl">${L.billTo}</div>${bill}<div class="dates"><div>${L.date}: <strong>${D(invoice.date)}</strong></div>${invoice.dueDate ? `<div>${L.due}: <strong>${D(invoice.dueDate)}</strong></div>` : ''}${extra.map((x) => `<div>${x}</div>`).join('')}</div></div>`
     const orgBlock = `<div class="info org">${org}</div>`
-    const swap = o('swap_pdf_info') === '1'
 
     const rows = items.map((it, i) => {
         const amount = round2((it.qty || 0) * (it.rate || 0))
-        return `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${/<[a-z][\s\S]*>|&lt;\/?[a-z]/i.test(it.longDescription) ? safeHtml(it.longDescription) : esc(it.longDescription).replace(/\n/g, '<br />')}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${M(it.rate)}</td>${perItemTax ? `<td class="r">${(it.taxes || []).map((t) => `${esc(t.name)} ${t.rate}%`).join('<br />') || '—'}</td>` : ''}<td class="r">${M(amount)}</td></tr>`
+        const taxCell = (it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'
+        return `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${/<[a-z][\s\S]*>|&lt;\/?[a-z]/i.test(it.longDescription) ? safeHtml(it.longDescription) : esc(it.longDescription).replace(/\n/g, '<br />')}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${taxCell}</td>` : ''}<td class="r">${Mi(amount)}</td></tr>`
     }).join('')
 
     const totalRows = [`<tr><td>${L.subtotal}</td><td>${M(invoice.subtotal)}</td></tr>`]
@@ -124,35 +123,39 @@ export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
     for (const t of totals.taxes) totalRows.push(`<tr><td>${esc(t.name)} (${t.rate}%)</td><td>${M(t.total)}</td></tr>`)
     if (Number(invoice.adjustment)) totalRows.push(`<tr><td>${L.adjustment}</td><td>${M(invoice.adjustment)}</td></tr>`)
     totalRows.push(`<tr class="grand"><td>${L.total}</td><td>${M(invoice.total)}</td></tr>`)
-    if (payments.length && o('show_total_paid_on_invoice', '1') === '1') totalRows.push(`<tr><td>${L.paid}</td><td>-${M(paid)}</td></tr>`)
-    if (o('show_amount_due_on_invoice') === '1' && invoice.status !== 5) totalRows.push(`<tr class="grand"><td>${L.due2}</td><td>${M(invoice.total - paid)}</td></tr>`)
+    if (payments.length && og('show_total_paid_on_invoice', '1') === '1') totalRows.push(`<tr><td>${L.paid}</td><td>-${M(paid)}</td></tr>`)
+    if (og('show_amount_due_on_invoice') === '1' && invoice.status !== 5) totalRows.push(`<tr class="grand"><td>${L.due2}</td><td>${M(invoice.total - paid)}</td></tr>`)
 
-    const payTable = payments.length && o('show_transactions_on_invoice_pdf', '1') === '1'
+    const words = S.words.on ? `<p class="words"><strong>${S.lang === 'french' ? 'Arrêtée la présente facture à la somme de' : 'Total in words'} :</strong> ${esc(amountInWords(invoice.total, { lang: S.lang, currency: currency?.name, lowercase: S.words.lower }))}</p>` : ''
+    const payTable = payments.length && og('show_transactions_on_invoice_pdf', '1') === '1'
         ? `<h4>${L.payments}</h4><table class="plain"><tr><th>${L.no}</th><th>${L.mode}</th><th>${L.pdate}</th><th class="r">${L.pamount}</th></tr>${payments.map((p) => `<tr><td>${p.legacyId ?? ''}</td><td>${esc(modeName[p.paymentModeId] || p.paymentMethod || '')}${p.transactionId ? ` - ${esc(p.transactionId)}` : ''}</td><td>${D(p.paymentDate)}</td><td class="r">${M(p.amount)}</td></tr>`).join('')}</table>`
         : ''
     const modesBlock = showModes.length ? `<h4>${L.pay}</h4>${showModes.map((m) => `<div class="mode"><strong>${esc(m.name)}</strong><div>${m.description}</div></div>`).join('')}` : ''
-    const status = o('show_status_on_pdf_ei') === '1' ? `<div class="status" style="color:${STATUS_COLOR[invoice.status]}">${L.status[invoice.status] || ''}</div>` : ''
+    const status = og('show_status_on_pdf_ei') === '1' ? `<div class="status" style="color:${STATUS_COLOR[invoice.status]}">${L.status[invoice.status] || ''}</div>` : ''
+    const sig = signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''
 
     return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(invoice.displayNumber)}</title><style>
-@page{size:A4;margin:14mm 14mm 16mm 14mm}
-*{box-sizing:border-box}body{margin:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:10pt;line-height:1.45;color:#303030}
-.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.top img{width:${Number(o('pdf_logo_width', 220)) * 1.5 || 330}px;max-width:62%;height:auto}
-.logo{text-align:right}.title{text-align:left}.title h1{margin:0;font-size:27pt;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:12pt}.status{margin-top:4px;font-weight:700;text-transform:uppercase}
+${S.pageCss()}
+${S.baseCss()}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.top img{width:${S.logoWidth * 1.5}px;max-width:62%;height:auto}
+.logo{text-align:right}.title{text-align:left}.title h1{margin:0;font-size:2.7em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}.status{margin-top:4px;font-weight:700;text-transform:uppercase}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}
-table{width:100%;border-collapse:collapse}.items th{background:${head};color:${headText};text-align:left;padding:8px 8px;font-size:9.5pt}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
-.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:9pt;margin-top:2px}
-.tot{width:52%;margin:14px 0 0 auto}.tot td{padding:6px 8px;text-align:right}.tot td:first-child{font-weight:700}.tot tr.grand td{background:#e5e7eb;font-weight:700;font-size:11pt}
-h4{margin:20px 0 6px;font-size:10.5pt}.plain th{text-align:left;border-bottom:1px solid #111;padding:5px 6px}.plain td{padding:5px 6px}.plain .r,.plain th.r{text-align:right}
+table{width:100%;border-collapse:collapse}.items th{background:${S.head};color:${S.headText};text-align:left;padding:8px 8px;font-size:.95em}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
+.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:.9em;margin-top:2px}
+.tot{width:52%;margin:14px 0 0 auto}.tot td{padding:6px 8px;text-align:right}.tot td:first-child{font-weight:700}.tot tr.grand td{background:#e5e7eb;font-weight:700;font-size:1.1em}
+.words{margin:14px 0 0;text-align:left;break-inside:avoid}.tot{break-inside:avoid}.sig{margin-top:28px;text-align:right}.sig img{max-height:90px;max-width:260px}
+h4{margin:20px 0 6px;font-size:1.05em}.plain th{text-align:left;border-bottom:1px solid #111;padding:5px 6px}.plain td{padding:5px 6px}.plain .r,.plain th.r{text-align:right}
 .bar{margin:-6mm 0 14px;text-align:right}.bar a{display:inline-block;background:#2563eb;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600;font-size:10pt}@media print{.bar{display:none}}
 .mode{margin-bottom:8px}.block{white-space:pre-line}tr{page-break-inside:avoid}
 </style></head><body>
-${pdfHref ? `<div class="bar"><a href="${pdfHref}">${L.invoice === 'FACTURE' ? 'Télécharger le PDF' : 'Download PDF'}</a></div>` : ''}<div class="top"><div class="title"><h1>${L.invoice}</h1><div class="num"># ${esc(invoice.displayNumber)}</div>${status}</div><div class="logo">${logo ? `<img src="${logo}" alt="">` : `<strong style="font-size:18pt">${esc(o('companyname'))}</strong>`}</div></div>
-<div class="cols">${swap ? infoBlock + orgBlock : orgBlock + infoBlock}</div>
-<table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
+${pdfHref ? `<div class="bar"><a href="${pdfHref}">${S.lang === 'french' ? 'Télécharger le PDF' : 'Download PDF'}</a></div>` : ''}<div class="top"><div class="title"><h1>${L.invoice}</h1><div class="num"># ${esc(invoice.displayNumber)}</div>${status}</div><div class="logo">${logo ? `<img src="${logo}" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
+<div class="cols">${S.swap ? infoBlock + orgBlock : orgBlock + infoBlock}</div>
+<table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${totalRows.join('')}</table>
-${payTable}${modesBlock}
+${words}${payTable}${modesBlock}
 ${invoice.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(invoice.clientNote)}</div>` : ''}
 ${invoice.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(invoice.terms)}</div>` : ''}
+${sig}
 </body></html>`
 }
 

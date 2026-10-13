@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import prisma from '@/lib/prisma'
+import { companyTokenData, COMPANY_KEYS } from '@/lib/crm/docTokens'
 
 /** Option helpers (Perfex stores all settings in the options table). */
 export async function getOptions(names) {
@@ -14,7 +15,7 @@ export async function setOptions(values) {
     }
 }
 
-export const SMTP_KEYS = ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_email', 'smtp_password', 'smtp_encryption', 'smtp_from_name', 'companyname']
+export const SMTP_KEYS = ['email_protocol', 'bcc_emails', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_email', 'smtp_password', 'smtp_encryption', 'smtp_from_name', 'companyname']
 
 /** SMTP settings from the options table, falling back to the SMTP_* env variables used by the login emails. */
 export async function getSmtp() {
@@ -25,6 +26,8 @@ export async function getSmtp() {
     const encryption = rawEnc === 'none' ? '' : rawEnc // '' is stored as 'none' because empty options count as unset
     const user = o('smtp_username', o('smtp_email', process.env.SMTP_USER || ''))
     return {
+        protocol: o('email_protocol', 'smtp') === 'sendmail' ? 'sendmail' : 'smtp',
+        bcc: o('bcc_emails', ''),
         host, port, encryption, user,
         pass: o('smtp_password', process.env.SMTP_PASS || ''),
         email: o('smtp_email', process.env.SMTP_FROM || user),
@@ -32,9 +35,10 @@ export async function getSmtp() {
     }
 }
 
-export const smtpReady = (s) => !!(s.host && s.email)
+export const smtpReady = (s) => !!(s.email && (s.host || s.protocol === 'sendmail'))
 
 async function transportFor(s) {
+    if (s.protocol === 'sendmail') return nodemailer.createTransport({ sendmail: true, newline: 'unix', path: process.env.SENDMAIL_PATH || '/usr/sbin/sendmail' })
     return nodemailer.createTransport({
         host: s.host,
         port: s.port,
@@ -75,9 +79,10 @@ export async function companyLanguage() {
 
 /** Base merge data shared by every template. */
 export async function baseData() {
-    const o = await getOptions(['companyname', 'main_domain', 'email_signature'])
+    const o = await getOptions([...COMPANY_KEYS, 'email_signature'])
     const site = (process.env.PUBLIC_URL || process.env.NEXTAUTH_URL || 'http://localhost:3200').replace(/\/$/, '')
     return {
+        ...companyTokenData(o),
         companyname: o('companyname'),
         crm_url: site,
         main_domain: o('main_domain'),
@@ -96,7 +101,7 @@ export async function deliver({ to, cc, subject, html, fromName, fromEmail, atta
         const t = await transportFor(s)
         await t.sendMail({
             from: { name: fromName || s.fromName || '', address: fromEmail || s.email },
-            to, cc: cc || undefined, subject, html, text: stripHtml(html), attachments: attachments?.length ? attachments : undefined,
+            to, cc: cc || undefined, bcc: s.bcc ? s.bcc.split(/[,;\s]+/).filter(Boolean).join(', ') : undefined, subject, html, text: stripHtml(html), attachments: attachments?.length ? attachments : undefined,
         })
         return { sent: true }
     } catch (e) {
@@ -111,3 +116,14 @@ export async function testConnection() {
 }
 
 export { escapeHtml }
+
+/** Sends an email template to explicit addresses (staff or clients) with merge data. Logged in the sent log. */
+export async function sendTemplate({ slug, to, data = {}, relType = null, relId = null }) {
+    const t = await findTemplate(slug, await companyLanguage())
+    if (!t || t.active === false) return { sent: false, error: `Email template "${slug}" is missing or turned off` }
+    const full = { ...(await baseData()), ...data }
+    const subject = mergeFields(t.subject, full)
+    const res = await deliver({ to, subject, html: await buildHtml(t.message, full) })
+    await prisma.crmMailLog.create({ data: { to, subject, template: slug, relType, relId: relId || undefined, status: res.sent ? 'sent' : 'failed', error: res.error || null } }).catch(() => {})
+    return res
+}

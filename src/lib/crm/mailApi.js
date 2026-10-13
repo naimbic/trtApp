@@ -17,6 +17,7 @@ export const KINDS = {
         feature: 'invoices', contactFlag: 'invoiceEmails',
         templates: [
             { slug: 'invoice-send-to-client', label: 'Send invoice' },
+            { slug: 'invoice-due-notice', label: 'Due soon reminder' },
             { slug: 'invoice-overdue-notice', label: 'Overdue reminder' },
             { slug: 'invoice-payment-recorded', label: 'Payment received' },
             { slug: 'invoice-already-send', label: 'Invoice already sent' },
@@ -182,14 +183,25 @@ export async function sendMail({ kind, id, template: slug, to, cc, subject, atta
     if (!spec) fail('Unknown document type')
     const session = await requirePermission(spec.feature, 'edit')
     const staffId = await getStaffId(session)
-    const toAll = toList(to); const ccAll = toList(cc)
-    if (!toAll.length) fail('Choose at least one recipient')
+    if (!toList(to).length) fail('Choose at least one recipient')
+    return sendMailCore({ kind, id, template: slug, to, cc, subject, attachPdf, staffId })
+}
+
+/**
+ * Sends one document email with no permission check (used by the signed-in dialog and by the cron job).
+ * Without `to`, it goes to the client contacts that are set to receive this kind of email.
+ */
+export async function sendMailCore({ kind, id, template: slug, to, cc, subject, attachPdf, staffId = null }) {
+    const { ctx, template } = await compose(kind, id, slug)
+    const toAll = toList(to).length ? toList(to) : ctx.recipients.filter((r) => r.checked).map((r) => r.email)
+    const ccAll = toList(cc)
+    if (!toAll.length) fail('This client has no contact with an email address')
     const badOne = [...toAll, ...ccAll].find((e) => !validEmail(e))
     if (badOne) fail(`"${badOne}" is not a valid email address`)
 
-    const { ctx, template } = await compose(kind, id, slug)
     const finalSubject = String(subject || '').trim() || mergeFields(template.subject, ctx.data)
     const html = await buildHtml(template.message, ctx.data)
+    if (kind === 'invoice' && attachPdf === undefined && slug === 'invoice-payment-recorded') attachPdf = (await getOptions(['attach_invoice_to_payment_receipt_email']))('attach_invoice_to_payment_receipt_email') === '1'
     let attachments
     if (kind === 'invoice' && attachPdf) {
         const { renderInvoicePdf, pdfFileName } = await import('@/lib/crm/invoicePdf')
@@ -197,18 +209,19 @@ export async function sendMail({ kind, id, template: slug, to, cc, subject, atta
     }
     const res = await deliver({ attachments, to: toAll.join(', '), cc: ccAll.join(', '), subject: finalSubject, html, fromName: template.fromName && !/^\{/.test(template.fromName) ? template.fromName : mergeFields(template.fromName, ctx.data), fromEmail: undefined })
 
-    await prisma.crmMailLog.create({ data: { to: toAll.join(', '), cc: ccAll.join(', ') || null, subject: finalSubject, template: template.slug, relType: kind, relId: id, status: res.sent ? 'sent' : 'failed', error: res.error || null, staffId } })
+    await prisma.crmMailLog.create({ data: { to: toAll.join(', '), cc: ccAll.join(', ') || null, subject: finalSubject, template: template.slug, relType: kind, relId: id, status: res.sent ? 'sent' : 'failed', error: res.error || null, staffId: staffId || undefined } })
     if (!res.sent) fail(res.error)
 
     const now = new Date()
     if (kind === 'invoice') {
         const patch = { sent: true, dateSend: now }
         if (slug === 'invoice-overdue-notice') patch.lastOverdueReminder = now
+        if (slug === 'invoice-due-notice') patch.lastDueNotice = now
         await prisma.crmInvoice.update({ where: { id }, data: patch })
     } else if (kind === 'estimate') await prisma.crmEstimate.update({ where: { id }, data: { sent: true, dateSend: now, ...(ctx.doc.status === 1 ? { status: 2 } : {}) } })
     const staff = staffId ? await prisma.user.findUnique({ where: { id: staffId }, select: { name: true } }).catch(() => null) : null
-    await prisma.crmSalesActivity.create({ data: { relType: kind, relId: id, description: `Email "${template.name || template.slug}" sent to ${toAll.join(', ')}`, staffId, fullName: staff?.name || null, date: now } }).catch(() => {})
-    return { success: true }
+    await prisma.crmSalesActivity.create({ data: { relType: kind, relId: id, description: `Email "${template.name || template.slug}" sent to ${toAll.join(', ')}`, staffId: staffId || undefined, fullName: staff?.name || (staffId ? null : 'Automatic'), date: now } }).catch(() => {})
+    return { success: true, to: toAll }
 }
 
 /* ---------- settings, test, log ---------- */

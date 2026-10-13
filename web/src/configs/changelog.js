@@ -2,6 +2,20 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.12.0',
+        date: '2026-10-13',
+        title: 'Platform settings and cron job',
+        items: [
+            'New Settings area: General, Company information, Localization, Email, Billing (General, Invoices, Estimates, Proposals, Purchase orders, Credit notes, Subscriptions), Clients, Tasks, Support, Leads, Google, Pusher, Calendar, AI, PDF, E-signature, Tags and Cron job',
+            'Platform logos, favicon and per-document logos, from the file manager or an upload',
+            'Company details with merge terms such as {company_name} {address} {city} {vat_number}, usable on documents and in emails',
+            'Invoice numbering rules: prefix, format, restart every year or month, delete only the last, take the number back on delete',
+            'PDF settings (font, size, page size and numbers, signature, total in words, separators, currency format) applied to invoices and estimates',
+            'Estimates can create the invoice automatically when the client accepts',
+            'Cron job: overdue and due-soon invoice reminders, recurring invoices, estimate/proposal/contract expiry notices, task deadlines, ticket auto-close; with a preview before the first real run',
+        ],
+    },
+    {
         version: '0.11.0',
         date: '2026-10-13',
         title: 'Two-step verification, email change, Space sync',

@@ -4,7 +4,11 @@ import { numberPadding } from '@/lib/crm/numbering'
 import { getOptions, buildHtml, mergeFields, deliver, findTemplate, companyLanguage, baseData } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { companyImageDataUri } from '@/lib/crm/company'
-import { esc, safeHtml, stripTags, money, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf } from '@/lib/crm/invoicePdf'
+import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf } from '@/lib/crm/invoicePdf'
+import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
+import { amountInWords } from '@/lib/crm/numberWords'
+import { allocateNumber } from '@/lib/crm/sales/docNumbering'
+import crypto from 'node:crypto'
 
 export const ESTIMATE = { DRAFT: 1, SENT: 2, DECLINED: 3, ACCEPTED: 4, EXPIRED: 5 }
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }) }
@@ -38,38 +42,38 @@ export async function loadEstimateDoc(id, hash) {
     return { estimate, items, client, currency, comments, number, status: effectiveStatus(estimate) }
 }
 
-const CSS = `*{box-sizing:border-box}body{margin:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:10pt;line-height:1.45;color:#303030}
-.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.logo{text-align:right}.top img{max-width:62%;height:auto}.title{text-align:left}.title h1{margin:0;font-size:27pt;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:12pt}
+const CSS = `
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.logo{text-align:right}.top img{max-width:62%;height:auto}.title{text-align:left}.title h1{margin:0;font-size:2.7em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}
-table{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;font-size:9.5pt}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
-.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:9pt;margin-top:2px}
-.tot{width:52%;margin:14px 0 0 auto}.tot td{padding:6px 8px;text-align:right}.tot td:first-child{font-weight:700}.tot tr.grand td{background:#e5e7eb;font-weight:700;font-size:11pt}
-h4{margin:20px 0 6px;font-size:10.5pt}.block{white-space:pre-line}tr{page-break-inside:avoid}`
+table{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;font-size:.95em}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
+.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:.9em;margin-top:2px}.words{margin:14px 0 0}.sig{margin-top:28px;text-align:right}.sig img{max-height:90px;max-width:260px}
+.tot{width:52%;margin:14px 0 0 auto}.tot td{padding:6px 8px;text-align:right}.tot td:first-child{font-weight:700}.tot tr.grand td{background:#e5e7eb;font-weight:700;font-size:1.1em}
+h4{margin:20px 0 6px;font-size:1.05em}.block{white-space:pre-line}tr{page-break-inside:avoid}`
 
 /** The estimate document itself (shared by the PDF and the public page). */
-async function documentHtml(d, lang) {
-    const o = await getOptions(['company_logo', 'companyname', 'company_info_format', 'invoice_company_name', 'invoice_company_address', 'invoice_company_city', 'invoice_company_postal_code', 'invoice_company_phonenumber', 'company_vat', 'pdf_table_heading_color', 'pdf_table_heading_text_color', 'pdf_logo_width', 'decimal_separator', 'thousand_separator', 'dateformat', 'swap_pdf_info', 'show_tax_per_item'])
+async function documentHtml(d, lang, S) {
+    const og = await getOptions(['company_info_format', 'company_logo', 'companyname'])
     const L = LABELS[lang], T = TXT[lang]
-    const sep = { decimal: o('decimal_separator', ','), thousand: o('thousand_separator', ' ') || ' ' }
-    const M = (n) => money(n, d.currency, sep), D = (x) => fmtDate(x, o('dateformat'))
+    const M = (n) => formatMoney(n, d.currency, S), Mi = (n) => formatMoney(n, d.currency, S, { noSymbol: S.itemsNoSymbol }), D = (x) => fmtDate(x, S.dateFormat, S.timezone)
     const e = d.estimate
     const totals = calcDocument({ items: d.items, discountPercent: e.discountPercent, discountFixed: e.discountPercent > 0 ? 0 : e.discountTotal, discountType: e.discountType || 'before_tax', adjustment: e.adjustment })
-    const head = o('pdf_table_heading_color', '#323a45'), headText = o('pdf_table_heading_text_color', '#ffffff')
-    const logo = await companyImageDataUri('logo', logoDataUri(o('company_logo')))
+    const logo = await companyImageDataUri('logo', logoDataUri(og('company_logo')), S.logoKeys)
+    const signature = S.showSignature ? await companyImageDataUri('signature', '') : ''
     const bill = await customerInfo(d.client, e, L)
     const info = `<div class="info"><div class="lbl">${L.billTo}</div>${bill}<div class="dates"><div>${L.date}: <strong>${D(e.date)}</strong></div>${e.expiryDate ? `<div>${T.valid}: <strong>${D(e.expiryDate)}</strong></div>` : ''}${e.referenceNo ? `<div>${T.reference}: <strong>${esc(e.referenceNo)}</strong></div>` : ''}</div></div>`
-    const org = `<div class="info org">${organizationInfo(o)}</div>`
-    const rows = d.items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${safeHtml(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${M(it.rate)}</td><td class="r">${M(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
+    const org = `<div class="info org">${await organizationInfo(og)}</div>`
+    const rows = d.items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${safeHtml(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(e.subtotal)}</td></tr>`]
     if (e.discountTotal > 0) tr.push(`<tr><td>${L.discount}${e.discountPercent > 0 ? ` (${e.discountPercent}%)` : ''}</td><td>-${M(e.discountTotal)}</td></tr>`)
     for (const t of totals.taxes) tr.push(`<tr><td>${esc(t.name)} (${t.rate}%)</td><td>${M(t.total)}</td></tr>`)
     if (Number(e.adjustment)) tr.push(`<tr><td>${L.adjustment}</td><td>${M(e.adjustment)}</td></tr>`)
     tr.push(`<tr class="grand"><td>${L.total}</td><td>${M(e.total)}</td></tr>`)
-    return `<div class="top"><div class="title"><h1>${T.estimate}</h1><div class="num"># ${esc(d.number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${Number(o('pdf_logo_width', 220)) * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(o('companyname'))}</strong>`}</div></div>
-<div class="cols">${o('swap_pdf_info') === '1' ? info + org : org + info}</div>
-<table class="items"><thead><tr style="background:${head};color:${headText}"><th class="n" style="color:${headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th><th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
+    const words = S.words.on ? `<p class="words"><strong>${lang === 'french' ? 'Arrêté le présent devis à la somme de' : 'Total in words'} :</strong> ${esc(amountInWords(e.total, { lang, currency: d.currency?.name, lowercase: S.words.lower }))}</p>` : ''
+    return `<div class="top"><div class="title"><h1>${T.estimate}</h1><div class="num"># ${esc(d.number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
+<div class="cols">${S.swap ? info + org : org + info}</div>
+<table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>
-${e.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNote)}</div>` : ''}${e.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(e.terms)}</div>` : ''}`
+${words}${e.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNote)}</div>` : ''}${e.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(e.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }
 
 const langOf = async () => ((await getOptions(['active_language']))('active_language') === 'french' ? 'french' : 'english')
@@ -77,8 +81,8 @@ const langOf = async () => ((await getOptions(['active_language']))('active_lang
 export async function estimatePdf(id, hash) {
     const d = await loadEstimateDoc(id, hash)
     if (!d) return null
-    const lang = await langOf()
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>@page{size:A4;margin:14mm}${CSS}</style></head><body>${await documentHtml(d, lang)}</body></html>`
+    const S = await pdfSettings('estimate')
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${CSS}</style></head><body>${await documentHtml(d, S.lang, S)}</body></html>`
     return { pdf: await htmlToPdf(html), name: `${d.number.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}.pdf` }
 }
 
@@ -88,13 +92,14 @@ const initials = (n) => String(n || '?').split(/\s+/).map((x) => x[0]).slice(0, 
 export async function estimatePage(id, hash) {
     const d = await loadEstimateDoc(id, hash)
     if (!d) return null
-    const lang = await langOf()
+    const S = await pdfSettings('estimate')
+    const lang = S.lang
     const T = TXT[lang], e = d.estimate
-    const o = await getOptions(['estimate_accept_identity_confirmation', 'companyname', 'dateformat'])
+    const o = await getOptions(['estimate_accept_identity_confirmation', 'companyname', 'dateformat', 'e_sign_legal_text'])
     const acting = d.status === ESTIMATE.SENT
     const contact = d.client ? await prisma.crmContact.findFirst({ where: { clientId: d.client.id, active: true }, orderBy: { isPrimary: 'desc' } }) : null
     const banner = d.status === ESTIMATE.ACCEPTED
-        ? `<div class="banner ok"><strong>${T.accepted}</strong><div>${esc(T.acceptedBy)} ${esc([e.acceptanceFirstname, e.acceptanceLastname].filter(Boolean).join(' '))}${e.acceptanceDate ? ` ${T.on} ${fmtDate(e.acceptanceDate, o('dateformat'))}` : ''}</div>${e.signature?.startsWith('data:image/png;base64,') ? `<img class="sig" src="${e.signature}" alt="">` : ''}</div>`
+        ? `<div class="banner ok"><strong>${T.accepted}</strong><div>${esc(T.acceptedBy)} ${esc([e.acceptanceFirstname, e.acceptanceLastname].filter(Boolean).join(' '))}${e.acceptanceDate ? ` ${T.on} ${fmtDate(e.acceptanceDate, S.dateFormat, S.timezone)}` : ''}</div>${e.signature?.startsWith('data:image/png;base64,') ? `<img class="sig" src="${e.signature}" alt="">` : ''}</div>`
         : d.status === ESTIMATE.DECLINED ? `<div class="banner no"><strong>${T.declined}</strong></div>`
         : d.status === ESTIMATE.EXPIRED ? `<div class="banner exp"><strong>${T.expired}</strong></div>` : ''
     const comments = d.comments.length ? d.comments.map((c) => `<div class="cm"><div class="av ${c.staffId ? 'st' : ''}">${esc(initials(c.authorName))}</div><div><div class="meta"><strong>${esc(c.authorName || (c.staffId ? T.team : ''))}</strong>${c.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(c.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${esc(c.content)}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
@@ -114,10 +119,10 @@ dialog{border:0;border-radius:16px;padding:26px;max-width:480px;width:calc(100% 
 @media print{.bar,.no-print{display:none}body{background:#fff}.card{border:0;padding:0}}
 </style></head><body>
 <div class="bar"><div class="in"><b>${esc(o('companyname'))}</b><span class="sp"></span><a class="btn gr-b" href="${base}/pdf">${T.pdf}</a>${acting ? `<button class="btn no-b" onclick="document.getElementById('refuse').showModal()">${T.refuse}</button><button class="btn ok-b" onclick="document.getElementById('accept').showModal()">${T.accept}</button>` : ''}</div></div>
-<div class="wrap">${banner}<div class="card">${await documentHtml(d, lang)}</div>
+<div class="wrap">${banner}<div class="card">${await documentHtml(d, lang, S)}</div>
 <div class="card no-print"><h3>${T.comments} (${d.comments.length})</h3>${comments}
 <form id="cf" class="fm" style="margin-top:14px"><input name="name" placeholder="${T.yourName}" maxlength="80" value="${esc([contact?.firstName, contact?.lastName].filter(Boolean).join(' '))}"><textarea name="content" rows="3" placeholder="${T.yourComment}" maxlength="2000" required></textarea><div style="text-align:right"><button class="btn pr-b" type="submit">${T.send}</button></div><div class="err" id="ce"></div></form></div></div>
-<dialog id="accept"><h3>${T.acceptTitle}</h3><p class="muted" style="margin:0 0 4px">${T.acceptText}</p><div class="fm"><div class="row"><div><label>${T.first}</label><input id="fn" value="${esc(contact?.firstName || '')}"></div><div><label>${T.last}</label><input id="ln" value="${esc(contact?.lastName || '')}"></div></div><div><label>${T.email}</label><input id="em" type="email" value="${esc(contact?.email || '')}"></div>${identity ? `<div><label>${T.sign} <a href="#" id="clr" style="font-weight:400;float:right">${T.clear}</a></label><canvas class="pad" id="pad"></canvas></div>` : ''}</div><div class="err" id="ae"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('accept').close()">${T.cancel}</button><button class="btn ok-b" id="aok">${T.confirmAccept}</button></div></dialog>
+<dialog id="accept"><h3>${T.acceptTitle}</h3><p class="muted" style="margin:0 0 4px">${T.acceptText}</p><div class="fm"><div class="row"><div><label>${T.first}</label><input id="fn" value="${esc(contact?.firstName || '')}"></div><div><label>${T.last}</label><input id="ln" value="${esc(contact?.lastName || '')}"></div></div><div><label>${T.email}</label><input id="em" type="email" value="${esc(contact?.email || '')}"></div>${identity ? `<div><label>${T.sign} <a href="#" id="clr" style="font-weight:400;float:right">${T.clear}</a></label><canvas class="pad" id="pad"></canvas></div>` : ''}</div>${o('e_sign_legal_text') ? `<p class="muted" style="font-size:12px;margin:10px 0 0">${esc(o('e_sign_legal_text'))}</p>` : ''}<div class="err" id="ae"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('accept').close()">${T.cancel}</button><button class="btn ok-b" id="aok">${T.confirmAccept}</button></div></dialog>
 <dialog id="refuse"><h3>${T.refuseTitle}</h3><p class="muted" style="margin:0">${T.refuseText}</p><label>${T.reason}</label><textarea id="rr" rows="3" maxlength="500"></textarea><div class="err" id="re"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('refuse').close()">${T.cancel}</button><button class="btn no-b" id="rok">${T.confirmRefuse}</button></div></dialog>
 <script>
 const base=${JSON.stringify(base)},identity=${identity},reqMsg=${JSON.stringify(T.required)};
@@ -156,6 +161,31 @@ async function notify(slug, to, estimate, d, extra = {}) {
 const ip = (request) => (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || null
 const log = (estimateId, description) => prisma.crmSalesActivity.create({ data: { relType: 'estimate', relId: estimateId, description, fullName: 'Client', date: new Date() } }).catch(() => {})
 
+/** Settings → Estimates: "create the invoice automatically when the client accepts". */
+async function maybeConvertToInvoice(d) {
+    try {
+        const opts = await getOptions(['estimate_auto_convert_to_invoice_on_client_accept', 'invoice_due_after'])
+        if (opts('estimate_auto_convert_to_invoice_on_client_accept') !== '1' || d.estimate.invoiceId) return
+        const e = d.estimate
+        const now = new Date()
+        const due = Number(opts('invoice_due_after', '0')) > 0 ? new Date(now.getTime() + Number(opts('invoice_due_after')) * 86400000) : null
+        const { number, prefix, numberFormat } = await allocateNumber('invoice', now)
+        const inv = await prisma.crmInvoice.create({ data: {
+            clientId: e.clientId, number, prefix, numberFormat, date: now, dueDate: due, currencyId: e.currencyId, subtotal: e.subtotal, totalTax: e.totalTax, total: e.total,
+            discountPercent: e.discountPercent, discountTotal: e.discountTotal, discountType: e.discountType, adjustment: e.adjustment, clientNote: e.clientNote, terms: e.terms, adminNote: `Created from estimate ${d.number}`,
+            status: 1, hash: crypto.randomUUID().replace(/-/g, ''), sent: false, addedFrom: e.saleAgentId || e.addedFrom || undefined,
+        } })
+        const lines = await prisma.crmItemable.findMany({ where: { relType: 'estimate', relId: e.id }, include: { taxes: true } })
+        for (const l of lines) {
+            const nl = await prisma.crmItemable.create({ data: { relType: 'invoice', relId: inv.id, description: l.description, longDescription: l.longDescription, qty: l.qty, rate: l.rate, unit: l.unit, itemOrder: l.itemOrder } })
+            for (const t of l.taxes) await prisma.crmItemTax.create({ data: { itemableId: nl.id, relType: 'invoice', relId: inv.id, taxName: t.taxName, taxRate: t.taxRate } })
+        }
+        await prisma.crmEstimate.update({ where: { id: e.id }, data: { invoiceId: inv.id, invoicedDate: now } })
+        await prisma.crmSalesActivity.create({ data: { relType: 'invoice', relId: inv.id, description: `Invoice created automatically from accepted estimate ${d.number}`, fullName: 'System', date: now } })
+        await log(e.id, `Invoice ${prefix}${number} created automatically`)
+    } catch (err) { console.error('[estimate] auto-convert failed', err) }
+}
+
 export async function acceptEstimate(id, hash, body, request) {
     const d = await loadEstimateDoc(id, hash)
     if (!d) fail('Estimate not found', 404)
@@ -170,6 +200,7 @@ export async function acceptEstimate(id, hash, body, request) {
     const res = await prisma.crmEstimate.updateMany({ where: { id, status: ESTIMATE.SENT }, data: { status: ESTIMATE.ACCEPTED, acceptanceFirstname: firstName, acceptanceLastname: lastName, acceptanceEmail: email, acceptanceDate: new Date(), acceptanceIp: ip(request), signature: identity ? sig : null } })
     if (!res.count) fail('This estimate was already answered')
     await log(id, `Estimate accepted by ${firstName} ${lastName}`)
+    await maybeConvertToInvoice(d)
     const staff = await staffTarget(d.estimate)
     await notify('estimate-accepted-to-staff', staff?.email, d.estimate, d, { staff_firstname: staff?.firstName || '' })
     await notify('estimate-thank-you-to-customer', email, d.estimate, d, { contact_firstname: firstName, contact_lastname: lastName })

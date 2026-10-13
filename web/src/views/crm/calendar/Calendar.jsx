@@ -94,6 +94,10 @@ const Calendar = () => {
     const [staff, setStaff] = useState([])
     const me = useMe()
     const display = me?.display || {}
+    const [app, setApp] = useState({})
+    useEffect(() => { api('/api/crm/settings/app').then(setApp).catch(() => {}) }, [])
+    const firstDay = display.weekStart !== undefined && display.weekStart !== '' ? Number(display.weekStart) : Number(app.calendar_first_day ?? 1)
+    const hour12 = (display.timeFormat || (app.time_format === '12' ? '12h' : '24h')) === '12h'
     const [params, setParams] = useSearchParams()
     const [syncOpen, setSyncOpen] = useState(params.get('sync') === '1')
     useEffect(() => { if (params.get('sync') === '1') { setSyncOpen(true); setParams({}, { replace: true }) } }, [params, setParams])
@@ -210,7 +214,7 @@ const Calendar = () => {
                 </Segment>
             </div>
             <AdaptiveCard>
-                <CalendarView eventContent={renderEvent} dayMaxEvents={3} firstDay={display.weekStart ?? 1} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12: display.timeFormat === '12h' }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12: display.timeFormat === '12h' }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
+                <CalendarView eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={Number(app.calendar_events_limit) || 3} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
             </AdaptiveCard>
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this event?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>

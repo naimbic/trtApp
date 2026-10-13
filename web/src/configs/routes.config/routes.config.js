@@ -20,7 +20,8 @@ export const protectedRoutes = [
         authority: [],
     },
     { key: 'account.profile', path: '/account/profile', component: lazy(() => import('@/views/account/Profile')), authority: [] },
-    { key: 'crm.company', path: '/crm/company', component: lazy(() => import('@/views/crm/company/Company')), authority: [] },
+    { key: 'crm.settings', path: '/crm/settings', component: lazy(() => import('@/views/crm/settings/Settings')), authority: [] },
+    { key: 'crm.company', path: '/crm/company', component: lazy(() => import('@/views/crm/settings/CompanyRedirect')), authority: [] },
     { key: 'crm.file-manager', path: '/crm/file-manager', component: lazy(() => import('@/views/crm/files/FileManager')), authority: [] },
     {
         key: 'account.security',

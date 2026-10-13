@@ -90,28 +90,47 @@ const ColumnChart = ({ labels, series, colors, height = 260, money, negativeColo
     />
 )
 
-/** Distribution by status as horizontal bars with the count at the end of each bar. */
-const StatusBars = ({ data, height }) => {
+/** Status breakdown as a stacked summary line plus one progress line per status (Perfex / Ecme style). */
+const StatusBars = ({ data, totalLabel = 'Total' }) => {
     const names = Object.keys(data || {}).sort((a, b) => data[b] - data[a])
-    if (!names.length || names.every((n) => !data[n])) return <Empty />
+    const total = names.reduce((sum, n) => sum + (data[n] || 0), 0)
+    if (!names.length || !total) return <Empty />
     return (
-        <Chart
-            type="bar"
-            height={height || Math.max(150, names.length * 44 + 20)}
-            series={[{ name: 'Count', data: names.map((n) => data[n]) }]}
-            xAxis={names}
-            customOptions={{
-                colors: names.map((n, i) => statusColor(n, i)),
-                chart: { toolbar: { show: false }, fontFamily: 'inherit' },
-                plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 6, borderRadiusApplication: 'end', barHeight: '62%' } },
-                dataLabels: { enabled: true, textAnchor: 'start', offsetX: 6, style: { fontSize: '12px', fontWeight: 600, colors: ['#334155'] }, formatter: (v) => nfi(v) },
-                grid: { show: false, padding: { left: 4, right: 28 } },
-                legend: { show: false },
-                xaxis: { categories: names, labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
-                yaxis: { labels: { ...axisText, style: { colors: '#475569', fontSize: '13px' }, maxWidth: 130 } },
-                tooltip: { y: { formatter: (v) => nfi(v) } },
-            }}
-        />
+        <div>
+            <div className="flex items-end justify-between mb-3">
+                <div>
+                    <div className="text-3xl font-bold leading-none">{nfi(total)}</div>
+                    <div className="text-xs text-gray-500 mt-1">{totalLabel}</div>
+                </div>
+            </div>
+            <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 mb-5">
+                {names.map((n, i) => (
+                    <div key={n} title={`${n}: ${data[n]}`} style={{ width: `${(data[n] / total) * 100}%`, background: statusColor(n, i) }} />
+                ))}
+            </div>
+            <ul className="flex flex-col gap-3.5">
+                {names.map((n, i) => {
+                    const pct = (data[n] / total) * 100
+                    return (
+                        <li key={n}>
+                            <div className="flex items-center justify-between text-sm mb-1.5">
+                                <span className="flex items-center gap-2 min-w-0">
+                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: statusColor(n, i) }} />
+                                    <span className="truncate">{n}</span>
+                                </span>
+                                <span className="shrink-0 ml-3">
+                                    <b>{nfi(data[n])}</b>
+                                    <span className="text-gray-400"> / {nfi(total)} · {pct < 10 ? pct.toFixed(1) : Math.round(pct)}%</span>
+                                </span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                                <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 1.5)}%`, background: statusColor(n, i) }} />
+                            </div>
+                        </li>
+                    )
+                })}
+            </ul>
+        </div>
     )
 }
 
@@ -287,7 +306,7 @@ const Dashboard = () => {
                         />
                     </Panel>
                     <Panel title="Invoices by status" subtitle="Excl. drafts & cancelled">
-                        <StatusBars data={inv.byStatus} height={300} />
+                        <StatusBars data={inv.byStatus} totalLabel="Invoices" />
                     </Panel>
                 </div>
             )}
@@ -313,10 +332,10 @@ const Dashboard = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {data.leads && <Panel title="Open leads by status"><StatusBars data={data.leads.byStatus} /></Panel>}
-                {data.tasks && <Panel title="Tasks by status"><StatusBars data={data.tasks.byStatus} /></Panel>}
-                {data.projects && <Panel title="Projects by status"><StatusBars data={data.projects.byStatus} /></Panel>}
-                {data.tickets && <Panel title="Tickets by status"><StatusBars data={data.tickets.byStatus} /></Panel>}
+                {data.leads && <Panel title="Open leads by status"><StatusBars data={data.leads.byStatus} totalLabel="Open leads" /></Panel>}
+                {data.tasks && <Panel title="Tasks by status"><StatusBars data={data.tasks.byStatus} totalLabel="Tasks" /></Panel>}
+                {data.projects && <Panel title="Projects by status"><StatusBars data={data.projects.byStatus} totalLabel="Projects" /></Panel>}
+                {data.tickets && <Panel title="Tickets by status"><StatusBars data={data.tickets.byStatus} totalLabel="Tickets" /></Panel>}
             </div>
 
             {data.clients && (

@@ -619,3 +619,17 @@ model CrmScheduledEmail {
   @@index([scheduledAt])
   @@map("crm_scheduled_emails")
 }
+
+/// Comments on an estimate: from the client (public page) or from staff.
+model CrmEstimateComment {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  estimateId  String   @db.ObjectId
+  content     String
+  authorName  String?
+  authorEmail String?
+  staffId     String?  @db.ObjectId // set for staff replies
+  createdAt   DateTime @default(now())
+
+  @@index([estimateId])
+  @@map("crm_estimate_comments")
+}

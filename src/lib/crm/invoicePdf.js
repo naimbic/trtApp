@@ -161,14 +161,13 @@ function chromePath() {
 }
 
 /** Renders the invoice to a PDF with headless Chrome (set CHROME_PATH when it is installed elsewhere). */
-export async function renderInvoicePdf(id, { hash } = {}) {
-    const html = await renderInvoiceHtml(id, { hash })
-    if (!html) return null
+/** HTML -> PDF with headless Chrome (set CHROME_PATH when it is installed elsewhere). */
+export async function htmlToPdf(html) {
     const chrome = chromePath()
     if (!chrome) throw Object.assign(new Error('PDF generation needs Google Chrome or Chromium on the server (set CHROME_PATH).'), { status: 501 })
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'invoice-pdf-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'doc-pdf-'))
     try {
-        const src = path.join(dir, 'invoice.html'), out = path.join(dir, 'invoice.pdf')
+        const src = path.join(dir, 'doc.html'), out = path.join(dir, 'doc.pdf')
         fs.writeFileSync(src, html)
         await run(chrome, ['--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run', '--disable-extensions', '--disable-background-networking', '--no-pdf-header-footer', `--user-data-dir=${path.join(os.tmpdir(), 'trt-chrome-pdf-profile')}`, `--print-to-pdf=${out}`, `file://${src}`], { timeout: 45000 })
         return fs.readFileSync(out)
@@ -177,4 +176,11 @@ export async function renderInvoicePdf(id, { hash } = {}) {
     }
 }
 
+export async function renderInvoicePdf(id, { hash } = {}) {
+    const html = await renderInvoiceHtml(id, { hash })
+    return html ? htmlToPdf(html) : null
+}
+
 export const pdfFileName = (displayNumber) => `${String(displayNumber).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'invoice'}.pdf`
+
+export { esc, safeHtml, stripTags, money, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, STATUS_COLOR }

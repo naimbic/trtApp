@@ -97,7 +97,7 @@ async function loadContext(kind, id) {
         const estimateNumber = formatDocumentNumber({ prefix: doc.prefix, number: doc.number, numberFormat: doc.numberFormat, date: doc.date, padding })
         data = {
             estimate_number: estimateNumber,
-            estimate_link: await shortLink({ prefix: 'est', relType: 'estimate', relId: id, label: estimateNumber, target: `/estimate/${id}/${await ensureHash('crmEstimate', doc)}` }),
+            estimate_link: await shortLink({ prefix: 'est', relType: 'estimate', relId: id, label: estimateNumber, target: `/api/crm/public/estimate/${id}/${await ensureHash('crmEstimate', doc)}` }),
             estimate_date: fmtDate(doc.date), estimate_expirydate: fmtDate(doc.expiryDate),
             estimate_status: ESTIMATE_LABEL[doc.status] || '', estimate_reference_no: doc.referenceNo || '',
             estimate_total: money(doc.total, cur), estimate_subtotal: money(doc.subtotal, cur),
@@ -205,7 +205,7 @@ export async function sendMail({ kind, id, template: slug, to, cc, subject, atta
         const patch = { sent: true, dateSend: now }
         if (slug === 'invoice-overdue-notice') patch.lastOverdueReminder = now
         await prisma.crmInvoice.update({ where: { id }, data: patch })
-    } else if (kind === 'estimate') await prisma.crmEstimate.update({ where: { id }, data: { sent: true, dateSend: now } })
+    } else if (kind === 'estimate') await prisma.crmEstimate.update({ where: { id }, data: { sent: true, dateSend: now, ...(ctx.doc.status === 1 ? { status: 2 } : {}) } })
     const staff = staffId ? await prisma.user.findUnique({ where: { id: staffId }, select: { name: true } }).catch(() => null) : null
     await prisma.crmSalesActivity.create({ data: { relType: kind, relId: id, description: `Email "${template.name || template.slug}" sent to ${toAll.join(', ')}`, staffId, fullName: staff?.name || null, date: now } }).catch(() => {})
     return { success: true }

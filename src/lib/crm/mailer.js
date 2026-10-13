@@ -47,15 +47,15 @@ async function transportFor(s) {
 }
 
 /** Replace {merge_fields}; unknown fields are removed like Perfex does. */
-export const mergeFields = (text, data) => String(text ?? '').replace(/\{([a-z0-9_]+)\}/gi, (m, k) => (k in data ? String(data[k] ?? '') : ''))
+export const mergeFields = (text, data, fallback) => String(text ?? '').replace(/\{([a-z0-9_]+)\}/gi, (m, k) => (k in data ? String(data[k] ?? '') : fallback ? fallback(k) : ''))
 
 const escapeHtml = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 export const stripHtml = (h) => String(h || '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<br\s*\/?>|<\/p>|<\/div>|<\/tr>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n\s*\n+/g, '\n\n').trim()
 
 /** Perfex layout: header + message + signature + footer. */
-export async function buildHtml(message, data) {
+export async function buildHtml(message, data, fallback) {
     const o = await getOptions(['email_header', 'email_footer', 'email_signature'])
-    return mergeFields(`${o('email_header')}${message}${o('email_signature')}${o('email_footer')}`, data)
+    return mergeFields(`${o('email_header')}${message}${o('email_signature')}${o('email_footer')}`, data, fallback)
 }
 
 /** Template for a slug in the company language, falling back to English then any language. */
@@ -89,14 +89,14 @@ export async function baseData() {
 }
 
 /** Sends one message. Returns { sent, error }. Never throws for SMTP problems; callers log the outcome. */
-export async function deliver({ to, cc, subject, html, fromName, fromEmail }) {
+export async function deliver({ to, cc, subject, html, fromName, fromEmail, attachments }) {
     const s = await getSmtp()
     if (!smtpReady(s)) return { sent: false, error: 'SMTP is not configured. Add the mail server in Mails → Settings.' }
     try {
         const t = await transportFor(s)
         await t.sendMail({
             from: { name: fromName || s.fromName || '', address: fromEmail || s.email },
-            to, cc: cc || undefined, subject, html, text: stripHtml(html),
+            to, cc: cc || undefined, subject, html, text: stripHtml(html), attachments: attachments?.length ? attachments : undefined,
         })
         return { sent: true }
     } catch (e) {

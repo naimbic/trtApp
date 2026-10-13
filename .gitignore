@@ -46,3 +46,5 @@ next-env.d.ts
 # import reports (local run output)
 perfex-import-report.json
 perfex-import-apply-report.json
+data-backups/
+storage/

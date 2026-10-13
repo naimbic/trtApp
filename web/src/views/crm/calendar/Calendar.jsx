@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
@@ -7,7 +7,11 @@ import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Segment from '@/components/ui/Segment'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
+import { TbPlus, TbRefresh } from 'react-icons/tb'
+import Button from '@/components/ui/Button'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EventDialog from './EventDialog'
+import SyncDialog from './SyncDialog'
 
 const LAYER_META = {
     events: { label: 'Events', dot: 'bg-blue-400' },
@@ -36,7 +40,11 @@ const Calendar = () => {
     const [loading, setLoading] = useState(false)
     const [dialog, setDialog] = useState({ open: false, selected: { type: 'NEW' } })
     const [saving, setSaving] = useState(false)
+    const [staff, setStaff] = useState([])
+    const [syncOpen, setSyncOpen] = useState(false)
+    const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
+    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => setStaff(d.staff)).catch(() => {}) }, [])
 
     const load = useCallback(async (r = range.current) => {
         if (!r) return
@@ -52,7 +60,7 @@ const Calendar = () => {
         }
     }, [])
 
-    const visible = useMemo(() => items.filter((i) => shown.includes(i.type)), [items, shown])
+    const visible = useMemo(() => items.filter((i) => shown.includes(i.type)).map((i) => (i.meetingUrl ? { ...i, title: `📹 ${i.title}` } : i)), [items, shown])
 
     const onDatesSet = (arg) => {
         range.current = { start: arg.start.toISOString(), end: arg.end.toISOString() }
@@ -74,15 +82,22 @@ const Calendar = () => {
         }
         setDialog({
             open: true,
-            selected: { type: 'EDIT', id: p.rawId, title: event.title, description: p.description, start: event.start?.toISOString(), end: event.end?.toISOString(), eventColor: p.eventColor, isPublic: p.isPublic },
+            selected: {
+                type: 'EDIT', id: p.rawId, title: p.rawTitle, description: p.description, start: p.rawStart, end: p.rawEnd, allDay: p.allDay,
+                eventColor: p.eventColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, clientId: p.clientId,
+                attendeeIds: p.attendeeIds, attendeeEmails: p.attendeeEmails, reminderBefore: p.reminderBefore, reminderBeforeType: p.reminderBeforeType,
+                editable: p.canEdit, owner: p.owner,
+            },
         })
     }
 
     const onMove = async (arg) => {
         const p = arg.event.extendedProps
         if (p.type !== 'events') return arg.revert()
+        const allDay = arg.event.allDay
+        const noon = (d) => dayjs(d).hour(12).minute(0).second(0).millisecond(0)
         try {
-            await api(`/api/crm/calendar/${p.rawId}`, { method: 'PATCH', body: JSON.stringify({ start: arg.event.start.toISOString(), end: arg.event.end ? arg.event.end.toISOString() : null }) })
+            await api(`/api/crm/calendar/${p.rawId}`, { method: 'PATCH', body: JSON.stringify(allDay ? { allDay, start: noon(arg.event.start).toISOString(), end: noon(arg.event.end ? dayjs(arg.event.end).subtract(1, 'day') : arg.event.start).toISOString() } : { allDay, start: arg.event.start.toISOString(), end: arg.event.end ? arg.event.end.toISOString() : null }) })
             notify('success', 'Event moved')
             load()
         } catch (e) {
@@ -94,9 +109,8 @@ const Calendar = () => {
     const submit = async (values) => {
         setSaving(true)
         try {
-            if (dialog.selected.type === 'EDIT') await api(`/api/crm/calendar/${dialog.selected.id}`, { method: 'PATCH', body: JSON.stringify(values) })
-            else await api('/api/crm/calendar', { method: 'POST', body: JSON.stringify(values) })
-            notify('success', dialog.selected.type === 'EDIT' ? 'Event updated' : 'Event created')
+            const res = dialog.selected.type === 'EDIT' ? await api(`/api/crm/calendar/${dialog.selected.id}`, { method: 'PATCH', body: JSON.stringify(values) }) : await api('/api/crm/calendar', { method: 'POST', body: JSON.stringify(values) })
+            notify('success', `${dialog.selected.type === 'EDIT' ? 'Event updated' : 'Event created'}${res?.invited ? ` · invitation sent to ${res.invited} ${res.invited > 1 ? 'people' : 'person'}` : ''}`)
             setDialog({ open: false, selected: { type: 'NEW' } })
             load()
         } catch (e) {
@@ -107,7 +121,7 @@ const Calendar = () => {
     }
 
     const remove = async () => {
-        if (!confirm('Delete this event?')) return
+        setConfirmDel(false)
         setSaving(true)
         try {
             await api(`/api/crm/calendar/${dialog.selected.id}`, { method: 'DELETE' })
@@ -128,6 +142,10 @@ const Calendar = () => {
                     <h3>Calendar</h3>
                     <p className="text-sm text-gray-500">Your events plus due dates from tasks, invoices, projects and more{loading ? ' · loading…' : ''}</p>
                 </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => setDialog({ open: true, selected: { type: 'NEW', start: dayjs().add(1, 'hour').startOf('hour').format(), end: dayjs().add(2, 'hour').startOf('hour').format() } })}>New event</Button>
+                    <Button size="sm" icon={<TbRefresh />} onClick={() => setSyncOpen(true)}>Sync with Google / Apple</Button>
+                </div>
                 <Segment selectionType="multiple" size="sm" value={shown} onChange={setShown}>
                     {available.map((k) => (
                         <Segment.Item key={k} value={k}>
@@ -139,12 +157,16 @@ const Calendar = () => {
             <AdaptiveCard>
                 <CalendarView editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
             </AdaptiveCard>
+            <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
+            <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this event?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
+                <p>The event is removed for everyone who was invited.</p>
+            </ConfirmDialog>
             <EventDialog
                 open={dialog.open}
                 selected={dialog.selected}
                 saving={saving}
                 onSubmit={submit}
-                onDelete={remove}
+                onDelete={() => setConfirmDel(true)} staff={staff}
                 onClose={() => setDialog((d) => ({ ...d, open: false }))}
             />
         </Container>

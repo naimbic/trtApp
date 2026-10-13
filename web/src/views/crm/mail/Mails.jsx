@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { TbSearch } from 'react-icons/tb'
+import { TbSearch, TbWand } from 'react-icons/tb'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import Segment from '@/components/ui/Segment'
+import VisualEditor from './VisualEditor'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Alert from '@/components/ui/Alert'
@@ -39,12 +42,18 @@ const Templates = () => {
     const [search, setSearch] = useState('')
     const [sel, setSel] = useState(null)
     const [form, setForm] = useState(null)
+    const [mode, setMode] = useState('visual') // visual | html | preview
     const [preview, setPreview] = useState('')
     const [saving, setSaving] = useState(false)
     const [testTo, setTestTo] = useState('')
     const [testing, setTesting] = useState(false)
+    const [confirm, setConfirm] = useState(null) // 'one' | 'all'
+    const [applying, setApplying] = useState(false)
     const area = useRef(null)
+    const visual = useRef(null)
     const editable = can('email_templates', 'edit')
+    const lang = language || list.language
+    const hasDesign = ['french', 'english'].includes(lang)
 
     const load = useCallback(async () => {
         const q = new URLSearchParams(); if (language) q.set('language', language); if (type) q.set('type', type); if (search.trim()) q.set('query', search.trim())
@@ -55,13 +64,13 @@ const Templates = () => {
     const open = async (row) => {
         setSel(row.id)
         const full = await api(`/api/crm/email-templates/${row.id}`)
-        setForm({ id: row.id, name: full.name, type: full.type, slug: full.slug, subject: full.subject || '', message: full.message || '', fromName: full.fromName || '', active: full.active !== false })
+        setForm({ id: row.id, name: full.name, type: full.type, slug: full.slug, subject: full.subject || '', message: full.message || '', fromName: full.fromName || '', active: full.active !== false, loaded: Date.now() })
     }
     useEffect(() => {
-        if (!form) return
-        const t = setTimeout(() => api('/api/crm/mail/preview', { method: 'POST', body: { subject: form.subject, message: form.message } }).then((p) => setPreview(p.html)).catch(() => {}), 400)
+        if (!form || mode !== 'preview') return
+        const t = setTimeout(() => api('/api/crm/mail/preview', { method: 'POST', body: { subject: form.subject, message: form.message } }).then((p) => setPreview(p.html)).catch(() => {}), 200)
         return () => clearTimeout(t)
-    }, [form?.subject, form?.message, form?.id])
+    }, [mode, form?.subject, form?.message, form?.id])
 
     const save = async () => {
         setSaving(true)
@@ -74,10 +83,20 @@ const Templates = () => {
         setTesting(true)
         try { await api('/api/crm/mail/test-template', { method: 'POST', body: { subject: form.subject, message: form.message, to: testTo } }); notify('success', `Test sent to ${testTo}`) } catch (e) { notify('danger', e.message) } finally { setTesting(false) }
     }
+    const applyDesign = async () => {
+        setApplying(true)
+        try {
+            const r = await api('/api/crm/mail/apply-design', { method: 'POST', body: { language: lang, slug: confirm === 'one' ? form.slug : undefined, shell: confirm === 'all' } })
+            notify('success', confirm === 'all' ? `${r.updated} templates updated` : 'Design applied')
+            setConfirm(null); await load()
+            if (form) { const row = { id: form.id }; await open(row) }
+        } catch (e) { notify('danger', e.message) } finally { setApplying(false) }
+    }
     const insert = (f) => {
-        const el = area.current
         const tag = `{${f}}`
-        if (!el) return setForm({ ...form, message: form.message + tag })
+        if (mode === 'visual') return visual.current?.insert(tag)
+        const el = area.current
+        if (!el) return
         const s = el.selectionStart ?? form.message.length, e = el.selectionEnd ?? s
         setForm({ ...form, message: form.message.slice(0, s) + tag + form.message.slice(e) })
         requestAnimationFrame(() => { el.focus(); el.setSelectionRange(s + tag.length, s + tag.length) })
@@ -93,8 +112,9 @@ const Templates = () => {
                 <Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search templates" value={search} onChange={(e) => setSearch(e.target.value)} />
                 <div className="grid grid-cols-2 gap-2">
                     <Select size="sm" isClearable placeholder="All types" options={typeOpts} value={typeOpts.find((o) => o.value === type) || null} onChange={(o) => setType(o ? o.value : null)} />
-                    <Select size="sm" options={langOpts} value={langOpts.find((o) => o.value === (language || list.language)) || null} onChange={(o) => o && setLanguage(o.value)} />
+                    <Select size="sm" options={langOpts} value={langOpts.find((o) => o.value === lang) || null} onChange={(o) => o && setLanguage(o.value)} />
                 </div>
+                {editable && hasDesign && <Button size="sm" icon={<TbWand />} onClick={() => setConfirm('all')}>Apply ready-made designs to all</Button>}
                 <div className="max-h-[640px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-600">
                     {Object.entries(grouped).map(([t, rows]) => (
                         <div key={t}>
@@ -111,12 +131,13 @@ const Templates = () => {
                 </div>
             </div>
 
-            <div>
+            <div className="min-w-0">
                 {!form ? <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-300 text-gray-400 dark:border-gray-600">Choose a template to edit</div> : (
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-wrap items-center gap-3">
                             <div className="min-w-0 flex-1"><h5 className="truncate">{form.name}</h5><p className="text-xs text-gray-500">{typeLabel(form.type)} · {form.slug}</p></div>
                             <div className="flex items-center gap-2 text-sm">Active<Switcher checked={form.active} disabled={!editable} onChange={(v) => setForm({ ...form, active: v })} /></div>
+                            {editable && hasDesign && <Button size="sm" icon={<TbWand />} onClick={() => setConfirm('one')}>Ready-made design</Button>}
                             {editable && <Button variant="solid" loading={saving} onClick={save}>Save</Button>}
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -124,14 +145,17 @@ const Templates = () => {
                             <div><Label>From name</Label><Input disabled={!editable} value={form.fromName} onChange={(e) => setForm({ ...form, fromName: e.target.value })} /></div>
                         </div>
                         <div>
-                            <Label>Available merge fields <span className="font-normal text-gray-400">(click to insert)</span></Label>
+                            <Label>Merge fields <span className="font-normal text-gray-400">(click to insert at the cursor)</span></Label>
                             <div className="flex flex-wrap gap-1.5">
-                                {fields.map((f) => <button key={f} type="button" disabled={!editable} onClick={() => insert(f)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${f}}`}</button>)}
+                                {fields.map((f) => <button key={f} type="button" disabled={!editable || mode === 'preview'} onClick={() => insert(f)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary disabled:opacity-50 dark:bg-gray-700">{`{${f}}`}</button>)}
                             </div>
                         </div>
-                        <div className="grid gap-4 xl:grid-cols-2">
-                            <div><Label>Message (HTML)</Label><textarea ref={area} disabled={!editable} spellCheck={false} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="input h-[460px] w-full rounded-xl border border-gray-300 bg-white p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-800" /></div>
-                            <div><Label>Preview <span className="font-normal text-gray-400">(sample data)</span></Label><iframe title="Template preview" sandbox="" srcDoc={preview} className="h-[460px] w-full rounded-xl border border-gray-200 bg-white dark:border-gray-600" /></div>
+                        <div>
+                            <div className="mb-3"><Segment size="sm" value={mode} onChange={(v) => v && setMode(v)}><Segment.Item value="visual">Visual</Segment.Item><Segment.Item value="html">HTML</Segment.Item><Segment.Item value="preview">Preview</Segment.Item></Segment></div>
+                            {mode === 'visual' && <VisualEditor ref={visual} docKey={`${form.id}-${form.loaded}`} value={form.message} disabled={!editable} onChange={(html) => setForm((f) => ({ ...f, message: html }))} />}
+                            {mode === 'html' && <textarea ref={area} disabled={!editable} spellCheck={false} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="h-[580px] w-full rounded-xl border border-gray-300 bg-white p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-800" />}
+                            {mode === 'preview' && <iframe title="Template preview" sandbox="" srcDoc={preview} className="h-[580px] w-full rounded-xl border border-gray-200 bg-white dark:border-gray-600" />}
+                            {mode === 'preview' && <p className="mt-1 text-xs text-gray-400">Sample data is used. Fields highlighted in yellow have no sample value.</p>}
                         </div>
                         {editable && (
                             <div className="flex flex-wrap items-center gap-2">
@@ -142,6 +166,10 @@ const Templates = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog isOpen={!!confirm} type="warning" title={confirm === 'all' ? `Apply ready-made designs to all ${lang} templates?` : 'Apply the ready-made design?'} confirmText="Apply design" confirmButtonProps={{ loading: applying }} onClose={() => setConfirm(null)} onRequestClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={applyDesign}>
+                <p>{confirm === 'all' ? 'Every template in this language gets a new subject and a modern HTML layout, and the shared email header and footer are replaced.' : 'The subject and content of this template are replaced by the ready-made design.'} Your current versions are saved in a backup file on the server first.</p>
+            </ConfirmDialog>
         </div>
     )
 }

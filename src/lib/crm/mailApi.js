@@ -2,6 +2,10 @@ import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, PermissionError } from '@/lib/crm/permissions'
 import { formatDocumentNumber, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
+import fs from 'node:fs'
+import path from 'node:path'
+import { buildMessage, SHELL } from '@/lib/crm/mailDesign/build'
+import { shortLink } from '@/lib/crm/shortLinks'
 import { baseData, buildHtml, companyLanguage, deliver, findTemplate, getOptions, getSmtp, setOptions, smtpReady, testConnection, mergeFields, escapeHtml } from '@/lib/crm/mailer'
 
 const plain = (v) => JSON.parse(JSON.stringify(v))
@@ -54,9 +58,17 @@ const INVOICE_LABEL = { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue
 const ESTIMATE_LABEL = { 1: 'Draft', 2: 'Sent', 3: 'Declined', 4: 'Accepted', 5: 'Expired' }
 const PROPOSAL_LABEL = { 1: 'Open', 2: 'Declined', 3: 'Accepted', 4: 'Sent', 5: 'Revised', 6: 'Draft' }
 
+/** Documents imported without a secret hash get one the first time a link is made. */
+async function ensureHash(model, doc) {
+    if (doc.hash) return doc.hash
+    const hash = (await import('node:crypto')).randomUUID().replace(/-/g, '')
+    await prisma[model].update({ where: { id: doc.id }, data: { hash } })
+    doc.hash = hash
+    return hash
+}
+
 /** Loads the document, its client and the merge fields for a kind + id. */
 async function loadContext(kind, id) {
-    const link = (path) => `${(process.env.PUBLIC_URL || process.env.NEXTAUTH_URL || 'http://localhost:3200').replace(/\/$/, '')}${path}`
     const base = await baseData()
     const padding = await numberPadding()
     let doc, clientId, data = {}, emailFallback = null
@@ -67,9 +79,10 @@ async function loadContext(kind, id) {
         const cur = doc.currencyId ? await prisma.crmCurrency.findUnique({ where: { id: doc.currencyId } }) : null
         const paid = (await prisma.crmPayment.findMany({ where: { invoiceId: id } })).reduce((s, p) => s + (p.amount || 0), 0)
         const last = await prisma.crmPayment.findFirst({ where: { invoiceId: id }, orderBy: { paymentDate: 'desc' } })
+        const invoiceNumber = formatDocumentNumber({ prefix: doc.prefix, number: doc.number, numberFormat: doc.numberFormat, date: doc.date, padding, draft: doc.status === INVOICE_STATUS.DRAFT })
         data = {
-            invoice_number: formatDocumentNumber({ prefix: doc.prefix, number: doc.number, numberFormat: doc.numberFormat, date: doc.date, padding, draft: doc.status === INVOICE_STATUS.DRAFT }),
-            invoice_link: link(`/invoice/${doc.id}/${doc.hash || ''}`),
+            invoice_number: invoiceNumber,
+            invoice_link: await shortLink({ prefix: 'inv', relType: 'invoice', relId: id, label: invoiceNumber, target: `/api/crm/public/invoice/${id}/${await ensureHash('crmInvoice', doc)}` }),
             invoice_date: fmtDate(doc.date), invoice_duedate: fmtDate(doc.dueDate),
             invoice_status: INVOICE_LABEL[doc.status] || '',
             invoice_total: money(doc.total, cur), invoice_subtotal: money(doc.subtotal, cur),
@@ -81,9 +94,10 @@ async function loadContext(kind, id) {
         if (!doc) fail('Estimate not found')
         clientId = doc.clientId
         const cur = doc.currencyId ? await prisma.crmCurrency.findUnique({ where: { id: doc.currencyId } }) : null
+        const estimateNumber = formatDocumentNumber({ prefix: doc.prefix, number: doc.number, numberFormat: doc.numberFormat, date: doc.date, padding })
         data = {
-            estimate_number: formatDocumentNumber({ prefix: doc.prefix, number: doc.number, numberFormat: doc.numberFormat, date: doc.date, padding }),
-            estimate_link: link(`/estimate/${doc.id}/${doc.hash || ''}`),
+            estimate_number: estimateNumber,
+            estimate_link: await shortLink({ prefix: 'est', relType: 'estimate', relId: id, label: estimateNumber, target: `/estimate/${id}/${await ensureHash('crmEstimate', doc)}` }),
             estimate_date: fmtDate(doc.date), estimate_expirydate: fmtDate(doc.expiryDate),
             estimate_status: ESTIMATE_LABEL[doc.status] || '', estimate_reference_no: doc.referenceNo || '',
             estimate_total: money(doc.total, cur), estimate_subtotal: money(doc.subtotal, cur),
@@ -98,7 +112,7 @@ async function loadContext(kind, id) {
         data = {
             proposal_number: `${pre}${String(doc.legacyId ?? '').padStart(padding, '0')}`,
             proposal_id: doc.legacyId ?? '', proposal_subject: doc.subject || '', proposal_proposal_to: doc.proposalTo || '',
-            proposal_link: link(`/proposal/${doc.id}/${doc.hash || ''}`), proposal_open_till: fmtDate(doc.openTill),
+            proposal_link: await shortLink({ prefix: 'prop', relType: 'proposal', relId: id, label: doc.subject || 'proposal', target: `/proposal/${id}/${await ensureHash('crmProposal', doc)}` }), proposal_open_till: fmtDate(doc.openTill),
             proposal_status: PROPOSAL_LABEL[doc.status] || '', proposal_total: money(doc.total, cur), proposal_subtotal: money(doc.subtotal, cur),
             proposal_assigned: '',
         }
@@ -110,7 +124,7 @@ async function loadContext(kind, id) {
             contract_subject: doc.subject || '', contract_description: doc.description || '',
             contract_datestart: fmtDate(doc.dateStart), contract_dateend: fmtDate(doc.dateEnd),
             contract_contract_value: doc.contractValue != null ? Number(doc.contractValue).toFixed(2) : '',
-            contract_link: link(`/contract/${doc.id}/${doc.hash || ''}`), contract_type: doc.contractType?.name || '',
+            contract_link: await shortLink({ prefix: 'ctr', relType: 'contract', relId: id, label: doc.subject || 'contract', target: `/contract/${id}/${await ensureHash('crmContract', doc)}` }), contract_type: doc.contractType?.name || '',
         }
     } else fail('Unknown document type')
 
@@ -125,7 +139,7 @@ async function loadContext(kind, id) {
     const lead = recipients.find((r) => r.checked) || recipients[0]
     const [first = '', ...rest] = (lead?.name || '').split(' ')
     Object.assign(data, base, {
-        client_company: client?.company || doc.proposalTo || '', client_phonenumber: client?.phone || '', client_vat_number: client?.vat || '',
+        client_company: client?.company || doc.proposalTo || '', client_phonenumber: client?.phoneNumber || '', client_vat_number: client?.vat || '',
         contact_firstname: first, contact_lastname: rest.join(' '), contact_email: lead?.email || '',
     })
     return { doc, client, recipients, data }
@@ -163,7 +177,7 @@ export async function composeMail(kind, id, slug) {
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
 const toList = (v) => (Array.isArray(v) ? v : String(v || '').split(/[,;\s]+/)).map((s) => s.trim()).filter(Boolean)
 
-export async function sendMail({ kind, id, template: slug, to, cc, subject }) {
+export async function sendMail({ kind, id, template: slug, to, cc, subject, attachPdf }) {
     const spec = KINDS[kind]
     if (!spec) fail('Unknown document type')
     const session = await requirePermission(spec.feature, 'edit')
@@ -176,7 +190,12 @@ export async function sendMail({ kind, id, template: slug, to, cc, subject }) {
     const { ctx, template } = await compose(kind, id, slug)
     const finalSubject = String(subject || '').trim() || mergeFields(template.subject, ctx.data)
     const html = await buildHtml(template.message, ctx.data)
-    const res = await deliver({ to: toAll.join(', '), cc: ccAll.join(', '), subject: finalSubject, html, fromName: template.fromName && !/^\{/.test(template.fromName) ? template.fromName : mergeFields(template.fromName, ctx.data), fromEmail: undefined })
+    let attachments
+    if (kind === 'invoice' && attachPdf) {
+        const { renderInvoicePdf, pdfFileName } = await import('@/lib/crm/invoicePdf')
+        try { attachments = [{ filename: pdfFileName(ctx.data.invoice_number), content: await renderInvoicePdf(id), contentType: 'application/pdf' }] } catch (e) { fail(`Could not create the PDF: ${e.message}`) }
+    }
+    const res = await deliver({ attachments, to: toAll.join(', '), cc: ccAll.join(', '), subject: finalSubject, html, fromName: template.fromName && !/^\{/.test(template.fromName) ? template.fromName : mergeFields(template.fromName, ctx.data), fromEmail: undefined })
 
     await prisma.crmMailLog.create({ data: { to: toAll.join(', '), cc: ccAll.join(', ') || null, subject: finalSubject, template: template.slug, relType: kind, relId: id, status: res.sent ? 'sent' : 'failed', error: res.error || null, staffId } })
     if (!res.sent) fail(res.error)
@@ -237,7 +256,9 @@ export async function previewTemplate({ subject, message }) {
         contract_subject: 'Website maintenance', contract_link: '#', contract_datestart: '2026-10-01', contract_dateend: '2027-10-01', contract_contract_value: '12000.00', contract_type: 'Maintenance', contract_description: '',
         staff_firstname: 'Karim', staff_lastname: 'Alaoui',
     }
-    return { subject: mergeFields(subject, sample), html: await buildHtml(message || '', sample) }
+    // Fields without sample data show as [field] so the preview never looks broken
+    const unknown = (k) => `<span style="background:#fef3c7;color:#92400e;padding:0 3px;border-radius:3px">[${k}]</span>`
+    return { subject: mergeFields(subject, sample, (k) => `[${k}]`), html: await buildHtml(message || '', sample, unknown) }
 }
 
 export async function sendTemplateTest({ subject, message, to }) {
@@ -272,3 +293,37 @@ export async function listTemplates({ type, language, query } = {}) {
     return plain({ list: list.map(({ message, ...r }) => r), language: lang, languages, types })
 }
 export { escapeHtml }
+
+/** Writes a JSON backup of what is about to be overwritten, so a design can always be rolled back. */
+function backup(name, payload) {
+    const dir = path.join(process.cwd(), 'data-backups')
+    fs.mkdirSync(dir, { recursive: true })
+    const file = path.join(dir, `${name}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
+    fs.writeFileSync(file, JSON.stringify(payload, null, 2))
+    return path.relative(process.cwd(), file)
+}
+
+/** Replaces templates by the ready-made designs (French / English). One slug, or every template of the language. */
+export async function applyDesigns({ language, slug, shell } = {}) {
+    await requirePermission('email_templates', 'edit')
+    if (!['french', 'english'].includes(language)) fail('Ready-made designs exist for French and English')
+    const rows = await prisma.crmEmailTemplate.findMany({ where: { language, ...(slug ? { slug } : {}) } })
+    if (slug && !rows.length) fail('Template not found')
+    const file = backup('email-templates', rows.map(({ id, slug: sl, language: l, subject, message }) => ({ id, slug: sl, language: l, subject, message })))
+    let updated = 0
+    const skipped = []
+    for (const r of rows) {
+        const built = buildMessage(r.slug, language)
+        if (!built) { skipped.push(r.slug); continue }
+        await prisma.crmEmailTemplate.update({ where: { id: r.id }, data: { subject: built.subject, message: built.message, plainText: false } })
+        updated++
+    }
+    let shellApplied = false
+    if (shell && !slug) {
+        const o = await getOptions(['email_header', 'email_footer'])
+        backup('email-shell', { email_header: o('email_header'), email_footer: o('email_footer') })
+        await setOptions({ email_header: SHELL.header, email_footer: SHELL.footer })
+        shellApplied = true
+    }
+    return { success: true, updated, skipped, shellApplied, backup: file }
+}

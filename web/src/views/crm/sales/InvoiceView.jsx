@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging } from 'react-icons/tb'
+import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging, TbFileTypePdf, TbDownload, TbPrinter } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import Segment from '@/components/ui/Segment'
 import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify, useCan } from '../kit/api'
 import { makeMoney } from '../clients/shared'
@@ -32,6 +33,7 @@ const InvoiceView = () => {
     const [lookups, setLookups] = useState(null)
     const [error, setError] = useState('')
     const [busy, setBusy] = useState(false)
+    const [view, setView] = useState('details') // details | document
     const [mail, setMail] = useState(null) // template slug or null
     const [payOpen, setPayOpen] = useState(false)
     const [pay, setPay] = useState({ amount: '', paymentModeId: null, paymentDate: dayjs().format('YYYY-MM-DD'), note: '', transactionId: '' })
@@ -82,6 +84,8 @@ const InvoiceView = () => {
                 <StatusTag status={st} />
                 {!invoice.sent && st === 1 && <span className="text-xs text-gray-400">not sent</span>}
                 <div className="ml-auto flex flex-wrap gap-2">
+                    <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>PDF</Button>
+                    <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/invoices/${id}/pdf?download=1` }}>Download</Button>
                     {can('invoices', 'edit') && !cancelled && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>Send</Button>}
                     {can('invoices', 'edit') && !cancelled && [1, 3, 4].includes(st) && <Button size="sm" icon={<TbBellRinging />} onClick={() => setMail('invoice-overdue-notice')}>Reminder</Button>}
                     {can('invoices', 'edit') && !cancelled && payments.length > 0 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-payment-recorded')}>Receipt</Button>}
@@ -93,7 +97,14 @@ const InvoiceView = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="mb-4"><Segment size="sm" value={view} onChange={(v) => v && setView(v)}><Segment.Item value="details">Details</Segment.Item><Segment.Item value="document">Document</Segment.Item></Segment></div>
+            {view === 'document' && (
+                <Card bodyClass="p-0 sm:p-0">
+                    <div className="flex items-center justify-between border-b px-4 py-2 text-sm text-gray-500"><span>This is the invoice your client receives</span><Button size="xs" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>Open PDF</Button></div>
+                    <iframe title="Invoice document" src={`/api/crm/sales/invoices/${id}/html?v=${Math.round((invoice.total || 0) * 100)}-${payments.length}-${st}`} className="block h-[1180px] w-full bg-white" />
+                </Card>
+            )}
+            <div className={`flex flex-col gap-4${view === 'document' ? ' hidden' : ''}`}>
                 <Card>
                     <div className="grid gap-4 text-sm md:grid-cols-4">
                         <div><div className="text-gray-500">Client</div>{client ? <Link className="font-semibold hover:underline" to={`/crm/clients/${client.id}`}>{client.company}</Link> : invoice.deletedCustomerName || '—'}</div>

@@ -14,6 +14,7 @@ const SendMailDialog = ({ open, kind, id, template, onClose, onSent }) => {
     const [slug, setSlug] = useState(template || null)
     const [picked, setPicked] = useState({})
     const [extra, setExtra] = useState('')
+    const [attachPdf, setAttachPdf] = useState(true)
     const [subject, setSubject] = useState('')
     const [loading, setLoading] = useState(false)
     const [sending, setSending] = useState(false)
@@ -40,7 +41,7 @@ const SendMailDialog = ({ open, kind, id, template, onClose, onSent }) => {
         const cc = extra.split(/[,;\s]+/).filter(Boolean)
         setSending(true)
         try {
-            await api('/api/crm/mail/send', { method: 'POST', body: { kind, id, template: data.template, to, cc, subject } })
+            await api('/api/crm/mail/send', { method: 'POST', body: { kind, id, template: data.template, to, cc, subject, attachPdf: kind === 'invoice' && attachPdf } })
             notify('success', 'Email sent')
             onSent?.(); onClose()
         } catch (e) { setError(e.message) } finally { setSending(false) }
@@ -76,6 +77,7 @@ const SendMailDialog = ({ open, kind, id, template, onClose, onSent }) => {
                     </div>
                     <div><label className="form-label mb-2 block">Other recipients</label><Input placeholder="name@company.com, other@company.com" value={extra} onChange={(e) => setExtra(e.target.value)} /></div>
                     <div><label className="form-label mb-2 block">Subject</label><Input value={subject} onChange={(e) => setSubject(e.target.value)} /></div>
+                    {kind === 'invoice' && <Checkbox checked={attachPdf} onChange={setAttachPdf}>Attach the invoice as a PDF</Checkbox>}
                     <div>
                         <label className="form-label mb-2 block">Preview</label>
                         <iframe title="Email preview" sandbox="" srcDoc={data.html} className="h-72 w-full rounded-xl border border-gray-200 bg-white dark:border-gray-600" />

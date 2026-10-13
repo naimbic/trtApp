@@ -452,12 +452,19 @@ model CrmEvent {
   isStartNotified    Boolean   @default(false)
   reminderBefore     Int?
   reminderBeforeType String?   // minutes | hours | days | weeks
+  allDay             Boolean   @default(false)
+  location           String?
+  meetingUrl         String?
+  clientId           String?   @db.ObjectId
+  attendeeIds        String[]  @db.ObjectId // staff invited to the event
+  attendeeEmails     String[]  // external guests
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
   @@index([legacyId])
   @@index([userId])
   @@index([start])
+  @@index([clientId])
   @@map("crm_events")
 }
 
@@ -787,4 +794,18 @@ model CrmMailLog {
   @@index([createdAt])
   @@index([relType, relId])
   @@map("crm_mail_log")
+}
+
+/// Short, readable links used in emails (e.g. /s/inv-fa-090-09-2026-k3x9).
+model CrmShortLink {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  code      String   @unique
+  target    String   // path (or absolute URL) the short link redirects to
+  relType   String
+  relId     String   @db.ObjectId
+  clicks    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([relType, relId])
+  @@map("crm_short_links")
 }

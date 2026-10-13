@@ -28,7 +28,7 @@ const ClientsList = () => {
     const lookups = useClientLookups()
     const money = makeMoney(lookups.currencies)
     const [data, setData] = useState({ list: [], total: 0, stats: {} })
-    const [status, setStatus] = useState('all')
+    const [status, setStatus] = useState('active')
     const [groupId, setGroupId] = useState(null)
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')

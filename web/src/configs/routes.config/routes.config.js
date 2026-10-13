@@ -72,6 +72,7 @@ export const protectedRoutes = [
     { key: 'crm.invoices.view', path: '/crm/invoices/:id', component: lazy(() => import('@/views/crm/sales/InvoiceView')), authority: [] },
     { key: 'crm.contracts', path: '/crm/contracts', component: lazy(() => import('@/views/crm/sales/ContractsList')), authority: [] },
     { key: 'crm.contracts.view', path: '/crm/contracts/:id', component: lazy(() => import('@/views/crm/sales/ContractView')), authority: [] },
+    { key: 'crm.mails', path: '/crm/mails', component: lazy(() => import('@/views/crm/mail/Mails')), authority: [] },
     { key: 'crm.payments', path: '/crm/payments', component: lazy(() => import('@/views/crm/sales/PaymentsList')), authority: [] },
     {
         key: 'crm.tasks-board',

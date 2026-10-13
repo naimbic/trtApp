@@ -769,3 +769,22 @@ model CrmFormQuestionBoxDescription {
   @@index([questionId])
   @@map("crm_form_question_box_description")
 }
+
+/// Every email the CRM tried to send (success or failure).
+model CrmMailLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  to        String
+  cc        String?
+  subject   String?
+  template  String?
+  relType   String?
+  relId     String?  @db.ObjectId
+  status    String   // sent | failed
+  error     String?
+  staffId   String?  @db.ObjectId
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([relType, relId])
+  @@map("crm_mail_log")
+}

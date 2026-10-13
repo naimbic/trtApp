@@ -2,4 +2,5 @@
 // { group, key, title, path, feature }
 export const customNavItems = [
     { group: 'Tasks', key: 'tasks-board', title: 'Tasks board', path: '/crm/tasks-board', feature: 'tasks' },
+    { group: 'Setup', key: 'mails', title: 'Mails', path: '/crm/mails', feature: 'email_templates' },
 ]

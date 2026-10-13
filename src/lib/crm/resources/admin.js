@@ -285,7 +285,7 @@ const resources = [
         filters: [activeFilter], children: [], actions: [],
     },
     {
-        key: 'email-templates', model: 'crmEmailTemplate', label: 'Email template', plural: 'Email templates',
+        key: 'email-templates', model: 'crmEmailTemplate', label: 'Email template', plural: 'Email templates', nav: false,
         group: 'Setup', icon: 'TbMail', feature: 'email_templates',
         titleField: 'name', search: ['name', 'subject', 'slug'], defaultSort: { type: 'asc' },
         columns: [

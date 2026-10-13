@@ -22,7 +22,10 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(10)
     const [sort, setSort] = useState(null)
-    const [filters, setFilters] = useState({})
+    // Lists that have an Active/Inactive filter open on "Active" by default.
+    const defaultFilters = () => ((resource.filters || []).some((f) => f.key === 'active') ? { active: 'true' } : {})
+    const [filters, setFilters] = useState(defaultFilters)
+    useEffect(() => { setFilters(defaultFilters()); setPage(1) }, [resource.key]) // eslint-disable-line react-hooks/exhaustive-deps
     const [data, setData] = useState({ list: [], total: 0 })
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')

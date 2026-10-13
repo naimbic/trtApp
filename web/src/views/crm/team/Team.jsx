@@ -47,7 +47,7 @@ const Team = () => {
     const canAdmin = authority.includes('admin') || authority.includes('crm.admin')
     const [data, setData] = useState({ members: [], stats: {} })
     const [lookups, setLookups] = useState({ roles: [], departments: [] })
-    const [status, setStatus] = useState('all')
+    const [status, setStatus] = useState('active')
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
     const [loading, setLoading] = useState(true)

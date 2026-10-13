@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash } from 'react-icons/tb'
+import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -13,6 +13,7 @@ import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify, useCan } from '../kit/api'
 import { makeMoney } from '../clients/shared'
 import { StatusTag, fmtDate } from './shared'
+import SendMailDialog from '../mail/SendMailDialog'
 
 /** Effective status for display (overdue derives from the due date, like the list). */
 const effective = (inv, paid) => {
@@ -31,6 +32,7 @@ const InvoiceView = () => {
     const [lookups, setLookups] = useState(null)
     const [error, setError] = useState('')
     const [busy, setBusy] = useState(false)
+    const [mail, setMail] = useState(null) // template slug or null
     const [payOpen, setPayOpen] = useState(false)
     const [pay, setPay] = useState({ amount: '', paymentModeId: null, paymentDate: dayjs().format('YYYY-MM-DD'), note: '', transactionId: '' })
     const [confirm, setConfirm] = useState(null) // 'cancel' | 'delete' | { payment }
@@ -80,6 +82,9 @@ const InvoiceView = () => {
                 <StatusTag status={st} />
                 {!invoice.sent && st === 1 && <span className="text-xs text-gray-400">not sent</span>}
                 <div className="ml-auto flex flex-wrap gap-2">
+                    {can('invoices', 'edit') && !cancelled && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>Send</Button>}
+                    {can('invoices', 'edit') && !cancelled && [1, 3, 4].includes(st) && <Button size="sm" icon={<TbBellRinging />} onClick={() => setMail('invoice-overdue-notice')}>Reminder</Button>}
+                    {can('invoices', 'edit') && !cancelled && payments.length > 0 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-payment-recorded')}>Receipt</Button>}
                     {can('invoices', 'edit') && !cancelled && !invoice.sent && <Button size="sm" icon={<TbSend />} loading={busy} onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'markSent' } }), 'Marked as sent')}>Mark as sent</Button>}
                     {can('payments', 'create') && !cancelled && balance > 0 && <Button size="sm" variant="solid" icon={<TbCash />} onClick={() => { setPay((p) => ({ ...p, amount: balance })); setPayOpen(true) }}>Record payment</Button>}
                     {can('invoices', 'edit') && !cancelled && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/invoices/${id}/edit`)}>Edit</Button>}
@@ -171,6 +176,7 @@ const InvoiceView = () => {
             <ConfirmDialog isOpen={!!confirm} type={confirm === 'cancel' ? 'warning' : 'danger'} title={confirm === 'cancel' ? 'Cancel this invoice?' : confirm === 'delete' ? 'Delete this invoice?' : 'Delete this payment?'} confirmText={confirm === 'cancel' ? 'Cancel invoice' : 'Delete'} onClose={() => setConfirm(null)} onRequestClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={doConfirm}>
                 <p>{confirm === 'cancel' ? 'A cancelled invoice no longer counts as revenue. It can be restored later. Invoices with payments cannot be cancelled.' : confirm === 'delete' ? 'The invoice, its lines and its activity will be removed. Invoices with payments cannot be deleted.' : 'The payment will be removed and the invoice status recalculated.'}</p>
             </ConfirmDialog>
+                    <SendMailDialog open={!!mail} kind="invoice" id={id} template={mail} onClose={() => setMail(null)} onSent={load} />
         </Container>
     )
 }

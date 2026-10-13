@@ -35,7 +35,14 @@ const shape = (s) => ({
     createdAt: s.createdAt,
 })
 
-const include = { role: true, departments: { include: { department: true } } }
+// Departments are resolved separately: links to deleted departments must not break the whole list.
+const include = { role: true, departments: true }
+async function withDepartments(rows) {
+    const list = Array.isArray(rows) ? rows : rows ? [rows] : []
+    const names = new Map((await prisma.crmDepartment.findMany({ select: { id: true, name: true } })).map((d) => [d.id, d]))
+    for (const s of list) s.departments = (s.departments || []).filter((l) => names.has(l.departmentId)).map((l) => ({ ...l, department: names.get(l.departmentId) }))
+    return rows
+}
 
 export async function teamLookups() {
     await requirePermission('staff', 'view')
@@ -54,7 +61,7 @@ export async function listTeam({ search = '', status = 'all' } = {}) {
             ? { OR: ['firstName', 'lastName', 'email', 'phoneNumber'].map((f) => ({ [f]: { contains: search, mode: 'insensitive' } })) }
             : {}),
     }
-    const rows = await prisma.crmStaff.findMany({ where, include, orderBy: [{ active: 'desc' }, { firstName: 'asc' }] })
+    const rows = await withDepartments(await prisma.crmStaff.findMany({ where, include, orderBy: [{ active: 'desc' }, { firstName: 'asc' }] }))
     const all = await prisma.crmStaff.findMany({ select: { active: true, admin: true, userId: true } })
     return {
         members: rows.map(shape),
@@ -105,7 +112,7 @@ export async function createMember(body, request) {
     })
     await applyRolePermissions(staff.id, staff.roleId)
     await setDepartments(staff.id, body.departmentIds)
-    const full = await prisma.crmStaff.findUnique({ where: { id: staff.id }, include })
+    const full = await withDepartments(await prisma.crmStaff.findUnique({ where: { id: staff.id }, include }))
     let inviteLink = null
     if (invite) {
         const { token } = await createAuthToken(user.id, 'invite', session.user.id)
@@ -166,7 +173,7 @@ export async function updateMember(id, body) {
         }
         if (Object.keys(u).length) await prisma.user.update({ where: { id: s.userId }, data: u })
     }
-    return shape(await prisma.crmStaff.findUnique({ where: { id }, include }))
+    return shape(await withDepartments(await prisma.crmStaff.findUnique({ where: { id }, include })))
 }
 
 /** Set a new one-time password for the member's login account (shown once to the administrator). */

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbPencil, TbRefresh, TbSignature, TbTrash, TbTrashOff } from 'react-icons/tb'
+import { TbArrowLeft, TbMail, TbPencil, TbRefresh, TbSignature, TbTrash, TbTrashOff } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -17,6 +17,7 @@ import RecordDrawer from '../kit/RecordDrawer'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { StateTag } from './ContractsList'
 import { fmtDate } from './shared'
+import SendMailDialog from '../mail/SendMailDialog'
 
 const { TabList, TabNav } = Tabs
 const Field = ({ label, children }) => (<div><div className="mb-0.5 text-xs uppercase tracking-wide text-gray-400">{label}</div><div>{children || <span className="text-gray-400">—</span>}</div></div>)
@@ -36,6 +37,7 @@ const ContractView = () => {
     const [comment, setComment] = useState('')
     const [busy, setBusy] = useState(false)
     const [confirm, setConfirm] = useState(null)
+    const [mailOpen, setMailOpen] = useState(false)
 
     const load = useCallback(() => api(`/api/crm/sales/contracts/${id}`).then((d) => { setC(d); setError('') }).catch((e) => setError(e.message)), [id])
     useEffect(() => { load() }, [load])
@@ -65,6 +67,7 @@ const ContractView = () => {
                 <StateTag state={c.state} />
                 <Tag className={signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{signed ? 'Signed' : 'Not signed'}</Tag>
                 <div className="ml-auto flex flex-wrap gap-2">
+                    {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbMail />} onClick={() => setMailOpen(true)}>Send</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbRefresh />} onClick={() => setRenew({ newStartDate: dayjs(c.dateEnd || new Date()).format('YYYY-MM-DD'), newEndDate: dayjs(c.dateEnd || new Date()).add(1, 'year').format('YYYY-MM-DD'), newValue: c.value })}>Renew</Button>}
                     {can('contracts', 'edit') && <Button size="sm" icon={<TbSignature />} loading={busy} onClick={() => act(signed ? 'unsign' : 'sign', {}, signed ? 'Marked as not signed' : 'Marked as signed')}>{signed ? 'Mark as not signed' : 'Mark as signed'}</Button>}
                     {can('contracts', 'edit') && <Button size="sm" icon={<TbPencil />} onClick={() => setEdit(true)}>Edit</Button>}
@@ -131,6 +134,7 @@ const ContractView = () => {
             <ConfirmDialog isOpen={confirm === 'delete'} type="danger" title="Delete this contract?" confirmText="Delete" onClose={() => setConfirm(null)} onRequestClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={del}>
                 <p>The contract is removed for good. Use Trash instead if you may need it again.</p>
             </ConfirmDialog>
+                    <SendMailDialog open={mailOpen} kind="contract" id={id} template="send-contract" onClose={() => setMailOpen(false)} />
         </Container>
     )
 }

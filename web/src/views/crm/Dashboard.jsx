@@ -48,8 +48,8 @@ const Dashboard = () => {
             {data && (
                 <main className={cn('space-y-4 transition-opacity', loading && 'opacity-60')}>
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
-                        {data.kpis.map(({ key, ...kpi }, i) => (
-                            <KPICard key={key} {...kpi} money={money} delay={i * 0.04} />
+                        {data.kpis.map((k, i) => (
+                            <KPICard key={k.key} {...k} money={money} delay={i * 0.04} />
                         ))}
                     </div>
 

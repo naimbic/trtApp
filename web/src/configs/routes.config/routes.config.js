@@ -13,6 +13,12 @@ export const protectedRoutes = [
         authority: [],
     },
     {
+        key: 'calendar',
+        path: '/calendar',
+        component: lazy(() => import('@/views/crm/calendar/Calendar')),
+        authority: [],
+    },
+    {
         key: 'crm.tasks-board',
         path: '/crm/tasks-board',
         component: lazy(() => import('@/views/crm/ResourcePage')),

@@ -12,6 +12,16 @@ const navigationConfig = [
         authority: [],
         subMenu: [],
     },
+    {
+        key: 'calendar',
+        path: '/calendar',
+        title: 'Calendar',
+        translateKey: 'nav.calendar',
+        icon: 'calendar',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [],
+        subMenu: [],
+    },
     ...crmNavigationConfig,
 ]
 

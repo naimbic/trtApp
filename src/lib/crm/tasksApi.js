@@ -265,3 +265,10 @@ export async function taskLookups() {
     ])
     return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: s.profileImage || null })).sort((x, y) => x.name.localeCompare(y.name)), milestones }
 }
+
+/** Prisma `where` limiting tasks to what the signed-in staff member may see (for dashboards). */
+export async function taskScope() {
+    const session = await requirePermission('tasks', 'view')
+    const a = await access(session)
+    return { where: await visibleWhere(a), staffId: a.staffId }
+}

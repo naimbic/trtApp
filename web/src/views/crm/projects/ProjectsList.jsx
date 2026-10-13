@@ -43,7 +43,7 @@ const ProjectsList = () => {
     return (
         <Container>
             <div className="flex items-center justify-between gap-4">
-                <h3>Projects</h3>
+                <div><div className="mb-1 text-sm text-gray-500"><Link to="/crm/projects" className="hover:text-primary">Projects</Link></div><h3>All projects</h3></div>
                 {data.can.create && <Button variant="solid" onClick={() => setDialog(true)}>Create project</Button>}
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">

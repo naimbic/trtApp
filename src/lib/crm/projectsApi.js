@@ -191,3 +191,75 @@ export async function deleteProjectNote(id, noteId) {
     await prisma.crmProjectNote.delete({ where: { id: noteId } })
     return { success: true }
 }
+
+const dayKey = (d) => new Date(d).toISOString().slice(0, 10)
+
+/** Everything the projects home (the "project dashboard") shows, from the data the user may see. */
+export async function projectDashboard() {
+    const session = await requirePermission('projects', 'view')
+    const a = await access(session)
+    const where = await visible(a)
+    const projects = await prisma.crmProject.findMany({ where })
+    const ids = projects.map((p) => p.id)
+    const today = new Date(new Date().toDateString())
+    const overview = {
+        ongoing: projects.filter((p) => p.status === 2).length,
+        completed: projects.filter((p) => p.status === 4).length,
+        upcoming: projects.filter((p) => p.status === 1).length,
+        onHold: projects.filter((p) => p.status === 3).length,
+        overdue: projects.filter((p) => [1, 2, 3].includes(p.status) && p.deadline && new Date(p.deadline) < today).length,
+    }
+
+    // schedule: active projects with their milestones
+    const active = projects.filter((p) => [1, 2, 3].includes(p.status) && p.startDate).sort((x, y) => +new Date(x.deadline || x.startDate) - +new Date(y.deadline || y.startDate)).slice(0, 6)
+    const stats = await taskStats(active.map((p) => p.id))
+    const milestones = active.length ? await prisma.crmMilestone.findMany({ where: { projectId: { in: active.map((p) => p.id) } }, orderBy: { milestoneOrder: 'asc' } }) : []
+    const schedule = []
+    for (const [i, p] of active.entries()) {
+        const start = new Date(p.startDate)
+        let end = p.deadline ? new Date(p.deadline) : new Date(+start + 30 * 86400000)
+        if (end <= start) end = new Date(+start + 86400000)
+        schedule.push({ id: `p-${p.id}`, name: p.name, start, end, progress: progressOf(p, stats[p.id]), type: 'project', hideChildren: i > 1, displayOrder: schedule.length + 1, barVariant: p.status === 2 ? 'ongoing' : p.status === 3 ? 'hold' : 'upcoming', link: `/crm/projects/${p.id}` })
+        for (const m of milestones.filter((x) => x.projectId === p.id)) {
+            const mEnd = m.dueDate ? new Date(m.dueDate) : end
+            schedule.push({ id: `m-${m.id}`, name: m.name, start, end: mEnd > start ? mEnd : new Date(+start + 86400000), progress: 0, type: 'task', project: `p-${p.id}`, displayOrder: schedule.length + 1, barVariant: 'milestone' })
+        }
+    }
+
+    // tasks
+    const { where: tw, staffId } = await (await import('@/lib/crm/tasksApi')).taskScope()
+    let mine = { AND: [tw, { status: { not: 5 } }] }
+    if (staffId) { const asg = await prisma.crmTaskAssigned.findMany({ where: { staffId }, select: { taskId: true } }); mine = { AND: [tw, { status: { not: 5 } }, { id: { in: asg.map((x) => x.taskId) } }] } }
+    let cur0 = await prisma.crmTask.count({ where: mine })
+    if (!cur0) mine = { AND: [tw, { status: { not: 5 } }] }
+    const cur = await prisma.crmTask.findMany({ where: mine, orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }], take: 40, select: { id: true, name: true, dueDate: true, priority: true, status: true, relType: true, relId: true } })
+    const sorted = [...cur.filter((t) => t.dueDate), ...cur.filter((t) => !t.dueDate)].slice(0, 7)
+    const PR = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }
+    const currentTasks = sorted.map((t) => ({ id: t.id, name: t.name, dueDate: t.dueDate, priority: PR[t.priority] || '', overdue: !!t.dueDate && new Date(t.dueDate) < today, projectId: t.relType === 'project' ? t.relId : null }))
+
+    // task overview: new vs finished, last 7 days and last 8 weeks
+    const since = new Date(Date.now() - 8 * 7 * 86400000)
+    const recentTasks = await prisma.crmTask.findMany({ where: { AND: [tw, { OR: [{ createdAt: { gte: since } }, { dateFinished: { gte: since } }] }] }, select: { createdAt: true, dateFinished: true, status: true } })
+    const daily = { range: [], created: [], finished: [] }
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000), k = dayKey(d)
+        daily.range.push(d.toLocaleDateString('en-GB', { weekday: 'short' }))
+        daily.created.push(recentTasks.filter((t) => dayKey(t.createdAt) === k).length)
+        daily.finished.push(recentTasks.filter((t) => t.dateFinished && dayKey(t.dateFinished) === k).length)
+    }
+    const weekly = { range: [], created: [], finished: [] }
+    for (let i = 7; i >= 0; i--) {
+        const to = new Date(Date.now() - i * 7 * 86400000 + 86400000), from = new Date(+to - 7 * 86400000)
+        weekly.range.push(from.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }))
+        weekly.created.push(recentTasks.filter((t) => t.createdAt >= from && t.createdAt < to).length)
+        weekly.finished.push(recentTasks.filter((t) => t.dateFinished && t.dateFinished >= from && t.dateFinished < to).length)
+    }
+    const open = await prisma.crmTask.count({ where: { AND: [tw, { status: { not: 5 } }] } })
+
+    // recent activity across projects
+    const acts = ids.length ? await prisma.crmProjectActivity.findMany({ where: { projectId: { in: ids } }, orderBy: { createdAt: 'desc' }, take: 14 }) : []
+    const people = await staffMap(acts.map((x) => x.staffId))
+    const pName = Object.fromEntries(projects.map((p) => [p.id, p.name]))
+    const recentActivity = acts.map((x) => ({ id: x.id, projectId: x.projectId, project: pName[x.projectId] || '', by: people[x.staffId]?.name || x.fullName || 'System', image: people[x.staffId]?.image || null, text: readable(x.descriptionKey, x.additionalData), date: x.createdAt }))
+    return { overview, schedule, currentTasks, taskOverview: { daily, weekly, open }, recentActivity, can: { create: a.can('create') } }
+}

@@ -54,7 +54,7 @@ const ProjectDetails = () => {
             setData(d)
             const p = d.project
             setForm({ name: p.name, description: p.description, status: p.status, clientId: p.clientId, billingType: p.billingType, startDate: p.startDate ? new Date(p.startDate) : null, deadline: p.deadline ? new Date(p.deadline) : null, progressFromTasks: p.progressFromTasks, progress: p.manualProgress ?? 0, projectCost: p.projectCost ?? '', projectRatePerHour: p.projectRatePerHour ?? '', estimatedHours: p.estimatedHours ?? '', memberIds: p.memberIds })
-        } catch (e) { notify('danger', e.message); nav('/crm/projects') }
+        } catch (e) { notify('danger', e.message); nav('/crm/projects/list') }
     }, [id, nav])
     useEffect(() => { setData(null); setTab('overview'); load() }, [load])
 
@@ -71,7 +71,7 @@ const ProjectDetails = () => {
     }
     const addNote = async () => { try { await api(`/api/crm/work/projects/${id}/notes`, { method: 'POST', body: { content: note } }); setNote(''); load() } catch (e) { notify('danger', e.message) } }
     const delNote = async (nid) => { try { await api(`/api/crm/work/projects/${id}/notes?noteId=${nid}`, { method: 'DELETE' }); load() } catch (e) { notify('danger', e.message) } }
-    const del = async () => { setConfirmDel(false); try { await api(`/api/crm/work/projects/${id}`, { method: 'DELETE' }); notify('success', 'Project deleted'); nav('/crm/projects') } catch (e) { notify('danger', e.message) } }
+    const del = async () => { setConfirmDel(false); try { await api(`/api/crm/work/projects/${id}`, { method: 'DELETE' }); notify('success', 'Project deleted'); nav('/crm/projects/list') } catch (e) { notify('danger', e.message) } }
 
     const days = {}
     for (const a of data.activity) (days[dayjs(a.date).format('YYYY-MM-DD')] ||= []).push(a)
@@ -80,7 +80,7 @@ const ProjectDetails = () => {
         <Container>
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
                 <div className="flex items-center gap-4">
-                    <div><div className="mb-1 text-sm text-gray-500"><Link to="/crm/projects" className="hover:text-primary">Projects</Link></div><h3>{p.name}</h3></div>
+                    <div><div className="mb-1 text-sm text-gray-500"><Link to="/crm/projects/list" className="hover:text-primary">Projects</Link></div><h3>{p.name}</h3></div>
                     <StatusTag status={p.status} />
                 </div>
                 {data.can.edit && <Button variant="solid" onClick={() => setTab('settings')}>Edit</Button>}

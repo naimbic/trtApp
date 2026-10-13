@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.19.1',
+        date: '2026-10-13',
+        title: 'Projects dashboard',
+        items: ['Projects now opens on a dashboard like the template: overview cards, project schedule (Gantt with milestones), calendar with the day plan, current tasks, task overview chart and recent activity', 'The project list moved to Projects → All projects'],
+    },
+    {
         version: '0.19.0',
         date: '2026-10-13',
         title: 'Support tickets',

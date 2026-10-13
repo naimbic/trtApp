@@ -43,6 +43,7 @@ export const PERMISSION_GROUPS = [
             { key: 'invoices', label: 'Invoices', caps: STD },
             { key: 'payments', label: 'Payments', caps: CRUD, auto: { view_own: 'Based on the invoices the staff member can see' } },
             { key: 'estimates', label: 'Estimates', caps: STD },
+            { key: 'purchase_orders', label: 'Purchase orders', caps: STD },
             { key: 'proposals', label: 'Proposals', caps: [...STD, 'view_all_templates'] },
             { key: 'credit_notes', label: 'Credit notes', caps: STD },
             { key: 'contracts', label: 'Contracts', caps: [...STD, 'view_all_templates'] },

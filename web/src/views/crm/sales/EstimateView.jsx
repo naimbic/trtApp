@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbCopy, TbDownload, TbFileInvoice, TbFileTypePdf, TbMail, TbPencil, TbTrash } from 'react-icons/tb'
+import { TbArrowLeft, TbShoppingCart, TbCopy, TbDownload, TbFileInvoice, TbFileTypePdf, TbMail, TbPencil, TbTrash } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
@@ -49,6 +49,7 @@ const EstimateView = () => {
     }
     const state = (action, ok) => run(() => api(`/api/crm/sales/estimates/${id}/state`, { method: 'POST', body: { action } }), ok)
     const copy = async () => { try { await navigator.clipboard.writeText(clientLink); notify('success', 'Client link copied') } catch { notify('danger', 'Could not copy') } }
+    const makeOrder = async () => { const r = await run(() => api(`/api/crm/sales/estimates/${id}/purchase-order`, { method: 'POST' }), 'Purchase order created'); if (r?.id) navigate(`/crm/purchase-orders/${r.id}`) }
     const convert = async () => { const r = await run(() => api(`/api/crm/sales/estimates/${id}/convert`, { method: 'POST' }), 'Invoice created'); if (r?.invoiceId) navigate(`/crm/invoices/${r.invoiceId}`) }
     const sendReply = async () => { if (!reply.trim()) return; if (await run(() => api(`/api/crm/sales/estimates/${id}/comments`, { method: 'POST', body: { content: reply } }), 'Reply added')) setReply('') }
     const delComment = (cid) => run(() => api(`/api/crm/sales/estimates/${id}/comments?commentId=${cid}`, { method: 'DELETE' }), 'Comment deleted')
@@ -69,6 +70,7 @@ const EstimateView = () => {
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/estimates/${id}/pdf?download=1` }}>Download</Button>
                     {can('estimates', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>Send</Button>}
                     {e.status !== 1 && <Button size="sm" icon={<TbCopy />} onClick={copy}>Client link</Button>}
+                    {can('purchase_orders', 'create') && !locked && [2, 4].includes(st) && <Button size="sm" icon={<TbShoppingCart />} loading={busy} onClick={makeOrder}>Purchase order</Button>}
                     {can('invoices', 'create') && !locked && [2, 4, 5].includes(st) && <Button size="sm" variant="solid" icon={<TbFileInvoice />} loading={busy} onClick={() => setConfirm('convert')}>Convert to invoice</Button>}
                     {can('estimates', 'edit') && !locked && (
                         <Dropdown renderTitle={<Button size="sm" loading={busy}>Mark as…</Button>} placement="bottom-end">

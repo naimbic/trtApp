@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.14.0',
+        date: '2026-10-13',
+        title: 'Purchase orders (bons de commande)',
+        items: ['Purchase orders: list, editor, PDF, email with the PDF attached, status (draft, sent, confirmed, delivered, cancelled)', 'Create a purchase order from an estimate, and an invoice from a purchase order', 'Numbering, delivery days, notes and terms from Settings → Billing → Purchase orders; new permission under Sales'],
+    },
+    {
         version: '0.13.0',
         date: '2026-10-13',
         title: 'Estimates',

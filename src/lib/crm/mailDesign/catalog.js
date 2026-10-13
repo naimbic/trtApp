@@ -305,3 +305,11 @@ D('remind_user_check_in', 'n', 'warn', '', [['Time', 'Heure', 'date_time']], nul
 D('new_leave_application_send_to_notification_recipient', 'n', 'info', 'link', [['Employee', 'Employé', 'staff_name'], ['Date', 'Date', 'date_time']], null,
   ['Timesheets – new leave application', 'New leave application', '{staff_name} submitted a leave application.', 'Review application'],
   ['Feuilles de temps – nouvelle demande de congé', 'Nouvelle demande de congé', '{staff_name} a soumis une demande de congé.', 'Examiner la demande'])
+
+/* ---------- Purchase orders ---------- */
+D('purchase-order-send-to-client', 'c', 'info', '', [['Purchase order', 'Bon de commande', 'purchase_order_number'], ['Date', 'Date', 'purchase_order_date'], ['Expected delivery', 'Livraison prévue', 'purchase_order_delivery'], ['Total', 'Total', 'purchase_order_total']], null,
+  ['Purchase order {purchase_order_number} from {companyname}', 'Your purchase order', 'Please find attached the purchase order {purchase_order_number}. Please check it and let us know if anything needs to change.', ''],
+  ['Bon de commande {purchase_order_number} – {companyname}', 'Votre bon de commande', 'Veuillez trouver ci-joint le bon de commande {purchase_order_number}. Merci de le vérifier et de nous signaler tout ajustement.', ''])
+D('purchase-order-confirmed', 'c', 'success', '', [['Purchase order', 'Bon de commande', 'purchase_order_number'], ['Expected delivery', 'Livraison prévue', 'purchase_order_delivery'], ['Total', 'Total', 'purchase_order_total']], null,
+  ['Order {purchase_order_number} confirmed', 'Your order is confirmed', 'Thank you. Purchase order {purchase_order_number} is confirmed and we are getting started.', ''],
+  ['Commande {purchase_order_number} confirmée', 'Votre commande est confirmée', 'Merci. Le bon de commande {purchase_order_number} est confirmé et nous démarrons.', ''])

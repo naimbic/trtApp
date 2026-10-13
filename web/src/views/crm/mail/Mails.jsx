@@ -28,6 +28,7 @@ const FIELDS = {
     invoice: ['invoice_number', 'invoice_link', 'invoice_date', 'invoice_duedate', 'invoice_status', 'invoice_total', 'invoice_subtotal', 'invoice_amount_due', 'payment_total', 'payment_date'],
     estimate: ['estimate_number', 'estimate_link', 'estimate_date', 'estimate_expirydate', 'estimate_status', 'estimate_total', 'estimate_subtotal', 'estimate_reference_no'],
     proposals: ['proposal_number', 'proposal_subject', 'proposal_proposal_to', 'proposal_link', 'proposal_open_till', 'proposal_status', 'proposal_total'],
+    purchase_order: ['purchase_order_number', 'purchase_order_date', 'purchase_order_delivery', 'purchase_order_total', 'purchase_order_reference'],
     contract: ['contract_subject', 'contract_description', 'contract_datestart', 'contract_dateend', 'contract_contract_value', 'contract_type', 'contract_link'],
 }
 const TYPE_LABEL = { invoice: 'Invoices', estimate: 'Estimates', proposals: 'Proposals', contract: 'Contracts', client: 'Customers', staff: 'Staff', tasks: 'Tasks', ticket: 'Tickets', project: 'Projects', leads: 'Leads', credit_note: 'Credit notes', subscriptions: 'Subscriptions' }

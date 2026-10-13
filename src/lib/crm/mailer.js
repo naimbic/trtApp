@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import prisma from '@/lib/prisma'
 import { companyTokenData, COMPANY_KEYS } from '@/lib/crm/docTokens'
+import { buildMessage } from '@/lib/crm/mailDesign/build'
 
 /** Option helpers (Perfex stores all settings in the options table). */
 export async function getOptions(names) {
@@ -69,7 +70,15 @@ export async function findTemplate(slug, language) {
         const t = await prisma.crmEmailTemplate.findFirst({ where: { slug, language: lang } })
         if (t) return t
     }
-    return prisma.crmEmailTemplate.findFirst({ where: { slug } })
+    const any = await prisma.crmEmailTemplate.findFirst({ where: { slug } })
+    if (any) return any
+    // templates this app added after the Perfex import (for example purchase orders) are created on first use
+    for (const lang of [language, 'english'].filter((l) => ['french', 'english'].includes(l))) {
+        const built = buildMessage(slug, lang)
+        if (!built) continue
+        return prisma.crmEmailTemplate.create({ data: { type: slug.startsWith('purchase-order') ? 'purchase_order' : 'other', slug, language: lang, name: slug.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase()), subject: built.subject, message: built.message, fromName: '{companyname}', plainText: false, active: true, sortOrder: 0 } })
+    }
+    return null
 }
 
 export async function companyLanguage() {

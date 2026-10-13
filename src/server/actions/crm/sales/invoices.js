@@ -294,6 +294,7 @@ export async function deleteInvoice(id) {
     // estimates / proposals that were converted into this invoice become convertible again
     await prisma.crmEstimate.updateMany({ where: { invoiceId: id }, data: { invoiceId: null, invoicedDate: null } })
     await prisma.crmProposal.updateMany({ where: { invoiceId: id }, data: { invoiceId: null, dateConverted: null } })
+    await prisma.crmPurchaseOrder.updateMany({ where: { invoiceId: id }, data: { invoiceId: null, invoicedDate: null } })
     await prisma.crmInvoice.delete({ where: { id } })
     await afterDelete('invoice', invoice)
     void session

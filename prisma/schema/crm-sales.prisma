@@ -634,3 +634,43 @@ model CrmEstimateComment {
   @@index([estimateId])
   @@map("crm_estimate_comments")
 }
+
+/// Bon de commande: the client's order confirmation between an estimate and the invoice.
+model CrmPurchaseOrder {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  clientId         String?   @db.ObjectId
+  number           Int
+  prefix           String?
+  numberFormat     Int       @default(1)
+  date             DateTime?
+  deliveryDate     DateTime?
+  currencyId       String?   @db.ObjectId
+  subtotal         Float     @default(0)
+  totalTax         Float     @default(0)
+  total            Float     @default(0)
+  discountPercent  Float     @default(0)
+  discountTotal    Float     @default(0)
+  discountType     String?
+  adjustment       Float?
+  status           Int       @default(1) // 1 draft | 2 sent | 3 confirmed | 4 delivered | 5 cancelled
+  sent             Boolean   @default(false)
+  dateSend         DateTime?
+  hash             String?
+  referenceNo      String?   // the client's own order number
+  clientNote       String?
+  adminNote        String?
+  terms            String?
+  estimateId       String?   @db.ObjectId
+  invoiceId        String?   @db.ObjectId
+  invoicedDate     DateTime?
+  addedFrom        String?   @db.ObjectId
+  saleAgentId      String?   @db.ObjectId
+  projectId        String?   @db.ObjectId
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([estimateId])
+  @@map("crm_purchase_orders")
+}

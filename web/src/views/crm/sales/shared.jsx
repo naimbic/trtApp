@@ -19,3 +19,12 @@ export const ESTIMATE_STATUS = {
     5: { label: 'Expired', cls: 'bg-amber-100 text-amber-700' },
 }
 export const EstimateStatusTag = ({ status }) => <Tag className={ESTIMATE_STATUS[status]?.cls}>{ESTIMATE_STATUS[status]?.label || status}</Tag>
+
+export const PO_STATUS = {
+    1: { label: 'Draft', cls: 'bg-gray-200 text-gray-600' },
+    2: { label: 'Sent', cls: 'bg-blue-100 text-blue-700' },
+    3: { label: 'Confirmed', cls: 'bg-emerald-100 text-emerald-700' },
+    4: { label: 'Delivered', cls: 'bg-teal-100 text-teal-700' },
+    5: { label: 'Cancelled', cls: 'bg-red-100 text-red-700' },
+}
+export const PoStatusTag = ({ status }) => <Tag className={PO_STATUS[status]?.cls}>{PO_STATUS[status]?.label || status}</Tag>

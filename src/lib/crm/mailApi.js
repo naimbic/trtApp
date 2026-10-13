@@ -23,6 +23,13 @@ export const KINDS = {
             { slug: 'invoice-already-send', label: 'Invoice already sent' },
         ],
     },
+    purchase_order: {
+        feature: 'purchase_orders', contactFlag: 'estimateEmails',
+        templates: [
+            { slug: 'purchase-order-send-to-client', label: 'Send purchase order' },
+            { slug: 'purchase-order-confirmed', label: 'Order confirmed' },
+        ],
+    },
     estimate: {
         feature: 'estimates', contactFlag: 'estimateEmails',
         templates: [
@@ -89,6 +96,15 @@ async function loadContext(kind, id) {
             invoice_total: money(doc.total, cur), invoice_subtotal: money(doc.subtotal, cur),
             invoice_amount_due: money(doc.total - paid, cur),
             payment_total: money(last?.amount ?? paid, cur), payment_date: fmtDate(last?.paymentDate),
+        }
+    } else if (kind === 'purchase_order') {
+        doc = await prisma.crmPurchaseOrder.findUnique({ where: { id } })
+        if (!doc) fail('Purchase order not found')
+        clientId = doc.clientId
+        const cur = doc.currencyId ? await prisma.crmCurrency.findUnique({ where: { id: doc.currencyId } }) : null
+        data = {
+            purchase_order_number: formatDocumentNumber({ prefix: doc.prefix, number: doc.number, numberFormat: doc.numberFormat, date: doc.date, padding }),
+            purchase_order_date: fmtDate(doc.date), purchase_order_delivery: fmtDate(doc.deliveryDate), purchase_order_total: money(doc.total, cur), purchase_order_reference: doc.referenceNo || '',
         }
     } else if (kind === 'estimate') {
         doc = await prisma.crmEstimate.findUnique({ where: { id } })
@@ -201,8 +217,13 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
 
     const finalSubject = String(subject || '').trim() || mergeFields(template.subject, ctx.data)
     const html = await buildHtml(template.message, ctx.data)
+    if (kind === 'purchase_order' && attachPdf === undefined) attachPdf = true
     if (kind === 'invoice' && attachPdf === undefined && slug === 'invoice-payment-recorded') attachPdf = (await getOptions(['attach_invoice_to_payment_receipt_email']))('attach_invoice_to_payment_receipt_email') === '1'
     let attachments
+    if (kind === 'purchase_order' && attachPdf) {
+        const { purchaseOrderPdf } = await import('@/lib/crm/purchaseOrderPdf')
+        try { const r = await purchaseOrderPdf(id); attachments = [{ filename: r.name, content: r.pdf, contentType: 'application/pdf' }] } catch (e) { fail(`Could not create the PDF: ${e.message}`) }
+    }
     if (kind === 'invoice' && attachPdf) {
         const { renderInvoicePdf, pdfFileName } = await import('@/lib/crm/invoicePdf')
         try { attachments = [{ filename: pdfFileName(ctx.data.invoice_number), content: await renderInvoicePdf(id), contentType: 'application/pdf' }] } catch (e) { fail(`Could not create the PDF: ${e.message}`) }
@@ -218,7 +239,8 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
         if (slug === 'invoice-overdue-notice') patch.lastOverdueReminder = now
         if (slug === 'invoice-due-notice') patch.lastDueNotice = now
         await prisma.crmInvoice.update({ where: { id }, data: patch })
-    } else if (kind === 'estimate') await prisma.crmEstimate.update({ where: { id }, data: { sent: true, dateSend: now, ...(ctx.doc.status === 1 ? { status: 2 } : {}) } })
+    } else if (kind === 'purchase_order') await prisma.crmPurchaseOrder.update({ where: { id }, data: { sent: true, dateSend: now, ...(ctx.doc.status === 1 ? { status: 2 } : {}) } })
+    else if (kind === 'estimate') await prisma.crmEstimate.update({ where: { id }, data: { sent: true, dateSend: now, ...(ctx.doc.status === 1 ? { status: 2 } : {}) } })
     const staff = staffId ? await prisma.user.findUnique({ where: { id: staffId }, select: { name: true } }).catch(() => null) : null
     await prisma.crmSalesActivity.create({ data: { relType: kind, relId: id, description: `Email "${template.name || template.slug}" sent to ${toAll.join(', ')}`, staffId: staffId || undefined, fullName: staff?.name || (staffId ? null : 'Automatic'), date: now } }).catch(() => {})
     return { success: true, to: toAll }

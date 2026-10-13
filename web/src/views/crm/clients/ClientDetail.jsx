@@ -125,6 +125,15 @@ const ClientDetail = () => {
         ].filter((t) => !t.feature || can(t.feature, 'view'))
     }, [c, id, can])
 
+    const invite = async (k) => {
+        try {
+            const r = await api(`/api/crm/customers/${id}/portal-invite`, { method: 'POST', body: { contactId: k.id } })
+            if (r.sent) notify('success', `Email sent to ${r.email}`)
+            else { try { await navigator.clipboard.writeText(r.link) } catch { /* clipboard blocked */ } notify('warning', `The email could not be sent (${r.error || 'mail not set up'}). The link was copied: send it yourself.`) }
+            loadProfile()
+        } catch (e) { notify('danger', e.message) }
+    }
+
     const remove = async () => {
         try {
             await api(`/api/crm/customers/${id}`, { method: 'DELETE' })
@@ -230,6 +239,7 @@ const ClientDetail = () => {
                                                 return (
                                                     <div key={k.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600"><div className="flex items-center gap-2 font-semibold">{k.name}{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">Primary</Tag>}{!k.active && <Tag>Inactive</Tag>}</div>
                                                         <div className="mt-1 space-y-0.5 text-sm text-gray-500">{k.title && <div>{k.title}</div>}{k.email && <div className="flex items-center gap-1"><TbMail />{k.email}</div>}{k.phone && <div className="flex items-center gap-1"><TbPhone />{k.phone}</div>}
+                                                            {k.email && k.active && can('customers', 'edit') && <div className="flex flex-wrap items-center gap-2 pt-2">{pk?.portal && <Tag className="bg-emerald-100 text-emerald-700">Client area access</Tag>}<Button size="xs" onClick={() => invite(k)}>{pk?.portal ? 'Send password reset' : 'Invite to client area'}</Button></div>}
                                                             {pk?.lastLogin && <div className="flex items-center gap-1 pt-1 text-xs"><TbLogin />Last login {dayjs(pk.lastLogin).format('DD MMM YYYY, HH:mm')}{pk.ip && <span className="font-mono"> · {pk.ip}</span>}</div>}
                                                         </div>
                                                     </div>

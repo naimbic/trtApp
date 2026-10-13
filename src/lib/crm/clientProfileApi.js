@@ -30,7 +30,7 @@ export async function clientProfile(id) {
 
     const [leadRow, contacts, invoices, estimates, proposals, contracts, projects, tickets, notes, reminders, tasks] = await Promise.all([
         c.leadId ? prisma.crmLead.findUnique({ where: { id: c.leadId } }) : prisma.crmLead.findFirst({ where: { clientId: id } }),
-        prisma.crmContact.findMany({ where: { clientId: id }, select: { id: true, firstName: true, lastName: true, email: true, lastIp: true, lastLogin: true, isPrimary: true, active: true } }),
+        prisma.crmContact.findMany({ where: { clientId: id }, select: { id: true, firstName: true, lastName: true, email: true, lastIp: true, lastLogin: true, isPrimary: true, active: true, passwordHash: true } }),
         prisma.crmInvoice.findMany({ where: { clientId: id }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, dueDate: true, total: true, status: true, currencyId: true, createdAt: true, dateSend: true, sent: true } }),
         prisma.crmEstimate.findMany({ where: { clientId: id }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, total: true, createdAt: true, acceptanceDate: true } }),
         prisma.crmProposal.findMany({ where: { relType: 'customer', relId: id }, select: { id: true, number: true, legacyId: true, subject: true, status: true, total: true, createdAt: true, date: true, acceptanceDate: true, openTill: true } }),
@@ -138,7 +138,7 @@ export async function clientProfile(id) {
     return {
         lead, journey, attention, engagement, timeline,
         lastLogin: lastLogin ? { name: name(lastLogin), ip: lastLogin.lastIp, date: lastLogin.lastLogin } : null,
-        contacts: contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active })),
+        contacts: contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active, portal: !!x.passwordHash })),
         reminders: reminders.map((r) => ({ id: r.id, description: r.description || '', date: r.date, done: !!r.isNotified, staff: sName[r.staffId] || null })),
         stats: { openTasks: openTasks.length, openTickets: openTickets.length, overdueInvoices: overdue.length, unpaidInvoices: unpaid.length },
         can: { note: can('customers', 'edit'), reminder: can('customers', 'edit') },

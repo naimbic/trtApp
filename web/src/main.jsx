@@ -10,7 +10,7 @@ let redirecting = false
 window.fetch = async (...args) => {
     const res = await nativeFetch(...args)
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || ''
-    if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/crm/auth/') && !redirecting) {
+    if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/portal') && !url.startsWith('/api/crm/auth/') && !redirecting) {
         redirecting = true
         try {
             localStorage.removeItem('sessionUser')

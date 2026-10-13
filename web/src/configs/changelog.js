@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.21.0',
+        date: '2026-10-13',
+        title: 'Client area',
+        items: ['New client area at /portal with its own sign-in, built from the template components: overview, invoices, estimates, proposals, projects and support', 'Clients see what is waiting for them (invoices to pay, offers to answer), open and download documents, follow shared project tasks, and open or reply to support requests', 'Invite a contact from the client page (Invite to client area / Send password reset); the link is emailed, or copied for you when mail is not set up', 'Contact permissions decide which sections each person sees; password change signs the old session out; sign-in is locked after 5 wrong attempts'],
+    },
+    {
         version: '0.20.0',
         date: '2026-10-13',
         title: 'Client profile with follow-up',

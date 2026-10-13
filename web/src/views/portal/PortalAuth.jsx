@@ -1,0 +1,104 @@
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router'
+import Alert from '@/components/ui/Alert'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
+import { FormItem, Form } from '@/components/ui/Form'
+import PasswordInput from '@/components/shared/PasswordInput'
+import ActionLink from '@/components/shared/ActionLink'
+import Logo from '@/components/template/Logo'
+import { useThemeStore } from '@/store/themeStore'
+import { portal } from './api'
+
+const Head = ({ title, text }) => {
+    const mode = useThemeStore((s) => s.mode)
+    return (
+        <>
+            <div className="mb-8"><Logo type="streamline" mode={mode} imgClass="mx-auto" logoWidth={60} /></div>
+            <div className="mb-8"><h2 className="mb-2">{title}</h2><p className="font-semibold heading-text">{text}</p></div>
+        </>
+    )
+}
+const backTo = (params) => { const b = params.get('back'); return b && b.startsWith('/portal') ? b : '/portal' }
+
+export const SignIn = () => {
+    const nav = useNavigate()
+    const [params] = useSearchParams()
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
+    const [busy, setBusy] = useState(false)
+    const submit = async () => {
+        setBusy(true); setError('')
+        try { await portal('/auth/login', { method: 'POST', body: { email, password }, quiet: true }); nav(backTo(params), { replace: true }) } catch (e) { setError(e.message) } finally { setBusy(false) }
+    }
+    return (
+        <>
+            <Head title="Welcome" text="Sign in to your client area to follow your invoices, projects and support requests." />
+            {error && <Alert showIcon className="mb-4" type="danger">{error}</Alert>}
+            <Form onSubmit={(e) => { e.preventDefault(); submit() }}>
+                <FormItem label="Email"><Input type="email" autoComplete="username" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} /></FormItem>
+                <FormItem label="Password"><PasswordInput autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} /></FormItem>
+                <div className="mb-7 mt-2"><ActionLink to="/portal/forgot-password" className="mt-2 font-semibold underline heading-text" themeColor={false}>Forgot password</ActionLink></div>
+                <Button block loading={busy} variant="solid" type="submit" disabled={!email || !password}>Sign in</Button>
+            </Form>
+            <p className="mt-8 text-center text-sm text-gray-500">No password yet? Ask your contact at the agency for an invitation, or use “Forgot password”.</p>
+        </>
+    )
+}
+
+export const Forgot = () => {
+    const [email, setEmail] = useState('')
+    const [done, setDone] = useState(false)
+    const [error, setError] = useState('')
+    const [busy, setBusy] = useState(false)
+    const submit = async () => {
+        setBusy(true); setError('')
+        try { await portal('/auth/forgot', { method: 'POST', body: { email }, quiet: true }); setDone(true) } catch (e) { setError(e.message) } finally { setBusy(false) }
+    }
+    return (
+        <>
+            <Head title="Forgot password" text={done ? 'Check your inbox.' : 'Enter the email address of your account and we will send you a link.'} />
+            {done ? <Alert showIcon type="success" className="mb-6">If an account exists for {email}, a link to choose a new password is on its way. It is valid for one hour.</Alert> : (
+                <>
+                    {error && <Alert showIcon className="mb-4" type="danger">{error}</Alert>}
+                    <Form onSubmit={(e) => { e.preventDefault(); submit() }}>
+                        <FormItem label="Email"><Input type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} /></FormItem>
+                        <Button block loading={busy} variant="solid" type="submit" disabled={!email}>Send reset link</Button>
+                    </Form>
+                </>
+            )}
+            <div className="mt-6 text-center"><ActionLink to="/portal/sign-in" themeColor={false} className="font-bold heading-text">Back to sign in</ActionLink></div>
+        </>
+    )
+}
+
+export const SetPassword = () => {
+    const nav = useNavigate()
+    const [params] = useSearchParams()
+    const key = params.get('key') || ''
+    const [info, setInfo] = useState(null)
+    const [password, setPassword] = useState('')
+    const [again, setAgain] = useState('')
+    const [error, setError] = useState('')
+    const [busy, setBusy] = useState(false)
+    useEffect(() => { portal(`/auth/set-password?key=${encodeURIComponent(key)}`, { quiet: true }).then(setInfo).catch(() => setInfo({ valid: false })) }, [key])
+    const submit = async () => {
+        if (password !== again) return setError('The two passwords are not the same')
+        setBusy(true); setError('')
+        try { await portal('/auth/set-password', { method: 'POST', body: { key, password }, quiet: true }); nav('/portal', { replace: true }) } catch (e) { setError(e.message) } finally { setBusy(false) }
+    }
+    if (!info) return <Head title="One moment…" text="" />
+    if (!info.valid) return (<><Head title="Link expired" text="This link is no longer valid." /><Alert showIcon type="warning" className="mb-6">Links work once and expire after a while. Ask for a new one.</Alert><Button block variant="solid" onClick={() => nav('/portal/forgot-password')}>Get a new link</Button></>)
+    return (
+        <>
+            <Head title={info.first ? 'Choose your password' : 'Choose a new password'} text={`${info.name || info.email} · ${info.email}`} />
+            {error && <Alert showIcon className="mb-4" type="danger">{error}</Alert>}
+            <Form onSubmit={(e) => { e.preventDefault(); submit() }}>
+                <FormItem label="New password"><PasswordInput autoComplete="new-password" placeholder="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} /></FormItem>
+                <FormItem label="Confirm password"><PasswordInput autoComplete="new-password" placeholder="Repeat the password" value={again} onChange={(e) => setAgain(e.target.value)} /></FormItem>
+                <Button block loading={busy} variant="solid" type="submit" disabled={password.length < 8 || !again}>{info.first ? 'Save and sign in' : 'Change password'}</Button>
+            </Form>
+        </>
+    )
+}

@@ -7,7 +7,10 @@ import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Segment from '@/components/ui/Segment'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
-import { TbPlus, TbRefresh } from 'react-icons/tb'
+import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers } from 'react-icons/tb'
+import Tooltip from '@/components/ui/Tooltip'
+import { CATEGORIES } from './EventDialog'
+import './calendar.css'
 import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EventDialog from './EventDialog'
@@ -30,6 +33,63 @@ const api = async (url, init) => {
     const json = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`)
     return json
+}
+
+const TONES = {
+    red: 'bg-red-100 text-red-800 border-red-500 dark:bg-red-500/20 dark:text-red-200',
+    orange: 'bg-orange-100 text-orange-800 border-orange-500 dark:bg-orange-500/20 dark:text-orange-200',
+    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-500 dark:bg-yellow-500/20 dark:text-yellow-200',
+    green: 'bg-green-100 text-green-800 border-green-500 dark:bg-green-500/20 dark:text-green-200',
+    blue: 'bg-blue-100 text-blue-800 border-blue-500 dark:bg-blue-500/20 dark:text-blue-200',
+    purple: 'bg-purple-100 text-purple-800 border-purple-500 dark:bg-purple-500/20 dark:text-purple-200',
+}
+const TYPE_LABEL = { tasks: 'Task', invoices: 'Invoice', projects: 'Project', estimates: 'Estimate', proposals: 'Proposal', contracts: 'Contract' }
+
+const Row = ({ icon: Icon, children }) => (children ? <div className="flex items-start gap-1.5 text-xs"><Icon className="mt-0.5 shrink-0 text-sm opacity-70" /><span className="min-w-0 break-words">{children}</span></div> : null)
+
+const EventTip = ({ ev, timeText }) => {
+    const p = ev.extendedProps
+    if (p.type !== 'events') {
+        return (
+            <div className="flex max-w-xs flex-col gap-1">
+                <div className="font-semibold">{p.rawTitle || ev.title}</div>
+                <div className="text-xs opacity-80">{p.detail || TYPE_LABEL[p.type]}</div>
+                <Row icon={TbBuilding}>{p.clientName}</Row>
+                <div className="text-xs opacity-60">Click to open</div>
+            </div>
+        )
+    }
+    const cat = CATEGORIES.find((c) => c.value === p.category) || CATEGORIES[0]
+    return (
+        <div className="flex max-w-xs flex-col gap-1">
+            <div className="font-semibold">{p.rawTitle}</div>
+            <div className="text-xs opacity-80">{cat.label} · {p.allDay ? 'All day' : timeText || ''}</div>
+            <Row icon={TbBuilding}>{p.clientName}</Row>
+            <Row icon={TbUsers}>{[...(p.attendees || []).map((a) => a.name), ...(p.attendeeEmails || [])].filter(Boolean).join(', ')}</Row>
+            <Row icon={TbMapPin}>{p.location}</Row>
+            <Row icon={TbVideo}>{p.meetingUrl && 'Video meeting · click to open and join'}</Row>
+            {p.description && <div className="line-clamp-3 text-xs opacity-80">{p.description}</div>}
+            <Row icon={TbUser}>{p.owner && `Organiser: ${p.owner}`}</Row>
+            <div className="text-xs opacity-60">{p.canEdit === false ? 'Click to view' : 'Click to edit'}</div>
+        </div>
+    )
+}
+
+const renderEvent = (arg) => {
+    const ev = arg.event, p = ev.extendedProps
+    const tone = TONES[p.eventColor] || TONES.blue
+    const timed = arg.view.type.startsWith('timeGrid')
+    const cat = p.type === 'events' ? CATEGORIES.find((c) => c.value === p.category) || CATEGORIES[0] : null
+    const Icon = p.meetingUrl ? TbVideo : cat?.icon
+    return (
+        <Tooltip title={<EventTip ev={ev} timeText={arg.timeText} />} placement="top">
+            <div className={`flex w-full min-w-0 ${timed ? 'h-full flex-col items-start' : 'items-center'} gap-1 overflow-hidden rounded border-l-[3px] px-1.5 py-px text-[11px] leading-[18px] ${tone}`}>
+                {!ev.allDay && arg.timeText && p.type === 'events' && <span className="shrink-0 font-semibold opacity-80">{arg.timeText}</span>}
+                {Icon && !timed && <Icon className="shrink-0 text-xs opacity-70" />}
+                <span className={`min-w-0 ${timed ? 'whitespace-normal' : 'truncate'} font-medium`}>{p.rawTitle || ev.title}</span>
+            </div>
+        </Tooltip>
+    )
 }
 
 const Calendar = () => {
@@ -60,7 +120,7 @@ const Calendar = () => {
         }
     }, [])
 
-    const visible = useMemo(() => items.filter((i) => shown.includes(i.type)).map((i) => (i.meetingUrl ? { ...i, title: `📹 ${i.title}` } : i)), [items, shown])
+    const visible = useMemo(() => items.filter((i) => shown.includes(i.type)), [items, shown])
 
     const onDatesSet = (arg) => {
         range.current = { start: arg.start.toISOString(), end: arg.end.toISOString() }
@@ -85,7 +145,7 @@ const Calendar = () => {
             selected: {
                 type: 'EDIT', id: p.rawId, title: p.rawTitle, description: p.description, start: p.rawStart, end: p.rawEnd, allDay: p.allDay,
                 eventColor: p.eventColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, clientId: p.clientId,
-                attendeeIds: p.attendeeIds, attendeeEmails: p.attendeeEmails, reminderBefore: p.reminderBefore, reminderBeforeType: p.reminderBeforeType,
+                category: p.category, projectId: p.projectId, attendeeIds: p.attendeeIds, attendeeEmails: p.attendeeEmails, reminderBefore: p.reminderBefore, reminderBeforeType: p.reminderBeforeType,
                 editable: p.canEdit, owner: p.owner,
             },
         })
@@ -155,7 +215,7 @@ const Calendar = () => {
                 </Segment>
             </div>
             <AdaptiveCard>
-                <CalendarView editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
+                <CalendarView wrapperClass="crm-cal" eventContent={renderEvent} dayMaxEvents={3} firstDay={1} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
             </AdaptiveCard>
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this event?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>

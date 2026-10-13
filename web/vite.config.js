@@ -24,7 +24,7 @@ export default defineConfig({
         secure: false
       },
       // short links from emails (/s/inv-fa-090-09-2026-k3x9) are served by the API
-      '/s': {
+      '^/s/[a-z0-9-]+$': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,

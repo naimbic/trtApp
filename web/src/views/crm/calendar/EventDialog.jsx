@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import { components } from 'react-select'
-import { TbBrandGoogle, TbCalendarPlus, TbChecks, TbDownload, TbVideo, TbWand } from 'react-icons/tb'
+import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -21,6 +21,14 @@ export const COLORS = [
     { value: 'green', label: 'green', color: 'bg-green-400' },
     { value: 'blue', label: 'blue', color: 'bg-blue-400' },
     { value: 'purple', label: 'purple', color: 'bg-purple-400' },
+]
+export const CATEGORIES = [
+    { value: 'meeting', label: 'Meeting', icon: TbUsers },
+    { value: 'call', label: 'Call', icon: TbPhone },
+    { value: 'visit', label: 'Visit', icon: TbMapPin },
+    { value: 'deadline', label: 'Deadline', icon: TbFlag },
+    { value: 'reminder', label: 'Reminder', icon: TbBell },
+    { value: 'other', label: 'Other', icon: TbCalendar },
 ]
 const UNITS = [{ value: 'minutes', label: 'minutes' }, { value: 'hours', label: 'hours' }, { value: 'days', label: 'days' }, { value: 'weeks', label: 'weeks' }]
 
@@ -45,7 +53,7 @@ const googleLink = (v) => {
 }
 const jitsi = () => `https://meet.jit.si/TRT-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`
 
-const EMPTY = { title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
+const EMPTY = { category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
 const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, onClose }) => {
@@ -64,6 +72,8 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
             color: selected.eventColor || 'blue',
             isPublic: !!selected.isPublic,
             allDay: !!selected.allDay,
+            category: selected.category || 'meeting',
+            projectId: selected.projectId || null,
             location: selected.location || '',
             meetingUrl: selected.meetingUrl || '',
             clientId: selected.clientId || null,
@@ -91,7 +101,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
         const end = v.allDay ? noon(v.end || v.start) : v.end
         onSubmit({
             title: v.title.trim(), description: v.description, start: start.toISOString(), end: end ? end.toISOString() : null, color: v.color, isPublic: v.isPublic,
-            allDay: v.allDay, location: v.location, meetingUrl: v.meetingUrl.trim(), clientId: v.clientId, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
+            allDay: v.allDay, category: v.category, projectId: v.projectId, location: v.location, meetingUrl: v.meetingUrl.trim(), clientId: v.clientId, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
             reminderBefore: v.reminderBefore === '' ? null : Number(v.reminderBefore), reminderBeforeType: v.reminderBeforeType,
             sendInvites: v.sendInvites && !!hasGuests, inviteClient: v.sendInvites && v.inviteClient && !!v.clientId,
         })
@@ -101,15 +111,20 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
 
     return (
         <Dialog isOpen={open} width={680} onClose={onClose} onRequestClose={onClose}>
-            <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="mb-4 flex flex-wrap items-center gap-2 pr-10">
                 <h5 className="mr-auto">{readOnly ? 'Event' : edit ? 'Edit event' : 'New event'}</h5>
                 {edit && v.meetingUrl && <Button size="sm" variant="solid" icon={<TbVideo />} onClick={() => window.open(v.meetingUrl, '_blank', 'noopener')}>Join meeting</Button>}
                 {edit && v.start && <Button size="sm" icon={<TbBrandGoogle />} onClick={() => window.open(googleLink(v), '_blank', 'noopener')}>Google Calendar</Button>}
                 {edit && <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/calendar/ics?id=${selected.id}` }}>.ics</Button>}
             </div>
             {readOnly && <p className="mb-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:bg-gray-700">You were invited to this event{selected.owner ? ` by ${selected.owner}` : ''}. Only the organiser can change it.</p>}
-            <Form className="flex flex-1 flex-col" onSubmit={submit}>
+            <Form className="flex max-h-[68vh] flex-1 flex-col overflow-y-auto pr-1" onSubmit={submit}>
                 <fieldset disabled={readOnly || saving} className="contents">
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                        {CATEGORIES.map((c) => (
+                            <button key={c.value} type="button" onClick={() => set({ category: c.value })} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition ${v.category === c.value ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600'}`}><c.icon className="text-sm" />{c.label}</button>
+                        ))}
+                    </div>
                     <FormItem label="Title" invalid={!!error && !v.title.trim()} errorMessage={error}>
                         <Input type="text" autoComplete="off" placeholder="Meeting with the client…" value={v.title} onChange={(e) => set({ title: e.target.value })} />
                     </FormItem>
@@ -124,7 +139,10 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                             <Select isMulti placeholder="Add people" options={staffOpts} value={staffOpts.filter((o) => v.attendeeIds.includes(o.value))} onChange={(o) => set({ attendeeIds: (o || []).map((x) => x.value) })} />
                         </FormItem>
                     </div>
-                    <FormItem label="Other guests (emails)"><Input placeholder="name@company.com, other@company.com" value={v.attendeeEmails} onChange={(e) => set({ attendeeEmails: e.target.value })} /></FormItem>
+                    <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+                        <FormItem label="Project"><RelationSelect resource="projects" value={v.projectId} onChange={(id) => set({ projectId: id })} /></FormItem>
+                        <FormItem label="Other guests (emails)"><Input placeholder="name@company.com, other@…" value={v.attendeeEmails} onChange={(e) => set({ attendeeEmails: e.target.value })} /></FormItem>
+                    </div>
                     <FormItem label="Meeting link">
                         <div className="flex gap-2">
                             <Input placeholder="https://meet.google.com/… or Zoom, Teams" value={v.meetingUrl} onChange={(e) => set({ meetingUrl: e.target.value })} />
@@ -133,7 +151,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                         {!readOnly && <p className="mt-1 text-xs text-gray-400"><b>Create</b> makes a free video room (Jitsi). For Google Meet use <a className="text-primary underline" href="https://meet.new" target="_blank" rel="noreferrer">meet.new</a> and paste the link.</p>}
                     </FormItem>
                     <FormItem label="Location"><Input placeholder="Office, address…" value={v.location} onChange={(e) => set({ location: e.target.value })} /></FormItem>
-                    <FormItem label="Description"><Input textArea rows={3} placeholder="Agenda, notes…" value={v.description} onChange={(e) => set({ description: e.target.value })} /></FormItem>
+                    <FormItem label="Description"><Input textArea rows={2} placeholder="Agenda, notes…" value={v.description} onChange={(e) => set({ description: e.target.value })} /></FormItem>
                     <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
                         <FormItem label="Colour">
                             <Select options={COLORS} value={COLORS.filter((o) => o.value === v.color)} components={{ Option: ColorOption, Control: ColorControl }} onChange={(o) => set({ color: o?.value || 'blue' })} />

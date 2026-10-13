@@ -52,6 +52,9 @@ export async function getCalendarItems({ from, to }) {
     const clientIds = [...new Set(events.map((e) => e.clientId).filter(Boolean))]
     const clientRows = clientIds.length ? await prisma.crmClient.findMany({ where: { id: { in: clientIds } }, select: { id: true, company: true } }) : []
     const clientName = Object.fromEntries(clientRows.map((c) => [c.id, c.company]))
+    const projectIds = [...new Set(events.map((e) => e.projectId).filter(Boolean))]
+    const projectRows = projectIds.length ? await prisma.crmProject.findMany({ where: { id: { in: projectIds } }, select: { id: true, name: true } }) : []
+    const projectName = Object.fromEntries(projectRows.map((x) => [x.id, x.name]))
     for (const e of events) {
         const mine = !e.userId || e.userId === ctx.staffId
         const invited = (e.attendeeIds || []).includes(ctx.staffId)
@@ -76,6 +79,9 @@ export async function getCalendarItems({ from, to }) {
             meetingUrl: e.meetingUrl || '',
             clientId: e.clientId || null,
             clientName: e.clientId ? clientName[e.clientId] || '' : '',
+            category: e.category || 'meeting',
+            projectId: e.projectId || null,
+            projectName: e.projectId ? projectName[e.projectId] || '' : '',
             attendeeIds: e.attendeeIds || [],
             attendees: (e.attendeeIds || []).map((id) => ({ id, name: staffName[id] || '' })),
             attendeeEmails: e.attendeeEmails || [],
@@ -88,18 +94,19 @@ export async function getCalendarItems({ from, to }) {
 
     const range = { gte: start, lt: end }
     const day = (d) => new Date(d).toISOString().slice(0, 10)
-    const add = (type, id, title, date, color, href) => items.push({ id: `${type}:${id}`, title, start: day(date), allDay: true, eventColor: color, type, editable: false, href })
+    const allClients = Object.fromEntries((await prisma.crmClient.findMany({ select: { id: true, company: true } })).map((c) => [c.id, c.company]))
+    const add = (type, id, title, date, color, href, detail = '', clientId = null) => items.push({ id: `${type}:${id}`, title, start: day(date), allDay: true, eventColor: color, type, editable: false, href, detail, clientName: clientId ? allClients[clientId] || '' : '' })
 
     if (ctx.can('tasks')) {
         layers.push('tasks')
         const rows = await prisma.crmTask.findMany({ where: { dueDate: range, status: { not: 5 } }, select: { id: true, name: true, dueDate: true } })
-        rows.forEach((t) => add('tasks', t.id, `Task: ${t.name}`, t.dueDate, 'orange', `/crm/tasks/${t.id}`))
+        rows.forEach((t) => add('tasks', t.id, `Task: ${t.name}`, t.dueDate, 'orange', `/crm/tasks/${t.id}`, 'Task due'))
     }
     if (ctx.can('invoices')) {
         layers.push('invoices')
-        const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6] } }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, dueDate: true, total: true } })
+        const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, status: true, dueDate: true, total: true } })
         const pad = await numberPadding()
-        rows.forEach((i) => add('invoices', i.id, `Invoice ${docNumberOf(i, pad)} due · ${round2(i.total).toLocaleString('en-US')}`, i.dueDate, 'red', `/crm/invoices/${i.id}`))
+        rows.forEach((i) => add('invoices', i.id, `Invoice ${docNumberOf(i, pad)} due · ${round2(i.total).toLocaleString('en-US')}`, i.dueDate, 'red', `/crm/invoices/${i.id}`, `Invoice due · ${round2(i.total).toLocaleString('en-US')}`, i.clientId))
     }
     if (ctx.can('projects')) {
         layers.push('projects')
@@ -108,9 +115,9 @@ export async function getCalendarItems({ from, to }) {
     }
     if (ctx.can('estimates')) {
         layers.push('estimates')
-        const rows = await prisma.crmEstimate.findMany({ where: { expiryDate: range, status: { in: [1, 2] } }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, expiryDate: true } })
+        const rows = await prisma.crmEstimate.findMany({ where: { expiryDate: range, status: { in: [1, 2] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, expiryDate: true } })
         const epad = await numberPadding()
-        rows.forEach((e) => add('estimates', e.id, `Estimate ${docNumberOf(e, epad, null)} expires`, e.expiryDate, 'yellow', `/crm/estimates/${e.id}`))
+        rows.forEach((e) => add('estimates', e.id, `Estimate ${docNumberOf(e, epad, null)} expires`, e.expiryDate, 'yellow', `/crm/estimates/${e.id}`, 'Estimate expires', e.clientId))
     }
     if (ctx.can('proposals')) {
         layers.push('proposals')
@@ -119,8 +126,8 @@ export async function getCalendarItems({ from, to }) {
     }
     if (ctx.can('contracts')) {
         layers.push('contracts')
-        const rows = await prisma.crmContract.findMany({ where: { dateEnd: range }, select: { id: true, subject: true, dateEnd: true } })
-        rows.forEach((c) => add('contracts', c.id, `Contract ends: ${c.subject || ''}`, c.dateEnd, 'blue', `/crm/contracts/${c.id}`))
+        const rows = await prisma.crmContract.findMany({ where: { dateEnd: range }, select: { id: true, clientId: true, subject: true, dateEnd: true } })
+        rows.forEach((c) => add('contracts', c.id, `Contract ends: ${c.subject || ''}`, c.dateEnd, 'blue', `/crm/contracts/${c.id}`, 'Contract ends', c.clientId))
     }
     return { items, layers }
 }
@@ -146,6 +153,8 @@ const clean = (b) => {
         allDay: !!b.allDay,
         location: String(b.location || '').trim() || null,
         meetingUrl: meetingUrl || null,
+        category: ['meeting', 'call', 'visit', 'deadline', 'reminder', 'other'].includes(b.category) ? b.category : 'meeting',
+        projectId: OID.test(b.projectId || '') ? b.projectId : null,
         clientId: OID.test(b.clientId || '') ? b.clientId : null,
         attendeeIds: [...new Set((b.attendeeIds || []).filter((x) => OID.test(x)))],
         attendeeEmails: emails,
@@ -193,7 +202,7 @@ async function ownEvent(id) {
 
 export async function updateCalendarEvent(id, body) {
     const ev = await ownEvent(id)
-    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType }
+    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType }
     const data = clean({ ...current, ...body })
     const updated = await prisma.crmEvent.update({ where: { id }, data })
     const out = { ...JSON.parse(JSON.stringify(updated)) }

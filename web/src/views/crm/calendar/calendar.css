@@ -1,0 +1,11 @@
+/* Compact calendar */
+.crm-cal .fc .fc-daygrid-day-frame { min-height: 88px; }
+.crm-cal .fc .fc-daygrid-day-top { flex-direction: row; }
+.crm-cal .fc .fc-daygrid-day-number { font-size: 12px; padding: 2px 6px; }
+.crm-cal .fc .fc-col-header-cell-cushion { font-size: 12px; padding: 4px 2px; font-weight: 600; }
+.crm-cal .fc .fc-daygrid-event { margin: 1px 3px 0 3px !important; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+.crm-cal .fc .fc-daygrid-event-harness { margin-top: 0; }
+.crm-cal .fc .fc-daygrid-more-link { font-size: 11px; font-weight: 600; padding: 0 6px; }
+.crm-cal .fc .fc-timegrid-event { border: 0 !important; background: transparent !important; box-shadow: none !important; }
+.crm-cal .fc .fc-toolbar-title { font-size: 1.15rem; }
+.crm-cal .fc-event { cursor: pointer; }

@@ -455,6 +455,8 @@ model CrmEvent {
   allDay             Boolean   @default(false)
   location           String?
   meetingUrl         String?
+  category           String?   // meeting | call | visit | deadline | reminder | other
+  projectId          String?   @db.ObjectId
   clientId           String?   @db.ObjectId
   attendeeIds        String[]  @db.ObjectId // staff invited to the event
   attendeeEmails     String[]  // external guests

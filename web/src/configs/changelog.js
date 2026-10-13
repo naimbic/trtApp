@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.22.1',
+        date: '2026-10-13',
+        title: 'Notifications',
+        items: ['Notification bell next to your profile: client replies on tickets, tasks assigned or due, reminders, payments received, offers accepted or declined, new leads, documents opened by clients, overdue invoices; click one to open it, "mark all as read" clears the dot', 'Top-bar icons (language, settings, notifications, profile) now share one size and the same hover style'],
+    },
+    {
         version: '0.22.0',
         date: '2026-10-13',
         title: 'Expenses',

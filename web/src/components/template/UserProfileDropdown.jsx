@@ -16,7 +16,7 @@ const dropdownItemList = [
     { label: 'Calendar sync', path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone /> },
 ]
 
-const _UserDropdown = () => {
+const _UserDropdown = ({ className }) => {
     const { avatar, userName, email } = useSessionUser((state) => state.user)
 
     const { signOut } = useAuth()
@@ -37,7 +37,7 @@ const _UserDropdown = () => {
             className="flex"
             toggleClassName="flex items-center"
             renderTitle={
-                <div className="cursor-pointer flex items-center">
+                <div className={`${className || ''}`}>
                     <Avatar size={32} {...avatarProps} />
                 </div>
             }

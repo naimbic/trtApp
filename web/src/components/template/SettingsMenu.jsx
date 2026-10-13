@@ -16,12 +16,12 @@ const ITEMS = [
     { label: 'All settings', desc: 'Every setup option', path: '/crm/settings', icon: <PiSlidersHorizontalDuotone />, need: ['settings'] },
 ]
 
-const _SettingsMenu = () => {
+const _SettingsMenu = ({ className }) => {
     const authority = useSessionUser((s) => s.user.authority) || []
     const admin = authority.includes('admin') || authority.includes('crm.admin')
     const allowed = (need) => !need.length || admin || need.some((f) => authority.some((a) => a.startsWith(`crm.${f}.`)))
     return (
-        <Dropdown className="flex" toggleClassName="flex items-center" renderTitle={<div className="cursor-pointer text-2xl text-gray-600 dark:text-gray-300" title="Settings"><PiGearSixDuotone /></div>} placement="bottom-end">
+        <Dropdown className="flex" toggleClassName="flex items-center" renderTitle={<div className={`${className || ''} text-2xl`} title="Settings"><PiGearSixDuotone /></div>} placement="bottom-end">
             <Dropdown.Item variant="header"><div className="px-3 py-2 text-sm font-bold text-gray-900 dark:text-gray-100">Settings</div></Dropdown.Item>
             <Dropdown.Item variant="divider" />
             {ITEMS.filter((i) => allowed(i.need)).map((i) => (

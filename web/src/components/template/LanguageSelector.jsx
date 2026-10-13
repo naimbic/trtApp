@@ -22,7 +22,7 @@ const _LanguageSelector = ({ className }) => {
     }, [locale])
 
     const selectedLanguage = (
-        <div className={classNames(className, 'flex items-center')}>
+        <div className={classNames(className)}>
             <Avatar
                 size={24}
                 shape="circle"

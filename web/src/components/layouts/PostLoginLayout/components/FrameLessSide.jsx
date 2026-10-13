@@ -4,6 +4,7 @@ import FrameLessGap from '@/components/template/FrameLessGap'
 import SideNavToggle from '@/components/template/SideNavToggle'
 import MobileNav from '@/components/template/MobileNav'
 import UserProfileDropdown from '@/components//template/UserProfileDropdown'
+import Notification from '@/components/template/Notification'
 import LayoutBase from '@/components//template/LayoutBase'
 import classNames from '@/utils/classNames'
 import useScrollTop from '@/utils/hooks/useScrollTop'
@@ -94,7 +95,8 @@ const FrameLessSide = ({ children }) => {
                             }
                             headerEnd={
                                 <>
-                                    <UserProfileDropdown hoverable={false} />
+                                    <Notification />
+                                <UserProfileDropdown />
                                 </>
                             }
                         />

@@ -11,15 +11,16 @@
     @apply flex items-center gap-2;
   }
   
+  /* every top-bar icon (language, notifications, settings, profile) is the same 40px round button */
   .header-action-item {
-    @apply cursor-pointer p-2 rounded-full;
+    @apply cursor-pointer p-0 rounded-full h-10 w-10 flex items-center justify-center shrink-0 text-gray-600 dark:text-gray-300;
   }
-  
+
   .header-action-item-hoverable {
-    @apply hover:bg-black/5
+    @apply hover:bg-gray-100
       hover:text-gray-900 
       dark:hover:text-gray-100
-      dark:hover:bg-black/40
+      dark:hover:bg-gray-700
       transition-colors 
       duration-300 
       ease-in-out;

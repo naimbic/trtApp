@@ -5,6 +5,7 @@ import MobileNav from '@/components/template/MobileNav'
 import UserProfileDropdown from '@/components//template/UserProfileDropdown'
 import LanguageSelector from '@/components/template/LanguageSelector'
 import SettingsMenu from '@/components/template/SettingsMenu'
+import Notification from '@/components/template/Notification'
 import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components//template/LayoutBase'
 import useResponsive from '@/utils/hooks/useResponsive'
@@ -34,7 +35,8 @@ const CollapsibleSide = ({ children }) => {
                             <>
                                 <LanguageSelector />
                                 <SettingsMenu />
-                                <UserProfileDropdown hoverable={false} />
+                                <Notification />
+                                <UserProfileDropdown />
                             </>
                         }
                     />

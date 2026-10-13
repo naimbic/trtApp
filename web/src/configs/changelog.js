@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.16.1',
+        date: '2026-10-13',
+        title: 'File manager redesign',
+        items: ['File manager now follows the template layout: Folders and Files sections, details panel with info and actions, upload dialog with drag and drop'],
+    },
+    {
         version: '0.16.0',
         date: '2026-10-13',
         title: 'Tasks board',

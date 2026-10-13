@@ -9,7 +9,7 @@ import { portal, money } from './api'
 import { StatusTag, date, Empty } from './ui'
 
 const { Tr, Th, Td, THead, TBody } = Table
-const TITLE = { invoices: ['Invoices', 'Open an invoice to read it, print it or download the PDF.'], estimates: ['Estimates', 'Open an estimate to accept or decline it, or to ask a question.'], proposals: ['Proposals', 'Open a proposal to read it, accept or decline it.'] }
+const TITLE = { invoices: ['Invoices', 'Open an invoice to read it, print it or download the PDF.'], estimates: ['Estimates', 'Open an estimate to accept or decline it, or to ask a question.'], proposals: ['Proposals', 'Open a proposal to read it, accept or decline it.'], contracts: ['Contracts', 'Open a contract to read it and sign it on screen.'] }
 
 const Documents = ({ kind }) => {
     const [d, setD] = useState(null)
@@ -18,7 +18,7 @@ const Documents = ({ kind }) => {
     useEffect(() => { setD(null); setFilter('all'); portal(`/${kind}`).then(setD).catch((e) => setError(e.message)) }, [kind])
     const [title, hint] = TITLE[kind]
     const list = (d?.list || []).filter((x) => filter === 'all' || (filter === 'due' ? x.due > 0 : filter === 'open' ? [1, 4, 5, 2].includes(x.status) && !x.due : true))
-    const waiting = (x) => (kind === 'invoices' ? x.due > 0 : kind === 'estimates' ? x.status === 2 : [1, 4, 5].includes(x.status))
+    const waiting = (x) => (kind === 'invoices' ? x.due > 0 : kind === 'estimates' ? x.status === 2 : kind === 'contracts' ? x.status === 4 : [1, 4, 5].includes(x.status))
     return (
         <div>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3>{title}</h3><p className="text-sm text-gray-500">{hint}</p></div>
@@ -29,7 +29,7 @@ const Documents = ({ kind }) => {
                 {!d ? <div className="p-6"><Skeleton height={120} /></div> : (
                     <div className="overflow-x-auto">
                         <Table>
-                            <THead><Tr><Th>{kind === 'proposals' ? 'Proposal' : 'Number'}</Th><Th>Date</Th>{kind === 'invoices' && <Th>Due</Th>}{kind === 'estimates' && <Th>Valid until</Th>}{kind === 'proposals' && <Th>Open until</Th>}<Th className="text-right">Total</Th>{kind === 'invoices' && <Th className="text-right">To pay</Th>}<Th>Status</Th><Th /></Tr></THead>
+                            <THead><Tr><Th>{kind === 'proposals' ? 'Proposal' : kind === 'contracts' ? 'Contract' : 'Number'}</Th><Th>Date</Th>{kind === 'invoices' && <Th>Due</Th>}{kind === 'estimates' && <Th>Valid until</Th>}{kind === 'proposals' && <Th>Open until</Th>}{kind === 'contracts' && <Th>Ends</Th>}<Th className="text-right">{kind === 'contracts' ? 'Value' : 'Total'}</Th>{kind === 'invoices' && <Th className="text-right">To pay</Th>}<Th>Status</Th><Th /></Tr></THead>
                             <TBody>
                                 {list.filter((x) => filter === 'all' || waiting(x)).map((x) => (
                                     <Tr key={x.id}>
@@ -37,8 +37,8 @@ const Documents = ({ kind }) => {
                                         <Td>{date(x.date)}</Td>
                                         {kind === 'invoices' && <Td className={x.status === 4 ? 'font-semibold text-red-500' : ''}>{date(x.dueDate)}</Td>}
                                         {kind === 'estimates' && <Td>{date(x.expiryDate)}</Td>}
-                                        {kind === 'proposals' && <Td>{date(x.openTill)}</Td>}
-                                        <Td className="text-right tabular-nums">{money(x.total, x.currency)}</Td>
+                                        {kind === 'proposals' && <Td>{date(x.openTill)}</Td>}{kind === 'contracts' && <Td>{x.endDate ? date(x.endDate) : 'No end'}</Td>}
+                                        <Td className="text-right tabular-nums">{x.total != null ? money(x.total, x.currency) : '—'}</Td>
                                         {kind === 'invoices' && <Td className="text-right tabular-nums">{x.due > 0 ? money(x.due, x.currency) : '—'}</Td>}
                                         <Td><StatusTag label={x.statusLabel} /></Td>
                                         <Td><div className="flex justify-end gap-1"><a href={x.link} target="_blank" rel="noreferrer"><Button size="xs" icon={<TbExternalLink />}>Open</Button></a><a href={x.pdf} target="_blank" rel="noreferrer"><Button size="xs" icon={<TbDownload />}>PDF</Button></a></div></Td>

@@ -11,10 +11,8 @@ import Table from '@/components/ui/Table'
 import Tag from '@/components/ui/Tag'
 import Pagination from '@/components/ui/Pagination'
 import cn from '@/utils/classNames'
-import { getResource } from '@/lib/crm/resources'
 import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
-import RecordDrawer from '../kit/RecordDrawer'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
 
@@ -43,7 +41,6 @@ const ContractsList = () => {
     const [sort, setSort] = useState({ key: 'dateStart', order: 'desc' })
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-    const [create, setCreate] = useState(false)
     const pageSize = 15
 
     useEffect(() => { const t = setTimeout(() => { setQuery(search.trim()); setPage(1) }, 300); return () => clearTimeout(t) }, [search])
@@ -62,7 +59,7 @@ const ContractsList = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div><h3>Contracts</h3><p className="text-sm text-gray-500">Agreements, renewals and what is about to expire</p></div>
-                {can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => setCreate(true)}>New contract</Button>}
+                {can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/contracts/new')}>New contract</Button>}
             </div>
             <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
                 {['active', 'expiring', 'expired', 'trash'].map((k) => (
@@ -105,7 +102,6 @@ const ContractsList = () => {
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>
-            <RecordDrawer resource={getResource('contracts')} open={create} id={null} canEdit onClose={() => setCreate(false)} onSaved={(rec) => rec?.id && navigate(`/crm/contracts/${rec.id}`)} />
         </Container>
     )
 }

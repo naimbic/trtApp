@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.23.0',
+        date: '2026-10-13',
+        title: 'Contracts with e-signature',
+        items: ['Contract editor with the visual editor and merge fields (client, company, dates, value); preview and PDF use your PDF settings', 'Public contract page for the client: read, comment and sign on screen; the signature is kept with name, email, date and IP, and you are emailed', 'Contracts email now links to that page (the old link did not open anything); copy the client link or send it', 'Client area shows contracts to sign and signed ones; a signed contract cannot change its text'],
+    },
+    {
         version: '0.22.1',
         date: '2026-10-13',
         title: 'Notifications',

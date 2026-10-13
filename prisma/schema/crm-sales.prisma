@@ -376,6 +376,8 @@ model CrmContractComment {
   contractId String?      @db.ObjectId
   contract   CrmContract? @relation(fields: [contractId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   staffId    String?      @db.ObjectId
+  /// name given by a client commenting from the public page
+  authorName String?
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 

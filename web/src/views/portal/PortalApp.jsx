@@ -27,6 +27,7 @@ const NAV = [
     { to: '/portal/invoices', label: 'Invoices', icon: <PiFileTextDuotone />, need: 'invoices' },
     { to: '/portal/estimates', label: 'Estimates', icon: <PiFileMagnifyingGlassDuotone />, need: 'estimates' },
     { to: '/portal/proposals', label: 'Proposals', icon: <PiPresentationChartDuotone />, need: 'proposals' },
+    { to: '/portal/contracts', label: 'Contracts', icon: <PiFileTextDuotone />, need: 'contracts' },
     { to: '/portal/projects', label: 'Projects', icon: <PiBriefcaseDuotone />, need: 'projects' },
     { to: '/portal/tickets', label: 'Support', icon: <PiLifebuoyDuotone />, need: 'support' },
 ]
@@ -88,6 +89,7 @@ const PortalApp = () => (
             <Route path="invoices" element={<Documents kind="invoices" />} />
             <Route path="estimates" element={<Documents kind="estimates" />} />
             <Route path="proposals" element={<Documents kind="proposals" />} />
+            <Route path="contracts" element={<Documents kind="contracts" />} />
             <Route path="projects" element={<Projects />} />
             <Route path="projects/:id" element={<ProjectDetail />} />
             <Route path="tickets" element={<Tickets />} />

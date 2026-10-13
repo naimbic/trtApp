@@ -141,7 +141,7 @@ async function loadContext(kind, id) {
             contract_subject: doc.subject || '', contract_description: doc.description || '',
             contract_datestart: fmtDate(doc.dateStart), contract_dateend: fmtDate(doc.dateEnd),
             contract_contract_value: doc.contractValue != null ? Number(doc.contractValue).toFixed(2) : '',
-            contract_link: await shortLink({ prefix: 'ctr', relType: 'contract', relId: id, label: doc.subject || 'contract', target: `/contract/${id}/${await ensureHash('crmContract', doc)}` }), contract_type: doc.contractType?.name || '',
+            contract_link: await shortLink({ prefix: 'ctr', relType: 'contract', relId: id, label: doc.subject || 'contract', target: `/api/crm/public/contract/${id}/${await ensureHash('crmContract', doc)}` }), contract_type: doc.contractType?.name || '',
         }
     } else fail('Unknown document type')
 

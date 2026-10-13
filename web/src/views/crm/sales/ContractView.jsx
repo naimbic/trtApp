@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbMail, TbPencil, TbRefresh, TbSignature, TbTrash, TbTrashOff } from 'react-icons/tb'
+import { TbArrowLeft, TbMail, TbPencil, TbRefresh, TbSignature, TbTrash, TbTrashOff, TbFileTypePdf, TbCopy } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -11,9 +11,7 @@ import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Tabs from '@/components/ui/Tabs'
 import Tag from '@/components/ui/Tag'
-import { getResource } from '@/lib/crm/resources'
 import { api, notify, useCan } from '../kit/api'
-import RecordDrawer from '../kit/RecordDrawer'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { StateTag } from './ContractsList'
 import { fmtDate } from './shared'
@@ -33,7 +31,6 @@ const ContractView = () => {
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
     const [tab, setTab] = useState('content')
-    const [edit, setEdit] = useState(false)
     const [renew, setRenew] = useState(null)
     const [comment, setComment] = useState('')
     const [busy, setBusy] = useState(false)
@@ -53,7 +50,7 @@ const ContractView = () => {
     }
     const delComment = async (cid) => { try { await api(`/api/crm/sales/contracts/${id}/comments?commentId=${cid}`, { method: 'DELETE' }); load() } catch (e) { notify('danger', e.message) } }
     const del = async () => {
-        try { await api(`/api/crm/contracts/${id}`, { method: 'DELETE' }); notify('success', 'Contract deleted'); navigate('/crm/contracts') } catch (e) { notify('danger', e.message); setConfirm(null) }
+        try { await api(`/api/crm/sales/contracts/${id}`, { method: 'DELETE' }); notify('success', 'Contract deleted'); navigate('/crm/contracts') } catch (e) { notify('danger', e.message); setConfirm(null) }
     }
 
     if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/contracts')}>Back to contracts</Button></Container>
@@ -68,10 +65,12 @@ const ContractView = () => {
                 <StateTag state={c.state} />
                 <Tag className={signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{signed ? 'Signed' : 'Not signed'}</Tag>
                 <div className="ml-auto flex flex-wrap gap-2">
+                    <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/contracts/${id}/pdf`, '_blank')}>PDF</Button>
+                    {c.hash && !c.trash && !c.hidden && <Button size="sm" icon={<TbCopy />} onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/api/crm/public/contract/${id}/${c.hash}`); notify('success', 'Client link copied') } catch { notify('danger', 'Could not copy') } }}>Client link</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbMail />} onClick={() => setMailOpen(true)}>Send</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbRefresh />} onClick={() => setRenew({ newStartDate: dayjs(c.dateEnd || new Date()).format('YYYY-MM-DD'), newEndDate: dayjs(c.dateEnd || new Date()).add(1, 'year').format('YYYY-MM-DD'), newValue: c.value })}>Renew</Button>}
                     {can('contracts', 'edit') && <Button size="sm" icon={<TbSignature />} loading={busy} onClick={() => act(signed ? 'unsign' : 'sign', {}, signed ? 'Marked as not signed' : 'Marked as signed')}>{signed ? 'Mark as not signed' : 'Mark as signed'}</Button>}
-                    {can('contracts', 'edit') && <Button size="sm" icon={<TbPencil />} onClick={() => setEdit(true)}>Edit</Button>}
+                    {can('contracts', 'edit') && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/contracts/${id}/edit`)}>Edit</Button>}
                     {can('contracts', 'edit') && (c.trash ? <Button size="sm" icon={<TbTrashOff />} loading={busy} onClick={() => act('restore', {}, 'Contract restored')}>Restore</Button> : <Button size="sm" icon={<TbTrash />} loading={busy} onClick={() => act('trash', {}, 'Moved to trash')}>Trash</Button>)}
                     {can('contracts', 'delete') && <Button size="sm" variant="plain" className="text-red-500" onClick={() => setConfirm('delete')}>Delete</Button>}
                 </div>
@@ -100,7 +99,7 @@ const ContractView = () => {
                     </TabList>
                     <div className="pt-5">
                         {tab === 'files' && <AttachmentsPanel relType="contract" relId={id} canEdit={can('contracts', 'edit')} showClientToggle />}
-                        {tab === 'content' && (c.content ? <iframe title="Contract content" sandbox="" srcDoc={`<base target="_blank"><style>body{font-family:system-ui,sans-serif;font-size:14px;line-height:1.55;color:#222;margin:16px}</style>${c.content}`} className="h-[640px] w-full rounded-xl border border-gray-200 bg-white dark:border-gray-600" /> : <p className="text-gray-400">This contract has no content yet. Use Edit to add it.</p>)}
+                        {tab === 'content' && (c.content ? <iframe title="Contract" src={`/api/crm/sales/contracts/${id}/html?v=${c.updatedAt || ''}`} className="block h-[760px] w-full rounded-lg border border-gray-200 bg-white dark:border-gray-700" /> : <p className="text-gray-400">This contract has no text yet.{can('contracts', 'edit') && <button className="ml-1 text-primary" onClick={() => navigate(`/crm/contracts/${id}/edit`)}>Write it</button>}</p>)}
                         {tab === 'comments' && (
                             <div className="flex flex-col gap-4">
                                 <div className="flex gap-2"><Input textArea rows={2} placeholder="Write a comment…" value={comment} onChange={(e) => setComment(e.target.value)} /><Button variant="solid" onClick={addComment}>Add</Button></div>
@@ -119,8 +118,6 @@ const ContractView = () => {
                     </div>
                 </Tabs>
             </AdaptiveCard>
-
-            <RecordDrawer resource={getResource('contracts')} open={edit} id={id} canEdit={can('contracts', 'edit')} canDelete={false} onClose={() => setEdit(false)} onSaved={load} />
 
             <Dialog isOpen={!!renew} onClose={() => setRenew(null)} onRequestClose={() => setRenew(null)}>
                 <h5 className="mb-1">Renew contract</h5>

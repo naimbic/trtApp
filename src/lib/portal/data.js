@@ -40,7 +40,7 @@ async function invoicesOf(clientId) {
 export async function dashboard() {
     const s = await requirePortal()
     const id = s.client.id
-    const out = { can: s.can, money: [], invoices: [], estimates: [], proposals: [], projects: [], tickets: [], actions: [] }
+    const out = { can: s.can, money: [], invoices: [], estimates: [], proposals: [], contracts: [], projects: [], tickets: [], actions: [] }
     if (s.can.includes('invoices')) {
         const inv = await invoicesOf(id)
         const by = {}
@@ -61,6 +61,10 @@ export async function dashboard() {
         out.proposals = ps.map((p) => ({ id: p.id, number: fmt(p), subject: p.subject, total: p.total, status: p.status, statusLabel: PROP[p.status], link: pub('proposal', p.id, p.hash) }))
         out.actions.push(...out.proposals.filter((p) => [1, 4, 5].includes(p.status)).map((p) => ({ kind: 'proposal', title: `Proposal ${p.number} is waiting for your answer`, detail: p.subject || '', link: p.link, external: true })))
     }
+    if (s.can.includes('contracts')) {
+        out.contracts = (await listContracts()).list.slice(0, 5)
+        out.actions.push(...out.contracts.filter((c) => c.status === 4).map((c) => ({ kind: 'contract', title: `Contract “${c.number}” is waiting for your signature`, detail: '', link: c.link, external: true })))
+    }
     if (s.can.includes('projects')) out.projects = (await listProjects()).list.slice(0, 5)
     if (s.can.includes('support')) out.tickets = (await listTickets()).list.slice(0, 5)
     return out
@@ -78,6 +82,16 @@ export async function listProposals() {
     const s = await requirePortal('proposals')
     const [rows, fmt, cur] = await Promise.all([prisma.crmProposal.findMany({ where: { relType: 'customer', relId: s.client.id, status: { not: 6 } }, orderBy: { createdAt: 'desc' } }), proposalNumber(), currencies()])
     return { list: rows.map((p) => ({ id: p.id, number: fmt(p), subject: p.subject, date: p.date, openTill: p.openTill, total: p.total, currency: cur[p.currencyId] || null, status: p.status, statusLabel: PROP[p.status], link: pub('proposal', p.id, p.hash), pdf: `${pub('proposal', p.id, p.hash)}/pdf` })) }
+}
+
+const CT = (c, today) => (c.signed || c.markedAsSigned ? ['Signed', 3] : c.dateEnd && new Date(c.dateEnd) < today ? ['Expired', 5] : ['To sign', 4])
+export async function listContracts() {
+    const s = await requirePortal('contracts')
+    const rows = await prisma.crmContract.findMany({ where: { clientId: s.client.id, trash: false, notVisibleToClient: false }, orderBy: { dateStart: 'desc' } })
+    const types = rows.length ? await prisma.crmContractType.findMany({ where: { id: { in: rows.map((r) => r.contractTypeId).filter(Boolean) } } }) : []
+    const tn = Object.fromEntries(types.map((t) => [t.id, t.name]))
+    const today = new Date(new Date().toDateString())
+    return { list: rows.filter((c) => c.hash).map((c) => { const [label, status] = CT(c, today); return { id: c.id, number: c.subject || `Contract #${c.legacyId ?? ''}`, subject: tn[c.contractTypeId] || '', date: c.dateStart, endDate: c.dateEnd, total: c.contractValue, status, statusLabel: label, link: pub('contract', c.id, c.hash), pdf: `${pub('contract', c.id, c.hash)}/pdf` } }) }
 }
 
 export async function listProjects() {

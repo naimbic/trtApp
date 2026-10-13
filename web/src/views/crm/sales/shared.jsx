@@ -10,3 +10,12 @@ export const STATUS = {
 }
 export const StatusTag = ({ status }) => <Tag className={STATUS[status]?.cls}>{STATUS[status]?.label || status}</Tag>
 export const fmtDate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '')
+
+export const ESTIMATE_STATUS = {
+    1: { label: 'Draft', cls: 'bg-gray-200 text-gray-600' },
+    2: { label: 'Sent', cls: 'bg-blue-100 text-blue-700' },
+    3: { label: 'Declined', cls: 'bg-red-100 text-red-700' },
+    4: { label: 'Accepted', cls: 'bg-emerald-100 text-emerald-700' },
+    5: { label: 'Expired', cls: 'bg-amber-100 text-amber-700' },
+}
+export const EstimateStatusTag = ({ status }) => <Tag className={ESTIMATE_STATUS[status]?.cls}>{ESTIMATE_STATUS[status]?.label || status}</Tag>

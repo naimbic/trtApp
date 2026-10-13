@@ -7,8 +7,7 @@ import { companyImageDataUri } from '@/lib/crm/company'
 import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf } from '@/lib/crm/invoicePdf'
 import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
-import { allocateNumber } from '@/lib/crm/sales/docNumbering'
-import crypto from 'node:crypto'
+import { createInvoiceFromEstimate } from '@/lib/crm/sales/convert'
 
 export const ESTIMATE = { DRAFT: 1, SENT: 2, DECLINED: 3, ACCEPTED: 4, EXPIRED: 5 }
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }) }
@@ -21,15 +20,16 @@ const TXT = {
 /** Effective status: a sent estimate past its expiry date is shown as expired. */
 export const effectiveStatus = (e) => (e.status === ESTIMATE.SENT && e.expiryDate && new Date(e.expiryDate) < new Date(new Date().toDateString()) ? ESTIMATE.EXPIRED : e.status)
 
-async function load(id, hash) {
-    if (!/^[0-9a-f]{24}$/i.test(id || '') || !hash) return null
+async function load(id, hash, staff = false) {
+    if (!/^[0-9a-f]{24}$/i.test(id || '')) return null
     const estimate = await prisma.crmEstimate.findUnique({ where: { id } })
-    if (!estimate || estimate.hash !== hash || estimate.status === ESTIMATE.DRAFT) return null
+    if (staff) return estimate // the caller already checked the staff permission
+    if (!hash || !estimate || estimate.hash !== hash || estimate.status === ESTIMATE.DRAFT) return null
     return estimate
 }
 
-export async function loadEstimateDoc(id, hash) {
-    const estimate = await load(id, hash)
+export async function loadEstimateDoc(id, hash, staff = false) {
+    const estimate = await load(id, hash, staff)
     if (!estimate) return null
     const [lines, client, currency, comments] = await Promise.all([
         prisma.crmItemable.findMany({ where: { relType: 'estimate', relId: id }, orderBy: { itemOrder: 'asc' }, include: { taxes: true } }),
@@ -78,8 +78,8 @@ ${words}${e.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNot
 
 const langOf = async () => ((await getOptions(['active_language']))('active_language') === 'french' ? 'french' : 'english')
 
-export async function estimatePdf(id, hash) {
-    const d = await loadEstimateDoc(id, hash)
+export async function estimatePdf(id, hash, staff = false) {
+    const d = await loadEstimateDoc(id, hash, staff)
     if (!d) return null
     const S = await pdfSettings('estimate')
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${CSS}</style></head><body>${await documentHtml(d, S.lang, S)}</body></html>`
@@ -164,25 +164,8 @@ const log = (estimateId, description) => prisma.crmSalesActivity.create({ data: 
 /** Settings → Estimates: "create the invoice automatically when the client accepts". */
 async function maybeConvertToInvoice(d) {
     try {
-        const opts = await getOptions(['estimate_auto_convert_to_invoice_on_client_accept', 'invoice_due_after'])
-        if (opts('estimate_auto_convert_to_invoice_on_client_accept') !== '1' || d.estimate.invoiceId) return
-        const e = d.estimate
-        const now = new Date()
-        const due = Number(opts('invoice_due_after', '0')) > 0 ? new Date(now.getTime() + Number(opts('invoice_due_after')) * 86400000) : null
-        const { number, prefix, numberFormat } = await allocateNumber('invoice', now)
-        const inv = await prisma.crmInvoice.create({ data: {
-            clientId: e.clientId, number, prefix, numberFormat, date: now, dueDate: due, currencyId: e.currencyId, subtotal: e.subtotal, totalTax: e.totalTax, total: e.total,
-            discountPercent: e.discountPercent, discountTotal: e.discountTotal, discountType: e.discountType, adjustment: e.adjustment, clientNote: e.clientNote, terms: e.terms, adminNote: `Created from estimate ${d.number}`,
-            status: 1, hash: crypto.randomUUID().replace(/-/g, ''), sent: false, addedFrom: e.saleAgentId || e.addedFrom || undefined,
-        } })
-        const lines = await prisma.crmItemable.findMany({ where: { relType: 'estimate', relId: e.id }, include: { taxes: true } })
-        for (const l of lines) {
-            const nl = await prisma.crmItemable.create({ data: { relType: 'invoice', relId: inv.id, description: l.description, longDescription: l.longDescription, qty: l.qty, rate: l.rate, unit: l.unit, itemOrder: l.itemOrder } })
-            for (const t of l.taxes) await prisma.crmItemTax.create({ data: { itemableId: nl.id, relType: 'invoice', relId: inv.id, taxName: t.taxName, taxRate: t.taxRate } })
-        }
-        await prisma.crmEstimate.update({ where: { id: e.id }, data: { invoiceId: inv.id, invoicedDate: now } })
-        await prisma.crmSalesActivity.create({ data: { relType: 'invoice', relId: inv.id, description: `Invoice created automatically from accepted estimate ${d.number}`, fullName: 'System', date: now } })
-        await log(e.id, `Invoice ${prefix}${number} created automatically`)
+        if ((await getOptions(['estimate_auto_convert_to_invoice_on_client_accept']))('estimate_auto_convert_to_invoice_on_client_accept') !== '1' || d.estimate.invoiceId) return
+        await createInvoiceFromEstimate(d.estimate, { estimateNumber: d.number, actor: 'System' })
     } catch (err) { console.error('[estimate] auto-convert failed', err) }
 }
 

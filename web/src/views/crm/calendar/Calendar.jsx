@@ -10,7 +10,6 @@ import toast from '@/components/ui/toast'
 import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers } from 'react-icons/tb'
 import Tooltip from '@/components/ui/Tooltip'
 import { CATEGORIES } from './EventDialog'
-import './calendar.css'
 import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EventDialog from './EventDialog'
@@ -35,14 +34,6 @@ const api = async (url, init) => {
     return json
 }
 
-const TONES = {
-    red: 'bg-red-100 text-red-800 border-red-500 dark:bg-red-500/20 dark:text-red-200',
-    orange: 'bg-orange-100 text-orange-800 border-orange-500 dark:bg-orange-500/20 dark:text-orange-200',
-    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-500 dark:bg-yellow-500/20 dark:text-yellow-200',
-    green: 'bg-green-100 text-green-800 border-green-500 dark:bg-green-500/20 dark:text-green-200',
-    blue: 'bg-blue-100 text-blue-800 border-blue-500 dark:bg-blue-500/20 dark:text-blue-200',
-    purple: 'bg-purple-100 text-purple-800 border-purple-500 dark:bg-purple-500/20 dark:text-purple-200',
-}
 const TYPE_LABEL = { tasks: 'Task', invoices: 'Invoice', projects: 'Project', estimates: 'Estimate', proposals: 'Proposal', contracts: 'Contract' }
 
 const Row = ({ icon: Icon, children }) => (children ? <div className="flex items-start gap-1.5 text-xs"><Icon className="mt-0.5 shrink-0 text-sm opacity-70" /><span className="min-w-0 break-words">{children}</span></div> : null)
@@ -75,18 +66,16 @@ const EventTip = ({ ev, timeText }) => {
     )
 }
 
+// Same look as the template's CalendarView events (coloured pill, time + bold title), plus a hover tooltip.
+const COLOR_BG = { red: 'bg-[#fbddd9]', orange: 'bg-[#ffc6ab]', yellow: 'bg-[#ffd993]', green: 'bg-[#bee9d3]', blue: 'bg-[#bce9fb]', purple: 'bg-[#ccbbfc]' }
 const renderEvent = (arg) => {
-    const ev = arg.event, p = ev.extendedProps
-    const tone = TONES[p.eventColor] || TONES.blue
-    const timed = arg.view.type.startsWith('timeGrid')
-    const cat = p.type === 'events' ? CATEGORIES.find((c) => c.value === p.category) || CATEGORIES[0] : null
-    const Icon = p.meetingUrl ? TbVideo : cat?.icon
+    const ev = arg.event
+    const { isStart, isEnd } = arg
     return (
         <Tooltip title={<EventTip ev={ev} timeText={arg.timeText} />} placement="top">
-            <div className={`flex w-full min-w-0 ${timed ? 'h-full flex-col items-start' : 'items-center'} gap-1 overflow-hidden rounded border-l-[3px] px-1.5 py-px text-[11px] leading-[18px] ${tone}`}>
-                {!ev.allDay && arg.timeText && p.type === 'events' && <span className="shrink-0 font-semibold opacity-80">{arg.timeText}</span>}
-                {Icon && !timed && <Icon className="shrink-0 text-xs opacity-70" />}
-                <span className={`min-w-0 ${timed ? 'whitespace-normal' : 'truncate'} font-medium`}>{p.rawTitle || ev.title}</span>
+            <div className={`custom-calendar-event ${COLOR_BG[ev.extendedProps.eventColor] || ''} text-gray-900 ${isEnd && !isStart ? 'rounded-tl-none! rounded-bl-none!' : ''} ${!isEnd && isStart ? 'rounded-tr-none! rounded-br-none!' : ''}`}>
+                {!(isEnd && !isStart) && <span>{arg.timeText}</span>}
+                <span className="ml-1 font-bold rtl:mr-1">{ev.extendedProps.rawTitle || ev.title}</span>
             </div>
         </Tooltip>
     )
@@ -215,7 +204,7 @@ const Calendar = () => {
                 </Segment>
             </div>
             <AdaptiveCard>
-                <CalendarView wrapperClass="crm-cal" eventContent={renderEvent} dayMaxEvents={3} firstDay={1} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
+                <CalendarView eventContent={renderEvent} dayMaxEvents={3} firstDay={1} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
             </AdaptiveCard>
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this event?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>

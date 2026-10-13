@@ -106,17 +106,24 @@ export function invoiceStatusFromPayments(invoice, payments = [], now = new Date
 }
 
 /**
- * Perfex format_*_number.
- * numberFormat 1: prefix + zero padded number            -> INV-000042
- * numberFormat 2: prefix + year + '/' + padded number    -> INV-2019/000042
- * (year taken from the document date). Unknown formats fall back to 1.
+ * Perfex sales_number_format / format_invoice_number.
+ * format 1: prefix + padded number               -> INV-000042
+ * format 2: prefix + year + '/' + padded number  -> INV-2019/000042
+ * format 3: prefix + padded number + '-' + yy    -> INV-000042-19
+ * format 4: prefix + padded number + '/mm/yyyy'  -> INV-042/10/2019
+ * Drafts display as prefix + 'DRAFT'. `padding` is the `number_padding_prefixes` option.
  */
-export function formatDocumentNumber({ prefix = '', number, numberFormat = 1, date, padding = 6 } = {}) {
+export function formatDocumentNumber({ prefix = '', number, numberFormat = 1, date, padding = 6, draft = false } = {}) {
     const pre = prefix ?? ''
+    if (draft) return `${pre}DRAFT`
     const padded = String(number ?? 0).padStart(padding, '0')
-    if (Number(numberFormat) === 2) {
-        const d = date ? (date instanceof Date ? date : new Date(date)) : new Date()
-        return `${pre}${d.getUTCFullYear()}/${padded}`
+    const d = date ? (date instanceof Date ? date : new Date(date)) : new Date()
+    const yyyy = d.getUTCFullYear()
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+    switch (Number(numberFormat)) {
+        case 2: return `${pre}${yyyy}/${padded}`
+        case 3: return `${pre}${padded}-${String(yyyy).slice(2)}`
+        case 4: return `${pre}${padded}/${mm}/${yyyy}`
+        default: return `${pre}${padded}`
     }
-    return `${pre}${padded}`
 }

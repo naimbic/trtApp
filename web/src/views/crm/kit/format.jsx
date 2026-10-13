@@ -13,7 +13,24 @@ const TAG = {
 }
 
 export const money = (v, d = 2) => (v === null || v === undefined || v === '' ? '' : Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }))
-export const docNumber = (r) => `${r.prefix || ''}${String(r.number ?? 0).padStart(6, '0')}`
+let padding = 6
+/** Set from the CRM `number_padding_prefixes` option once the lookups have loaded. */
+export const setDocPadding = (n) => { if (n > 0) padding = n }
+/** Perfex sales_number_format: formats 1-4, drafts show as <prefix>DRAFT. */
+export const docNumber = (r) => {
+    const pre = r.prefix || ''
+    if (r.status === 6 && 'sent' in r) return `${pre}DRAFT`
+    const p = String(r.number ?? 0).padStart(padding, '0')
+    const d = r.date ? new Date(r.date) : new Date()
+    const yyyy = d.getUTCFullYear()
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+    switch (Number(r.numberFormat)) {
+        case 2: return `${pre}${yyyy}/${p}`
+        case 3: return `${pre}${p}-${String(yyyy).slice(2)}`
+        case 4: return `${pre}${p}/${mm}/${yyyy}`
+        default: return `${pre}${p}`
+    }
+}
 export const optionLabel = (field, value) => field.options?.find((o) => String(o.value) === String(value))?.label ?? value
 
 /** Renders one cell for a column config. `row._rel` carries labels of relation columns. */

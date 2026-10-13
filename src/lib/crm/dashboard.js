@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
 import { viewScope } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
+import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 
 const iso = (d) => d.toISOString().slice(0, 10)
 const monthKey = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
@@ -62,6 +63,7 @@ export async function getDashboardMetrics(params = {}) {
     const inRange = (d) => d && new Date(d) >= since && new Date(d) < until
     const today = new Date()
     const startOfToday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
+    const padding = await numberPadding()
     const data = { generatedAt: new Date().toISOString(), months, granularity: R.granularity, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso }, sections: [] }
 
     const section = async (name, feature, fn) => {
@@ -148,7 +150,7 @@ export async function getDashboardMetrics(params = {}) {
             .filter((i) => i.status !== 5 && i.status !== 6 && i.dueDate && new Date(i.dueDate) < startOfToday && round2(i.total - (paidByInvoice[i.id] || 0)) > 0)
             .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
             .slice(0, 8)
-            .map((i) => ({ id: i.id, number: `${i.prefix || ''}${String(i.number).padStart(6, '0')}`, company: clientName[i.clientId] || '', dueDate: i.dueDate, due: round2(i.total - (paidByInvoice[i.id] || 0)), currencyId: i.currencyId }))
+            .map((i) => ({ id: i.id, number: docNumberOf(i, padding), company: clientName[i.clientId] || '', dueDate: i.dueDate, due: round2(i.total - (paidByInvoice[i.id] || 0)), currencyId: i.currencyId }))
 
         return { byCurrency, topClients, overdueList }
     })
@@ -238,7 +240,7 @@ export async function getDashboardMetrics(params = {}) {
 
     await section('recent', 'payments', async () => {
         const [payments, activity] = await Promise.all([
-            prisma.crmPayment.findMany({ where: { paymentDate: { gte: since, lt: until } }, orderBy: { paymentDate: 'desc' }, take: 8, include: { invoice: { select: { id: true, number: true, prefix: true, currencyId: true } } } }),
+            prisma.crmPayment.findMany({ where: { paymentDate: { gte: since, lt: until } }, orderBy: { paymentDate: 'desc' }, take: 8, include: { invoice: { select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, currencyId: true } } } }),
             prisma.crmSalesActivity.findMany({ orderBy: { date: 'desc' }, take: 8 }),
         ])
         return {
@@ -247,7 +249,7 @@ export async function getDashboardMetrics(params = {}) {
                 amount: p.amount,
                 date: p.paymentDate,
                 invoiceId: p.invoiceId,
-                invoiceNumber: p.invoice ? `${p.invoice.prefix || ''}${String(p.invoice.number).padStart(6, '0')}` : '',
+                invoiceNumber: p.invoice ? docNumberOf(p.invoice, padding) : '',
                 currencyId: p.invoice?.currencyId || null,
             })),
             activity: activity.map((a) => ({ id: a.id, description: a.description, date: a.date || a.createdAt, relType: a.relType, relId: a.relId })),

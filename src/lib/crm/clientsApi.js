@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
+import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const str = (v) => (v === undefined || v === null || String(v).trim() === '' ? null : String(v).trim())
@@ -54,6 +55,7 @@ export async function clientLookups() {
         prisma.crmStaff.findMany({ where: { active: true }, orderBy: { firstName: 'asc' } }),
     ])
     return {
+        numberPadding: await numberPadding(),
         countries: countries.filter((c) => c.legacyId != null).map((c) => ({ value: c.legacyId, label: c.shortName || c.longName || c.iso2 })),
         currencies: currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, placement: c.placement, isDefault: c.isDefault })),
         groups: groups.map((g) => ({ id: g.id, name: g.name })),
@@ -223,7 +225,8 @@ export async function clientPayments(id, { pageIndex = 1, pageSize = 10 } = {}) 
     await requirePermission('customers', 'view')
     const sc = await scope(session)
     if (!(await prisma.crmClient.findFirst({ where: { AND: [{ id }, sc] }, select: { id: true } }))) throw httpError('Client not found', 404)
-    const invs = await prisma.crmInvoice.findMany({ where: { clientId: id }, select: { id: true, number: true, prefix: true, currencyId: true } })
+    const invs = await prisma.crmInvoice.findMany({ where: { clientId: id }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, currencyId: true } })
+    const padding = await numberPadding()
     const byId = Object.fromEntries(invs.map((i) => [i.id, i]))
     const where = { invoiceId: { in: invs.map((i) => i.id) } }
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1)
@@ -237,7 +240,7 @@ export async function clientPayments(id, { pageIndex = 1, pageSize = 10 } = {}) 
     return {
         list: rows.map((p) => {
             const i = byId[p.invoiceId]
-            return { id: p.id, amount: p.amount, paymentDate: p.paymentDate, mode: mode[p.paymentModeId] || p.paymentMethod || '', transactionId: p.transactionId, invoiceId: p.invoiceId, invoiceNumber: i ? `${i.prefix || ''}${String(i.number).padStart(6, '0')}` : '', currencyId: i?.currencyId || null }
+            return { id: p.id, amount: p.amount, paymentDate: p.paymentDate, mode: mode[p.paymentModeId] || p.paymentMethod || '', transactionId: p.transactionId, invoiceId: p.invoiceId, invoiceNumber: i ? docNumberOf(i, padding) : '', currencyId: i?.currencyId || null }
         }),
         total, pageIndex: page, pageSize: size,
     }

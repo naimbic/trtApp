@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
+import { numberPadding } from '@/lib/crm/numbering'
 
 const REL = 'invoice'
 const plain = (v) => JSON.parse(JSON.stringify(v))
@@ -91,6 +92,8 @@ export async function getInvoiceDocument(id) {
                 number: invoice.number,
                 numberFormat: invoice.numberFormat,
                 date: invoice.date,
+                padding: await numberPadding(),
+                draft: invoice.status === INVOICE_STATUS.DRAFT,
             }),
         },
         items,
@@ -149,8 +152,11 @@ export async function saveInvoice(input) {
         const prefix = await option('invoice_prefix', 'INV-')
         const numberFormat = Number(await option('invoice_number_format', '1')) || 1
         const next = Number(await option('next_invoice_number', '0')) || 0
-        const last = await prisma.crmInvoice.findFirst({ orderBy: { number: 'desc' }, select: { number: true } })
-        const number = Math.max(next, (last?.number || 0) + 1)
+        // Perfex numbering: the `next_invoice_number` option is the sequence (it may restart, e.g. each year);
+        // only fall back to "highest real number + 1" when the option is missing. Drafts use placeholder numbers
+        // around 1,000,000,000 which must never feed the sequence.
+        const last = await prisma.crmInvoice.findFirst({ where: { number: { lt: 1000000000 } }, orderBy: { number: 'desc' }, select: { number: true } })
+        const number = next > 0 ? next : (last?.number || 0) + 1
         invoice = await prisma.crmInvoice.create({
             data: {
                 ...data,
@@ -277,5 +283,20 @@ export async function setInvoiceState(invoiceId, action) {
     } else {
         return fail('Unknown action')
     }
+    return { success: true }
+}
+
+/** Delete an invoice that has no payments (Perfex also removes its lines, taxes and activity). */
+export async function deleteInvoice(id) {
+    const session = await requirePermission('invoices', 'delete')
+    const invoice = await prisma.crmInvoice.findUnique({ where: { id } })
+    if (!invoice) return fail('Invoice not found')
+    if ((await prisma.crmPayment.count({ where: { invoiceId: id } })) > 0) return fail('This invoice has payments. Delete the payments first, or cancel the invoice instead.')
+    const lines = await prisma.crmItemable.findMany({ where: { relType: REL, relId: id }, select: { id: true } })
+    await prisma.crmItemTax.deleteMany({ where: { relType: REL, relId: id } })
+    await prisma.crmItemable.deleteMany({ where: { id: { in: lines.map((l) => l.id) } } })
+    await prisma.crmSalesActivity.deleteMany({ where: { relType: REL, relId: id } })
+    await prisma.crmInvoice.delete({ where: { id } })
+    void session
     return { success: true }
 }

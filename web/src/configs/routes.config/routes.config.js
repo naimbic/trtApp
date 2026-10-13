@@ -66,6 +66,13 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/crm/clients/ClientDetail')),
         authority: [],
     },
+    { key: 'crm.invoices', path: '/crm/invoices', component: lazy(() => import('@/views/crm/sales/InvoicesList')), authority: [] },
+    { key: 'crm.invoices.new', path: '/crm/invoices/new', component: lazy(() => import('@/views/crm/sales/InvoiceEditor')), authority: [] },
+    { key: 'crm.invoices.edit', path: '/crm/invoices/:id/edit', component: lazy(() => import('@/views/crm/sales/InvoiceEditor')), authority: [] },
+    { key: 'crm.invoices.view', path: '/crm/invoices/:id', component: lazy(() => import('@/views/crm/sales/InvoiceView')), authority: [] },
+    { key: 'crm.contracts', path: '/crm/contracts', component: lazy(() => import('@/views/crm/sales/ContractsList')), authority: [] },
+    { key: 'crm.contracts.view', path: '/crm/contracts/:id', component: lazy(() => import('@/views/crm/sales/ContractView')), authority: [] },
+    { key: 'crm.payments', path: '/crm/payments', component: lazy(() => import('@/views/crm/sales/PaymentsList')), authority: [] },
     {
         key: 'crm.tasks-board',
         path: '/crm/tasks-board',

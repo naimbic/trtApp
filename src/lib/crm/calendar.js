@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
 import { viewScope, isCrmAdmin, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
+import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 
 // Calendar layers shown next to the user's own events (each gated by the matching Perfex feature).
 export const LAYERS = ['events', 'tasks', 'invoices', 'projects', 'estimates', 'proposals', 'contracts']
@@ -20,7 +21,6 @@ export function colorName(color) {
     return h < 20 || h >= 340 ? 'red' : h < 45 ? 'orange' : h < 70 ? 'yellow' : h < 170 ? 'green' : h < 260 ? 'blue' : 'purple'
 }
 
-const num = (i) => `${i.prefix || ''}${String(i.number).padStart(6, '0')}`
 const iso = (d) => (d ? new Date(d).toISOString() : undefined)
 
 async function context() {
@@ -72,8 +72,9 @@ export async function getCalendarItems({ from, to }) {
     }
     if (ctx.can('invoices')) {
         layers.push('invoices')
-        const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6] } }, select: { id: true, number: true, prefix: true, dueDate: true, total: true } })
-        rows.forEach((i) => add('invoices', i.id, `Invoice ${num(i)} due · ${round2(i.total).toLocaleString('en-US')}`, i.dueDate, 'red', `/crm/invoices/${i.id}`))
+        const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6] } }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, dueDate: true, total: true } })
+        const pad = await numberPadding()
+        rows.forEach((i) => add('invoices', i.id, `Invoice ${docNumberOf(i, pad)} due · ${round2(i.total).toLocaleString('en-US')}`, i.dueDate, 'red', `/crm/invoices/${i.id}`))
     }
     if (ctx.can('projects')) {
         layers.push('projects')
@@ -82,8 +83,9 @@ export async function getCalendarItems({ from, to }) {
     }
     if (ctx.can('estimates')) {
         layers.push('estimates')
-        const rows = await prisma.crmEstimate.findMany({ where: { expiryDate: range, status: { in: [1, 2] } }, select: { id: true, number: true, prefix: true, expiryDate: true } })
-        rows.forEach((e) => add('estimates', e.id, `Estimate ${num(e)} expires`, e.expiryDate, 'yellow', `/crm/estimates/${e.id}`))
+        const rows = await prisma.crmEstimate.findMany({ where: { expiryDate: range, status: { in: [1, 2] } }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, expiryDate: true } })
+        const epad = await numberPadding()
+        rows.forEach((e) => add('estimates', e.id, `Estimate ${docNumberOf(e, epad, null)} expires`, e.expiryDate, 'yellow', `/crm/estimates/${e.id}`))
     }
     if (ctx.can('proposals')) {
         layers.push('proposals')

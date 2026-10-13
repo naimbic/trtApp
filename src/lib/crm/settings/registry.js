@@ -477,7 +477,7 @@ export const GROUPS = {
                 f('proposals_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('send_proposal_expiry_reminder_before', 'Expiry reminder, days before', 'number', { min: 0, max: 60, default: '0', hint: '0 = no reminder.' }),
             ] },
-            { title: 'Expenses', fields: [f('expenses_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9', soon: true })] },
+            { title: 'Expenses', fields: [f('expenses_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' })] },
             { title: 'Contracts', fields: [
                 f('contracts_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('contract_expiration_before', 'Expiry notice, days before', 'number', { min: 0, max: 120, default: '0', hint: '0 = no notice.' }),

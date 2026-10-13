@@ -14,7 +14,7 @@ const num = (v) => Number(v) || 0
 
 const OPTION_KEYS = ['default_timezone', 'cron_key', 'cron_enabled', 'invoice_auto_operations_hour', 'invoice_due_notice_before', 'invoice_due_notice_resend_after', 'automatically_send_invoice_overdue_reminder_after', 'automatically_resend_invoice_overdue_reminder_after', 'create_invoice_from_recurring_only_on_paid_invoices', 'new_recurring_invoice_action', 'invoice_due_after',
     'estimates_auto_operations_hour', 'send_estimate_expiry_reminder_before', 'proposals_auto_operations_hour', 'send_proposal_expiry_reminder_before', 'contracts_auto_operations_hour', 'contract_expiration_before', 'tasks_reminder_notification_hour', 'tasks_reminder_notification_before', 'autoclose_tickets_after', 'delete_activity_log_older_then',
-    'cron_last_invoices', 'cron_last_estimates', 'cron_last_proposals', 'cron_last_contracts', 'cron_last_tasks', 'cron_last_cleanup', 'last_cron_run']
+    'cron_last_invoices', 'cron_last_estimates', 'cron_last_proposals', 'cron_last_contracts', 'cron_last_tasks', 'cron_last_expenses', 'expenses_auto_operations_hour', 'cron_last_cleanup', 'last_cron_run']
 
 /** Today in the platform time zone, as a UTC-midnight Date (how document dates are stored) and the local hour. */
 function clock(tz) {
@@ -168,11 +168,33 @@ async function cleanupJob({ o, lines, dry }) {
     if (r.count) lines.push(`${dry ? '[preview] ' : ''}${r.count} old activity log entries ${dry ? 'would be ' : ''}deleted`)
 }
 
+/* ---------------- recurring expenses ---------------- */
+async function expensesJob({ today, lines, dry }) {
+    const parents = await prisma.crmExpense.findMany({ where: { recurring: true, recurringFrom: null } })
+    for (const p of parents) {
+        if (p.cycles > 0 && p.totalCycles >= p.cycles) continue // reached the number of repeats asked for
+        const next = addUnits(p.lastRecurringDate || p.date || p.createdAt, p.repeatEvery || 1, p.recurringType || 'month')
+        if (next > today) continue
+        const label = p.expenseName || 'Expense'
+        if (dry) { lines.push(`[preview] A copy of “${label}” would be created${p.createInvoiceBillable ? ' (its invoice is not automatic yet)' : ''}`); continue }
+        try {
+            const { id: _id, createdAt, updatedAt, legacyId, invoiceId, ...copy } = p
+            void [_id, createdAt, updatedAt, legacyId, invoiceId]
+            const last = await prisma.crmExpense.findFirst({ where: { legacyId: { not: null } }, orderBy: { legacyId: 'desc' }, select: { legacyId: true } })
+            await prisma.crmExpense.create({ data: { ...copy, legacyId: (last?.legacyId || 0) + 1, date: today, recurring: false, recurringFrom: p.id, cycles: 0, totalCycles: 0, lastRecurringDate: null, invoiceId: null, createInvoiceBillable: false, sendInvoiceToCustomer: false } })
+            await prisma.crmExpense.update({ where: { id: p.id }, data: { totalCycles: p.totalCycles + 1, lastRecurringDate: today } })
+            lines.push(`Recurring expense created: ${label}`)
+            if (p.createInvoiceBillable) lines.push(`! “${label}” is set to invoice the client automatically, which is not available yet: invoice it by hand`)
+        } catch (e) { lines.push(`! Recurring expense “${label}” failed: ${e.message}`) }
+    }
+}
+
 const JOBS = [
     { key: 'invoices', label: 'Invoices', hour: 'invoice_auto_operations_hour', run: invoicesJob },
     { key: 'estimates', label: 'Estimates', hour: 'estimates_auto_operations_hour', run: estimatesJob },
     { key: 'proposals', label: 'Proposals', hour: 'proposals_auto_operations_hour', run: proposalsJob },
     { key: 'contracts', label: 'Contracts', hour: 'contracts_auto_operations_hour', run: contractsJob },
+    { key: 'expenses', label: 'Expenses', hour: 'expenses_auto_operations_hour', run: expensesJob },
     { key: 'tasks', label: 'Tasks', hour: 'tasks_reminder_notification_hour', run: tasksJob },
     { key: 'cleanup', label: 'Cleanup', hour: null, daily: true, run: cleanupJob },
     { key: 'tickets', label: 'Tickets', hour: null, run: ticketsJob },

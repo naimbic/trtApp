@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.22.0',
+        date: '2026-10-13',
+        title: 'Expenses',
+        items: ['Expenses screen: totals (spent, to invoice, invoiced), spending by month and by category, filters (category, client, dates, state) and search', 'Add and edit an expense in a side panel: category (create one on the spot), taxes with live total, payment mode, client and project, billable, receipts stored in the Space', 'Turn a billable expense into an invoice in one click; invoiced expenses are locked, and deleting that invoice frees the expense', 'Recurring expenses: automatic copies from Settings → Cron job (previewable; the invoice of a recurring billable expense is still manual)'],
+    },
+    {
         version: '0.21.0',
         date: '2026-10-13',
         title: 'Client area',

@@ -2,6 +2,7 @@ import classNames from '@/utils/classNames'
 import ScrollBar from '@/components/ui/ScrollBar'
 import Logo from '@/components/template/Logo'
 import VerticalMenuContent from '@/components/template/VerticalMenuContent'
+import SideNavFooter from '@/components/template/SideNavFooter'
 import { useThemeStore } from '@/store/themeStore'
 import { useSessionUser } from '@/store/authStore'
 import { useRouteKeyStore } from '@/store/routeKeyStore'
@@ -47,7 +48,7 @@ const SideNav = ({
         <div
             style={sideNavCollapse ? sideNavCollapseStyle : sideNavStyle}
             className={classNames(
-                'side-nav',
+                'side-nav flex flex-col',
                 background && 'side-nav-bg',
                 !sideNavCollapse && 'side-nav-expand',
                 className,
@@ -70,7 +71,7 @@ const SideNav = ({
                     )}
                 />
             </Link>
-            <div className={classNames('side-nav-content', contentClass)}>
+            <div className={classNames('side-nav-content min-h-0 flex-1', contentClass)} style={{ height: 'auto' }}>
                 <ScrollBar style={{ height: '100%' }} direction={direction}>
                     <VerticalMenuContent
                         collapsed={sideNavCollapse}
@@ -82,6 +83,7 @@ const SideNav = ({
                     />
                 </ScrollBar>
             </div>
+            <SideNavFooter collapsed={sideNavCollapse} />
         </div>
     )
 }

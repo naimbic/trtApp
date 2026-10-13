@@ -15,6 +15,23 @@
                 "item1": "Group collapse menu item 1",
                 "item2": "Group collapse menu item 2"
             }
+        },
+        "dashboard": "Dashboard",
+        "calendar": "Calendar",
+        "team": "Team",
+        "crm": {
+            "crm": "CRM",
+            "customers": "Customers",
+            "leads": "Leads",
+            "projects": "Projects",
+            "tasks": "Tasks",
+            "sales": "Sales",
+            "purchases": "Purchases",
+            "support": "Support",
+            "knowledge-base": "Knowledge base",
+            "administration": "Administration",
+            "setup": "Setup",
+            "utilities": "Utilities"
         }
     }
 }

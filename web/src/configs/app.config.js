@@ -4,7 +4,7 @@ const appConfig = {
     unAuthenticatedEntryPath: '/sign-in',
     locale: 'en',
     accessTokenPersistStrategy: 'cookies',
-    enableMock: false,
+    enableMock: true,
     activeNavTranslation: false,
 }
 

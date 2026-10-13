@@ -22,7 +22,10 @@ import {
     PiBagSimpleDuotone,
 } from 'react-icons/pi'
 
+import demoIcons from './navigation-icon.demo.config'
+
 const navigationIcon = {
+    ...demoIcons,
     home: <PiHouseLineDuotone />,
     singleMenu: <PiAcornDuotone />,
     collapseMenu: <PiArrowsInDuotone />,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import CalendarView from '@/components/shared/CalendarView'
@@ -91,7 +91,9 @@ const Calendar = () => {
     const [dialog, setDialog] = useState({ open: false, selected: { type: 'NEW' } })
     const [saving, setSaving] = useState(false)
     const [staff, setStaff] = useState([])
-    const [syncOpen, setSyncOpen] = useState(false)
+    const [params, setParams] = useSearchParams()
+    const [syncOpen, setSyncOpen] = useState(params.get('sync') === '1')
+    useEffect(() => { if (params.get('sync') === '1') { setSyncOpen(true); setParams({}, { replace: true }) } }, [params, setParams])
     const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
     useEffect(() => { api('/api/crm/calendar/lookups').then((d) => setStaff(d.staff)).catch(() => {}) }, [])

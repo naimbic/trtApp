@@ -2,10 +2,17 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path';
 import dynamicImport from 'vite-plugin-dynamic-import'
+import { execSync } from 'node:child_process'
+
+const git = (cmd, fallback) => { try { return execSync(`git ${cmd}`, { cwd: __dirname }).toString().trim() } catch { return fallback } }
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), dynamicImport()],
+  define: {
+    __APP_COMMIT__: JSON.stringify(git('rev-parse --short HEAD', 'dev')),
+    __APP_BUILT__: JSON.stringify(new Date().toISOString().slice(0, 10)),
+  },
   assetsInclude: ['**/*.md'],
   resolve: {
     alias: {

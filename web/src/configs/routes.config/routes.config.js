@@ -1,6 +1,7 @@
 import { lazy } from 'react'
 import authRoute from './authRoute'
 import othersRoute from './othersRoute'
+import templateDemoRoutes from './templateDemoRoutes'
 
 export const publicRoutes = [...authRoute]
 
@@ -86,5 +87,6 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/crm/ResourcePage')),
         authority: [],
     },
+    ...templateDemoRoutes,
     ...othersRoute,
 ]

@@ -1,0 +1,85 @@
+/* ================================================================= *
+ * Dashboard design system — dark-first, re-themeable accent.
+ * Scoped to `.dash`; tokens namespaced `d-*` so they never collide
+ * with the Ecme template tokens. Light = `.theme-light`.
+ * Accent switches via [data-accent].
+ * ================================================================= */
+@theme inline {
+  --color-d-bg: rgb(var(--dsh-bg));
+  --color-d-surface: rgb(var(--dsh-surface));
+  --color-d-elevated: rgb(var(--dsh-elevated));
+  --color-d-input: rgb(var(--dsh-input));
+  --color-d-border: rgb(var(--dsh-border));
+  --color-d-text: rgb(var(--dsh-text));
+  --color-d-text2: rgb(var(--dsh-text2));
+  --color-d-muted: rgb(var(--dsh-muted));
+  --color-d-accent: rgb(var(--dsh-accent));
+  --color-d-success: rgb(var(--dsh-success));
+  --color-d-danger: rgb(var(--dsh-danger));
+  --color-d-warning: rgb(var(--dsh-warning));
+  --color-d-info: rgb(var(--dsh-info));
+}
+
+/* Dark = base */
+.dash {
+  --dsh-bg: 9 11 14;
+  --dsh-surface: 17 20 26;
+  --dsh-elevated: 24 28 36;
+  --dsh-input: 30 35 44;
+  --dsh-border: 38 44 55;
+  --dsh-text: 236 239 244;
+  --dsh-text2: 158 167 180;
+  --dsh-muted: 110 120 135;
+  --dsh-accent: 16 185 129;
+  --dsh-success: 34 197 94;
+  --dsh-danger: 239 68 68;
+  --dsh-warning: 245 158 11;
+  --dsh-info: 59 130 246;
+  color-scheme: dark;
+  background-color: rgb(var(--dsh-bg));
+  color: rgb(var(--dsh-text));
+}
+
+/* Light = explicit opt-in */
+.dash.theme-light {
+  --dsh-bg: 243 245 248;
+  --dsh-surface: 255 255 255;
+  --dsh-elevated: 255 255 255;
+  --dsh-input: 255 255 255;
+  --dsh-border: 225 230 236;
+  --dsh-text: 16 24 38;
+  --dsh-text2: 71 84 103;
+  --dsh-muted: 132 142 157;
+  color-scheme: light;
+}
+
+/* Re-themeable accent */
+.dash[data-accent="brand"]   { --dsh-accent: var(--dsh-brand, 37 99 235); }
+.dash[data-accent="emerald"] { --dsh-accent: 16 185 129; }
+.dash[data-accent="blue"]    { --dsh-accent: 59 130 246; }
+.dash[data-accent="violet"]  { --dsh-accent: 139 92 246; }
+.dash[data-accent="rose"]    { --dsh-accent: 244 63 94; }
+.dash[data-accent="amber"]   { --dsh-accent: 245 158 11; }
+
+.dash ::selection { background: rgb(var(--dsh-accent) / 0.28); }
+.dash .num { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+/* Modern minimal cards (soft elevation, no hard borders) */
+.dash {
+  --dsh-shadow: 0 0 0 1px rgb(255 255 255 / 0.04), 0 2px 8px rgb(0 0 0 / 0.35);
+  --dsh-shadow-hover: 0 0 0 1px rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.45);
+}
+.dash.theme-light {
+  --dsh-shadow: 0 0 0 1px rgb(16 24 40 / 0.05), 0 1px 2px rgb(16 24 40 / 0.05), 0 4px 12px rgb(16 24 40 / 0.04);
+  --dsh-shadow-hover: 0 0 0 1px rgb(16 24 40 / 0.08), 0 12px 28px rgb(16 24 40 / 0.10);
+}
+.dash .dcard {
+  background-color: rgb(var(--dsh-surface));
+  border-radius: 1rem;
+  box-shadow: var(--dsh-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+.dash .dcard-hover:hover {
+  box-shadow: var(--dsh-shadow-hover);
+  transform: translateY(-2px);
+}

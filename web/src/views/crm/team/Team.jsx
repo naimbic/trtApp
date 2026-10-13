@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { useLocation } from 'react-router'
-import { TbPlus, TbSearch, TbPencil, TbKey, TbCopy, TbShieldLock, TbLink, TbLogout } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbPencil, TbKey, TbCopy, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -130,6 +130,9 @@ const Team = () => {
             } else if (kind === 'signout') {
                 await api(`/api/crm/team/${member.id}/sign-out`, { method: 'POST' })
                 notify('success', `${member.name} was signed out on every device`)
+            } else if (kind === 'twofactor') {
+                await api(`/api/crm/team/${member.id}/two-factor`, { method: 'DELETE' })
+                notify('success', `Two-step verification removed for ${member.name}`)
             } else if (kind === 'reset') {
                 const res = await api(`/api/crm/team/${member.id}/reset-password`, { method: 'POST' })
                 setSecret({ name: member.name, email: member.email, password: res.tempPassword })
@@ -248,6 +251,7 @@ const Team = () => {
                                             <Tooltip title="Permissions"><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
                                             {m.hasLogin && <Tooltip title="Reset link (member sets own password)"><Button size="sm" variant="plain" icon={<TbLink />} onClick={() => setConfirm({ member: m, kind: 'link' })} /></Tooltip>}
                                             {m.hasLogin && <Tooltip title="One-time password"><Button size="sm" variant="plain" icon={<TbKey />} onClick={() => setConfirm({ member: m, kind: 'reset' })} /></Tooltip>}
+                                            {m.hasLogin && m.twoFactor && canAdmin && <Tooltip title="Reset two-step verification"><Button size="sm" variant="plain" icon={<TbDeviceMobileOff />} onClick={() => setConfirm({ member: m, kind: 'twofactor' })} /></Tooltip>}
                                             {m.hasLogin && <Tooltip title="Sign out everywhere"><Button size="sm" variant="plain" icon={<TbLogout />} onClick={() => setConfirm({ member: m, kind: 'signout' })} /></Tooltip>}
                                         </div>
                                     </Td>
@@ -269,8 +273,8 @@ const Team = () => {
             <ConfirmDialog
                 isOpen={!!confirm}
                 type="warning"
-                title={confirm?.kind === 'link' ? 'Create a reset link?' : confirm?.kind === 'signout' ? 'Sign out everywhere?' : 'Generate a one-time password?'}
-                confirmText={confirm?.kind === 'link' ? 'Create link' : confirm?.kind === 'signout' ? 'Sign out' : 'Generate password'}
+                title={confirm?.kind === 'link' ? 'Create a reset link?' : confirm?.kind === 'signout' ? 'Sign out everywhere?' : confirm?.kind === 'twofactor' ? 'Reset two-step verification?' : 'Generate a one-time password?'}
+                confirmText={confirm?.kind === 'link' ? 'Create link' : confirm?.kind === 'signout' ? 'Sign out' : confirm?.kind === 'twofactor' ? 'Reset' : 'Generate password'}
                 onClose={() => setConfirm(null)}
                 onRequestClose={() => setConfirm(null)}
                 onCancel={() => setConfirm(null)}
@@ -279,7 +283,9 @@ const Team = () => {
                 <p>
                     {confirm?.kind === 'link'
                         ? `A one-time link (valid for 1 hour) will be created so ${confirm?.member.name} can choose a new password. Their current password keeps working until they use it. It is emailed when mail is configured, and shown here either way.`
-                        : confirm?.kind === 'signout'
+                        : confirm?.kind === 'twofactor'
+                          ? `${confirm?.member.name} will no longer be asked for a code when signing in (use this if they lost their phone). They can set it up again from their profile.`
+                          : confirm?.kind === 'signout'
                           ? `${confirm?.member.name} will be signed out on every device and must sign in again.`
                           : `A new one-time password will be generated for ${confirm?.member.name}. Their current password stops working immediately.`}
                 </p>

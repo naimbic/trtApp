@@ -1,7 +1,9 @@
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
 import { PermissionError, requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
-import { processUpload, putMedia, deleteMedia, MediaError } from '@/lib/media'
+import { ListObjectsV2Command } from '@aws-sdk/client-s3'
+import spaces, { BUCKET } from '@/lib/spaces'
+import { processUpload, putMedia, deleteMedia, publicUrl, MediaError } from '@/lib/media'
 
 const plain = (v) => JSON.parse(JSON.stringify(v))
 const OID = /^[0-9a-f]{24}$/i
@@ -141,9 +143,84 @@ export async function mediaAction(body) {
     if (action === 'setVisibility') return plain(shape(await prisma.crmMedia.update({ where: { id }, data: { visibleToClient: !!body.visibleToClient } })))
     if (action === 'delete') {
         const sub = item.isFolder ? await descendants(id) : { ids: [], keys: [] }
-        await deleteMedia([item.key, ...sub.keys])
+        await deleteMedia([item.key, ...sub.keys], { allowAny: true })
         await prisma.crmMedia.deleteMany({ where: { id: { in: [id, ...sub.ids] } } })
         return { success: true, removed: 1 + sub.ids.length }
     }
     fail('Unknown action')
+}
+
+/* ---------- bring what is already in the Space into the file manager ---------- */
+const EXT_KIND = {
+    jpg: ['image', 'image/jpeg'], jpeg: ['image', 'image/jpeg'], png: ['image', 'image/png'], webp: ['image', 'image/webp'], gif: ['image', 'image/gif'], avif: ['image', 'image/avif'],
+    svg: ['image', 'image/svg+xml'], bmp: ['image', 'image/bmp'], ico: ['image', 'image/x-icon'], tif: ['image', 'image/tiff'], tiff: ['image', 'image/tiff'], heic: ['image', 'image/heic'],
+    pdf: ['pdf', 'application/pdf'], doc: ['doc', 'application/msword'], docx: ['doc', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], rtf: ['doc', 'application/rtf'], odt: ['doc', 'application/vnd.oasis.opendocument.text'],
+    txt: ['text', 'text/plain'], md: ['text', 'text/markdown'], json: ['text', 'application/json'], csv: ['sheet', 'text/csv'], xls: ['sheet', 'application/vnd.ms-excel'],
+    xlsx: ['sheet', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], ods: ['sheet', 'application/vnd.oasis.opendocument.spreadsheet'],
+    ppt: ['slides', 'application/vnd.ms-powerpoint'], pptx: ['slides', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+    zip: ['archive', 'application/zip'], rar: ['archive', 'application/vnd.rar'], '7z': ['archive', 'application/x-7z-compressed'], gz: ['archive', 'application/gzip'],
+    mp4: ['video', 'video/mp4'], mov: ['video', 'video/quicktime'], webm: ['video', 'video/webm'], mp3: ['audio', 'audio/mpeg'], wav: ['audio', 'audio/wav'], m4a: ['audio', 'audio/mp4'],
+}
+let lastSync = 0
+let syncing = null
+
+async function listAllObjects() {
+    const out = []
+    let token
+    do {
+        const r = await spaces.send(new ListObjectsV2Command({ Bucket: BUCKET, MaxKeys: 1000, ContinuationToken: token }))
+        for (const o of r.Contents || []) out.push({ key: o.Key, size: o.Size || 0, at: o.LastModified })
+        token = r.IsTruncated ? r.NextContinuationToken : undefined
+    } while (token)
+    return out
+}
+
+async function runSync() {
+    const objects = (await listAllObjects()).filter((o) => !o.key.startsWith(`trtcrm/_healthcheck/`))
+    const listed = new Map(objects.map((o) => [o.key, o]))
+    const indexed = await prisma.crmMedia.findMany({ where: { isFolder: false, key: { not: null } }, select: { id: true, key: true } })
+    const known = new Set(indexed.map((r) => r.key))
+
+    // index entries whose object is gone from the Space
+    const stale = indexed.filter((r) => !listed.has(r.key)).map((r) => r.id)
+    if (stale.length) await prisma.crmMedia.deleteMany({ where: { id: { in: stale } } })
+
+    // folders created for Space paths, found by (parent, name)
+    const folderCache = new Map()
+    const folderFor = async (segments) => {
+        let parentId = null
+        let path = ''
+        for (const name of segments) {
+            path += `/${name}`
+            if (!folderCache.has(path)) {
+                let f = await prisma.crmMedia.findFirst({ where: { isFolder: true, parentId, name, relType: null } })
+                if (!f) f = await prisma.crmMedia.create({ data: { name, isFolder: true, parentId, relType: null, relId: null, key: null, url: null, kind: 'folder', purpose: 'space', uploaderName: 'Space' } })
+                folderCache.set(path, f.id)
+            }
+            parentId = folderCache.get(path)
+        }
+        return parentId
+    }
+
+    let added = 0
+    for (const o of objects) {
+        if (known.has(o.key) || o.key.endsWith('/')) continue
+        const parts = o.key.split('/').filter(Boolean)
+        const name = parts.pop()
+        const ext = (name.split('.').pop() || '').toLowerCase()
+        const [kind, mime] = EXT_KIND[ext] || ['other', 'application/octet-stream']
+        const parentId = parts.length ? await folderFor(parts) : null
+        await prisma.crmMedia.create({ data: { name, isFolder: false, parentId, key: o.key, url: publicUrl(o.key), mime, kind, size: o.size, originalSize: null, width: null, height: null, purpose: 'imported', relType: null, relId: null, visibleToClient: false, uploaderName: 'Space', createdAt: o.at || new Date() } })
+        added++
+    }
+    lastSync = Date.now()
+    return { added, removed: stale.length, total: objects.length }
+}
+
+/** Syncs the index with the bucket (at most once a minute unless forced). */
+export async function syncFromSpace({ force = false } = {}) {
+    await who()
+    if (!force && Date.now() - lastSync < 60000) return { skipped: true, added: 0, removed: 0 }
+    syncing ??= runSync().finally(() => { syncing = null })
+    return syncing
 }

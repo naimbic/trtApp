@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbCopy, TbDotsVertical, TbFolderPlus, TbGridDots, TbList, TbPencil, TbSearch, TbTrash, TbUpload, TbExternalLink, TbFolderSymlink, TbChevronRight } from 'react-icons/tb'
+import { TbRefresh, TbCopy, TbDotsVertical, TbFolderPlus, TbGridDots, TbList, TbPencil, TbSearch, TbTrash, TbUpload, TbExternalLink, TbFolderSymlink, TbChevronRight } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -15,6 +15,12 @@ import FileIcon from '@/components/crm/FileIcon'
 import { api, notify, upload, formatBytes, qs } from '../kit/api'
 
 const KINDS = [['', 'All'], ['image', 'Images'], ['pdf', 'PDF'], ['doc', 'Documents'], ['sheet', 'Sheets'], ['archive', 'Archives'], ['video', 'Video']]
+
+/** Image thumbnail that falls back to the type icon when the file cannot be shown (e.g. a private object). */
+const Thumb = ({ f, className, iconClass }) => {
+    const [bad, setBad] = useState(false)
+    return f.kind === 'image' && !bad ? <img src={f.url} alt="" onError={() => setBad(true)} className={className} loading="lazy" /> : <FileIcon kind={f.kind} className={iconClass} />
+}
 
 const FileManager = () => {
     const [parentId, setParentId] = useState(null)
@@ -36,6 +42,7 @@ const FileManager = () => {
     const [moveTo, setMoveTo] = useState(null)
     const [preview, setPreview] = useState(null)
     const input = useRef(null)
+    const [syncing, setSyncing] = useState(false)
 
     useEffect(() => { const t = setTimeout(() => setQuery(search.trim()), 300); return () => clearTimeout(t) }, [search])
     const load = useCallback(async () => {
@@ -46,6 +53,17 @@ const FileManager = () => {
         } catch (e) { notify('danger', e.message) } finally { setLoading(false) }
     }, [parentId, query, kind])
     useEffect(() => { load() }, [load])
+
+    // Bring in what is already in the Space (files uploaded before the CRM, by other tools, or removed outside it).
+    const sync = useCallback(async (force) => {
+        setSyncing(true)
+        try {
+            const r = await api('/api/crm/media/sync', { method: 'POST', body: { force } })
+            if (r.added || r.removed) { notify('success', `${r.added ? `${r.added} file${r.added > 1 ? 's' : ''} found in the Space` : ''}${r.added && r.removed ? ' · ' : ''}${r.removed ? `${r.removed} removed` : ''}`); load() }
+            else if (force) notify('success', 'Already up to date')
+        } catch (e) { notify('danger', e.message) } finally { setSyncing(false) }
+    }, [load])
+    useEffect(() => { sync(false) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const send = async (files) => {
         if (!files?.length) return
@@ -88,8 +106,9 @@ const FileManager = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>File manager</h3><p className="text-sm text-gray-500">All your files in one place, stored in DigitalOcean Spaces. Images are converted to WebP.</p></div>
+                <div><h3>File manager</h3><p className="text-sm text-gray-500">Everything in your DigitalOcean Space, plus new uploads. Images are converted to WebP.</p></div>
                 <div className="flex gap-2">
+                    <Button icon={syncing ? <Spinner size={16} /> : <TbRefresh />} disabled={syncing} onClick={() => sync(true)}>Refresh from Space</Button>
                     <Button icon={<TbFolderPlus />} onClick={() => setFolderDialog(true)}>New folder</Button>
                     <Button variant="solid" icon={busy ? <Spinner size={16} /> : <TbUpload />} disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Uploading…' : 'Upload'}</Button>
                     <input ref={input} type="file" multiple className="hidden" onChange={(e) => send(e.target.files)} />
@@ -125,7 +144,7 @@ const FileManager = () => {
                             {data.list.map((f) => (
                                 <div key={f.id} className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
                                     <button type="button" onClick={() => open(f)} className="flex h-32 w-full items-center justify-center bg-gray-50 dark:bg-gray-700/40">
-                                        {f.kind === 'image' ? <img src={f.url} alt="" className="h-full w-full object-cover" loading="lazy" /> : <FileIcon kind={f.kind} className="text-5xl" />}
+                                        <Thumb f={f} className="h-full w-full object-cover" iconClass="text-5xl" />
                                     </button>
                                     <div className="flex items-center gap-1 px-3 py-2">
                                         <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold" title={f.name}>{f.name}</div><div className="text-xs text-gray-400">{f.isFolder ? 'Folder' : formatBytes(f.size)}</div></div>
@@ -139,7 +158,7 @@ const FileManager = () => {
                             {data.list.map((f) => (
                                 <div key={f.id} className="flex items-center gap-3 py-2">
                                     <button type="button" onClick={() => open(f)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                                        {f.kind === 'image' ? <img src={f.url} alt="" className="h-9 w-9 rounded-md object-cover" loading="lazy" /> : <span className="flex h-9 w-9 items-center justify-center"><FileIcon kind={f.kind} className="text-2xl" /></span>}
+                                        <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md"><Thumb f={f} className="h-9 w-9 object-cover" iconClass="text-2xl" /></span>
                                         <span className="truncate text-sm font-semibold">{f.name}</span>
                                     </button>
                                     <span className="hidden w-24 text-right text-sm text-gray-500 sm:block">{f.isFolder ? '—' : formatBytes(f.size)}</span>
@@ -173,6 +192,7 @@ const FileManager = () => {
             </Dialog>
             <ConfirmDialog isOpen={!!del} type="danger" title={del?.isFolder ? 'Delete this folder?' : 'Delete this file?'} confirmText="Delete" onClose={() => setDel(null)} onRequestClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={doDelete}>
                 <p>{del?.isFolder ? `“${del?.name}” and everything inside it will be removed for good.` : `“${del?.name}” will be removed for good.`}</p>
+                {(del?.purpose === 'imported' || del?.purpose === 'space' || del?.isFolder) && <p className="mt-2 text-amber-600">Some of these files were already in your Space before the CRM, so other tools or pages may still use them.</p>}
             </ConfirmDialog>
         </Container>
     )

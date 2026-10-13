@@ -8,6 +8,7 @@ import Alert from '@/components/ui/Alert'
 import { Form, FormItem } from '@/components/ui/Form'
 import { apiChangePassword, apiSignOutEverywhere } from '@/services/AuthService'
 import { useAuth } from '@/auth'
+import TwoStep from './TwoStep'
 import { useSessionUser } from '@/store/authStore'
 
 const Security = ({ embedded = false }) => {
@@ -52,6 +53,7 @@ const Security = ({ embedded = false }) => {
                 </div>
             )}
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                <TwoStep />
                 <Card>
                     <h5 className="mb-1">Change password</h5>
                     <p className="mb-5 text-sm text-gray-500">After changing it you are signed out on every device and sign in again with the new password.</p>

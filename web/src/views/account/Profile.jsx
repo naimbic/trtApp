@@ -11,6 +11,9 @@ import Segment from '@/components/ui/Segment'
 import Switcher from '@/components/ui/Switcher'
 import Tabs from '@/components/ui/Tabs'
 import Spinner from '@/components/ui/Spinner'
+import Dialog from '@/components/ui/Dialog'
+import PasswordInput from '@/components/shared/PasswordInput'
+import { useAuth } from '@/auth'
 import Alert from '@/components/ui/Alert'
 import ImageUpload from '@/components/crm/ImageUpload'
 import { countryList } from '@/constants/countries.constant'
@@ -66,6 +69,12 @@ const Profile = () => {
     const [error, setError] = useState('')
     const [params] = useSearchParams()
     const [tab, setTab] = useState(params.get('tab') || 'profile')
+    const { signOut } = useAuth()
+    const [emailDlg, setEmailDlg] = useState(false)
+    const [newEmail, setNewEmail] = useState('')
+    const [emailPw, setEmailPw] = useState('')
+    const [emailBusy, setEmailBusy] = useState(false)
+    const [emailErr, setEmailErr] = useState('')
 
     const load = useCallback(async () => {
         try {
@@ -100,6 +109,15 @@ const Profile = () => {
             resetMe()
             notify('success', 'Profile saved')
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
+    }
+    const changeEmail = async () => {
+        setEmailBusy(true); setEmailErr('')
+        try {
+            await api('/api/crm/profile', { method: 'POST', body: { newEmail, password: emailPw } })
+            notify('success', 'Email changed. Sign in again with the new address.')
+            setEmailDlg(false)
+            await signOut()
+        } catch (e) { setEmailErr(e.message) } finally { setEmailBusy(false) }
     }
     const onAvatar = (url) => { setU({ image: url }); setSaved((x) => JSON.stringify({ ...JSON.parse(x), user: { ...JSON.parse(x).user, image: url } })); setUser({ ...sessionUser, avatar: url || '' }); resetMe() }
 
@@ -143,8 +161,10 @@ const Profile = () => {
                             <Field label="Birthday"><Input type="date" max={dayjs().format('YYYY-MM-DD')} value={u.birthday} onChange={(e) => setU({ birthday: e.target.value })} /></Field>
                             <Field label="About you" hint={`${(s.bio || '').length}/500`} className="md:col-span-2"><Input textArea rows={3} maxLength={500} placeholder="A few words about what you do" value={s.bio} onChange={(e) => setS({ bio: e.target.value })} /></Field>
                         </Section>
-                        <Section title="Contact" desc="Your sign-in email can only be changed by an administrator.">
-                            <Field label="Email"><Input disabled value={u.email} /></Field>
+                        <Section title="Contact" desc={data.canChangeEmail ? 'Your sign-in email can be changed here; you will sign in again afterwards.' : 'Your sign-in email can only be changed by an administrator.'}>
+                            <Field label="Email" hint={data.canChangeEmail ? undefined : 'Ask an administrator to change it, or to give you the “Change own sign-in email” permission.'}>
+                                <div className="flex gap-2"><Input disabled value={u.email} />{data.canChangeEmail && <Button onClick={() => { setNewEmail(''); setEmailPw(''); setEmailErr(''); setEmailDlg(true) }}>Change</Button>}</div>
+                            </Field>
                             <Field label="Phone">
                                 <div className="flex gap-2">
                                     <div className="w-44"><Select placeholder="+212" options={DIAL} value={DIAL.find((d) => d.value === u.dialCode) || null} onChange={(o) => setU({ dialCode: o?.value || '' })} /></div>
@@ -211,6 +231,17 @@ const Profile = () => {
                     </TabContent>
                 </div>
             </Tabs>
+
+            <Dialog isOpen={emailDlg} width={440} onClose={() => setEmailDlg(false)} onRequestClose={() => setEmailDlg(false)}>
+                <h5 className="mb-1">Change your sign-in email</h5>
+                <p className="mb-4 text-sm text-gray-500">You will be signed out everywhere and sign in again with the new address. We also tell your old address about the change.</p>
+                {emailErr && <Alert showIcon type="danger" className="mb-3">{emailErr}</Alert>}
+                <div className="flex flex-col gap-3">
+                    <Field label="New email"><Input type="email" autoFocus value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="name@company.com" /></Field>
+                    <Field label="Current password"><PasswordInput autoComplete="current-password" value={emailPw} onChange={(e) => setEmailPw(e.target.value)} /></Field>
+                </div>
+                <div className="mt-5 flex justify-end gap-2"><Button onClick={() => setEmailDlg(false)}>Cancel</Button><Button variant="solid" loading={emailBusy} disabled={!newEmail || !emailPw} onClick={changeEmail}>Change email</Button></div>
+            </Dialog>
 
             {dirty && tab !== 'security' && (
                 <div className="sticky bottom-4 z-10 mt-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-lg dark:border-gray-600 dark:bg-gray-800">

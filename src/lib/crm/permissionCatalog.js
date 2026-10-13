@@ -16,6 +16,7 @@ export const CAPABILITIES = [
 ]
 
 export const EXTRA_LABELS = {
+    change_email: 'Change own sign-in email',
     view_all_templates: 'View all templates',
     create_milestones: 'Create milestones',
     edit_milestones: 'Edit milestones',
@@ -65,6 +66,12 @@ export const PERMISSION_GROUPS = [
         features: [
             { key: 'tickets', label: 'Tickets', caps: STD },
             { key: 'knowledge_base', label: 'Knowledge base', caps: CRUD },
+        ],
+    },
+    {
+        group: 'Account',
+        features: [
+            { key: 'profile', label: 'My profile', caps: ['change_email'], auto: {} },
         ],
     },
     {

@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.11.0',
+        date: '2026-10-13',
+        title: 'Two-step verification, email change, Space sync',
+        items: [
+            'Two-step verification in Profile → Security: authenticator app and email code, with recovery codes',
+            'Sign-in asks for the code as a second step; administrators can reset it for a member who lost their phone',
+            'Change your sign-in email from the profile (needs your password); new permission "Change own sign-in email" under Account → My profile',
+            'File manager lists everything already in the DigitalOcean Space, with "Refresh from Space"',
+        ],
+    },
+    {
         version: '0.10.0',
         date: '2026-10-13',
         title: 'Files in DigitalOcean Spaces, profile and company pages',

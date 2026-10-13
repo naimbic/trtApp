@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { buildUserAuthority } from '@/lib/crm/authBuild'
 import { lockState, recordFailure, clearFailures } from '@/lib/crm/loginGuard'
+import { hasTwoFactor, verifySecondStep } from '@/lib/crm/twoFactor'
 
 // Compared against when the email is unknown so response time does not reveal which emails exist.
 const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8.4Q0n5y7Q5xk9bP7r6bUQ8g8m3m5W'
@@ -37,6 +38,16 @@ const validateCredential = async (values) => {
 
     const { authority, blocked } = await buildUserAuthority(user)
     if (blocked) return null // inactive team member
+
+    // two-step verification: the code must come with the password (the sign-in form asks for it as a second step)
+    if (await hasTwoFactor(user.id)) {
+        const otp = String(values?.otp || '').trim()
+        if (!otp) return null
+        if (!(await verifySecondStep(user.id, otp))) {
+            await recordFailure(email, await clientIp()) // codes are brute-force protected by the same lock
+            return null
+        }
+    }
     await clearFailures(email)
 
     // team members: remember when they last signed in

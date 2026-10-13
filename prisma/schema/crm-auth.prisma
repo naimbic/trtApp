@@ -28,3 +28,19 @@ model AuthToken {
   @@index([userId])
   @@map("auth_tokens")
 }
+
+/// Two-step verification settings of one user (authenticator app and/or email code, plus single-use recovery codes).
+model CrmTwoFactor {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @unique @db.ObjectId
+  totpSecretEnc  String?  // authenticator secret, AES-GCM encrypted
+  totpPendingEnc String?  // secret shown during set-up, not active until the first code is confirmed
+  totpEnabled    Boolean  @default(false)
+  emailEnabled   Boolean  @default(false)
+  lastStep       Int?     // last accepted 30-second step (a code works only once)
+  recoveryHashes String[] // sha-256 of the unused recovery codes
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("auth_two_factor")
+}

@@ -36,7 +36,7 @@ export class MediaError extends Error {
     constructor(message, status = 400) { super(message); this.status = status }
 }
 
-export const publicUrl = (key) => `${CDN_URL}/${key}`
+export const publicUrl = (key) => `${CDN_URL}/${String(key).split('/').map(encodeURIComponent).join('/')}`
 export const keyFromUrl = (url) => (url && url.startsWith(`${CDN_URL}/${PREFIX}/`) ? url.slice(CDN_URL.length + 1) : null)
 
 const safeName = (name) => String(name || 'file').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || 'file'
@@ -91,9 +91,9 @@ export async function putMedia(processed, folder = 'library') {
     return { key, url: publicUrl(key) }
 }
 
-/** Removes objects from the Space. Only keys under our prefix are ever deleted. */
-export async function deleteMedia(keys) {
-    const list = [...new Set((Array.isArray(keys) ? keys : [keys]).filter((k) => k && k.startsWith(`${PREFIX}/`)))]
+/** Removes objects from the Space. Keys under our prefix by default; `allowAny` is for files that were already in the Space before the CRM (listed in the file manager). */
+export async function deleteMedia(keys, { allowAny = false } = {}) {
+    const list = [...new Set((Array.isArray(keys) ? keys : [keys]).filter((k) => k && (allowAny || k.startsWith(`${PREFIX}/`))))]
     if (!list.length) return
     if (list.length === 1) { await spaces.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: list[0] })); return }
     for (let i = 0; i < list.length; i += 900) await spaces.send(new DeleteObjectsCommand({ Bucket: BUCKET, Delete: { Objects: list.slice(i, i + 900).map((Key) => ({ Key })), Quiet: true } }))

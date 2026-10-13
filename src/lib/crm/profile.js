@@ -1,6 +1,9 @@
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
-import { PermissionError, requirePermission, isCrmAdmin, getStaffId } from '@/lib/crm/permissions'
+import bcrypt from 'bcryptjs'
+import { PermissionError, requirePermission, isCrmAdmin, getStaffId, hasCap } from '@/lib/crm/permissions'
+import { clearFailures } from '@/lib/crm/loginGuard'
+import { deliver, buildHtml, baseData } from '@/lib/crm/mailer'
 import { uploadImage, deleteMedia, keyFromUrl, MediaError } from '@/lib/media'
 
 const plain = (v) => JSON.parse(JSON.stringify(v))
@@ -48,6 +51,7 @@ export async function getProfile() {
             role: staff.role?.name || null, lastLogin: staff.lastLogin, departments,
         } : null,
         admin: isCrmAdmin(session.user.authority || []),
+        canChangeEmail: hasCap(session.user.authority || [], 'profile', 'change_email'),
         preferences: mergePrefs(staff?.preferences),
     })
 }
@@ -155,4 +159,26 @@ export async function removeClientLogo(clientId) {
     await prisma.crmClient.update({ where: { id: clientId }, data: { logoUrl: null } })
     await deleteMedia(keyFromUrl(client.logoUrl)).catch(() => {})
     return { url: null }
+}
+
+/** Changes the sign-in email of the signed-in user. Needs the `profile.change_email` permission and the current password. */
+export async function changeOwnEmail({ newEmail, password }) {
+    const { session, user, staff } = await me()
+    if (!hasCap(session.user.authority || [], 'profile', 'change_email')) throw new PermissionError('You do not have permission to change your email. Ask an administrator.', 403)
+    const email = clean(newEmail, 120).toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail('Enter a valid email address')
+    if (email === String(user.email).toLowerCase()) fail('This is already your email')
+    if (!user.password || !(await bcrypt.compare(String(password || ''), user.password))) fail('Your password is not correct')
+    const taken = (await prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' }, NOT: { id: user.id } } })) || (await prisma.crmStaff.findFirst({ where: { email: { equals: email, mode: 'insensitive' }, NOT: staff ? { id: staff.id } : undefined } }))
+    if (taken) fail('Another account already uses this email', 409)
+    const old = user.email
+    await prisma.user.update({ where: { id: user.id }, data: { email, sessionVersion: (user.sessionVersion || 0) + 1 } }) // every session is ended: sign in again with the new email
+    await prisma.crmStaff.updateMany({ where: { userId: user.id }, data: { email } })
+    await clearFailures(old).catch(() => {})
+    // tell the previous address (best effort)
+    try {
+        const html = await buildHtml(`<h2 style="font-family:Arial,sans-serif;color:#111827">Your sign-in email was changed</h2><p style="font-family:Arial,sans-serif">The email of your account was changed from <strong>${old}</strong> to <strong>${email}</strong>. If this was not you, contact an administrator right away.</p>`, await baseData())
+        await deliver({ to: old, subject: 'Your sign-in email was changed', html })
+    } catch { /* ignore */ }
+    return { success: true, email }
 }

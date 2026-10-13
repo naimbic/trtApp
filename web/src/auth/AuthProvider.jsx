@@ -69,8 +69,13 @@ function AuthProvider({ children }) {
         navigatorRef.current?.navigate(redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath)
     }
 
-    const signIn = async ({ email, password }) => {
+    const signIn = async ({ email, password, otp }) => {
         try {
+            // first step: does this account need a second check?
+            if (!otp) {
+                const chk = await fetch('/api/crm/auth/2fa/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }).then((r) => r.json()).catch(() => ({}))
+                if (chk.twoFactor) return { status: 'otp', methods: chk.methods }
+            }
             const { csrfToken } = await (await fetch('/api/auth/csrf', { credentials: 'include' })).json()
             // redirect: 'manual' — NextAuth answers with a redirect (possibly to another origin via a stale
             // callback-url cookie); we only need the session cookie it sets, never to follow that redirect.
@@ -79,14 +84,14 @@ function AuthProvider({ children }) {
                 credentials: 'include',
                 redirect: 'manual',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ csrfToken, email, password, callbackUrl: window.location.origin, json: 'true' }),
+                body: new URLSearchParams({ csrfToken, email, password, ...(otp ? { otp } : {}), callbackUrl: window.location.origin, json: 'true' }),
             })
             const u = await fetchSession()
             if (!u) {
                 const st = await fetch(`/api/crm/auth/status?email=${encodeURIComponent(email)}`).then((r) => r.json()).catch(() => ({}))
                 return {
                     status: 'failed',
-                    message: st.locked ? `Too many failed attempts. Try again in ${st.minutes} minute${st.minutes === 1 ? '' : 's'}.` : 'Invalid email or password, or the account is inactive',
+                    message: st.locked ? `Too many failed attempts. Try again in ${st.minutes} minute${st.minutes === 1 ? '' : 's'}.` : otp ? 'That code is not right or has expired' : 'Invalid email or password, or the account is inactive',
                 }
             }
             setUser(u)

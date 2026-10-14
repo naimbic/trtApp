@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.24.2',
+        date: '2026-10-14',
+        title: 'Password vault layout',
+        items: ['Vault page is now cards only (charts removed); search, client filter, show filters (all, mine, shared, private, client logins) and category chips sit together in one bar on top, with the entries in a full-width card grid'],
+    },
+    {
         version: '0.24.1',
         date: '2026-10-14',
         title: 'Password vault overview',

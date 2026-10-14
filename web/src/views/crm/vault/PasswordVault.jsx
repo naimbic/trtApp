@@ -2,9 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { TbShieldLock, TbUsersGroup, TbAlertTriangle, TbDeviceMobileCode, TbPlus, TbSearch, TbLock, TbUsers, TbUserCheck, TbEye, TbEyeOff, TbExternalLink, TbPencil, TbKey, TbFolders, TbFolder, TbStar, TbBuildingStore, TbShare, TbClockExclamation, TbTrash, TbCheck } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
-import Chart from '@/components/shared/Chart'
 import Card from '@/components/ui/Card'
-import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
@@ -102,37 +100,14 @@ const Stat = ({ title, value, sub, className, icon }) => (
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-2xl text-white">{icon}</div>
     </div>
 )
-const ACTION = { create: 'added', update: 'edited', view: 'revealed', copy_password: 'copied the password of', copy_username: 'copied the username of', copy_totp: 'copied the 2FA code of', open_url: 'opened' }
-
 const Overview = ({ s }) => {
     const attention = s.expired + s.expiring + s.noPassword
     return (
-        <div className="mb-6 flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <Stat title="Entries" className="bg-sky-100" value={s.total} sub={`${s.private} only for you`} icon={<TbShieldLock />} />
-                <Stat title="Shared" className="bg-emerald-100" value={s.team + s.selected} sub={`${s.team} whole team · ${s.selected} selected people`} icon={<TbUsersGroup />} />
-                <Stat title="Need attention" className={attention ? 'bg-amber-100' : 'bg-purple-100'} value={attention} sub={attention ? [s.expired && `${s.expired} past date`, s.expiring && `${s.expiring} due within 30 days`, s.noPassword && `${s.noPassword} without password`].filter(Boolean).join(' · ') : 'Everything is up to date'} icon={<TbAlertTriangle />} />
-                <Stat title="With 2FA code" className="bg-pink-100" value={s.withTotp} sub="Live codes the team can copy" icon={<TbDeviceMobileCode />} />
-            </div>
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-                <Card>
-                    <h5 className="mb-2">By category</h5>
-                    {s.byCategory.length ? <Chart type="donut" height={230} series={s.byCategory.map((x) => x.value)} customOptions={{ labels: s.byCategory.map((x) => x.name), colors: s.byCategory.map((x) => x.color), legend: { position: 'bottom', fontSize: '12px' }, dataLabels: { enabled: false }, plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: 'Entries', formatter: () => String(s.total) } } } } } }} /> : <p className="py-10 text-center text-gray-500">No entries yet.</p>}
-                </Card>
-                <Card>
-                    <h5 className="mb-2">Activity · last 14 days</h5>
-                    <Chart type="bar" height={230} series={[{ name: 'Used', data: s.activity.uses }, { name: 'Added or edited', data: s.activity.changes }]} xAxis={s.activity.days.map((d) => dayjs(d).format('DD MMM'))} customOptions={{ colors: ['#3b82f6', '#10b981'], legend: { position: 'top', fontSize: '12px' }, dataLabels: { enabled: false }, plotOptions: { bar: { columnWidth: '55%', borderRadius: 3, borderRadiusApplication: 'end' } }, xaxis: { categories: s.activity.days.map((d) => dayjs(d).format('DD MMM')), labels: { rotate: -45, style: { fontSize: '10px' } }, tickAmount: 7 }, yaxis: { labels: { formatter: (v) => String(Math.round(v)) } } }} />
-                </Card>
-                <Card>
-                    <h5 className="mb-4">Latest actions</h5>
-                    <div className="space-y-3">
-                        {s.recent.map((r) => (
-                            <div key={r.id} className="flex items-start gap-3 text-sm"><span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" /><div className="min-w-0"><div><span className="font-semibold heading-text">{r.who}</span> {ACTION[r.action] || r.action} <span className="font-semibold">{r.entry}</span></div><div className="text-xs text-gray-400">{dayjs(r.date).format('DD MMM, HH:mm')}</div></div></div>
-                        ))}
-                        {!s.recent.length && <p className="py-8 text-center text-gray-500">Nothing yet. Reveals and copies of your entries appear here.</p>}
-                    </div>
-                </Card>
-            </div>
+        <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <Stat title="Entries" className="bg-sky-100" value={s.total} sub={`${s.private} only for you`} icon={<TbShieldLock />} />
+            <Stat title="Shared" className="bg-emerald-100" value={s.team + s.selected} sub={`${s.team} whole team · ${s.selected} selected people`} icon={<TbUsersGroup />} />
+            <Stat title="Need attention" className={attention ? 'bg-amber-100' : 'bg-purple-100'} value={attention} sub={attention ? [s.expired && `${s.expired} past date`, s.expiring && `${s.expiring} due within 30 days`, s.noPassword && `${s.noPassword} without password`].filter(Boolean).join(' · ') : 'Everything is up to date'} icon={<TbAlertTriangle />} />
+            <Stat title="With 2FA code" className="bg-pink-100" value={s.withTotp} sub="Live codes the team can copy" icon={<TbDeviceMobileCode />} />
         </div>
     )
 }
@@ -165,42 +140,40 @@ const PasswordVault = () => {
                 {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>New entry</Button>}
             </div>
             {data.stats && data.stats.total > 0 && <Overview s={data.stats} />}
-            <div className="flex flex-col gap-6 lg:flex-row">
-                <aside className="shrink-0 lg:w-64">
-                    <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
-                        {SCOPES.map(([k, label, icon]) => (
-                            <button key={k} onClick={() => pickScope(k)} className={cn('flex w-full items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left font-semibold transition-colors', scope === k && !categoryId ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700')}>
-                                <span className="text-xl">{icon}</span>{label}<span className="ml-auto text-xs text-gray-400">{data.counts[k] ?? 0}</span>
-                            </button>
-                        ))}
-                    </div>
-                    <div className="mt-5 hidden lg:block">
-                        <div className="mb-2 flex items-center justify-between px-3"><span className="text-xs font-semibold uppercase text-gray-400">Categories</span>{(data.can.create || data.can.admin) && <button className="text-xs font-semibold text-primary" onClick={() => setCats(true)}>Manage</button>}</div>
-                        <div className="flex flex-col gap-1">
-                            {data.categories.map((c) => (
-                                <button key={c.id} onClick={() => setCategoryId(categoryId === c.id ? null : c.id)} className={cn('flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-left text-sm font-semibold transition-colors', categoryId === c.id ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700')}>
-                                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: colorOf(c) }} /><span className="truncate">{c.name}</span><span className="ml-auto text-xs text-gray-400">{c.count}</span>
-                                </button>
-                            ))}
-                            {data.counts.none > 0 && <button onClick={() => setCategoryId(categoryId === 'none' ? null : 'none')} className={cn('flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-left text-sm font-semibold', categoryId === 'none' ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700')}><TbFolder className="text-base" />No category<span className="ml-auto text-xs text-gray-400">{data.counts.none}</span></button>}
-                        </div>
-                    </div>
-                </aside>
-                <div className="min-w-0 flex-1">
-                    <div className="mb-4 flex flex-wrap items-center gap-3">
-                        <div className="w-72 max-w-full"><Input size="sm" prefix={<TbSearch />} placeholder="Search name, user, URL, client, tag" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-                        <div className="w-56"><RelationSelect size="sm" resource="clients" value={clientId} onChange={(x) => setClientId(x || null)} /></div>
-                        <span className="ml-auto text-sm text-gray-500">{data.list.length} entr{data.list.length === 1 ? 'y' : 'ies'}</span>
-                    </div>
-                    {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
-                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
-                        {data.list.map((e) => <EntryCard key={e.id} e={e} onOpen={open} api={api} />)}
-                    </div>
-                    {!loading && !data.list.length && (
-                        <div className="flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-500"><TbKey className="text-5xl text-gray-300" /><h5>{data.counts.all ? 'Nothing matches' : 'The vault is empty'}</h5><p className="max-w-sm text-sm">{data.counts.all ? 'Try another category or search.' : 'Add the logins your team uses, choose who can see each one, and stop sharing passwords in chat.'}</p>{!data.counts.all && data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>Add the first entry</Button>}</div>
-                    )}
+            <Card className="mb-5" bodyClass="p-4 sm:p-5">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="min-w-[220px] flex-1 md:max-w-md"><Input prefix={<TbSearch className="text-lg" />} placeholder="Search name, user, URL, client, tag" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                    <div className="w-56"><RelationSelect resource="clients" value={clientId} onChange={(x) => setClientId(x || null)} /></div>
+                    {(scope !== 'all' || categoryId || clientId || search) && <Button size="sm" variant="plain" onClick={() => { setScope('all'); setCategoryId(null); setClientId(null); setSearch('') }}>Clear filters</Button>}
+                    <span className="ml-auto text-sm text-gray-500">{data.list.length} of {data.counts.all ?? 0} entr{(data.counts.all ?? 0) === 1 ? 'y' : 'ies'}</span>
                 </div>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className="mr-1 text-xs font-semibold uppercase text-gray-400">Show</span>
+                    {SCOPES.map(([k, label, icon]) => (
+                        <button key={k} onClick={() => pickScope(k)} className={cn('inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors', scope === k ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300')}>
+                            <span className="text-base">{icon}</span>{label}<span className={cn('rounded-full px-1.5 text-xs', scope === k ? 'bg-primary/20' : 'bg-gray-100 text-gray-500 dark:bg-gray-700')}>{data.counts[k] ?? 0}</span>
+                        </button>
+                    ))}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
+                    <span className="mr-1 text-xs font-semibold uppercase text-gray-400">Category</span>
+                    {data.categories.map((c) => (
+                        <button key={c.id} onClick={() => setCategoryId(categoryId === c.id ? null : c.id)} className={cn('inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold transition-colors', categoryId === c.id ? 'border-transparent text-white' : 'border-gray-200 text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:text-gray-200')} style={categoryId === c.id ? { background: colorOf(c) } : undefined}>
+                            <span className="h-2 w-2 rounded-full" style={{ background: categoryId === c.id ? '#fff' : colorOf(c) }} />{c.name}<span className="text-xs opacity-70">{c.count}</span>
+                        </button>
+                    ))}
+                    {data.counts.none > 0 && <button onClick={() => setCategoryId(categoryId === 'none' ? null : 'none')} className={cn('inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold', categoryId === 'none' ? 'border-primary bg-primary/10 text-primary' : 'border-dashed border-gray-300 text-gray-500')}><TbFolder />No category<span className="text-xs opacity-70">{data.counts.none}</span></button>}
+                    {!data.categories.length && !data.counts.none && <span className="text-sm text-gray-400">No categories yet</span>}
+                    {(data.can.create || data.can.admin) && <button className="ml-1 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline" onClick={() => setCats(true)}><TbPlus />Manage categories</button>}
+                </div>
+            </Card>
+            {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {data.list.map((e) => <EntryCard key={e.id} e={e} onOpen={open} api={api} />)}
             </div>
+            {!loading && !data.list.length && (
+                <div className="flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-500"><TbKey className="text-5xl text-gray-300" /><h5>{data.counts.all ? 'Nothing matches' : 'The vault is empty'}</h5><p className="max-w-sm text-sm">{data.counts.all ? 'Try another category or search.' : 'Add the logins your team uses, choose who can see each one, and stop sharing passwords in chat.'}</p>{!data.counts.all && data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>Add the first entry</Button>}</div>
+            )}
             <EntryDrawer open={drawer.open} id={drawer.id} categories={data.categories} staff={data.staff} presets={clientId ? { clientId } : null} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} onCategories={load} />
             <CategoryDialog open={cats} onClose={() => setCats(false)} categories={data.categories} onChanged={load} />
         </Container>

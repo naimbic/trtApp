@@ -41,22 +41,12 @@ export async function listEntries(q = {}) {
     const cName = Object.fromEntries(clients.map((x) => [x.id, x.company])), catMap = Object.fromEntries(cats.map((x) => [x.id, x]))
     const sName = Object.fromEntries(staff.map((s) => [s.id, s.name]))
     const count = (f) => visible.filter(f).length
-    // overview numbers for the cards and charts (over everything the person may see, not only the filtered list)
+    // numbers for the overview cards (over everything the person may see, not only the filtered list)
     const soon = new Date(Date.now() + 30 * 86400000), now = new Date()
-    const since = new Date(Date.now() - 13 * 86400000); since.setHours(0, 0, 0, 0)
-    const logs = visible.length ? await prisma.crmPasswordLog.findMany({ where: { entryId: { in: visible.map((e) => e.id) }, createdAt: { gte: since } }, orderBy: { createdAt: 'desc' } }) : []
-    const dayKey = (d) => new Date(d).toLocaleDateString('en-CA')
-    const days = Array.from({ length: 14 }, (_, i) => { const d = new Date(since); d.setDate(d.getDate() + i); return dayKey(d) })
-    const use = (l) => ['view', 'copy_password', 'copy_username', 'copy_totp'].includes(l.action)
-    const title = Object.fromEntries(visible.map((e) => [e.id, e.title]))
-    const editable = new Set(visible.filter((e) => rights(c, e).edit).map((e) => e.id))
     const stats = {
         total: visible.length, team: count((e) => e.access === 'team'), selected: count((e) => e.access === 'selected'), private: count((e) => e.access === 'private'),
         expired: count((e) => e.expiresAt && new Date(e.expiresAt) < now), expiring: count((e) => e.expiresAt && new Date(e.expiresAt) >= now && new Date(e.expiresAt) <= soon),
-        withTotp: count((e) => e.totpEnc), noPassword: count((e) => !e.passwordEnc),
-        byCategory: [...cats.map((x) => ({ name: x.name, color: x.color || '#64748b', value: visible.filter((e) => e.categoryId === x.id).length })), { name: 'No category', color: '#cbd5e1', value: count((e) => !e.categoryId) }].filter((x) => x.value > 0),
-        activity: { days, uses: days.map((d) => logs.filter((l) => use(l) && dayKey(l.createdAt) === d).length), changes: days.map((d) => logs.filter((l) => ['create', 'update'].includes(l.action) && dayKey(l.createdAt) === d).length) },
-        recent: logs.filter((l) => editable.has(l.entryId)).slice(0, 8).map((l) => ({ id: l.id, entryId: l.entryId, entry: title[l.entryId], who: sName[l.staffId] || 'System', action: l.action, date: l.createdAt })),
+        withTotp: count((e) => e.totpEnc), noPassword: count((e) => !e.passwordEnc)
     }
     const term = String(q.query || '').trim().toLowerCase()
     let list = visible

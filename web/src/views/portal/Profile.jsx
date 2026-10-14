@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -13,6 +13,7 @@ const Profile = () => {
     const c = me.contact
     const [v, setV] = useState({ firstName: c.firstName || '', lastName: c.lastName || '', phone: c.phone || '', title: c.title || '' })
     const [pw, setPw] = useState({ current: '', password: '', again: '' })
+    useEffect(() => { if (window.location.hash === '#password') setTimeout(() => document.getElementById('password')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150) }, [])
     const [msg, setMsg] = useState(null)
     const [busy, setBusy] = useState('')
     const note = (type, text) => { setMsg({ type, text }); window.scrollTo({ top: 0, behavior: 'smooth' }) }
@@ -38,7 +39,7 @@ const Profile = () => {
                     <div className="flex justify-end"><Button variant="solid" type="submit" loading={busy === 'p'}>Save changes</Button></div>
                 </Form>
             </Card>
-            <Card>
+            <Card id="password">
                 <h5 className="mb-5">Password</h5>
                 <Form onSubmit={(e) => { e.preventDefault(); change() }}>
                     <FormItem label="Current password"><PasswordInput autoComplete="current-password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} /></FormItem>

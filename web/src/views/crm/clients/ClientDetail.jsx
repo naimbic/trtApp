@@ -8,6 +8,8 @@ import Tooltip from '@/components/ui/Tooltip'
 import ImageUpload from '@/components/crm/ImageUpload'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
+import Dialog from '@/components/ui/Dialog'
+import PasswordInput from '@/components/shared/PasswordInput'
 import Button from '@/components/ui/Button'
 import Segment from '@/components/ui/Segment'
 import Table from '@/components/ui/Table'
@@ -125,6 +127,19 @@ const ClientDetail = () => {
         ].filter((t) => !t.feature || can(t.feature, 'view'))
     }, [c, id, can])
 
+    const [pwFor, setPwFor] = useState(null)
+    const [pw, setPw] = useState('')
+    const [pwBusy, setPwBusy] = useState(false)
+    const makePw = () => { const a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; const r = crypto.getRandomValues(new Uint32Array(12)); setPw([...r].map((n) => a[n % a.length]).join('')) }
+    const savePw = async () => {
+        setPwBusy(true)
+        try {
+            await api(`/api/crm/customers/${id}/portal-password`, { method: 'POST', body: { contactId: pwFor.id, password: pw } })
+            try { await navigator.clipboard.writeText(pw) } catch { /* clipboard blocked */ }
+            notify('success', `Password set for ${pwFor.name}. It was copied: share it with them (they can change it in their profile).`)
+            setPwFor(null); setPw(''); loadProfile()
+        } catch (e) { notify('danger', e.message) } finally { setPwBusy(false) }
+    }
     const invite = async (k) => {
         try {
             const r = await api(`/api/crm/customers/${id}/portal-invite`, { method: 'POST', body: { contactId: k.id } })
@@ -239,7 +254,7 @@ const ClientDetail = () => {
                                                 return (
                                                     <div key={k.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600"><div className="flex items-center gap-2 font-semibold">{k.name}{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">Primary</Tag>}{!k.active && <Tag>Inactive</Tag>}</div>
                                                         <div className="mt-1 space-y-0.5 text-sm text-gray-500">{k.title && <div>{k.title}</div>}{k.email && <div className="flex items-center gap-1"><TbMail />{k.email}</div>}{k.phone && <div className="flex items-center gap-1"><TbPhone />{k.phone}</div>}
-                                                            {k.email && k.active && can('customers', 'edit') && <div className="flex flex-wrap items-center gap-2 pt-2">{pk?.portal && <Tag className="bg-emerald-100 text-emerald-700">Client area access</Tag>}<Button size="xs" onClick={() => invite(k)}>{pk?.portal ? 'Send password reset' : 'Invite to client area'}</Button></div>}
+                                                            {k.email && k.active && can('customers', 'edit') && <div className="flex flex-wrap items-center gap-2 pt-2">{pk?.portal && <Tag className="bg-emerald-100 text-emerald-700">Client area access</Tag>}<Button size="xs" onClick={() => invite(k)}>{pk?.portal ? 'Send password reset' : 'Invite to client area'}</Button><Button size="xs" onClick={() => { setPwFor(k); setPw('') }}>Set password</Button></div>}
                                                             {pk?.lastLogin && <div className="flex items-center gap-1 pt-1 text-xs"><TbLogin />Last login {dayjs(pk.lastLogin).format('DD MMM YYYY, HH:mm')}{pk.ip && <span className="font-mono"> · {pk.ip}</span>}</div>}
                                                         </div>
                                                     </div>
@@ -264,7 +279,14 @@ const ClientDetail = () => {
             <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this client?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
                 <p>{c.company} and its contacts will be removed. Clients that still have invoices, estimates, contracts, projects or tickets cannot be deleted — deactivate them instead.</p>
             </ConfirmDialog>
-        </Container>
+                    <Dialog isOpen={!!pwFor} width={420} onClose={() => setPwFor(null)} onRequestClose={() => setPwFor(null)}>
+                <h5 className="mb-1">Set client area password</h5>
+                <p className="mb-4 text-sm text-gray-500">{pwFor?.name} · {pwFor?.email}. They sign in at /portal with their email and this password. Any session they have is closed.</p>
+                <PasswordInput autoComplete="new-password" placeholder="At least 8 characters" value={pw} onChange={(e) => setPw(e.target.value)} />
+                <div className="mt-2"><button type="button" onClick={makePw} className="text-sm font-semibold text-primary">Generate a strong password</button></div>
+                <div className="mt-5 flex justify-end gap-2"><Button onClick={() => setPwFor(null)}>Cancel</Button><Button variant="solid" loading={pwBusy} disabled={pw.length < 8} onClick={savePw}>Save password</Button></div>
+            </Dialog>
+</Container>
     )
 }
 

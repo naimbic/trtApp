@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.28.1',
+        date: '2026-10-14',
+        title: 'Client passwords',
+        items: ['Staff can set a client contact\'s client-area password directly (client page, Contacts, Set password; with a password generator), no email needed', 'The client area menu has a Password link that opens the change-password card'],
+    },
+    {
         version: '0.28.0',
         date: '2026-10-14',
         title: 'Chat files, voice messages and calls',

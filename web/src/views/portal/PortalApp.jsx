@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { Navigate, NavLink, Outlet, Route, Routes, useNavigate } from 'react-router'
-import { PiHouseDuotone, PiFileTextDuotone, PiFileMagnifyingGlassDuotone, PiPresentationChartDuotone, PiBriefcaseDuotone, PiLifebuoyDuotone, PiUserDuotone, PiSignOutDuotone, PiMoonDuotone, PiSunDuotone } from 'react-icons/pi'
+import { PiHouseDuotone, PiFileTextDuotone, PiFileMagnifyingGlassDuotone, PiPresentationChartDuotone, PiBriefcaseDuotone, PiLifebuoyDuotone, PiUserDuotone, PiSignOutDuotone, PiMoonDuotone, PiSunDuotone, PiKeyDuotone } from 'react-icons/pi'
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import Spinner from '@/components/ui/Spinner'
@@ -34,6 +34,7 @@ const NAV = [
     { to: '/portal/projects', label: 'Projects', icon: <PiBriefcaseDuotone />, need: 'projects' },
     { to: '/portal/tickets', label: 'Support', icon: <PiLifebuoyDuotone />, need: 'support' },
     { to: '/portal/help', label: 'Help center', icon: <PiBookOpenTextDuotone /> },
+    { to: '/portal/profile#password', label: 'Password', icon: <PiKeyDuotone />, plain: true },
 ]
 
 const Shell = () => {

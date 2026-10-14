@@ -91,3 +91,14 @@ export async function inviteContact(clientId, contactId) {
     const res = await sendTemplate({ slug: 'contact-set-password', to: c.email, data: { set_password_url: link, contact_email: c.email, contact_firstname: c.firstName || '', contact_lastname: c.lastName || '' }, relType: 'contact', relId: c.id })
     return { success: true, sent: !!res.sent, error: res.error || null, link: res.sent ? null : link, email: c.email, expires: c.passwordHash ? '1 hour' : '7 days' }
 }
+
+/** Staff set a contact's client-area password directly (no email). Signs the contact out everywhere. */
+export async function setContactPassword(clientId, contactId, password) {
+    await requirePermission('customers', 'edit')
+    const c = await prisma.crmContact.findFirst({ where: { id: contactId, clientId } })
+    if (!c) throw httpError('Contact not found', 404)
+    if (!c.active) throw httpError('This contact is inactive')
+    if (String(password || '').length < 8) throw httpError('The password needs at least 8 characters')
+    await prisma.crmContact.update({ where: { id: c.id }, data: { passwordHash: await bcrypt.hash(String(password), 10), lastPasswordChange: new Date(), newPassKey: null, newPassKeyRequested: null, emailVerifiedAt: c.emailVerifiedAt || new Date() } })
+    return { success: true, email: c.email }
+}

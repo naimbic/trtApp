@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { StatTile, TileGrid } from '@/components/crm/ListHeader'
+import { TbBuilding, TbCircleCheck, TbCircleOff, TbUsers } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import { TbPlus, TbSearch, TbPencil, TbEye } from 'react-icons/tb'
@@ -76,13 +78,12 @@ const ClientsList = () => {
                 <div><h3>Clients</h3><p className="text-sm text-gray-500">Companies, contacts and what they owe</p></div>
                 {can('customers', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/clients/new')}>New client</Button>}
             </div>
-            <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
-                <Stat label="Clients" value={s.total} />
-                <Stat label="Active" value={s.active} />
-                <Stat label="Inactive" value={s.inactive} />
-                <Stat label="Contacts" value={s.contacts} />
-                <Stat label="Active contacts" value={s.activeContacts} />
-            </div>
+            <TileGrid>
+                <StatTile title="Clients" className="bg-sky-100" value={s.total} icon={<TbBuilding />} />
+                <StatTile title="Active" className="bg-emerald-100" value={s.active} icon={<TbCircleCheck />} />
+                <StatTile title="Inactive" className="bg-amber-100" value={s.inactive} icon={<TbCircleOff />} />
+                <StatTile title="Contacts" className="bg-purple-100" value={s.contacts} sub={`${s.activeContacts ?? 0} active`} icon={<TbUsers />} />
+            </TileGrid>
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <Segment size="sm" value={status} onChange={(v) => { if (v) { setStatus(v); setPage(1) } }}>

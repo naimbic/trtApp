@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { StatTile, TileGrid, StatusPills, CurrencySwitch } from '@/components/crm/ListHeader'
+import { TbReceipt2, TbCash, TbHourglass, TbAlertTriangle, TbCircleCheck, TbFileText } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
 import { TbPlus, TbSearch } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
@@ -68,27 +70,16 @@ const InvoicesList = () => {
                 {can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/invoices/new')}>New invoice</Button>}
             </div>
 
-            <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-                {ORDER.map((s) => (
-                    <button key={s} type="button" onClick={() => { setStatus(status === s ? null : s); setPage(1) }} className={cn('rounded-2xl border bg-white p-4 text-left transition dark:bg-gray-800', status === s ? 'border-primary ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300 dark:border-gray-700')}>
-                        <div className="text-sm text-gray-500">{STATUS[s].label}</div>
-                        <h3 className="mt-1">{data.stats.counts[s] || 0}</h3>
-                    </button>
-                ))}
-            </div>
-
+            <CurrencySwitch currencies={currencies} value={cur} onChange={setCur} names={(k) => lookups.currencies.find((x) => x.id === k)?.name || '?'} />
             {m && (
-                <Card className="mb-4" bodyClass="p-4">
-                    <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-                        {currencies.length > 1 && <Segment size="sm" value={cur} onChange={(v) => v && setCur(v)}>{currencies.map((k) => <Segment.Item key={k} value={k}>{lookups.currencies.find((x) => x.id === k)?.name || '?'}</Segment.Item>)}</Segment>}
-                        <div><div className="text-xs text-gray-500">Invoiced</div><b>{money(m.invoiced, cur)}</b></div>
-                        <div><div className="text-xs text-gray-500">Paid</div><b className="text-emerald-600">{money(m.paid, cur)}</b></div>
-                        <div><div className="text-xs text-gray-500">Outstanding</div><b>{money(m.outstanding, cur)}</b></div>
-                        <div><div className="text-xs text-gray-500">Overdue</div><b className={m.overdue > 0 ? 'text-red-500' : ''}>{money(m.overdue, cur)}</b></div>
-                        <span className="ml-auto text-xs text-gray-400">Excludes drafts and cancelled · for the current filters</span>
-                    </div>
-                </Card>
+                <TileGrid cols={4}>
+                    <StatTile title="Invoiced" className="bg-sky-100" value={money(m.invoiced, cur)} icon={<TbReceipt2 />} sub="Drafts and cancelled not counted" />
+                    <StatTile title="Paid" className="bg-emerald-100" value={money(m.paid, cur)} icon={<TbCash />} />
+                    <StatTile title="Outstanding" className="bg-purple-100" value={money(m.outstanding, cur)} icon={<TbHourglass />} />
+                    <StatTile title="Overdue" className={m.overdue > 0 ? 'bg-red-100' : 'bg-amber-100'} value={money(m.overdue, cur)} icon={<TbAlertTriangle />} sub="For the current filters" />
+                </TileGrid>
             )}
+            <StatusPills order={ORDER} labels={Object.fromEntries(ORDER.map((s) => [s, STATUS[s].label]))} counts={data.stats.counts} value={status} onChange={(s) => { setStatus(s); setPage(1) }} />
 
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">

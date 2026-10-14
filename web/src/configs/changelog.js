@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.2',
+        date: '2026-10-14',
+        title: 'Lists in the template style',
+        items: ['Invoices, estimates, proposals, purchase orders, clients and team now open on the same pastel figure tiles as the dashboards; invoice, estimate, proposal and purchase-order statuses are filter chips with counts instead of plain boxes'],
+    },
+    {
         version: '0.26.1',
         date: '2026-10-14',
         title: 'Reports like the e-commerce dashboard',

@@ -1,0 +1,27 @@
+import { TbCheck } from 'react-icons/tb'
+import Segment from '@/components/ui/Segment'
+import cn from '@/utils/classNames'
+
+/** The pastel figure tile used on every list (same look as the template dashboards). */
+export const StatTile = ({ title, value, sub, icon, className }) => (
+    <div className={cn('flex items-center justify-between gap-3 rounded-2xl p-4', className)}>
+        <div className="min-w-0"><div className="mb-3 font-bold text-gray-900">{title}</div><h3 className="truncate text-gray-900">{value ?? '–'}</h3>{sub && <div className="mt-1 truncate text-xs text-gray-700">{sub}</div>}</div>
+        {icon && <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-900 text-2xl text-white">{icon}</div>}
+    </div>
+)
+
+export const TileGrid = ({ children, cols = 4 }) => <div className={cn('mb-4 grid grid-cols-1 gap-4 md:grid-cols-2', cols === 4 ? 'xl:grid-cols-4' : cols === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-3')}>{children}</div>
+
+/** Status chips with counts; click one to filter, click again to clear. */
+export const StatusPills = ({ order, labels, counts = {}, value, onChange, dots }) => (
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+        {order.map((s) => (
+            <button key={s} type="button" onClick={() => onChange(value === s ? null : s)} className={cn('inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors', value === s ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300')}>
+                {value === s && <TbCheck />}{dots?.[s] && <span className="h-2 w-2 rounded-full" style={{ background: dots[s] }} />}{labels[s]}
+                <span className={cn('rounded-full px-1.5 text-xs', value === s ? 'bg-primary/20' : 'bg-gray-100 text-gray-500 dark:bg-gray-700')}>{counts[s] || 0}</span>
+            </button>
+        ))}
+    </div>
+)
+
+export const CurrencySwitch = ({ currencies, value, onChange, names }) => (currencies.length > 1 ? <div className="mb-4"><Segment size="sm" value={value} onChange={(v) => v && onChange(v)}>{currencies.map((k) => <Segment.Item key={k} value={k}>{names(k)}</Segment.Item>)}</Segment></div> : null)

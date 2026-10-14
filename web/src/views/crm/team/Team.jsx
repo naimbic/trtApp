@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { StatTile } from '@/components/crm/ListHeader'
+import { TbUsers, TbCircleCheck, TbCircleOff, TbLogin } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import { useLocation } from 'react-router'
 import { TbPlus, TbSearch, TbPencil, TbKey, TbCopy, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
@@ -180,12 +182,12 @@ const Team = () => {
             ) : (
                 <>
 
-            <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
-                <Stat label="Team members" value={s.total ?? '–'} />
-                <Stat label="Active" value={s.active ?? '–'} />
-                <Stat label="Inactive" value={s.inactive ?? '–'} sub="Cannot sign in" />
-                <Stat label="Administrators" value={s.admins ?? '–'} />
-                <Stat label="With login" value={s.withLogin ?? '–'} sub="Can sign in" />
+            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <StatTile title="Team members" className="bg-sky-100" value={s.total ?? '–'} icon={<TbUsers />} />
+                <StatTile title="Active" className="bg-emerald-100" value={s.active ?? '–'} icon={<TbCircleCheck />} />
+                <StatTile title="Inactive" className="bg-amber-100" value={s.inactive ?? '–'} sub="Cannot sign in" icon={<TbCircleOff />} />
+                <StatTile title="Administrators" className="bg-purple-100" value={s.admins ?? '–'} icon={<TbShieldLock />} />
+                <StatTile title="With login" className="bg-pink-100" value={s.withLogin ?? '–'} sub="Can sign in" icon={<TbLogin />} />
             </div>
 
             <AdaptiveCard>

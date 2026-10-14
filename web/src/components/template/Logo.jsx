@@ -26,7 +26,7 @@ const Logo = (props) => {
         >
             <img
                 className={imgClass}
-                src={custom || `${LOGO_SRC_PATH}logo-${mode}-${type}.png`}
+                src={custom || `${LOGO_SRC_PATH}logo-${mode}-${type}.svg`}
                 alt={`${APP_NAME} logo`}
             />
         </div>

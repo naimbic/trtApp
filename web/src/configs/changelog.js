@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.27.2',
+        date: '2026-10-14',
+        title: 'Template media removed',
+        items: ['The default logo and favicon are now trtCRM (shown when no company logo is set); all template logos, sample images, avatars and landing pictures were deleted from the project'],
+    },
+    {
         version: '0.27.1',
         date: '2026-10-14',
         title: 'Chat sound and status',

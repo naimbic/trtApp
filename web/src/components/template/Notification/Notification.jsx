@@ -75,7 +75,7 @@ const _Notification = ({ className }) => {
                 })}
                 {loaded && !items.length && (
                     <div className="flex h-[340px] items-center justify-center text-center">
-                        <div><img className="mx-auto mb-2 max-w-[150px]" src="/img/others/no-notification.png" alt="" /><h6 className="font-semibold">You are all caught up</h6><p className="mt-1 text-sm text-gray-500">New tickets, tasks, payments and answers show up here.</p></div>
+                        <div><PiBellRingingDuotone className="mx-auto mb-2 text-6xl text-gray-300" /><h6 className="font-semibold">You are all caught up</h6><p className="mt-1 text-sm text-gray-500">New tickets, tasks, payments and answers show up here.</p></div>
                     </div>
                 )}
             </ScrollBar>

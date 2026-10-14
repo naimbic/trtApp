@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.24.1',
+        date: '2026-10-14',
+        title: 'Password vault overview',
+        items: ['Vault page opens on overview cards (entries, shared, need attention, with 2FA code), a category donut, a 14-day activity chart and the latest actions on your entries'],
+    },
+    {
         version: '0.24.0',
         date: '2026-10-13',
         title: 'Password vault',

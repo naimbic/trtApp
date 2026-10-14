@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { TbPlus, TbSearch, TbLock, TbUsers, TbUserCheck, TbEye, TbEyeOff, TbExternalLink, TbPencil, TbKey, TbFolders, TbFolder, TbStar, TbBuildingStore, TbShare, TbClockExclamation, TbTrash, TbCheck } from 'react-icons/tb'
+import { TbShieldLock, TbUsersGroup, TbAlertTriangle, TbDeviceMobileCode, TbPlus, TbSearch, TbLock, TbUsers, TbUserCheck, TbEye, TbEyeOff, TbExternalLink, TbPencil, TbKey, TbFolders, TbFolder, TbStar, TbBuildingStore, TbShare, TbClockExclamation, TbTrash, TbCheck } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
+import Chart from '@/components/shared/Chart'
+import Card from '@/components/ui/Card'
+import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
@@ -93,8 +96,49 @@ const CategoryDialog = ({ open, onClose, categories, onChanged }) => {
     )
 }
 
+const Stat = ({ title, value, sub, className, icon }) => (
+    <div className={cn('flex items-center justify-between rounded-2xl p-4', className)}>
+        <div><div className="mb-3 font-bold text-gray-900">{title}</div><h3 className="text-gray-900">{value}</h3>{sub && <div className="mt-1 text-xs text-gray-700">{sub}</div>}</div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-2xl text-white">{icon}</div>
+    </div>
+)
+const ACTION = { create: 'added', update: 'edited', view: 'revealed', copy_password: 'copied the password of', copy_username: 'copied the username of', copy_totp: 'copied the 2FA code of', open_url: 'opened' }
+
+const Overview = ({ s }) => {
+    const attention = s.expired + s.expiring + s.noPassword
+    return (
+        <div className="mb-6 flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Stat title="Entries" className="bg-sky-100" value={s.total} sub={`${s.private} only for you`} icon={<TbShieldLock />} />
+                <Stat title="Shared" className="bg-emerald-100" value={s.team + s.selected} sub={`${s.team} whole team · ${s.selected} selected people`} icon={<TbUsersGroup />} />
+                <Stat title="Need attention" className={attention ? 'bg-amber-100' : 'bg-purple-100'} value={attention} sub={attention ? [s.expired && `${s.expired} past date`, s.expiring && `${s.expiring} due within 30 days`, s.noPassword && `${s.noPassword} without password`].filter(Boolean).join(' · ') : 'Everything is up to date'} icon={<TbAlertTriangle />} />
+                <Stat title="With 2FA code" className="bg-pink-100" value={s.withTotp} sub="Live codes the team can copy" icon={<TbDeviceMobileCode />} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                <Card>
+                    <h5 className="mb-2">By category</h5>
+                    {s.byCategory.length ? <Chart type="donut" height={230} series={s.byCategory.map((x) => x.value)} customOptions={{ labels: s.byCategory.map((x) => x.name), colors: s.byCategory.map((x) => x.color), legend: { position: 'bottom', fontSize: '12px' }, dataLabels: { enabled: false }, plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: 'Entries', formatter: () => String(s.total) } } } } } }} /> : <p className="py-10 text-center text-gray-500">No entries yet.</p>}
+                </Card>
+                <Card>
+                    <h5 className="mb-2">Activity · last 14 days</h5>
+                    <Chart type="bar" height={230} series={[{ name: 'Used', data: s.activity.uses }, { name: 'Added or edited', data: s.activity.changes }]} xAxis={s.activity.days.map((d) => dayjs(d).format('DD MMM'))} customOptions={{ colors: ['#3b82f6', '#10b981'], legend: { position: 'top', fontSize: '12px' }, dataLabels: { enabled: false }, plotOptions: { bar: { columnWidth: '55%', borderRadius: 3, borderRadiusApplication: 'end' } }, xaxis: { categories: s.activity.days.map((d) => dayjs(d).format('DD MMM')), labels: { rotate: -45, style: { fontSize: '10px' } }, tickAmount: 7 }, yaxis: { labels: { formatter: (v) => String(Math.round(v)) } } }} />
+                </Card>
+                <Card>
+                    <h5 className="mb-4">Latest actions</h5>
+                    <div className="space-y-3">
+                        {s.recent.map((r) => (
+                            <div key={r.id} className="flex items-start gap-3 text-sm"><span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" /><div className="min-w-0"><div><span className="font-semibold heading-text">{r.who}</span> {ACTION[r.action] || r.action} <span className="font-semibold">{r.entry}</span></div><div className="text-xs text-gray-400">{dayjs(r.date).format('DD MMM, HH:mm')}</div></div></div>
+                        ))}
+                        {!s.recent.length && <p className="py-8 text-center text-gray-500">Nothing yet. Reveals and copies of your entries appear here.</p>}
+                    </div>
+                </Card>
+            </div>
+        </div>
+    )
+}
+
 const PasswordVault = () => {
-    const [data, setData] = useState({ list: [], categories: [], counts: {}, staff: [], can: {} })
+    const [data, setData] = useState({ list: [], categories: [], counts: {}, staff: [], can: {}, stats: null })
     const [scope, setScope] = useState('all')
     const [categoryId, setCategoryId] = useState(null)
     const [clientId, setClientId] = useState(null)
@@ -120,6 +164,7 @@ const PasswordVault = () => {
                 <div><h3>Password vault</h3><p className="text-sm text-gray-500">Logins the team shares: platforms, hosting, social accounts, client access. Passwords are encrypted and every reveal is logged.</p></div>
                 {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>New entry</Button>}
             </div>
+            {data.stats && data.stats.total > 0 && <Overview s={data.stats} />}
             <div className="flex flex-col gap-6 lg:flex-row">
                 <aside className="shrink-0 lg:w-64">
                     <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">

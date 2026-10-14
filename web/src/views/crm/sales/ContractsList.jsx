@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { StatTile, TileGrid, StatusPills } from '@/components/crm/ListHeader'
+import { TbFileCertificate, TbClockExclamation, TbCoins, TbSignature } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
 import { TbPlus, TbSearch } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
@@ -61,14 +63,13 @@ const ContractsList = () => {
                 <div><h3>Contracts</h3><p className="text-sm text-gray-500">Agreements, renewals and what is about to expire</p></div>
                 {can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/contracts/new')}>New contract</Button>}
             </div>
-            <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
-                {['active', 'expiring', 'expired', 'trash'].map((k) => (
-                    <button key={k} type="button" onClick={() => { setState(state === k ? null : k); setPage(1) }} className={cn('rounded-2xl border bg-white p-4 text-left transition dark:bg-gray-800', state === k ? 'border-primary ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300 dark:border-gray-700')}>
-                        <div className="text-sm text-gray-500">{STATE[k].label}</div><h3 className="mt-1">{st.counts?.[k] ?? 0}</h3>
-                    </button>
-                ))}
-                <Card bodyClass="p-4"><div className="text-sm text-gray-500">Value of live contracts</div><h3 className="mt-1">{money(st.activeValue, baseCur, { decimals: 0 })}</h3><div className="text-xs text-gray-500">{st.unsigned || 0} not signed yet</div></Card>
-            </div>
+            <TileGrid>
+                <StatTile title="Active" className="bg-emerald-100" value={st.counts?.active ?? 0} icon={<TbFileCertificate />} />
+                <StatTile title="About to expire" className={(st.counts?.expiring ?? 0) ? 'bg-amber-100' : 'bg-sky-100'} value={st.counts?.expiring ?? 0} sub="Within 7 days" icon={<TbClockExclamation />} />
+                <StatTile title="Value of live contracts" className="bg-sky-100" value={money(st.activeValue, baseCur, { decimals: 0 })} icon={<TbCoins />} />
+                <StatTile title="Waiting for a signature" className="bg-purple-100" value={st.unsigned || 0} icon={<TbSignature />} />
+            </TileGrid>
+            <StatusPills order={['active', 'expiring', 'expired', 'trash']} labels={Object.fromEntries(['active', 'expiring', 'expired', 'trash'].map((k) => [k, STATE[k].label]))} counts={st.counts} value={state} onChange={(k) => { setState(k); setPage(1) }} />
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <div className="w-52"><Select size="sm" isClearable placeholder="All types" options={typeOptions} value={typeOptions.find((o) => o.value === typeId) || null} onChange={(o) => { setTypeId(o ? o.value : null); setPage(1) }} /></div>

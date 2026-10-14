@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { StatTile, TileGrid } from '@/components/crm/ListHeader'
+import { TbCash, TbListNumbers } from 'react-icons/tb'
 import { usePageRange } from '@/store/pageFilterStore'
 import { useNavigate } from 'react-router'
 import { TbSearch, TbTrash } from 'react-icons/tb'
@@ -74,10 +76,10 @@ const PaymentsList = () => {
         <Container>
             <div className="mb-4"><h3>Payments</h3><p className="text-sm text-gray-500">Money received against invoices. Record a payment from the invoice itself.</p></div>
             {Object.keys(data.totals).length > 0 && (
-                <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    {Object.entries(data.totals).map(([cid, v]) => <Card key={cid} bodyClass="p-4"><div className="text-sm text-gray-500">Received · {lookups.currencies.find((x) => x.id === cid)?.name || ''}</div><h3 className="mt-1 text-emerald-600">{money(v, cid)}</h3></Card>)}
-                    <Card bodyClass="p-4"><div className="text-sm text-gray-500">Payments</div><h3 className="mt-1">{data.total}</h3></Card>
-                </div>
+                <TileGrid>
+                    {Object.entries(data.totals).map(([cid, v], i) => <StatTile key={cid} title={`Received · ${lookups.currencies.find((x) => x.id === cid)?.name || ''}`} className={['bg-emerald-100', 'bg-sky-100', 'bg-amber-100'][i % 3]} value={money(v, cid)} icon={<TbCash />} />)}
+                    <StatTile title="Payments" className="bg-purple-100" value={data.total} sub="For the current filters" icon={<TbListNumbers />} />
+                </TileGrid>
             )}
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">

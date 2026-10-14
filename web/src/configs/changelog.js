@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.4',
+        date: '2026-10-14',
+        title: 'Payments and contracts lists',
+        items: ['Payments and contracts open on the same pastel figure tiles; contract states are filter chips with counts'],
+    },
+    {
         version: '0.26.3',
         date: '2026-10-14',
         title: 'Date filter in the top bar',

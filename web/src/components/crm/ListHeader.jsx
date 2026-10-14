@@ -13,10 +13,10 @@ export const StatTile = ({ title, value, sub, icon, className }) => (
 export const TileGrid = ({ children, cols = 4 }) => <div className={cn('mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2', cols === 4 ? 'xl:grid-cols-4' : cols === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-3')}>{children}</div>
 
 /** Status chips with counts; click one to filter, click again to clear. */
-export const StatusPills = ({ order, labels, counts = {}, value, onChange, dots }) => (
-    <div className="mb-3 flex flex-wrap items-center gap-2">
+export const StatusPills = ({ order, labels, counts = {}, value, onChange, dots, inline }) => (
+    <div className={cn('flex flex-wrap items-center gap-1.5', inline ? 'min-w-0 flex-1 justify-center' : 'mb-3')}>
         {order.map((s) => (
-            <button key={s} type="button" onClick={() => onChange(value === s ? null : s)} className={cn('inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-sm font-semibold transition-colors', value === s ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300')}>
+            <button key={s} type="button" onClick={() => onChange(value === s ? null : s)} className={cn('inline-flex items-center gap-2 rounded-full border px-2 py-0.5 text-[13px] font-semibold transition-colors', value === s ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300')}>
                 {value === s && <TbCheck />}{dots?.[s] && <span className="h-2 w-2 rounded-full" style={{ background: dots[s] }} />}{labels[s]}
                 <span className={cn('rounded-full px-1.5 text-xs', value === s ? 'bg-primary/20' : 'bg-gray-100 text-gray-500 dark:bg-gray-700')}>{counts[s] || 0}</span>
             </button>

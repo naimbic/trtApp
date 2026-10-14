@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Select from '@/components/ui/Select'
 
 /** Async picker for a `relation` field (options come from /api/crm/<resource>/options). value = id | null. */
-const RelationSelect = ({ resource, value, onChange, disabled, size }) => {
+const RelationSelect = ({ resource, value, onChange, disabled, size, placeholder = 'Search…' }) => {
     const [options, setOptions] = useState([])
     const [loading, setLoading] = useState(false)
 
@@ -39,7 +39,7 @@ const RelationSelect = ({ resource, value, onChange, disabled, size }) => {
             value={options.find((o) => o.value === value) || null}
             onInputChange={(q) => q && load(q)}
             onChange={(o) => onChange(o ? o.value : null)}
-            placeholder="Search…"
+            placeholder={placeholder}
         />
     )
 }

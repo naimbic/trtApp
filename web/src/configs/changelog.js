@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.7',
+        date: '2026-10-14',
+        title: 'Filter row',
+        items: ['Invoice, estimate, proposal, purchase order and contract lists: one filter row with "Choose a client" on the left, the status chips in the middle and the search on the right'],
+    },
+    {
         version: '0.26.6',
         date: '2026-10-14',
         title: 'Dashboard filter bar everywhere',

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.28.0',
+        date: '2026-10-14',
+        title: 'Chat files, voice messages and calls',
+        items: ['Send files, pictures and videos in chat with the paperclip (images are optimised, previews inside the bubble)', 'Record and send voice messages with the microphone button', 'Voice calls between colleagues and with clients, when an administrator turns them on (phone icon in the chat header, green = on). Incoming calls ring on any page; a client calling from the portal rings every available team member and the first to answer takes it', 'A line like "Voice call · 2:31" or "Missed call" is left in the conversation'],
+    },
+    {
         version: '0.27.4',
         date: '2026-10-14',
         title: 'Pick from the file manager',

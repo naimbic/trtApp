@@ -60,12 +60,12 @@ const extOf = (name) => (String(name).split('.').pop() || '').toLowerCase()
  * Images become WebP (EXIF-rotated, metadata stripped, never enlarged, animated GIFs stay animated); other files are
  * checked by extension and, for PDFs, by signature.
  */
-export async function processUpload(file, { purpose = 'library', imageOnly = false } = {}) {
+export async function processUpload(file, { purpose = 'library', imageOnly = false, skipAllowed = false } = {}) {
     if (!file || typeof file.arrayBuffer !== 'function') throw new MediaError('No file received')
     const name = safeName(file.name)
     const ext = extOf(name)
     const cfg = await uploadConfig()
-    if (cfg.allowed && !cfg.allowed.has(ext) && !(ext === 'jpg' && cfg.allowed.has('jpeg')) && !(ext === 'jpeg' && cfg.allowed.has('jpg'))) throw new MediaError(`".${ext || 'unknown'}" files are not allowed in Settings → General → Files`)
+    if (!skipAllowed && cfg.allowed && !cfg.allowed.has(ext) && !(ext === 'jpg' && cfg.allowed.has('jpeg')) && !(ext === 'jpeg' && cfg.allowed.has('jpg'))) throw new MediaError(`".${ext || 'unknown'}" files are not allowed in Settings → General → Files`)
     if (cfg.maxMb && file.size > cfg.maxMb * MB) throw new MediaError(`"${name}" is larger than ${cfg.maxMb} MB (Settings → General → Files)`)
     const raw = Buffer.from(await file.arrayBuffer())
     if (!raw.length) throw new MediaError(`"${name}" is empty`)

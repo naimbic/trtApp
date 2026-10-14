@@ -46,3 +46,8 @@ Files: copy the company logo/signature folder into the `storage` volume (`/app/s
 ## 4. Go live
 Point the real domain to the same app (or re-deploy with `PUBLIC_URL` = live domain), re-import the latest Perfex data,
 turn on cron and mail, and switch DNS.
+
+## Voice calls (chat)
+Calls use WebRTC with Google's public STUN servers, which works for most networks. For reliable calls behind strict
+firewalls add a TURN server (e.g. coturn) and set `TURN_URL` (e.g. `turn:turn.example.com:3478`), `TURN_USER` and `TURN_PASS`.
+Browsers only allow the microphone on https pages. An administrator turns calls on with the phone icon in the chat header.

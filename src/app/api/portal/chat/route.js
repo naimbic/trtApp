@@ -10,6 +10,6 @@ export async function POST(request) {
         const b = await request.json().catch(() => ({}))
         if (b.state) return json(await portalPresence(b.state))
         if (b.read) return json(await portalRead())
-        return json(await portalSend(b.body), { status: 201 })
+        return json(await portalSend(b.body, b.attachment), { status: 201 })
     } catch (e) { return fail(e) }
 }

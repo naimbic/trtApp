@@ -524,6 +524,11 @@ model CrmChatMessage {
   senderId   String   @db.ObjectId
   senderName String
   body       String
+  attUrl     String?
+  attName    String?
+  attMime    String?
+  attSize    Int?
+  attKind    String?
   createdAt  DateTime @default(now())
 
   @@index([roomId, createdAt])
@@ -547,4 +552,22 @@ model CrmChatPresence {
   state     String   @default("online")
 
   @@map("crm_chat_presence")
+}
+
+// WebRTC call signalling (offers, answers, ICE candidates, hang-ups) handed over by polling; rows are removed after a few minutes.
+model CrmChatSignal {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  callId    String
+  roomId    String   @db.ObjectId
+  toKey     String
+  fromKey   String
+  fromName  String
+  type      String
+  payload   String?
+  delivered Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([toKey, delivered])
+  @@index([callId])
+  @@map("crm_chat_signal")
 }

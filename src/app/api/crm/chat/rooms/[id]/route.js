@@ -7,5 +7,8 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
-    try { return NextResponse.json(await sendMessage((await params).id, (await request.json().catch(() => ({}))).body), { status: 201 }) } catch (e) { return errorResponse(e) }
+    try {
+        const b = await request.json().catch(() => ({}))
+        return NextResponse.json(await sendMessage((await params).id, b.body, b.attachment), { status: 201 })
+    } catch (e) { return errorResponse(e) }
 }

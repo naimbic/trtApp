@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import dayjs from 'dayjs'
-import { PiChatCircleDotsFill, PiXBold, PiCaretLeftBold, PiUsersThreeDuotone, PiUserCircleDuotone, PiBuildingsDuotone, PiBellSimpleDuotone, PiBellSimpleSlashDuotone } from 'react-icons/pi'
+import { PiChatCircleDotsFill, PiXBold, PiCaretLeftBold, PiUsersThreeDuotone, PiUserCircleDuotone, PiBuildingsDuotone, PiBellSimpleDuotone, PiBellSimpleSlashDuotone, PiPhoneCallDuotone } from 'react-icons/pi'
 import Avatar from '@/components/ui/Avatar'
 import classNames from '@/utils/classNames'
 import ChatThread from './ChatThread'
+import CallOverlay from './CallOverlay'
+import useCall from './useCall'
+import { upload as uploadFile } from '@/views/crm/kit/api'
 import { StatusDot, usePresence, usePingOnIncrease } from './chatKit'
 import { useChatStatus, STATUS } from '@/store/chatStatusStore'
 
@@ -55,7 +58,13 @@ const ChatWidget = () => {
     usePingOnIncrease(data?.unread ?? 0)
 
     const loadMsgs = useCallback((after) => api(`/rooms/${room.id}${after ? `?after=${encodeURIComponent(after)}` : ''}`), [room?.id])
-    const sendMsg = useCallback((body) => api(`/rooms/${room.id}`, { method: 'POST', body: JSON.stringify({ body }) }).then((m) => { refresh(); return m }), [room?.id, refresh])
+    const sendMsg = useCallback((body, attachment) => api(`/rooms/${room.id}`, { method: 'POST', body: JSON.stringify({ body, attachment }) }).then((m) => { refresh(); return m }), [room?.id, refresh])
+    const uploadMsg = useCallback((file, voice) => { const fd = new FormData(); fd.append('file', file); if (voice) fd.append('voice', '1'); return uploadFile('/api/crm/chat/upload', fd) }, [])
+    const fetchSignals = useCallback(() => api('/signals'), [])
+    const sendSignal = useCallback((b) => api('/signals', { method: 'POST', body: JSON.stringify(b) }), [])
+    const logCall = useCallback((roomId, body) => { api(`/rooms/${roomId}`, { method: 'POST', body: JSON.stringify({ body }) }).then(refresh).catch(() => {}) }, [refresh])
+    const phone = useCall({ fetchSignals, sendSignal, enabled: !!data?.calls, iceServers: data?.iceServers, onLog: logCall })
+    const setCalls = async (calls) => { try { await api('/settings', { method: 'POST', body: JSON.stringify({ calls }) }); refresh() } catch { /* not allowed */ } }
     const onData = useCallback((x) => setTheirStatus(x.status ?? null), [])
 
     if (!data) return null
@@ -70,6 +79,7 @@ const ChatWidget = () => {
 
     return (
         <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
+            <CallOverlay c={phone} />
             {open && (
                 <div className="flex h-[min(560px,calc(100vh-110px))] w-[min(380px,calc(100vw-40px))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800">
                     {room ? (
@@ -78,15 +88,16 @@ const ChatWidget = () => {
                                 <button type="button" className="text-lg text-gray-500" onClick={() => { setRoom(null); refresh() }}><PiCaretLeftBold /></button>
                                 <Face r={{ ...room, status: theirStatus ?? room.status }} />
                                 <div className="min-w-0 flex-1"><div className="truncate font-bold text-gray-900 dark:text-gray-100">{room.title}</div><div className="text-xs text-gray-500">{room.kind === 'team' ? `${peopleOnline + 1} online` : (theirStatus ?? room.status) === 'online' ? 'Available now' : (theirStatus ?? room.status) === 'offline' ? (room.kind === 'client' ? 'Offline · will see your reply later' : 'Offline') : `${STATUS[theirStatus ?? room.status].label} · may reply late`}</div></div>
+                                {data.calls && room.kind !== 'team' && <button type="button" className="text-xl text-primary" title="Voice call" onClick={() => phone.start({ roomId: room.id, peerName: room.title })}><PiPhoneCallDuotone /></button>}
                                 <button type="button" className="text-lg text-gray-400" onClick={() => setOpen(false)}><PiXBold /></button>
                             </div>
-                            <ChatThread load={loadMsgs} send={sendMsg} onData={onData} showSender={room.kind === 'team'} />
+                            <ChatThread load={loadMsgs} send={sendMsg} upload={uploadMsg} onData={onData} showSender={room.kind === 'team'} />
                         </>
                     ) : (
                         <>
                             <div className="flex items-center justify-between px-4 pt-4">
                                 <div><div className="text-lg font-bold text-gray-900 dark:text-gray-100">Chat</div><div className="flex items-center gap-1.5 text-xs text-gray-500"><StatusDot status={mine} className="!border-0" />You: {STATUS[mine].label} · {peopleOnline} colleague{peopleOnline === 1 ? '' : 's'} available</div></div>
-                                <div className="flex items-center gap-3 text-lg text-gray-400"><button type="button" title={muted ? 'Sound off' : 'Sound on'} onClick={() => setMuted(!muted)}>{muted ? <PiBellSimpleSlashDuotone /> : <PiBellSimpleDuotone />}</button><button type="button" onClick={() => setOpen(false)}><PiXBold /></button></div>
+                                <div className="flex items-center gap-3 text-lg text-gray-400">{data.me?.admin && <button type="button" title={data.calls ? 'Voice calls are on (click to turn off)' : 'Voice calls are off (click to turn on)'} onClick={() => setCalls(!data.calls)} className={data.calls ? 'text-emerald-500' : ''}><PiPhoneCallDuotone /></button>}<button type="button" title={muted ? 'Sound off' : 'Sound on'} onClick={() => setMuted(!muted)}>{muted ? <PiBellSimpleSlashDuotone /> : <PiBellSimpleDuotone />}</button><button type="button" onClick={() => setOpen(false)}><PiXBold /></button></div>
                             </div>
                             <div className="flex gap-1 px-3 pb-2 pt-3">
                                 {TABS.map(([k, label]) => (

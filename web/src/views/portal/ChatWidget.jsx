@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { PiChatCircleDotsFill, PiXBold, PiUserCircleDuotone } from 'react-icons/pi'
+import { PiChatCircleDotsFill, PiXBold, PiUserCircleDuotone, PiPhoneCallDuotone } from 'react-icons/pi'
 import Avatar from '@/components/ui/Avatar'
 import ChatThread from '@/components/crm/chat/ChatThread'
+import CallOverlay from '@/components/crm/chat/CallOverlay'
+import useCall from '@/components/crm/chat/useCall'
 import { portal } from './api'
 import { usePresence, usePingOnIncrease } from '@/components/crm/chat/chatKit'
 
@@ -10,12 +12,26 @@ const ChatWidget = () => {
     const [open, setOpen] = useState(false)
     const [team, setTeam] = useState([])
     const [unread, setUnread] = useState(0)
+    const [callsOn, setCallsOn] = useState(false)
+    const [ice, setIce] = useState(null)
     const openRef = useRef(false)
+    const roomRef = useRef(null)
     openRef.current = open
 
     const load = useCallback((after) => portal(`/chat${after ? `?after=${encodeURIComponent(after)}` : ''}`, { quiet: true }), [])
-    const send = useCallback((body) => portal('/chat', { method: 'POST', body: { body } }), [])
-    const onData = useCallback((x) => { setTeam(x.team || []); setUnread(openRef.current ? 0 : x.unread || 0) }, [])
+    const send = useCallback((body, attachment) => portal('/chat', { method: 'POST', body: { body, attachment } }), [])
+    const uploadMsg = useCallback(async (file, voice) => {
+        const fd = new FormData(); fd.append('file', file); if (voice) fd.append('voice', '1')
+        const res = await fetch('/api/portal/chat/upload', { method: 'POST', credentials: 'include', body: fd })
+        const j = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(j.error || 'Could not upload')
+        return j
+    }, [])
+    const fetchSignals = useCallback(() => portal('/chat/signals', { quiet: true }), [])
+    const sendSignal = useCallback((b) => portal('/chat/signals', { method: 'POST', body: b, quiet: true }), [])
+    const logCall = useCallback((_room, body) => { portal('/chat', { method: 'POST', body: { body }, quiet: true }).catch(() => {}) }, [])
+    const phone = useCall({ fetchSignals, sendSignal, enabled: callsOn, iceServers: ice, onLog: logCall })
+    const onData = useCallback((x) => { if (x.roomId) roomRef.current = x.roomId; if (x.calls !== undefined) setCallsOn(!!x.calls); if (x.iceServers) setIce(x.iceServers); setTeam(x.team || []); setUnread(openRef.current ? 0 : x.unread || 0) }, [])
 
     // closed: keep the badge and the "available" state fresh
     useEffect(() => {
@@ -33,6 +49,7 @@ const ChatWidget = () => {
     const on = team.length > 0
     return (
         <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
+            <CallOverlay c={phone} />
             {open && (
                 <div className="flex h-[min(540px,calc(100vh-110px))] w-[min(370px,calc(100vw-40px))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800">
                     <div className="flex items-center gap-3 bg-primary px-4 py-3 text-white">
@@ -41,9 +58,10 @@ const ChatWidget = () => {
                             <div className="font-bold">Chat with our team</div>
                             <div className="flex items-center gap-1.5 text-xs text-white/85"><span className={`h-2 w-2 rounded-full ${on ? 'bg-emerald-300' : 'bg-white/50'}`} />{on ? `${team.map((p) => p.name).slice(0, 2).join(', ')} ${team.length > 2 ? `+${team.length - 2} ` : ''}available` : 'Nobody is online right now — leave a message'}</div>
                         </div>
+                        {callsOn && <button type="button" className="text-xl" title="Voice call" onClick={() => phone.start({ roomId: roomRef.current, peerName: 'Our team' })}><PiPhoneCallDuotone /></button>}
                         <button type="button" className="text-lg" onClick={() => setOpen(false)}><PiXBold /></button>
                     </div>
-                    <ChatThread load={load} send={send} onData={onData} showSender empty={on ? 'Someone from our team is here. Say hello!' : 'Leave us a message and we will reply as soon as we are back.'} />
+                    <ChatThread load={load} send={send} upload={uploadMsg} onData={onData} showSender empty={on ? 'Someone from our team is here. Say hello!' : 'Leave us a message and we will reply as soon as we are back.'} />
                 </div>
             )}
             <button type="button" onClick={() => setOpen((o) => !o)} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-3xl text-white shadow-xl transition-transform hover:scale-105" title="Chat with our team">

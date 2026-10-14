@@ -61,3 +61,22 @@ export function usePingOnIncrease(count) {
         prev.current = count
     }, [count])
 }
+
+/** Ring tone for incoming calls (call it every ~1.8 s while ringing). */
+export function ring() {
+    if (useChatStatus.getState().muted) return
+    try {
+        ctx ||= new (window.AudioContext || window.webkitAudioContext)()
+        if (ctx.state === 'suspended') ctx.resume()
+        const t0 = ctx.currentTime
+        ;[[660, 0], [880, 0.22], [660, 0.55], [880, 0.77]].forEach(([f, d]) => {
+            const o = ctx.createOscillator(), g = ctx.createGain()
+            o.type = 'sine'; o.frequency.value = f
+            g.gain.setValueAtTime(0.0001, t0 + d)
+            g.gain.exponentialRampToValueAtTime(0.22, t0 + d + 0.03)
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.2)
+            o.connect(g).connect(ctx.destination)
+            o.start(t0 + d); o.stop(t0 + d + 0.22)
+        })
+    } catch { /* no audio available */ }
+}

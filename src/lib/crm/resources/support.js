@@ -163,7 +163,7 @@ const resources = [
         fields: [], filters: [], readOnly: true,
     },
     {
-        key: 'kb-groups', model: 'crmKnowledgeBaseGroup', label: 'Article group', plural: 'Article groups',
+        key: 'kb-groups', nav: false, model: 'crmKnowledgeBaseGroup', label: 'Article group', plural: 'Article groups',
         group: 'Knowledge Base', icon: 'TbFolders', feature: 'knowledge_base', titleField: 'name',
         search: ['name', 'description'], defaultSort: { groupOrder: 'asc' },
         columns: [
@@ -184,7 +184,7 @@ const resources = [
         children: [{ resource: 'kb-articles', fk: 'groupId', label: 'Articles' }],
     },
     {
-        key: 'kb-articles', model: 'crmKnowledgeBaseArticle', label: 'Article', plural: 'Articles',
+        key: 'kb-articles', nav: false, model: 'crmKnowledgeBaseArticle', label: 'Article', plural: 'Articles',
         group: 'Knowledge Base', icon: 'TbBook2', feature: 'knowledge_base', titleField: 'subject',
         search: ['subject', 'description', 'slug'], defaultSort: { createdAt: 'desc' },
         columns: [

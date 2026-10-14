@@ -18,6 +18,8 @@ import Documents from './Documents'
 import { Projects, ProjectDetail } from './Projects'
 import { Tickets, TicketThread } from './Tickets'
 import Profile from './Profile'
+import { Knowledge, HelpArticle } from './Knowledge'
+import { PiBookOpenTextDuotone } from 'react-icons/pi'
 
 const Ctx = createContext(null)
 export const usePortal = () => useContext(Ctx)
@@ -30,6 +32,7 @@ const NAV = [
     { to: '/portal/contracts', label: 'Contracts', icon: <PiFileTextDuotone />, need: 'contracts' },
     { to: '/portal/projects', label: 'Projects', icon: <PiBriefcaseDuotone />, need: 'projects' },
     { to: '/portal/tickets', label: 'Support', icon: <PiLifebuoyDuotone />, need: 'support' },
+    { to: '/portal/help', label: 'Help center', icon: <PiBookOpenTextDuotone /> },
 ]
 
 const Shell = () => {
@@ -94,6 +97,8 @@ const PortalApp = () => (
             <Route path="projects/:id" element={<ProjectDetail />} />
             <Route path="tickets" element={<Tickets />} />
             <Route path="tickets/:id" element={<TicketThread />} />
+            <Route path="help" element={<Knowledge />} />
+            <Route path="help/:id" element={<HelpArticle />} />
             <Route path="profile" element={<Profile />} />
         </Route>
         <Route path="*" element={<Navigate to="/portal" replace />} />

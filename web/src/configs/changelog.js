@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.25.0',
+        date: '2026-10-14',
+        title: 'Knowledge base',
+        items: ['Help center like the template: search hero, topics (groups) with article counts, most read and recently updated articles', 'Article page with reading time, "In this page" menu, related articles and view / helpful counts', 'Manage articles: table with group, audience (clients or staff only), published or draft, views and votes; groups with colours, hide or delete', 'Article editor with the visual editor, create a group on the spot; articles marked staff only never reach clients', 'Client area gets a Help center: search, topics, articles and "Was this helpful?" feedback; client views are counted'],
+    },
+    {
         version: '0.24.2',
         date: '2026-10-14',
         title: 'Password vault layout',

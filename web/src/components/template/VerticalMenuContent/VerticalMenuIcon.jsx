@@ -5,7 +5,8 @@ export const Icon = ({ component, ...props }) => {
     return <Component {...props} />
 }
 
-const VerticalMenuIcon = ({ icon }) => {
+// size: 'lg' (default) | 'sm'; color: any CSS colour (default: inherit)
+const VerticalMenuIcon = ({ icon, size = 'lg', color }) => {
     if (typeof icon !== 'string' && !icon) {
         return <></>
     }
@@ -13,7 +14,12 @@ const VerticalMenuIcon = ({ icon }) => {
     return (
         <>
             {navigationIcon[icon] && (
-                <span className={`text-2xl`}>{navigationIcon[icon]}</span>
+                <span
+                    className={size === 'sm' ? 'text-xl text-gray-400 dark:text-gray-500' : 'text-2xl'}
+                    style={color ? { color } : undefined}
+                >
+                    {navigationIcon[icon]}
+                </span>
             )}
         </>
     )

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.10',
+        date: '2026-10-14',
+        title: 'Sidebar accordion and icons',
+        items: ['Opening a menu group closes the one that was open (same for sub-groups), so only one is open at a time', 'Top menu groups have coloured icons; sub-menu icons are smaller and grey'],
+    },
+    {
         version: '0.26.9',
         date: '2026-10-14',
         title: 'Sidebar menu',

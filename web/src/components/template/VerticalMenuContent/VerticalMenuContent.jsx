@@ -16,6 +16,15 @@ const { MenuGroup } = Menu
 
 const MAX_CASCADE_LEVEL = 2
 
+const siblingKeys = (tree, key) => {
+    for (const n of tree || []) {
+        if (n.subMenu?.some((c) => c.key === key)) return n.subMenu.map((c) => c.key)
+        const hit = siblingKeys(n.subMenu, key)
+        if (hit) return hit
+    }
+    return []
+}
+
 // All ancestor keys of `key`, so nested groups open down to the active page.
 const ancestorKeys = (tree, key, trail = []) => {
     for (const n of tree || []) {
@@ -40,6 +49,15 @@ const VerticalMenuContent = (props) => {
     const { t } = useTranslation(!translationSetup)
 
     const [defaulExpandKey, setDefaulExpandKey] = useState([])
+
+    // Accordion: opening a group closes its open siblings.
+    const toggleKey = (key, expand) =>
+        setDefaulExpandKey((keys) => {
+            const rest = keys.filter((k) => k !== key)
+            if (!expand) return rest
+            const sib = siblingKeys(navigationTree, key)
+            return [...rest.filter((k) => !sib.includes(k)), key]
+        })
 
     const { activedRoute } = useMenuActive(navigationTree, routeKey)
 
@@ -94,6 +112,8 @@ const VerticalMenuContent = (props) => {
                                 renderAsIcon={nextCascade <= 1}
                                 userAuthority={userAuthority}
                                 t={t}
+                                open={defaulExpandKey.includes(nav.key)}
+                                onToggle={(expand) => toggleKey(nav.key, expand)}
                                 onLinkClick={onMenuItemClick}
                             >
                                 {nav.subMenu &&

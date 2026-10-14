@@ -18,9 +18,12 @@ const MenuCollapse = (props) => {
         label = null,
         dotIndent,
         onToggle,
+        open,
     } = props
 
-    const [isExpanded, setIsExpanded] = useState(expanded)
+    const controlled = typeof open === 'boolean'
+    const [innerExpanded, setIsExpanded] = useState(expanded)
+    const isExpanded = controlled ? open : innerExpanded
 
     const { sideCollapsed, defaultExpandedKeys, defaultCollapseActiveKeys } =
         useContext(MenuContext)
@@ -28,6 +31,7 @@ const MenuCollapse = (props) => {
     const { direction } = useConfig()
 
     useEffect(() => {
+        if (controlled) return
         if (defaultExpandedKeys.includes(eventKey)) {
             setIsExpanded(true)
         }
@@ -41,7 +45,7 @@ const MenuCollapse = (props) => {
         if (typeof onToggle === 'function') {
             onToggle(!isExpanded, e)
         }
-        setIsExpanded(!isExpanded)
+        if (!controlled) setIsExpanded(!isExpanded)
     }
 
     const menuCollapseItemClass = classNames(

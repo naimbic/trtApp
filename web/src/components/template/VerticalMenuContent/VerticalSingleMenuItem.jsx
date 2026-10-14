@@ -78,7 +78,7 @@ const DefaultItem = (props) => {
                         })
                     }
                 >
-                    {showIcon && <VerticalMenuIcon icon={nav.icon} />}
+                    {showIcon && <VerticalMenuIcon icon={nav.icon} size={indent && nav.icon ? 'sm' : 'lg'} />}
                     {showTitle && <span>{t(nav.translateKey, nav.title)}</span>}
                 </Link>
             </MenuItem>

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.28.2',
+        date: '2026-10-14',
+        title: 'Open the client area as a client',
+        items: ['New "Open client area" button on every contact of a client: opens the client area as that person without email or password (read-only preview for 2 hours, with an amber bar and an Exit button; works even for inactive clients)'],
+    },
+    {
         version: '0.28.1',
         date: '2026-10-14',
         title: 'Client passwords',

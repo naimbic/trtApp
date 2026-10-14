@@ -49,6 +49,12 @@ const Shell = () => {
     return (
         <Ctx.Provider value={{ me, reload: () => portal('/me').then(setMe) }}>
             <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
+                {me.preview && (
+                    <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-400 px-4 py-2 text-sm font-semibold text-amber-950">
+                        <span>Preview: you are viewing the client area as {me.contact.name} ({me.client.company}). It is read-only.</span>
+                        <button type="button" className="rounded-lg bg-amber-950 px-3 py-1 text-white" onClick={async () => { await portal('/auth/logout', { method: 'POST', quiet: true }).catch(() => {}); window.close(); window.location.assign('/') }}>Exit preview</button>
+                    </div>
+                )}
                 <Header
                     container
                     className="shadow-sm dark:shadow-2xl"
@@ -77,7 +83,7 @@ const Shell = () => {
                 </nav>
                 <main className="flex-1 py-6"><Container><Outlet /></Container></main>
                 <footer className="py-4 text-center text-xs text-gray-500">&copy; {new Date().getFullYear()} <span className="font-semibold">{me.company.name || APP_NAME}</span> · Client area</footer>
-                <ChatWidget />
+                {!me.preview && <ChatWidget />}
             </div>
         </Ctx.Provider>
     )

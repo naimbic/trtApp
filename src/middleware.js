@@ -24,6 +24,15 @@ export default auth((req) => {
     const isPublicRoute = publicRoutes.includes(nextUrl.pathname)
     const isAuthRoute = authRoutes.includes(nextUrl.pathname)
 
+    /** A staff preview of the client area (cookie flag `imp`) can look but not change anything */
+    if (nextUrl.pathname.startsWith('/api/portal/') && req.method !== 'GET' && req.method !== 'HEAD' && nextUrl.pathname !== '/api/portal/auth/logout') {
+        try {
+            const raw = req.cookies.get('trtportal')?.value || ''
+            const body = JSON.parse(atob(raw.split('.')[0].replace(/-/g, '+').replace(/_/g, '/')))
+            if (body?.imp) return Response.json({ error: 'Preview mode is read-only' }, { status: 403 })
+        } catch { /* no portal cookie */ }
+    }
+
     /** Skip auth middleware for all api routes — they handle auth internally */
     if (isApiRoute) return
 

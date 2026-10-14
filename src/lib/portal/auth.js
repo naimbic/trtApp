@@ -102,3 +102,12 @@ export async function setContactPassword(clientId, contactId, password) {
     await prisma.crmContact.update({ where: { id: c.id }, data: { passwordHash: await bcrypt.hash(String(password), 10), lastPasswordChange: new Date(), newPassKey: null, newPassKeyRequested: null, emailVerifiedAt: c.emailVerifiedAt || new Date() } })
     return { success: true, email: c.email }
 }
+
+/** Staff preview of the client area as one contact (no password). The cookie is read-only and lasts 2 hours. */
+export async function previewAsContact(clientId, contactId) {
+    await requirePermission('customers', 'edit')
+    const c = await prisma.crmContact.findFirst({ where: { id: contactId, clientId } })
+    if (!c) throw httpError('Contact not found', 404)
+    if (!c.active) throw httpError('This contact is inactive')
+    return { value: sign(c, { preview: true }), name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email }
+}

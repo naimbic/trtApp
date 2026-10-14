@@ -30,13 +30,12 @@ const parse = (raw) => {
     try { const p = JSON.parse(Buffer.from(body, 'base64url').toString()); return p.exp > Date.now() ? p : null } catch { return null }
 }
 
-/** Sections the contact may use (Perfex contact permissions; a contact with none set gets everything). */
-export async function allowedSections(contactId) {
-    const rows = await prisma.crmContactPermission.findMany({ where: { contactId }, select: { permissionId: true } })
-    if (!rows.length) return [...SECTIONS]
-    const perms = await prisma.crmPermission.findMany({ where: { id: { in: rows.map((r) => r.permissionId).filter(Boolean) } }, select: { shortName: true } })
-    const names = perms.map((p) => p.shortName)
-    return SECTIONS.filter((s) => names.includes(s))
+/**
+ * Sections the contact may use: all of them. Perfex's per-contact permission checkboxes did not survive the import (the
+ * permission records they point to are not in the database), and a restricted contact saw an empty client area.
+ */
+export async function allowedSections() {
+    return [...SECTIONS]
 }
 
 /** { contact, client, can } for the signed-in portal contact, or null. */
@@ -48,7 +47,7 @@ export async function getPortalSession() {
     if (!contact || !contact.active || contact.clientId !== p.k || +new Date(contact.lastPasswordChange || 0) !== p.pv) return null
     const client = await prisma.crmClient.findUnique({ where: { id: contact.clientId } })
     if (!client || (!client.active && !p.imp)) return null
-    const can = await allowedSections(contact.id)
+    const can = await allowedSections()
     return { contact, client, can, preview: !!p.imp }
 }
 

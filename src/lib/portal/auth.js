@@ -95,6 +95,7 @@ export async function inviteContact(clientId, contactId) {
 /** Staff set a contact's client-area password directly (no email). Signs the contact out everywhere. */
 export async function setContactPassword(clientId, contactId, password) {
     await requirePermission('customers', 'edit')
+    if (!/^[a-f0-9]{24}$/i.test(String(contactId || '')) || !/^[a-f0-9]{24}$/i.test(String(clientId || ''))) throw httpError('Contact not found', 404)
     const c = await prisma.crmContact.findFirst({ where: { id: contactId, clientId } })
     if (!c) throw httpError('Contact not found', 404)
     if (!c.active) throw httpError('This contact is inactive')
@@ -106,6 +107,7 @@ export async function setContactPassword(clientId, contactId, password) {
 /** Staff preview of the client area as one contact (no password). The cookie is read-only and lasts 2 hours. */
 export async function previewAsContact(clientId, contactId) {
     await requirePermission('customers', 'edit')
+    if (!/^[a-f0-9]{24}$/i.test(String(contactId || '')) || !/^[a-f0-9]{24}$/i.test(String(clientId || ''))) throw httpError('Contact not found', 404)
     const c = await prisma.crmContact.findFirst({ where: { id: contactId, clientId } })
     if (!c) throw httpError('Contact not found', 404)
     if (!c.active) throw httpError('This contact is inactive')

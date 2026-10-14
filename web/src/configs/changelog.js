@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.28.3',
+        date: '2026-10-14',
+        title: 'Client area shows every section',
+        items: ['The client area now shows all sections (Invoices, Estimates, Proposals, Contracts, Projects, Support) to every client contact; the imported per-contact permission boxes were not usable and left the area empty'],
+    },
+    {
         version: '0.28.2',
         date: '2026-10-14',
         title: 'Open the client area as a client',

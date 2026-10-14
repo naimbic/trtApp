@@ -65,10 +65,10 @@ const DefaultItem = (props) => {
 
     return (
         <AuthorityCheck userAuthority={userAuthority} authority={nav.authority}>
-            <MenuItem key={nav.key} eventKey={nav.key} dotIndent={indent}>
+            <MenuItem key={nav.key} eventKey={nav.key} dotIndent={indent && !nav.icon}>
                 <Link
                     to={nav.path}
-                    className="flex items-center gap-2 h-full w-full"
+                    className={`flex items-center gap-2 h-full w-full ${indent && nav.icon ? 'ps-3' : ''}`}
                     target={nav.isExternalLink ? '_blank' : ''}
                     onClick={() =>
                         onLinkClick?.({

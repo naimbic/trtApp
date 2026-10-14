@@ -18,14 +18,14 @@ const DefaultItem = ({
             <MenuCollapse
                 key={nav.key}
                 label={
-                    <>
+                    <span className={`flex items-center gap-2 ${dotIndent ? 'ps-3' : ''}`}>
                         <VerticalMenuIcon icon={nav.icon} />
                         <span>{t(nav.translateKey, nav.title)}</span>
-                    </>
+                    </span>
                 }
                 eventKey={nav.key}
                 expanded={false}
-                dotIndent={dotIndent}
+                dotIndent={false}
                 indent={indent}
             >
                 {children}

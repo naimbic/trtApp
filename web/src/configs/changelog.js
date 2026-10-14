@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.9',
+        date: '2026-10-14',
+        title: 'Sidebar menu',
+        items: ['Every menu entry has an icon', 'Important pages come first (Sales: Invoices, Payments, Estimates, Proposals, Contracts...), the rest is folded into sub-groups such as Items & catalog, Sales setup, Ticket setup, Email & spam, Finance, Data and Personal', 'The current page is highlighted and its group opens automatically'],
+    },
+    {
         version: '0.26.8',
         date: '2026-10-14',
         title: 'Colour everywhere, chart comparisons',

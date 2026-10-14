@@ -23,9 +23,11 @@ import {
 } from 'react-icons/pi'
 
 import demoIcons from './navigation-icon.demo.config'
+import crmIcons from './navigation-icon.crm'
 
 const navigationIcon = {
     ...demoIcons,
+    ...crmIcons,
     home: <PiHouseLineDuotone />,
     singleMenu: <PiAcornDuotone />,
     collapseMenu: <PiArrowsInDuotone />,

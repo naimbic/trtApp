@@ -16,6 +16,16 @@ const { MenuGroup } = Menu
 
 const MAX_CASCADE_LEVEL = 2
 
+// All ancestor keys of `key`, so nested groups open down to the active page.
+const ancestorKeys = (tree, key, trail = []) => {
+    for (const n of tree || []) {
+        if (n.key === key) return trail
+        const hit = ancestorKeys(n.subMenu, key, [...trail, n.key])
+        if (hit) return hit
+    }
+    return null
+}
+
 const VerticalMenuContent = (props) => {
     const {
         collapsed,
@@ -35,9 +45,9 @@ const VerticalMenuContent = (props) => {
 
     useEffect(() => {
         if (activedRoute?.parentKey) {
-            setDefaulExpandKey([activedRoute?.parentKey])
+            setDefaulExpandKey(ancestorKeys(navigationTree, activedRoute.key) || [activedRoute.parentKey])
         }
-    }, [activedRoute?.parentKey])
+    }, [activedRoute?.parentKey, activedRoute?.key]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleLinkClick = () => {
         onMenuItemClick?.()
@@ -60,7 +70,7 @@ const VerticalMenuContent = (props) => {
                                 direction={direction}
                                 indent={indent}
                                 renderAsIcon={cascade <= 0}
-                                showIcon={cascade <= 0}
+                                showIcon={cascade <= 0 || Boolean(nav.icon)}
                                 userAuthority={userAuthority}
                                 showTitle={
                                     collapsed
@@ -126,9 +136,7 @@ const VerticalMenuContent = (props) => {
             sideCollapsed={collapsed}
             defaultActiveKeys={activedRoute?.key ? [activedRoute.key] : []}
             defaultExpandedKeys={defaulExpandKey}
-            defaultCollapseActiveKeys={
-                activedRoute?.parentKey ? [activedRoute.parentKey] : []
-            }
+            defaultCollapseActiveKeys={defaulExpandKey}
         >
             {renderNavigation(navigationTree, 0)}
         </Menu>

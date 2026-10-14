@@ -12,6 +12,7 @@ import Switcher from '@/components/ui/Switcher'
 import Table from '@/components/ui/Table'
 import cn from '@/utils/classNames'
 import { api, qs } from '../kit/api'
+import { usePageRange } from '@/store/pageFilterStore'
 import NewTicketDialog from './NewTicketDialog'
 
 dayjs.extend(relativeTime)
@@ -36,11 +37,12 @@ const TicketsList = () => {
     const [error, setError] = useState('')
     const [dialog, setDialog] = useState(false)
     const pageSize = 20
+    const [range] = usePageRange('tickets')
 
     useEffect(() => { const t = setTimeout(() => { setQuery(search.trim()); setPage(1) }, 300); return () => clearTimeout(t) }, [search])
     const load = useCallback(async () => {
-        try { setData(await api(`/api/crm/support/tickets?${qs({ query, statusId: statusId || '', priorityId: priorityId || '', departmentId: departmentId || '', assignedId: assignedId || '', open: open && !statusId ? '1' : '', mine: mine ? '1' : '', pageIndex: page, pageSize })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [query, statusId, priorityId, departmentId, assignedId, open, mine, page])
+        try { setData(await api(`/api/crm/support/tickets?${qs({ query, statusId: statusId || '', priorityId: priorityId || '', departmentId: departmentId || '', assignedId: assignedId || '', open: open && !statusId ? '1' : '', mine: mine ? '1' : '', from: range[0] ? dayjs(range[0]).format('YYYY-MM-DD') : '', to: range[1] ? dayjs(range[1]).format('YYYY-MM-DD') : '', pageIndex: page, pageSize })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
+    }, [query, statusId, priorityId, departmentId, assignedId, open, mine, page, range])
     useEffect(() => { load() }, [load])
 
     const opt = (list) => list.map((x) => ({ value: x.id, label: x.name }))

@@ -47,6 +47,7 @@ export async function listLeads(p = {}) {
     if (oid(p.assigned)) and.push({ assigned: p.assigned })
     if (oid(p.sourceId)) and.push({ sourceId: p.sourceId })
     if (p.mine === '1' && a.staffId) and.push({ assigned: a.staffId })
+    if (p.from || p.to) and.push({ createdAt: { ...(p.from ? { gte: new Date(p.from) } : {}), ...(p.to ? { lte: new Date(`${p.to}T23:59:59.999`) } : {}) } })
     if (p.query) { const c = { contains: p.query, mode: 'insensitive' }; and.push({ OR: [{ name: c }, { company: c }, { email: c }, { phoneNumber: c }] }) }
     const where = { AND: and }
     const [statuses, sources] = await Promise.all([prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' } }), prisma.crmLeadSource.findMany({ orderBy: { name: 'asc' } })])

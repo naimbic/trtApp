@@ -57,6 +57,7 @@ export async function listTickets(q = {}) {
     if (oid(q.assignedId)) and.push({ assignedId: q.assignedId })
     if (oid(q.clientId)) and.push({ clientId: q.clientId })
     if (q.mine === '1' && a.staffId) and.push({ assignedId: a.staffId })
+    if (q.from || q.to) and.push({ createdAt: { ...(q.from ? { gte: new Date(q.from) } : {}), ...(q.to ? { lte: new Date(`${q.to}T23:59:59.999`) } : {}) } })
     if (q.query) {
         const c = { contains: q.query, mode: 'insensitive' }
         const num = parseInt(q.query.replace('#', ''), 10)

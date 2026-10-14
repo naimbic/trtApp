@@ -13,6 +13,7 @@ import Table from '@/components/ui/Table'
 import Tag from '@/components/ui/Tag'
 import cn from '@/utils/classNames'
 import { api, qs, notify } from '../kit/api'
+import { usePageRange } from '@/store/pageFilterStore'
 import { People } from '../tasks/shared'
 import LeadDrawer from './LeadDrawer'
 
@@ -57,14 +58,15 @@ const LeadsBoard = () => {
     useEffect(() => { api('/api/crm/pipeline/leads/lookups').then((l) => setStaff(l.staff)).catch(() => {}) }, [])
     useEffect(() => { if (routeId) setDrawer({ open: true, id: routeId }) }, [routeId])
 
-    const filters = { query, show, mine: mine ? '1' : '', assigned: assigned || '', sourceId: sourceId || '' }
+    const [range] = usePageRange('leads')
+    const filters = { from: range[0] ? dayjs(range[0]).format('YYYY-MM-DD') : '', to: range[1] ? dayjs(range[1]).format('YYYY-MM-DD') : '', query, show, mine: mine ? '1' : '', assigned: assigned || '', sourceId: sourceId || '' }
     const load = useCallback(async () => {
         try {
             if (view === 'list') setList(await api(`/api/crm/pipeline/leads?${qs({ ...filters, view: 'list' })}`))
             else setData(await api(`/api/crm/pipeline/leads?${qs(filters)}`))
             setError('')
         } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [view, query, show, mine, assigned, sourceId]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [view, query, show, mine, assigned, sourceId, range]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { load() }, [load])
 
     const setViewSaved = (v) => { setView(v); try { localStorage.setItem('leads.view', v) } catch { /* private mode */ } }

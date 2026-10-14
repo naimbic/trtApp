@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { usePageRange } from '@/store/pageFilterStore'
 import { Link, useSearchParams } from 'react-router'
 import { TbPlus, TbSearch, TbReceipt2, TbFileInvoice, TbCashBanknote, TbRepeat } from 'react-icons/tb'
 import dayjs from 'dayjs'
@@ -35,7 +36,7 @@ const ExpensesList = () => {
     const [state, setState] = useState('')
     const [categoryId, setCategoryId] = useState(null)
     const [clientId, setClientId] = useState(null)
-    const [range, setRange] = useState([null, null])
+    const [range] = usePageRange('expenses')
     const [page, setPage] = useState(1)
     const [sort, setSort] = useState({ key: 'date', order: 'desc' })
     const [loading, setLoading] = useState(true)
@@ -93,7 +94,6 @@ const ExpensesList = () => {
                 <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder="Search name, note, reference" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="w-52"><Select size="sm" isClearable placeholder="Any category" options={catOpts} value={catOpts.find((o) => o.value === categoryId) || null} onChange={(o) => { setCategoryId(o?.value || null); setPage(1) }} /></div>
                 <div className="w-52"><RelationSelect size="sm" resource="clients" value={clientId} onChange={(x) => { setClientId(x || null); setPage(1) }} /></div>
-                <div className="w-60"><DatePicker.DatePickerRange size="sm" placeholder="Date range" inputFormat="DD MMM YYYY" separator="→" value={range[0] && range[1] ? range : undefined} onChange={(v) => { setRange(Array.isArray(v) && v[0] && v[1] ? v : [null, null]); setPage(1) }} /></div>
                 <Segment size="sm" value={state} onChange={(v) => { setState(Array.isArray(v) ? v[0] ?? '' : v ?? ''); setPage(1) }}>{STATES.map(([v, l]) => <Segment.Item key={v || 'all'} value={v}>{l}</Segment.Item>)}</Segment>
             </div>
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}

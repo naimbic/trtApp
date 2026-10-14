@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { usePageRange } from '@/store/pageFilterStore'
 import { TbDownload, TbCash, TbReceipt2, TbTrendingUp, TbAlertTriangle, TbUsersGroup, TbTargetArrow, TbClock, TbLifebuoy, TbChecklist, TbHourglass, TbScale, TbPercentage } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Chart from '@/components/shared/Chart'
@@ -19,7 +20,6 @@ import { api, qs } from '../kit/api'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const TABS = { sales: 'Sales', profit: 'Profit & expenses', leads: 'Leads', support: 'Support', work: 'Work & time' }
-const RANGES = [['month', 'This month'], ['lastmonth', 'Last month'], ['30d', 'Last 30 days'], ['year', 'This year'], ['12m', 'Last 12 months'], ['custom', 'Custom dates']]
 const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#ef4444', '#64748b']
 
 const Stat = ({ title, value, sub, className, icon }) => (
@@ -284,18 +284,16 @@ const VIEW = { sales: Sales, profit: Profit, leads: Leads, support: Support, wor
 const Reports = () => {
     const [meta, setMeta] = useState(null)
     const [tab, setTab] = useState(null)
-    const [range, setRange] = useState('year')
-    const [custom, setCustom] = useState([null, null])
+    const [dates] = usePageRange('reports', 'year')
     const [currencyId, setCurrencyId] = useState(null)
     const [data, setData] = useState(null)
     const [error, setError] = useState('')
     useEffect(() => { api('/api/crm/reports').then((m) => { setMeta(m); setTab(m.available[0] || null); setCurrencyId(m.currencies.find((c) => c.isDefault)?.id || m.currencies[0]?.id || null) }).catch((e) => setError(e.message)) }, [])
     const load = useCallback(async () => {
         if (!tab) return
-        if (range === 'custom' && !(custom[0] && custom[1])) return
         setData(null); setError('')
-        try { setData(await api(`/api/crm/reports/${tab}?${qs({ range, from: custom[0] ? dayjs(custom[0]).format('YYYY-MM-DD') : '', to: custom[1] ? dayjs(custom[1]).format('YYYY-MM-DD') : '', currencyId })}`)) } catch (e) { setError(e.message) }
-    }, [tab, range, custom, currencyId])
+        try { setData(await api(`/api/crm/reports/${tab}?${qs({ range: 'custom', from: dayjs(dates[0] || '2015-01-01').format('YYYY-MM-DD'), to: dayjs(dates[1] || new Date()).format('YYYY-MM-DD'), currencyId })}`)) } catch (e) { setError(e.message) }
+    }, [tab, dates, currencyId])
     useEffect(() => { load() }, [load])
     const View = tab ? VIEW[tab] : null
     return (
@@ -303,8 +301,6 @@ const Reports = () => {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div><h3>Reports</h3><p className="text-sm text-gray-500">{data ? `${data.range.label} · ${data.range.from} → ${data.range.to}` : 'Sales, profit, leads, support and time'}</p></div>
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="w-44"><Select size="sm" options={RANGES.map(([v, l]) => ({ value: v, label: l }))} value={RANGES.filter(([v]) => v === range).map(([v, l]) => ({ value: v, label: l }))[0]} onChange={(o) => setRange(o.value)} /></div>
-                    {range === 'custom' && <div className="w-60"><DatePicker.DatePickerRange size="sm" placeholder="Pick the dates" inputFormat="DD MMM YYYY" separator="→" value={custom[0] && custom[1] ? custom : undefined} onChange={(v) => setCustom(Array.isArray(v) && v[0] && v[1] ? v : [null, null])} /></div>}
                     {meta && meta.currencies.length > 1 && <div className="w-32"><Select size="sm" options={meta.currencies.map((c) => ({ value: c.id, label: c.name }))} value={meta.currencies.filter((c) => c.id === currencyId).map((c) => ({ value: c.id, label: c.name }))[0]} onChange={(o) => setCurrencyId(o.value)} /></div>}
                 </div>
             </div>

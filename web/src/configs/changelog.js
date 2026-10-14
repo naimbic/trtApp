@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.3',
+        date: '2026-10-14',
+        title: 'Date filter in the top bar',
+        items: ['The dashboard-style date filter (Today, 7D, 30D, Month, Last month, Year, 12M, All, or a custom range) now sits in the top bar on Reports, Expenses, Invoices, Estimates, Proposals, Purchase orders, Payments, Tickets and Leads; each page remembers its own period', 'Tickets and leads can now be filtered by the date they were opened or created'],
+    },
+    {
         version: '0.26.2',
         date: '2026-10-14',
         title: 'Lists in the template style',

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { usePageRange } from '@/store/pageFilterStore'
 import { useNavigate } from 'react-router'
 import { TbSearch, TbTrash } from 'react-icons/tb'
 import dayjs from 'dayjs'
@@ -29,7 +30,7 @@ const PaymentsList = () => {
     const [data, setData] = useState({ list: [], total: 0, totals: {}, modes: [] })
     const [modeId, setModeId] = useState(null)
     const [clientId, setClientId] = useState(null)
-    const [range, setRange] = useState([null, null])
+    const [range] = usePageRange('payments')
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
     const [page, setPage] = useState(1)
@@ -82,7 +83,6 @@ const PaymentsList = () => {
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <div className="w-52"><Select size="sm" isClearable placeholder="All payment modes" options={modeOptions} value={modeOptions.find((o) => o.value === modeId) || null} onChange={(o) => { setModeId(o ? o.value : null); setPage(1) }} /></div>
                     <div className="w-56"><RelationSelect size="sm" resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
-                    <div className="w-60"><DatePicker.DatePickerRange size="sm" placeholder="Payment date range" inputFormat="DD MMM YYYY" separator="→" value={range[0] && range[1] ? range : undefined} onChange={(v) => { setRange(Array.isArray(v) && v[0] && v[1] ? v : [null, null]); setPage(1) }} /></div>
                     <div className="ml-auto w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search invoice, client, transaction" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 </div>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}

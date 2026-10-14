@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { PermissionError, requirePermission } from '@/lib/crm/permissions'
 import { getOptions, setOptions } from '@/lib/crm/mailer'
-import { uploadImage, deleteMedia, keyFromUrl, MediaError } from '@/lib/media'
+import { uploadImage, dropImage, MediaError } from '@/lib/media'
 import { resetNumberingCache } from '@/lib/crm/numbering'
 import { GROUPS, ALL_FIELDS, fieldsOf, fieldMap } from '@/lib/crm/settings/registry'
 
@@ -111,7 +111,7 @@ export async function setSettingImage(key, { file, mediaId }) {
         throw e
     }
     await setOptions({ [key]: url })
-    if (old && old !== url && !mediaId) await deleteMedia(keyFromUrl(old)).catch(() => {})
+    if (old && old !== url) await dropImage(old).catch(() => {})
     return { url }
 }
 
@@ -124,7 +124,7 @@ export async function clearSettingImage(key) {
     // only delete the object when no other setting points at it and it is not in the file manager index
     if (old) {
         const used = await prisma.crmMedia.findFirst({ where: { url: old } })
-        if (!used) await deleteMedia(keyFromUrl(old)).catch(() => {})
+        if (!used) await dropImage(old).catch(() => {})
     }
     return { url: null }
 }

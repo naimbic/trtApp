@@ -1,6 +1,6 @@
 import { PermissionError, requirePermission } from '@/lib/crm/permissions'
 import { getOptions, setOptions } from '@/lib/crm/mailer'
-import { uploadImage, deleteMedia, keyFromUrl, MediaError } from '@/lib/media'
+import { resolveImage, dropImage, MediaError } from '@/lib/media'
 
 const fail = (message, status = 400) => { throw new PermissionError(message, status) }
 const KEYS = ['companyname', 'invoice_company_name', 'invoice_company_address', 'invoice_company_city', 'invoice_company_postal_code', 'invoice_company_phonenumber', 'company_email', 'main_domain', 'company_vat', 'company_info_format', 'company_logo_url', 'company_logo_dark_url', 'company_signature_url']
@@ -36,15 +36,15 @@ export async function saveCompany(b) {
     return getCompany()
 }
 
-export async function setCompanyImage(kind, file) {
+export async function setCompanyImage(kind, input) {
     await requirePermission('settings', 'edit')
     const spec = IMAGES[kind]
     if (!spec) fail('Unknown image')
     const old = (await getOptions([spec[0]]))(spec[0])
     try {
-        const up = await uploadImage(file, spec[1], 'company')
+        const up = await resolveImage(input, spec[1], 'company')
         await setOptions({ [spec[0]]: up.url })
-        await deleteMedia(keyFromUrl(old)).catch(() => {})
+        if (old !== up.url) await dropImage(old).catch(() => {})
         return { url: up.url, size: up.size, originalSize: up.originalSize }
     } catch (e) {
         if (e instanceof MediaError) fail(e.message, e.status)
@@ -58,7 +58,7 @@ export async function removeCompanyImage(kind) {
     if (!spec) fail('Unknown image')
     const old = (await getOptions([spec[0]]))(spec[0])
     await setOptions({ [spec[0]]: '' })
-    await deleteMedia(keyFromUrl(old)).catch(() => {})
+    await dropImage(old).catch(() => {})
     return { url: null }
 }
 

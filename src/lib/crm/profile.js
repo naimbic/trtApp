@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { PermissionError, requirePermission, isCrmAdmin, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { clearFailures } from '@/lib/crm/loginGuard'
 import { deliver, buildHtml, baseData } from '@/lib/crm/mailer'
-import { uploadImage, deleteMedia, keyFromUrl, MediaError } from '@/lib/media'
+import { resolveImage, dropImage, MediaError } from '@/lib/media'
 
 const plain = (v) => JSON.parse(JSON.stringify(v))
 const fail = (message, status = 400) => { throw new PermissionError(message, status) }
@@ -105,13 +105,13 @@ export async function updateProfile(body) {
 }
 
 /** Replaces the profile picture of a User (+ its staff row). Old picture is removed from the Space. */
-async function setStaffAvatar(staff, userId, file) {
-    const up = await uploadImage(file, 'avatar', 'avatars')
+async function setStaffAvatar(staff, userId, input) {
+    const up = await resolveImage(input, 'avatar', 'avatars')
     const oldUrl = staff?.profileImage
     const user = userId ? await prisma.user.findUnique({ where: { id: userId }, select: { image: true } }) : null
     if (userId) await prisma.user.update({ where: { id: userId }, data: { image: up.url } })
     if (staff) await prisma.crmStaff.update({ where: { id: staff.id }, data: { profileImage: up.url } })
-    await deleteMedia([keyFromUrl(oldUrl), keyFromUrl(user?.image)]).catch(() => {})
+    await dropImage(...[oldUrl, user?.image].filter((u) => u && u !== up.url)).catch(() => {})
     return { url: up.url, size: up.size, originalSize: up.originalSize }
 }
 
@@ -119,20 +119,20 @@ async function clearStaffAvatar(staff, userId) {
     const user = userId ? await prisma.user.findUnique({ where: { id: userId }, select: { image: true } }) : null
     if (userId) await prisma.user.update({ where: { id: userId }, data: { image: null } })
     if (staff) await prisma.crmStaff.update({ where: { id: staff.id }, data: { profileImage: null } })
-    await deleteMedia([keyFromUrl(staff?.profileImage), keyFromUrl(user?.image)]).catch(() => {})
+    await dropImage(staff?.profileImage, user?.image).catch(() => {})
     return { url: null }
 }
 
 const wrap = async (fn) => { try { return await fn() } catch (e) { if (e instanceof MediaError) throw new PermissionError(e.message, e.status); throw e } }
 
-export const uploadOwnAvatar = (file) => wrap(async () => { const { user, staff } = await me(); return setStaffAvatar(staff, user.id, file) })
+export const uploadOwnAvatar = (input) => wrap(async () => { const { user, staff } = await me(); return setStaffAvatar(staff, user.id, input) })
 export const removeOwnAvatar = async () => { const { user, staff } = await me(); return clearStaffAvatar(staff, user.id) }
 
-export async function uploadStaffAvatar(staffId, file) {
+export async function uploadStaffAvatar(staffId, input) {
     await requirePermission('staff', 'edit')
     const staff = await prisma.crmStaff.findUnique({ where: { id: staffId } })
     if (!staff) fail('Member not found', 404)
-    return wrap(() => setStaffAvatar(staff, staff.userId, file))
+    return wrap(() => setStaffAvatar(staff, staff.userId, input))
 }
 export async function removeStaffAvatar(staffId) {
     await requirePermission('staff', 'edit')
@@ -141,14 +141,14 @@ export async function removeStaffAvatar(staffId) {
     return clearStaffAvatar(staff, staff.userId)
 }
 
-export async function uploadClientLogo(clientId, file) {
+export async function uploadClientLogo(clientId, input) {
     await requirePermission('customers', 'edit')
     const client = await prisma.crmClient.findUnique({ where: { id: clientId }, select: { id: true, logoUrl: true } })
     if (!client) fail('Client not found', 404)
     return wrap(async () => {
-        const up = await uploadImage(file, 'logo', 'clients')
+        const up = await resolveImage(input, 'logo', 'clients')
         await prisma.crmClient.update({ where: { id: clientId }, data: { logoUrl: up.url } })
-        await deleteMedia(keyFromUrl(client.logoUrl)).catch(() => {})
+        if (client.logoUrl !== up.url) await dropImage(client.logoUrl).catch(() => {})
         return { url: up.url, size: up.size, originalSize: up.originalSize }
     })
 }
@@ -157,7 +157,7 @@ export async function removeClientLogo(clientId) {
     const client = await prisma.crmClient.findUnique({ where: { id: clientId }, select: { logoUrl: true } })
     if (!client) fail('Client not found', 404)
     await prisma.crmClient.update({ where: { id: clientId }, data: { logoUrl: null } })
-    await deleteMedia(keyFromUrl(client.logoUrl)).catch(() => {})
+    await dropImage(client.logoUrl).catch(() => {})
     return { url: null }
 }
 

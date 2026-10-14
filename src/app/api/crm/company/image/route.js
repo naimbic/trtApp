@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { setCompanyImage, removeCompanyImage } from '@/lib/crm/company'
+import { readImageInput } from '@/lib/media'
 import { errorResponse } from '@/lib/crm/crud'
 
 export async function POST(request) {
     try {
         const kind = new URL(request.url).searchParams.get('kind')
-        const form = await request.formData()
-        return NextResponse.json(await setCompanyImage(kind, form.get('file')))
+        return NextResponse.json(await setCompanyImage(kind, await readImageInput(request)))
     } catch (e) {
         return errorResponse(e)
     }

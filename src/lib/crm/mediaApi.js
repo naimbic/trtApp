@@ -36,13 +36,14 @@ const shape = (m) => ({
 })
 
 /** Folder contents (or attachments of one record), newest first, folders on top. */
-export async function listMedia({ parentId, query, relType, relId, kind, foldersOnly, recent, pageIndex = 1, pageSize = 60 } = {}) {
+export async function listMedia({ parentId, query, relType, relId, kind, flat, foldersOnly, recent, pageIndex = 1, pageSize = 60 } = {}) {
     const ctx = await who()
     if (recent) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: false, relType: null }, orderBy: { createdAt: 'desc' }, take: Math.min(parseInt(recent, 10) || 20, 100) })).map(shape), total: 0, path: [] })
     if (foldersOnly) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: true, relType: null }, orderBy: { name: 'asc' }, take: 500 })).map(shape), total: 0, path: [] })
     relAccess(ctx, relType, 'view')
-    const where = relType ? { relType, relId } : { relType: null, ...(query || kind ? {} : { parentId: OID.test(parentId || '') ? parentId : null }) }
+    const where = relType ? { relType, relId } : { relType: null, ...(query || kind || flat ? {} : { parentId: OID.test(parentId || '') ? parentId : null }) }
     if (kind) where.kind = kind
+    if (flat && !relType) where.isFolder = false
     if (query) where.name = { contains: query, mode: 'insensitive' }
     if (relType && !OID.test(relId || '')) fail('relId is required')
     const [rows, total] = await Promise.all([
@@ -118,6 +119,16 @@ export async function mediaAction(body) {
         const row = await prisma.crmMedia.create({ data: { name, isFolder: true, parentId, relType: null, relId: null, key: null, url: null, kind: 'folder', purpose: 'library', uploadedBy: ctx.staffId || undefined, uploaderName: ctx.name } })
         return plain(shape(row))
     }
+    if (action === 'attach') {
+        // attach a file that is already in the file manager to a record, without uploading it again
+        const relType = body.relType, relId = body.relId
+        if (!relType || !OID.test(relId || '')) fail('relType and relId are required')
+        relAccess(ctx, relType, 'edit')
+        const src = await prisma.crmMedia.findFirst({ where: { id: String(body.mediaId || ''), isFolder: false, relType: null } })
+        if (!src || !src.key) fail('Choose a file from the file manager', 404)
+        const row = await prisma.crmMedia.create({ data: { name: src.name, key: src.key, url: src.url, mime: src.mime, kind: src.kind, size: src.size, originalSize: src.originalSize, width: src.width, height: src.height, purpose: 'attachment', parentId: null, relType, relId, visibleToClient: !!body.visibleToClient, uploadedBy: ctx.staffId || undefined, uploaderName: ctx.name } })
+        return plain(shape(row))
+    }
     const id = body.id
     if (!OID.test(id || '')) fail('Invalid item')
     const item = await prisma.crmMedia.findUnique({ where: { id } })
@@ -144,8 +155,12 @@ export async function mediaAction(body) {
     if (action === 'setVisibility') return plain(shape(await prisma.crmMedia.update({ where: { id }, data: { visibleToClient: !!body.visibleToClient } })))
     if (action === 'delete') {
         const sub = item.isFolder ? await descendants(id) : { ids: [], keys: [] }
-        await deleteMedia([item.key, ...sub.keys], { allowAny: true })
-        await prisma.crmMedia.deleteMany({ where: { id: { in: [id, ...sub.ids] } } })
+        const gone = [id, ...sub.ids]
+        const keys = [item.key, ...sub.keys].filter(Boolean)
+        // an attachment may reuse a file-manager file (same object in the Space): keep the object while any other row still points to it
+        const shared = keys.length ? new Set((await prisma.crmMedia.findMany({ where: { key: { in: keys }, id: { notIn: gone } }, select: { key: true } })).map((r) => r.key)) : new Set()
+        await deleteMedia(keys.filter((k) => !shared.has(k)), { allowAny: true })
+        await prisma.crmMedia.deleteMany({ where: { id: { in: gone } } })
         return { success: true, removed: 1 + sub.ids.length }
     }
     fail('Unknown action')

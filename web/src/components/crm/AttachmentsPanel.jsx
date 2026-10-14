@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbTrash, TbUpload, TbExternalLink } from 'react-icons/tb'
+import { TbTrash, TbUpload, TbExternalLink, TbPhotoSearch } from 'react-icons/tb'
+import MediaPicker from '@/components/crm/MediaPicker'
 import Button from '@/components/ui/Button'
 import Switcher from '@/components/ui/Switcher'
 import Spinner from '@/components/ui/Spinner'
@@ -15,6 +16,7 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
     const [busy, setBusy] = useState(false)
     const [drag, setDrag] = useState(false)
     const [del, setDel] = useState(null)
+    const [picker, setPicker] = useState(false)
     const input = useRef(null)
 
     const load = useCallback(async () => {
@@ -35,6 +37,10 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
             load()
         } catch (e) { notify('danger', e.message) } finally { setBusy(false); if (input.current) input.current.value = '' }
     }
+    const attach = async (m) => {
+        setPicker(false); setBusy(true)
+        try { await api('/api/crm/media', { method: 'POST', body: { action: 'attach', mediaId: m.id, relType, relId } }); notify('success', 'File attached'); load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+    }
     const toggle = async (f, v) => {
         setList((l) => l.map((x) => (x.id === f.id ? { ...x, visibleToClient: v } : x)))
         try { await api('/api/crm/media', { method: 'POST', body: { action: 'setVisibility', id: f.id, visibleToClient: v } }) } catch (e) { notify('danger', e.message); load() }
@@ -52,7 +58,9 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
                 >
                     <div className="text-sm text-gray-500">Drop files here or choose them. Images are optimised to WebP automatically. PDF, Office, CSV, ZIP… up to 50 MB.</div>
                     <Button size="sm" icon={busy ? <Spinner size={16} /> : <TbUpload />} disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Uploading…' : 'Upload files'}</Button>
+                    <Button size="sm" icon={<TbPhotoSearch />} disabled={busy} onClick={() => setPicker(true)}>From files</Button>
                     <input ref={input} type="file" multiple className="hidden" onChange={(e) => send(e.target.files)} />
+                    <MediaPicker open={picker} kind="" onClose={() => setPicker(false)} onPick={attach} />
                 </div>
             )}
             {loading ? <div className="py-8 text-center text-gray-400">Loading…</div> : !list.length ? <p className="py-6 text-center text-gray-400">No files attached yet.</p> : (

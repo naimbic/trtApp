@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.27.4',
+        date: '2026-10-14',
+        title: 'Pick from the file manager',
+        items: ['Profile picture, staff pictures, client logos and the company logo, dark logo and signature can be uploaded or picked from the file manager (click the picture, then Upload or From files)', 'Files attached to invoices, clients, contracts and other records can also be picked from the file manager without uploading again', 'Replacing or removing a picture never deletes a file that is still in the file manager'],
+    },
+    {
         version: '0.27.3',
         date: '2026-10-14',
         title: 'Demo pages for super admin only',

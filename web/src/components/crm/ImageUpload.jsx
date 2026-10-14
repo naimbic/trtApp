@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { TbCamera, TbTrash } from 'react-icons/tb'
+import { TbCamera, TbPhotoSearch, TbTrash, TbUpload } from 'react-icons/tb'
+import MediaPicker from './MediaPicker'
 import Spinner from '@/components/ui/Spinner'
 import { notify, upload, api, formatBytes } from '@/views/crm/kit/api'
 import classNames from '@/utils/classNames'
@@ -17,6 +18,8 @@ const ImageUpload = ({ url, name, shape = 'circle', size = 112, uploadUrl, canEd
     const [busy, setBusy] = useState(false)
     const [drag, setDrag] = useState(false)
     const [broken, setBroken] = useState(false)
+    const [menu, setMenu] = useState(false)
+    const [picker, setPicker] = useState(false)
     const round = shape === 'circle' ? 'rounded-full' : 'rounded-2xl'
 
     const send = async (file) => {
@@ -32,6 +35,13 @@ const ImageUpload = ({ url, name, shape = 'circle', size = 112, uploadUrl, canEd
             onChange?.(r.url)
             notify('success', `Saved · ${formatBytes(r.originalSize)} → ${formatBytes(r.size)} (WebP)`)
         } catch (e) { notify('danger', e.message) } finally { setBusy(false); if (input.current) input.current.value = '' }
+    }
+    const pick = async (m) => {
+        setPicker(false); setBusy(true)
+        try {
+            const r = await api(uploadUrl, { method: 'POST', body: { mediaId: m.id } })
+            setBroken(false); onChange?.(r.url); notify('success', 'Picture set')
+        } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const remove = async () => {
         setBusy(true)
@@ -51,14 +61,21 @@ const ImageUpload = ({ url, name, shape = 'circle', size = 112, uploadUrl, canEd
                     <div className={classNames('flex h-full w-full items-center justify-center bg-gradient-to-br font-bold text-white', gradient(name))} style={{ fontSize: size / 3 }}>{initials(name)}</div>
                 )}
                 {canEdit && (
-                    <button type="button" onClick={() => input.current?.click()} className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-black/45 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100" aria-label="Change picture">
+                    <button type="button" onClick={() => setMenu((m) => !m)} className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-black/45 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100" aria-label="Change picture">
                         <TbCamera className="text-2xl" /><span className="text-[11px] font-semibold">Change</span>
                     </button>
                 )}
                 {busy && <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-900/70"><Spinner size={28} /></div>}
             </div>
+            {canEdit && menu && !busy && (
+                <div className="flex gap-1">
+                    <button type="button" onClick={() => { setMenu(false); input.current?.click() }} className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold hover:bg-primary/10 hover:text-primary dark:bg-gray-700"><TbUpload />Upload</button>
+                    <button type="button" onClick={() => { setMenu(false); setPicker(true) }} className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold hover:bg-primary/10 hover:text-primary dark:bg-gray-700"><TbPhotoSearch />From files</button>
+                </div>
+            )}
             {canEdit && url && !busy && <button type="button" onClick={remove} className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"><TbTrash />Remove</button>}
             {hint && <span className="max-w-[180px] text-center text-[11px] text-gray-400">{hint}</span>}
+            <MediaPicker open={picker} onClose={() => setPicker(false)} onPick={pick} />
             <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" className="hidden" onChange={(e) => send(e.target.files?.[0])} />
         </div>
     )

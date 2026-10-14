@@ -121,3 +121,29 @@ export async function uploadImage(file, purpose, folder = purpose) {
     const { key, url } = await putMedia(p, folder)
     return { key, url, width: p.width, height: p.height, size: p.size, originalSize: p.originalSize }
 }
+
+/** Reads the body of an image POST: a multipart `file`, or JSON `{ mediaId }` (a picture picked from the file manager). */
+export async function readImageInput(request) {
+    if ((request.headers.get('content-type') || '').includes('application/json')) return { mediaId: (await request.json().catch(() => ({}))).mediaId }
+    return { file: (await request.formData()).get('file') }
+}
+
+/** Upload `{ file }` (optimised to WebP) or reuse a file-manager picture `{ mediaId }`. */
+export async function resolveImage({ file, mediaId } = {}, purpose, folder = purpose) {
+    if (mediaId) {
+        const m = /^[a-f0-9]{24}$/i.test(String(mediaId)) ? await prisma.crmMedia.findUnique({ where: { id: String(mediaId) } }) : null
+        if (!m || m.isFolder || m.kind !== 'image' || !m.url) throw new MediaError('Choose an image from the file manager')
+        return { url: m.url, size: m.size, originalSize: m.originalSize ?? m.size, fromLibrary: true }
+    }
+    return uploadImage(file, purpose, folder)
+}
+
+/** Deletes a stored picture unless the file manager still lists it (so replacing an avatar never deletes a library file). */
+export async function dropImage(...urls) {
+    const keys = []
+    for (const u of urls) {
+        const key = keyFromUrl(u)
+        if (key && !(await prisma.crmMedia.findFirst({ where: { key }, select: { id: true } }))) keys.push(key)
+    }
+    if (keys.length) await deleteMedia(keys)
+}

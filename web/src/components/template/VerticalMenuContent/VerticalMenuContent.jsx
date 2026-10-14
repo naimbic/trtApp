@@ -17,6 +17,9 @@ const { MenuGroup } = Menu
 const MAX_CASCADE_LEVEL = 2
 
 const siblingKeys = (tree, key) => {
+    // Groups under any section title (CRM, template demo...) are siblings: one open group across the whole menu.
+    const titled = (tree || []).filter((n) => n.type === NAV_ITEM_TYPE_TITLE)
+    if (titled.some((n) => n.subMenu?.some((c) => c.key === key))) return titled.flatMap((n) => n.subMenu.map((c) => c.key))
     for (const n of tree || []) {
         if (n.subMenu?.some((c) => c.key === key)) return n.subMenu.map((c) => c.key)
         const hit = siblingKeys(n.subMenu, key)
@@ -153,6 +156,7 @@ const VerticalMenuContent = (props) => {
     return (
         <Menu
             className="px-4 pb-4"
+            menuItemHeight={36}
             sideCollapsed={collapsed}
             defaultActiveKeys={activedRoute?.key ? [activedRoute.key] : []}
             defaultExpandedKeys={defaulExpandKey}

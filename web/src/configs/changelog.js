@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.11',
+        date: '2026-10-14',
+        title: 'Compact sidebar',
+        items: ['Smaller, tighter menu rows, text and icons', 'Only one menu group is open across the whole sidebar (CRM and template sections together)'],
+    },
+    {
         version: '0.26.10',
         date: '2026-10-14',
         title: 'Sidebar accordion and icons',

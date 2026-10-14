@@ -15,7 +15,7 @@ const VerticalMenuIcon = ({ icon, size = 'lg', color }) => {
         <>
             {navigationIcon[icon] && (
                 <span
-                    className={size === 'sm' ? 'text-xl text-gray-400 dark:text-gray-500' : 'text-2xl'}
+                    className={size === 'sm' ? 'text-lg text-gray-400 dark:text-gray-500' : 'text-xl'}
                     style={color ? { color } : undefined}
                 >
                     {navigationIcon[icon]}

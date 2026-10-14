@@ -6,4 +6,4 @@ for i in $(seq 1 30); do mongosh --quiet --eval "db.runCommand({ping:1}).ok" 2>/
 mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'127.0.0.1:27017'}]}) }" >/dev/null
 for i in $(seq 1 30); do mongosh --quiet --eval "db.hello().isWritablePrimary" 2>/dev/null | grep -q true && break; sleep 1; done
 nginx
-exec npx next start -H 0.0.0.0 -p 3000
+exec npx next start -H 0.0.0.0 -p 3001

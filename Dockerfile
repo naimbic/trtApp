@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
  && apt-get update && apt-get install -y --no-install-recommends mongodb-org-server mongodb-mongosh \
  && rm -rf /var/lib/apt/lists/* /etc/nginx/sites-enabled/default
 WORKDIR /app
-ENV NODE_ENV=production CHROME_PATH=/usr/bin/chromium PORT=3000 AUTH_TRUST_HOST=true \
+ENV NODE_ENV=production CHROME_PATH=/usr/bin/chromium PORT=3001 AUTH_TRUST_HOST=true \
     DATABASE_URL="mongodb://127.0.0.1:27017/trtapp_real?replicaSet=rs0&directConnection=true"
 COPY --from=api /app/package.json /app/package-lock.json ./
 COPY --from=api /app/node_modules ./node_modules
@@ -43,7 +43,7 @@ COPY --from=api /app/scripts ./scripts
 COPY --from=web /app/web/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN sed -i 's#http://api:3000#http://127.0.0.1:3000#g' /etc/nginx/conf.d/default.conf \
+RUN sed -i 's#http://api:3000#http://127.0.0.1:3001#g; s#listen 80;#listen 80; listen 3000;#' /etc/nginx/conf.d/default.conf \
  && mkdir -p /data/db data-backups storage/company && chmod +x /docker-entrypoint.sh
-EXPOSE 80
+EXPOSE 80 3000
 CMD ["/docker-entrypoint.sh"]

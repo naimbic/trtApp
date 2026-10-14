@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.1',
+        date: '2026-10-14',
+        title: 'Cleaner permission editor',
+        items: ['Permission editor: aligned View / View own / Create / Edit / Delete columns under a header row in every group, single-switch features (Financial figures, Reports, My profile) listed as simple switches below their name, "auto" shown as a small lock tag, and the Save bar stays visible at the bottom'],
+    },
+    {
         version: '0.29.0',
         date: '2026-10-14',
         title: 'Money permission, report permissions, new permission editor',

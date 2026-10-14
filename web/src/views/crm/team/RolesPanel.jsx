@@ -140,7 +140,7 @@ const RolesPanel = () => {
                         <p className="mt-3 text-xs text-gray-500">
                             Roles are templates: a member gets the role&apos;s permissions when the role is assigned. Use &quot;Save &amp; apply to members&quot; to push changes to everyone who already has this role. Administrators always have full access.
                         </p>
-                        <div className="mt-5 flex flex-wrap items-center gap-2">
+                        <div className="sticky bottom-0 -mx-5 -mb-5 mt-5 flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white/95 px-5 py-3 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
                             {selected !== 'new' && (
                                 <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDelete(true)} disabled={saving}>Delete role</Button>
                             )}

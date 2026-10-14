@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.28.4',
+        date: '2026-10-14',
+        title: 'Remembered theme, demo menus',
+        items: ['Light or dark mode picked in the top bar, profile menu or settings is remembered after a refresh (the profile theme only applies until you pick one)', 'The template demo menus show for every administrator account (admin or CRM admin), not only accounts with the legacy "admin" role'],
+    },
+    {
         version: '0.28.3',
         date: '2026-10-14',
         title: 'Client area shows every section',

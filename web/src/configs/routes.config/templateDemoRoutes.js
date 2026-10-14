@@ -6,6 +6,6 @@ import guideRoute from './guideRoute'
 
 // TEMPORARY: the original template demo pages (dashboards, concepts, UI components, guide / docs).
 // Delete this file, its import in routes.config.js and the views/ folders when the CRM is finished.
-const open = (routes) => routes.map((r) => ({ ...r, authority: ['admin'] }))
+const open = (routes) => routes.map((r) => ({ ...r, authority: ['admin', 'crm.admin'] }))
 
 export default open([...dashboardsRoute, ...conceptsRoute, ...uiComponentsRoute, ...authDemoRoute, ...guideRoute])

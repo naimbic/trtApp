@@ -9,7 +9,11 @@ export const useThemeStore = create()(
         (set) => ({
             ...inititialThemeState,
             setSchema: (payload) => set(() => ({ themeSchema: payload })),
-            setMode: (payload) => set(() => ({ mode: payload })),
+            // an explicit choice (header, profile menu, settings) is remembered so the profile's default theme does not undo it on refresh
+            setMode: (payload) => {
+                try { localStorage.setItem('themeModeChosen', payload) } catch { /* private mode */ }
+                set(() => ({ mode: payload }))
+            },
             setSideNavCollapse: (payload) =>
                 set((state) => ({
                     layout: { ...state.layout, sideNavCollapse: payload },

@@ -106,6 +106,7 @@ const Profile = () => {
             setData(d); setForm(f); setSaved(JSON.stringify(f))
             setUser({ ...sessionUser, userName: `${d.user.firstName} ${d.user.lastName}`.trim() })
             if (d.preferences.display.theme !== 'system') setMode(d.preferences.display.theme)
+            else { try { localStorage.removeItem('themeModeChosen') } catch { /* private mode */ } setMode(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); try { localStorage.removeItem('themeModeChosen') } catch { /* private mode */ } }
             resetMe()
             notify('success', 'Profile saved')
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }

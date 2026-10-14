@@ -1,5 +1,12 @@
 # Deploying trtCRM on Coolify (test sub-domain first)
 
+## Simple way: one `Dockerfile` (build pack "Dockerfile")
+Application from the repo, branch `staging`, build pack **Dockerfile**, Dockerfile location `/Dockerfile`, port **80**,
+domain on the app. The image contains MongoDB (single-node replica set), the API and the web app.
+Storages (Coolify -> Storages): `/data/db` (database) and `/app/storage` (logos/signatures) - without them the data is lost on redeploy.
+Environment variables: `PUBLIC_URL`, `AUTH_SECRET`, `DO_SPACES_*` (see below). Restore data with `mongorestore` inside the same container.
+The compose files below are the alternative for a separate database container.
+
 Files: `docker-compose.coolify.yml`, `Dockerfile.api`, `Dockerfile.web`, `nginx.conf`.
 Services: `mongo` (single-node replica set, needed by Prisma), `api` (Next.js, includes Chromium for PDFs), `web` (nginx: the SPA + proxy of `/api` and `/s/*` to the API).
 

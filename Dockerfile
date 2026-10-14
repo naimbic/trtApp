@@ -35,7 +35,6 @@ ENV NODE_ENV=production CHROME_PATH=/usr/bin/chromium PORT=3001 AUTH_TRUST_HOST=
 COPY --from=api /app/package.json /app/package-lock.json ./
 COPY --from=api /app/node_modules ./node_modules
 COPY --from=api /app/.next ./.next
-COPY --from=api /app/public ./public
 COPY --from=api /app/prisma ./prisma
 COPY --from=api /app/messages ./messages
 COPY --from=api /app/next.config.mjs ./next.config.mjs

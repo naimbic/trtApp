@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.1',
+        date: '2026-10-14',
+        title: 'Reports like the e-commerce dashboard',
+        items: ['Reports now use the template e-commerce layout: Overview card with three clickable figures (growth versus the period before) and a chart, a target circle, top lists, a split bar, and a table of the latest records', 'Fixed: switching to Profit, Leads, Support or Work crashed the page'],
+    },
+    {
         version: '0.26.0',
         date: '2026-10-14',
         title: 'Reports',

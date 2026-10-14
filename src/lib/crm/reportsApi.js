@@ -195,7 +195,7 @@ export async function runReport(kind, params = {}, opts = {}) {
     if (!opts.noPrev && out.stats) {
         const len = R.until - R.from
         const pf = new Date(+R.from - len), pt = new Date(+R.from - DAY)
-        try { out.prev = (await runReport(kind, { ...params, range: 'custom', from: iso(pf), to: iso(pt) }, { noPrev: true })).stats } catch { out.prev = null }
+        try { const pr = await runReport(kind, { ...params, range: 'custom', from: iso(pf), to: iso(pt) }, { noPrev: true }); out.prev = pr.stats; out.prevSeries = pr.series } catch { out.prev = null }
     }
     return out
 }

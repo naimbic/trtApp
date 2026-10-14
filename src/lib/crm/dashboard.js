@@ -256,5 +256,14 @@ export async function getDashboardMetrics(params = {}) {
         }
     })
 
+    // the same figures for the period just before, so the charts can draw it as a comparison line
+    if (!params.noPrev) {
+        try {
+            const len = R.until - R.from
+            const pf = new Date(+R.from - len), pt = new Date(+R.from - 86400000)
+            const p = await getDashboardMetrics({ range: 'custom', from: iso(pf), to: iso(pt), noPrev: true })
+            if (p) data.prev = { months: p.months, label: `${iso(pf)} → ${iso(pt)}`, invoices: p.invoices, expenses: p.expenses, clients: p.clients }
+        } catch { /* comparison is optional */ }
+    }
     return data
 }

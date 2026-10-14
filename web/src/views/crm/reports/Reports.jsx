@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { usePageRange, useRegisterCurrency } from '@/store/pageFilterStore'
+import { useDashFilters, accentHex } from '@/store/dashFilterStore'
 import { TbDownload, TbCash, TbReceipt2, TbTrendingUp, TbAlertTriangle, TbUsersGroup, TbTargetArrow, TbClock, TbLifebuoy, TbChecklist, TbHourglass, TbScale, TbPercentage } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Chart from '@/components/shared/Chart'
@@ -81,7 +82,17 @@ const Overview = ({ d, tiles }) => {
             <div className="mt-4 grid grid-cols-1 gap-4 rounded-2xl bg-gray-100 p-3 md:grid-cols-3 dark:bg-gray-700">
                 {tiles.map((x, i) => <Tile key={x.title} {...x} active={sel === i} onClick={() => setSel(i)} compare="vs the period before" />)}
             </div>
-            <Chart type="line" height={380} series={[{ name: t.title, data: t.series }]} xAxis={labelsOf(d)} customOptions={{ legend: { show: false }, colors: [t.color], xaxis: { categories: labelsOf(d), labels: { style: { fontSize: '11px' }, rotate: -45 }, tickAmount: Math.min(d.labels.length, 12) }, yaxis: { labels: { formatter: (v) => (t.money ? Number(v).toLocaleString('en-US', { notation: 'compact' }) : String(Math.round(v * 10) / 10)) } }, tooltip: { y: { formatter: (v) => t.fmt(v) } } }} />
+            <Chart type="line" height={380}
+                series={[{ name: t.title, data: t.series }, ...(t.prevSeries ? [{ name: `${t.title} · previous period`, data: Array.from({ length: t.series.length }, (_, i) => t.prevSeries[i] ?? 0) }] : [])]}
+                xAxis={labelsOf(d)}
+                customOptions={{
+                    legend: { show: !!t.prevSeries, position: 'top', horizontalAlign: 'left', fontSize: '12px' },
+                    colors: t.prevSeries ? [t.color, `${t.color}8c`] : [t.color],
+                    stroke: t.prevSeries ? { width: [3, 2], curve: 'smooth', dashArray: [0, 6] } : { width: 3, curve: 'smooth' },
+                    xaxis: { categories: labelsOf(d), labels: { style: { fontSize: '11px' }, rotate: -45 }, tickAmount: Math.min(d.labels.length, 12) },
+                    yaxis: { labels: { formatter: (v) => (t.money ? Number(v).toLocaleString('en-US', { notation: 'compact' }) : String(Math.round(v * 10) / 10)) } },
+                    tooltip: { shared: true, y: { formatter: (v) => t.fmt(v) } },
+                }} />
         </Card>
     )
 }
@@ -150,11 +161,12 @@ const STATUS_COLOR = { Paid: '#10b981', Overdue: '#ef4444', Unpaid: '#f59e0b', '
 
 const Sales = ({ d }) => {
     const { m } = useFmt(d.currency)
+    const accent = accentHex(useDashFilters((x) => x.accent))
     const s = d.stats, p = d.prev || {}
     const tiles = [
-        { title: 'Invoiced', value: m(s.invoiced, 0), icon: <TbReceipt2 />, iconClass: 'bg-sky-200', g: growth(s.invoiced, p.invoiced), series: d.series.invoiced, color: '#3b82f6', money: true, fmt: m },
-        { title: 'Received', value: m(s.paid, 0), icon: <TbCash />, iconClass: 'bg-emerald-200', g: growth(s.paid, p.paid), series: d.series.paid, color: '#10b981', money: true, fmt: m },
-        { title: 'Invoices', value: s.count, icon: <TbReceipt2 />, iconClass: 'bg-purple-200', g: growth(s.count, p.count), series: d.series.count, color: '#8b5cf6', fmt: String },
+        { title: 'Invoiced', value: m(s.invoiced, 0), icon: <TbReceipt2 />, iconClass: 'bg-sky-200', g: growth(s.invoiced, p.invoiced), series: d.series.invoiced, prevSeries: d.prevSeries?.invoiced, color: accent, money: true, fmt: m },
+        { title: 'Received', value: m(s.paid, 0), icon: <TbCash />, iconClass: 'bg-emerald-200', g: growth(s.paid, p.paid), series: d.series.paid, prevSeries: d.prevSeries?.paid, color: '#10b981', money: true, fmt: m },
+        { title: 'Invoices', value: s.count, icon: <TbReceipt2 />, iconClass: 'bg-purple-200', g: growth(s.count, p.count), series: d.series.count, prevSeries: d.prevSeries?.count, color: '#8b5cf6', fmt: String },
     ]
     return (
         <Dash d={d} tiles={tiles}
@@ -183,9 +195,9 @@ const Profit = ({ d }) => {
     const { m } = useFmt(d.currency)
     const s = d.stats, p = d.prev || {}
     const tiles = [
-        { title: 'Income', value: m(s.income, 0), icon: <TbCash />, iconClass: 'bg-emerald-200', g: growth(s.income, p.income), series: d.series.income, color: '#10b981', money: true, fmt: m },
-        { title: 'Expenses', value: m(s.expenses, 0), icon: <TbReceipt2 />, iconClass: 'bg-amber-200', g: growth(s.expenses, p.expenses), series: d.series.expenses, color: '#f59e0b', money: true, fmt: m },
-        { title: 'Net result', value: m(s.net, 0), icon: <TbScale />, iconClass: 'bg-sky-200', g: growth(s.net, p.net), series: d.series.net, color: '#3b82f6', money: true, fmt: m },
+        { title: 'Income', value: m(s.income, 0), icon: <TbCash />, iconClass: 'bg-emerald-200', g: growth(s.income, p.income), series: d.series.income, prevSeries: d.prevSeries?.income, color: '#10b981', money: true, fmt: m },
+        { title: 'Expenses', value: m(s.expenses, 0), icon: <TbReceipt2 />, iconClass: 'bg-amber-200', g: growth(s.expenses, p.expenses), series: d.series.expenses, prevSeries: d.prevSeries?.expenses, color: '#f59e0b', money: true, fmt: m },
+        { title: 'Net result', value: m(s.net, 0), icon: <TbScale />, iconClass: 'bg-sky-200', g: growth(s.net, p.net), series: d.series.net, prevSeries: d.prevSeries?.net, color: '#3b82f6', money: true, fmt: m },
     ]
     return (
         <Dash d={d} tiles={tiles}
@@ -209,9 +221,9 @@ const Profit = ({ d }) => {
 const Leads = ({ d }) => {
     const s = d.stats, p = d.prev || {}
     const tiles = [
-        { title: 'New leads', value: s.total, icon: <TbTargetArrow />, iconClass: 'bg-sky-200', g: growth(s.total, p.total), series: d.series.created, color: '#3b82f6', fmt: String },
-        { title: 'Became clients', value: s.converted, icon: <TbUsersGroup />, iconClass: 'bg-emerald-200', g: growth(s.converted, p.converted), series: d.series.converted, color: '#10b981', fmt: String },
-        { title: 'Lost', value: s.lost, icon: <TbAlertTriangle />, iconClass: 'bg-orange-200', g: growth(s.lost, p.lost), series: d.series.lost, color: '#f97316', fmt: String },
+        { title: 'New leads', value: s.total, icon: <TbTargetArrow />, iconClass: 'bg-sky-200', g: growth(s.total, p.total), series: d.series.created, prevSeries: d.prevSeries?.created, color: '#3b82f6', fmt: String },
+        { title: 'Became clients', value: s.converted, icon: <TbUsersGroup />, iconClass: 'bg-emerald-200', g: growth(s.converted, p.converted), series: d.series.converted, prevSeries: d.prevSeries?.converted, color: '#10b981', fmt: String },
+        { title: 'Lost', value: s.lost, icon: <TbAlertTriangle />, iconClass: 'bg-orange-200', g: growth(s.lost, p.lost), series: d.series.lost, prevSeries: d.prevSeries?.lost, color: '#f97316', fmt: String },
     ]
     const rate = (rows) => rows.slice(0, 6).map((r) => <Tr key={r.name}><Td className="font-semibold">{r.name}</Td><Td className="text-right tabular-nums">{r.total}</Td><Td className="text-right tabular-nums">{r.converted}</Td><Td className="text-right tabular-nums">{r.lost}</Td><Td className="text-right font-semibold tabular-nums">{r.rate}%</Td></Tr>)
     return (
@@ -233,9 +245,9 @@ const Leads = ({ d }) => {
 const Support = ({ d }) => {
     const s = d.stats, p = d.prev || {}
     const tiles = [
-        { title: 'Tickets', value: s.total, icon: <TbLifebuoy />, iconClass: 'bg-sky-200', g: growth(s.total, p.total), series: d.series.opened, color: '#8b5cf6', fmt: String },
-        { title: 'Replies', value: s.replies, icon: <TbChecklist />, iconClass: 'bg-emerald-200', g: growth(s.replies, p.replies), series: d.series.replies, color: '#10b981', fmt: String },
-        { title: 'Closed', value: s.closed, icon: <TbCash />, iconClass: 'bg-purple-200', g: growth(s.closed, p.closed), series: d.series.closed, color: '#3b82f6', fmt: String },
+        { title: 'Tickets', value: s.total, icon: <TbLifebuoy />, iconClass: 'bg-sky-200', g: growth(s.total, p.total), series: d.series.opened, prevSeries: d.prevSeries?.opened, color: '#8b5cf6', fmt: String },
+        { title: 'Replies', value: s.replies, icon: <TbChecklist />, iconClass: 'bg-emerald-200', g: growth(s.replies, p.replies), series: d.series.replies, prevSeries: d.prevSeries?.replies, color: '#10b981', fmt: String },
+        { title: 'Closed', value: s.closed, icon: <TbCash />, iconClass: 'bg-purple-200', g: growth(s.closed, p.closed), series: d.series.closed, prevSeries: d.prevSeries?.closed, color: '#3b82f6', fmt: String },
     ]
     const answered = s.total ? Math.round(((s.total - s.unanswered) / s.total) * 100) : 100
     const fr = s.firstResponseHours === null ? '—' : s.firstResponseHours < 48 ? `${s.firstResponseHours} h` : `${Math.round(s.firstResponseHours / 24)} d`
@@ -258,9 +270,9 @@ const Support = ({ d }) => {
 const Work = ({ d }) => {
     const s = d.stats, p = d.prev || {}
     const tiles = [
-        { title: 'Completed', value: s.completed, icon: <TbChecklist />, iconClass: 'bg-emerald-200', g: growth(s.completed, p.completed), series: d.series.completed, color: '#10b981', fmt: String },
-        { title: 'Created', value: s.created, icon: <TbTargetArrow />, iconClass: 'bg-sky-200', g: growth(s.created, p.created), series: d.series.created, color: '#3b82f6', fmt: String },
-        { title: 'Hours logged', value: `${s.hours} h`, icon: <TbClock />, iconClass: 'bg-purple-200', g: growth(s.hours, p.hours), series: d.series.hours, color: '#8b5cf6', fmt: (v) => `${v} h` },
+        { title: 'Completed', value: s.completed, icon: <TbChecklist />, iconClass: 'bg-emerald-200', g: growth(s.completed, p.completed), series: d.series.completed, prevSeries: d.prevSeries?.completed, color: '#10b981', fmt: String },
+        { title: 'Created', value: s.created, icon: <TbTargetArrow />, iconClass: 'bg-sky-200', g: growth(s.created, p.created), series: d.series.created, prevSeries: d.prevSeries?.created, color: '#3b82f6', fmt: String },
+        { title: 'Hours logged', value: `${s.hours} h`, icon: <TbClock />, iconClass: 'bg-purple-200', g: growth(s.hours, p.hours), series: d.series.hours, prevSeries: d.prevSeries?.hours, color: '#8b5cf6', fmt: (v) => `${v} h` },
     ]
     const onTime = s.openTasks ? Math.round(((s.openTasks - s.overdue) / s.openTasks) * 100) : 100
     return (
@@ -300,7 +312,7 @@ const Reports = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Reports</h3><p className="text-sm text-gray-500">{data ? `${data.range.label} · ${data.range.from} → ${data.range.to}` : 'Sales, profit, leads, support and time'}</p></div>
+                <h3 className="flex flex-wrap items-baseline gap-3">Reports<span className="text-sm font-normal text-gray-500">{data ? `${data.range.from} → ${data.range.to}` : 'Sales, profit, leads, support and time'}</span></h3>
                 
             </div>
             {meta && !meta.available.length && <Card><p className="py-10 text-center text-gray-500">Your role does not include any report. Ask an administrator to allow “view all” on invoices, payments, expenses, leads, tickets or tasks.</p></Card>}

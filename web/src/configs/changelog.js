@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.8',
+        date: '2026-10-14',
+        title: 'Colour everywhere, chart comparisons',
+        items: ['The colour picked in the top bar now repaints every CRM page (buttons, tabs, links, progress)', 'Reports and the dashboard charts show a dashed "previous period" line to compare against the period before', 'Reports header is one line: Reports 2025-11-01 → 2026-10-14'],
+    },
+    {
         version: '0.26.7',
         date: '2026-10-14',
         title: 'Filter row',

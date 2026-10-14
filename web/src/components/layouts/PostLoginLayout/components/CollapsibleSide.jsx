@@ -6,6 +6,7 @@ import UserProfileDropdown from '@/components//template/UserProfileDropdown'
 import LanguageSelector from '@/components/template/LanguageSelector'
 import SettingsMenu from '@/components/template/SettingsMenu'
 import Notification from '@/components/template/Notification'
+import AccentApplier from '@/components/template/AccentApplier'
 import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components//template/LayoutBase'
 import useResponsive from '@/utils/hooks/useResponsive'
@@ -20,6 +21,7 @@ const CollapsibleSide = ({ children }) => {
             className="app-layout-collapsible-side flex flex-auto flex-col"
         >
             <PreferencesApplier />
+                    <AccentApplier />
             <div className="flex flex-auto min-w-0">
                 {larger.lg && <SideNav />}
                 <div className="flex flex-col flex-auto min-h-screen min-w-0 relative w-full">

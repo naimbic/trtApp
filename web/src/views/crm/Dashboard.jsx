@@ -41,16 +41,20 @@ const STATUS_COLOR = {
 }
 const statusColor = (name, i) => STATUS_COLOR[name] || SERIES[i % SERIES.length]
 
-const TrendChart = ({ labels, series, colors = SERIES, height = 320, money, type = 'area' }) => (
+const TrendChart = ({ labels, series, colors = SERIES, height = 320, money, type: wanted = 'area', compare }) => {
+    const type = compare ? 'line' : wanted // with a comparison, plain lines read better than stacked fills
+    const all = compare ? [...series, ...compare] : series
+    const cols = compare ? [...colors.slice(0, series.length), ...colors.slice(0, series.length).map((c) => `${c}8c`)] : colors
+    return (
     <Chart
         type={type}
         height={height}
-        series={series}
+        series={all}
         xAxis={labels}
         customOptions={{
-            colors,
+            colors: cols,
             chart: { toolbar: { show: false }, zoom: { enabled: false }, animations: { speed: 500 }, fontFamily: 'inherit' },
-            stroke: { width: 3, curve: 'smooth' },
+            stroke: compare ? { width: [...series.map(() => 3), ...compare.map(() => 2)], curve: 'smooth', dashArray: [...series.map(() => 0), ...compare.map(() => 6)] } : { width: 3, curve: 'smooth' },
             fill: type === 'area' ? { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 95, 100] } } : { opacity: 1 },
             markers: { size: 0, hover: { size: 6 }, strokeWidth: 2, strokeColors: '#fff' },
             dataLabels: { enabled: false },
@@ -61,16 +65,17 @@ const TrendChart = ({ labels, series, colors = SERIES, height = 320, money, type
             tooltip: { shared: true, intersect: false, y: { formatter: (v) => (money ? money(v) : nfi(v)) } },
         }}
     />
-)
+    )
+}
 
-const ColumnChart = ({ labels, series, colors, height = 260, money, negativeColor }) => (
+const ColumnChart = ({ labels, series, colors, height = 260, money, negativeColor, compare }) => (
     <Chart
         type="bar"
         height={height}
-        series={series}
+        series={compare ? [...series, ...compare] : series}
         xAxis={labels}
         customOptions={{
-            colors,
+            colors: compare ? [...colors, '#cbd5e1'] : colors,
             chart: { toolbar: { show: false }, fontFamily: 'inherit' },
             plotOptions: {
                 bar: {
@@ -280,6 +285,18 @@ const Dashboard = () => {
     run = 0
     const cumInvoiced = invoicedSeries.map((v) => (run += v))
     const newClients = months.map((m) => data.clients?.byMonth?.[m] || 0)
+    // previous period, lined up bucket by bucket with the current one
+    const padTo = (arr) => Array.from({ length: months.length }, (_, i) => arr[i] ?? 0)
+    const pm = data.prev?.months || []
+    const pinv = data.prev?.invoices?.byCurrency?.[currencyId]
+    const pexp = data.prev?.expenses?.byCurrency?.[currencyId]
+    const prevInvoiced = pinv ? padTo(pm.map((m) => pinv.invoicedByMonth[m] || 0)) : null
+    const prevCollected = pinv ? padTo(pm.map((m) => pinv.collectedByMonth[m] || 0)) : null
+    const prevExpense = padTo(pm.map((m) => (pexp ? pexp[m] || 0 : 0)))
+    const prevNet = prevCollected ? prevCollected.map((v, i) => Math.round((v - prevExpense[i]) * 100) / 100) : null
+    const cum = (a) => { let r = 0; return a.map((v) => (r += v)) }
+    const prevNewClients = data.prev?.clients ? padTo(pm.map((m) => data.prev.clients.byMonth?.[m] || 0)) : null
+    const PREV = 'Previous period'
 
     return (
         <div className="flex flex-col gap-4">
@@ -320,6 +337,7 @@ const Dashboard = () => {
                                 { name: 'Collected', data: collectedSeries },
                                 { name: 'Expenses', data: expenseSeries },
                             ]}
+                            compare={prevInvoiced ? [{ name: `Invoiced · ${PREV.toLowerCase()}`, data: prevInvoiced }, { name: `Collected · ${PREV.toLowerCase()}`, data: prevCollected }, { name: `Expenses · ${PREV.toLowerCase()}`, data: prevExpense }] : null}
                         />
                     </Panel>
                     <Panel title="Invoices by status" subtitle="Excl. drafts & cancelled">
@@ -340,10 +358,11 @@ const Dashboard = () => {
                                 { name: 'Invoiced (cumulative)', data: cumInvoiced },
                                 { name: 'Collected (cumulative)', data: cumCollected },
                             ]}
+                            compare={prevInvoiced ? [{ name: `Invoiced · ${PREV.toLowerCase()}`, data: cum(prevInvoiced) }, { name: `Collected · ${PREV.toLowerCase()}`, data: cum(prevCollected) }] : null}
                         />
                     </Panel>
                     <Panel title="Net cash flow" subtitle="Collected minus expenses">
-                        <ColumnChart labels={labels} money={money} colors={[PALETTE.teal]} negativeColor={PALETTE.red} height={280} series={[{ name: 'Net', data: net }]} />
+                        <ColumnChart labels={labels} money={money} colors={[PALETTE.teal]} negativeColor={PALETTE.red} height={280} series={[{ name: 'Net', data: net }]} compare={prevNet ? [{ name: PREV, data: prevNet }] : null} />
                     </Panel>
                 </div>
             )}
@@ -357,7 +376,7 @@ const Dashboard = () => {
 
             {data.clients && (
                 <Panel title="New clients per month" subtitle="Client acquisition trend">
-                    <TrendChart labels={labels} colors={[accent]} height={220} series={[{ name: 'New clients', data: newClients }]} />
+                    <TrendChart labels={labels} colors={[accent]} height={220} series={[{ name: 'New clients', data: newClients }]} compare={prevNewClients ? [{ name: PREV, data: prevNewClients }] : null} />
                 </Panel>
             )}
 

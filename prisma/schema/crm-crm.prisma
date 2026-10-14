@@ -544,6 +544,7 @@ model CrmChatPresence {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   memberKey String   @unique
   lastSeen  DateTime @default(now())
+  state     String   @default("online")
 
   @@map("crm_chat_presence")
 }

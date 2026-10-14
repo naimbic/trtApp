@@ -27,6 +27,12 @@ export async function portalChat(after) {
     return { messages: rows.map((m) => shape(m, s)), team, unread }
 }
 
+export async function portalPresence(state) {
+    const s = await requirePortal()
+    await touch(`contact:${s.contact.id}`, state)
+    return { ok: true }
+}
+
 export async function portalRead() {
     const s = await requirePortal()
     const r = await room(s)

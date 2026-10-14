@@ -7,6 +7,7 @@ import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuot
 import { useThemeStore } from '@/store/themeStore'
 import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
+import { useChatStatus, STATUS } from '@/store/chatStatusStore'
 
 const dropdownItemList = [
     { label: 'My profile', path: '/account/profile', icon: <PiUserDuotone /> },
@@ -21,6 +22,9 @@ const _UserDropdown = ({ className }) => {
 
     const { signOut } = useAuth()
     const me = useMe()
+    const chatState = useChatStatus((st) => st.state)
+    const away = useChatStatus((st) => st.away)
+    const setAway = useChatStatus((st) => st.setAway)
     const mode = useThemeStore((st) => st.mode)
     const setMode = useThemeStore((st) => st.setMode)
 
@@ -38,7 +42,7 @@ const _UserDropdown = ({ className }) => {
             toggleClassName="flex items-center"
             renderTitle={
                 <div className={`${className || ''}`}>
-                    <Avatar size={32} {...avatarProps} />
+                    <span className="relative flex"><Avatar size={32} {...avatarProps} /><span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-gray-800 ${STATUS[chatState].dot}`} /></span>
                 </div>
             }
             placement="bottom-end"
@@ -56,6 +60,11 @@ const _UserDropdown = ({ className }) => {
                         {me?.role && <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">{me.role}</span>}
                     </div>
                 </div>
+            </Dropdown.Item>
+            <Dropdown.Item variant="divider" />
+            <Dropdown.Item eventKey="Status" className="gap-2" onClick={() => setAway(!away)}>
+                <span className={`h-3 w-3 rounded-full ${away ? 'bg-emerald-500' : 'bg-orange-400'}`} />
+                <span>{away ? `Set as available (now ${STATUS[chatState].label.toLowerCase()})` : 'Set as away'}</span>
             </Dropdown.Item>
             <Dropdown.Item variant="divider" />
             {dropdownItemList.map((item) => (

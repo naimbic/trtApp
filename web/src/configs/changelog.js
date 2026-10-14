@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.27.1',
+        date: '2026-10-14',
+        title: 'Chat sound and status',
+        items: ['A short ping plays when a new chat message arrives (bell icon in the chat header mutes it)', 'Chat status: green = available, orange = idle (no activity for 2 minutes or tab in background) or away (set yourself in the profile menu), grey = offline', 'Your status dot also shows on your profile picture in the top bar'],
+    },
+    {
         version: '0.27.0',
         date: '2026-10-14',
         title: 'Chat',

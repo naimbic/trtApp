@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { PiPaperPlaneTiltFill } from 'react-icons/pi'
 import classNames from '@/utils/classNames'
+import { ping } from './chatKit'
 
 const POLL = 3000
 const time = (d) => (dayjs(d).isSame(dayjs(), 'day') ? dayjs(d).format('HH:mm') : dayjs(d).format('MMM D, HH:mm'))
@@ -24,7 +25,10 @@ const ChatThread = ({ load, send, onData, showSender = false, empty = 'No messag
             const { messages, ...rest } = await load(full ? null : last.current)
             onData?.(rest)
             if (full) setMsgs(messages)
-            else if (messages.length) setMsgs((cur) => [...(cur || []), ...messages.filter((m) => !(cur || []).some((x) => x.id === m.id))])
+            else if (messages.length) {
+                setMsgs((cur) => [...(cur || []), ...messages.filter((m) => !(cur || []).some((x) => x.id === m.id))])
+                if (messages.some((m) => !m.mine)) ping()
+            }
         } catch (e) { if (full) setMsgs([]) }
     }, [load, onData])
 

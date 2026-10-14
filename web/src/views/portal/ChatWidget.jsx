@@ -3,6 +3,7 @@ import { PiChatCircleDotsFill, PiXBold, PiUserCircleDuotone } from 'react-icons/
 import Avatar from '@/components/ui/Avatar'
 import ChatThread from '@/components/crm/chat/ChatThread'
 import { portal } from './api'
+import { usePresence, usePingOnIncrease } from '@/components/crm/chat/chatKit'
 
 // Chat bubble in the client area: shows who from the team is available and keeps the conversation with them.
 const ChatWidget = () => {
@@ -24,6 +25,10 @@ const ChatWidget = () => {
     }, [load, onData])
 
     useEffect(() => { if (open) portal('/chat', { method: 'POST', body: { read: true }, quiet: true }).then(() => setUnread(0)).catch(() => {}) }, [open])
+
+    const sendPresence = useCallback((state) => { portal('/chat', { method: 'POST', body: { state }, quiet: true }).catch(() => {}) }, [])
+    usePresence(sendPresence)
+    usePingOnIncrease(unread)
 
     const on = team.length > 0
     return (

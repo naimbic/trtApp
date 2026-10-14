@@ -8,7 +8,7 @@ import guideNav from './guide.navigation.config'
 
 // TEMPORARY: the original template demo menu, kept until the CRM is finished (then delete this block, the
 // *.navigation.config.js demo files, templateDemoRoutes.js and the views/{dashboards,concepts,ui-components,auth-demo,guide} folders).
-const everyone = (item) => ({ ...item, authority: [], subMenu: (item.subMenu || []).map(everyone) })
+const everyone = (item) => ({ ...item, authority: ['admin'], subMenu: (item.subMenu || []).map(everyone) })
 const templateDemoNavigation = [...dashboardsNav, ...conceptsNav, ...uiComponentsNav, ...authNav, ...guideNav].map((g) => ({
     ...everyone(g),
     key: `template.${g.key}`,

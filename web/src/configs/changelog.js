@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.27.3',
+        date: '2026-10-14',
+        title: 'Demo pages for super admin only',
+        items: ['The template demo menus and pages (Dashboard, Concepts, UI components, Auth, Guide) are visible and reachable only by the super admin; everyone else no longer sees them in the menu and is denied if they open the address'],
+    },
+    {
         version: '0.27.2',
         date: '2026-10-14',
         title: 'Template media removed',

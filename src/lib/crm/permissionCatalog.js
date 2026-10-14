@@ -26,6 +26,18 @@ export const EXTRA_LABELS = {
     delete_timesheet: 'Delete timesheets',
     delete_own_timesheet: 'Delete own timesheets',
     'view-timesheets': 'View timesheet report',
+    view_amounts: 'See money amounts',
+    report_sales: 'Sales report',
+    report_profit: 'Profit & expenses report',
+    report_leads: 'Leads report',
+    report_support: 'Support report',
+    report_work: 'Work & time report',
+}
+
+/** One-line explanations shown under a feature name in the permission editor. */
+export const FEATURE_HINTS = {
+    finance: 'Without this, every income, total, balance and money chart shows *** (cards, lists, reports, client profiles).',
+    reports: 'Choose which reports this person may open. Money reports also need "See money amounts".',
 }
 
 export const PERMISSION_GROUPS = [
@@ -89,7 +101,13 @@ export const PERMISSION_GROUPS = [
             { key: 'settings', label: 'Settings', caps: ['view', 'edit'] },
             { key: 'email_templates', label: 'Email templates', caps: ['view', 'edit'] },
             { key: 'bulk_pdf_exporter', label: 'Bulk PDF exporter', caps: ['view'] },
-            { key: 'reports', label: 'Reports', caps: ['view', 'view-timesheets'] },
+        ],
+    },
+    {
+        group: 'Money & reports',
+        features: [
+            { key: 'finance', label: 'Financial figures', caps: ['view_amounts'], auto: {} },
+            { key: 'reports', label: 'Reports', caps: ['view', 'report_sales', 'report_profit', 'report_leads', 'report_support', 'report_work', 'view-timesheets'] },
         ],
     },
 ]

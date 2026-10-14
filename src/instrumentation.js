@@ -9,6 +9,7 @@ export async function register() {
     } catch (e) {
         console.warn('[warmup] database not reachable yet:', e.message?.slice(0, 120))
     }
+    try { await (await import('@/lib/crm/migrations')).migratePermissions() } catch (e) { console.warn('[migrate] permissions:', e.message?.slice(0, 120)) }
     // Idle Mongo connections go cold (slow reconnect through Docker/Colima); a light ping keeps them warm.
     const keepAlive = setInterval(() => prisma.crmOption.count().catch(() => {}), 20000)
     keepAlive.unref?.()

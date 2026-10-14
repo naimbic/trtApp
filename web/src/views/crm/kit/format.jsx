@@ -1,3 +1,4 @@
+import { moneyHidden, MASK } from '@/utils/money'
 import dayjs from 'dayjs'
 import Tag from '@/components/ui/Tag'
 
@@ -12,7 +13,7 @@ const TAG = {
     gray: 'bg-gray-200 text-gray-700',
 }
 
-export const money = (v, d = 2) => (v === null || v === undefined || v === '' ? '' : Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }))
+export const money = (v, d = 2) => (moneyHidden() ? MASK : v === null || v === undefined || v === '' ? '' : Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }))
 let padding = 6
 /** Set from the CRM `number_padding_prefixes` option once the lookups have loaded. */
 export const setDocPadding = (n) => { if (n > 0) padding = n }

@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
-import { viewScope } from '@/lib/crm/permissions'
+import { viewScope, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 
@@ -54,6 +54,9 @@ export async function getDashboardMetrics(params = {}) {
     const session = await auth()
     if (!session?.user?.id) return null
     const authority = session.user.authority || []
+    const money = isCrmAdmin(authority) || hasCap(authority, 'finance', 'view_amounts')
+    // money sections are only built for people who may see financial figures
+    const MONEY_SECTIONS = ['invoices', 'expenses', 'estimates', 'recent']
     const can = (feature) => viewScope(authority, feature) === 'all'
     const R = resolveRange(params)
     const months = R.keys // chart buckets: YYYY-MM-DD (short ranges) or YYYY-MM
@@ -64,10 +67,11 @@ export async function getDashboardMetrics(params = {}) {
     const today = new Date()
     const startOfToday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
     const padding = await numberPadding()
-    const data = { generatedAt: new Date().toISOString(), months, granularity: R.granularity, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso }, sections: [] }
+    const data = { generatedAt: new Date().toISOString(), months, granularity: R.granularity, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso }, sections: [], moneyHidden: !money }
 
     const section = async (name, feature, fn) => {
         if (feature && !can(feature)) return
+        if (MONEY_SECTIONS.includes(name) && !money) return
         try {
             data[name] = await fn()
             data.sections.push(name)

@@ -1,3 +1,4 @@
+import { moneyHidden, MASK } from '@/utils/money'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { TbFileInvoice, TbTrash, TbRepeat } from 'react-icons/tb'
@@ -17,7 +18,7 @@ import RelationSelect from '../kit/RelationSelect'
 
 const EMPTY = { name: '', categoryId: null, amount: '', taxId: null, tax2Id: null, currencyId: null, date: new Date(), reference: '', paymentModeId: null, clientId: null, projectId: null, billable: false, note: '', recurring: false, repeatEvery: 1, recurringType: 'month', cyclesLimit: 0, createInvoiceBillable: false, sendInvoiceToCustomer: false }
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
-const money = (n, cur) => `${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur?.symbol || cur?.name || ''}`.trim()
+const money = (n, cur) => moneyHidden() ? MASK : `${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur?.symbol || cur?.name || ''}`.trim()
 
 const ExpenseDrawer = ({ open, id, lookups, onClose, onChanged, onLookups }) => {
     const nav = useNavigate()

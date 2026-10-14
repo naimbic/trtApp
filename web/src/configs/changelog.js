@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.0',
+        date: '2026-10-14',
+        title: 'Money permission, report permissions, new permission editor',
+        items: ['New permission "See money amounts" (Roles & permissions → Money & reports → Financial figures): without it every income, total and balance shows ***, money charts are replaced by a notice, and the dashboard and reports no longer send the figures', 'Reports now have one switch per report (Sales, Profit & expenses, Leads, Support, Work & time); Sales and Profit also need "See money amounts". Existing members who could open Reports keep all reports', 'The permission editor is redesigned: one card per group, switches instead of checkboxes, search, "Read only / Everything / Nothing" presets and "Allow all" per group'],
+    },
+    {
         version: '0.28.4',
         date: '2026-10-14',
         title: 'Remembered theme, demo menus',

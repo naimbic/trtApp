@@ -1,3 +1,4 @@
+import { moneyHidden, MASK } from '@/utils/money'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import dayjs from 'dayjs'
@@ -250,6 +251,7 @@ const Dashboard = () => {
 
     const cur = useMemo(() => data?.currencies.find((c) => c.id === currencyId), [data, currencyId])
     const fmt = (v, id, short) => {
+        if (moneyHidden()) return MASK
         const c = data?.currencies.find((x) => x.id === id) || cur
         const s = c?.symbol || c?.name || ''
         const n = short ? compact(v) : nf(v)
@@ -307,6 +309,15 @@ const Dashboard = () => {
                 </div>
             </div>
 
+            {data.moneyHidden && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <StatCard accent={accent} icon={<PiReceiptDuotone />} label="Total invoiced" value={MASK} sub="Hidden for your account" tone="blue" />
+                    <StatCard accent={accent} icon={<PiHandCoinsDuotone />} label="Collected" value={MASK} sub="Hidden for your account" tone="green" />
+                    <StatCard accent={accent} icon={<PiHourglassHighDuotone />} label="Outstanding" value={MASK} sub="Hidden for your account" tone="amber" />
+                    <StatCard accent={accent} icon={<PiWarningCircleDuotone />} label="Overdue" value={MASK} sub="Hidden for your account" tone="red" />
+                </div>
+            )}
+
             {data.invoices && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                     <StatCard accent={accent} icon={<PiReceiptDuotone />} label="Total invoiced" value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub="Excl. drafts & cancelled" tone="blue" to="/crm/invoices" spark={invoicedSeries} />
@@ -324,6 +335,10 @@ const Dashboard = () => {
                 {data.tickets && <StatCard accent={accent} icon={<PiLifebuoyDuotone />} label="Open tickets" value={nfi(data.tickets.open)} sub={`${nfi(data.tickets.total)} total`} tone="amber" to="/crm/tickets" />}
                 {data.estimates && <StatCard accent={accent} icon={<PiFileTextDuotone />} label="Estimates" value={nfi(data.estimates.total)} sub={`${nfi(data.estimates.byStatus?.Sent)} sent`} tone="blue" to="/crm/estimates" />}
             </div>
+
+            {data.moneyHidden && (
+                <Panel title="Revenue and cash flow" subtitle="Invoiced, collected and expenses"><div className="flex h-40 items-center justify-center text-center text-gray-400"><div><div className="text-3xl font-bold">{MASK}</div><div className="mt-1 text-sm">Financial figures are hidden for your account.</div></div></div></Panel>
+            )}
 
             {inv && (
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">

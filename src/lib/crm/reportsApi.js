@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { requirePermission, viewScope } from '@/lib/crm/permissions'
+import { requirePermission, viewScope, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { resolveRange } from '@/lib/crm/dashboard'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
@@ -11,14 +11,16 @@ const sum = (a, f) => round2(a.reduce((s, x) => s + (f(x) || 0), 0))
 const DAY = 86400000
 const INV_OK = (i) => ![5, 6].includes(i.status)
 const TICKET_NEEDS = ['tickets']
+const MONEY_REPORTS = ['sales', 'profit']
 const NEEDS = { sales: ['invoices', 'payments'], profit: ['payments', 'expenses'], leads: ['leads'], support: TICKET_NEEDS, work: ['tasks'] }
 
 async function gate(kind) {
     const session = await requirePermission('reports', 'view')
     const authority = session.user.authority || []
-    const allowed = (k) => NEEDS[k].every((f) => viewScope(authority, f) === 'all')
+    const money = isCrmAdmin(authority) || hasCap(authority, 'finance', 'view_amounts')
+    const allowed = (k) => NEEDS[k].every((f) => viewScope(authority, f) === 'all') && hasCap(authority, 'reports', `report_${k}`) && (money || !MONEY_REPORTS.includes(k))
     if (kind && !NEEDS[kind]) throw fail('Unknown report', 404)
-    if (kind && !allowed(kind)) throw fail('This report needs permission to see all the records behind it', 403)
+    if (kind && !allowed(kind)) throw fail('You do not have permission to open this report', 403)
     return { available: Object.keys(NEEDS).filter(allowed) }
 }
 

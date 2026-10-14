@@ -7,7 +7,7 @@ WORKDIR /app
 COPY src/lib/crm ./src/lib/crm
 COPY web ./web
 WORKDIR /app/web
-RUN npm ci
+RUN npm install --no-audit --no-fund
 ARG SOURCE_COMMIT=
 ENV SOURCE_COMMIT=$SOURCE_COMMIT
 RUN NODE_OPTIONS=--max-old-space-size=3072 npx vite build
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm ci
+RUN npm install --no-audit --no-fund
 COPY . .
 RUN npx prisma generate && npm run build
 

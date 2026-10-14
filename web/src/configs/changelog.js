@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.5',
+        date: '2026-10-14',
+        title: 'Compact list headers, top-bar filters',
+        items: ['Top bar periods are now 1D, 2D, 3D, 5D, 7D, 30D, Current M, Last M, This year and Last year, with a calendar icon for custom dates; click a period again to clear it', 'The currency choice moved to the top bar too (invoices, estimates, proposals, purchase orders, reports)', 'List figure tiles are smaller; status chips (Draft, Unpaid, Paid…) now sit inside the filter card with the other filters and replace the duplicate status dropdown'],
+    },
+    {
         version: '0.26.4',
         date: '2026-10-14',
         title: 'Payments and contracts lists',

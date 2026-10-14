@@ -69,8 +69,8 @@ const ContractsList = () => {
                 <StatTile title="Value of live contracts" className="bg-sky-100" value={money(st.activeValue, baseCur, { decimals: 0 })} icon={<TbCoins />} />
                 <StatTile title="Waiting for a signature" className="bg-purple-100" value={st.unsigned || 0} icon={<TbSignature />} />
             </TileGrid>
-            <StatusPills order={['active', 'expiring', 'expired', 'trash']} labels={Object.fromEntries(['active', 'expiring', 'expired', 'trash'].map((k) => [k, STATE[k].label]))} counts={st.counts} value={state} onChange={(k) => { setState(k); setPage(1) }} />
             <AdaptiveCard>
+                <StatusPills order={['active', 'expiring', 'expired', 'trash']} labels={Object.fromEntries(['active', 'expiring', 'expired', 'trash'].map((k) => [k, STATE[k].label]))} counts={st.counts} value={state} onChange={(k) => { setState(k); setPage(1) }} />
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <div className="w-52"><Select size="sm" isClearable placeholder="All types" options={typeOptions} value={typeOptions.find((o) => o.value === typeId) || null} onChange={(o) => { setTypeId(o ? o.value : null); setPage(1) }} /></div>
                     <div className="w-56"><RelationSelect size="sm" resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>

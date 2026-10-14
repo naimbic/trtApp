@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { usePageRange } from '@/store/pageFilterStore'
-import { StatTile, TileGrid, StatusPills, CurrencySwitch } from '@/components/crm/ListHeader'
+import { StatTile, TileGrid, StatusPills } from '@/components/crm/ListHeader'
+import { useRegisterCurrency } from '@/store/pageFilterStore'
 import { TbReceipt2, TbCash, TbHourglass, TbAlertTriangle, TbCircleCheck, TbFileText } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
 import { TbPlus, TbSearch } from 'react-icons/tb'
@@ -63,6 +64,7 @@ const ProposalsList = () => {
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
     const currencies = Object.keys(data.stats.money)
+    useRegisterCurrency(currencies.map((k) => ({ id: k, name: lookups.currencies.find((x) => x.id === k)?.name || '?' })), cur, setCur)
 
     return (
         <Container>
@@ -71,7 +73,6 @@ const ProposalsList = () => {
                 {can('proposals', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/proposals/new')}>New proposal</Button>}
             </div>
 
-            <CurrencySwitch currencies={currencies} value={cur} onChange={setCur} names={(k) => lookups.currencies.find((x) => x.id === k)?.name || '?'} />
             {m && (
                 <TileGrid cols={4}>
                     <StatTile title="Waiting for an answer" className="bg-sky-100" value={money(m.open, cur)} icon={<TbHourglass />} />
@@ -80,11 +81,10 @@ const ProposalsList = () => {
                     <StatTile title="Declined" className="bg-amber-100" value={data.stats.counts[2] || 0} icon={<TbAlertTriangle />} />
                 </TileGrid>
             )}
-            <StatusPills order={ORDER} labels={Object.fromEntries(ORDER.map((s) => [s, STATUS[s].label]))} counts={data.stats.counts} value={status} onChange={(s) => { setStatus(s); setPage(1) }} />
 
             <AdaptiveCard>
+                <StatusPills order={ORDER} labels={Object.fromEntries(ORDER.map((s) => [s, STATUS[s].label]))} counts={data.stats.counts} value={status} onChange={(s) => { setStatus(s); setPage(1) }} />
                 <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <div className="w-48"><Select size="sm" isClearable placeholder="All statuses" options={ORDER.map((s) => ({ value: s, label: STATUS[s].label }))} value={status ? { value: status, label: STATUS[status].label } : null} onChange={(o) => { setStatus(o ? o.value : null); setPage(1) }} /></div>
                     <div className="w-56"><RelationSelect size="sm" resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
                     <div className="ml-auto w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search number, subject or recipient" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 </div>

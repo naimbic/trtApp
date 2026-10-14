@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { usePageRange } from '@/store/pageFilterStore'
+import { usePageRange, useRegisterCurrency } from '@/store/pageFilterStore'
 import { TbDownload, TbCash, TbReceipt2, TbTrendingUp, TbAlertTriangle, TbUsersGroup, TbTargetArrow, TbClock, TbLifebuoy, TbChecklist, TbHourglass, TbScale, TbPercentage } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Chart from '@/components/shared/Chart'
@@ -295,14 +295,13 @@ const Reports = () => {
         try { setData(await api(`/api/crm/reports/${tab}?${qs({ range: 'custom', from: dayjs(dates[0] || '2015-01-01').format('YYYY-MM-DD'), to: dayjs(dates[1] || new Date()).format('YYYY-MM-DD'), currencyId })}`)) } catch (e) { setError(e.message) }
     }, [tab, dates, currencyId])
     useEffect(() => { load() }, [load])
+    useRegisterCurrency(meta && meta.currencies.length > 1 ? meta.currencies.map((c) => ({ id: c.id, name: c.name })) : [], currencyId, setCurrencyId)
     const View = tab ? VIEW[tab] : null
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div><h3>Reports</h3><p className="text-sm text-gray-500">{data ? `${data.range.label} · ${data.range.from} → ${data.range.to}` : 'Sales, profit, leads, support and time'}</p></div>
-                <div className="flex flex-wrap items-center gap-3">
-                    {meta && meta.currencies.length > 1 && <div className="w-32"><Select size="sm" options={meta.currencies.map((c) => ({ value: c.id, label: c.name }))} value={meta.currencies.filter((c) => c.id === currencyId).map((c) => ({ value: c.id, label: c.name }))[0]} onChange={(o) => setCurrencyId(o.value)} /></div>}
-                </div>
+                
             </div>
             {meta && !meta.available.length && <Card><p className="py-10 text-center text-gray-500">Your role does not include any report. Ask an administrator to allow “view all” on invoices, payments, expenses, leads, tickets or tasks.</p></Card>}
             {meta && meta.available.length > 0 && (

@@ -10,7 +10,7 @@ const git = (cmd, fallback) => { try { return execSync(`git ${cmd}`, { cwd: __di
 export default defineConfig({
   plugins: [react(), dynamicImport()],
   define: {
-    __APP_COMMIT__: JSON.stringify(git('rev-parse --short HEAD', 'dev')),
+    __APP_COMMIT__: JSON.stringify(process.env.SOURCE_COMMIT ? process.env.SOURCE_COMMIT.slice(0, 7) : git('rev-parse --short HEAD', 'dev')),
     __APP_BUILT__: JSON.stringify(new Date().toISOString().slice(0, 10)),
   },
   assetsInclude: ['**/*.md'],

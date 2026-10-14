@@ -1,0 +1,60 @@
+# Deploy with Coolify: New resource -> Docker Compose (this file), then give the domain to the `web` service (port 80).
+# Fill the variables below in Coolify -> Environment variables.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # single-node replica set (Prisma needs one); initiates itself the first time
+      test: >
+        mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}).ok }" | grep -q 1
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mongodb://mongo:27017/${DB_NAME:-trtapp_real}?replicaSet=rs0
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_URL: ${PUBLIC_URL}
+      NEXTAUTH_URL: ${PUBLIC_URL}
+      PUBLIC_URL: ${PUBLIC_URL}
+      APP_WEB_URL: ${PUBLIC_URL}
+      AUTH_TRUST_HOST: "true"
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      DO_SPACES_KEY: ${DO_SPACES_KEY:-}
+      DO_SPACES_SECRET: ${DO_SPACES_SECRET:-}
+      DO_SPACES_BUCKET: ${DO_SPACES_BUCKET:-}
+      DO_SPACES_REGION: ${DO_SPACES_REGION:-}
+    volumes:
+      - backups:/app/data-backups
+      - storage:/app/storage
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-}
+    restart: unless-stopped
+    depends_on:
+      - api
+    expose:
+      - "80"
+
+volumes:
+  mongo-data:
+  backups:
+  storage:

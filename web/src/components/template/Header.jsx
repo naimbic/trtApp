@@ -2,6 +2,8 @@ import classNames from '@/utils/classNames'
 import { HEADER_HEIGHT } from '@/constants/theme.constant'
 import { useLocation } from 'react-router'
 import DashboardFilters from './DashboardFilters'
+import PageTabs from './PageTabs'
+import { usePageTabsStore } from '@/store/pageTabsStore'
 import { PAGE_FILTERS } from '@/store/pageFilterStore'
 
 const Header = (props) => {
@@ -16,7 +18,8 @@ const Header = (props) => {
 
     // The dashboard puts its date / currency / colour filters in the top bar.
     const { pathname } = useLocation()
-    const middle = headerMiddle || (pathname === '/dashboard' || PAGE_FILTERS[pathname] ? <DashboardFilters /> : null)
+    const hasTabs = usePageTabsStore((st) => !!st.tabs)
+    const middle = headerMiddle || (hasTabs ? <PageTabs /> : null) || (pathname === '/dashboard' || PAGE_FILTERS[pathname] ? <DashboardFilters /> : null)
 
     return (
         <header className={classNames('header', className)}>

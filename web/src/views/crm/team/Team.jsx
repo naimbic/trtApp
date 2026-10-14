@@ -23,6 +23,7 @@ import { useSessionUser } from '@/store/authStore'
 import MemberDrawer from './MemberDrawer'
 import MemberAccessDrawer from './MemberAccessDrawer'
 import RolesPanel from './RolesPanel'
+import { usePageTabs } from '@/store/pageTabsStore'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const notify = (type, msg) => toast.push(<Notification type={type}>{msg}</Notification>, { placement: 'top-center' })
@@ -59,6 +60,7 @@ const Team = () => {
     const [formError, setFormError] = useState('')
     const location = useLocation()
     const [tab, setTab] = useState(location.pathname.endsWith('/roles') ? 'roles' : 'members')
+    usePageTabs([{ key: 'members', label: 'Members' }, { key: 'roles', label: 'Roles & permissions' }], tab, setTab)
     const [access, setAccess] = useState({ open: false, id: null })
     const [confirm, setConfirm] = useState(null) // { member, kind: 'reset' }
     const [secret, setSecret] = useState(null) // { name, email, password } or { name, email, link, invite }
@@ -164,17 +166,10 @@ const Team = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h3>Team</h3>
-                    <p className="text-sm text-gray-500">Manage members, roles, departments and sign-in access</p>
+                    <h3>{tab === 'roles' ? 'Roles & permissions' : 'Team'}</h3>
+                    <p className="text-sm text-gray-500">{tab === 'roles' ? 'Choose what each role can see and do. Members get the permissions of their role.' : 'Manage members, departments and sign-in access'}</p>
                 </div>
                 {tab === 'members' && <Button variant="solid" icon={<TbPlus />} onClick={openNew}>Add member</Button>}
-            </div>
-
-            <div className="mb-4">
-                <Segment value={tab} onChange={(v) => v && setTab(v)}>
-                    <Segment.Item value="members">Members</Segment.Item>
-                    <Segment.Item value="roles">Roles &amp; permissions</Segment.Item>
-                </Segment>
             </div>
 
             {tab === 'roles' ? (

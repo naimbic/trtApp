@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.2',
+        date: '2026-10-14',
+        title: 'Page tabs in the top bar',
+        items: ['Team: the Members / Roles & permissions tabs moved to the top bar (any page can now put its tabs there)', 'Roles & permissions: sticky roles list, a header with the role name and counters, quick-jump chips for each permission group, and the editor no longer overflows the page'],
+    },
+    {
         version: '0.29.1',
         date: '2026-10-14',
         title: 'Cleaner permission editor',

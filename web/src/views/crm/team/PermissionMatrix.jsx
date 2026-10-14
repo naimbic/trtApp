@@ -66,12 +66,13 @@ const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
         onChange(cleanPermissions(next))
     }
 
+    const slug = (t) => `perm-${t.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
     const needle = q.trim().toLowerCase()
     const groups = useMemo(() => PERMISSION_GROUPS.map((g) => ({ ...g, features: g.features.filter((f) => !needle || f.label.toLowerCase().includes(needle) || g.group.toLowerCase().includes(needle)) })).filter((g) => g.features.length), [needle])
     const total = Object.values(value).reduce((n, c) => n + c.length, 0)
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
             <div className="flex flex-wrap items-center gap-3">
                 <div className="w-full sm:w-72"><Input size="sm" prefix={<TbSearch />} placeholder="Search a feature" value={q} onChange={(e) => setQ(e.target.value)} /></div>
                 <span className="text-sm text-gray-500">{total} permission{total === 1 ? '' : 's'} on</span>
@@ -84,13 +85,26 @@ const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
                 )}
             </div>
 
+            {groups.length > 1 && (
+                <div className="sticky top-16 z-10 -mx-1 flex gap-2 overflow-x-auto bg-white/95 px-1 py-2 backdrop-blur dark:bg-gray-800/95">
+                    {groups.map((g) => {
+                        const n = g.features.reduce((acc, f) => acc + (value[f.key]?.length || 0), 0)
+                        return (
+                            <button key={g.group} type="button" onClick={() => document.getElementById(slug(g.group))?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="flex shrink-0 items-center gap-2 rounded-full border border-gray-200 px-3 py-1 text-sm font-semibold text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300">
+                                {g.group}<span className={`rounded-full px-1.5 text-xs ${n ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400 dark:bg-gray-700'}`}>{n}</span>
+                            </button>
+                        )
+                    })}
+                </div>
+            )}
+
             {groups.map((g) => {
                 const allOn = g.features.every((f) => f.caps.filter((c) => c !== 'view_own').every((c) => has(f.key, c)))
                 const on = g.features.reduce((n, f) => n + (value[f.key]?.length || 0), 0)
                 const money = g.group === 'Money & reports'
                 const std = g.features.some((f) => !listOnly(f))
                 return (
-                    <Card key={g.group} bodyClass="p-0" className={`overflow-hidden ${money ? 'border-amber-200 dark:border-amber-500/30' : ''}`}>
+                    <Card key={g.group} id={slug(g.group)} bodyClass="p-0" className={`scroll-mt-32 overflow-hidden ${money ? 'border-amber-200 dark:border-amber-500/30' : ''}`}>
                         <div className={`flex items-center justify-between gap-3 px-5 py-3.5 ${money ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-gray-50 dark:bg-gray-700/40'}`}>
                             <div className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">{money ? <TbCoin className="text-xl text-amber-500" /> : <TbLock className="text-xl text-gray-400" />}{g.group}<Tag className="ml-1 bg-white text-gray-600 dark:bg-gray-600 dark:text-gray-100">{on} on</Tag></div>
                             <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-300"><span>Allow all</span><Switcher checked={allOn} disabled={disabled} onChange={(v) => setMany(g.features, v)} /></label>

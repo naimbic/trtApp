@@ -95,8 +95,8 @@ const RolesPanel = () => {
     }
 
     return (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[18rem_1fr]">
-            <Card bodyClass="p-3">
+        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[17rem_1fr]">
+            <Card className="xl:sticky xl:top-20" bodyClass="p-3">
                 <div className="mb-2 flex items-center justify-between px-2 pt-1">
                     <h6>Roles</h6>
                     <Button size="xs" variant="solid" icon={<TbPlus />} onClick={startNew}>New role</Button>
@@ -125,22 +125,25 @@ const RolesPanel = () => {
                 </ul>
             </Card>
 
-            <Card>
+            <Card className="min-w-0">
                 {selected ? (
                     <>
-                        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                            <div className="w-full sm:w-80">
+                        <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-gray-100 pb-5 dark:border-gray-700">
+                            <div className="w-full sm:w-96">
                                 <label className="mb-1.5 block text-sm font-semibold">Role name</label>
                                 <Input placeholder="e.g. Sales manager" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
                             </div>
-                            <div className="text-sm text-gray-500">{count(draft.permissions)} permissions selected</div>
+                            <div className="flex gap-6 text-sm">
+                                <div><div className="text-xs uppercase tracking-wide text-gray-400">Permissions on</div><div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{count(draft.permissions)}</div></div>
+                                <div><div className="text-xs uppercase tracking-wide text-gray-400">Members</div><div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{selected === 'new' ? 0 : current?.members ?? 0}</div></div>
+                            </div>
                         </div>
                         {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
                         <PermissionMatrix value={draft.permissions} onChange={(permissions) => setDraft({ ...draft, permissions })} />
                         <p className="mt-3 text-xs text-gray-500">
                             Roles are templates: a member gets the role&apos;s permissions when the role is assigned. Use &quot;Save &amp; apply to members&quot; to push changes to everyone who already has this role. Administrators always have full access.
                         </p>
-                        <div className="sticky bottom-0 -mx-5 -mb-5 mt-5 flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white/95 px-5 py-3 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
+                        <div className="sticky bottom-0 -mx-5 -mb-5 mt-5 flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white/95 py-3 pl-5 pr-24 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
                             {selected !== 'new' && (
                                 <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDelete(true)} disabled={saving}>Delete role</Button>
                             )}

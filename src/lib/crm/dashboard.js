@@ -45,7 +45,7 @@ const count = (rows, fn) => rows.reduce((m, r) => {
 }, {})
 
 const TASK_STATUS = { 1: 'Not started', 2: 'Awaiting feedback', 3: 'Testing', 4: 'In progress', 5: 'Complete' }
-const PROJECT_STATUS = { 1: 'Not started', 2: 'In progress', 3: 'On hold', 4: 'Cancelled', 5: 'Finished' }
+const PROJECT_STATUS = { 1: 'Not started', 2: 'In progress', 3: 'On hold', 4: 'Finished', 5: 'Cancelled' }
 const ESTIMATE_STATUS = { 1: 'Draft', 2: 'Sent', 3: 'Declined', 4: 'Accepted', 5: 'Expired' }
 const INVOICE_STATUS = { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft' }
 

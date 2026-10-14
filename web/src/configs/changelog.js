@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.0',
+        date: '2026-10-14',
+        title: 'Reports',
+        items: ['Reports under Utilities with five tabs: Sales (invoiced vs received, top clients and items, payment methods, tax, receivables ageing), Profit & expenses, Leads (conversion by source, status and owner), Support (first response time, by department) and Work & time', 'Pick the period (this month to custom dates) and the currency; every table exports to CSV', 'Each tab only appears if your role may see all the records behind it', 'Dashboard project statuses fixed (Finished and Cancelled were swapped there too)'],
+    },
+    {
         version: '0.25.0',
         date: '2026-10-14',
         title: 'Knowledge base',

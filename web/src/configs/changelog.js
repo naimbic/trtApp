@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.26.6',
+        date: '2026-10-14',
+        title: 'Dashboard filter bar everywhere',
+        items: ['Reports, expenses, invoices, estimates, proposals, purchase orders, payments, tickets and leads now use the exact dashboard filter bar in the top bar (periods, custom range, currency, colour); the period and currency are shared with the dashboard'],
+    },
+    {
         version: '0.26.5',
         date: '2026-10-14',
         title: 'Compact list headers, top-bar filters',

@@ -6,6 +6,7 @@ import UserProfileDropdown from '@/components//template/UserProfileDropdown'
 import LanguageSelector from '@/components/template/LanguageSelector'
 import SettingsMenu from '@/components/template/SettingsMenu'
 import Notification from '@/components/template/Notification'
+import ChatWidget from '@/components/crm/chat/ChatWidget'
 import AccentApplier from '@/components/template/AccentApplier'
 import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components//template/LayoutBase'
@@ -47,6 +48,7 @@ const CollapsibleSide = ({ children }) => {
                     </div>
                 </div>
             </div>
+            <ChatWidget />
         </LayoutBase>
     )
 }

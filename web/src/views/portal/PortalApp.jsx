@@ -18,6 +18,7 @@ import Documents from './Documents'
 import { Projects, ProjectDetail } from './Projects'
 import { Tickets, TicketThread } from './Tickets'
 import Profile from './Profile'
+import ChatWidget from './ChatWidget'
 import { Knowledge, HelpArticle } from './Knowledge'
 import { PiBookOpenTextDuotone } from 'react-icons/pi'
 
@@ -75,6 +76,7 @@ const Shell = () => {
                 </nav>
                 <main className="flex-1 py-6"><Container><Outlet /></Container></main>
                 <footer className="py-4 text-center text-xs text-gray-500">&copy; {new Date().getFullYear()} <span className="font-semibold">{me.company.name || APP_NAME}</span> · Client area</footer>
+                <ChatWidget />
             </div>
         </Ctx.Provider>
     )

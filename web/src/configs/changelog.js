@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.27.0',
+        date: '2026-10-14',
+        title: 'Chat',
+        items: ['Chat bubble for the team after login: a Team room, private conversations with colleagues (green dot = available now) and a Clients tab for clients who write in', 'Clients get the same bubble in the client area: they see who from the team is available and can leave a message even when nobody is online', 'Unread counters on the bubble, messages refresh every few seconds'],
+    },
+    {
         version: '0.26.11',
         date: '2026-10-14',
         title: 'Compact sidebar',

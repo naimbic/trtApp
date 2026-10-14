@@ -500,3 +500,50 @@ model CrmPasswordLog {
   @@index([entryId])
   @@map("crm_password_log")
 }
+
+// Chat: one team room, direct staff-to-staff rooms and one room per client contact (staff <-> client).
+model CrmChatRoom {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  kind           String
+  staffIds       String[] @db.ObjectId
+  clientId       String?  @db.ObjectId
+  contactId      String?  @db.ObjectId
+  lastMessageAt  DateTime @default(now())
+  lastMessage    String?
+  createdAt      DateTime @default(now())
+
+  @@index([kind])
+  @@index([contactId])
+  @@map("crm_chat_room")
+}
+
+model CrmChatMessage {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomId     String   @db.ObjectId
+  senderType String
+  senderId   String   @db.ObjectId
+  senderName String
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([roomId, createdAt])
+  @@map("crm_chat_message")
+}
+
+model CrmChatRead {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomId    String   @db.ObjectId
+  memberKey String
+  readAt    DateTime @default(now())
+
+  @@unique([roomId, memberKey])
+  @@map("crm_chat_read")
+}
+
+model CrmChatPresence {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  memberKey String   @unique
+  lastSeen  DateTime @default(now())
+
+  @@map("crm_chat_presence")
+}

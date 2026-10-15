@@ -14,6 +14,8 @@ import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
+import Dropdown from '@/components/ui/Dropdown'
+import EllipsisButton from '@/components/shared/EllipsisButton'
 import Switcher from '@/components/ui/Switcher'
 import Table from '@/components/ui/Table'
 import Tag from '@/components/ui/Tag'
@@ -228,7 +230,7 @@ const Team = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
 
                 <div className="overflow-x-auto">
-                    <Table>
+                    <Table compact overflow={false}>
                         <THead>
                             <Tr>
                                 <Th>Member</Th>
@@ -254,8 +256,8 @@ const Team = () => {
                                     <Td>
                                         <div className="flex flex-wrap items-center gap-1.5">
                                             {m.admin ? <Tag className="bg-purple-100 text-purple-700">Super Admin</Tag> : (
-                                                <div className="w-44">
-                                                    <Select isClearable size="sm" placeholder="No role" options={roleOptions} value={roleOptions.find((o) => o.value === m.role?.id) || null} onChange={(o) => changeRole(m, o)} />
+                                                <div className="w-36">
+                                                    <Select isClearable size="sm" placeholder="No role" options={roleOptions} value={roleOptions.find((o) => o.value === m.role?.id) || null} onChange={(o) => changeRole(m, o)} menuPortalTarget={document.body} menuPosition="fixed" menuPlacement="auto" classNames={{ menu: () => 'select-menu !min-w-[210px]' }} styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} />
                                                 </div>
                                             )}
                                         </div>
@@ -268,20 +270,24 @@ const Team = () => {
                                     <Td>
                                         <div className="flex items-center gap-2.5">
                                             <Switcher checked={m.active} onChange={(checked) => toggleActive(m, checked)} />
-                                            <span className={m.active ? 'text-emerald-600' : 'text-gray-400'}>{m.active ? 'Active' : 'Inactive'}</span>
+                                            <span className={`hidden 2xl:inline ${m.active ? 'text-emerald-600' : 'text-gray-400'}`}>{m.active ? 'Active' : 'Inactive'}</span>
                                             {!m.hasLogin && <Tooltip title="No login account yet"><Tag className="bg-amber-100 text-amber-700">No login</Tag></Tooltip>}
                                         </div>
                                     </Td>
-                                    <Td className="whitespace-nowrap text-gray-500">{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, YYYY HH:mm') : 'Never'}</Td>
+                                    <Td className="whitespace-nowrap text-gray-500">{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : 'Never'}</Td>
                                     <Td>
-                                        <div className="flex items-center justify-end gap-1">
+                                        <div className="flex items-center justify-end gap-0.5">
                                             <Tooltip title="Edit"><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
                                             <Tooltip title="Permissions"><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
-                                            {m.hasLogin && <Tooltip title="Reset link (member sets own password)"><Button size="sm" variant="plain" icon={<TbLink />} onClick={() => setConfirm({ member: m, kind: 'link' })} /></Tooltip>}
                                             {m.hasLogin && <Tooltip title="Set a password"><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
-                                            {m.hasLogin && <Tooltip title="One-time password"><Button size="sm" variant="plain" icon={<TbKey />} onClick={() => setConfirm({ member: m, kind: 'reset' })} /></Tooltip>}
-                                            {m.hasLogin && m.twoFactor && canAdmin && <Tooltip title="Reset two-step verification"><Button size="sm" variant="plain" icon={<TbDeviceMobileOff />} onClick={() => setConfirm({ member: m, kind: 'twofactor' })} /></Tooltip>}
-                                            {m.hasLogin && <Tooltip title="Sign out everywhere"><Button size="sm" variant="plain" icon={<TbLogout />} onClick={() => setConfirm({ member: m, kind: 'signout' })} /></Tooltip>}
+                                            {m.hasLogin && (
+                                                <Dropdown placement="bottom-end" renderTitle={<EllipsisButton />}>
+                                                    <Dropdown.Item eventKey="link" onClick={() => setConfirm({ member: m, kind: 'link' })}><TbLink className="mr-2 text-lg" />Reset link</Dropdown.Item>
+                                                    <Dropdown.Item eventKey="reset" onClick={() => setConfirm({ member: m, kind: 'reset' })}><TbKey className="mr-2 text-lg" />One-time password</Dropdown.Item>
+                                                    <Dropdown.Item eventKey="signout" onClick={() => setConfirm({ member: m, kind: 'signout' })}><TbLogout className="mr-2 text-lg" />Sign out everywhere</Dropdown.Item>
+                                                    {m.twoFactor && canAdmin && <Dropdown.Item eventKey="twofactor" onClick={() => setConfirm({ member: m, kind: 'twofactor' })}><TbDeviceMobileOff className="mr-2 text-lg" />Reset two-step verification</Dropdown.Item>}
+                                                </Dropdown>
+                                            )}
                                         </div>
                                     </Td>
                                 </Tr>

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.17',
+        date: '2026-10-15',
+        title: 'Team list redesigned',
+        items: ['Team -> Members fits the screen without sideways scrolling: compact rows, a smaller role picker, shorter last-login date, and the secondary actions (reset link, one-time password, sign out everywhere, two-step reset) are in a "..." menu next to Edit, Permissions and Set password', 'The role dropdown now opens over the page (not inside the table), so you never have to scroll to see its options, also on the last row']
+    },
+    {
         version: '0.30.16',
         date: '2026-10-15',
         title: 'Sign-in layout centred',

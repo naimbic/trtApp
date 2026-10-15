@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.2',
+        date: '2026-10-15',
+        title: 'Super Admin and Admin separated',
+        items: ['The Super Admin on/off switch is gone from the member form: Super Admin is only ask@trtdigital.ma and has no settings; everyone else, including the former Perfex administrators, is an Admin (a normal role) whose permissions you can edit in Team and Roles & permissions', 'On the first start the former administrators are converted to the Admin role automatically (only once, and only while the Super Admin account exists)', 'New helper: node scripts/staff-check.mjs email shows why a team member cannot sign in and can unlock or reset the password'],
+    },
+    {
         version: '0.30.1',
         date: '2026-10-15',
         title: 'Login pages',

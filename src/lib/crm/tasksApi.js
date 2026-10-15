@@ -186,6 +186,23 @@ export async function reorderTasks(status, ids) {
     return { success: true }
 }
 
+/** Drag and drop on the task lists: optionally move a task to another project / group, then store the order of `ids`. */
+export async function regroupTask({ id, relType, relId, ids }) {
+    const session = await requirePermission('tasks', 'edit')
+    const a = await access(session)
+    const where = await visibleWhere(a)
+    if (oid(id)) {
+        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { id: true } })
+        if (!t) throw fail('Task not found', 404)
+        if (relType === 'project' && oid(relId)) await prisma.crmTask.update({ where: { id }, data: { relType: 'project', relId } })
+        else if (relType === null || relType === 'none') await prisma.crmTask.update({ where: { id }, data: { relType: null, relId: null } })
+    }
+    for (const [i, tid] of (Array.isArray(ids) ? ids : []).filter(oid).entries()) {
+        await prisma.crmTask.updateMany({ where: { AND: [{ id: tid }, where] }, data: { kanbanOrder: i } })
+    }
+    return { success: true }
+}
+
 export async function deleteTask(id) {
     const session = await requirePermission('tasks', 'delete')
     const a = await access(session)

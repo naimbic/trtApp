@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.36.3',
+        date: '2026-10-15',
+        title: 'My tasks and Team tasks like the template',
+        items: ['My tasks and Team tasks now look like the template\'s task list: one block per project (and Other tasks), each with a grip to drag the whole block, rows with a round check, name, status and priority pills, date and person, and a + Add task bar that opens a small form (name, status, priority, person, date)', 'Drag a task up or down to reorder it, or into another project block to move it there; completed tasks stay in the list (older ones are hidden until you switch on Show all completed); click a task name to open it']
+    },
+    {
         version: '0.36.2',
         date: '2026-10-15',
         title: 'Activity log permission',

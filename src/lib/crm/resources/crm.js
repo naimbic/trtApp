@@ -1,3 +1,4 @@
+const LANG_OPTIONS = [{ value: 'english', label: 'English' }, { value: 'french', label: 'Français' }, { value: 'spanish', label: 'Español' }, { value: 'japanese', label: '日本語' }, { value: 'arabic', label: 'العربية' }]
 // Resource configs for the crm domain (see docs/perfex/ARCHITECTURE.md)
 const yesNo = [
     { value: 'true', label: 'Yes' },
@@ -28,7 +29,7 @@ const resources = [
             { key: 'vat', label: 'VAT / ICE', type: 'text', section: 'General' },
             { key: 'phoneNumber', label: 'Phone', type: 'text', section: 'General' },
             { key: 'website', label: 'Website', type: 'url', section: 'General' },
-            { key: 'defaultLanguage', label: 'Default language', type: 'text', section: 'General' },
+            { key: 'defaultLanguage', label: 'Default language', type: 'select', options: LANG_OPTIONS, section: 'General' },
             { key: 'active', label: 'Active', type: 'boolean', section: 'General' },
             { key: 'showPrimaryContact', label: 'Show primary contact', type: 'boolean', section: 'General' },
             { key: 'address', label: 'Address', type: 'textarea', section: 'Address' },
@@ -97,6 +98,7 @@ const resources = [
             { key: 'title', label: 'Position', type: 'text', section: 'General' },
             { key: 'email', label: 'Email', type: 'email', required: true, section: 'General' },
             { key: 'phoneNumber', label: 'Phone', type: 'text', section: 'General' },
+            { key: 'language', label: 'Language', type: 'select', options: LANG_OPTIONS, section: 'General' },
             { key: 'direction', label: 'Direction', type: 'select', section: 'General', options: [{ value: 'ltr', label: 'LTR' }, { value: 'rtl', label: 'RTL' }] },
             { key: 'isPrimary', label: 'Primary contact', type: 'boolean', section: 'General' },
             { key: 'active', label: 'Active', type: 'boolean', section: 'General' },

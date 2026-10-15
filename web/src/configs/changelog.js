@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.38.0',
+        date: '2026-10-15',
+        title: 'Your language is kept: profile, client and contact',
+        items: ['Team members: the language chosen in My profile or with the flag menu is saved on the account and applied on every browser and device from the first screen, in the staff area and everywhere (Japanese stays Japanese until you change it)', 'Clients: the client\'s Default language is now a list (English, Français, Español, 日本語, العربية) and each contact has its own Language; the client area opens in the contact\'s language, else the client\'s, on every browser; a contact who picks another language with the flag menu keeps it', 'Profile language list now matches the languages of the app']
+    },
+    {
         version: '0.37.2',
         date: '2026-10-15',
         title: 'Template project addresses open the real pages',

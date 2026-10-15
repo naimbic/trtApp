@@ -6,6 +6,7 @@ import { numberFormatter as proposalNumber } from '@/lib/crm/proposalDoc'
 import { round2 } from '@/lib/crm/sales/calc'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFiles'
+import { codeOfLanguage } from '@/lib/crm/langCodes'
 import { notifyStaffOfClient } from '@/lib/crm/ticketNotify'
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
@@ -25,7 +26,9 @@ export async function me() {
     const unreadTickets = (await prisma.crmTicket.findMany({ where: { clientId: s.client.id, clientRead: 0 }, select: { lastReply: true } })).filter((t) => t.lastReply).length
     const co = await prisma.crmOption.findMany({ where: { name: { in: ['companyname', 'company_logo', 'company_logo_dark'] } } })
     const o = Object.fromEntries(co.map((x) => [x.name, x.value]))
-    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null }, can: s.can, unreadTickets, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
+    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null },
+        // the contact's own choice, else the client's language: it follows them on every browser
+        language: codeOfLanguage(c.language) || codeOfLanguage(s.client.defaultLanguage), can: s.can, unreadTickets, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
 }
 
 async function invoicesOf(clientId) {
@@ -191,6 +194,7 @@ export async function updateProfile(body) {
     if ('lastName' in body) data.lastName = String(body.lastName || '').trim().slice(0, 80) || null
     if ('phone' in body) data.phoneNumber = String(body.phone || '').trim().slice(0, 40) || null
     if ('title' in body) data.title = String(body.title || '').trim().slice(0, 80) || null
+    if ('language' in body) data.language = codeOfLanguage(body.language) ? String(body.language).toLowerCase() : null
     await prisma.crmContact.update({ where: { id: s.contact.id }, data })
     return { success: true }
 }

@@ -8,6 +8,7 @@ import {
     LAYOUT_BLANK,
 } from '@/constants/theme.constant'
 import Loading from '@/components/shared/Loading'
+import AccountLanguage from '@/components/template/AccountLanguage'
 
 const layouts = {
     [LAYOUT_COLLAPSIBLE_SIDE]: lazy(
@@ -24,6 +25,8 @@ const PostLoginLayout = ({ layoutType, children }) => {
     const AppLayout = layouts[layoutType] ?? layouts[Object.keys(layouts)[0]]
 
     return (
+        <>
+        <AccountLanguage />
         <Suspense
             fallback={
                 <div className="flex flex-auto flex-col h-[100vh]">
@@ -33,6 +36,7 @@ const PostLoginLayout = ({ layoutType, children }) => {
         >
             <AppLayout>{children}</AppLayout>
         </Suspense>
+        </>
     )
 }
 

@@ -49,6 +49,14 @@ const Shell = () => {
     // first visit (nothing chosen yet): use the client's own language, else the browser's
     useEffect(() => {
         if (!me) return
+        // the language saved on the contact (or the client's) wins on every browser; without one: this browser's choice, else the browser language
+        const cur = useLocaleStore.getState().currentLang
+        if (me.language) {
+            let done = false
+            try { done = !!sessionStorage.getItem(`portal-lang:${me.language}`); sessionStorage.setItem(`portal-lang:${me.language}`, '1') } catch { /* storage blocked */ }
+            if (me.language !== cur && !done) useLocaleStore.getState().setLang(me.language)
+            return
+        }
         let chosen = true
         try { chosen = !!localStorage.getItem('locale') } catch { /* storage blocked */ }
         if (!chosen) useLocaleStore.getState().setLang(guessLang(me.client.language))

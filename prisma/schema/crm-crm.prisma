@@ -64,6 +64,8 @@ model CrmClient {
 /// tblcontacts
 model CrmContact {
   id                      String    @id @default(auto()) @map("_id") @db.ObjectId
+  /// language chosen by the contact (english | french | ...), else the client's default language
+  language                String?
   legacyId                Int?
   createdAt               DateTime  @default(now()) // datecreated
   updatedAt               DateTime  @updatedAt

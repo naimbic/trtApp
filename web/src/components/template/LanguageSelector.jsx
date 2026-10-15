@@ -6,6 +6,8 @@ import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useLocaleStore } from '@/store/localeStore'
 import { HiCheck } from 'react-icons/hi'
 import { useThemeStore } from '@/store/themeStore'
+import { useSessionUser } from '@/store/authStore'
+import { saveAccountLanguage } from './AccountLanguage'
 import { tr } from '@/utils/t'
 
 const languageList = [
@@ -18,6 +20,7 @@ const languageList = [
 
 const _LanguageSelector = ({ className }) => {
     const { currentLang: locale, setLang } = useLocaleStore((state) => state)
+    const user = useSessionUser((s) => s.user)
 
     const selectLangFlag = useMemo(() => {
         return languageList.find((lang) => lang.value === locale)?.flag
@@ -45,7 +48,9 @@ const _LanguageSelector = ({ className }) => {
                         setLang(lang.value)
                         useThemeStore.getState().setDirection(lang.value === 'ar' ? 'rtl' : 'ltr')
                         // every text of the staff area is drawn once, so the page restarts in the new language
-                        setTimeout(() => window.location.reload(), 120)
+                        const signedIn = window.location.pathname.startsWith('/portal') ? !window.location.pathname.includes('sign-in') && !window.location.pathname.includes('forgot') : !!user?.authority?.length
+                        // a signed-in person's choice is stored on the account first, then the page restarts in the new language
+                        Promise.race([signedIn ? saveAccountLanguage(lang.value) : Promise.resolve(), new Promise((r) => setTimeout(r, 1500))]).finally(() => window.location.reload())
                     }}
                 >
                     <span className="flex items-center">

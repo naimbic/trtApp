@@ -23,10 +23,13 @@ import { api, notify } from '@/views/crm/kit/api'
 import { resetMe } from '@/utils/hooks/useMe'
 import Security from './Security'
 import { tr } from '@/utils/t'
+import { UI_LANGUAGES, codeOfLanguage } from '@/lib/crm/langCodes'
+import { useLocaleStore } from '@/store/localeStore'
+import { savedLang } from '@/utils/t'
 
 const { TabList, TabNav, TabContent } = Tabs
 
-const LANGUAGES = ['english', 'french', 'arabic', 'spanish', 'german', 'italian', 'portuguese', 'dutch', 'turkish'].map((v) => ({ value: v, label: v[0].toUpperCase() + v.slice(1) }))
+const LANGUAGES = UI_LANGUAGES.map((l) => ({ value: l.name, label: l.label }))
 const DIAL = [...new Map(countryList.map((c) => [c.dialCode, { value: c.dialCode, label: `${c.dialCode}  ${c.label}` }])).values()]
 const COUNTRIES = countryList.map((c) => ({ value: c.value, label: c.label }))
 const ZONES = (typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : ['UTC', 'Africa/Casablanca', 'Europe/Paris']).map((z) => ({ value: z, label: z.replace(/_/g, ' ') }))
@@ -109,6 +112,9 @@ const Profile = () => {
             if (d.preferences.display.theme !== 'system') setMode(d.preferences.display.theme)
             else { try { localStorage.removeItem('themeModeChosen') } catch { /* private mode */ } setMode(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); try { localStorage.removeItem('themeModeChosen') } catch { /* private mode */ } }
             resetMe()
+            // the language chosen here is applied at once and kept on every browser
+            const langCode = codeOfLanguage(d.staff?.defaultLanguage)
+            if (langCode && langCode !== savedLang()) { useLocaleStore.getState().setLang(langCode); useThemeStore.getState().setDirection(langCode === 'ar' ? 'rtl' : 'ltr'); setTimeout(() => window.location.reload(), 400) }
             notify('success', tr("Profile saved"))
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }

@@ -1,4 +1,6 @@
 import prisma from '@/lib/prisma'
+import { ROLES } from '@/lib/crm/standardRoles'
+import { cleanPermissions } from '@/lib/crm/permissionCatalog'
 
 const TABS = ['report_sales', 'report_profit', 'report_leads', 'report_support', 'report_work']
 const MARK = 'perm_migration_reports_v1'
@@ -24,4 +26,15 @@ export async function migratePermissions() {
         await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
     }
     await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
+/** Creates the standard roles that do not exist yet (never changes an existing role). Runs once, marker-guarded. */
+export async function ensureStandardRoles() {
+    const MARK2 = 'standard_roles_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK2 } })) return
+    for (const [name, perms] of Object.entries(ROLES)) {
+        if (await prisma.crmRole.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } })) continue
+        await prisma.crmRole.create({ data: { name, permissionsRaw: JSON.stringify(cleanPermissions(perms)) } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK2, value: new Date().toISOString() } })
 }

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.8',
+        date: '2026-10-15',
+        title: 'Standard roles created on start',
+        items: ['The standard roles (Super Admin, Admin, Account Manager, Editor, Sales Rep, Support Agent, Accountant, Project Manager, Viewer) are created automatically the first time the app starts on a database; existing roles are never changed'],
+    },
+    {
         version: '0.29.7',
         date: '2026-10-15',
         title: 'Role icons, login images',

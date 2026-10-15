@@ -40,6 +40,7 @@ COPY --from=api /app/messages ./messages
 COPY --from=api /app/next.config.mjs ./next.config.mjs
 COPY --from=api /app/scripts ./scripts
 COPY --from=api /app/src/lib/crm/permissionCatalog.js ./src/lib/crm/permissionCatalog.js
+COPY --from=api /app/src/lib/crm/standardRoles.js ./src/lib/crm/standardRoles.js
 COPY --from=web /app/web/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh

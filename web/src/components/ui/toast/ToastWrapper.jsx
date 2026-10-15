@@ -16,49 +16,34 @@ import { createRoot } from 'react-dom/client'
 const useMessages = (msgKey) => {
     const [messages, setMessages] = useState([])
 
-    const getKey = useCallback(
-        (key) => {
-            if (typeof key === 'undefined' && messages.length) {
-                key = messages[messages.length - 1].key
-            }
-            return key
-        },
-        [messages],
-    )
-
+    // functional updates everywhere: several toasts fired in the same tick must all be kept (a stale
+    // copy of the list used to make the last one overwrite the others)
     const push = useCallback(
         (message) => {
             const key = msgKey || '_' + Math.random().toString(36).substr(2, 12)
-            setMessages([...messages, { key, visible: true, node: message }])
+            setMessages((list) => [...list, { key, visible: true, node: message }])
             return key
         },
-        [messages, msgKey],
+        [msgKey],
     )
 
     const removeAll = useCallback(() => {
-        setMessages(messages.map((msg) => ({ ...msg, visible: false })))
+        setMessages((list) => list.map((msg) => ({ ...msg, visible: false })))
         setTimeout(() => {
             setMessages([])
-        }, 50)
-    }, [messages])
+        }, 200)
+    }, [])
 
-    const remove = useCallback(
-        (key) => {
-            setMessages(
-                messages.map((elm) => {
-                    if (elm.key === getKey(key)) {
-                        elm.visible = false
-                    }
-                    return elm
-                }),
-            )
-
-            setTimeout(() => {
-                setMessages(messages.filter((msg) => msg.visible))
-            }, 50)
-        },
-        [messages, getKey],
-    )
+    const remove = useCallback((key) => {
+        setMessages((list) => {
+            const k = typeof key === 'undefined' && list.length ? list[list.length - 1].key : key
+            return list.map((elm) => (elm.key === k ? { ...elm, visible: false } : elm))
+        })
+        // let the exit animation (0.15s) finish before the toast is dropped
+        setTimeout(() => {
+            setMessages((list) => list.filter((msg) => msg.visible))
+        }, 200)
+    }, [])
 
     return { messages, push, removeAll, remove }
 }
@@ -100,6 +85,7 @@ const ToastWrapper = (props) => {
         return (
             <motion.div
                 key={item.key}
+                layout
                 className={'toast-wrapper'}
                 initial={placementTransition.variants.initial}
                 variants={placementTransition.variants}

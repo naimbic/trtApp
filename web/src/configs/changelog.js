@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.11',
+        date: '2026-10-15',
+        title: 'Notifications (toasts) fixed',
+        items: ['Several notifications fired at the same moment are now all shown (before, only the last one survived and the others flashed and vanished)', 'Notifications fade out fully instead of being cut off, and the ones below slide up smoothly when one closes'],
+    },
+    {
         version: '0.30.10',
         date: '2026-10-15',
         title: 'Sign-in clears old session cookies',

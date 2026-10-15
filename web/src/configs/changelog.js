@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.3',
+        date: '2026-10-15',
+        title: 'Assign roles from the Team list',
+        items: ['Team -> Members: the Role column is now a small dropdown, pick a role for a member right in the list and they get that role\'s permissions immediately (Super Admin rows stay fixed)'],
+    },
+    {
         version: '0.30.2',
         date: '2026-10-15',
         title: 'Super Admin and Admin separated',

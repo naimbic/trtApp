@@ -13,6 +13,7 @@ import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Segment from '@/components/ui/Segment'
+import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import Table from '@/components/ui/Table'
 import Tag from '@/components/ui/Tag'
@@ -125,6 +126,19 @@ const Team = () => {
         }
     }
 
+    const roleOptions = useMemo(() => lookups.roles.filter((r) => !/^super admin$/i.test(r.name)).map((r) => ({ value: r.id, label: r.name })), [lookups.roles])
+    // quick assign: picking a role in the table gives the member that role's permissions right away
+    const changeRole = async (member, option) => {
+        const roleId = option?.value || null
+        try {
+            await api(`/api/crm/team/${member.id}`, { method: 'PATCH', body: JSON.stringify({ roleId, applyRolePermissions: true }) })
+            notify('success', roleId ? `${member.name} is now ${option.label}` : `${member.name} has no role`)
+            load()
+        } catch (e) {
+            notify('danger', e.message)
+        }
+    }
+
     const runConfirm = async () => {
         const { member, kind } = confirm
         try {
@@ -225,8 +239,11 @@ const Team = () => {
                                     </Td>
                                     <Td>
                                         <div className="flex flex-wrap items-center gap-1.5">
-                                            {m.admin && <Tag className="bg-purple-100 text-purple-700">Super Admin</Tag>}
-                                            {m.role ? <Tag>{m.role.name}</Tag> : !m.admin && <span className="text-gray-400">—</span>}
+                                            {m.admin ? <Tag className="bg-purple-100 text-purple-700">Super Admin</Tag> : (
+                                                <div className="w-44">
+                                                    <Select isClearable size="sm" placeholder="No role" options={roleOptions} value={roleOptions.find((o) => o.value === m.role?.id) || null} onChange={(o) => changeRole(m, o)} />
+                                                </div>
+                                            )}
                                         </div>
                                     </Td>
                                     <Td>

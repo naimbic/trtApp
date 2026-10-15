@@ -31,3 +31,13 @@ point `CrmFile`/`CrmProjectFile`/`CrmTicketAttachment` paths at them (11 ticket 
 Parser, all mappers and the generic CRUD layer are tested against synthetic rows only. The Perfex DDL was
 written from knowledge of Perfex 3.4, NOT from the real dump — run the dry run first and review
 `assumptions` listed in `docs/perfex/COVERAGE.md`.
+
+## Attachments and pictures (after the data import)
+```bash
+# attachments: 516 files -> Space (trtcrm/perfex/...) + file rows on each record (dry run first, then --apply)
+node scripts/perfex-import/upload-attachments.mjs <data-dir>/perfex-2026-09-15-v2 [--apply]
+# staff / contact profile pictures
+node scripts/perfex-import/upload-profile-images.mjs <data-dir>/perfex-core/site [--apply]
+# another database (e.g. staging) restored from the same dump: create only the file rows from the file written by --apply
+node scripts/perfex-import/upload-attachments.mjs --rows perfex-media-rows.json
+```

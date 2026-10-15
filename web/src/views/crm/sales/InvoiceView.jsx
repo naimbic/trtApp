@@ -10,6 +10,8 @@ import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Segment from '@/components/ui/Segment'
+import Dropdown from '@/components/ui/Dropdown'
+import EllipsisButton from '@/components/shared/EllipsisButton'
 import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify, useCan } from '../kit/api'
 import { makeMoney } from '../clients/shared'
@@ -77,105 +79,130 @@ const InvoiceView = () => {
         else if (c?.payment) await run(() => api(`/api/crm/sales/payments/${c.payment.id}`, { method: 'DELETE' }), 'Payment deleted')
     }
 
+    const canEdit = can('invoices', 'edit') && !cancelled
+    const dueIn = invoice.dueDate ? dayjs(fmtDate(invoice.dueDate)).diff(dayjs(fmtDate(new Date())), 'day') : null
+    const pct = invoice.total > 0 ? Math.min(100, Math.round((paid / invoice.total) * 100)) : 0
+    const dueHint = st === 2 || cancelled || dueIn == null ? null : dueIn < 0 ? { text: `${-dueIn} day${dueIn === -1 ? '' : 's'} overdue`, cls: 'text-red-500' } : { text: dueIn === 0 ? 'Due today' : `in ${dueIn} day${dueIn === 1 ? '' : 's'}`, cls: 'text-gray-400' }
+    const kpi = 'rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800'
+    const label = 'text-xs font-semibold uppercase tracking-wide text-gray-500'
+    const sizeFrame = (e) => { try { const d = e.target.contentDocument; if (d) e.target.style.height = `${Math.max(d.documentElement.scrollHeight, d.body.scrollHeight) + 8}px` } catch { /* keep the default height */ } }
+
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/invoices')} />
-                <h3 className="mr-2">Invoice {invoice.displayNumber}</h3>
+                <h3 className="mr-1">Invoice {invoice.displayNumber}</h3>
                 <StatusTag status={st} />
                 {!invoice.sent && st === 1 && <span className="text-xs text-gray-400">not sent</span>}
-                <div className="ml-auto flex flex-wrap gap-2">
-                    <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>PDF</Button>
-                    <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/invoices/${id}/pdf?download=1` }}>Download</Button>
-                    {can('invoices', 'edit') && !cancelled && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>Send</Button>}
-                    {can('invoices', 'edit') && !cancelled && [1, 3, 4].includes(st) && <Button size="sm" icon={<TbBellRinging />} onClick={() => setMail('invoice-overdue-notice')}>Reminder</Button>}
-                    {can('invoices', 'edit') && !cancelled && payments.length > 0 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-payment-recorded')}>Receipt</Button>}
-                    {can('invoices', 'edit') && !cancelled && !invoice.sent && <Button size="sm" icon={<TbSend />} loading={busy} onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'markSent' } }), 'Marked as sent')}>Mark as sent</Button>}
+                <div className="ml-auto flex flex-wrap items-center gap-2">
                     {can('payments', 'create') && !cancelled && balance > 0 && <Button size="sm" variant="solid" icon={<TbCash />} onClick={() => { setPay((p) => ({ ...p, amount: balance })); setPayOpen(true) }}>Record payment</Button>}
-                    {can('invoices', 'edit') && !cancelled && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/invoices/${id}/edit`)}>Edit</Button>}
-                    {can('invoices', 'edit') && (cancelled ? <Button size="sm" loading={busy} onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'uncancel' } }), 'Invoice restored')}>Mark as not cancelled</Button> : <Button size="sm" icon={<TbBan />} onClick={() => setConfirm('cancel')}>Cancel</Button>)}
-                    {can('invoices', 'delete') && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>Delete</Button>}
+                    {canEdit && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>Send</Button>}
+                    <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>PDF</Button>
+                    {canEdit && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/invoices/${id}/edit`)}>Edit</Button>}
+                    <Dropdown placement="bottom-end" renderTitle={<EllipsisButton size="sm" />}>
+                        <Dropdown.Item eventKey="dl" onClick={() => { window.location.href = `/api/crm/sales/invoices/${id}/pdf?download=1` }}><TbDownload className="text-lg" /><span>Download PDF</span></Dropdown.Item>
+                        {canEdit && [1, 3, 4].includes(st) && <Dropdown.Item eventKey="rem" onClick={() => setMail('invoice-overdue-notice')}><TbBellRinging className="text-lg" /><span>Send reminder</span></Dropdown.Item>}
+                        {canEdit && payments.length > 0 && <Dropdown.Item eventKey="rec" onClick={() => setMail('invoice-payment-recorded')}><TbMail className="text-lg" /><span>Send receipt</span></Dropdown.Item>}
+                        {canEdit && !invoice.sent && <Dropdown.Item eventKey="sent" onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'markSent' } }), 'Marked as sent')}><TbSend className="text-lg" /><span>Mark as sent</span></Dropdown.Item>}
+                        {can('invoices', 'edit') && (cancelled ? <Dropdown.Item eventKey="un" onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'uncancel' } }), 'Invoice restored')}><TbBan className="text-lg" /><span>Mark as not cancelled</span></Dropdown.Item> : <Dropdown.Item eventKey="cx" onClick={() => setConfirm('cancel')}><TbBan className="text-lg" /><span>Cancel invoice</span></Dropdown.Item>)}
+                        {can('invoices', 'delete') && <Dropdown.Item eventKey="del" onClick={() => setConfirm('delete')}><TbTrash className="text-lg text-red-500" /><span className="text-red-500">Delete</span></Dropdown.Item>}
+                    </Dropdown>
                 </div>
             </div>
 
             <div className="mb-4"><Segment size="sm" value={view} onChange={(v) => v && setView(v)}><Segment.Item value="details">Details</Segment.Item><Segment.Item value="document">Document</Segment.Item></Segment></div>
+
             {view === 'document' && (
-                <Card bodyClass="p-0 sm:p-0">
-                    <div className="flex items-center justify-between border-b px-4 py-2 text-sm text-gray-500"><span>This is the invoice your client receives</span><Button size="xs" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>Open PDF</Button></div>
-                    <iframe title="Invoice document" src={`/api/crm/sales/invoices/${id}/html?v=${Math.round((invoice.total || 0) * 100)}-${payments.length}-${st}`} className="block h-[1180px] w-full bg-white" />
-                </Card>
+                <div className="rounded-2xl bg-gray-100 p-3 sm:p-6 dark:bg-gray-900/40">
+                    <div className="mx-auto mb-3 flex max-w-[860px] items-center justify-between gap-2 text-sm text-gray-500">
+                        <span>This is the invoice your client receives</span>
+                        <span className="flex gap-2"><Button size="xs" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>Open PDF</Button><Button size="xs" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/invoices/${id}/pdf?download=1` }}>Download</Button></span>
+                    </div>
+                    <div className="mx-auto max-w-[860px] overflow-hidden rounded-lg bg-white px-4 py-6 shadow-md ring-1 ring-black/5 sm:px-10 sm:py-10">
+                        <iframe title="Invoice document" onLoad={sizeFrame} src={`/api/crm/sales/invoices/${id}/html?v=${Math.round((invoice.total || 0) * 100)}-${payments.length}-${st}-${items.map((i) => i.id).join('')}-${invoice.updatedAt || ''}`} className="block h-[1180px] w-full bg-white" />
+                    </div>
+                </div>
             )}
-            <div className={`flex flex-col gap-4${view === 'document' ? ' hidden' : ''}`}>
-                <Card>
-                    <div className="grid gap-4 text-sm md:grid-cols-4">
-                        <div><div className="text-gray-500">Client</div>{client ? <Link className="font-semibold hover:underline" to={`/crm/clients/${client.id}`}>{client.company}</Link> : invoice.deletedCustomerName || '—'}</div>
-                        <div><div className="text-gray-500">Invoice date</div>{fmtDate(invoice.date) || '—'}</div>
-                        <div><div className="text-gray-500">Due date</div>{fmtDate(invoice.dueDate) || '—'}</div>
-                        <div><div className="text-gray-500">Balance due</div><span className="font-semibold">{money(balance)}</span></div>
+
+            <div className={view === 'document' ? 'hidden' : ''}>
+                <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+                    <div className={`${kpi} col-span-2 lg:col-span-1`}><div className={label}>Client</div><div className="mt-1 truncate font-semibold heading-text">{client ? <Link className="hover:text-primary" to={`/crm/clients/${client.id}`}>{client.company}</Link> : invoice.deletedCustomerName || '—'}</div><div className="mt-0.5 text-xs text-gray-400">Invoice {fmtDate(invoice.date) || '—'}</div></div>
+                    <div className={kpi}><div className={label}>Due date</div><div className="mt-1 font-semibold heading-text">{fmtDate(invoice.dueDate) || '—'}</div>{dueHint && <div className={`mt-0.5 text-xs ${dueHint.cls}`}>{dueHint.text}</div>}</div>
+                    <div className={kpi}><div className={label}>Total</div><div className="mt-1 text-lg font-bold heading-text tabular-nums">{money(invoice.total)}</div></div>
+                    <div className={kpi}><div className={label}>Paid</div><div className="mt-1 text-lg font-bold text-emerald-600 tabular-nums">{money(paid)}</div><div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} /></div></div>
+                    <div className={`${kpi} ${balance > 0 && st === 4 ? 'border-red-200 dark:border-red-500/40' : ''}`}><div className={label}>Balance due</div><div className={`mt-1 text-lg font-bold tabular-nums ${balance > 0 ? (st === 4 ? 'text-red-600' : 'heading-text') : 'text-emerald-600'}`}>{money(balance)}</div></div>
+                </div>
+
+                <div className="grid items-start gap-4 xl:grid-cols-3">
+                    <div className="flex flex-col gap-4 xl:col-span-2">
+                        <Card>
+                            <h5 className="mb-3">Items</h5>
+                            <div className="overflow-x-auto">
+                                <div className="min-w-[560px]">
+                                    <div className="grid grid-cols-[28px_minmax(0,1fr)_80px_110px_70px_120px] gap-x-3 border-b pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><span>#</span><span>Item</span><span className="text-right">Qty</span><span className="text-right">Rate</span><span>Tax</span><span className="text-right">Amount</span></div>
+                                    {items.map((it, i) => (
+                                        <div key={it.id} className="grid grid-cols-[28px_minmax(0,1fr)_80px_110px_70px_120px] gap-x-3 border-b border-gray-100 py-3 text-sm last:border-0 dark:border-gray-700">
+                                            <span className="text-gray-400">{i + 1}</span>
+                                            <div className="min-w-0"><div className="font-medium heading-text">{it.description}</div>{it.longDescription && <div className="mt-0.5 whitespace-pre-line text-xs text-gray-500">{it.longDescription}</div>}</div>
+                                            <span className="text-right tabular-nums">{it.qty}{it.unit ? ` ${it.unit}` : ''}</span>
+                                            <span className="text-right tabular-nums">{money(it.rate)}</span>
+                                            <span className="flex flex-wrap gap-1">{it.taxes.length ? it.taxes.map((t, k) => <span key={k} className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-700">{t.rate}%</span>) : <span className="text-gray-400">—</span>}</span>
+                                            <span className="text-right font-semibold tabular-nums">{money(it.qty * it.rate)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <dl className="ml-auto mt-4 w-full max-w-sm rounded-xl bg-gray-50 p-4 text-sm dark:bg-gray-700/40">
+                                <div className="flex justify-between py-1"><dt className="text-gray-500">Sub total</dt><dd className="tabular-nums">{money(invoice.subtotal)}</dd></div>
+                                {invoice.discountTotal > 0 && <div className="flex justify-between py-1"><dt className="text-gray-500">Discount{invoice.discountPercent ? ` (${invoice.discountPercent}%)` : ''}</dt><dd className="tabular-nums">-{money(invoice.discountTotal)}</dd></div>}
+                                {totals.taxes.map((t) => <div key={`${t.name}|${t.rate}`} className="flex justify-between py-1"><dt className="text-gray-500">{t.name} ({t.rate}%)</dt><dd className="tabular-nums">{money(t.total)}</dd></div>)}
+                                {!!invoice.adjustment && <div className="flex justify-between py-1"><dt className="text-gray-500">Adjustment</dt><dd className="tabular-nums">{money(invoice.adjustment)}</dd></div>}
+                                <div className="mt-1 flex justify-between border-t border-gray-200 pt-2 text-base font-bold dark:border-gray-600"><dt>Total</dt><dd className="tabular-nums">{money(invoice.total)}</dd></div>
+                                <div className="flex justify-between py-1 text-emerald-600"><dt>Total paid</dt><dd className="tabular-nums">{money(paid)}</dd></div>
+                                <div className="flex justify-between py-1 font-semibold"><dt>Amount due</dt><dd className="tabular-nums">{money(balance)}</dd></div>
+                            </dl>
+                        </Card>
+
+                        {(invoice.clientNote || invoice.terms) && (
+                            <Card>
+                                <div className="grid gap-4 text-sm md:grid-cols-2">
+                                    {invoice.clientNote && <div><div className={label}>Client note</div><p className="mt-1 whitespace-pre-line">{invoice.clientNote}</p></div>}
+                                    {invoice.terms && <div><div className={label}>Terms</div><p className="mt-1 whitespace-pre-line">{invoice.terms}</p></div>}
+                                </div>
+                            </Card>
+                        )}
                     </div>
-                </Card>
 
-                <Card>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead><tr className="border-b text-left text-gray-500"><th className="pb-2">Item</th><th className="pb-2 text-right">Qty</th><th className="pb-2 text-right">Rate</th><th className="pb-2">Tax</th><th className="pb-2 text-right">Amount</th></tr></thead>
-                            <tbody>
-                                {items.map((it) => (
-                                    <tr key={it.id} className="border-b align-top">
-                                        <td className="py-2"><div className="font-medium">{it.description}</div>{it.longDescription && <div className="whitespace-pre-line text-gray-500">{it.longDescription}</div>}</td>
-                                        <td className="py-2 text-right tabular-nums">{it.qty}{it.unit ? ` ${it.unit}` : ''}</td>
-                                        <td className="py-2 text-right tabular-nums">{money(it.rate)}</td>
-                                        <td className="py-2">{it.taxes.map((t) => `${t.rate}%`).join(', ') || '—'}</td>
-                                        <td className="py-2 text-right tabular-nums">{money(it.qty * it.rate)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="flex flex-col gap-4">
+                        <Card>
+                            <h5 className="mb-3">Payments</h5>
+                            {payments.length ? (
+                                <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {payments.map((p) => (
+                                        <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                                            <div className="min-w-0"><div className="font-semibold tabular-nums">{money(p.amount)}</div><div className="truncate text-xs text-gray-500">{fmtDate(p.paymentDate)} · {modeName[p.paymentModeId] || p.paymentMethod || '—'}{p.transactionId ? ` · ${p.transactionId}` : ''}</div>{p.note && <div className="truncate text-xs text-gray-400">{p.note}</div>}</div>
+                                            {can('payments', 'delete') && <Button size="xs" variant="plain" icon={<TbTrash />} onClick={() => setConfirm({ payment: p })} />}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : <p className="text-sm text-gray-500">No payments yet.</p>}
+                        </Card>
+
+                        <Card>
+                            <h5 className="mb-3">Files</h5>
+                            <AttachmentsPanel relType="invoice" relId={id} canEdit={can('invoices', 'edit')} showClientToggle />
+                        </Card>
+
+                        {invoice.adminNote && <Card><h5 className="mb-2">Internal note</h5><p className="whitespace-pre-line text-sm">{invoice.adminNote}</p></Card>}
+
+                        {activity.length > 0 && (
+                            <Card>
+                                <h5 className="mb-3">Activity</h5>
+                                <ul className="flex flex-col gap-2 text-sm">{activity.map((a) => <li key={a.id}><div className="text-xs text-gray-400">{dayjs(a.date || a.createdAt).format('YYYY-MM-DD HH:mm')}</div>{a.description}</li>)}</ul>
+                            </Card>
+                        )}
                     </div>
-                    <dl className="ml-auto mt-4 w-full max-w-sm text-sm">
-                        <div className="flex justify-between py-1"><dt>Sub total</dt><dd className="tabular-nums">{money(invoice.subtotal)}</dd></div>
-                        {invoice.discountTotal > 0 && <div className="flex justify-between py-1"><dt>Discount{invoice.discountPercent ? ` (${invoice.discountPercent}%)` : ''}</dt><dd className="tabular-nums">-{money(invoice.discountTotal)}</dd></div>}
-                        {totals.taxes.map((t) => <div key={`${t.name}|${t.rate}`} className="flex justify-between py-1"><dt>{t.name} ({t.rate}%)</dt><dd className="tabular-nums">{money(t.total)}</dd></div>)}
-                        {!!invoice.adjustment && <div className="flex justify-between py-1"><dt>Adjustment</dt><dd className="tabular-nums">{money(invoice.adjustment)}</dd></div>}
-                        <div className="mt-1 flex justify-between border-t py-2 text-base font-semibold"><dt>Total</dt><dd className="tabular-nums">{money(invoice.total)}</dd></div>
-                        <div className="flex justify-between py-1"><dt>Total paid</dt><dd className="tabular-nums">{money(paid)}</dd></div>
-                        <div className="flex justify-between py-1 font-semibold"><dt>Amount due</dt><dd className="tabular-nums">{money(balance)}</dd></div>
-                    </dl>
-                </Card>
-
-                <Card>
-                    <h4 className="mb-3">Payments</h4>
-                    {payments.length ? (
-                        <table className="w-full text-sm">
-                            <thead><tr className="border-b text-left text-gray-500"><th className="pb-2">Date</th><th className="pb-2">Mode</th><th className="pb-2">Transaction</th><th className="pb-2">Note</th><th className="pb-2 text-right">Amount</th><th className="w-10" /></tr></thead>
-                            <tbody>{payments.map((p) => (
-                                <tr key={p.id} className="border-b"><td className="py-2">{fmtDate(p.paymentDate)}</td><td className="py-2">{modeName[p.paymentModeId] || p.paymentMethod || '—'}</td><td className="py-2">{p.transactionId || '—'}</td><td className="py-2">{p.note || '—'}</td><td className="py-2 text-right tabular-nums">{money(p.amount)}</td><td className="py-2">{can('payments', 'delete') && <Button size="xs" variant="plain" icon={<TbTrash />} onClick={() => setConfirm({ payment: p })} />}</td></tr>
-                            ))}</tbody>
-                        </table>
-                    ) : <p className="text-sm text-gray-500">No payments yet.</p>}
-                </Card>
-
-                <Card>
-                    <h4 className="mb-3">Files</h4>
-                    <AttachmentsPanel relType="invoice" relId={id} canEdit={can('invoices', 'edit')} showClientToggle />
-                </Card>
-
-                {(invoice.clientNote || invoice.adminNote || invoice.terms) && (
-                    <Card>
-                        <div className="grid gap-4 text-sm md:grid-cols-3">
-                            {invoice.clientNote && <div><div className="text-gray-500">Client note</div><p className="whitespace-pre-line">{invoice.clientNote}</p></div>}
-                            {invoice.adminNote && <div><div className="text-gray-500">Admin note</div><p className="whitespace-pre-line">{invoice.adminNote}</p></div>}
-                            {invoice.terms && <div><div className="text-gray-500">Terms</div><p className="whitespace-pre-line">{invoice.terms}</p></div>}
-                        </div>
-                    </Card>
-                )}
-
-                {activity.length > 0 && (
-                    <Card>
-                        <h4 className="mb-3">Activity</h4>
-                        <ul className="flex flex-col gap-1 text-sm">{activity.map((a) => <li key={a.id}><span className="text-gray-500">{dayjs(a.date || a.createdAt).format('YYYY-MM-DD HH:mm')}</span> — {a.description}</li>)}</ul>
-                    </Card>
-                )}
+                </div>
             </div>
 
             <Dialog isOpen={payOpen} onClose={() => setPayOpen(false)} onRequestClose={() => setPayOpen(false)}>

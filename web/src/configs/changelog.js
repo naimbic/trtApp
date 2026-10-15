@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.26',
+        date: '2026-10-15',
+        title: 'Invoice page redesign, drag to reorder lines',
+        items: ['Invoice page: Record payment, Send, PDF and Edit stay in the header and the rest (download, reminder, receipt, mark as sent, cancel, delete) moved into a ... menu; a figures strip shows client, due date (with days overdue), total, paid (with a progress bar) and balance due; items on the left with numbered rows and tax chips, payments, files, internal note and activity on the right', 'Document tab: the invoice is shown as a paper sheet on a grey background, sized to its content with margins, refreshed whenever the lines, payments or status change, with Open PDF and Download buttons', 'Invoice, estimate, proposal and purchase order editors: drag a line by its handle (or focus it and use Space and the arrow keys) to reorder the lines; the order is saved and used in the PDF and the client page. Lines are now cards instead of a table row, and the tax menu no longer gets clipped'],
+    },
+    {
         version: '0.30.25',
         date: '2026-10-15',
         title: 'Contracts: open, lock when signed, signing proof',

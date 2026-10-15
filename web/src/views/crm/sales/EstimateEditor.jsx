@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbTrash } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -9,6 +8,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify } from '../kit/api'
+import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
 
@@ -62,7 +62,6 @@ const EstimateEditor = () => {
     const money = (n) => makeMoney(lookups.currencies)(n, v.currencyId)
     const newLine = () => ({ ...emptyLine(), taxes: (lookups.defaults?.taxes || []).filter((t) => lookups.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
     const set = (patch) => setV((s) => ({ ...s, ...patch }))
-    const setLine = (i, patch) => set({ items: v.items.map((r, idx) => (idx === i ? { ...r, ...patch } : r)) })
     const num = (key) => (e) => set({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
 
     const addFromCatalog = async (itemId) => {
@@ -112,24 +111,7 @@ const EstimateEditor = () => {
                         <h4>Items</h4>
                         <div className="w-72"><RelationSelect resource="items" value={null} onChange={addFromCatalog} /></div>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead><tr className="text-left text-gray-500"><th className="min-w-[240px] pb-2 pr-2">Description</th><th className="w-24 pb-2 pr-2">Qty</th><th className="w-32 pb-2 pr-2">Rate</th><th className="min-w-[180px] pb-2 pr-2">Tax</th><th className="w-32 pb-2 pr-2 text-right">Amount</th><th className="w-10 pb-2" /></tr></thead>
-                            <tbody>
-                                {v.items.map((it, i) => (
-                                    <tr key={i} className="align-top">
-                                        <td className="pb-3 pr-2"><Input value={it.description} placeholder="Description" onChange={(e) => setLine(i, { description: e.target.value })} /><Input className="mt-1" textArea rows={2} value={it.longDescription} placeholder="Long description (optional)" onChange={(e) => setLine(i, { longDescription: e.target.value })} /></td>
-                                        <td className="pb-3 pr-2"><Input type="number" step="any" value={it.qty} onChange={(e) => setLine(i, { qty: e.target.value === '' ? '' : Number(e.target.value) })} /></td>
-                                        <td className="pb-3 pr-2"><Input type="number" step="0.01" value={it.rate} onChange={(e) => setLine(i, { rate: e.target.value === '' ? '' : Number(e.target.value) })} /></td>
-                                        <td className="pb-3 pr-2"><Select isMulti options={taxOptions} value={taxOptions.filter((o) => it.taxes.some((t) => `${t.name}|${t.rate}` === o.value))} onChange={(opts) => setLine(i, { taxes: (opts || []).map((o) => o.tax) })} /></td>
-                                        <td className="pb-3 pr-2 pt-2 text-right tabular-nums">{money2((Number(it.qty) || 0) * (Number(it.rate) || 0))}</td>
-                                        <td className="pb-3"><Button size="sm" variant="plain" icon={<TbTrash />} onClick={() => set({ items: v.items.length > 1 ? v.items.filter((_, x) => x !== i) : [newLine()] })} /></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <Button size="sm" icon={<TbPlus />} onClick={() => set({ items: [...v.items, newLine()] })}>Add line</Button>
+                    <LineItemsTable items={v.items} onChange={(items) => set({ items })} taxOptions={taxOptions} newLine={newLine} />
 
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="grid grid-cols-2 content-start gap-4">

@@ -213,7 +213,7 @@ const ClientDetail = () => {
                 <Card>
                     <Tabs value={tab} onChange={setTab}>
                         <TabList>
-                            {tabs.map((t) => <TabNav key={t.key} value={t.key} className="!px-2.5 text-sm">{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
+                            {tabs.map((t) => <TabNav key={t.key} value={t.key} className="flex-1 !px-2.5 text-sm">{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
                         </TabList>
                         <div className="p-4">
                             {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.20',
+        date: '2026-10-15',
+        title: 'Client tabs and Activity justified',
+        items: ['Client page: the tabs now share the full width of the row evenly', 'Activity tab uses the whole width: one row per event with the time, icon, title and detail, and a group tag (Billing, Sales, Work...) on the right, grouped by day, with the filter and the event count on one line']
+    },
+    {
         version: '0.30.19',
         date: '2026-10-15',
         title: 'Client billing chart like the Reports overview',

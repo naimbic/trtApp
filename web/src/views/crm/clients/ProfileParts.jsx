@@ -105,27 +105,33 @@ export const Timeline = ({ items }) => {
     const list = items.filter((e) => group === 'all' || GROUP_OF[e.type] === group)
     const days = {}
     for (const e of list) (days[dayjs(e.date).format('YYYY-MM-DD')] ||= []).push(e)
+    const label = Object.fromEntries(GROUPS)
     return (
         <div>
-            <div className="mb-5"><Segment size="sm" value={group} onChange={(v) => setGroup(Array.isArray(v) ? v[0] : v)}>{GROUPS.map(([v, l]) => <Segment.Item key={v} value={v}>{l}</Segment.Item>)}</Segment></div>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <Segment size="sm" value={group} onChange={(v) => setGroup(Array.isArray(v) ? v[0] : v)}>{GROUPS.map(([v, l]) => <Segment.Item key={v} value={v}>{l}</Segment.Item>)}</Segment>
+                <span className="text-sm text-gray-500">{list.length} event{list.length === 1 ? '' : 's'}</span>
+            </div>
             {Object.entries(days).map(([day, evs]) => (
-                <div key={day} className="mb-6">
-                    <div className="mb-3 text-xs font-semibold uppercase text-gray-500">{dayjs(day).format('dddd, DD MMMM YYYY')}</div>
-                    <div className="space-y-3 border-l border-gray-200 pl-5 dark:border-gray-600">
+                <div key={day} className="mb-5">
+                    <div className="mb-2 text-xs font-semibold uppercase text-gray-500">{dayjs(day).format('dddd, DD MMMM YYYY')}</div>
+                    <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-600">
                         {evs.map((e) => {
                             const Icon = ICON[e.type] || TbCircle
-                            const body = <><div className="font-semibold heading-text">{e.title}</div>{e.detail && <div className="text-gray-500">{e.detail}</div>}<div className="text-xs text-gray-400">{dayjs(e.date).format('HH:mm')}</div></>
-                            return (
-                                <div key={e.id} className="relative text-sm">
-                                    <span className={cn('absolute -left-[34px] flex h-7 w-7 items-center justify-center rounded-full text-base', TONE[e.type] || 'bg-gray-100 text-gray-600')}><Icon /></span>
-                                    {e.link ? <Link to={e.link} className="block hover:text-primary">{body}</Link> : <div>{body}</div>}
+                            const row = (
+                                <div className="grid grid-cols-[3rem_2rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 text-sm">
+                                    <span className="text-xs tabular-nums text-gray-400">{dayjs(e.date).format('HH:mm')}</span>
+                                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-full text-base', TONE[e.type] || 'bg-gray-100 text-gray-600')}><Icon /></span>
+                                    <span className="min-w-0"><span className="block truncate font-semibold heading-text">{e.title}</span>{e.detail && <span className="block truncate text-xs text-gray-500">{e.detail}</span>}</span>
+                                    <span className="hidden rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700 sm:inline">{label[GROUP_OF[e.type]] || 'Other'}</span>
                                 </div>
                             )
+                            return e.link ? <Link key={e.id} to={e.link} className="block transition hover:bg-gray-50 dark:hover:bg-gray-700/40">{row}</Link> : <div key={e.id}>{row}</div>
                         })}
                     </div>
                 </div>
             ))}
-            {!list.length && <p className="text-gray-500">Nothing here yet.</p>}
+            {!list.length && <p className="py-10 text-center text-gray-500">Nothing here yet.</p>}
         </div>
     )
 }

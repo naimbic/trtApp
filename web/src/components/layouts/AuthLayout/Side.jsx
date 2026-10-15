@@ -14,7 +14,8 @@ const Side = ({ children, ...rest }) => {
                 </div>
             </div>
             <div className="py-6 px-10 lg:flex flex-col flex-1 justify-between hidden rounded-3xl items-end relative xl:max-w-[520px] 2xl:max-w-[720px]">
-                <div className="absolute left-0 top-0 h-full w-full rounded-3xl bg-gradient-to-br from-primary via-primary-deep to-primary-deep" />
+                <img src="/img/others/auth-side-bg.png" alt="" className="absolute left-0 top-0 h-full w-full rounded-3xl object-cover" />
+                <div className="absolute left-0 top-0 h-full w-full rounded-3xl bg-gradient-to-br from-primary/80 via-primary-deep/40 to-primary-deep/70" />
                 <div className="relative z-10 flex h-full w-full flex-col justify-between text-white">
                     <Logo mode="dark" type="full" logoWidth={210} imgClass="h-14 w-full object-contain object-left brightness-0 invert" />
                     <div>

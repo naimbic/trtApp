@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.4',
+        date: '2026-10-15',
+        title: 'Sign-in picture back',
+        items: ['The sign-in page right column shows the picture again, with the trtCRM logo and tagline on top and your accent colour tinting it'],
+    },
+    {
         version: '0.30.3',
         date: '2026-10-15',
         title: 'Assign roles from the Team list',

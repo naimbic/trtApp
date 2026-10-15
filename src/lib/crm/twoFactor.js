@@ -61,6 +61,8 @@ async function ensureRow(userId) {
 }
 
 export async function twoFactorStatus(userId) {
+    // TWO_FACTOR_OFF=1 skips the second step for everyone (test/staging servers only)
+    if (process.env.TWO_FACTOR_OFF === '1') return { app: false, email: false, recoveryLeft: 0, enabled: false }
     const r = await row(userId)
     return { app: !!r?.totpEnabled, email: !!r?.emailEnabled, recoveryLeft: r?.recoveryHashes?.length || 0, enabled: !!(r?.totpEnabled || r?.emailEnabled) }
 }

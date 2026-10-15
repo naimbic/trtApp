@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.5',
+        date: '2026-10-15',
+        title: 'Two-step verification switch for test servers',
+        items: ['Setting TWO_FACTOR_OFF=1 on a server skips the two-step verification code at sign-in for everyone (used on staging while testing; never set it on the live server)'],
+    },
+    {
         version: '0.30.4',
         date: '2026-10-15',
         title: 'Sign-in picture back',

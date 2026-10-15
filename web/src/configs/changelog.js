@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.7',
+        date: '2026-10-15',
+        title: 'New sign-in page',
+        items: ['Sign-in: dark side panel (no more coloured background) with slides: quotes and links to our websites (trtdigital.ma, sea.ma, trtseo.com, trtads.com, adsagency.ma); pauses when you hover it', 'Sign-in form is simpler: the Google/GitHub buttons and the Sign up link are gone (sign-up is disabled anyway), text fixed'],
+    },
+    {
         version: '0.30.6',
         date: '2026-10-15',
         title: 'Popups open smoothly',

@@ -8,14 +8,15 @@ import { useAuth } from '@/auth'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { tr } from '@/utils/t'
 
 const validationSchema = z.object({
     email: z
         .string()
-        .min(1, { message: 'Please enter your email' }),
+        .min(1, { message: tr("Please enter your email") }),
     password: z
         .string()
-        .min(1, { message: 'Please enter your password' }),
+        .min(1, { message: tr("Please enter your password") }),
 })
 
 const SignInForm = (props) => {
@@ -70,23 +71,23 @@ const SignInForm = (props) => {
         try {
             const r = await fetch('/api/crm/auth/2fa/email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: step.email, password: step.password }) })
             const j = await r.json().catch(() => ({}))
-            if (!r.ok) setMessage?.(j.error || 'Could not send the code')
-            else setEmailNote(`Code sent to ${j.to}`)
-        } catch { setMessage?.('Could not send the code') }
+            if (!r.ok) setMessage?.(j.error || tr("Could not send the code"))
+            else setEmailNote(tr("Code sent to {to}", { to: j.to }))
+        } catch { setMessage?.(tr("Could not send the code")) }
     }
 
     if (step) {
         return (
             <div className={className}>
                 <div className="mb-5">
-                    <h4 className="mb-1">Two-step verification</h4>
-                    <p className="text-sm text-gray-500">{step.methods?.app ? 'Enter the 6-digit code from your authenticator app.' : 'Request a code by email, then enter it below.'} You can also use a recovery code.</p>
+                    <h4 className="mb-1">{tr("Two-step verification")}</h4>
+                    <p className="text-sm text-gray-500">{step.methods?.app ? tr("Enter the 6-digit code from your authenticator app.") : tr("Request a code by email, then enter it below.")} {tr("You can also use a recovery code.")}</p>
                 </div>
                 <Input autoFocus inputMode="text" autoComplete="one-time-code" placeholder="123456" maxLength={20} className="mb-3 text-center text-xl tracking-[0.3em]" value={otp} onChange={(e) => setOtp(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && verify()} />
-                <Button block loading={isSubmitting} variant="solid" onClick={verify}>Verify and sign in</Button>
+                <Button block loading={isSubmitting} variant="solid" onClick={verify}>{tr("Verify and sign in")}</Button>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
-                    {step.methods?.email ? <button type="button" className="text-primary hover:underline" onClick={sendEmail}>Email me a code</button> : <span />}
-                    <button type="button" className="text-gray-500 hover:underline" onClick={() => { setStep(null); setOtp(''); setEmailNote('') }}>Use a different account</button>
+                    {step.methods?.email ? <button type="button" className="text-primary hover:underline" onClick={sendEmail}>{tr("Email me a code")}</button> : <span />}
+                    <button type="button" className="text-gray-500 hover:underline" onClick={() => { setStep(null); setOtp(''); setEmailNote('') }}>{tr("Use a different account")}</button>
                 </div>
                 {emailNote && <p className="mt-2 text-sm text-emerald-600">{emailNote}</p>}
             </div>
@@ -97,7 +98,7 @@ const SignInForm = (props) => {
         <div className={className}>
             <Form onSubmit={handleSubmit(onSignIn)}>
                 <FormItem
-                    label="Email"
+                    label={tr("Email")}
                     invalid={Boolean(errors.email)}
                     errorMessage={errors.email?.message}
                 >
@@ -107,7 +108,7 @@ const SignInForm = (props) => {
                         render={({ field }) => (
                             <Input
                                 type="email"
-                                placeholder="Email"
+                                placeholder={tr("Email")}
                                 autoComplete="off"
                                 {...field}
                             />
@@ -115,7 +116,7 @@ const SignInForm = (props) => {
                     />
                 </FormItem>
                 <FormItem
-                    label="Password"
+                    label={tr("Password")}
                     invalid={Boolean(errors.password)}
                     errorMessage={errors.password?.message}
                     className={classNames(
@@ -130,7 +131,7 @@ const SignInForm = (props) => {
                         render={({ field }) => (
                             <PasswordInput
                                 type="text"
-                                placeholder="Password"
+                                placeholder={tr("Password")}
                                 autoComplete="off"
                                 {...field}
                             />
@@ -144,7 +145,7 @@ const SignInForm = (props) => {
                     variant="solid"
                     type="submit"
                 >
-                    {isSubmitting ? 'Signing in...' : 'Sign In'}
+                    {isSubmitting ? tr("Signing in...") : tr("Sign In")}
                 </Button>
             </Form>
         </div>

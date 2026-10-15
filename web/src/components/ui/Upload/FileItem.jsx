@@ -1,5 +1,6 @@
 import { VscFilePdf, VscFileZip, VscFile } from 'react-icons/vsc'
 import classNames from '../utils/classNames'
+import { tr } from '@/utils/t'
 
 const BYTE = 1000
 const getKB = (bytes) => Math.round(bytes / BYTE)
@@ -20,7 +21,7 @@ const FileItem = (props) => {
                 <img
                     className="upload-file-image"
                     src={URL.createObjectURL(file)}
-                    alt={`file preview ${name}`}
+                    alt={tr("file preview {name}", { name: name })}
                 />
             )
         }
@@ -56,7 +57,7 @@ const FileItem = (props) => {
                     <h6 className="upload-file-name text-sm font-bold">
                         {name}
                     </h6>
-                    <span className="upload-file-size">{getKB(size)} kb</span>
+                    <span className="upload-file-size">{getKB(size)} {tr("kb")}</span>
                 </div>
             </div>
             {children}

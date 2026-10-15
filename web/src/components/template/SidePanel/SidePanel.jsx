@@ -4,6 +4,7 @@ import { PiGearDuotone } from 'react-icons/pi'
 import SidePanelContent from './SidePanelContent'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useThemeStore } from '@/store/themeStore'
+import { tr } from '@/utils/t'
 
 const _SidePanel = (props) => {
     const { className, ...rest } = props
@@ -37,7 +38,7 @@ const _SidePanel = (props) => {
                 <PiGearDuotone />
             </div>
             <Drawer
-                title="Theme Config"
+                title={tr("Theme Config")}
                 isOpen={panelExpand}
                 placement={direction === 'rtl' ? 'left' : 'right'}
                 width={375}

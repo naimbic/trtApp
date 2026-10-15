@@ -10,6 +10,7 @@ import { Form, FormItem } from '@/components/ui/Form'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import RelationSelect from './RelationSelect'
 import { api, notify } from './api'
+import { tr } from '@/utils/t'
 
 const empty = (f) => (f.type === 'boolean' ? false : ['multiselect', 'tags'].includes(f.type) ? [] : '')
 const initValue = (f, v) => {
@@ -38,7 +39,7 @@ const Control = ({ f, value, onChange, disabled }) => {
             return <Select isClearable isDisabled={disabled} options={f.options || []} value={(f.options || []).find((o) => String(o.value) === String(value)) || null} onChange={(o) => onChange(o ? o.value : null)} />
         case 'multiselect':
         case 'tags':
-            return <Input disabled={disabled} placeholder="comma, separated" value={Array.isArray(value) ? value.join(', ') : ''} onChange={(e) => onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} />
+            return <Input disabled={disabled} placeholder={tr("comma, separated")} value={Array.isArray(value) ? value.join(', ') : ''} onChange={(e) => onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} />
         case 'relation':
             return <RelationSelect resource={f.resource} value={value || null} onChange={onChange} disabled={disabled} />
         case 'color':
@@ -83,7 +84,7 @@ const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = t
 
     const sections = useMemo(() => {
         const m = new Map()
-        fields.filter((f) => !hide.includes(f.key)).forEach((f) => { const s = f.section || 'General'; if (!m.has(s)) m.set(s, []); m.get(s).push(f) })
+        fields.filter((f) => !hide.includes(f.key)).forEach((f) => { const s = f.section || tr("General"); if (!m.has(s)) m.set(s, []); m.get(s).push(f) })
         return [...m.entries()]
     }, [fields, hide])
 
@@ -106,7 +107,7 @@ const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = t
     const remove = async () => {
         try {
             await api(`/api/crm/${resource.key}/${id}`, { method: 'DELETE' })
-            notify('success', `${resource.label} deleted`)
+            notify('success', tr("{label} deleted", { label: resource.label }))
             onDeleted?.()
             onClose()
         } catch (e) {
@@ -118,24 +119,24 @@ const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = t
 
     return (
         <Drawer
-            title={edit ? `Edit ${resource.label.toLowerCase()}` : `New ${resource.label.toLowerCase()}`}
+            title={edit ? tr("Edit {v1}", { v1: resource.label.toLowerCase() }) : tr("New {v1}", { v1: resource.label.toLowerCase() })}
             isOpen={open}
             onClose={onClose}
             onRequestClose={onClose}
             width={560}
             footer={
                 <div className="flex w-full items-center gap-2">
-                    {edit && canDelete && <Button variant="plain" className="text-red-500" onClick={() => setConfirmDel(true)}>Delete</Button>}
+                    {edit && canDelete && <Button variant="plain" className="text-red-500" onClick={() => setConfirmDel(true)}>{tr("Delete")}</Button>}
                     <div className="ml-auto flex gap-2">
-                        <Button onClick={onClose}>{canEdit ? 'Cancel' : 'Close'}</Button>
-                        {canEdit && <Button variant="solid" loading={saving} onClick={save}>{edit ? 'Save changes' : 'Create'}</Button>}
+                        <Button onClick={onClose}>{canEdit ? tr("Cancel") : tr("Close")}</Button>
+                        {canEdit && <Button variant="solid" loading={saving} onClick={save}>{edit ? tr("Save changes") : tr("Create")}</Button>}
                     </div>
                 </div>
             }
         >
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             {loading ? (
-                <div className="py-16 text-center text-gray-400">Loading…</div>
+                <div className="py-16 text-center text-gray-400">{tr("Loading…")}</div>
             ) : (
                 <Form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6">
                     {sections.map(([title, list]) => (
@@ -152,8 +153,8 @@ const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = t
                     ))}
                 </Form>
             )}
-            <ConfirmDialog isOpen={confirmDel} type="danger" title={`Delete ${resource.label.toLowerCase()}?`} confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
-                <p>This cannot be undone.</p>
+            <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete {v1}?", { v1: resource.label.toLowerCase() })} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
+                <p>{tr("This cannot be undone.")}</p>
             </ConfirmDialog>
         </Drawer>
     )

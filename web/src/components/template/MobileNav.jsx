@@ -9,6 +9,7 @@ import appConfig from '@/configs/app.config'
 import { useThemeStore } from '@/store/themeStore'
 import { useRouteKeyStore } from '@/store/routeKeyStore'
 import { useSessionUser } from '@/store/authStore'
+import { tr } from '@/utils/t'
 
 const VerticalMenuContent = lazy(
     () => import('@/components/template/VerticalMenuContent'),
@@ -38,7 +39,7 @@ const MobileNav = ({ translationSetup = appConfig.activeNavTranslation }) => {
                 <MobileNavToggle toggled={isOpen} />
             </div>
             <Drawer
-                title="Navigation"
+                title={tr("Navigation")}
                 isOpen={isOpen}
                 bodyClass={classNames('p-0')}
                 width={330}

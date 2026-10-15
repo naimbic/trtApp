@@ -2,6 +2,7 @@ import Alert from '@/components/ui/Alert'
 import OtpVerificationForm from './components/OtpVerificationForm'
 import sleep from '@/utils/sleep'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
+import { tr } from '@/utils/t'
 
 export const OtpVerificationBase = () => {
     const [otpVerified, setOtpVerified] = useTimeOutMessage()
@@ -12,10 +13,10 @@ export const OtpVerificationBase = () => {
         try {
             /** simulate api call with sleep */
             await sleep(500)
-            setOtpResend('We have sent you One Time Password.')
+            setOtpResend(tr("We have sent you One Time Password."))
         } catch (errors) {
             setMessage?.(
-                typeof errors === 'string' ? errors : 'Some error occured!',
+                typeof errors === 'string' ? errors : tr("Some error occured!"),
             )
         }
     }
@@ -23,9 +24,9 @@ export const OtpVerificationBase = () => {
     return (
         <div>
             <div className="mb-8">
-                <h3 className="mb-2">OTP Verification</h3>
+                <h3 className="mb-2">{tr("OTP Verification")}</h3>
                 <p className="font-semibold heading-text">
-                    We have sent you One Time Password to your email.
+                    {tr("We have sent you One Time Password to your email.")}
                 </p>
             </div>
             {message && (
@@ -48,12 +49,12 @@ export const OtpVerificationBase = () => {
                 setOtpVerified={setOtpVerified}
             />
             <div className="mt-4 text-center">
-                <span className="font-semibold">Din&apos;t receive OTP? </span>
+                <span className="font-semibold">{tr("Din't receive OTP?")} </span>
                 <button
                     className="heading-text font-bold underline"
                     onClick={handleResendOtp}
                 >
-                    Resend OTP
+                    {tr("Resend OTP")}
                 </button>
             </div>
         </div>

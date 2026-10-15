@@ -2,10 +2,11 @@ import Button from '@/components/ui/Button'
 import InputGroup from '@/components/ui/InputGroup'
 import useDirection from '@/utils/hooks/useDirection'
 import { THEME_ENUM } from '@/constants/theme.constant'
+import { tr } from '@/utils/t'
 
 const dirList = [
-    { value: THEME_ENUM.DIR_LTR, label: 'LTR' },
-    { value: THEME_ENUM.DIR_RTL, label: 'RTL' },
+    { value: THEME_ENUM.DIR_LTR, label: tr("LTR") },
+    { value: THEME_ENUM.DIR_RTL, label: tr("RTL") },
 ]
 
 const DirectionSwitcher = ({ callBackClose }) => {

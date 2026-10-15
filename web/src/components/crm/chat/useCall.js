@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ring } from './chatKit'
+import { tr } from '@/utils/t'
 
 const RING_MS = 45000
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`)
@@ -43,7 +44,7 @@ export default function useCall({ fetchSignals, sendSignal, enabled, iceServers,
         if (cur.phase === 'idle') return
         if (tell && cur.callId && cur.peer) live.current.sendSignal({ roomId: cur.roomId, callId: cur.callId, type: cur.phase === 'incoming' ? 'decline' : 'hangup', to: cur.peer.key }).catch(() => {})
         if (cur.caller) {
-            if (connectedAt.current) live.current.onLog?.(cur.roomId, `📞 Voice call · ${fmt(Math.round((Date.now() - connectedAt.current) / 1000))}`)
+            if (connectedAt.current) live.current.onLog?.(cur.roomId, tr("📞 Voice call · {v1}", { v1: fmt(Math.round((Date.now() - connectedAt.current) / 1000)) }))
             else live.current.onLog?.(cur.roomId, '📞 Missed call')
         }
         connectedAt.current = 0
@@ -78,7 +79,7 @@ export default function useCall({ fetchSignals, sendSignal, enabled, iceServers,
     }, [end])
 
     const mic = async () => {
-        try { stream.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); return stream.current } catch { setError('Allow the microphone to make calls'); return null }
+        try { stream.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); return stream.current } catch { setError(tr("Allow the microphone to make calls")); return null }
     }
 
     const start = useCallback(async (room) => {
@@ -94,8 +95,8 @@ export default function useCall({ fetchSignals, sendSignal, enabled, iceServers,
         await p.setLocalDescription(offer)
         try {
             const r = await live.current.sendSignal({ roomId: room.roomId, callId, type: 'offer', payload: JSON.stringify(p.localDescription) })
-            if (!r.delivered) { setError('Nobody is available to answer right now'); cleanup(); set({ phase: 'idle', peer: null, callId: null, caller: false }); return }
-        } catch (e) { setError(e.message || 'Could not start the call'); cleanup(); set({ phase: 'idle', peer: null, callId: null, caller: false }); return }
+            if (!r.delivered) { setError(tr("Nobody is available to answer right now")); cleanup(); set({ phase: 'idle', peer: null, callId: null, caller: false }); return }
+        } catch (e) { setError(e.message || tr("Could not start the call")); cleanup(); set({ phase: 'idle', peer: null, callId: null, caller: false }); return }
         timers.current.timeout = setTimeout(() => end(true), RING_MS)
     }, [makePc, cleanup, end])
 

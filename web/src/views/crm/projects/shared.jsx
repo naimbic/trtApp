@@ -3,15 +3,16 @@ import Tag from '@/components/ui/Tag'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { api } from '../kit/api'
+import { tr } from '@/utils/t'
 
 export const STATUS = [
-    { value: 1, label: 'Not started', cls: 'border-gray-400 text-gray-500' },
-    { value: 2, label: 'In progress', cls: 'border-blue-500 text-blue-600' },
-    { value: 3, label: 'On hold', cls: 'border-amber-500 text-amber-600' },
-    { value: 4, label: 'Finished', cls: 'border-emerald-500 text-emerald-600' },
-    { value: 5, label: 'Cancelled', cls: 'border-red-400 text-red-500' },
+    { value: 1, label: tr("Not started"), cls: 'border-gray-400 text-gray-500' },
+    { value: 2, label: tr("In progress"), cls: 'border-blue-500 text-blue-600' },
+    { value: 3, label: tr("On hold"), cls: 'border-amber-500 text-amber-600' },
+    { value: 4, label: tr("Finished"), cls: 'border-emerald-500 text-emerald-600' },
+    { value: 5, label: tr("Cancelled"), cls: 'border-red-400 text-red-500' },
 ]
-export const BILLING = [{ value: 1, label: 'Fixed rate' }, { value: 2, label: 'Project hours' }, { value: 3, label: 'Task hours' }]
+export const BILLING = [{ value: 1, label: tr("Fixed rate") }, { value: 2, label: tr("Project hours") }, { value: 3, label: tr("Task hours") }]
 export const statusOf = (v) => STATUS.find((s) => s.value === +v) || STATUS[0]
 export const StatusTag = ({ status }) => <Tag className={`rounded-full border-2 bg-transparent dark:bg-transparent ${statusOf(status).cls}`}>{statusOf(status).label}</Tag>
 export const fmt = (d, f = 'DD MMM YYYY') => (d ? dayjs(d).format(f) : '—')

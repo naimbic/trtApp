@@ -1,10 +1,11 @@
 import { CgRedo } from 'react-icons/cg'
 import ToolButton from './ToolButton'
+import { tr } from '@/utils/t'
 
 const ToolButtonRedo = ({ editor }) => {
     return (
         <ToolButton
-            title="Code"
+            title={tr("Code")}
             disabled={!editor.can().chain().focus().redo().run()}
             onClick={() => editor.chain().focus().redo().run()}
         >

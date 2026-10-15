@@ -1,7 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
 import './index.css'
+import { loadStaffLang } from '@/utils/t'
+import { useThemeStore } from '@/store/themeStore'
+import { localizeShared } from '@/utils/localizeShared'
 
 // If the server says the session is gone (401) — signed out elsewhere, deactivated, or the database changed —
 // clear the local state and go to the sign-in page instead of showing a raw error.
@@ -23,8 +25,15 @@ window.fetch = async (...args) => {
     return res
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-        <App />
-    </React.StrictMode>,
-)
+// The dictionary of the saved language (and right-to-left for Arabic) must be ready before the app's modules run:
+// many labels are defined at module level, so the app is imported only after the dictionary has loaded.
+loadStaffLang().then(async (lang) => {
+    useThemeStore.getState().setDirection(lang === 'ar' ? 'rtl' : 'ltr')
+    if (lang !== 'en') localizeShared()
+    const { default: App } = await import('./App')
+    ReactDOM.createRoot(document.getElementById('root')).render(
+        <React.StrictMode>
+            <App />
+        </React.StrictMode>,
+    )
+})

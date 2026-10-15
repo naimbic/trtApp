@@ -15,6 +15,7 @@ import cn from '@/utils/classNames'
 import { api, notify, upload } from '../kit/api'
 import { useTicketFiles, AttachButtons, FileTray, DropHint, AttachmentList, messageForm } from '@/components/crm/TicketFiles'
 import { initials } from '../tasks/shared'
+import { tr } from '@/utils/t'
 
 const L = ({ children }) => <label className="mb-1.5 block text-xs font-semibold uppercase text-gray-500">{children}</label>
 // legacy ticket messages are HTML from the old helpdesk: drop scripts, styles and event handlers
@@ -51,17 +52,17 @@ const TicketView = () => {
         try {
             const r = await upload(`/api/crm/support/tickets/${id}/reply`, messageForm({ message: reply, statusId: replyStatus, notify: notify_, internal, close }, tf.files))
             setReply(''); setReplyStatus(null); tf.clear()
-            if (internal) notify('success', 'Internal note added')
-            else if (r.mail && !r.mail.sent) notify('warning', `Reply saved, but the email was not sent: ${r.mail.error || 'unknown error'}`)
-            else notify('success', close ? 'Reply sent and ticket closed' : r.mail ? 'Reply sent' : 'Reply saved')
+            if (internal) notify('success', tr("Internal note added"))
+            else if (r.mail && !r.mail.sent) notify('warning', tr("Reply saved, but the email was not sent: {v1}", { v1: r.mail.error || 'unknown error' }))
+            else notify('success', close ? tr("Reply sent and ticket closed") : r.mail ? tr("Reply sent") : tr("Reply saved"))
             await load()
         } catch (e) { notify('danger', e.message) } finally { setSending(false) }
     }
     const confirmRun = async () => {
         const c = confirm; setConfirm(null)
         try {
-            if (c.type === 'ticket') { await api(`/api/crm/support/tickets/${id}`, { method: 'DELETE' }); notify('success', 'Ticket deleted'); nav('/crm/tickets') }
-            else { await api(`/api/crm/support/tickets/${id}/reply?replyId=${c.id}`, { method: 'DELETE' }); notify('success', 'Reply deleted'); load() }
+            if (c.type === 'ticket') { await api(`/api/crm/support/tickets/${id}`, { method: 'DELETE' }); notify('success', tr("Ticket deleted")); nav('/crm/tickets') }
+            else { await api(`/api/crm/support/tickets/${id}/reply?replyId=${c.id}`, { method: 'DELETE' }); notify('success', tr("Reply deleted")); load() }
         } catch (e) { notify('danger', e.message) }
     }
 
@@ -69,16 +70,16 @@ const TicketView = () => {
         <Container>
             <div className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
                 <div className="min-w-0">
-                    <div className="mb-1 text-sm text-gray-500"><Link to="/crm/tickets" className="hover:text-primary">Tickets</Link> · #{t.number}</div>
+                    <div className="mb-1 text-sm text-gray-500"><Link to="/crm/tickets" className="hover:text-primary">{tr("Tickets")}</Link> · #{t.number}</div>
                     <h3 className="break-words">{t.subject}</h3>
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-500">
                         {status && <span className="inline-flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-200"><span className="h-2 w-2 rounded-full" style={{ background: status.color }} />{status.name}</span>}
-                        <span>Opened {dayjs(t.createdAt).format('DD MMM YYYY, HH:mm')}</span>
+                        <span>{tr("Opened")} {dayjs(t.createdAt).format('DD MMM YYYY, HH:mm')}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {d.can.edit && (isClosed ? d.openStatusId && <Button size="sm" icon={<TbRefresh />} onClick={() => patch({ statusId: d.openStatusId }, 'Ticket reopened')}>Reopen</Button> : d.closedStatusId && <Button size="sm" icon={<TbCircleCheck />} onClick={() => patch({ statusId: d.closedStatusId }, 'Ticket closed')}>Close ticket</Button>)}
-                    {d.can.delete && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm({ type: 'ticket' })}>Delete</Button>}
+                    {d.can.edit && (isClosed ? d.openStatusId && <Button size="sm" icon={<TbRefresh />} onClick={() => patch({ statusId: d.openStatusId }, tr("Ticket reopened"))}>{tr("Reopen")}</Button> : d.closedStatusId && <Button size="sm" icon={<TbCircleCheck />} onClick={() => patch({ statusId: d.closedStatusId }, tr("Ticket closed"))}>{tr("Close ticket")}</Button>)}
+                    {d.can.delete && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm({ type: 'ticket' })}>{tr("Delete")}</Button>}
                 </div>
             </div>
 
@@ -88,7 +89,7 @@ const TicketView = () => {
                         <div key={m.id} className={cn('flex gap-3', m.staff && 'flex-row-reverse')}>
                             <Avatar size={36} shape="circle" src={m.staff?.image || undefined} className={m.staff ? 'bg-primary text-white' : ''}>{initials(m.name)}</Avatar>
                             <div className={cn('group max-w-[88%] rounded-2xl p-4', m.internal ? 'rounded-tr-sm border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : m.staff ? 'rounded-tr-sm bg-primary/10 dark:bg-primary/20' : 'rounded-tl-sm bg-gray-100 dark:bg-gray-700/50')}>
-                                <div className="mb-2 flex items-center justify-between gap-4 text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}{m.staff ? ' · team' : ''}{m.first ? ' · opened the ticket' : ''}{m.internal && <span className="ml-2 inline-flex items-center gap-1 text-amber-700 dark:text-amber-300"><TbLock />internal note, only your team sees this</span>}</span><span className="flex items-center gap-2">{dayjs(m.date).format('DD MMM YYYY, HH:mm')}{!m.first && d.can.delete && <button className="hidden text-red-500 group-hover:inline" title="Delete reply" onClick={() => setConfirm({ type: 'reply', id: m.id })}><TbTrash /></button>}</span></div>
+                                <div className="mb-2 flex items-center justify-between gap-4 text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}{m.staff ? tr(" · team") : ''}{m.first ? tr(" · opened the ticket") : ''}{m.internal && <span className="ml-2 inline-flex items-center gap-1 text-amber-700 dark:text-amber-300"><TbLock />{tr("internal note, only your team sees this")}</span>}</span><span className="flex items-center gap-2">{dayjs(m.date).format('DD MMM YYYY, HH:mm')}{!m.first && d.can.delete && <button className="hidden text-red-500 group-hover:inline" title={tr("Delete reply")} onClick={() => setConfirm({ type: 'reply', id: m.id })}><TbTrash /></button>}</span></div>
                                 <div className="prose prose-sm max-w-none break-words dark:prose-invert [&_img]:max-w-full" dangerouslySetInnerHTML={{ __html: clean(m.html) }} />
                                 <AttachmentList items={m.attachments} />
                             </div>
@@ -101,19 +102,19 @@ const TicketView = () => {
                             <DropHint tf={tf} />
                             <Card className={internal ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-500/5' : ''}>
                                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                                    <h5 className="flex items-center gap-2">{internal ? <><TbLock className="text-amber-600" />Internal note</> : 'Reply'}</h5>
-                                    {lk.predefined.length > 0 && <div className="w-56"><Select size="sm" isClearable placeholder="Insert a saved reply" options={lk.predefined.map((r) => ({ value: r.id, label: r.name }))} value={null} onChange={(o) => { const r = lk.predefined.find((x) => x.id === o?.value); if (r) setReply((x) => (x ? `${x}\n\n${r.message}` : r.message)) }} /></div>}
+                                    <h5 className="flex items-center gap-2">{internal ? <><TbLock className="text-amber-600" />{tr("Internal note")}</> : tr("Reply")}</h5>
+                                    {lk.predefined.length > 0 && <div className="w-56"><Select size="sm" isClearable placeholder={tr("Insert a saved reply")} options={lk.predefined.map((r) => ({ value: r.id, label: r.name }))} value={null} onChange={(o) => { const r = lk.predefined.find((x) => x.id === o?.value); if (r) setReply((x) => (x ? `${x}\n\n${r.message}` : r.message)) }} /></div>}
                                 </div>
-                                <Input textArea rows={6} placeholder={internal ? 'Write a note for your team (the client never sees it)' : 'Write your reply. Paste a screenshot (Ctrl+V) or drop files here.'} value={reply} onChange={(e) => setReply(e.target.value)} onPaste={tf.onPaste} />
+                                <Input textArea rows={6} placeholder={internal ? tr("Write a note for your team (the client never sees it)") : tr("Write your reply. Paste a screenshot (Ctrl+V) or drop files here.")} value={reply} onChange={(e) => setReply(e.target.value)} onPaste={tf.onPaste} />
                                 <FileTray tf={tf} />
                                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                                     <AttachButtons tf={tf} />
-                                    {!internal && <div className="w-48"><Select size="sm" isClearable placeholder="Status: Answered" options={opt(lk.statuses)} value={pick(lk.statuses, replyStatus)} onChange={(o) => setReplyStatus(o?.value || null)} /></div>}
-                                    <label className="flex items-center gap-2 text-sm"><Switcher checked={internal} onChange={setInternal} />Internal note</label>
-                                    {!internal && <label className="flex items-center gap-2 text-sm"><Switcher checked={notify_} onChange={setNotify} />Email the client</label>}
+                                    {!internal && <div className="w-48"><Select size="sm" isClearable placeholder={tr("Status: Answered")} options={opt(lk.statuses)} value={pick(lk.statuses, replyStatus)} onChange={(o) => setReplyStatus(o?.value || null)} /></div>}
+                                    <label className="flex items-center gap-2 text-sm"><Switcher checked={internal} onChange={setInternal} />{tr("Internal note")}</label>
+                                    {!internal && <label className="flex items-center gap-2 text-sm"><Switcher checked={notify_} onChange={setNotify} />{tr("Email the client")}</label>}
                                     <div className="ml-auto flex items-center gap-2">
-                                        {!internal && d.closedStatusId && !isClosed && <Button disabled={sending || (!reply.trim() && !tf.items.length)} onClick={() => send(true)}>Send and close</Button>}
-                                        <Button variant="solid" icon={internal ? <TbLock /> : <TbSend />} loading={sending} disabled={!reply.trim() && !tf.items.length} onClick={() => send(false)}>{internal ? 'Add note' : 'Send reply'}</Button>
+                                        {!internal && d.closedStatusId && !isClosed && <Button disabled={sending || (!reply.trim() && !tf.items.length)} onClick={() => send(true)}>{tr("Send and close")}</Button>}
+                                        <Button variant="solid" icon={internal ? <TbLock /> : <TbSend />} loading={sending} disabled={!reply.trim() && !tf.items.length} onClick={() => send(false)}>{internal ? tr("Add note") : tr("Send reply")}</Button>
                                     </div>
                                 </div>
                             </Card>
@@ -123,31 +124,31 @@ const TicketView = () => {
 
                 <div className="space-y-4 lg:w-[320px] lg:shrink-0">
                     <Card>
-                        <h5 className="mb-4">Details</h5>
+                        <h5 className="mb-4">{tr("Details")}</h5>
                         <div className="space-y-4">
-                            <div><L>Status</L><Select isDisabled={!d.can.edit} options={opt(lk.statuses)} value={pick(lk.statuses, t.statusId)} onChange={(o) => patch({ statusId: o.value }, 'Status updated')} /></div>
-                            <div><L>Priority</L><Select isDisabled={!d.can.edit} isClearable options={opt(lk.priorities)} value={pick(lk.priorities, t.priorityId)} onChange={(o) => patch({ priorityId: o?.value || null })} /></div>
-                            <div><L>Department</L><Select isDisabled={!d.can.edit} isClearable options={opt(lk.departments)} value={pick(lk.departments, t.departmentId)} onChange={(o) => patch({ departmentId: o?.value || null })} /></div>
-                            {lk.services.length > 0 && <div><L>Service</L><Select isDisabled={!d.can.edit} isClearable options={opt(lk.services)} value={pick(lk.services, t.serviceId)} onChange={(o) => patch({ serviceId: o?.value || null })} /></div>}
-                            <div><L>Assigned to</L><Select isDisabled={!d.can.edit} isClearable options={opt(lk.staff)} value={pick(lk.staff, t.assignedId)} onChange={(o) => patch({ assignedId: o?.value || null }, o ? 'Assigned' : 'Unassigned')} /></div>
+                            <div><L>{tr("Status")}</L><Select isDisabled={!d.can.edit} options={opt(lk.statuses)} value={pick(lk.statuses, t.statusId)} onChange={(o) => patch({ statusId: o.value }, tr("Status updated"))} /></div>
+                            <div><L>{tr("Priority")}</L><Select isDisabled={!d.can.edit} isClearable options={opt(lk.priorities)} value={pick(lk.priorities, t.priorityId)} onChange={(o) => patch({ priorityId: o?.value || null })} /></div>
+                            <div><L>{tr("Department")}</L><Select isDisabled={!d.can.edit} isClearable options={opt(lk.departments)} value={pick(lk.departments, t.departmentId)} onChange={(o) => patch({ departmentId: o?.value || null })} /></div>
+                            {lk.services.length > 0 && <div><L>{tr("Service")}</L><Select isDisabled={!d.can.edit} isClearable options={opt(lk.services)} value={pick(lk.services, t.serviceId)} onChange={(o) => patch({ serviceId: o?.value || null })} /></div>}
+                            <div><L>{tr("Assigned to")}</L><Select isDisabled={!d.can.edit} isClearable options={opt(lk.staff)} value={pick(lk.staff, t.assignedId)} onChange={(o) => patch({ assignedId: o?.value || null }, o ? tr("Assigned") : tr("Unassigned"))} /></div>
                         </div>
                     </Card>
                     <Card>
-                        <h5 className="mb-4">Client</h5>
+                        <h5 className="mb-4">{tr("Client")}</h5>
                         <div className="space-y-2 text-sm">
-                            {t.client ? <Link className="font-semibold hover:text-primary" to={`/crm/clients/${t.client.id}`}>{t.client.company}</Link> : <span className="text-gray-500">No client record</span>}
+                            {t.client ? <Link className="font-semibold hover:text-primary" to={`/crm/clients/${t.client.id}`}>{t.client.company}</Link> : <span className="text-gray-500">{tr("No client record")}</span>}
                             {t.contact && <div className="font-semibold heading-text">{t.contact.name}</div>}
                             {t.contact?.email && <div className="flex items-center gap-2 text-gray-500"><TbMail />{t.contact.email}</div>}
                             {t.contact?.phone && <div className="flex items-center gap-2 text-gray-500"><TbPhone />{t.contact.phone}</div>}
-                            {t.project && <div className="pt-2"><L>Project</L><Link className="hover:text-primary" to={`/crm/projects/${t.project.id}`}>{t.project.name}</Link></div>}
-                            {t.lastReply && <div className="flex items-center gap-2 pt-2 text-xs text-gray-400"><TbArrowBackUp />Last reply {dayjs(t.lastReply).format('DD MMM YYYY, HH:mm')}</div>}
+                            {t.project && <div className="pt-2"><L>{tr("Project")}</L><Link className="hover:text-primary" to={`/crm/projects/${t.project.id}`}>{t.project.name}</Link></div>}
+                            {t.lastReply && <div className="flex items-center gap-2 pt-2 text-xs text-gray-400"><TbArrowBackUp />{tr("Last reply")} {dayjs(t.lastReply).format('DD MMM YYYY, HH:mm')}</div>}
                         </div>
                     </Card>
                 </div>
             </div>
 
-            <ConfirmDialog isOpen={!!confirm} type="danger" title={confirm?.type === 'ticket' ? 'Delete this ticket?' : 'Delete this reply?'} confirmText="Delete" onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={confirmRun}>
-                <p>{confirm?.type === 'ticket' ? 'The ticket, all its replies and attachments are removed for good.' : 'This reply is removed from the conversation for good.'}</p>
+            <ConfirmDialog isOpen={!!confirm} type="danger" title={confirm?.type === 'ticket' ? tr("Delete this ticket?") : tr("Delete this reply?")} confirmText={tr("Delete")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={confirmRun}>
+                <p>{confirm?.type === 'ticket' ? tr("The ticket, all its replies and attachments are removed for good.") : tr("This reply is removed from the conversation for good.")}</p>
             </ConfirmDialog>
         </Container>
     )

@@ -17,13 +17,14 @@ import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 export const STATE = {
-    active: { label: 'Active', cls: 'bg-emerald-100 text-emerald-700' },
-    expiring: { label: 'About to expire', cls: 'bg-amber-100 text-amber-700' },
-    expired: { label: 'Expired', cls: 'bg-red-100 text-red-700' },
-    trash: { label: 'Trash', cls: 'bg-gray-200 text-gray-600' },
+    active: { label: tr("Active"), cls: 'bg-emerald-100 text-emerald-700' },
+    expiring: { label: tr("About to expire"), cls: 'bg-amber-100 text-amber-700' },
+    expired: { label: tr("Expired"), cls: 'bg-red-100 text-red-700' },
+    trash: { label: tr("Trash"), cls: 'bg-gray-200 text-gray-600' },
 }
 export const StateTag = ({ state }) => <Tag className={STATE[state]?.cls}>{STATE[state]?.label || state}</Tag>
 
@@ -60,26 +61,26 @@ const ContractsList = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Contracts</h3><p className="text-sm text-gray-500">Agreements, renewals and what is about to expire</p></div>
-                {can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/contracts/new')}>New contract</Button>}
+                <div><h3>{tr("Contracts")}</h3><p className="text-sm text-gray-500">{tr("Agreements, renewals and what is about to expire")}</p></div>
+                {can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/contracts/new')}>{tr("New contract")}</Button>}
             </div>
             <TileGrid>
-                <StatTile title="Active" className="bg-emerald-100" value={st.counts?.active ?? 0} icon={<TbFileCertificate />} />
-                <StatTile title="About to expire" className={(st.counts?.expiring ?? 0) ? 'bg-amber-100' : 'bg-sky-100'} value={st.counts?.expiring ?? 0} sub="Within 7 days" icon={<TbClockExclamation />} />
-                <StatTile title="Value of live contracts" className="bg-sky-100" value={money(st.activeValue, baseCur, { decimals: 0 })} icon={<TbCoins />} />
-                <StatTile title="Waiting for a signature" className="bg-purple-100" value={st.unsigned || 0} icon={<TbSignature />} />
+                <StatTile title={tr("Active")} className="bg-emerald-100" value={st.counts?.active ?? 0} icon={<TbFileCertificate />} />
+                <StatTile title={tr("About to expire")} className={(st.counts?.expiring ?? 0) ? 'bg-amber-100' : 'bg-sky-100'} value={st.counts?.expiring ?? 0} sub={tr("Within 7 days")} icon={<TbClockExclamation />} />
+                <StatTile title={tr("Value of live contracts")} className="bg-sky-100" value={money(st.activeValue, baseCur, { decimals: 0 })} icon={<TbCoins />} />
+                <StatTile title={tr("Waiting for a signature")} className="bg-purple-100" value={st.unsigned || 0} icon={<TbSignature />} />
             </TileGrid>
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <div className="w-52"><Select size="sm" isClearable placeholder="All types" options={typeOptions} value={typeOptions.find((o) => o.value === typeId) || null} onChange={(o) => { setTypeId(o ? o.value : null); setPage(1) }} /></div>
-                    <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder="Choose a client" resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
+                    <div className="w-52"><Select size="sm" isClearable placeholder={tr("All types")} options={typeOptions} value={typeOptions.find((o) => o.value === typeId) || null} onChange={(o) => { setTypeId(o ? o.value : null); setPage(1) }} /></div>
+                    <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder={tr("Choose a client")} resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
                     <StatusPills inline order={['active', 'expiring', 'expired', 'trash']} labels={Object.fromEntries(['active', 'expiring', 'expired', 'trash'].map((k) => [k, STATE[k].label]))} counts={st.counts} value={state} onChange={(k) => { setState(k); setPage(1) }} />
-                    <div className="w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search subject, client, type" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                    <div className="w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search subject, client, type")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 </div>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('subject', 'Subject')}{th('client', 'Client')}{th('type', 'Type')}{th('value', 'Value', true)}{th('dateStart', 'Start')}{th('dateEnd', 'End')}<Th>Signed</Th><Th>Status</Th></Tr></THead>
+                        <THead><Tr>{th('subject', tr("Subject"))}{th('client', tr("Client"))}{th('type', tr("Type"))}{th('value', tr("Value"), true)}{th('dateStart', tr("Start"))}{th('dateEnd', tr("End"))}<Th>{tr("Signed")}</Th><Th>{tr("Status")}</Th></Tr></THead>
                         <TBody>
                             {data.list.map((c) => (
                                 <Tr key={c.id} className="cursor-pointer" onClick={() => navigate(`/crm/contracts/${c.id}`)}>
@@ -88,18 +89,18 @@ const ContractsList = () => {
                                     <Td className="max-w-[160px] truncate text-gray-500">{c.type || '—'}</Td>
                                     <Td className="text-right tabular-nums">{money(c.value, baseCur)}</Td>
                                     <Td className="whitespace-nowrap">{fmtDate(c.dateStart)}</Td>
-                                    <Td className="whitespace-nowrap">{c.dateEnd ? fmtDate(c.dateEnd) : <span className="text-gray-400">No end</span>}{c.state === 'expiring' && <span className="ml-1.5 text-xs text-amber-600">{c.daysLeft}d</span>}</Td>
-                                    <Td><Tag className={c.signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.signed ? 'Yes' : 'No'}</Tag></Td>
+                                    <Td className="whitespace-nowrap">{c.dateEnd ? fmtDate(c.dateEnd) : <span className="text-gray-400">{tr("No end")}</span>}{c.state === 'expiring' && <span className="ml-1.5 text-xs text-amber-600">{c.daysLeft}d</span>}</Td>
+                                    <Td><Tag className={c.signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.signed ? tr("Yes") : tr("No")}</Tag></Td>
                                     <Td><StateTag state={c.state} /></Td>
                                 </Tr>
                             ))}
                         </TBody>
                     </Table>
-                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
-                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">No contracts found</div>}
+                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("No contracts found")}</div>}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-sm text-gray-500">{data.total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.total)} of ${data.total}` : ''}</span>
+                    <span className="text-sm text-gray-500">{data.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>

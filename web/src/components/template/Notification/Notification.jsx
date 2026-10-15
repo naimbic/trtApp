@@ -13,6 +13,7 @@ import Badge from '@/components/ui/Badge'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { useSessionUser } from '@/store/authStore'
 import NotificationToggle from './NotificationToggle'
+import { tr } from '@/utils/t'
 
 dayjs.extend(relativeTime)
 
@@ -50,8 +51,8 @@ const _Notification = ({ className }) => {
         <Dropdown ref={ref} renderTitle={<NotificationToggle dot={unread > 0} className={className} />} menuClass="min-w-[300px] md:min-w-[380px]" placement={larger.md ? 'bottom-end' : 'bottom'} onOpen={load}>
             <Dropdown.Item variant="header">
                 <div className="mb-1 flex items-center justify-between px-2">
-                    <h6>Notifications{unread > 0 && <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">{unread} new</span>}</h6>
-                    <Button variant="plain" shape="circle" size="sm" icon={<HiOutlineMailOpen className="text-xl" />} title="Mark all as read" onClick={markAll} />
+                    <h6>{tr("Notifications")}{unread > 0 && <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">{unread} {tr("new")}</span>}</h6>
+                    <Button variant="plain" shape="circle" size="sm" icon={<HiOutlineMailOpen className="text-xl" />} title={tr("Mark all as read")} onClick={markAll} />
                 </div>
             </Dropdown.Item>
             <ScrollBar className="h-[360px] overflow-y-auto">
@@ -75,7 +76,7 @@ const _Notification = ({ className }) => {
                 })}
                 {loaded && !items.length && (
                     <div className="flex h-[340px] items-center justify-center text-center">
-                        <div><PiBellRingingDuotone className="mx-auto mb-2 text-6xl text-gray-300" /><h6 className="font-semibold">You are all caught up</h6><p className="mt-1 text-sm text-gray-500">New tickets, tasks, payments and answers show up here.</p></div>
+                        <div><PiBellRingingDuotone className="mx-auto mb-2 text-6xl text-gray-300" /><h6 className="font-semibold">{tr("You are all caught up")}</h6><p className="mt-1 text-sm text-gray-500">{tr("New tickets, tasks, payments and answers show up here.")}</p></div>
                     </div>
                 )}
             </ScrollBar>

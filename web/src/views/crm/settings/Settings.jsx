@@ -14,11 +14,12 @@ import { Field } from './fields'
 import { ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel, ResourceManager } from './panels'
 import { MailServerSettings } from '../mail/Mails'
 import { refreshBranding } from '@/utils/hooks/useBranding'
+import { tr } from '@/utils/t'
 
 const ICONS = { TbAdjustmentsHorizontal, TbBuilding, TbWorld, TbMail, TbReceipt2, TbFileInvoice, TbFileDescription, TbPresentation, TbShoppingCart, TbReceiptRefund, TbRepeat, TbUsers, TbChecklist, TbLifebuoy, TbFilter, TbBrandGoogle, TbBellRinging, TbCalendar, TbSparkles, TbFileTypePdf, TbSignature, TbTags, TbClockPlay }
 
 // panel key -> resource key for the plain list managers
-const LISTS = { currencies: ['currencies', 'The currencies you invoice in. Prefix puts the symbol before the amount, suffix after it.'], taxes: ['taxes', 'The taxes you can add to document lines.'], ticketStatuses: ['ticket-statuses'], ticketPriorities: ['ticket-priorities'], departments: ['departments'], predefinedReplies: ['predefined-replies'], spamFilters: ['spam-filters'], leadStatuses: ['lead-statuses'], leadSources: ['lead-sources'], webToLead: ['web-to-lead'], tags: ['tags', 'Tags can be attached to clients, leads, tasks and more.'] }
+const LISTS = { currencies: ['currencies', tr("The currencies you invoice in. Prefix puts the symbol before the amount, suffix after it.")], taxes: ['taxes', tr("The taxes you can add to document lines.")], ticketStatuses: ['ticket-statuses'], ticketPriorities: ['ticket-priorities'], departments: ['departments'], predefinedReplies: ['predefined-replies'], spamFilters: ['spam-filters'], leadStatuses: ['lead-statuses'], leadSources: ['lead-sources'], webToLead: ['web-to-lead'], tags: ['tags', tr("Tags can be attached to clients, leads, tasks and more.")] }
 
 const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'smtp') return <MailServerSettings />
@@ -73,7 +74,7 @@ const Settings = () => {
         try {
             const d = await api('/api/crm/settings', { method: 'PUT', body: { group, values } })
             setData(d); setValues(d.values); setSaved(JSON.stringify(d.values)); setSecrets(d.secrets)
-            notify('success', 'Settings saved')
+            notify('success', tr("Settings saved"))
             refreshBranding()
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
@@ -82,7 +83,7 @@ const Settings = () => {
 
     return (
         <Container>
-            <div className="mb-4"><h3>Settings</h3><p className="text-sm text-gray-500">Configure the whole platform</p></div>
+            <div className="mb-4"><h3>{tr("Settings")}</h3><p className="text-sm text-gray-500">{tr("Configure the whole platform")}</p></div>
             <div className="grid gap-5 lg:grid-cols-[250px_minmax(0,1fr)]">
                 <nav className="lg:sticky lg:top-20 lg:self-start">
                     <Card bodyClass="p-2">
@@ -125,14 +126,14 @@ const Settings = () => {
                     )}
                     {hasFields && canEdit && dirty && (
                         <div className="sticky bottom-4 z-10 mt-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-lg dark:border-gray-600 dark:bg-gray-800">
-                            <span className="text-sm text-gray-500">You have unsaved changes</span>
-                            <div className="flex gap-2"><Button onClick={() => setValues(JSON.parse(saved))}>Discard</Button><Button variant="solid" loading={saving} onClick={save}>Save changes</Button></div>
+                            <span className="text-sm text-gray-500">{tr("You have unsaved changes")}</span>
+                            <div className="flex gap-2"><Button onClick={() => setValues(JSON.parse(saved))}>{tr("Discard")}</Button><Button variant="solid" loading={saving} onClick={save}>{tr("Save changes")}</Button></div>
                         </div>
                     )}
                 </div>
             </div>
-            <ConfirmDialog isOpen={!!pending} type="warning" title="Leave without saving?" confirmText="Leave" onClose={() => setPending(null)} onRequestClose={() => setPending(null)} onCancel={() => setPending(null)} onConfirm={() => { setParams({ group: pending }); setPending(null) }}>
-                <p>You changed settings on this page and have not saved them.</p>
+            <ConfirmDialog isOpen={!!pending} type="warning" title={tr("Leave without saving?")} confirmText={tr("Leave")} onClose={() => setPending(null)} onRequestClose={() => setPending(null)} onCancel={() => setPending(null)} onConfirm={() => { setParams({ group: pending }); setPending(null) }}>
+                <p>{tr("You changed settings on this page and have not saved them.")}</p>
             </ConfirmDialog>
         </Container>
     )

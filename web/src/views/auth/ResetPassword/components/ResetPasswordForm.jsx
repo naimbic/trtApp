@@ -7,14 +7,15 @@ import { apiResetPassword } from '@/services/AuthService'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { tr } from '@/utils/t'
 
 const validationSchema = z
     .object({
-        newPassword: z.string().min(8, 'Use at least 8 characters'),
-        confirmPassword: z.string().min(1, 'Confirm Password Required'),
+        newPassword: z.string().min(8, tr("Use at least 8 characters")),
+        confirmPassword: z.string().min(1, tr("Confirm Password Required")),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
-        message: 'Your passwords do not match',
+        message: tr("Your passwords do not match"),
         path: ['confirmPassword'],
     })
 
@@ -51,7 +52,7 @@ const ResetPasswordForm = (props) => {
             setMessage?.(
                 typeof errors === 'string'
                     ? errors
-                    : 'Failed to reset password',
+                    : tr("Failed to reset password"),
             )
             setSubmitting(false)
         }
@@ -64,7 +65,7 @@ const ResetPasswordForm = (props) => {
             {!resetComplete ? (
                 <Form onSubmit={handleSubmit(onResetPassword)}>
                     <FormItem
-                        label="Password"
+                        label={tr("Password")}
                         invalid={Boolean(errors.newPassword)}
                         errorMessage={errors.newPassword?.message}
                     >
@@ -81,7 +82,7 @@ const ResetPasswordForm = (props) => {
                         />
                     </FormItem>
                     <FormItem
-                        label="Confirm Password"
+                        label={tr("Confirm Password")}
                         invalid={Boolean(errors.confirmPassword)}
                         errorMessage={errors.confirmPassword?.message}
                     >
@@ -91,7 +92,7 @@ const ResetPasswordForm = (props) => {
                             render={({ field }) => (
                                 <PasswordInput
                                     autoComplete="off"
-                                    placeholder="Confirm Password"
+                                    placeholder={tr("Confirm Password")}
                                     {...field}
                                 />
                             )}
@@ -103,7 +104,7 @@ const ResetPasswordForm = (props) => {
                         variant="solid"
                         type="submit"
                     >
-                        {isSubmitting ? 'Submiting...' : 'Submit'}
+                        {isSubmitting ? tr("Submiting...") : tr("Submit")}
                     </Button>
                 </Form>
             ) : (

@@ -4,6 +4,7 @@ import SignInForm from './components/SignInForm'
 import ActionLink from '@/components/shared/ActionLink'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
 import { useThemeStore } from '@/store/themeStore'
+import { tr } from '@/utils/t'
 
 export const SignInBase = ({
     forgetPasswordUrl = '/forgot-password',
@@ -38,7 +39,7 @@ export const SignInBase = ({
                             className="font-semibold heading-text mt-2 underline"
                             themeColor={false}
                         >
-                            Forgot password
+                            {tr("Forgot password")}
                         </ActionLink>
                     </div>
                 }

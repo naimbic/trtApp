@@ -7,6 +7,7 @@ import {
 
 import { FcGoogle } from 'react-icons/fc'
 import { FaGithub } from 'react-icons/fa'
+import { tr } from '@/utils/t'
 
 const OauthSignIn = ({ setMessage, disableSubmit }) => {
     const { oAuthSignIn } = useAuth()
@@ -54,7 +55,7 @@ const OauthSignIn = ({ setMessage, disableSubmit }) => {
             >
                 <div className="flex items-center justify-center gap-2">
                     <FcGoogle className="text-2xl" />
-                    <span>Google</span>
+                    <span>{tr("Google")}</span>
                 </div>
             </Button>
             <Button
@@ -64,7 +65,7 @@ const OauthSignIn = ({ setMessage, disableSubmit }) => {
             >
                 <div className="flex items-center justify-center gap-2">
                     <FaGithub className="text-2xl" />
-                    <span>Github</span>
+                    <span>{tr("Github")}</span>
                 </div>
             </Button>
         </div>

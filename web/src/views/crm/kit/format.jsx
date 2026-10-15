@@ -1,6 +1,7 @@
 import { moneyHidden, MASK } from '@/utils/money'
 import dayjs from 'dayjs'
 import Tag from '@/components/ui/Tag'
+import { tr } from '@/utils/t'
 
 const TAG = {
     green: 'bg-emerald-100 text-emerald-700',
@@ -40,7 +41,7 @@ export function renderCell(col, row, resource) {
     if (col.format === 'documentNumber') return docNumber(row)
     switch (col.type) {
         case 'boolean':
-            return <Tag className={v ? TAG.green : TAG.gray}>{v ? 'Yes' : 'No'}</Tag>
+            return <Tag className={v ? TAG.green : TAG.gray}>{v ? tr("Yes") : tr("No")}</Tag>
         case 'select': {
             if (v === null || v === undefined) return ''
             const color = resource?.statusColors?.[v] ?? resource?.statusColors?.[String(v)]

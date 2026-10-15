@@ -13,6 +13,7 @@ import {
     createTimeHandler,
 } from './utils'
 import { HiOutlineClock } from 'react-icons/hi'
+import { tr } from '@/utils/t'
 
 const TimeInput = (props) => {
     const {
@@ -157,7 +158,7 @@ const TimeInput = (props) => {
                     className={timeFieldClass}
                     max={format === '12' ? 12 : 23}
                     placeholder={timeFieldPlaceholder}
-                    aria-label="hours"
+                    aria-label={tr("hours")}
                     disabled={disabled}
                     name={name}
                     onChange={handleHoursChange}
@@ -172,7 +173,7 @@ const TimeInput = (props) => {
                     withSeparator={showSeconds}
                     max={59}
                     placeholder={timeFieldPlaceholder}
-                    aria-label="minutes"
+                    aria-label={tr("minutes")}
                     disabled={disabled}
                     onChange={handleMinutesChange}
                 />
@@ -186,7 +187,7 @@ const TimeInput = (props) => {
                         className={timeFieldClass}
                         max={59}
                         placeholder={timeFieldPlaceholder}
-                        aria-label="seconds"
+                        aria-label={tr("seconds")}
                         disabled={disabled}
                         onChange={handleSecondsChange}
                     />
@@ -198,7 +199,7 @@ const TimeInput = (props) => {
                         placeholder={amPmPlaceholder}
                         amLabel={amLabel}
                         pmLabel={pmLabel}
-                        aria-label="am pm"
+                        aria-label={tr("am pm")}
                         disabled={disabled}
                         onChange={handleAmPmChange}
                     />

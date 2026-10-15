@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Input from '@/components/ui/Input'
 import classNames from '@/utils/classNames'
+import { tr } from '@/utils/t'
 
 const OTPInput = ({
     length = 6,
@@ -94,7 +95,7 @@ const OTPInput = ({
                         disabled={disabled}
                         autoFocus={autoFocus && index === 0}
                         placeholder={placeholder}
-                        aria-label={`Digit ${index + 1} of ${length}`}
+                        aria-label={tr("Digit {v1} of {length}", { v1: index + 1, length: length })}
                         invalid={invalid}
                         onChange={(e) => handleChange(e, index)}
                         onKeyDown={(e) => handleKeyDown(e, index)}

@@ -21,6 +21,7 @@ import { api, notify, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -63,7 +64,7 @@ const PaymentsList = () => {
     const remove = async () => {
         try {
             await api(`/api/crm/sales/payments/${del.id}`, { method: 'DELETE' })
-            notify('success', 'Payment deleted')
+            notify('success', tr("Payment deleted"))
             load()
         } catch (e) {
             notify('danger', e.message)
@@ -74,23 +75,23 @@ const PaymentsList = () => {
 
     return (
         <Container>
-            <div className="mb-4"><h3>Payments</h3><p className="text-sm text-gray-500">Money received against invoices. Record a payment from the invoice itself.</p></div>
+            <div className="mb-4"><h3>{tr("Payments")}</h3><p className="text-sm text-gray-500">{tr("Money received against invoices. Record a payment from the invoice itself.")}</p></div>
             {Object.keys(data.totals).length > 0 && (
                 <TileGrid>
-                    {Object.entries(data.totals).map(([cid, v], i) => <StatTile key={cid} title={`Received · ${lookups.currencies.find((x) => x.id === cid)?.name || ''}`} className={['bg-emerald-100', 'bg-sky-100', 'bg-amber-100'][i % 3]} value={money(v, cid)} icon={<TbCash />} />)}
-                    <StatTile title="Payments" className="bg-purple-100" value={data.total} sub="For the current filters" icon={<TbListNumbers />} />
+                    {Object.entries(data.totals).map(([cid, v], i) => <StatTile key={cid} title={tr("Received · {v1}", { v1: lookups.currencies.find((x) => x.id === cid)?.name || '' })} className={['bg-emerald-100', 'bg-sky-100', 'bg-amber-100'][i % 3]} value={money(v, cid)} icon={<TbCash />} />)}
+                    <StatTile title={tr("Payments")} className="bg-purple-100" value={data.total} sub={tr("For the current filters")} icon={<TbListNumbers />} />
                 </TileGrid>
             )}
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <div className="w-52"><Select size="sm" isClearable placeholder="All payment modes" options={modeOptions} value={modeOptions.find((o) => o.value === modeId) || null} onChange={(o) => { setModeId(o ? o.value : null); setPage(1) }} /></div>
+                    <div className="w-52"><Select size="sm" isClearable placeholder={tr("All payment modes")} options={modeOptions} value={modeOptions.find((o) => o.value === modeId) || null} onChange={(o) => { setModeId(o ? o.value : null); setPage(1) }} /></div>
                     <div className="w-56"><RelationSelect size="sm" resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
-                    <div className="ml-auto w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search invoice, client, transaction" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                    <div className="ml-auto w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search invoice, client, transaction")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 </div>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('paymentDate', 'Date')}{th('invoiceNumber', 'Invoice')}{th('client', 'Client')}{th('mode', 'Payment mode')}<Th>Transaction</Th>{th('amount', 'Amount', true)}{can('payments', 'delete') && <Th />}</Tr></THead>
+                        <THead><Tr>{th('paymentDate', tr("Date"))}{th('invoiceNumber', tr("Invoice"))}{th('client', tr("Client"))}{th('mode', tr("Payment mode"))}<Th>{tr("Transaction")}</Th>{th('amount', tr("Amount"), true)}{can('payments', 'delete') && <Th />}</Tr></THead>
                         <TBody>
                             {data.list.map((p) => (
                                 <Tr key={p.id} className="cursor-pointer" onClick={() => navigate(`/crm/invoices/${p.invoiceId}`)}>
@@ -100,21 +101,21 @@ const PaymentsList = () => {
                                     <Td>{p.mode}</Td>
                                     <Td className="max-w-[160px] truncate text-gray-500">{p.transactionId}</Td>
                                     <Td className="text-right tabular-nums">{money(p.amount, p.currencyId)}</Td>
-                                    {can('payments', 'delete') && <Td className="text-right" onClick={(e) => e.stopPropagation()}><Tooltip title="Delete payment"><Button size="xs" variant="plain" icon={<TbTrash />} onClick={() => setDel(p)} /></Tooltip></Td>}
+                                    {can('payments', 'delete') && <Td className="text-right" onClick={(e) => e.stopPropagation()}><Tooltip title={tr("Delete payment")}><Button size="xs" variant="plain" icon={<TbTrash />} onClick={() => setDel(p)} /></Tooltip></Td>}
                                 </Tr>
                             ))}
                         </TBody>
                     </Table>
-                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
-                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">No payments found</div>}
+                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("No payments found")}</div>}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-sm text-gray-500">{data.total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.total)} of ${data.total}` : ''}</span>
+                    <span className="text-sm text-gray-500">{data.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>
-            <ConfirmDialog isOpen={!!del} type="danger" title="Delete this payment?" confirmText="Delete" onClose={() => setDel(null)} onRequestClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={remove}>
-                <p>{del && `${money(del.amount, del.currencyId)} on ${del.invoiceNumber} will be removed and the invoice status recalculated.`}</p>
+            <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this payment?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onRequestClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={remove}>
+                <p>{del && tr("{v1} on {invoiceNumber} will be removed and the invoice status recalculated.", { v1: money(del.amount, del.currencyId), invoiceNumber: del.invoiceNumber })}</p>
             </ConfirmDialog>
         </Container>
     )

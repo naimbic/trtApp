@@ -6,11 +6,12 @@ import sleep from '@/utils/sleep'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { tr } from '@/utils/t'
 
 const OTP_LENGTH = 6
 
 const validationSchema = z.object({
-    otp: z.string().min(OTP_LENGTH, { message: 'Please enter a valid OTP' }),
+    otp: z.string().min(OTP_LENGTH, { message: tr("Please enter a valid OTP") }),
 })
 
 const OtpVerificationForm = (props) => {
@@ -33,10 +34,10 @@ const OtpVerificationForm = (props) => {
             /** simulate api call with sleep */
             await sleep(1000)
             setSubmitting(false)
-            setOtpVerified?.('OTP verified!')
+            setOtpVerified?.(tr("OTP verified!"))
         } catch (errors) {
             setMessage?.(
-                typeof errors === 'string' ? errors : 'Some error occured!',
+                typeof errors === 'string' ? errors : tr("Some error occured!"),
             )
             setSubmitting(false)
         }
@@ -71,7 +72,7 @@ const OtpVerificationForm = (props) => {
                     variant="solid"
                     type="submit"
                 >
-                    {isSubmitting ? 'Verifying...' : 'Verify OTP'}
+                    {isSubmitting ? tr("Verifying...") : tr("Verify OTP")}
                 </Button>
             </Form>
         </div>

@@ -11,6 +11,7 @@ import { api, notify } from '../kit/api'
 import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
+import { tr } from '@/utils/t'
 
 const emptyLine = () => ({ description: '', longDescription: '', qty: 1, rate: 0, unit: '', taxes: [] })
 const day = (v) => (v ? dayjs(v).format('YYYY-MM-DD') : '')
@@ -56,7 +57,7 @@ const InvoiceEditor = () => {
     const totals = useMemo(() => (v ? calcDocument({ items: v.items, discountPercent: v.discountPercent, discountFixed: v.discountFixed, discountType: v.discountType, adjustment: v.adjustment }) : null), [v])
 
     if (error && !v) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div></Container>
-    if (!v || !lookups) return <Container><div className="py-20 text-center text-gray-400">Loading…</div></Container>
+    if (!v || !lookups) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
 
     const currency = lookups.currencies.find((c) => c.id === v.currencyId)
     const money = (n) => makeMoney(lookups.currencies)(n, v.currencyId)
@@ -77,13 +78,13 @@ const InvoiceEditor = () => {
     }
 
     const submit = async (draft) => {
-        if (!v.clientId) return setError('Choose a client')
+        if (!v.clientId) return setError(tr("Choose a client"))
         setSaving(true)
         setError('')
         try {
             const body = { ...v, draft }
             const res = id ? await api(`/api/crm/sales/invoices/${id}`, { method: 'PUT', body }) : await api('/api/crm/sales/invoices', { method: 'POST', body })
-            notify('success', 'Invoice saved')
+            notify('success', tr("Invoice saved"))
             navigate(`/crm/invoices/${res.id}`)
         } catch (e) {
             setError(e.message)
@@ -93,55 +94,55 @@ const InvoiceEditor = () => {
 
     return (
         <Container>
-            <h3 className="mb-4">{id ? `Edit invoice ${doc?.invoice?.displayNumber || ''}` : 'New invoice'}</h3>
+            <h3 className="mb-4">{id ? tr("Edit invoice {v1}", { v1: doc?.invoice?.displayNumber || '' }) : tr("New invoice")}</h3>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="flex flex-col gap-4">
                 <Card>
                     <div className="grid gap-4 md:grid-cols-4">
-                        <div className="md:col-span-2"><label className="form-label mb-2 block">Client *</label><RelationSelect resource="clients" value={v.clientId} onChange={(cid) => set({ clientId: cid })} /></div>
-                        <div><label className="form-label mb-2 block">Currency</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-2 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={(cid) => set({ clientId: cid })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
                         <div />
-                        <div><label className="form-label mb-2 block">Invoice date</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">Due date</label><Input type="date" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Invoice date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Due date")}</label><Input type="date" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></div>
                     </div>
                 </Card>
 
                 <Card>
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <h4>Items</h4>
+                        <h4>{tr("Items")}</h4>
                         <div className="w-72"><RelationSelect resource="items" value={null} onChange={addFromCatalog} /></div>
                     </div>
                     <LineItemsTable items={v.items} onChange={(items) => set({ items })} taxOptions={taxOptions} newLine={newLine} />
 
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="grid grid-cols-2 content-start gap-4">
-                            <div><label className="form-label mb-2 block">Discount %</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
-                            <div><label className="form-label mb-2 block">Fixed discount</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
-                            <div><label className="form-label mb-2 block">Discount applies</label><Select options={[{ value: 'before_tax', label: 'Before tax' }, { value: 'after_tax', label: 'After tax' }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? 'After tax' : 'Before tax' }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
-                            <div><label className="form-label mb-2 block">Adjustment</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
+                            <div><label className="form-label mb-2 block">{tr("Discount %")}</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
+                            <div><label className="form-label mb-2 block">{tr("Fixed discount")}</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
+                            <div><label className="form-label mb-2 block">{tr("Discount applies")}</label><Select options={[{ value: 'before_tax', label: tr("Before tax") }, { value: 'after_tax', label: tr("After tax") }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? tr("After tax") : tr("Before tax") }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
+                            <div><label className="form-label mb-2 block">{tr("Adjustment")}</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
                         </div>
                         <dl className="ml-auto w-full max-w-sm text-sm">
-                            <div className="flex justify-between py-1"><dt>Sub total</dt><dd className="tabular-nums">{money(totals.subtotal)}</dd></div>
-                            {totals.discountTotal > 0 && <div className="flex justify-between py-1"><dt>Discount</dt><dd className="tabular-nums">-{money(totals.discountTotal)}</dd></div>}
+                            <div className="flex justify-between py-1"><dt>{tr("Sub total")}</dt><dd className="tabular-nums">{money(totals.subtotal)}</dd></div>
+                            {totals.discountTotal > 0 && <div className="flex justify-between py-1"><dt>{tr("Discount")}</dt><dd className="tabular-nums">-{money(totals.discountTotal)}</dd></div>}
                             {totals.taxes.map((t) => <div key={`${t.name}|${t.rate}`} className="flex justify-between py-1"><dt>{t.name} ({t.rate}%)</dt><dd className="tabular-nums">{money(t.total)}</dd></div>)}
-                            {Number(v.adjustment) !== 0 && <div className="flex justify-between py-1"><dt>Adjustment</dt><dd className="tabular-nums">{money(v.adjustment)}</dd></div>}
-                            <div className="mt-1 flex justify-between border-t py-2 text-base font-semibold"><dt>Total</dt><dd className="tabular-nums">{money(totals.total)}</dd></div>
+                            {Number(v.adjustment) !== 0 && <div className="flex justify-between py-1"><dt>{tr("Adjustment")}</dt><dd className="tabular-nums">{money(v.adjustment)}</dd></div>}
+                            <div className="mt-1 flex justify-between border-t py-2 text-base font-semibold"><dt>{tr("Total")}</dt><dd className="tabular-nums">{money(totals.total)}</dd></div>
                         </dl>
                     </div>
                 </Card>
 
                 <Card>
                     <div className="grid gap-4 md:grid-cols-3">
-                        <div><label className="form-label mb-2 block">Client note</label><Input textArea rows={4} value={v.clientNote} onChange={(e) => set({ clientNote: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">Admin note (internal)</label><Input textArea rows={4} value={v.adminNote} onChange={(e) => set({ adminNote: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">Terms &amp; conditions</label><Input textArea rows={4} value={v.terms} onChange={(e) => set({ terms: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Client note")}</label><Input textArea rows={4} value={v.clientNote} onChange={(e) => set({ clientNote: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Admin note (internal)")}</label><Input textArea rows={4} value={v.adminNote} onChange={(e) => set({ adminNote: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Terms & conditions")}</label><Input textArea rows={4} value={v.terms} onChange={(e) => set({ terms: e.target.value })} /></div>
                     </div>
                 </Card>
 
                 <div className="flex justify-end gap-2">
-                    <Button onClick={() => navigate(id ? `/crm/invoices/${id}` : '/crm/invoices')}>Cancel</Button>
-                    {!id && <Button loading={saving} onClick={() => submit(true)}>Save as draft</Button>}
-                    <Button variant="solid" loading={saving} onClick={() => submit(false)}>Save</Button>
+                    <Button onClick={() => navigate(id ? `/crm/invoices/${id}` : '/crm/invoices')}>{tr("Cancel")}</Button>
+                    {!id && <Button loading={saving} onClick={() => submit(true)}>{tr("Save as draft")}</Button>}
+                    <Button variant="solid" loading={saving} onClick={() => submit(false)}>{tr("Save")}</Button>
                 </div>
             </div>
             {currency ? null : null}

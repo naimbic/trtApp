@@ -5,14 +5,15 @@ import Tooltip from '@/components/ui/Tooltip'
 import { PiPaletteDuotone } from 'react-icons/pi'
 import { useDashFilters, ACCENTS } from '@/store/dashFilterStore'
 import classNames from '@/utils/classNames'
+import { tr } from '@/utils/t'
 
 const PRESETS = [
-    ['today', 'Today'],
+    ['today', tr("Today")],
     ['7d', '7D'],
     ['30d', '30D'],
-    ['month', 'Month'],
-    ['lastmonth', 'Last month'],
-    ['year', 'Year'],
+    ['month', tr("Month")],
+    ['lastmonth', tr("Last month")],
+    ['year', tr("Year")],
     ['12m', '12M'],
 ]
 
@@ -27,7 +28,7 @@ const DashboardFilters = () => {
     const customValue = range === 'custom' && from && to ? [new Date(`${from}T00:00:00`), new Date(`${to}T00:00:00`)] : undefined
 
     return (
-        <div className="flex max-w-full items-center gap-3 overflow-x-auto py-1" aria-label="Dashboard filters">
+        <div className="flex max-w-full items-center gap-3 overflow-x-auto py-1" aria-label={tr("Dashboard filters")}>
             <Group>
                 <Segment size="sm" value={range === 'custom' ? '' : range} onChange={(v) => v && setRange(v)}>
                     {PRESETS.map(([key, label]) => (
@@ -38,7 +39,7 @@ const DashboardFilters = () => {
                     <DatePicker.DatePickerRange
                         size="sm"
                         clearable={false}
-                        placeholder="Custom range"
+                        placeholder={tr("Custom range")}
                         inputFormat="DD MMM YYYY"
                         separator="→"
                         maxDate={new Date()}
@@ -66,7 +67,7 @@ const DashboardFilters = () => {
             )}
 
             <Divider />
-            <Group className="rounded-full border border-gray-200 px-2.5 py-1.5 dark:border-gray-600" aria-label="Colour">
+            <Group className="rounded-full border border-gray-200 px-2.5 py-1.5 dark:border-gray-600" aria-label={tr("Colour")}>
                 <PiPaletteDuotone className="text-lg text-gray-400" />
                 {ACCENTS.map((a) => (
                     <Tooltip key={a.key} title={a.label}>

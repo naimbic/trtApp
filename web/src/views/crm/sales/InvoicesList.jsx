@@ -21,6 +21,7 @@ import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { STATUS, StatusTag, fmtDate } from './shared'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const ORDER = [6, 1, 3, 4, 2, 5]
@@ -69,29 +70,29 @@ const InvoicesList = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Invoices</h3><p className="text-sm text-gray-500">Track what you billed, what was paid and what is overdue</p></div>
-                {can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/invoices/new')}>New invoice</Button>}
+                <div><h3>{tr("Invoices")}</h3><p className="text-sm text-gray-500">{tr("Track what you billed, what was paid and what is overdue")}</p></div>
+                {can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/invoices/new')}>{tr("New invoice")}</Button>}
             </div>
 
             {m && (
                 <TileGrid cols={4}>
-                    <StatTile title="Invoiced" className="bg-sky-100" value={money(m.invoiced, cur)} icon={<TbReceipt2 />} sub="Drafts and cancelled not counted" />
-                    <StatTile title="Paid" className="bg-emerald-100" value={money(m.paid, cur)} icon={<TbCash />} />
-                    <StatTile title="Outstanding" className="bg-purple-100" value={money(m.outstanding, cur)} icon={<TbHourglass />} />
-                    <StatTile title="Overdue" className={m.overdue > 0 ? 'bg-red-100' : 'bg-amber-100'} value={money(m.overdue, cur)} icon={<TbAlertTriangle />} sub="For the current filters" />
+                    <StatTile title={tr("Invoiced")} className="bg-sky-100" value={money(m.invoiced, cur)} icon={<TbReceipt2 />} sub={tr("Drafts and cancelled not counted")} />
+                    <StatTile title={tr("Paid")} className="bg-emerald-100" value={money(m.paid, cur)} icon={<TbCash />} />
+                    <StatTile title={tr("Outstanding")} className="bg-purple-100" value={money(m.outstanding, cur)} icon={<TbHourglass />} />
+                    <StatTile title={tr("Overdue")} className={m.overdue > 0 ? 'bg-red-100' : 'bg-amber-100'} value={money(m.overdue, cur)} icon={<TbAlertTriangle />} sub={tr("For the current filters")} />
                 </TileGrid>
             )}
 
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder="Choose a client" resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
+                    <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder={tr("Choose a client")} resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
                     <StatusPills inline order={ORDER} labels={Object.fromEntries(ORDER.map((s) => [s, STATUS[s].label]))} counts={data.stats.counts} value={status} onChange={(s) => { setStatus(s); setPage(1) }} />
-                    <div className="w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search number or client" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                    <div className="w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search number or client")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 </div>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('number', 'Invoice')}{th('client', 'Client')}{th('date', 'Date')}{th('dueDate', 'Due date')}{th('total', 'Amount', true)}<Th className="text-right">Paid</Th>{th('due', 'Balance', true)}{th('status', 'Status')}</Tr></THead>
+                        <THead><Tr>{th('number', tr("Invoice"))}{th('client', tr("Client"))}{th('date', tr("Date"))}{th('dueDate', tr("Due date"))}{th('total', tr("Amount"), true)}<Th className="text-right">{tr("Paid")}</Th>{th('due', tr("Balance"), true)}{th('status', tr("Status"))}</Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
                                 <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/invoices/${r.id}`)}>
@@ -102,16 +103,16 @@ const InvoicesList = () => {
                                     <Td className="text-right tabular-nums">{money(r.total, r.currencyId)}</Td>
                                     <Td className="text-right tabular-nums text-gray-500">{r.paid ? money(r.paid, r.currencyId) : '—'}</Td>
                                     <Td className="text-right tabular-nums">{r.due ? money(r.due, r.currencyId) : '—'}</Td>
-                                    <Td><StatusTag status={r.status} />{!r.sent && r.status === 1 && <span className="ml-1.5 text-xs text-gray-400">not sent</span>}</Td>
+                                    <Td><StatusTag status={r.status} />{!r.sent && r.status === 1 && <span className="ml-1.5 text-xs text-gray-400">{tr("not sent")}</span>}</Td>
                                 </Tr>
                             ))}
                         </TBody>
                     </Table>
-                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
-                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">No invoices found</div>}
+                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("No invoices found")}</div>}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-sm text-gray-500">{data.total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.total)} of ${data.total}` : ''}</span>
+                    <span className="text-sm text-gray-500">{data.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>

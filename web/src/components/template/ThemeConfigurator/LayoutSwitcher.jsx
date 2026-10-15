@@ -15,46 +15,47 @@ import TopBarClassicSvg from '@/assets/svg/TopBarClassicSvg'
 import FrameLessSideSvg from '@/assets/svg/FrameLessSideSvg'
 import ContentOverlaySvg from '@/assets/svg/ContentOverlaySvg'
 import BlankSvg from '@/assets/svg/BlankSvg'
+import { tr } from '@/utils/t'
 
 const layouts = [
     {
         value: LAYOUT_COLLAPSIBLE_SIDE,
-        label: 'Collapsible',
+        label: tr("Collapsible"),
         src: '/img/thumbs/layouts/classic.jpg',
         srcDark: '/img/thumbs/layouts/classic-dark.jpg',
         svg: <CollapsibleSideSvg height={'100%'} width={'100%'} />,
     },
     {
         value: LAYOUT_STACKED_SIDE,
-        label: 'Stacked',
+        label: tr("Stacked"),
         src: '/img/thumbs/layouts/modern.jpg',
         srcDark: '/img/thumbs/layouts/modern-dark.jpg',
         svg: <StackedSideSvg height={'100%'} width={'100%'} />,
     },
     {
         value: LAYOUT_TOP_BAR_CLASSIC,
-        label: 'Top bar',
+        label: tr("Top bar"),
         src: '/img/thumbs/layouts/stackedSide.jpg',
         srcDark: '/img/thumbs/layouts/stackedSide-dark.jpg',
         svg: <TopBarClassicSvg height={'100%'} width={'100%'} />,
     },
     {
         value: LAYOUT_FRAMELESS_SIDE,
-        label: 'Frameless',
+        label: tr("Frameless"),
         src: '/img/thumbs/layouts/simple.jpg',
         srcDark: '/img/thumbs/layouts/simple-dark.jpg',
         svg: <FrameLessSideSvg height={'100%'} width={'100%'} />,
     },
     {
         value: LAYOUT_CONTENT_OVERLAY,
-        label: 'Overlay',
+        label: tr("Overlay"),
         src: '/img/thumbs/layouts/decked.jpg',
         srcDark: '/img/thumbs/layouts/decked-dark.jpg',
         svg: <ContentOverlaySvg height={'100%'} width={'100%'} />,
     },
     {
         value: LAYOUT_BLANK,
-        label: 'Blank',
+        label: tr("Blank"),
         src: '/img/thumbs/layouts/blank.jpg',
         srcDark: '/img/thumbs/layouts/blank-dark.jpg',
         svg: <BlankSvg height={'100%'} width={'100%'} />,

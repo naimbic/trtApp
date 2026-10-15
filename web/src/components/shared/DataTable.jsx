@@ -21,6 +21,7 @@ import {
     getSortedRowModel,
     flexRender,
 } from '@tanstack/react-table'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody, Sorter } = Table
 
@@ -279,7 +280,7 @@ function DataTable(props) {
                                             <>
                                                 <FileNotFound />
                                                 <span className="font-semibold">
-                                                    No data found!
+                                                    {tr("No data found!")}
                                                 </span>
                                             </>
                                         )}

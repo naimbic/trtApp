@@ -16,15 +16,17 @@ import EventDialog from './EventDialog'
 import SyncDialog from './SyncDialog'
 import useMe from '@/utils/hooks/useMe'
 import './calendar.css'
+import { tr } from '@/utils/t'
+import { localTitle } from './titles'
 
 const LAYER_META = {
-    events: { label: 'Events', dot: 'bg-blue-400' },
-    tasks: { label: 'Tasks', dot: 'bg-orange-400' },
-    invoices: { label: 'Invoices', dot: 'bg-red-400' },
-    projects: { label: 'Projects', dot: 'bg-purple-400' },
-    estimates: { label: 'Estimates', dot: 'bg-yellow-400' },
-    proposals: { label: 'Proposals', dot: 'bg-green-400' },
-    contracts: { label: 'Contracts', dot: 'bg-sky-400' },
+    events: { label: tr("Events"), dot: 'bg-blue-400' },
+    tasks: { label: tr("Tasks"), dot: 'bg-orange-400' },
+    invoices: { label: tr("Invoices"), dot: 'bg-red-400' },
+    projects: { label: tr("Projects"), dot: 'bg-purple-400' },
+    estimates: { label: tr("Estimates"), dot: 'bg-yellow-400' },
+    proposals: { label: tr("Proposals"), dot: 'bg-green-400' },
+    contracts: { label: tr("Contracts"), dot: 'bg-sky-400' },
 }
 
 const notify = (type, msg) => toast.push(<Notification type={type}>{msg}</Notification>, { placement: 'top-center' })
@@ -32,11 +34,11 @@ const notify = (type, msg) => toast.push(<Notification type={type}>{msg}</Notifi
 const api = async (url, init) => {
     const res = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`)
+    if (!res.ok) throw new Error(json.error || tr("Request failed ({status})", { status: res.status }))
     return json
 }
 
-const TYPE_LABEL = { tasks: 'Task', invoices: 'Invoice', projects: 'Project', estimates: 'Estimate', proposals: 'Proposal', contracts: 'Contract' }
+const TYPE_LABEL = { tasks: tr("Task"), invoices: tr("Invoice"), projects: tr("Project"), estimates: tr("Estimate"), proposals: tr("Proposal"), contracts: tr("Contract") }
 
 const Row = ({ icon: Icon, children }) => (children ? <div className="flex items-start gap-1.5 text-xs"><Icon className="mt-0.5 shrink-0 text-sm opacity-70" /><span className="min-w-0 break-words">{children}</span></div> : null)
 
@@ -48,22 +50,22 @@ const EventTip = ({ ev, timeText }) => {
                 <div className="font-semibold">{p.rawTitle || ev.title}</div>
                 <div className="text-xs opacity-80">{p.detail || TYPE_LABEL[p.type]}</div>
                 <Row icon={TbBuilding}>{p.clientName}</Row>
-                <div className="text-xs opacity-60">Click to open</div>
+                <div className="text-xs opacity-60">{tr("Click to open")}</div>
             </div>
         )
     }
     const cat = CATEGORIES.find((c) => c.value === p.category) || CATEGORIES[0]
     return (
         <div className="flex max-w-xs flex-col gap-1">
-            <div className="font-semibold">{p.rawTitle}</div>
-            <div className="text-xs opacity-80">{cat.label} · {p.allDay ? 'All day' : timeText || ''}</div>
+            <div className="font-semibold">{localTitle(p.rawTitle)}</div>
+            <div className="text-xs opacity-80">{cat.label} · {p.allDay ? tr("All day") : timeText || ''}</div>
             <Row icon={TbBuilding}>{p.clientName}</Row>
             <Row icon={TbUsers}>{[...(p.attendees || []).map((a) => a.name), ...(p.attendeeEmails || [])].filter(Boolean).join(', ')}</Row>
             <Row icon={TbMapPin}>{p.location}</Row>
-            <Row icon={TbVideo}>{p.meetingUrl && 'Video meeting · click to open and join'}</Row>
+            <Row icon={TbVideo}>{p.meetingUrl && tr("Video meeting · click to open and join")}</Row>
             {p.description && <div className="line-clamp-3 text-xs opacity-80">{p.description}</div>}
-            <Row icon={TbUser}>{p.owner && `Organiser: ${p.owner}`}</Row>
-            <div className="text-xs opacity-60">{p.canEdit === false ? 'Click to view' : 'Click to edit'}</div>
+            <Row icon={TbUser}>{p.owner && tr("Organiser: {owner}", { owner: p.owner })}</Row>
+            <div className="text-xs opacity-60">{p.canEdit === false ? tr("Click to view") : tr("Click to edit")}</div>
         </div>
     )
 }
@@ -77,7 +79,7 @@ const renderEvent = (arg) => {
         <Tooltip title={<EventTip ev={ev} timeText={arg.timeText} />} placement="top">
             <div className={`custom-calendar-event ${COLOR_BG[ev.extendedProps.eventColor] || ''} text-gray-900 ${isEnd && !isStart ? 'rounded-tl-none! rounded-bl-none!' : ''} ${!isEnd && isStart ? 'rounded-tr-none! rounded-br-none!' : ''}`}>
                 {!(isEnd && !isStart) && <span>{arg.timeText}</span>}
-                <span className="ml-1 font-bold rtl:mr-1">{ev.extendedProps.rawTitle || ev.title}</span>
+                <span className="ml-1 font-bold rtl:mr-1">{localTitle(ev.extendedProps.rawTitle || ev.title)}</span>
             </div>
         </Tooltip>
     )
@@ -157,7 +159,7 @@ const Calendar = () => {
         const noon = (d) => dayjs(d).hour(12).minute(0).second(0).millisecond(0)
         try {
             await api(`/api/crm/calendar/${p.rawId}`, { method: 'PATCH', body: JSON.stringify(allDay ? { allDay, start: noon(arg.event.start).toISOString(), end: noon(arg.event.end ? dayjs(arg.event.end).subtract(1, 'day') : arg.event.start).toISOString() } : { allDay, start: arg.event.start.toISOString(), end: arg.event.end ? arg.event.end.toISOString() : null }) })
-            notify('success', 'Event moved')
+            notify('success', tr("Event moved"))
             load()
         } catch (e) {
             arg.revert()
@@ -169,7 +171,7 @@ const Calendar = () => {
         setSaving(true)
         try {
             const res = dialog.selected.type === 'EDIT' ? await api(`/api/crm/calendar/${dialog.selected.id}`, { method: 'PATCH', body: JSON.stringify(values) }) : await api('/api/crm/calendar', { method: 'POST', body: JSON.stringify(values) })
-            notify('success', `${dialog.selected.type === 'EDIT' ? 'Event updated' : 'Event created'}${res?.invited ? ` · invitation sent to ${res.invited} ${res.invited > 1 ? 'people' : 'person'}` : ''}`)
+            notify('success', `${dialog.selected.type === 'EDIT' ? tr("Event updated") : tr("Event created")}${res?.invited ? tr(" · invitation sent to {invited} {v2}", { invited: res.invited, v2: res.invited > 1 ? 'people' : 'person' }) : ''}`)
             setDialog({ open: false, selected: { type: 'NEW' } })
             load()
         } catch (e) {
@@ -184,7 +186,7 @@ const Calendar = () => {
         setSaving(true)
         try {
             await api(`/api/crm/calendar/${dialog.selected.id}`, { method: 'DELETE' })
-            notify('success', 'Event deleted')
+            notify('success', tr("Event deleted"))
             setDialog({ open: false, selected: { type: 'NEW' } })
             load()
         } catch (e) {
@@ -198,12 +200,12 @@ const Calendar = () => {
         <Container className="h-full">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h3>Calendar</h3>
-                    <p className="text-sm text-gray-500">Your events plus due dates from tasks, invoices, projects and more{loading ? ' · loading…' : ''}</p>
+                    <h3>{tr("Calendar")}</h3>
+                    <p className="text-sm text-gray-500">{tr("Your events plus due dates from tasks, invoices, projects and more")}{loading ? tr(" · loading…") : ''}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => setDialog({ open: true, selected: { type: 'NEW', start: dayjs().add(1, 'hour').startOf('hour').format(), end: dayjs().add(2, 'hour').startOf('hour').format() } })}>New event</Button>
-                    <Button size="sm" icon={<TbRefresh />} onClick={() => setSyncOpen(true)}>Sync with Google / Apple</Button>
+                    <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => setDialog({ open: true, selected: { type: 'NEW', start: dayjs().add(1, 'hour').startOf('hour').format(), end: dayjs().add(2, 'hour').startOf('hour').format() } })}>{tr("New event")}</Button>
+                    <Button size="sm" icon={<TbRefresh />} onClick={() => setSyncOpen(true)}>{tr("Sync with Google / Apple")}</Button>
                 </div>
                 <Segment selectionType="multiple" size="sm" value={shown} onChange={setShown}>
                     {available.map((k) => (
@@ -217,8 +219,8 @@ const Calendar = () => {
                 <CalendarView eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={Number(app.calendar_events_limit) || 3} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} />
             </AdaptiveCard>
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
-            <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this event?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
-                <p>The event is removed for everyone who was invited.</p>
+            <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete this event?")} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
+                <p>{tr("The event is removed for everyone who was invited.")}</p>
             </ConfirmDialog>
             <EventDialog
                 open={dialog.open}

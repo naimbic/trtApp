@@ -16,9 +16,10 @@ import { api, qs, notify } from '../kit/api'
 import { usePageRange } from '@/store/pageFilterStore'
 import { People } from '../tasks/shared'
 import LeadDrawer from './LeadDrawer'
+import { tr, trn } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
-const SHOW = [['', 'Active'], ['lost', 'Lost'], ['junk', 'Junk'], ['converted', 'Converted']]
+const SHOW = [['', tr("Active")], ['lost', tr("Lost")], ['junk', tr("Junk")], ['converted', tr("Converted")]]
 
 const LeadCard = ({ l, onOpen }) => (
     <div onClick={() => onOpen(l.id)} className="cursor-pointer space-y-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
@@ -32,7 +33,7 @@ const LeadCard = ({ l, onOpen }) => (
         </div>
         <div className="flex items-center justify-between">
             <span className="flex items-center gap-1 text-[11px] text-gray-400"><TbClockHour4 />{dayjs(l.lastContact || l.createdAt).format('DD MMM')}</span>
-            {l.assigned ? <People list={[l.assigned]} size={22} /> : <span className="text-[11px] text-gray-400">Unassigned</span>}
+            {l.assigned ? <People list={[l.assigned]} size={22} /> : <span className="text-[11px] text-gray-400">{tr("Unassigned")}</span>}
         </div>
     </div>
 )
@@ -100,21 +101,21 @@ const LeadsBoard = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Leads</h3><p className="text-sm text-gray-500">{total} lead{total === 1 ? '' : 's'}{show ? ` · ${SHOW.find((s) => s[0] === show)[1].toLowerCase()}` : ''}</p></div>
+                <div><h3>{tr("Leads")}</h3><p className="text-sm text-gray-500">{trn(total, "lead")}{show ? ` · ${SHOW.find((s) => s[0] === show)[1].toLowerCase()}` : ''}</p></div>
                 <div className="flex items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
-                        <Segment.Item value="board"><span className="inline-flex items-center gap-1"><TbLayoutKanban />Board</span></Segment.Item>
-                        <Segment.Item value="list"><span className="inline-flex items-center gap-1"><TbList />List</span></Segment.Item>
+                        <Segment.Item value="board"><span className="inline-flex items-center gap-1"><TbLayoutKanban />{tr("Board")}</span></Segment.Item>
+                        <Segment.Item value="list"><span className="inline-flex items-center gap-1"><TbList />{tr("List")}</span></Segment.Item>
                     </Segment>
-                    <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>New lead</Button>
+                    <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>{tr("New lead")}</Button>
                 </div>
             </div>
 
             <div className="mb-4 flex flex-wrap items-center gap-3">
-                <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder="Search leads" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-                <div className="w-48"><Select size="sm" isClearable placeholder="Any owner" options={staffOptions} value={staffOptions.find((o) => o.value === assigned) || null} onChange={(o) => { setAssigned(o?.value || null); setMine(false) }} /></div>
-                <div className="w-48"><Select size="sm" isClearable placeholder="Any source" options={sourceOptions} value={sourceOptions.find((o) => o.value === sourceId) || null} onChange={(o) => setSourceId(o?.value || null)} /></div>
-                <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssigned(null) }} />My leads</label>
+                <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search leads")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any owner")} options={staffOptions} value={staffOptions.find((o) => o.value === assigned) || null} onChange={(o) => { setAssigned(o?.value || null); setMine(false) }} /></div>
+                <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any source")} options={sourceOptions} value={sourceOptions.find((o) => o.value === sourceId) || null} onChange={(o) => setSourceId(o?.value || null)} /></div>
+                <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssigned(null) }} />{tr("My leads")}</label>
                 <Segment size="sm" value={show} onChange={(v) => setShow(Array.isArray(v) ? v[0] ?? '' : v ?? '')} className="ml-auto">{SHOW.map(([v, l]) => <Segment.Item key={v || 'active'} value={v}>{l}{v && data.totals?.[v] ? ` (${data.totals[v]})` : ''}</Segment.Item>)}</Segment>
             </div>
 
@@ -137,8 +138,8 @@ const LeadsBoard = () => {
                                                 </Draggable>
                                             ))}
                                             {prov.placeholder}
-                                            {!loading && !c.leads.length && <div className="py-6 text-center text-xs text-gray-400">No leads</div>}
-                                            {c.leads.length < c.count && <Button size="xs" block onClick={() => more(c)}>Show {Math.min(data.limit || 50, c.count - c.leads.length)} more</Button>}
+                                            {!loading && !c.leads.length && <div className="py-6 text-center text-xs text-gray-400">{tr("No leads")}</div>}
+                                            {c.leads.length < c.count && <Button size="xs" block onClick={() => more(c)}>{tr("Show")} {Math.min(data.limit || 50, c.count - c.leads.length)} {tr("more")}</Button>}
                                         </div>
                                     )}
                                 </Droppable>
@@ -149,7 +150,7 @@ const LeadsBoard = () => {
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <Table>
-                        <THead><Tr><Th>Name</Th><Th>Company</Th><Th>Email</Th><Th>Phone</Th><Th>Status</Th><Th>Source</Th><Th>Owner</Th><Th>Created</Th></Tr></THead>
+                        <THead><Tr><Th>{tr("Name")}</Th><Th>{tr("Company")}</Th><Th>{tr("Email")}</Th><Th>{tr("Phone")}</Th><Th>{tr("Status")}</Th><Th>{tr("Source")}</Th><Th>{tr("Owner")}</Th><Th>{tr("Created")}</Th></Tr></THead>
                         <TBody>
                             {list.list.map((l) => (
                                 <Tr key={l.id} className="cursor-pointer" onClick={() => open(l.id)}>
@@ -158,10 +159,10 @@ const LeadsBoard = () => {
                                     <Td>{l.source || '—'}</Td><Td>{l.assigned?.name || '—'}</Td><Td>{dayjs(l.createdAt).format('DD MMM YYYY')}</Td>
                                 </Tr>
                             ))}
-                            {!loading && !list.list.length && <Tr><Td colSpan={8} className="py-10 text-center text-gray-500">No leads match</Td></Tr>}
+                            {!loading && !list.list.length && <Tr><Td colSpan={8} className="py-10 text-center text-gray-500">{tr("No leads match")}</Td></Tr>}
                         </TBody>
                     </Table>
-                    {list.total > list.list.length && <div className="p-3 text-center text-xs text-gray-500">Showing the latest {list.list.length} of {list.total}. Use search or filters to narrow down.</div>}
+                    {list.total > list.list.length && <div className="p-3 text-center text-xs text-gray-500">{tr("Showing the latest")} {list.list.length} {tr("of")} {list.total}{tr(". Use search or filters to narrow down.")}</div>}
                 </div>
             )}
 

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.34.0',
+        date: '2026-10-15',
+        title: 'The whole staff area in 5 languages',
+        items: ['Every page of the staff area is now translated in English, Français, Español, 日本語 and العربية: menus, headers, buttons, forms, dialogs, tooltips, empty states, notifications, error messages, statuses, settings and permission names, charts, the calendar (month names, weekdays, task and invoice entries) and the project timeline', 'Arabic switches the whole layout to right-to-left; the language you pick is kept and applied from the first screen (the page restarts when you change it, so everything switches at once)', 'Names and data you typed (clients, tasks, templates, release notes) stay as written; the release notes on the Versions page are in English', 'For developers: scripts/i18n-wrap.mjs, i18n-broad.mjs, i18n-scan.mjs, i18n-keys.mjs and i18n-merge.mjs wrap new texts in tr() and list what a language is missing; dictionaries are in web/src/locales/staff']
+    },
+    {
         version: '0.33.0',
         date: '2026-10-15',
         title: 'Japanese replaces Chinese, sidebar in every language',

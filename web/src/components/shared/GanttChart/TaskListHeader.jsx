@@ -1,3 +1,4 @@
+import { tr } from '@/utils/t'
 const TaskListHeader = ({ headerHeight, rowWidth, extraHeaders = [] }) => {
     return (
         <div className="table">
@@ -13,7 +14,7 @@ const TaskListHeader = ({ headerHeight, rowWidth, extraHeaders = [] }) => {
                         minWidth: rowWidth,
                     }}
                 >
-                    &nbsp;Name
+                    {tr("Name")}
                 </div>
                 <div
                     className="border-r border-gray-200 dark:border-gray-700 -ml-1"

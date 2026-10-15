@@ -2,6 +2,7 @@ import Button from '../Button'
 import classNames from '../utils/classNames'
 import { useCarousel } from './context'
 import { HiChevronLeft } from 'react-icons/hi'
+import { tr } from '@/utils/t'
 
 const CarouselPrevious = (props) => {
     const { className, variant = 'default', size = 'sm', ...rest } = props
@@ -19,7 +20,7 @@ const CarouselPrevious = (props) => {
             className={buttonClass}
             disabled={!canScrollPrev}
             shape="circle"
-            aria-label="Previous slide"
+            aria-label={tr("Previous slide")}
             icon={<HiChevronLeft />}
             onClick={scrollPrev}
             {...rest}

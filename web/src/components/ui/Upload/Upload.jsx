@@ -6,6 +6,7 @@ import Button from '../Button/Button'
 import CloseButton from '../CloseButton'
 import Notification from '../Notification/Notification'
 import toast from '../toast/toast'
+import { tr } from '@/utils/t'
 
 const filesToArray = (files) => Object.keys(files).map((key) => files[key])
 
@@ -44,7 +45,7 @@ const Upload = (props) => {
     const triggerMessage = (msg = '') => {
         toast.push(
             <Notification type="danger" duration={2000}>
-                {msg || 'Upload Failed!'}
+                {msg || tr("Upload Failed!")}
             </Notification>,
             {
                 placement: 'top-center',
@@ -120,13 +121,13 @@ const Upload = (props) => {
         if (!draggable && !children) {
             return (
                 <Button disabled={disabled} onClick={(e) => e.preventDefault()}>
-                    Upload
+                    {tr("Upload")}
                 </Button>
             )
         }
 
         if (draggable && !children) {
-            return <span>Choose a file or drag and drop here</span>
+            return <span>{tr("Choose a file or drag and drop here")}</span>
         }
 
         return children

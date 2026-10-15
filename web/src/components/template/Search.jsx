@@ -11,10 +11,11 @@ import { HiOutlineSearch, HiChevronRight } from 'react-icons/hi'
 import { PiMagnifyingGlassDuotone } from 'react-icons/pi'
 import { Link } from 'react-router'
 import Highlighter from 'react-highlight-words'
+import { tr } from '@/utils/t'
 
 const recommendedSearch = [
     {
-        title: 'Recommended',
+        title: tr("Recommended"),
         data: [],
     },
 ]
@@ -137,12 +138,12 @@ const _Search = ({ className }) => {
                             <input
                                 ref={inputRef}
                                 className="ring-0 outline-hidden block w-full p-4 text-base bg-transparent text-gray-900 dark:text-gray-100"
-                                placeholder="Search..."
+                                placeholder={tr("Search...")}
                                 onChange={handleSearch}
                             />
                         </div>
                         <Button size="xs" onClick={handleSearchClose}>
-                            Esc
+                            {tr("Esc")}
                         </Button>
                     </div>
                     <div className="py-6 px-5">
@@ -166,7 +167,7 @@ const _Search = ({ className }) => {
                             ))}
                             {searchResult.length === 0 && noResult && (
                                 <div className="my-10 text-center text-lg">
-                                    <span>No results for </span>
+                                    <span>{tr("No results for")} </span>
                                     <span className="heading-text">
                                         {`'`}
                                         {inputRef.current?.value}

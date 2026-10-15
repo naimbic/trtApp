@@ -6,16 +6,17 @@ import { useAuth } from '@/auth'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { tr } from '@/utils/t'
 
 const validationSchema = z
     .object({
-        email: z.email({ message: 'Please enter a valid email' }),
-        userName: z.string().min(1, { message: 'Please enter your name' }),
-        password: z.string().min(1, { message: 'Password required' }),
-        confirmPassword: z.string().min(1, { message: 'Confirm Password Required' }),
+        email: z.email({ message: tr("Please enter a valid email") }),
+        userName: z.string().min(1, { message: tr("Please enter your name") }),
+        password: z.string().min(1, { message: tr("Password required") }),
+        confirmPassword: z.string().min(1, { message: tr("Confirm Password Required") }),
     })
     .refine((data) => data.password === data.confirmPassword, {
-        message: 'Password not match',
+        message: tr("Password not match"),
         path: ['confirmPassword'],
     })
 
@@ -53,7 +54,7 @@ const SignUpForm = (props) => {
         <div className={className}>
             <Form onSubmit={handleSubmit(onSignUp)}>
                 <FormItem
-                    label="User name"
+                    label={tr("User name")}
                     invalid={Boolean(errors.userName)}
                     errorMessage={errors.userName?.message}
                 >
@@ -63,7 +64,7 @@ const SignUpForm = (props) => {
                         render={({ field }) => (
                             <Input
                                 type="text"
-                                placeholder="User Name"
+                                placeholder={tr("User Name")}
                                 autoComplete="off"
                                 {...field}
                             />
@@ -71,7 +72,7 @@ const SignUpForm = (props) => {
                     />
                 </FormItem>
                 <FormItem
-                    label="Email"
+                    label={tr("Email")}
                     invalid={Boolean(errors.email)}
                     errorMessage={errors.email?.message}
                 >
@@ -81,7 +82,7 @@ const SignUpForm = (props) => {
                         render={({ field }) => (
                             <Input
                                 type="email"
-                                placeholder="Email"
+                                placeholder={tr("Email")}
                                 autoComplete="off"
                                 {...field}
                             />
@@ -89,7 +90,7 @@ const SignUpForm = (props) => {
                     />
                 </FormItem>
                 <FormItem
-                    label="Password"
+                    label={tr("Password")}
                     invalid={Boolean(errors.password)}
                     errorMessage={errors.password?.message}
                 >
@@ -100,14 +101,14 @@ const SignUpForm = (props) => {
                             <Input
                                 type="password"
                                 autoComplete="off"
-                                placeholder="Password"
+                                placeholder={tr("Password")}
                                 {...field}
                             />
                         )}
                     />
                 </FormItem>
                 <FormItem
-                    label="Confirm Password"
+                    label={tr("Confirm Password")}
                     invalid={Boolean(errors.confirmPassword)}
                     errorMessage={errors.confirmPassword?.message}
                 >
@@ -118,7 +119,7 @@ const SignUpForm = (props) => {
                             <Input
                                 type="password"
                                 autoComplete="off"
-                                placeholder="Confirm Password"
+                                placeholder={tr("Confirm Password")}
                                 {...field}
                             />
                         )}
@@ -130,7 +131,7 @@ const SignUpForm = (props) => {
                     variant="solid"
                     type="submit"
                 >
-                    {isSubmitting ? 'Creating Account...' : 'Sign Up'}
+                    {isSubmitting ? tr("Creating Account...") : tr("Sign Up")}
                 </Button>
             </Form>
         </div>

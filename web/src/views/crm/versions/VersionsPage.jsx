@@ -15,6 +15,7 @@ import Tooltip from '@/components/ui/Tooltip'
 import classNames from '@/utils/classNames'
 import { CHANGELOG, VERSION } from '@/configs/changelog'
 import commits from '@/configs/versions.generated'
+import { tr, trn } from '@/utils/t'
 
 dayjs.extend(relativeTime)
 /* eslint-disable no-undef */
@@ -29,15 +30,15 @@ const kindOf = (v, older) => {
     return a[0] !== b[0] || a[1] !== b[1] ? 'feature' : 'fix'
 }
 const KIND = {
-    feature: { label: 'Feature', icon: <PiSparkleDuotone />, tone: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20', tag: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300' },
-    fix: { label: 'Fix', icon: <PiWrenchDuotone />, tone: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20', tag: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300' },
+    feature: { label: tr("Feature"), icon: <PiSparkleDuotone />, tone: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20', tag: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300' },
+    fix: { label: tr("Fix"), icon: <PiWrenchDuotone />, tone: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20', tag: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300' },
 }
 
 const CommitChip = ({ hash, full }) => {
     const [done, setDone] = useState(false)
     const copy = () => { navigator.clipboard?.writeText(full || hash).then(() => { setDone(true); setTimeout(() => setDone(false), 1500) }).catch(() => {}) }
     return (
-        <Tooltip title={done ? 'Copied' : `Copy ${full || hash}`}>
+        <Tooltip title={done ? tr("Copied") : tr("Copy {v1}", { v1: full || hash })}>
             <button type="button" onClick={copy} className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-600 hover:text-primary dark:bg-gray-700 dark:text-gray-300"><PiGitCommitDuotone />{hash}{done ? <PiCheckBold className="text-emerald-500" /> : <PiCopyDuotone className="opacity-50" />}</button>
         </Tooltip>
     )
@@ -51,7 +52,7 @@ const Release = ({ r, open, toggle }) => {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="text-base font-bold heading-text">v{r.version}</span>
                 <Tag className={k.tag}>{k.label}</Tag>
-                {r.current && <Tag className="bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300"><PiRocketLaunchDuotone className="mr-1 inline" />Running now</Tag>}
+                {r.current && <Tag className="bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300"><PiRocketLaunchDuotone className="mr-1 inline" />{tr("Running now")}</Tag>}
                 {(c?.tags || []).map((t) => <Tag key={t} className="bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-300"><PiTagDuotone className="mr-1 inline" />{t}</Tag>)}
                 <span className="ml-auto text-xs text-gray-400" title={dayjs(r.when).format('YYYY-MM-DD HH:mm')}>{dayjs(r.when).format('MMM D, YYYY')}{c ? ` · ${dayjs(r.when).format('HH:mm')}` : ''} · {dayjs(r.when).fromNow()}</span>
             </div>
@@ -60,12 +61,12 @@ const Release = ({ r, open, toggle }) => {
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gray-500">
                     <CommitChip hash={c.commit} full={c.full} />
                     <span className="inline-flex items-center gap-1"><PiUserCircleDuotone />{c.author}</span>
-                    <span><b className="font-semibold text-emerald-600">+{c.added}</b> <b className="font-semibold text-red-500">−{c.removed}</b> in {c.files} file{c.files === 1 ? '' : 's'}</span>
-                    {c.commits > 1 && <span>{c.commits} commits</span>}
+                    <span><b className="font-semibold text-emerald-600">+{c.added}</b> <b className="font-semibold text-red-500">−{c.removed}</b> {tr("in")} {trn(c.files, "file")}</span>
+                    {c.commits > 1 && <span>{c.commits} {tr("commits")}</span>}
                 </div>
             )}
             {!c && r.buildCommit && <div className="mt-2"><CommitChip hash={r.buildCommit} /></div>}
-            <button type="button" onClick={toggle} className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary"><PiCaretDownBold className={classNames('transition', open && 'rotate-180')} />{open ? 'Hide' : 'Show'} {r.items.length} change{r.items.length === 1 ? '' : 's'}</button>
+            <button type="button" onClick={toggle} className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary"><PiCaretDownBold className={classNames('transition', open && 'rotate-180')} />{open ? tr("Hide") : tr("Show")} {trn(r.items.length, "change")}</button>
             {open && <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300">{r.items.map((i) => <li key={i}>{i}</li>)}</ul>}
         </div>
     )
@@ -97,19 +98,19 @@ const VersionsPage = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <div><h3>Versions</h3><p className="text-gray-500">trtCRM v{VERSION} · build {BUILD_COMMIT} · {dayjs(BUILT).isValid() ? dayjs(BUILT).format('MMM D, YYYY HH:mm') : BUILT}</p></div>
+                <div><h3>{tr("Versions")}</h3><p className="text-gray-500">{tr("trtCRM v")}{VERSION} {tr("· build")} {BUILD_COMMIT} · {dayjs(BUILT).isValid() ? dayjs(BUILT).format('MMM D, YYYY HH:mm') : BUILT}</p></div>
             </div>
             <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <Stat label="Releases" value={all.length} sub={`since ${dayjs(all[all.length - 1].when).format('MMM YYYY')}`} />
-                <Stat label="Features" value={features} sub={`${all.length - features} fixes`} />
-                <Stat label="Code changed" value={`+${lines.a.toLocaleString('en-US')}`} sub={`−${lines.r.toLocaleString('en-US')} lines`} />
-                <Stat label="Latest release" value={dayjs(all[0].when).fromNow()} sub={dayjs(all[0].when).format('MMM D, YYYY')} />
+                <Stat label={tr("Releases")} value={all.length} sub={tr("since {v1}", { v1: dayjs(all[all.length - 1].when).format('MMM YYYY') })} />
+                <Stat label={tr("Features")} value={features} sub={tr("{v1} fixes", { v1: all.length - features })} />
+                <Stat label={tr("Code changed")} value={`+${lines.a.toLocaleString('en-US')}`} sub={tr("−{v1} lines", { v1: lines.r.toLocaleString('en-US') })} />
+                <Stat label={tr("Latest release")} value={dayjs(all[0].when).fromNow()} sub={dayjs(all[0].when).format('MMM D, YYYY')} />
             </div>
             <Card>
                 <div className="mb-5 flex flex-wrap items-center gap-3">
-                    <div className="w-full sm:w-72"><Input size="sm" value={q} prefix={<PiMagnifyingGlassDuotone />} placeholder="Search a version, commit or change" onChange={(e) => { setQ(e.target.value); setPage(1) }} /></div>
-                    <Segment size="sm" value={kind} onChange={(v) => { if (v) { setKind(v); setPage(1) } }}><Segment.Item value="all">All</Segment.Item><Segment.Item value="feature">Features</Segment.Item><Segment.Item value="fix">Fixes</Segment.Item></Segment>
-                    <span className="ml-auto text-xs text-gray-400">{shown.length} of {all.length} releases</span>
+                    <div className="w-full sm:w-72"><Input size="sm" value={q} prefix={<PiMagnifyingGlassDuotone />} placeholder={tr("Search a version, commit or change")} onChange={(e) => { setQ(e.target.value); setPage(1) }} /></div>
+                    <Segment size="sm" value={kind} onChange={(v) => { if (v) { setKind(v); setPage(1) } }}><Segment.Item value="all">{tr("All")}</Segment.Item><Segment.Item value="feature">{tr("Features")}</Segment.Item><Segment.Item value="fix">{tr("Fixes")}</Segment.Item></Segment>
+                    <span className="ml-auto text-xs text-gray-400">{shown.length} {tr("of")} {all.length} {tr("releases")}</span>
                 </div>
                 {months.map((g) => (
                     <div key={g.m} className="mb-2">
@@ -123,10 +124,10 @@ const VersionsPage = () => {
                         </Timeline>
                     </div>
                 ))}
-                {!shown.length && <div className="py-12 text-center text-sm text-gray-400">No release matches.</div>}
+                {!shown.length && <div className="py-12 text-center text-sm text-gray-400">{tr("No release matches.")}</div>}
                 {shown.length ? (
                     <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4 dark:border-gray-700">
-                        <span className="text-sm text-gray-500">{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, shown.length)} of {shown.length}</span>
+                        <span className="text-sm text-gray-500">{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, shown.length)} {tr("of")} {shown.length}</span>
                         <Pagination total={shown.length} pageSize={pageSize} currentPage={page} onChange={setPage} />
                         <div className="w-36"><Select size="sm" isSearchable={false} menuPlacement="top" options={[5, 10, 20, 50].map((n) => ({ value: n, label: `${n} / page` }))} value={{ value: pageSize, label: `${pageSize} / page` }} onChange={(o) => { setPageSize(o.value); setPage(1) }} /></div>
                     </div>

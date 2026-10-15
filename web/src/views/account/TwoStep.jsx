@@ -8,6 +8,7 @@ import Spinner from '@/components/ui/Spinner'
 import Alert from '@/components/ui/Alert'
 import PasswordInput from '@/components/shared/PasswordInput'
 import { api, notify } from '@/views/crm/kit/api'
+import { tr, trn } from '@/utils/t'
 
 const post = (body) => api('/api/crm/profile/2fa', { method: 'POST', body })
 
@@ -15,7 +16,7 @@ const Row = ({ icon: Icon, title, desc, on, children }) => (
     <div className="flex flex-wrap items-center gap-4 py-4">
         <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl ${on ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20' : 'bg-gray-100 text-gray-500 dark:bg-gray-700'}`}><Icon /></span>
         <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 font-semibold">{title}{on && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/20">On</span>}</div>
+            <div className="flex items-center gap-2 font-semibold">{title}{on && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/20">{tr("On")}</span>}</div>
             <div className="text-sm text-gray-500">{desc}</div>
         </div>
         <div className="flex gap-2">{children}</div>
@@ -25,15 +26,15 @@ const Row = ({ icon: Icon, title, desc, on, children }) => (
 const CodeInput = (props) => <Input autoFocus inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="123456" className="text-center text-xl tracking-[0.4em]" {...props} />
 
 const RecoveryDialog = ({ codes, onClose }) => {
-    const text = `Recovery codes\nEach code works once if you cannot use your phone or email.\n\n${(codes || []).join('\n')}\n`
-    const copy = async () => { try { await navigator.clipboard.writeText(text); notify('success', 'Codes copied') } catch { notify('danger', 'Could not copy') } }
+    const text = tr("Recovery codes\nEach code works once if you cannot use your phone or email.\n\n{v1}\n", { v1: (codes || []).join('\n') })
+    const copy = async () => { try { await navigator.clipboard.writeText(text); notify('success', tr("Codes copied")) } catch { notify('danger', tr("Could not copy")) } }
     const download = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = 'recovery-codes.txt'; a.click(); URL.revokeObjectURL(a.href) }
     return (
         <Dialog isOpen={!!codes} width={460} onClose={onClose} onRequestClose={onClose} shouldCloseOnOverlayClick={false}>
-            <h5 className="mb-1">Save your recovery codes</h5>
-            <p className="mb-4 text-sm text-gray-500">If you lose your phone or cannot receive email, each of these codes lets you sign in once. They are shown only now, keep them somewhere safe.</p>
+            <h5 className="mb-1">{tr("Save your recovery codes")}</h5>
+            <p className="mb-4 text-sm text-gray-500">{tr("If you lose your phone or cannot receive email, each of these codes lets you sign in once. They are shown only now, keep them somewhere safe.")}</p>
             <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-4 font-mono text-sm dark:bg-gray-700/50">{(codes || []).map((c) => <span key={c}>{c}</span>)}</div>
-            <div className="flex flex-wrap justify-between gap-2"><div className="flex gap-2"><Button size="sm" icon={<TbCopy />} onClick={copy}>Copy</Button><Button size="sm" icon={<TbDownload />} onClick={download}>Download</Button></div><Button variant="solid" onClick={onClose}>I saved them</Button></div>
+            <div className="flex flex-wrap justify-between gap-2"><div className="flex gap-2"><Button size="sm" icon={<TbCopy />} onClick={copy}>{tr("Copy")}</Button><Button size="sm" icon={<TbDownload />} onClick={download}>{tr("Download")}</Button></div><Button variant="solid" onClick={onClose}>{tr("I saved them")}</Button></div>
         </Dialog>
     )
 }
@@ -65,52 +66,52 @@ const TwoStep = () => {
 
     return (
         <Card className="xl:col-span-2">
-            <div className="mb-1 flex items-center gap-2"><TbShieldCheck className="text-2xl text-primary" /><h5>Two-step verification</h5></div>
-            <p className="mb-2 text-sm text-gray-500">Adds a second check when you sign in, so a stolen password alone is not enough.</p>
+            <div className="mb-1 flex items-center gap-2"><TbShieldCheck className="text-2xl text-primary" /><h5>{tr("Two-step verification")}</h5></div>
+            <p className="mb-2 text-sm text-gray-500">{tr("Adds a second check when you sign in, so a stolen password alone is not enough.")}</p>
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                <Row icon={TbDeviceMobile} title="Authenticator app" on={s.app} desc="Use Google Authenticator, Microsoft Authenticator, Authy or 1Password to get a code every 30 seconds.">
-                    {s.app ? <Button size="sm" onClick={() => setDlg({ off: 'app' })}>Turn off</Button> : <Button size="sm" variant="solid" onClick={openApp}>Set up</Button>}
+                <Row icon={TbDeviceMobile} title={tr("Authenticator app")} on={s.app} desc={tr("Use Google Authenticator, Microsoft Authenticator, Authy or 1Password to get a code every 30 seconds.")}>
+                    {s.app ? <Button size="sm" onClick={() => setDlg({ off: 'app' })}>{tr("Turn off")}</Button> : <Button size="sm" variant="solid" onClick={openApp}>{tr("Set up")}</Button>}
                 </Row>
-                <Row icon={TbMail} title="Email code" on={s.email} desc={`We email a 6-digit code to ${s.address} each time you sign in.`}>
-                    {s.email ? <Button size="sm" onClick={() => setDlg({ off: 'email' })}>Turn off</Button> : <Button size="sm" variant="solid" onClick={openEmail}>Turn on</Button>}
+                <Row icon={TbMail} title={tr("Email code")} on={s.email} desc={tr("We email a 6-digit code to {address} each time you sign in.", { address: s.address })}>
+                    {s.email ? <Button size="sm" onClick={() => setDlg({ off: 'email' })}>{tr("Turn off")}</Button> : <Button size="sm" variant="solid" onClick={openEmail}>{tr("Turn on")}</Button>}
                 </Row>
                 {s.enabled && (
-                    <Row icon={TbKey} title="Recovery codes" on={false} desc={`${s.recoveryLeft} unused code${s.recoveryLeft === 1 ? '' : 's'}. Use one if you lose your phone or cannot get the email.`}>
-                        <Button size="sm" onClick={() => setDlg('recovery')}>Get new codes</Button>
+                    <Row icon={TbKey} title={tr("Recovery codes")} on={false} desc={`${trn(s.recoveryLeft, 'unused code')}. ${tr('Use one if you lose your phone or cannot get the email.')}`}>
+                        <Button size="sm" onClick={() => setDlg('recovery')}>{tr("Get new codes")}</Button>
                     </Row>
                 )}
             </div>
 
             <Dialog isOpen={dlg === 'app'} width={460} onClose={close} onRequestClose={close}>
-                <h5 className="mb-1">Set up your authenticator app</h5>
-                <p className="mb-4 text-sm text-gray-500">1. Scan this QR code with the app. 2. Enter the 6-digit code it shows.</p>
+                <h5 className="mb-1">{tr("Set up your authenticator app")}</h5>
+                <p className="mb-4 text-sm text-gray-500">{tr("1. Scan this QR code with the app. 2. Enter the 6-digit code it shows.")}</p>
                 {error && <Alert showIcon type="danger" className="mb-3">{error}</Alert>}
                 {setup ? (
                     <div className="flex flex-col items-center gap-3">
-                        <img src={setup.qr} alt="QR code" className="h-48 w-48 rounded-xl border border-gray-200 bg-white p-2" />
-                        <div className="text-center text-xs text-gray-500">Cannot scan? Enter this key in the app:<br /><code className="select-all text-sm font-semibold tracking-wider text-gray-800 dark:text-gray-100">{setup.secret}</code></div>
-                        <div className="w-full"><CodeInput value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => e.key === 'Enter' && code.length === 6 && run(() => post({ action: 'app-enable', code }), (r) => done(r, 'Authenticator app turned on'))} /></div>
+                        <img src={setup.qr} alt={tr("QR code")} className="h-48 w-48 rounded-xl border border-gray-200 bg-white p-2" />
+                        <div className="text-center text-xs text-gray-500">{tr("Cannot scan? Enter this key in the app:")}<br /><code className="select-all text-sm font-semibold tracking-wider text-gray-800 dark:text-gray-100">{setup.secret}</code></div>
+                        <div className="w-full"><CodeInput value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => e.key === 'Enter' && code.length === 6 && run(() => post({ action: 'app-enable', code }), (r) => done(r, tr("Authenticator app turned on")))} /></div>
                     </div>
                 ) : <div className="flex h-48 items-center justify-center"><Spinner size={28} /></div>}
-                <div className="mt-5 flex justify-end gap-2"><Button onClick={close}>Cancel</Button><Button variant="solid" loading={busy} disabled={code.length !== 6} onClick={() => run(() => post({ action: 'app-enable', code }), (r) => done(r, 'Authenticator app turned on'))}>Verify and turn on</Button></div>
+                <div className="mt-5 flex justify-end gap-2"><Button onClick={close}>{tr("Cancel")}</Button><Button variant="solid" loading={busy} disabled={code.length !== 6} onClick={() => run(() => post({ action: 'app-enable', code }), (r) => done(r, tr("Authenticator app turned on")))}>{tr("Verify and turn on")}</Button></div>
             </Dialog>
 
             <Dialog isOpen={dlg === 'email'} width={440} onClose={close} onRequestClose={close}>
-                <h5 className="mb-1">Turn on email codes</h5>
-                <p className="mb-4 text-sm text-gray-500">{sent ? `We sent a 6-digit code to ${sent}. It expires in 10 minutes.` : 'Sending a code to your email…'}</p>
+                <h5 className="mb-1">{tr("Turn on email codes")}</h5>
+                <p className="mb-4 text-sm text-gray-500">{sent ? tr("We sent a 6-digit code to {sent}. It expires in 10 minutes.", { sent: sent }) : tr("Sending a code to your email…")}</p>
                 {error && <Alert showIcon type="danger" className="mb-3">{error}</Alert>}
-                <CodeInput value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => e.key === 'Enter' && code.length === 6 && run(() => post({ action: 'email-enable', code }), (r) => done(r, 'Email codes turned on'))} />
-                <div className="mt-2 text-right"><button type="button" className="text-xs text-primary hover:underline" onClick={() => run(() => post({ action: 'email-send' }), (r) => { setSent(r.to); notify('success', 'New code sent') })}>Send a new code</button></div>
-                <div className="mt-4 flex justify-end gap-2"><Button onClick={close}>Cancel</Button><Button variant="solid" loading={busy} disabled={code.length !== 6} onClick={() => run(() => post({ action: 'email-enable', code }), (r) => done(r, 'Email codes turned on'))}>Verify and turn on</Button></div>
+                <CodeInput value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => e.key === 'Enter' && code.length === 6 && run(() => post({ action: 'email-enable', code }), (r) => done(r, tr("Email codes turned on")))} />
+                <div className="mt-2 text-right"><button type="button" className="text-xs text-primary hover:underline" onClick={() => run(() => post({ action: 'email-send' }), (r) => { setSent(r.to); notify('success', tr("New code sent")) })}>{tr("Send a new code")}</button></div>
+                <div className="mt-4 flex justify-end gap-2"><Button onClick={close}>{tr("Cancel")}</Button><Button variant="solid" loading={busy} disabled={code.length !== 6} onClick={() => run(() => post({ action: 'email-enable', code }), (r) => done(r, tr("Email codes turned on")))}>{tr("Verify and turn on")}</Button></div>
             </Dialog>
 
             <Dialog isOpen={needPassword || dlg === 'recovery'} width={440} onClose={close} onRequestClose={close}>
-                <h5 className="mb-1">{dlg === 'recovery' ? 'Get new recovery codes' : `Turn off ${dlg?.off === 'app' ? 'the authenticator app' : 'email codes'}`}</h5>
-                <p className="mb-4 text-sm text-gray-500">{dlg === 'recovery' ? 'Your old codes stop working. Confirm with your password.' : 'Confirm with your password. Your account will be less protected.'}</p>
+                <h5 className="mb-1">{dlg === 'recovery' ? tr("Get new recovery codes") : tr("Turn off {v1}", { v1: dlg?.off === 'app' ? 'the authenticator app' : 'email codes' })}</h5>
+                <p className="mb-4 text-sm text-gray-500">{dlg === 'recovery' ? tr("Your old codes stop working. Confirm with your password.") : tr("Confirm with your password. Your account will be less protected.")}</p>
                 {error && <Alert showIcon type="danger" className="mb-3">{error}</Alert>}
-                <PasswordInput autoFocus autoComplete="current-password" placeholder="Current password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                <div className="mt-4 flex justify-end gap-2"><Button onClick={close}>Cancel</Button>
-                    <Button variant="solid" loading={busy} disabled={!password} onClick={() => run(() => post({ action: dlg === 'recovery' ? 'recovery' : dlg.off === 'app' ? 'app-disable' : 'email-disable', password }), (r) => done(r, dlg === 'recovery' ? 'New codes created' : 'Turned off'))}>{dlg === 'recovery' ? 'Create codes' : 'Turn off'}</Button></div>
+                <PasswordInput autoFocus autoComplete="current-password" placeholder={tr("Current password")} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <div className="mt-4 flex justify-end gap-2"><Button onClick={close}>{tr("Cancel")}</Button>
+                    <Button variant="solid" loading={busy} disabled={!password} onClick={() => run(() => post({ action: dlg === 'recovery' ? 'recovery' : dlg.off === 'app' ? 'app-disable' : 'email-disable', password }), (r) => done(r, dlg === 'recovery' ? tr("New codes created") : tr("Turned off")))}>{dlg === 'recovery' ? tr("Create codes") : tr("Turn off")}</Button></div>
             </Dialog>
 
             <RecoveryDialog codes={codes} onClose={() => { setCodes(null); load() }} />

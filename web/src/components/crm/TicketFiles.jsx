@@ -4,6 +4,7 @@ import Dialog from '@/components/ui/Dialog'
 import Tooltip from '@/components/ui/Tooltip'
 import FileIcon from '@/components/crm/FileIcon'
 import cn from '@/utils/classNames'
+import { tr } from '@/utils/t'
 
 export const MAX_FILES = 10
 export const formatSize = (n = 0) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${(n / 1048576).toFixed(1)} MB`)
@@ -14,7 +15,7 @@ let counter = 0
  * Everything a message box needs for files: pick, paste (screenshots from the clipboard), drag and drop, and capture
  * the screen. `notify(type, text)` shows problems; `t` translates the texts (portal).
  */
-export function useTicketFiles({ notify, t = (s) => s } = {}) {
+export function useTicketFiles({ notify, t = tr } = {}) {
     const [items, setItems] = useState([])
     const [dragging, setDragging] = useState(false)
     const [capturing, setCapturing] = useState(false)
@@ -52,7 +53,7 @@ export function useTicketFiles({ notify, t = (s) => s } = {}) {
     // capture the screen (browser picks the window or tab), keep one frame as a PNG
     const supportsCapture = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getDisplayMedia
     const capture = async () => {
-        if (!supportsCapture) return notify?.('warning', t('Your browser cannot capture the screen. Paste an image instead (Ctrl+V).'))
+        if (!supportsCapture) return notify?.('warning', t("Your browser cannot capture the screen. Paste an image instead (Ctrl+V)."))
         setCapturing(true)
         let stream
         try {
@@ -69,7 +70,7 @@ export function useTicketFiles({ notify, t = (s) => s } = {}) {
             const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'))
             if (blob) add([new File([blob], `screenshot-${stamp()}.png`, { type: 'image/png' })])
         } catch (e) {
-            if (e?.name !== 'NotAllowedError' && e?.name !== 'AbortError') notify?.('danger', t('Could not capture the screen'))
+            if (e?.name !== 'NotAllowedError' && e?.name !== 'AbortError') notify?.('danger', t("Could not capture the screen"))
         } finally {
             stream?.getTracks().forEach((tr) => tr.stop())
             setCapturing(false)
@@ -81,21 +82,21 @@ export function useTicketFiles({ notify, t = (s) => s } = {}) {
 const stamp = () => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}` }
 
 /** The two buttons: attach files, capture the screen. */
-export const AttachButtons = ({ tf, disabled, t = (s) => s, size = 'md' }) => {
+export const AttachButtons = ({ tf, disabled, t = tr, size = 'md' }) => {
     const input = useRef(null)
     const cls = 'flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-primary hover:text-primary disabled:opacity-50 dark:border-gray-600'
     const box = size === 'sm' ? 'h-8 w-8 text-lg' : 'h-9 w-9 text-xl'
     return (
         <div className="flex items-center gap-1.5">
             <input ref={input} type="file" multiple className="hidden" onChange={(e) => { tf.add(e.target.files); e.target.value = '' }} />
-            <Tooltip title={t('Attach files')}><button type="button" disabled={disabled} className={cn(cls, box)} onClick={() => input.current?.click()}><TbPaperclip /></button></Tooltip>
-            {tf.supportsCapture && <Tooltip title={t('Capture the screen')}><button type="button" disabled={disabled || tf.capturing} className={cn(cls, box)} onClick={tf.capture}><TbScreenshot /></button></Tooltip>}
+            <Tooltip title={t("Attach files")}><button type="button" disabled={disabled} className={cn(cls, box)} onClick={() => input.current?.click()}><TbPaperclip /></button></Tooltip>
+            {tf.supportsCapture && <Tooltip title={t("Capture the screen")}><button type="button" disabled={disabled || tf.capturing} className={cn(cls, box)} onClick={tf.capture}><TbScreenshot /></button></Tooltip>}
         </div>
     )
 }
 
 /** Previews of the files waiting to be sent. */
-export const FileTray = ({ tf, t = (s) => s }) => (
+export const FileTray = ({ tf, t = tr }) => (
     tf.items.length ? (
         <div className="mt-3 flex flex-wrap gap-2">
             {tf.items.map((x) => (
@@ -105,7 +106,7 @@ export const FileTray = ({ tf, t = (s) => s }) => (
                     ) : (
                         <div className="flex h-16 min-w-[140px] max-w-[200px] items-center gap-2 rounded-lg border border-gray-200 px-3 dark:border-gray-600"><FileIcon kind={kindOf(x.file)} className="text-2xl" /><div className="min-w-0"><div className="truncate text-xs font-semibold">{x.file.name}</div><div className="text-[11px] text-gray-400">{formatSize(x.file.size)}</div></div></div>
                     )}
-                    <button type="button" title={t('Remove')} onClick={() => tf.remove(x.id)} className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-xs text-white opacity-90 hover:bg-red-500"><TbX /></button>
+                    <button type="button" title={t("Remove")} onClick={() => tf.remove(x.id)} className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-xs text-white opacity-90 hover:bg-red-500"><TbX /></button>
                 </div>
             ))}
         </div>
@@ -113,10 +114,10 @@ export const FileTray = ({ tf, t = (s) => s }) => (
 )
 
 /** The drop hint shown over a message box while files are dragged on it. */
-export const DropHint = ({ tf, t = (s) => s }) => (tf.dragging ? <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary bg-primary/10 text-sm font-semibold text-primary">{t('Drop the files to attach them')}</div> : null)
+export const DropHint = ({ tf, t = tr }) => (tf.dragging ? <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary bg-primary/10 text-sm font-semibold text-primary">{t("Drop the files to attach them")}</div> : null)
 
 /** Attachments of a message: pictures as thumbnails (click to enlarge), other files as download chips. */
-export const AttachmentList = ({ items, t = (s) => s }) => {
+export const AttachmentList = ({ items, t = tr }) => {
     const [open, setOpen] = useState(null)
     if (!items?.length) return null
     const pics = items.filter((a) => a.image && a.url && !a.missing)
@@ -133,12 +134,12 @@ export const AttachmentList = ({ items, t = (s) => s }) => {
                     {rest.map((a) => (a.url && !a.missing ? (
                         <a key={a.id} href={a.url} target="_blank" rel="noreferrer" download={a.name} className="inline-flex max-w-[260px] items-center gap-2 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs transition hover:border-primary dark:border-gray-600"><FileIcon kind={a.image ? 'image' : a.type === 'application/pdf' ? 'pdf' : 'other'} className="text-lg" /><span className="min-w-0"><span className="block truncate font-semibold">{a.name}</span>{a.size > 0 && <span className="text-gray-400">{formatSize(a.size)}</span>}</span><TbDownload className="shrink-0 text-gray-400" /></a>
                     ) : (
-                        <span key={a.id} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-200 px-2.5 py-1.5 text-xs text-gray-400" title={t('This file is no longer available')}><TbPaperclip />{a.name}</span>
+                        <span key={a.id} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-200 px-2.5 py-1.5 text-xs text-gray-400" title={t("This file is no longer available")}><TbPaperclip />{a.name}</span>
                     )))}
                 </div>
             )}
             <Dialog isOpen={!!open} width={960} onClose={() => setOpen(null)} onRequestClose={() => setOpen(null)}>
-                {open && (<><div className="mb-3 flex items-center justify-between gap-3 pr-8"><span className="truncate font-semibold">{open.name}</span><a className="shrink-0 text-sm text-primary hover:underline" href={open.url} target="_blank" rel="noreferrer">{t('Open the original')}</a></div><img src={open.url} alt={open.name} className="max-h-[75vh] w-full rounded-lg object-contain" /></>)}
+                {open && (<><div className="mb-3 flex items-center justify-between gap-3 pr-8"><span className="truncate font-semibold">{open.name}</span><a className="shrink-0 text-sm text-primary hover:underline" href={open.url} target="_blank" rel="noreferrer">{t("Open the original")}</a></div><img src={open.url} alt={open.name} className="max-h-[75vh] w-full rounded-lg object-contain" /></>)}
             </Dialog>
         </div>
     )

@@ -2,16 +2,17 @@ import { createElement } from 'react'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { useSessionUser } from '@/store/authStore'
+import { tr } from '@/utils/t'
 
 /** JSON fetch against the CRM API. Throws Error(message) with the server's message. */
 export async function api(url, init = {}) {
     const res = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init, body: init.body && typeof init.body !== 'string' ? JSON.stringify(init.body) : init.body })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`)
+    if (!res.ok) throw new Error(tr(json.error || tr('Request failed ({status})', { status: res.status })))
     return json
 }
 
-export const notify = (type, msg) => toast.push(createElement(Notification, { type }, msg), { placement: 'top-center' })
+export const notify = (type, msg) => toast.push(createElement(Notification, { type }, typeof msg === 'string' ? tr(msg) : msg), { placement: 'top-center' })
 
 // ---- permissions (same rules as src/lib/crm/permissions.js on the server)
 export const isAdmin = (authority = []) => authority.includes('admin') || authority.includes('crm.admin')
@@ -33,7 +34,7 @@ export const qs = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) =>
 export async function upload(url, formData, method = 'POST') {
     const res = await fetch(url, { method, credentials: 'include', body: formData })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`)
+    if (!res.ok) throw new Error(tr(json.error || tr('Upload failed ({status})', { status: res.status })))
     return json
 }
 

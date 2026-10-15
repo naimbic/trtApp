@@ -11,6 +11,7 @@ import Skeleton from '@/components/ui/Skeleton'
 import { api, qs } from '../kit/api'
 import ProjectDialog from './ProjectDialog'
 import { STATUS, StatusTag, Bar, fmt } from './shared'
+import { tr } from '@/utils/t'
 
 const FAV_KEY = 'projects.favourites'
 const readFav = () => { try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]') } catch { return [] } }
@@ -43,12 +44,12 @@ const ProjectsList = () => {
     return (
         <Container>
             <div className="flex items-center justify-between gap-4">
-                <div><div className="mb-1 text-sm text-gray-500"><Link to="/crm/projects" className="hover:text-primary">Projects</Link></div><h3>All projects</h3></div>
-                {data.can.create && <Button variant="solid" onClick={() => setDialog(true)}>Create project</Button>}
+                <div><div className="mb-1 text-sm text-gray-500"><Link to="/crm/projects" className="hover:text-primary">{tr("Projects")}</Link></div><h3>{tr("All projects")}</h3></div>
+                {data.can.create && <Button variant="solid" onClick={() => setDialog(true)}>{tr("Create project")}</Button>}
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-                <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder="Search projects" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-                <div className="w-52"><Select size="sm" isClearable placeholder="All statuses" options={opts} value={status ? opts.find((o) => o.value === status.value) : null} onChange={(o) => setStatus(o)} /></div>
+                <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search projects")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                <div className="w-52"><Select size="sm" isClearable placeholder={tr("All statuses")} options={opts} value={status ? opts.find((o) => o.value === status.value) : null} onChange={(o) => setStatus(o)} /></div>
             </div>
             {error && <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
@@ -56,7 +57,7 @@ const ProjectsList = () => {
                 <>
                     {favs.length > 0 && (
                         <div className="mt-8">
-                            <h5 className="mb-3">Favorite</h5>
+                            <h5 className="mb-3">{tr("Favorite")}</h5>
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {favs.map((p) => (
                                     <Card key={p.id} bodyClass="h-full">
@@ -65,7 +66,7 @@ const ProjectsList = () => {
                                                 <Link to={`/crm/projects/${p.id}`}><h6 className="font-bold hover:text-primary">{p.name}</h6></Link>
                                                 <div className="cursor-pointer text-lg text-amber-400" role="button" onClick={() => toggle(p.id)}><TbStarFilled /></div>
                                             </div>
-                                            <p className="mt-3 text-sm text-gray-500">{p.client?.name || 'No client'}</p>
+                                            <p className="mt-3 text-sm text-gray-500">{p.client?.name || tr("No client")}</p>
                                             <div className="mt-3">
                                                 <Bar value={p.progress} />
                                                 <div className="mt-2 flex items-center justify-between"><UsersAvatarGroup users={members(p)} /><Tasks p={p} /></div>
@@ -77,13 +78,13 @@ const ProjectsList = () => {
                         </div>
                     )}
                     <div className="mt-8">
-                        <h5 className="mb-3">{favs.length ? 'Other projects' : 'All projects'}</h5>
+                        <h5 className="mb-3">{favs.length ? tr("Other projects") : tr("All projects")}</h5>
                         <div className="flex flex-col gap-4">
                             {others.map((p) => (
                                 <Card key={p.id}>
                                     <div className="grid grid-cols-12 gap-x-4">
                                         <div className="col-span-12 my-1 sm:col-span-4 sm:my-0 md:flex md:items-center lg:col-span-3">
-                                            <div className="flex flex-col"><h6 className="font-bold hover:text-primary"><Link to={`/crm/projects/${p.id}`}>{p.name}</Link></h6><span className="text-sm">{p.client?.name || 'No client'}</span></div>
+                                            <div className="flex flex-col"><h6 className="font-bold hover:text-primary"><Link to={`/crm/projects/${p.id}`}>{p.name}</Link></h6><span className="text-sm">{p.client?.name || tr("No client")}</span></div>
                                         </div>
                                         <div className="col-span-12 my-1 flex flex-wrap items-center gap-3 sm:col-span-4 sm:my-0 lg:col-span-3">
                                             <StatusTag status={p.status} />
@@ -95,7 +96,7 @@ const ProjectsList = () => {
                                     </div>
                                 </Card>
                             ))}
-                            {!others.length && !favs.length && <Card><div className="py-6 text-center text-gray-500">No projects {status ? `with status “${status.label.replace(/ \(\d+\)$/, '')}”` : 'found'}.</div></Card>}
+                            {!others.length && !favs.length && <Card><div className="py-6 text-center text-gray-500">{tr("No projects")} {status ? tr("with status “{v1}”", { v1: status.label.replace(/ \(\d+\)$/, '') }) : tr("found")}.</div></Card>}
                         </div>
                     </div>
                 </>

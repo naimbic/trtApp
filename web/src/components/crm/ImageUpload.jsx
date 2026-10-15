@@ -4,6 +4,7 @@ import MediaPicker from './MediaPicker'
 import Spinner from '@/components/ui/Spinner'
 import { notify, upload, api, formatBytes } from '@/views/crm/kit/api'
 import classNames from '@/utils/classNames'
+import { tr } from '@/utils/t'
 
 const initials = (name = '') => name.split(/\s+/).filter(Boolean).map((x) => x[0]).slice(0, 2).join('').toUpperCase() || '?'
 const GRADIENTS = ['from-emerald-400 to-teal-500', 'from-sky-400 to-indigo-500', 'from-amber-400 to-orange-500', 'from-fuchsia-400 to-purple-500', 'from-rose-400 to-red-500']
@@ -24,8 +25,8 @@ const ImageUpload = ({ url, name, shape = 'circle', size = 112, uploadUrl, canEd
 
     const send = async (file) => {
         if (!file) return
-        if (!file.type.startsWith('image/')) return notify('danger', 'Please choose an image file')
-        if (file.size > 20 * 1024 * 1024) return notify('danger', 'This image is too large (max 20 MB)')
+        if (!file.type.startsWith('image/')) return notify('danger', tr("Please choose an image file"))
+        if (file.size > 20 * 1024 * 1024) return notify('danger', tr("This image is too large (max 20 MB)"))
         const fd = new FormData()
         fd.append('file', file)
         setBusy(true)
@@ -33,19 +34,19 @@ const ImageUpload = ({ url, name, shape = 'circle', size = 112, uploadUrl, canEd
             const r = await upload(uploadUrl, fd)
             setBroken(false)
             onChange?.(r.url)
-            notify('success', `Saved · ${formatBytes(r.originalSize)} → ${formatBytes(r.size)} (WebP)`)
+            notify('success', tr("Saved · {v1} → {v2} (WebP)", { v1: formatBytes(r.originalSize), v2: formatBytes(r.size) }))
         } catch (e) { notify('danger', e.message) } finally { setBusy(false); if (input.current) input.current.value = '' }
     }
     const pick = async (m) => {
         setPicker(false); setBusy(true)
         try {
             const r = await api(uploadUrl, { method: 'POST', body: { mediaId: m.id } })
-            setBroken(false); onChange?.(r.url); notify('success', 'Picture set')
+            setBroken(false); onChange?.(r.url); notify('success', tr("Picture set"))
         } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const remove = async () => {
         setBusy(true)
-        try { await api(uploadUrl, { method: 'DELETE' }); onChange?.(null); notify('success', 'Picture removed') } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+        try { await api(uploadUrl, { method: 'DELETE' }); onChange?.(null); notify('success', tr("Picture removed")) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
 
     return (
@@ -61,19 +62,19 @@ const ImageUpload = ({ url, name, shape = 'circle', size = 112, uploadUrl, canEd
                     <div className={classNames('flex h-full w-full items-center justify-center bg-gradient-to-br font-bold text-white', gradient(name))} style={{ fontSize: size / 3 }}>{initials(name)}</div>
                 )}
                 {canEdit && (
-                    <button type="button" onClick={() => setMenu((m) => !m)} className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-black/45 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100" aria-label="Change picture">
-                        <TbCamera className="text-2xl" /><span className="text-[11px] font-semibold">Change</span>
+                    <button type="button" onClick={() => setMenu((m) => !m)} className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-black/45 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100" aria-label={tr("Change picture")}>
+                        <TbCamera className="text-2xl" /><span className="text-[11px] font-semibold">{tr("Change")}</span>
                     </button>
                 )}
                 {busy && <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-900/70"><Spinner size={28} /></div>}
             </div>
             {canEdit && menu && !busy && (
                 <div className="flex gap-1">
-                    <button type="button" onClick={() => { setMenu(false); input.current?.click() }} className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold hover:bg-primary/10 hover:text-primary dark:bg-gray-700"><TbUpload />Upload</button>
-                    <button type="button" onClick={() => { setMenu(false); setPicker(true) }} className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold hover:bg-primary/10 hover:text-primary dark:bg-gray-700"><TbPhotoSearch />From files</button>
+                    <button type="button" onClick={() => { setMenu(false); input.current?.click() }} className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold hover:bg-primary/10 hover:text-primary dark:bg-gray-700"><TbUpload />{tr("Upload")}</button>
+                    <button type="button" onClick={() => { setMenu(false); setPicker(true) }} className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold hover:bg-primary/10 hover:text-primary dark:bg-gray-700"><TbPhotoSearch />{tr("From files")}</button>
                 </div>
             )}
-            {canEdit && url && !busy && <button type="button" onClick={remove} className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"><TbTrash />Remove</button>}
+            {canEdit && url && !busy && <button type="button" onClick={remove} className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"><TbTrash />{tr("Remove")}</button>}
             {hint && <span className="max-w-[180px] text-center text-[11px] text-gray-400">{hint}</span>}
             <MediaPicker open={picker} onClose={() => setPicker(false)} onPick={pick} />
             <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" className="hidden" onChange={(e) => send(e.target.files?.[0])} />

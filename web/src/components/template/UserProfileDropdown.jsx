@@ -8,13 +8,14 @@ import { useThemeStore } from '@/store/themeStore'
 import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
 import { useChatStatus, STATUS } from '@/store/chatStatusStore'
+import { tr } from '@/utils/t'
 
 const dropdownItemList = [
-    { label: 'My profile', path: '/account/profile', icon: <PiUserDuotone /> },
-    { label: 'Password & security', path: '/account/profile?tab=security', icon: <PiShieldCheckDuotone /> },
-    { label: 'Team & roles', path: '/team', icon: <PiUsersThreeDuotone /> },
-    { label: 'Mail settings', path: '/crm/mails?tab=settings', icon: <PiEnvelopeSimpleDuotone /> },
-    { label: 'Calendar sync', path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone /> },
+    { label: tr("My profile"), path: '/account/profile', icon: <PiUserDuotone /> },
+    { label: tr("Password & security"), path: '/account/profile?tab=security', icon: <PiShieldCheckDuotone /> },
+    { label: tr("Team & roles"), path: '/team', icon: <PiUsersThreeDuotone /> },
+    { label: tr("Mail settings"), path: '/crm/mails?tab=settings', icon: <PiEnvelopeSimpleDuotone /> },
+    { label: tr("Calendar sync"), path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone /> },
 ]
 
 const _UserDropdown = ({ className }) => {
@@ -52,10 +53,10 @@ const _UserDropdown = ({ className }) => {
                     <Avatar {...avatarProps} />
                     <div>
                         <div className="font-bold text-gray-900 dark:text-gray-100">
-                            {me?.name || userName || 'Anonymous'}
+                            {me?.name || userName || tr("Anonymous")}
                         </div>
                         <div className="text-xs">
-                            {me?.email || email || 'No email available'}
+                            {me?.email || email || tr("No email available")}
                         </div>
                         {me?.role && <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">{me.role}</span>}
                     </div>
@@ -64,7 +65,7 @@ const _UserDropdown = ({ className }) => {
             <Dropdown.Item variant="divider" />
             <Dropdown.Item eventKey="Status" className="gap-2" onClick={() => setAway(!away)}>
                 <span className={`h-3 w-3 rounded-full ${away ? 'bg-emerald-500' : 'bg-orange-400'}`} />
-                <span>{away ? `Set as available (now ${STATUS[chatState].label.toLowerCase()})` : 'Set as away'}</span>
+                <span>{away ? tr("Set as available (now {v1})", { v1: STATUS[chatState].label.toLowerCase() }) : tr("Set as away")}</span>
             </Dropdown.Item>
             <Dropdown.Item variant="divider" />
             {dropdownItemList.map((item) => (
@@ -84,7 +85,7 @@ const _UserDropdown = ({ className }) => {
             <Dropdown.Item variant="divider" />
             <Dropdown.Item eventKey="Theme" className="gap-2" onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
                 <span className="text-xl">{mode === 'dark' ? <PiSunDuotone /> : <PiMoonDuotone />}</span>
-                <span>{mode === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+                <span>{mode === 'dark' ? tr("Light mode") : tr("Dark mode")}</span>
             </Dropdown.Item>
             <Dropdown.Item
                 eventKey="Sign Out"
@@ -94,7 +95,7 @@ const _UserDropdown = ({ className }) => {
                 <span className="text-xl">
                     <PiSignOutDuotone />
                 </span>
-                <span>Sign Out</span>
+                <span>{tr("Sign Out")}</span>
             </Dropdown.Item>
         </Dropdown>
     )

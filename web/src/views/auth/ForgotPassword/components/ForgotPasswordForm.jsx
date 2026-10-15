@@ -6,6 +6,7 @@ import { apiForgotPassword } from '@/services/AuthService'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { tr } from '@/utils/t'
 
 const validationSchema = z.object({
     email: z.string().email().min(5),
@@ -35,7 +36,7 @@ const ForgotPasswordForm = (props) => {
             }
         } catch (errors) {
             setMessage?.(
-                typeof errors === 'string' ? errors : 'Some error occured!',
+                typeof errors === 'string' ? errors : tr("Some error occured!"),
             )
             setSubmitting(false)
         }
@@ -48,7 +49,7 @@ const ForgotPasswordForm = (props) => {
             {!emailSent ? (
                 <Form onSubmit={handleSubmit(onForgotPassword)}>
                     <FormItem
-                        label="Email"
+                        label={tr("Email")}
                         invalid={Boolean(errors.email)}
                         errorMessage={errors.email?.message}
                     >
@@ -58,7 +59,7 @@ const ForgotPasswordForm = (props) => {
                             render={({ field }) => (
                                 <Input
                                     type="email"
-                                    placeholder="Email"
+                                    placeholder={tr("Email")}
                                     autoComplete="off"
                                     {...field}
                                 />
@@ -71,7 +72,7 @@ const ForgotPasswordForm = (props) => {
                         variant="solid"
                         type="submit"
                     >
-                        {isSubmitting ? 'Submiting...' : 'Submit'}
+                        {isSubmitting ? tr("Submiting...") : tr("Submit")}
                     </Button>
                 </Form>
             ) : (

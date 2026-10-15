@@ -5,11 +5,13 @@ import classNames from 'classnames'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useLocaleStore } from '@/store/localeStore'
 import { HiCheck } from 'react-icons/hi'
+import { useThemeStore } from '@/store/themeStore'
+import { tr } from '@/utils/t'
 
 const languageList = [
-    { label: 'English', value: 'en', flag: 'US' },
-    { label: 'Français', value: 'fr', flag: 'FR' },
-    { label: 'Español', value: 'es', flag: 'ES' },
+    { label: tr("English"), value: 'en', flag: 'US' },
+    { label: tr("Français"), value: 'fr', flag: 'FR' },
+    { label: tr("Español"), value: 'es', flag: 'ES' },
     { label: '日本語', value: 'ja', flag: 'JP' },
     { label: 'العربية', value: 'ar', flag: 'MA' },
 ]
@@ -38,7 +40,13 @@ const _LanguageSelector = ({ className }) => {
                     key={lang.label}
                     className="justify-between"
                     eventKey={lang.label}
-                    onClick={() => setLang(lang.value)}
+                    onClick={() => {
+                        if (lang.value === locale) return
+                        setLang(lang.value)
+                        useThemeStore.getState().setDirection(lang.value === 'ar' ? 'rtl' : 'ltr')
+                        // every text of the staff area is drawn once, so the page restarts in the new language
+                        setTimeout(() => window.location.reload(), 120)
+                    }}
                 >
                     <span className="flex items-center">
                         <Avatar

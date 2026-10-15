@@ -2,6 +2,7 @@ import Button from '../Button'
 import classNames from '../utils/classNames'
 import { HiChevronRight } from 'react-icons/hi'
 import { useCarousel } from './context'
+import { tr } from '@/utils/t'
 
 const CarouselNext = (props) => {
     const { className, variant = 'default', size = 'sm', ...rest } = props
@@ -19,7 +20,7 @@ const CarouselNext = (props) => {
             className={buttonClass}
             disabled={!canScrollNext}
             shape="circle"
-            aria-label="Next slide"
+            aria-label={tr("Next slide")}
             icon={<HiChevronRight />}
             onClick={scrollNext}
             {...rest}

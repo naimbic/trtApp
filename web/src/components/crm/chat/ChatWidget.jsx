@@ -11,6 +11,7 @@ import { upload as uploadFile } from '@/views/crm/kit/api'
 import { StatusDot, usePresence, usePingOnIncrease } from './chatKit'
 import { useChatStatus, STATUS } from '@/store/chatStatusStore'
 import { chatApi, chatPost } from './chatClient'
+import { tr, trn } from '@/utils/t'
 
 const POLL = 8000
 const api = chatApi
@@ -34,7 +35,7 @@ const Row = ({ r, onClick }) => (
     </button>
 )
 
-const TABS = [['chats', 'Chats'], ['people', 'People'], ['clients', 'Clients']]
+const TABS = [['chats', tr("Chats")], ['people', tr("People")], ['clients', tr("Clients")]]
 
 const ChatWidget = () => {
     const [open, setOpen] = useState(false)
@@ -86,8 +87,8 @@ const ChatWidget = () => {
                             <div className="flex items-center gap-3 border-b border-gray-200 px-3 py-3 dark:border-gray-700">
                                 <button type="button" className="text-lg text-gray-500" onClick={() => { setRoom(null); refresh() }}><PiCaretLeftBold /></button>
                                 <Face r={{ ...room, status: theirStatus ?? room.status }} />
-                                <div className="min-w-0 flex-1"><div className="truncate font-bold text-gray-900 dark:text-gray-100">{room.title}</div><div className="text-xs text-gray-500">{room.kind === 'group' ? room.subtitle : room.kind === 'team' ? `${peopleOnline + 1} online` : (theirStatus ?? room.status) === 'online' ? 'Available now' : (theirStatus ?? room.status) === 'offline' ? (room.kind === 'client' ? 'Offline · will see your reply later' : 'Offline') : `${STATUS[theirStatus ?? room.status].label} · may reply late`}</div></div>
-                                {data.calls && room.kind !== 'team' && room.kind !== 'group' && <button type="button" className="text-xl text-primary" title="Voice call" onClick={() => phone.start({ roomId: room.id, peerName: room.title })}><PiPhoneCallDuotone /></button>}
+                                <div className="min-w-0 flex-1"><div className="truncate font-bold text-gray-900 dark:text-gray-100">{room.title}</div><div className="text-xs text-gray-500">{room.kind === 'group' ? room.subtitle : room.kind === 'team' ? tr("{v1} online", { v1: peopleOnline + 1 }) : (theirStatus ?? room.status) === 'online' ? tr("Available now") : (theirStatus ?? room.status) === 'offline' ? (room.kind === 'client' ? tr("Offline · will see your reply later") : tr("Offline")) : tr("{label} · may reply late", { label: STATUS[theirStatus ?? room.status].label })}</div></div>
+                                {data.calls && room.kind !== 'team' && room.kind !== 'group' && <button type="button" className="text-xl text-primary" title={tr("Voice call")} onClick={() => phone.start({ roomId: room.id, peerName: room.title })}><PiPhoneCallDuotone /></button>}
                                 <button type="button" className="text-lg text-gray-400" onClick={() => setOpen(false)}><PiXBold /></button>
                             </div>
                             <ChatThread load={loadMsgs} send={sendMsg} upload={uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} />
@@ -95,8 +96,8 @@ const ChatWidget = () => {
                     ) : (
                         <>
                             <div className="flex items-center justify-between px-4 pt-4">
-                                <div><div className="text-lg font-bold text-gray-900 dark:text-gray-100">Chat</div><div className="flex items-center gap-1.5 text-xs text-gray-500"><StatusDot status={mine} className="!border-0" />You: {STATUS[mine].label} · {peopleOnline} colleague{peopleOnline === 1 ? '' : 's'} available</div></div>
-                                <div className="flex items-center gap-3 text-lg text-gray-400"><button type="button" title="Open the full chat page" onClick={() => { setOpen(false); navigate('/crm/chat') }}><PiArrowsOutSimpleDuotone /></button>{data.me?.admin && <button type="button" title={data.calls ? 'Voice calls are on (click to turn off)' : 'Voice calls are off (click to turn on)'} onClick={() => setCalls(!data.calls)} className={data.calls ? 'text-emerald-500' : ''}><PiPhoneCallDuotone /></button>}<button type="button" title={muted ? 'Sound off' : 'Sound on'} onClick={() => setMuted(!muted)}>{muted ? <PiBellSimpleSlashDuotone /> : <PiBellSimpleDuotone />}</button><button type="button" onClick={() => setOpen(false)}><PiXBold /></button></div>
+                                <div><div className="text-lg font-bold text-gray-900 dark:text-gray-100">{tr("Chat")}</div><div className="flex items-center gap-1.5 text-xs text-gray-500"><StatusDot status={mine} className="!border-0" />{tr("You:")} {STATUS[mine].label} · {trn(peopleOnline, "colleague")} {tr("available")}</div></div>
+                                <div className="flex items-center gap-3 text-lg text-gray-400"><button type="button" title={tr("Open the full chat page")} onClick={() => { setOpen(false); navigate('/crm/chat') }}><PiArrowsOutSimpleDuotone /></button>{data.me?.admin && <button type="button" title={data.calls ? tr("Voice calls are on (click to turn off)") : tr("Voice calls are off (click to turn on)")} onClick={() => setCalls(!data.calls)} className={data.calls ? 'text-emerald-500' : ''}><PiPhoneCallDuotone /></button>}<button type="button" title={muted ? tr("Sound off") : tr("Sound on")} onClick={() => setMuted(!muted)}>{muted ? <PiBellSimpleSlashDuotone /> : <PiBellSimpleDuotone />}</button><button type="button" onClick={() => setOpen(false)}><PiXBold /></button></div>
                             </div>
                             <div className="flex gap-1 px-3 pb-2 pt-3">
                                 {TABS.map(([k, label]) => (
@@ -109,8 +110,8 @@ const ChatWidget = () => {
                                 ) : (
                                     <>
                                         {shown.map((r) => <Row key={r.id} r={r} onClick={() => pick(r)} />)}
-                                        {tab === 'clients' && !shown.length && <div className="px-6 py-12 text-center text-sm text-gray-400"><PiBuildingsDuotone className="mx-auto mb-2 text-3xl" />Clients who write from their portal appear here.</div>}
-                                        {tab === 'chats' && <div className="px-6 pt-3 text-center text-xs text-gray-400">Open the People tab to start a private conversation.</div>}
+                                        {tab === 'clients' && !shown.length && <div className="px-6 py-12 text-center text-sm text-gray-400"><PiBuildingsDuotone className="mx-auto mb-2 text-3xl" />{tr("Clients who write from their portal appear here.")}</div>}
+                                        {tab === 'chats' && <div className="px-6 pt-3 text-center text-xs text-gray-400">{tr("Open the People tab to start a private conversation.")}</div>}
                                     </>
                                 )}
                             </div>
@@ -118,7 +119,7 @@ const ChatWidget = () => {
                     )}
                 </div>
             )}
-            {!onPage && <button type="button" onClick={() => setOpen((o) => !o)} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-3xl text-white shadow-xl transition-transform hover:scale-105" title="Chat">
+            {!onPage && <button type="button" onClick={() => setOpen((o) => !o)} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-3xl text-white shadow-xl transition-transform hover:scale-105" title={tr("Chat")}>
                 {open ? <PiXBold className="text-2xl" /> : <PiChatCircleDotsFill />}
                 {!open && data.unread > 0 && <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">{data.unread}</span>}
             </button>}

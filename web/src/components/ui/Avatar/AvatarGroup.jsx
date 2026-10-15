@@ -2,6 +2,7 @@ import { Children, cloneElement, Fragment } from 'react'
 import classNames from 'classnames'
 import Avatar from './Avatar'
 import Tooltip from '../Tooltip/Tooltip'
+import { tr } from '@/utils/t'
 
 const GroupContainer = ({ children, chained, className }) => (
     <div
@@ -53,7 +54,7 @@ const AvatarGroup = (props) => {
             omittedAvatarTooltip ? (
                 <Tooltip
                     key="avatar-more-tooltip"
-                    title={`${overflowCount} More`}
+                    title={tr("{overflowCount} More", { overflowCount: overflowCount })}
                     {...omittedAvatarTooltipProps}
                 >
                     <>{avatar}</>

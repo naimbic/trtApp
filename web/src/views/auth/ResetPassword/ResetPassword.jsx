@@ -6,6 +6,7 @@ import ResetPasswordForm from './components/ResetPasswordForm'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
 import { useNavigate, useSearchParams } from 'react-router'
 import { apiCheckResetToken } from '@/services/AuthService'
+import { tr } from '@/utils/t'
 
 export const ResetPasswordBase = ({ signInUrl = '/sign-in' }) => {
     const [resetComplete, setResetComplete] = useState(false)
@@ -33,16 +34,16 @@ export const ResetPasswordBase = ({ signInUrl = '/sign-in' }) => {
             <div className="mb-6">
                 {resetComplete ? (
                     <>
-                        <h3 className="mb-1">{invite ? 'Password set' : 'Reset done'}</h3>
+                        <h3 className="mb-1">{invite ? tr("Password set") : tr("Reset done")}</h3>
                         <p className="font-semibold heading-text">
-                            {invite ? 'Your password is ready. You can now sign in.' : 'Your password has been reset. You have been signed out everywhere, so please sign in again.'}
+                            {invite ? tr("Your password is ready. You can now sign in.") : tr("Your password has been reset. You have been signed out everywhere, so please sign in again.")}
                         </p>
                     </>
                 ) : (
                     <>
-                        <h3 className="mb-1">{link.checking ? 'Checking link…' : !link.valid ? 'Link not valid' : invite ? 'Welcome — set your password' : 'Set new password'}</h3>
+                        <h3 className="mb-1">{link.checking ? tr("Checking link…") : !link.valid ? tr("Link not valid") : invite ? tr("Welcome — set your password") : tr("Set new password")}</h3>
                         <p className="font-semibold heading-text">
-                            {link.valid ? `${link.email} · use at least 8 characters` : link.checking ? '' : 'This link is invalid, already used, or has expired.'}
+                            {link.valid ? tr("{email} · use at least 8 characters", { email: link.email }) : link.checking ? '' : tr("This link is invalid, already used, or has expired.")}
                         </p>
                     </>
                 )}
@@ -54,7 +55,7 @@ export const ResetPasswordBase = ({ signInUrl = '/sign-in' }) => {
             )}
             {!resetComplete && !link.checking && !link.valid ? (
                 <Button block variant="solid" type="button" onClick={() => navigate('/forgot-password')}>
-                    Request a new link
+                    {tr("Request a new link")}
                 </Button>
             ) : (
             <ResetPasswordForm
@@ -68,18 +69,18 @@ export const ResetPasswordBase = ({ signInUrl = '/sign-in' }) => {
                     type="button"
                     onClick={handleContinue}
                 >
-                    Continue
+                    {tr("Continue")}
                 </Button>
             </ResetPasswordForm>
             )}
             <div className="mt-4 text-center">
-                <span>Back to </span>
+                <span>{tr("Back to")} </span>
                 <ActionLink
                     to={signInUrl}
                     className="heading-text font-bold"
                     themeColor={false}
                 >
-                    Sign in
+                    {tr("Sign in")}
                 </ActionLink>
             </div>
         </div>

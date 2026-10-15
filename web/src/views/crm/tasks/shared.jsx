@@ -1,24 +1,25 @@
 import Avatar from '@/components/ui/Avatar'
 import Tooltip from '@/components/ui/Tooltip'
 import dayjs from 'dayjs'
+import { tr } from '@/utils/t'
 
 export const STATUS = [
-    { value: 1, label: 'Not started', dot: 'bg-gray-400' },
-    { value: 4, label: 'In progress', dot: 'bg-blue-500' },
-    { value: 3, label: 'Testing', dot: 'bg-violet-500' },
-    { value: 2, label: 'Awaiting feedback', dot: 'bg-amber-500' },
-    { value: 5, label: 'Complete', dot: 'bg-emerald-500' },
+    { value: 1, label: tr("Not started"), dot: 'bg-gray-400' },
+    { value: 4, label: tr("In progress"), dot: 'bg-blue-500' },
+    { value: 3, label: tr("Testing"), dot: 'bg-violet-500' },
+    { value: 2, label: tr("Awaiting feedback"), dot: 'bg-amber-500' },
+    { value: 5, label: tr("Complete"), dot: 'bg-emerald-500' },
 ]
 export const PRIORITY = [
-    { value: 1, label: 'Low', bar: 'bg-gray-300', text: 'text-gray-500' },
-    { value: 2, label: 'Medium', bar: 'bg-blue-400', text: 'text-blue-600' },
-    { value: 3, label: 'High', bar: 'bg-orange-500', text: 'text-orange-600' },
-    { value: 4, label: 'Urgent', bar: 'bg-red-500', text: 'text-red-600' },
+    { value: 1, label: tr("Low"), bar: 'bg-gray-300', text: "text-gray-500" },
+    { value: 2, label: tr("Medium"), bar: 'bg-blue-400', text: "text-blue-600" },
+    { value: 3, label: tr("High"), bar: 'bg-orange-500', text: "text-orange-600" },
+    { value: 4, label: tr("Urgent"), bar: 'bg-red-500', text: "text-red-600" },
 ]
 export const REL_TYPES = [
-    { value: 'customer', label: 'Client', resource: 'clients' },
-    { value: 'lead', label: 'Lead', resource: 'leads' },
-    { value: 'project', label: 'Project', resource: 'projects' },
+    { value: 'customer', label: tr("Client"), resource: 'clients' },
+    { value: 'lead', label: tr("Lead"), resource: 'leads' },
+    { value: 'project', label: tr("Project"), resource: 'projects' },
 ]
 export const statusOf = (v) => STATUS.find((s) => s.value === +v) || STATUS[0]
 export const prioOf = (v) => PRIORITY.find((p) => p.value === +v) || PRIORITY[1]

@@ -5,6 +5,7 @@ import ActionLink from '@/components/shared/ActionLink'
 import ForgotPasswordForm from './components/ForgotPasswordForm'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
 import { useNavigate } from 'react-router'
+import { tr } from '@/utils/t'
 
 export const ForgotPasswordBase = ({ signInUrl = '/sign-in' }) => {
     const [emailSent, setEmailSent] = useState(false)
@@ -21,18 +22,18 @@ export const ForgotPasswordBase = ({ signInUrl = '/sign-in' }) => {
             <div className="mb-6">
                 {emailSent ? (
                     <>
-                        <h3 className="mb-2">Check your email</h3>
+                        <h3 className="mb-2">{tr("Check your email")}</h3>
                         <p className="font-semibold heading-text">
                             {emailSent === 'email'
-                                ? 'If an account exists for that email, we have sent a link to reset the password. It is valid for 1 hour.'
-                                : 'If an account exists for that email, a reset link has been prepared. Email delivery is not set up yet, so please ask your administrator to send you the reset link.'}
+                                ? tr("If an account exists for that email, we have sent a link to reset the password. It is valid for 1 hour.")
+                                : tr("If an account exists for that email, a reset link has been prepared. Email delivery is not set up yet, so please ask your administrator to send you the reset link.")}
                         </p>
                     </>
                 ) : (
                     <>
-                        <h3 className="mb-2">Forgot Password</h3>
+                        <h3 className="mb-2">{tr("Forgot Password")}</h3>
                         <p className="font-semibold heading-text">
-                            Enter your account email and we will help you choose a new password
+                            {tr("Enter your account email and we will help you choose a new password")}
                         </p>
                     </>
                 )}
@@ -53,17 +54,17 @@ export const ForgotPasswordBase = ({ signInUrl = '/sign-in' }) => {
                     type="button"
                     onClick={handleContinue}
                 >
-                    Continue
+                    {tr("Continue")}
                 </Button>
             </ForgotPasswordForm>
             <div className="mt-4 text-center">
-                <span>Back to </span>
+                <span>{tr("Back to")} </span>
                 <ActionLink
                     to={signInUrl}
                     className="heading-text font-bold"
                     themeColor={false}
                 >
-                    Sign in
+                    {tr("Sign in")}
                 </ActionLink>
             </div>
         </div>

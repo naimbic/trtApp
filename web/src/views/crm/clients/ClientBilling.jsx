@@ -8,6 +8,7 @@ import { useRegisterCurrency } from '@/store/pageFilterStore'
 import classNames from '@/utils/classNames'
 import { api, qs } from '../kit/api'
 import { PALETTE, DonutChart } from '../kit/charts'
+import { tr } from '@/utils/t'
 
 const growth = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 100) : null)
 const labelOf = (l) => (l.length === 7 ? dayjs(`${l}-01`).format('MMM YY') : dayjs(l).format('DD MMM'))
@@ -19,7 +20,7 @@ const Tile = ({ title, value, sub, icon, iconClass, g, active, onClick }) => (
                 <div className="mb-3 text-sm font-semibold">{title}</div>
                 <h4 className="mb-1">{value}</h4>
                 {g !== undefined ? (
-                    <div className="inline-flex flex-wrap items-center gap-1">{g === null ? <span className="text-xs text-gray-400">no earlier data</span> : <><GrowShrinkValue className="font-bold" value={g} suffix="%" positiveIcon="+" negativeIcon="" /><span className="text-xs">vs the period before</span></>}</div>
+                    <div className="inline-flex flex-wrap items-center gap-1">{g === null ? <span className="text-xs text-gray-400">{tr("no earlier data")}</span> : <><GrowShrinkValue className="font-bold" value={g} suffix="%" positiveIcon="+" negativeIcon="" /><span className="text-xs">{tr("vs the period before")}</span></>}</div>
                 ) : <div className="text-xs">{sub}</div>}
             </div>
             <div className={classNames('flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl text-gray-900', iconClass)}>{icon}</div>
@@ -45,14 +46,14 @@ const ClientBilling = ({ id, c, lookups, money, cur, setCur, charts }) => {
     }, [id, range, from, to, cur])
 
     const m = c.money[cur]
-    if (!options.length) return <p className="text-sm text-gray-400">No invoices yet.</p>
-    if (d?.hidden) return <p className="rounded-xl bg-gray-50 p-4 text-center text-sm text-gray-400 dark:bg-gray-700/40">Money figures are hidden for your role.</p>
+    if (!options.length) return <p className="text-sm text-gray-400">{tr("No invoices yet.")}</p>
+    if (d?.hidden) return <p className="rounded-xl bg-gray-50 p-4 text-center text-sm text-gray-400 dark:bg-gray-700/40">{tr("Money figures are hidden for your role.")}</p>
 
     const fmt = (v) => money(v, cur)
     const tiles = d ? [
-        { title: 'Invoiced', value: fmt(d.invoiced.total), g: growth(d.invoiced.total, d.invoiced.prevTotal), icon: <TbReceipt2 />, iconClass: 'bg-sky-200', s: d.invoiced, color: PALETTE.blue, money: true },
-        { title: 'Paid', value: fmt(d.paid.total), g: growth(d.paid.total, d.paid.prevTotal), icon: <TbCash />, iconClass: 'bg-emerald-200', s: d.paid, color: PALETTE.green, money: true },
-        { title: 'Invoices', value: String(d.count.total), g: growth(d.count.total, d.count.prevTotal), icon: <TbHash />, iconClass: 'bg-purple-200', s: d.count, color: PALETTE.purple },
+        { title: tr("Invoiced"), value: fmt(d.invoiced.total), g: growth(d.invoiced.total, d.invoiced.prevTotal), icon: <TbReceipt2 />, iconClass: 'bg-sky-200', s: d.invoiced, color: PALETTE.blue, money: true },
+        { title: tr("Paid"), value: fmt(d.paid.total), g: growth(d.paid.total, d.paid.prevTotal), icon: <TbCash />, iconClass: 'bg-emerald-200', s: d.paid, color: PALETTE.green, money: true },
+        { title: tr("Invoices"), value: String(d.count.total), g: growth(d.count.total, d.count.prevTotal), icon: <TbHash />, iconClass: 'bg-purple-200', s: d.count, color: PALETTE.purple },
     ] : []
     const t = tiles[sel] || tiles[0]
     const labels = d ? d.labels.map(labelOf) : []
@@ -61,11 +62,11 @@ const ClientBilling = ({ id, c, lookups, money, cur, setCur, charts }) => {
         <div>
             <div className="grid grid-cols-1 gap-3 rounded-2xl bg-gray-100 p-3 md:grid-cols-2 xl:grid-cols-4 dark:bg-gray-700">
                 {tiles.map((x, i) => <Tile key={x.title} {...x} active={sel === i} onClick={() => setSel(i)} />)}
-                <Tile title="Balance due" value={fmt(m?.outstanding)} sub={<span className={m?.overdue > 0 ? 'font-semibold text-red-600' : ''}>{fmt(m?.overdue)} overdue · all time</span>} icon={<TbHourglass />} iconClass="bg-red-200" />
+                <Tile title={tr("Balance due")} value={fmt(m?.outstanding)} sub={<span className={m?.overdue > 0 ? 'font-semibold text-red-600' : ''}>{fmt(m?.overdue)} {tr("overdue · all time")}</span>} icon={<TbHourglass />} iconClass="bg-red-200" />
             </div>
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
                 <div className="lg:col-span-2">
-                    <div className="mb-1 flex items-center justify-between text-sm"><span className="font-semibold">{t?.title || 'Invoiced'} · {d?.range.label || ''}</span><span className="text-gray-400">dashed line: the period before</span></div>
+                    <div className="mb-1 flex items-center justify-between text-sm"><span className="font-semibold">{t?.title || tr("Invoiced")} · {d?.range.label || ''}</span><span className="text-gray-400">{tr("dashed line: the period before")}</span></div>
                     {t ? (
                         <Chart
                             type="line"
@@ -81,11 +82,11 @@ const ClientBilling = ({ id, c, lookups, money, cur, setCur, charts }) => {
                                 tooltip: { shared: true, y: { formatter: (v) => (t.money ? fmt(v) : String(v)) } },
                             }}
                         />
-                    ) : <div className="py-24 text-center text-sm text-gray-400">Loading…</div>}
+                    ) : <div className="py-24 text-center text-sm text-gray-400">{tr("Loading…")}</div>}
                 </div>
                 <div>
-                    <div className="mb-1 text-sm font-semibold">Invoices by status · all time</div>
-                    <DonutChart data={charts?.invoiceStatus} title="Invoices" />
+                    <div className="mb-1 text-sm font-semibold">{tr("Invoices by status · all time")}</div>
+                    <DonutChart data={charts?.invoiceStatus} title={tr("Invoices")} />
                 </div>
             </div>
         </div>

@@ -14,6 +14,7 @@ import cn from '@/utils/classNames'
 import { api, qs } from '../kit/api'
 import { usePageRange } from '@/store/pageFilterStore'
 import NewTicketDialog from './NewTicketDialog'
+import { tr, trn } from '@/utils/t'
 
 dayjs.extend(relativeTime)
 const { Tr, Th, Td, THead, TBody } = Table
@@ -52,8 +53,8 @@ const TicketsList = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Tickets</h3><p className="text-sm text-gray-500">{data.total} ticket{data.total === 1 ? '' : 's'}</p></div>
-                {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => setDialog(true)}>New ticket</Button>}
+                <div><h3>{tr("Tickets")}</h3><p className="text-sm text-gray-500">{trn(data.total, "ticket")}</p></div>
+                {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => setDialog(true)}>{tr("New ticket")}</Button>}
             </div>
 
             <div className="mb-4 flex flex-wrap gap-3">
@@ -67,32 +68,32 @@ const TicketsList = () => {
 
             {/* one row: search, filters (they shrink to fit) and the switches */}
             <div className="mb-4 flex items-center gap-2">
-                <div className="w-56 shrink-0"><Input size="sm" prefix={<TbSearch />} placeholder="Search subject, #number, email" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-                <div className="min-w-[7rem] max-w-[11rem] flex-1"><Select size="sm" isClearable placeholder="Any priority" options={opt(data.priorities)} value={sel(data.priorities, priorityId)} onChange={(o) => { setPriorityId(o?.value || null); setPage(1) }} {...portalSel} /></div>
-                <div className="min-w-[7rem] max-w-[12rem] flex-1"><Select size="sm" isClearable placeholder="Any department" options={opt(data.departments)} value={sel(data.departments, departmentId)} onChange={(o) => { setDepartmentId(o?.value || null); setPage(1) }} {...portalSel} /></div>
-                <div className="min-w-[7rem] max-w-[12rem] flex-1"><Select size="sm" isClearable placeholder="Anyone" options={opt(data.staff)} value={sel(data.staff, assignedId)} onChange={(o) => { setAssignedId(o?.value || null); setMine(false); setPage(1) }} {...portalSel} /></div>
-                <label className="flex shrink-0 items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssignedId(null); setPage(1) }} />Mine</label>
-                <label className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm"><Switcher checked={open && !statusId} disabled={!!statusId} onChange={(c) => { setOpen(c); setPage(1) }} />Hide closed</label>
+                <div className="w-56 shrink-0"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search subject, #number, email")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                <div className="min-w-[7rem] max-w-[11rem] flex-1"><Select size="sm" isClearable placeholder={tr("Any priority")} options={opt(data.priorities)} value={sel(data.priorities, priorityId)} onChange={(o) => { setPriorityId(o?.value || null); setPage(1) }} {...portalSel} /></div>
+                <div className="min-w-[7rem] max-w-[12rem] flex-1"><Select size="sm" isClearable placeholder={tr("Any department")} options={opt(data.departments)} value={sel(data.departments, departmentId)} onChange={(o) => { setDepartmentId(o?.value || null); setPage(1) }} {...portalSel} /></div>
+                <div className="min-w-[7rem] max-w-[12rem] flex-1"><Select size="sm" isClearable placeholder={tr("Anyone")} options={opt(data.staff)} value={sel(data.staff, assignedId)} onChange={(o) => { setAssignedId(o?.value || null); setMine(false); setPage(1) }} {...portalSel} /></div>
+                <label className="flex shrink-0 items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssignedId(null); setPage(1) }} />{tr("Mine")}</label>
+                <label className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm"><Switcher checked={open && !statusId} disabled={!!statusId} onChange={(c) => { setOpen(c); setPage(1) }} />{tr("Hide closed")}</label>
             </div>
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
             <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                 <Table compact overflow={false}>
-                    <THead><Tr><Th>#</Th><Th>Subject</Th><Th>Client</Th><Th>Department</Th><Th>Status</Th><Th>Priority</Th><Th>Assigned</Th><Th>Last reply</Th></Tr></THead>
+                    <THead><Tr><Th>#</Th><Th>{tr("Subject")}</Th><Th>{tr("Client")}</Th><Th>{tr("Department")}</Th><Th>{tr("Status")}</Th><Th>{tr("Priority")}</Th><Th>{tr("Assigned")}</Th><Th>{tr("Last reply")}</Th></Tr></THead>
                     <TBody>
                         {data.list.map((t) => (
                             <Tr key={t.id} className="cursor-pointer" onClick={() => nav(`/crm/tickets/${t.id}`)}>
                                 <Td className="text-gray-500">{t.number}</Td>
-                                <Td className="max-w-[360px]"><div className={cn('flex items-center gap-1.5 truncate', t.unread ? 'font-bold' : 'font-semibold')}>{t.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" title="New" />}<span className="truncate">{t.subject}</span>{t.files > 0 && <TbPaperclip className="shrink-0 text-gray-400" title={`${t.files} file${t.files === 1 ? '' : 's'}`} />}</div>{t.replies > 0 && <div className="text-xs text-gray-400">{t.replies} repl{t.replies === 1 ? 'y' : 'ies'}</div>}</Td>
+                                <Td className="max-w-[360px]"><div className={cn('flex items-center gap-1.5 truncate', t.unread ? 'font-bold' : 'font-semibold')}>{t.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" title={tr("New")} />}<span className="truncate">{t.subject}</span>{t.files > 0 && <TbPaperclip className="shrink-0 text-gray-400" title={trn(t.files, 'file')} />}</div>{t.replies > 0 && <div className="text-xs text-gray-400">{trn(t.replies, 'reply', 'replies')}</div>}</Td>
                                 <Td><div className="max-w-[200px] truncate">{t.client?.name || t.contact || '—'}</div>{t.client && t.contact && <div className="text-xs text-gray-400">{t.contact}</div>}</Td>
                                 <Td>{t.department || '—'}</Td>
                                 <Td><StatusDot s={t.status} /></Td>
                                 <Td className={PRIORITY[(t.priority || '').toLowerCase()] || ''}>{t.priority || '—'}</Td>
                                 <Td>{t.assigned?.name || '—'}</Td>
-                                <Td className="whitespace-nowrap text-gray-500" title={t.lastReply ? dayjs(t.lastReply).format('DD MMM YYYY HH:mm') : ''}>{t.lastReply ? dayjs(t.lastReply).fromNow() : 'No reply'}</Td>
+                                <Td className="whitespace-nowrap text-gray-500" title={t.lastReply ? dayjs(t.lastReply).format('DD MMM YYYY HH:mm') : ''}>{t.lastReply ? dayjs(t.lastReply).fromNow() : tr("No reply")}</Td>
                             </Tr>
                         ))}
-                        {!loading && !data.list.length && <Tr><Td colSpan={8} className="py-10 text-center text-gray-500">No tickets match</Td></Tr>}
+                        {!loading && !data.list.length && <Tr><Td colSpan={8} className="py-10 text-center text-gray-500">{tr("No tickets match")}</Td></Tr>}
                     </TBody>
                 </Table>
             </div>

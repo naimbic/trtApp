@@ -1,12 +1,13 @@
 import { cloneElement, useEffect, useState } from 'react'
 import { TbArrowUpRight, TbWorld } from 'react-icons/tb'
 import { CHANGELOG } from '@/configs/changelog'
+import { tr } from '@/utils/t'
 
 const QUOTES = [
-    { text: 'Websites that turn visitors into clients.', by: 'trtDigital' },
-    { text: 'SEO that gets your business found on Google.', by: 'trtSEO' },
-    { text: 'Ads that bring qualified leads, not just clicks.', by: 'trtAds' },
-    { text: 'One team for your website, your ranking and your advertising.', by: 'trtDigital' },
+    { text: tr("Websites that turn visitors into clients."), by: 'trtDigital' },
+    { text: tr("SEO that gets your business found on Google."), by: 'trtSEO' },
+    { text: tr("Ads that bring qualified leads, not just clicks."), by: 'trtAds' },
+    { text: tr("One team for your website, your ranking and your advertising."), by: 'trtDigital' },
 ]
 
 // all our domains (trt-domains-48.xlsx); 8 random ones are shown each time the slide comes round
@@ -103,7 +104,7 @@ const Slides = () => {
             </div>
             <div className="absolute left-0 right-0 top-full mt-6 flex justify-center gap-2">
                 {SLIDES.map((_, n) => (
-                    <button key={n} type="button" aria-label={`Slide ${n + 1}`} onClick={() => setI(n)} className={`h-2 rounded-full transition-all ${n === i ? 'w-10 bg-white' : 'w-3 bg-white/35 hover:bg-white/60'}`} />
+                    <button key={n} type="button" aria-label={tr("Slide {v1}", { v1: n + 1 })} onClick={() => setI(n)} className={`h-2 rounded-full transition-all ${n === i ? 'w-10 bg-white' : 'w-3 bg-white/35 hover:bg-white/60'}`} />
                 ))}
             </div>
         </div>
@@ -118,7 +119,7 @@ const Side = ({ children, ...rest }) => {
                 <div className="w-full max-w-sm">
                     {children ? cloneElement(children, { ...rest }) : null}
                     <footer className="mt-10 text-center text-xs text-gray-400">
-                        trtCRM developed by <span className="font-semibold">trtDigital</span>
+                        {tr("trtCRM developed by")} <span className="font-semibold">{tr("trtDigital")}</span>
                         <span className="mx-1.5">&middot;</span>
                         <span className="font-mono">v{CHANGELOG[0].version}</span>
                     </footer>

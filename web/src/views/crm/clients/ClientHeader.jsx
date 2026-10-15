@@ -10,6 +10,7 @@ import Tag from '@/components/ui/Tag'
 import Tooltip from '@/components/ui/Tooltip'
 import ImageUpload from '@/components/crm/ImageUpload'
 import cn from '@/utils/classNames'
+import { tr, trn } from '@/utils/t'
 
 const initials = (n = '') => n.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
 
@@ -30,7 +31,7 @@ const Journey = ({ journey }) => (
                 {i > 0 && <div className={cn('absolute right-1/2 top-2.5 h-0.5 w-full', s.done ? 'bg-emerald-400' : 'bg-gray-200 dark:bg-gray-600')} />}
                 <span className={cn('relative z-10 grid h-5 w-5 place-items-center rounded-full text-[11px] font-bold', s.done ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-500 dark:bg-gray-600')}>{s.done ? <TbCheck /> : i + 1}</span>
                 <div className={cn('mt-1 text-xs font-semibold', !s.done && 'text-gray-400')}>{s.label}</div>
-                <div className="text-[11px] text-gray-400">{s.date ? dayjs(s.date).format('DD MMM YY') : s.done ? '' : 'not yet'}</div>
+                <div className="text-[11px] text-gray-400">{s.date ? dayjs(s.date).format('DD MMM YY') : s.done ? '' : tr("not yet")}</div>
             </div>
         ))}
     </div>
@@ -57,44 +58,44 @@ const ClientHeader = ({ c, profile, lookups, id, can, a }) => {
                     <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                             <h4 className="truncate font-bold">{c.company}</h4>
-                            <Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? 'Active' : 'Inactive'}</Tag>
+                            <Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? tr("Active") : tr("Inactive")}</Tag>
                             {c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>)}
-                            {lead && <Tag className="gap-1 bg-blue-50 text-blue-700"><TbTargetArrow className="inline" /> From lead{lead.daysToConvert !== null ? ` · ${lead.daysToConvert}d` : ''}</Tag>}
+                            {lead && <Tag className="gap-1 bg-blue-50 text-blue-700"><TbTargetArrow className="inline" /> {tr("From lead")}{lead.daysToConvert !== null ? ` · ${lead.daysToConvert}d` : ''}</Tag>}
                         </div>
                         <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                             {where && <span className="flex items-center gap-1 font-semibold heading-text"><TbMapPin className="text-gray-400" />{where}</span>}
                             {site && <a className="flex items-center gap-1 text-primary hover:underline" href={site} target="_blank" rel="noreferrer"><TbWorld />{c.website.replace(/^https?:\/\//, '')}</a>}
-                            <Fact label="Since">{dayjs(c.createdAt).format('DD MMM YYYY')}</Fact>
-                            <Fact label="Currency">{lookups.currencies.find((x) => x.id === c.currencyId)?.name}</Fact>
-                            <Fact label="Language">{c.language}</Fact>
-                            <Fact label="Industry">{c.industry}</Fact>
-                            <Fact label="VAT / ICE">{c.vat}</Fact>
-                            <Fact label="Managed by">{c.admins.map((x) => x.name).join(', ')}</Fact>
-                            {profile?.lastLogin && <Fact label="Last seen">{dayjs(profile.lastLogin.date).fromNow?.() || dayjs(profile.lastLogin.date).format('DD MMM YYYY')}</Fact>}
+                            <Fact label={tr("Since")}>{dayjs(c.createdAt).format('DD MMM YYYY')}</Fact>
+                            <Fact label={tr("Currency")}>{lookups.currencies.find((x) => x.id === c.currencyId)?.name}</Fact>
+                            <Fact label={tr("Language")}>{c.language}</Fact>
+                            <Fact label={tr("Industry")}>{c.industry}</Fact>
+                            <Fact label={tr("VAT / ICE")}>{c.vat}</Fact>
+                            <Fact label={tr("Managed by")}>{c.admins.map((x) => x.name).join(', ')}</Fact>
+                            {profile?.lastLogin && <Fact label={tr("Last seen")}>{dayjs(profile.lastLogin.date).fromNow?.() || dayjs(profile.lastLogin.date).format('DD MMM YYYY')}</Fact>}
                         </div>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 xl:shrink-0 xl:justify-end">
-                    {canEdit && <Button size="sm" variant="solid" icon={<TbBell />} onClick={a.followUp}>Follow up</Button>}
+                    {canEdit && <Button size="sm" variant="solid" icon={<TbBell />} onClick={a.followUp}>{tr("Follow up")}</Button>}
                     <div className="flex items-center gap-1">
-                        {can('invoices', 'create') && <Act icon={<TbFileInvoice />} label="New invoice" onClick={a.invoice} />}
-                        {can('estimates', 'create') && <Act icon={<TbFileText />} label="New estimate" onClick={a.estimate} />}
-                        {can('proposals', 'create') && <Act icon={<TbPresentation />} label="New proposal" onClick={a.proposal} />}
-                        {can('projects', 'create') && <Act icon={<TbBriefcase />} label="New project" onClick={a.project} />}
-                        {can('tickets', 'create') && <Act icon={<TbLifebuoy />} label="New ticket" onClick={a.ticket} />}
-                        {canEdit && <Act icon={<TbNotes />} label="Add note" onClick={a.note} />}
+                        {can('invoices', 'create') && <Act icon={<TbFileInvoice />} label={tr("New invoice")} onClick={a.invoice} />}
+                        {can('estimates', 'create') && <Act icon={<TbFileText />} label={tr("New estimate")} onClick={a.estimate} />}
+                        {can('proposals', 'create') && <Act icon={<TbPresentation />} label={tr("New proposal")} onClick={a.proposal} />}
+                        {can('projects', 'create') && <Act icon={<TbBriefcase />} label={tr("New project")} onClick={a.project} />}
+                        {can('tickets', 'create') && <Act icon={<TbLifebuoy />} label={tr("New ticket")} onClick={a.ticket} />}
+                        {canEdit && <Act icon={<TbNotes />} label={tr("Add note")} onClick={a.note} />}
                     </div>
                     <div className="flex items-center gap-1 border-l border-gray-200 pl-2 dark:border-gray-600">
-                        {primary?.email && <Act icon={<TbMail />} label={`Email ${primary.email}`} href={`mailto:${primary.email}`} />}
-                        {phone && <Act icon={<TbPhone />} label={`Call ${phone}`} href={`tel:${phone.replace(/\s/g, '')}`} />}
-                        {phone && <Act icon={<TbBrandWhatsapp />} label="WhatsApp" onClick={() => window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`, '_blank', 'noopener')} />}
+                        {primary?.email && <Act icon={<TbMail />} label={tr("Email {email}", { email: primary.email })} href={`mailto:${primary.email}`} />}
+                        {phone && <Act icon={<TbPhone />} label={tr("Call {phone}", { phone: phone })} href={`tel:${phone.replace(/\s/g, '')}`} />}
+                        {phone && <Act icon={<TbBrandWhatsapp />} label={tr("WhatsApp")} onClick={() => window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`, '_blank', 'noopener')} />}
                     </div>
                     <div className="flex items-center gap-1 border-l border-gray-200 pl-2 dark:border-gray-600">
-                        {canEdit && <Act icon={<TbPencil />} label="Edit client" onClick={a.edit} />}
+                        {canEdit && <Act icon={<TbPencil />} label={tr("Edit client")} onClick={a.edit} />}
                         {can('customers', 'delete') && (
                             <Dropdown placement="bottom-end" renderTitle={<EllipsisButton />}>
-                                <Dropdown.Item eventKey="delete" onClick={a.remove}><span className="flex items-center text-red-500"><TbTrash className="mr-2 text-lg" />Delete client</span></Dropdown.Item>
+                                <Dropdown.Item eventKey="delete" onClick={a.remove}><span className="flex items-center text-red-500"><TbTrash className="mr-2 text-lg" />{tr("Delete client")}</span></Dropdown.Item>
                             </Dropdown>
                         )}
                     </div>
@@ -105,15 +106,15 @@ const ClientHeader = ({ c, profile, lookups, id, can, a }) => {
             {profile && (
                 <div className="border-t border-gray-100 pt-3 dark:border-gray-700">
                     <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                        <span className="font-semibold uppercase tracking-wide">Lead to client</span>
+                        <span className="font-semibold uppercase tracking-wide">{tr("Lead to client")}</span>
                         {lead ? (
                             <>
                                 {lead.link ? <Link to={lead.link} className="inline-flex items-center gap-1 text-primary hover:underline">{lead.name}<TbExternalLink /></Link> : <span>{lead.name}</span>}
-                                {lead.source && <span>Source <b className="text-gray-700 dark:text-gray-200">{lead.source}</b></span>}
-                                {lead.assigned && <span>Owner <b className="text-gray-700 dark:text-gray-200">{lead.assigned}</b></span>}
-                                {lead.daysToConvert !== null && <span>Converted after <b className="text-gray-700 dark:text-gray-200">{lead.daysToConvert} day{lead.daysToConvert === 1 ? '' : 's'}</b></span>}
+                                {lead.source && <span>{tr("Source")} <b className="text-gray-700 dark:text-gray-200">{lead.source}</b></span>}
+                                {lead.assigned && <span>{tr("Owner")} <b className="text-gray-700 dark:text-gray-200">{lead.assigned}</b></span>}
+                                {lead.daysToConvert !== null && <span>{tr("Converted after")} <b className="text-gray-700 dark:text-gray-200">{trn(lead.daysToConvert, "day")}</b></span>}
                             </>
-                        ) : <span>Added directly as a client</span>}
+                        ) : <span>{tr("Added directly as a client")}</span>}
                     </div>
                     <Journey journey={profile.journey} />
                 </div>
@@ -122,8 +123,8 @@ const ClientHeader = ({ c, profile, lookups, id, can, a }) => {
             {/* contacts and their actions */}
             <div className="border-t border-gray-100 pt-3 dark:border-gray-700">
                 <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Contacts ({c.contacts.length})</span>
-                    <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={a.manageContacts}>Manage contacts</button>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{tr("Contacts (")}{c.contacts.length})</span>
+                    <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={a.manageContacts}>{tr("Manage contacts")}</button>
                 </div>
                 {c.contacts.length ? (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-2">
@@ -133,22 +134,22 @@ const ClientHeader = ({ c, profile, lookups, id, can, a }) => {
                                 <div key={k.id} className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2 dark:border-gray-600">
                                     <Avatar size={34} shape="circle">{initials(k.name)}</Avatar>
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-1.5 text-sm font-semibold heading-text"><span className="truncate">{k.name}</span>{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">Primary</Tag>}{!k.active && <Tag>Inactive</Tag>}</div>
+                                        <div className="flex items-center gap-1.5 text-sm font-semibold heading-text"><span className="truncate">{k.name}</span>{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">{tr("Primary")}</Tag>}{!k.active && <Tag>{tr("Inactive")}</Tag>}</div>
                                         <div className="truncate text-xs text-gray-500">{[k.title, k.email, k.phone].filter(Boolean).join(' · ')}</div>
-                                        {pk?.lastLogin && <div className="flex items-center gap-1 text-[11px] text-gray-400"><TbLogin />Last login {dayjs(pk.lastLogin).format('DD MMM YYYY, HH:mm')}</div>}
+                                        {pk?.lastLogin && <div className="flex items-center gap-1 text-[11px] text-gray-400"><TbLogin />{tr("Last login")} {dayjs(pk.lastLogin).format('DD MMM YYYY, HH:mm')}</div>}
                                     </div>
                                     {k.active && canEdit && (
                                         <div className="flex shrink-0 items-center gap-1">
-                                            <Tooltip title="Open the client area as this contact"><Button size="xs" variant="solid" onClick={() => a.openAsClient(k)}>Client area</Button></Tooltip>
-                                            {k.email && <Tooltip title={pk?.portal ? 'Send a password reset link' : 'Invite to the client area'}><Button size="xs" icon={<TbLink />} onClick={() => a.invite(k)} /></Tooltip>}
-                                            {k.email && <Tooltip title="Set the client area password"><Button size="xs" icon={<TbKey />} onClick={() => a.setPassword(k)} /></Tooltip>}
+                                            <Tooltip title={tr("Open the client area as this contact")}><Button size="xs" variant="solid" onClick={() => a.openAsClient(k)}>{tr("Client area")}</Button></Tooltip>
+                                            {k.email && <Tooltip title={pk?.portal ? tr("Send a password reset link") : tr("Invite to the client area")}><Button size="xs" icon={<TbLink />} onClick={() => a.invite(k)} /></Tooltip>}
+                                            {k.email && <Tooltip title={tr("Set the client area password")}><Button size="xs" icon={<TbKey />} onClick={() => a.setPassword(k)} /></Tooltip>}
                                         </div>
                                     )}
                                 </div>
                             )
                         })}
                     </div>
-                ) : <p className="text-sm text-gray-400">No contacts yet.</p>}
+                ) : <p className="text-sm text-gray-400">{tr("No contacts yet.")}</p>}
             </div>
         </Card>
     )

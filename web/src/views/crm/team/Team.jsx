@@ -27,6 +27,7 @@ import MemberDrawer from './MemberDrawer'
 import MemberAccessDrawer from './MemberAccessDrawer'
 import RolesPanel from './RolesPanel'
 import { usePageTabs } from '@/store/pageTabsStore'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const notify = (type, msg) => toast.push(<Notification type={type}>{msg}</Notification>, { placement: 'top-center' })
@@ -34,7 +35,7 @@ const notify = (type, msg) => toast.push(<Notification type={type}>{msg}</Notifi
 const api = async (url, init) => {
     const res = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`)
+    if (!res.ok) throw new Error(json.error || tr("Request failed ({status})", { status: res.status }))
     return json
 }
 
@@ -63,7 +64,7 @@ const Team = () => {
     const [formError, setFormError] = useState('')
     const location = useLocation()
     const [tab, setTab] = useState(location.pathname.endsWith('/roles') ? 'roles' : 'members')
-    usePageTabs([{ key: 'members', label: 'Members' }, { key: 'roles', label: 'Roles & permissions' }], tab, setTab)
+    usePageTabs([{ key: 'members', label: tr("Members") }, { key: 'roles', label: tr("Roles & permissions") }], tab, setTab)
     const [access, setAccess] = useState({ open: false, id: null })
     const [confirm, setConfirm] = useState(null) // { member, kind: 'reset' }
     const [setPw, setSetPw] = useState(null) // { member, value, saving, error }
@@ -99,11 +100,11 @@ const Team = () => {
             const body = { ...v, hourlyRate: v.hourlyRate === '' ? 0 : Number(v.hourlyRate) }
             if (drawer.member) {
                 await api(`/api/crm/team/${drawer.member.id}`, { method: 'PATCH', body: JSON.stringify(body) })
-                notify('success', 'Member updated')
+                notify('success', tr("Member updated"))
             } else {
                 if (!body.password) delete body.password
                 const res = await api('/api/crm/team', { method: 'POST', body: JSON.stringify(body) })
-                notify('success', 'Member created')
+                notify('success', tr("Member created"))
                 if (res.tempPassword) setSecret({ name: res.member.name, email: res.member.email, password: res.tempPassword })
                 else if (res.inviteLink) setSecret({ name: res.member.name, email: res.member.email, link: res.inviteLink, invite: true, emailed: res.emailed })
             }
@@ -121,7 +122,7 @@ const Team = () => {
         setData((d) => ({ ...d, members: d.members.map((m) => (m.id === member.id ? { ...m, active: checked } : m)) }))
         try {
             await api(`/api/crm/team/${member.id}`, { method: 'PATCH', body: JSON.stringify({ active: checked }) })
-            notify('success', checked ? `${member.name} activated` : `${member.name} deactivated`)
+            notify('success', checked ? tr("{name} activated", { name: member.name }) : tr("{name} deactivated", { name: member.name }))
             load()
         } catch (e) {
             setData((d) => ({ ...d, members: d.members.map((m) => (m.id === member.id ? { ...m, active: member.active } : m)) }))
@@ -135,7 +136,7 @@ const Team = () => {
         const roleId = option?.value || null
         try {
             await api(`/api/crm/team/${member.id}`, { method: 'PATCH', body: JSON.stringify({ roleId, applyRolePermissions: true }) })
-            notify('success', roleId ? `${member.name} is now ${option.label}` : `${member.name} has no role`)
+            notify('success', roleId ? tr("{name} is now {label}", { name: member.name, label: option.label }) : tr("{name} has no role", { name: member.name }))
             load()
         } catch (e) {
             notify('danger', e.message)
@@ -147,7 +148,7 @@ const Team = () => {
         setSetPw((d) => ({ ...d, saving: true, error: '' }))
         try {
             await api(`/api/crm/team/${member.id}/reset-password`, { method: 'POST', body: JSON.stringify({ password: value }) })
-            notify('success', `Password set for ${member.name}`)
+            notify('success', tr("Password set for {name}", { name: member.name }))
             setSetPw(null)
             load()
         } catch (e) {
@@ -163,10 +164,10 @@ const Team = () => {
                 setSecret({ name: member.name, email: member.email, link: res.link, emailed: res.emailed })
             } else if (kind === 'signout') {
                 await api(`/api/crm/team/${member.id}/sign-out`, { method: 'POST' })
-                notify('success', `${member.name} was signed out on every device`)
+                notify('success', tr("{name} was signed out on every device", { name: member.name }))
             } else if (kind === 'twofactor') {
                 await api(`/api/crm/team/${member.id}/two-factor`, { method: 'DELETE' })
-                notify('success', `Two-step verification removed for ${member.name}`)
+                notify('success', tr("Two-step verification removed for {name}", { name: member.name }))
             } else if (kind === 'reset') {
                 const res = await api(`/api/crm/team/${member.id}/reset-password`, { method: 'POST' })
                 setSecret({ name: member.name, email: member.email, password: res.tempPassword })
@@ -182,9 +183,9 @@ const Team = () => {
     const copy = async (text) => {
         try {
             await navigator.clipboard.writeText(text)
-            notify('success', 'Copied')
+            notify('success', tr("Copied"))
         } catch {
-            notify('warning', 'Copy failed — select and copy manually')
+            notify('warning', tr("Copy failed — select and copy manually"))
         }
     }
 
@@ -196,10 +197,10 @@ const Team = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h3>{tab === 'roles' ? 'Roles & permissions' : 'Team'}</h3>
-                    <p className="text-sm text-gray-500">{tab === 'roles' ? 'Choose what each role can see and do. Members get the permissions of their role.' : 'Manage members, departments and sign-in access'}</p>
+                    <h3>{tab === 'roles' ? tr("Roles & permissions") : tr("Team")}</h3>
+                    <p className="text-sm text-gray-500">{tab === 'roles' ? tr("Choose what each role can see and do. Members get the permissions of their role.") : tr("Manage members, departments and sign-in access")}</p>
                 </div>
-                {tab === 'members' && <Button variant="solid" icon={<TbPlus />} onClick={openNew}>Add member</Button>}
+                {tab === 'members' && <Button variant="solid" icon={<TbPlus />} onClick={openNew}>{tr("Add member")}</Button>}
             </div>
 
             {tab === 'roles' ? (
@@ -208,22 +209,22 @@ const Team = () => {
                 <>
 
             <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-                <StatTile title="Team members" className="bg-sky-100" value={s.total ?? '–'} icon={<TbUsers />} />
-                <StatTile title="Active" className="bg-emerald-100" value={s.active ?? '–'} icon={<TbCircleCheck />} />
-                <StatTile title="Inactive" className="bg-amber-100" value={s.inactive ?? '–'} sub="Cannot sign in" icon={<TbCircleOff />} />
-                <StatTile title="Super Admins" className="bg-purple-100" value={s.admins ?? '–'} icon={<TbShieldLock />} />
-                <StatTile title="With login" className="bg-pink-100" value={s.withLogin ?? '–'} sub="Can sign in" icon={<TbLogin />} />
+                <StatTile title={tr("Team members")} className="bg-sky-100" value={s.total ?? '–'} icon={<TbUsers />} />
+                <StatTile title={tr("Active")} className="bg-emerald-100" value={s.active ?? '–'} icon={<TbCircleCheck />} />
+                <StatTile title={tr("Inactive")} className="bg-amber-100" value={s.inactive ?? '–'} sub={tr("Cannot sign in")} icon={<TbCircleOff />} />
+                <StatTile title={tr("Super Admins")} className="bg-purple-100" value={s.admins ?? '–'} icon={<TbShieldLock />} />
+                <StatTile title={tr("With login")} className="bg-pink-100" value={s.withLogin ?? '–'} sub={tr("Can sign in")} icon={<TbLogin />} />
             </div>
 
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <Segment size="sm" value={status} onChange={(v) => v && setStatus(v)}>
-                        <Segment.Item value="all">All</Segment.Item>
-                        <Segment.Item value="active">Active</Segment.Item>
-                        <Segment.Item value="inactive">Inactive</Segment.Item>
+                        <Segment.Item value="all">{tr("All")}</Segment.Item>
+                        <Segment.Item value="active">{tr("Active")}</Segment.Item>
+                        <Segment.Item value="inactive">{tr("Inactive")}</Segment.Item>
                     </Segment>
                     <div className="w-full sm:w-72">
-                        <Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search name, email or phone" value={search} onChange={(e) => setSearch(e.target.value)} />
+                        <Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search name, email or phone")} value={search} onChange={(e) => setSearch(e.target.value)} />
                     </div>
                 </div>
 
@@ -233,12 +234,12 @@ const Team = () => {
                     <Table compact overflow={false}>
                         <THead>
                             <Tr>
-                                <Th>Member</Th>
-                                <Th>Role</Th>
-                                <Th>Departments</Th>
-                                <Th>Status</Th>
-                                <Th>Last login</Th>
-                                <Th className="text-right">Actions</Th>
+                                <Th>{tr("Member")}</Th>
+                                <Th>{tr("Role")}</Th>
+                                <Th>{tr("Departments")}</Th>
+                                <Th>{tr("Status")}</Th>
+                                <Th>{tr("Last login")}</Th>
+                                <Th className="text-right">{tr("Actions")}</Th>
                             </Tr>
                         </THead>
                         <TBody>
@@ -255,9 +256,9 @@ const Team = () => {
                                     </Td>
                                     <Td>
                                         <div className="flex flex-wrap items-center gap-1.5">
-                                            {m.admin ? <Tag className="bg-purple-100 text-purple-700">Super Admin</Tag> : (
+                                            {m.admin ? <Tag className="bg-purple-100 text-purple-700">{tr("Super Admin")}</Tag> : (
                                                 <div className="w-36">
-                                                    <Select isClearable size="sm" placeholder="No role" options={roleOptions} value={roleOptions.find((o) => o.value === m.role?.id) || null} onChange={(o) => changeRole(m, o)} menuPortalTarget={document.body} menuPosition="fixed" menuPlacement="auto" classNames={{ menu: () => 'select-menu !min-w-[210px]' }} styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} />
+                                                    <Select isClearable size="sm" placeholder={tr("No role")} options={roleOptions} value={roleOptions.find((o) => o.value === m.role?.id) || null} onChange={(o) => changeRole(m, o)} menuPortalTarget={document.body} menuPosition="fixed" menuPlacement="auto" classNames={{ menu: () => 'select-menu !min-w-[210px]' }} styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} />
                                                 </div>
                                             )}
                                         </div>
@@ -270,22 +271,22 @@ const Team = () => {
                                     <Td>
                                         <div className="flex items-center gap-2.5">
                                             <Switcher checked={m.active} onChange={(checked) => toggleActive(m, checked)} />
-                                            <span className={`hidden 2xl:inline ${m.active ? 'text-emerald-600' : 'text-gray-400'}`}>{m.active ? 'Active' : 'Inactive'}</span>
-                                            {!m.hasLogin && <Tooltip title="No login account yet"><Tag className="bg-amber-100 text-amber-700">No login</Tag></Tooltip>}
+                                            <span className={`hidden 2xl:inline ${m.active ? 'text-emerald-600' : 'text-gray-400'}`}>{m.active ? tr("Active") : tr("Inactive")}</span>
+                                            {!m.hasLogin && <Tooltip title={tr("No login account yet")}><Tag className="bg-amber-100 text-amber-700">{tr("No login")}</Tag></Tooltip>}
                                         </div>
                                     </Td>
-                                    <Td className="whitespace-nowrap text-gray-500">{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : 'Never'}</Td>
+                                    <Td className="whitespace-nowrap text-gray-500">{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : tr("Never")}</Td>
                                     <Td>
                                         <div className="flex items-center justify-end gap-0.5">
-                                            <Tooltip title="Edit"><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
-                                            <Tooltip title="Permissions"><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
-                                            {m.hasLogin && <Tooltip title="Set a password"><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
+                                            <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
+                                            <Tooltip title={tr("Permissions")}><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
+                                            {m.hasLogin && <Tooltip title={tr("Set a password")}><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
                                             {m.hasLogin && (
                                                 <Dropdown placement="bottom-end" renderTitle={<EllipsisButton />}>
-                                                    <Dropdown.Item eventKey="link" onClick={() => setConfirm({ member: m, kind: 'link' })}><TbLink className="mr-2 text-lg" />Reset link</Dropdown.Item>
-                                                    <Dropdown.Item eventKey="reset" onClick={() => setConfirm({ member: m, kind: 'reset' })}><TbKey className="mr-2 text-lg" />One-time password</Dropdown.Item>
-                                                    <Dropdown.Item eventKey="signout" onClick={() => setConfirm({ member: m, kind: 'signout' })}><TbLogout className="mr-2 text-lg" />Sign out everywhere</Dropdown.Item>
-                                                    {m.twoFactor && canAdmin && <Dropdown.Item eventKey="twofactor" onClick={() => setConfirm({ member: m, kind: 'twofactor' })}><TbDeviceMobileOff className="mr-2 text-lg" />Reset two-step verification</Dropdown.Item>}
+                                                    <Dropdown.Item eventKey="link" onClick={() => setConfirm({ member: m, kind: 'link' })}><TbLink className="mr-2 text-lg" />{tr("Reset link")}</Dropdown.Item>
+                                                    <Dropdown.Item eventKey="reset" onClick={() => setConfirm({ member: m, kind: 'reset' })}><TbKey className="mr-2 text-lg" />{tr("One-time password")}</Dropdown.Item>
+                                                    <Dropdown.Item eventKey="signout" onClick={() => setConfirm({ member: m, kind: 'signout' })}><TbLogout className="mr-2 text-lg" />{tr("Sign out everywhere")}</Dropdown.Item>
+                                                    {m.twoFactor && canAdmin && <Dropdown.Item eventKey="twofactor" onClick={() => setConfirm({ member: m, kind: 'twofactor' })}><TbDeviceMobileOff className="mr-2 text-lg" />{tr("Reset two-step verification")}</Dropdown.Item>}
                                                 </Dropdown>
                                             )}
                                         </div>
@@ -294,8 +295,8 @@ const Team = () => {
                             ))}
                         </TBody>
                     </Table>
-                    {loading && !rows.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
-                    {empty && <div className="py-10 text-center text-gray-400">No team members found</div>}
+                    {loading && !rows.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                    {empty && <div className="py-10 text-center text-gray-400">{tr("No team members found")}</div>}
                 </div>
             </AdaptiveCard>
 
@@ -308,8 +309,8 @@ const Team = () => {
             <ConfirmDialog
                 isOpen={!!confirm}
                 type="warning"
-                title={confirm?.kind === 'link' ? 'Create a reset link?' : confirm?.kind === 'signout' ? 'Sign out everywhere?' : confirm?.kind === 'twofactor' ? 'Reset two-step verification?' : 'Generate a one-time password?'}
-                confirmText={confirm?.kind === 'link' ? 'Create link' : confirm?.kind === 'signout' ? 'Sign out' : confirm?.kind === 'twofactor' ? 'Reset' : 'Generate password'}
+                title={confirm?.kind === 'link' ? tr("Create a reset link?") : confirm?.kind === 'signout' ? tr("Sign out everywhere?") : confirm?.kind === 'twofactor' ? tr("Reset two-step verification?") : tr("Generate a one-time password?")}
+                confirmText={confirm?.kind === 'link' ? tr("Create link") : confirm?.kind === 'signout' ? tr("Sign out") : confirm?.kind === 'twofactor' ? tr("Reset") : tr("Generate password")}
                 onClose={() => setConfirm(null)}
                 onRequestClose={() => setConfirm(null)}
                 onCancel={() => setConfirm(null)}
@@ -317,44 +318,44 @@ const Team = () => {
             >
                 <p>
                     {confirm?.kind === 'link'
-                        ? `A one-time link (valid for 1 hour) will be created so ${confirm?.member.name} can choose a new password. Their current password keeps working until they use it. It is emailed when mail is configured, and shown here either way.`
+                        ? tr("A one-time link (valid for 1 hour) will be created so {name} can choose a new password. Their current password keeps working until they use it. It is emailed when mail is configured, and shown here either way.", { name: confirm?.member.name })
                         : confirm?.kind === 'twofactor'
-                          ? `${confirm?.member.name} will no longer be asked for a code when signing in (use this if they lost their phone). They can set it up again from their profile.`
+                          ? tr("{name} will no longer be asked for a code when signing in (use this if they lost their phone). They can set it up again from their profile.", { name: confirm?.member.name })
                           : confirm?.kind === 'signout'
-                          ? `${confirm?.member.name} will be signed out on every device and must sign in again.`
-                          : `A new one-time password will be generated for ${confirm?.member.name}. Their current password stops working immediately.`}
+                          ? tr("{name} will be signed out on every device and must sign in again.", { name: confirm?.member.name })
+                          : tr("A new one-time password will be generated for {name}. Their current password stops working immediately.", { name: confirm?.member.name })}
                 </p>
             </ConfirmDialog>
 
             <Dialog isOpen={!!setPw} onClose={() => setSetPw(null)} onRequestClose={() => setSetPw(null)}>
-                <h5 className="mb-2">Set a password</h5>
-                <p className="mb-4 text-sm text-gray-500">Type the new password for {setPw?.member.name} ({setPw?.member.email}). It replaces the current one at once and signs them out on every device. 8 characters or more.</p>
-                <Input autoFocus autoComplete="off" placeholder="New password" value={setPw?.value || ''} onChange={(e) => setSetPw((d) => ({ ...d, value: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter' && (setPw?.value || '').length >= 8 && !setPw?.saving) savePassword() }} />
+                <h5 className="mb-2">{tr("Set a password")}</h5>
+                <p className="mb-4 text-sm text-gray-500">{tr("Type the new password for")} {setPw?.member.name} ({setPw?.member.email}{tr("). It replaces the current one at once and signs them out on every device. 8 characters or more.")}</p>
+                <Input autoFocus autoComplete="off" placeholder={tr("New password")} value={setPw?.value || ''} onChange={(e) => setSetPw((d) => ({ ...d, value: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter' && (setPw?.value || '').length >= 8 && !setPw?.saving) savePassword() }} />
                 {setPw?.error && <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{setPw.error}</div>}
                 <div className="mt-6 flex justify-end gap-2">
-                    <Button onClick={() => setSetPw(null)}>Cancel</Button>
-                    <Button variant="solid" loading={setPw?.saving} disabled={(setPw?.value || '').length < 8} onClick={savePassword}>Set password</Button>
+                    <Button onClick={() => setSetPw(null)}>{tr("Cancel")}</Button>
+                    <Button variant="solid" loading={setPw?.saving} disabled={(setPw?.value || '').length < 8} onClick={savePassword}>{tr("Set password")}</Button>
                 </div>
             </Dialog>
 
             <Dialog isOpen={!!secret} onClose={() => setSecret(null)} onRequestClose={() => setSecret(null)}>
-                <h5 className="mb-2">{secret?.link ? (secret.invite ? 'Invite link' : 'Reset link') : 'One-time password'}</h5>
+                <h5 className="mb-2">{secret?.link ? (secret.invite ? tr("Invite link") : tr("Reset link")) : tr("One-time password")}</h5>
                 <p className="mb-4 text-sm text-gray-500">
                     {secret?.link
-                        ? `Send this link to ${secret?.name}${secret?.emailed ? ' (it was also emailed)' : ''}. It works once and expires (${secret?.invite ? '7 days' : '1 hour'}).`
-                        : `Share these sign-in details with ${secret?.name}. The password is shown only once — it cannot be retrieved later.`}
+                        ? tr('Send this link to {name}{emailed}. It works once and expires ({when}).', { name: secret?.name, emailed: secret?.emailed ? tr(' (it was also emailed)') : '', when: secret?.invite ? tr('7 days') : tr('1 hour') })
+                        : tr("Share these sign-in details with {name}. The password is shown only once — it cannot be retrieved later.", { name: secret?.name })}
                 </p>
                 <div className="flex flex-col gap-3">
-                    <div><div className="mb-1 text-xs text-gray-500">Email</div><div className="font-semibold">{secret?.email}</div></div>
+                    <div><div className="mb-1 text-xs text-gray-500">{tr("Email")}</div><div className="font-semibold">{secret?.email}</div></div>
                     <div>
-                        <div className="mb-1 text-xs text-gray-500">{secret?.link ? 'Link' : 'Password'}</div>
+                        <div className="mb-1 text-xs text-gray-500">{secret?.link ? tr("Link") : tr("Password")}</div>
                         <div className="flex items-center gap-2">
                             <code className="flex-1 break-all rounded-lg bg-gray-100 px-3 py-2 font-mono text-xs dark:bg-gray-700">{secret?.link || secret?.password}</code>
-                            <Button size="sm" icon={<TbCopy />} onClick={() => copy(secret.link || secret.password)}>Copy</Button>
+                            <Button size="sm" icon={<TbCopy />} onClick={() => copy(secret.link || secret.password)}>{tr("Copy")}</Button>
                         </div>
                     </div>
                 </div>
-                <div className="mt-6 text-right"><Button variant="solid" onClick={() => setSecret(null)}>Done</Button></div>
+                <div className="mt-6 text-right"><Button variant="solid" onClick={() => setSecret(null)}>{tr("Done")}</Button></div>
             </Dialog>
         </Container>
     )

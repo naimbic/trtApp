@@ -5,6 +5,7 @@ import { useSessionUser } from '@/store/authStore'
 import Loading from '@/components/shared/Loading'
 import { REDIRECT_URL_KEY } from '@/constants/app.constant'
 import { useNavigate } from 'react-router'
+import { tr } from '@/utils/t'
 
 const IsolatedNavigator = ({ ref }) => {
     const navigate = useNavigate()
@@ -93,7 +94,7 @@ function AuthProvider({ children }) {
                 const st = await fetch(`/api/crm/auth/status?email=${encodeURIComponent(email)}`).then((r) => r.json()).catch(() => ({}))
                 return {
                     status: 'failed',
-                    message: st.locked ? `Too many failed attempts. Try again in ${st.minutes} minute${st.minutes === 1 ? '' : 's'}.` : otp ? 'That code is not right or has expired' : 'Invalid email or password, or the account is inactive',
+                    message: st.locked ? `Too many failed attempts. Try again in ${st.minutes} minute${st.minutes === 1 ? '' : 's'}.` : otp ? tr("That code is not right or has expired") : tr("Invalid email or password, or the account is inactive"),
                 }
             }
             setUser(u)
@@ -105,7 +106,7 @@ function AuthProvider({ children }) {
         }
     }
 
-    const signUp = async () => ({ status: 'failed', message: 'Sign up is disabled' })
+    const signUp = async () => ({ status: 'failed', message: tr("Sign up is disabled") })
 
     const signOut = async () => {
         try {

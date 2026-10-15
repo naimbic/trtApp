@@ -18,6 +18,7 @@ import Tooltip from '@/components/ui/Tooltip'
 import Pagination from '@/components/ui/Pagination'
 import { api, notify, qs, useCan } from '../kit/api'
 import { useClientLookups, makeMoney } from './shared'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const Stat = ({ label, value, sub }) => (
@@ -75,33 +76,33 @@ const ClientsList = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Clients</h3><p className="text-sm text-gray-500">Companies, contacts and what they owe</p></div>
-                {can('customers', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/clients/new')}>New client</Button>}
+                <div><h3>{tr("Clients")}</h3><p className="text-sm text-gray-500">{tr("Companies, contacts and what they owe")}</p></div>
+                {can('customers', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/clients/new')}>{tr("New client")}</Button>}
             </div>
             <TileGrid>
-                <StatTile title="Clients" className="bg-sky-100" value={s.total} icon={<TbBuilding />} />
-                <StatTile title="Active" className="bg-emerald-100" value={s.active} icon={<TbCircleCheck />} />
-                <StatTile title="Inactive" className="bg-amber-100" value={s.inactive} icon={<TbCircleOff />} />
-                <StatTile title="Contacts" className="bg-purple-100" value={s.contacts} sub={`${s.activeContacts ?? 0} active`} icon={<TbUsers />} />
+                <StatTile title={tr("Clients")} className="bg-sky-100" value={s.total} icon={<TbBuilding />} />
+                <StatTile title={tr("Active")} className="bg-emerald-100" value={s.active} icon={<TbCircleCheck />} />
+                <StatTile title={tr("Inactive")} className="bg-amber-100" value={s.inactive} icon={<TbCircleOff />} />
+                <StatTile title={tr("Contacts")} className="bg-purple-100" value={s.contacts} sub={tr("{v1} active", { v1: s.activeContacts ?? 0 })} icon={<TbUsers />} />
             </TileGrid>
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <Segment size="sm" value={status} onChange={(v) => { if (v) { setStatus(v); setPage(1) } }}>
-                        <Segment.Item value="all">All</Segment.Item><Segment.Item value="active">Active</Segment.Item><Segment.Item value="inactive">Inactive</Segment.Item>
+                        <Segment.Item value="all">{tr("All")}</Segment.Item><Segment.Item value="active">{tr("Active")}</Segment.Item><Segment.Item value="inactive">{tr("Inactive")}</Segment.Item>
                     </Segment>
-                    <div className="w-48"><Select size="sm" isClearable placeholder="All groups" options={groupOptions} value={groupOptions.find((o) => o.value === groupId) || null} onChange={(o) => { setGroupId(o ? o.value : null); setPage(1) }} /></div>
-                    <div className="ml-auto w-full sm:w-72"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search company, contact, phone, VAT…" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                    <div className="w-48"><Select size="sm" isClearable placeholder={tr("All groups")} options={groupOptions} value={groupOptions.find((o) => o.value === groupId) || null} onChange={(o) => { setGroupId(o ? o.value : null); setPage(1) }} /></div>
+                    <div className="ml-auto w-full sm:w-72"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search company, contact, phone, VAT…")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 </div>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
                         <THead>
-                            <Tr>{th('company', 'Company')}<Th>Primary contact</Th>{th('phoneNumber', 'Phone')}<Th>Groups</Th><Th className="text-right">Outstanding</Th>{th('active', 'Active')}{th('createdAt', 'Created')}<Th className="text-right">Actions</Th></Tr>
+                            <Tr>{th('company', tr("Company"))}<Th>{tr("Primary contact")}</Th>{th('phoneNumber', tr("Phone"))}<Th>{tr("Groups")}</Th><Th className="text-right">{tr("Outstanding")}</Th>{th('active', tr("Active"))}{th('createdAt', tr("Created"))}<Th className="text-right">{tr("Actions")}</Th></Tr>
                         </THead>
                         <TBody>
                             {data.list.map((c) => (
                                 <Tr key={c.id} className="cursor-pointer" onClick={() => navigate(`/crm/clients/${c.id}`)}>
-                                    <Td><div className="flex items-center gap-3">{c.logoUrl ? <img src={c.logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" loading="lazy" /> : <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 dark:bg-gray-700">{(c.company || '?').slice(0, 2).toUpperCase()}</span>}<div className="min-w-0"><div className="font-semibold heading-text">{c.company}</div><div className="text-xs text-gray-500">{[c.city, c.vat && `VAT ${c.vat}`].filter(Boolean).join(' · ')}</div></div></div></Td>
+                                    <Td><div className="flex items-center gap-3">{c.logoUrl ? <img src={c.logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" loading="lazy" /> : <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 dark:bg-gray-700">{(c.company || '?').slice(0, 2).toUpperCase()}</span>}<div className="min-w-0"><div className="font-semibold heading-text">{c.company}</div><div className="text-xs text-gray-500">{[c.city, c.vat && tr("VAT {vat}", { vat: c.vat })].filter(Boolean).join(' · ')}</div></div></div></Td>
                                     <Td>{c.primaryContact ? <><div>{c.primaryContact.name}</div><div className="text-xs text-gray-500">{c.primaryContact.email}</div></> : <span className="text-gray-400">—</span>}</Td>
                                     <Td className="whitespace-nowrap">{c.phone || c.primaryContact?.phone || <span className="text-gray-400">—</span>}</Td>
                                     <Td><div className="flex flex-wrap gap-1">{c.groups.length ? c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>) : <span className="text-gray-400">—</span>}</div></Td>
@@ -109,21 +110,21 @@ const ClientsList = () => {
                                         {Object.entries(c.money).filter(([, m]) => m.outstanding > 0).map(([cid, m]) => <div key={cid} className={m.overdue > 0 ? 'text-red-500' : ''}>{money(m.outstanding, cid, { decimals: 0 })}</div>)}
                                         {!Object.values(c.money).some((m) => m.outstanding > 0) && <span className="text-gray-400">—</span>}
                                     </Td>
-                                    <Td onClick={(e) => e.stopPropagation()}>{can('customers', 'edit') ? <Switcher checked={c.active} onChange={(v) => toggle(c, v)} /> : <Tag>{c.active ? 'Yes' : 'No'}</Tag>}</Td>
+                                    <Td onClick={(e) => e.stopPropagation()}>{can('customers', 'edit') ? <Switcher checked={c.active} onChange={(v) => toggle(c, v)} /> : <Tag>{c.active ? tr("Yes") : tr("No")}</Tag>}</Td>
                                     <Td className="whitespace-nowrap text-gray-500">{dayjs(c.createdAt).format('YYYY-MM-DD')}</Td>
                                     <Td className="text-right" onClick={(e) => e.stopPropagation()}>
-                                        <Tooltip title="Open"><Button size="sm" variant="plain" icon={<TbEye />} onClick={() => navigate(`/crm/clients/${c.id}`)} /></Tooltip>
-                                        {can('customers', 'edit') && <Tooltip title="Edit"><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => navigate(`/crm/clients/${c.id}/edit`)} /></Tooltip>}
+                                        <Tooltip title={tr("Open")}><Button size="sm" variant="plain" icon={<TbEye />} onClick={() => navigate(`/crm/clients/${c.id}`)} /></Tooltip>
+                                        {can('customers', 'edit') && <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => navigate(`/crm/clients/${c.id}/edit`)} /></Tooltip>}
                                     </Td>
                                 </Tr>
                             ))}
                         </TBody>
                     </Table>
-                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
-                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">No clients found</div>}
+                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("No clients found")}</div>}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-sm text-gray-500">{data.total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.total)} of ${data.total}` : ''}</span>
+                    <span className="text-sm text-gray-500">{data.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>

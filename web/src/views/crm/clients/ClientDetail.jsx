@@ -24,6 +24,7 @@ import ClientHeader from './ClientHeader'
 import ClientOverview from './ClientOverview'
 import NewTicketDialog from '../tickets/NewTicketDialog'
 import ProjectDialog from '../projects/ProjectDialog'
+import { tr } from '@/utils/t'
 
 const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
@@ -47,7 +48,7 @@ const RelatedTab = ({ cfg, onChanged }) => {
                 columns={cfg.columns}
                 hideFilters={cfg.hideFilters || ['clientId']}
                 onRowClick={(r) => (cfg.openPath ? navigate(cfg.openPath(r)) : setDrawer({ open: true, id: r.id }))}
-                toolbar={canCreate && <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => (cfg.newPath ? navigate(cfg.newPath) : setDrawer({ open: true, id: null }))}>New {resource.label.toLowerCase()}</Button>}
+                toolbar={canCreate && <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => (cfg.newPath ? navigate(cfg.newPath) : setDrawer({ open: true, id: null }))}>{tr("New")} {resource.label.toLowerCase()}</Button>}
             />
             <RecordDrawer resource={resource} open={drawer.open} id={drawer.id} initial={cfg.initial} hide={cfg.hide} canEdit={drawer.id ? canEdit : canCreate} canDelete={can(resource.feature, 'delete')} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onSaved={done} onDeleted={done} />
         </>
@@ -74,14 +75,14 @@ const PaymentsTab = ({ id, money }) => {
     return (
         <div>
             <div className="mb-4 flex items-center gap-2">
-                <div className="w-52 shrink-0"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search payments" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
-                <div className="min-w-[7rem] max-w-[11rem] flex-1"><Select size="sm" isClearable placeholder="Payment mode" options={d.modes || []} value={mode} onChange={(o) => { setMode(o); setPage(1) }} menuPortalTarget={document.body} menuPosition="fixed" styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} /></div>
-                <div className="w-36 shrink-0"><Input size="sm" type="date" title="From" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }} /></div>
-                <div className="w-36 shrink-0"><Input size="sm" type="date" title="To" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }} /></div>
+                <div className="w-52 shrink-0"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search payments")} value={query} onChange={(e) => setQuery(e.target.value)} /></div>
+                <div className="min-w-[7rem] max-w-[11rem] flex-1"><Select size="sm" isClearable placeholder={tr("Payment mode")} options={d.modes || []} value={mode} onChange={(o) => { setMode(o); setPage(1) }} menuPortalTarget={document.body} menuPosition="fixed" styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} /></div>
+                <div className="w-36 shrink-0"><Input size="sm" type="date" title={tr("From")} value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }} /></div>
+                <div className="w-36 shrink-0"><Input size="sm" type="date" title={tr("To")} value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }} /></div>
             </div>
             <div className="overflow-x-auto">
                 <Table hoverable>
-                    <THead><Tr><Th>Date</Th><Th>Invoice</Th><Th>Payment mode</Th><Th>Transaction</Th><Th className="text-right">Amount</Th></Tr></THead>
+                    <THead><Tr><Th>{tr("Date")}</Th><Th>{tr("Invoice")}</Th><Th>{tr("Payment mode")}</Th><Th>{tr("Transaction")}</Th><Th className="text-right">{tr("Amount")}</Th></Tr></THead>
                     <TBody>
                         {d.list.map((p) => (
                             <Tr key={p.id} className="cursor-pointer" onClick={() => navigate(`/crm/invoices/${p.invoiceId}`)}>
@@ -90,11 +91,11 @@ const PaymentsTab = ({ id, money }) => {
                         ))}
                     </TBody>
                 </Table>
-                {loading && !d.list.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
-                {!loading && !d.list.length && <div className="py-10 text-center text-gray-400">No payments found</div>}
+                {loading && !d.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                {!loading && !d.list.length && <div className="py-10 text-center text-gray-400">{tr("No payments found")}</div>}
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <span className="text-sm text-gray-500">{d.total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, d.total)} of ${d.total}` : ''}</span>
+                <span className="text-sm text-gray-500">{d.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, d.total), total: d.total }) : ''}</span>
                 <div className="flex items-center gap-3">
                     <Pagination total={d.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                     <div className="w-32"><Select size="sm" isSearchable={false} options={sizes} value={sizes.find((s) => s.value === pageSize)} onChange={(o) => { setPageSize(o.value); setPage(1) }} menuPortalTarget={document.body} menuPosition="fixed" styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} /></div>
@@ -132,18 +133,18 @@ const ClientDetail = () => {
         const rel = (key, label, count, feature, rel) => ({ key, label, count, feature, rel })
         const cols = (r) => getResource(r).columns.filter((x) => x.key !== 'clientId')
         return [
-            { key: 'overview', label: 'Overview' },
-            rel('invoices', 'Invoices', c.counts.invoices, 'invoices', { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: cols('invoices') }),
-            { key: 'payments', label: 'Payments', feature: 'payments' },
-            rel('contracts', 'Contracts', c.counts.contracts, 'contracts', { resource: 'contracts', where, openPath: (r) => `/crm/contracts/${r.id}`, newPath: `/crm/contracts/new?clientId=${id}`, columns: cols('contracts') }),
-            rel('estimates', 'Estimates', c.counts.estimates, 'estimates', { resource: 'estimates', where, openPath: (r) => `/crm/estimates/${r.id}`, newPath: `/crm/estimates/new?clientId=${id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('estimates') }),
-            rel('proposals', 'Proposals', c.counts.proposals, 'proposals', { resource: 'proposals', where: { relType: 'customer', relId: id }, openPath: (r) => `/crm/proposals/${r.id}`, newPath: `/crm/proposals/new?clientId=${id}`, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'] }),
-            rel('projects', 'Projects', c.counts.projects, 'projects', { resource: 'projects', where, openPath: (r) => `/crm/projects/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('projects') }),
-            rel('tickets', 'Tickets', c.counts.tickets, 'tickets', { resource: 'tickets', where, openPath: (r) => `/crm/tickets/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('tickets') }),
-            { key: 'activity', label: 'Activity' },
-            rel('notes', 'Notes', c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
-            { key: 'files', label: 'Files' },
-            rel('contacts', 'Contacts', c.counts.contacts, 'customers', { resource: 'contacts', where, initial: { clientId: id }, hide: ['clientId'], columns: cols('contacts') }),
+            { key: 'overview', label: tr("Overview") },
+            rel('invoices', tr("Invoices"), c.counts.invoices, 'invoices', { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: cols('invoices') }),
+            { key: 'payments', label: tr("Payments"), feature: 'payments' },
+            rel('contracts', tr("Contracts"), c.counts.contracts, 'contracts', { resource: 'contracts', where, openPath: (r) => `/crm/contracts/${r.id}`, newPath: `/crm/contracts/new?clientId=${id}`, columns: cols('contracts') }),
+            rel('estimates', tr("Estimates"), c.counts.estimates, 'estimates', { resource: 'estimates', where, openPath: (r) => `/crm/estimates/${r.id}`, newPath: `/crm/estimates/new?clientId=${id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('estimates') }),
+            rel('proposals', tr("Proposals"), c.counts.proposals, 'proposals', { resource: 'proposals', where: { relType: 'customer', relId: id }, openPath: (r) => `/crm/proposals/${r.id}`, newPath: `/crm/proposals/new?clientId=${id}`, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'] }),
+            rel('projects', tr("Projects"), c.counts.projects, 'projects', { resource: 'projects', where, openPath: (r) => `/crm/projects/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('projects') }),
+            rel('tickets', tr("Tickets"), c.counts.tickets, 'tickets', { resource: 'tickets', where, openPath: (r) => `/crm/tickets/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('tickets') }),
+            { key: 'activity', label: tr("Activity") },
+            rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
+            { key: 'files', label: tr("Files") },
+            rel('contacts', tr("Contacts"), c.counts.contacts, 'customers', { resource: 'contacts', where, initial: { clientId: id }, hide: ['clientId'], columns: cols('contacts') }),
         ].filter((t) => !t.feature || can(t.feature, 'view'))
     }, [c, id, can])
 
@@ -162,15 +163,15 @@ const ClientDetail = () => {
         try {
             await api(`/api/crm/customers/${id}/portal-password`, { method: 'POST', body: { contactId: pwFor.id, password: pw } })
             try { await navigator.clipboard.writeText(pw) } catch { /* clipboard blocked */ }
-            notify('success', `Password set for ${pwFor.name}. It was copied: share it with them (they can change it in their profile).`)
+            notify('success', tr("Password set for {name}. It was copied: share it with them (they can change it in their profile).", { name: pwFor.name }))
             setPwFor(null); setPw(''); loadProfile()
         } catch (e) { notify('danger', e.message) } finally { setPwBusy(false) }
     }
     const invite = async (k) => {
         try {
             const r = await api(`/api/crm/customers/${id}/portal-invite`, { method: 'POST', body: { contactId: k.id } })
-            if (r.sent) notify('success', `Email sent to ${r.email}`)
-            else { try { await navigator.clipboard.writeText(r.link) } catch { /* clipboard blocked */ } notify('warning', `The email could not be sent (${r.error || 'mail not set up'}). The link was copied: send it yourself.`) }
+            if (r.sent) notify('success', tr("Email sent to {email}", { email: r.email }))
+            else { try { await navigator.clipboard.writeText(r.link) } catch { /* clipboard blocked */ } notify('warning', tr("The email could not be sent ({v1}). The link was copied: send it yourself.", { v1: r.error || 'mail not set up' })) }
             loadProfile()
         } catch (e) { notify('danger', e.message) }
     }
@@ -178,7 +179,7 @@ const ClientDetail = () => {
     const remove = async () => {
         try {
             await api(`/api/crm/customers/${id}`, { method: 'DELETE' })
-            notify('success', 'Client deleted')
+            notify('success', tr("Client deleted"))
             navigate('/crm/clients')
         } catch (e) {
             notify('danger', e.message)
@@ -186,8 +187,8 @@ const ClientDetail = () => {
         }
     }
 
-    if (error) return <Container><Card><div className="text-red-500">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/clients')}>Back to clients</Button></Card></Container>
-    if (!c) return <Container><div className="py-20 text-center text-gray-400">Loading…</div></Container>
+    if (error) return <Container><Card><div className="text-red-500">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/clients')}>{tr("Back to clients")}</Button></Card></Container>
+    if (!c) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
 
     const actions = {
         edit: () => navigate(`/crm/clients/${id}/edit`),
@@ -217,7 +218,7 @@ const ClientDetail = () => {
                         </TabList>
                         <div className="p-4">
                             {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}
-                            {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">Loading…</p>)}
+                            {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
                             {tab === 'payments' && <PaymentsTab id={id} money={money} />}
                             {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
                             {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}
@@ -229,15 +230,15 @@ const ClientDetail = () => {
             <FollowUpDialog key={followUp || 'none'} open={!!followUp} initialType={followUp || 'note'} clientId={id} onClose={() => setFollowUp(null)} onSaved={() => { loadProfile(); load() }} />
             <NewTicketDialog open={ticketDialog} onClose={() => setTicketDialog(false)} lookups={ticketLk} presets={{ clientId: id }} onCreated={(tid) => navigate(`/crm/tickets/${tid}`)} />
             <ProjectDialog open={projectDialog} onClose={() => setProjectDialog(false)} presets={{ clientId: id }} onCreated={(pid) => navigate(`/crm/projects/${pid}`)} />
-            <ConfirmDialog isOpen={confirmDel} type="danger" title="Delete this client?" confirmText="Delete" onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
-                <p>{c.company} and its contacts will be removed. Clients that still have invoices, estimates, contracts, projects or tickets cannot be deleted — deactivate them instead.</p>
+            <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete this client?")} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
+                <p>{c.company} {tr("and its contacts will be removed. Clients that still have invoices, estimates, contracts, projects or tickets cannot be deleted — deactivate them instead.")}</p>
             </ConfirmDialog>
                     <Dialog isOpen={!!pwFor} width={420} onClose={() => setPwFor(null)} onRequestClose={() => setPwFor(null)}>
-                <h5 className="mb-1">Set client area password</h5>
-                <p className="mb-4 text-sm text-gray-500">{pwFor?.name} · {pwFor?.email}. They sign in at /portal with their email and this password. Any session they have is closed.</p>
-                <PasswordInput autoComplete="new-password" placeholder="At least 8 characters" value={pw} onChange={(e) => setPw(e.target.value)} />
-                <div className="mt-2"><button type="button" onClick={makePw} className="text-sm font-semibold text-primary">Generate a strong password</button></div>
-                <div className="mt-5 flex justify-end gap-2"><Button onClick={() => setPwFor(null)}>Cancel</Button><Button variant="solid" loading={pwBusy} disabled={pw.length < 8} onClick={savePw}>Save password</Button></div>
+                <h5 className="mb-1">{tr("Set client area password")}</h5>
+                <p className="mb-4 text-sm text-gray-500">{pwFor?.name} · {pwFor?.email}{tr(". They sign in at /portal with their email and this password. Any session they have is closed.")}</p>
+                <PasswordInput autoComplete="new-password" placeholder={tr("At least 8 characters")} value={pw} onChange={(e) => setPw(e.target.value)} />
+                <div className="mt-2"><button type="button" onClick={makePw} className="text-sm font-semibold text-primary">{tr("Generate a strong password")}</button></div>
+                <div className="mt-5 flex justify-end gap-2"><Button onClick={() => setPwFor(null)}>{tr("Cancel")}</Button><Button variant="solid" loading={pwBusy} disabled={pw.length < 8} onClick={savePw}>{tr("Save password")}</Button></div>
             </Dialog>
 </Container>
     )

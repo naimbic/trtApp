@@ -7,13 +7,14 @@ import Tag from '@/components/ui/Tag'
 import Tooltip from '@/components/ui/Tooltip'
 import Button from '@/components/ui/Button'
 import { CAPABILITIES, EXTRA_LABELS, FEATURE_HINTS, PERMISSION_GROUPS, cleanPermissions } from '@/lib/crm/permissionCatalog'
+import { tr } from '@/utils/t'
 
 const capLabel = (c) => CAPABILITIES.find(([k]) => k === c)?.[1] || EXTRA_LABELS[c] || c
 const STD_CAPS = ['view', 'view_own', 'create', 'edit', 'delete']
 const isStd = (c) => STD_CAPS.includes(c)
 // features with at most one standard capability (Financial figures, Reports, My profile…) are listed as plain switches, not in the grid
 const listOnly = (f) => f.caps.filter(isStd).length < 2 && !Object.keys(f.auto || {}).some(isStd)
-const labelFor = (f, c) => (f.key === 'reports' && c === 'view' ? 'Open Reports' : capLabel(c))
+const labelFor = (f, c) => (f.key === 'reports' && c === 'view' ? tr("Open Reports") : capLabel(c))
 const GRID = 'grid grid-cols-[minmax(0,1fr)_repeat(5,3.75rem)] items-center gap-x-1 sm:grid-cols-[minmax(0,1fr)_repeat(5,4.5rem)]'
 const READ_ONLY = (f) => f.caps.filter((c) => c === 'view' || c === 'view-timesheets')
 
@@ -22,7 +23,7 @@ const Option = ({ label, checked, onChange, disabled, hint }) => (
     <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200">
         <Switcher checked={checked} disabled={disabled} onChange={(on) => onChange(on)} />
         <span>{label}</span>
-        {hint && <Tooltip title={hint}><span className="cursor-help text-xs text-gray-400">auto</span></Tooltip>}
+        {hint && <Tooltip title={hint}><span className="cursor-help text-xs text-gray-400">{tr("auto")}</span></Tooltip>}
     </label>
 )
 
@@ -75,13 +76,13 @@ const PermissionMatrix = ({ value = {}, onChange, disabled, toolbarStart }) => {
         <div className="flex min-w-0 flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
                 {toolbarStart}
-                <div className="w-full sm:w-56"><Input size="sm" prefix={<TbSearch />} placeholder="Search a feature" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-                <Tag className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-200">{total} on</Tag>
+                <div className="w-full sm:w-56"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search a feature")} value={q} onChange={(e) => setQ(e.target.value)} /></div>
+                <Tag className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-200">{total} {tr("on")}</Tag>
                 {!disabled && (
                     <div className="ml-auto flex flex-wrap gap-2">
-                        <Button size="xs" onClick={() => preset('read')}>Read only</Button>
-                        <Button size="xs" onClick={() => preset('full')}>Everything</Button>
-                        <Button size="xs" variant="plain" className="text-red-500" onClick={() => preset('none')}>Nothing</Button>
+                        <Button size="xs" onClick={() => preset('read')}>{tr("Read only")}</Button>
+                        <Button size="xs" onClick={() => preset('full')}>{tr("Everything")}</Button>
+                        <Button size="xs" variant="plain" className="text-red-500" onClick={() => preset('none')}>{tr("Nothing")}</Button>
                     </div>
                 )}
             </div>
@@ -107,12 +108,12 @@ const PermissionMatrix = ({ value = {}, onChange, disabled, toolbarStart }) => {
                 return (
                     <Card key={g.group} id={slug(g.group)} bodyClass="p-0" className={`scroll-mt-32 overflow-hidden ${money ? 'border-amber-200 dark:border-amber-500/30' : ''}`}>
                         <div className={`flex items-center justify-between gap-3 px-4 py-2 ${money ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-gray-50 dark:bg-gray-700/40'}`}>
-                            <div className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-gray-100">{money ? <TbCoin className="text-xl text-amber-500" /> : <TbLock className="text-xl text-gray-400" />}{g.group}<Tag className="ml-1 bg-white text-gray-600 dark:bg-gray-600 dark:text-gray-100">{on} on</Tag></div>
-                            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-300"><span>Allow all</span><Switcher checked={allOn} disabled={disabled} onChange={(v) => setMany(g.features, v)} /></label>
+                            <div className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-gray-100">{money ? <TbCoin className="text-xl text-amber-500" /> : <TbLock className="text-xl text-gray-400" />}{g.group}<Tag className="ml-1 bg-white text-gray-600 dark:bg-gray-600 dark:text-gray-100">{on} {tr("on")}</Tag></div>
+                            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-300"><span>{tr("Allow all")}</span><Switcher checked={allOn} disabled={disabled} onChange={(v) => setMany(g.features, v)} /></label>
                         </div>
                         {std && (
                             <div className={`${GRID} border-y border-gray-100 px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:border-gray-700`}>
-                                <span>Feature</span>
+                                <span>{tr("Feature")}</span>
                                 {STD_CAPS.map((c) => <span key={c} className="text-center">{capLabel(c)}</span>)}
                             </div>
                         )}
@@ -135,7 +136,7 @@ const PermissionMatrix = ({ value = {}, onChange, disabled, toolbarStart }) => {
                                             {!plain && STD_CAPS.map((c) => (
                                                 <div key={c} className="flex justify-center">
                                                     {f.caps.includes(c) ? <Switcher checked={has(f.key, c)} disabled={disabled} onChange={(v) => set(f.key, c, v)} />
-                                                        : f.auto?.[c] ? <Tooltip title={f.auto[c]}><span className="flex cursor-help items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500 dark:bg-gray-700"><TbLock />auto</span></Tooltip>
+                                                        : f.auto?.[c] ? <Tooltip title={f.auto[c]}><span className="flex cursor-help items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500 dark:bg-gray-700"><TbLock />{tr("auto")}</span></Tooltip>
                                                             : <span className="text-gray-300">–</span>}
                                                 </div>
                                             ))}
@@ -152,7 +153,7 @@ const PermissionMatrix = ({ value = {}, onChange, disabled, toolbarStart }) => {
                     </Card>
                 )
             })}
-            {!groups.length && <div className="py-10 text-center text-gray-400">No feature matches “{q}”.</div>}
+            {!groups.length && <div className="py-10 text-center text-gray-400">{tr("No feature matches “")}{q}”.</div>}
         </div>
     )
 }

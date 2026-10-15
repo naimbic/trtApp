@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { tr } from '@/utils/t'
 
 function hexToRgb(hex) {
     hex = hex.replace(/^#/, '')

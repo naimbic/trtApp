@@ -1,6 +1,7 @@
 import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { TbBold, TbItalic, TbUnderline, TbList, TbListNumbers, TbLink, TbClearFormatting, TbAlignLeft, TbAlignCenter, TbH2 } from 'react-icons/tb'
 import Tooltip from '@/components/ui/Tooltip'
+import { tr } from '@/utils/t'
 
 const Btn = ({ title, onClick, children }) => (
     <Tooltip title={title}>
@@ -36,29 +37,29 @@ const VisualEditor = ({ docKey, value, onChange, disabled, ref }) => {
         d.addEventListener('click', (e) => { if (e.target.closest?.('a')) e.preventDefault() })
     }
     const link = () => {
-        const url = window.prompt('Link address (https://…)')
+        const url = window.prompt(tr("Link address (https://…)"))
         if (url) run('createLink', url)
     }
 
     return (
         <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600">
             <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-gray-50 px-2 py-1.5 dark:border-gray-600 dark:bg-gray-700/40">
-                <Btn title="Bold" onClick={() => run('bold')}><TbBold /></Btn>
-                <Btn title="Italic" onClick={() => run('italic')}><TbItalic /></Btn>
-                <Btn title="Underline" onClick={() => run('underline')}><TbUnderline /></Btn>
-                <Btn title="Heading" onClick={() => run('formatBlock', 'h2')}><TbH2 /></Btn>
+                <Btn title={tr("Bold")} onClick={() => run('bold')}><TbBold /></Btn>
+                <Btn title={tr("Italic")} onClick={() => run('italic')}><TbItalic /></Btn>
+                <Btn title={tr("Underline")} onClick={() => run('underline')}><TbUnderline /></Btn>
+                <Btn title={tr("Heading")} onClick={() => run('formatBlock', 'h2')}><TbH2 /></Btn>
                 <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-600" />
-                <Btn title="Align left" onClick={() => run('justifyLeft')}><TbAlignLeft /></Btn>
-                <Btn title="Center" onClick={() => run('justifyCenter')}><TbAlignCenter /></Btn>
-                <Btn title="Bulleted list" onClick={() => run('insertUnorderedList')}><TbList /></Btn>
-                <Btn title="Numbered list" onClick={() => run('insertOrderedList')}><TbListNumbers /></Btn>
-                <Btn title="Link" onClick={link}><TbLink /></Btn>
-                <Btn title="Clear formatting" onClick={() => run('removeFormat')}><TbClearFormatting /></Btn>
+                <Btn title={tr("Align left")} onClick={() => run('justifyLeft')}><TbAlignLeft /></Btn>
+                <Btn title={tr("Center")} onClick={() => run('justifyCenter')}><TbAlignCenter /></Btn>
+                <Btn title={tr("Bulleted list")} onClick={() => run('insertUnorderedList')}><TbList /></Btn>
+                <Btn title={tr("Numbered list")} onClick={() => run('insertOrderedList')}><TbListNumbers /></Btn>
+                <Btn title={tr("Link")} onClick={link}><TbLink /></Btn>
+                <Btn title={tr("Clear formatting")} onClick={() => run('removeFormat')}><TbClearFormatting /></Btn>
             </div>
             <iframe
                 key={docKey}
                 ref={frame}
-                title="Visual editor"
+                title={tr("Visual editor")}
                 sandbox="allow-same-origin"
                 onLoad={onLoad}
                 srcDoc={`<!doctype html><html><body style="margin:0;padding:24px;background:#f3f4f6;font-family:sans-serif">${initial}</body></html>`}

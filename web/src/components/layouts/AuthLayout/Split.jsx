@@ -1,5 +1,6 @@
 import { cloneElement } from 'react'
 import Logo from '@/components/template/Logo'
+import { tr } from '@/utils/t'
 
 const Split = ({ children, content, ...rest }) => {
     return (
@@ -9,12 +10,10 @@ const Split = ({ children, content, ...rest }) => {
                     <Logo mode="dark" type="full" logoWidth={220} imgClass="h-16 w-full object-contain brightness-0 invert" />
                     <div className="text-center max-w-[550px]">
                         <h1 className="text-neutral">
-                            Everything for your clients in one place
+                            {tr("Everything for your clients in one place")}
                         </h1>
                         <p className="text-neutral opacity-80 mx-auto mt-8 font-semibold">
-                            Experience seamless project management with trtCRM.
-                            Simplify your workflow, and achieve your goals
-                            efficiently with our powerful and intuitive tools.
+                            {tr("Experience seamless project management with trtCRM. Simplify your workflow, and achieve your goals efficiently with our powerful and intuitive tools.")}
                         </p>
                     </div>
                 </div>

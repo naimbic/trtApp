@@ -21,6 +21,7 @@ import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { PROPOSAL_STATUS as STATUS, ProposalStatusTag as StatusTag, fmtDate } from './shared'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const ORDER = [6, 1, 4, 5, 3, 2, 7]
@@ -69,48 +70,48 @@ const ProposalsList = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Proposals</h3><p className="text-sm text-gray-500">Offers to clients and leads, and what they answered</p></div>
-                {can('proposals', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/proposals/new')}>New proposal</Button>}
+                <div><h3>{tr("Proposals")}</h3><p className="text-sm text-gray-500">{tr("Offers to clients and leads, and what they answered")}</p></div>
+                {can('proposals', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/proposals/new')}>{tr("New proposal")}</Button>}
             </div>
 
             {m && (
                 <TileGrid cols={4}>
-                    <StatTile title="Waiting for an answer" className="bg-sky-100" value={money(m.open, cur)} icon={<TbHourglass />} />
-                    <StatTile title="Accepted" className="bg-emerald-100" value={money(m.accepted, cur)} icon={<TbCircleCheck />} />
-                    <StatTile title="Proposals" className="bg-purple-100" value={Object.values(data.stats.counts).reduce((a, b) => a + b, 0)} icon={<TbFileText />} />
-                    <StatTile title="Declined" className="bg-amber-100" value={data.stats.counts[2] || 0} icon={<TbAlertTriangle />} />
+                    <StatTile title={tr("Waiting for an answer")} className="bg-sky-100" value={money(m.open, cur)} icon={<TbHourglass />} />
+                    <StatTile title={tr("Accepted")} className="bg-emerald-100" value={money(m.accepted, cur)} icon={<TbCircleCheck />} />
+                    <StatTile title={tr("Proposals")} className="bg-purple-100" value={Object.values(data.stats.counts).reduce((a, b) => a + b, 0)} icon={<TbFileText />} />
+                    <StatTile title={tr("Declined")} className="bg-amber-100" value={data.stats.counts[2] || 0} icon={<TbAlertTriangle />} />
                 </TileGrid>
             )}
 
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder="Choose a client" resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
+                    <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder={tr("Choose a client")} resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
                     <StatusPills inline order={ORDER} labels={Object.fromEntries(ORDER.map((s) => [s, STATUS[s].label]))} counts={data.stats.counts} value={status} onChange={(s) => { setStatus(s); setPage(1) }} />
-                    <div className="w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search number, subject or recipient" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                    <div className="w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search number, subject or recipient")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 </div>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('number', 'Proposal')}{th('subject', 'Subject')}{th('to', 'For')}{th('date', 'Date')}{th('openTill', 'Open until')}{th('total', 'Amount', true)}{th('status', 'Status')}</Tr></THead>
+                        <THead><Tr>{th('number', tr("Proposal"))}{th('subject', tr("Subject"))}{th('to', tr("For"))}{th('date', tr("Date"))}{th('openTill', tr("Open until"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}</Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
                                 <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/proposals/${r.id}`)}>
                                     <Td className="whitespace-nowrap font-semibold heading-text">{r.number}</Td>
                                     <Td className="max-w-[280px] truncate font-medium">{r.subject}</Td>
-                                    <Td className="max-w-[200px] truncate">{r.to} <span className="text-xs text-gray-400">{r.relType === 'lead' ? 'lead' : ''}</span></Td>
+                                    <Td className="max-w-[200px] truncate">{r.to} <span className="text-xs text-gray-400">{r.relType === 'lead' ? tr("lead") : ''}</span></Td>
                                     <Td className="whitespace-nowrap">{fmtDate(r.date)}</Td>
                                     <Td className={cn('whitespace-nowrap', r.status === 7 && 'text-amber-600')}>{fmtDate(r.openTill) || '—'}</Td>
                                     <Td className="text-right tabular-nums">{money(r.total, r.currencyId)}</Td>
-                                    <Td><StatusTag status={r.status} />{r.converted && <span className="ml-1.5 text-xs text-emerald-600">converted</span>}</Td>
+                                    <Td><StatusTag status={r.status} />{r.converted && <span className="ml-1.5 text-xs text-emerald-600">{tr("converted")}</span>}</Td>
                                 </Tr>
                             ))}
                         </TBody>
                     </Table>
-                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
-                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">No proposals found</div>}
+                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("No proposals found")}</div>}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-sm text-gray-500">{data.total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.total)} of ${data.total}` : ''}</span>
+                    <span className="text-sm text-gray-500">{data.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>

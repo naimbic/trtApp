@@ -15,6 +15,7 @@ import Segment from '@/components/ui/Segment'
 import VisualEditor from '../mail/VisualEditor'
 import { useClientLookups } from '../clients/shared'
 import { makeMoney } from '../clients/shared'
+import { tr } from '@/utils/t'
 
 const emptyLine = () => ({ description: '', longDescription: '', qty: 1, rate: 0, unit: '', taxes: [] })
 const day = (v) => (v ? dayjs(v).format('YYYY-MM-DD') : '')
@@ -63,7 +64,7 @@ const ProposalEditor = () => {
     const totals = useMemo(() => (v ? calcDocument({ items: v.items, discountPercent: v.discountPercent, discountFixed: v.discountFixed, discountType: v.discountType, adjustment: v.adjustment }) : null), [v])
 
     if (error && !v) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div></Container>
-    if (!v || !lookups) return <Container><div className="py-20 text-center text-gray-400">Loading…</div></Container>
+    if (!v || !lookups) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
 
     const currency = lookups.currencies.find((c) => c.id === v.currencyId)
     const money = (n) => makeMoney(lookups.currencies)(n, v.currencyId)
@@ -88,15 +89,15 @@ const ProposalEditor = () => {
     }
 
     const submit = async () => {
-        if (!v.subject.trim()) return setError('Give the proposal a subject')
-        if (!v.relId) return setError('Choose the client or lead this proposal is for')
-        if (!v.proposalTo.trim()) return setError('Who is the proposal for?')
+        if (!v.subject.trim()) return setError(tr("Give the proposal a subject"))
+        if (!v.relId) return setError(tr("Choose the client or lead this proposal is for"))
+        if (!v.proposalTo.trim()) return setError(tr("Who is the proposal for?"))
         setSaving(true)
         setError('')
         try {
             const body = { ...v }
             const res = id ? await api(`/api/crm/sales/proposals/${id}`, { method: 'PUT', body }) : await api('/api/crm/sales/proposals', { method: 'POST', body })
-            notify('success', 'Proposal saved')
+            notify('success', tr("Proposal saved"))
             navigate(`/crm/proposals/${res.id}`)
         } catch (e) {
             setError(e.message)
@@ -106,40 +107,40 @@ const ProposalEditor = () => {
 
     return (
         <Container>
-            <h3 className="mb-4">{id ? `Edit proposal ${doc?.proposal?.displayNumber || ''}` : 'New proposal'}</h3>
+            <h3 className="mb-4">{id ? tr("Edit proposal {v1}", { v1: doc?.proposal?.displayNumber || '' }) : tr("New proposal")}</h3>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="flex flex-col gap-4">
                 <Card>
                     <div className="grid gap-4 md:grid-cols-4">
-                        <div className="md:col-span-4"><label className="form-label mb-2 block">Subject *</label><Input value={v.subject} placeholder="e.g. Website redesign" onChange={(e) => set({ subject: e.target.value })} /></div>
+                        <div className="md:col-span-4"><label className="form-label mb-2 block">{tr("Subject *")}</label><Input value={v.subject} placeholder={tr("e.g. Website redesign")} onChange={(e) => set({ subject: e.target.value })} /></div>
                         <div className="md:col-span-2">
-                            <label className="form-label mb-2 block">Made for *</label>
-                            <div className="mb-2"><Segment size="sm" value={v.relType} onChange={(t) => t && set({ relType: t, relId: null })}><Segment.Item value="customer">Client</Segment.Item><Segment.Item value="lead">Lead</Segment.Item></Segment></div>
+                            <label className="form-label mb-2 block">{tr("Made for *")}</label>
+                            <div className="mb-2"><Segment size="sm" value={v.relType} onChange={(t) => t && set({ relType: t, relId: null })}><Segment.Item value="customer">{tr("Client")}</Segment.Item><Segment.Item value="lead">{tr("Lead")}</Segment.Item></Segment></div>
                             <RelationSelect key={v.relType} resource={v.relType === 'lead' ? 'leads' : 'clients'} value={v.relId} onChange={(rid) => { set({ relId: rid }); if (rid) fill(v.relType, rid) }} />
                         </div>
-                        <div><label className="form-label mb-2 block">Currency</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
-                        <div><label className="form-label mb-2 block">Assigned to</label><Select isClearable options={(base.staff || []).map((s) => ({ value: s.id, label: s.name }))} value={(base.staff || []).filter((s) => s.id === v.assignedId).map((s) => ({ value: s.id, label: s.name }))[0] || null} onChange={(o) => set({ assignedId: o?.value || null })} /></div>
-                        <div><label className="form-label mb-2 block">Proposal date</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">Open until</label><Input type="date" value={v.openTill} onChange={(e) => set({ openTill: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Assigned to")}</label><Select isClearable options={(base.staff || []).map((s) => ({ value: s.id, label: s.name }))} value={(base.staff || []).filter((s) => s.id === v.assignedId).map((s) => ({ value: s.id, label: s.name }))[0] || null} onChange={(o) => set({ assignedId: o?.value || null })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Proposal date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Open until")}</label><Input type="date" value={v.openTill} onChange={(e) => set({ openTill: e.target.value })} /></div>
                     </div>
                 </Card>
 
                 <Card>
-                    <div className="mb-3 flex items-center justify-between"><h4>Prepared for</h4><span className="text-xs text-gray-400">Filled from the client or lead; edit freely</span></div>
+                    <div className="mb-3 flex items-center justify-between"><h4>{tr("Prepared for")}</h4><span className="text-xs text-gray-400">{tr("Filled from the client or lead; edit freely")}</span></div>
                     <div className="grid gap-4 md:grid-cols-3">
-                        <div><label className="form-label mb-2 block">Name / company *</label><Input value={v.proposalTo} onChange={(e) => set({ proposalTo: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">Email</label><Input type="email" value={v.email} onChange={(e) => set({ email: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">Phone</label><Input value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
-                        <div className="md:col-span-3"><label className="form-label mb-2 block">Address</label><Input value={v.address} onChange={(e) => set({ address: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">City</label><Input value={v.city} onChange={(e) => set({ city: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">State</label><Input value={v.state} onChange={(e) => set({ state: e.target.value })} /></div>
-                        <div className="grid grid-cols-2 gap-4"><div><label className="form-label mb-2 block">ZIP</label><Input value={v.zip} onChange={(e) => set({ zip: e.target.value })} /></div><div><label className="form-label mb-2 block">Country</label><Select isClearable options={base.countries || []} value={(base.countries || []).find((o) => o.value === v.country) || null} onChange={(o) => set({ country: o ? o.value : null })} /></div></div>
+                        <div><label className="form-label mb-2 block">{tr("Name / company *")}</label><Input value={v.proposalTo} onChange={(e) => set({ proposalTo: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Email")}</label><Input type="email" value={v.email} onChange={(e) => set({ email: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Phone")}</label><Input value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
+                        <div className="md:col-span-3"><label className="form-label mb-2 block">{tr("Address")}</label><Input value={v.address} onChange={(e) => set({ address: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("City")}</label><Input value={v.city} onChange={(e) => set({ city: e.target.value })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("State")}</label><Input value={v.state} onChange={(e) => set({ state: e.target.value })} /></div>
+                        <div className="grid grid-cols-2 gap-4"><div><label className="form-label mb-2 block">{tr("ZIP")}</label><Input value={v.zip} onChange={(e) => set({ zip: e.target.value })} /></div><div><label className="form-label mb-2 block">{tr("Country")}</label><Select isClearable options={base.countries || []} value={(base.countries || []).find((o) => o.value === v.country) || null} onChange={(o) => set({ country: o ? o.value : null })} /></div></div>
                     </div>
                 </Card>
 
                 <Card>
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div><h4>Proposal text</h4><p className="text-sm text-gray-500">What the client reads. The items table goes where you put <code>{'{proposal_items}'}</code>; without it the table is added at the end.</p></div>
+                        <div><h4>{tr("Proposal text")}</h4><p className="text-sm text-gray-500">{tr("What the client reads. The items table goes where you put")} <code>{tr("{proposal_items}")}</code>{tr("; without it the table is added at the end.")}</p></div>
                         <div className="flex flex-wrap gap-1.5">{['proposal_items', 'proposal_number', 'proposal_total', 'proposal_open_till', 'proposal_proposal_to', 'company_name'].map((t) => <button key={t} type="button" onClick={() => visual.current?.insert(`{${t}}`)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${t}}`}</button>)}</div>
                     </div>
                     <VisualEditor ref={visual} docKey={`proposal-${id || 'new'}`} value={v.content} onChange={(html) => setV((s) => ({ ...s, content: html }))} />
@@ -147,35 +148,35 @@ const ProposalEditor = () => {
 
                 <Card>
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <h4>Items <span className="text-sm font-normal text-gray-400">(optional)</span></h4>
+                        <h4>{tr("Items")} <span className="text-sm font-normal text-gray-400">{tr("(optional)")}</span></h4>
                         <div className="w-72"><RelationSelect resource="items" value={null} onChange={addFromCatalog} /></div>
                     </div>
                     <LineItemsTable items={v.items} onChange={(items) => set({ items })} taxOptions={taxOptions} newLine={newLine} />
 
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="grid grid-cols-2 content-start gap-4">
-                            <div><label className="form-label mb-2 block">Discount %</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
-                            <div><label className="form-label mb-2 block">Fixed discount</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
-                            <div><label className="form-label mb-2 block">Discount applies</label><Select options={[{ value: 'before_tax', label: 'Before tax' }, { value: 'after_tax', label: 'After tax' }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? 'After tax' : 'Before tax' }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
-                            <div><label className="form-label mb-2 block">Adjustment</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
+                            <div><label className="form-label mb-2 block">{tr("Discount %")}</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
+                            <div><label className="form-label mb-2 block">{tr("Fixed discount")}</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
+                            <div><label className="form-label mb-2 block">{tr("Discount applies")}</label><Select options={[{ value: 'before_tax', label: tr("Before tax") }, { value: 'after_tax', label: tr("After tax") }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? tr("After tax") : tr("Before tax") }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
+                            <div><label className="form-label mb-2 block">{tr("Adjustment")}</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
                         </div>
                         <dl className="ml-auto w-full max-w-sm text-sm">
-                            <div className="flex justify-between py-1"><dt>Sub total</dt><dd className="tabular-nums">{money(totals.subtotal)}</dd></div>
-                            {totals.discountTotal > 0 && <div className="flex justify-between py-1"><dt>Discount</dt><dd className="tabular-nums">-{money(totals.discountTotal)}</dd></div>}
+                            <div className="flex justify-between py-1"><dt>{tr("Sub total")}</dt><dd className="tabular-nums">{money(totals.subtotal)}</dd></div>
+                            {totals.discountTotal > 0 && <div className="flex justify-between py-1"><dt>{tr("Discount")}</dt><dd className="tabular-nums">-{money(totals.discountTotal)}</dd></div>}
                             {totals.taxes.map((t) => <div key={`${t.name}|${t.rate}`} className="flex justify-between py-1"><dt>{t.name} ({t.rate}%)</dt><dd className="tabular-nums">{money(t.total)}</dd></div>)}
-                            {Number(v.adjustment) !== 0 && <div className="flex justify-between py-1"><dt>Adjustment</dt><dd className="tabular-nums">{money(v.adjustment)}</dd></div>}
-                            <div className="mt-1 flex justify-between border-t py-2 text-base font-semibold"><dt>Total</dt><dd className="tabular-nums">{money(totals.total)}</dd></div>
+                            {Number(v.adjustment) !== 0 && <div className="flex justify-between py-1"><dt>{tr("Adjustment")}</dt><dd className="tabular-nums">{money(v.adjustment)}</dd></div>}
+                            <div className="mt-1 flex justify-between border-t py-2 text-base font-semibold"><dt>{tr("Total")}</dt><dd className="tabular-nums">{money(totals.total)}</dd></div>
                         </dl>
                     </div>
                 </Card>
 
                 <Card>
-                    <div className="flex items-center justify-between gap-4"><div><div className="font-semibold">Allow comments</div><div className="text-sm text-gray-500">The client can write comments on the public proposal page</div></div><Switcher checked={v.allowComments} onChange={(c) => set({ allowComments: c })} /></div>
+                    <div className="flex items-center justify-between gap-4"><div><div className="font-semibold">{tr("Allow comments")}</div><div className="text-sm text-gray-500">{tr("The client can write comments on the public proposal page")}</div></div><Switcher checked={v.allowComments} onChange={(c) => set({ allowComments: c })} /></div>
                 </Card>
 
                 <div className="flex justify-end gap-2">
-                    <Button onClick={() => navigate(id ? `/crm/proposals/${id}` : '/crm/proposals')}>Cancel</Button>
-                    <Button variant="solid" loading={saving} onClick={() => submit()}>Save proposal</Button>
+                    <Button onClick={() => navigate(id ? `/crm/proposals/${id}` : '/crm/proposals')}>{tr("Cancel")}</Button>
+                    <Button variant="solid" loading={saving} onClick={() => submit()}>{tr("Save proposal")}</Button>
                 </div>
             </div>
             {currency ? null : null}

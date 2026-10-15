@@ -1,8 +1,9 @@
+import { tr } from '@/utils/t'
 const Total = (props) => {
     const { total } = props
     return (
         <div className="pagination-total">
-            Total <span>{total}</span> Items
+            {tr("Total")} <span>{total}</span> {tr("Items")}
         </div>
     )
 }

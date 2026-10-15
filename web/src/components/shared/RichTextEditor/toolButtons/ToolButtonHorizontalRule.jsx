@@ -1,10 +1,11 @@
 import { TbMinus } from 'react-icons/tb'
 import ToolButton from './ToolButton'
+import { tr } from '@/utils/t'
 
 const ToolButtonHorizontalRule = ({ editor }) => {
     return (
         <ToolButton
-            title="Horizontal Rule"
+            title={tr("Horizontal Rule")}
             onClick={() => editor.chain().focus().setHorizontalRule().run()}
         >
             <TbMinus />

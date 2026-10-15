@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone } from 'react-icons/pi'
 import classNames from '@/utils/classNames'
 import { ping } from './chatKit'
+import { tr } from '@/utils/t'
 
 const POLL = 3000
 const size = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round((n || 0) / 1024))} KB`)
@@ -23,7 +24,7 @@ const time = (d) => (dayjs(d).isSame(dayjs(), 'day') ? dayjs(d).format('HH:mm') 
  * Message list + composer, shared by the staff widget and the client portal.
  * load(after) -> { messages, ...extra }   send(body) -> message   onData(extra) gets everything but messages.
  */
-const ChatThread = ({ load, send, upload, onData, showSender = false, empty = 'No messages yet. Say hello!', placeholder = 'Write a message…' }) => {
+const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr("No messages yet. Say hello!"), placeholder = tr("Write a message…") }) => {
     const [msgs, setMsgs] = useState(null)
     const [text, setText] = useState('')
     const [busy, setBusy] = useState(false)
@@ -64,7 +65,7 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = 'N
             if (!attachment) setText('')
             stick.current = true
             setMsgs((cur) => [...(cur || []).filter((x) => x.id !== m.id), m])
-        } catch (e) { setErr(e.message || 'Could not send') } finally { setBusy(false) }
+        } catch (e) { setErr(e.message || tr("Could not send")) } finally { setBusy(false) }
     }
 
     const sendFile = async (file, voice = false) => {
@@ -74,11 +75,11 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = 'N
             const att = await upload(file, voice)
             setBusy(false)
             await submit(att)
-        } catch (e) { setErr(e.message || 'Could not upload'); setBusy(false) } finally { if (fileInput.current) fileInput.current.value = '' }
+        } catch (e) { setErr(e.message || tr("Could not upload")); setBusy(false) } finally { if (fileInput.current) fileInput.current.value = '' }
     }
 
     const startRec = async () => {
-        if (recording || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { setErr('Voice messages are not supported in this browser'); return }
+        if (recording || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { setErr(tr("Voice messages are not supported in this browser")); return }
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
             const type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((t) => MediaRecorder.isTypeSupported?.(t)) || ''
@@ -95,7 +96,7 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = 'N
             rec.current = state
             mr.start()
             setRecording({ seconds: 0 })
-        } catch { setErr('Allow the microphone to record a voice message') }
+        } catch { setErr(tr("Allow the microphone to record a voice message")) }
     }
     const stopRec = (cancel = false) => { if (rec.current) { rec.current.cancelled = cancel; if (rec.current.mr.state !== 'inactive') rec.current.mr.stop() } }
     useEffect(() => () => { if (rec.current) { rec.current.cancelled = true; try { rec.current.mr.stop() } catch { /* idle */ } } }, [])
@@ -124,13 +125,13 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = 'N
             {recording ? (
                 <div className="flex items-center gap-3 border-t border-gray-200 p-3 dark:border-gray-700">
                     <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
-                    <span className="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200">Recording… {Math.floor(recording.seconds / 60)}:{String(recording.seconds % 60).padStart(2, '0')}</span>
-                    <button type="button" onClick={() => stopRec(true)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-lg text-gray-500 dark:bg-gray-700" title="Cancel"><PiXBold /></button>
-                    <button type="button" onClick={() => stopRec(false)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-lg text-white" title="Send voice message"><PiPaperPlaneTiltFill /></button>
+                    <span className="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200">{tr("Recording…")} {Math.floor(recording.seconds / 60)}:{String(recording.seconds % 60).padStart(2, '0')}</span>
+                    <button type="button" onClick={() => stopRec(true)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-lg text-gray-500 dark:bg-gray-700" title={tr("Cancel")}><PiXBold /></button>
+                    <button type="button" onClick={() => stopRec(false)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-lg text-white" title={tr("Send voice message")}><PiPaperPlaneTiltFill /></button>
                 </div>
             ) : (
                 <div className="flex items-end gap-2 border-t border-gray-200 p-3 dark:border-gray-700">
-                    {upload && <button type="button" onClick={() => fileInput.current?.click()} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title="Attach a file or picture"><PiPaperclipDuotone /></button>}
+                    {upload && <button type="button" onClick={() => fileInput.current?.click()} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title={tr("Attach a file or picture")}><PiPaperclipDuotone /></button>}
                     <textarea
                         rows={1}
                         value={text}
@@ -142,7 +143,7 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = 'N
                     />
                     {text.trim() || !upload
                         ? <button type="button" onClick={() => submit()} disabled={busy || !text.trim()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-lg text-white disabled:opacity-40"><PiPaperPlaneTiltFill /></button>
-                        : <button type="button" onClick={startRec} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-xl text-white disabled:opacity-40" title="Record a voice message"><PiMicrophoneDuotone /></button>}
+                        : <button type="button" onClick={startRec} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-xl text-white disabled:opacity-40" title={tr("Record a voice message")}><PiMicrophoneDuotone /></button>}
                     <input ref={fileInput} type="file" className="hidden" onChange={(e) => sendFile(e.target.files?.[0])} />
                 </div>
             )}

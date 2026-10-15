@@ -3,31 +3,36 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import frLocale from '@fullcalendar/core/locales/fr'
+import esLocale from '@fullcalendar/core/locales/es'
+import jaLocale from '@fullcalendar/core/locales/ja'
+import arLocale from '@fullcalendar/core/locales/ar'
+import { tr, savedLang } from '@/utils/t'
 
 const defaultColorList = {
     red: {
         bg: 'bg-[#fbddd9]',
-        text: 'text-gray-900',
+        text: "text-gray-900",
     },
     orange: {
         bg: 'bg-[#ffc6ab]',
-        text: 'text-gray-900',
+        text: "text-gray-900",
     },
     yellow: {
         bg: 'bg-[#ffd993]',
-        text: 'text-gray-900',
+        text: "text-gray-900",
     },
     green: {
         bg: 'bg-[#bee9d3]',
-        text: 'text-gray-900',
+        text: "text-gray-900",
     },
     blue: {
         bg: 'bg-[#bce9fb]',
-        text: 'text-gray-900',
+        text: "text-gray-900",
     },
     purple: {
         bg: 'bg-[#ccbbfc]',
-        text: 'text-gray-900',
+        text: "text-gray-900",
     },
 }
 
@@ -41,6 +46,8 @@ const CalendarView = (props) => {
     return (
         <div className={classNames('calendar', wrapperClass)}>
             <FullCalendar
+                locales={[frLocale, esLocale, jaLocale, arLocale]}
+                locale={savedLang()}
                 initialView="dayGridMonth"
                 headerToolbar={{
                     left: 'title',

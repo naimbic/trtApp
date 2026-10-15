@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import { APP_NAME } from '@/constants/app.constant'
 import useBranding from '@/utils/hooks/useBranding'
+import { tr } from '@/utils/t'
 
 const LOGO_SRC_PATH = '/img/logo/'
 
@@ -27,7 +28,7 @@ const Logo = (props) => {
             <img
                 className={imgClass}
                 src={custom || `${LOGO_SRC_PATH}logo-${mode}-${type}.svg`}
-                alt={`${APP_NAME} logo`}
+                alt={tr("{APP_NAME} logo", { APP_NAME: APP_NAME })}
             />
         </div>
     )

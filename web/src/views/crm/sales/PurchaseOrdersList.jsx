@@ -21,6 +21,7 @@ import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { PO_STATUS as STATUS, PoStatusTag as StatusTag, fmtDate } from './shared'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const ORDER = [1, 2, 3, 4, 5]
@@ -69,28 +70,28 @@ const PurchaseOrdersList = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>Purchase orders</h3><p className="text-sm text-gray-500">Bons de commande: what clients ordered, what is left to deliver and to invoice</p></div>
-                {can('purchase_orders', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/purchase-orders/new')}>New purchase order</Button>}
+                <div><h3>{tr("Purchase orders")}</h3><p className="text-sm text-gray-500">{tr("Bons de commande: what clients ordered, what is left to deliver and to invoice")}</p></div>
+                {can('purchase_orders', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/purchase-orders/new')}>{tr("New purchase order")}</Button>}
             </div>
 
             {m && (
                 <TileGrid cols={3}>
-                    <StatTile title="All orders" className="bg-sky-100" value={money(m.total, cur)} icon={<TbReceipt2 />} />
-                    <StatTile title="To deliver" className="bg-purple-100" value={money(m.toDeliver, cur)} icon={<TbHourglass />} />
-                    <StatTile title="Not invoiced yet" className="bg-amber-100" value={money(m.uninvoiced, cur)} icon={<TbAlertTriangle />} />
+                    <StatTile title={tr("All orders")} className="bg-sky-100" value={money(m.total, cur)} icon={<TbReceipt2 />} />
+                    <StatTile title={tr("To deliver")} className="bg-purple-100" value={money(m.toDeliver, cur)} icon={<TbHourglass />} />
+                    <StatTile title={tr("Not invoiced yet")} className="bg-amber-100" value={money(m.uninvoiced, cur)} icon={<TbAlertTriangle />} />
                 </TileGrid>
             )}
 
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder="Choose a client" resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
+                    <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder={tr("Choose a client")} resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
                     <StatusPills inline order={ORDER} labels={Object.fromEntries(ORDER.map((s) => [s, STATUS[s].label]))} counts={data.stats.counts} value={status} onChange={(s) => { setStatus(s); setPage(1) }} />
-                    <div className="w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder="Search number, client or reference" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                    <div className="w-full sm:w-64"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search number, client or reference")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 </div>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('number', 'Order')}{th('client', 'Client')}<Th>Client ref.</Th>{th('date', 'Date')}{th('deliveryDate', 'Delivery')}{th('total', 'Amount', true)}{th('status', 'Status')}</Tr></THead>
+                        <THead><Tr>{th('number', tr("Order"))}{th('client', tr("Client"))}<Th>{tr("Client ref.")}</Th>{th('date', tr("Date"))}{th('deliveryDate', tr("Delivery"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}</Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
                                 <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/purchase-orders/${r.id}`)}>
@@ -100,16 +101,16 @@ const PurchaseOrdersList = () => {
                                     <Td className="whitespace-nowrap">{fmtDate(r.date)}</Td>
                                     <Td className={cn('whitespace-nowrap', r.status === 5 && 'text-gray-400')}>{fmtDate(r.deliveryDate) || '—'}</Td>
                                     <Td className="text-right tabular-nums">{money(r.total, r.currencyId)}</Td>
-                                    <Td><StatusTag status={r.status} />{r.invoiced && <span className="ml-1.5 text-xs text-emerald-600">invoiced</span>}</Td>
+                                    <Td><StatusTag status={r.status} />{r.invoiced && <span className="ml-1.5 text-xs text-emerald-600">{tr("invoiced")}</span>}</Td>
                                 </Tr>
                             ))}
                         </TBody>
                     </Table>
-                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
-                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">No purchase orders found</div>}
+                    {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                    {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("No purchase orders found")}</div>}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-sm text-gray-500">{data.total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.total)} of ${data.total}` : ''}</span>
+                    <span className="text-sm text-gray-500">{data.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>

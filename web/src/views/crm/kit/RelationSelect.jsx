@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import Select from '@/components/ui/Select'
+import { tr } from '@/utils/t'
 
 /** Async picker for a `relation` field (options come from /api/crm/<resource>/options). value = id | null. */
-const RelationSelect = ({ resource, value, onChange, disabled, size, placeholder = 'Search…' }) => {
+const RelationSelect = ({ resource, value, onChange, disabled, size, placeholder = tr("Search…") }) => {
     const [options, setOptions] = useState([])
     const [loading, setLoading] = useState(false)
 

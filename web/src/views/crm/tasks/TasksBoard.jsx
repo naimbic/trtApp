@@ -13,6 +13,7 @@ import cn from '@/utils/classNames'
 import { api, qs, notify } from '../kit/api'
 import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, statusOf } from './shared'
 import TaskDrawer from './TaskDrawer'
+import { tr, trn } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -28,7 +29,7 @@ const TaskCard = ({ t, onOpen }) => (
                 {t.dueDate && <span className={cn('inline-flex items-center gap-1', isOverdue(t) && 'font-semibold text-red-500')}><TbCalendar />{fmtDate(t.dueDate)}</span>}
                 {t.checklistTotal > 0 && <span className="inline-flex items-center gap-1"><TbChecklist />{t.checklistDone}/{t.checklistTotal}</span>}
                 {t.comments > 0 && <span className="inline-flex items-center gap-1"><TbMessage />{t.comments}</span>}
-                {t.recurring && <TbRepeat title="Recurring" />}
+                {t.recurring && <TbRepeat title={tr("Recurring")} />}
                 <span className={cn('ml-auto text-[11px] font-medium', prioOf(t.priority).text)}>{prioOf(t.priority).label}</span>
             </div>
             <People list={t.assignees} />
@@ -96,22 +97,22 @@ const TasksBoard = ({ projectId = null }) => {
     return (
         <Wrap>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>{projectId ? <h5>Tasks</h5> : <h3>Tasks</h3>}<p className="text-sm text-gray-500">{data.list.length} task{data.list.length === 1 ? '' : 's'} shown</p></div>
+                <div>{projectId ? <h5>{tr("Tasks")}</h5> : <h3>{tr("Tasks")}</h3>}<p className="text-sm text-gray-500">{trn(data.list.length, "task")} {tr("shown")}</p></div>
                 <div className="flex items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
-                        <Segment.Item value="board"><span className="inline-flex items-center gap-1"><TbLayoutKanban />Board</span></Segment.Item>
-                        <Segment.Item value="list"><span className="inline-flex items-center gap-1"><TbList />List</span></Segment.Item>
+                        <Segment.Item value="board"><span className="inline-flex items-center gap-1"><TbLayoutKanban />{tr("Board")}</span></Segment.Item>
+                        <Segment.Item value="list"><span className="inline-flex items-center gap-1"><TbList />{tr("List")}</span></Segment.Item>
                     </Segment>
-                    {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>New task</Button>}
+                    {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>{tr("New task")}</Button>}
                 </div>
             </div>
 
             <div className="mb-4 flex flex-wrap items-center gap-3">
-                <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder="Search tasks" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-                <div className="w-48"><Select size="sm" isClearable placeholder="Any assignee" options={staffOptions} value={staffOptions.find((o) => o.value === assignee) || null} onChange={(o) => { setAssignee(o?.value || null); setMine(false) }} /></div>
-                <div className="w-36"><Select size="sm" isClearable placeholder="Any priority" options={PRIORITY.map((p) => ({ value: p.value, label: p.label }))} value={priority ? { value: priority, label: prioOf(priority).label } : null} onChange={(o) => setPriority(o?.value || null)} /></div>
-                <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssignee(null) }} />My tasks</label>
-                <label className="flex items-center gap-2 text-sm"><Switcher checked={done} onChange={setDone} />Show completed</label>
+                <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search tasks")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any assignee")} options={staffOptions} value={staffOptions.find((o) => o.value === assignee) || null} onChange={(o) => { setAssignee(o?.value || null); setMine(false) }} /></div>
+                <div className="w-36"><Select size="sm" isClearable placeholder={tr("Any priority")} options={PRIORITY.map((p) => ({ value: p.value, label: p.label }))} value={priority ? { value: priority, label: prioOf(priority).label } : null} onChange={(o) => setPriority(o?.value || null)} /></div>
+                <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssignee(null) }} />{tr("My tasks")}</label>
+                <label className="flex items-center gap-2 text-sm"><Switcher checked={done} onChange={setDone} />{tr("Show completed")}</label>
             </div>
 
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
@@ -131,7 +132,7 @@ const TasksBoard = ({ projectId = null }) => {
                                                 </Draggable>
                                             ))}
                                             {prov.placeholder}
-                                            {!loading && !(columns[s.value] || []).length && <div className="py-6 text-center text-xs text-gray-400">Nothing here</div>}
+                                            {!loading && !(columns[s.value] || []).length && <div className="py-6 text-center text-xs text-gray-400">{tr("Nothing here")}</div>}
                                         </div>
                                     )}
                                 </Droppable>
@@ -142,7 +143,7 @@ const TasksBoard = ({ projectId = null }) => {
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <Table>
-                        <THead><Tr><Th>Task</Th><Th>Related to</Th><Th>Status</Th><Th>Priority</Th><Th>Assigned</Th><Th>Due</Th></Tr></THead>
+                        <THead><Tr><Th>{tr("Task")}</Th><Th>{tr("Related to")}</Th><Th>{tr("Status")}</Th><Th>{tr("Priority")}</Th><Th>{tr("Assigned")}</Th><Th>{tr("Due")}</Th></Tr></THead>
                         <TBody>
                             {data.list.map((t) => (
                                 <Tr key={t.id} className="cursor-pointer" onClick={() => open(t.id)}>
@@ -154,7 +155,7 @@ const TasksBoard = ({ projectId = null }) => {
                                     <Td className={isOverdue(t) ? 'font-semibold text-red-500' : ''}>{fmtDate(t.dueDate) || '—'}</Td>
                                 </Tr>
                             ))}
-                            {!loading && !data.list.length && <Tr><Td colSpan={6} className="py-10 text-center text-gray-500">No tasks match</Td></Tr>}
+                            {!loading && !data.list.length && <Tr><Td colSpan={6} className="py-10 text-center text-gray-500">{tr("No tasks match")}</Td></Tr>}
                         </TBody>
                     </Table>
                 </div>

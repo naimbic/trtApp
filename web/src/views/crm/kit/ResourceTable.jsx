@@ -7,6 +7,7 @@ import Pagination from '@/components/ui/Pagination'
 import cn from '@/utils/classNames'
 import { api, qs } from './api'
 import { renderCell } from './format'
+import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const SIZES = [10, 25, 50, 100].map((n) => ({ value: n, label: `${n} / page` }))
@@ -15,7 +16,7 @@ const SIZES = [10, 25, 50, 100].map((n) => ({ value: n, label: `${n} / page` }))
  * Server-side table for any CRM resource config (search, sort, filters, paging).
  * props: resource, where, columns, onRowClick, reloadKey, toolbar, rowActions(row), onData(data), emptyText, hideFilters (filter keys not to show)
  */
-const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 0, toolbar, rowActions, onData, emptyText = 'No records found', hideFilters = [] }) => {
+const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 0, toolbar, rowActions, onData, emptyText = tr("No records found"), hideFilters = [] }) => {
     const cols = useMemo(() => columns || resource.columns || [], [columns, resource])
     const [query, setQuery] = useState('')
     const [q, setQ] = useState('')
@@ -64,7 +65,7 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
             {/* one row: search, filters (they shrink to fit) and the action button */}
             <div className="mb-4 flex items-center gap-2">
                 <div className="w-52 shrink-0">
-                    <Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={`Search ${resource.plural?.toLowerCase() || ''}`} value={query} onChange={(e) => setQuery(e.target.value)} />
+                    <Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search {v1}", { v1: resource.plural?.toLowerCase() || '' })} value={query} onChange={(e) => setQuery(e.target.value)} />
                 </div>
                 {(resource.filters || []).filter((f) => !hideFilters.includes(f.key)).map((f) => (
                     <div key={f.key} className="min-w-[7rem] max-w-[11rem] flex-1">
@@ -98,7 +99,7 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
                                     </span>
                                 </Th>
                             ))}
-                            {rowActions && <Th className="text-right">Actions</Th>}
+                            {rowActions && <Th className="text-right">{tr("Actions")}</Th>}
                         </Tr>
                     </THead>
                     <TBody>
@@ -112,12 +113,12 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
                         ))}
                     </TBody>
                 </Table>
-                {loading && !data.list.length && <div className="py-10 text-center text-gray-400">Loading…</div>}
+                {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
                 {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{emptyText}</div>}
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <span className="text-sm text-gray-500">{data.total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.total)} of ${data.total}` : ''}</span>
+                <span className="text-sm text-gray-500">{data.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
                 <div className="flex items-center gap-3">
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                     <div className="w-32">

@@ -1,4 +1,5 @@
 import Chart from '@/components/shared/Chart'
+import { tr } from '@/utils/t'
 
 // Same palette and chart styling as the dashboard, so a status looks the same everywhere.
 export const PALETTE = { blue: '#3b82f6', green: '#10b981', amber: '#f59e0b', red: '#ef4444', purple: '#8b5cf6', teal: '#14b8a6', pink: '#ec4899', slate: '#64748b' }
@@ -22,7 +23,7 @@ const axisText = { style: { colors: '#94a3b8', fontSize: '12px' } }
 export const DonutChart = ({ data, height = 210, title = 'Total' }) => {
     const names = Object.keys(data || {}).filter((n) => data[n] > 0)
     const total = names.reduce((s, n) => s + data[n], 0)
-    if (!total) return <p className="py-10 text-center text-sm text-gray-400">Nothing yet</p>
+    if (!total) return <p className="py-10 text-center text-sm text-gray-400">{tr("Nothing yet")}</p>
     return (
         <Chart
             type="donut"
@@ -31,7 +32,7 @@ export const DonutChart = ({ data, height = 210, title = 'Total' }) => {
             donutTitle={title}
             donutText={nfi(total)}
             customOptions={{
-                labels: names.map(cap),
+                labels: names.map((n) => tr(cap(n))),
                 colors: names.map((n, i) => statusColor(n, i)),
                 legend: { position: 'bottom', fontSize: '12px', markers: { radius: 12 }, itemMargin: { horizontal: 6, vertical: 2 } },
                 dataLabels: { enabled: false },
@@ -42,7 +43,7 @@ export const DonutChart = ({ data, height = 210, title = 'Total' }) => {
 }
 
 /** One compact card: title, big total, stacked status bar and a legend. Optional click opens the matching tab. */
-export const StackedStat = ({ title, icon, data, onClick, emptyText = 'None yet' }) => {
+export const StackedStat = ({ title, icon, data, onClick, emptyText = tr("None yet") }) => {
     const names = Object.keys(data || {}).filter((n) => data[n] > 0)
     const total = names.reduce((s, n) => s + data[n], 0)
     return (
@@ -54,10 +55,10 @@ export const StackedStat = ({ title, icon, data, onClick, emptyText = 'None yet'
             {total ? (
                 <>
                     <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                        {names.map((n, i) => <div key={n} title={`${cap(n)}: ${data[n]}`} style={{ width: `${(data[n] / total) * 100}%`, background: statusColor(n, i) }} />)}
+                        {names.map((n, i) => <div key={n} title={`${tr(cap(n))}: ${data[n]}`} style={{ width: `${(data[n] / total) * 100}%`, background: statusColor(n, i) }} />)}
                     </div>
                     <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-                        {names.map((n, i) => <span key={n} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: statusColor(n, i) }} />{cap(n)} <b className="text-gray-700 dark:text-gray-200">{data[n]}</b></span>)}
+                        {names.map((n, i) => <span key={n} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: statusColor(n, i) }} />{tr(cap(n))} <b className="text-gray-700 dark:text-gray-200">{data[n]}</b></span>)}
                     </div>
                 </>
             ) : <div className="mt-3 text-xs text-gray-400">{emptyText}</div>}

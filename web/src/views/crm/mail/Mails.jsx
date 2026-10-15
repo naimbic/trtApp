@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { TbSearch, TbWand } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Segment from '@/components/ui/Segment'
@@ -116,6 +116,7 @@ const Templates = () => {
                     <Select size="sm" isClearable placeholder={tr("All types")} options={typeOpts} value={typeOpts.find((o) => o.value === type) || null} onChange={(o) => setType(o ? o.value : null)} />
                     <Select size="sm" options={langOpts} value={langOpts.find((o) => o.value === lang) || null} onChange={(o) => o && setLanguage(o.value)} />
                 </div>
+                <p className="px-1 text-xs text-gray-400">{tr("Only the languages in use are listed.")} <Link to="/crm/settings?group=localization" className="text-primary hover:underline">{tr("Change them in Settings")}</Link></p>
                 {editable && hasDesign && <Button size="sm" icon={<TbWand />} onClick={() => setConfirm('all')}>{tr("Apply ready-made designs to all")}</Button>}
                 <div className="max-h-[640px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-600">
                     {Object.entries(grouped).map(([t, rows]) => (

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.37.1',
+        date: '2026-10-15',
+        title: 'Email templates only in the languages in use',
+        items: ['New setting Languages in use (Settings > Localization), English, Français, Español, 日本語 and العربية by default: the Mails screen lists templates in these languages only', 'Add a language there and its templates are created at once from the English ones (ready to translate); every template always exists in every language in use. Templates of a language you switch off are kept but hidden, and come back if you switch it on again']
+    },
+    {
         version: '0.37.0',
         date: '2026-10-15',
         title: 'Project pages like the template: task page, scrum board, tasks',

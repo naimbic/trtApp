@@ -112,6 +112,7 @@ export const GROUPS = {
                 f('default_timezone', 'Default time zone', 'timezone'),
             ] },
             { title: 'Language', fields: [
+                f('active_languages', 'Languages in use', 'languages', { default: 'english,french,spanish,japanese,arabic', options: LANGUAGES.map((l) => ({ value: l, label: l[0].toUpperCase() + l.slice(1) })), hint: 'Email templates exist in these languages only. Add a language and its templates are created from the English ones, ready to translate.' }),
                 sel('active_language', 'Default language', LANGUAGES.map((l) => [l, l[0].toUpperCase() + l.slice(1)]), { default: 'english' }),
                 yes('disable_language', 'Disable language selection for users', { soon: true }),
                 yes('output_client_pdfs_from_admin_area_in_client_language', 'Print client documents in the client language', { hint: 'When a client has a default language, their documents use it.' }),

@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { PermissionError, requirePermission } from '@/lib/crm/permissions'
 import { getOptions, setOptions } from '@/lib/crm/mailer'
+import { normalizeLanguages, syncTemplateLanguages } from '@/lib/crm/templateLanguages'
 import { uploadImage, dropImage, MediaError } from '@/lib/media'
 import { resetNumberingCache } from '@/lib/crm/numbering'
 import { GROUPS, ALL_FIELDS, fieldsOf, fieldMap } from '@/lib/crm/settings/registry'
@@ -32,6 +33,7 @@ export async function getSettings(group) {
 
 function clean(x, v) {
     const t = x.type
+    if (t === 'languages') return normalizeLanguages(Array.isArray(v) ? v.join(',') : v).join(',')
     if (t === 'switch') return v === true || v === '1' || v === 1 ? '1' : '0'
     if (t === 'number') {
         if (v === '' || v == null) return ''
@@ -85,6 +87,7 @@ export async function saveSettings(group, values = {}) {
     }
     await setOptions(out)
     resetNumberingCache()
+    if ('active_languages' in out || 'active_language' in out) await syncTemplateLanguages({ force: true }) // new language -> its templates are created
     return getSettings(group)
 }
 

@@ -6,6 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { buildMessage, SHELL } from '@/lib/crm/mailDesign/build'
 import { shortLink } from '@/lib/crm/shortLinks'
+import { activeLanguages, syncTemplateLanguages } from '@/lib/crm/templateLanguages'
 import { baseData, buildHtml, companyLanguage, deliver, findTemplate, getOptions, getSmtp, setOptions, smtpReady, testConnection, mergeFields, escapeHtml } from '@/lib/crm/mailer'
 
 const plain = (v) => JSON.parse(JSON.stringify(v))
@@ -319,11 +320,14 @@ export async function listMailLog({ pageIndex = 1, pageSize = 20, status } = {})
 /** Template catalog for the Templates screen. */
 export async function listTemplates({ type, language, query } = {}) {
     await requireAdminish()
-    const lang = language || (await companyLanguage())
+    const active = await activeLanguages()
+    await syncTemplateLanguages() // every active language has every template
+    const wanted = language || (await companyLanguage())
+    const lang = active.includes(wanted) ? wanted : active[0]
     const rows = await prisma.crmEmailTemplate.findMany({ where: { language: lang }, orderBy: [{ type: 'asc' }, { name: 'asc' }] })
     const q = (query || '').toLowerCase()
     const list = rows.filter((r) => (!type || r.type === type) && (!q || `${r.name} ${r.subject} ${r.slug}`.toLowerCase().includes(q)))
-    const languages = (await prisma.crmEmailTemplate.findMany({ distinct: ['language'], select: { language: true } })).map((l) => l.language).filter(Boolean).sort()
+    const languages = active
     const types = [...new Set(rows.map((r) => r.type).filter(Boolean))].sort()
     return plain({ list: list.map(({ message, ...r }) => r), language: lang, languages, types })
 }

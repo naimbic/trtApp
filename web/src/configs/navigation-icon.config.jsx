@@ -20,6 +20,7 @@ import {
     PiBookBookmarkDuotone,
     PiAcornDuotone,
     PiBagSimpleDuotone,
+    PiChatsCircleDuotone,
 } from 'react-icons/pi'
 
 import demoIcons from './navigation-icon.demo.config'
@@ -37,6 +38,7 @@ const navigationIcon = {
     dashboard: <PiChartPieSliceDuotone />,
     calendar: <PiCalendarBlankDuotone />,
     team: <PiUsersFourDuotone />,
+    chat: <PiChatsCircleDuotone />,
     crm: <PiBuildingsDuotone />,
     crmCustomers: <PiAddressBookDuotone />,
     crmLeads: <PiFunnelDuotone />,

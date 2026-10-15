@@ -58,7 +58,7 @@ export async function relaySignal(sender, room, { callId, type, payload, to }) {
     if (!(await callsEnabled())) throw fail('Calls are not activated', 403)
     if (!/^[a-zA-Z0-9-]{6,64}$/.test(String(callId || ''))) throw fail('Invalid call')
     if (!['offer', 'answer', 'ice', 'hangup', 'decline'].includes(type)) throw fail('Invalid signal')
-    if (room.kind === 'team') throw fail('Calls are for private conversations', 400)
+    if (room.kind === 'team' || room.kind === 'group') throw fail('Calls are for private conversations', 400)
     let targets = []
     if (room.kind === 'direct') targets = room.staffIds.map((i) => `staff:${i}`).filter((k) => k !== sender.key)
     else if (sender.key.startsWith('staff:')) targets = [`contact:${room.contactId}`]
@@ -128,18 +128,19 @@ async function teamRoom() {
 async function roomFor(c, id) {
     const room = oid(id) && (await prisma.crmChatRoom.findUnique({ where: { id } }))
     if (!room) throw fail('Conversation not found', 404)
-    if (room.kind === 'direct' && !room.staffIds.includes(c.staffId)) throw fail('Conversation not found', 404)
+    if ((room.kind === 'direct' || room.kind === 'group') && !room.staffIds.includes(c.staffId)) throw fail('Conversation not found', 404)
     return room
 }
 
-const shape = (m, c) => ({ id: m.id, body: m.body, attachment: attachmentOf(m), at: m.createdAt, senderType: m.senderType, senderId: m.senderId, senderName: m.senderName, mine: m.senderType === 'staff' && m.senderId === c.staffId })
+const shape = (m, c) => ({ id: m.id, body: m.body, attachment: attachmentOf(m), at: m.createdAt, senderType: m.senderType, senderId: m.senderId, senderName: m.senderName, mine: m.senderType === 'staff' && m.senderId === c.staffId, system: m.senderType === 'system' })
 
 export async function listRooms() {
     const c = await ctx()
     await touch(c.key)
     const team = await teamRoom()
-    const [direct, clients, staff, reads, pres] = await Promise.all([
+    const [direct, groups, clients, staff, reads, pres] = await Promise.all([
         prisma.crmChatRoom.findMany({ where: { kind: 'direct', staffIds: { has: c.staffId } } }),
+        prisma.crmChatRoom.findMany({ where: { kind: 'group', staffIds: { has: c.staffId } } }),
         prisma.crmChatRoom.findMany({ where: { kind: 'client' }, orderBy: { lastMessageAt: 'desc' }, take: 60 }),
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
         prisma.crmChatRead.findMany({ where: { memberKey: c.key } }),
@@ -148,9 +149,9 @@ export async function listRooms() {
     const readAt = Object.fromEntries(reads.map((r) => [r.roomId, r.readAt]))
     const live = Object.fromEntries(pres.map((p) => [p.memberKey, p.state || 'online']))
     const st = (k) => live[k] || 'offline'
-    const rooms = [team, ...direct, ...clients]
+    const rooms = [team, ...direct, ...groups, ...clients]
     // unread = messages by somebody else after the last time this person opened the room
-    const unread = Object.fromEntries(await Promise.all(rooms.map(async (r) => [r.id, await prisma.crmChatMessage.count({ where: { roomId: r.id, createdAt: { gt: readAt[r.id] || new Date(0) }, NOT: { senderType: 'staff', senderId: c.staffId } } })])))
+    const unread = Object.fromEntries(await Promise.all(rooms.map(async (r) => [r.id, await prisma.crmChatMessage.count({ where: { roomId: r.id, createdAt: { gt: readAt[r.id] || new Date(0) }, NOT: [{ senderType: 'staff', senderId: c.staffId }, { senderType: 'system' }] } })])))
     const contacts = clients.length ? await prisma.crmContact.findMany({ where: { id: { in: clients.map((r) => r.contactId).filter(Boolean) } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : []
     const clientRows = clients.length ? await prisma.crmClient.findMany({ where: { id: { in: clients.map((r) => r.clientId).filter(Boolean) } }, select: { id: true, company: true } }) : []
     const cMap = Object.fromEntries(contacts.map((x) => [x.id, x])), coMap = Object.fromEntries(clientRows.map((x) => [x.id, x.company]))
@@ -158,10 +159,11 @@ export async function listRooms() {
     const out = [
         { id: team.id, kind: 'team', title: 'Team', subtitle: `${staff.filter((s) => st(`staff:${s.id}`) === 'online').length} online`, lastMessage: team.lastMessage, lastAt: team.lastMessageAt, unread: unread[team.id] },
         ...direct.map((r) => { const other = sMap[r.staffIds.find((i) => i !== c.staffId)] || { name: 'Former colleague' }; return { id: r.id, kind: 'direct', title: other.name, image: other.image, status: other.status || 'offline', lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
+        ...groups.map((r) => ({ id: r.id, kind: 'group', title: r.name || 'Group', subtitle: `${r.staffIds.length} members`, members: r.staffIds, createdBy: r.createdBy, lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] })),
         ...clients.map((r) => { const p = cMap[r.contactId]; return { id: r.id, kind: 'client', title: p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email : 'Client', subtitle: coMap[r.clientId] || '', image: realPicture(p?.profileImage), status: st(`contact:${r.contactId}`), lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
     ]
     const people = Object.values(sMap).filter((s) => s.id !== c.staffId).sort((a, b) => (b.status === 'online') - (a.status === 'online') || (b.status === 'idle') - (a.status === 'idle') || a.name.localeCompare(b.name))
-    return { me: { id: c.staffId, name: c.name, image: c.image, admin: c.admin }, rooms: out, people, unread: out.reduce((n, r) => n + r.unread, 0), calls: await callsEnabled(), iceServers: iceServers() }
+    return { me: { id: c.staffId, name: c.name, image: c.image, admin: c.admin }, rooms: out, people, directory: Object.values(sMap), unread: out.reduce((n, r) => n + r.unread, 0), calls: await callsEnabled(), iceServers: iceServers() }
 }
 
 export async function openDirect(otherId) {
@@ -218,4 +220,76 @@ export async function staffSendSignal(body) {
     const c = await ctx()
     const room = await roomFor(c, body.roomId)
     return relaySignal({ key: c.key, name: c.name }, room, body)
+}
+
+/* ---------- group chats ---------- */
+const sys = (roomId, c, text) => prisma.crmChatMessage.create({ data: { roomId, senderType: 'system', senderId: c.staffId, senderName: c.name, body: text } })
+const cleanName = (n) => {
+    const v = String(n || '').trim().replace(/\s+/g, ' ').slice(0, 60)
+    if (!v) throw fail('Give the group a name')
+    return v
+}
+async function activeStaff(ids) {
+    const list = [...new Set((ids || []).filter(oid))]
+    return list.length ? prisma.crmStaff.findMany({ where: { id: { in: list }, active: true }, select: { id: true, firstName: true, lastName: true, email: true } }) : []
+}
+
+export async function createGroup(name, staffIds) {
+    const c = await ctx()
+    const title = cleanName(name)
+    const members = (await activeStaff(staffIds)).filter((s) => s.id !== c.staffId)
+    if (!members.length) throw fail('Choose at least one colleague')
+    const room = await prisma.crmChatRoom.create({ data: { kind: 'group', name: title, createdBy: c.staffId, staffIds: [c.staffId, ...members.map((s) => s.id)] } })
+    const m = await sys(room.id, c, `${c.name} created the group`)
+    await prisma.crmChatRoom.update({ where: { id: room.id }, data: { lastMessageAt: m.createdAt, lastMessage: m.body } })
+    return { id: room.id }
+}
+
+/** Rename, add or remove members, leave. Anyone in the group can rename and add; the creator and administrators can remove others. */
+export async function updateGroup(id, { name, add, remove, leave } = {}) {
+    const c = await ctx()
+    const room = await roomFor(c, id)
+    if (room.kind !== 'group') throw fail('Only groups can be changed')
+    const owner = room.createdBy === c.staffId || c.admin
+    const data = {}
+    let staffIds = [...room.staffIds]
+    const say = []
+    const nameOf = async (ids) => (await prisma.crmStaff.findMany({ where: { id: { in: ids } }, select: { firstName: true, lastName: true, email: true } })).map(staffName).join(', ')
+    if (name !== undefined && cleanName(name) !== room.name) { data.name = cleanName(name); say.push(`${c.name} renamed the group to “${data.name}”`) }
+    if (Array.isArray(add) && add.length) {
+        const fresh = (await activeStaff(add)).filter((s) => !staffIds.includes(s.id))
+        if (fresh.length) { staffIds.push(...fresh.map((s) => s.id)); say.push(`${c.name} added ${fresh.map(staffName).join(', ')}`) }
+    }
+    if (Array.isArray(remove) && remove.length) {
+        const gone = remove.filter((i) => oid(i) && i !== c.staffId && staffIds.includes(i))
+        if (gone.length && !owner) throw fail('Only the creator or an administrator can remove people', 403)
+        if (gone.length) { say.push(`${c.name} removed ${await nameOf(gone)}`); staffIds = staffIds.filter((i) => !gone.includes(i)) }
+    }
+    if (leave) {
+        staffIds = staffIds.filter((i) => i !== c.staffId)
+        if (!staffIds.length) { await removeRoom(room.id); return { deleted: true } }
+        say.push(`${c.name} left`)
+        if (room.createdBy === c.staffId) data.createdBy = staffIds[0]
+    }
+    if (staffIds.length !== room.staffIds.length) data.staffIds = staffIds
+    let last
+    for (const text of say) last = await sys(room.id, c, text)
+    if (last) { data.lastMessageAt = last.createdAt; data.lastMessage = last.body }
+    if (Object.keys(data).length) await prisma.crmChatRoom.update({ where: { id: room.id }, data })
+    return { ok: true, left: !!leave }
+}
+
+async function removeRoom(id) {
+    await prisma.crmChatMessage.deleteMany({ where: { roomId: id } })
+    await prisma.crmChatRead.deleteMany({ where: { roomId: id } })
+    await prisma.crmChatRoom.delete({ where: { id } })
+}
+
+export async function deleteGroup(id) {
+    const c = await ctx()
+    const room = await roomFor(c, id)
+    if (room.kind !== 'group') throw fail('Only groups can be deleted')
+    if (room.createdBy !== c.staffId && !c.admin) throw fail('Only the creator or an administrator can delete the group', 403)
+    await removeRoom(room.id)
+    return { deleted: true }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { listRooms, openDirect } from '@/lib/crm/chatApi'
+import { listRooms, openDirect, createGroup } from '@/lib/crm/chatApi'
 import { errorResponse } from '@/lib/crm/crud'
 
 export async function GET() {
@@ -7,5 +7,8 @@ export async function GET() {
 }
 
 export async function POST(request) {
-    try { return NextResponse.json(await openDirect((await request.json().catch(() => ({}))).staffId)) } catch (e) { return errorResponse(e) }
+    try {
+        const b = await request.json().catch(() => ({}))
+        return NextResponse.json(b.group ? await createGroup(b.group.name, b.group.staffIds) : await openDirect(b.staffId))
+    } catch (e) { return errorResponse(e) }
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
-import { PiChatCircleDotsFill, PiXBold, PiCaretLeftBold, PiUsersThreeDuotone, PiUserCircleDuotone, PiBuildingsDuotone, PiBellSimpleDuotone, PiBellSimpleSlashDuotone, PiPhoneCallDuotone } from 'react-icons/pi'
+import { PiChatCircleDotsFill, PiXBold, PiCaretLeftBold, PiUsersThreeDuotone, PiUserCircleDuotone, PiBuildingsDuotone, PiBellSimpleDuotone, PiBellSimpleSlashDuotone, PiPhoneCallDuotone, PiChatsCircleDuotone, PiArrowsOutSimpleDuotone } from 'react-icons/pi'
 import Avatar from '@/components/ui/Avatar'
 import classNames from '@/utils/classNames'
 import ChatThread from './ChatThread'
@@ -9,21 +10,16 @@ import useCall from './useCall'
 import { upload as uploadFile } from '@/views/crm/kit/api'
 import { StatusDot, usePresence, usePingOnIncrease } from './chatKit'
 import { useChatStatus, STATUS } from '@/store/chatStatusStore'
+import { chatApi, chatPost } from './chatClient'
 
 const POLL = 8000
-const api = async (url, init) => {
-    const r = await fetch(`/api/crm/chat${url}`, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init })
-    const j = await r.json().catch(() => ({}))
-    if (!r.ok) throw new Error(j.error || 'Request failed')
-    return j
-}
-
-const post = (url, body) => api(url, { method: 'POST', body: JSON.stringify(body) })
+const api = chatApi
+const post = chatPost
 
 const Face = ({ r }) => (
     <div className="relative shrink-0">
-        {r.kind === 'team' ? <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xl text-primary"><PiUsersThreeDuotone /></div> : <Avatar size={40} shape="circle" src={r.image || undefined} icon={r.image ? undefined : <PiUserCircleDuotone />} />}
-        {r.kind !== 'team' && <StatusDot status={r.status} className="absolute -bottom-0.5 -right-0.5" />}
+        {r.kind === 'team' || r.kind === 'group' ? <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xl text-primary">{r.kind === 'group' ? <PiChatsCircleDuotone /> : <PiUsersThreeDuotone />}</div> : <Avatar size={40} shape="circle" src={r.image || undefined} icon={r.image ? undefined : <PiUserCircleDuotone />} />}
+        {r.kind !== 'team' && r.kind !== 'group' && <StatusDot status={r.status} className="absolute -bottom-0.5 -right-0.5" />}
     </div>
 )
 
@@ -42,6 +38,8 @@ const TABS = [['chats', 'Chats'], ['people', 'People'], ['clients', 'Clients']]
 
 const ChatWidget = () => {
     const [open, setOpen] = useState(false)
+    const navigate = useNavigate()
+    const onPage = useLocation().pathname.startsWith('/crm/chat')
     const [data, setData] = useState(null)
     const [tab, setTab] = useState('chats')
     const [room, setRoom] = useState(null) // { id, title, kind, image, online }
@@ -64,6 +62,7 @@ const ChatWidget = () => {
     const sendSignal = useCallback((b) => api('/signals', { method: 'POST', body: JSON.stringify(b) }), [])
     const logCall = useCallback((roomId, body) => { api(`/rooms/${roomId}`, { method: 'POST', body: JSON.stringify({ body }) }).then(refresh).catch(() => {}) }, [refresh])
     const phone = useCall({ fetchSignals, sendSignal, enabled: !!data?.calls, iceServers: data?.iceServers, onLog: logCall })
+    useEffect(() => { const h = (e) => phone.start(e.detail); window.addEventListener('trt-chat-call', h); return () => window.removeEventListener('trt-chat-call', h) }, [phone])
     const setCalls = async (calls) => { try { await api('/settings', { method: 'POST', body: JSON.stringify({ calls }) }); refresh() } catch { /* not allowed */ } }
     const onData = useCallback((x) => setTheirStatus(x.status ?? null), [])
 
@@ -80,24 +79,24 @@ const ChatWidget = () => {
     return (
         <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
             <CallOverlay c={phone} />
-            {open && (
+            {open && !onPage && (
                 <div className="flex h-[min(560px,calc(100vh-110px))] w-[min(380px,calc(100vw-40px))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800">
                     {room ? (
                         <>
                             <div className="flex items-center gap-3 border-b border-gray-200 px-3 py-3 dark:border-gray-700">
                                 <button type="button" className="text-lg text-gray-500" onClick={() => { setRoom(null); refresh() }}><PiCaretLeftBold /></button>
                                 <Face r={{ ...room, status: theirStatus ?? room.status }} />
-                                <div className="min-w-0 flex-1"><div className="truncate font-bold text-gray-900 dark:text-gray-100">{room.title}</div><div className="text-xs text-gray-500">{room.kind === 'team' ? `${peopleOnline + 1} online` : (theirStatus ?? room.status) === 'online' ? 'Available now' : (theirStatus ?? room.status) === 'offline' ? (room.kind === 'client' ? 'Offline · will see your reply later' : 'Offline') : `${STATUS[theirStatus ?? room.status].label} · may reply late`}</div></div>
-                                {data.calls && room.kind !== 'team' && <button type="button" className="text-xl text-primary" title="Voice call" onClick={() => phone.start({ roomId: room.id, peerName: room.title })}><PiPhoneCallDuotone /></button>}
+                                <div className="min-w-0 flex-1"><div className="truncate font-bold text-gray-900 dark:text-gray-100">{room.title}</div><div className="text-xs text-gray-500">{room.kind === 'group' ? room.subtitle : room.kind === 'team' ? `${peopleOnline + 1} online` : (theirStatus ?? room.status) === 'online' ? 'Available now' : (theirStatus ?? room.status) === 'offline' ? (room.kind === 'client' ? 'Offline · will see your reply later' : 'Offline') : `${STATUS[theirStatus ?? room.status].label} · may reply late`}</div></div>
+                                {data.calls && room.kind !== 'team' && room.kind !== 'group' && <button type="button" className="text-xl text-primary" title="Voice call" onClick={() => phone.start({ roomId: room.id, peerName: room.title })}><PiPhoneCallDuotone /></button>}
                                 <button type="button" className="text-lg text-gray-400" onClick={() => setOpen(false)}><PiXBold /></button>
                             </div>
-                            <ChatThread load={loadMsgs} send={sendMsg} upload={uploadMsg} onData={onData} showSender={room.kind === 'team'} />
+                            <ChatThread load={loadMsgs} send={sendMsg} upload={uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} />
                         </>
                     ) : (
                         <>
                             <div className="flex items-center justify-between px-4 pt-4">
                                 <div><div className="text-lg font-bold text-gray-900 dark:text-gray-100">Chat</div><div className="flex items-center gap-1.5 text-xs text-gray-500"><StatusDot status={mine} className="!border-0" />You: {STATUS[mine].label} · {peopleOnline} colleague{peopleOnline === 1 ? '' : 's'} available</div></div>
-                                <div className="flex items-center gap-3 text-lg text-gray-400">{data.me?.admin && <button type="button" title={data.calls ? 'Voice calls are on (click to turn off)' : 'Voice calls are off (click to turn on)'} onClick={() => setCalls(!data.calls)} className={data.calls ? 'text-emerald-500' : ''}><PiPhoneCallDuotone /></button>}<button type="button" title={muted ? 'Sound off' : 'Sound on'} onClick={() => setMuted(!muted)}>{muted ? <PiBellSimpleSlashDuotone /> : <PiBellSimpleDuotone />}</button><button type="button" onClick={() => setOpen(false)}><PiXBold /></button></div>
+                                <div className="flex items-center gap-3 text-lg text-gray-400"><button type="button" title="Open the full chat page" onClick={() => { setOpen(false); navigate('/crm/chat') }}><PiArrowsOutSimpleDuotone /></button>{data.me?.admin && <button type="button" title={data.calls ? 'Voice calls are on (click to turn off)' : 'Voice calls are off (click to turn on)'} onClick={() => setCalls(!data.calls)} className={data.calls ? 'text-emerald-500' : ''}><PiPhoneCallDuotone /></button>}<button type="button" title={muted ? 'Sound off' : 'Sound on'} onClick={() => setMuted(!muted)}>{muted ? <PiBellSimpleSlashDuotone /> : <PiBellSimpleDuotone />}</button><button type="button" onClick={() => setOpen(false)}><PiXBold /></button></div>
                             </div>
                             <div className="flex gap-1 px-3 pb-2 pt-3">
                                 {TABS.map(([k, label]) => (
@@ -119,10 +118,10 @@ const ChatWidget = () => {
                     )}
                 </div>
             )}
-            <button type="button" onClick={() => setOpen((o) => !o)} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-3xl text-white shadow-xl transition-transform hover:scale-105" title="Chat">
+            {!onPage && <button type="button" onClick={() => setOpen((o) => !o)} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-3xl text-white shadow-xl transition-transform hover:scale-105" title="Chat">
                 {open ? <PiXBold className="text-2xl" /> : <PiChatCircleDotsFill />}
                 {!open && data.unread > 0 && <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">{data.unread}</span>}
-            </button>
+            </button>}
         </div>
     )
 }

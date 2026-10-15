@@ -106,6 +106,7 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = 'N
                 {msgs && !msgs.length && <div className="py-10 text-center text-sm text-gray-400">{empty}</div>}
                 {(msgs || []).map((m, i) => {
                     const prev = msgs[i - 1]
+                    if (m.system) return <div key={m.id} className="py-2 text-center text-xs text-gray-400">{m.body} · {time(m.at)}</div>
                     const firstOfRun = !prev || prev.mine !== m.mine || prev.senderName !== m.senderName || +new Date(m.at) - +new Date(prev.at) > 5 * 60000
                     return (
                         <div key={m.id} className={classNames('flex flex-col', m.mine ? 'items-end' : 'items-start', firstOfRun && i > 0 && 'pt-2')}>

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.31.0',
+        date: '2026-10-15',
+        title: 'Chat page and group chats',
+        items: ['New Chat page in the sidebar (under Calendar): conversations on the left with search, tabs (All, Groups, Direct, Clients), unread counters, last message and time; the open conversation on the right with files, pictures, voice messages and calls, and a details panel; on a phone it shows the list or the conversation, one at a time', 'Group chats: New group asks for a name and the colleagues to add; inside the group, anyone can rename it and add people, the creator and administrators can remove people or delete it, anyone can leave; the conversation records who joined, left or renamed it', 'New chat starts a private conversation from a searchable list of colleagues with their status', 'The chat bubble stays on the other pages (groups show there too, with a button that opens the full page) and hides on the Chat page']
+    },
+    {
         version: '0.30.26',
         date: '2026-10-15',
         title: 'Invoice page redesign, drag to reorder lines',

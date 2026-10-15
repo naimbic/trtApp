@@ -38,6 +38,16 @@ const navigationConfig = [
         subMenu: [],
     },
     {
+        key: 'chat',
+        path: '/crm/chat',
+        title: 'Chat',
+        translateKey: 'nav.chat',
+        icon: 'chat',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [],
+        subMenu: [],
+    },
+    {
         key: 'team',
         path: '/team',
         title: 'Team',

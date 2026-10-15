@@ -501,11 +501,13 @@ model CrmPasswordLog {
   @@map("crm_password_log")
 }
 
-// Chat: one team room, direct staff-to-staff rooms and one room per client contact (staff <-> client).
+// Chat: one team room, direct staff-to-staff rooms, named group rooms (staffIds = members) and one room per client contact (staff <-> client).
 model CrmChatRoom {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   kind           String
   staffIds       String[] @db.ObjectId
+  name           String?
+  createdBy      String?  @db.ObjectId
   clientId       String?  @db.ObjectId
   contactId      String?  @db.ObjectId
   lastMessageAt  DateTime @default(now())

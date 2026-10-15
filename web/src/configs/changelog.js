@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.4',
+        date: '2026-10-15',
+        title: 'Compact roles page',
+        items: ['Roles & permissions: the role name is now a small field in the toolbar (same row as search and presets) instead of a big block; role tabs, group chips, card headers and rows are all tighter'],
+    },
+    {
         version: '0.29.3',
         date: '2026-10-15',
         title: 'Roles as top tabs',

@@ -95,7 +95,7 @@ const RolesPanel = () => {
     }
 
     return (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
                 <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
                     {loading && <span className="px-2 py-2 text-sm text-gray-400">Loading…</span>}
@@ -104,36 +104,26 @@ const RolesPanel = () => {
                             key={r.id}
                             type="button"
                             onClick={() => pick(r)}
-                            className={cn('flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-2.5 text-left transition-colors', selected === r.id ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white hover:border-primary/50 dark:border-gray-600 dark:bg-gray-800')}
+                            className={cn('flex shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-colors', selected === r.id ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white hover:border-primary/50 dark:border-gray-600 dark:bg-gray-800')}
                         >
-                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/70 text-lg dark:bg-gray-700"><TbShieldCheck /></span>
+                            <span className="text-lg"><TbShieldCheck /></span>
                             <span className="min-w-0">
-                                <span className="block truncate font-semibold">{r.name}</span>
-                                <span className="block text-xs text-gray-500">{r.members} member{r.members === 1 ? '' : 's'} · {r.permissionCount} on</span>
+                                <span className="block truncate text-sm font-semibold leading-tight">{r.name}</span>
+                                <span className="block text-[11px] leading-tight text-gray-500">{r.members} member{r.members === 1 ? '' : 's'} · {r.permissionCount} on</span>
                             </span>
                         </button>
                     ))}
-                    {selected === 'new' && <span className="flex shrink-0 items-center rounded-2xl border border-dashed border-primary px-4 py-2.5 text-sm font-semibold text-primary">New role (unsaved)</span>}
+                    {selected === 'new' && <span className="flex shrink-0 items-center rounded-xl border border-dashed border-primary px-3 py-1.5 text-sm font-semibold text-primary">New role (unsaved)</span>}
                     {!loading && !roles.length && selected !== 'new' && <span className="px-2 py-2 text-sm text-gray-400">No roles yet</span>}
                 </div>
-                <Button variant="solid" icon={<TbPlus />} onClick={startNew}>New role</Button>
+                <Button size="sm" variant="solid" icon={<TbPlus />} onClick={startNew}>New role</Button>
             </div>
 
             <Card className="min-w-0">
                 {selected ? (
                     <>
-                        <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-gray-100 pb-5 dark:border-gray-700">
-                            <div className="w-full sm:w-96">
-                                <label className="mb-1.5 block text-sm font-semibold">Role name</label>
-                                <Input placeholder="e.g. Sales manager" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-                            </div>
-                            <div className="flex gap-6 text-sm">
-                                <div><div className="text-xs uppercase tracking-wide text-gray-400">Permissions on</div><div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{count(draft.permissions)}</div></div>
-                                <div><div className="text-xs uppercase tracking-wide text-gray-400">Members</div><div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{selected === 'new' ? 0 : current?.members ?? 0}</div></div>
-                            </div>
-                        </div>
                         {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
-                        <PermissionMatrix value={draft.permissions} onChange={(permissions) => setDraft({ ...draft, permissions })} />
+                        <PermissionMatrix value={draft.permissions} onChange={(permissions) => setDraft({ ...draft, permissions })} toolbarStart={<div className="w-full sm:w-56"><Input size="sm" aria-label="Role name" placeholder="Role name, e.g. Sales manager" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></div>} />
                         <p className="mt-3 text-xs text-gray-500">
                             Roles are templates: a member gets the role&apos;s permissions when the role is assigned. Use &quot;Save &amp; apply to members&quot; to push changes to everyone who already has this role. Administrators always have full access.
                         </p>

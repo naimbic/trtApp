@@ -30,7 +30,7 @@ const Option = ({ label, checked, onChange, disabled, hint }) => (
  * Permission editor. value = { feature: [capabilities] }. One card per group, one row per feature with a switch for
  * every capability (view and view own are mutually exclusive, a person with "view" never needs "view own").
  */
-const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
+const PermissionMatrix = ({ value = {}, onChange, disabled, toolbarStart }) => {
     const [q, setQ] = useState('')
     const has = (f, c) => (value[f] || []).includes(c)
 
@@ -72,10 +72,11 @@ const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
     const total = Object.values(value).reduce((n, c) => n + c.length, 0)
 
     return (
-        <div className="flex min-w-0 flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-                <div className="w-full sm:w-72"><Input size="sm" prefix={<TbSearch />} placeholder="Search a feature" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-                <span className="text-sm text-gray-500">{total} permission{total === 1 ? '' : 's'} on</span>
+        <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+                {toolbarStart}
+                <div className="w-full sm:w-56"><Input size="sm" prefix={<TbSearch />} placeholder="Search a feature" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+                <Tag className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-200">{total} on</Tag>
                 {!disabled && (
                     <div className="ml-auto flex flex-wrap gap-2">
                         <Button size="xs" onClick={() => preset('read')}>Read only</Button>
@@ -86,11 +87,11 @@ const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
             </div>
 
             {groups.length > 1 && (
-                <div className="sticky top-16 z-10 -mx-1 flex gap-2 overflow-x-auto bg-white/95 px-1 py-2 backdrop-blur dark:bg-gray-800/95">
+                <div className="sticky top-16 z-10 -mx-1 flex gap-1.5 overflow-x-auto bg-white/95 px-1 py-1.5 backdrop-blur dark:bg-gray-800/95">
                     {groups.map((g) => {
                         const n = g.features.reduce((acc, f) => acc + (value[f.key]?.length || 0), 0)
                         return (
-                            <button key={g.group} type="button" onClick={() => document.getElementById(slug(g.group))?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="flex shrink-0 items-center gap-2 rounded-full border border-gray-200 px-3 py-1 text-sm font-semibold text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300">
+                            <button key={g.group} type="button" onClick={() => document.getElementById(slug(g.group))?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="flex shrink-0 items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-semibold text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300">
                                 {g.group}<span className={`rounded-full px-1.5 text-xs ${n ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400 dark:bg-gray-700'}`}>{n}</span>
                             </button>
                         )
@@ -105,12 +106,12 @@ const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
                 const std = g.features.some((f) => !listOnly(f))
                 return (
                     <Card key={g.group} id={slug(g.group)} bodyClass="p-0" className={`scroll-mt-32 overflow-hidden ${money ? 'border-amber-200 dark:border-amber-500/30' : ''}`}>
-                        <div className={`flex items-center justify-between gap-3 px-5 py-3.5 ${money ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-gray-50 dark:bg-gray-700/40'}`}>
-                            <div className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">{money ? <TbCoin className="text-xl text-amber-500" /> : <TbLock className="text-xl text-gray-400" />}{g.group}<Tag className="ml-1 bg-white text-gray-600 dark:bg-gray-600 dark:text-gray-100">{on} on</Tag></div>
+                        <div className={`flex items-center justify-between gap-3 px-4 py-2 ${money ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-gray-50 dark:bg-gray-700/40'}`}>
+                            <div className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-gray-100">{money ? <TbCoin className="text-xl text-amber-500" /> : <TbLock className="text-xl text-gray-400" />}{g.group}<Tag className="ml-1 bg-white text-gray-600 dark:bg-gray-600 dark:text-gray-100">{on} on</Tag></div>
                             <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-300"><span>Allow all</span><Switcher checked={allOn} disabled={disabled} onChange={(v) => setMany(g.features, v)} /></label>
                         </div>
                         {std && (
-                            <div className={`${GRID} border-y border-gray-100 px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:border-gray-700`}>
+                            <div className={`${GRID} border-y border-gray-100 px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:border-gray-700`}>
                                 <span>Feature</span>
                                 {STD_CAPS.map((c) => <span key={c} className="text-center">{capLabel(c)}</span>)}
                             </div>
@@ -122,14 +123,14 @@ const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
                                 const plain = listOnly(f)
                                 const extras = plain ? f.caps : f.caps.filter((c) => !isStd(c))
                                 return (
-                                    <div key={f.key} className="px-5 py-3.5 transition-colors hover:bg-gray-50/70 dark:hover:bg-gray-700/20">
+                                    <div key={f.key} className="px-4 py-2 transition-colors hover:bg-gray-50/70 dark:hover:bg-gray-700/20">
                                         <div className={plain ? '' : GRID}>
                                             <div className="min-w-0">
-                                                <label className="flex cursor-pointer items-center gap-3 font-semibold text-gray-900 dark:text-gray-100">
+                                                <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
                                                     <Switcher checked={everything} disabled={disabled} onChange={(v) => setRow(f, v)} />
                                                     <span className="truncate">{f.label}</span>
                                                 </label>
-                                                {hint && <p className="ml-[3.25rem] mt-1 text-xs leading-relaxed text-gray-500">{hint}</p>}
+                                                {hint && <p className="ml-[3.25rem] text-[11px] leading-snug text-gray-500">{hint}</p>}
                                             </div>
                                             {!plain && STD_CAPS.map((c) => (
                                                 <div key={c} className="flex justify-center">
@@ -140,7 +141,7 @@ const PermissionMatrix = ({ value = {}, onChange, disabled }) => {
                                             ))}
                                         </div>
                                         {extras.length > 0 && (
-                                            <div className="ml-[3.25rem] mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                                            <div className="ml-[3.25rem] mt-2 grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2 xl:grid-cols-4">
                                                 {extras.map((c) => <Option key={c} label={labelFor(f, c)} checked={has(f.key, c)} disabled={disabled} onChange={(v) => set(f.key, c, v)} />)}
                                             </div>
                                         )}

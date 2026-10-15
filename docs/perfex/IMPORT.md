@@ -41,3 +41,10 @@ node scripts/perfex-import/upload-profile-images.mjs <data-dir>/perfex-core/site
 # another database (e.g. staging) restored from the same dump: create only the file rows from the file written by --apply
 node scripts/perfex-import/upload-attachments.mjs --rows perfex-media-rows.json
 ```
+
+```bash
+# pictures inside contracts / e-mail templates / tickets that point to https://trtcrm.com/media/... -> Space + rewritten links
+node scripts/perfex-import/rewrite-media-urls.mjs <data-dir>/perfex-core/site [--apply]
+# on another database (files are already in the Space):
+node scripts/perfex-import/rewrite-media-urls.mjs --replace-only
+```

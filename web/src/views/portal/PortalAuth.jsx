@@ -14,7 +14,7 @@ const Head = ({ title, text }) => {
     const mode = useThemeStore((s) => s.mode)
     return (
         <>
-            <div className="mb-8"><Logo type="streamline" mode={mode} imgClass="mx-auto" logoWidth={60} /></div>
+            <div className="mb-8"><Logo type="full" mode={mode} imgClass="mx-auto h-12 w-full object-contain" logoWidth={200} /></div>
             <div className="mb-8"><h2 className="mb-2">{title}</h2><p className="font-semibold heading-text">{text}</p></div>
         </>
     )

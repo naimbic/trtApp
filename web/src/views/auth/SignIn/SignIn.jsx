@@ -19,10 +19,10 @@ export const SignInBase = ({
         <>
             <div className="mb-8">
                 <Logo
-                    type="streamline"
+                    type="full"
                     mode={mode}
-                    imgClass="mx-auto"
-                    logoWidth={60}
+                    imgClass="h-12 w-full object-contain object-left"
+                    logoWidth={200}
                 />
             </div>
             <div className="mb-10">

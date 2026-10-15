@@ -1,4 +1,5 @@
 import { cloneElement } from 'react'
+import Logo from '@/components/template/Logo'
 
 const Side = ({ children, ...rest }) => {
     return (
@@ -14,9 +15,12 @@ const Side = ({ children, ...rest }) => {
             </div>
             <div className="py-6 px-10 lg:flex flex-col flex-1 justify-between hidden rounded-3xl items-end relative xl:max-w-[520px] 2xl:max-w-[720px]">
                 <div className="absolute left-0 top-0 h-full w-full rounded-3xl bg-gradient-to-br from-primary via-primary-deep to-primary-deep" />
-                <div className="relative z-10 flex h-full w-full flex-col justify-end text-white">
+                <div className="relative z-10 flex h-full w-full flex-col justify-between text-white">
+                    <Logo mode="dark" type="full" logoWidth={210} imgClass="h-14 w-full object-contain object-left brightness-0 invert" />
+                    <div>
                     <h2 className="text-white">trtCRM</h2>
                     <p className="mt-3 max-w-md text-base font-semibold opacity-80">Clients, sales, projects, tasks and support in one place.</p>
+                    </div>
                 </div>
             </div>
         </div>

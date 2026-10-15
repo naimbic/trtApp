@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.1',
+        date: '2026-10-15',
+        title: 'Login pages',
+        items: ['Sign-in, sign-up and the client area sign-in now show the full trtdigital logo (not the small icon), and the coloured side panel shows the logo in white with the tagline'],
+    },
+    {
         version: '0.30.0',
         date: '2026-10-15',
         title: 'Super Admin vs Admin',

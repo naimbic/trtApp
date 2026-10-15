@@ -30,6 +30,7 @@ const ContractEditor = () => {
 
     useEffect(() => {
         Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id ? api(`/api/crm/sales/contracts/${id}`) : null]).then(([l, c]) => {
+            if (c?.locked) { notify('warning', 'A signed contract cannot be edited'); navigate(`/crm/contracts/${id}`, { replace: true }); return }
             setTypes(l.stats?.types || [])
             setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: day(c.dateStart), dateEnd: day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, signed: c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: null, projectId: null, dateStart: day(new Date()), dateEnd: '', value: '', description: '', content: '', hidden: false, signed: false })
         }).catch((e) => setError(e.message))

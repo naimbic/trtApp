@@ -56,6 +56,7 @@ const ContractView = () => {
     if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/contracts')}>Back to contracts</Button></Container>
     if (!c) return <Container><div className="py-20 text-center text-gray-400">Loading…</div></Container>
     const signed = c.signed || c.markedAsSigned
+    const locked = !!c.locked // a signed contract is final: no edit, no delete
 
     return (
         <Container>
@@ -63,16 +64,16 @@ const ContractView = () => {
                 <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/contracts')} />
                 <h3 className="mr-1 max-w-[60%] truncate">{c.subject}</h3>
                 <StateTag state={c.state} />
-                <Tag className={signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{signed ? 'Signed' : 'Not signed'}</Tag>
+                <Tag className={signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{signed ? 'Signed' : 'Not signed'}</Tag>{locked && <span className="text-xs text-gray-400">Signed contracts cannot be edited</span>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/contracts/${id}/pdf`, '_blank')}>PDF</Button>
                     {c.hash && !c.trash && !c.hidden && <Button size="sm" icon={<TbCopy />} onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/api/crm/public/contract/${id}/${c.hash}`); notify('success', 'Client link copied') } catch { notify('danger', 'Could not copy') } }}>Client link</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbMail />} onClick={() => setMailOpen(true)}>Send</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbRefresh />} onClick={() => setRenew({ newStartDate: dayjs(c.dateEnd || new Date()).format('YYYY-MM-DD'), newEndDate: dayjs(c.dateEnd || new Date()).add(1, 'year').format('YYYY-MM-DD'), newValue: c.value })}>Renew</Button>}
-                    {can('contracts', 'edit') && <Button size="sm" icon={<TbSignature />} loading={busy} onClick={() => act(signed ? 'unsign' : 'sign', {}, signed ? 'Marked as not signed' : 'Marked as signed')}>{signed ? 'Mark as not signed' : 'Mark as signed'}</Button>}
-                    {can('contracts', 'edit') && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/contracts/${id}/edit`)}>Edit</Button>}
+                    {can('contracts', 'edit') && !c.eSigned && <Button size="sm" icon={<TbSignature />} loading={busy} onClick={() => act(signed ? 'unsign' : 'sign', {}, signed ? 'Marked as not signed' : 'Marked as signed')}>{signed ? 'Mark as not signed' : 'Mark as signed'}</Button>}
+                    {can('contracts', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/contracts/${id}/edit`)}>Edit</Button>}
                     {can('contracts', 'edit') && (c.trash ? <Button size="sm" icon={<TbTrashOff />} loading={busy} onClick={() => act('restore', {}, 'Contract restored')}>Restore</Button> : <Button size="sm" icon={<TbTrash />} loading={busy} onClick={() => act('trash', {}, 'Moved to trash')}>Trash</Button>)}
-                    {can('contracts', 'delete') && <Button size="sm" variant="plain" className="text-red-500" onClick={() => setConfirm('delete')}>Delete</Button>}
+                    {can('contracts', 'delete') && !locked && <Button size="sm" variant="plain" className="text-red-500" onClick={() => setConfirm('delete')}>Delete</Button>}
                 </div>
             </div>
 
@@ -113,7 +114,7 @@ const ContractView = () => {
                                 <tbody>{c.renewals.map((r) => (<tr key={r.id} className="border-b"><td className="py-2">{fmtDate(r.dateRenewed)}</td><td className="py-2">{r.renewedBy || '—'}</td><td className="py-2">{fmtDate(r.oldStartDate)} → {fmtDate(r.oldEndDate)} <span className="text-gray-400">to</span> {fmtDate(r.newStartDate)} → {fmtDate(r.newEndDate)}</td><td className="py-2 text-right tabular-nums">{r.oldValue != null ? money(r.oldValue, baseCur, { decimals: 0 }) : '—'} → {r.newValue != null ? money(r.newValue, baseCur, { decimals: 0 }) : '—'}</td></tr>))}</tbody></table>
                         ) : <p className="text-gray-400">This contract has not been renewed.</p>)}
                         {tab === 'signature' && (c.acceptance || signed ? (
-                            <div className="grid max-w-xl grid-cols-2 gap-4 text-sm"><Field label="Status">{c.markedAsSigned ? 'Marked as signed by staff' : 'Signed by the client'}</Field><Field label="Signed by">{c.acceptance?.name}</Field><Field label="Email">{c.acceptance?.email}</Field><Field label="Date">{c.acceptance?.date ? dayjs(c.acceptance.date).format('YYYY-MM-DD HH:mm') : ''}</Field></div>
+                            <div className="grid max-w-xl grid-cols-2 gap-4 text-sm"><Field label="Status">{c.markedAsSigned ? 'Marked as signed by staff' : 'Signed by the client'}</Field><Field label="Signed by">{c.acceptance?.name}</Field><Field label="Email">{c.acceptance?.email}</Field><Field label="Date and time">{c.acceptance?.date ? dayjs(c.acceptance.date).format('YYYY-MM-DD HH:mm:ss') : ''}</Field><Field label="IP address"><span className="font-mono">{c.acceptance?.ip}</span></Field>{c.acceptance?.signature && <div className="col-span-2"><div className="mb-1 text-xs uppercase tracking-wide text-gray-400">Signature</div><img src={c.acceptance.signature} alt="Signature" className="max-h-28 rounded-lg border border-gray-200 bg-white p-2" /></div>}</div>
                         ) : <p className="text-gray-400">Not signed yet.</p>)}
                     </div>
                 </Tabs>

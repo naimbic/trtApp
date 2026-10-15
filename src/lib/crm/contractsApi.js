@@ -77,7 +77,9 @@ export async function getContract(id) {
     return {
         id: c.id, clientId: c.clientId, typeId: c.contractTypeId, projectId: c.projectId, hash: c.hash, subject: c.subject, description: c.description, content: c.content, value: c.contractValue || 0, dateStart: c.dateStart, dateEnd: c.dateEnd,
         client, type: type ? { id: type.id, name: type.name } : null, signed: c.signed, markedAsSigned: c.markedAsSigned, trash: c.trash, hidden: c.notVisibleToClient,
-        acceptance: c.signed ? { name: [c.acceptanceFirstname, c.acceptanceLastname].filter(Boolean).join(' '), email: c.acceptanceEmail, date: c.acceptanceDate, ip: c.acceptanceIp } : null,
+        // what the client signed with: name, email, the exact time, the address it came from and the drawn signature
+        acceptance: c.signed ? { name: [c.acceptanceFirstname, c.acceptanceLastname].filter(Boolean).join(' '), email: c.acceptanceEmail, date: c.acceptanceDate, ip: c.acceptanceIp ? String(c.acceptanceIp).replace(/^::ffff:/i, '') : null, signature: c.signature?.startsWith('data:image/png;base64,') ? c.signature : null } : null,
+        locked: !!(c.signed || c.markedAsSigned), eSigned: !!c.signature,
         state: st, stateLabel: STATE_LABEL[st], createdAt: c.createdAt, updatedAt: c.updatedAt,
         comments: comments.map((x) => ({ id: x.id, content: x.content, staff: sname[x.staffId] || '', createdAt: x.createdAt })),
         renewals: renewals.map((r) => ({ id: r.id, oldStartDate: r.oldStartDate, newStartDate: r.newStartDate, oldEndDate: r.oldEndDate, newEndDate: r.newEndDate, oldValue: r.oldValue, newValue: r.newValue, dateRenewed: r.dateRenewed, renewedBy: r.renewedBy || sname[r.renewedByStaffId] || '' })),
@@ -90,7 +92,11 @@ export async function contractAction(id, { action, ...body }) {
     const c = await mustFind(session, id)
     const staffId = await getStaffId(session)
     if (action === 'sign') await prisma.crmContract.update({ where: { id }, data: { markedAsSigned: true, signed: true, acceptanceDate: c.acceptanceDate || new Date() } })
-    else if (action === 'unsign') await prisma.crmContract.update({ where: { id }, data: { markedAsSigned: false, signed: false } })
+    else if (action === 'unsign') {
+        // only a manual "marked as signed" can be taken back; what the client signed on screen is final
+        if (c.signature) throw httpError('A contract signed by the client cannot be changed back to not signed')
+        await prisma.crmContract.update({ where: { id }, data: { markedAsSigned: false, signed: false } })
+    }
     else if (action === 'trash') await prisma.crmContract.update({ where: { id }, data: { trash: true } })
     else if (action === 'restore') await prisma.crmContract.update({ where: { id }, data: { trash: false } })
     else if (action === 'renew') {
@@ -138,7 +144,7 @@ export async function saveContract(body, id) {
     const data = { subject, description: String(body.description || '').trim() || null, content: body.content ?? null, clientId: oid(body.clientId), contractTypeId: oid(body.typeId), projectId: oid(body.projectId), dateStart: start, dateEnd: end, contractValue: body.value === '' || body.value == null ? null : Number(body.value) || 0, notVisibleToClient: !!body.hidden }
     if (id) {
         const prev = await mustFind(session, id)
-        if ((prev.signed || prev.markedAsSigned) && prev.content !== data.content) throw httpError('A signed contract cannot change its text. Mark it as not signed first.')
+        if (prev.signed || prev.markedAsSigned) throw httpError('A signed contract cannot be edited', 409)
         await prisma.crmContract.update({ where: { id }, data })
         return { success: true, id }
     }
@@ -149,7 +155,8 @@ export async function saveContract(body, id) {
 
 export async function deleteContract(id) {
     const session = await requirePermission('contracts', 'delete')
-    await mustFind(session, id)
+    const cur = await mustFind(session, id)
+    if (cur.signed || cur.markedAsSigned) throw httpError('A signed contract cannot be deleted', 409)
     await prisma.crmContractComment.deleteMany({ where: { contractId: id } })
     await prisma.crmContractRenewal.deleteMany({ where: { contractId: id } })
     await prisma.crmFile.deleteMany({ where: { relType: 'contract', relId: id } }).catch(() => {})

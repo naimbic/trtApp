@@ -135,7 +135,7 @@ const ClientDetail = () => {
             { key: 'overview', label: 'Overview' },
             rel('invoices', 'Invoices', c.counts.invoices, 'invoices', { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: cols('invoices') }),
             { key: 'payments', label: 'Payments', feature: 'payments' },
-            rel('contracts', 'Contracts', c.counts.contracts, 'contracts', { resource: 'contracts', where, initial: { clientId: id }, hide: ['clientId'], columns: cols('contracts') }),
+            rel('contracts', 'Contracts', c.counts.contracts, 'contracts', { resource: 'contracts', where, openPath: (r) => `/crm/contracts/${r.id}`, newPath: `/crm/contracts/new?clientId=${id}`, columns: cols('contracts') }),
             rel('estimates', 'Estimates', c.counts.estimates, 'estimates', { resource: 'estimates', where, openPath: (r) => `/crm/estimates/${r.id}`, newPath: `/crm/estimates/new?clientId=${id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('estimates') }),
             rel('proposals', 'Proposals', c.counts.proposals, 'proposals', { resource: 'proposals', where: { relType: 'customer', relId: id }, openPath: (r) => `/crm/proposals/${r.id}`, newPath: `/crm/proposals/new?clientId=${id}`, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'] }),
             rel('projects', 'Projects', c.counts.projects, 'projects', { resource: 'projects', where, openPath: (r) => `/crm/projects/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('projects') }),

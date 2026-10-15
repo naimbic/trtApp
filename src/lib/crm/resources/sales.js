@@ -296,6 +296,8 @@ const resources = [
     },
     {
         key: 'contracts', model: 'crmContract', label: 'Contract', plural: 'Contracts', group: G, icon: 'TbFileCertificate',
+        // a signed contract is final: no edit, no delete from the generic screens either
+        lock: (row) => (row.signed || row.markedAsSigned ? 'A signed contract cannot be edited or deleted' : null),
         feature: 'contracts', titleField: 'subject', search: ['subject', 'description'],
         defaultSort: { dateStart: 'desc' },
         columns: [

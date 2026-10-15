@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.25',
+        date: '2026-10-15',
+        title: 'Contracts: open, lock when signed, signing proof',
+        items: ['Client page -> Contracts: clicking a contract opens the contract (not the editor); New contract opens the editor with the client already chosen', 'A signed contract is final: it cannot be edited or deleted (the editor, the lists and the API all refuse); the Edit and Delete buttons are gone and the editor sends you back to the contract. A contract the client signed on screen cannot be marked as not signed; a contract marked as signed by staff still can. Renewing and the trash still work', 'Signing proof: the exact date and time (to the second, in the company time zone), the IP address, the email and the drawn signature are kept and shown on the staff Signature tab, on the public contract page (banner and signature box) and in the contract PDF']
+    },
+    {
         version: '0.30.24',
         date: '2026-10-15',
         title: 'Document numbers without slashes',

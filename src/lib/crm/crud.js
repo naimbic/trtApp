@@ -210,7 +210,9 @@ export async function updateRecord(key, id, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.feature, 'edit')
-    await getRecord(key, id) // enforces view_own scope
+    const current = await getRecord(key, id) // enforces view_own scope
+    const locked = resource.lock?.(current)
+    if (locked) throw new PermissionError(locked, 409)
     const data = buildData(resource, body, { partial: true })
     const row = await delegate(resource).update({ where: { id }, data })
     await audit(session, resource, 'Updated', id, row[resource.titleField])
@@ -222,6 +224,8 @@ export async function deleteRecord(key, id) {
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.feature, 'delete')
     const row = await getRecord(key, id)
+    const locked = resource.lock?.(row)
+    if (locked) throw new PermissionError(locked, 409)
     await delegate(resource).delete({ where: { id } })
     await audit(session, resource, 'Deleted', id, row[resource.titleField])
     return { id }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { TbPlus, TbTrash, TbShieldCheck } from 'react-icons/tb'
+import { TbPlus, TbTrash, TbShieldCheck, TbPencil } from 'react-icons/tb'
+import Dialog from '@/components/ui/Dialog'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -27,6 +28,7 @@ const RolesPanel = () => {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [confirmDelete, setConfirmDelete] = useState(false)
+    const [nameDlg, setNameDlg] = useState(null) // { mode: 'new' | 'rename', value }
 
     const load = useCallback(async (keep) => {
         try {
@@ -116,14 +118,15 @@ const RolesPanel = () => {
                     {selected === 'new' && <span className="flex shrink-0 items-center rounded-xl border border-dashed border-primary px-3 py-1.5 text-sm font-semibold text-primary">New role (unsaved)</span>}
                     {!loading && !roles.length && selected !== 'new' && <span className="px-2 py-2 text-sm text-gray-400">No roles yet</span>}
                 </div>
-                <Button size="sm" variant="solid" icon={<TbPlus />} onClick={startNew}>New role</Button>
+                <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => setNameDlg({ mode: 'new', value: '' })}>New role</Button>
+                {current && selected !== 'new' && <Button size="sm" icon={<TbPencil />} onClick={() => setNameDlg({ mode: 'rename', value: draft.name })}>Rename</Button>}
             </div>
 
             <Card className="min-w-0">
                 {selected ? (
                     <>
                         {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
-                        <PermissionMatrix value={draft.permissions} onChange={(permissions) => setDraft({ ...draft, permissions })} toolbarStart={<div className="w-full sm:w-56"><Input size="sm" aria-label="Role name" placeholder="Role name, e.g. Sales manager" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></div>} />
+                        <PermissionMatrix value={draft.permissions} onChange={(permissions) => setDraft({ ...draft, permissions })} />
                         <p className="mt-3 text-xs text-gray-500">
                             Roles are templates: a member gets the role&apos;s permissions when the role is assigned. Use &quot;Save &amp; apply to members&quot; to push changes to everyone who already has this role. Administrators always have full access.
                         </p>
@@ -144,6 +147,15 @@ const RolesPanel = () => {
                     <div className="py-16 text-center text-gray-400">Select a role to edit its permissions</div>
                 )}
             </Card>
+
+            <Dialog isOpen={!!nameDlg} width={380} onClose={() => setNameDlg(null)} onRequestClose={() => setNameDlg(null)}>
+                <h5 className="mb-3">{nameDlg?.mode === 'new' ? 'New role' : 'Rename role'}</h5>
+                <Input autoFocus placeholder="Role name, e.g. Sales manager" value={nameDlg?.value || ''} onChange={(e) => setNameDlg({ ...nameDlg, value: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.form?.requestSubmit?.() }} />
+                <div className="mt-4 flex justify-end gap-2">
+                    <Button onClick={() => setNameDlg(null)}>Cancel</Button>
+                    <Button variant="solid" disabled={!nameDlg?.value?.trim()} onClick={() => { const v = nameDlg.value.trim(); if (nameDlg.mode === 'new') { startNew(); setDraft({ name: v, permissions: {} }) } else setDraft((d) => ({ ...d, name: v })); setNameDlg(null) }}>{nameDlg?.mode === 'new' ? 'Continue' : 'Rename'}</Button>
+                </div>
+            </Dialog>
 
             <ConfirmDialog
                 isOpen={confirmDelete}

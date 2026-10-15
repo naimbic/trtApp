@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.6',
+        date: '2026-10-15',
+        title: 'No role name field',
+        items: ['Roles & permissions: the role name field is gone from the toolbar; the name is asked in a small dialog when you press New role, and Rename changes it'],
+    },
+    {
         version: '0.29.5',
         date: '2026-10-15',
         title: 'Standard roles, Super Admin',

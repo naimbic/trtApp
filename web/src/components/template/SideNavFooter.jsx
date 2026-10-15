@@ -54,7 +54,7 @@ const SideNavFooter = ({ collapsed }) => {
             </div>
             <div className="mt-2 flex items-center justify-between px-2 text-[11px] text-gray-400">
                 <button type="button" onClick={() => about()} className="hover:text-primary" title={tr("What's new")}>{tr("trtCRM")} {VERSION} · {COMMIT}</button>
-                <button type="button" onClick={() => about()} className="hover:text-primary">{tr("What's new")}</button>
+                <a href="https://trtdigital.ma" target="_blank" rel="noreferrer" className="hover:text-primary">{tr("Dev by trtAgency")}</a>
             </div>
         </div>
     )

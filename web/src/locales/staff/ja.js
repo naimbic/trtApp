@@ -774,6 +774,7 @@ export default {
     "Details": "詳細",
     "Details block on documents": "ドキュメントの詳細ブロック",
     "Details printed on documents": "書類に印刷される情報",
+    "Dev by trtAgency": "開発: trtAgency",
     "Digit {v1} of {length}": "{length}桁中 {v1} 桁目",
     "Dimensions": "サイズ",
     "Din't receive OTP?": "OTPが届きませんか？",

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.36.1',
+        date: '2026-10-15',
+        title: 'Menu footer link, one Tasks entry',
+        items: ['Bottom of the menu: "What\'s new" is replaced by "Dev by trtAgency", a link to trtdigital.ma (the version next to it still opens the Versions page)', 'Tasks menu: the duplicate "Tasks" entry is gone; "Tasks board" is the one that opens the board and list']
+    },
+    {
         version: '0.36.0',
         date: '2026-10-15',
         title: 'My tasks, team tasks and an issue tracker',

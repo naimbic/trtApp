@@ -257,6 +257,7 @@ const resources = [
     },
     {
         key: 'tasks',
+        nav: false, // the board page (Tasks board) is the same screen
         model: 'crmTask',
         label: 'Task',
         plural: 'Tasks',

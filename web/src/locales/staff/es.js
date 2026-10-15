@@ -774,6 +774,7 @@ export default {
     "Details": "Detalles",
     "Details block on documents": "Bloque de detalles en documentos",
     "Details printed on documents": "Datos impresos en los documentos",
+    "Dev by trtAgency": "Desarrollado por trtAgency",
     "Digit {v1} of {length}": "Dígito {v1} de {length}",
     "Dimensions": "Dimensiones",
     "Din't receive OTP?": "¿No recibió el código?",

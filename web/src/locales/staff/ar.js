@@ -774,6 +774,7 @@ export default {
     "Details": "التفاصيل",
     "Details block on documents": "كتلة التفاصيل في المستندات",
     "Details printed on documents": "البيانات المطبوعة على المستندات",
+    "Dev by trtAgency": "تطوير trtAgency",
     "Digit {v1} of {length}": "الرقم {v1} من {length}",
     "Dimensions": "الأبعاد",
     "Din't receive OTP?": "لم يصلك الرمز؟",

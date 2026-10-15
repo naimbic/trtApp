@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.8',
+        date: '2026-10-15',
+        title: 'Sign-in page redesign (same layout as Ratokil)',
+        items: ['Sign-in, forgot and reset pages: full-height split layout like the Ratokil login, a picture panel with the brand colour over it, the logo, a short pitch and rotating slides (links to our websites, then quotes), and the form in a bordered card on a light background with a "developed by trtDigital" footer and the version'],
+    },
+    {
         version: '0.30.7',
         date: '2026-10-15',
         title: 'New sign-in page',

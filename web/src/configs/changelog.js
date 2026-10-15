@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.37.2',
+        date: '2026-10-15',
+        title: 'Template project addresses open the real pages',
+        items: ['The template addresses /concepts/projects/scrum-board, /tasks, /tasks/<id>, /project-details/<id> and /project-list now open the real project pages (scrum board, My tasks, task page, project page, projects list); Scrum board is also in the Projects menu']
+    },
+    {
         version: '0.37.1',
         date: '2026-10-15',
         title: 'Email templates only in the languages in use',

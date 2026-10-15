@@ -116,7 +116,7 @@ const conceptsRoute = [
     {
         key: 'concepts.projects.scrumBoard',
         path: `${CONCEPTS_PREFIX_PATH}/projects/scrum-board`,
-        component: lazy(() => import('@/views/concepts/projects/ScrumBoard')),
+        component: lazy(() => import('@/views/crm/redirects/DemoRedirect').then((m) => ({ default: m.ToScrumBoard }))),
         authority: [ADMIN, USER],
         meta: {
             pageContainerType: 'contained',
@@ -125,7 +125,7 @@ const conceptsRoute = [
     {
         key: 'concepts.projects.projectList',
         path: `${CONCEPTS_PREFIX_PATH}/projects/project-list`,
-        component: lazy(() => import('@/views/concepts/projects/ProjectList')),
+        component: lazy(() => import('@/views/crm/redirects/DemoRedirect').then((m) => ({ default: m.ToProjects }))),
         authority: [ADMIN, USER],
         meta: {
             pageContainerType: 'contained',
@@ -135,9 +135,7 @@ const conceptsRoute = [
     {
         key: 'concepts.projects.projectDetails',
         path: `${CONCEPTS_PREFIX_PATH}/projects/project-details/:id`,
-        component: lazy(
-            () => import('@/views/concepts/projects/ProjectDetails'),
-        ),
+        component: lazy(() => import('@/views/crm/redirects/DemoRedirect').then((m) => ({ default: m.ToProject }))),
         authority: [ADMIN, USER],
         meta: {
             pageContainerType: 'contained',
@@ -147,7 +145,7 @@ const conceptsRoute = [
     {
         key: 'concepts.projects.projectTasks',
         path: `${CONCEPTS_PREFIX_PATH}/projects/tasks`,
-        component: lazy(() => import('@/views/concepts/projects/Tasks')),
+        component: lazy(() => import('@/views/crm/redirects/DemoRedirect').then((m) => ({ default: m.ToTasks }))),
         authority: [ADMIN, USER],
         meta: {
             pageContainerType: 'contained',
@@ -156,7 +154,7 @@ const conceptsRoute = [
     {
         key: 'concepts.projects.projectIssue',
         path: `${CONCEPTS_PREFIX_PATH}/projects/tasks/:id`,
-        component: lazy(() => import('@/views/concepts/projects/Issue')),
+        component: lazy(() => import('@/views/crm/redirects/DemoRedirect').then((m) => ({ default: m.ToTask }))),
         authority: [ADMIN, USER],
         meta: {
             pageContainerType: 'contained',

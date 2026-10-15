@@ -5,6 +5,8 @@ import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { numberFormatter as proposalNumber } from '@/lib/crm/proposalDoc'
 import { round2 } from '@/lib/crm/sales/calc'
 import { publicBase } from '@/lib/crm/shortLinks'
+import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFiles'
+import { notifyStaffOfClient } from '@/lib/crm/ticketNotify'
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -20,9 +22,10 @@ const currencies = async () => Object.fromEntries((await prisma.crmCurrency.find
 export async function me() {
     const s = await requirePortal()
     const c = s.contact
+    const unreadTickets = (await prisma.crmTicket.findMany({ where: { clientId: s.client.id, clientRead: 0 }, select: { lastReply: true } })).filter((t) => t.lastReply).length
     const co = await prisma.crmOption.findMany({ where: { name: { in: ['companyname', 'company_logo', 'company_logo_dark'] } } })
     const o = Object.fromEntries(co.map((x) => [x.name, x.value]))
-    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null }, can: s.can, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
+    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null }, can: s.can, unreadTickets, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
 }
 
 async function invoicesOf(clientId) {
@@ -135,10 +138,11 @@ export async function getTicket(id) {
     const s = await requirePortal('support')
     const t = oid(id) && (await prisma.crmTicket.findFirst({ where: { id, clientId: s.client.id } }))
     if (!t) throw httpError('Ticket not found', 404)
-    const [replies, atts, status, staff] = await Promise.all([prisma.crmTicketReply.findMany({ where: { ticketId: id }, orderBy: { createdAt: 'asc' } }), prisma.crmTicketAttachment.findMany({ where: { ticketId: id } }), t.statusId ? prisma.crmTicketStatus.findUnique({ where: { id: t.statusId } }) : null, prisma.crmStaff.findMany({ select: { id: true, firstName: true } })])
+    // old (imported) replies have no `internal` field, so the filter must run here, not in the database query
+    const [replies, atts, status, staff] = await Promise.all([prisma.crmTicketReply.findMany({ where: { ticketId: id }, orderBy: { createdAt: 'asc' } }).then((all) => all.filter((r) => !r.internal)), prisma.crmTicketAttachment.findMany({ where: { ticketId: id } }), t.statusId ? prisma.crmTicketStatus.findUnique({ where: { id: t.statusId } }) : null, prisma.crmStaff.findMany({ select: { id: true, firstName: true } })])
     if (!t.clientRead) await prisma.crmTicket.update({ where: { id }, data: { clientRead: 1 } })
     const sf = Object.fromEntries(staff.map((x) => [x.id, x.firstName]))
-    const att = (rid) => atts.filter((a) => (a.replyId || null) === rid).map((a) => ({ id: a.id, name: a.fileName }))
+    const att = (rid) => atts.filter((a) => (a.replyId || null) === rid).map(attachmentOut)
     const who = (r) => (r.adminId ? `${sf[r.adminId] || 'Support'} · support team` : r.name || [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || 'You')
     return {
         ticket: { id: t.id, number: t.legacyId, subject: t.subject, createdAt: t.createdAt, closed: status?.legacyId === 5, status: status ? { name: status.name, color: status.statusColor || '#64748b' } : null },
@@ -146,30 +150,38 @@ export async function getTicket(id) {
     }
 }
 
-export async function createTicket(body) {
+export async function createTicket(body, files = []) {
     const s = await requirePortal('support')
     const subject = String(body.subject || '').trim().slice(0, 200), message = String(body.message || '').trim().slice(0, 10000)
     if (!subject) throw httpError('Give your request a subject')
     if (!message) throw httpError('Describe what you need')
+    const prepared = await prepareFiles(files).catch((e) => { throw httpError(e.message, e.status || 400) })
     const [statuses, prios] = await Promise.all([prisma.crmTicketStatus.findMany(), prisma.crmTicketPriority.findMany()])
     const open = statuses.find((x) => x.legacyId === 1) || statuses.find((x) => x.isDefault) || statuses[0]
     const last = await prisma.crmTicket.findFirst({ where: { legacyId: { not: null } }, orderBy: { legacyId: 'desc' }, select: { legacyId: true } })
     const prio = prios.find((p) => p.id === body.priorityId) || prios.find((p) => /medium/i.test(p.name))
-    const t = await prisma.crmTicket.create({ data: { legacyId: (last?.legacyId || 0) + 1, clientId: s.client.id, contactId: s.contact.id, name: [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || null, email: s.contact.email, departmentId: oid(body.departmentId), priorityId: prio?.id || null, statusId: open?.id || null, subject, message: toHtml(message), ticketKey: (await import('node:crypto')).randomBytes(16).toString('hex'), adminRead: 0, clientRead: 1, lastReply: null } })
-    return { success: true, id: t.id, number: t.legacyId }
+    const name = [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || null
+    const t = await prisma.crmTicket.create({ data: { legacyId: (last?.legacyId || 0) + 1, clientId: s.client.id, contactId: s.contact.id, name, email: s.contact.email, departmentId: oid(body.departmentId), priorityId: prio?.id || null, statusId: open?.id || null, subject, message: toHtml(message), ticketKey: (await import('node:crypto')).randomBytes(16).toString('hex'), adminRead: 0, clientRead: 1, lastReply: null } })
+    const saved = await saveTicketFiles({ ticketId: t.id, prepared, uploaderName: name || s.contact.email })
+    void notifyStaffOfClient(t, { text: message, files: saved })
+    return { success: true, id: t.id, number: t.legacyId, files: saved.length }
 }
 
-export async function replyTicket(id, message) {
+export async function replyTicket(id, message, files = []) {
     const s = await requirePortal('support')
     const t = oid(id) && (await prisma.crmTicket.findFirst({ where: { id, clientId: s.client.id } }))
     if (!t) throw httpError('Ticket not found', 404)
     const text = String(message || '').trim().slice(0, 10000)
-    if (!text) throw httpError('Write your reply first')
+    const prepared = await prepareFiles(files).catch((e) => { throw httpError(e.message, e.status || 400) })
+    if (!text && !prepared.length) throw httpError('Write your reply first')
     const [statuses] = await Promise.all([prisma.crmTicketStatus.findMany()])
     const open = statuses.find((x) => x.legacyId === 1)
-    await prisma.crmTicketReply.create({ data: { ticketId: id, contactId: s.contact.id, clientId: s.client.id, name: [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || null, email: s.contact.email, message: toHtml(text) } })
-    await prisma.crmTicket.update({ where: { id }, data: { statusId: open?.id || t.statusId, lastReply: new Date(), adminRead: 0, clientRead: 1 } })
-    return { success: true }
+    const name = [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || null
+    const r = await prisma.crmTicketReply.create({ data: { ticketId: id, contactId: s.contact.id, clientId: s.client.id, name, email: s.contact.email, message: toHtml(text) } })
+    const saved = await saveTicketFiles({ ticketId: id, replyId: r.id, prepared, uploaderName: name || s.contact.email })
+    const updated = await prisma.crmTicket.update({ where: { id }, data: { statusId: open?.id || t.statusId, lastReply: new Date(), adminRead: 0, clientRead: 1 } })
+    void notifyStaffOfClient(updated, { reply: true, text, files: saved })
+    return { success: true, files: saved.length }
 }
 
 export async function updateProfile(body) {

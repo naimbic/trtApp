@@ -10,6 +10,15 @@ export async function portal(url, init = {}) {
     return json
 }
 
+/** Multipart POST (a message with files). */
+export async function portalUpload(url, formData) {
+    const res = await fetch(`/api/portal${url}`, { method: 'POST', credentials: 'include', body: formData })
+    const json = await res.json().catch(() => ({}))
+    if (res.status === 401) window.location.assign(`/portal/sign-in?back=${encodeURIComponent(window.location.pathname)}`)
+    if (!res.ok) throw Object.assign(new Error(json.error || `Request failed (${res.status})`), { status: res.status })
+    return json
+}
+
 export const money = (n, cur = null) => {
     const v = Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     const sym = cur?.symbol || cur?.name || ''

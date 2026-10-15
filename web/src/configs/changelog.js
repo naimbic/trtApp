@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.22',
+        date: '2026-10-15',
+        title: 'Tickets: files, screenshots, notifications, internal notes',
+        items: ['Files and screenshots, for the team and for clients (client area too): attach files, drag and drop them on the message box, paste a screenshot straight from the clipboard (Ctrl+V) or capture the screen with the new button; up to 10 files per message, pictures are optimised and shown as thumbnails you can enlarge, other files download with their size', 'New tickets can carry files too (staff and client area); the client\'s reply and new request emails to the team and the team\'s replies to the client list the attachment links', 'Notifications: the team is now emailed when a client opens a ticket or replies (the assigned person, else the department, else the administrators); client emails greet by name and the "View ticket" button works; in the client area Support shows a red badge with the number of unread replies', 'Internal notes: a switch under the reply box adds a note only your team sees (amber, never shown to the client, never emailed, does not change the status)', 'Send and close: reply and close the ticket in one click; Close ticket / Reopen buttons at the top of a ticket', 'Ticket list: one row of filters, a dot on unread tickets, a paperclip on tickets with files, compact table', 'Imported tickets keep their old replies visible to clients; old attachments that have no file stay greyed out']
+    },
+    {
         version: '0.30.21',
         date: '2026-10-15',
         title: 'Client area in 5 languages, better dashboard',

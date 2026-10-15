@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { replyTicket, deleteReply } from '@/lib/crm/ticketsApi'
 import { errorResponse } from '@/lib/crm/crud'
+import { readMessageBody } from '@/lib/crm/ticketFiles'
 
 export async function POST(request, { params }) {
-    try { return NextResponse.json(await replyTicket((await params).id, await request.json())) } catch (e) { return errorResponse(e) }
+    try { const { body, files } = await readMessageBody(request); return NextResponse.json(await replyTicket((await params).id, body, files)) } catch (e) { return errorResponse(e) }
 }
 
 export async function DELETE(request, { params }) {

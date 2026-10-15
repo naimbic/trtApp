@@ -10,13 +10,18 @@ import Select from '@/components/ui/Select'
 import Skeleton from '@/components/ui/Skeleton'
 import Table from '@/components/ui/Table'
 import classNames from '@/utils/classNames'
-import { portal } from './api'
+import { portal, portalUpload } from './api'
+import { useTicketFiles, AttachButtons, FileTray, DropHint, AttachmentList, messageForm } from '@/components/crm/TicketFiles'
+import toast from '@/components/ui/toast'
+import Notification from '@/components/ui/Notification'
 import { Empty } from './ui'
 import { useI18n } from './i18n'
+import { usePortal } from './PortalApp'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const clean = (h) => String(h || '').replace(/<(script|style|iframe|object|embed)[\s\S]*?<\/\1>/gi, '').replace(/\son\w+="[^"]*"/gi, '').replace(/\son\w+='[^']*'/gi, '').replace(/javascript:/gi, '')
 const ini = (n = '') => n.split(/[\s·]+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join('').toUpperCase()
+const warn = (type, text) => toast.push(<Notification type={type}>{text}</Notification>, { placement: 'top-center' })
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 
 export const Tickets = () => {
@@ -27,11 +32,12 @@ export const Tickets = () => {
     const [v, setV] = useState({ subject: '', message: '', departmentId: null, priorityId: null })
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
+    const tf = useTicketFiles({ notify: warn, t })
     useEffect(() => { portal('/tickets').then(setD).catch(() => setD({ list: [], departments: [], priorities: [] })) }, [])
     const opt = (l = []) => l.map((x) => ({ value: x.id, label: x.name }))
     const create = async () => {
         setBusy(true); setError('')
-        try { const r = await portal('/tickets', { method: 'POST', body: v }); nav(`/portal/tickets/${r.id}`) } catch (e) { setError(e.message) } finally { setBusy(false) }
+        try { const r = await portalUpload('/tickets', messageForm(v, tf.files)); tf.clear(); nav(`/portal/tickets/${r.id}`) } catch (e) { setError(e.message) } finally { setBusy(false) }
     }
     return (
         <div>
@@ -55,7 +61,7 @@ export const Tickets = () => {
                         <div><L>{t('Department')}</L><Select isClearable options={opt(d?.departments)} value={opt(d?.departments).find((o) => o.value === v.departmentId) || null} onChange={(o) => setV({ ...v, departmentId: o?.value || null })} /></div>
                         <div><L>{t('Priority')}</L><Select isClearable options={opt(d?.priorities)} value={opt(d?.priorities).find((o) => o.value === v.priorityId) || null} onChange={(o) => setV({ ...v, priorityId: o?.value || null })} placeholder={t('Medium')} /></div>
                     </div>
-                    <div><L>{t('Message')}</L><Input textArea rows={7} placeholder={t('Describe what you need or what went wrong')} value={v.message} onChange={(e) => setV({ ...v, message: e.target.value })} /></div>
+                    <div className="relative" {...tf.dropProps}><DropHint tf={tf} t={t} /><L>{t('Message')}</L><Input textArea rows={7} placeholder={t('Describe what you need or what went wrong')} value={v.message} onChange={(e) => setV({ ...v, message: e.target.value })} onPaste={tf.onPaste} /><p className="mt-1 text-xs text-gray-400">{t('Paste a screenshot (Ctrl+V) or drop files here.')}</p><FileTray tf={tf} t={t} /><div className="mt-2"><AttachButtons tf={tf} t={t} size="sm" /></div></div>
                 </div>
                 <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setDialog(false)}>{t('Cancel')}</Button><Button variant="solid" loading={busy} disabled={!v.subject.trim() || !v.message.trim()} onClick={create}>{t('Send request')}</Button></div>
             </Dialog>
@@ -65,19 +71,21 @@ export const Tickets = () => {
 
 export const TicketThread = () => {
     const { t: tr, date } = useI18n()
+    const { reload } = usePortal()
+    const tf = useTicketFiles({ notify: warn, t: tr })
     const { id } = useParams()
     const [d, setD] = useState(null)
     const [text, setText] = useState('')
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
     const end = useRef(null)
-    const load = () => portal(`/tickets/${id}`).then(setD).catch((e) => setError(e.message))
+    const load = () => portal(`/tickets/${id}`).then((x) => { setD(x); reload() }).catch((e) => setError(e.message)) // reading it clears the unread badge
     useEffect(() => { setD(null); load() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (d) end.current?.scrollIntoView({ block: 'nearest' }) }, [d?.thread.length]) // eslint-disable-line react-hooks/exhaustive-deps
     if (error && !d) return <Card><div className="text-red-500">{error}</div><Link to="/portal/tickets" className="mt-3 inline-block text-primary">{tr('Back to support')}</Link></Card>
     if (!d) return <Card><Skeleton height={160} /></Card>
     const { ticket: t } = d
-    const send = async () => { setBusy(true); setError(''); try { await portal(`/tickets/${id}/reply`, { method: 'POST', body: { message: text } }); setText(''); await load() } catch (e) { setError(e.message) } finally { setBusy(false) } }
+    const send = async () => { setBusy(true); setError(''); try { await portalUpload(`/tickets/${id}/reply`, messageForm({ message: text }, tf.files)); setText(''); tf.clear(); await load() } catch (e) { setError(e.message) } finally { setBusy(false) } }
     return (
         <div className="mx-auto max-w-4xl">
             <div className="mb-6 border-b border-gray-200 pb-4 dark:border-gray-700"><div className="mb-1 text-sm text-gray-500"><Link to="/portal/tickets" className="hover:text-primary">{tr('Support')}</Link> · #{t.number}</div><h3 className="break-words">{t.subject}</h3><div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-500">{t.status && <span className="inline-flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-200"><span className="h-2 w-2 rounded-full" style={{ background: t.status.color }} />{t.status.name}</span>}<span>{tr('Opened {date}', { date: date(t.createdAt, 'DD MMM YYYY, HH:mm') })}</span></div></div>
@@ -88,18 +96,23 @@ export const TicketThread = () => {
                         <div className={classNames('max-w-[88%] rounded-2xl p-4', m.staff ? 'rounded-tl-sm bg-gray-100 dark:bg-gray-700/50' : 'rounded-tr-sm bg-primary/10 dark:bg-primary/20')}>
                             <div className="mb-2 flex items-center justify-between gap-4 text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}</span><span>{date(m.date, 'DD MMM YYYY, HH:mm')}</span></div>
                             <div className="prose prose-sm max-w-none break-words dark:prose-invert [&_img]:max-w-full" dangerouslySetInnerHTML={{ __html: clean(m.html) }} />
-                            {m.attachments.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{m.attachments.map((a) => <span key={a.id} className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-2 py-0.5 text-xs"><TbPaperclip />{a.name}</span>)}</div>}
+                            <AttachmentList items={m.attachments} t={tr} />
                         </div>
                     </div>
                 ))}
                 <div ref={end} />
             </div>
-            <Card className="mt-6">
-                <h5 className="mb-3">{t.closed ? tr('Reply to reopen this request') : tr('Reply')}</h5>
-                {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
-                <Input textArea rows={5} placeholder={tr('Write your message')} value={text} onChange={(e) => setText(e.target.value)} />
-                <div className="mt-3 flex justify-end"><Button variant="solid" icon={<TbSend />} loading={busy} disabled={!text.trim()} onClick={send}>{tr('Send reply')}</Button></div>
-            </Card>
+            <div className="relative mt-6" {...tf.dropProps}>
+                <DropHint tf={tf} t={tr} />
+                <Card>
+                    <h5 className="mb-3">{t.closed ? tr('Reply to reopen this request') : tr('Reply')}</h5>
+                    {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+                    <Input textArea rows={5} placeholder={tr('Write your message')} value={text} onChange={(e) => setText(e.target.value)} onPaste={tf.onPaste} />
+                    <p className="mt-1 text-xs text-gray-400">{tr('Paste a screenshot (Ctrl+V) or drop files here.')}</p>
+                    <FileTray tf={tf} t={tr} />
+                    <div className="mt-3 flex items-center justify-between gap-3"><AttachButtons tf={tf} t={tr} /><Button variant="solid" icon={<TbSend />} loading={busy} disabled={!text.trim() && !tf.items.length} onClick={send}>{tr('Send reply')}</Button></div>
+                </Card>
+            </div>
         </div>
     )
 }

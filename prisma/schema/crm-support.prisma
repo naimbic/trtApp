@@ -118,6 +118,8 @@ model CrmTicketReply {
   message     String?
   /// ticket_replies.attachment (legacy flag/int)
   attachment  Int?
+  /// internal note: only the team sees it (never shown to the client, never emailed)
+  internal    Boolean               @default(false)
   /// ticket_replies.admin -> CrmStaff (cross-domain); null = customer reply
   adminId     String?               @db.ObjectId
   ip          String?
@@ -144,6 +146,10 @@ model CrmTicketAttachment {
   fileName  String
   fileType  String?
   missing   Boolean         @default(false)
+  /// files uploaded in the CRM live in the Space (crm_media row + public url); imported ones have neither
+  mediaId   String?         @db.ObjectId
+  url       String?
+  size      Int?
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 

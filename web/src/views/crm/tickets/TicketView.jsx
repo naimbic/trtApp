@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { TbPaperclip, TbTrash, TbSend, TbMail, TbPhone, TbArrowBackUp } from 'react-icons/tb'
+import { TbTrash, TbSend, TbMail, TbPhone, TbArrowBackUp, TbLock, TbCircleCheck, TbRefresh } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -12,7 +12,8 @@ import Select from '@/components/ui/Select'
 import Spinner from '@/components/ui/Spinner'
 import Switcher from '@/components/ui/Switcher'
 import cn from '@/utils/classNames'
-import { api, notify } from '../kit/api'
+import { api, notify, upload } from '../kit/api'
+import { useTicketFiles, AttachButtons, FileTray, DropHint, AttachmentList, messageForm } from '@/components/crm/TicketFiles'
 import { initials } from '../tasks/shared'
 
 const L = ({ children }) => <label className="mb-1.5 block text-xs font-semibold uppercase text-gray-500">{children}</label>
@@ -26,6 +27,8 @@ const TicketView = () => {
     const [reply, setReply] = useState('')
     const [notify_, setNotify] = useState(true)
     const [replyStatus, setReplyStatus] = useState(null)
+    const [internal, setInternal] = useState(false)
+    const tf = useTicketFiles({ notify })
     const [sending, setSending] = useState(false)
     const [confirm, setConfirm] = useState(null)
     const end = useRef(null)
@@ -41,14 +44,16 @@ const TicketView = () => {
     const opt = (list) => list.map((x) => ({ value: x.id, label: x.name }))
     const pick = (list, v) => opt(list).find((o) => o.value === v) || null
     const status = lk.statuses.find((s) => s.id === t.statusId)
+    const isClosed = status?.legacyId === 5
     const patch = async (body, ok) => { try { await api(`/api/crm/support/tickets/${id}`, { method: 'PUT', body }); if (ok) notify('success', ok); await load() } catch (e) { notify('danger', e.message) } }
-    const send = async () => {
+    const send = async (close = false) => {
         setSending(true)
         try {
-            const r = await api(`/api/crm/support/tickets/${id}/reply`, { method: 'POST', body: { message: reply, statusId: replyStatus, notify: notify_ } })
-            setReply(''); setReplyStatus(null)
-            if (r.mail && !r.mail.sent) notify('warning', `Reply saved, but the email was not sent: ${r.mail.error || 'unknown error'}`)
-            else notify('success', r.mail ? 'Reply sent' : 'Reply saved')
+            const r = await upload(`/api/crm/support/tickets/${id}/reply`, messageForm({ message: reply, statusId: replyStatus, notify: notify_, internal, close }, tf.files))
+            setReply(''); setReplyStatus(null); tf.clear()
+            if (internal) notify('success', 'Internal note added')
+            else if (r.mail && !r.mail.sent) notify('warning', `Reply saved, but the email was not sent: ${r.mail.error || 'unknown error'}`)
+            else notify('success', close ? 'Reply sent and ticket closed' : r.mail ? 'Reply sent' : 'Reply saved')
             await load()
         } catch (e) { notify('danger', e.message) } finally { setSending(false) }
     }
@@ -71,7 +76,10 @@ const TicketView = () => {
                         <span>Opened {dayjs(t.createdAt).format('DD MMM YYYY, HH:mm')}</span>
                     </div>
                 </div>
-                {d.can.delete && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm({ type: 'ticket' })}>Delete</Button>}
+                <div className="flex items-center gap-2">
+                    {d.can.edit && (isClosed ? d.openStatusId && <Button size="sm" icon={<TbRefresh />} onClick={() => patch({ statusId: d.openStatusId }, 'Ticket reopened')}>Reopen</Button> : d.closedStatusId && <Button size="sm" icon={<TbCircleCheck />} onClick={() => patch({ statusId: d.closedStatusId }, 'Ticket closed')}>Close ticket</Button>)}
+                    {d.can.delete && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm({ type: 'ticket' })}>Delete</Button>}
+                </div>
             </div>
 
             <div className="flex flex-col gap-6 lg:flex-row">
@@ -79,28 +87,37 @@ const TicketView = () => {
                     {thread.map((m) => (
                         <div key={m.id} className={cn('flex gap-3', m.staff && 'flex-row-reverse')}>
                             <Avatar size={36} shape="circle" src={m.staff?.image || undefined} className={m.staff ? 'bg-primary text-white' : ''}>{initials(m.name)}</Avatar>
-                            <div className={cn('group max-w-[88%] rounded-2xl p-4', m.staff ? 'rounded-tr-sm bg-primary/10 dark:bg-primary/20' : 'rounded-tl-sm bg-gray-100 dark:bg-gray-700/50')}>
-                                <div className="mb-2 flex items-center justify-between gap-4 text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}{m.staff ? ' · team' : ''}{m.first ? ' · opened the ticket' : ''}</span><span className="flex items-center gap-2">{dayjs(m.date).format('DD MMM YYYY, HH:mm')}{!m.first && d.can.delete && <button className="hidden text-red-500 group-hover:inline" title="Delete reply" onClick={() => setConfirm({ type: 'reply', id: m.id })}><TbTrash /></button>}</span></div>
+                            <div className={cn('group max-w-[88%] rounded-2xl p-4', m.internal ? 'rounded-tr-sm border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : m.staff ? 'rounded-tr-sm bg-primary/10 dark:bg-primary/20' : 'rounded-tl-sm bg-gray-100 dark:bg-gray-700/50')}>
+                                <div className="mb-2 flex items-center justify-between gap-4 text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}{m.staff ? ' · team' : ''}{m.first ? ' · opened the ticket' : ''}{m.internal && <span className="ml-2 inline-flex items-center gap-1 text-amber-700 dark:text-amber-300"><TbLock />internal note, only your team sees this</span>}</span><span className="flex items-center gap-2">{dayjs(m.date).format('DD MMM YYYY, HH:mm')}{!m.first && d.can.delete && <button className="hidden text-red-500 group-hover:inline" title="Delete reply" onClick={() => setConfirm({ type: 'reply', id: m.id })}><TbTrash /></button>}</span></div>
                                 <div className="prose prose-sm max-w-none break-words dark:prose-invert [&_img]:max-w-full" dangerouslySetInnerHTML={{ __html: clean(m.html) }} />
-                                {m.attachments.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{m.attachments.map((a) => <span key={a.id} className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs', a.missing ? 'border-gray-200 text-gray-400 line-through' : 'border-gray-300')} title={a.missing ? 'This file was not in the backup' : a.name}><TbPaperclip />{a.name}</span>)}</div>}
+                                <AttachmentList items={m.attachments} />
                             </div>
                         </div>
                     ))}
                     <div ref={end} />
 
                     {d.can.reply && (
-                        <Card>
-                            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                                <h5>Reply</h5>
-                                {lk.predefined.length > 0 && <div className="w-56"><Select size="sm" isClearable placeholder="Insert a saved reply" options={lk.predefined.map((r) => ({ value: r.id, label: r.name }))} value={null} onChange={(o) => { const r = lk.predefined.find((x) => x.id === o?.value); if (r) setReply((x) => (x ? `${x}\n\n${r.message}` : r.message)) }} /></div>}
-                            </div>
-                            <Input textArea rows={6} placeholder="Write your reply" value={reply} onChange={(e) => setReply(e.target.value)} />
-                            <div className="mt-3 flex flex-wrap items-center gap-4">
-                                <div className="w-52"><Select size="sm" isClearable placeholder="Status: Answered" options={opt(lk.statuses)} value={pick(lk.statuses, replyStatus)} onChange={(o) => setReplyStatus(o?.value || null)} /></div>
-                                <label className="flex items-center gap-2 text-sm"><Switcher checked={notify_} onChange={setNotify} />Email the client</label>
-                                <Button className="ml-auto" variant="solid" icon={<TbSend />} loading={sending} disabled={!reply.trim()} onClick={send}>Send reply</Button>
-                            </div>
-                        </Card>
+                        <div className="relative" {...tf.dropProps}>
+                            <DropHint tf={tf} />
+                            <Card className={internal ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-500/5' : ''}>
+                                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                                    <h5 className="flex items-center gap-2">{internal ? <><TbLock className="text-amber-600" />Internal note</> : 'Reply'}</h5>
+                                    {lk.predefined.length > 0 && <div className="w-56"><Select size="sm" isClearable placeholder="Insert a saved reply" options={lk.predefined.map((r) => ({ value: r.id, label: r.name }))} value={null} onChange={(o) => { const r = lk.predefined.find((x) => x.id === o?.value); if (r) setReply((x) => (x ? `${x}\n\n${r.message}` : r.message)) }} /></div>}
+                                </div>
+                                <Input textArea rows={6} placeholder={internal ? 'Write a note for your team (the client never sees it)' : 'Write your reply. Paste a screenshot (Ctrl+V) or drop files here.'} value={reply} onChange={(e) => setReply(e.target.value)} onPaste={tf.onPaste} />
+                                <FileTray tf={tf} />
+                                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                                    <AttachButtons tf={tf} />
+                                    {!internal && <div className="w-48"><Select size="sm" isClearable placeholder="Status: Answered" options={opt(lk.statuses)} value={pick(lk.statuses, replyStatus)} onChange={(o) => setReplyStatus(o?.value || null)} /></div>}
+                                    <label className="flex items-center gap-2 text-sm"><Switcher checked={internal} onChange={setInternal} />Internal note</label>
+                                    {!internal && <label className="flex items-center gap-2 text-sm"><Switcher checked={notify_} onChange={setNotify} />Email the client</label>}
+                                    <div className="ml-auto flex items-center gap-2">
+                                        {!internal && d.closedStatusId && !isClosed && <Button disabled={sending || (!reply.trim() && !tf.items.length)} onClick={() => send(true)}>Send and close</Button>}
+                                        <Button variant="solid" icon={internal ? <TbLock /> : <TbSend />} loading={sending} disabled={!reply.trim() && !tf.items.length} onClick={() => send(false)}>{internal ? 'Add note' : 'Send reply'}</Button>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
                     )}
                 </div>
 

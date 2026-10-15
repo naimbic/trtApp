@@ -72,7 +72,7 @@ const Shell = () => {
                     headerMiddle={
                         <nav className="hidden items-center gap-1 lg:flex">
                             {NAV.filter((n) => !n.need || me.can.includes(n.need)).map((n) => (
-                                <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => classNames('flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-semibold transition-colors', isActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700')}><span className="text-lg">{n.icon}</span>{t(n.label)}</NavLink>
+                                <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => classNames('flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-semibold transition-colors', isActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700')}><span className="text-lg">{n.icon}</span>{t(n.label)}{n.to === '/portal/tickets' && me.unreadTickets > 0 && <span className="min-w-5 rounded-full bg-red-500 px-1.5 text-center text-[11px] font-bold leading-5 text-white">{me.unreadTickets}</span>}</NavLink>
                             ))}
                         </nav>
                     }
@@ -90,7 +90,7 @@ const Shell = () => {
                     }
                 />
                 <nav className="flex gap-1 overflow-x-auto border-b border-gray-200 bg-white px-4 py-2 lg:hidden dark:border-gray-700 dark:bg-gray-800">
-                    {NAV.filter((n) => !n.need || me.can.includes(n.need)).map((n) => <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => classNames('flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-semibold', isActive ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-300')}>{n.icon}{t(n.label)}</NavLink>)}
+                    {NAV.filter((n) => !n.need || me.can.includes(n.need)).map((n) => <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => classNames('flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-semibold', isActive ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-300')}>{n.icon}{t(n.label)}{n.to === '/portal/tickets' && me.unreadTickets > 0 && <span className="rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white">{me.unreadTickets}</span>}</NavLink>)}
                 </nav>
                 <main className="flex-1 py-6"><Container><Outlet /></Container></main>
                 <footer className="py-4 text-center text-xs text-gray-500">&copy; {new Date().getFullYear()} <span className="font-semibold">{me.company.name || APP_NAME}</span> · {t('Client area')}</footer>

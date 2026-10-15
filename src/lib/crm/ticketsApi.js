@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { sendTemplate } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
+import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFiles'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -28,6 +29,9 @@ const stripHtml = (h) => String(h || '').replace(/<br\s*\/?>/gi, '\n').replace(/
 // Perfex stores ticket messages as HTML; staff write plain text here. Escape plain text, keep legacy HTML.
 const esc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const toHtml = (t) => (/<[a-z][\s\S]*>/i.test(t) ? t : esc(t).replace(/\r?\n/g, '<br />'))
+
+/** Email text: the message followed by the links of the files that came with it. */
+export const withFiles = (text, files) => (files?.length ? `${text}${text ? '\n\n' : ''}Attachments:\n${files.map((f) => `- ${f.fileName}: ${f.url}`).join('\n')}` : text)
 
 async function lookups() {
     const [statuses, priorities, departments, services, staff, predefined] = await Promise.all([
@@ -67,7 +71,7 @@ export async function listTickets(q = {}) {
     const page = Math.max(parseInt(q.pageIndex, 10) || 1, 1), size = Math.min(Math.max(parseInt(q.pageSize, 10) || 20, 5), 100)
     const where = { AND: and }
     const [rows, total, lk] = await Promise.all([
-        prisma.crmTicket.findMany({ where, orderBy: [{ lastReply: 'desc' }, { createdAt: 'desc' }], skip: (page - 1) * size, take: size, include: { _count: { select: { replies: true } } } }),
+        prisma.crmTicket.findMany({ where, orderBy: [{ lastReply: 'desc' }, { createdAt: 'desc' }], skip: (page - 1) * size, take: size, include: { _count: { select: { replies: true, attachments: true } } } }),
         prisma.crmTicket.count({ where }), lookups(),
     ])
     const st = Object.fromEntries(lk.statuses.map((s) => [s.id, s])), pr = Object.fromEntries(lk.priorities.map((p) => [p.id, p])), dp = Object.fromEntries(lk.departments.map((d) => [d.id, d]))
@@ -83,7 +87,7 @@ export async function listTickets(q = {}) {
         list: rows.map((t) => ({
             id: t.id, number: t.legacyId, subject: t.subject || '(no subject)', client: t.clientId ? { id: t.clientId, name: cMap[t.clientId] || '' } : null, contact: contactName(kMap[t.contactId]) || t.name || t.email || '',
             department: dp[t.departmentId]?.name || '', status: st[t.statusId] || null, priority: pr[t.priorityId]?.name || '', assigned: people[t.assignedId] || null,
-            lastReply: t.lastReply, createdAt: t.createdAt, unread: !t.adminRead, replies: t._count.replies,
+            lastReply: t.lastReply, createdAt: t.createdAt, unread: !t.adminRead, replies: t._count.replies, files: t._count.attachments,
         })),
         total, pageIndex: page, pageSize: size, counts, statuses: lk.statuses, priorities: lk.priorities, departments: lk.departments, staff: lk.staff,
         can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') },
@@ -113,10 +117,10 @@ export async function getTicket(id) {
     const people = await staffMap([t.assignedId, t.adminId, ...replies.map((r) => r.adminId)])
     const rc = await prisma.crmContact.findMany({ where: { id: { in: replies.map((r) => r.contactId).filter(Boolean) } }, select: { id: true, firstName: true, lastName: true, email: true } })
     const rcMap = Object.fromEntries(rc.map((c) => [c.id, c]))
-    const att = (rid) => attachments.filter((x) => (x.replyId || null) === rid).map((x) => ({ id: x.id, name: x.fileName, type: x.fileType, missing: !!x.missing }))
+    const att = (rid) => attachments.filter((x) => (x.replyId || null) === rid).map(attachmentOut)
     const thread = [
         { id: 'first', staff: people[t.adminId] || null, name: people[t.adminId]?.name || contactName(contact) || t.name || t.email || 'Client', html: toHtml(t.message || ''), date: t.createdAt, attachments: att(null), first: true },
-        ...replies.map((r) => ({ id: r.id, staff: people[r.adminId] || null, name: people[r.adminId]?.name || r.name || contactName(rcMap[r.contactId]) || contactName(contact) || r.email || 'Client', html: toHtml(r.message || ''), date: r.createdAt, attachments: att(r.id), first: false })),
+        ...replies.map((r) => ({ id: r.id, staff: people[r.adminId] || null, name: people[r.adminId]?.name || r.name || contactName(rcMap[r.contactId]) || contactName(contact) || r.email || 'Client', html: toHtml(r.message || ''), date: r.createdAt, attachments: att(r.id), first: false, internal: !!r.internal })),
     ]
     return {
         ticket: {
@@ -124,49 +128,53 @@ export async function getTicket(id) {
             createdAt: t.createdAt, lastReply: t.lastReply, email: t.email, client, contact: contact ? { id: contact.id, name: contactName(contact), email: contact.email, phone: contact.phoneNumber } : t.email ? { name: t.name || t.email, email: t.email } : null, project,
             assigned: people[t.assignedId] || null,
         },
-        thread, lookups: lk, can: { reply: a.can('edit'), edit: a.can('edit'), delete: a.can('delete') },
+        thread, lookups: lk, can: { reply: a.can('edit'), edit: a.can('edit'), delete: a.can('delete') }, closedStatusId: lk.statuses.find((s) => s.legacyId === 5)?.id || null, openStatusId: lk.statuses.find((s) => s.legacyId === 1)?.id || null,
     }
 }
 
-async function mailVars(t, extra = {}) {
+export async function mailVars(t, extra = {}) {
     const [dept, prio, status] = await Promise.all([
         t.departmentId ? prisma.crmDepartment.findUnique({ where: { id: t.departmentId }, select: { name: true } }) : null,
         t.priorityId ? prisma.crmTicketPriority.findUnique({ where: { id: t.priorityId }, select: { name: true } }) : null,
         t.statusId ? prisma.crmTicketStatus.findUnique({ where: { id: t.statusId }, select: { name: true } }) : null,
     ])
-    return { ticket_id: String(t.legacyId ?? ''), ticket_subject: t.subject || '', ticket_department: dept?.name || '', ticket_priority: prio?.name || '', ticket_status: status?.name || '', ticket_message: extra.message || '', ticket_url: extra.staffUrl ? `${publicBase()}/crm/tickets/${t.id}` : '', ...extra.vars }
+    return { ticket_id: String(t.legacyId ?? ''), ticket_subject: t.subject || '', ticket_department: dept?.name || '', ticket_priority: prio?.name || '', ticket_status: status?.name || '', ticket_message: extra.message || '', ticket_url: extra.staffUrl ? `${publicBase()}/crm/tickets/${t.id}` : `${publicBase()}/portal/tickets/${t.id}`, ...extra.vars }
 }
 
 async function clientEmail(t) {
     if (t.contactId) { const c = await prisma.crmContact.findUnique({ where: { id: t.contactId }, select: { email: true } }); if (c?.email) return c.email }
     return t.email || null
 }
+/** The greeting name for the client's emails. */
+const clientFirst = async (t) => (t.contactId ? (await prisma.crmContact.findUnique({ where: { id: t.contactId }, select: { firstName: true } }))?.firstName : null) || (t.name || '').split(' ')[0] || ''
 
 async function nextNumber() {
     const last = await prisma.crmTicket.findFirst({ where: { legacyId: { not: null } }, orderBy: { legacyId: 'desc' }, select: { legacyId: true } })
     return (last?.legacyId || 0) + 1
 }
 
-export async function createTicket(body) {
+export async function createTicket(body, files = []) {
     const session = await requirePermission('tickets', 'create')
     const a = await access(session)
     const subject = nz(body.subject), message = nz(body.message)
     if (!subject) throw fail('Give the ticket a subject')
-    if (!message) throw fail('Write the message')
+    if (!message && !(files || []).some((f) => f && f.size > 0)) throw fail('Write the message')
     if (!oid(body.clientId) && !nz(body.email)) throw fail('Choose a client or enter an email address')
+    const prepared = await prepareFiles(files)
     const lk = await lookups()
     const def = lk.statuses.find((s) => s.isDefault) || lk.statuses.find((s) => s.legacyId === 1) || lk.statuses[0]
     const t = await prisma.crmTicket.create({
         data: {
             legacyId: await nextNumber(), clientId: oid(body.clientId), contactId: oid(body.contactId), email: nz(body.email), name: nz(body.name), departmentId: oid(body.departmentId), priorityId: oid(body.priorityId) || lk.priorities.find((p) => /medium/i.test(p.name))?.id || null,
-            statusId: oid(body.statusId) || def?.id || null, serviceId: oid(body.serviceId), subject, message: toHtml(message), adminId: a.staffId, projectId: oid(body.projectId), assignedId: oid(body.assignedId), cc: nz(body.cc),
+            statusId: oid(body.statusId) || def?.id || null, serviceId: oid(body.serviceId), subject, message: toHtml(message || ''), adminId: a.staffId, projectId: oid(body.projectId), assignedId: oid(body.assignedId), cc: nz(body.cc),
             ticketKey: crypto.randomBytes(16).toString('hex'), adminRead: 1, clientRead: 0, lastReply: null,
         },
     })
+    const saved = await saveTicketFiles({ ticketId: t.id, prepared, uploaderId: a.staffId, uploaderName: a.session.user.name || a.session.user.email })
     const sent = { client: null, staff: null }
-    if (body.notifyClient) { const to = await clientEmail(t); if (to) sent.client = await sendTemplate({ slug: 'ticket-autoresponse', to, data: await mailVars(t, { message: stripHtml(t.message) }), relType: 'ticket', relId: t.id }) }
+    if (body.notifyClient) { const to = await clientEmail(t); if (to) sent.client = await sendTemplate({ slug: 'ticket-autoresponse', to, data: await mailVars(t, { message: withFiles(stripHtml(t.message), saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: t.id }) }
     if (t.assignedId && t.assignedId !== a.staffId) { const s = await prisma.crmStaff.findUnique({ where: { id: t.assignedId }, select: { email: true } }); if (s?.email) sent.staff = await sendTemplate({ slug: 'ticket-assigned-to-admin', to: s.email, data: await mailVars(t, { message: stripHtml(t.message), staffUrl: true }), relType: 'ticket', relId: t.id }) }
-    return { success: true, id: t.id, number: t.legacyId, mail: sent }
+    return { success: true, id: t.id, number: t.legacyId, mail: sent, files: saved.length }
 }
 
 export async function updateTicket(id, body) {
@@ -185,20 +193,26 @@ export async function updateTicket(id, body) {
     return { success: true }
 }
 
-export async function replyTicket(id, { message, statusId, notify = true }) {
+export async function replyTicket(id, { message, statusId, notify = true, internal = false, close = false } = {}, files = []) {
     const session = await requirePermission('tickets', 'edit')
     const a = await access(session)
     const t = await loadOne(id, a)
     const text = nz(message)
-    if (!text) throw fail('Write your reply first')
+    const prepared = await prepareFiles(files)
+    if (!text && !prepared.length) throw fail('Write your reply first')
     const lk = await lookups()
+    const who = a.session.user.name || a.session.user.email || null
+    const r = await prisma.crmTicketReply.create({ data: { ticketId: id, adminId: a.staffId, message: toHtml(text || ''), name: a.session.user.name || null, email: a.session.user.email || null, internal: !!internal } })
+    const saved = await saveTicketFiles({ ticketId: id, replyId: r.id, prepared, uploaderId: a.staffId, uploaderName: who })
+    // an internal note never changes the status, never counts as a reply to the client and is never emailed
+    if (internal) return { success: true, id: r.id, mail: null, files: saved.length }
     const answered = lk.statuses.find((s) => s.legacyId === 3)
-    const nextStatus = oid(statusId) || answered?.id || t.statusId
-    const r = await prisma.crmTicketReply.create({ data: { ticketId: id, adminId: a.staffId, message: toHtml(text), name: a.session.user.name || null, email: a.session.user.email || null } })
+    const closed = lk.statuses.find((s) => s.legacyId === 5)
+    const nextStatus = close && closed ? closed.id : oid(statusId) || answered?.id || t.statusId
     await prisma.crmTicket.update({ where: { id }, data: { statusId: nextStatus, lastReply: new Date(), clientRead: 0, adminRead: 1, ...(t.assignedId ? {} : { assignedId: a.staffId }) } })
     let mail = null
-    if (notify) { const to = await clientEmail(t); if (to) mail = await sendTemplate({ slug: 'ticket-reply', to, data: await mailVars({ ...t, statusId: nextStatus }, { message: text }), relType: 'ticket', relId: id }) }
-    return { success: true, id: r.id, mail }
+    if (notify) { const to = await clientEmail(t); if (to) mail = await sendTemplate({ slug: 'ticket-reply', to, data: await mailVars({ ...t, statusId: nextStatus }, { message: withFiles(text || '', saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: id }) }
+    return { success: true, id: r.id, mail, files: saved.length }
 }
 
 export async function deleteReply(id, replyId) {

@@ -29,10 +29,113 @@
             "sales": "Sales",
             "purchases": "Purchases",
             "support": "Support",
-            "knowledge-base": "Knowledge base",
+            "knowledge-base": "Knowledge Base",
             "administration": "Administration",
             "setup": "Setup",
-            "utilities": "Utilities"
+            "utilities": "Utilities",
+            "sub": {
+                "customers": {
+                    "more": "More"
+                },
+                "leads": {
+                    "setup": "Lead setup"
+                },
+                "tasks": {
+                    "hr": "Attendance & leave",
+                    "setup": "Templates"
+                },
+                "sales": {
+                    "catalog": "Items & catalog",
+                    "setup": "Sales setup"
+                },
+                "support": {
+                    "setup": "Ticket setup",
+                    "email": "Email & spam"
+                },
+                "administration": {
+                    "comms": "Communication"
+                },
+                "setup": {
+                    "finance": "Finance",
+                    "data": "Data"
+                },
+                "utilities": {
+                    "tools": "Personal",
+                    "team": "Team & feedback",
+                    "more": "System"
+                }
+            },
+            "item": {
+                "clients": "Clients",
+                "contacts": "Contacts",
+                "customer-groups": "Customer groups",
+                "vault": "Vault",
+                "consent-purposes": "Consent purposes",
+                "leads": "Leads",
+                "lead-sources": "Lead sources",
+                "lead-statuses": "Lead statuses",
+                "web-to-lead": "Web to lead forms",
+                "lead-email-integration": "Lead email integration",
+                "projects": "Projects",
+                "milestones": "Milestones",
+                "tasks-board": "Tasks board",
+                "tasks": "Tasks",
+                "task-timers": "Timesheets",
+                "timesheets": "Attendance",
+                "leave-requests": "Leave requests",
+                "days-off": "Days off",
+                "checklist-templates": "Checklist templates",
+                "invoices": "Invoices",
+                "payments": "Payments",
+                "estimates": "Estimates",
+                "proposals": "Proposals",
+                "contracts": "Contracts",
+                "purchase-orders": "Purchase orders",
+                "credit-notes": "Credit notes",
+                "subscriptions": "Subscriptions",
+                "expenses": "Expenses",
+                "items": "Items",
+                "item-groups": "Item groups",
+                "expense-categories": "Expense categories",
+                "contract-types": "Contract types",
+                "tickets": "Tickets",
+                "ticket-statuses": "Ticket statuses",
+                "ticket-priorities": "Ticket priorities",
+                "services": "Services",
+                "predefined-replies": "Predefined replies",
+                "spam-filters": "Spam filters",
+                "ticket-pipe-log": "Ticket pipe log",
+                "tracked-mails": "Tracked emails",
+                "mail-queue": "Email queue",
+                "help-center": "Help center",
+                "kb-manage": "Manage articles",
+                "staff": "Staff",
+                "roles": "Roles",
+                "departments": "Departments",
+                "announcements": "Announcements",
+                "newsfeed": "Newsfeed",
+                "modules": "Modules",
+                "platform-settings": "Settings",
+                "mails": "Mails",
+                "currencies": "Currencies",
+                "taxes": "Taxes",
+                "payment-modes": "Payment modes",
+                "custom-fields": "Custom fields",
+                "tags": "Tags",
+                "countries": "Countries",
+                "reports": "Reports",
+                "file-manager": "File manager",
+                "passwords": "Password vault",
+                "todos": "To-dos",
+                "reminders": "Reminders",
+                "notes": "Notes",
+                "events": "Calendar events",
+                "goals": "Goals",
+                "surveys": "Surveys",
+                "notifications": "Notifications",
+                "files": "Files",
+                "activity-log": "Activity log"
+            }
         }
     }
 }

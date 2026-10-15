@@ -1,0 +1,126 @@
+{
+    "nav": {
+        "dashboard": "ダッシュボード",
+        "calendar": "カレンダー",
+        "chat": "チャット",
+        "team": "チーム",
+        "crm": {
+            "crm": "CRM",
+            "customers": "顧客",
+            "leads": "リード",
+            "projects": "プロジェクト",
+            "tasks": "タスク",
+            "sales": "売上",
+            "purchases": "仕入",
+            "support": "サポート",
+            "knowledge-base": "ナレッジベース",
+            "administration": "管理",
+            "setup": "設定",
+            "utilities": "ユーティリティ",
+            "sub": {
+                "customers": {
+                    "more": "その他"
+                },
+                "leads": {
+                    "setup": "リード設定"
+                },
+                "tasks": {
+                    "hr": "勤怠と休暇",
+                    "setup": "テンプレート"
+                },
+                "sales": {
+                    "catalog": "アイテムとカタログ",
+                    "setup": "売上設定"
+                },
+                "support": {
+                    "setup": "チケット設定",
+                    "email": "メールとスパム"
+                },
+                "administration": {
+                    "comms": "コミュニケーション"
+                },
+                "setup": {
+                    "finance": "財務",
+                    "data": "データ"
+                },
+                "utilities": {
+                    "tools": "個人",
+                    "team": "チームとフィードバック",
+                    "more": "システム"
+                }
+            },
+            "item": {
+                "clients": "クライアント",
+                "contacts": "連絡先",
+                "customer-groups": "顧客グループ",
+                "vault": "金庫",
+                "consent-purposes": "同意の目的",
+                "leads": "リード",
+                "lead-sources": "リードソース",
+                "lead-statuses": "リードのステータス",
+                "web-to-lead": "Webからリードへのフォーム",
+                "lead-email-integration": "リードのメール連携",
+                "projects": "プロジェクト",
+                "milestones": "マイルストーン",
+                "tasks-board": "タスクボード",
+                "tasks": "タスク",
+                "task-timers": "タイムシート",
+                "timesheets": "勤怠",
+                "leave-requests": "休暇申請",
+                "days-off": "休日",
+                "checklist-templates": "チェックリストテンプレート",
+                "invoices": "請求書",
+                "payments": "支払い",
+                "estimates": "見積書",
+                "proposals": "提案書",
+                "contracts": "契約",
+                "purchase-orders": "発注書",
+                "credit-notes": "クレジットノート",
+                "subscriptions": "サブスクリプション",
+                "expenses": "経費",
+                "items": "アイテム",
+                "item-groups": "アイテムグループ",
+                "expense-categories": "経費カテゴリ",
+                "contract-types": "契約タイプ",
+                "tickets": "チケット",
+                "ticket-statuses": "チケットのステータス",
+                "ticket-priorities": "チケットの優先度",
+                "services": "サービス",
+                "predefined-replies": "定型返信",
+                "spam-filters": "スパムフィルター",
+                "ticket-pipe-log": "チケットパイプログ",
+                "tracked-mails": "追跡済みメール",
+                "mail-queue": "メールキュー",
+                "help-center": "ヘルプセンター",
+                "kb-manage": "記事の管理",
+                "staff": "スタッフ",
+                "roles": "ロール",
+                "departments": "部門",
+                "announcements": "お知らせ",
+                "newsfeed": "ニュースフィード",
+                "modules": "モジュール",
+                "platform-settings": "設定",
+                "mails": "メール",
+                "currencies": "通貨",
+                "taxes": "税",
+                "payment-modes": "支払い方法",
+                "custom-fields": "カスタムフィールド",
+                "tags": "タグ",
+                "countries": "国",
+                "reports": "レポート",
+                "file-manager": "ファイルマネージャー",
+                "passwords": "パスワード金庫",
+                "todos": "ToDo",
+                "reminders": "リマインダー",
+                "notes": "メモ",
+                "events": "カレンダーイベント",
+                "goals": "目標",
+                "surveys": "アンケート",
+                "notifications": "通知",
+                "files": "ファイル",
+                "activity-log": "アクティビティログ"
+            }
+        },
+        "home": "ホーム"
+    }
+}

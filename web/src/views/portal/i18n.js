@@ -3,28 +3,28 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/fr'
 import 'dayjs/locale/es'
-import 'dayjs/locale/zh'
+import 'dayjs/locale/ja'
 import 'dayjs/locale/ar'
 import { useLocaleStore } from '@/store/localeStore'
 import fr from './lang/fr'
 import es from './lang/es'
-import zh from './lang/zh'
+import ja from './lang/ja'
 import ar from './lang/ar'
 
 dayjs.extend(relativeTime)
 
 // The English text is the key; a language that has no entry for it simply shows the English text.
-const DICTS = { fr, es, zh, ar }
+const DICTS = { fr, es, ja, ar }
 
 // Perfex-style language names stored on the client record -> language codes of the app.
-const CLIENT_LANG = { english: 'en', french: 'fr', spanish: 'es', chinese: 'zh', 'chinese_simplified': 'zh', arabic: 'ar' }
+const CLIENT_LANG = { english: 'en', french: 'fr', spanish: 'es', japanese: 'ja', arabic: 'ar' }
 
 /** The language a first-time visitor should get: the client's own language, else the browser's, else English. */
 export const guessLang = (clientLanguage) => {
     const byClient = CLIENT_LANG[String(clientLanguage || '').toLowerCase()]
     if (byClient) return byClient
     const nav = String(navigator.language || 'en').slice(0, 2).toLowerCase()
-    return ['en', 'fr', 'es', 'zh', 'ar'].includes(nav) ? nav : 'en'
+    return ['en', 'fr', 'es', 'ja', 'ar'].includes(nav) ? nav : 'en'
 }
 
 /** t('English text', { name }) · date(value, format) · ago(value) · lang · rtl, following the language chosen in the header. */

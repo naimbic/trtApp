@@ -1,12 +1,6 @@
 {
     "nav": {
-        "dashboard": {
-            "dashboard": "Panel",
-            "ecommerce": "Comercio Electrónico",
-            "analytic": "Analítica",
-            "project": "Proyecto",
-            "marketing": "Marketing"
-        },
+        "dashboard": "Panel",
         "concepts": "Conceptos",
         "conceptsAi": {
             "ai": "IA",
@@ -159,6 +153,124 @@
             "sharedComponentDoc": "Componente Compartido",
             "utilsDoc": "Utilidades",
             "changeLog": "Registro de Cambios"
+        },
+        "team": "Equipo",
+        "crm": {
+            "crm": "CRM",
+            "customers": "Clientes",
+            "leads": "Prospectos",
+            "projects": "Proyectos",
+            "tasks": "Tareas",
+            "sales": "Ventas",
+            "purchases": "Compras",
+            "support": "Soporte",
+            "knowledge-base": "Base de conocimientos",
+            "administration": "Administración",
+            "setup": "Configuración",
+            "utilities": "Utilidades",
+            "sub": {
+                "customers": {
+                    "more": "Más"
+                },
+                "leads": {
+                    "setup": "Configuración de prospectos"
+                },
+                "tasks": {
+                    "hr": "Asistencia y permisos",
+                    "setup": "Plantillas"
+                },
+                "sales": {
+                    "catalog": "Artículos y catálogo",
+                    "setup": "Configuración de ventas"
+                },
+                "support": {
+                    "setup": "Configuración de tickets",
+                    "email": "Correo y spam"
+                },
+                "administration": {
+                    "comms": "Comunicación"
+                },
+                "setup": {
+                    "finance": "Finanzas",
+                    "data": "Datos"
+                },
+                "utilities": {
+                    "tools": "Personal",
+                    "team": "Equipo y comentarios",
+                    "more": "Sistema"
+                }
+            },
+            "item": {
+                "clients": "Clientes",
+                "contacts": "Contactos",
+                "customer-groups": "Grupos de clientes",
+                "vault": "Bóveda",
+                "consent-purposes": "Finalidades de consentimiento",
+                "leads": "Prospectos",
+                "lead-sources": "Fuentes de prospectos",
+                "lead-statuses": "Estados de prospectos",
+                "web-to-lead": "Formularios web a prospecto",
+                "lead-email-integration": "Integración de correo de prospectos",
+                "projects": "Proyectos",
+                "milestones": "Hitos",
+                "tasks-board": "Tablero de tareas",
+                "tasks": "Tareas",
+                "task-timers": "Hojas de horas",
+                "timesheets": "Asistencia",
+                "leave-requests": "Solicitudes de permiso",
+                "days-off": "Días libres",
+                "checklist-templates": "Plantillas de listas de verificación",
+                "invoices": "Facturas",
+                "payments": "Pagos",
+                "estimates": "Presupuestos",
+                "proposals": "Propuestas",
+                "contracts": "Contratos",
+                "purchase-orders": "Órdenes de compra",
+                "credit-notes": "Notas de crédito",
+                "subscriptions": "Suscripciones",
+                "expenses": "Gastos",
+                "items": "Artículos",
+                "item-groups": "Grupos de artículos",
+                "expense-categories": "Categorías de gastos",
+                "contract-types": "Tipos de contrato",
+                "tickets": "Tickets",
+                "ticket-statuses": "Estados de tickets",
+                "ticket-priorities": "Prioridades de tickets",
+                "services": "Servicios",
+                "predefined-replies": "Respuestas predefinidas",
+                "spam-filters": "Filtros de spam",
+                "ticket-pipe-log": "Registro de tuberías de tickets",
+                "tracked-mails": "Correos rastreados",
+                "mail-queue": "Cola de correos",
+                "help-center": "Centro de ayuda",
+                "kb-manage": "Gestionar artículos",
+                "staff": "Personal",
+                "roles": "Roles",
+                "departments": "Departamentos",
+                "announcements": "Anuncios",
+                "newsfeed": "Noticias",
+                "modules": "Módulos",
+                "platform-settings": "Ajustes",
+                "mails": "Correos",
+                "currencies": "Monedas",
+                "taxes": "Impuestos",
+                "payment-modes": "Modos de pago",
+                "custom-fields": "Campos personalizados",
+                "tags": "Etiquetas",
+                "countries": "Países",
+                "reports": "Informes",
+                "file-manager": "Gestor de archivos",
+                "passwords": "Bóveda de contraseñas",
+                "todos": "Pendientes",
+                "reminders": "Recordatorios",
+                "notes": "Notas",
+                "events": "Eventos del calendario",
+                "goals": "Objetivos",
+                "surveys": "Encuestas",
+                "notifications": "Notificaciones",
+                "files": "Archivos",
+                "activity-log": "Registro de actividad"
+            }
         }
     }
 }

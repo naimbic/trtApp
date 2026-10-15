@@ -10,7 +10,7 @@ import { useLocale } from 'next-intl'
 
 const languageList = [
     { label: 'English', value: 'en', flag: 'US' },
-    { label: 'Chinese', value: 'zh', flag: 'CN' },
+    { label: '日本語', value: 'ja', flag: 'JP' },
     { label: 'Espanol', value: 'es', flag: 'ES' },
     { label: 'Arabic', value: 'ar', flag: 'SA' },
 ]

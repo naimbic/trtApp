@@ -32,7 +32,110 @@
             "knowledge-base": "Base de connaissances",
             "administration": "Administration",
             "setup": "Configuration",
-            "utilities": "Utilitaires"
+            "utilities": "Utilitaires",
+            "sub": {
+                "customers": {
+                    "more": "Plus"
+                },
+                "leads": {
+                    "setup": "Configuration des prospects"
+                },
+                "tasks": {
+                    "hr": "Présence et congés",
+                    "setup": "Modèles"
+                },
+                "sales": {
+                    "catalog": "Articles et catalogue",
+                    "setup": "Configuration des ventes"
+                },
+                "support": {
+                    "setup": "Configuration des tickets",
+                    "email": "E-mail et spam"
+                },
+                "administration": {
+                    "comms": "Communication"
+                },
+                "setup": {
+                    "finance": "Finance",
+                    "data": "Données"
+                },
+                "utilities": {
+                    "tools": "Personnel",
+                    "team": "Équipe et retours",
+                    "more": "Système"
+                }
+            },
+            "item": {
+                "clients": "Clients",
+                "contacts": "Contacts",
+                "customer-groups": "Groupes de clients",
+                "vault": "Coffre",
+                "consent-purposes": "Finalités de consentement",
+                "leads": "Prospects",
+                "lead-sources": "Sources de prospects",
+                "lead-statuses": "Statuts des prospects",
+                "web-to-lead": "Formulaires web vers prospect",
+                "lead-email-integration": "Intégration e-mail des prospects",
+                "projects": "Projets",
+                "milestones": "Jalons",
+                "tasks-board": "Tableau des tâches",
+                "tasks": "Tâches",
+                "task-timers": "Feuilles de temps",
+                "timesheets": "Présence",
+                "leave-requests": "Demandes de congé",
+                "days-off": "Jours de congé",
+                "checklist-templates": "Modèles de listes de contrôle",
+                "invoices": "Factures",
+                "payments": "Paiements",
+                "estimates": "Devis",
+                "proposals": "Propositions",
+                "contracts": "Contrats",
+                "purchase-orders": "Bons de commande",
+                "credit-notes": "Avoirs",
+                "subscriptions": "Abonnements",
+                "expenses": "Dépenses",
+                "items": "Articles",
+                "item-groups": "Groupes d’articles",
+                "expense-categories": "Catégories de dépenses",
+                "contract-types": "Types de contrat",
+                "tickets": "Tickets",
+                "ticket-statuses": "Statuts des tickets",
+                "ticket-priorities": "Priorités des tickets",
+                "services": "Services",
+                "predefined-replies": "Réponses prédéfinies",
+                "spam-filters": "Filtres anti-spam",
+                "ticket-pipe-log": "Journal du pipe des tickets",
+                "tracked-mails": "E-mails suivis",
+                "mail-queue": "File d’attente des e-mails",
+                "help-center": "Centre d’aide",
+                "kb-manage": "Gérer les articles",
+                "staff": "Personnel",
+                "roles": "Rôles",
+                "departments": "Départements",
+                "announcements": "Annonces",
+                "newsfeed": "Fil d’actualité",
+                "modules": "Modules",
+                "platform-settings": "Paramètres",
+                "mails": "E-mails",
+                "currencies": "Devises",
+                "taxes": "Taxes",
+                "payment-modes": "Modes de paiement",
+                "custom-fields": "Champs personnalisés",
+                "tags": "Étiquettes",
+                "countries": "Pays",
+                "reports": "Rapports",
+                "file-manager": "Gestionnaire de fichiers",
+                "passwords": "Coffre de mots de passe",
+                "todos": "Tâches perso",
+                "reminders": "Rappels",
+                "notes": "Notes",
+                "events": "Événements du calendrier",
+                "goals": "Objectifs",
+                "surveys": "Sondages",
+                "notifications": "Notifications",
+                "files": "Fichiers",
+                "activity-log": "Journal d’activité"
+            }
         }
     }
 }

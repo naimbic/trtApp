@@ -5,7 +5,7 @@ const appConfig = {
     locale: 'en',
     accessTokenPersistStrategy: 'cookies',
     enableMock: true,
-    activeNavTranslation: false,
+    activeNavTranslation: true,
 }
 
 export default appConfig

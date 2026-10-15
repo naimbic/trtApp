@@ -27,7 +27,12 @@ export const useLocaleStore = create()(
                     return set({ currentLang: lang })
                 },
             }),
-            { name: 'locale' },
+            {
+                name: 'locale',
+                version: 1,
+                // Chinese was removed: anyone who had chosen it goes back to English
+                migrate: (s) => ({ ...s, currentLang: s?.currentLang === 'zh' ? 'en' : s?.currentLang }),
+            },
         ),
     ),
 )

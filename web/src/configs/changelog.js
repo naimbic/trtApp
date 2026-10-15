@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.33.0',
+        date: '2026-10-15',
+        title: 'Japanese replaces Chinese, sidebar in every language',
+        items: ['Languages are now English, Français, Español, 日本語 and العربية: Chinese is removed everywhere (language menu, client area, saved choices go back to English, the client language list in Setup) and Japanese is added, including the whole client area (menu, dashboard, invoices, estimates, proposals, contracts, projects, support, help center, profile, chat, statuses and dates)', 'The sidebar is translated for real now: dashboard, calendar, chat, team, every CRM group, sub-group and page name in all five languages (the translation switch was off, so even French showed English)', 'The language you chose is kept and applied from the first screen when you reload', 'Page contents of the staff area (tables, forms, buttons) are still written in English only']
+    },
+    {
         version: '0.32.0',
         date: '2026-10-15',
         title: 'Versions page with a release timeline',

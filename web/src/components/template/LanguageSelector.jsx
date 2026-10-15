@@ -10,7 +10,7 @@ const languageList = [
     { label: 'English', value: 'en', flag: 'US' },
     { label: 'Français', value: 'fr', flag: 'FR' },
     { label: 'Español', value: 'es', flag: 'ES' },
-    { label: '中文', value: 'zh', flag: 'CN' },
+    { label: '日本語', value: 'ja', flag: 'JP' },
     { label: 'العربية', value: 'ar', flag: 'MA' },
 ]
 

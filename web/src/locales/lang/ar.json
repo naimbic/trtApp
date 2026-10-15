@@ -1,12 +1,6 @@
 {
     "nav": {
-        "dashboard": {
-            "dashboard": "لوحة التحكم",
-            "ecommerce": "التجارة الإلكترونية",
-            "analytic": "التحليلات",
-            "project": "المشروع",
-            "marketing": "التسويق"
-        },
+        "dashboard": "لوحة القيادة",
         "concepts": "المفاهيم",
         "conceptsAi": {
             "ai": "الذكاء الاصطناعي",
@@ -159,6 +153,124 @@
             "sharedComponentDoc": "المكون المشترك",
             "utilsDoc": "الأدوات",
             "changeLog": "سجل التغييرات"
+        },
+        "team": "الفريق",
+        "crm": {
+            "crm": "إدارة العملاء",
+            "customers": "العملاء",
+            "leads": "العملاء المحتملون",
+            "projects": "المشاريع",
+            "tasks": "المهام",
+            "sales": "المبيعات",
+            "purchases": "المشتريات",
+            "support": "الدعم",
+            "knowledge-base": "قاعدة المعرفة",
+            "administration": "الإدارة",
+            "setup": "الإعداد",
+            "utilities": "أدوات",
+            "sub": {
+                "customers": {
+                    "more": "المزيد"
+                },
+                "leads": {
+                    "setup": "إعداد العملاء المحتملين"
+                },
+                "tasks": {
+                    "hr": "الحضور والإجازات",
+                    "setup": "القوالب"
+                },
+                "sales": {
+                    "catalog": "العناصر والكتالوج",
+                    "setup": "إعداد المبيعات"
+                },
+                "support": {
+                    "setup": "إعداد التذاكر",
+                    "email": "البريد والبريد المزعج"
+                },
+                "administration": {
+                    "comms": "التواصل"
+                },
+                "setup": {
+                    "finance": "المالية",
+                    "data": "البيانات"
+                },
+                "utilities": {
+                    "tools": "شخصي",
+                    "team": "الفريق والملاحظات",
+                    "more": "النظام"
+                }
+            },
+            "item": {
+                "clients": "العملاء",
+                "contacts": "جهات الاتصال",
+                "customer-groups": "مجموعات العملاء",
+                "vault": "الخزنة",
+                "consent-purposes": "أغراض الموافقة",
+                "leads": "العملاء المحتملون",
+                "lead-sources": "مصادر العملاء المحتملين",
+                "lead-statuses": "حالات العملاء المحتملين",
+                "web-to-lead": "نماذج الويب إلى عميل محتمل",
+                "lead-email-integration": "تكامل بريد العملاء المحتملين",
+                "projects": "المشاريع",
+                "milestones": "المراحل",
+                "tasks-board": "لوحة المهام",
+                "tasks": "المهام",
+                "task-timers": "سجلات الوقت",
+                "timesheets": "الحضور",
+                "leave-requests": "طلبات الإجازة",
+                "days-off": "أيام الإجازة",
+                "checklist-templates": "قوالب قوائم المراجعة",
+                "invoices": "الفواتير",
+                "payments": "المدفوعات",
+                "estimates": "عروض الأسعار",
+                "proposals": "المقترحات",
+                "contracts": "العقود",
+                "purchase-orders": "أوامر الشراء",
+                "credit-notes": "إشعارات دائنة",
+                "subscriptions": "الاشتراكات",
+                "expenses": "المصروفات",
+                "items": "العناصر",
+                "item-groups": "مجموعات العناصر",
+                "expense-categories": "فئات المصروفات",
+                "contract-types": "أنواع العقود",
+                "tickets": "التذاكر",
+                "ticket-statuses": "حالات التذاكر",
+                "ticket-priorities": "أولويات التذاكر",
+                "services": "الخدمات",
+                "predefined-replies": "ردود جاهزة",
+                "spam-filters": "مرشحات البريد المزعج",
+                "ticket-pipe-log": "سجل أنبوب التذاكر",
+                "tracked-mails": "الرسائل المتتبعة",
+                "mail-queue": "قائمة انتظار البريد",
+                "help-center": "مركز المساعدة",
+                "kb-manage": "إدارة المقالات",
+                "staff": "الموظفون",
+                "roles": "الأدوار",
+                "departments": "الأقسام",
+                "announcements": "الإعلانات",
+                "newsfeed": "آخر الأخبار",
+                "modules": "الوحدات",
+                "platform-settings": "الإعدادات",
+                "mails": "الرسائل",
+                "currencies": "العملات",
+                "taxes": "الضرائب",
+                "payment-modes": "طرق الدفع",
+                "custom-fields": "حقول مخصصة",
+                "tags": "الوسوم",
+                "countries": "الدول",
+                "reports": "التقارير",
+                "file-manager": "مدير الملفات",
+                "passwords": "خزنة كلمات المرور",
+                "todos": "المهام الشخصية",
+                "reminders": "التذكيرات",
+                "notes": "الملاحظات",
+                "events": "أحداث التقويم",
+                "goals": "الأهداف",
+                "surveys": "الاستطلاعات",
+                "notifications": "الإشعارات",
+                "files": "الملفات",
+                "activity-log": "سجل النشاط"
+            }
         }
     }
 }

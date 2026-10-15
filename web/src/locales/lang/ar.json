@@ -272,7 +272,8 @@
                 "activity-log": "سجل النشاط",
                 "my-tasks": "مهامي",
                 "team-tasks": "مهام الفريق",
-                "issues": "المشكلات"
+                "issues": "المشكلات",
+                "scrum-board": "لوحة سكرم"
             }
         }
     }

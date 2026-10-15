@@ -137,7 +137,8 @@
                 "activity-log": "Journal d’activité",
                 "my-tasks": "Mes tâches",
                 "team-tasks": "Tâches de l’équipe",
-                "issues": "Problèmes"
+                "issues": "Problèmes",
+                "scrum-board": "Tableau scrum"
             }
         }
     }

@@ -137,7 +137,8 @@
                 "activity-log": "Activity log",
                 "my-tasks": "My tasks",
                 "team-tasks": "Team tasks",
-                "issues": "Issues"
+                "issues": "Issues",
+                "scrum-board": "Scrum board"
             }
         }
     }

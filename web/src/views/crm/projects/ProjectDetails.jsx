@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { TbFileInfo, TbChecklist, TbPaperclip, TbMessages, TbNotes, TbCalendarStats, TbSettings, TbTrash, TbClock, TbFlag } from 'react-icons/tb'
+import { TbLayoutKanban, TbFileInfo, TbChecklist, TbPaperclip, TbMessages, TbNotes, TbCalendarStats, TbSettings, TbTrash, TbClock, TbFlag } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Avatar from '@/components/ui/Avatar'
@@ -17,7 +17,7 @@ import dayjs from 'dayjs'
 import cn from '@/utils/classNames'
 import { api, notify, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
-import TasksBoard from '../tasks/TasksBoard'
+import TaskList from '../tasks/TaskList'
 import { People, initials } from '../tasks/shared'
 import { STATUS, BILLING, StatusTag, Bar, fmt, hours, useStaff } from './shared'
 import { tr, trn } from '@/utils/t'
@@ -84,7 +84,7 @@ const ProjectDetails = () => {
                     <div><div className="mb-1 text-sm text-gray-500"><Link to="/crm/projects/list" className="hover:text-primary">{tr("Projects")}</Link></div><h3>{p.name}</h3></div>
                     <StatusTag status={p.status} />
                 </div>
-                {data.can.edit && <Button variant="solid" onClick={() => setTab('settings')}>{tr("Edit")}</Button>}
+                <div className="flex gap-2"><Button icon={<TbLayoutKanban />} onClick={() => nav(`/crm/projects/${id}/board`)}>{tr("Scrum board")}</Button>{data.can.edit && <Button variant="solid" onClick={() => setTab('settings')}>{tr("Edit")}</Button>}</div>
             </div>
 
             <div className="flex flex-col gap-6 xl:flex-row xl:gap-12">
@@ -140,7 +140,7 @@ const ProjectDetails = () => {
                         </div>
                     )}
 
-                    {tab === 'tasks' && <TasksBoard projectId={id} />}
+                    {tab === 'tasks' && <TaskList projectId={id} />}
 
                     {tab === 'files' && (
                         <div>

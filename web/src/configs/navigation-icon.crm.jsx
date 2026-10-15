@@ -22,7 +22,7 @@ export default {
     'nav.leads': <PiFunnelDuotone />, 'nav.lead-sources': <PiMegaphoneDuotone />, 'nav.lead-statuses': <PiFlagDuotone />,
     'nav.web-to-lead': <PiGlobeDuotone />, 'nav.lead-email-integration': <PiEnvelopeOpenDuotone />,
     'nav.projects': <PiKanbanDuotone />, 'nav.milestones': <PiFlagBannerDuotone />,
-    'nav.tasks-board': <PiKanbanDuotone />, 'nav.my-tasks': <PiUserCheckDuotone />, 'nav.team-tasks': <PiUsersThreeDuotone />, 'nav.issues': <PiBugBeetleDuotone />, 'nav.tasks': <PiCheckSquareDuotone />, 'nav.task-timers': <PiTimerDuotone />,
+    'nav.tasks-board': <PiKanbanDuotone />, 'nav.my-tasks': <PiUserCheckDuotone />, 'nav.scrum-board': <PiKanbanDuotone />, 'nav.team-tasks': <PiUsersThreeDuotone />, 'nav.issues': <PiBugBeetleDuotone />, 'nav.tasks': <PiCheckSquareDuotone />, 'nav.task-timers': <PiTimerDuotone />,
     'nav.timesheets': <PiCalendarCheckDuotone />, 'nav.leave-requests': <PiAirplaneTiltDuotone />, 'nav.days-off': <PiCalendarXDuotone />,
     'nav.checklist-templates': <PiListChecksDuotone />,
     'nav.invoices': <PiReceiptDuotone />, 'nav.payments': <PiMoneyDuotone />, 'nav.estimates': <PiFileTextDuotone />,

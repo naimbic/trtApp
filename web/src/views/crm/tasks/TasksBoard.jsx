@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { TbPlus, TbSearch, TbChecklist, TbMessage, TbCalendar, TbLayoutKanban, TbList, TbRepeat } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
@@ -38,6 +38,7 @@ const TaskCard = ({ t, onOpen }) => (
 )
 
 const TasksBoard = ({ projectId = null }) => {
+    const nav = useNavigate()
     const [params, setParams] = useSearchParams()
     const [data, setData] = useState({ list: [], counts: {}, can: {} })
     const [lookups, setLookups] = useState({ staff: [] })
@@ -89,7 +90,7 @@ const TasksBoard = ({ projectId = null }) => {
         void draggableId
     }
 
-    const open = (id) => setDrawer({ open: true, id })
+    const open = (id) => (id ? nav(`/crm/tasks/${id}`) : setDrawer({ open: true, id: null }))
     const close = () => { setDrawer((d) => ({ ...d, open: false })); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
     const staffOptions = lookups.staff.map((s) => ({ value: s.id, label: s.name }))
 

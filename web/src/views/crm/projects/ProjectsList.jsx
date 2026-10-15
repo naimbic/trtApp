@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { TbClipboardCheck, TbStar, TbStarFilled, TbSearch, TbCalendar } from 'react-icons/tb'
+import { TbLayoutKanban, TbClipboardCheck, TbStar, TbStarFilled, TbSearch, TbCalendar } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import Button from '@/components/ui/Button'
@@ -63,7 +63,7 @@ const ProjectsList = () => {
                                     <Card key={p.id} bodyClass="h-full">
                                         <div className="flex h-full flex-col justify-between">
                                             <div className="flex items-center justify-between gap-2">
-                                                <Link to={`/crm/projects/${p.id}`}><h6 className="font-bold hover:text-primary">{p.name}</h6></Link>
+                                                <div className="flex items-center gap-2"><Link to={`/crm/projects/${p.id}`}><h6 className="font-bold hover:text-primary">{p.name}</h6></Link><Link to={`/crm/projects/${p.id}/board`} title={tr("Scrum board")} className="text-gray-400 hover:text-primary"><TbLayoutKanban /></Link></div>
                                                 <div className="cursor-pointer text-lg text-amber-400" role="button" onClick={() => toggle(p.id)}><TbStarFilled /></div>
                                             </div>
                                             <p className="mt-3 text-sm text-gray-500">{p.client?.name || tr("No client")}</p>
@@ -84,7 +84,7 @@ const ProjectsList = () => {
                                 <Card key={p.id}>
                                     <div className="grid grid-cols-12 gap-x-4">
                                         <div className="col-span-12 my-1 sm:col-span-4 sm:my-0 md:flex md:items-center lg:col-span-3">
-                                            <div className="flex flex-col"><h6 className="font-bold hover:text-primary"><Link to={`/crm/projects/${p.id}`}>{p.name}</Link></h6><span className="text-sm">{p.client?.name || tr("No client")}</span></div>
+                                            <div className="flex flex-col"><h6 className="flex items-center gap-2 font-bold hover:text-primary"><Link to={`/crm/projects/${p.id}`}>{p.name}</Link><Link to={`/crm/projects/${p.id}/board`} title={tr("Scrum board")} className="text-gray-400 hover:text-primary"><TbLayoutKanban /></Link></h6><span className="text-sm">{p.client?.name || tr("No client")}</span></div>
                                         </div>
                                         <div className="col-span-12 my-1 flex flex-wrap items-center gap-3 sm:col-span-4 sm:my-0 lg:col-span-3">
                                             <StatusTag status={p.status} />

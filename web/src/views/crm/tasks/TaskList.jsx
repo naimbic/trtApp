@@ -21,6 +21,7 @@ import TaskDrawer from './TaskDrawer'
 import { tr, trn } from '@/utils/t'
 
 const { TBody, Tr, Td } = Table
+const Shell = ({ embedded, children }) => (embedded ? <div>{children}</div> : <AdaptiveCard>{children}</AdaptiveCard>)
 // same pastel pills as the template's task list
 const PILL = 'dark:text-gray-900'
 const STATUS_PILL = { 1: 'bg-amber-200 dark:bg-amber-200', 4: 'bg-sky-200 dark:bg-sky-200', 3: 'bg-purple-200 dark:bg-purple-200', 2: 'bg-orange-200 dark:bg-orange-200', 5: 'bg-emerald-200 dark:bg-emerald-200' }
@@ -88,10 +89,10 @@ const AddTask = ({ open, onOpen, onClose, staff, me, onCreate }) => {
 }
 
 /** "My tasks" and "Team tasks": the template's grouped task list, one group per project. */
-const TaskList = () => {
+const TaskList = ({ projectId = null }) => {
     const { pathname } = useLocation()
     const nav = useNavigate()
-    const scope = pathname.endsWith('team-tasks') ? 'team' : 'mine'
+    const scope = projectId ? 'team' : pathname.endsWith('team-tasks') ? 'team' : 'mine'
     const [data, setData] = useState({ list: [], can: {} })
     const [lookups, setLookups] = useState({ staff: [], me: null })
     const [search, setSearch] = useState('')
@@ -104,8 +105,8 @@ const TaskList = () => {
 
     useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLookups).catch(() => {}) }, [])
     const load = useCallback(async () => {
-        try { setData(await api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', done: allDone ? '1' : '', limit: 1000 })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [scope, allDone])
+        try { setData(await api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', done: allDone ? '1' : '', limit: 1000, relType: projectId ? 'project' : '', relId: projectId || '' })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
+    }, [scope, allDone, projectId])
     useEffect(() => { setLoading(true); load() }, [load])
 
     // groups = projects (plus the tasks that belong to no project)
@@ -115,15 +116,18 @@ const TaskList = () => {
         for (const t of data.list) {
             if (q && !t.name.toLowerCase().includes(q) && !(t.rel?.label || '').toLowerCase().includes(q)) continue
             const isProject = t.rel?.type === 'project' && t.relId
-            const key = isProject ? `project:${t.relId}` : 'other'
-            if (!map.has(key)) map.set(key, { key, title: isProject ? t.rel.label : tr('Other tasks'), relType: isProject ? 'project' : null, relId: isProject ? t.relId : null, list: [] })
+            // inside a project the blocks are its milestones; everywhere else they are the projects
+            const key = projectId ? (t.milestoneId ? `ms:${t.milestoneId}` : 'other') : isProject ? `project:${t.relId}` : 'other'
+            if (!map.has(key)) map.set(key, projectId
+                ? { key, title: t.milestone?.name || tr('No milestone'), relType: 'project', relId: projectId, milestoneId: t.milestoneId || null, list: [] }
+                : { key, title: isProject ? t.rel.label : tr('Other tasks'), relType: isProject ? 'project' : null, relId: isProject ? t.relId : null, list: [] })
             map.get(key).list.push(t)
         }
-        if (adding && !map.has(adding)) map.set(adding, { key: adding, title: tr('Other tasks'), relType: null, relId: null, list: [] })
+        if (adding && !map.has(adding)) map.set(adding, { key: adding, title: projectId ? tr('No milestone') : tr('Other tasks'), relType: projectId ? 'project' : null, relId: projectId || null, milestoneId: null, list: [] })
         const arr = [...map.values()].sort((a, b) => (a.key === 'other') - (b.key === 'other') || a.title.localeCompare(b.title))
         const pos = (k) => { const i = order.indexOf(k); return i < 0 ? 9999 : i }
         return arr.sort((a, b) => pos(a.key) - pos(b.key))
-    }, [data.list, search, order, adding])
+    }, [data.list, search, order, adding, projectId])
 
     const people = useMemo(() => { const m = new Map(); data.list.forEach((t) => t.assignees.forEach((a) => m.set(a.id, a))); return [...m.values()] }, [data.list])
     const openCount = data.list.filter((t) => t.status !== 5).length
@@ -144,10 +148,10 @@ const TaskList = () => {
         if (!from || !to || !data.can.edit) return
         const task = from.list[s.index]
         const dest = [...to.list.filter((t) => t.id !== task.id)]
-        dest.splice(d.index, 0, { ...task, relType: to.relType, relId: to.relId, rel: to.relType ? { type: 'project', label: to.title } : null })
+        dest.splice(d.index, 0, projectId ? { ...task, milestoneId: to.milestoneId, milestone: to.milestoneId ? { id: to.milestoneId, name: to.title } : null } : { ...task, relType: to.relType, relId: to.relId, rel: to.relType ? { type: 'project', label: to.title } : null })
         // optimistic update: the task lives in its new group right away
         setData((cur) => ({ ...cur, list: [...cur.list.filter((t) => !(to.list.concat(from.list)).some((x) => x.id === t.id)), ...dest, ...from.list.filter((t) => t.id !== task.id && from.key !== to.key)] }))
-        try { await api('/api/crm/work/tasks/regroup', { method: 'POST', body: { id: task.id, relType: to.relType || 'none', relId: to.relId, ids: dest.map((t) => t.id) } }) } catch (e) { notify('danger', e.message) }
+        try { await api('/api/crm/work/tasks/regroup', { method: 'POST', body: projectId ? { id: task.id, milestoneId: to.milestoneId, ids: dest.map((t) => t.id) } : { id: task.id, relType: to.relType || 'none', relId: to.relId, ids: dest.map((t) => t.id) } }) } catch (e) { notify('danger', e.message) }
         load()
     }
 
@@ -158,26 +162,26 @@ const TaskList = () => {
     }
     const create = async (g, body) => {
         try {
-            await api('/api/crm/work/tasks', { method: 'POST', body: { ...body, ...(g.relType ? { relType: 'project', relId: g.relId } : {}) } })
+            await api('/api/crm/work/tasks', { method: 'POST', body: { ...body, ...(g.relType ? { relType: 'project', relId: g.relId } : {}), ...(projectId && g.milestoneId ? { milestoneId: g.milestoneId } : {}) } })
             notify('success', tr('Task added')); setAdding(''); load()
         } catch (e) { notify('danger', e.message) }
     }
-    const open = (id) => setDrawer({ open: true, id })
+    const open = (id) => (id ? nav(`/crm/tasks/${id}`) : setDrawer({ open: true, id: null }))
 
     return (
-        <AdaptiveCard>
+        <Shell embedded={!!projectId}>
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                    <h3>{scope === 'mine' ? tr('My tasks') : tr('Team tasks')}</h3>
+                    {projectId ? <h4>{tr('Tasks')}</h4> : <h3>{scope === 'mine' ? tr('My tasks') : tr('Team tasks')}</h3>}
                     <p className="text-sm text-gray-500">{trn(openCount, 'open task')}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <Segment size="sm" value={scope} onChange={(v) => v && v !== scope && nav(v === 'mine' ? '/crm/my-tasks' : '/crm/team-tasks')}>
+                    {!projectId && <Segment size="sm" value={scope} onChange={(v) => v && v !== scope && nav(v === 'mine' ? '/crm/my-tasks' : '/crm/team-tasks')}>
                         <Segment.Item value="mine">{tr('My tasks')}</Segment.Item>
                         <Segment.Item value="team">{tr('Team tasks')}</Segment.Item>
-                    </Segment>
+                    </Segment>}
                     {scope === 'team' && people.length > 0 && <UsersAvatarGroup className="flex items-center" avatarProps={{ size: 'sm' }} imgKey="image" users={people} />}
-                    <Button size="sm" icon={<TbLayoutKanban />} onClick={() => nav('/crm/tasks-board')}>{tr('Board')}</Button>
+                    <Button size="sm" icon={<TbLayoutKanban />} onClick={() => nav(projectId ? `/crm/projects/${projectId}/board` : '/crm/scrum-board')}>{tr('Scrum board')}</Button>
                     {data.can.create && <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => open(null)}>{tr('New task')}</Button>}
                 </div>
             </div>
@@ -231,8 +235,8 @@ const TaskList = () => {
                 {loading && !groups.length && <div className="py-10 text-center text-gray-400">{tr('Loading…')}</div>}
             </div>
 
-            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={null} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} />
-        </AdaptiveCard>
+            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={projectId ? { relType: 'project', relId: projectId } : null} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} />
+        </Shell>
     )
 }
 

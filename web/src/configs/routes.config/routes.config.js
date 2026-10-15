@@ -98,6 +98,9 @@ export const protectedRoutes = [
     { key: 'crm.issues.view', path: '/crm/issues/:id', component: lazy(() => import('@/views/crm/issues/IssueView')), authority: [] },
     { key: 'crm.my-tasks', path: '/crm/my-tasks', component: lazy(() => import('@/views/crm/tasks/TaskList')), authority: [] },
     { key: 'crm.team-tasks', path: '/crm/team-tasks', component: lazy(() => import('@/views/crm/tasks/TaskList')), authority: [] },
+    { key: 'crm.task-page', path: '/crm/tasks/:id', component: lazy(() => import('@/views/crm/tasks/TaskPage')), authority: [] },
+    { key: 'crm.scrum-board', path: '/crm/scrum-board', component: lazy(() => import('@/views/crm/tasks/ScrumBoard')), authority: [] },
+    { key: 'crm.project-board', path: '/crm/projects/:id/board', component: lazy(() => import('@/views/crm/tasks/ScrumBoard')), authority: [] },
     { key: 'crm.chat', path: '/crm/chat', component: lazy(() => import('@/views/crm/chat/ChatPage')), authority: [] },
     { key: 'crm.payments', path: '/crm/payments', component: lazy(() => import('@/views/crm/sales/PaymentsList')), authority: [] },
     {

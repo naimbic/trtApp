@@ -52,6 +52,21 @@ async function relLabels(tasks) {
     return out
 }
 
+/** Tags, file counts and milestone names for a set of tasks (for the cards of the lists and the board). */
+async function extras(tasks) {
+    const ids = tasks.map((t) => t.id)
+    const mids = [...new Set(tasks.map((t) => t.milestoneId).filter(Boolean))]
+    const [tg, files, ms] = await Promise.all([
+        ids.length ? prisma.crmTaggable.findMany({ where: { relType: 'task', relId: { in: ids } }, include: { tag: true }, orderBy: { tagOrder: 'asc' } }) : [],
+        ids.length ? prisma.crmMedia.groupBy({ by: ['relId'], where: { relType: 'task', relId: { in: ids }, isFolder: false }, _count: { _all: true } }).catch(() => []) : [],
+        mids.length ? prisma.crmMilestone.findMany({ where: { id: { in: mids } }, select: { id: true, name: true } }) : [],
+    ])
+    const tags = {}, fileCount = {}, milestones = Object.fromEntries(ms.map((m) => [m.id, m.name]))
+    for (const x of tg) (tags[x.relId] ||= []).push(x.tag.name)
+    for (const f of files) fileCount[f.relId] = f._count._all
+    return (t) => ({ tags: tags[t.id] || [], files: fileCount[t.id] || 0, milestone: t.milestoneId ? { id: t.milestoneId, name: milestones[t.milestoneId] || '' } : null })
+}
+
 function card(t, people, rels, extra = {}) {
     const rel = t.relType && t.relId ? rels[`${t.relType}:${t.relId}`] : null
     return {
@@ -60,7 +75,7 @@ function card(t, people, rels, extra = {}) {
         rel: rel ? { type: t.relType, ...rel } : t.relType ? { type: t.relType, label: t.relType } : null,
         assignees: (t.assignees || []).map((x) => people[x.staffId]).filter(Boolean),
         checklistDone: (t.checklistItems || []).filter((c) => c.finished).length, checklistTotal: (t.checklistItems || []).length,
-        comments: t._count?.comments ?? 0, billable: t.billable, recurring: t.recurring, order: t.kanbanOrder, createdAt: t.createdAt,
+        comments: t._count?.comments ?? 0, milestoneId: t.milestoneId || null, code: `#T-${t.legacyId ?? String(t.id).slice(-5).toUpperCase()}`, billable: t.billable, recurring: t.recurring, order: t.kanbanOrder, createdAt: t.createdAt,
         ...extra,
     }
 }
@@ -91,7 +106,8 @@ export async function listTasks(p = {}) {
     const rels = await relLabels(tasks)
     const counts = {}
     for (const t of tasks) counts[t.status] = (counts[t.status] || 0) + 1
-    return { list: tasks.map((t) => card(t, people, rels)), counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
+    const ex = await extras(tasks)
+    return { list: tasks.map((t) => card(t, people, rels, ex(t))), counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
 }
 
 async function loadOne(id, a) {
@@ -113,7 +129,7 @@ export async function getTask(id) {
     const running = timers.find((x) => !x.endTime && x.staff?.id === a.staffId) || null
     return {
         task: {
-            ...card({ ...t, checklistItems: t.checklistItems, _count: { comments: t.comments.length } }, people, rels),
+            ...card({ ...t, checklistItems: t.checklistItems, _count: { comments: t.comments.length } }, people, rels, (await extras([t]))(t)),
             description: t.description || '', hourlyRate: t.hourlyRate, isPublic: t.isPublic, visibleToClient: t.visibleToClient, billed: t.billed,
             recurringType: t.recurringType, repeatEvery: t.repeatEvery, totalCycles: t.totalCycles, addedBy: people[t.addedFrom] || null,
             followers: t.followers.map((x) => people[x.staffId]).filter(Boolean),
@@ -122,6 +138,15 @@ export async function getTask(id) {
         checklist: t.checklistItems.map((c) => ({ id: c.id, description: c.description || '', finished: c.finished })),
         comments: t.comments.map((c) => ({ id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, createdAt: c.createdAt, mine: !!a.staffId && c.staffId === a.staffId })),
         timers, running, totalSeconds: timers.reduce((s, x) => s + x.seconds, 0),
+        // what happened on the task, newest first (for the activity panel)
+        activity: [
+            { type: 'created', staff: people[t.addedFrom] || null, at: t.createdAt },
+            ...(t.dateFinished && t.status === COMPLETE ? [{ type: 'finished', staff: null, at: t.dateFinished }] : []),
+            ...t.comments.map((c) => ({ type: 'comment', staff: people[c.staffId] || null, at: c.createdAt, text: (c.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) })),
+            ...t.timers.filter((x) => x.endTime).map((x) => ({ type: 'timer', staff: people[x.staffId] || null, at: x.endTime, seconds: Math.max(0, Math.round((+x.endTime - +(x.startTime || x.endTime)) / 1000)), text: x.note || '' })),
+            ...t.checklistItems.filter((c) => c.finished).map((c) => ({ type: 'checklist', staff: null, at: c.updatedAt || t.updatedAt, text: c.description || '' })),
+        ].sort((x, y) => +new Date(y.at) - +new Date(x.at)).slice(0, 60),
+        milestones: t.relType === 'project' && oid(t.relId) ? (await prisma.crmMilestone.findMany({ where: { projectId: t.relId }, orderBy: { milestoneOrder: 'asc' }, select: { id: true, name: true } })) : [],
         can: { edit: a.can('edit'), delete: a.can('delete') },
     }
 }
@@ -159,6 +184,14 @@ export async function saveTask(body, id) {
     }
     if (Array.isArray(body.assigneeIds)) await sync('crmTaskAssigned', body.assigneeIds, { assignedFrom: a.staffId })
     if (Array.isArray(body.followerIds)) await sync('crmTaskFollower', body.followerIds)
+    if (Array.isArray(body.tags)) {
+        const want = [...new Set(body.tags.map((x) => String(x || '').trim().slice(0, 40)).filter(Boolean))].slice(0, 12)
+        await prisma.crmTaggable.deleteMany({ where: { relType: 'task', relId: task.id } })
+        for (const [i, name] of want.entries()) {
+            const tag = (await prisma.crmTag.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } })) || (await prisma.crmTag.create({ data: { name } }))
+            await prisma.crmTaggable.create({ data: { relType: 'task', relId: task.id, tagId: tag.id, tagOrder: i } })
+        }
+    }
     return { success: true, id: task.id }
 }
 
@@ -187,7 +220,7 @@ export async function reorderTasks(status, ids) {
 }
 
 /** Drag and drop on the task lists: optionally move a task to another project / group, then store the order of `ids`. */
-export async function regroupTask({ id, relType, relId, ids }) {
+export async function regroupTask({ id, relType, relId, ids, ...rest }) {
     const session = await requirePermission('tasks', 'edit')
     const a = await access(session)
     const where = await visibleWhere(a)
@@ -196,6 +229,7 @@ export async function regroupTask({ id, relType, relId, ids }) {
         if (!t) throw fail('Task not found', 404)
         if (relType === 'project' && oid(relId)) await prisma.crmTask.update({ where: { id }, data: { relType: 'project', relId } })
         else if (relType === null || relType === 'none') await prisma.crmTask.update({ where: { id }, data: { relType: null, relId: null } })
+        if ('milestoneId' in rest) await prisma.crmTask.update({ where: { id }, data: { milestoneId: oid(rest.milestoneId) } })
     }
     for (const [i, tid] of (Array.isArray(ids) ? ids : []).filter(oid).entries()) {
         await prisma.crmTask.updateMany({ where: { AND: [{ id: tid }, where] }, data: { kanbanOrder: i } })

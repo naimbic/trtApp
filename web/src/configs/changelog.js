@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.37.0',
+        date: '2026-10-15',
+        title: 'Project pages like the template: task page, scrum board, tasks',
+        items: ['Task page (/crm/tasks/...) laid out like the template\'s issue page: code, title, label / assigned to / status / due date / priority / start date / milestone, description, tabs for Comments, Checklist, Attachments and Time, and an Activity panel (created, comments, tracked time, completed); everything saves on the spot', 'Scrum board for every project (the Scrum board button on the project page and in the projects list, or Tasks > Scrum board and pick a project): columns by status, cards with labels, priority, people, comments and files; drag a card to change its status, add a task at the bottom of a column; a card opens the task page', 'Project page > Tasks is now the template\'s grouped task list with one block per milestone (drag a task between milestones); names, cards and the board all open the task page, and the task page links back to the project and its board', 'Tasks now carry labels (tags) and show their file count']
+    },
+    {
         version: '0.36.3',
         date: '2026-10-15',
         title: 'My tasks and Team tasks like the template',

@@ -272,7 +272,8 @@
                 "activity-log": "Registro de actividad",
                 "my-tasks": "Mis tareas",
                 "team-tasks": "Tareas del equipo",
-                "issues": "Incidencias"
+                "issues": "Incidencias",
+                "scrum-board": "Tablero scrum"
             }
         }
     }

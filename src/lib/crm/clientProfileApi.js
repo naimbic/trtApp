@@ -135,8 +135,33 @@ export async function clientProfile(id) {
     for (const x of contacts) if (x.lastLogin) add('login', `${name(x)} signed in to the client area`, x.lastIp ? `from ${x.lastIp}` : '', x.lastLogin)
     const timeline = ev.sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 150)
 
+    // ---- charts for the overview (counts are always sent; money series only to people who may see amounts)
+    const countBy = (arr, fn) => arr.reduce((o, x) => { const k = fn(x); if (k) o[k] = (o[k] || 0) + 1; return o }, {})
+    const INV_LABEL = { 1: 'unpaid', 2: 'paid', 3: 'partial', 4: 'overdue', 5: 'cancelled', 6: 'draft' }
+    const PROJ_LABEL = { 1: 'not started', 2: 'in progress', 3: 'on hold', 4: 'finished', 5: 'cancelled' }
+    const invoiceStatus = countBy(invoices, (i) => ([1, 3].includes(i.status) && i.dueDate && new Date(i.dueDate) < today ? 'overdue' : INV_LABEL[i.status]))
+    const docs = {
+        estimates: countBy(estimates, (e) => EST[e.status]),
+        proposals: countBy(proposals, (p) => PROP[p.status]),
+        contracts: countBy(contracts, (k) => (k.signed ? 'signed' : 'not signed')),
+        projects: countBy(projects, (p) => PROJ_LABEL[p.status]),
+        tickets: { open: openTickets.length, closed: tickets.length - openTickets.length },
+        tasks: { open: openTasks.length, done: tasks.length - openTasks.length },
+    }
+    let monthly = null
+    if (hasCap(authority, 'finance', 'view_amounts')) {
+        monthly = {}
+        const months = Array.from({ length: 12 }, (_, n) => { const d = new Date(today.getFullYear(), today.getMonth() - (11 - n), 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` })
+        const key = (d) => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}` }
+        const curOf = Object.fromEntries(invoices.map((i) => [i.id, i.currencyId || 'none']))
+        const bucket = (cur) => (monthly[cur] ||= months.map((m) => ({ m, invoiced: 0, paid: 0 })))
+        for (const i of invoices) if (![5, 6].includes(i.status) && (i.date || i.createdAt)) { const b = bucket(i.currencyId || 'none').find((x) => x.m === key(i.date || i.createdAt)); if (b) b.invoiced = round2(b.invoiced + i.total) }
+        for (const p of payments) { const d = p.paymentDate || p.createdAt; if (!d) continue; const b = bucket(curOf[p.invoiceId] || 'none').find((x) => x.m === key(d)); if (b) b.paid = round2(b.paid + (p.amount || 0)) }
+    }
+
     return {
         lead, journey, attention, engagement, timeline,
+        charts: { invoiceStatus, docs, monthly },
         lastLogin: lastLogin ? { name: name(lastLogin), ip: lastLogin.lastIp, date: lastLogin.lastLogin } : null,
         contacts: contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active, portal: !!x.passwordHash })),
         reminders: reminders.map((r) => ({ id: r.id, description: r.description || '', date: r.date, done: !!r.isNotified, staff: sName[r.staffId] || null })),

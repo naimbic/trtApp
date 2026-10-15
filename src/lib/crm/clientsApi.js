@@ -221,7 +221,7 @@ export async function deleteClient(id) {
 }
 
 /** Payments received for a client's invoices. */
-export async function clientPayments(id, { pageIndex = 1, pageSize = 10 } = {}) {
+export async function clientPayments(id, { pageIndex = 1, pageSize = 10, query = '', mode: modeId = '', from = '', to = '' } = {}) {
     const session = await requirePermission('payments', 'view')
     await requirePermission('customers', 'view')
     const sc = await scope(session)
@@ -229,7 +229,13 @@ export async function clientPayments(id, { pageIndex = 1, pageSize = 10 } = {}) 
     const invs = await prisma.crmInvoice.findMany({ where: { clientId: id }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, currencyId: true } })
     const padding = await numberPadding()
     const byId = Object.fromEntries(invs.map((i) => [i.id, i]))
+    const labelOf = (i) => docNumberOf(i, padding)
+    const q = String(query || '').trim().toLowerCase()
+    const matching = q ? invs.filter((i) => labelOf(i).toLowerCase().includes(q)).map((i) => i.id) : null
     const where = { invoiceId: { in: invs.map((i) => i.id) } }
+    if (modeId) where.paymentModeId = modeId
+    if (from || to) where.paymentDate = { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(`${to}T23:59:59`) } : {}) }
+    if (q) where.OR = [{ transactionId: { contains: q, mode: 'insensitive' } }, ...(matching.length ? [{ invoiceId: { in: matching } }] : [])]
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1)
     const size = Math.min(Math.max(parseInt(pageSize, 10) || 10, 1), 200)
     const [rows, total, modes] = await Promise.all([
@@ -243,6 +249,6 @@ export async function clientPayments(id, { pageIndex = 1, pageSize = 10 } = {}) 
             const i = byId[p.invoiceId]
             return { id: p.id, amount: p.amount, paymentDate: p.paymentDate, mode: mode[p.paymentModeId] || p.paymentMethod || '', transactionId: p.transactionId, invoiceId: p.invoiceId, invoiceNumber: i ? docNumberOf(i, padding) : '', currencyId: i?.currencyId || null }
         }),
-        total, pageIndex: page, pageSize: size,
+        total, pageIndex: page, pageSize: size, modes: modes.map((m) => ({ value: m.id, label: m.name })),
     }
 }

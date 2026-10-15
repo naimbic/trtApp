@@ -13,9 +13,9 @@ const SIZES = [10, 25, 50, 100].map((n) => ({ value: n, label: `${n} / page` }))
 
 /**
  * Server-side table for any CRM resource config (search, sort, filters, paging).
- * props: resource, where, columns, onRowClick, reloadKey, toolbar, rowActions(row), onData(data), emptyText
+ * props: resource, where, columns, onRowClick, reloadKey, toolbar, rowActions(row), onData(data), emptyText, hideFilters (filter keys not to show)
  */
-const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 0, toolbar, rowActions, onData, emptyText = 'No records found' }) => {
+const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 0, toolbar, rowActions, onData, emptyText = 'No records found', hideFilters = [] }) => {
     const cols = useMemo(() => columns || resource.columns || [], [columns, resource])
     const [query, setQuery] = useState('')
     const [q, setQ] = useState('')
@@ -61,12 +61,13 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
 
     return (
         <div>
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-                <div className="w-full sm:w-72">
+            {/* one row: search, filters (they shrink to fit) and the action button */}
+            <div className="mb-4 flex items-center gap-2">
+                <div className="w-52 shrink-0">
                     <Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={`Search ${resource.plural?.toLowerCase() || ''}`} value={query} onChange={(e) => setQuery(e.target.value)} />
                 </div>
-                {(resource.filters || []).map((f) => (
-                    <div key={f.key} className="w-44">
+                {(resource.filters || []).filter((f) => !hideFilters.includes(f.key)).map((f) => (
+                    <div key={f.key} className="min-w-[7rem] max-w-[11rem] flex-1">
                         <Select
                             size="sm"
                             isClearable
@@ -74,10 +75,13 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
                             options={f.options || []}
                             value={(f.options || []).find((o) => String(o.value) === String(filters[f.key])) || null}
                             onChange={(o) => { setFilters((s) => ({ ...s, [f.key]: o ? o.value : undefined })); setPage(1) }}
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
+                            styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }}
                         />
                     </div>
                 ))}
-                <div className="ml-auto flex items-center gap-2">{toolbar}</div>
+                <div className="ml-auto flex shrink-0 items-center gap-2">{toolbar}</div>
             </div>
 
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}

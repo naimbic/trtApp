@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.18',
+        date: '2026-10-15',
+        title: 'Client page redesigned',
+        items: ['Client page: the left column is gone; a compact portfolio section on top has the logo, status, city and country, key facts, quick actions (follow up, new invoice/estimate/proposal/project/ticket/note, email, call, WhatsApp, edit), the lead-to-client path as a slim stepper, and the contacts with their client-area buttons', 'Tabs are ordered by use: Overview, Invoices, Payments, Contracts, Estimates, Proposals, Projects, Tickets, Activity, Notes, Files, Contacts', 'Overview is section by section: Billing (4 figures, invoiced vs paid chart for 12 months, invoices by status), Needs attention and Reminders, Sales and work (status bars for estimates, proposals, contracts, projects, tickets, tasks), Document views, Details with the addresses', 'Every list (here and across the CRM) now keeps its search and filters in one row; Payments got filters too (search, payment mode, date range)', 'The invoiced/paid chart is only sent to people who may see money amounts']
+    },
+    {
         version: '0.30.17',
         date: '2026-10-15',
         title: 'Team list redesigned',

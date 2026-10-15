@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.6',
+        date: '2026-10-15',
+        title: 'Popups open smoothly',
+        items: ['Dialogs and side panels no longer flash: the dark backdrop now fades in instead of appearing at full strength before the window zooms in'],
+    },
+    {
         version: '0.30.5',
         date: '2026-10-15',
         title: 'Two-step verification switch for test servers',

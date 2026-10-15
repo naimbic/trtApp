@@ -30,7 +30,8 @@
   }
   
   .drawer-overlay {
-    transition: all 0.3s ease-in-out;
+    transition: opacity 0.3s ease-in-out;
+    animation: popup-fade-in 0.3s ease-out;
     @apply bg-black/80 inset-0 fixed z-40;
   }
   

@@ -54,6 +54,8 @@ export async function getDashboardMetrics(params = {}) {
     const session = await auth()
     if (!session?.user?.id) return null
     const authority = session.user.authority || []
+    // the business dashboard is for administrators (and whoever was given it or manages roles)
+    if (!(isCrmAdmin(authority) || hasCap(authority, 'dashboard', 'view') || hasCap(authority, 'roles', 'view'))) throw Object.assign(new Error('Forbidden'), { status: 403 })
     const money = isCrmAdmin(authority) || hasCap(authority, 'finance', 'view_amounts')
     // money sections are only built for people who may see financial figures
     const MONEY_SECTIONS = ['invoices', 'expenses', 'estimates', 'recent']

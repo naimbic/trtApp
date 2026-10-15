@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.39.0',
+        date: '2026-10-15',
+        title: 'Team dashboard, business dashboard for admins only',
+        items: ['The Dashboard (revenue, invoices, clients) is now for administrators only, and for people who manage roles or were given the new permission "Business dashboard"; it is hidden from the menu for everyone else and opening it sends them to the Team dashboard; the data behind it refuses them too', 'New Team dashboard, the home of every team member: a greeting and quick New task / lead / issue buttons, figures (my open tasks, overdue, my leads and how many need a follow-up, my issues, my tickets, today), My tasks to tick off, Leads to follow up (longest without contact first), the Agenda (events and reminders), Issues and ideas (by priority and platform, ideas and requests waiting), My tickets, the Team activity of the last 7 days and who is online', 'For people who may see all tasks and leads: Team workload (open, overdue and done per person, unassigned), Leads pipeline by status, Leads by owner; everyone only sees the parts they have permission for']
+    },
+    {
         version: '0.38.0',
         date: '2026-10-15',
         title: 'Your language is kept: profile, client and contact',

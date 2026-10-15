@@ -275,6 +275,7 @@
                 "issues": "Incidencias",
                 "scrum-board": "Tablero scrum"
             }
-        }
+        },
+        "teamDashboard": "Panel del equipo"
     }
 }

@@ -140,6 +140,7 @@
                 "issues": "Problèmes",
                 "scrum-board": "Tableau scrum"
             }
-        }
+        },
+        "teamDashboard": "Tableau de bord équipe"
     }
 }

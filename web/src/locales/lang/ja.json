@@ -125,6 +125,7 @@
                 "scrum-board": "スクラムボード"
             }
         },
-        "home": "ホーム"
+        "home": "ホーム",
+        "teamDashboard": "チームダッシュボード"
     }
 }

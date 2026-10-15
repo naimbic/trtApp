@@ -19,7 +19,7 @@ export const DEFAULT_PREFS = {
     display: { theme: 'system', dateFormat: 'DD/MM/YYYY', timeFormat: '', weekStart: '', landing: '/dashboard' },
 }
 const THEMES = ['light', 'dark', 'system'], DATES = ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'], TIMES = ['', '24h', '12h'], WEEK = ['', 0, 1, 6]
-const LANDINGS = ['/dashboard', '/calendar', '/crm/invoices', '/crm/clients', '/crm/contracts', '/crm/tasks-board']
+const LANDINGS = ['/dashboard', '/team-dashboard', '/calendar', '/crm/invoices', '/crm/clients', '/crm/contracts', '/crm/tasks-board']
 
 function mergePrefs(raw) {
     let saved = {}

@@ -21,6 +21,7 @@ import {
     PiAcornDuotone,
     PiBagSimpleDuotone,
     PiChatsCircleDuotone,
+    PiSquaresFourDuotone,
 } from 'react-icons/pi'
 
 import demoIcons from './navigation-icon.demo.config'
@@ -39,6 +40,7 @@ const navigationIcon = {
     calendar: <PiCalendarBlankDuotone />,
     team: <PiUsersFourDuotone />,
     chat: <PiChatsCircleDuotone />,
+    'team-dashboard': <PiSquaresFourDuotone />,
     crm: <PiBuildingsDuotone />,
     crmCustomers: <PiAddressBookDuotone />,
     crmLeads: <PiFunnelDuotone />,

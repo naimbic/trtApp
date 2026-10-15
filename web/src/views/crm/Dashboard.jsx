@@ -1,6 +1,6 @@
 import { moneyHidden, MASK } from '@/utils/money'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, Navigate } from 'react-router'
 import dayjs from 'dayjs'
 import Card from '@/components/ui/Card'
 import { useDashFilters, accentHex } from '@/store/dashFilterStore'
@@ -20,6 +20,7 @@ import {
     PiFileTextDuotone,
 } from 'react-icons/pi'
 import { tr } from '@/utils/t'
+import { useSessionUser } from '@/store/authStore'
 
 // ---------- formatting
 const nf = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -211,7 +212,7 @@ const List = ({ rows, empty, render }) =>
     )
 
 // ---------- page
-const Dashboard = () => {
+const BusinessDashboard = () => {
     const [data, setData] = useState(null)
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -483,6 +484,13 @@ const Dashboard = () => {
             {!data.sections.length && <Card><Empty>{tr("You do not have access to any dashboard metrics.")}</Empty></Card>}
         </div>
     )
+}
+
+/** The business dashboard is for administrators; everyone else lands on the Team dashboard. */
+const Dashboard = () => {
+    const authority = useSessionUser((s) => s.user.authority) || []
+    const allowed = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.dashboard.view') || authority.includes('crm.roles.view')
+    return allowed ? <BusinessDashboard /> : <Navigate to="/team-dashboard" replace />
 }
 
 export default Dashboard

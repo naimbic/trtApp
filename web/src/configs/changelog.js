@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.34.2',
+        date: '2026-10-15',
+        title: 'Sales first in the menu',
+        items: ['Sidebar: Sales now comes before Customers']
+    },
+    {
         version: '0.34.1',
         date: '2026-10-15',
         title: 'Cairo font for Arabic',

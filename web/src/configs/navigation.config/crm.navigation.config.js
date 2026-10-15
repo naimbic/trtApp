@@ -8,11 +8,11 @@ import { customNavItems } from '@/lib/crm/custom-nav'
 
 // Sidebar built from the Perfex resource registry (src/lib/crm/resources/*).
 const GROUP_ORDER = [
+    ['Sales', 'crmSales'],
     ['Customers', 'crmCustomers'],
     ['Leads', 'crmLeads'],
     ['Projects', 'crmProjects'],
     ['Tasks', 'crmTasks'],
-    ['Sales', 'crmSales'],
     ['Purchases', 'crmPurchases'],
     ['Support', 'crmSupport'],
     ['Knowledge Base', 'crmKnowledgeBase'],

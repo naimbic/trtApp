@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.3',
+        date: '2026-10-15',
+        title: 'Roles as top tabs',
+        items: ['Roles & permissions: the roles list moved from the left column to tabs across the top (with a New role button), and the editor now uses the full page width'],
+    },
+    {
         version: '0.29.2',
         date: '2026-10-14',
         title: 'Page tabs in the top bar',

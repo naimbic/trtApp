@@ -95,35 +95,29 @@ const RolesPanel = () => {
     }
 
     return (
-        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[17rem_1fr]">
-            <Card className="xl:sticky xl:top-20" bodyClass="p-3">
-                <div className="mb-2 flex items-center justify-between px-2 pt-1">
-                    <h6>Roles</h6>
-                    <Button size="xs" variant="solid" icon={<TbPlus />} onClick={startNew}>New role</Button>
-                </div>
-                {loading && <div className="p-4 text-center text-gray-400">Loading…</div>}
-                <ul className="flex flex-col gap-1">
+        <div className="flex flex-col gap-5">
+            <div className="flex flex-wrap items-center gap-2">
+                <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
+                    {loading && <span className="px-2 py-2 text-sm text-gray-400">Loading…</span>}
                     {roles.map((r) => (
-                        <li key={r.id}>
-                            <button
-                                type="button"
-                                onClick={() => pick(r)}
-                                className={cn('flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors', selected === r.id ? 'bg-primary/10 text-primary' : 'hover:bg-gray-50 dark:hover:bg-gray-700/40')}
-                            >
-                                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gray-100 text-lg dark:bg-gray-700"><TbShieldCheck /></span>
-                                <span className="min-w-0">
-                                    <span className="block truncate font-semibold">{r.name}</span>
-                                    <span className="block text-xs text-gray-500">{r.members} member{r.members === 1 ? '' : 's'} · {r.permissionCount} permissions</span>
-                                </span>
-                            </button>
-                        </li>
+                        <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => pick(r)}
+                            className={cn('flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-2.5 text-left transition-colors', selected === r.id ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white hover:border-primary/50 dark:border-gray-600 dark:bg-gray-800')}
+                        >
+                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/70 text-lg dark:bg-gray-700"><TbShieldCheck /></span>
+                            <span className="min-w-0">
+                                <span className="block truncate font-semibold">{r.name}</span>
+                                <span className="block text-xs text-gray-500">{r.members} member{r.members === 1 ? '' : 's'} · {r.permissionCount} on</span>
+                            </span>
+                        </button>
                     ))}
-                    {selected === 'new' && (
-                        <li className="rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary">New role (unsaved)</li>
-                    )}
-                    {!loading && !roles.length && selected !== 'new' && <li className="p-4 text-center text-sm text-gray-400">No roles yet</li>}
-                </ul>
-            </Card>
+                    {selected === 'new' && <span className="flex shrink-0 items-center rounded-2xl border border-dashed border-primary px-4 py-2.5 text-sm font-semibold text-primary">New role (unsaved)</span>}
+                    {!loading && !roles.length && selected !== 'new' && <span className="px-2 py-2 text-sm text-gray-400">No roles yet</span>}
+                </div>
+                <Button variant="solid" icon={<TbPlus />} onClick={startNew}>New role</Button>
+            </div>
 
             <Card className="min-w-0">
                 {selected ? (

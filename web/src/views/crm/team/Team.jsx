@@ -3,7 +3,7 @@ import { StatTile } from '@/components/crm/ListHeader'
 import { TbUsers, TbCircleCheck, TbCircleOff, TbLogin } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import { useLocation } from 'react-router'
-import { TbPlus, TbSearch, TbPencil, TbKey, TbCopy, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbPencil, TbKey, TbLockPassword, TbCopy, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -64,6 +64,7 @@ const Team = () => {
     usePageTabs([{ key: 'members', label: 'Members' }, { key: 'roles', label: 'Roles & permissions' }], tab, setTab)
     const [access, setAccess] = useState({ open: false, id: null })
     const [confirm, setConfirm] = useState(null) // { member, kind: 'reset' }
+    const [setPw, setSetPw] = useState(null) // { member, value, saving, error }
     const [secret, setSecret] = useState(null) // { name, email, password } or { name, email, link, invite }
 
     useEffect(() => {
@@ -136,6 +137,19 @@ const Team = () => {
             load()
         } catch (e) {
             notify('danger', e.message)
+        }
+    }
+
+    const savePassword = async () => {
+        const { member, value } = setPw
+        setSetPw((d) => ({ ...d, saving: true, error: '' }))
+        try {
+            await api(`/api/crm/team/${member.id}/reset-password`, { method: 'POST', body: JSON.stringify({ password: value }) })
+            notify('success', `Password set for ${member.name}`)
+            setSetPw(null)
+            load()
+        } catch (e) {
+            setSetPw((d) => ({ ...d, saving: false, error: e.message }))
         }
     }
 
@@ -264,6 +278,7 @@ const Team = () => {
                                             <Tooltip title="Edit"><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
                                             <Tooltip title="Permissions"><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
                                             {m.hasLogin && <Tooltip title="Reset link (member sets own password)"><Button size="sm" variant="plain" icon={<TbLink />} onClick={() => setConfirm({ member: m, kind: 'link' })} /></Tooltip>}
+                                            {m.hasLogin && <Tooltip title="Set a password"><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
                                             {m.hasLogin && <Tooltip title="One-time password"><Button size="sm" variant="plain" icon={<TbKey />} onClick={() => setConfirm({ member: m, kind: 'reset' })} /></Tooltip>}
                                             {m.hasLogin && m.twoFactor && canAdmin && <Tooltip title="Reset two-step verification"><Button size="sm" variant="plain" icon={<TbDeviceMobileOff />} onClick={() => setConfirm({ member: m, kind: 'twofactor' })} /></Tooltip>}
                                             {m.hasLogin && <Tooltip title="Sign out everywhere"><Button size="sm" variant="plain" icon={<TbLogout />} onClick={() => setConfirm({ member: m, kind: 'signout' })} /></Tooltip>}
@@ -304,6 +319,17 @@ const Team = () => {
                           : `A new one-time password will be generated for ${confirm?.member.name}. Their current password stops working immediately.`}
                 </p>
             </ConfirmDialog>
+
+            <Dialog isOpen={!!setPw} onClose={() => setSetPw(null)} onRequestClose={() => setSetPw(null)}>
+                <h5 className="mb-2">Set a password</h5>
+                <p className="mb-4 text-sm text-gray-500">Type the new password for {setPw?.member.name} ({setPw?.member.email}). It replaces the current one at once and signs them out on every device. 8 characters or more.</p>
+                <Input autoFocus autoComplete="off" placeholder="New password" value={setPw?.value || ''} onChange={(e) => setSetPw((d) => ({ ...d, value: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter' && (setPw?.value || '').length >= 8 && !setPw?.saving) savePassword() }} />
+                {setPw?.error && <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{setPw.error}</div>}
+                <div className="mt-6 flex justify-end gap-2">
+                    <Button onClick={() => setSetPw(null)}>Cancel</Button>
+                    <Button variant="solid" loading={setPw?.saving} disabled={(setPw?.value || '').length < 8} onClick={savePassword}>Set password</Button>
+                </div>
+            </Dialog>
 
             <Dialog isOpen={!!secret} onClose={() => setSecret(null)} onRequestClose={() => setSecret(null)}>
                 <h5 className="mb-2">{secret?.link ? (secret.invite ? 'Invite link' : 'Reset link') : 'One-time password'}</h5>

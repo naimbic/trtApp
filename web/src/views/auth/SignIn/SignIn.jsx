@@ -15,19 +15,13 @@ export const SignInBase = ({
 
     return (
         <>
-            <div className="mb-8">
+            <div className="mb-10">
                 <Logo
                     type="full"
                     mode={mode}
                     imgClass="h-12 w-full object-contain object-left"
                     logoWidth={200}
                 />
-            </div>
-            <div className="mb-10">
-                <h2 className="mb-2">Sign in to trtCRM</h2>
-                <p className="font-semibold heading-text">
-                    Enter your email and password to continue.
-                </p>
             </div>
             {message && (
                 <Alert showIcon className="mb-4" type="danger">

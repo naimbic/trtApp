@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.14',
+        date: '2026-10-15',
+        title: 'Sign-in page: form left, bold panel right',
+        items: ['Sign-in: the form is back on the left with no heading text; the right side is a wide, bolder panel with slides (quotes about our services, and 8 random cards from our 48 domains, new ones each time)'],
+    },
+    {
+        version: '0.30.13',
+        date: '2026-10-15',
+        title: 'Set a member password',
+        items: ['Team -> Members: new "Set a password" button (padlock) where the administrator types the new password (8+ characters), so you know exactly what it is; it signs the member out everywhere. Only a Super Admin can change a Super Admin password. The one-time generated password still exists'],
+    },
+    {
         version: '0.30.12',
         date: '2026-10-15',
         title: 'Sign-in slides: our services only',

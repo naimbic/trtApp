@@ -207,12 +207,25 @@ export async function updateMember(id, body) {
     return shape(await withDepartments(await prisma.crmStaff.findUnique({ where: { id }, include })))
 }
 
-/** Set a new one-time password for the member's login account (shown once to the administrator). */
-export async function resetMemberPassword(id) {
-    await requirePermission('staff', 'edit')
+/**
+ * Set a new password for the member's login account. Without `body.password` a one-time password is generated and
+ * returned once; with it the administrator's own password (8-72 characters) is set and nothing is returned.
+ */
+export async function resetMemberPassword(id, body = {}) {
+    const session = await requirePermission('staff', 'edit')
     const s = await prisma.crmStaff.findUnique({ where: { id } })
     if (!s) throw httpError('Member not found', 404)
     if (!s.userId) throw httpError('This member has no login account', 400)
+    if (s.admin && !isCrmAdmin(session.user.authority || [])) throw httpError('Only a Super Admin can change a Super Admin password', 403)
+    if (body.password !== undefined) {
+        const pw = String(body.password)
+        if (pw.length < 8) throw httpError('The password needs at least 8 characters')
+        if (pw.length > 72) throw httpError('The password can have at most 72 characters')
+        const u = await prisma.user.findUnique({ where: { id: s.userId }, select: { sessionVersion: true } })
+        await prisma.user.update({ where: { id: s.userId }, data: { password: await bcrypt.hash(pw, 10), sessionVersion: (u?.sessionVersion || 0) + 1 } })
+        await prisma.crmStaff.update({ where: { id }, data: { lastPasswordChange: new Date() } })
+        return { success: true }
+    }
     const tempPassword = generatePassword()
     await prisma.user.update({ where: { id: s.userId }, data: { password: await bcrypt.hash(tempPassword, 10) } })
     await prisma.crmStaff.update({ where: { id }, data: { lastPasswordChange: new Date() } })

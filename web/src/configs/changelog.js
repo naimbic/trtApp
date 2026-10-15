@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.10',
+        date: '2026-10-15',
+        title: 'Sign-in clears old session cookies',
+        items: ['Before signing in, the page now removes any old session cookie left in the browser by an earlier version; a stale cookie could make a correct password look wrong ("Invalid email or password")'],
+    },
+    {
         version: '0.30.9',
         date: '2026-10-15',
         title: 'One logo on the sign-in page',

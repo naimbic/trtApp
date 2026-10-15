@@ -76,6 +76,8 @@ function AuthProvider({ children }) {
                 const chk = await fetch('/api/crm/auth/2fa/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }).then((r) => r.json()).catch(() => ({}))
                 if (chk.twoFactor) return { status: 'otp', methods: chk.methods }
             }
+            // drop any old session cookie first: a leftover from an earlier deployment can shadow the new one
+            await fetch('/api/crm/auth/clear-session', { method: 'POST', credentials: 'include' }).catch(() => {})
             const { csrfToken } = await (await fetch('/api/auth/csrf', { credentials: 'include' })).json()
             // redirect: 'manual' — NextAuth answers with a redirect (possibly to another origin via a stale
             // callback-url cookie); we only need the session cookie it sets, never to follow that redirect.

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.32.0',
+        date: '2026-10-15',
+        title: 'Versions page with a release timeline',
+        items: ['New Versions page (click the version at the bottom of the sidebar): every release on a timeline grouped by month, with its type (Feature or Fix), date and time, how long ago, the git commit (click to copy), the author, lines added and removed, files changed, git tags and the list of changes', 'Figures on top (releases, features, code changed, latest release), search by version, commit or text, a Features / Fixes filter and pages of 5, 10, 20 or 50 releases; the running version is marked and the two latest releases are open', 'The commit details come from scripts/gen-versions.mjs, which is run before each release commit (the release being committed shows the build commit until the next run)']
+    },
+    {
         version: '0.31.0',
         date: '2026-10-15',
         title: 'Chat page and group chats',

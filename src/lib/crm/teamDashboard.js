@@ -14,7 +14,7 @@ const startOfDay = (d = new Date()) => new Date(Date.UTC(d.getUTCFullYear(), d.g
  * What the team is doing and what each person has to do: the signed-in person's tasks, leads to follow up, issues, tickets
  * and agenda, plus the team's workload, pipeline, ideas and recent activity (each part only for people who may see it).
  */
-export async function teamDashboard() {
+export async function teamDashboard({ days = 30 } = {}) {
     const session = await requirePermission(null)
     const authority = session.user.authority || []
     const staffId = await getStaffId(session)
@@ -24,7 +24,8 @@ export async function teamDashboard() {
     const me = staffId ? await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : null
     const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
     const sm = Object.fromEntries(staff.map((s) => [s.id, person(s)]))
-    const out = { me: person(me) || { id: null, name: session.user.name || session.user.email, image: null }, generatedAt: new Date().toISOString(), scopes, can: Object.fromEntries(Object.entries(scopes).map(([k, v]) => [k, !!v])) }
+    days = [7, 30, 90].includes(Number(days)) ? Number(days) : 30
+    const out = { days, me: person(me) || { id: null, name: session.user.name || session.user.email, image: null }, generatedAt: new Date().toISOString(), scopes, can: Object.fromEntries(Object.entries(scopes).map(([k, v]) => [k, !!v])) }
 
     /* ---- tasks ---- */
     if (scopes.tasks) {
@@ -154,6 +155,90 @@ export async function teamDashboard() {
         for (const r of rows) if (iss[r.issueId]) feed.push({ type: 'issue', at: r.createdAt, staff: sm[r.staffId] || null, text: `#${iss[r.issueId].number} ${iss[r.issueId].title}`, link: `/crm/issues/${r.issueId}` })
     }
     out.activity = feed.sort((a, b) => +new Date(b.at) - +new Date(a.at)).slice(0, 12)
+
+
+    /* ---- performance: how much gets done, how fast and how reliably ---- */
+    if (scopes.tasks) {
+        const keyOf = (d) => new Date(d).toISOString().slice(0, 10)
+        const since = new Date(+today - (days - 1) * DAY), prevSince = new Date(+since - days * DAY)
+        const labels = Array.from({ length: days }, (_, i) => keyOf(+since + i * DAY))
+        const idx = Object.fromEntries(labels.map((l, i) => [l, i]))
+        const [doneRows, createdRows, assignedAll] = await Promise.all([
+            prisma.crmTask.findMany({ where: { status: 5, dateFinished: { gte: prevSince } }, select: { id: true, createdAt: true, startDate: true, dueDate: true, dateFinished: true, priority: true }, take: 8000 }),
+            prisma.crmTask.findMany({ where: { createdAt: { gte: since } }, select: { id: true, createdAt: true }, take: 8000 }),
+            prisma.crmTaskAssigned.findMany({ select: { taskId: true, staffId: true } }),
+        ])
+        const owners = {}
+        for (const a of assignedAll) (owners[a.taskId] ||= []).push(a.staffId)
+        const wantAll = scopes.tasks === 'all'
+        const mine = (t) => !!staffId && (owners[t.id] || []).includes(staffId)
+        const inScope = (t) => wantAll || mine(t)
+        const done = doneRows.filter(inScope)
+        const cur = done.filter((t) => new Date(t.dateFinished) >= since), prev = done.filter((t) => new Date(t.dateFinished) < since)
+        const onTime = (t) => !t.dueDate || +new Date(t.dateFinished) <= +new Date(t.dueDate) + DAY - 1
+        const speed = (t) => Math.max(0, (+new Date(t.dateFinished) - +new Date(t.startDate || t.createdAt)) / DAY)
+        const avg = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0)
+        const series = { completed: labels.map(() => 0), created: labels.map(() => 0), mine: labels.map(() => 0) }
+        for (const t of cur) { const i = idx[keyOf(t.dateFinished)]; if (i !== undefined) { series.completed[i]++; if (mine(t)) series.mine[i]++ } }
+        for (const t of createdRows.filter(inScope)) { const i = idx[keyOf(t.createdAt)]; if (i !== undefined) series.created[i]++ }
+        const weekday = [0, 0, 0, 0, 0, 0, 0]
+        for (const t of cur) weekday[(new Date(t.dateFinished).getUTCDay() + 6) % 7]++ // Monday first
+        const myDone = cur.filter(mine)
+        // everyone's numbers
+        const per = {}
+        const row = (id) => (per[id] ||= { person: sm[id] || null, completed: 0, onTime: 0, speeds: [], hours: 0, comments: 0, issues: 0, converted: 0 })
+        for (const t of cur) for (const sid of owners[t.id] || []) { if (!sm[sid]) continue; const r = row(sid); r.completed++; if (onTime(t)) r.onTime++; r.speeds.push(speed(t)) }
+        const [timers, cmts, resolved, convertedLeads] = await Promise.all([
+            wantAll ? prisma.crmTaskTimer.findMany({ where: { endTime: { gte: since } }, select: { staffId: true, startTime: true, endTime: true }, take: 8000 }) : [],
+            wantAll ? prisma.crmTaskComment.findMany({ where: { createdAt: { gte: since }, staffId: { not: null } }, select: { staffId: true }, take: 8000 }) : [],
+            scopes.issues ? prisma.crmIssue.findMany({ where: { resolvedAt: { gte: since } }, select: { assigneeIds: true } }) : [],
+            scopes.leads === 'all' ? prisma.crmLead.findMany({ where: { dateConverted: { gte: since } }, select: { assigned: true } }) : [],
+        ])
+        if (wantAll) {
+            for (const t of timers) if (sm[t.staffId] && t.startTime && t.endTime) row(t.staffId).hours += Math.max(0, (+new Date(t.endTime) - +new Date(t.startTime)) / 3600000)
+            for (const c of cmts) if (sm[c.staffId]) row(c.staffId).comments++
+            for (const i of resolved) for (const sid of i.assigneeIds || []) if (sm[sid]) row(sid).issues++
+            for (const l of convertedLeads) if (l.assigned && sm[l.assigned]) row(l.assigned).converted++
+        }
+        const board = Object.values(per).map((r) => ({
+            person: r.person, completed: r.completed, onTimeRate: r.completed ? Math.round((r.onTime / r.completed) * 100) : null, avgDays: r.speeds.length ? Math.round(avg(r.speeds) * 10) / 10 : null,
+            hours: Math.round(r.hours * 10) / 10, comments: r.comments, issues: r.issues, converted: r.converted,
+            score: r.completed * 10 + r.onTime * 5 + r.issues * 8 + r.converted * 15 + Math.min(40, Math.round(r.hours)),
+        })).filter((r) => r.person && (r.completed || r.issues || r.converted || r.hours)).sort((a, b) => b.score - a.score)
+        const pickBy = (list, fn, order) => { const l = list.filter(fn); if (!l.length) return null; return [...l].sort(order)[0].person.id }
+        const enough = (r) => r.completed >= 3
+        const myRow = per[staffId] ? board.find((r) => r.person?.id === staffId) : null
+        out.performance = {
+            days, labels, series,
+            team: { completed: cur.length, previous: prev.length, created: series.created.reduce((s, x) => s + x, 0), onTimeRate: cur.length ? Math.round((cur.filter(onTime).length / cur.length) * 100) : null, avgDays: cur.length ? Math.round(avg(cur.map(speed)) * 10) / 10 : null },
+            weekday,
+            leaderboard: wantAll ? board.slice(0, 10) : [],
+            badges: wantAll ? { top: board[0]?.person?.id || null, fastest: pickBy(board, (r) => enough(r) && r.avgDays !== null, (a, b) => a.avgDays - b.avgDays), reliable: pickBy(board, (r) => enough(r) && r.onTimeRate !== null, (a, b) => b.onTimeRate - a.onTimeRate || b.completed - a.completed), closer: pickBy(board, (r) => r.converted > 0, (a, b) => b.converted - a.converted), active: pickBy(board, (r) => r.comments + r.hours > 0, (a, b) => b.comments + b.hours - (a.comments + a.hours)) } : {},
+            me: { completed: myDone.length, previous: prev.filter(mine).length, onTimeRate: myDone.length ? Math.round((myDone.filter(onTime).length / myDone.length) * 100) : null, avgDays: myDone.length ? Math.round(avg(myDone.map(speed)) * 10) / 10 : null, rank: myRow ? board.findIndex((r) => r.person.id === staffId) + 1 : null, of: board.length, score: myRow?.score || 0 },
+        }
+        if (wantAll) {
+            const openRows = await prisma.crmTask.findMany({ where: { status: { not: 5 } }, select: { status: true, priority: true, createdAt: true }, take: 8000 })
+            const byStatus = {}, byPriority = {}
+            for (const t of openRows) { const s = TASK_STATUS[t.status] || String(t.status); byStatus[s] = (byStatus[s] || 0) + 1; const p = TASK_PRIORITY[t.priority] || String(t.priority); byPriority[p] = (byPriority[p] || 0) + 1 }
+            out.performance.team.backlog = openRows.length
+            out.performance.team.oldest = openRows.length ? Math.floor((+new Date() - Math.min(...openRows.map((t) => +new Date(t.createdAt)))) / DAY) : 0
+            out.performance.byStatus = byStatus
+            out.performance.byPriority = byPriority
+        }
+    }
+    if (scopes.leads === 'all') {
+        const weeks = Math.min(12, Math.max(4, Math.round(days / 7)))
+        const from = new Date(+today - (weeks * 7 - 1) * DAY)
+        const [created, conv] = await Promise.all([
+            prisma.crmLead.findMany({ where: { createdAt: { gte: from } }, select: { createdAt: true }, take: 8000 }),
+            prisma.crmLead.findMany({ where: { dateConverted: { gte: from } }, select: { dateConverted: true }, take: 8000 }),
+        ])
+        const wk = (d) => Math.min(weeks - 1, Math.max(0, Math.floor((+new Date(d) - +from) / (7 * DAY))))
+        const labels = Array.from({ length: weeks }, (_, i) => new Date(+from + i * 7 * DAY).toISOString().slice(0, 10))
+        const c = labels.map(() => 0), v = labels.map(() => 0)
+        created.forEach((l) => { c[wk(l.createdAt)]++ }); conv.forEach((l) => { v[wk(l.dateConverted)]++ })
+        out.leadTrend = { labels, created: c, converted: v }
+    }
 
     /* ---- who is around ---- */
     const pres = await prisma.crmChatPresence.findMany({ where: { memberKey: { startsWith: 'staff:' }, lastSeen: { gt: new Date(Date.now() - 45000) } } })

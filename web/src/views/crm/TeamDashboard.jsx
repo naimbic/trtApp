@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbUsers, TbArrowRight } from 'react-icons/tb'
+import { TbTrophy, TbBolt, TbShieldCheck, TbMessages, TbTrendingUp, TbTrendingDown, TbHourglass, TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbUsers, TbArrowRight } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
@@ -12,7 +12,7 @@ import Tag from '@/components/ui/Tag'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import classNames from '@/utils/classNames'
 import { api, notify } from './kit/api'
-import { DonutChart } from './kit/charts'
+import { DonutChart, TrendChart, ColumnChart, PALETTE } from './kit/charts'
 import { initials, prioOf, statusOf } from './tasks/shared'
 import { tr, trn } from '@/utils/t'
 
@@ -50,7 +50,8 @@ const TeamDashboard = () => {
     const nav = useNavigate()
     const [d, setD] = useState(null)
     const [error, setError] = useState('')
-    const load = useCallback(() => api('/api/crm/team-dashboard').then((r) => { setD(r); setError('') }).catch((e) => setError(e.message)), [])
+    const [days, setDays] = useState(30)
+    const load = useCallback(() => api(`/api/crm/team-dashboard?days=${days}`).then((r) => { setD(r); setError('') }).catch((e) => setError(e.message)), [days])
     useEffect(() => { load(); const t = setInterval(() => { if (!document.hidden) load() }, 60000); return () => clearInterval(t) }, [load])
 
     if (error && !d) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div></Container>
@@ -64,6 +65,7 @@ const TeamDashboard = () => {
     // due dates are whole days (UTC midnight): compare the day, not the hour
     const when = (t) => { if (!t.dueDate) return ''; const day = String(t.dueDate).slice(0, 10), now = new Date().toISOString().slice(0, 10); return day < now ? tr('Overdue') : day === now ? tr('Today') : dayjs(day).format('DD MMM') }
     const maxLoad = Math.max(1, ...(tasks?.team?.workload || []).map((w) => w.open))
+    const perf = d.performance
     const prioData = Object.fromEntries(Object.entries(issues?.byPriority || {}).map(([k, v]) => [prioLabel(k), v]))
 
     return (
@@ -88,6 +90,9 @@ const TeamDashboard = () => {
                 {tickets && <StatCard icon={<TbLifebuoy />} label={tr('Support tickets')} value={tickets.mine.length} sub={tr('{n} open in total', { n: tickets.open })} tone="teal" to="/crm/tickets" />}
                 {agenda && <StatCard icon={<TbCalendarEvent />} label={tr('Today')} value={agenda.events.filter((e) => dayjs(e.start).isSame(dayjs(), 'day')).length} sub={tr('{n} reminders', { n: agenda.reminders.length })} tone="blue" to="/calendar" />}
             </div>
+
+
+            {perf && <Performance perf={perf} days={days} setDays={setDays} leadTrend={d.leadTrend} meId={d.me.id} />}
 
             <div className="grid gap-4 xl:grid-cols-3">
                 <div className="flex flex-col gap-4 xl:col-span-2">
@@ -206,6 +211,133 @@ const TeamDashboard = () => {
                 </div>
             </div>
         </Container>
+    )
+}
+
+
+const MEDAL = ['bg-amber-400 text-white', 'bg-slate-300 text-slate-700', 'bg-orange-300 text-white']
+const delta = (cur, prev) => (prev ? Math.round(((cur - prev) / prev) * 100) : cur ? 100 : 0)
+const Delta = ({ cur, prev, goodUp = true }) => {
+    const p = delta(cur, prev)
+    if (!p) return <span className="text-gray-400">{tr('same as before')}</span>
+    const good = (p > 0) === goodUp
+    return <span className={classNames('inline-flex items-center gap-0.5 font-semibold', good ? 'text-emerald-600' : 'text-red-500')}>{p > 0 ? <TbTrendingUp /> : <TbTrendingDown />}{Math.abs(p)}%</span>
+}
+const WEEKDAYS = () => [tr('Mon'), tr('Tue'), tr('Wed'), tr('Thu'), tr('Fri'), tr('Sat'), tr('Sun')]
+
+/** How the team is doing: trends, the people who stand out, and a leaderboard. Shown to whoever can see the tasks. */
+const Performance = ({ perf, days, setDays, leadTrend, meId }) => {
+    const { team, me, leaderboard, badges, series, labels } = perf
+    const byId = Object.fromEntries(leaderboard.map((r) => [r.person.id, r]))
+    const best = leaderboard[0]
+    const maxScore = Math.max(1, ...leaderboard.map((r) => r.score))
+    const BADGES = [
+        ['top', tr('Best performer'), <TbTrophy />, 'amber', (r) => tr('{n} points', { n: r.score })],
+        ['fastest', tr('Fastest'), <TbBolt />, 'blue', (r) => tr('{n} days on average', { n: r.avgDays })],
+        ['reliable', tr('Most reliable'), <TbShieldCheck />, 'green', (r) => tr('{n}% on time', { n: r.onTimeRate })],
+        ['closer', tr('Top closer'), <TbTargetArrow />, 'violet', (r) => tr('{n} leads converted', { n: r.converted })],
+        ['active', tr('Most active'), <TbMessages />, 'teal', (r) => tr('{n} comments · {h} h tracked', { n: r.comments, h: r.hours })],
+    ].filter(([k]) => badges[k] && byId[badges[k]])
+    const periods = [7, 30, 90]
+    const sparse = labels.length > 31
+    const lbls = labels.map((l) => dayjs(l).format(sparse ? 'D MMM' : 'D'))
+    return (
+        <div className="mb-6">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div><h4>{tr('Team performance')}</h4><p className="text-sm text-gray-500">{tr('Who gets things done, how fast and how reliably')}</p></div>
+                <div className="inline-flex rounded-lg bg-gray-100 p-1 dark:bg-gray-700">
+                    {periods.map((p) => <button key={p} type="button" onClick={() => setDays(p)} className={classNames('rounded-md px-3 py-1 text-sm font-semibold transition', days === p ? 'bg-white text-primary shadow-sm dark:bg-gray-800' : 'text-gray-500 hover:text-gray-700')}>{tr('{n} days', { n: p })}</button>)}
+                </div>
+            </div>
+
+            <div className="mb-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
+                <StatCard icon={<TbCircleCheck />} label={tr('Tasks completed')} value={team.completed} sub={<span>{<Delta cur={team.completed} prev={team.previous} />} {tr('vs previous {n} days', { n: days })}</span>} tone="green" />
+                <StatCard icon={<TbShieldCheck />} label={tr('Finished on time')} value={team.onTimeRate === null ? '—' : `${team.onTimeRate}%`} sub={tr('of the tasks completed')} tone={team.onTimeRate !== null && team.onTimeRate < 70 ? 'amber' : 'blue'} />
+                <StatCard icon={<TbBolt />} label={tr('Average time to finish')} value={team.avgDays === null ? '—' : tr('{n} days', { n: team.avgDays })} sub={tr('from start to done')} tone="violet" />
+                {team.backlog !== undefined
+                    ? <StatCard icon={<TbHourglass />} label={tr('Backlog')} value={team.backlog} sub={tr('oldest open task: {n} days', { n: team.oldest })} tone={team.oldest > 60 ? 'amber' : 'teal'} to="/crm/team-tasks" />
+                    : <StatCard icon={<TbTrophy />} label={tr('My rank')} value={me.rank ? `#${me.rank}` : '—'} sub={tr('{n} tasks completed', { n: me.completed })} tone="amber" />}
+            </div>
+
+            {BADGES.length > 0 && (
+                <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                    {BADGES.map(([k, title, icon, tone, detail]) => {
+                        const r = byId[badges[k]]
+                        return (
+                            <Card key={k} className="h-full" bodyClass="p-4">
+                                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><span className={classNames('flex h-6 w-6 items-center justify-center rounded-full text-base', TONES[tone])}>{icon}</span>{title}</div>
+                                <div className="mt-3 flex items-center gap-3">
+                                    <Avatar size={40} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar>
+                                    <div className="min-w-0"><div className="truncate font-bold heading-text">{r.person.name}</div><div className="truncate text-xs text-gray-500">{detail(r)}</div></div>
+                                </div>
+                            </Card>
+                        )
+                    })}
+                </div>
+            )}
+
+            <div className="mb-4 grid gap-4 xl:grid-cols-3">
+                <Panel className="xl:col-span-2" title={tr('Tasks created and completed')} subtitle={tr('Per day, the last {n} days', { n: days })}>
+                    <TrendChart labels={lbls} height={280} colors={[PALETTE.green, PALETTE.blue]} series={[{ name: tr('Completed'), data: series.completed }, { name: tr('Created'), data: series.created }]} />
+                </Panel>
+                {perf.byStatus ? (
+                    <Panel title={tr('Open tasks by status')} subtitle={tr('{n} still to do', { n: team.backlog })}>
+                        <DonutChart data={perf.byStatus} height={270} title={tr('Open')} />
+                    </Panel>
+                ) : (
+                    <Panel title={tr('My completed tasks')} subtitle={<span><Delta cur={me.completed} prev={me.previous} /> {tr('vs previous {n} days', { n: days })}</span>}>
+                        <TrendChart type="area" labels={lbls} height={250} colors={[PALETTE.purple]} series={[{ name: tr('Completed'), data: series.mine }]} />
+                    </Panel>
+                )}
+            </div>
+
+            <div className="mb-4 grid gap-4 xl:grid-cols-3">
+                {leaderboard.length > 0 && (
+                    <Panel className="xl:col-span-2" title={tr('Leaderboard')} subtitle={tr('Points: 10 per task, +5 on time, +8 per issue resolved, +15 per lead converted, +1 per hour tracked (max 40)')}>
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[620px] text-sm">
+                                <thead><tr className="text-left text-xs uppercase tracking-wide text-gray-400"><th className="pb-2 pe-2">#</th><th className="pb-2">{tr('Member')}</th><th className="pb-2 text-end">{tr('Tasks')}</th><th className="pb-2 text-end">{tr('On time')}</th><th className="pb-2 text-end">{tr('Avg. days')}</th><th className="pb-2 text-end">{tr('Hours')}</th><th className="pb-2 ps-4">{tr('Score')}</th></tr></thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {leaderboard.map((r, i) => (
+                                        <tr key={r.person.id} className={r.person.id === meId ? 'bg-primary/5' : ''}>
+                                            <td className="py-2.5 pe-2"><span className={classNames('flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold', MEDAL[i] || 'bg-gray-100 text-gray-500 dark:bg-gray-700')}>{i + 1}</span></td>
+                                            <td className="py-2.5"><div className="flex items-center gap-2.5"><Avatar size={28} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar><span className="truncate font-semibold">{r.person.name}</span></div></td>
+                                            <td className="py-2.5 text-end font-bold">{r.completed}</td>
+                                            <td className={classNames('py-2.5 text-end', r.onTimeRate !== null && r.onTimeRate < 60 ? 'text-red-500' : '')}>{r.onTimeRate === null ? '—' : `${r.onTimeRate}%`}</td>
+                                            <td className="py-2.5 text-end">{r.avgDays === null ? '—' : r.avgDays}</td>
+                                            <td className="py-2.5 text-end">{r.hours || '—'}</td>
+                                            <td className="py-2.5 ps-4"><div className="flex items-center gap-2"><div className="h-2 w-24 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full rounded-full bg-primary" style={{ width: `${(r.score / maxScore) * 100}%` }} /></div><b className="w-9 text-end">{r.score}</b></div></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Panel>
+                )}
+                <div className={classNames('flex flex-col gap-4', leaderboard.length ? '' : 'xl:col-span-3')}>
+                    {best && leaderboard.length > 0 && me.rank && (
+                        <Card bodyClass="p-4">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{tr('Your performance')}</div>
+                            <div className="mt-2 flex items-end justify-between"><div className="text-3xl font-bold heading-text">#{me.rank}<span className="text-base font-semibold text-gray-400"> / {me.of}</span></div><div className="text-end text-sm text-gray-500">{tr('{n} points', { n: me.score })}</div></div>
+                            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs text-gray-500">
+                                <div><b className="block text-lg heading-text">{me.completed}</b>{tr('Tasks')}</div>
+                                <div><b className="block text-lg heading-text">{me.onTimeRate === null ? '—' : `${me.onTimeRate}%`}</b>{tr('On time')}</div>
+                                <div><b className="block text-lg heading-text">{me.avgDays === null ? '—' : me.avgDays}</b>{tr('Avg. days')}</div>
+                            </div>
+                        </Card>
+                    )}
+                    <Panel title={tr('Busiest days')} subtitle={tr('When tasks get completed')}>
+                        <ColumnChart labels={WEEKDAYS()} height={200} colors={[PALETTE.purple]} series={[{ name: tr('Completed'), data: perf.weekday }]} />
+                    </Panel>
+                </div>
+            </div>
+
+            {leadTrend && (leadTrend.created.some(Boolean) || leadTrend.converted.some(Boolean)) ? (
+                <Panel title={tr('Leads per week')} subtitle={tr('New leads and conversions')}>
+                    <ColumnChart labels={leadTrend.labels.map((l) => dayjs(l).format('D MMM'))} height={240} colors={[PALETTE.blue, PALETTE.green]} series={[{ name: tr('New leads'), data: leadTrend.created }, { name: tr('Converted'), data: leadTrend.converted }]} />
+                </Panel>
+            ) : null}
+        </div>
     )
 }
 

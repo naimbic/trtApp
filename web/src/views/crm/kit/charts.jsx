@@ -65,3 +65,49 @@ export const StackedStat = ({ title, icon, data, onClick, emptyText = tr("None y
         </button>
     )
 }
+
+const legendTop = { position: 'top', horizontalAlign: 'left', fontSize: '13px', markers: { radius: 12 }, itemMargin: { horizontal: 12 } }
+
+/** Smooth gradient area/line chart, the look of the template's demo dashboards. `series` is [{ name, data }]. */
+export const TrendChart = ({ labels, series, colors = SERIES, height = 280, type = 'area' }) => (
+    <Chart
+        type={type}
+        height={height}
+        series={series}
+        xAxis={labels}
+        customOptions={{
+            colors,
+            chart: { toolbar: { show: false }, zoom: { enabled: false }, animations: { speed: 500 }, fontFamily: 'inherit' },
+            stroke: { width: 3, curve: 'smooth' },
+            fill: type === 'area' ? { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 95, 100] } } : { opacity: 1 },
+            markers: { size: 0, hover: { size: 6 }, strokeWidth: 2, strokeColors: '#fff' },
+            dataLabels: { enabled: false },
+            grid,
+            legend: legendTop,
+            xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: { ...axisText, rotate: 0, hideOverlappingLabels: true, trim: false } },
+            yaxis: { min: 0, forceNiceScale: true, labels: { ...axisText, formatter: (v) => compact(v) } },
+            tooltip: { shared: true, intersect: false },
+        }}
+    />
+)
+
+/** Rounded column chart; `stacked` stacks the series. */
+export const ColumnChart = ({ labels, series, colors = SERIES, height = 260, stacked = false }) => (
+    <Chart
+        type="bar"
+        height={height}
+        series={series}
+        xAxis={labels}
+        customOptions={{
+            colors,
+            chart: { toolbar: { show: false }, stacked, fontFamily: 'inherit' },
+            plotOptions: { bar: { borderRadius: 6, borderRadiusApplication: stacked ? 'around' : 'end', columnWidth: '52%' } },
+            dataLabels: { enabled: false },
+            grid,
+            legend: series.length > 1 ? legendTop : { show: false },
+            xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: { ...axisText, rotate: 0, hideOverlappingLabels: true, trim: false } },
+            yaxis: { min: 0, forceNiceScale: true, labels: { ...axisText, formatter: (v) => compact(v) } },
+            tooltip: { shared: true, intersect: false },
+        }}
+    />
+)

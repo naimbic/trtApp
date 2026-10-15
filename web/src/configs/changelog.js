@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.40.0',
+        date: '2026-10-15',
+        title: 'Team performance on the Team dashboard',
+        items: ['New Team performance section with a 7 / 30 / 90 days switch: tasks completed (compared with the previous period), share finished on time, average time to finish and the backlog (with the age of the oldest open task)', 'Who stands out: Best performer, Fastest, Most reliable, Top closer (leads converted) and Most active, each with the figure behind it', 'Leaderboard with rank, tasks, on time, average days, hours tracked and a score (10 per task, +5 on time, +8 per issue resolved, +15 per lead converted, +1 per tracked hour up to 40), and a Your performance card with your own rank', 'Template-style charts: tasks created and completed per day (gradient area), open tasks by status, busiest days of the week and leads per week (new and converted); people who can only see their own tasks get their own numbers and curve, never the others']
+    },
+    {
         version: '0.39.0',
         date: '2026-10-15',
         title: 'Team dashboard, business dashboard for admins only',

@@ -22,7 +22,7 @@ export async function me() {
     const c = s.contact
     const co = await prisma.crmOption.findMany({ where: { name: { in: ['companyname', 'company_logo', 'company_logo_dark'] } } })
     const o = Object.fromEntries(co.map((x) => [x.name, x.value]))
-    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null }, can: s.can, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
+    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null }, can: s.can, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
 }
 
 async function invoicesOf(clientId) {
@@ -41,33 +41,33 @@ async function invoicesOf(clientId) {
 export async function dashboard() {
     const s = await requirePortal()
     const id = s.client.id
-    const out = { can: s.can, money: [], invoices: [], estimates: [], proposals: [], contracts: [], projects: [], tickets: [], actions: [] }
+    const out = { can: s.can, money: [], invoices: [], estimates: [], proposals: [], contracts: [], projects: [], tickets: [], actions: [], counts: { projectsActive: 0, ticketsOpen: 0 } }
     if (s.can.includes('invoices')) {
         const inv = await invoicesOf(id)
         const by = {}
         for (const i of inv) { const m = (by[i.currencyId || 'none'] ||= { currency: i.currency, invoiced: 0, paid: 0, due: 0, overdue: 0 }); m.invoiced = round2(m.invoiced + i.total); m.paid = round2(m.paid + i.paid); m.due = round2(m.due + i.due); if (i.status === 4) m.overdue = round2(m.overdue + i.due) }
         out.money = Object.values(by)
         out.invoices = inv.slice(0, 6)
-        out.actions.push(...inv.filter((i) => i.due > 0).slice(0, 4).map((i) => ({ kind: i.status === 4 ? 'overdue' : 'invoice', title: `Invoice ${i.number} ${i.status === 4 ? 'is overdue' : 'is waiting for payment'}`, detail: `${i.due.toFixed(2)} ${i.currency?.symbol || ''} left`, link: i.link, external: true })))
+        out.actions.push(...inv.filter((i) => i.due > 0).slice(0, 4).map((i) => ({ kind: i.status === 4 ? 'overdue' : 'invoice', ref: i.number, amount: i.due, currency: i.currency || null, title: `Invoice ${i.number} ${i.status === 4 ? 'is overdue' : 'is waiting for payment'}`, detail: `${i.due.toFixed(2)} ${i.currency?.symbol || ''} left`, link: i.link, external: true })))
     }
     if (s.can.includes('estimates')) {
         const padding = await numberPadding()
         const es = await prisma.crmEstimate.findMany({ where: { clientId: id, status: { not: 1 } }, orderBy: { date: 'desc' }, take: 6 })
         out.estimates = es.map((e) => ({ id: e.id, number: docNumberOf(e, padding, 1), date: e.date, total: e.total, status: e.status, statusLabel: EST[e.status], link: pub('estimate', e.id, e.hash) }))
-        out.actions.push(...out.estimates.filter((e) => e.status === 2).map((e) => ({ kind: 'estimate', title: `Estimate ${e.number} is waiting for your answer`, detail: '', link: e.link, external: true })))
+        out.actions.push(...out.estimates.filter((e) => e.status === 2).map((e) => ({ kind: 'estimate', ref: e.number, title: `Estimate ${e.number} is waiting for your answer`, detail: '', link: e.link, external: true })))
     }
     if (s.can.includes('proposals')) {
         const fmt = await proposalNumber()
         const ps = await prisma.crmProposal.findMany({ where: { relType: 'customer', relId: id, status: { not: 6 } }, orderBy: { createdAt: 'desc' }, take: 6 })
         out.proposals = ps.map((p) => ({ id: p.id, number: fmt(p), subject: p.subject, total: p.total, status: p.status, statusLabel: PROP[p.status], link: pub('proposal', p.id, p.hash) }))
-        out.actions.push(...out.proposals.filter((p) => [1, 4, 5].includes(p.status)).map((p) => ({ kind: 'proposal', title: `Proposal ${p.number} is waiting for your answer`, detail: p.subject || '', link: p.link, external: true })))
+        out.actions.push(...out.proposals.filter((p) => [1, 4, 5].includes(p.status)).map((p) => ({ kind: 'proposal', ref: p.number, title: `Proposal ${p.number} is waiting for your answer`, detail: p.subject || '', link: p.link, external: true })))
     }
     if (s.can.includes('contracts')) {
         out.contracts = (await listContracts()).list.slice(0, 5)
-        out.actions.push(...out.contracts.filter((c) => c.status === 4).map((c) => ({ kind: 'contract', title: `Contract “${c.number}” is waiting for your signature`, detail: '', link: c.link, external: true })))
+        out.actions.push(...out.contracts.filter((c) => c.status === 4).map((c) => ({ kind: 'contract', ref: c.number, title: `Contract “${c.number}” is waiting for your signature`, detail: '', link: c.link, external: true })))
     }
-    if (s.can.includes('projects')) out.projects = (await listProjects()).list.slice(0, 5)
-    if (s.can.includes('support')) out.tickets = (await listTickets()).list.slice(0, 5)
+    if (s.can.includes('projects')) { const all = (await listProjects()).list; out.projects = all.slice(0, 5); out.counts.projectsActive = all.filter((p) => p.statusLabel === 'In progress').length }
+    if (s.can.includes('support')) { const all = (await listTickets()).list; out.tickets = all.slice(0, 5); out.counts.ticketsOpen = all.filter((t) => t.status && !/clos|resolv/i.test(t.status.name)).length }
     return out
 }
 

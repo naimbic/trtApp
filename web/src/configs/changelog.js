@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.21',
+        date: '2026-10-15',
+        title: 'Client area in 5 languages, better dashboard',
+        items: ['Client area (portal): a language menu in the header and on the sign-in pages, English, French, Spanish, Chinese and Arabic (Arabic switches the whole page to right-to-left). Everything on the pages is translated: menu, dashboard, invoices, estimates, proposals, contracts, projects, support, help center, profile, chat bubble, statuses and dates', 'First visit: the portal opens in the client\'s own language (set on the client record), else the browser language; after that the choice is remembered', 'Dashboard rearranged: "Waiting for you" on top, then one row of figures (To pay with the overdue amount, Paid, Invoiced, Projects in progress, Open requests), then Latest invoices next to Offers and contracts, and Projects next to Support; a card takes the full width when its neighbour has nothing to show', 'Header: the Password link is gone (it is under My profile) so the menu fits', 'Texts that come from the server (error messages, project names, article content) stay in the language they were written in']
+    },
+    {
         version: '0.30.20',
         date: '2026-10-15',
         title: 'Client tabs and Activity justified',

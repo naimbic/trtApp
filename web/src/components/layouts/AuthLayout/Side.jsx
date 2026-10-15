@@ -81,10 +81,10 @@ const Slides = () => {
         if (SLIDES[i].type === 'sites') setSites(pick8())
     }, [i])
     return (
-        <div className="relative w-full max-w-2xl" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-            <div key={i} className="flex min-h-[300px] flex-col justify-center animate-[popup-fade-in_0.6s_ease-out]">
+        <div className="relative mx-auto w-full max-w-xl" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+            <div key={i} className="flex h-[300px] flex-col items-center justify-center animate-[popup-fade-in_0.6s_ease-out]">
                 {slide.type === 'sites' ? (
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid w-full grid-cols-2 gap-2.5">
                         {sites.map((host) => (
                             <a key={host} href={`https://${host}`} target="_blank" rel="noopener noreferrer" className={`group flex items-center gap-2.5 px-4 py-3 hover:bg-white/20 ${glass}`}>
                                 <TbWorld className="shrink-0 text-xl text-white/70" />
@@ -94,14 +94,14 @@ const Slides = () => {
                         ))}
                     </div>
                 ) : (
-                    <figure className="text-left">
-                        <div className="font-serif text-8xl leading-none text-white/30">&ldquo;</div>
-                        <blockquote className="-mt-6 text-4xl font-extrabold leading-tight tracking-tight text-white xl:text-5xl">{slide.text}</blockquote>
+                    <figure className="text-center">
+                        <div className="font-serif text-7xl leading-none text-white/30">&ldquo;</div>
+                        <blockquote className="-mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white xl:text-4xl">{slide.text}</blockquote>
                         <figcaption className="mt-6 inline-block rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold text-white ring-1 ring-white/25">{slide.by}</figcaption>
                     </figure>
                 )}
             </div>
-            <div className="mt-8 flex gap-2">
+            <div className="absolute left-0 right-0 top-full mt-6 flex justify-center gap-2">
                 {SLIDES.map((_, n) => (
                     <button key={n} type="button" aria-label={`Slide ${n + 1}`} onClick={() => setI(n)} className={`h-2 rounded-full transition-all ${n === i ? 'w-10 bg-white' : 'w-3 bg-white/35 hover:bg-white/60'}`} />
                 ))}
@@ -112,7 +112,7 @@ const Slides = () => {
 
 const Side = ({ children, ...rest }) => {
     return (
-        <main className="grid h-full min-h-screen bg-white dark:bg-gray-800 lg:grid-cols-[minmax(420px,5fr)_7fr]">
+        <main className="grid h-full min-h-screen bg-white dark:bg-gray-800 lg:grid-cols-2">
             {/* Left: sign-in form */}
             <div className="flex flex-col items-center justify-center px-6 py-10">
                 <div className="w-full max-w-sm">

@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.16',
+        date: '2026-10-15',
+        title: 'Sign-in layout centred',
+        items: ['Sign-in: two equal halves again, the form centred in the left half and the slides centred (text and cards) in the right half, dots under the slide']
+    },
+    {
+        version: '0.30.15',
+        date: '2026-10-15',
+        title: 'Admins can sign in again',
+        items: ['Fixed: members with a big role (Admin, about 100 permissions) could not sign in, the page said "Invalid email or password". Their session cookie is about 4 KB and the sign-in answer was blocked by the web server\'s small header buffer (502 "upstream sent too big header"). The buffers are now large enough; Super Admin and small roles were never affected'],
+    },
+    {
         version: '0.30.14',
         date: '2026-10-15',
         title: 'Sign-in page: form left, bold panel right',

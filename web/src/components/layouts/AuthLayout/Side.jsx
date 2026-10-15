@@ -3,9 +3,10 @@ import { TbArrowUpRight, TbWorld } from 'react-icons/tb'
 import { CHANGELOG } from '@/configs/changelog'
 
 const QUOTES = [
-    { text: 'Well done is better than well said.', by: 'Benjamin Franklin' },
-    { text: 'Efficiency is doing things right; effectiveness is doing the right things.', by: 'Peter Drucker' },
-    { text: 'Quality is more important than quantity.', by: 'Steve Jobs' },
+    { text: 'Websites that turn visitors into clients.', by: 'trtDigital' },
+    { text: 'SEO that gets your business found on Google.', by: 'trtSEO' },
+    { text: 'Ads that bring qualified leads, not just clicks.', by: 'trtAds' },
+    { text: 'One team for your website, your ranking and your advertising.', by: 'trtDigital' },
 ]
 
 const SITES = [

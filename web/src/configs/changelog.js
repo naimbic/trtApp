@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.12',
+        date: '2026-10-15',
+        title: 'Sign-in slides: our services only',
+        items: ['The quotes on the sign-in page are now short lines about our own services (websites, SEO, ads), no outside quotes'],
+    },
+    {
         version: '0.30.11',
         date: '2026-10-15',
         title: 'Notifications (toasts) fixed',

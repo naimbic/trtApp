@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.24',
+        date: '2026-10-15',
+        title: 'Document numbers without slashes',
+        items: ['Invoice, estimate and other document numbers now use dashes instead of slashes and keep a space after a prefix like "FA -": FA -100/10/2026 becomes FA - 100-10-2026 (lists, PDFs, emails and the public pages); the page heading reads #FA - 100-10-2026 (no space after #)']
+    },
+    {
         version: '0.30.23',
         date: '2026-10-15',
         title: 'Public invoice page, contract signature, favicon',

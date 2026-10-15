@@ -83,7 +83,7 @@ export async function proposalDocumentHtml(p, items, currency, S, number) {
     let content = safeProposalHtml(p.content)
     const hasItems = /\{proposal_items\}/.test(content)
     content = content.replace(/\{([a-z0-9_]+)\}/gi, (m, k) => (k in merge ? String(merge[k] ?? '') : ''))
-    return `<div class="top"><div class="title"><h1>${T.title}</h1><div class="num"># ${esc(number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(co.company_name)}</strong>`}</div></div>
+    return `<div class="top"><div class="title"><h1>${T.title}</h1><div class="num">#${esc(number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(co.company_name)}</strong>`}</div></div>
 <div class="cols">${S.swap ? `<div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>${L.date}: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div><div class="info org">${org}</div>` : `<div class="info org">${org}</div><div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>${L.date}: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div>`}</div>
 ${p.subject ? `<h2 class="psub">${esc(p.subject)}</h2>` : ''}<div class="pcontent">${content}</div>${hasItems ? '' : itemsBlock}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }

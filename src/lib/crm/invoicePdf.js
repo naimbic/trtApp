@@ -169,7 +169,7 @@ h4{margin:20px 0 6px;font-size:1.05em}.plain th{text-align:left;border-bottom:1p
 .mode{margin-bottom:8px}.block{white-space:pre-line}tr{page-break-inside:avoid}.sc{overflow-x:auto}
 ${pub ? PUBLIC_CSS : ''}
 </style></head><body${pub ? ' class="pub"' : ''}>
-${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}<div class="top"><div class="title"><h1>${L.invoice}</h1><div class="num"># ${esc(invoice.displayNumber)}</div>${status}</div><div class="logo">${logo ? `<img src="${logo}" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
+${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}<div class="top"><div class="title"><h1>${L.invoice}</h1><div class="num">#${esc(invoice.displayNumber)}</div>${status}</div><div class="logo">${logo ? `<img src="${logo}" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
 <div class="cols">${S.swap ? infoBlock + orgBlock : orgBlock + infoBlock}</div>
 <div class="sc"><table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table></div>
 <table class="tot">${totalRows.join('')}</table>

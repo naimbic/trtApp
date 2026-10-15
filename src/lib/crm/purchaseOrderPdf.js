@@ -45,7 +45,7 @@ export async function renderPurchaseOrderHtml(id) {
     if (Number(p.adjustment)) tr.push(`<tr><td>${L.adjustment}</td><td>${M(p.adjustment)}</td></tr>`)
     tr.push(`<tr class="grand"><td>${L.total}</td><td>${M(p.total)}</td></tr>`)
     const words = S.words.on ? `<p class="words"><strong>${T.words} :</strong> ${esc(amountInWords(p.total, { lang: S.lang, currency: currency?.name, lowercase: S.words.lower }))}</p>` : ''
-    const body = `<div class="top"><div class="title"><h1>${T.title}</h1><div class="num"># ${esc(number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
+    const body = `<div class="top"><div class="title"><h1>${T.title}</h1><div class="num">#${esc(number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
 <div class="cols">${S.swap ? info + org : org + info}</div>
 <table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>

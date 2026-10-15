@@ -110,20 +110,22 @@ export function invoiceStatusFromPayments(invoice, payments = [], now = new Date
  * format 1: prefix + padded number               -> INV-000042
  * format 2: prefix + year + '/' + padded number  -> INV-2019/000042
  * format 3: prefix + padded number + '-' + yy    -> INV-000042-19
- * format 4: prefix + padded number + '/mm/yyyy'  -> INV-042/10/2019
+ * format 4: prefix + padded number + '-mm-yyyy'  -> INV-042-10-2019
  * Drafts display as prefix + 'DRAFT'. `padding` is the `number_padding_prefixes` option.
  */
 export function formatDocumentNumber({ prefix = '', number, numberFormat = 1, date, padding = 6, draft = false } = {}) {
-    const pre = prefix ?? ''
+    // a prefix written like "FA -" reads "FA - 100-10-2026" (space after the dash); dates use dashes, never slashes
+    const raw = prefix ?? ''
+    const pre = /\s-$/.test(raw) ? `${raw} ` : raw
     if (draft) return `${pre}DRAFT`
     const padded = String(number ?? 0).padStart(padding, '0')
     const d = date ? (date instanceof Date ? date : new Date(date)) : new Date()
     const yyyy = d.getUTCFullYear()
     const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
     switch (Number(numberFormat)) {
-        case 2: return `${pre}${yyyy}/${padded}`
+        case 2: return `${pre}${yyyy}-${padded}`
         case 3: return `${pre}${padded}-${String(yyyy).slice(2)}`
-        case 4: return `${pre}${padded}/${mm}/${yyyy}`
+        case 4: return `${pre}${padded}-${mm}-${yyyy}`
         default: return `${pre}${padded}`
     }
 }

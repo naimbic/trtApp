@@ -69,7 +69,7 @@ async function documentHtml(d, lang, S) {
     if (Number(e.adjustment)) tr.push(`<tr><td>${L.adjustment}</td><td>${M(e.adjustment)}</td></tr>`)
     tr.push(`<tr class="grand"><td>${L.total}</td><td>${M(e.total)}</td></tr>`)
     const words = S.words.on ? `<p class="words"><strong>${lang === 'french' ? 'Arrêté le présent devis à la somme de' : 'Total in words'} :</strong> ${esc(amountInWords(e.total, { lang, currency: d.currency?.name, lowercase: S.words.lower }))}</p>` : ''
-    return `<div class="top"><div class="title"><h1>${T.estimate}</h1><div class="num"># ${esc(d.number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
+    return `<div class="top"><div class="title"><h1>${T.estimate}</h1><div class="num">#${esc(d.number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
 <div class="cols">${S.swap ? info + org : org + info}</div>
 <table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>

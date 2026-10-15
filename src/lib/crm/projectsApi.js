@@ -1,3 +1,4 @@
+import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 
@@ -23,7 +24,7 @@ async function visible(a) {
 const staffName = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || 'Staff'
 async function staffMap(ids) {
     const list = ids.length ? await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(ids.filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : []
-    return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: staffName(s), image: s.profileImage || null }]))
+    return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: staffName(s), image: realPicture(s.profileImage) }]))
 }
 
 const readable = (key, extra) => {

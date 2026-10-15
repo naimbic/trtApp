@@ -1,3 +1,4 @@
+import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 
@@ -31,7 +32,7 @@ const staffName = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || 
 
 async function staffMap(ids) {
     const list = ids.length ? await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(ids)] } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : []
-    return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: staffName(s), image: s.profileImage || null }]))
+    return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: staffName(s), image: realPicture(s.profileImage) }]))
 }
 
 /** Human label (and link) for what a task is attached to. */
@@ -263,7 +264,7 @@ export async function taskLookups() {
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
         prisma.crmMilestone.findMany({ select: { id: true, name: true }, take: 500 }),
     ])
-    return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: s.profileImage || null })).sort((x, y) => x.name.localeCompare(y.name)), milestones }
+    return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), milestones }
 }
 
 /** Prisma `where` limiting tasks to what the signed-in staff member may see (for dashboards). */

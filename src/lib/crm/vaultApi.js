@@ -1,3 +1,4 @@
+import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { seal, unseal, b32decode, totpNow } from '@/lib/crm/twoFactor'
@@ -26,7 +27,7 @@ function rights(c, e) {
 const staffName = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || 'Staff'
 async function staffList() {
     const rows = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
-    return rows.map((s) => ({ id: s.id, name: staffName(s), image: s.profileImage || null })).sort((a, b) => a.name.localeCompare(b.name))
+    return rows.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((a, b) => a.name.localeCompare(b.name))
 }
 
 async function log(entryId, c, action, detail, request) {

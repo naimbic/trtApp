@@ -5,6 +5,9 @@ import {
     apiGithubOauthSignIn,
 } from '@/services/OAuthServices'
 
+import { FcGoogle } from 'react-icons/fc'
+import { FaGithub } from 'react-icons/fa'
+
 const OauthSignIn = ({ setMessage, disableSubmit }) => {
     const { oAuthSignIn } = useAuth()
 
@@ -50,11 +53,7 @@ const OauthSignIn = ({ setMessage, disableSubmit }) => {
                 onClick={handleGoogleSignIn}
             >
                 <div className="flex items-center justify-center gap-2">
-                    <img
-                        className="h-[25px] w-[25px]"
-                        src="/img/others/google.png"
-                        alt="Google sign in"
-                    />
+                    <FcGoogle className="text-2xl" />
                     <span>Google</span>
                 </div>
             </Button>
@@ -64,11 +63,7 @@ const OauthSignIn = ({ setMessage, disableSubmit }) => {
                 onClick={handleGithubSignIn}
             >
                 <div className="flex items-center justify-center gap-2">
-                    <img
-                        className="h-[25px] w-[25px]"
-                        src="/img/others/github.png"
-                        alt="Google sign in"
-                    />
+                    <FaGithub className="text-2xl" />
                     <span>Github</span>
                 </div>
             </Button>

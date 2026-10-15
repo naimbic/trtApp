@@ -1,3 +1,4 @@
+import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 import { requirePortal } from '@/lib/portal/session'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
@@ -21,7 +22,7 @@ export async function me() {
     const c = s.contact
     const co = await prisma.crmOption.findMany({ where: { name: { in: ['companyname', 'company_logo', 'company_logo_dark'] } } })
     const o = Object.fromEntries(co.map((x) => [x.name, x.value]))
-    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: c.profileImage || null }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null }, can: s.can, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
+    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null }, can: s.can, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
 }
 
 async function invoicesOf(clientId) {

@@ -1,3 +1,4 @@
+import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, isCrmAdmin } from '@/lib/crm/permissions'
 import { processUpload, putMedia, MediaError, PREFIX } from '@/lib/media'
@@ -109,7 +110,7 @@ export async function onlineStaff(exceptId = null) {
     const ids = pres.map((p) => p.memberKey.slice(6)).filter((i) => oid(i) && i !== exceptId)
     if (!ids.length) return []
     const rows = await prisma.crmStaff.findMany({ where: { id: { in: ids }, active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
-    return rows.map((s) => ({ id: s.id, name: staffName(s), image: s.profileImage || null }))
+    return rows.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) }))
 }
 
 async function ctx() {
@@ -117,7 +118,7 @@ async function ctx() {
     const staffId = await getStaffId(session)
     if (!staffId) throw fail('Chat needs a staff profile linked to your login', 403)
     const me = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
-    return { staffId, key: `staff:${staffId}`, name: staffName(me || {}), image: me?.profileImage || null, admin: isCrmAdmin(session.user.authority || []) }
+    return { staffId, key: `staff:${staffId}`, name: staffName(me || {}), image: realPicture(me?.profileImage), admin: isCrmAdmin(session.user.authority || []) }
 }
 
 async function teamRoom() {
@@ -153,11 +154,11 @@ export async function listRooms() {
     const contacts = clients.length ? await prisma.crmContact.findMany({ where: { id: { in: clients.map((r) => r.contactId).filter(Boolean) } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : []
     const clientRows = clients.length ? await prisma.crmClient.findMany({ where: { id: { in: clients.map((r) => r.clientId).filter(Boolean) } }, select: { id: true, company: true } }) : []
     const cMap = Object.fromEntries(contacts.map((x) => [x.id, x])), coMap = Object.fromEntries(clientRows.map((x) => [x.id, x.company]))
-    const sMap = Object.fromEntries(staff.map((s) => [s.id, { id: s.id, name: staffName(s), image: s.profileImage || null, status: st(`staff:${s.id}`) }]))
+    const sMap = Object.fromEntries(staff.map((s) => [s.id, { id: s.id, name: staffName(s), image: realPicture(s.profileImage), status: st(`staff:${s.id}`) }]))
     const out = [
         { id: team.id, kind: 'team', title: 'Team', subtitle: `${staff.filter((s) => st(`staff:${s.id}`) === 'online').length} online`, lastMessage: team.lastMessage, lastAt: team.lastMessageAt, unread: unread[team.id] },
         ...direct.map((r) => { const other = sMap[r.staffIds.find((i) => i !== c.staffId)] || { name: 'Former colleague' }; return { id: r.id, kind: 'direct', title: other.name, image: other.image, status: other.status || 'offline', lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
-        ...clients.map((r) => { const p = cMap[r.contactId]; return { id: r.id, kind: 'client', title: p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email : 'Client', subtitle: coMap[r.clientId] || '', image: p?.profileImage || null, status: st(`contact:${r.contactId}`), lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
+        ...clients.map((r) => { const p = cMap[r.contactId]; return { id: r.id, kind: 'client', title: p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email : 'Client', subtitle: coMap[r.clientId] || '', image: realPicture(p?.profileImage), status: st(`contact:${r.contactId}`), lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
     ]
     const people = Object.values(sMap).filter((s) => s.id !== c.staffId).sort((a, b) => (b.status === 'online') - (a.status === 'online') || (b.status === 'idle') - (a.status === 'idle') || a.name.localeCompare(b.name))
     return { me: { id: c.staffId, name: c.name, image: c.image, admin: c.admin }, rooms: out, people, unread: out.reduce((n, r) => n + r.unread, 0), calls: await callsEnabled(), iceServers: iceServers() }

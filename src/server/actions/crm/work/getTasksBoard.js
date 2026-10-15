@@ -1,3 +1,4 @@
+import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 
 export const TASK_BOARD_STATUSES = [
@@ -28,7 +29,7 @@ const getTasksBoard = async ({ projectId, limit = 1000 } = {}) => {
     const staffMap = {}
     if (staffIds.length) {
         const staff = await prisma.crmStaff.findMany({ where: { id: { in: staffIds } } })
-        for (const s of staff) staffMap[s.id] = { id: s.id, name: staffName(s), img: s.profileImage || '' }
+        for (const s of staff) staffMap[s.id] = { id: s.id, name: staffName(s), img: realPicture(s.profileImage) || '' }
     }
 
     const items = tasks.map((t) => ({

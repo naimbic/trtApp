@@ -1,3 +1,4 @@
+import { realPicture } from '@/lib/crm/pictures'
 import crypto from 'crypto'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
@@ -19,7 +20,7 @@ const visible = (a) => (a.scope === 'all' ? {} : a.staffId ? { OR: [{ assignedId
 const staffName = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || 'Staff'
 async function staffMap(ids) {
     const list = ids.length ? await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(ids.filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : []
-    return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: staffName(s), image: s.profileImage || null }]))
+    return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: staffName(s), image: realPicture(s.profileImage) }]))
 }
 const contactName = (c) => (c ? [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email : null)
 const stripHtml = (h) => String(h || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
@@ -40,7 +41,7 @@ async function lookups() {
     return {
         statuses: statuses.map((s) => ({ id: s.id, name: s.name, color: s.statusColor || '#64748b', legacyId: s.legacyId, isDefault: s.isDefault })),
         priorities: priorities.map((p) => ({ id: p.id, name: p.name })), departments, services: services.map((s) => ({ id: s.id, name: s.name })),
-        staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: s.profileImage || null })).sort((x, y) => x.name.localeCompare(y.name)),
+        staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)),
         predefined: predefined.map((r) => ({ id: r.id, name: r.name, message: stripHtml(r.message) })),
     }
 }

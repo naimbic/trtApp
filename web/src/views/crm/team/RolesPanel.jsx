@@ -102,24 +102,28 @@ const RolesPanel = () => {
                 <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
                     {loading && <span className="px-2 py-2 text-sm text-gray-400">Loading…</span>}
                     {roles.map((r) => (
-                        <button
-                            key={r.id}
-                            type="button"
-                            onClick={() => pick(r)}
-                            className={cn('flex shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-colors', selected === r.id ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white hover:border-primary/50 dark:border-gray-600 dark:bg-gray-800')}
-                        >
-                            <span className="text-lg"><TbShieldCheck /></span>
-                            <span className="min-w-0">
-                                <span className="block truncate text-sm font-semibold leading-tight">{r.name}</span>
-                                <span className="block text-[11px] leading-tight text-gray-500">{r.members} member{r.members === 1 ? '' : 's'} · {r.permissionCount} on</span>
+                        <div key={r.id} className="group relative shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => pick(r)}
+                                className={cn('flex items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-colors group-hover:pr-16', selected === r.id ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white hover:border-primary/50 dark:border-gray-600 dark:bg-gray-800')}
+                            >
+                                <span className="text-lg"><TbShieldCheck /></span>
+                                <span className="min-w-0">
+                                    <span className="block truncate text-sm font-semibold leading-tight">{r.name}</span>
+                                    <span className="block text-[11px] leading-tight text-gray-500">{r.members} member{r.members === 1 ? '' : 's'} · {r.permissionCount} on</span>
+                                </span>
+                            </button>
+                            <span className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 group-hover:flex">
+                                <button type="button" title="Rename" aria-label={`Rename ${r.name}`} onClick={() => { pick(r); setNameDlg({ mode: 'rename', value: r.name }) }} className="grid h-6 w-6 place-items-center rounded-md text-gray-500 hover:bg-white hover:text-primary dark:hover:bg-gray-700"><TbPencil /></button>
+                                <button type="button" title="Delete" aria-label={`Delete ${r.name}`} onClick={() => { pick(r); setConfirmDelete(true) }} className="grid h-6 w-6 place-items-center rounded-md text-gray-500 hover:bg-white hover:text-red-500 dark:hover:bg-gray-700"><TbTrash /></button>
                             </span>
-                        </button>
+                        </div>
                     ))}
                     {selected === 'new' && <span className="flex shrink-0 items-center rounded-xl border border-dashed border-primary px-3 py-1.5 text-sm font-semibold text-primary">New role (unsaved)</span>}
                     {!loading && !roles.length && selected !== 'new' && <span className="px-2 py-2 text-sm text-gray-400">No roles yet</span>}
                 </div>
                 <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => setNameDlg({ mode: 'new', value: '' })}>New role</Button>
-                {current && selected !== 'new' && <Button size="sm" icon={<TbPencil />} onClick={() => setNameDlg({ mode: 'rename', value: draft.name })}>Rename</Button>}
             </div>
 
             <Card className="min-w-0">

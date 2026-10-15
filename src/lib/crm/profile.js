@@ -10,7 +10,8 @@ const plain = (v) => JSON.parse(JSON.stringify(v))
 const fail = (message, status = 400) => { throw new PermissionError(message, status) }
 const clean = (v, max = 200) => String(v ?? '').trim().slice(0, max)
 /** Only pictures we stored (https://…) count; the old template placeholders (/img/avatars/…) mean "no picture". */
-export const realPicture = (u) => (/^https?:\/\//i.test(u || '') ? u : null)
+import { realPicture } from '@/lib/crm/pictures'
+export { realPicture }
 const URL_RE = /^https?:\/\/[^\s]+$/i
 
 export const DEFAULT_PREFS = {

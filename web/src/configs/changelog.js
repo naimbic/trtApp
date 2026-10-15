@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.7',
+        date: '2026-10-15',
+        title: 'Role icons, login images',
+        items: ['Roles: hover a role tab to get Rename and Delete icons; the Rename button at the right is gone', 'Sign-in pages no longer use the deleted template pictures (gradient panel and trtCRM logo instead, Google/GitHub icons are vector); staff pictures that are only an imported file name (e.g. tech.jpeg) show initials instead of a broken image until the files are uploaded'],
+    },
+    {
         version: '0.29.6',
         date: '2026-10-15',
         title: 'No role name field',

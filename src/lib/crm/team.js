@@ -1,3 +1,4 @@
+import { realPicture } from '@/lib/crm/pictures'
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
@@ -31,7 +32,7 @@ const shape = (s) => ({
     role: s.role ? { id: s.role.id, name: s.role.name } : null,
     roleId: s.roleId || null,
     departments: (s.departments || []).map((d) => ({ id: d.departmentId, name: d.department?.name || '' })),
-    image: s.profileImage || null,
+    image: realPicture(s.profileImage),
     jobTitle: s.jobTitle || '',
     bio: s.bio || '',
     timezone: s.timezone || '',

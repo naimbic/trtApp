@@ -1,6 +1,5 @@
 import { cloneElement, useEffect, useState } from 'react'
 import { TbArrowUpRight, TbWorld } from 'react-icons/tb'
-import Logo from '@/components/template/Logo'
 import { CHANGELOG } from '@/configs/changelog'
 
 const QUOTES = [
@@ -71,7 +70,6 @@ const Side = ({ children, ...rest }) => {
                 <img src="/img/others/auth-side-bg.png" alt="" className="absolute inset-0 h-full w-full origin-right scale-[1.35] object-cover object-right" />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-primary-deep via-primary-deep/85 to-primary-deep/60" />
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_0%,rgba(255,255,255,0.16),transparent)]" />
-                <Logo mode="dark" type="full" logoWidth={200} imgClass="relative h-12 w-full object-contain brightness-0 invert" />
                 <div className="relative max-w-md">
                     <h1 className="text-3xl font-bold leading-tight tracking-tight text-white xl:text-4xl">Clients, sales, projects and support in one place.</h1>
                     <p className="mx-auto mt-4 max-w-sm text-white/75">Everything your team needs to serve clients, from the first lead to the paid invoice.</p>

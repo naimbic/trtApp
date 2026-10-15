@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.9',
+        date: '2026-10-15',
+        title: 'One logo on the sign-in page',
+        items: ['Sign-in side panel: the second (white) logo is removed, only the logo in the form card stays'],
+    },
+    {
         version: '0.30.8',
         date: '2026-10-15',
         title: 'Sign-in page redesign (same layout as Ratokil)',

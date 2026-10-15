@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.29.5',
+        date: '2026-10-15',
+        title: 'Standard roles, Super Admin',
+        items: ['New standard roles: Super Admin, Admin, Account Manager, Editor, Sales Rep, Support Agent, Accountant, Project Manager and Viewer (editable in Roles & permissions); ask@trtdigital.ma is the Super Admin with full access'],
+    },
+    {
         version: '0.29.4',
         date: '2026-10-15',
         title: 'Compact roles page',

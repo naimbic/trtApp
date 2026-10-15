@@ -20,6 +20,7 @@ function scan(f) {
 dirs.forEach(walk)
 // extra texts that are not in tr() calls (server messages, resource labels...) live in web/src/locales/staff/extra-keys.json
 try { for (const k of JSON.parse(fs.readFileSync('web/src/locales/staff/extra-keys.json', 'utf8'))) if (!keys.has(k)) keys.set(k, 'extra') } catch { /* none yet */ }
+try { for (const k of JSON.parse(fs.readFileSync('web/src/locales/staff/manual-keys.json', 'utf8'))) if (!keys.has(k)) keys.set(k, 'manual') } catch { /* none */ }
 let list = [...keys.keys()].sort()
 if (process.argv.includes('--missing')) {
     const have = {}

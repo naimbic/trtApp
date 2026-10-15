@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StatTile } from '@/components/crm/ListHeader'
 import { TbUsers, TbCircleCheck, TbCircleOff, TbLogin } from 'react-icons/tb'
 import dayjs from 'dayjs'
-import { useLocation } from 'react-router'
-import { TbPlus, TbSearch, TbPencil, TbKey, TbLockPassword, TbCopy, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
+import { useLocation, useNavigate } from 'react-router'
+import { TbPlus, TbSearch, TbPencil, TbHistory, TbKey, TbLockPassword, TbCopy, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -50,6 +50,7 @@ const Stat = ({ label, value, sub }) => (
 const initials = (m) => `${m.firstName?.[0] || ''}${m.lastName?.[0] || m.email?.[0] || ''}`.toUpperCase()
 
 const Team = () => {
+    const navigate = useNavigate()
     const authority = useSessionUser((s) => s.user.authority) || []
     const canAdmin = authority.includes('admin') || authority.includes('crm.admin')
     const [data, setData] = useState({ members: [], stats: {} })
@@ -279,6 +280,7 @@ const Team = () => {
                                     <Td>
                                         <div className="flex items-center justify-end gap-0.5">
                                             <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
+                                            <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>
                                             <Tooltip title={tr("Permissions")}><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
                                             {m.hasLogin && <Tooltip title={tr("Set a password")}><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
                                             {m.hasLogin && (

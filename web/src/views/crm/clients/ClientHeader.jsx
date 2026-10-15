@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPencil, TbTrash, TbFileInvoice, TbMail, TbPhone, TbFileText, TbPresentation, TbLifebuoy, TbBriefcase, TbNotes, TbBell, TbBrandWhatsapp, TbTargetArrow, TbLogin, TbMapPin, TbCheck, TbKey, TbLink, TbExternalLink, TbWorld } from 'react-icons/tb'
+import { TbHistory, TbPencil, TbTrash, TbFileInvoice, TbMail, TbPhone, TbFileText, TbPresentation, TbLifebuoy, TbBriefcase, TbNotes, TbBell, TbBrandWhatsapp, TbTargetArrow, TbLogin, TbMapPin, TbCheck, TbKey, TbLink, TbExternalLink, TbWorld } from 'react-icons/tb'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -92,6 +92,7 @@ const ClientHeader = ({ c, profile, lookups, id, can, a }) => {
                         {phone && <Act icon={<TbBrandWhatsapp />} label={tr("WhatsApp")} onClick={() => window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`, '_blank', 'noopener')} />}
                     </div>
                     <div className="flex items-center gap-1 border-l border-gray-200 pl-2 dark:border-gray-600">
+                        <Act icon={<TbHistory />} label={tr("Activity log")} onClick={a.activity} />
                         {canEdit && <Act icon={<TbPencil />} label={tr("Edit client")} onClick={a.edit} />}
                         {can('customers', 'delete') && (
                             <Dropdown placement="bottom-end" renderTitle={<EllipsisButton />}>

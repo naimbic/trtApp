@@ -192,6 +192,7 @@ const ClientDetail = () => {
 
     const actions = {
         edit: () => navigate(`/crm/clients/${id}/edit`),
+        activity: () => navigate(`/crm/activity/client/${id}`),
         followUp: () => setFollowUp('reminder'),
         note: () => setFollowUp('note'),
         invoice: () => navigate(`/crm/invoices/new?clientId=${id}`),

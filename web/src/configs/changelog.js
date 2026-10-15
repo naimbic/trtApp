@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.35.0',
+        date: '2026-10-15',
+        title: 'Activity log for team members and clients',
+        items: ['New Activity log page like the template\'s: a timeline grouped by day with an icon per kind of event, filters (sign-ins, sales, work, leads, notes and emails, other) with counts, a link to the record on each entry, and Load more', 'Team member: sign-ins, invoice, estimate, proposal and contract activity, leads, projects, task comments and timers, notes, emails sent, password vault use and what they created. Client: the client timeline (lead origin, invoices, payments, estimates, proposals, contracts, projects, tickets, tasks, notes, what the client opened, portal sign-ins)', 'Open it with the clock icon in every Team row, in the clients list and in the client page header (team members need the Staff view permission, clients the Customers one)']
+    },
+    {
         version: '0.34.2',
         date: '2026-10-15',
         title: 'Sales first in the menu',

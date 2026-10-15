@@ -3,7 +3,7 @@ import { StatTile, TileGrid } from '@/components/crm/ListHeader'
 import { TbBuilding, TbCircleCheck, TbCircleOff, TbUsers } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbPencil, TbEye } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbPencil, TbEye, TbHistory } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Card from '@/components/ui/Card'
@@ -114,6 +114,7 @@ const ClientsList = () => {
                                     <Td className="whitespace-nowrap text-gray-500">{dayjs(c.createdAt).format('YYYY-MM-DD')}</Td>
                                     <Td className="text-right" onClick={(e) => e.stopPropagation()}>
                                         <Tooltip title={tr("Open")}><Button size="sm" variant="plain" icon={<TbEye />} onClick={() => navigate(`/crm/clients/${c.id}`)} /></Tooltip>
+                                        <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/client/${c.id}`)} /></Tooltip>
                                         {can('customers', 'edit') && <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => navigate(`/crm/clients/${c.id}/edit`)} /></Tooltip>}
                                     </Td>
                                 </Tr>

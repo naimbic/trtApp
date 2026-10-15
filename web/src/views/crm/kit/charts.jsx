@@ -18,27 +18,6 @@ export const compact = (v) => Number(v || 0).toLocaleString('en-US', { notation:
 const grid = { borderColor: 'rgba(148,163,184,0.25)', strokeDashArray: 4, padding: { left: 8, right: 8 } }
 const axisText = { style: { colors: '#94a3b8', fontSize: '12px' } }
 
-/** Grouped columns per month (two series). `money(v)` formats the tooltip. */
-export const ColumnChart = ({ labels, series, colors, height = 230, money }) => (
-    <Chart
-        type="bar"
-        height={height}
-        series={series}
-        xAxis={labels}
-        customOptions={{
-            colors,
-            chart: { toolbar: { show: false }, fontFamily: 'inherit' },
-            plotOptions: { bar: { borderRadius: 5, borderRadiusApplication: 'end', columnWidth: '55%' } },
-            dataLabels: { enabled: false },
-            grid,
-            legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', markers: { radius: 12 }, itemMargin: { horizontal: 10 } },
-            xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: { ...axisText, rotate: 0, hideOverlappingLabels: true, trim: false } },
-            yaxis: { labels: { ...axisText, formatter: (v) => compact(v) } },
-            tooltip: { shared: true, intersect: false, y: { formatter: (v) => (money ? money(v) : nfi(v)) } },
-        }}
-    />
-)
-
 /** Donut of { name: count } with the total in the middle. */
 export const DonutChart = ({ data, height = 210, title = 'Total' }) => {
     const names = Object.keys(data || {}).filter((n) => data[n] > 0)

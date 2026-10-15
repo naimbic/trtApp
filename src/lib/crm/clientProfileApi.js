@@ -4,6 +4,7 @@ import { scope } from '@/lib/crm/clientsApi'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { numberFormatter as proposalNumber } from '@/lib/crm/proposalDoc'
 import { round2 } from '@/lib/crm/sales/calc'
+import { resolveRange } from '@/lib/crm/dashboard'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -135,7 +136,7 @@ export async function clientProfile(id) {
     for (const x of contacts) if (x.lastLogin) add('login', `${name(x)} signed in to the client area`, x.lastIp ? `from ${x.lastIp}` : '', x.lastLogin)
     const timeline = ev.sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 150)
 
-    // ---- charts for the overview (counts are always sent; money series only to people who may see amounts)
+    // ---- charts for the overview (status counts only; the money series come from clientBilling)
     const countBy = (arr, fn) => arr.reduce((o, x) => { const k = fn(x); if (k) o[k] = (o[k] || 0) + 1; return o }, {})
     const INV_LABEL = { 1: 'unpaid', 2: 'paid', 3: 'partial', 4: 'overdue', 5: 'cancelled', 6: 'draft' }
     const PROJ_LABEL = { 1: 'not started', 2: 'in progress', 3: 'on hold', 4: 'finished', 5: 'cancelled' }
@@ -148,20 +149,10 @@ export async function clientProfile(id) {
         tickets: { open: openTickets.length, closed: tickets.length - openTickets.length },
         tasks: { open: openTasks.length, done: tasks.length - openTasks.length },
     }
-    let monthly = null
-    if (hasCap(authority, 'finance', 'view_amounts')) {
-        monthly = {}
-        const months = Array.from({ length: 12 }, (_, n) => { const d = new Date(today.getFullYear(), today.getMonth() - (11 - n), 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` })
-        const key = (d) => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}` }
-        const curOf = Object.fromEntries(invoices.map((i) => [i.id, i.currencyId || 'none']))
-        const bucket = (cur) => (monthly[cur] ||= months.map((m) => ({ m, invoiced: 0, paid: 0 })))
-        for (const i of invoices) if (![5, 6].includes(i.status) && (i.date || i.createdAt)) { const b = bucket(i.currencyId || 'none').find((x) => x.m === key(i.date || i.createdAt)); if (b) b.invoiced = round2(b.invoiced + i.total) }
-        for (const p of payments) { const d = p.paymentDate || p.createdAt; if (!d) continue; const b = bucket(curOf[p.invoiceId] || 'none').find((x) => x.m === key(d)); if (b) b.paid = round2(b.paid + (p.amount || 0)) }
-    }
 
     return {
         lead, journey, attention, engagement, timeline,
-        charts: { invoiceStatus, docs, monthly },
+        charts: { invoiceStatus, docs },
         lastLogin: lastLogin ? { name: name(lastLogin), ip: lastLogin.lastIp, date: lastLogin.lastLogin } : null,
         contacts: contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active, portal: !!x.passwordHash })),
         reminders: reminders.map((r) => ({ id: r.id, description: r.description || '', date: r.date, done: !!r.isNotified, staff: sName[r.staffId] || null })),
@@ -193,4 +184,43 @@ export async function deleteReminder(id, reminderId) {
     if (!r) throw fail('Reminder not found', 404)
     await prisma.crmReminder.delete({ where: { id: reminderId } })
     return { success: true }
+}
+
+/**
+ * Invoiced / paid / invoice count for one client over the page period (the dashboard's range keys), together with the
+ * period just before it (same length) so the page can draw the comparison line. Only for people who may see amounts.
+ */
+export async function clientBilling(id, params = {}) {
+    const { session } = await load(id)
+    const authority = session.user.authority || []
+    if (!hasCap(authority, 'finance', 'view_amounts')) return { hidden: true }
+    const R = resolveRange(params)
+    const span = R.until - R.from
+    const prevFrom = new Date(R.from.getTime() - span)
+    const P = resolveRange({ range: 'custom', from: prevFrom.toISOString().slice(0, 10), to: new Date(R.from.getTime() - 86400000).toISOString().slice(0, 10) })
+    const [invoices] = await Promise.all([prisma.crmInvoice.findMany({ where: { clientId: id, status: { notIn: [5, 6] } }, select: { id: true, total: true, date: true, createdAt: true, currencyId: true } })])
+    const currencies = [...new Set(invoices.map((i) => i.currencyId || 'none'))]
+    const cur = currencies.includes(params.currencyId) ? params.currencyId : currencies[0] || null
+    const mine = invoices.filter((i) => (i.currencyId || 'none') === cur)
+    const pays = mine.length ? await prisma.crmPayment.findMany({ where: { invoiceId: { in: mine.map((i) => i.id) }, paymentDate: { gte: prevFrom, lt: R.until } }, select: { amount: true, paymentDate: true } }) : []
+    const key = (d, g) => { const x = new Date(d); return g === 'day' ? x.toISOString().slice(0, 10) : `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, '0')}` }
+    const build = (win, rows, pick) => {
+        const out = Object.fromEntries(win.keys.map((k) => [k, 0]))
+        for (const r of rows) { const d = pick(r); if (!d || d < win.from || d >= win.until) continue; const k = key(d, win.granularity); if (k in out) out[k] = round2(out[k] + r.amount) }
+        return win.keys.map((k) => out[k])
+    }
+    const inv = mine.map((i) => ({ amount: i.total, one: 1, date: i.date || i.createdAt }))
+    const series = (win) => ({
+        invoiced: build(win, inv, (r) => r.date),
+        paid: build(win, pays, (r) => r.paymentDate),
+        count: build(win, inv.map((r) => ({ ...r, amount: 1 })), (r) => r.date),
+    })
+    const now = series(R)
+    const before = series(P)
+    const sum = (a) => round2(a.reduce((x, y) => x + y, 0))
+    const pack = (k) => ({ series: now[k], prev: before[k], total: sum(now[k]), prevTotal: sum(before[k]) })
+    return {
+        labels: R.keys, granularity: R.granularity, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso }, currencies, currencyId: cur,
+        invoiced: pack('invoiced'), paid: pack('paid'), count: pack('count'),
+    }
 }

@@ -4,7 +4,7 @@ import { useLocation } from 'react-router'
 import DashboardFilters from './DashboardFilters'
 import PageTabs from './PageTabs'
 import { usePageTabsStore } from '@/store/pageTabsStore'
-import { PAGE_FILTERS } from '@/store/pageFilterStore'
+import { hasPageFilter } from '@/store/pageFilterStore'
 
 const Header = (props) => {
     const {
@@ -19,7 +19,7 @@ const Header = (props) => {
     // The dashboard puts its date / currency / colour filters in the top bar.
     const { pathname } = useLocation()
     const hasTabs = usePageTabsStore((st) => !!st.tabs)
-    const middle = headerMiddle || (hasTabs ? <PageTabs /> : null) || (pathname === '/dashboard' || PAGE_FILTERS[pathname] ? <DashboardFilters /> : null)
+    const middle = headerMiddle || (hasTabs ? <PageTabs /> : null) || (pathname === '/dashboard' || hasPageFilter(pathname) ? <DashboardFilters /> : null)
 
     return (
         <header className={classNames('header', className)}>

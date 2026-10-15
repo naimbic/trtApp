@@ -8,6 +8,9 @@ export const PAGE_FILTERS = {
     '/crm/purchase-orders': true, '/crm/payments': true, '/crm/tickets': true, '/crm/leads': true,
 }
 
+/** Exact paths above, plus a client's own page (its billing chart follows the same period and currency). */
+export const hasPageFilter = (pathname) => !!PAGE_FILTERS[pathname] || /^\/crm\/clients\/[a-f0-9]{24}$/i.test(pathname)
+
 /** preset (or custom from/to as YYYY-MM-DD) → [Date, Date] at local midnight, like the pickers. */
 export function resolveRange(range = '12m', from, to) {
     const today = dayjs().startOf('day')

@@ -1,9 +1,8 @@
-import dayjs from 'dayjs'
 import { TbPlus, TbFileText, TbPresentation, TbFileCertificate, TbBriefcase, TbLifebuoy, TbChecklist } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
-import Segment from '@/components/ui/Segment'
 import cn from '@/utils/classNames'
-import { ColumnChart, DonutChart, StackedStat, PALETTE } from '../kit/charts'
+import { StackedStat } from '../kit/charts'
+import ClientBilling from './ClientBilling'
 import { Attention, Engagement, Reminders } from './ProfileParts'
 
 const addrLine = (a) => [a?.street, [a?.zip, a?.city].filter(Boolean).join(' '), a?.state, a?.countryName].filter(Boolean).join(', ')
@@ -15,55 +14,16 @@ const Panel = ({ title, action, children, className }) => (
     </section>
 )
 
-const Kpi = ({ label, value, sub, tone }) => (
-    <div className={cn('rounded-xl px-4 py-3', tone)}>
-        <div className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">{label}</div>
-        <div className="mt-1 text-xl font-bold heading-text">{value}</div>
-        {sub && <div className="text-xs text-gray-500">{sub}</div>}
-    </div>
-)
-
 /** Overview tab: section by section (billing with charts, attention, sales, work, engagement, details). */
 const ClientOverview = ({ c, profile, lookups, money, cur, setCur, can, setTab, setFollowUp, loadProfile, id }) => {
-    const currencies = Object.keys(c.money)
-    const m = c.money[cur]
     const charts = profile?.charts
-    const series = charts?.monthly?.[cur]
-    const collected = m?.invoiced ? Math.min(100, Math.round((m.paid / m.invoiced) * 100)) : 0
-    const hasMoney = currencies.length > 0
     const see = (feature) => can(feature, 'view')
 
     return (
         <div className="flex flex-col gap-4">
-            {/* 1. Billing */}
-            <Panel
-                title="Billing"
-                action={currencies.length > 1 && <Segment size="sm" value={cur} onChange={(v) => v && setCur(Array.isArray(v) ? v[0] : v)}>{currencies.map((k) => <Segment.Item key={k} value={k}>{lookups.currencies.find((x) => x.id === k)?.name || '?'}</Segment.Item>)}</Segment>}
-            >
-                {hasMoney ? (
-                    <>
-                        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                            <Kpi label="Invoiced" value={money(m?.invoiced, cur)} sub={`${m?.invoices || 0} invoices`} tone="bg-sky-100 dark:bg-sky-100/10" />
-                            <Kpi label="Paid" value={money(m?.paid, cur)} sub={`${collected}% collected`} tone="bg-emerald-100 dark:bg-emerald-100/10" />
-                            <Kpi label="Outstanding" value={money(m?.outstanding, cur)} tone="bg-purple-100 dark:bg-purple-100/10" />
-                            <Kpi label="Overdue" value={<span className={m?.overdue > 0 ? 'text-red-600' : ''}>{money(m?.overdue, cur)}</span>} tone="bg-red-100 dark:bg-red-100/10" />
-                        </div>
-                        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                            {series ? (
-                                <div className="lg:col-span-2">
-                                    <div className="mb-1 text-sm font-semibold">Invoiced and paid, last 12 months</div>
-                                    <ColumnChart labels={series.map((x) => dayjs(`${x.m}-01`).format('MMM YY'))} series={[{ name: 'Invoiced', data: series.map((x) => x.invoiced) }, { name: 'Paid', data: series.map((x) => x.paid) }]} colors={[PALETTE.blue, PALETTE.green]} money={(v) => money(v, cur)} />
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-center rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-400 dark:bg-gray-700/40 lg:col-span-2">Money charts are hidden for your role.</div>
-                            )}
-                            <div>
-                                <div className="mb-1 text-sm font-semibold">Invoices by status</div>
-                                <DonutChart data={charts?.invoiceStatus} title="Invoices" />
-                            </div>
-                        </div>
-                    </>
-                ) : <p className="text-sm text-gray-400">No invoices yet.</p>}
+            {/* 1. Billing: period and currency come from the top-bar filter */}
+            <Panel title="Billing">
+                <ClientBilling id={id} c={c} lookups={lookups} money={money} cur={cur} setCur={setCur} charts={charts} />
             </Panel>
 
             {/* 2. Attention and reminders */}

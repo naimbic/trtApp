@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.19',
+        date: '2026-10-15',
+        title: 'Client billing chart like the Reports overview',
+        items: ['Client page, Overview -> Billing: Invoiced, Paid and Invoices tiles with the growth against the period before, a line chart of the chosen tile with the previous period dashed behind it, and a Balance due tile (all time, with the overdue amount)', 'The period and currency follow the top-bar filter (Today ... 12M, custom range, currency), the same one the dashboard and Reports use, so there is no extra filter bar on the page', 'Invoices by status stays as a donut next to it; money charts are only sent to people who may see amounts']
+    },
+    {
         version: '0.30.18',
         date: '2026-10-15',
         title: 'Client page redesigned',

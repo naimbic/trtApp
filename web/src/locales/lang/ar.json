@@ -269,7 +269,10 @@
                 "surveys": "الاستطلاعات",
                 "notifications": "الإشعارات",
                 "files": "الملفات",
-                "activity-log": "سجل النشاط"
+                "activity-log": "سجل النشاط",
+                "my-tasks": "مهامي",
+                "team-tasks": "مهام الفريق",
+                "issues": "المشكلات"
             }
         }
     }

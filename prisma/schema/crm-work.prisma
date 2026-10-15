@@ -399,3 +399,61 @@ model CrmDayOff {
   @@index([offDate])
   @@map("crm_timesheets_day_off")
 }
+
+// ==================== ISSUE TRACKER ====================
+// Problems to follow on our platforms and websites (bugs, improvements, requests), with comments and a history.
+model CrmPlatform {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  url         String?
+  /// website | platform | app | other
+  kind        String   @default("website")
+  clientId    String?  @db.ObjectId
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("crm_platform")
+}
+
+model CrmIssue {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  number      Int
+  title       String
+  description String?
+  /// open | in_progress | in_review | resolved | closed
+  status      String    @default("open")
+  /// low | medium | high | critical
+  priority    String    @default("medium")
+  /// bug | improvement | feature | question
+  type        String    @default("bug")
+  labels      String[]
+  platformId  String?   @db.ObjectId
+  pageUrl     String?
+  reporterId  String?   @db.ObjectId
+  assigneeIds String[]  @db.ObjectId
+  dueDate     DateTime?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([platformId])
+  @@index([number])
+  @@map("crm_issue")
+}
+
+/// kind = comment (body is the text) or event (meta describes the change: { field, from, to })
+model CrmIssueComment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  issueId   String   @db.ObjectId
+  staffId   String?  @db.ObjectId
+  kind      String   @default("comment")
+  body      String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([issueId, createdAt])
+  @@map("crm_issue_comment")
+}

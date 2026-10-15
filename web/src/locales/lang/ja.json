@@ -118,7 +118,10 @@
                 "surveys": "アンケート",
                 "notifications": "通知",
                 "files": "ファイル",
-                "activity-log": "アクティビティログ"
+                "activity-log": "アクティビティログ",
+                "my-tasks": "私のタスク",
+                "team-tasks": "チームのタスク",
+                "issues": "課題"
             }
         },
         "home": "ホーム"

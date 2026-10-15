@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.36.0',
+        date: '2026-10-15',
+        title: 'My tasks, team tasks and an issue tracker',
+        items: ['Tasks menu: My tasks (yours, grouped Overdue, Today, Next 7 days, Later, No due date, Completed) and Team tasks (everyone together, grouped by person, with Unassigned), one page with a switch; tick a task to complete it, click it to open the task, add one with the quick box (assigned to you)', 'New Issues page to follow problems and requests on our platforms and websites: number, title, description, type (bug, improvement, new feature, question), priority, status (open, in progress, in review, resolved, closed), platform or website, page address, labels, assignees, due date, files, comments and a history of every change; list with status counts and filters (platform, priority, type, person, mine, search)', 'Platforms and websites are managed from the Platforms button on the Issues page (name, address, kind, on or off)', 'New permission Issues in Roles (the standard Editor, Account Manager, Support Agent and Project Manager roles get it; existing custom roles need it ticked once)']
+    },
+    {
         version: '0.35.0',
         date: '2026-10-15',
         title: 'Activity log for team members and clients',

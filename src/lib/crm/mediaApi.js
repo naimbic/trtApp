@@ -10,7 +10,7 @@ const OID = /^[0-9a-f]{24}$/i
 const fail = (message, status = 400) => { throw new PermissionError(message, status) }
 
 // Which Perfex feature controls attachments of each record type.
-const REL_FEATURE = { customer: 'customers', client: 'customers', invoice: 'invoices', estimate: 'estimates', proposal: 'proposals', contract: 'contracts', project: 'projects', task: 'tasks', ticket: 'tickets', lead: 'leads', expense: 'expenses' }
+const REL_FEATURE = { customer: 'customers', client: 'customers', invoice: 'invoices', estimate: 'estimates', proposal: 'proposals', contract: 'contracts', project: 'projects', task: 'tasks', issue: 'issues', ticket: 'tickets', lead: 'leads', expense: 'expenses' }
 
 async function who() {
     const session = await auth()

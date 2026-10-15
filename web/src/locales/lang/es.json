@@ -269,7 +269,10 @@
                 "surveys": "Encuestas",
                 "notifications": "Notificaciones",
                 "files": "Archivos",
-                "activity-log": "Registro de actividad"
+                "activity-log": "Registro de actividad",
+                "my-tasks": "Mis tareas",
+                "team-tasks": "Tareas del equipo",
+                "issues": "Incidencias"
             }
         }
     }

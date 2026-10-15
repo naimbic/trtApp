@@ -134,7 +134,10 @@
                 "surveys": "Sondages",
                 "notifications": "Notifications",
                 "files": "Fichiers",
-                "activity-log": "Journal d’activité"
+                "activity-log": "Journal d’activité",
+                "my-tasks": "Mes tâches",
+                "team-tasks": "Tâches de l’équipe",
+                "issues": "Problèmes"
             }
         }
     }

@@ -259,12 +259,12 @@ export async function timer(id, op) {
 }
 
 export async function taskLookups() {
-    await requirePermission('tasks', 'view')
+    const session = await requirePermission('tasks', 'view')
     const [staff, milestones] = await Promise.all([
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
         prisma.crmMilestone.findMany({ select: { id: true, name: true }, take: 500 }),
     ])
-    return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), milestones }
+    return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), milestones, me: await getStaffId(session) }
 }
 
 /** Prisma `where` limiting tasks to what the signed-in staff member may see (for dashboards). */

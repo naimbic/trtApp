@@ -134,7 +134,10 @@
                 "surveys": "Surveys",
                 "notifications": "Notifications",
                 "files": "Files",
-                "activity-log": "Activity log"
+                "activity-log": "Activity log",
+                "my-tasks": "My tasks",
+                "team-tasks": "Team tasks",
+                "issues": "Issues"
             }
         }
     }

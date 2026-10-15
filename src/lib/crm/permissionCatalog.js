@@ -75,6 +75,7 @@ export const PERMISSION_GROUPS = [
         features: [
             { key: 'projects', label: 'Projects', caps: [...CRUD, 'create_milestones', 'edit_milestones', 'delete_milestones'], auto: { view_own: 'Based on the projects the staff member is a member of' } },
             { key: 'tasks', label: 'Tasks', caps: [...CRUD, 'edit_timesheet', 'edit_own_timesheet', 'delete_timesheet', 'delete_own_timesheet'], auto: { view_own: 'Based on the tasks assigned to or followed by the staff member' } },
+            { key: 'issues', label: 'Issues', caps: CRUD, auto: { view_own: 'Staff only see the issues assigned to them or reported by them' } },
             { key: 'checklist_templates', label: 'Checklist templates', caps: ['create', 'delete'] },
             { key: 'goals', label: 'Goals', caps: CRUD },
             { key: 'surveys', label: 'Surveys', caps: CRUD },

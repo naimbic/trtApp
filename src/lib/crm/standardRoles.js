@@ -12,22 +12,22 @@ export const ROLES = {
     Admin: { ...FULL, roles: ['view', 'create', 'edit'], staff: ['view', 'create', 'edit'] },
     'Account Manager': pick({
         customers: 'edit', leads: 'edit', estimates: 'edit', proposals: 'edit', contracts: 'edit', invoices: 'edit', payments: ['view', 'create'], expenses: 'read',
-        projects: 'edit', tasks: 'edit', tickets: 'edit', knowledge_base: 'read', items: 'read', finance: ['view_amounts'], reports: REPORT('sales', 'leads', 'support', 'work'),
+        projects: 'edit', tasks: 'edit', issues: 'edit', tickets: 'edit', knowledge_base: 'read', items: 'read', finance: ['view_amounts'], reports: REPORT('sales', 'leads', 'support', 'work'),
     }),
     Editor: pick({
-        customers: 'edit', leads: 'edit', proposals: 'edit', contracts: 'edit', estimates: 'edit', projects: 'edit', tasks: 'edit', tickets: 'edit', knowledge_base: 'all', goals: 'edit',
+        customers: 'edit', leads: 'edit', proposals: 'edit', contracts: 'edit', estimates: 'edit', projects: 'edit', tasks: 'edit', issues: 'edit', tickets: 'edit', knowledge_base: 'all', goals: 'edit',
         reports: REPORT('leads', 'support', 'work'),
     }),
     'Sales Rep': pick({
         customers: 'edit', leads: ['view'], estimates: 'edit', proposals: 'edit', contracts: 'read', items: 'read', tasks: 'edit', tickets: 'read', finance: ['view_amounts'], reports: REPORT('leads'),
     }),
-    'Support Agent': pick({ customers: 'read', tickets: 'edit', knowledge_base: 'all', tasks: 'edit', projects: 'read', reports: REPORT('support') }),
+    'Support Agent': pick({ customers: 'read', tickets: 'edit', knowledge_base: 'all', tasks: 'edit', issues: 'edit', projects: 'read', reports: REPORT('support') }),
     Accountant: pick({
         customers: 'read', invoices: 'all', payments: 'all', credit_notes: 'all', expenses: 'all', subscriptions: 'all', estimates: 'read', purchase_orders: 'all', items: 'all',
         finance: ['view_amounts'], reports: REPORT('sales', 'profit'),
     }),
     'Project Manager': pick({
-        customers: 'read', projects: 'all', tasks: 'all', checklist_templates: ['create', 'delete'], tickets: 'read', goals: 'read', reports: REPORT('work', 'support'),
+        customers: 'read', projects: 'all', tasks: 'all', issues: 'all', checklist_templates: ['create', 'delete'], tickets: 'read', goals: 'read', reports: REPORT('work', 'support'),
     }),
     Viewer: pick(Object.fromEntries(FEATURES.filter((f) => !['staff', 'roles', 'settings', 'email_templates', 'passwords', 'finance', 'bulk_pdf_exporter', 'profile'].includes(f.key)).map((f) => [f.key, 'read']))),
 }

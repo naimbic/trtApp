@@ -1,6 +1,9 @@
 // Nav entries for hand-built pages that are not generic resources.
 // { group, key, title, path, feature }
 export const customNavItems = [
+    { group: 'Tasks', key: 'my-tasks', title: 'My tasks', path: '/crm/my-tasks', feature: 'tasks' },
+    { group: 'Tasks', key: 'team-tasks', title: 'Team tasks', path: '/crm/team-tasks', feature: 'tasks' },
+    { group: 'Tasks', key: 'issues', title: 'Issues', path: '/crm/issues', feature: 'issues' },
     { group: 'Tasks', key: 'tasks-board', title: 'Tasks board', path: '/crm/tasks-board', feature: 'tasks' },
     { group: 'Setup', key: 'platform-settings', title: 'Settings', path: '/crm/settings', feature: 'settings' },
     { group: 'Setup', key: 'mails', title: 'Mails', path: '/crm/mails', feature: 'email_templates' },

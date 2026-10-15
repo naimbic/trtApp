@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.34.1',
+        date: '2026-10-15',
+        title: 'Cairo font for Arabic',
+        items: ['When the language is Arabic, the staff area and the client area use the Cairo font (code and monospace text keep their own font); other languages keep Inter']
+    },
+    {
         version: '0.34.0',
         date: '2026-10-15',
         title: 'The whole staff area in 5 languages',

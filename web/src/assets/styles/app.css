@@ -1,6 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
 @import './tailwind/index.css';
 @import './components/index.css';
 @import './template/index.css';
 @import './others/index.css';
 @import './vendors/index.css';
+
+
+/* Arabic uses Cairo (the page language is set on <html lang> before the app starts) */
+html[lang='ar'],
+html[lang='ar'] *:not(.font-mono):not(code):not(pre):not(kbd) {
+    font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+}

@@ -104,7 +104,7 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
                         <Switcher checked={v.active} onChange={(c) => set({ active: c })} />
                     </div>
                     <div className="flex items-center justify-between gap-4">
-                        <div><div className="font-semibold">Administrator</div><div className="text-sm text-gray-500">{canAdmin ? 'Full access, overrides all permissions' : 'Only administrators can change this'}</div></div>
+                        <div><div className="font-semibold">Super Admin</div><div className="text-sm text-gray-500">{canAdmin ? 'Full access that cannot be restricted. Turn it off to make this person an Admin with editable permissions.' : 'Only a Super Admin can change this'}</div></div>
                         <Switcher checked={v.admin} disabled={!canAdmin} onChange={(c) => set({ admin: c })} />
                     </div>
                 </div>

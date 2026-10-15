@@ -9,7 +9,7 @@ const REPORT = (...kinds) => ['view', ...kinds.map((k) => `report_${k}`)]
 
 export const ROLES = {
     'Super Admin': FULL,
-    Admin: { ...FULL, roles: ['view'], staff: ['view', 'create', 'edit'] },
+    Admin: { ...FULL, roles: ['view', 'create', 'edit'], staff: ['view', 'create', 'edit'] },
     'Account Manager': pick({
         customers: 'edit', leads: 'edit', estimates: 'edit', proposals: 'edit', contracts: 'edit', invoices: 'edit', payments: ['view', 'create'], expenses: 'read',
         projects: 'edit', tasks: 'edit', tickets: 'edit', knowledge_base: 'read', items: 'read', finance: ['view_amounts'], reports: REPORT('sales', 'leads', 'support', 'work'),

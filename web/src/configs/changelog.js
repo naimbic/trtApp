@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.0',
+        date: '2026-10-15',
+        title: 'Super Admin vs Admin',
+        items: ['Only a Super Admin (full access, shown as "Super Admin" in Team) is locked: its permissions and the Super Admin role cannot be edited, renamed or deleted', 'Admin is an ordinary role: its permissions, and the permissions of any member who is not a Super Admin, can be changed (the Admin role can now also create and edit roles)', 'Turning off Super Admin on a member makes them an Admin: they get the permissions of their role (or of the Admin role) so they keep working'],
+    },
+    {
         version: '0.29.8',
         date: '2026-10-15',
         title: 'Standard roles created on start',

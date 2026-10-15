@@ -4,6 +4,7 @@ import { parseRolePermissions, toPermissionRows } from '@/lib/crm/rolePermission
 import { cleanPermissions } from '@/lib/crm/permissionCatalog'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
+const isSuperRole = (name) => /^super admin$/i.test(String(name || '').trim())
 
 /** Non-admins may only hand out capabilities they hold themselves (no privilege escalation). */
 function assertCanGrant(authority, perms) {
@@ -30,6 +31,7 @@ export async function createRole(body) {
     const session = await requirePermission('roles', 'create')
     const name = String(body.name || '').trim()
     if (!name) throw httpError('Role name is required')
+    if (isSuperRole(name)) throw httpError('The Super Admin role already exists and is fixed', 409)
     if (await prisma.crmRole.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } })) throw httpError('A role with this name already exists', 409)
     const permissions = cleanPermissions(body.permissions)
     assertCanGrant(session.user.authority || [], permissions)
@@ -42,6 +44,7 @@ export async function updateRole(id, body) {
     const session = await requirePermission('roles', 'edit')
     const role = await prisma.crmRole.findUnique({ where: { id } })
     if (!role) throw httpError('Role not found', 404)
+    if (isSuperRole(role.name) || isSuperRole(body.name)) throw httpError('The Super Admin role is fixed and cannot be changed', 400)
     const data = {}
     if (body.name !== undefined) {
         const name = String(body.name).trim()
@@ -72,6 +75,8 @@ export async function updateRole(id, body) {
 
 export async function deleteRole(id) {
     await requirePermission('roles', 'delete')
+    const target = await prisma.crmRole.findUnique({ where: { id }, select: { name: true } })
+    if (isSuperRole(target?.name)) throw httpError('The Super Admin role is fixed and cannot be deleted', 400)
     const members = await prisma.crmStaff.count({ where: { roleId: id } })
     if (members) throw httpError(`This role is assigned to ${members} member${members > 1 ? 's' : ''}. Move them to another role first.`, 409)
     await prisma.crmRole.delete({ where: { id } })
@@ -97,6 +102,7 @@ export async function setStaffAccess(id, body) {
     const session = await requirePermission('staff', 'edit')
     const s = await prisma.crmStaff.findUnique({ where: { id } })
     if (!s) throw httpError('Member not found', 404)
+    if (s.admin) throw httpError('A Super Admin has full access and cannot be edited', 400)
     const permissions = cleanPermissions(body.permissions)
     assertCanGrant(session.user.authority || [], permissions)
     await prisma.crmStaffPermission.deleteMany({ where: { staffId: id } })

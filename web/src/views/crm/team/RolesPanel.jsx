@@ -60,6 +60,7 @@ const RolesPanel = () => {
     }
 
     const current = roles.find((r) => r.id === selected)
+    const locked = /^super admin$/i.test(String(current?.name || ''))
     const dirty = useMemo(() => (selected === 'new' ? !!draft.name || count(draft.permissions) > 0 : current ? draft.name !== current.name || !same(draft.permissions, current.permissions) : false), [draft, current, selected])
 
     const save = async (applyToMembers = false) => {
@@ -114,7 +115,7 @@ const RolesPanel = () => {
                                     <span className="block text-[11px] leading-tight text-gray-500">{r.members} member{r.members === 1 ? '' : 's'} · {r.permissionCount} on</span>
                                 </span>
                             </button>
-                            <span className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 group-hover:flex">
+                            <span className={cn('absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5', !/^super admin$/i.test(r.name) && 'group-hover:flex')}>
                                 <button type="button" title="Rename" aria-label={`Rename ${r.name}`} onClick={() => { pick(r); setNameDlg({ mode: 'rename', value: r.name }) }} className="grid h-6 w-6 place-items-center rounded-md text-gray-500 hover:bg-white hover:text-primary dark:hover:bg-gray-700"><TbPencil /></button>
                                 <button type="button" title="Delete" aria-label={`Delete ${r.name}`} onClick={() => { pick(r); setConfirmDelete(true) }} className="grid h-6 w-6 place-items-center rounded-md text-gray-500 hover:bg-white hover:text-red-500 dark:hover:bg-gray-700"><TbTrash /></button>
                             </span>
@@ -130,13 +131,14 @@ const RolesPanel = () => {
                 {selected ? (
                     <>
                         {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
-                        <PermissionMatrix value={draft.permissions} onChange={(permissions) => setDraft({ ...draft, permissions })} />
+                        {locked && <div className="rounded-xl bg-purple-50 px-4 py-3 text-sm text-purple-700 dark:bg-purple-500/10">The Super Admin role has full access and is fixed: it cannot be edited, renamed or deleted.</div>}
+                        <PermissionMatrix value={draft.permissions} disabled={locked} onChange={(permissions) => setDraft({ ...draft, permissions })} />
                         <p className="mt-3 text-xs text-gray-500">
                             Roles are templates: a member gets the role&apos;s permissions when the role is assigned. Use &quot;Save &amp; apply to members&quot; to push changes to everyone who already has this role. Administrators always have full access.
                         </p>
                         <div className="sticky bottom-0 -mx-5 -mb-5 mt-5 flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white/95 py-3 pl-5 pr-24 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
                             {selected !== 'new' && (
-                                <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDelete(true)} disabled={saving}>Delete role</Button>
+                                <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDelete(true)} disabled={saving || locked}>Delete role</Button>
                             )}
                             <div className="ml-auto flex flex-wrap gap-2">
                                 <Button disabled={!dirty || saving} onClick={() => (selected === 'new' ? startNew() : pick(current))}>Discard</Button>

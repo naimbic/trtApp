@@ -181,7 +181,7 @@ const Team = () => {
                 <StatTile title="Team members" className="bg-sky-100" value={s.total ?? '–'} icon={<TbUsers />} />
                 <StatTile title="Active" className="bg-emerald-100" value={s.active ?? '–'} icon={<TbCircleCheck />} />
                 <StatTile title="Inactive" className="bg-amber-100" value={s.inactive ?? '–'} sub="Cannot sign in" icon={<TbCircleOff />} />
-                <StatTile title="Administrators" className="bg-purple-100" value={s.admins ?? '–'} icon={<TbShieldLock />} />
+                <StatTile title="Super Admins" className="bg-purple-100" value={s.admins ?? '–'} icon={<TbShieldLock />} />
                 <StatTile title="With login" className="bg-pink-100" value={s.withLogin ?? '–'} sub="Can sign in" icon={<TbLogin />} />
             </div>
 
@@ -225,7 +225,7 @@ const Team = () => {
                                     </Td>
                                     <Td>
                                         <div className="flex flex-wrap items-center gap-1.5">
-                                            {m.admin && <Tag className="bg-purple-100 text-purple-700">Administrator</Tag>}
+                                            {m.admin && <Tag className="bg-purple-100 text-purple-700">Super Admin</Tag>}
                                             {m.role ? <Tag>{m.role.name}</Tag> : !m.admin && <span className="text-gray-400">—</span>}
                                         </div>
                                     </Td>

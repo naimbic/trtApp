@@ -165,6 +165,7 @@ export async function updateMember(id, body) {
         if (!body.active && (id === me || (s.userId && s.userId === session.user.id))) throw httpError('You cannot deactivate your own account', 400)
         data.active = !!body.active
     }
+    let demoted = false
     if (body.admin !== undefined && body.admin !== s.admin) {
         if (!admin) throw httpError('Only an administrator can change administrator status', 403)
         if (!body.admin && s.admin) {
@@ -172,12 +173,25 @@ export async function updateMember(id, body) {
             if (!others) throw httpError('At least one active administrator is required', 400)
         }
         data.admin = !!body.admin
+        if (!body.admin && s.admin) demoted = true
     }
     const roleChanged = body.roleId !== undefined && (body.roleId || null) !== s.roleId
     if (roleChanged) data.roleId = body.roleId || null
 
     if (Object.keys(data).length) await prisma.crmStaff.update({ where: { id }, data })
     if (roleChanged && body.applyRolePermissions !== false) await applyRolePermissions(id, data.roleId)
+    if (demoted) {
+        // a Super Admin becomes a normal Admin: give them the permissions of their role (or of the Admin role) so they keep working, and drop the legacy "admin" login flags
+        const have = await prisma.crmStaffPermission.count({ where: { staffId: id } })
+        if (!have) {
+            const role = data.roleId ? { id: data.roleId } : s.roleId ? { id: s.roleId } : await prisma.crmRole.findFirst({ where: { name: { equals: 'Admin', mode: 'insensitive' } } })
+            if (role) { await applyRolePermissions(id, role.id); if (!data.roleId && !s.roleId) await prisma.crmStaff.update({ where: { id }, data: { roleId: role.id } }) }
+        }
+        if (s.userId) {
+            const u = await prisma.user.findUnique({ where: { id: s.userId }, select: { role: true, authority: true } })
+            if (u) await prisma.user.update({ where: { id: s.userId }, data: { role: u.role === 'admin' ? 'user' : u.role, authority: (u.authority || []).filter((a) => a !== 'admin' && a !== 'crm.admin') } })
+        }
+    }
     if (Array.isArray(body.departmentIds)) await setDepartments(id, body.departmentIds)
 
     // keep the login account in step with the profile

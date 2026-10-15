@@ -71,7 +71,7 @@ const MemberAccessDrawer = ({ open, memberId, onClose, onSaved }) => {
             {info?.admin && (
                 <div className="mb-4 flex items-start gap-2 rounded-lg bg-purple-50 px-3 py-2 text-sm text-purple-700 dark:bg-purple-500/10">
                     <TbShieldLock className="mt-0.5 text-lg shrink-0" />
-                    Administrators have full access to everything. Individual permissions don&apos;t apply — remove the administrator flag first to restrict this member.
+                    A Super Admin has full access and cannot be edited. To restrict this person, turn off Super Admin in their profile first; they become an Admin whose permissions you can change.
                 </div>
             )}
             {info && (

@@ -91,8 +91,9 @@ export const initials = (n) => String(n || '?').split(/\s+/).map((x) => x[0]).sl
 /** The public page (document + Accept / Refuse + comments) shared by estimates and proposals. */
 export function renderPublicPage(p) {
     const { T, contact } = p
-    return `<!doctype html><html lang="${p.lang === 'french' ? 'fr' : 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(p.number)} – ${esc(p.companyName)}</title><style>
+    return `<!doctype html><html lang="${p.lang === 'french' ? 'fr' : 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><link rel="icon" href="/api/crm/branding/favicon"><title>${esc(p.number)} – ${esc(p.companyName)}</title><style>
 ${CSS}
+*,*::before,*::after{box-sizing:border-box}
 body{background:#f3f4f6;font-size:14px}.wrap{max-width:920px;margin:0 auto;padding:20px 14px 60px}
 .bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 14px}.bar .in{max-width:920px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.bar .sp{flex:1}.bar b{font-size:15px}
 .btn{border:0;border-radius:9px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}.ok-b{background:#059669;color:#fff}.no-b{background:#fff;color:#dc2626;border:1px solid #fca5a5}.gr-b{background:#fff;color:#374151;border:1px solid #d1d5db}.pr-b{background:#2563eb;color:#fff}

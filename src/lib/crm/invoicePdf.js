@@ -78,6 +78,16 @@ async function loadPublicDocument(id, hash) {
     }
 }
 
+/** Screen-only shell of the public invoice page (hidden when printing, absent from the PDF). */
+const PUBLIC_CSS = `
+body.pub{background:#f3f4f6;font-size:14px}
+.pub .bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 14px}.pub .bar .in{max-width:920px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.pub .bar b{font-size:15px}.pub .spc{flex:1}
+.pub .btn{border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:9px;padding:9px 16px;font-weight:600;font-size:14px;line-height:1.2;font-family:inherit;text-decoration:none;display:inline-block;cursor:pointer}.pub .btn.pr{background:#2563eb;border-color:#2563eb;color:#fff}
+.pub .wrap{max-width:920px;margin:0 auto;padding:20px 14px 60px}.pub .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:34px}
+.pub .banner{border-radius:12px;padding:14px 18px;margin-bottom:16px}.pub .banner.ok{background:#ecfdf5;color:#065f46}.pub .banner.no{background:#fef2f2;color:#991b1b}.pub .banner.due{background:#eff6ff;color:#1e40af}
+@media(max-width:640px){.pub .card{padding:18px}.pub .cols{flex-direction:column;gap:14px}.pub .tot{width:100%}.pub .top{flex-direction:column-reverse;gap:12px}.pub .top img{max-width:70%}.pub .items th:nth-child(1),.pub .items td:nth-child(1){display:none}}
+@media print{.pub .bar{display:none}body.pub{background:#fff}.pub .wrap{max-width:none;padding:0}.pub .card{border:0;border-radius:0;padding:0}.pub .banner{display:none}}`
+
 export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
     const doc = hash ? await loadPublicDocument(id, hash) : await getInvoiceDocument(id)
     if (!doc) return null
@@ -132,9 +142,20 @@ export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
         : ''
     const modesBlock = showModes.length ? `<h4>${L.pay}</h4>${showModes.map((m) => `<div class="mode"><strong>${esc(m.name)}</strong><div>${m.description}</div></div>`).join('')}` : ''
     const status = og('show_status_on_pdf_ei') === '1' ? `<div class="status" style="color:${STATUS_COLOR[invoice.status]}">${L.status[invoice.status] || ''}</div>` : ''
+    // The public (client) page gets a screen shell like estimates and contracts: top bar, centred card, banner. The PDF and
+    // the print view keep the plain document (no pdfHref, and the shell rules are screen-only or hidden when printing).
+    const pub = !!pdfHref
+    const fr = S.lang === 'french'
+    const due = round2((invoice.total || 0) - (paid || 0))
+    const banner = !pub ? '' : invoice.status === 2
+        ? `<div class="banner ok"><strong>${fr ? 'Facture payée' : 'Paid'}</strong><div>${fr ? 'Merci pour votre règlement.' : 'Thank you for your payment.'}</div></div>`
+        : invoice.status === 4
+            ? `<div class="banner no"><strong>${fr ? 'Facture en retard' : 'Overdue'}</strong><div>${fr ? 'Reste à payer' : 'Amount due'}: <b>${M(due)}</b>${invoice.dueDate ? ` · ${L.due}: ${D(invoice.dueDate)}` : ''}</div></div>`
+            : [1, 3].includes(invoice.status) && due > 0 ? `<div class="banner due"><strong>${fr ? 'Reste à payer' : 'Amount due'}: ${M(due)}</strong>${invoice.dueDate ? `<div>${L.due}: ${D(invoice.dueDate)}</div>` : ''}</div>` : ''
+    const bar = pub ? `<div class="bar"><div class="in"><b>${esc(og('companyname'))}</b><span class="spc"></span><button type="button" class="btn" onclick="window.print()">${fr ? 'Imprimer' : 'Print'}</button><a class="btn pr" href="${pdfHref}">${fr ? 'Télécharger le PDF' : 'Download PDF'}</a></div></div>` : ''
     const sig = signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''
 
-    return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(invoice.displayNumber)}</title><style>
+    return `<!doctype html><html lang="${fr ? 'fr' : 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${pub ? '<link rel="icon" href="/api/crm/branding/favicon">' : ''}<title>${esc(invoice.displayNumber)}</title><style>
 ${S.pageCss()}
 ${S.baseCss()}
 .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.top img{width:${S.logoWidth * 1.5}px;max-width:62%;height:auto}
@@ -145,18 +166,18 @@ table{width:100%;border-collapse:collapse}.items th{background:${S.head};color:$
 .tot{width:52%;margin:14px 0 0 auto}.tot td{padding:6px 8px;text-align:right}.tot td:first-child{font-weight:700}.tot tr.grand td{background:#e5e7eb;font-weight:700;font-size:1.1em}
 .words{margin:14px 0 0;text-align:left;break-inside:avoid}.tot{break-inside:avoid}.sig{margin-top:28px;text-align:right}.sig img{max-height:90px;max-width:260px}
 h4{margin:20px 0 6px;font-size:1.05em}.plain th{text-align:left;border-bottom:1px solid #111;padding:5px 6px}.plain td{padding:5px 6px}.plain .r,.plain th.r{text-align:right}
-.bar{margin:-6mm 0 14px;text-align:right}.bar a{display:inline-block;background:#2563eb;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600;font-size:10pt}@media print{.bar{display:none}}
-.mode{margin-bottom:8px}.block{white-space:pre-line}tr{page-break-inside:avoid}
-</style></head><body>
-${pdfHref ? `<div class="bar"><a href="${pdfHref}">${S.lang === 'french' ? 'Télécharger le PDF' : 'Download PDF'}</a></div>` : ''}<div class="top"><div class="title"><h1>${L.invoice}</h1><div class="num"># ${esc(invoice.displayNumber)}</div>${status}</div><div class="logo">${logo ? `<img src="${logo}" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
+.mode{margin-bottom:8px}.block{white-space:pre-line}tr{page-break-inside:avoid}.sc{overflow-x:auto}
+${pub ? PUBLIC_CSS : ''}
+</style></head><body${pub ? ' class="pub"' : ''}>
+${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}<div class="top"><div class="title"><h1>${L.invoice}</h1><div class="num"># ${esc(invoice.displayNumber)}</div>${status}</div><div class="logo">${logo ? `<img src="${logo}" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
 <div class="cols">${S.swap ? infoBlock + orgBlock : orgBlock + infoBlock}</div>
-<table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="sc"><table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table></div>
 <table class="tot">${totalRows.join('')}</table>
 ${words}${payTable}${modesBlock}
 ${invoice.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(invoice.clientNote)}</div>` : ''}
 ${invoice.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(invoice.terms)}</div>` : ''}
 ${sig}
-</body></html>`
+${pub ? '</div></div>' : ''}</body></html>`
 }
 
 function chromePath() {

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.30.23',
+        date: '2026-10-15',
+        title: 'Public invoice page, contract signature, favicon',
+        items: ['Public invoice page (the link sent to clients): now a proper page like estimates and contracts, a top bar with the company name and Print / Download PDF, a status banner (paid, overdue, amount due), a centred card with margins that also works on a phone; the PDF and the printed page are unchanged', 'Fixed: signing a contract from the client link always ended with "Error" (the page posted to a route that did not exist); it now signs, shows who signed and the signature; the sign dialog fields no longer overflow the dialog', 'Favicon: it is now only the one chosen in Settings -> General (the app, sign-in pages and the public invoice, estimate, proposal and contract pages); the built-in default icon files are deleted']
+    },
+    {
         version: '0.30.22',
         date: '2026-10-15',
         title: 'Tickets: files, screenshots, notifications, internal notes',

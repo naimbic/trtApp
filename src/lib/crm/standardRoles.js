@@ -29,7 +29,7 @@ export const ROLES = {
     'Project Manager': pick({
         customers: 'read', projects: 'all', tasks: 'all', issues: 'all', checklist_templates: ['create', 'delete'], tickets: 'read', goals: 'read', reports: REPORT('work', 'support'),
     }),
-    Viewer: pick(Object.fromEntries(FEATURES.filter((f) => !['staff', 'roles', 'settings', 'email_templates', 'passwords', 'finance', 'bulk_pdf_exporter', 'profile'].includes(f.key)).map((f) => [f.key, 'read']))),
+    Viewer: pick(Object.fromEntries(FEATURES.filter((f) => !['staff', 'roles', 'settings', 'email_templates', 'passwords', 'activity_log', 'finance', 'bulk_pdf_exporter', 'profile'].includes(f.key)).map((f) => [f.key, 'read']))),
 }
 
 export const standardRolePermissions = (name) => cleanPermissions(ROLES[name])

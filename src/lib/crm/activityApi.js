@@ -68,6 +68,7 @@ async function clientEvents(id) {
 export async function activityFeed({ kind, id, types, before, limit }) {
     if (!oid(id)) throw fail('Not found', 404)
     let data
+    await requirePermission('activity_log', 'view') // administrators, or roles that were given this permission
     if (kind === 'staff') { await requirePermission('staff', 'view'); data = await staffEvents(id) }
     else if (kind === 'client') { await requirePermission('customers', 'view'); data = await clientEvents(id) }
     else throw fail('Unknown activity', 404)

@@ -114,7 +114,7 @@ const ClientsList = () => {
                                     <Td className="whitespace-nowrap text-gray-500">{dayjs(c.createdAt).format('YYYY-MM-DD')}</Td>
                                     <Td className="text-right" onClick={(e) => e.stopPropagation()}>
                                         <Tooltip title={tr("Open")}><Button size="sm" variant="plain" icon={<TbEye />} onClick={() => navigate(`/crm/clients/${c.id}`)} /></Tooltip>
-                                        <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/client/${c.id}`)} /></Tooltip>
+                                        {can('activity_log', 'view') && <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/client/${c.id}`)} /></Tooltip>}
                                         {can('customers', 'edit') && <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => navigate(`/crm/clients/${c.id}/edit`)} /></Tooltip>}
                                     </Td>
                                 </Tr>

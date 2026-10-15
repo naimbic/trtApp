@@ -36,6 +36,7 @@ export const EXTRA_LABELS = {
 
 /** One-line explanations shown under a feature name in the permission editor. */
 export const FEATURE_HINTS = {
+    activity_log: 'See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.',
     finance: 'Without this, every income, total, balance and money chart shows *** (cards, lists, reports, client profiles).',
     reports: 'Choose which reports this person may open. Money reports also need "See money amounts".',
 }
@@ -67,6 +68,7 @@ export const PERMISSION_GROUPS = [
     {
         group: 'Team',
         features: [
+            { key: 'activity_log', label: 'Activity log', caps: ['view'] },
             { key: 'passwords', label: 'Password vault', caps: CRUD, auto: { view_own: 'Staff only see the entries shared with them or created by them' } },
         ],
     },

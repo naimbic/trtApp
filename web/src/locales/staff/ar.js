@@ -2101,6 +2101,7 @@ export default {
     "Security": "الأمان",
     "Security questions, which phone gets the code, who owns the account…": "أسئلة الأمان، أي هاتف يتلقى الرمز، من يملك الحساب…",
     "See money amounts": "رؤية المبالغ المالية",
+    "See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.": "عرض ما يفعله أعضاء الفريق والعملاء (تسجيلات الدخول والمستندات والمهام والرسائل). عادةً للمسؤولين فقط.",
     "Select a direction": "اختر اتجاهاً",
     "Select a role to edit its permissions": "اختر دوراً لتعديل أذوناته",
     "Select country": "اختر الدولة",

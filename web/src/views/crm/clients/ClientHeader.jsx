@@ -92,7 +92,7 @@ const ClientHeader = ({ c, profile, lookups, id, can, a }) => {
                         {phone && <Act icon={<TbBrandWhatsapp />} label={tr("WhatsApp")} onClick={() => window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`, '_blank', 'noopener')} />}
                     </div>
                     <div className="flex items-center gap-1 border-l border-gray-200 pl-2 dark:border-gray-600">
-                        <Act icon={<TbHistory />} label={tr("Activity log")} onClick={a.activity} />
+                        {can('activity_log', 'view') && <Act icon={<TbHistory />} label={tr("Activity log")} onClick={a.activity} />}
                         {canEdit && <Act icon={<TbPencil />} label={tr("Edit client")} onClick={a.edit} />}
                         {can('customers', 'delete') && (
                             <Dropdown placement="bottom-end" renderTitle={<EllipsisButton />}>

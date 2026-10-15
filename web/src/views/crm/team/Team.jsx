@@ -53,6 +53,7 @@ const Team = () => {
     const navigate = useNavigate()
     const authority = useSessionUser((s) => s.user.authority) || []
     const canAdmin = authority.includes('admin') || authority.includes('crm.admin')
+    const canActivity = canAdmin || authority.includes('crm.activity_log.view')
     const [data, setData] = useState({ members: [], stats: {} })
     const [lookups, setLookups] = useState({ roles: [], departments: [] })
     const [status, setStatus] = useState('active')
@@ -280,7 +281,7 @@ const Team = () => {
                                     <Td>
                                         <div className="flex items-center justify-end gap-0.5">
                                             <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
-                                            <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>
+                                            {canActivity && <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>}
                                             <Tooltip title={tr("Permissions")}><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
                                             {m.hasLogin && <Tooltip title={tr("Set a password")}><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
                                             {m.hasLogin && (

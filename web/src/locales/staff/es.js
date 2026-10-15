@@ -2101,6 +2101,7 @@ export default {
     "Security": "Seguridad",
     "Security questions, which phone gets the code, who owns the account…": "Preguntas de seguridad, qué teléfono recibe el código, quién es el titular de la cuenta…",
     "See money amounts": "Ver importes de dinero",
+    "See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.": "Ver lo que hacen los miembros del equipo y los clientes (inicios de sesión, documentos, tareas, correos). Normalmente solo para administradores.",
     "Select a direction": "Seleccione una dirección",
     "Select a role to edit its permissions": "Seleccione un rol para editar sus permisos",
     "Select country": "Seleccionar país",

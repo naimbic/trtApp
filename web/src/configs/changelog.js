@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.36.2',
+        date: '2026-10-15',
+        title: 'Activity log permission',
+        items: ['New permission "Activity log" in Roles (Team group): only administrators and roles that were given it can open the activity log of a team member or a client, and the clock icons are hidden for everyone else; the API refuses it too. The standard roles do not have it, Super Admin and Admin do']
+    },
+    {
         version: '0.36.1',
         date: '2026-10-15',
         title: 'Menu footer link, one Tasks entry',

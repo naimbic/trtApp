@@ -2101,6 +2101,7 @@ export default {
     "Security": "セキュリティ",
     "Security questions, which phone gets the code, who owns the account…": "セキュリティ質問、コードを受け取る電話、アカウントの所有者…",
     "See money amounts": "金額の表示",
+    "See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.": "チームメンバーとクライアントの行動（サインイン、書類、タスク、メール）を確認できます。通常は管理者のみです。",
     "Select a direction": "方向を選択",
     "Select a role to edit its permissions": "ロールを選択して権限を編集",
     "Select country": "国を選択",

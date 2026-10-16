@@ -19,9 +19,13 @@ async function access(session) {
 
 /** Who may change a task's status (finish it, reopen it, move it on the board): its assignees, whoever created it, and people who see all tasks. */
 const mayAct = (a, t, assignees = t.assignees) => a.scope === 'all' || (!!a.staffId && (t.addedFrom === a.staffId || (assignees || []).some((x) => x.staffId === a.staffId)))
-const NOT_YOURS = 'Only the people assigned to this task, or who created it, can change its status'
+const NOT_YOURS = 'Only the people assigned to this task, or who created it, can change it'
 
-async function visibleWhere(a) {
+/** Everybody who may open the tasks sees all of them; changing one is limited by mayAct. */
+async function visibleWhere() { return {} }
+
+/** The narrow view (own tasks, followed, created, public) used by the dashboards' own figures. */
+async function ownWhere(a) {
     if (a.scope === 'all') return {}
     if (!a.staffId) return { id: NONE }
     const [asg, fol] = await Promise.all([
@@ -151,7 +155,7 @@ export async function getTask(id) {
             ...t.checklistItems.filter((c) => c.finished).map((c) => ({ type: 'checklist', staff: null, at: c.updatedAt || t.updatedAt, text: c.description || '' })),
         ].sort((x, y) => +new Date(y.at) - +new Date(x.at)).slice(0, 60),
         milestones: t.relType === 'project' && oid(t.relId) ? (await prisma.crmMilestone.findMany({ where: { projectId: t.relId }, orderBy: { milestoneOrder: 'asc' }, select: { id: true, name: true } })) : [],
-        can: { edit: a.can('edit'), delete: a.can('delete') },
+        can: { edit: a.can('edit') && mayAct(a, t), delete: a.can('delete') && mayAct(a, t) },
     }
 }
 
@@ -173,7 +177,7 @@ export async function saveTask(body, id) {
         recurring: !!body.recurring, recurringType: body.recurring ? body.recurringType || 'month' : null, repeatEvery: body.recurring ? Math.max(parseInt(body.repeatEvery, 10) || 1, 1) : 0, totalCycles: body.recurring ? Math.max(parseInt(body.totalCycles, 10) || 0, 0) : 0,
     }
     let prev = null
-    if (id) { prev = await loadOne(id, a); if (status !== prev.status && !mayAct(a, prev)) throw fail(NOT_YOURS, 403); data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
+    if (id) { prev = await loadOne(id, a); if (!mayAct(a, prev)) throw fail(NOT_YOURS, 403); data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
     else data.dateFinished = status === COMPLETE ? new Date() : null
     const task = id
         ? await prisma.crmTask.update({ where: { id }, data })
@@ -204,7 +208,7 @@ export async function moveTask(id, { status, order }) {
     const a = await access(session)
     const t = await loadOne(id, a)
     const st = [1, 2, 3, 4, 5].includes(+status) ? +status : t.status
-    if (st !== t.status && !mayAct(a, t)) throw fail(NOT_YOURS, 403)
+    if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
     await prisma.crmTask.update({ where: { id }, data: { status: st, kanbanOrder: Number.isFinite(+order) ? Math.round(+order) : t.kanbanOrder, dateFinished: st === COMPLETE ? t.dateFinished || new Date() : null } })
     return { success: true }
 }
@@ -233,8 +237,9 @@ export async function regroupTask({ id, relType, relId, ids, ...rest }) {
     const a = await access(session)
     const where = await visibleWhere(a)
     if (oid(id)) {
-        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { id: true } })
+        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { id: true, addedFrom: true, assignees: { select: { staffId: true } } } })
         if (!t) throw fail('Task not found', 404)
+        if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
         if (relType === 'project' && oid(relId)) await prisma.crmTask.update({ where: { id }, data: { relType: 'project', relId } })
         else if (relType === null || relType === 'none') await prisma.crmTask.update({ where: { id }, data: { relType: null, relId: null } })
         if ('milestoneId' in rest) await prisma.crmTask.update({ where: { id }, data: { milestoneId: oid(rest.milestoneId) } })
@@ -248,7 +253,7 @@ export async function regroupTask({ id, relType, relId, ids, ...rest }) {
 export async function deleteTask(id) {
     const session = await requirePermission('tasks', 'delete')
     const a = await access(session)
-    await loadOne(id, a)
+    if (!mayAct(a, await loadOne(id, a))) throw fail(NOT_YOURS, 403)
     await prisma.crmTaskTimer.deleteMany({ where: { taskId: id } })
     await prisma.crmTask.delete({ where: { id } })
     return { success: true }
@@ -278,7 +283,7 @@ export async function deleteComment(id, commentId) {
 export async function checklist(id, op) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
-    await loadOne(id, a)
+    if (!mayAct(a, await loadOne(id, a))) throw fail(NOT_YOURS, 403)
     if (op.action === 'add') {
         const description = String(op.description || '').trim().slice(0, 500)
         if (!description) throw fail('Write the item first')
@@ -301,6 +306,7 @@ export async function timer(id, op) {
     if (!a.staffId) throw fail('Your login is not linked to a staff member')
     const open = await prisma.crmTaskTimer.findFirst({ where: { taskId: id, staffId: a.staffId, endTime: null } })
     if (op.action === 'start') {
+        if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
         if (open) throw fail('Timer already running')
         if (t.status === COMPLETE) throw fail('This task is complete')
         await prisma.crmTaskTimer.create({ data: { taskId: id, staffId: a.staffId, startTime: new Date(), endTime: null, hourlyRate: t.hourlyRate || 0 } })
@@ -330,5 +336,5 @@ export async function taskLookups() {
 export async function taskScope() {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
-    return { where: await visibleWhere(a), staffId: a.staffId }
+    return { where: await ownWhere(a), staffId: a.staffId }
 }

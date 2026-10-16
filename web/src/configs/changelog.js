@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.42.0',
+        date: '2026-10-16',
+        title: 'All tasks visible to everyone, edited only by their team; richer scrum board',
+        items: ['Everybody who opens the tasks sees all of them (read only for the tasks that are not theirs); a task can only be edited, finished, moved, given a checklist item or a timer by the people assigned to it, the person who created it and people who see all tasks (managers, administrators); comments stay open to everybody who sees the task', 'Scrum board redesigned: a project strip (client, status, deadline with days left, progress), metric cards (tasks, in progress, overdue, completed with the average time to finish, team and tasks without an owner), a burn-up chart of the last 21 days, tasks by status, who works on what and the tasks due soon, above the columns; the charts can be hidden and the choice is remembered', 'Done tasks older than two weeks now count in the project figures too']
+    },
+    {
         version: '0.41.0',
         date: '2026-10-16',
         title: 'Only the assignees can finish a task',

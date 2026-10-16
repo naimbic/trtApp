@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.47.1',
+        date: '2026-10-16',
+        title: 'Task cards in one compact row',
+        items: ['The cards above My tasks and Team tasks are smaller and sit in a single row (two rows of four on a phone): the figure, a small icon and the name, with the details in the tooltip']
+    },
+    {
         version: '0.47.0',
         date: '2026-10-16',
         title: 'Cards on My tasks and Team tasks',

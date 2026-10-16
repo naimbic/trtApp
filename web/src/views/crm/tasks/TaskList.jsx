@@ -116,9 +116,9 @@ const periodParams = (period, field, from, to) => {
 
 /** One small card: a figure, what it counts, and a click that filters the list below to it. */
 const Mini = ({ icon, label, value, sub, tone, active, onClick }) => (
-    <button type="button" onClick={onClick} className={classNames('flex items-center gap-3 rounded-2xl border bg-white p-3 text-start transition hover:shadow-md dark:bg-gray-800', active ? 'border-primary ring-1 ring-primary' : 'border-gray-200 hover:border-primary dark:border-gray-600')}>
-        <span className={classNames('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl', MINI_TONE[tone])}>{icon}</span>
-        <span className="min-w-0"><span className="block text-xl font-bold leading-tight heading-text">{value}</span><span className="block truncate text-xs text-gray-500">{label}</span>{sub && <span className="block truncate text-[11px] text-gray-400">{sub}</span>}</span>
+    <button type="button" onClick={onClick} title={[label, sub].filter(Boolean).join(' · ')} className={classNames('min-w-0 rounded-xl border bg-white px-2.5 py-2 text-start transition hover:shadow-md dark:bg-gray-800', active ? 'border-primary ring-1 ring-primary' : 'border-gray-200 hover:border-primary dark:border-gray-600')}>
+        <span className="flex items-center justify-between gap-1"><span className="truncate text-base font-bold leading-tight heading-text">{value}</span><span className={classNames('flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-base', MINI_TONE[tone])}>{icon}</span></span>
+        <span className="mt-0.5 block truncate text-[11px] leading-tight text-gray-500">{label}</span>
     </button>
 )
 const MINI_TONE = { blue: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20', red: 'bg-red-100 text-red-600 dark:bg-red-500/20', amber: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20', green: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20', violet: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20', teal: 'bg-teal-100 text-teal-600 dark:bg-teal-500/20', slate: 'bg-slate-100 text-slate-600 dark:bg-slate-500/20' }
@@ -240,7 +240,7 @@ const TaskList = ({ projectId = null }) => {
                 </div>
             </div>
             {sum && (
-                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-4 gap-2 md:grid-cols-8">
                     <Mini icon={<TbCalendarEvent />} tone="blue" label={tr('Due today')} value={sum.dueToday ? `${sum.dueTodayDone}/${sum.dueToday}` : 0} sub={sum.dueToday ? tr('done') : undefined} active={period === 'today' && !statusFilter && !unassignedOnly} onClick={() => { setPeriod('today'); setStatusFilter(''); setUnassignedOnly(false) }} />
                     <Mini icon={<TbAlertTriangle />} tone={sum.overdue ? 'red' : 'green'} label={tr('Overdue')} value={sum.overdue} active={period === 'overdue' && !statusFilter && !unassignedOnly} onClick={() => { setPeriod('overdue'); setStatusFilter(''); setUnassignedOnly(false) }} />
                     <Mini icon={<TbCalendarDue />} tone="violet" label={tr('Tomorrow')} value={sum.tomorrow} active={period === 'tomorrow' && !statusFilter && !unassignedOnly} onClick={() => { setPeriod('tomorrow'); setStatusFilter(''); setUnassignedOnly(false) }} />

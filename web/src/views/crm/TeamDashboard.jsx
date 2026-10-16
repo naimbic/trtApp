@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { TbDownload, TbFlag, TbTrophy, TbBolt, TbShieldCheck, TbMessages, TbTrendingUp, TbTrendingDown, TbHourglass, TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbUsers, TbArrowRight } from 'react-icons/tb'
+import { TbAdjustmentsHorizontal, TbUsersGroup, TbLayoutKanban, TbTimeline, TbUsers, TbFolders, TbCalendar, TbMessages, TbFileInvoice, TbFileDescription, TbReceipt, TbBook, TbFolder, TbKey, TbChartBar, TbDownload, TbFlag, TbTrophy, TbBolt, TbShieldCheck, TbTrendingUp, TbTrendingDown, TbHourglass, TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbArrowRight } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
@@ -14,7 +14,7 @@ import { downloadCsv } from '@/utils/csv'
 import Tag from '@/components/ui/Tag'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import classNames from '@/utils/classNames'
-import { api, notify } from './kit/api'
+import { api, notify, useCan } from './kit/api'
 import { DonutChart, TrendChart, ColumnChart, PALETTE } from './kit/charts'
 import { TONES, StatCard, Panel } from './kit/widgets'
 import { initials, prioOf, statusOf } from './tasks/shared'
@@ -63,6 +63,8 @@ const TeamDashboard = () => {
                     {can.issues && <Button size="sm" icon={<TbPlus />} onClick={() => nav('/crm/issues')}>{tr('New issue')}</Button>}
                 </div>
             </div>
+
+            <Shortcuts d={d} reload={load} />
 
             <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
                 {tasks && <StatCard icon={<TbChecklist />} label={tr('My open tasks')} value={tasks.mine.open} sub={tr('{n} done this week', { n: tasks.mine.doneWeek })} tone="blue" to="/crm/my-tasks" />}
@@ -196,6 +198,80 @@ const TeamDashboard = () => {
     )
 }
 
+
+/* ---- shortcuts: the pages people use every day, one click from the dashboard ---- */
+// feature = the permission needed to open the page (null: everybody); badge(d) = a live figure shown on the tile
+const SHORTCUTS = [
+    { key: 'my-tasks', label: () => tr('My tasks'), to: '/crm/my-tasks', icon: <TbChecklist />, tone: 'blue', feature: 'tasks', badge: (d) => d.tasks && { n: d.tasks.mine.open, warn: d.tasks.mine.overdue, text: d.tasks.mine.overdue ? tr('{n} overdue', { n: d.tasks.mine.overdue }) : tr('open') } },
+    { key: 'leads', label: () => tr('Leads to follow up'), to: '/crm/leads', icon: <TbTargetArrow />, tone: 'violet', feature: 'leads', badge: (d) => d.leads && { n: d.leads.mine.stale, warn: d.leads.mine.stale, text: tr('to follow up') } },
+    { key: 'team-tasks', label: () => tr('Team tasks'), to: '/crm/team-tasks', icon: <TbUsersGroup />, tone: 'teal', feature: 'tasks', badge: (d) => d.tasks?.team && { n: d.tasks.team.open, text: tr('open') } },
+    { key: 'scrum-board', label: () => tr('Scrum board'), to: '/crm/scrum-board', icon: <TbLayoutKanban />, tone: 'green', feature: 'tasks' },
+    { key: 'timeline', label: () => tr('Timeline'), to: '/crm/timeline', icon: <TbTimeline />, tone: 'amber', feature: 'tasks' },
+    { key: 'time-report', label: () => tr('Time report'), to: '/crm/time-report', icon: <TbClock />, tone: 'blue', feature: 'tasks' },
+    { key: 'tickets', label: () => tr('Support tickets'), to: '/crm/tickets', icon: <TbLifebuoy />, tone: 'teal', feature: 'tickets', badge: (d) => d.tickets && { n: d.tickets.mine.length, text: tr('mine') } },
+    { key: 'issues', label: () => tr('Issues and ideas'), to: '/crm/issues', icon: <TbBug />, tone: 'amber', feature: 'issues', badge: (d) => d.issues && { n: d.issues.mineOpen, text: tr('mine') } },
+    { key: 'projects', label: () => tr('Projects'), to: '/crm/projects', icon: <TbFolders />, tone: 'violet', feature: 'projects' },
+    { key: 'clients', label: () => tr('Clients'), to: '/crm/clients', icon: <TbUsers />, tone: 'green', feature: 'customers' },
+    { key: 'calendar', label: () => tr('Calendar'), to: '/calendar', icon: <TbCalendar />, tone: 'red', feature: null, badge: (d) => d.agenda && { n: d.agenda.events.filter((e) => dayjs(e.start).isSame(dayjs(), 'day')).length, text: tr('today') } },
+    { key: 'chat', label: () => tr('Chat'), to: '/crm/chat', icon: <TbMessages />, tone: 'blue', feature: null },
+    { key: 'notifications', label: () => tr('Notifications'), to: '/crm/notifications', icon: <TbBell />, tone: 'amber', feature: null },
+    { key: 'invoices', label: () => tr('Invoices'), to: '/crm/invoices', icon: <TbFileInvoice />, tone: 'green', feature: 'invoices' },
+    { key: 'estimates', label: () => tr('Estimates'), to: '/crm/estimates', icon: <TbFileDescription />, tone: 'violet', feature: 'estimates' },
+    { key: 'expenses', label: () => tr('Expenses'), to: '/crm/expenses', icon: <TbReceipt />, tone: 'red', feature: 'expenses' },
+    { key: 'kb', label: () => tr('Help center'), to: '/crm/knowledge-base', icon: <TbBook />, tone: 'teal', feature: 'knowledge_base' },
+    { key: 'files', label: () => tr('File manager'), to: '/crm/file-manager', icon: <TbFolder />, tone: 'amber', feature: null },
+    { key: 'passwords', label: () => tr('Password vault'), to: '/crm/passwords', icon: <TbKey />, tone: 'violet', feature: 'passwords' },
+    { key: 'reports', label: () => tr('Reports'), to: '/crm/reports', icon: <TbChartBar />, tone: 'blue', feature: 'reports' },
+]
+const DEFAULT_SHORTCUTS = ['my-tasks', 'leads', 'team-tasks', 'scrum-board', 'tickets', 'calendar']
+
+const Shortcuts = ({ d, reload }) => {
+    const can = useCan()
+    const [dlg, setDlg] = useState(null)
+    const allowed = SHORTCUTS.filter((s) => !s.feature || can(s.feature, 'view') || can(s.feature, 'view_own'))
+    const chosen = (d.shortcuts || DEFAULT_SHORTCUTS)
+    const shown = allowed.filter((s) => chosen.includes(s.key))
+    const save = async (body) => { try { await api('/api/crm/team-dashboard/shortcuts', { method: 'PUT', body }); setDlg(null); reload?.() } catch (e) { notify('danger', e.message) } }
+    return (
+        <div className="mb-6">
+            <div className="mb-2 flex items-center justify-between"><h6 className="text-gray-500">{tr('Shortcuts')}</h6><button type="button" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline" onClick={() => setDlg(allowed.filter((s) => chosen.includes(s.key)).map((s) => s.key))}><TbAdjustmentsHorizontal />{tr('Customize')}</button></div>
+            {shown.length ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                    {shown.map((s) => {
+                        const b = s.badge?.(d)
+                        return (
+                            <Link key={s.key} to={s.to} className="group flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3 transition hover:border-primary hover:shadow-md dark:border-gray-600 dark:bg-gray-800">
+                                <span className={classNames('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl', TONES[s.tone])}>{s.icon}</span>
+                                <span className="min-w-0"><span className="block truncate text-sm font-bold heading-text group-hover:text-primary">{s.label()}</span>{b && <span className={classNames('block truncate text-xs', b.warn ? 'font-semibold text-red-500' : 'text-gray-500')}>{b.warn || b.text !== undefined ? `${b.n} · ${b.text}` : b.n}</span>}</span>
+                            </Link>
+                        )
+                    })}
+                </div>
+            ) : <p className="text-sm text-gray-400">{tr('No shortcut yet. Use Customize to pin the pages you open most.')}</p>}
+            <Dialog isOpen={!!dlg} width={520} onClose={() => setDlg(null)} onRequestClose={() => setDlg(null)}>
+                <h5 className="mb-1">{tr('Your shortcuts')}</h5>
+                <p className="mb-4 text-sm text-gray-500">{tr('Tick the pages you open every day. Only the pages you are allowed to open are listed.')}</p>
+                {dlg && (
+                    <>
+                        <div className="grid max-h-[360px] grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
+                            {allowed.map((s) => (
+                                <label key={s.key} className={classNames('flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2', dlg.includes(s.key) ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-600')}>
+                                    <input type="checkbox" checked={dlg.includes(s.key)} onChange={() => setDlg((cur) => (cur.includes(s.key) ? cur.filter((x) => x !== s.key) : [...cur, s.key]))} />
+                                    <span className={classNames('flex h-7 w-7 items-center justify-center rounded-lg text-lg', TONES[s.tone])}>{s.icon}</span>
+                                    <span className="truncate text-sm font-semibold">{s.label()}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <div className="mt-4 flex items-center justify-between gap-2">
+                            <Button size="sm" variant="plain" onClick={() => save({ reset: true })}>{tr('Back to the default set')}</Button>
+                            <div className="flex gap-2"><Button onClick={() => setDlg(null)}>{tr('Cancel')}</Button><Button variant="solid" onClick={() => save({ keys: dlg })}>{tr('Save')}</Button></div>
+                        </div>
+                    </>
+                )}
+            </Dialog>
+        </div>
+    )
+}
 
 const MEDAL = ['bg-amber-400 text-white', 'bg-slate-300 text-slate-700', 'bg-orange-300 text-white']
 const delta = (cur, prev) => (prev ? Math.round(((cur - prev) / prev) * 100) : cur ? 100 : 0)

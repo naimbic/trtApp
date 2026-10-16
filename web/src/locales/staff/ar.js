@@ -3266,5 +3266,14 @@ export default {
     "Needs keys": "يتطلب مفاتيح",
     "Show {n} more": "عرض {n} أخرى",
     "Comments can only be removed during the first hour": "يمكن حذف التعليقات خلال الساعة الأولى فقط",
-    "The VAT / ICE number is required": "رقم الضريبة / ICE مطلوب"
+    "The VAT / ICE number is required": "رقم الضريبة / ICE مطلوب",
+    "Back to the default set": "العودة إلى المجموعة الافتراضية",
+    "Customize": "تخصيص",
+    "No shortcut yet. Use Customize to pin the pages you open most.": "لا اختصارات بعد. استخدم «تخصيص» لتثبيت الصفحات التي تفتحها كثيرًا.",
+    "Shortcuts": "اختصارات",
+    "Tick the pages you open every day. Only the pages you are allowed to open are listed.": "حدّد الصفحات التي تفتحها كل يوم. تُعرض فقط الصفحات المسموح لك بفتحها.",
+    "Your shortcuts": "اختصاراتك",
+    "mine": "الخاصة بي",
+    "open": "مفتوحة",
+    "to follow up": "للمتابعة"
 }

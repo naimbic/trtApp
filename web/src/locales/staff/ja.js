@@ -3266,5 +3266,14 @@ export default {
     "Needs keys": "キーが必要",
     "Show {n} more": "さらに{n}件を表示",
     "Comments can only be removed during the first hour": "コメントは最初の1時間だけ削除できます",
-    "The VAT / ICE number is required": "VAT / ICE番号は必須です"
+    "The VAT / ICE number is required": "VAT / ICE番号は必須です",
+    "Back to the default set": "初期設定に戻す",
+    "Customize": "カスタマイズ",
+    "No shortcut yet. Use Customize to pin the pages you open most.": "ショートカットはまだありません。「カスタマイズ」でよく開くページを固定できます。",
+    "Shortcuts": "ショートカット",
+    "Tick the pages you open every day. Only the pages you are allowed to open are listed.": "毎日開くページにチェックを入れてください。開く権限のあるページだけが表示されます。",
+    "Your shortcuts": "あなたのショートカット",
+    "mine": "自分の",
+    "open": "未完了",
+    "to follow up": "要フォロー"
 }

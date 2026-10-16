@@ -3266,5 +3266,14 @@ export default {
     "Needs keys": "Clés requises",
     "Show {n} more": "Afficher {n} de plus",
     "Comments can only be removed during the first hour": "Les commentaires ne peuvent être supprimés que pendant la première heure",
-    "The VAT / ICE number is required": "Le numéro de TVA / ICE est obligatoire"
+    "The VAT / ICE number is required": "Le numéro de TVA / ICE est obligatoire",
+    "Back to the default set": "Revenir à la sélection par défaut",
+    "Customize": "Personnaliser",
+    "No shortcut yet. Use Customize to pin the pages you open most.": "Aucun raccourci. Utilisez Personnaliser pour épingler les pages que vous ouvrez le plus.",
+    "Shortcuts": "Raccourcis",
+    "Tick the pages you open every day. Only the pages you are allowed to open are listed.": "Cochez les pages que vous ouvrez chaque jour. Seules les pages auxquelles vous avez accès sont listées.",
+    "Your shortcuts": "Vos raccourcis",
+    "mine": "les miens",
+    "open": "ouvertes",
+    "to follow up": "à relancer"
 }

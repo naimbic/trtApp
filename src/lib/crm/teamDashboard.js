@@ -249,6 +249,9 @@ export async function teamDashboard({ days = 30 } = {}) {
 
     /* ---- who is around ---- */
     const pres = await prisma.crmChatPresence.findMany({ where: { memberKey: { startsWith: 'staff:' }, lastSeen: { gt: new Date(Date.now() - 45000) } } })
+    // the pages this person pinned to the dashboard (null = the default set)
+    const shortcutRow = staffId ? await prisma.crmOption.findUnique({ where: { name: `team_shortcuts_${staffId}` } }) : null
+    try { out.shortcuts = shortcutRow?.value ? JSON.parse(shortcutRow.value) : null } catch { out.shortcuts = null }
     out.online = pres.map((p) => sm[p.memberKey.slice(6)]).filter(Boolean)
     out.taskLabels = { status: TASK_STATUS, priority: TASK_PRIORITY }
     return out
@@ -263,4 +266,16 @@ export async function setTeamGoals(body) {
     const value = JSON.stringify({ weeklyTasks: clamp(body.weeklyTasks, 200), onTimeRate: clamp(body.onTimeRate, 100) })
     await prisma.crmOption.upsert({ where: { name: 'team_goals' }, update: { value }, create: { name: 'team_goals', value, autoload: false } })
     return JSON.parse(value)
+}
+
+/** Pin pages to the dashboard: a list of shortcut keys, kept for the person on the server, so it follows them. */
+export async function setShortcuts(body) {
+    const session = await requirePermission(null)
+    const staffId = await getStaffId(session)
+    if (!staffId) throw Object.assign(new Error('Your login is not linked to a staff member'), { status: 400 })
+    const keys = [...new Set((Array.isArray(body.keys) ? body.keys : []).map((k) => String(k)).filter((k) => /^[a-z0-9-]{1,30}$/.test(k)))].slice(0, 16)
+    const name = `team_shortcuts_${staffId}`
+    if (body.reset) await prisma.crmOption.deleteMany({ where: { name } })
+    else await prisma.crmOption.upsert({ where: { name }, update: { value: JSON.stringify(keys) }, create: { name, value: JSON.stringify(keys), autoload: false } })
+    return { keys: body.reset ? null : keys }
 }

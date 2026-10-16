@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.46.0',
+        date: '2026-10-16',
+        title: 'Shortcuts on the team dashboard',
+        items: ['New Shortcuts row at the top of the Team dashboard: one click to the pages used every day (My tasks, Leads to follow up, Team tasks, Scrum board, Timeline, Time report, Tickets, Issues, Projects, Clients, Calendar, Chat, Notifications, Invoices, Estimates, Expenses, Help center, File manager, Password vault, Reports), each with a live figure where it makes sense (open and overdue tasks, leads to follow up, my tickets, today\'s events)', 'Customize: everybody ticks the pages they want and the choice follows them to any browser; only the pages the person may open are offered, and "Back to the default set" returns to My tasks, Leads, Team tasks, Scrum board, Tickets and Calendar']
+    },
+    {
         version: '0.45.1',
         date: '2026-10-16',
         title: 'Fix: searching a company in a client field crashed the page',

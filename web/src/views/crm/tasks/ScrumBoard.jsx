@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { TbPlus, TbPaperclip, TbMessageCircle, TbCalendar, TbExternalLink, TbList, TbChecklist, TbLoader, TbAlertTriangle, TbCircleCheck, TbUsers, TbChevronDown, TbChevronUp } from 'react-icons/tb'
+import { TbPlus, TbPaperclip, TbMessageCircle, TbCalendar, TbExternalLink, TbList, TbChecklist, TbLoader, TbAlertTriangle, TbCircleCheck, TbUsers, TbChevronDown, TbChevronUp, TbHierarchy2 } from 'react-icons/tb'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import IconText from '@/components/shared/IconText'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
@@ -70,6 +70,7 @@ const Ticket = ({ t, innerRef, onOpen, ...rest }) => (
             <UsersAvatarGroup avatarProps={{ size: 25 }} imgKey="image" users={t.assignees} />
             <div className="flex items-center gap-2">
                 {t.dueDate && <IconText className="gap-1 text-xs" icon={<TbCalendar />}>{dayjs(t.dueDate).format('DD MMM')}</IconText>}
+                {t.subtasks?.total > 0 && <IconText className="gap-1 text-xs" icon={<TbHierarchy2 />}>{t.subtasks.done}/{t.subtasks.total}</IconText>}
                 {t.comments > 0 && <IconText className="gap-1 font-semibold" icon={<TbMessageCircle className="text-base" />}>{t.comments}</IconText>}
                 {t.files > 0 && <IconText className="gap-1 text-base" icon={<TbPaperclip />}>{t.files}</IconText>}
             </div>

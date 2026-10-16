@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimit, clientIp } from '@/lib/rateLimit'
 import { verifyLogin } from '@/lib/crm/loginCheck'
 import { twoFactorStatus } from '@/lib/crm/twoFactor'
 
@@ -6,6 +7,7 @@ import { twoFactorStatus } from '@/lib/crm/twoFactor'
 // the real sign-in then fails with the usual message.)
 export async function POST(request) {
     try {
+        rateLimit(`2fa-check:ip:${clientIp(request)}`, 30, 60000)
         const { email, password } = await request.json()
         const r = await verifyLogin(email, password)
         if (r.locked) return NextResponse.json({ twoFactor: false, locked: true, minutes: r.minutes })
@@ -13,6 +15,7 @@ export async function POST(request) {
         const s = await twoFactorStatus(r.user.id)
         return NextResponse.json({ twoFactor: s.enabled, methods: { app: s.app, email: s.email } })
     } catch (e) {
+        if (e.status === 429) return NextResponse.json({ error: e.message }, { status: 429, headers: { 'Retry-After': String(e.retryAfter) } })
         return e instanceof SyntaxError ? NextResponse.json({ error: 'The request could not be read' }, { status: 400 }) : NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
     }
 }

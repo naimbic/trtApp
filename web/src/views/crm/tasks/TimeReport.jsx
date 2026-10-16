@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import dayjs from 'dayjs'
-import { TbClock, TbReceipt, TbListDetails, TbSunHigh } from 'react-icons/tb'
+import { TbDownload, TbClock, TbReceipt, TbListDetails, TbSunHigh } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Avatar from '@/components/ui/Avatar'
 import Select from '@/components/ui/Select'
+import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
+import { downloadCsv } from '@/utils/csv'
 import classNames from '@/utils/classNames'
 import { api } from '../kit/api'
 import { DonutChart, TrendChart, PALETTE } from '../kit/charts'
@@ -35,6 +37,7 @@ const TimeReport = () => {
                 <div><h3>{tr('Time report')}</h3><p className="text-gray-500">{d.all ? tr('Time logged on tasks by the team') : tr('Time you logged on tasks')}</p></div>
                 <div className="flex flex-wrap items-center gap-2">
                     {d.all && d.staff.length > 0 && <div className="w-52"><Select size="sm" isClearable placeholder={tr('Everyone')} options={d.staff.map((s) => ({ value: s.id, label: s.name }))} value={d.staff.filter((s) => s.id === staffId).map((s) => ({ value: s.id, label: s.name }))[0] || null} onChange={(o) => setStaffId(o?.value || '')} /></div>}
+                    <Button size="sm" icon={<TbDownload />} disabled={!d.recent.length} onClick={() => downloadCsv(`time-report-${d.days}d.csv`, [tr('Task'), tr('Project'), tr('Member'), tr('Date'), tr('Hours'), tr('Note')], d.recent.map((r) => [r.task?.name || '', r.project || '', r.person?.name || '', dayjs(r.at).format('YYYY-MM-DD HH:mm'), r.hours, r.note]))}>{tr('Export CSV')}</Button>
                     <div className="inline-flex rounded-lg bg-gray-100 p-1 dark:bg-gray-700">
                         {[7, 30, 90].map((p) => <button key={p} type="button" onClick={() => setDays(p)} className={classNames('rounded-md px-3 py-1 text-sm font-semibold transition', days === p ? 'bg-white text-primary shadow-sm dark:bg-gray-800' : 'text-gray-500 hover:text-gray-700')}>{tr('{n} days', { n: p })}</button>)}
                     </div>

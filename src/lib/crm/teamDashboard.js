@@ -208,7 +208,14 @@ export async function teamDashboard({ days = 30 } = {}) {
         const pickBy = (list, fn, order) => { const l = list.filter(fn); if (!l.length) return null; return [...l].sort(order)[0].person.id }
         const enough = (r) => r.completed >= 3
         const myRow = per[staffId] ? board.find((r) => r.person?.id === staffId) : null
+        // goals set by the managers (Settings are kept in the options table): tasks per person per week, share finished on time
+        const goalRow = await prisma.crmOption.findUnique({ where: { name: 'team_goals' } })
+        let goals = { weeklyTasks: 0, onTimeRate: 0 }
+        try { goals = { ...goals, ...JSON.parse(goalRow?.value || '{}') } } catch { /* keep defaults */ }
+        const weekFrom = new Date(+today - 6 * DAY)
+        const weekDone = done.filter((t) => new Date(t.dateFinished) >= weekFrom)
         out.performance = {
+            goals: { ...goals, canSet: !!(wantAll || isCrmAdmin(authority)), week: { me: weekDone.filter(mine).length, team: wantAll ? weekDone.length : null, members: Object.keys(sm).length } },
             days, labels, series,
             team: { completed: cur.length, previous: prev.length, created: series.created.reduce((s, x) => s + x, 0), onTimeRate: cur.length ? Math.round((cur.filter(onTime).length / cur.length) * 100) : null, avgDays: cur.length ? Math.round(avg(cur.map(speed)) * 10) / 10 : null },
             weekday,
@@ -245,4 +252,15 @@ export async function teamDashboard({ days = 30 } = {}) {
     out.online = pres.map((p) => sm[p.memberKey.slice(6)]).filter(Boolean)
     out.taskLabels = { status: TASK_STATUS, priority: TASK_PRIORITY }
     return out
+}
+
+/** Managers (people who see all tasks) and administrators set the goals shown on the Team dashboard. */
+export async function setTeamGoals(body) {
+    const session = await requirePermission(null)
+    const authority = session.user.authority || []
+    if (!isCrmAdmin(authority) && viewScope(authority, 'tasks') !== 'all') throw Object.assign(new Error('Only managers can set the team goals'), { status: 403 })
+    const clamp = (v, max) => Math.max(0, Math.min(max, Math.round(Number(v) || 0)))
+    const value = JSON.stringify({ weeklyTasks: clamp(body.weeklyTasks, 200), onTimeRate: clamp(body.onTimeRate, 100) })
+    await prisma.crmOption.upsert({ where: { name: 'team_goals' }, update: { value }, create: { name: 'team_goals', value, autoload: false } })
+    return JSON.parse(value)
 }

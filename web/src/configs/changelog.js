@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.44.0',
+        date: '2026-10-16',
+        title: 'Subtasks, templates, recurring tasks, timeline, team goals, rate limits',
+        items: ['Subtasks: a Subtasks tab on every task (add, tick, progress bar), a "Subtask of" link, a progress chip on the lists and the boards; a task cannot be finished while its subtasks are open, cannot become a subtask of itself, and deleting a task deletes its subtasks; only the team of a task adds subtasks to it', 'Task templates: Templates button on the task list to use or create one (description, priority, due date, checklist and subtasks with due dates counted from the start), and "Save as template" on any task', 'Recurring tasks now repeat: once a recurring task is complete and its interval has passed, the daily cron creates a fresh copy (people, checklist unticked, labels, dates moved forward) until the number of cycles is reached; no email is sent', 'New Timeline (Tasks menu): every task as a bar from its start to its due date, grouped by project with subtasks under their parent, today marked, overdue in red, days or weeks zoom, one project or all', 'Team dashboard goals: managers set a weekly number of completed tasks per person and a share finished on time; everybody sees their progress, managers also the team\'s; CSV export of the leaderboard and of the time report', 'Rate limits: uploads, forgot / reset / change password, the second sign-in step and every create / change / delete are limited per person or address, with a clear message and a Retry-After header when exceeded']
+    },
+    {
         version: '0.43.0',
         date: '2026-10-16',
         title: 'No-access pages, raw errors, time report, audit of access changes',

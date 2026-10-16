@@ -10,7 +10,7 @@ const ROUTE_FEATURE = [
     ['/crm/settings', 'settings'], ['/crm/company', 'settings'], ['/team', 'staff'], ['/crm/staff', 'staff'], ['/crm/roles', 'roles'],
     ['/crm/clients', 'customers'], ['/crm/invoices', 'invoices'], ['/crm/estimates', 'estimates'], ['/crm/purchase-orders', 'purchase_orders'], ['/crm/proposals', 'proposals'], ['/crm/contracts', 'contracts'],
     ['/crm/payments', 'payments'], ['/crm/expenses', 'expenses'], ['/crm/mails', 'email_templates'], ['/crm/issues', 'issues'],
-    ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'],
+    ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'], ['/crm/timeline', 'tasks'],
     ['/crm/leads', 'leads'], ['/crm/projects', 'projects'], ['/crm/tickets', 'tickets'], ['/crm/passwords', 'passwords'],
     ['/crm/knowledge-base', 'knowledge_base'], ['/crm/reports', 'reports'], ['/crm/activity', 'activity_log'],
 ]
@@ -138,6 +138,7 @@ const crmRoutes = [
     { key: 'crm.kb.article', path: '/crm/knowledge-base/article/:id', component: lazy(() => import('@/views/crm/kb/KbArticle')), authority: [] },
     { key: 'crm.reports', path: '/crm/reports', component: lazy(() => import('@/views/crm/reports/Reports')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
+    { key: 'crm.timeline', path: '/crm/timeline', component: lazy(() => import('@/views/crm/tasks/Timeline')), authority: [] },
     { key: 'crm.time-report', path: '/crm/time-report', component: lazy(() => import('@/views/crm/tasks/TimeReport')), authority: [] },
     { key: 'crm.notifications', path: '/crm/notifications', component: lazy(() => import('@/views/crm/NotificationsPage')), authority: [] },
     {

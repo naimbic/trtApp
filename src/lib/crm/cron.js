@@ -4,6 +4,7 @@ import { getOptions, setOptions, sendTemplate } from '@/lib/crm/mailer'
 import { sendMailCore } from '@/lib/crm/mailApi'
 import { allocateNumber } from '@/lib/crm/sales/docNumbering'
 import { publicBase } from '@/lib/crm/shortLinks'
+import { runRecurringTasks } from '@/lib/crm/recurringTasks'
 
 /**
  * The cron job. Call it often (every 5–15 minutes); each task does its work once a day at the hour set in
@@ -127,6 +128,7 @@ async function contractsJob({ o, today, lines, dry }) {
 }
 
 async function tasksJob({ o, today, lines, dry }) {
+    await runRecurringTasks({ today, lines, dry }) // new copies of finished recurring tasks (no email)
     const before = num(o('tasks_reminder_notification_before'))
     if (before <= 0) return
     const list = await prisma.crmTask.findMany({ where: { status: { not: 5 }, deadlineNotified: false, dueDate: { gte: today, lte: new Date(today.getTime() + before * DAY) } }, include: { assignees: true } })

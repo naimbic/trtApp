@@ -64,6 +64,14 @@ async function relLabels(tasks) {
 async function extras(tasks) {
     const ids = tasks.map((t) => t.id)
     const mids = [...new Set(tasks.map((t) => t.milestoneId).filter(Boolean))]
+    const parentIds = [...new Set(tasks.map((t) => t.parentId).filter(Boolean))]
+    const [kids, parents] = await Promise.all([
+        ids.length ? prisma.crmTask.findMany({ where: { parentId: { in: ids } }, select: { parentId: true, status: true } }) : [],
+        parentIds.length ? prisma.crmTask.findMany({ where: { id: { in: parentIds } }, select: { id: true, name: true } }) : [],
+    ])
+    const sub = {}
+    for (const k of kids) { const x = (sub[k.parentId] ||= { done: 0, total: 0 }); x.total++; if (k.status === COMPLETE) x.done++ }
+    const parentName = Object.fromEntries(parents.map((x) => [x.id, x.name]))
     const [tg, files, ms] = await Promise.all([
         ids.length ? prisma.crmTaggable.findMany({ where: { relType: 'task', relId: { in: ids } }, include: { tag: true }, orderBy: { tagOrder: 'asc' } }) : [],
         ids.length ? prisma.crmMedia.groupBy({ by: ['relId'], where: { relType: 'task', relId: { in: ids }, isFolder: false }, _count: { _all: true } }).catch(() => []) : [],
@@ -72,14 +80,14 @@ async function extras(tasks) {
     const tags = {}, fileCount = {}, milestones = Object.fromEntries(ms.map((m) => [m.id, m.name]))
     for (const x of tg) (tags[x.relId] ||= []).push(x.tag.name)
     for (const f of files) fileCount[f.relId] = f._count._all
-    return (t) => ({ tags: tags[t.id] || [], files: fileCount[t.id] || 0, milestone: t.milestoneId ? { id: t.milestoneId, name: milestones[t.milestoneId] || '' } : null })
+    return (t) => ({ subtasks: sub[t.id] || { done: 0, total: 0 }, parent: t.parentId && parentName[t.parentId] ? { id: t.parentId, name: parentName[t.parentId] } : null, tags: tags[t.id] || [], files: fileCount[t.id] || 0, milestone: t.milestoneId ? { id: t.milestoneId, name: milestones[t.milestoneId] || '' } : null })
 }
 
 function card(t, people, rels, extra = {}) {
     const rel = t.relType && t.relId ? rels[`${t.relType}:${t.relId}`] : null
     return {
         id: t.id, name: t.name, status: t.status, statusLabel: STATUS[t.status] || '', priority: t.priority, priorityLabel: PRIORITY[t.priority] || '',
-        startDate: t.startDate, dueDate: t.dueDate, dateFinished: t.dateFinished, relType: t.relType, relId: t.relId,
+        startDate: t.startDate, dueDate: t.dueDate, dateFinished: t.dateFinished, relType: t.relType, relId: t.relId, parentId: t.parentId || null,
         rel: rel ? { type: t.relType, ...rel } : t.relType ? { type: t.relType, label: t.relType } : null,
         assignees: (t.assignees || []).map((x) => people[x.staffId]).filter(Boolean),
         checklistDone: (t.checklistItems || []).filter((c) => c.finished).length, checklistTotal: (t.checklistItems || []).length,
@@ -154,6 +162,12 @@ export async function getTask(id) {
             ...t.timers.filter((x) => x.endTime).map((x) => ({ type: 'timer', staff: people[x.staffId] || null, at: x.endTime, seconds: Math.max(0, Math.round((+x.endTime - +(x.startTime || x.endTime)) / 1000)), text: x.note || '' })),
             ...t.checklistItems.filter((c) => c.finished).map((c) => ({ type: 'checklist', staff: null, at: c.updatedAt || t.updatedAt, text: c.description || '' })),
         ].sort((x, y) => +new Date(y.at) - +new Date(x.at)).slice(0, 60),
+        parent: t.parentId ? await prisma.crmTask.findUnique({ where: { id: t.parentId }, select: { id: true, name: true } }) : null,
+        subtasks: await (async () => {
+            const kids = await prisma.crmTask.findMany({ where: { parentId: id }, orderBy: [{ kanbanOrder: 'asc' }, { createdAt: 'asc' }], include: { assignees: { select: { staffId: true } } } })
+            const pm = await staffMap(kids.flatMap((k) => k.assignees.map((x) => x.staffId)))
+            return kids.map((k) => ({ id: k.id, name: k.name, status: k.status, dueDate: k.dueDate, priority: k.priority, assignees: k.assignees.map((x) => pm[x.staffId]).filter(Boolean), canFinish: mayAct(a, k) }))
+        })(),
         milestones: t.relType === 'project' && oid(t.relId) ? (await prisma.crmMilestone.findMany({ where: { projectId: t.relId }, orderBy: { milestoneOrder: 'asc' }, select: { id: true, name: true } })) : [],
         can: { edit: a.can('edit') && mayAct(a, t), delete: a.can('delete') && mayAct(a, t) },
     }
@@ -176,8 +190,20 @@ export async function saveTask(body, id) {
         isPublic: !!body.isPublic, billable: !!body.billable, visibleToClient: !!body.visibleToClient, hourlyRate: Number(body.hourlyRate) || 0,
         recurring: !!body.recurring, recurringType: body.recurring ? body.recurringType || 'month' : null, repeatEvery: body.recurring ? Math.max(parseInt(body.repeatEvery, 10) || 1, 1) : 0, totalCycles: body.recurring ? Math.max(parseInt(body.totalCycles, 10) || 0, 0) : 0,
     }
+    // a subtask: its parent must exist and cannot be the task itself or one of its own subtasks
+    if (body.parentId !== undefined) {
+        const pid = oid(body.parentId)
+        if (pid) {
+            if (id && (pid === id || (await descendants(id)).includes(pid))) throw fail('A task cannot be a subtask of itself')
+            const parent = await prisma.crmTask.findUnique({ where: { id: pid }, select: { relType: true, relId: true, milestoneId: true, addedFrom: true, assignees: { select: { staffId: true } } } })
+            if (!parent) throw fail('Parent task not found', 404)
+            if (!mayAct(a, parent)) throw fail(NOT_YOURS, 403) // only the team of a task adds subtasks to it
+            if (!id) Object.assign(data, { relType: data.relType || parent.relType, relId: data.relId || parent.relId, milestoneId: data.milestoneId || parent.milestoneId })
+        }
+        data.parentId = pid
+    }
     let prev = null
-    if (id) { prev = await loadOne(id, a); if (!mayAct(a, prev)) throw fail(NOT_YOURS, 403); data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
+    if (id) { prev = await loadOne(id, a); if (!mayAct(a, prev)) throw fail(NOT_YOURS, 403); if (status === COMPLETE && prev.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) } data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
     else data.dateFinished = status === COMPLETE ? new Date() : null
     const task = id
         ? await prisma.crmTask.update({ where: { id }, data })
@@ -203,12 +229,27 @@ export async function saveTask(body, id) {
     return { success: true, id: task.id }
 }
 
+const openChildren = (id) => prisma.crmTask.count({ where: { parentId: id, status: { not: COMPLETE } } })
+const FINISH_SUBTASKS = (n) => `Finish the subtasks first (${n} still open)`
+/** The task and everything under it (subtasks, their subtasks...). */
+async function descendants(id) {
+    const out = []
+    let level = [id]
+    while (level.length && out.length < 500) {
+        const kids = await prisma.crmTask.findMany({ where: { parentId: { in: level } }, select: { id: true } })
+        level = kids.map((k) => k.id)
+        out.push(...level)
+    }
+    return out
+}
+
 export async function moveTask(id, { status, order }) {
     const session = await requirePermission('tasks', 'edit')
     const a = await access(session)
     const t = await loadOne(id, a)
     const st = [1, 2, 3, 4, 5].includes(+status) ? +status : t.status
     if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
+    if (st === COMPLETE && t.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) }
     await prisma.crmTask.update({ where: { id }, data: { status: st, kanbanOrder: Number.isFinite(+order) ? Math.round(+order) : t.kanbanOrder, dateFinished: st === COMPLETE ? t.dateFinished || new Date() : null } })
     return { success: true }
 }
@@ -220,15 +261,17 @@ export async function reorderTasks(status, ids) {
     const st = [1, 2, 3, 4, 5].includes(+status) ? +status : null
     if (!st || !Array.isArray(ids)) throw fail('Bad request')
     const where = await visibleWhere(a)
-    let denied = 0
+    let denied = 0, blocked = 0
     for (const [i, id] of ids.filter(oid).entries()) {
         const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { status: true, dateFinished: true, addedFrom: true, assignees: { select: { staffId: true } } } })
         if (!t) continue
         if (t.status !== st && !mayAct(a, t)) { denied++; continue }
+        if (st === COMPLETE && t.status !== COMPLETE && (await openChildren(id))) { blocked++; continue }
         await prisma.crmTask.update({ where: { id }, data: { kanbanOrder: i, ...(t.status !== st ? { status: st, dateFinished: st === COMPLETE ? new Date() : null } : {}) } })
     }
     if (denied && denied === ids.filter(oid).length) throw fail(NOT_YOURS, 403)
-    return { success: true, denied }
+    if (blocked && blocked === ids.filter(oid).length) throw fail('Finish the subtasks first', 409)
+    return { success: true, denied, blocked }
 }
 
 /** Drag and drop on the task lists: optionally move a task to another project / group, then store the order of `ids`. */
@@ -254,8 +297,10 @@ export async function deleteTask(id) {
     const session = await requirePermission('tasks', 'delete')
     const a = await access(session)
     if (!mayAct(a, await loadOne(id, a))) throw fail(NOT_YOURS, 403)
-    await prisma.crmTaskTimer.deleteMany({ where: { taskId: id } })
-    await prisma.crmTask.delete({ where: { id } })
+    for (const tid of [...(await descendants(id)).reverse(), id]) {
+        await prisma.crmTaskTimer.deleteMany({ where: { taskId: tid } })
+        await prisma.crmTask.delete({ where: { id: tid } })
+    }
     return { success: true }
 }
 
@@ -337,4 +382,77 @@ export async function taskScope() {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     return { where: await ownWhere(a), staffId: a.staffId }
+}
+
+
+/* ---------------- templates ---------------- */
+const parseJson = (raw, fallback) => { try { const v = JSON.parse(raw || ''); return Array.isArray(v) ? v : fallback } catch { return fallback } }
+const shapeTemplate = (t) => ({ id: t.id, name: t.name, description: t.description || '', priority: t.priority, billable: t.billable, dueInDays: t.dueInDays, checklist: parseJson(t.checklistRaw, []), subtasks: parseJson(t.subtasksRaw, []) })
+
+export async function listTemplates() {
+    await requirePermission('tasks', 'view')
+    const rows = await prisma.crmTaskTemplate.findMany({ orderBy: { name: 'asc' }, take: 200 })
+    return { list: rows.map(shapeTemplate) }
+}
+
+export async function saveTemplate(body, id) {
+    const session = await requirePermission('tasks', id ? 'edit' : 'create')
+    const a = await access(session)
+    const name = String(body.name || '').trim().slice(0, 150)
+    if (!name) throw fail('Give the template a name')
+    const checklist = (Array.isArray(body.checklist) ? body.checklist : []).map((x) => String(x || '').trim().slice(0, 500)).filter(Boolean).slice(0, 60)
+    const subtasks = (Array.isArray(body.subtasks) ? body.subtasks : []).map((x) => ({ name: String(x?.name || '').trim().slice(0, 150), priority: [1, 2, 3, 4].includes(+x?.priority) ? +x.priority : 2, dueInDays: Math.max(0, parseInt(x?.dueInDays, 10) || 0) })).filter((x) => x.name).slice(0, 40)
+    const data = { name, description: body.description ?? null, priority: [1, 2, 3, 4].includes(+body.priority) ? +body.priority : 2, billable: !!body.billable, dueInDays: Math.max(0, parseInt(body.dueInDays, 10) || 0), checklistRaw: JSON.stringify(checklist), subtasksRaw: JSON.stringify(subtasks) }
+    if (id) {
+        const cur = await prisma.crmTaskTemplate.findUnique({ where: { id } })
+        if (!cur) throw fail('Template not found', 404)
+        if (cur.addedFrom !== a.staffId && a.scope !== 'all') throw fail('Only the author of a template or a manager can change it', 403)
+        return shapeTemplate(await prisma.crmTaskTemplate.update({ where: { id }, data }))
+    }
+    return shapeTemplate(await prisma.crmTaskTemplate.create({ data: { ...data, addedFrom: a.staffId } }))
+}
+
+export async function deleteTemplate(id) {
+    const session = await requirePermission('tasks', 'delete')
+    const a = await access(session)
+    const cur = oid(id) && (await prisma.crmTaskTemplate.findUnique({ where: { id } }))
+    if (!cur) throw fail('Template not found', 404)
+    if (cur.addedFrom !== a.staffId && a.scope !== 'all') throw fail('Only the author of a template or a manager can delete it', 403)
+    await prisma.crmTaskTemplate.delete({ where: { id } })
+    return { success: true }
+}
+
+/** Keep a task (its checklist and subtasks) as a template. */
+export async function templateFromTask(taskId, name) {
+    const session = await requirePermission('tasks', 'create')
+    const a = await access(session)
+    const t = await loadOne(taskId, a)
+    const kids = await prisma.crmTask.findMany({ where: { parentId: taskId }, orderBy: [{ kanbanOrder: 'asc' }, { createdAt: 'asc' }] })
+    const day = 86400000
+    const rel = (x) => (x.dueDate && (x.startDate || x.createdAt) ? Math.max(0, Math.round((+x.dueDate - +(x.startDate || x.createdAt)) / day)) : 0)
+    return saveTemplate({
+        name: name || t.name, description: t.description, priority: t.priority, billable: t.billable, dueInDays: rel(t),
+        checklist: t.checklistItems.map((c) => c.description), subtasks: kids.map((k) => ({ name: k.name, priority: k.priority, dueInDays: rel(k) })),
+    })
+}
+
+/** New task from a template: the task, its checklist and its subtasks, assigned to the person (or the ones given). */
+export async function taskFromTemplate(templateId, body = {}) {
+    const session = await requirePermission('tasks', 'create')
+    const a = await access(session)
+    const tpl = oid(templateId) && (await prisma.crmTaskTemplate.findUnique({ where: { id: templateId } }))
+    if (!tpl) throw fail('Template not found', 404)
+    const start = body.startDate ? new Date(body.startDate) : new Date(new Date().toISOString().slice(0, 10))
+    const due = (n) => (n > 0 ? new Date(+start + n * 86400000) : null)
+    const who = (Array.isArray(body.assigneeIds) && body.assigneeIds.length ? body.assigneeIds : a.staffId ? [a.staffId] : []).map(oid).filter(Boolean)
+    const base = { relType: body.relType || null, relId: oid(body.relId), milestoneId: oid(body.milestoneId), isPublic: false, addedFrom: a.staffId, startDate: start }
+    const make = async (data, checklist = []) => {
+        const t = await prisma.crmTask.create({ data: { ...base, ...data } })
+        for (const staffId of who) await prisma.crmTaskAssigned.create({ data: { taskId: t.id, staffId, assignedFrom: a.staffId } })
+        for (const [i, d] of checklist.entries()) await prisma.crmTaskChecklistItem.create({ data: { taskId: t.id, description: d, listOrder: i + 1, addedFrom: a.staffId, finished: false } })
+        return t
+    }
+    const main = await make({ name: tpl.name, description: tpl.description, priority: tpl.priority, billable: tpl.billable, dueDate: due(tpl.dueInDays), status: 1 }, parseJson(tpl.checklistRaw, []))
+    for (const s of parseJson(tpl.subtasksRaw, [])) await make({ name: s.name, priority: s.priority || 2, dueDate: due(s.dueInDays || 0), status: 1, parentId: main.id })
+    return { success: true, id: main.id }
 }

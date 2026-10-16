@@ -2,12 +2,15 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { TbTrophy, TbBolt, TbShieldCheck, TbMessages, TbTrendingUp, TbTrendingDown, TbHourglass, TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbUsers, TbArrowRight } from 'react-icons/tb'
+import { TbDownload, TbFlag, TbTrophy, TbBolt, TbShieldCheck, TbMessages, TbTrendingUp, TbTrendingDown, TbHourglass, TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbUsers, TbArrowRight } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import Dialog from '@/components/ui/Dialog'
+import Input from '@/components/ui/Input'
 import Skeleton from '@/components/ui/Skeleton'
+import { downloadCsv } from '@/utils/csv'
 import Tag from '@/components/ui/Tag'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import classNames from '@/utils/classNames'
@@ -71,7 +74,7 @@ const TeamDashboard = () => {
             </div>
 
 
-            {perf && <Performance perf={perf} days={days} setDays={setDays} leadTrend={d.leadTrend} meId={d.me.id} />}
+            {perf && <Performance perf={perf} days={days} setDays={setDays} leadTrend={d.leadTrend} meId={d.me.id} reload={load} />}
 
             <div className="grid gap-4 xl:grid-cols-3">
                 <div className="flex flex-col gap-4 xl:col-span-2">
@@ -204,8 +207,20 @@ const Delta = ({ cur, prev, goodUp = true }) => {
 }
 const WEEKDAYS = () => [tr('Mon'), tr('Tue'), tr('Wed'), tr('Thu'), tr('Fri'), tr('Sat'), tr('Sun')]
 
+const GoalBar = ({ label, value, target, percent, sub }) => {
+    const pct = Math.min(100, Math.round((value / Math.max(1, target)) * 100)), reached = value >= target
+    return (
+        <div>
+            <div className="mb-1 flex items-baseline justify-between text-sm"><span className="font-semibold">{label}</span><span className="text-gray-500"><b className={reached ? 'text-emerald-600' : 'heading-text'}>{value}{percent ? '%' : ''}</b> / {target}{percent ? '%' : ''}</span></div>
+            <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className={classNames('h-full rounded-full transition-all', reached ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${pct}%` }} /></div>
+            {sub && <div className="mt-1 text-xs text-gray-400">{sub}</div>}
+        </div>
+    )
+}
+
 /** How the team is doing: trends, the people who stand out, and a leaderboard. Shown to whoever can see the tasks. */
-const Performance = ({ perf, days, setDays, leadTrend, meId }) => {
+const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
+    const [goalDlg, setGoalDlg] = useState(null)
     const { team, me, leaderboard, badges, series, labels } = perf
     const byId = Object.fromEntries(leaderboard.map((r) => [r.person.id, r]))
     const best = leaderboard[0]
@@ -237,6 +252,32 @@ const Performance = ({ perf, days, setDays, leadTrend, meId }) => {
                     ? <StatCard icon={<TbHourglass />} label={tr('Backlog')} value={team.backlog} sub={tr('oldest open task: {n} days', { n: team.oldest })} tone={team.oldest > 60 ? 'amber' : 'teal'} to="/crm/team-tasks" />
                     : <StatCard icon={<TbTrophy />} label={tr('My rank')} value={me.rank ? `#${me.rank}` : '—'} sub={tr('{n} tasks completed', { n: me.completed })} tone="amber" />}
             </div>
+
+            {(perf.goals?.weeklyTasks > 0 || perf.goals?.onTimeRate > 0 || perf.goals?.canSet) && (
+                <Card className="mb-4" bodyClass="p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 font-bold heading-text"><span className={classNames('flex h-7 w-7 items-center justify-center rounded-full text-lg', TONES.violet)}><TbFlag /></span>{tr('Goals this week')}</div>
+                        {perf.goals.canSet && <Button size="xs" onClick={() => setGoalDlg({ weeklyTasks: perf.goals.weeklyTasks || '', onTimeRate: perf.goals.onTimeRate || '' })}>{tr('Set goals')}</Button>}
+                    </div>
+                    {perf.goals.weeklyTasks > 0 || perf.goals.onTimeRate > 0 ? (
+                        <div className="grid gap-5 md:grid-cols-3">
+                            {perf.goals.weeklyTasks > 0 && <GoalBar label={tr('My completed tasks')} value={perf.goals.week.me} target={perf.goals.weeklyTasks} />}
+                            {perf.goals.weeklyTasks > 0 && perf.goals.week.team !== null && <GoalBar label={tr('Team completed tasks')} value={perf.goals.week.team} target={perf.goals.weeklyTasks * Math.max(1, perf.goals.week.members)} sub={tr('{n} per person', { n: perf.goals.weeklyTasks })} />}
+                            {perf.goals.onTimeRate > 0 && <GoalBar label={tr('Finished on time')} value={me.onTimeRate ?? 0} target={perf.goals.onTimeRate} percent sub={tr('last {n} days', { n: days })} />}
+                        </div>
+                    ) : <p className="text-sm text-gray-500">{tr('No goals yet. Set a weekly target of completed tasks and a share finished on time so everybody sees how the week is going.')}</p>}
+                </Card>
+            )}
+            <Dialog isOpen={!!goalDlg} width={400} onClose={() => setGoalDlg(null)} onRequestClose={() => setGoalDlg(null)}>
+                <h5 className="mb-4">{tr('Team goals')}</h5>
+                {goalDlg && (
+                    <div className="space-y-3">
+                        <div><div className="mb-1 text-xs font-semibold text-gray-500">{tr('Completed tasks per person per week (0 = no goal)')}</div><Input type="number" min="0" value={goalDlg.weeklyTasks} onChange={(ev) => setGoalDlg({ ...goalDlg, weeklyTasks: ev.target.value })} /></div>
+                        <div><div className="mb-1 text-xs font-semibold text-gray-500">{tr('Finished on time, % (0 = no goal)')}</div><Input type="number" min="0" max="100" value={goalDlg.onTimeRate} onChange={(ev) => setGoalDlg({ ...goalDlg, onTimeRate: ev.target.value })} /></div>
+                        <div className="flex justify-end gap-2 pt-2"><Button onClick={() => setGoalDlg(null)}>{tr('Cancel')}</Button><Button variant="solid" onClick={async () => { try { await api('/api/crm/team-dashboard', { method: 'PUT', body: goalDlg }); setGoalDlg(null); reload?.() } catch (er) { notify('danger', er.message) } }}>{tr('Save')}</Button></div>
+                    </div>
+                )}
+            </Dialog>
 
             {BADGES.length > 0 && (
                 <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -272,7 +313,7 @@ const Performance = ({ perf, days, setDays, leadTrend, meId }) => {
 
             <div className="mb-4 grid gap-4 xl:grid-cols-3">
                 {leaderboard.length > 0 && (
-                    <Panel className="xl:col-span-2" title={tr('Leaderboard')} subtitle={tr('Points: 10 per task, +5 on time, +8 per issue resolved, +15 per lead converted, +1 per hour tracked (max 40)')}>
+                    <Panel className="xl:col-span-2" action={<Button size="xs" variant="plain" icon={<TbDownload />} onClick={() => downloadCsv(`team-performance-${days}d.csv`, [tr('Rank'), tr('Member'), tr('Tasks'), tr('On time'), tr('Avg. days'), tr('Hours'), tr('Comments'), tr('Issues'), tr('Leads converted'), tr('Score')], leaderboard.map((r, i) => [i + 1, r.person.name, r.completed, r.onTimeRate === null ? '' : `${r.onTimeRate}%`, r.avgDays ?? '', r.hours, r.comments, r.issues, r.converted, r.score]))}>{tr('Export CSV')}</Button>} title={tr('Leaderboard')} subtitle={tr('Points: 10 per task, +5 on time, +8 per issue resolved, +15 per lead converted, +1 per hour tracked (max 40)')}>
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[620px] text-sm">
                                 <thead><tr className="text-left text-xs uppercase tracking-wide text-gray-400"><th className="pb-2 pe-2">#</th><th className="pb-2">{tr('Member')}</th><th className="pb-2 text-end">{tr('Tasks')}</th><th className="pb-2 text-end">{tr('On time')}</th><th className="pb-2 text-end">{tr('Avg. days')}</th><th className="pb-2 text-end">{tr('Hours')}</th><th className="pb-2 ps-4">{tr('Score')}</th></tr></thead>

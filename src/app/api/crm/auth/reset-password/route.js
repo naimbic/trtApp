@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimit, clientIp } from '@/lib/rateLimit'
 import { inspectToken, resetPasswordWithToken } from '@/lib/crm/authTokens'
 
 export async function GET(request) {
@@ -7,6 +8,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
+        rateLimit(`reset:ip:${clientIp(request)}`, 10, 15 * 60000)
         const { token, password } = await request.json()
         const r = await resetPasswordWithToken(token, password)
         return NextResponse.json({ success: true, email: r.email })

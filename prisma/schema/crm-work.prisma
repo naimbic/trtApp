@@ -224,6 +224,8 @@ model CrmTask {
   milestoneId        String?   @db.ObjectId
   kanbanOrder        Int       @default(0)
   milestoneOrder     Int       @default(0)
+  /// the task this one is a subtask of
+  parentId           String?   @db.ObjectId
   visibleToClient    Boolean   @default(false)
   deadlineNotified   Boolean   @default(false)
   createdAt          DateTime  @default(now())
@@ -238,6 +240,7 @@ model CrmTask {
   @@index([status])
   @@index([relType, relId])
   @@index([milestoneId])
+  @@index([parentId])
   @@index([addedFrom])
   @@index([invoiceId])
   @@index([dueDate])
@@ -456,4 +459,23 @@ model CrmIssueComment {
 
   @@index([issueId, createdAt])
   @@map("crm_issue_comment")
+}
+
+/// A reusable task: its description, checklist and subtasks (JSON), with due dates as a number of days after it is used.
+model CrmTaskTemplate {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String?
+  priority     Int      @default(2)
+  billable     Boolean  @default(false)
+  dueInDays    Int      @default(0)
+  /// JSON: ["step", ...]
+  checklistRaw String?
+  /// JSON: [{ name, priority, dueInDays }]
+  subtasksRaw  String?
+  addedFrom    String?  @db.ObjectId
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("crm_task_templates")
 }

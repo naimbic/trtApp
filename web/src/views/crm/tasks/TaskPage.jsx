@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbTag, TbUser, TbCircleDashed, TbCalendarDue, TbFlag, TbBriefcase, TbCalendar, TbTrash, TbPencil, TbPlayerPlay, TbPlayerStop, TbCheck, TbX, TbMessage, TbFile, TbClock, TbPlus, TbListCheck } from 'react-icons/tb'
+import { TbHierarchy2, TbBookmark, TbArrowLeft, TbTag, TbUser, TbCircleDashed, TbCalendarDue, TbFlag, TbBriefcase, TbCalendar, TbTrash, TbPencil, TbPlayerPlay, TbPlayerStop, TbCheck, TbX, TbMessage, TbFile, TbClock, TbPlus, TbListCheck } from 'react-icons/tb'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
@@ -29,7 +29,7 @@ const Prop = ({ icon, label, children }) => (
     </div>
 )
 
-const TABS = [['comments', tr('Comments'), <TbMessage key="c" />], ['checklist', tr('Checklist'), <TbListCheck key="l" />], ['files', tr('Attachments'), <TbFile key="f" />], ['time', tr('Time'), <TbClock key="t" />]]
+const TABS = [['comments', tr('Comments'), <TbMessage key="c" />], ['subtasks', tr('Subtasks'), <TbHierarchy2 key="s" />], ['checklist', tr('Checklist'), <TbListCheck key="l" />], ['files', tr('Attachments'), <TbFile key="f" />], ['time', tr('Time'), <TbClock key="t" />]]
 
 /** One task, laid out like the template's issue page: properties, description, tabs, and the activity panel on the right. */
 const TaskPage = () => {
@@ -43,6 +43,7 @@ const TaskPage = () => {
     const [descEdit, setDescEdit] = useState(null)
     const [comment, setComment] = useState('')
     const [item, setItem] = useState('')
+    const [subName, setSubName] = useState('')
     const [tag, setTag] = useState('')
     const [confirmDel, setConfirmDel] = useState(false)
     const [, setTick] = useState(0)
@@ -67,6 +68,15 @@ const TaskPage = () => {
     const post = async (path, b, ok) => { try { await api(`/api/crm/work/tasks/${id}/${path}`, { method: 'POST', body: b }); if (ok) notify('success', ok); await load() } catch (er) { notify('danger', er.message) } }
     const delComment = async (c) => { try { await api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' }); await load() } catch (er) { notify('danger', er.message) } }
     const remove = async () => { setConfirmDel(false); try { await api(`/api/crm/work/tasks/${id}`, { method: 'DELETE' }); notify('success', tr('Task deleted')); nav(t.rel?.type === 'project' ? `/crm/projects/${t.relId}` : '/crm/my-tasks') } catch (er) { notify('danger', er.message) } }
+    const subs = t.subtasks || []
+    const addSub = async () => {
+        const name = subName.trim()
+        if (!name) return
+        setSubName('')
+        try { await api('/api/crm/work/tasks', { method: 'POST', body: { name, status: 1, priority: t.priority, parentId: id, assigneeIds: t.assigneeIds } }); await load() } catch (er) { notify('danger', er.message) }
+    }
+    const toggleSub = async (x) => { try { await api('/api/crm/work/tasks/reorder', { method: 'POST', body: { status: x.status === 5 ? 1 : 5, ids: [x.id] } }); await load() } catch (er) { notify('danger', er.message) } }
+    const keepAsTemplate = async () => { try { await api('/api/crm/work/task-templates', { method: 'POST', body: { fromTask: id } }); notify('success', tr('Saved as a template')) } catch (er) { notify('danger', er.message) } }
     const addTag = () => { const v = tag.trim(); setTag(''); if (v && !t.tags.includes(v)) save({ tags: [...t.tags, v] }) }
     const runningSecs = d.running ? Math.max(0, Math.round((Date.now() - +new Date(d.running.startTime)) / 1000)) : 0
     const back = () => nav(t.rel?.type === 'project' ? `/crm/projects/${t.relId}` : '/crm/my-tasks')
@@ -87,10 +97,12 @@ const TaskPage = () => {
                         {t.rel?.href && <Link to={t.rel.href} className="text-sm font-semibold text-primary hover:underline">{t.rel.label}</Link>}
                         {t.milestone?.name && <span className="text-sm text-gray-400">· {t.milestone.name}</span>}
                         <div className="ml-auto flex gap-2">
+                            {e && <Button size="xs" variant="plain" icon={<TbBookmark />} onClick={keepAsTemplate}>{tr('Save as template')}</Button>}
                             {t.rel?.type === 'project' && <Button size="xs" onClick={() => nav(`/crm/projects/${t.relId}/board`)}>{tr('Scrum board')}</Button>}
                             {can.delete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDel(true)} />}
                         </div>
                     </div>
+                    {d.parent && <div className="mb-1 text-sm text-gray-500">{tr('Subtask of')} <Link to={`/crm/tasks/${d.parent.id}`} className="font-semibold text-primary hover:underline">{d.parent.name}</Link></div>}
                     {titleEdit !== null ? (
                         <div className="flex items-center gap-2"><Input autoFocus value={titleEdit} maxLength={200} onChange={(ev) => setTitleEdit(ev.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter' && titleEdit.trim()) { save({ name: titleEdit }); setTitleEdit(null) } if (ev.key === 'Escape') setTitleEdit(null) }} /><Button size="sm" variant="solid" icon={<TbCheck />} onClick={() => { if (titleEdit.trim()) { save({ name: titleEdit }); setTitleEdit(null) } }} /><Button size="sm" icon={<TbX />} onClick={() => setTitleEdit(null)} /></div>
                     ) : (
@@ -139,7 +151,7 @@ const TaskPage = () => {
                         <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700">
                             {TABS.map(([k, label]) => (
                                 <button key={k} type="button" onClick={() => setTab(k)} className={classNames('-mb-px border-b-2 px-1 pb-3 text-sm font-semibold transition', tab === k ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200')}>
-                                    {label}{k === 'comments' && d.comments.length > 0 && <span className="ml-1.5 text-xs opacity-70">{d.comments.length}</span>}{k === 'checklist' && d.checklist.length > 0 && <span className="ml-1.5 text-xs opacity-70">{d.checklist.filter((c) => c.finished).length}/{d.checklist.length}</span>}
+                                    {label}{k === 'subtasks' && subs.length > 0 && <span className="ml-1.5 text-xs opacity-70">{subs.filter((x) => x.status === 5).length}/{subs.length}</span>}{k === 'comments' && d.comments.length > 0 && <span className="ml-1.5 text-xs opacity-70">{d.comments.length}</span>}{k === 'checklist' && d.checklist.length > 0 && <span className="ml-1.5 text-xs opacity-70">{d.checklist.filter((c) => c.finished).length}/{d.checklist.length}</span>}
                                 </button>
                             ))}
                         </div>
@@ -157,6 +169,21 @@ const TaskPage = () => {
                                     ))}
                                     {!d.comments.length && <p className="text-sm text-gray-400">{tr('No comments yet.')}</p>}
                                     <div className="flex flex-col gap-2"><Input textArea rows={3} value={comment} placeholder={tr('Write a comment')} onChange={(ev) => setComment(ev.target.value)} /><div className="flex justify-end"><Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment }).then(() => setComment(''))}>{tr('Comment')}</Button></div></div>
+                                </div>
+                            )}
+                            {tab === 'subtasks' && (
+                                <div className="space-y-1">
+                                    {subs.length > 0 && <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(subs.filter((x) => x.status === 5).length / subs.length) * 100}%` }} /></div>}
+                                    {subs.map((x) => (
+                                        <div key={x.id} className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                                            <input type="checkbox" checked={x.status === 5} disabled={!x.canFinish} title={x.canFinish ? undefined : tr('Only the people assigned to this task, or who created it, can change its status')} onChange={() => toggleSub(x)} />
+                                            <Link to={`/crm/tasks/${x.id}`} className={classNames('min-w-0 flex-1 truncate text-sm font-semibold hover:text-primary', x.status === 5 && 'text-gray-400 line-through')}>{x.name}</Link>
+                                            <div className="flex -space-x-1.5">{x.assignees.slice(0, 3).map((p) => <Avatar key={p.id} size={22} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar>)}</div>
+                                            {x.dueDate && <span className="w-14 shrink-0 text-end text-xs text-gray-500">{dayjs(x.dueDate).format('DD MMM')}</span>}
+                                        </div>
+                                    ))}
+                                    {!subs.length && <p className="text-sm text-gray-400">{tr('No subtasks yet. Break the task into smaller tasks, each with its own people and due date.')}</p>}
+                                    {e && <form className="flex gap-2 pt-2" onSubmit={(ev) => { ev.preventDefault(); addSub() }}><Input size="sm" value={subName} placeholder={tr('Add a subtask')} onChange={(ev) => setSubName(ev.target.value)} /><Button size="sm" type="submit" icon={<TbPlus />}>{tr('Add')}</Button></form>}
                                 </div>
                             )}
                             {tab === 'checklist' && (

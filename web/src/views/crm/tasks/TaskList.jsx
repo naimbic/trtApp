@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { MdDragIndicator } from 'react-icons/md'
-import { TbPlus, TbCircleCheck, TbCircleCheckFilled, TbSearch, TbLayoutKanban } from 'react-icons/tb'
+import { TbBookmarks, TbHierarchy2, TbCircleCheck, TbCircleCheckFilled, TbSearch, TbLayoutKanban, TbPlus } from 'react-icons/tb'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import Avatar from '@/components/ui/Avatar'
@@ -18,6 +18,7 @@ import classNames from '@/utils/classNames'
 import { api, qs, notify } from '../kit/api'
 import { STATUS, PRIORITY, statusOf, prioOf, initials } from './shared'
 import TaskDrawer from './TaskDrawer'
+import TemplatesDialog from './TemplatesDialog'
 import { tr, trn } from '@/utils/t'
 
 const { TBody, Tr, Td } = Table
@@ -44,6 +45,12 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }
             </Td>
             <Td className="min-w-[220px]">
                 <button type="button" onClick={() => onOpen(t.id)} className={classNames('heading-text text-left font-bold hover:text-primary', done && 'line-through opacity-50')}>{t.name}</button>
+                {(t.parent || t.subtasks?.total > 0) && (
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+                        {t.parent && <button type="button" className="truncate hover:text-primary" onClick={() => onOpen(t.parent.id)}>↳ {t.parent.name}</button>}
+                        {t.subtasks?.total > 0 && <span className="inline-flex items-center gap-1"><TbHierarchy2 />{t.subtasks.done}/{t.subtasks.total}</span>}
+                    </div>
+                )}
             </Td>
             <Td className="w-[150px]"><Pill cls={STATUS_PILL[t.status]}>{statusOf(t.status).label}</Pill></Td>
             <Td className="w-[130px]"><Pill cls={PRIO_PILL[t.priority]}>{prioOf(t.priority).label}</Pill></Td>
@@ -96,6 +103,7 @@ const TaskList = ({ projectId = null }) => {
     const [data, setData] = useState({ list: [], can: {} })
     const [lookups, setLookups] = useState({ staff: [], me: null })
     const [search, setSearch] = useState('')
+    const [tpl, setTpl] = useState(false)
     const [allDone, setAllDone] = useState(false)
     const [order, setOrder] = useState(() => { try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '[]') } catch { return [] } })
     const [adding, setAdding] = useState('')
@@ -182,6 +190,7 @@ const TaskList = ({ projectId = null }) => {
                     </Segment>}
                     {scope === 'team' && people.length > 0 && <UsersAvatarGroup className="flex items-center" avatarProps={{ size: 'sm' }} imgKey="image" users={people} />}
                     <Button size="sm" icon={<TbLayoutKanban />} onClick={() => nav(projectId ? `/crm/projects/${projectId}/board` : '/crm/scrum-board')}>{tr('Scrum board')}</Button>
+                    {data.can.create && <Button size="sm" icon={<TbBookmarks />} onClick={() => setTpl(true)}>{tr('Templates')}</Button>}
                     {data.can.create && <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => open(null)}>{tr('New task')}</Button>}
                 </div>
             </div>
@@ -235,6 +244,7 @@ const TaskList = ({ projectId = null }) => {
                 {loading && !groups.length && <div className="py-10 text-center text-gray-400">{tr('Loading…')}</div>}
             </div>
 
+            <TemplatesDialog isOpen={tpl} onClose={() => setTpl(false)} context={projectId ? { relType: 'project', relId: projectId } : {}} onUsed={(id) => nav(`/crm/tasks/${id}`)} />
             <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={projectId ? { relType: 'project', relId: projectId } : null} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} />
         </Shell>
     )

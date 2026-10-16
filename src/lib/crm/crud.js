@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
+import { rateLimit } from '@/lib/rateLimit'
 import { getResource } from './resources'
 import {
     PermissionError,
@@ -248,6 +249,7 @@ export async function createRecord(key, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.feature, 'create')
+    rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const data = buildData(resource, body)
     validateRequired(resource, data)
@@ -265,6 +267,7 @@ export async function updateRecord(key, id, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.feature, 'edit')
+    rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const current = await getRecord(key, id) // enforces view_own scope
     const locked = resource.lock?.(current)
@@ -279,6 +282,7 @@ export async function deleteRecord(key, id) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.feature, 'delete')
+    rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const row = await getRecord(key, id)
     const locked = resource.lock?.(row)
@@ -318,6 +322,6 @@ export const errorResponse = (original) => {
     if (status === 500) console.error('[crm]', error)
     return Response.json(
         { error: status === 500 ? 'Internal server error' : error.message },
-        { status },
+        { status, headers: error.retryAfter ? { 'Retry-After': String(error.retryAfter) } : undefined },
     )
 }

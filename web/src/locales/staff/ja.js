@@ -3260,5 +3260,6 @@ export default {
     "{n} per person": "1人あたり{n}",
     "{n} tasks without dates are not shown.": "日付のないタスク{n}件は表示されていません。",
     "Finish the subtasks first": "先にサブタスクを完了してください",
-    "Too many requests. Try again in {n} seconds.": "リクエストが多すぎます。{n}秒後にもう一度お試しください。"
+    "Too many requests. Try again in {n} seconds.": "リクエストが多すぎます。{n}秒後にもう一度お試しください。",
+    "Clear dates": "日付をクリア"
 }

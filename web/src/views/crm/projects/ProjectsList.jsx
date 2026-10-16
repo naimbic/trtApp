@@ -13,6 +13,7 @@ import ProjectDialog from './ProjectDialog'
 import { STATUS, StatusTag, Bar, fmt } from './shared'
 import { tr } from '@/utils/t'
 
+const DATE_FIELDS = () => [{ value: 'deadline', label: tr('Deadline') }, { value: 'startDate', label: tr('Start date') }, { value: 'createdAt', label: tr('Created') }]
 const FAV_KEY = 'projects.favourites'
 const readFav = () => { try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]') } catch { return [] } }
 
@@ -26,14 +27,17 @@ const ProjectsList = () => {
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
     const [status, setStatus] = useState(null)
+    const [dateField, setDateField] = useState('deadline')
+    const [from, setFrom] = useState('')
+    const [to, setTo] = useState('')
     const [fav, setFav] = useState(readFav)
     const [dialog, setDialog] = useState(false)
     const [error, setError] = useState('')
 
     useEffect(() => { const t = setTimeout(() => setQuery(search.trim()), 300); return () => clearTimeout(t) }, [search])
     const load = useCallback(async () => {
-        try { setData(await api(`/api/crm/work/projects?${qs({ query, status: status?.value })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [query, status])
+        try { setData(await api(`/api/crm/work/projects?${qs({ query, status: status?.value, dateField, from, to })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
+    }, [query, status, dateField, from, to])
     useEffect(() => { load() }, [load])
 
     const toggle = (id) => setFav((f) => { const n = f.includes(id) ? f.filter((x) => x !== id) : [...f, id]; try { localStorage.setItem(FAV_KEY, JSON.stringify(n)) } catch { /* private mode */ } return n })
@@ -50,6 +54,13 @@ const ProjectsList = () => {
             <div className="mt-4 flex flex-wrap items-center gap-3">
                 <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search projects")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="w-52"><Select size="sm" isClearable placeholder={tr("All statuses")} options={opts} value={status ? opts.find((o) => o.value === status.value) : null} onChange={(o) => setStatus(o)} /></div>
+                <div className="w-40"><Select size="sm" isSearchable={false} options={DATE_FIELDS()} value={DATE_FIELDS().find((o) => o.value === dateField)} onChange={(o) => setDateField(o.value)} /></div>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} aria-label={tr("From")} className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-800" />
+                    <span>→</span>
+                    <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} aria-label={tr("To")} className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-800" />
+                    {(from || to) && <button type="button" className="font-semibold text-primary hover:underline" onClick={() => { setFrom(''); setTo('') }}>{tr("Clear dates")}</button>}
+                </div>
             </div>
             {error && <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 

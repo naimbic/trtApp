@@ -56,6 +56,11 @@ export async function listProjects(q = {}) {
     if (q.status) and.push({ status: parseInt(q.status, 10) })
     if (oid(q.clientId)) and.push({ clientId: q.clientId })
     if (q.query) and.push({ name: { contains: q.query, mode: 'insensitive' } })
+    // a date range on the start date, the deadline or the day the project was created (whole days, UTC like the other dates)
+    const field = { startDate: 'startDate', deadline: 'deadline', createdAt: 'createdAt' }[q.dateField] || 'deadline'
+    const day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? new Date(`${v}T00:00:00.000Z`) : null)
+    const from = day(q.from), to = day(q.to)
+    if (from || to) and.push({ [field]: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(+to + 86400000) } : {}) } })
     const projects = await prisma.crmProject.findMany({ where: { AND: and }, orderBy: { createdAt: 'desc' } })
     const ids = projects.map((p) => p.id)
     const [stats, members, clients] = await Promise.all([

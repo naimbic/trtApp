@@ -3260,5 +3260,6 @@ export default {
     "{n} per person": "{n} par personne",
     "{n} tasks without dates are not shown.": "{n} tâches sans dates ne sont pas affichées.",
     "Finish the subtasks first": "Terminez d'abord les sous-tâches",
-    "Too many requests. Try again in {n} seconds.": "Trop de requêtes. Réessayez dans {n} secondes."
+    "Too many requests. Try again in {n} seconds.": "Trop de requêtes. Réessayez dans {n} secondes.",
+    "Clear dates": "Effacer les dates"
 }

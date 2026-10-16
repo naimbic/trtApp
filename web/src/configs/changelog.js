@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.44.1',
+        date: '2026-10-16',
+        title: 'Fixes: new task template, subtasks tab; date filter on projects',
+        items: ['Creating a new task template crashed the page (the priority list was read the wrong way); fixed and tested by creating a template, using it and ticking its subtasks', 'The Subtasks tab of a task showed a blank page; fixed', 'Projects: filter by a date range on the deadline, the start date or the creation date, with a clear button']
+    },
+    {
         version: '0.44.0',
         date: '2026-10-16',
         title: 'Subtasks, templates, recurring tasks, timeline, team goals, rate limits',

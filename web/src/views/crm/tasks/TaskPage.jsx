@@ -68,7 +68,7 @@ const TaskPage = () => {
     const post = async (path, b, ok) => { try { await api(`/api/crm/work/tasks/${id}/${path}`, { method: 'POST', body: b }); if (ok) notify('success', ok); await load() } catch (er) { notify('danger', er.message) } }
     const delComment = async (c) => { try { await api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' }); await load() } catch (er) { notify('danger', er.message) } }
     const remove = async () => { setConfirmDel(false); try { await api(`/api/crm/work/tasks/${id}`, { method: 'DELETE' }); notify('success', tr('Task deleted')); nav(t.rel?.type === 'project' ? `/crm/projects/${t.relId}` : '/crm/my-tasks') } catch (er) { notify('danger', er.message) } }
-    const subs = t.subtasks || []
+    const subs = Array.isArray(d.subtasks) ? d.subtasks : []
     const addSub = async () => {
         const name = subName.trim()
         if (!name) return

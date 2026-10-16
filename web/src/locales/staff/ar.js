@@ -3260,5 +3260,6 @@ export default {
     "{n} per person": "{n} لكل شخص",
     "{n} tasks without dates are not shown.": "{n} مهمة بلا تواريخ غير معروضة.",
     "Finish the subtasks first": "أنهِ المهام الفرعية أولًا",
-    "Too many requests. Try again in {n} seconds.": "طلبات كثيرة جدًا. حاول مجددًا بعد {n} ثانية."
+    "Too many requests. Try again in {n} seconds.": "طلبات كثيرة جدًا. حاول مجددًا بعد {n} ثانية.",
+    "Clear dates": "مسح التواريخ"
 }

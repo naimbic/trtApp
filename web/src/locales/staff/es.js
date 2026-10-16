@@ -3203,5 +3203,6 @@ export default {
     "{n} still open": "{n} aún abiertas",
     "{n} tasks": "{n} tareas",
     "{n} tasks without an owner": "{n} tareas sin responsable",
-    "Only the people assigned to this task, or who created it, can change it": "Solo las personas asignadas a esta tarea, o quien la creó, pueden modificarla"
+    "Only the people assigned to this task, or who created it, can change it": "Solo las personas asignadas a esta tarea, o quien la creó, pueden modificarla",
+    "{n} new": "{n} nuevas"
 }

@@ -43,7 +43,7 @@ export async function notificationFeed() {
         for (const r of rem) add('reminder', 'Reminder', r.description, r.date, r.relType === 'customer' ? `/crm/clients/${r.relId}` : r.relType === 'lead' ? `/crm/leads/${r.relId}` : null, 'amber')
     }
     const padding = await numberPadding()
-    if (can('payments') || can('invoices')) {
+    if (all('payments') || all('invoices')) { // company-wide figures: only for people who see all of them
         const inv = await prisma.crmInvoice.findMany({ where: { status: 4 }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true } })
         if (inv.length) add('invoice', `${inv.length} invoice${inv.length === 1 ? ' is' : 's are'} overdue`, inv.slice(0, 3).map((i) => docNumberOf(i, padding)).join(', ') + (inv.length > 3 ? '…' : ''), today, '/crm/invoices', 'red')
         const pays = await prisma.crmPayment.findMany({ where: { OR: [{ paymentDate: { gte: since(7) } }, { createdAt: { gte: since(7) } }] }, orderBy: { createdAt: 'desc' }, take: 6 })

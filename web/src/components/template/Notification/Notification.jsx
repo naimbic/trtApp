@@ -17,12 +17,12 @@ import { tr } from '@/utils/t'
 
 dayjs.extend(relativeTime)
 
-const KIND = {
+export const KIND = {
     ticket: [PiLifebuoyDuotone, 'bg-purple-100 text-purple-600'], task: [PiChecksDuotone, 'bg-sky-100 text-sky-600'], reminder: [PiAlarmDuotone, 'bg-amber-100 text-amber-600'],
     payment: [PiCurrencyCircleDollarDuotone, 'bg-emerald-100 text-emerald-600'], invoice: [PiWarningCircleDuotone, 'bg-red-100 text-red-600'], estimate: [PiFileTextDuotone, 'bg-amber-100 text-amber-600'],
     proposal: [PiPresentationChartDuotone, 'bg-purple-100 text-purple-600'], lead: [PiTargetDuotone, 'bg-blue-100 text-blue-600'], view: [PiEyeDuotone, 'bg-gray-100 text-gray-600'],
 }
-const TONE = { red: 'bg-red-100 text-red-600', green: 'bg-emerald-100 text-emerald-600' }
+export const TONE = { red: 'bg-red-100 text-red-600', green: 'bg-emerald-100 text-emerald-600' }
 const POLL = 60000
 
 const _Notification = ({ className }) => {
@@ -42,6 +42,9 @@ const _Notification = ({ className }) => {
         } catch { /* offline: keep the last list */ } finally { setLoaded(true) }
     }, [])
     useEffect(() => { load(); const t = setInterval(load, POLL); return () => clearInterval(t) }, [load])
+
+    // the Notifications page marks everything as read too
+    useEffect(() => { const f = () => { try { setSeen(Number(localStorage.getItem(storeKey)) || 0) } catch { /* private mode */ } }; window.addEventListener('notif-seen', f); return () => window.removeEventListener('notif-seen', f) }, [storeKey])
 
     const unread = items.filter((i) => +new Date(i.date) > seen).length
     const markAll = () => { const now = Date.now(); setSeen(now); try { localStorage.setItem(storeKey, String(now)) } catch { /* private mode */ } }

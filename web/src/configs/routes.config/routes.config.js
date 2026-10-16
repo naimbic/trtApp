@@ -126,6 +126,7 @@ export const protectedRoutes = [
     { key: 'crm.kb.article', path: '/crm/knowledge-base/article/:id', component: lazy(() => import('@/views/crm/kb/KbArticle')), authority: [] },
     { key: 'crm.reports', path: '/crm/reports', component: lazy(() => import('@/views/crm/reports/Reports')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
+    { key: 'crm.notifications', path: '/crm/notifications', component: lazy(() => import('@/views/crm/NotificationsPage')), authority: [] },
     {
         key: 'crm.resource',
         path: '/crm/:resource',

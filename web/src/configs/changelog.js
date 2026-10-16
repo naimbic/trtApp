@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.42.1',
+        date: '2026-10-16',
+        title: 'Notifications page fixed',
+        items: ['The Notifications page (Team and feedback) crashed for everyone but worked only as an empty screen: its address was answered by the bell\'s data instead of a list; it is now a real page with everything that needs your attention, filters by kind, unread marks and Mark all as read (shared with the bell)', 'The overdue invoices and the received payments in the notifications are now only shown to people who may see all invoices and payments; before, a member who only sees their own records could see the company-wide ones']
+    },
+    {
         version: '0.42.0',
         date: '2026-10-16',
         title: 'All tasks visible to everyone, edited only by their team; richer scrum board',

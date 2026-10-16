@@ -3203,5 +3203,6 @@ export default {
     "{n} still open": "{n} لا تزال مفتوحة",
     "{n} tasks": "{n} مهمة",
     "{n} tasks without an owner": "{n} مهمة بلا مسؤول",
-    "Only the people assigned to this task, or who created it, can change it": "يمكن فقط للأشخاص المكلفين بهذه المهمة أو من أنشأها تعديلها"
+    "Only the people assigned to this task, or who created it, can change it": "يمكن فقط للأشخاص المكلفين بهذه المهمة أو من أنشأها تعديلها",
+    "{n} new": "{n} جديدة"
 }

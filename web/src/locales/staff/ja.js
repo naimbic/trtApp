@@ -3203,5 +3203,6 @@ export default {
     "{n} still open": "未完了{n}件",
     "{n} tasks": "{n}件のタスク",
     "{n} tasks without an owner": "担当者なし{n}件",
-    "Only the people assigned to this task, or who created it, can change it": "このタスクの担当者または作成者だけが変更できます"
+    "Only the people assigned to this task, or who created it, can change it": "このタスクの担当者または作成者だけが変更できます",
+    "{n} new": "新着{n}件"
 }

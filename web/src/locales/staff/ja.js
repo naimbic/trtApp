@@ -3275,5 +3275,12 @@ export default {
     "Your shortcuts": "あなたのショートカット",
     "mine": "自分の",
     "open": "未完了",
-    "to follow up": "要フォロー"
+    "to follow up": "要フォロー",
+    "All dates": "すべての日付",
+    "Completed on": "完了日",
+    "Done today": "今日完了",
+    "Tasks due today": "今日が期限のタスク",
+    "This week": "今週",
+    "Tomorrow": "明日",
+    "due today": "今日が期限"
 }

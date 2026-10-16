@@ -110,8 +110,16 @@ export async function listTasks(p = {}) {
     if (p.relType) and.push({ relType: p.relType })
     if (oid(p.relId)) and.push({ relId: p.relId })
     if (p.query) and.push({ OR: [{ name: { contains: p.query, mode: 'insensitive' } }, { description: { contains: p.query, mode: 'insensitive' } }] })
-    // finished tasks are hidden on the board unless asked for, like Perfex
-    const showDone = p.done === '1' || p.status === '5'
+    // date filters: a range on the due / start / completion date, only the late ones, or the ones without a date.
+    // Days are whole days (UTC), the caller says what "today" is where it lives.
+    const day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? new Date(`${v}T00:00:00.000Z`) : null)
+    const field = { dueDate: 'dueDate', startDate: 'startDate', dateFinished: 'dateFinished' }[p.dateField] || 'dueDate'
+    const from = day(p.from), to = day(p.to)
+    if (from || to) and.push({ AND: [{ [field]: { not: null } }, { [field]: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(+to + 86400000) } : {}) } }] })
+    if (p.noDate === '1') and.push({ [field]: null })
+    if (p.overdue === '1') and.push({ AND: [{ dueDate: { not: null } }, { dueDate: { lt: day(p.today) || day(new Date().toISOString().slice(0, 10)) } }], status: { not: COMPLETE } })
+    // finished tasks are hidden on the board unless asked for, like Perfex; a date range shows them too (a day's work includes what is done)
+    const showDone = p.done === '1' || p.status === '5' || !!(from || to)
     if (p.status) and.push({ status: parseInt(p.status, 10) })
     else if (!showDone) and.push({ OR: [{ status: { not: COMPLETE } }, { dateFinished: { gte: new Date(Date.now() - 14 * 86400000) } }] })
     const limit = Math.min(parseInt(p.limit, 10) || 400, 1000)

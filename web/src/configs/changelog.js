@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.46.1',
+        date: '2026-10-16',
+        title: 'Date filter on tasks',
+        items: ['My tasks, Team tasks and the project task lists: one-click periods for the daily follow-up (All dates, Today, Tomorrow, This week, Overdue, No date, Done today) and a Custom range on the due date, the start date or the completion date; a range also shows the tasks already finished that day', 'A link can open the list on a period (for example /crm/my-tasks?period=today); new dashboard shortcut "Tasks due today" with the number due', 'Behind it, the task list accepts dateField, from, to, overdue and noDate, and only counts tasks that really have a date']
+    },
+    {
         version: '0.46.0',
         date: '2026-10-16',
         title: 'Shortcuts on the team dashboard',

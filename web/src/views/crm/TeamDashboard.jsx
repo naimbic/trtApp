@@ -203,6 +203,7 @@ const TeamDashboard = () => {
 // feature = the permission needed to open the page (null: everybody); badge(d) = a live figure shown on the tile
 const SHORTCUTS = [
     { key: 'my-tasks', label: () => tr('My tasks'), to: '/crm/my-tasks', icon: <TbChecklist />, tone: 'blue', feature: 'tasks', badge: (d) => d.tasks && { n: d.tasks.mine.open, warn: d.tasks.mine.overdue, text: d.tasks.mine.overdue ? tr('{n} overdue', { n: d.tasks.mine.overdue }) : tr('open') } },
+    { key: 'today-tasks', label: () => tr('Tasks due today'), to: '/crm/my-tasks?period=today', icon: <TbCalendarEvent />, tone: 'amber', feature: 'tasks', badge: (d) => d.tasks && { n: d.tasks.mine.today, warn: 0, text: tr('due today') } },
     { key: 'leads', label: () => tr('Leads to follow up'), to: '/crm/leads', icon: <TbTargetArrow />, tone: 'violet', feature: 'leads', badge: (d) => d.leads && { n: d.leads.mine.stale, warn: d.leads.mine.stale, text: tr('to follow up') } },
     { key: 'team-tasks', label: () => tr('Team tasks'), to: '/crm/team-tasks', icon: <TbUsersGroup />, tone: 'teal', feature: 'tasks', badge: (d) => d.tasks?.team && { n: d.tasks.team.open, text: tr('open') } },
     { key: 'scrum-board', label: () => tr('Scrum board'), to: '/crm/scrum-board', icon: <TbLayoutKanban />, tone: 'green', feature: 'tasks' },

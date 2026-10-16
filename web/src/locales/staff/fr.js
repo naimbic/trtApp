@@ -3275,5 +3275,12 @@ export default {
     "Your shortcuts": "Vos raccourcis",
     "mine": "les miens",
     "open": "ouvertes",
-    "to follow up": "à relancer"
+    "to follow up": "à relancer",
+    "All dates": "Toutes les dates",
+    "Completed on": "Terminée le",
+    "Done today": "Terminées aujourd'hui",
+    "Tasks due today": "Tâches dues aujourd'hui",
+    "This week": "Cette semaine",
+    "Tomorrow": "Demain",
+    "due today": "dues aujourd'hui"
 }

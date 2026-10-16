@@ -95,6 +95,23 @@ const AddTask = ({ open, onOpen, onClose, staff, me, onCreate, defaults }) => {
     )
 }
 
+/* ---- date filter: one click for the daily follow-up, or any range on the due / start / completion date ---- */
+const ymd = (d) => dayjs(d).format('YYYY-MM-DD')
+const PERIODS = () => [['all', tr('All dates')], ['today', tr('Today')], ['tomorrow', tr('Tomorrow')], ['week', tr('This week')], ['overdue', tr('Overdue')], ['nodate', tr('No date')], ['done', tr('Done today')], ['custom', tr('Custom')]]
+const DATE_FIELDS = () => [{ value: 'dueDate', label: tr('Due date') }, { value: 'startDate', label: tr('Start date') }, { value: 'dateFinished', label: tr('Completed on') }]
+/** The API parameters of a period (whole days, the person's own today). */
+const periodParams = (period, field, from, to) => {
+    const today = ymd(new Date())
+    if (period === 'today') return { from: today, to: today }
+    if (period === 'tomorrow') return { from: ymd(dayjs().add(1, 'day')), to: ymd(dayjs().add(1, 'day')) }
+    if (period === 'week') { const monday = dayjs().subtract((dayjs().day() + 6) % 7, 'day'); return { from: ymd(monday), to: ymd(monday.add(6, 'day')) } }
+    if (period === 'overdue') return { overdue: '1', today }
+    if (period === 'nodate') return { noDate: '1' }
+    if (period === 'done') return { dateField: 'dateFinished', from: today, to: today }
+    if (period === 'custom') return { dateField: field, from, to }
+    return {}
+}
+
 /** What a new task starts with, from Settings → Tasks. */
 const taskDefaults = (l) => (l.defaults ? { status: l.defaults.status, priority: l.defaults.priority, billable: l.defaults.billable, assigneeIds: l.defaults.assignMe && l.me ? [l.me] : [], followerIds: l.defaults.followMe && l.me ? [l.me] : [] } : {})
 
@@ -108,6 +125,10 @@ const TaskList = ({ projectId = null }) => {
     const [search, setSearch] = useState('')
     const [tpl, setTpl] = useState(false)
     const [allDone, setAllDone] = useState(false)
+    const [period, setPeriod] = useState(() => { const p = new URLSearchParams(window.location.search).get('period'); return PERIODS().some(([k]) => k === p) ? p : 'all' }) // ?period=today opens the list on that day
+    const [dateField, setDateField] = useState('dueDate')
+    const [from, setFrom] = useState('')
+    const [to, setTo] = useState('')
     const [order, setOrder] = useState(() => { try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '[]') } catch { return [] } })
     const [adding, setAdding] = useState('')
     const [loading, setLoading] = useState(true)
@@ -116,8 +137,8 @@ const TaskList = ({ projectId = null }) => {
 
     useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLookups).catch(() => {}) }, [])
     const load = useCallback(async () => {
-        try { setData(await api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', done: allDone ? '1' : '', limit: 1000, relType: projectId ? 'project' : '', relId: projectId || '' })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [scope, allDone, projectId])
+        try { setData(await api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', done: allDone ? '1' : '', limit: 1000, relType: projectId ? 'project' : '', relId: projectId || '', ...periodParams(period, dateField, from, to) })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
+    }, [scope, allDone, projectId, period, dateField, from, to])
     useEffect(() => { setLoading(true); load() }, [load])
 
     // groups = projects (plus the tasks that belong to no project)
@@ -200,6 +221,17 @@ const TaskList = ({ projectId = null }) => {
             <div className="mt-4 flex flex-wrap items-center gap-4">
                 <div className="w-full sm:w-72"><Input size="sm" value={search} prefix={<TbSearch className="text-lg" />} placeholder={tr('Search tasks')} onChange={(e) => setSearch(e.target.value)} /></div>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={allDone} onChange={setAllDone} />{tr('Show all completed')}</label>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+                {PERIODS().map(([k, label]) => <button key={k} type="button" onClick={() => setPeriod(k)} className={classNames('rounded-full px-3 py-1 text-sm font-semibold transition', period === k ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300', k === 'overdue' && period !== k && 'text-red-500')}>{label}</button>)}
+                {period === 'custom' && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="w-40"><Select size="sm" isSearchable={false} options={DATE_FIELDS()} value={DATE_FIELDS().find((o) => o.value === dateField)} onChange={(o) => setDateField(o.value)} /></div>
+                        <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} aria-label={tr('From')} className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-800" />
+                        <span className="text-gray-400">→</span>
+                        <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} aria-label={tr('To')} className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-800" />
+                    </div>
+                )}
             </div>
             {error && <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
 

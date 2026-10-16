@@ -3275,5 +3275,12 @@ export default {
     "Your shortcuts": "اختصاراتك",
     "mine": "الخاصة بي",
     "open": "مفتوحة",
-    "to follow up": "للمتابعة"
+    "to follow up": "للمتابعة",
+    "All dates": "كل التواريخ",
+    "Completed on": "أُنجزت في",
+    "Done today": "أُنجزت اليوم",
+    "Tasks due today": "مهام تستحق اليوم",
+    "This week": "هذا الأسبوع",
+    "Tomorrow": "غدًا",
+    "due today": "تستحق اليوم"
 }

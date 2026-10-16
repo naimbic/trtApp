@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import { loadStaffLang } from '@/utils/t'
 import { useThemeStore } from '@/store/themeStore'
+import { clearUserData } from '@/utils/clearUserData'
 import { localizeShared } from '@/utils/localizeShared'
 
 // If the server says the session is gone (401) — signed out elsewhere, deactivated, or the database changed —
@@ -10,12 +11,14 @@ import { localizeShared } from '@/utils/localizeShared'
 const nativeFetch = window.fetch.bind(window)
 let redirecting = false
 window.fetch = async (...args) => {
-    const res = await nativeFetch(...args)
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || ''
+    // data of the API belongs to whoever is signed in: never answer it from the browser cache
+    if (url.startsWith('/api/')) args[1] = { cache: 'no-store', ...args[1] }
+    const res = await nativeFetch(...args)
     if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/portal') && !url.startsWith('/api/crm/auth/') && !redirecting) {
         redirecting = true
         try {
-            localStorage.removeItem('sessionUser')
+            clearUserData()
         } catch {
             /* storage unavailable */
         }

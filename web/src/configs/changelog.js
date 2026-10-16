@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.40.1',
+        date: '2026-10-16',
+        title: 'Nothing of the previous person stays after sign-out',
+        items: ['Signing out now reloads the app and wipes what the browser remembered about that person (remembered views, filters, favourites, task order, caches); signing in also starts clean, so the next person never sees the previous one\'s data; language and theme are kept', 'API answers are never kept by the browser, a proxy or a CDN any more (no-store, per cookie), so a shared cache cannot hand one person\'s data to another']
+    },
+    {
         version: '0.40.0',
         date: '2026-10-15',
         title: 'Team performance on the Team dashboard',

@@ -1,3 +1,4 @@
+import { clearUserData } from '@/utils/clearUserData'
 import { useRef, useImperativeHandle, useState, useEffect } from 'react'
 import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
@@ -77,6 +78,7 @@ function AuthProvider({ children }) {
                 const chk = await fetch('/api/crm/auth/2fa/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }).then((r) => r.json()).catch(() => ({}))
                 if (chk.twoFactor) return { status: 'otp', methods: chk.methods }
             }
+            clearUserData() // what a previous person left in this browser must not reach this one
             // drop any old session cookie first: a leftover from an earlier deployment can shadow the new one
             await fetch('/api/crm/auth/clear-session', { method: 'POST', credentials: 'include' }).catch(() => {})
             const { csrfToken } = await (await fetch('/api/auth/csrf', { credentials: 'include' })).json()
@@ -121,7 +123,9 @@ function AuthProvider({ children }) {
         } finally {
             setUser({ userName: '', email: '', avatar: '', authority: [] })
             setSessionSignedIn(false)
-            navigatorRef.current?.navigate('/')
+            clearUserData()
+            // a full reload, not a client-side navigation: nothing of this person may stay in memory for the next one
+            window.location.assign('/sign-in')
         }
     }
 

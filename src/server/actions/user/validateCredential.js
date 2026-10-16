@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { buildUserAuthority } from '@/lib/crm/authBuild'
 import { lockState, recordFailure, clearFailures } from '@/lib/crm/loginGuard'
 import { hasTwoFactor, verifySecondStep } from '@/lib/crm/twoFactor'
+import { redeemTicket } from '@/lib/crm/trtagency/store'
 
 // Compared against when the email is unknown so response time does not reveal which emails exist.
 const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8.4Q0n5y7Q5xk9bP7r6bUQ8g8m3m5W'
@@ -23,6 +24,16 @@ const clientIp = async () => {
  * records the sign-in. Returns null on any failure (the UI asks /api/crm/auth/status why).
  */
 const validateCredential = async (values) => {
+    // a person who just signed in through trtAgency: the callback issued a one-time ticket (the provider did the authentication)
+    if (values?.oidcTicket) {
+        const userId = await redeemTicket(values.oidcTicket)
+        const user = userId ? await prisma.user.findUnique({ where: { id: userId } }) : null
+        if (!user) return null
+        const { authority, blocked } = await buildUserAuthority(user)
+        if (blocked) return null
+        prisma.crmStaff.updateMany({ where: { userId: user.id }, data: { lastLogin: new Date(), lastActivity: new Date() } }).catch(() => {})
+        return { id: user.id, userName: user.name, email: user.email, avatar: user.image, authority, sv: user.sessionVersion || 0 }
+    }
     const email = String(values?.email || '').trim().toLowerCase()
     const password = String(values?.password || '')
     if (!email || !password) return null

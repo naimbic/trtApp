@@ -3289,5 +3289,17 @@ export default {
     "Time today": "今日の時間",
     "Timer running": "タイマー実行中",
     "Waiting": "待機中",
-    "testing, feedback": "テスト・フィードバック"
+    "testing, feedback": "テスト・フィードバック",
+    "Sign in with trtAgency": "trtAgencyでサインイン",
+    "Sign in with trtAgency is not set up on this server.": "このサーバーではtrtAgencyでのサインインが設定されていません。",
+    "The sign-in took too long. Start again.": "サインインに時間がかかりすぎました。もう一度お試しください。",
+    "There is no account for you here yet. Ask an administrator to add you.": "ここにはまだあなたのアカウントがありません。管理者に追加を依頼してください。",
+    "This email address already belongs to another trtAgency identity. Ask an administrator.": "このメールアドレスは別のtrtAgencyのIDに紐づいています。管理者に相談してください。",
+    "This sign-in link is not valid any more. Start again.": "このサインインのリンクは無効です。もう一度お試しください。",
+    "You cancelled the sign-in with trtAgency.": "trtAgencyでのサインインをキャンセルしました。",
+    "Your account is disabled. Ask an administrator.": "アカウントが無効です。管理者に相談してください。",
+    "Your trtAgency account has no email address, which is needed to create your account here.": "trtAgencyのアカウントにメールアドレスがないため、ここでアカウントを作成できません。",
+    "trtAgency answered with something we could not verify. Try again, or use your email and password.": "trtAgencyの応答を検証できませんでした。もう一度試すか、メールとパスワードでサインインしてください。",
+    "trtAgency could not sign you in. Try again.": "trtAgencyでサインインできませんでした。もう一度お試しください。",
+    "trtAgency did not tell us who you are.": "trtAgencyからあなたの情報が届きませんでした。"
 }

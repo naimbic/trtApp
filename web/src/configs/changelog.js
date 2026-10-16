@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.48.0',
+        date: '2026-10-16',
+        title: 'Sign in with trtAgency (OpenID Connect)',
+        items: ['New "Sign in with trtAgency" button on the sign-in page (shown only when the server is set up for it): authorization code + PKCE, state and nonce kept on the server, the ID token verified against the provider\'s keys (signature, issuer, audience, expiry, nonce); the normal session is then created, so everything else works as with a password', 'The account is found by the stable trtAgency identity, else attached to the existing account with the same verified email, else created (a team member who only has the access every member has; an administrator gives the role); deactivated members are refused; creation and email linking can be switched off with TRTAGENCY_AUTO_CREATE and TRTAGENCY_LINK_BY_EMAIL', 'Friendly messages when the person cancels, the link is old or reused, the token cannot be verified, no account exists or the account is disabled', 'Settings are environment variables (TRTAGENCY_ISSUER, TRTAGENCY_CLIENT_ID, TRTAGENCY_CLIENT_SECRET, TRTAGENCY_REDIRECT_URI), nothing secret is stored in the code; see docs/trtagency-signin.md; a fake provider (scripts/fake-trtagency.mjs) and 28 tests (npm test) cover the whole flow']
+    },
+    {
         version: '0.47.1',
         date: '2026-10-16',
         title: 'Task cards in one compact row',

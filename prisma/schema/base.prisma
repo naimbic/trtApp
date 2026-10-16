@@ -30,6 +30,9 @@ model User {
   postcode       String?
   birthday       String?
   role           String?  @default("user")
+  /// trtAgency (OpenID Connect): the stable user id of the identity provider and the name shown there
+  trtagencySub      String?
+  trtagencyUsername String?
   /// bumped to sign the user out of every device (null = 0)
   sessionVersion Int?
   status         String?  @default("active")
@@ -60,6 +63,7 @@ model User {
   transactions   Transaction[]
   integrations   UserIntegration[]
 
+  @@index([trtagencySub])
   @@map("users")
 }
 

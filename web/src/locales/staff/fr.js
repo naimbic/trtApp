@@ -3289,5 +3289,17 @@ export default {
     "Time today": "Temps aujourd'hui",
     "Timer running": "Chrono en cours",
     "Waiting": "En attente",
-    "testing, feedback": "test, retour"
+    "testing, feedback": "test, retour",
+    "Sign in with trtAgency": "Se connecter avec trtAgency",
+    "Sign in with trtAgency is not set up on this server.": "La connexion avec trtAgency n'est pas configurée sur ce serveur.",
+    "The sign-in took too long. Start again.": "La connexion a pris trop de temps. Recommencez.",
+    "There is no account for you here yet. Ask an administrator to add you.": "Vous n'avez pas encore de compte ici. Demandez à un administrateur de vous ajouter.",
+    "This email address already belongs to another trtAgency identity. Ask an administrator.": "Cette adresse email appartient déjà à une autre identité trtAgency. Demandez à un administrateur.",
+    "This sign-in link is not valid any more. Start again.": "Ce lien de connexion n'est plus valide. Recommencez.",
+    "You cancelled the sign-in with trtAgency.": "Vous avez annulé la connexion avec trtAgency.",
+    "Your account is disabled. Ask an administrator.": "Votre compte est désactivé. Demandez à un administrateur.",
+    "Your trtAgency account has no email address, which is needed to create your account here.": "Votre compte trtAgency n'a pas d'adresse email, nécessaire pour créer votre compte ici.",
+    "trtAgency answered with something we could not verify. Try again, or use your email and password.": "trtAgency a répondu avec quelque chose que nous n'avons pas pu vérifier. Réessayez ou utilisez votre email et mot de passe.",
+    "trtAgency could not sign you in. Try again.": "trtAgency n'a pas pu vous connecter. Réessayez.",
+    "trtAgency did not tell us who you are.": "trtAgency ne nous a pas dit qui vous êtes."
 }

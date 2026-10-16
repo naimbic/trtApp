@@ -3289,5 +3289,17 @@ export default {
     "Time today": "وقت اليوم",
     "Timer running": "المؤقت يعمل",
     "Waiting": "قيد الانتظار",
-    "testing, feedback": "اختبار، ملاحظات"
+    "testing, feedback": "اختبار، ملاحظات",
+    "Sign in with trtAgency": "تسجيل الدخول عبر trtAgency",
+    "Sign in with trtAgency is not set up on this server.": "تسجيل الدخول عبر trtAgency غير مفعّل على هذا الخادم.",
+    "The sign-in took too long. Start again.": "استغرق تسجيل الدخول وقتًا طويلًا. ابدأ من جديد.",
+    "There is no account for you here yet. Ask an administrator to add you.": "لا يوجد حساب لك هنا بعد. اطلب من المسؤول إضافتك.",
+    "This email address already belongs to another trtAgency identity. Ask an administrator.": "هذا البريد مرتبط بهوية trtAgency أخرى. اطلب المساعدة من المسؤول.",
+    "This sign-in link is not valid any more. Start again.": "رابط تسجيل الدخول لم يعد صالحًا. ابدأ من جديد.",
+    "You cancelled the sign-in with trtAgency.": "لقد ألغيت تسجيل الدخول عبر trtAgency.",
+    "Your account is disabled. Ask an administrator.": "حسابك معطّل. اطلب المساعدة من المسؤول.",
+    "Your trtAgency account has no email address, which is needed to create your account here.": "حساب trtAgency الخاص بك بلا بريد إلكتروني، وهو لازم لإنشاء حسابك هنا.",
+    "trtAgency answered with something we could not verify. Try again, or use your email and password.": "ردّ trtAgency بما لم نتمكن من التحقق منه. حاول مجددًا أو استخدم بريدك وكلمة المرور.",
+    "trtAgency could not sign you in. Try again.": "تعذّر على trtAgency تسجيل دخولك. حاول مجددًا.",
+    "trtAgency did not tell us who you are.": "لم يخبرنا trtAgency من أنت."
 }

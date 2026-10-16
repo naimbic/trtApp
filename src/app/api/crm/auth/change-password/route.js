@@ -5,6 +5,6 @@ export async function POST(request) {
     try {
         return NextResponse.json(await changeOwnPassword(await request.json()))
     } catch (e) {
-        return NextResponse.json({ error: e.message }, { status: e.status || 500 })
+        return e instanceof SyntaxError ? NextResponse.json({ error: 'The request could not be read' }, { status: 400 }) : NextResponse.json({ error: e.message }, { status: e.status || 500 })
     }
 }

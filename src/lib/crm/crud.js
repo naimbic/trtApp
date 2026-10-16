@@ -235,9 +235,8 @@ const audit = async (session, resource, action, id, label) => {
         if (!prisma.crmActivityLog) return
         await prisma.crmActivityLog.create({
             data: {
-                description: `${action} ${resource.label}${label ? `: ${label}` : ''}`,
+                description: `${action} ${resource.label}${label ? `: ${String(label).slice(0, 200)}` : ''}`,
                 staffId: await getStaffId(session),
-                additionalData: JSON.stringify({ resource: resource.key, id }),
             },
         })
     } catch {
@@ -308,7 +307,13 @@ export async function listOptions(key, { query = '', ids } = {}) {
     return rows.map((r) => ({ value: r.id, label: String(r[resource.titleField] ?? r.id) }))
 }
 
-export const errorResponse = (error) => {
+/** A request body that is not what the route expects (bad JSON, a form that is not multipart) is the caller's mistake, not a server error. */
+export const badBody = (error) => (error instanceof SyntaxError || (error instanceof TypeError && /content-type|formdata|multipart|body/i.test(error.message || '')))
+    ? Object.assign(new Error('The request could not be read: send the file as a form, or valid JSON'), { status: 400 })
+    : error
+
+export const errorResponse = (original) => {
+    const error = badBody(original)
     const status = error?.status || 500
     if (status === 500) console.error('[crm]', error)
     return Response.json(

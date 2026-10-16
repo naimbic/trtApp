@@ -4,6 +4,7 @@ import Dialog from '@/components/ui/Dialog'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -158,9 +159,15 @@ const RolesPanel = () => {
             <Dialog isOpen={!!nameDlg} width={380} onClose={() => setNameDlg(null)} onRequestClose={() => setNameDlg(null)}>
                 <h5 className="mb-3">{nameDlg?.mode === 'new' ? tr("New role") : tr("Rename role")}</h5>
                 <Input autoFocus placeholder={tr("Role name, e.g. Sales manager")} value={nameDlg?.value || ''} onChange={(e) => setNameDlg({ ...nameDlg, value: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.form?.requestSubmit?.() }} />
+                {nameDlg?.mode === 'new' && roles.length > 0 && (
+                    <div className="mt-3">
+                        <div className="mb-1 text-xs font-semibold text-gray-500">{tr("Start from an existing role (optional)")}</div>
+                        <Select isClearable size="sm" menuPortalTarget={document.body} menuPosition="fixed" placeholder={tr("Empty role")} options={roles.map((r) => ({ value: r.id, label: r.name }))} value={roles.filter((r) => r.id === nameDlg.copyFrom).map((r) => ({ value: r.id, label: r.name }))[0] || null} onChange={(o) => setNameDlg({ ...nameDlg, copyFrom: o?.value || null })} />
+                    </div>
+                )}
                 <div className="mt-4 flex justify-end gap-2">
                     <Button onClick={() => setNameDlg(null)}>{tr("Cancel")}</Button>
-                    <Button variant="solid" disabled={!nameDlg?.value?.trim()} onClick={() => { const v = nameDlg.value.trim(); if (nameDlg.mode === 'new') { startNew(); setDraft({ name: v, permissions: {} }) } else setDraft((d) => ({ ...d, name: v })); setNameDlg(null) }}>{nameDlg?.mode === 'new' ? tr("Continue") : tr("Rename")}</Button>
+                    <Button variant="solid" disabled={!nameDlg?.value?.trim()} onClick={() => { const v = nameDlg.value.trim(); if (nameDlg.mode === 'new') { startNew(); setDraft({ name: v, permissions: structuredClone(roles.find((r) => r.id === nameDlg.copyFrom)?.permissions || {}) }) } else setDraft((d) => ({ ...d, name: v })); setNameDlg(null) }}>{nameDlg?.mode === 'new' ? tr("Continue") : tr("Rename")}</Button>
                 </div>
             </Dialog>
 

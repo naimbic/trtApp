@@ -10,6 +10,7 @@ export async function POST(request) {
         if (!r.user) return NextResponse.json({ error: 'Invalid email or password' }, { status: 400 })
         return NextResponse.json(await sendLoginEmailCode(r.user))
     } catch (e) {
+        if (e instanceof SyntaxError) return NextResponse.json({ error: 'The request could not be read' }, { status: 400 })
         return NextResponse.json({ error: e.message || 'Could not send the code' }, { status: e.status || 500 })
     }
 }

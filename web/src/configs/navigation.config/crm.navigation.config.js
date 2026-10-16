@@ -34,7 +34,7 @@ const LAYOUT = {
     Customers: ['clients', 'contacts', S('more', 'More', ['customer-groups', 'vault', 'consent-purposes'])],
     Leads: ['leads', S('setup', 'Lead setup', ['lead-sources', 'lead-statuses', 'web-to-lead', 'lead-email-integration'])],
     Projects: ['projects', 'scrum-board', 'milestones'],
-    Tasks: ['my-tasks', 'team-tasks', 'issues', 'tasks-board', 'tasks', 'task-timers', S('hr', 'Attendance & leave', ['timesheets', 'leave-requests', 'days-off']), S('setup', 'Templates', ['checklist-templates'])],
+    Tasks: ['my-tasks', 'team-tasks', 'time-report', 'issues', 'tasks-board', 'tasks', 'task-timers', S('hr', 'Attendance & leave', ['timesheets', 'leave-requests', 'days-off']), S('setup', 'Templates', ['checklist-templates'])],
     Sales: [
         'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses',
         S('catalog', 'Items & catalog', ['items', 'item-groups']),

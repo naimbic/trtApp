@@ -6,7 +6,19 @@ import templateDemoRoutes from './templateDemoRoutes'
 export const publicRoutes = [...authRoute]
 
 // Every CRM resource shares one generic route; hand-built screens get their own entry first.
-export const protectedRoutes = [
+const ROUTE_FEATURE = [
+    ['/crm/settings', 'settings'], ['/crm/company', 'settings'], ['/team', 'staff'], ['/crm/staff', 'staff'], ['/crm/roles', 'roles'],
+    ['/crm/clients', 'customers'], ['/crm/invoices', 'invoices'], ['/crm/estimates', 'estimates'], ['/crm/purchase-orders', 'purchase_orders'], ['/crm/proposals', 'proposals'], ['/crm/contracts', 'contracts'],
+    ['/crm/payments', 'payments'], ['/crm/expenses', 'expenses'], ['/crm/mails', 'email_templates'], ['/crm/issues', 'issues'],
+    ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'],
+    ['/crm/leads', 'leads'], ['/crm/projects', 'projects'], ['/crm/tickets', 'tickets'], ['/crm/passwords', 'passwords'],
+    ['/crm/knowledge-base', 'knowledge_base'], ['/crm/reports', 'reports'], ['/crm/activity', 'activity_log'],
+]
+// who may open a screen: the people with the view (or view own) permission of its feature, and administrators
+const featureOf = (path) => ROUTE_FEATURE.find(([p]) => path === p || path.startsWith(`${p}/`))?.[1]
+const gate = (routes) => routes.map((r) => { const f = featureOf(r.path); return f && (!r.authority || !r.authority.length) ? { ...r, authority: ['admin', 'crm.admin', `crm.${f}.view`, `crm.${f}.view_own`] } : r })
+
+const crmRoutes = [
     {
         key: 'dashboard',
         path: '/dashboard',
@@ -126,6 +138,7 @@ export const protectedRoutes = [
     { key: 'crm.kb.article', path: '/crm/knowledge-base/article/:id', component: lazy(() => import('@/views/crm/kb/KbArticle')), authority: [] },
     { key: 'crm.reports', path: '/crm/reports', component: lazy(() => import('@/views/crm/reports/Reports')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
+    { key: 'crm.time-report', path: '/crm/time-report', component: lazy(() => import('@/views/crm/tasks/TimeReport')), authority: [] },
     { key: 'crm.notifications', path: '/crm/notifications', component: lazy(() => import('@/views/crm/NotificationsPage')), authority: [] },
     {
         key: 'crm.resource',
@@ -136,3 +149,5 @@ export const protectedRoutes = [
     ...templateDemoRoutes,
     ...othersRoute,
 ]
+
+export const protectedRoutes = gate(crmRoutes)

@@ -9,7 +9,6 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Skeleton from '@/components/ui/Skeleton'
 import classNames from '@/utils/classNames'
-import { useSessionUser } from '@/store/authStore'
 import { KIND, TONE } from '@/components/template/Notification/Notification'
 import { api } from './kit/api'
 import { tr } from '@/utils/t'
@@ -20,16 +19,14 @@ const KIND_LABEL = () => ({ ticket: tr('Tickets'), task: tr('Tasks'), reminder: 
 /** Everything that needs the signed-in person's attention, the full list behind the bell. */
 const NotificationsPage = () => {
     const nav = useNavigate()
-    const uid = useSessionUser((s) => s.user.userId || s.user.email || 'me')
-    const storeKey = `notif.seen.${uid}`
     const [items, setItems] = useState(null)
     const [error, setError] = useState('')
     const [kind, setKind] = useState('')
-    const [seen, setSeen] = useState(() => { try { return Number(localStorage.getItem(storeKey)) || 0 } catch { return 0 } })
-    const load = useCallback(() => api('/api/crm/notifications').then((r) => { setItems(r.items || []); setError('') }).catch((e) => setError(e.message)), [])
+    const [seen, setSeen] = useState(0)
+    const load = useCallback(() => api('/api/crm/notifications').then((r) => { setItems(r.items || []); setSeen(r.seen || 0); setError('') }).catch((e) => setError(e.message)), [])
     useEffect(() => { load(); const t = setInterval(() => { if (!document.hidden) load() }, 60000); return () => clearInterval(t) }, [load])
 
-    const markAll = () => { const now = Date.now(); setSeen(now); try { localStorage.setItem(storeKey, String(now)) } catch { /* private mode */ } window.dispatchEvent(new Event('notif-seen')) }
+    const markAll = () => { const now = Date.now(); setSeen(now); api('/api/crm/notifications', { method: 'POST' }).catch(() => {}); window.dispatchEvent(new CustomEvent('notif-seen', { detail: now })) }
     const kinds = [...new Set((items || []).map((i) => i.kind))]
     const shown = (items || []).filter((i) => !kind || i.kind === kind)
     const unread = (items || []).filter((i) => +new Date(i.date) > seen).length

@@ -11,7 +11,6 @@ import ScrollBar from '@/components/ui/ScrollBar'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import useResponsive from '@/utils/hooks/useResponsive'
-import { useSessionUser } from '@/store/authStore'
 import NotificationToggle from './NotificationToggle'
 import { tr } from '@/utils/t'
 
@@ -28,26 +27,24 @@ const POLL = 60000
 const _Notification = ({ className }) => {
     const navigate = useNavigate()
     const { larger } = useResponsive()
-    const uid = useSessionUser((s) => s.user.userId || s.user.email || 'me')
-    const storeKey = `notif.seen.${uid}`
     const [items, setItems] = useState([])
-    const [seen, setSeen] = useState(() => { try { return Number(localStorage.getItem(storeKey)) || 0 } catch { return 0 } })
+    const [seen, setSeen] = useState(0) // when this person last marked everything as read, kept on the server
     const [loaded, setLoaded] = useState(false)
     const ref = useRef(null)
 
     const load = useCallback(async () => {
         try {
             const r = await fetch('/api/crm/notifications', { credentials: 'include' })
-            if (r.ok) setItems((await r.json()).items || [])
+            if (r.ok) { const j = await r.json(); setItems(j.items || []); setSeen(j.seen || 0) }
         } catch { /* offline: keep the last list */ } finally { setLoaded(true) }
     }, [])
     useEffect(() => { load(); const t = setInterval(load, POLL); return () => clearInterval(t) }, [load])
 
     // the Notifications page marks everything as read too
-    useEffect(() => { const f = () => { try { setSeen(Number(localStorage.getItem(storeKey)) || 0) } catch { /* private mode */ } }; window.addEventListener('notif-seen', f); return () => window.removeEventListener('notif-seen', f) }, [storeKey])
+    useEffect(() => { const f = (e) => setSeen(e.detail || Date.now()); window.addEventListener('notif-seen', f); return () => window.removeEventListener('notif-seen', f) }, [])
 
     const unread = items.filter((i) => +new Date(i.date) > seen).length
-    const markAll = () => { const now = Date.now(); setSeen(now); try { localStorage.setItem(storeKey, String(now)) } catch { /* private mode */ } }
+    const markAll = () => { setSeen(Date.now()); fetch('/api/crm/notifications', { method: 'POST', credentials: 'include' }).catch(() => {}) }
     const open = (i) => { ref.current?.handleDropdownClose?.(); if (i.link) navigate(i.link) }
 
     return (

@@ -13,6 +13,6 @@ export async function POST(request) {
         const s = await twoFactorStatus(r.user.id)
         return NextResponse.json({ twoFactor: s.enabled, methods: { app: s.app, email: s.email } })
     } catch (e) {
-        return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+        return e instanceof SyntaxError ? NextResponse.json({ error: 'The request could not be read' }, { status: 400 }) : NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
     }
 }

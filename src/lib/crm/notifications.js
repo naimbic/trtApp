@@ -72,5 +72,17 @@ export async function notificationFeed() {
         for (const v of vs) add('view', `Client opened ${v.relType === 'invoice' ? 'an invoice' : v.relType === 'estimate' ? 'an estimate' : 'a proposal'}`, v.viewIp ? `from ${v.viewIp}` : '', v.createdAt, `/crm/${v.relType === 'invoice' ? 'invoices' : v.relType === 'estimate' ? 'estimates' : 'proposals'}/${v.relId}`, 'gray')
     }
     void hasCap; void strip
-    return { items: items.sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 40), serverTime: now.toISOString() }
+    const seenRow = staffId ? await prisma.crmOption.findUnique({ where: { name: `notif_seen_${staffId}` } }) : null
+    return { items: items.sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 40), serverTime: now.toISOString(), seen: seenRow?.value ? +new Date(seenRow.value) || 0 : 0 }
+}
+
+/** "Mark all as read": remembered for the person (not the browser), so it follows them to another device and survives a sign-out. */
+export async function markNotificationsSeen() {
+    const session = await requirePermission(null)
+    const staffId = await getStaffId(session)
+    if (!staffId) return { seen: Date.now() }
+    const value = new Date().toISOString()
+    const name = `notif_seen_${staffId}`
+    await prisma.crmOption.upsert({ where: { name }, update: { value }, create: { name, value, autoload: false } })
+    return { seen: +new Date(value) }
 }

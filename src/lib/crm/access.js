@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { requirePermission, isCrmAdmin, hasCap } from '@/lib/crm/permissions'
+import { requirePermission, isCrmAdmin, hasCap, getStaffId } from '@/lib/crm/permissions'
 import { parseRolePermissions, toPermissionRows } from '@/lib/crm/rolePermissions'
 import { cleanPermissions } from '@/lib/crm/permissionCatalog'
 
@@ -12,6 +12,17 @@ function assertCanGrant(authority, perms) {
     for (const [feature, caps] of Object.entries(perms)) {
         for (const cap of caps) if (!hasCap(authority, feature, cap)) throw httpError(`You cannot grant "${cap}" on ${feature} because you do not have it`, 403)
     }
+}
+
+/** Who changed whose access, and exactly what was added or removed: kept in the activity log (administrators read it). */
+const flat = (perms) => new Set(Object.entries(perms || {}).flatMap(([f, caps]) => caps.map((c) => `${f}.${c}`)))
+async function auditAccess(session, description, before, after, extra = {}) {
+    try {
+        const a = flat(before), b = flat(after)
+        const added = [...b].filter((x) => !a.has(x)), removed = [...a].filter((x) => !b.has(x))
+        const changes = [...added.map((x) => `+${x}`), ...removed.map((x) => `-${x}`)].join(' ')
+        await prisma.crmActivityLog.create({ data: { description: `${description}${changes ? ` (${changes})` : ''}`.slice(0, 1500), staffId: await getStaffId(session) } })
+    } catch { /* auditing must never break a write */ }
 }
 
 const shapeRole = (r, members) => {
@@ -36,6 +47,7 @@ export async function createRole(body) {
     const permissions = cleanPermissions(body.permissions)
     assertCanGrant(session.user.authority || [], permissions)
     const r = await prisma.crmRole.create({ data: { name, permissionsRaw: JSON.stringify(permissions) } })
+    await auditAccess(session, `Created role: ${name}`, {}, permissions, { roleId: r.id })
     return shapeRole(r, 0)
 }
 
@@ -59,6 +71,7 @@ export async function updateRole(id, body) {
         data.permissionsRaw = JSON.stringify(permissions)
     }
     const r = await prisma.crmRole.update({ where: { id }, data })
+    await auditAccess(session, `Updated role: ${data.name || role.name}${body.applyToMembers ? ' (applied to its members)' : ''}`, cleanPermissions(parseRolePermissions(role.permissionsRaw)), permissions ?? cleanPermissions(parseRolePermissions(role.permissionsRaw)), { roleId: id, renamedFrom: data.name && data.name !== role.name ? role.name : undefined })
     let applied = 0
     if (body.applyToMembers && permissions) {
         const members = await prisma.crmStaff.findMany({ where: { roleId: id, admin: false }, select: { id: true } })
@@ -74,12 +87,14 @@ export async function updateRole(id, body) {
 }
 
 export async function deleteRole(id) {
-    await requirePermission('roles', 'delete')
+    const session = await requirePermission('roles', 'delete')
     const target = await prisma.crmRole.findUnique({ where: { id }, select: { name: true } })
     if (isSuperRole(target?.name)) throw httpError('The Super Admin role is fixed and cannot be deleted', 400)
     const members = await prisma.crmStaff.count({ where: { roleId: id } })
     if (members) throw httpError(`This role is assigned to ${members} member${members > 1 ? 's' : ''}. Move them to another role first.`, 409)
+    const old = await prisma.crmRole.findUnique({ where: { id } })
     await prisma.crmRole.delete({ where: { id } })
+    await auditAccess(session, `Deleted role: ${target?.name}`, cleanPermissions(parseRolePermissions(old?.permissionsRaw)), {}, { roleId: id })
     return { success: true }
 }
 
@@ -105,8 +120,10 @@ export async function setStaffAccess(id, body) {
     if (s.admin) throw httpError('A Super Admin has full access and cannot be edited', 400)
     const permissions = cleanPermissions(body.permissions)
     assertCanGrant(session.user.authority || [], permissions)
+    const before = await getStaffAccess(id)
     await prisma.crmStaffPermission.deleteMany({ where: { staffId: id } })
     const rows = toPermissionRows(permissions)
     if (rows.length) await prisma.crmStaffPermission.createMany({ data: rows.map((r) => ({ ...r, staffId: id })) })
+    await auditAccess(session, `Changed the access of ${before.name}`, before.permissions, permissions, { staffId: id })
     return getStaffAccess(id)
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router'
+import { Navigate, useParams } from 'react-router'
 import { TbPlus, TbPencil } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
@@ -29,6 +29,9 @@ const ResourcePage = () => {
             </Container>
         )
     }
+
+    // no permission for this kind of record: the friendly Access Denied page, not a screen full of errors
+    if (resource.feature && !can(resource.feature, 'view') && !can(resource.feature, 'view_own')) return <Navigate to="/access-denied" replace />
 
     const canCreate = !resource.readOnly && can(resource.feature, 'create')
     const canEdit = !resource.readOnly && can(resource.feature, 'edit')

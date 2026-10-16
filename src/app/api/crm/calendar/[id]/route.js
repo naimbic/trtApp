@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { updateCalendarEvent, deleteCalendarEvent } from '@/lib/crm/calendar'
 
-const fail = (e) => NextResponse.json({ error: e.message || String(e) }, { status: e.status || 500 })
+const fail = (e) => (e instanceof SyntaxError ? NextResponse.json({ error: 'The request could not be read' }, { status: 400 }) : NextResponse.json({ error: e.message || String(e) }, { status: e.status || 500 }))
 
 export async function PATCH(request, { params }) {
     try {

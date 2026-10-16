@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.43.0',
+        date: '2026-10-16',
+        title: 'No-access pages, raw errors, time report, audit of access changes',
+        items: ['Opening a page you have no permission for now sends you to a friendly Access Denied page (with a way back to your dashboard) instead of a half-loaded screen full of errors; the same for every list of records', 'Uploads and forms that receive something unreadable (a bad file, bad JSON) answer with a clear message instead of an Internal server error, and signing in is checked before the file is read', 'New Time report (Tasks menu): hours per day, per project and per person, billable time, the latest timer sessions, with a 7 / 30 / 90 days switch; managers see the team and can pick a person, everybody else sees their own time', 'The activity log really records changes now (it silently recorded nothing before), including every change of roles and member access with exactly which permissions were added or removed; new roles can start from a copy of an existing role', '"Mark all as read" in the notifications is remembered on the server for the person, so it follows them to another browser and survives a sign-out', 'New scripts/smoke-api.mjs: signs in with one account and opens every list of the API, reporting errors and what the role may not reach, to run after each deployment (once per role)']
+    },
+    {
         version: '0.42.2',
         date: '2026-10-16',
         title: 'Access audit: own-records scope really applied, private notes, reminders and files',

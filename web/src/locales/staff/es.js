@@ -3261,5 +3261,10 @@ export default {
     "{n} tasks without dates are not shown.": "{n} tareas sin fechas no se muestran.",
     "Finish the subtasks first": "Termina primero las subtareas",
     "Too many requests. Try again in {n} seconds.": "Demasiadas solicitudes. Inténtalo de nuevo en {n} segundos.",
-    "Clear dates": "Borrar fechas"
+    "Clear dates": "Borrar fechas",
+    "Needs an account with this service. Enter your keys here when you have them; the connection is switched on once it is built.": "Requiere una cuenta en este servicio. Introduce tus claves aquí cuando las tengas; la conexión se activará cuando esté construida.",
+    "Needs keys": "Requiere claves",
+    "Show {n} more": "Mostrar {n} más",
+    "Comments can only be removed during the first hour": "Los comentarios solo se pueden eliminar durante la primera hora",
+    "The VAT / ICE number is required": "El número de IVA / ICE es obligatorio"
 }

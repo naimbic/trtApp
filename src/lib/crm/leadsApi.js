@@ -1,7 +1,7 @@
 import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
-import { getOptions } from '@/lib/crm/mailer'
+import { readSettings } from '@/lib/crm/appSettings'
 import { convertLeadToClient } from '@/server/actions/crm/crm/convertLead'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
@@ -38,10 +38,11 @@ async function logActivity(leadId, a, description, additional) {
 export async function listLeads(p = {}) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    const opt = await getOptions(['leads_kanban_limit', 'default_leads_kanban_sort'])
-    const limit = Math.min(Math.max(parseInt(p.limit, 10) || parseInt(opt.leads_kanban_limit, 10) || 50, 5), 500)
-    const sort = opt.default_leads_kanban_sort || 'leadorder'
-    const orderBy = sort === 'dateadded' ? [{ createdAt: 'desc' }] : sort === 'lastcontact' ? [{ lastContact: 'desc' }] : [{ leadOrder: 'asc' }, { createdAt: 'desc' }]
+    const opt = await readSettings(['leads_kanban_limit', 'default_leads_kanban_sort', 'default_leads_kanban_sort_type'])
+    const limit = Math.min(Math.max(parseInt(p.limit, 10) || parseInt(opt.get('leads_kanban_limit'), 10) || 50, 5), 500)
+    const sort = opt.get('default_leads_kanban_sort') || 'leadorder'
+    const dir = opt.get('default_leads_kanban_sort_type') === 'asc' ? 'asc' : opt.get('default_leads_kanban_sort_type') === 'desc' ? 'desc' : null // Settings → Leads: order direction
+    const orderBy = sort === 'dateadded' ? [{ createdAt: dir || 'desc' }] : sort === 'lastcontact' ? [{ lastContact: dir || 'desc' }] : [{ leadOrder: dir || 'asc' }, { createdAt: 'desc' }]
     const and = [visible(a)]
     const show = p.show || ''
     if (show === 'lost') and.push({ lost: true }); else if (show === 'junk') and.push({ junk: true }); else if (show === 'converted') and.push({ clientId: { not: null } }); else and.push({ lost: false, junk: false })
@@ -121,7 +122,7 @@ export async function saveLead(body, id) {
     if (id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)
-        if (prev.clientId && (await getOptions(['lead_lock_after_convert_to_customer'])).lead_lock_after_convert_to_customer === '1' && !a.admin) throw fail('This lead is locked because it became a client')
+        if (prev.clientId && (await readSettings(['lead_lock_after_convert_to_customer'])).on('lead_lock_after_convert_to_customer') && !a.admin) throw fail('This lead is locked because it became a client')
         const assigned = oid(body.assignedId)
         if (assigned !== (prev.assigned || null)) { data.assigned = assigned; data.dateAssigned = assigned ? new Date() : null }
         const st = oid(body.statusId)
@@ -180,6 +181,11 @@ export async function convertLead(id, opts = {}) {
     if (!mayEdit(a, l)) throw fail('Forbidden', 403)
     const r = await convertLeadToClient(id, { includeLeadNotes: !!opts.includeNotes })
     if (!r.success) throw fail(r.message || 'Could not convert the lead')
+    // Settings → Leads: the person who owned the lead becomes the administrator of the new client
+    if (l.assigned && (await readSettings(['auto_assign_customer_admin_after_lead_convert'])).on('auto_assign_customer_admin_after_lead_convert') && r.clientId) {
+        const has = await prisma.crmCustomerAdmin.findFirst({ where: { clientId: r.clientId, staffId: l.assigned }, select: { id: true } })
+        if (!has) await prisma.crmCustomerAdmin.create({ data: { clientId: r.clientId, staffId: l.assigned, dateAssigned: new Date() } })
+    }
     return r
 }
 

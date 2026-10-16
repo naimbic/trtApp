@@ -3261,5 +3261,10 @@ export default {
     "{n} tasks without dates are not shown.": "日付のないタスク{n}件は表示されていません。",
     "Finish the subtasks first": "先にサブタスクを完了してください",
     "Too many requests. Try again in {n} seconds.": "リクエストが多すぎます。{n}秒後にもう一度お試しください。",
-    "Clear dates": "日付をクリア"
+    "Clear dates": "日付をクリア",
+    "Needs an account with this service. Enter your keys here when you have them; the connection is switched on once it is built.": "このサービスのアカウントが必要です。キーを取得したらここに入力してください。接続は開発完了後に有効になります。",
+    "Needs keys": "キーが必要",
+    "Show {n} more": "さらに{n}件を表示",
+    "Comments can only be removed during the first hour": "コメントは最初の1時間だけ削除できます",
+    "The VAT / ICE number is required": "VAT / ICE番号は必須です"
 }

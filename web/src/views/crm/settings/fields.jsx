@@ -13,7 +13,9 @@ import { tr } from '@/utils/t'
 
 const ZONES = (typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : ['UTC', 'Africa/Casablanca', 'Europe/Paris']).map((z) => ({ value: z, label: z.replace(/_/g, ' ') }))
 
-export const Soon = () => <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/20" title={tr("Saved now, used by a screen that is not built yet")}>{tr("Soon")}</span>
+export const Soon = ({ kind }) => (kind === 'account'
+    ? <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:bg-sky-500/20" title={tr("Needs an account with this service. Enter your keys here when you have them; the connection is switched on once it is built.")}>{tr("Needs keys")}</span>
+    : <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/20" title={tr("Saved now, used by a screen that is not built yet")}>{tr("Soon")}</span>)
 const copy = async (t) => { try { await navigator.clipboard.writeText(t); notify('success', tr("{t} copied", { t: t })) } catch { notify('danger', tr("Could not copy")) } }
 export const TokenChip = ({ token, onClick }) => (
     <button type="button" onClick={() => (onClick ? onClick(token) : copy(`{${token}}`))} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${token}}`}</button>
@@ -64,7 +66,7 @@ export const Field = ({ field: x, value, secretSet, onChange, canEdit, taxes }) 
     const label = (
         <span className="flex flex-wrap items-center">
             <span className="font-semibold text-gray-700 dark:text-gray-200">{x.label}</span>
-            {x.soon && <Soon />}
+            {x.soon && <Soon kind={x.soon} />}
             {x.token && <span className="ml-2"><TokenChip token={x.token} /></span>}
         </span>
     )

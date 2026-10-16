@@ -97,10 +97,12 @@ const ScrumBoard = () => {
     const [projects, setProjects] = useState([])
     const [data, setData] = useState({ list: [], can: {} })
     const [me, setMe] = useState(null)
+    const [limit, setLimit] = useState(0) // cards per column (Settings → Tasks), 0 = all
+    const [more, setMore] = useState({})
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-    useEffect(() => { api('/api/crm/work/projects?limit=500').then((r) => setProjects(r.list || [])).catch(() => {}); api('/api/crm/work/tasks/lookups').then((l) => setMe(l.me)).catch(() => {}) }, [])
+    useEffect(() => { api('/api/crm/work/projects?limit=500').then((r) => setProjects(r.list || [])).catch(() => {}); api('/api/crm/work/tasks/lookups').then((l) => { setMe(l.me); setLimit(l.defaults?.kanbanLimit || 0) }).catch(() => {}) }, [])
     const load = useCallback(async () => {
         if (!projectId) { setLoading(false); return }
         try { setData(await api(`/api/crm/work/tasks?relType=project&relId=${projectId}&limit=1000&done=1`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
@@ -223,12 +225,13 @@ const ScrumBoard = () => {
                                     <Droppable droppableId={String(c.status)} type="CONTENT">
                                         {(dp) => (
                                             <div ref={dp.innerRef} {...dp.droppableProps} className="min-h-[60px] px-4">
-                                                {c.list.map((t, i) => (
+                                                {c.list.slice(0, limit > 0 && !more[c.status] ? limit : undefined).map((t, i) => (
                                                     <Draggable key={t.id} draggableId={t.id} index={i} isDragDisabled={!data.can.edit || t.canFinish === false}>
                                                         {(tp) => <div ref={tp.innerRef} {...tp.draggableProps} {...tp.dragHandleProps}><Ticket t={t} onOpen={(id) => nav(`/crm/tasks/${id}`)} /></div>}
                                                     </Draggable>
                                                 ))}
                                                 {dp.placeholder}
+                                                {limit > 0 && !more[c.status] && c.list.length > limit && <button type="button" className="mb-3 w-full rounded-lg py-2 text-sm font-semibold text-primary hover:bg-primary/10" onClick={() => setMore((m) => ({ ...m, [c.status]: true }))}>{tr('Show {n} more', { n: c.list.length - limit })}</button>}
                                             </div>
                                         )}
                                     </Droppable>

@@ -7,10 +7,11 @@ import Pagination from '@/components/ui/Pagination'
 import cn from '@/utils/classNames'
 import { api, qs } from './api'
 import { renderCell } from './format'
+import { useAppSettings } from '@/store/appSettingsStore'
 import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
-const SIZES = [10, 25, 50, 100].map((n) => ({ value: n, label: `${n} / page` }))
+const SIZES = [10, 25, 50, 100, 200].map((n) => ({ value: n, label: `${n} / page` }))
 
 /**
  * Server-side table for any CRM resource config (search, sort, filters, paging).
@@ -21,7 +22,10 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
     const [query, setQuery] = useState('')
     const [q, setQ] = useState('')
     const [page, setPage] = useState(1)
+    const app = useAppSettings()
     const [pageSize, setPageSize] = useState(10)
+    // the rows per page chosen in Settings → General become the starting size of every table
+    useEffect(() => { const n = Number(app?.tables_pagination_limit); if (n >= 5 && n <= 200) setPageSize(n) }, [app?.tables_pagination_limit])
     const [sort, setSort] = useState(null)
     // Lists that have an Active/Inactive filter open on "Active" by default.
     const defaultFilters = () => ((resource.filters || []).some((f) => f.key === 'active') ? { active: 'true' } : {})

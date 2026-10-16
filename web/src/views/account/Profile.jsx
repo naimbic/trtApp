@@ -18,6 +18,7 @@ import Alert from '@/components/ui/Alert'
 import ImageUpload from '@/components/crm/ImageUpload'
 import { countryList } from '@/constants/countries.constant'
 import { useSessionUser } from '@/store/authStore'
+import { useAppSettings } from '@/store/appSettingsStore'
 import { useThemeStore } from '@/store/themeStore'
 import { api, notify } from '@/views/crm/kit/api'
 import { resetMe } from '@/utils/hooks/useMe'
@@ -65,6 +66,8 @@ const completion = (u, s) => {
 const Profile = () => {
     const setUser = useSessionUser((st) => st.setUser)
     const sessionUser = useSessionUser((st) => st.user)
+    const app = useAppSettings()
+    const isAdminUser = (sessionUser.authority || []).some((a) => a === 'admin' || a === 'crm.admin')
     const setMode = useThemeStore((st) => st.setMode)
     const [data, setData] = useState(null)
     const [form, setForm] = useState(null)
@@ -192,7 +195,7 @@ const Profile = () => {
                             <Field label={tr("Skype")}><Input prefix={<TbBrandSkype className="text-lg" />} value={s.skype} onChange={(e) => setS({ skype: e.target.value })} /></Field>
                         </Section>
                         <Section title={tr("Language & time")} desc={tr("Used for dates in the calendar and for emails sent in your name.")}>
-                            <Field label={tr("Language")}><Select isClearable placeholder={tr("Company default")} options={LANGUAGES} value={LANGUAGES.find((l) => l.value === s.defaultLanguage) || null} onChange={(o) => setS({ defaultLanguage: o?.value || '' })} /></Field>
+                            <Field label={tr("Language")}><Select isDisabled={app?.disable_language === '1' && !isAdminUser} isClearable placeholder={tr("Company default")} options={LANGUAGES} value={LANGUAGES.find((l) => l.value === s.defaultLanguage) || null} onChange={(o) => setS({ defaultLanguage: o?.value || '' })} /></Field>
                             <Field label={tr("Time zone")}><Select isClearable placeholder={tr("Browser default")} options={ZONES} value={ZONES.find((z) => z.value === s.timezone) || null} onChange={(o) => setS({ timezone: o?.value || '' })} /></Field>
                             <Field label={tr("Text direction")}><Segment value={s.direction || 'ltr'} onChange={(v) => v && setS({ direction: v })}><Segment.Item value="ltr">{tr("Left to right")}</Segment.Item><Segment.Item value="rtl">{tr("Right to left")}</Segment.Item></Segment></Field>
                         </Section>

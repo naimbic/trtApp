@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { effectiveStatus, numberFormatter, numberOf, LABEL, EXPIRED } from '@/lib/crm/proposalDoc'
@@ -8,7 +9,8 @@ const NAME = { ...LABEL, [EXPIRED]: 'Expired' }
 const ownWhere = async (session) => {
     if (viewScope(session.user.authority || [], 'proposals') === 'all') return {}
     const staffId = await getStaffId(session)
-    return staffId ? { OR: [{ addedFrom: staffId }, { assignedId: staffId }] } : { id: '000000000000000000000000' }
+    const assigned = (await readSettings(['allow_staff_view_proposals_assigned'])).on('allow_staff_view_proposals_assigned') // Settings → Proposals
+    return staffId ? { OR: [{ addedFrom: staffId }, ...(assigned ? [{ assignedId: staffId }] : [])] } : { id: '000000000000000000000000' }
 }
 
 export async function listProposals({ query = '', status, relType, currencyId, from, to, pageIndex = 1, pageSize = 15, sortKey = 'date', order = 'desc' } = {}) {

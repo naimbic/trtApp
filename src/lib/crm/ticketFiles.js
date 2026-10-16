@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { readSettings } from '@/lib/crm/appSettings'
 import { processUpload, putMedia, MediaError } from '@/lib/media'
 
 /** At most this many files per message. */
@@ -10,7 +11,12 @@ export const attachmentOut = (a) => ({ id: a.id, name: a.fileName, type: a.fileT
 /** Checks and optimises every file first, so a bad file stops the whole message before anything is saved. */
 export async function prepareFiles(files) {
     const list = (files || []).filter((f) => f && typeof f !== 'string' && f.size > 0)
-    if (list.length > MAX_FILES) throw new MediaError(`Up to ${MAX_FILES} files per message`)
+    // Settings → Support: files per message and the allowed extensions (empty = everything)
+    const S = await readSettings(['maximum_allowed_ticket_attachments', 'ticket_attachments_file_extensions'])
+    const max = S.num('maximum_allowed_ticket_attachments', 0) > 0 ? Math.min(S.num('maximum_allowed_ticket_attachments'), MAX_FILES) : MAX_FILES
+    if (list.length > max) throw new MediaError(`Up to ${max} files per message`)
+    const allowed = S.get('ticket_attachments_file_extensions').split(',').map((x) => x.trim().toLowerCase().replace(/^\./, '')).filter(Boolean)
+    if (allowed.length) for (const f of list) { const ext = String(f.name || '').split('.').pop().toLowerCase(); if (!allowed.includes(ext)) throw new MediaError(`Files of type .${ext} are not allowed (allowed: ${allowed.map((x) => `.${x}`).join(', ')})`) }
     const out = []
     for (const f of list) out.push(await processUpload(f, { purpose: 'attachment' }))
     return out

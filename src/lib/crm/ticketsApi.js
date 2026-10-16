@@ -1,8 +1,9 @@
 import { realPicture } from '@/lib/crm/pictures'
 import crypto from 'crypto'
 import prisma from '@/lib/prisma'
-import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
+import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { sendTemplate } from '@/lib/crm/mailer'
+import { readSettings } from '@/lib/crm/appSettings'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFiles'
 
@@ -13,10 +14,19 @@ const nz = (v) => (v === undefined || v === null || String(v).trim() === '' ? nu
 
 async function access(session) {
     const authority = session.user.authority || []
-    return { authority, scope: viewScope(authority, 'tickets'), staffId: await getStaffId(session), session, can: (cap) => hasCap(authority, 'tickets', cap) }
+    const staffId = await getStaffId(session)
+    const S = await readSettings(['staff_access_only_assigned_departments', 'allow_non_admin_members_to_delete_tickets_and_replies', 'ticket_replies_order', 'automatically_assign_ticket_to_first_staff_responding'])
+    // Settings → Support: members only see the tickets of the departments they belong to (administrators see all)
+    const deptIds = S.on('staff_access_only_assigned_departments') && !isCrmAdmin(authority) ? (staffId ? (await prisma.crmStaffDepartment.findMany({ where: { staffId }, select: { departmentId: true } })).map((x) => x.departmentId) : []) : null
+    return { authority, scope: viewScope(authority, 'tickets'), staffId, session, S, deptIds, can: (cap) => hasCap(authority, 'tickets', cap) }
 }
 // "view own" staff see tickets assigned to them or opened by them
-const visible = (a) => (a.scope === 'all' ? {} : a.staffId ? { OR: [{ assignedId: a.staffId }, { adminId: a.staffId }] } : { id: NONE })
+const visible = (a) => {
+    const own = a.scope === 'all' ? {} : a.staffId ? { OR: [{ assignedId: a.staffId }, { adminId: a.staffId }] } : { id: NONE }
+    return a.deptIds ? { AND: [own, { departmentId: { in: a.deptIds.length ? a.deptIds : [NONE] } }] } : own
+}
+/** Deleting: people with the delete permission, and (Settings → Support) members who can edit tickets when the switch is on. */
+const mayDelete = (a) => isCrmAdmin(a.authority) || a.can('delete') || (a.S.on('allow_non_admin_members_to_delete_tickets_and_replies') && a.can('edit'))
 
 const staffName = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || 'Staff'
 async function staffMap(ids) {
@@ -90,7 +100,7 @@ export async function listTickets(q = {}) {
             lastReply: t.lastReply, createdAt: t.createdAt, unread: !t.adminRead, replies: t._count.replies, files: t._count.attachments,
         })),
         total, pageIndex: page, pageSize: size, counts, statuses: lk.statuses, priorities: lk.priorities, departments: lk.departments, staff: lk.staff,
-        can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') },
+        can: { create: a.can('create'), edit: a.can('edit'), delete: mayDelete(a) },
     }
 }
 
@@ -120,7 +130,7 @@ export async function getTicket(id) {
     const att = (rid) => attachments.filter((x) => (x.replyId || null) === rid).map(attachmentOut)
     const thread = [
         { id: 'first', staff: people[t.adminId] || null, name: people[t.adminId]?.name || contactName(contact) || t.name || t.email || 'Client', html: toHtml(t.message || ''), date: t.createdAt, attachments: att(null), first: true },
-        ...replies.map((r) => ({ id: r.id, staff: people[r.adminId] || null, name: people[r.adminId]?.name || r.name || contactName(rcMap[r.contactId]) || contactName(contact) || r.email || 'Client', html: toHtml(r.message || ''), date: r.createdAt, attachments: att(r.id), first: false, internal: !!r.internal })),
+        ...(a.S.on('ticket_replies_order') ? [...replies].reverse() : replies).map((r) => ({ id: r.id, staff: people[r.adminId] || null, name: people[r.adminId]?.name || r.name || contactName(rcMap[r.contactId]) || contactName(contact) || r.email || 'Client', html: toHtml(r.message || ''), date: r.createdAt, attachments: att(r.id), first: false, internal: !!r.internal })),
     ]
     return {
         ticket: {
@@ -128,7 +138,7 @@ export async function getTicket(id) {
             createdAt: t.createdAt, lastReply: t.lastReply, email: t.email, client, contact: contact ? { id: contact.id, name: contactName(contact), email: contact.email, phone: contact.phoneNumber } : t.email ? { name: t.name || t.email, email: t.email } : null, project,
             assigned: people[t.assignedId] || null,
         },
-        thread, lookups: lk, can: { reply: a.can('edit'), edit: a.can('edit'), delete: a.can('delete') }, closedStatusId: lk.statuses.find((s) => s.legacyId === 5)?.id || null, openStatusId: lk.statuses.find((s) => s.legacyId === 1)?.id || null,
+        thread, lookups: lk, can: { reply: a.can('edit'), edit: a.can('edit'), delete: mayDelete(a) }, closedStatusId: lk.statuses.find((s) => s.legacyId === 5)?.id || null, openStatusId: lk.statuses.find((s) => s.legacyId === 1)?.id || null,
     }
 }
 
@@ -209,15 +219,16 @@ export async function replyTicket(id, { message, statusId, notify = true, intern
     const answered = lk.statuses.find((s) => s.legacyId === 3)
     const closed = lk.statuses.find((s) => s.legacyId === 5)
     const nextStatus = close && closed ? closed.id : oid(statusId) || answered?.id || t.statusId
-    await prisma.crmTicket.update({ where: { id }, data: { statusId: nextStatus, lastReply: new Date(), clientRead: 0, adminRead: 1, ...(t.assignedId ? {} : { assignedId: a.staffId }) } })
+    await prisma.crmTicket.update({ where: { id }, data: { statusId: nextStatus, lastReply: new Date(), clientRead: 0, adminRead: 1, ...(t.assignedId || !a.S.on('automatically_assign_ticket_to_first_staff_responding') ? {} : { assignedId: a.staffId }) } })
     let mail = null
     if (notify) { const to = await clientEmail(t); if (to) mail = await sendTemplate({ slug: 'ticket-reply', to, data: await mailVars({ ...t, statusId: nextStatus }, { message: withFiles(text || '', saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: id }) }
     return { success: true, id: r.id, mail, files: saved.length }
 }
 
 export async function deleteReply(id, replyId) {
-    const session = await requirePermission('tickets', 'delete')
+    const session = await requirePermission('tickets', 'view')
     const a = await access(session)
+    if (!mayDelete(a)) throw fail('Forbidden', 403)
     await loadOne(id, a)
     const r = oid(replyId) && (await prisma.crmTicketReply.findFirst({ where: { id: replyId, ticketId: id } }))
     if (!r) throw fail('Reply not found', 404)
@@ -226,8 +237,9 @@ export async function deleteReply(id, replyId) {
 }
 
 export async function deleteTicket(id) {
-    const session = await requirePermission('tickets', 'delete')
+    const session = await requirePermission('tickets', 'view')
     const a = await access(session)
+    if (!mayDelete(a)) throw fail('Forbidden', 403)
     await loadOne(id, a)
     await prisma.crmTicket.delete({ where: { id } })
     return { success: true }

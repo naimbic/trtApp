@@ -42,4 +42,14 @@ export async function runRecurringTasks({ today = new Date(), lines = [], dry = 
     }
     return made
 }
+
+/** Timers someone forgot to stop: any timer running longer than `hours` is closed at exactly that length. No email. */
+export async function stopForgottenTimers({ hours, lines = [], dry = false } = {}) {
+    if (!(hours > 0)) return 0
+    const cutoff = new Date(Date.now() - hours * 3600000)
+    const running = await prisma.crmTaskTimer.findMany({ where: { endTime: null, startTime: { lt: cutoff } }, select: { id: true, startTime: true } })
+    for (const t of running) if (!dry) await prisma.crmTaskTimer.update({ where: { id: t.id }, data: { endTime: new Date(+t.startTime + hours * 3600000), note: 'Stopped automatically' } })
+    if (running.length) lines.push(`${dry ? '[preview] ' : ''}${running.length} forgotten timer(s) ${dry ? 'would be ' : ''}stopped after ${hours} h`)
+    return running.length
+}
 void DAY

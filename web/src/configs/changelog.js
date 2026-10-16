@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.45.0',
+        date: '2026-10-16',
+        title: 'Settings that did nothing now work (29), the rest are labelled',
+        items: ['Tasks: new tasks follow the defaults of Settings → Tasks (priority, status, billable) and can assign and follow the creator automatically; one timer at a time, a timer can move the task to In progress, timers are rounded up / down / to the nearest N minutes, forgotten timers are stopped after N hours (daily cron), comments can only be removed during the first hour, boards show a limited number of cards per column with "Show more"', 'Calendar: only my tasks, and reminders on the calendar for the kinds of record you choose, optionally hidden once notified', 'Support: newest replies first, files per message and allowed extensions, the first person who replies becomes the assignee (on by default), members only see the tickets of their departments, members who can edit tickets may delete tickets and replies when the switch is on', 'Leads and clients: the lead owner becomes the client administrator on conversion, the lock after conversion and the board limit and order really apply now (they were silently ignored), order direction on the pipeline, VAT / ICE number can be made compulsory', 'Sales: the person who creates an invoice or estimate becomes its sale agent; staff with "view own" see invoices and proposals assigned to them only when the switch is on (on by default)', 'Interface: rows per page of every table starts from Settings → General, the language selector can be hidden for members', 'Settings that need an outside account (Google, Microsoft, reCAPTCHA, Pusher, AI) now say "Needs keys" instead of "Soon": the fields are ready for your keys; the 43 others still marked Soon are not built yet', 'Fixed: the Settings → Leads options (board limit, order, lock after conversion) were read the wrong way and never applied']
+    },
+    {
         version: '0.44.1',
         date: '2026-10-16',
         title: 'Fixes: new task template, subtasks tab; date filter on projects',

@@ -1,4 +1,5 @@
 import { realPicture } from '@/lib/crm/pictures'
+import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 
@@ -180,14 +181,16 @@ export async function saveTask(body, id) {
     const a = await access(session)
     const name = String(body.name || '').trim()
     if (!name) throw fail('Give the task a name')
-    const prio = [1, 2, 3, 4].includes(+body.priority) ? +body.priority : 2
-    const status = [1, 2, 3, 4, 5].includes(+body.status) ? +body.status : 1
+    // platform defaults for a new task (Settings → Tasks); an explicit value always wins
+    const S = id ? null : await readSettings(NEW_TASK_KEYS)
+    const prio = [1, 2, 3, 4].includes(+body.priority) ? +body.priority : [1, 2, 3, 4].includes(S?.num('default_task_priority')) ? S.num('default_task_priority') : 2
+    const status = [1, 2, 3, 4, 5].includes(+body.status) ? +body.status : [1, 2, 3, 4, 5].includes(S?.num('default_task_status')) ? S.num('default_task_status') : 1
     if (body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date')
     const data = {
         name, description: body.description ?? null, priority: prio, status,
         startDate: dateOrNull(body.startDate), dueDate: dateOrNull(body.dueDate),
         relType: body.relType || null, relId: oid(body.relId), milestoneId: oid(body.milestoneId),
-        isPublic: !!body.isPublic, billable: !!body.billable, visibleToClient: !!body.visibleToClient, hourlyRate: Number(body.hourlyRate) || 0,
+        isPublic: !!body.isPublic, billable: body.billable === undefined && S ? S.on('task_biillable_checked_on_creation') : !!body.billable, visibleToClient: !!body.visibleToClient, hourlyRate: Number(body.hourlyRate) || 0,
         recurring: !!body.recurring, recurringType: body.recurring ? body.recurringType || 'month' : null, repeatEvery: body.recurring ? Math.max(parseInt(body.repeatEvery, 10) || 1, 1) : 0, totalCycles: body.recurring ? Math.max(parseInt(body.totalCycles, 10) || 0, 0) : 0,
     }
     // a subtask: its parent must exist and cannot be the task itself or one of its own subtasks
@@ -216,8 +219,11 @@ export async function saveTask(body, id) {
         const add = want.filter((w) => !have.some((h) => h.staffId === w))
         for (const staffId of add) await prisma[model].create({ data: { taskId: task.id, staffId, ...extra } })
     }
-    if (Array.isArray(body.assigneeIds)) await sync('crmTaskAssigned', body.assigneeIds, { assignedFrom: a.staffId })
-    if (Array.isArray(body.followerIds)) await sync('crmTaskFollower', body.followerIds)
+    const withCreator = (list, on) => (on && a.staffId && !(list || []).includes(a.staffId) ? [...(list || []), a.staffId] : list)
+    const assignees = id ? body.assigneeIds : withCreator(Array.isArray(body.assigneeIds) ? body.assigneeIds : [], S?.on('new_task_auto_assign_current_member'))
+    const followers = id ? body.followerIds : withCreator(Array.isArray(body.followerIds) ? body.followerIds : [], S?.on('new_task_auto_follower_current_member'))
+    if (Array.isArray(assignees)) await sync('crmTaskAssigned', assignees, { assignedFrom: a.staffId })
+    if (Array.isArray(followers)) await sync('crmTaskFollower', followers)
     if (Array.isArray(body.tags)) {
         const want = [...new Set(body.tags.map((x) => String(x || '').trim().slice(0, 40)).filter(Boolean))].slice(0, 12)
         await prisma.crmTaggable.deleteMany({ where: { relType: 'task', relId: task.id } })
@@ -230,6 +236,7 @@ export async function saveTask(body, id) {
 }
 
 const openChildren = (id) => prisma.crmTask.count({ where: { parentId: id, status: { not: COMPLETE } } })
+const NEW_TASK_KEYS = ['default_task_priority', 'default_task_status', 'task_biillable_checked_on_creation', 'new_task_auto_assign_current_member', 'new_task_auto_follower_current_member']
 const FINISH_SUBTASKS = (n) => `Finish the subtasks first (${n} still open)`
 /** The task and everything under it (subtasks, their subtasks...). */
 async function descendants(id) {
@@ -321,6 +328,8 @@ export async function deleteComment(id, commentId) {
     const c = oid(commentId) && (await prisma.crmTaskComment.findFirst({ where: { id: commentId, taskId: id } }))
     if (!c) throw fail('Comment not found', 404)
     if (c.staffId !== a.staffId && !a.can('delete')) throw fail('You can only delete your own comments', 403)
+    // optional rule: comments can only be removed during the first hour (managers are not bound by it)
+    if (a.scope !== 'all' && (await readSettings(['client_staff_add_edit_delete_task_comments_first_hour'])).on('client_staff_add_edit_delete_task_comments_first_hour') && Date.now() - +new Date(c.createdAt) > 3600000) throw fail('Comments can only be removed during the first hour', 403)
     await prisma.crmTaskComment.delete({ where: { id: commentId } })
     return { success: true }
 }
@@ -354,11 +363,20 @@ export async function timer(id, op) {
         if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
         if (open) throw fail('Timer already running')
         if (t.status === COMPLETE) throw fail('This task is complete')
+        const S = await readSettings(['auto_stop_tasks_timers_on_new_timer', 'timer_started_change_status_in_progress'])
+        if (S.on('auto_stop_tasks_timers_on_new_timer')) await prisma.crmTaskTimer.updateMany({ where: { staffId: a.staffId, endTime: null }, data: { endTime: new Date() } }) // one timer at a time
         await prisma.crmTaskTimer.create({ data: { taskId: id, staffId: a.staffId, startTime: new Date(), endTime: null, hourlyRate: t.hourlyRate || 0 } })
-        if (t.status === 1) await prisma.crmTask.update({ where: { id }, data: { status: 4 } })
+        if (t.status === 1 && S.on('timer_started_change_status_in_progress')) await prisma.crmTask.update({ where: { id }, data: { status: 4 } })
     } else if (op.action === 'stop') {
         if (!open) throw fail('No timer running')
-        await prisma.crmTaskTimer.update({ where: { id: open.id }, data: { endTime: new Date(), note: String(op.note || '').slice(0, 500) || null } })
+        const S = await readSettings(['round_off_task_timer_option', 'round_off_task_timer_time'])
+        const step = Math.max(0, S.num('round_off_task_timer_time')) * 60000
+        let end = new Date()
+        if (step > 0 && open.startTime) { // round the length to the step: up, down or to the nearest
+            const ms = +end - +open.startTime, mode = S.get('round_off_task_timer_option')
+            end = new Date(+open.startTime + (mode === '0' ? Math.ceil(ms / step) : mode === '1' ? Math.floor(ms / step) : Math.round(ms / step)) * step)
+        }
+        await prisma.crmTaskTimer.update({ where: { id: open.id }, data: { endTime: end, note: String(op.note || '').slice(0, 500) || null } })
     } else if (op.action === 'delete') {
         const x = oid(op.timerId) && (await prisma.crmTaskTimer.findFirst({ where: { id: op.timerId, taskId: id } }))
         if (!x) throw fail('Entry not found', 404)
@@ -374,7 +392,11 @@ export async function taskLookups() {
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
         prisma.crmMilestone.findMany({ select: { id: true, name: true }, take: 500 }),
     ])
-    return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), milestones, me: await getStaffId(session) }
+    const S = await readSettings([...NEW_TASK_KEYS, 'tasks_kanban_limit'])
+    return {
+        staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), milestones, me: await getStaffId(session),
+        defaults: { priority: S.num('default_task_priority', 2), status: S.num('default_task_status', 1), billable: S.on('task_biillable_checked_on_creation'), assignMe: S.on('new_task_auto_assign_current_member'), followMe: S.on('new_task_auto_follower_current_member'), kanbanLimit: S.num('tasks_kanban_limit', 0) },
+    }
 }
 
 /** Prisma `where` limiting tasks to what the signed-in staff member may see (for dashboards). */

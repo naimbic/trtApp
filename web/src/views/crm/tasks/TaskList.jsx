@@ -69,14 +69,14 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }
 }
 
 /** The "+ Add task" bar that opens into a small form, like the template. */
-const AddTask = ({ open, onOpen, onClose, staff, me, onCreate }) => {
+const AddTask = ({ open, onOpen, onClose, staff, me, onCreate, defaults }) => {
     const ref = useRef(null)
     const [name, setName] = useState('')
     const [status, setStatus] = useState(1)
     const [priority, setPriority] = useState(2)
     const [assignee, setAssignee] = useState(me)
     const [due, setDue] = useState('')
-    useEffect(() => { if (open) { setName(''); setStatus(1); setPriority(2); setAssignee(me); setDue(''); setTimeout(() => ref.current?.focus(), 50) } }, [open, me])
+    useEffect(() => { if (open) { setName(''); setStatus(defaults?.status || 1); setPriority(defaults?.priority || 2); setAssignee(me); setDue(''); setTimeout(() => ref.current?.focus(), 50) } }, [open, me, defaults])
     const create = () => { if (!name.trim()) return; onCreate({ name: name.trim(), status, priority, assigneeIds: assignee ? [assignee] : [], dueDate: due || null }) }
     const portal = { menuPortalTarget: document.body, menuPosition: 'fixed', styles: { menuPortal: (b) => ({ ...b, zIndex: 10000 }) } }
     if (!open) return <Button block variant="default" icon={<TbPlus />} onClick={onOpen}>{tr('Add task')}</Button>
@@ -94,6 +94,9 @@ const AddTask = ({ open, onOpen, onClose, staff, me, onCreate }) => {
         </div>
     )
 }
+
+/** What a new task starts with, from Settings → Tasks. */
+const taskDefaults = (l) => (l.defaults ? { status: l.defaults.status, priority: l.defaults.priority, billable: l.defaults.billable, assigneeIds: l.defaults.assignMe && l.me ? [l.me] : [], followerIds: l.defaults.followMe && l.me ? [l.me] : [] } : {})
 
 /** "My tasks" and "Team tasks": the template's grouped task list, one group per project. */
 const TaskList = ({ projectId = null }) => {
@@ -229,7 +232,7 @@ const TaskList = ({ projectId = null }) => {
                                                             )}
                                                         </Droppable>
                                                     </Table>
-                                                    {data.can.create && <div className="mt-4"><AddTask open={adding === g.key} onOpen={() => setAdding(g.key)} onClose={() => setAdding('')} staff={lookups.staff} me={lookups.me} onCreate={(b) => create(g, b)} /></div>}
+                                                    {data.can.create && <div className="mt-4"><AddTask open={adding === g.key} onOpen={() => setAdding(g.key)} onClose={() => setAdding('')} staff={lookups.staff} me={lookups.me} defaults={lookups.defaults} onCreate={(b) => create(g, b)} /></div>}
                                                 </div>
                                             )}
                                         </Draggable>
@@ -245,7 +248,7 @@ const TaskList = ({ projectId = null }) => {
             </div>
 
             <TemplatesDialog isOpen={tpl} onClose={() => setTpl(false)} context={projectId ? { relType: 'project', relId: projectId } : {}} onUsed={(id) => nav(`/crm/tasks/${id}`)} />
-            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={projectId ? { relType: 'project', relId: projectId } : null} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} />
+            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={{ ...taskDefaults(lookups), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} />
         </Shell>
     )
 }

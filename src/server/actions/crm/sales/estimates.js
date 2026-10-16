@@ -2,6 +2,7 @@
 
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
+import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, formatDocumentNumber } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
@@ -62,7 +63,7 @@ export async function saveEstimate(input) {
     let estimate
     if (isNew) {
         const { number, prefix, numberFormat } = await allocateNumber('estimate', data.date)
-        estimate = await prisma.crmEstimate.create({ data: { ...data, number, prefix, numberFormat, status: 1, sent: false, hash: crypto.randomUUID().replace(/-/g, ''), addedFrom: staffId || undefined, saleAgentId: staffId || undefined } })
+        estimate = await prisma.crmEstimate.create({ data: { ...data, number, prefix, numberFormat, status: 1, sent: false, hash: crypto.randomUUID().replace(/-/g, ''), addedFrom: staffId || undefined, saleAgentId: data.saleAgentId || (staffId && (await readSettings(['automatically_set_logged_in_staff_sales_agent'])).on('automatically_set_logged_in_staff_sales_agent') ? staffId : undefined) } })
     } else {
         const existing = await prisma.crmEstimate.findUnique({ where: { id: input.id } })
         if (!existing) return fail('Estimate not found')

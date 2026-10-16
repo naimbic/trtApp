@@ -21,6 +21,7 @@ import { localTitle } from './titles'
 
 const LAYER_META = {
     events: { label: tr("Events"), dot: 'bg-blue-400' },
+    reminders: { label: tr("Reminders"), dot: 'bg-amber-400' },
     tasks: { label: tr("Tasks"), dot: 'bg-orange-400' },
     invoices: { label: tr("Invoices"), dot: 'bg-red-400' },
     projects: { label: tr("Projects"), dot: 'bg-purple-400' },

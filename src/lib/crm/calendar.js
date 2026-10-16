@@ -8,7 +8,7 @@ import { deliver, getOptions, setOptions } from '@/lib/crm/mailer'
 import crypto from 'node:crypto'
 
 // Calendar layers shown next to the user's own events (each gated by the matching Perfex feature).
-export const LAYERS = ['events', 'tasks', 'invoices', 'projects', 'estimates', 'proposals', 'contracts']
+export const LAYERS = ['events', 'reminders', 'tasks', 'invoices', 'projects', 'estimates', 'proposals', 'contracts']
 const NAMES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
 
 /** Template calendar colours are names; Perfex stored hex colours, so map those to the nearest name by hue. */
@@ -92,7 +92,8 @@ export async function getCalendarItems({ from, to }) {
         })
     }
 
-    const lay = await getOptions(['show_tasks_on_calendar', 'show_invoices_on_calendar', 'show_estimates_on_calendar', 'show_proposals_on_calendar', 'show_contracts_on_calendar', 'show_projects_on_calendar'])
+    const REM_TYPES = ['lead', 'customer', 'estimate', 'invoice', 'proposal', 'expense', 'task', 'credit_note', 'ticket']
+    const lay = await getOptions(['calendar_only_assigned_tasks', 'hide_notified_reminders_from_calendar', ...REM_TYPES.map((k) => `show_${k}_reminders_on_calendar`), 'show_tasks_on_calendar', 'show_invoices_on_calendar', 'show_estimates_on_calendar', 'show_proposals_on_calendar', 'show_contracts_on_calendar', 'show_projects_on_calendar'])
     const on = (k) => lay(k, '1') !== '0'
     const range = { gte: start, lt: end }
     const day = (d) => new Date(d).toISOString().slice(0, 10)
@@ -101,8 +102,20 @@ export async function getCalendarItems({ from, to }) {
 
     if (ctx.can('tasks') && on('show_tasks_on_calendar')) {
         layers.push('tasks')
-        const rows = await prisma.crmTask.findMany({ where: { dueDate: range, status: { not: 5 } }, select: { id: true, name: true, dueDate: true } })
+        const mine = lay('calendar_only_assigned_tasks', '0') === '1' && ctx.staffId // "Only my tasks"
+        const assigned = mine ? (await prisma.crmTaskAssigned.findMany({ where: { staffId: ctx.staffId }, select: { taskId: true } })).map((x) => x.taskId) : null
+        const rows = await prisma.crmTask.findMany({ where: { dueDate: range, status: { not: 5 }, ...(assigned ? { id: { in: assigned } } : {}) }, select: { id: true, name: true, dueDate: true } })
         rows.forEach((t) => add('tasks', t.id, `Task: ${t.name}`, t.dueDate, 'orange', `/crm/tasks/${t.id}`, 'Task due'))
+    }
+    // the person's own reminders, for the kinds of record chosen in Settings → Calendar
+    if (ctx.staffId) {
+        const kinds = REM_TYPES.filter((k) => lay(`show_${k}_reminders_on_calendar`, '0') === '1')
+        if (kinds.length) {
+            layers.push('reminders')
+            const rows = await prisma.crmReminder.findMany({ where: { staffId: ctx.staffId, date: range, relType: { in: kinds }, ...(lay('hide_notified_reminders_from_calendar', '0') === '1' ? { isNotified: false } : {}) }, select: { id: true, description: true, date: true, relType: true, relId: true } })
+            const href = (r) => ({ customer: `/crm/clients/${r.relId}`, lead: `/crm/leads/${r.relId}`, invoice: `/crm/invoices/${r.relId}`, estimate: `/crm/estimates/${r.relId}`, proposal: `/crm/proposals/${r.relId}`, ticket: `/crm/tickets/${r.relId}`, task: `/crm/tasks/${r.relId}` }[r.relType] || null)
+            rows.forEach((r) => add('reminders', r.id, `Reminder: ${(r.description || '').slice(0, 80)}`, r.date, 'yellow', href(r), 'Reminder'))
+        }
     }
     if (ctx.can('invoices') && on('show_invoices_on_calendar')) {
         layers.push('invoices')

@@ -42,6 +42,7 @@ const TasksBoard = ({ projectId = null }) => {
     const [params, setParams] = useSearchParams()
     const [data, setData] = useState({ list: [], counts: {}, can: {} })
     const [lookups, setLookups] = useState({ staff: [] })
+    const [more, setMore] = useState({}) // columns opened beyond the card limit
     const [view, setView] = useState(() => { try { return localStorage.getItem('tasks.view') || 'board' } catch { return 'board' } })
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
@@ -127,12 +128,13 @@ const TasksBoard = ({ projectId = null }) => {
                                 <Droppable droppableId={String(s.value)}>
                                     {(prov, snap) => (
                                         <div ref={prov.innerRef} {...prov.droppableProps} className={cn('min-h-[120px] space-y-2 rounded-lg p-1 transition', snap.isDraggingOver && 'bg-blue-50 dark:bg-blue-900/10')}>
-                                            {(columns[s.value] || []).map((t, i) => (
+                                            {(columns[s.value] || []).slice(0, lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined).map((t, i) => (
                                                 <Draggable key={t.id} draggableId={t.id} index={i} isDragDisabled={!data.can.edit || t.canFinish === false}>
                                                     {(p) => <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps}><TaskCard t={t} onOpen={open} /></div>}
                                                 </Draggable>
                                             ))}
                                             {prov.placeholder}
+                                            {lookups.defaults?.kanbanLimit > 0 && !more[s.value] && (columns[s.value] || []).length > lookups.defaults.kanbanLimit && <button type="button" className="mb-3 w-full rounded-lg py-2 text-sm font-semibold text-primary hover:bg-primary/10" onClick={() => setMore((m) => ({ ...m, [s.value]: true }))}>{tr('Show {n} more', { n: (columns[s.value] || []).length - lookups.defaults.kanbanLimit })}</button>}
                                             {!loading && !(columns[s.value] || []).length && <div className="py-6 text-center text-xs text-gray-400">{tr("Nothing here")}</div>}
                                         </div>
                                     )}
@@ -162,7 +164,7 @@ const TasksBoard = ({ projectId = null }) => {
                 </div>
             )}
 
-            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={projectId ? { relType: 'project', relId: projectId } : null} onClose={close} onChanged={load} />
+            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={{ ...(lookups.defaults ? { status: lookups.defaults.status, priority: lookups.defaults.priority, billable: lookups.defaults.billable, assigneeIds: lookups.defaults.assignMe && lookups.me ? [lookups.me] : [], followerIds: lookups.defaults.followMe && lookups.me ? [lookups.me] : [] } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={close} onChanged={load} />
         </Wrap>
     )
 }

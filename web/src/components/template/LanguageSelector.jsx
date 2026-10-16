@@ -8,6 +8,7 @@ import { HiCheck } from 'react-icons/hi'
 import { useThemeStore } from '@/store/themeStore'
 import { useSessionUser } from '@/store/authStore'
 import { saveAccountLanguage } from './AccountLanguage'
+import { useAppSettings } from '@/store/appSettingsStore'
 import { tr } from '@/utils/t'
 
 const languageList = [
@@ -21,6 +22,8 @@ const languageList = [
 const _LanguageSelector = ({ className }) => {
     const { currentLang: locale, setLang } = useLocaleStore((state) => state)
     const user = useSessionUser((s) => s.user)
+    const app = useAppSettings()
+    const staffLocked = app?.disable_language === '1' && !(user.authority || []).some((a) => a === 'admin' || a === 'crm.admin') && !window.location.pathname.startsWith('/portal')
 
     const selectLangFlag = useMemo(() => {
         return languageList.find((lang) => lang.value === locale)?.flag
@@ -35,6 +38,8 @@ const _LanguageSelector = ({ className }) => {
             />
         </div>
     )
+
+    if (staffLocked) return null // Settings → General: language selection is switched off for members
 
     return (
         <Dropdown renderTitle={selectedLanguage} placement="bottom-end">

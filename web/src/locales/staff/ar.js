@@ -3261,5 +3261,10 @@ export default {
     "{n} tasks without dates are not shown.": "{n} مهمة بلا تواريخ غير معروضة.",
     "Finish the subtasks first": "أنهِ المهام الفرعية أولًا",
     "Too many requests. Try again in {n} seconds.": "طلبات كثيرة جدًا. حاول مجددًا بعد {n} ثانية.",
-    "Clear dates": "مسح التواريخ"
+    "Clear dates": "مسح التواريخ",
+    "Needs an account with this service. Enter your keys here when you have them; the connection is switched on once it is built.": "يتطلب حسابًا لدى هذه الخدمة. أدخل مفاتيحك هنا عندما تحصل عليها؛ يتم تفعيل الاتصال بعد بنائه.",
+    "Needs keys": "يتطلب مفاتيح",
+    "Show {n} more": "عرض {n} أخرى",
+    "Comments can only be removed during the first hour": "يمكن حذف التعليقات خلال الساعة الأولى فقط",
+    "The VAT / ICE number is required": "رقم الضريبة / ICE مطلوب"
 }

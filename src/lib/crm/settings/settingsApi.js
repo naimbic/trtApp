@@ -140,7 +140,7 @@ export async function getBranding() {
     return { name: o('platform_name', 'trtCRM'), logo: url('platform_logo'), logoDark: url('platform_logo_dark'), favicon: url('favicon') }
 }
 
-const APP_KEYS = ['dateformat', 'time_format', 'default_timezone', 'active_language', 'decimal_separator', 'thousand_separator', 'remove_decimals_on_zero', 'default_view_calendar', 'calendar_first_day', 'calendar_events_limit', 'show_tasks_on_calendar', 'show_invoices_on_calendar', 'show_estimates_on_calendar', 'show_proposals_on_calendar', 'show_contracts_on_calendar', 'show_projects_on_calendar', 'invoice_due_after', 'predefined_clientnote_invoice', 'predefined_terms_invoice', 'default_tax', 'show_tax_per_item', 'company_is_required', 'media_max_file_size_upload', 'allowed_files', 'estimate_due_after', 'predefined_clientnote_estimate', 'predefined_terms_estimate']
+const APP_KEYS = ['tables_pagination_limit', 'disable_language', 'dateformat', 'time_format', 'default_timezone', 'active_language', 'decimal_separator', 'thousand_separator', 'remove_decimals_on_zero', 'default_view_calendar', 'calendar_first_day', 'calendar_events_limit', 'show_tasks_on_calendar', 'show_invoices_on_calendar', 'show_estimates_on_calendar', 'show_proposals_on_calendar', 'show_contracts_on_calendar', 'show_projects_on_calendar', 'invoice_due_after', 'predefined_clientnote_invoice', 'predefined_terms_invoice', 'default_tax', 'show_tax_per_item', 'company_is_required', 'media_max_file_size_upload', 'allowed_files', 'estimate_due_after', 'predefined_clientnote_estimate', 'predefined_terms_estimate']
 /** Signed-in users: the non-secret settings screens use to behave (formats, defaults, calendar). */
 export async function getAppSettings() {
     const { auth } = await import('@/auth')

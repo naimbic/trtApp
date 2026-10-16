@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
@@ -18,7 +19,8 @@ const effective = (i, paid, today) => {
 const ownWhere = async (session, feature) => {
     if (viewScope(session.user.authority || [], feature) === 'all') return {}
     const staffId = await getStaffId(session)
-    return staffId ? { OR: [{ addedFrom: staffId }, { saleAgentId: staffId }] } : { id: '000000000000000000000000' }
+    const assigned = (await readSettings(['allow_staff_view_invoices_assigned'])).on('allow_staff_view_invoices_assigned') // Settings → Invoices
+    return staffId ? { OR: [{ addedFrom: staffId }, ...(assigned ? [{ saleAgentId: staffId }] : [])] } : { id: '000000000000000000000000' }
 }
 
 const paginate = (rows, pageIndex, pageSize) => {

@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
@@ -164,6 +165,11 @@ const fieldsFrom = (b) => {
     return d
 }
 
+/** Settings → Clients: the VAT / ICE number can be made compulsory. */
+async function requireVat(vat) {
+    if (!str(vat) && (await readSettings(['company_requires_vat_number_field'])).on('company_requires_vat_number_field')) throw httpError('The VAT / ICE number is required')
+}
+
 async function setGroups(clientId, ids) {
     await prisma.crmCustomerGroupLink.deleteMany({ where: { clientId } })
     const unique = [...new Set(ids || [])].filter(Boolean)
@@ -179,6 +185,7 @@ async function setAdmins(clientId, ids) {
 export async function createClient(body) {
     const session = await requirePermission('customers', 'create')
     if (!str(body.company)) throw httpError('Company name is required')
+    await requireVat(body.vat)
     const staffId = await getStaffId(session)
     const c = await prisma.crmClient.create({ data: { ...fieldsFrom(body), active: body.active !== false, addedFrom: staffId || undefined } })
     if (Array.isArray(body.groupIds)) await setGroups(c.id, body.groupIds)
@@ -194,6 +201,7 @@ export async function updateClient(id, body) {
     const session = await requirePermission('customers', 'edit')
     const sc = await scope(session)
     if (!(await prisma.crmClient.findFirst({ where: { AND: [{ id }, sc] }, select: { id: true } }))) throw httpError('Client not found', 404)
+    if (body.vat !== undefined) await requireVat(body.vat)
     const data = fieldsFrom(body)
     if (Object.keys(data).length) await prisma.crmClient.update({ where: { id }, data })
     if (Array.isArray(body.groupIds)) await setGroups(id, body.groupIds)

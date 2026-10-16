@@ -1,6 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
+import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
@@ -163,6 +164,8 @@ export async function saveInvoice(input) {
                 numberFormat,
                 status: input.draft ? INVOICE_STATUS.DRAFT : INVOICE_STATUS.UNPAID,
                 addedFrom: staffId || undefined,
+                // Settings → Sales: the person who creates the invoice is its sale agent
+                ...(!data.saleAgentId && staffId && (await readSettings(['automatically_set_logged_in_staff_sales_agent'])).on('automatically_set_logged_in_staff_sales_agent') ? { saleAgentId: staffId } : {}),
                 hash: crypto.randomUUID().replace(/-/g, ''),
             },
         })

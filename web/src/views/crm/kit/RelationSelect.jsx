@@ -38,7 +38,7 @@ const RelationSelect = ({ resource, value, onChange, disabled, size, placeholder
             isLoading={loading}
             options={options}
             value={options.find((o) => o.value === value) || null}
-            onInputChange={(q) => q && load(q)}
+            onInputChange={(q) => { if (q) load(q) }} // must return nothing: react-select takes a returned value as the typed text
             onChange={(o) => onChange(o ? o.value : null)}
             placeholder={placeholder}
         />

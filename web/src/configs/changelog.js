@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.45.1',
+        date: '2026-10-16',
+        title: 'Fix: searching a company in a client field crashed the page',
+        items: ['Typing in a search field that looks up records (the Client field of the password vault, the client filter, and every similar picker in the forms) blanked the whole page; the search now lists the matching records']
+    },
+    {
         version: '0.45.0',
         date: '2026-10-16',
         title: 'Settings that did nothing now work (29), the rest are labelled',

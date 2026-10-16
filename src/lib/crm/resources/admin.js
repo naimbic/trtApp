@@ -400,7 +400,7 @@ const resources = [
     // ---------------------------------------------------------------- Utilities
     {
         key: 'notes', model: 'crmNote', label: 'Note', plural: 'Notes',
-        group: 'Utilities', icon: 'TbNote', feature: null,
+        group: 'Utilities', icon: 'TbNote', feature: null, shareByRel: 'addedFrom',
         titleField: 'description', search: ['description'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'description', label: 'Note', type: 'text', link: true },
@@ -420,7 +420,7 @@ const resources = [
     },
     {
         key: 'reminders', model: 'crmReminder', label: 'Reminder', plural: 'Reminders',
-        group: 'Utilities', icon: 'TbBellRinging', feature: null,
+        group: 'Utilities', icon: 'TbBellRinging', feature: null, privateField: 'staffId',
         titleField: 'description', search: ['description'], defaultSort: { date: 'asc' },
         columns: [
             { key: 'description', label: 'Description', type: 'text', link: true },
@@ -442,7 +442,7 @@ const resources = [
     },
     {
         key: 'todos', model: 'crmTodo', label: 'To-do', plural: 'To-dos',
-        group: 'Utilities', icon: 'TbChecklist', feature: null,
+        group: 'Utilities', icon: 'TbChecklist', feature: null, privateField: 'staffId',
         titleField: 'description', search: ['description'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'description', label: 'Description', type: 'text', link: true },
@@ -460,7 +460,7 @@ const resources = [
     },
     {
         key: 'events', model: 'crmEvent', label: 'Event', plural: 'Calendar events',
-        group: 'Utilities', icon: 'TbCalendarEvent', feature: null,
+        group: 'Utilities', icon: 'TbCalendarEvent', feature: null, privateField: 'userId',
         titleField: 'title', search: ['title', 'description'], defaultSort: { start: 'desc' },
         columns: [
             { key: 'title', label: 'Title', type: 'text', link: true },
@@ -484,7 +484,7 @@ const resources = [
     },
     {
         key: 'notifications', model: 'crmNotification', label: 'Notification', plural: 'Notifications',
-        group: 'Utilities', icon: 'TbBell', feature: null,
+        group: 'Utilities', icon: 'TbBell', feature: null, privateField: 'toUserId',
         titleField: 'description', search: ['description', 'fromFullName'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'description', label: 'Description', type: 'text' },
@@ -498,7 +498,7 @@ const resources = [
     },
     {
         key: 'files', model: 'crmFile', label: 'File', plural: 'Files',
-        group: 'Utilities', icon: 'TbPaperclip', feature: null,
+        group: 'Utilities', icon: 'TbPaperclip', feature: null, shareByRel: 'staffId',
         titleField: 'fileName', search: ['fileName', 'fileType'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'fileName', label: 'File', type: 'text', link: true },

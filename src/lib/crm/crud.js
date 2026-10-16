@@ -1,9 +1,11 @@
+import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import { getResource } from './resources'
 import {
     PermissionError,
     requirePermission,
     getStaffId,
+    isCrmAdmin,
     viewScope,
 } from './permissions'
 
@@ -109,14 +111,9 @@ const buildWhere = async (resource, params, session) => {
     for (const [k, v] of Object.entries(params.where || {})) {
         and.push({ [k]: v })
     }
-    if (resource.feature && session) {
-        const scope = viewScope(session.user.authority || [], resource.feature)
-        if (scope === 'own') {
-            const staffId = await getStaffId(session)
-            const ownField = resource.ownField || 'addedFrom'
-            if (fieldKeys(resource).has(ownField)) and.push({ [ownField]: staffId || '__none__' })
-        }
-    }
+    // resources without a permission feature (notes, reminders, to-dos, events, files, notifications): everybody's own, administrators see all
+    if (session && restricted(resource, session)) and.push(await ownerFilter(resource, session))
+    if (session) { const own = await ownWhere(resource, session, params); if (own) and.push(own) }
     return and.length ? { AND: and } : {}
 }
 
@@ -143,6 +140,62 @@ const attachRelations = async (resource, rows) => {
     return rows
 }
 
+// ---- "own records only" (view_own) for resources behind a permission feature.
+// The owner is a real column of the table (not necessarily one of the screen's fields); child tables (contacts,
+// project files...) follow the parent record named in the filter; plain lookups (statuses, sources...) stay readable.
+const OWNER_COLUMNS = ['addedFrom', 'assigned', 'assignedId', 'adminId', 'staffId']
+const CHILD_PARENT = { clientId: 'clients', leadId: 'leads', projectId: 'projects', taskId: 'tasks', ticketId: 'tickets', invoiceId: 'invoices', estimateId: 'estimates', proposalId: 'proposals', contractId: 'contracts', expenseId: 'expenses', subscriptionId: 'subscriptions', creditNoteId: 'credit-notes' }
+const LOOKUPS = new Set(['lead-sources', 'lead-statuses', 'customer-groups', 'item-groups', 'items', 'contract-types', 'expense-categories', 'kb-groups', 'kb-articles', 'kb-feedback', 'milestones', 'checklist-templates', 'days-off', 'consent-purposes', 'ticket-statuses', 'ticket-priorities', 'services', 'predefined-replies', 'surveys', 'survey-questions', 'goals'])
+const modelFields = {}
+const ownerColumns = (resource) => {
+    const name = resource.model[0].toUpperCase() + resource.model.slice(1)
+    modelFields[name] ||= new Set((Prisma.dmmf?.datamodel?.models || []).find((m) => m.name === name)?.fields.map((f) => f.name) || [])
+    return (resource.ownField ? [resource.ownField] : OWNER_COLUMNS).filter((c) => modelFields[name].has(c))
+}
+/** Tasks are visible to the whole team; changing them is guarded in the tasks API, and here only for managers. */
+const readScope = (resource, authority) => (resource.feature === 'tasks' ? (viewScope(authority, 'tasks') ? 'all' : null) : viewScope(authority, resource.feature))
+async function ownWhere(resource, session, params = {}) {
+    const authority = session.user.authority || []
+    if (!resource.feature || readScope(resource, authority) !== 'own') return null
+    const cols = ownerColumns(resource)
+    const me = (await getStaffId(session)) || '__none__'
+    if (cols.length) return cols.length === 1 ? { [cols[0]]: me } : { OR: cols.map((c) => ({ [c]: me })) }
+    if (LOOKUPS.has(resource.key)) return null
+    for (const [k, parent] of Object.entries(CHILD_PARENT)) {
+        const id = params.where?.[k]
+        if (id) { await getRecord(parent, String(id)); return null } // throws when the parent is not theirs
+    }
+    throw new PermissionError('Forbidden', 403)
+}
+async function ownAllows(resource, session, row) {
+    const authority = session.user.authority || []
+    if (!resource.feature || readScope(resource, authority) !== 'own') return true
+    const cols = ownerColumns(resource)
+    const me = await getStaffId(session)
+    if (cols.length) return !!me && cols.some((c) => row[c] === me)
+    if (LOOKUPS.has(resource.key)) return true
+    for (const [k, parent] of Object.entries(CHILD_PARENT)) {
+        if (row[k]) { try { await getRecord(parent, String(row[k])); return true } catch { return false } }
+    }
+    return false
+}
+/** Writes on task tables through the generic API are for managers; everybody else uses the tasks API (assignee rules). */
+const taskWriteGuard = (resource, session) => {
+    if (resource.feature === 'tasks' && viewScope(session.user.authority || [], 'tasks') !== 'all') throw new PermissionError('Only the people assigned to this task, or who created it, can change it', 403)
+}
+
+// Resources without a permission feature are not open to every signed-in member:
+//  - privateField  (reminders, to-dos, events, notifications): each person sees their own, administrators see all
+//  - shareByRel    (notes, files): the author sees theirs, others only those attached to a kind of record they may open
+const REL_FEATURE = { customer: 'customers', lead: 'leads', proposal: 'proposals', estimate: 'estimates', invoice: 'invoices', credit_note: 'credit_notes', ticket: 'tickets', expense: 'expenses', contract: 'contracts', project: 'projects', task: 'tasks', subscription: 'subscriptions', staff: 'staff' }
+const relAllowed = (authority) => Object.entries(REL_FEATURE).filter(([, f]) => viewScope(authority, f) !== null).map(([t]) => t)
+const restricted = (resource, session) => !resource.feature && (resource.privateField || resource.shareByRel) && !isCrmAdmin(session.user.authority || [])
+async function ownerFilter(resource, session) {
+    const me = (await getStaffId(session)) || '__none__'
+    if (resource.privateField) return { [resource.privateField]: me }
+    return { OR: [{ [resource.shareByRel]: me }, { relType: { in: relAllowed(session.user.authority || []) } }] }
+}
+
 export async function listRecords(key, params = {}) {
     const resource = resolveResource(key)
     const session = await requirePermission(resource.feature, 'view')
@@ -167,10 +220,11 @@ export async function getRecord(key, id) {
     const session = await requirePermission(resource.feature, 'view')
     const row = await delegate(resource).findUnique({ where: { id } })
     if (!row) throw new PermissionError('Not found', 404)
-    if (resource.feature && viewScope(session.user.authority || [], resource.feature) === 'own') {
-        const staffId = await getStaffId(session)
-        const ownField = resource.ownField || 'addedFrom'
-        if (fieldKeys(resource).has(ownField) && row[ownField] !== staffId) throw new PermissionError('Forbidden', 403)
+    if (!(await ownAllows(resource, session, row))) throw new PermissionError('Forbidden', 403)
+    if (restricted(resource, session)) {
+        const me = await getStaffId(session)
+        const ok = resource.privateField ? row[resource.privateField] === me : row[resource.shareByRel] === me || relAllowed(session.user.authority || []).includes(row.relType)
+        if (!ok) throw new PermissionError('Forbidden', 403)
     }
     await attachRelations(resource, [row])
     return row
@@ -195,12 +249,14 @@ export async function createRecord(key, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.feature, 'create')
+    taskWriteGuard(resource, session)
     const data = buildData(resource, body)
     validateRequired(resource, data)
     const keys = fieldKeys(resource)
     if (keys.has('addedFrom') && data.addedFrom === undefined) data.addedFrom = await getStaffId(session)
     // resources whose author column is not `addedFrom` (e.g. ticket replies -> adminId)
     if (resource.staffField && !data[resource.staffField]) data[resource.staffField] = await getStaffId(session)
+    if (restricted(resource, session) && resource.privateField) data[resource.privateField] = await getStaffId(session)
     const row = await delegate(resource).create({ data })
     await audit(session, resource, 'Created', row.id, row[resource.titleField])
     return row
@@ -210,6 +266,7 @@ export async function updateRecord(key, id, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.feature, 'edit')
+    taskWriteGuard(resource, session)
     const current = await getRecord(key, id) // enforces view_own scope
     const locked = resource.lock?.(current)
     if (locked) throw new PermissionError(locked, 409)
@@ -223,6 +280,7 @@ export async function deleteRecord(key, id) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.feature, 'delete')
+    taskWriteGuard(resource, session)
     const row = await getRecord(key, id)
     const locked = resource.lock?.(row)
     if (locked) throw new PermissionError(locked, 409)
@@ -234,7 +292,8 @@ export async function deleteRecord(key, id) {
 /** Options for relation pickers: [{ value, label }] */
 export async function listOptions(key, { query = '', ids } = {}) {
     const resource = resolveResource(key)
-    await requirePermission(resource.feature, 'view')
+    const session = await requirePermission(resource.feature, 'view')
+    if (restricted(resource, session)) return []
     const where = ids?.length
         ? { id: { in: ids } }
         : query

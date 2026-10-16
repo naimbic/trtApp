@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.42.2',
+        date: '2026-10-16',
+        title: 'Access audit: own-records scope really applied, private notes, reminders and files',
+        items: ['Members who may only see their own records (clients, leads, invoices, contracts, expenses, tickets...) could still read everything through the generic lists and record pages, because the owner column was not recognised there; the owner is now taken from the real column, child lists (contacts, project files...) follow the record they belong to, and tables with no owner (payments, vault entries...) are closed to them; lookups such as statuses and sources stay readable', 'Notes and files are shown only to their author and to people who may open the kind of record they are attached to; reminders, to-dos, events and notifications are private to their owner (administrators still see all); before, any signed-in member could list, edit and delete everyone\'s', 'Task tables reached through the generic API can only be changed by managers; everybody else goes through the task rules (assignees, creator)']
+    },
+    {
         version: '0.42.1',
         date: '2026-10-16',
         title: 'Notifications page fixed',

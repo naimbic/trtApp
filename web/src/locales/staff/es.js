@@ -3282,5 +3282,8 @@ export default {
     "Tasks due today": "Tareas para hoy",
     "This week": "Esta semana",
     "Tomorrow": "Mañana",
-    "due today": "para hoy"
+    "due today": "para hoy",
+    "Show them": "Mostrarlas",
+    "unfinished task is overdue": "tarea sin terminar está vencida",
+    "unfinished tasks are overdue": "tareas sin terminar están vencidas"
 }

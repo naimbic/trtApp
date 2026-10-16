@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { MdDragIndicator } from 'react-icons/md'
-import { TbBookmarks, TbHierarchy2, TbCircleCheck, TbCircleCheckFilled, TbSearch, TbLayoutKanban, TbPlus } from 'react-icons/tb'
+import { TbAlertTriangle, TbBookmarks, TbHierarchy2, TbCircleCheck, TbCircleCheckFilled, TbSearch, TbLayoutKanban, TbPlus } from 'react-icons/tb'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import Avatar from '@/components/ui/Avatar'
@@ -69,14 +69,14 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }
 }
 
 /** The "+ Add task" bar that opens into a small form, like the template. */
-const AddTask = ({ open, onOpen, onClose, staff, me, onCreate, defaults }) => {
+const AddTask = ({ open, onOpen, onClose, staff, me, onCreate, defaults, defaultDue = '' }) => {
     const ref = useRef(null)
     const [name, setName] = useState('')
     const [status, setStatus] = useState(1)
     const [priority, setPriority] = useState(2)
     const [assignee, setAssignee] = useState(me)
     const [due, setDue] = useState('')
-    useEffect(() => { if (open) { setName(''); setStatus(defaults?.status || 1); setPriority(defaults?.priority || 2); setAssignee(me); setDue(''); setTimeout(() => ref.current?.focus(), 50) } }, [open, me, defaults])
+    useEffect(() => { if (open) { setName(''); setStatus(defaults?.status || 1); setPriority(defaults?.priority || 2); setAssignee(me); setDue(defaultDue); setTimeout(() => ref.current?.focus(), 50) } }, [open, me, defaults, defaultDue])
     const create = () => { if (!name.trim()) return; onCreate({ name: name.trim(), status, priority, assigneeIds: assignee ? [assignee] : [], dueDate: due || null }) }
     const portal = { menuPortalTarget: document.body, menuPosition: 'fixed', styles: { menuPortal: (b) => ({ ...b, zIndex: 10000 }) } }
     if (!open) return <Button block variant="default" icon={<TbPlus />} onClick={onOpen}>{tr('Add task')}</Button>
@@ -125,10 +125,11 @@ const TaskList = ({ projectId = null }) => {
     const [search, setSearch] = useState('')
     const [tpl, setTpl] = useState(false)
     const [allDone, setAllDone] = useState(false)
-    const [period, setPeriod] = useState(() => { const p = new URLSearchParams(window.location.search).get('period'); return PERIODS().some(([k]) => k === p) ? p : 'all' }) // ?period=today opens the list on that day
+    const [period, setPeriod] = useState(() => { const p = new URLSearchParams(window.location.search).get('period'); return PERIODS().some(([k]) => k === p) ? p : projectId ? 'all' : 'today' }) // the lists open on today; ?period=week (or any chip) opens another
     const [dateField, setDateField] = useState('dueDate')
     const [from, setFrom] = useState('')
     const [to, setTo] = useState('')
+    const [late, setLate] = useState(0) // unfinished tasks whose day has passed: a small reminder under the chips
     const [order, setOrder] = useState(() => { try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '[]') } catch { return [] } })
     const [adding, setAdding] = useState('')
     const [loading, setLoading] = useState(true)
@@ -139,6 +140,11 @@ const TaskList = ({ projectId = null }) => {
     const load = useCallback(async () => {
         try { setData(await api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', done: allDone ? '1' : '', limit: 1000, relType: projectId ? 'project' : '', relId: projectId || '', ...periodParams(period, dateField, from, to) })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
     }, [scope, allDone, projectId, period, dateField, from, to])
+    useEffect(() => {
+        let alive = true
+        api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', overdue: '1', today: ymd(new Date()), limit: 1000, relType: projectId ? 'project' : '', relId: projectId || '' })}`).then((r) => alive && setLate(r.list.length)).catch(() => {})
+        return () => { alive = false }
+    }, [scope, projectId, data.list]) // refreshed whenever the list changes (a task ticked off lowers the number)
     useEffect(() => { setLoading(true); load() }, [load])
 
     // groups = projects (plus the tasks that belong to no project)
@@ -233,6 +239,13 @@ const TaskList = ({ projectId = null }) => {
                     </div>
                 )}
             </div>
+            {late > 0 && period !== 'overdue' && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+                    <TbAlertTriangle className="text-lg" />
+                    <span>{trn(late, 'unfinished task is overdue', 'unfinished tasks are overdue')}</span>
+                    <button type="button" className="font-semibold underline" onClick={() => setPeriod('overdue')}>{tr('Show them')}</button>
+                </div>
+            )}
             {error && <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
 
             <div className="my-8">
@@ -264,7 +277,7 @@ const TaskList = ({ projectId = null }) => {
                                                             )}
                                                         </Droppable>
                                                     </Table>
-                                                    {data.can.create && <div className="mt-4"><AddTask open={adding === g.key} onOpen={() => setAdding(g.key)} onClose={() => setAdding('')} staff={lookups.staff} me={lookups.me} defaults={lookups.defaults} onCreate={(b) => create(g, b)} /></div>}
+                                                    {data.can.create && <div className="mt-4"><AddTask open={adding === g.key} onOpen={() => setAdding(g.key)} onClose={() => setAdding('')} staff={lookups.staff} me={lookups.me} defaults={lookups.defaults} defaultDue={period === 'today' ? ymd(new Date()) : ''} onCreate={(b) => create(g, b)} /></div>}
                                                 </div>
                                             )}
                                         </Draggable>
@@ -280,7 +293,7 @@ const TaskList = ({ projectId = null }) => {
             </div>
 
             <TemplatesDialog isOpen={tpl} onClose={() => setTpl(false)} context={projectId ? { relType: 'project', relId: projectId } : {}} onUsed={(id) => nav(`/crm/tasks/${id}`)} />
-            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={{ ...taskDefaults(lookups), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} />
+            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={{ ...taskDefaults(lookups), ...(period === 'today' ? { dueDate: new Date() } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} />
         </Shell>
     )
 }

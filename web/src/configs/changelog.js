@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.46.2',
+        date: '2026-10-16',
+        title: 'Task lists open on today, with a reminder of what is still unfinished',
+        items: ['My tasks and Team tasks now open on Today (the tasks due today, finished or not); the other periods are one click away, and project task lists keep showing all dates', 'A small amber reminder under the date chips says how many unfinished tasks are overdue, with a Show them link that opens the Overdue period; it disappears when there are none', 'Adding a task while on Today gives it today\'s date, so it appears in the list you are looking at']
+    },
+    {
         version: '0.46.1',
         date: '2026-10-16',
         title: 'Date filter on tasks',

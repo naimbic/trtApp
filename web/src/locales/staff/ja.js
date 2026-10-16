@@ -3282,5 +3282,8 @@ export default {
     "Tasks due today": "今日が期限のタスク",
     "This week": "今週",
     "Tomorrow": "明日",
-    "due today": "今日が期限"
+    "due today": "今日が期限",
+    "Show them": "表示する",
+    "unfinished task is overdue": "未完了のタスクが期限切れです",
+    "unfinished tasks are overdue": "未完了のタスクが期限切れです"
 }

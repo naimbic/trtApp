@@ -3282,5 +3282,8 @@ export default {
     "Tasks due today": "Tâches dues aujourd'hui",
     "This week": "Cette semaine",
     "Tomorrow": "Demain",
-    "due today": "dues aujourd'hui"
+    "due today": "dues aujourd'hui",
+    "Show them": "Les afficher",
+    "unfinished task is overdue": "tâche non terminée est en retard",
+    "unfinished tasks are overdue": "tâches non terminées sont en retard"
 }

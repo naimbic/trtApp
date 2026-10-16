@@ -3282,5 +3282,8 @@ export default {
     "Tasks due today": "مهام تستحق اليوم",
     "This week": "هذا الأسبوع",
     "Tomorrow": "غدًا",
-    "due today": "تستحق اليوم"
+    "due today": "تستحق اليوم",
+    "Show them": "عرضها",
+    "unfinished task is overdue": "مهمة غير منجزة متأخرة",
+    "unfinished tasks are overdue": "مهام غير منجزة متأخرة"
 }

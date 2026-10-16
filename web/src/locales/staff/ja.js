@@ -3182,5 +3182,6 @@ export default {
     "{n} points": "{n}ポイント",
     "{n} still to do": "残り{n}件",
     "{n} tasks completed": "完了タスク{n}件",
-    "{n}% on time": "期限内{n}%"
+    "{n}% on time": "期限内{n}%",
+    "Only the people assigned to this task, or who created it, can change its status": "このタスクの担当者または作成者だけがステータスを変更できます"
 }

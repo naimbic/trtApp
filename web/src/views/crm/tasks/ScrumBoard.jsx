@@ -124,7 +124,7 @@ const ScrumBoard = () => {
                                         {(dp) => (
                                             <div ref={dp.innerRef} {...dp.droppableProps} className="min-h-[60px] px-4">
                                                 {c.list.map((t, i) => (
-                                                    <Draggable key={t.id} draggableId={t.id} index={i} isDragDisabled={!data.can.edit}>
+                                                    <Draggable key={t.id} draggableId={t.id} index={i} isDragDisabled={!data.can.edit || t.canFinish === false}>
                                                         {(tp) => <div ref={tp.innerRef} {...tp.draggableProps} {...tp.dragHandleProps}><Ticket t={t} onOpen={(id) => nav(`/crm/tasks/${id}`)} /></div>}
                                                     </Draggable>
                                                 ))}

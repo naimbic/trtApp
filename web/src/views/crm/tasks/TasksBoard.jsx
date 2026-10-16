@@ -128,7 +128,7 @@ const TasksBoard = ({ projectId = null }) => {
                                     {(prov, snap) => (
                                         <div ref={prov.innerRef} {...prov.droppableProps} className={cn('min-h-[120px] space-y-2 rounded-lg p-1 transition', snap.isDraggingOver && 'bg-blue-50 dark:bg-blue-900/10')}>
                                             {(columns[s.value] || []).map((t, i) => (
-                                                <Draggable key={t.id} draggableId={t.id} index={i} isDragDisabled={!data.can.edit}>
+                                                <Draggable key={t.id} draggableId={t.id} index={i} isDragDisabled={!data.can.edit || t.canFinish === false}>
                                                     {(p) => <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps}><TaskCard t={t} onOpen={open} /></div>}
                                                 </Draggable>
                                             ))}

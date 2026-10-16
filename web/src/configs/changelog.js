@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.41.0',
+        date: '2026-10-16',
+        title: 'Only the assignees can finish a task',
+        items: ['A task\'s status (finish, reopen, move on the board) can now only be changed by the people assigned to it, the person who created it, and people who see all tasks (managers, administrators); before, anyone who could see a task and had the edit permission could finish it, for example a public task assigned to a colleague', 'For everybody else the tick box, the status field and the drag and drop on the boards are disabled, and the server refuses the change with a clear message; comments, following and the rest are unchanged']
+    },
+    {
         version: '0.40.1',
         date: '2026-10-16',
         title: 'Nothing of the previous person stays after sign-out',

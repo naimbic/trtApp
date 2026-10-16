@@ -3182,5 +3182,6 @@ export default {
     "{n} points": "{n} puntos",
     "{n} still to do": "{n} por hacer",
     "{n} tasks completed": "{n} tareas completadas",
-    "{n}% on time": "{n} % a tiempo"
+    "{n}% on time": "{n} % a tiempo",
+    "Only the people assigned to this task, or who created it, can change its status": "Solo las personas asignadas a esta tarea, o quien la creó, pueden cambiar su estado"
 }

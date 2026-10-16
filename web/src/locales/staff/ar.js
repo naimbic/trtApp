@@ -3182,5 +3182,6 @@ export default {
     "{n} points": "{n} نقطة",
     "{n} still to do": "{n} متبقية",
     "{n} tasks completed": "{n} مهمة منجزة",
-    "{n}% on time": "{n}% في الموعد"
+    "{n}% on time": "{n}% في الموعد",
+    "Only the people assigned to this task, or who created it, can change its status": "يمكن فقط للأشخاص المكلفين بهذه المهمة أو من أنشأها تغيير حالتها"
 }

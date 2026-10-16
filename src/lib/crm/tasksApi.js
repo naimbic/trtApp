@@ -17,6 +17,10 @@ async function access(session) {
     return { authority, scope, staffId, can: (cap) => hasCap(authority, 'tasks', cap) }
 }
 
+/** Who may change a task's status (finish it, reopen it, move it on the board): its assignees, whoever created it, and people who see all tasks. */
+const mayAct = (a, t, assignees = t.assignees) => a.scope === 'all' || (!!a.staffId && (t.addedFrom === a.staffId || (assignees || []).some((x) => x.staffId === a.staffId)))
+const NOT_YOURS = 'Only the people assigned to this task, or who created it, can change its status'
+
 async function visibleWhere(a) {
     if (a.scope === 'all') return {}
     if (!a.staffId) return { id: NONE }
@@ -107,7 +111,7 @@ export async function listTasks(p = {}) {
     const counts = {}
     for (const t of tasks) counts[t.status] = (counts[t.status] || 0) + 1
     const ex = await extras(tasks)
-    return { list: tasks.map((t) => card(t, people, rels, ex(t))), counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
+    return { list: tasks.map((t) => card(t, people, rels, { ...ex(t), canFinish: mayAct(a, t) })), counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
 }
 
 async function loadOne(id, a) {
@@ -129,7 +133,7 @@ export async function getTask(id) {
     const running = timers.find((x) => !x.endTime && x.staff?.id === a.staffId) || null
     return {
         task: {
-            ...card({ ...t, checklistItems: t.checklistItems, _count: { comments: t.comments.length } }, people, rels, (await extras([t]))(t)),
+            ...card({ ...t, checklistItems: t.checklistItems, _count: { comments: t.comments.length } }, people, rels, { ...(await extras([t]))(t), canFinish: mayAct(a, t) }),
             description: t.description || '', hourlyRate: t.hourlyRate, isPublic: t.isPublic, visibleToClient: t.visibleToClient, billed: t.billed,
             recurringType: t.recurringType, repeatEvery: t.repeatEvery, totalCycles: t.totalCycles, addedBy: people[t.addedFrom] || null,
             followers: t.followers.map((x) => people[x.staffId]).filter(Boolean),
@@ -169,7 +173,7 @@ export async function saveTask(body, id) {
         recurring: !!body.recurring, recurringType: body.recurring ? body.recurringType || 'month' : null, repeatEvery: body.recurring ? Math.max(parseInt(body.repeatEvery, 10) || 1, 1) : 0, totalCycles: body.recurring ? Math.max(parseInt(body.totalCycles, 10) || 0, 0) : 0,
     }
     let prev = null
-    if (id) { prev = await loadOne(id, a); data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
+    if (id) { prev = await loadOne(id, a); if (status !== prev.status && !mayAct(a, prev)) throw fail(NOT_YOURS, 403); data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
     else data.dateFinished = status === COMPLETE ? new Date() : null
     const task = id
         ? await prisma.crmTask.update({ where: { id }, data })
@@ -200,6 +204,7 @@ export async function moveTask(id, { status, order }) {
     const a = await access(session)
     const t = await loadOne(id, a)
     const st = [1, 2, 3, 4, 5].includes(+status) ? +status : t.status
+    if (st !== t.status && !mayAct(a, t)) throw fail(NOT_YOURS, 403)
     await prisma.crmTask.update({ where: { id }, data: { status: st, kanbanOrder: Number.isFinite(+order) ? Math.round(+order) : t.kanbanOrder, dateFinished: st === COMPLETE ? t.dateFinished || new Date() : null } })
     return { success: true }
 }
@@ -211,12 +216,15 @@ export async function reorderTasks(status, ids) {
     const st = [1, 2, 3, 4, 5].includes(+status) ? +status : null
     if (!st || !Array.isArray(ids)) throw fail('Bad request')
     const where = await visibleWhere(a)
+    let denied = 0
     for (const [i, id] of ids.filter(oid).entries()) {
-        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { status: true, dateFinished: true } })
+        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { status: true, dateFinished: true, addedFrom: true, assignees: { select: { staffId: true } } } })
         if (!t) continue
+        if (t.status !== st && !mayAct(a, t)) { denied++; continue }
         await prisma.crmTask.update({ where: { id }, data: { kanbanOrder: i, ...(t.status !== st ? { status: st, dateFinished: st === COMPLETE ? new Date() : null } : {}) } })
     }
-    return { success: true }
+    if (denied && denied === ids.filter(oid).length) throw fail(NOT_YOURS, 403)
+    return { success: true, denied }
 }
 
 /** Drag and drop on the task lists: optionally move a task to another project / group, then store the order of `ids`. */

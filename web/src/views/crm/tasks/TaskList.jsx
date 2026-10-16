@@ -38,7 +38,7 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }
         <Tr ref={innerRef} {...rest}>
             <Td className="w-[40px] text-lg">{dragHandle}</Td>
             <Td className="w-[40px]">
-                <button type="button" className="cursor-pointer pt-1 text-2xl" disabled={!canEdit} onClick={() => onToggle(t)}>
+                <button type="button" className="cursor-pointer pt-1 text-2xl" disabled={!canEdit || t.canFinish === false} title={t.canFinish === false ? tr("Only the people assigned to this task, or who created it, can change its status") : undefined} onClick={() => onToggle(t)}>
                     {done ? <TbCircleCheckFilled className="text-primary" /> : <TbCircleCheck className="hover:text-primary" />}
                 </button>
             </Td>
@@ -211,7 +211,7 @@ const TaskList = ({ projectId = null }) => {
                                                             {(dp) => (
                                                                 <TBody ref={dp.innerRef} {...dp.droppableProps}>
                                                                     {g.list.map((t, ti) => (
-                                                                        <Draggable key={t.id} draggableId={t.id} index={ti} isDragDisabled={!data.can.edit}>
+                                                                        <Draggable key={t.id} draggableId={t.id} index={ti} isDragDisabled={!data.can.edit || t.canFinish === false}>
                                                                             {(tp) => <TaskRow t={t} innerRef={tp.innerRef} dragHandle={<span {...tp.dragHandleProps}><MdDragIndicator /></span>} onToggle={toggle} onOpen={open} canEdit={data.can.edit} {...tp.draggableProps} />}
                                                                         </Draggable>
                                                                     ))}

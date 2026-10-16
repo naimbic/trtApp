@@ -3285,5 +3285,9 @@ export default {
     "due today": "今日が期限",
     "Show them": "表示する",
     "unfinished task is overdue": "未完了のタスクが期限切れです",
-    "unfinished tasks are overdue": "未完了のタスクが期限切れです"
+    "unfinished tasks are overdue": "未完了のタスクが期限切れです",
+    "Time today": "今日の時間",
+    "Timer running": "タイマー実行中",
+    "Waiting": "待機中",
+    "testing, feedback": "テスト・フィードバック"
 }

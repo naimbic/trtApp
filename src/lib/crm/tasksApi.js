@@ -117,9 +117,12 @@ export async function listTasks(p = {}) {
     const from = day(p.from), to = day(p.to)
     if (from || to) and.push({ AND: [{ [field]: { not: null } }, { [field]: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(+to + 86400000) } : {}) } }] })
     if (p.noDate === '1') and.push({ [field]: null })
+    const statuses = String(p.statuses || '').split(',').map((x) => parseInt(x, 10)).filter((x) => [1, 2, 3, 4, 5].includes(x))
+    if (statuses.length) and.push({ status: { in: statuses } })
+    if (p.unassigned === '1') and.push({ assignees: { none: {} }, status: { not: COMPLETE } })
     if (p.overdue === '1') and.push({ AND: [{ dueDate: { not: null } }, { dueDate: { lt: day(p.today) || day(new Date().toISOString().slice(0, 10)) } }], status: { not: COMPLETE } })
     // finished tasks are hidden on the board unless asked for, like Perfex; a date range shows them too (a day's work includes what is done)
-    const showDone = p.done === '1' || p.status === '5' || !!(from || to)
+    const showDone = p.done === '1' || p.status === '5' || !!(from || to) || statuses.includes(5)
     if (p.status) and.push({ status: parseInt(p.status, 10) })
     else if (!showDone) and.push({ OR: [{ status: { not: COMPLETE } }, { dateFinished: { gte: new Date(Date.now() - 14 * 86400000) } }] })
     const limit = Math.min(parseInt(p.limit, 10) || 400, 1000)
@@ -485,4 +488,40 @@ export async function taskFromTemplate(templateId, body = {}) {
     const main = await make({ name: tpl.name, description: tpl.description, priority: tpl.priority, billable: tpl.billable, dueDate: due(tpl.dueInDays), status: 1 }, parseJson(tpl.checklistRaw, []))
     for (const s of parseJson(tpl.subtasksRaw, [])) await make({ name: s.name, priority: s.priority || 2, dueDate: due(s.dueInDays || 0), status: 1, parentId: main.id })
     return { success: true, id: main.id }
+}
+
+
+/** The figures behind the cards of the task lists: what is due when, what is late, what is being worked on, and the time logged today. */
+export async function taskSummary(p = {}) {
+    const session = await requirePermission('tasks', 'view')
+    const a = await access(session)
+    const day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? new Date(`${v}T00:00:00.000Z`) : null)
+    const today = day(p.today) || day(new Date().toISOString().slice(0, 10))
+    const plus = (d, n) => new Date(+d + n * 86400000)
+    const base = [await visibleWhere(a)]
+    let mineIds = null
+    if (p.mine === '1' && a.staffId) {
+        mineIds = (await prisma.crmTaskAssigned.findMany({ where: { staffId: a.staffId }, select: { taskId: true } })).map((x) => x.taskId)
+        base.push({ id: { in: mineIds } })
+    }
+    if (p.relType) base.push({ relType: p.relType })
+    if (oid(p.relId)) base.push({ relId: p.relId })
+    const count = (...w) => prisma.crmTask.count({ where: { AND: [...base, ...w] } })
+    const dueOn = (from, to) => ({ AND: [{ dueDate: { not: null } }, { dueDate: { gte: from, lt: plus(to, 1) } }] })
+    const wFrom = day(p.weekFrom) || today, wTo = day(p.weekTo) || plus(today, 6)
+    const open = { status: { not: COMPLETE } }, done = { status: COMPLETE }
+    const [dueToday, dueTodayDone, overdue, tomorrow, week, weekDone, noDate, inProgress, waiting, doneToday, unassigned] = await Promise.all([
+        count(dueOn(today, today)), count(dueOn(today, today), done), count({ AND: [{ dueDate: { not: null } }, { dueDate: { lt: today } }], ...open }),
+        count(dueOn(plus(today, 1), plus(today, 1))), count(dueOn(wFrom, wTo)), count(dueOn(wFrom, wTo), done),
+        count({ dueDate: null }, open), count({ status: 4 }), count({ status: { in: [2, 3] } }),
+        count(done, { dateFinished: { gte: today, lt: plus(today, 1) } }), count({ assignees: { none: {} } }, open),
+    ])
+    // time logged today (the person's own on "my tasks", everybody's on the team list) and the timer that is running now
+    const mineOnly = p.mine === '1'
+    const timers = await prisma.crmTaskTimer.findMany({ where: { ...(mineOnly || !a.staffId ? { staffId: a.staffId || NONE } : {}), OR: [{ endTime: { gte: today } }, { endTime: null }], startTime: { not: null } }, select: { id: true, taskId: true, staffId: true, startTime: true, endTime: true }, take: 2000 })
+    let ms = 0
+    for (const t of timers) { const from = Math.max(+t.startTime, +today), to = t.endTime ? +t.endTime : Date.now(); if (to > from) ms += to - from }
+    const mine = timers.find((t) => !t.endTime && t.staffId === a.staffId)
+    const running = mine ? await prisma.crmTask.findUnique({ where: { id: mine.taskId }, select: { id: true, name: true } }) : null
+    return { dueToday, dueTodayDone, overdue, tomorrow, week, weekDone, noDate, inProgress, waiting, doneToday, unassigned, hoursToday: Math.round((ms / 3600000) * 10) / 10, running: running ? { ...running, since: mine.startTime } : null }
 }

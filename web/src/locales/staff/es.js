@@ -3285,5 +3285,9 @@ export default {
     "due today": "para hoy",
     "Show them": "Mostrarlas",
     "unfinished task is overdue": "tarea sin terminar está vencida",
-    "unfinished tasks are overdue": "tareas sin terminar están vencidas"
+    "unfinished tasks are overdue": "tareas sin terminar están vencidas",
+    "Time today": "Tiempo hoy",
+    "Timer running": "Cronómetro en marcha",
+    "Waiting": "En espera",
+    "testing, feedback": "pruebas, comentarios"
 }

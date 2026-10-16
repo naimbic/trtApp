@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { MdDragIndicator } from 'react-icons/md'
-import { TbAlertTriangle, TbBookmarks, TbHierarchy2, TbCircleCheck, TbCircleCheckFilled, TbSearch, TbLayoutKanban, TbPlus } from 'react-icons/tb'
+import { TbCalendarDue, TbCalendarEvent, TbCalendarWeek, TbLoader, TbHourglass, TbCircleCheck as TbDone, TbClock, TbUserOff, TbPlayerPlay, TbAlertTriangle, TbBookmarks, TbHierarchy2, TbCircleCheck, TbCircleCheckFilled, TbSearch, TbLayoutKanban, TbPlus } from 'react-icons/tb'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import Avatar from '@/components/ui/Avatar'
@@ -96,6 +97,7 @@ const AddTask = ({ open, onOpen, onClose, staff, me, onCreate, defaults, default
 }
 
 /* ---- date filter: one click for the daily follow-up, or any range on the due / start / completion date ---- */
+dayjs.extend(relativeTime)
 const ymd = (d) => dayjs(d).format('YYYY-MM-DD')
 const PERIODS = () => [['all', tr('All dates')], ['today', tr('Today')], ['tomorrow', tr('Tomorrow')], ['week', tr('This week')], ['overdue', tr('Overdue')], ['nodate', tr('No date')], ['done', tr('Done today')], ['custom', tr('Custom')]]
 const DATE_FIELDS = () => [{ value: 'dueDate', label: tr('Due date') }, { value: 'startDate', label: tr('Start date') }, { value: 'dateFinished', label: tr('Completed on') }]
@@ -111,6 +113,15 @@ const periodParams = (period, field, from, to) => {
     if (period === 'custom') return { dateField: field, from, to }
     return {}
 }
+
+/** One small card: a figure, what it counts, and a click that filters the list below to it. */
+const Mini = ({ icon, label, value, sub, tone, active, onClick }) => (
+    <button type="button" onClick={onClick} className={classNames('flex items-center gap-3 rounded-2xl border bg-white p-3 text-start transition hover:shadow-md dark:bg-gray-800', active ? 'border-primary ring-1 ring-primary' : 'border-gray-200 hover:border-primary dark:border-gray-600')}>
+        <span className={classNames('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl', MINI_TONE[tone])}>{icon}</span>
+        <span className="min-w-0"><span className="block text-xl font-bold leading-tight heading-text">{value}</span><span className="block truncate text-xs text-gray-500">{label}</span>{sub && <span className="block truncate text-[11px] text-gray-400">{sub}</span>}</span>
+    </button>
+)
+const MINI_TONE = { blue: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20', red: 'bg-red-100 text-red-600 dark:bg-red-500/20', amber: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20', green: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20', violet: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20', teal: 'bg-teal-100 text-teal-600 dark:bg-teal-500/20', slate: 'bg-slate-100 text-slate-600 dark:bg-slate-500/20' }
 
 /** What a new task starts with, from Settings → Tasks. */
 const taskDefaults = (l) => (l.defaults ? { status: l.defaults.status, priority: l.defaults.priority, billable: l.defaults.billable, assigneeIds: l.defaults.assignMe && l.me ? [l.me] : [], followerIds: l.defaults.followMe && l.me ? [l.me] : [] } : {})
@@ -129,7 +140,10 @@ const TaskList = ({ projectId = null }) => {
     const [dateField, setDateField] = useState('dueDate')
     const [from, setFrom] = useState('')
     const [to, setTo] = useState('')
-    const [late, setLate] = useState(0) // unfinished tasks whose day has passed: a small reminder under the chips
+    const [sum, setSum] = useState(null) // the figures of the cards (and the overdue reminder)
+    const [statusFilter, setStatusFilter] = useState('') // '4' in progress, '2,3' testing / awaiting feedback
+    const [unassignedOnly, setUnassignedOnly] = useState(false)
+    const late = sum?.overdue || 0
     const [order, setOrder] = useState(() => { try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '[]') } catch { return [] } })
     const [adding, setAdding] = useState('')
     const [loading, setLoading] = useState(true)
@@ -138,13 +152,14 @@ const TaskList = ({ projectId = null }) => {
 
     useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLookups).catch(() => {}) }, [])
     const load = useCallback(async () => {
-        try { setData(await api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', done: allDone ? '1' : '', limit: 1000, relType: projectId ? 'project' : '', relId: projectId || '', ...periodParams(period, dateField, from, to) })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [scope, allDone, projectId, period, dateField, from, to])
+        try { setData(await api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', done: allDone ? '1' : '', limit: 1000, relType: projectId ? 'project' : '', relId: projectId || '', ...periodParams(period, dateField, from, to), statuses: statusFilter, unassigned: unassignedOnly ? '1' : '' })}`)); setError('') } catch (e) { setError(e.message) } finally { setLoading(false) }
+    }, [scope, allDone, projectId, period, dateField, from, to, statusFilter, unassignedOnly])
     useEffect(() => {
         let alive = true
-        api(`/api/crm/work/tasks?${qs({ mine: scope === 'mine' ? '1' : '', overdue: '1', today: ymd(new Date()), limit: 1000, relType: projectId ? 'project' : '', relId: projectId || '' })}`).then((r) => alive && setLate(r.list.length)).catch(() => {})
+        const monday = dayjs().subtract((dayjs().day() + 6) % 7, 'day')
+        api(`/api/crm/work/tasks/summary?${qs({ mine: scope === 'mine' ? '1' : '', today: ymd(new Date()), weekFrom: ymd(monday), weekTo: ymd(monday.add(6, 'day')), relType: projectId ? 'project' : '', relId: projectId || '' })}`).then((r) => alive && setSum(r)).catch(() => {})
         return () => { alive = false }
-    }, [scope, projectId, data.list]) // refreshed whenever the list changes (a task ticked off lowers the number)
+    }, [scope, projectId, data.list]) // refreshed whenever the list changes (a task ticked off updates the cards)
     useEffect(() => { setLoading(true); load() }, [load])
 
     // groups = projects (plus the tasks that belong to no project)
@@ -224,12 +239,29 @@ const TaskList = ({ projectId = null }) => {
                     {data.can.create && <Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => open(null)}>{tr('New task')}</Button>}
                 </div>
             </div>
+            {sum && (
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Mini icon={<TbCalendarEvent />} tone="blue" label={tr('Due today')} value={sum.dueToday ? `${sum.dueTodayDone}/${sum.dueToday}` : 0} sub={sum.dueToday ? tr('done') : undefined} active={period === 'today' && !statusFilter && !unassignedOnly} onClick={() => { setPeriod('today'); setStatusFilter(''); setUnassignedOnly(false) }} />
+                    <Mini icon={<TbAlertTriangle />} tone={sum.overdue ? 'red' : 'green'} label={tr('Overdue')} value={sum.overdue} active={period === 'overdue' && !statusFilter && !unassignedOnly} onClick={() => { setPeriod('overdue'); setStatusFilter(''); setUnassignedOnly(false) }} />
+                    <Mini icon={<TbCalendarDue />} tone="violet" label={tr('Tomorrow')} value={sum.tomorrow} active={period === 'tomorrow' && !statusFilter && !unassignedOnly} onClick={() => { setPeriod('tomorrow'); setStatusFilter(''); setUnassignedOnly(false) }} />
+                    <Mini icon={<TbCalendarWeek />} tone="teal" label={tr('This week')} value={sum.week ? `${sum.weekDone}/${sum.week}` : 0} sub={sum.week ? tr('done') : undefined} active={period === 'week' && !statusFilter && !unassignedOnly} onClick={() => { setPeriod('week'); setStatusFilter(''); setUnassignedOnly(false) }} />
+                    <Mini icon={<TbLoader />} tone="blue" label={tr('In progress')} value={sum.inProgress} active={statusFilter === '4'} onClick={() => { setPeriod('all'); setUnassignedOnly(false); setStatusFilter(statusFilter === '4' ? '' : '4') }} />
+                    <Mini icon={<TbHourglass />} tone="amber" label={tr('Waiting')} value={sum.waiting} sub={tr('testing, feedback')} active={statusFilter === '2,3'} onClick={() => { setPeriod('all'); setUnassignedOnly(false); setStatusFilter(statusFilter === '2,3' ? '' : '2,3') }} />
+                    {scope === 'team' && !projectId
+                        ? <Mini icon={<TbUserOff />} tone="slate" label={tr('Unassigned')} value={sum.unassigned} active={unassignedOnly} onClick={() => { setPeriod('all'); setStatusFilter(''); setUnassignedOnly(!unassignedOnly) }} />
+                        : <Mini icon={<TbDone />} tone="green" label={tr('Done today')} value={sum.doneToday} active={period === 'done' && !statusFilter} onClick={() => { setPeriod('done'); setStatusFilter(''); setUnassignedOnly(false) }} />}
+                    {sum.running
+                        ? <Mini icon={<TbPlayerPlay />} tone="green" label={tr('Timer running')} value={dayjs(sum.running.since).fromNow(true)} sub={sum.running.name} onClick={() => open(sum.running.id)} />
+                        : <Mini icon={<TbClock />} tone="slate" label={tr('Time today')} value={`${sum.hoursToday} h`} onClick={() => nav('/crm/time-report')} />}
+                </div>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-4">
                 <div className="w-full sm:w-72"><Input size="sm" value={search} prefix={<TbSearch className="text-lg" />} placeholder={tr('Search tasks')} onChange={(e) => setSearch(e.target.value)} /></div>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={allDone} onChange={setAllDone} />{tr('Show all completed')}</label>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-                {PERIODS().map(([k, label]) => <button key={k} type="button" onClick={() => setPeriod(k)} className={classNames('rounded-full px-3 py-1 text-sm font-semibold transition', period === k ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300', k === 'overdue' && period !== k && 'text-red-500')}>{label}</button>)}
+                {PERIODS().map(([k, label]) => <button key={k} type="button" onClick={() => { setPeriod(k); setStatusFilter(''); setUnassignedOnly(false) }} className={classNames('rounded-full px-3 py-1 text-sm font-semibold transition', period === k && !statusFilter && !unassignedOnly ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300', k === 'overdue' && period !== k && 'text-red-500')}>{label}</button>)}
+                {(statusFilter || unassignedOnly) && <button type="button" onClick={() => { setStatusFilter(''); setUnassignedOnly(false) }} className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-sm font-semibold text-white">{unassignedOnly ? tr('Unassigned') : statusFilter === '4' ? tr('In progress') : tr('Waiting')} ×</button>}
                 {period === 'custom' && (
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="w-40"><Select size="sm" isSearchable={false} options={DATE_FIELDS()} value={DATE_FIELDS().find((o) => o.value === dateField)} onChange={(o) => setDateField(o.value)} /></div>

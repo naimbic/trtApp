@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.47.0',
+        date: '2026-10-16',
+        title: 'Cards on My tasks and Team tasks',
+        items: ['A row of small cards above the task lists: Due today (done / total), Overdue, Tomorrow, This week (done / total), In progress, Waiting (testing and awaiting feedback), Done today (Unassigned on the team list) and Time today, which becomes a Timer running card with the task name while a timer is on; each card opens the matching list with one click, the active one is highlighted and a pill removes the filter', 'The figures come from a new summary of the task API and refresh whenever the list changes, so ticking a task off updates them; the overdue reminder now uses the same figure', 'The task list also filters by status groups and by unassigned tasks']
+    },
+    {
         version: '0.46.2',
         date: '2026-10-16',
         title: 'Task lists open on today, with a reminder of what is still unfinished',

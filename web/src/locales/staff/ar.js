@@ -3285,5 +3285,9 @@ export default {
     "due today": "تستحق اليوم",
     "Show them": "عرضها",
     "unfinished task is overdue": "مهمة غير منجزة متأخرة",
-    "unfinished tasks are overdue": "مهام غير منجزة متأخرة"
+    "unfinished tasks are overdue": "مهام غير منجزة متأخرة",
+    "Time today": "وقت اليوم",
+    "Timer running": "المؤقت يعمل",
+    "Waiting": "قيد الانتظار",
+    "testing, feedback": "اختبار، ملاحظات"
 }

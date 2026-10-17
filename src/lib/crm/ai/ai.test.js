@@ -12,6 +12,13 @@ test('secret: a key survives sealing, differs each time, and is useless with ano
     assert.equal(open('plain-text', 'secret-A'), null)
 })
 
+test('errors: a provider failure is reported with 424, never 502 or 504 (proxies replace those and hide the message)', async () => {
+    const status = async (fn) => { try { await fn() } catch (e) { return e.status } }
+    assert.equal(await status(() => chat({ provider: 'openai', apiKey: 'K', model: 'm', system: 'S', user: 'U', fetchFn: fakeFetch(500, {}) })), 424)
+    assert.equal(await status(() => chat({ provider: 'openai', apiKey: 'K', model: 'm', system: 'S', user: 'U', fetchFn: fakeFetch(404, {}) })), 424)
+    assert.equal(await status(() => chat({ provider: 'openai', apiKey: 'K', model: 'm', system: 'S', user: 'U', fetchFn: async () => { throw new Error('x') } })), 424)
+    assert.equal(await status(() => chat({ provider: 'openai', apiKey: 'K', model: 'm', system: 'S', user: 'U', fetchFn: fakeFetch(401, {}) })), 400)
+})
 test('providers: the four the CRM offers, each with models to choose from', () => {
     assert.deepEqual(Object.keys(PROVIDERS), ['anthropic', 'openai', 'deepseek', 'openrouter'])
     for (const p of Object.values(PROVIDERS)) assert.ok(p.presets.length >= 2)

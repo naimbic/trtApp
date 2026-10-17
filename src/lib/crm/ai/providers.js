@@ -2,7 +2,7 @@
 // OpenAI "chat completions" API, so one adapter serves three of them. Everything here is free of the database and the
 // framework (fetch can be handed in), so it can be tested.
 export const PROVIDERS = {
-    anthropic: { id: 'anthropic', label: 'Claude (Anthropic)', kind: 'anthropic', base: 'https://api.anthropic.com/v1', help: 'console.anthropic.com → API keys', presets: ['claude-fable-5-1', 'claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'] },
+    anthropic: { id: 'anthropic', label: 'Claude (Anthropic)', kind: 'anthropic', base: 'https://api.anthropic.com/v1', help: 'console.anthropic.com → API keys', presets: ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5', 'claude-fable-5-1'] },
     openai: { id: 'openai', label: 'ChatGPT (OpenAI)', kind: 'openai', base: 'https://api.openai.com/v1', help: 'platform.openai.com → API keys', presets: ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini', 'o4-mini'] },
     deepseek: { id: 'deepseek', label: 'DeepSeek', kind: 'openai', base: 'https://api.deepseek.com', help: 'platform.deepseek.com → API keys', presets: ['deepseek-chat', 'deepseek-reasoner'] },
     openrouter: { id: 'openrouter', label: 'OpenRouter', kind: 'openai', base: 'https://openrouter.ai/api/v1', help: 'openrouter.ai → Keys (one key, hundreds of models)', presets: ['anthropic/claude-sonnet-4.5', 'openai/gpt-4o', 'google/gemini-2.5-pro', 'deepseek/deepseek-chat', 'meta-llama/llama-3.3-70b-instruct'] },
@@ -13,7 +13,8 @@ export const providerIds = Object.keys(PROVIDERS)
 export const baseOf = (id, env = process.env) => String(env[`AI_BASE_URL_${String(id).toUpperCase()}`] || PROVIDERS[id].base).replace(/\/+$/, '')
 
 export class AIError extends Error {
-    constructor(message, status = 502) { super(message); this.status = status }
+    // 424 (the provider failed) rather than 502 / 504: a proxy or CDN in front of the app replaces those with its own page and the message is lost
+    constructor(message, status = 424) { super(message); this.status = status }
 }
 
 /** The request for one question: { url, headers, body }. */
@@ -58,9 +59,9 @@ const withTimeout = (ms) => { const c = new AbortController(); const t = setTime
 async function call(providerId, url, init, fetchFn, timeoutMs) {
     const t = withTimeout(timeoutMs)
     let res
-    try { res = await fetchFn(url, { ...init, signal: t.signal }) } catch (e) { throw new AIError(e?.name === 'AbortError' ? `${PROVIDERS[providerId].label} took too long to answer.` : `Could not reach ${PROVIDERS[providerId].label}.`, 504) } finally { t.done() }
+    try { res = await fetchFn(url, { ...init, signal: t.signal }) } catch (e) { throw new AIError(e?.name === 'AbortError' ? `${PROVIDERS[providerId].label} took too long to answer.` : `Could not reach ${PROVIDERS[providerId].label}.`) } finally { t.done() }
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new AIError(friendlyError(providerId, res.status, json), res.status === 401 || res.status === 403 ? 400 : 502)
+    if (!res.ok) throw new AIError(friendlyError(providerId, res.status, json), res.status === 401 || res.status === 403 ? 400 : 424)
     return json
 }
 

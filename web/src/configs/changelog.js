@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.50.1',
+        date: '2026-10-17',
+        title: 'AI: the real error is shown, Claude Sonnet is the default model',
+        items: ['When Claude, ChatGPT, DeepSeek or OpenRouter refuses a request (wrong model, key without credit, rate limit...), the screen showed only "Request failed (502)" because the server in front of the app replaces 502 answers with its own page; the AI errors now use a status that passes through, so the real message appears (for example that the model is not known to the account or that the key has no credit left)', 'Claude\'s suggested models now start with Sonnet, the usual choice, instead of the largest one']
+    },
+    {
         version: '0.50.0',
         date: '2026-10-17',
         title: 'AI insights: leads, clients and yearly income',

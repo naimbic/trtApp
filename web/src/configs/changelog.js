@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.51.1',
+        date: '2026-10-17',
+        title: 'Claude keys that belong to no workspace',
+        items: ['Settings → AI → Claude: new optional "Workspace id" field. Anthropic answers "This API key is not scoped to a workspace" for keys created outside a workspace; paste the workspace id (console.anthropic.com → Settings → Workspaces) and it is sent with every request, for the test, the model list, the analyses and the chat', 'Provider error messages are no longer cut short']
+    },
+    {
         version: '0.51.0',
         date: '2026-10-17',
         title: 'AI chat about your figures',

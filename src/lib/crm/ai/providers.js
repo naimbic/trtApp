@@ -18,13 +18,13 @@ export class AIError extends Error {
 }
 
 /** The request for one question: { url, headers, body }. */
-export function buildChat(providerId, { model, system, user, messages, maxTokens = 2000 }, apiKey) {
+export function buildChat(providerId, { model, system, user, messages, maxTokens = 2000, workspaceId }, apiKey) {
     // a conversation ([{ role, content }]) or one question
     const turns = messages?.length ? messages : [{ role: 'user', content: user }]
     const p = PROVIDERS[providerId]
     if (!p) throw new AIError('Unknown AI provider', 400)
     if (p.kind === 'anthropic') {
-        return { url: `${baseOf(providerId)}/messages`, headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }, body: { model, max_tokens: maxTokens, system, messages: turns } }
+        return { url: `${baseOf(providerId)}/messages`, headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', ...(workspaceId ? { 'anthropic-workspace-id': workspaceId } : {}) }, body: { model, max_tokens: maxTokens, system, messages: turns } }
     }
     // OpenAI's reasoning models take max_completion_tokens; the others (and DeepSeek, OpenRouter) max_tokens
     const tokens = providerId === 'openai' && /^(o\d|gpt-5)/.test(model) ? 'max_completion_tokens' : 'max_tokens'
@@ -47,7 +47,7 @@ export function parseChat(providerId, json) {
 /** What the person is told when a provider refuses (never contains the key). */
 export function friendlyError(providerId, status, body) {
     const p = PROVIDERS[providerId]
-    const detail = String(body?.error?.message || body?.error || body?.message || '').slice(0, 200)
+    const detail = String(body?.error?.message || body?.error || body?.message || '').slice(0, 500)
     if (status === 401 || status === 403) return `${p.label} refused the API key. Check it, or create a new one.`
     if (status === 402) return `${p.label} says the account has no credit left.`
     if (status === 404) return `${p.label} does not know this model${detail ? ` (${detail})` : ''}. Pick another model.`
@@ -68,21 +68,21 @@ async function call(providerId, url, init, fetchFn, timeoutMs) {
 }
 
 /** Asks one question. Returns { text, usage }. */
-export async function chat({ provider, apiKey, model, system, user, messages, maxTokens, fetchFn = fetch, timeoutMs = 90000 }) {
+export async function chat({ provider, apiKey, workspaceId, model, system, user, messages, maxTokens, fetchFn = fetch, timeoutMs = 90000 }) {
     if (!apiKey) throw new AIError(`No API key for ${PROVIDERS[provider]?.label || provider} yet.`, 400)
     if (!model) throw new AIError('Choose a model first.', 400)
-    const r = buildChat(provider, { model, system, user, messages, maxTokens }, apiKey)
+    const r = buildChat(provider, { model, system, user, messages, maxTokens, workspaceId }, apiKey)
     return parseChat(provider, await call(provider, r.url, { method: 'POST', headers: r.headers, body: JSON.stringify(r.body) }, fetchFn, timeoutMs))
 }
 
 const NOT_CHAT = /embed|whisper|tts|dall-e|moderation|transcribe|audio|image|realtime|search-preview/i
 
 /** The models the key can use (for the dropdown). */
-export async function listModels({ provider, apiKey, fetchFn = fetch, timeoutMs = 20000 }) {
+export async function listModels({ provider, apiKey, workspaceId, fetchFn = fetch, timeoutMs = 20000 }) {
     const p = PROVIDERS[provider]
     if (!p) throw new AIError('Unknown AI provider', 400)
     if (!apiKey) throw new AIError(`No API key for ${p.label} yet.`, 400)
-    const headers = p.kind === 'anthropic' ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' } : { authorization: `Bearer ${apiKey}` }
+    const headers = p.kind === 'anthropic' ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', ...(workspaceId ? { 'anthropic-workspace-id': workspaceId } : {}) } : { authorization: `Bearer ${apiKey}` }
     const url = p.kind === 'anthropic' ? `${baseOf(provider)}/models?limit=100` : `${baseOf(provider)}/models`
     const json = await call(provider, url, { method: 'GET', headers }, fetchFn, timeoutMs)
     const ids = (json?.data || []).map((m) => m.id).filter((id) => typeof id === 'string' && !NOT_CHAT.test(id))

@@ -1,5 +1,8 @@
 // Staff area: fr. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Workspace id saved": "Identifiant de workspace enregistré",
+    "Workspace id (only if Claude says the key is not scoped to a workspace)": "Identifiant de workspace (seulement si Claude indique que la clé n'est liée à aucun workspace)",
+    "Find it in console.anthropic.com → Settings → Workspaces. Or create a key inside one workspace and none is needed.": "À trouver dans console.anthropic.com → Settings → Workspaces. Ou créez une clé dans un workspace et rien n'est nécessaire.",
     "Ask a question… (Enter to send, Shift+Enter for a new line)": "Posez une question… (Entrée pour envoyer, Maj+Entrée pour un saut de ligne)",
     "Ask about your leads, clients and income": "Interrogez vos prospects, clients et revenus",
     "Compare this year with last year, month by month.": "Compare cette année à l'an dernier, mois par mois.",

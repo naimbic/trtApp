@@ -80,3 +80,12 @@ test('conversation: the whole chat is sent, to both API styles', () => {
     assert.deepEqual(buildChat('anthropic', { model: 'm', system: 'S', messages: turns }, 'K').body.messages, turns)
     assert.deepEqual(buildChat('openai', { model: 'gpt-4o', system: 'S', messages: turns }, 'K').body.messages, [{ role: 'system', content: 'S' }, ...turns])
 })
+
+test('request: an Anthropic key outside any workspace sends the workspace id header, on questions and on the model list', async () => {
+    const r = buildChat('anthropic', { model: 'm', system: 'S', user: 'U', workspaceId: 'wrkspc_123' }, 'K')
+    assert.equal(r.headers['anthropic-workspace-id'], 'wrkspc_123')
+    assert.ok(!('anthropic-workspace-id' in buildChat('anthropic', { model: 'm', system: 'S', user: 'U' }, 'K').headers))
+    let seen
+    await listModels({ provider: 'anthropic', apiKey: 'K', workspaceId: 'wrkspc_9', fetchFn: async (u, init) => { seen = init.headers; return { ok: true, json: async () => ({ data: [{ id: 'claude-x' }] }) } } })
+    assert.equal(seen['anthropic-workspace-id'], 'wrkspc_9')
+})

@@ -1,5 +1,8 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Workspace id saved": "تم حفظ معرّف مساحة العمل",
+    "Workspace id (only if Claude says the key is not scoped to a workspace)": "معرّف مساحة العمل (فقط إذا قال Claude إن المفتاح غير مرتبط بمساحة عمل)",
+    "Find it in console.anthropic.com → Settings → Workspaces. Or create a key inside one workspace and none is needed.": "تجده في console.anthropic.com → Settings → Workspaces. أو أنشئ مفتاحاً داخل مساحة عمل ولن تحتاجه.",
     "Ask a question… (Enter to send, Shift+Enter for a new line)": "اطرح سؤالاً… (Enter للإرسال، Shift+Enter لسطر جديد)",
     "Ask about your leads, clients and income": "اسأل عن العملاء المحتملين والعملاء والإيرادات",
     "Compare this year with last year, month by month.": "قارن هذا العام بالعام الماضي شهراً بشهر.",

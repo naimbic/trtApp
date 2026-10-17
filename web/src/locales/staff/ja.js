@@ -1,5 +1,8 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Workspace id saved": "ワークスペースIDを保存しました",
+    "Workspace id (only if Claude says the key is not scoped to a workspace)": "ワークスペースID（Claudeが「キーがワークスペースに紐づいていない」と言う場合のみ）",
+    "Find it in console.anthropic.com → Settings → Workspaces. Or create a key inside one workspace and none is needed.": "console.anthropic.com → Settings → Workspaces にあります。ワークスペース内でキーを作成すれば不要です。",
     "Ask a question… (Enter to send, Shift+Enter for a new line)": "質問を入力… (Enterで送信、Shift+Enterで改行)",
     "Ask about your leads, clients and income": "リード・顧客・収入について質問する",
     "Compare this year with last year, month by month.": "今年と昨年を月ごとに比較してください。",

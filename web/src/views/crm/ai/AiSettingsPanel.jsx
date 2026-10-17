@@ -15,6 +15,7 @@ const opts = (list) => list.map((m) => ({ value: m, label: m }))
 const Provider = ({ p, isDefault, onSaved }) => {
     const [key, setKey] = useState('')
     const [model, setModel] = useState(p.model)
+    const [workspace, setWorkspace] = useState(p.workspaceId || '')
     const [loaded, setLoaded] = useState([])
     const [busy, setBusy] = useState('')
     const [result, setResult] = useState(null)
@@ -22,6 +23,7 @@ const Provider = ({ p, isDefault, onSaved }) => {
 
     const save = async (body, ok) => { setBusy('save'); try { const d = await api('/api/crm/ai/settings', { method: 'PUT', body }); onSaved(d); if (ok) notify('success', ok); return d } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
     const saveKey = async () => { if (!key.trim()) return; const d = await save({ keys: { [p.id]: key.trim() } }, tr('API key saved')); if (d) { setKey(''); setResult(null) } }
+    const saveWorkspace = async () => { const d = await save({ workspaces: { [p.id]: workspace.trim() } }, tr('Workspace id saved')); if (d) setResult(null) }
     const load = async () => { setBusy('load'); try { const r = await api('/api/crm/ai/models', { method: 'POST', body: { provider: p.id } }); setLoaded(r.models); notify('success', tr('{n} models loaded', { n: r.models.length })) } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
     const test = async () => { setBusy('test'); setResult(null); try { setResult({ ok: true, ...(await api('/api/crm/ai/test', { method: 'POST', body: { provider: p.id, model } })) }) } catch (e) { setResult({ ok: false, error: e.message }) } finally { setBusy('') } }
     const pick = (o) => { const m = o?.value || ''; setModel(m); if (m) save({ models: { [p.id]: m }, ...(isDefault ? { model: m } : {}) }) }
@@ -46,6 +48,13 @@ const Provider = ({ p, isDefault, onSaved }) => {
                     </div>
                 </div>
             </div>
+            {p.id === 'anthropic' && p.hasKey && (
+                <div className="mt-3">
+                    <div className="mb-1 text-xs font-semibold text-gray-500">{tr('Workspace id (only if Claude says the key is not scoped to a workspace)')}</div>
+                    <div className="flex max-w-xl gap-2"><Input size="sm" autoComplete="off" placeholder="wrkspc_…" value={workspace} onChange={(e) => setWorkspace(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveWorkspace()} /><Button size="sm" disabled={workspace.trim() === (p.workspaceId || '')} loading={busy === 'save'} onClick={saveWorkspace}>{tr('Save')}</Button></div>
+                    <p className="mt-1 text-xs text-gray-400">{tr('Find it in console.anthropic.com → Settings → Workspaces. Or create a key inside one workspace and none is needed.')}</p>
+                </div>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Button size="sm" icon={<TbPlugConnected />} disabled={!p.hasKey || !model} loading={busy === 'test'} onClick={test}>{tr('Test')}</Button>
                 {p.hasKey && !isDefault && <Button size="sm" onClick={() => save({ provider: p.id, model }, tr('Default provider changed'))}>{tr('Use as default')}</Button>}

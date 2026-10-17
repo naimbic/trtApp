@@ -41,7 +41,7 @@ export async function analyze({ kind, question, provider, model, lang }) {
     const data = await COLLECT[kind]()
     const { system, user } = buildPrompt({ kind, data, question, systemPrompt: ai.systemPrompt, lang })
     const t = Date.now()
-    const out = await chat({ provider: ai.provider, apiKey: ai.apiKey, model: ai.model, system, user, maxTokens: 2200 })
+    const out = await chat({ provider: ai.provider, apiKey: ai.apiKey, workspaceId: ai.workspaceId, model: ai.model, system, user, maxTokens: 2200 })
     await audit(session, `AI analysis (${kind}) with ${PROVIDERS[ai.provider].label} · ${ai.model}`)
     return { kind, markdown: out.text, provider: ai.provider, model: ai.model, usage: out.usage, ms: Date.now() - t, generatedAt: new Date().toISOString() }
 }
@@ -57,7 +57,7 @@ export async function modelsFor(provider) {
     await requireSuper()
     if (!providerIds.includes(provider)) throw bad('Unknown AI provider')
     const ai = await resolveAi({ provider })
-    return { models: await listModels({ provider, apiKey: ai.apiKey }) }
+    return { models: await listModels({ provider, apiKey: ai.apiKey, workspaceId: ai.workspaceId }) }
 }
 
 /** A tiny question to see that the key and the model work. */
@@ -66,6 +66,6 @@ export async function testConnection({ provider, model }) {
     rateLimit(`ai-test:${session.user.id}`, 20, 600000)
     const ai = await resolveAi({ provider, model })
     const t = Date.now()
-    const out = await chat({ provider: ai.provider, apiKey: ai.apiKey, model: ai.model, system: 'Reply with the single word: ready', user: 'ping', maxTokens: 20 })
+    const out = await chat({ provider: ai.provider, apiKey: ai.apiKey, workspaceId: ai.workspaceId, model: ai.model, system: 'Reply with the single word: ready', user: 'ping', maxTokens: 20 })
     return { ok: true, provider: ai.provider, model: ai.model, reply: out.text.slice(0, 40), ms: Date.now() - t }
 }

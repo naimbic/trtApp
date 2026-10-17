@@ -138,6 +138,7 @@ const crmRoutes = [
     { key: 'crm.kb.article', path: '/crm/knowledge-base/article/:id', component: lazy(() => import('@/views/crm/kb/KbArticle')), authority: [] },
     { key: 'crm.reports', path: '/crm/reports', component: lazy(() => import('@/views/crm/reports/Reports')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
+    { key: 'crm.ai', path: '/crm/ai', component: lazy(() => import('@/views/crm/ai/AiInsights')), authority: ['admin', 'crm.admin'] },
     { key: 'crm.timeline', path: '/crm/timeline', component: lazy(() => import('@/views/crm/tasks/Timeline')), authority: [] },
     { key: 'crm.time-report', path: '/crm/time-report', component: lazy(() => import('@/views/crm/tasks/TimeReport')), authority: [] },
     { key: 'crm.notifications', path: '/crm/notifications', component: lazy(() => import('@/views/crm/NotificationsPage')), authority: [] },

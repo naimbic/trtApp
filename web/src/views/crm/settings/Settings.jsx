@@ -13,6 +13,7 @@ import { api, notify, useCan } from '../kit/api'
 import { Field } from './fields'
 import { ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel, ResourceManager } from './panels'
 import { MailServerSettings } from '../mail/Mails'
+import AiSettingsPanel from '../ai/AiSettingsPanel'
 import { refreshBranding } from '@/utils/hooks/useBranding'
 import { tr } from '@/utils/t'
 
@@ -22,6 +23,7 @@ const ICONS = { TbAdjustmentsHorizontal, TbBuilding, TbWorld, TbMail, TbReceipt2
 const LISTS = { currencies: ['currencies', tr("The currencies you invoice in. Prefix puts the symbol before the amount, suffix after it.")], taxes: ['taxes', tr("The taxes you can add to document lines.")], ticketStatuses: ['ticket-statuses'], ticketPriorities: ['ticket-priorities'], departments: ['departments'], predefinedReplies: ['predefined-replies'], spamFilters: ['spam-filters'], leadStatuses: ['lead-statuses'], leadSources: ['lead-sources'], webToLead: ['web-to-lead'], tags: ['tags', tr("Tags can be attached to clients, leads, tasks and more.")] }
 
 const Panel = ({ name, group, values, setValue, ctx }) => {
+    if (name === 'ai') return <AiSettingsPanel />
     if (name === 'smtp') return <MailServerSettings />
     if (name === 'companyFormat') return <FormatPanel kind="company" fieldKey="company_info_format" values={values} setValue={setValue} />
     if (name === 'customerFormat') return <FormatPanel kind="client" fieldKey="customer_info_format" values={values} setValue={setValue} customFields={ctx.customFields} />

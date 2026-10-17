@@ -53,7 +53,7 @@ const LAYOUT = {
         S('data', 'Data', ['custom-fields', 'tags', 'countries']),
     ],
     Utilities: [
-        'reports', 'file-manager', 'passwords',
+        'reports', 'ai', 'file-manager', 'passwords',
         S('tools', 'Personal', ['todos', 'reminders', 'notes', 'events']),
         S('team', 'Team & feedback', ['goals', 'surveys', 'notifications']),
         S('more', 'System', ['files', 'activity-log']),
@@ -93,7 +93,7 @@ const itemNode = (group, i) => ({
     translateKey: `nav.crm.item.${i.key}`,
     icon: `nav.${i.key}`,
     type: NAV_ITEM_TYPE_ITEM,
-    authority: authorityFor(i.feature),
+    authority: i.superOnly ? ['admin', 'crm.admin'] : authorityFor(i.feature), // AI insights: the super administrator only
     meta: { description: { translateKey: `nav.crm.item.${i.key}Desc`, label: i.title } },
     subMenu: [],
 })

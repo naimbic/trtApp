@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.50.0',
+        date: '2026-10-17',
+        title: 'AI insights: leads, clients and yearly income',
+        items: ['Settings → AI: for the super administrator only, add the API key of Claude (Anthropic), ChatGPT (OpenAI), DeepSeek or OpenRouter (keys are stored encrypted and never shown again), pick the model in a dropdown (suggested models, the ones the key can use, or type any model id), test the connection, choose the default provider and add a few words about your company', 'New AI insights page (Utilities, super administrator only) with three analyses: Leads (conversion, days to convert, sources, owners, trend, leads needing attention), Clients (top clients, concentration, overdue, dormant, growth) and Yearly income over the whole life of the company (invoiced, collected, expenses, growth year by year, this year against the same months of last year); each shows its figures and charts and the AI writes the reading: summary, what stands out, risks and actions, in your language, with an optional question', 'Privacy and control: only totals, rates and company names are sent (never emails, phone numbers or addresses), the AI may use only those figures, every use is in the activity log, 30 analyses an hour per person, amounts are never converted between currencies', 'See docs/ai-insights.md; scripts/fake-ai.mjs lets you try it without a key and npm test covers the providers']
+    },
+    {
         version: '0.49.0',
         date: '2026-10-17',
         title: 'Sign in with Google and GitHub, working',

@@ -409,15 +409,8 @@ export const GROUPS = {
         ],
     },
     ai: {
-        label: 'AI', icon: 'TbSparkles', desc: 'AI helpers for tickets and writing',
-        cards: [{ title: 'AI assistant', fields: [
-            sel('ai_provider', 'Provider', [['', 'Off'], ['anthropic', 'Anthropic (Claude)'], ['openai', 'OpenAI']], { default: '', soon: 'account' }),
-            f('ai_api_key', 'API key', 'password', { soon: 'account' }),
-            f('ai_model', 'Model', 'text', { soon: 'account', ph: 'claude-sonnet-5-5' }),
-            f('ai_system_prompt', 'System prompt', 'textarea', { rows: 5, soon: 'account', hint: 'Tell the assistant about your business and tone.' }),
-            yes('ai_enable_ticket_summarization', 'Summarise tickets', { soon: 'account' }),
-            yes('ai_enable_ticket_reply_suggestions', 'Suggest ticket replies', { soon: 'account' }),
-        ] }],
+        label: 'AI', icon: 'TbSparkles', desc: 'API keys and models for the AI analyses (super administrator only)',
+        cards: [{ title: 'AI providers', desc: 'Claude, ChatGPT, DeepSeek and OpenRouter. Keys are stored encrypted and never shown again.', panel: 'ai' }],
     },
     pdf: {
         label: 'PDF', icon: 'TbFileTypePdf', desc: 'How documents look when printed',

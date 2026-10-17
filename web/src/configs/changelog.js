@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.51.0',
+        date: '2026-10-17',
+        title: 'AI chat about your figures',
+        items: ['The AI page now opens on a Chat: ask anything about your leads, clients and yearly income and keep the conversation going (follow-up questions, "compare with last year", "who do I call first?"), pick the provider and model above the chat, copy any answer, start a new chat; the analyses stay on the other tabs', 'Same privacy as the analyses: the assistant sees only totals, rates and company names, answers only from those figures, the figures are refreshed every few minutes, every use is in the activity log, 60 messages an hour per person, super administrator only']
+    },
+    {
         version: '0.50.1',
         date: '2026-10-17',
         title: 'AI: the real error is shown, Claude Sonnet is the default model',

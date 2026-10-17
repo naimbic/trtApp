@@ -20,6 +20,8 @@ export function startFakeAi({ port = 4200, onRequest } = {}) {
         if (req.url.endsWith('/chat/completions')) {
             const b = JSON.parse(body)
             if (b.model === 'missing-model') return send(404, { error: { message: 'model not found' } })
+            const turns = b.messages.filter((m) => m.role !== 'system')
+            if (turns.length > 1 || /assistant of a small company/.test(b.messages[0]?.content || '')) return send(200, { choices: [{ message: { content: `(fake model) Turn ${turns.length}. You said: **${turns[turns.length - 1].content.slice(0, 200)}**\n\n- the figures I was given are ${b.messages[0].content.length} characters long` } }], usage: { prompt_tokens: 100, completion_tokens: 30 } })
             const user = b.messages.find((m) => m.role === 'user')?.content || ''
             const json = user.slice(user.indexOf('{')) // the figures
             let facts = ''

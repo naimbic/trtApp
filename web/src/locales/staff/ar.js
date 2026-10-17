@@ -1,5 +1,13 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Ask a question… (Enter to send, Shift+Enter for a new line)": "اطرح سؤالاً… (Enter للإرسال، Shift+Enter لسطر جديد)",
+    "Ask about your leads, clients and income": "اسأل عن العملاء المحتملين والعملاء والإيرادات",
+    "Compare this year with last year, month by month.": "قارن هذا العام بالعام الماضي شهراً بشهر.",
+    "The assistant sees the same figures as the analyses: totals, rates and company names. Never emails, phone numbers or addresses.": "يرى المساعد الأرقام نفسها التي تراها التحليلات: المجاميع والنسب وأسماء الشركات. لا بريد إلكتروني ولا هواتف ولا عناوين أبداً.",
+    "Which clients owe us money, and who should I call first?": "أي العملاء مدينون لنا وبمن أتصل أولاً؟",
+    "Which lead source brings the clients that pay?": "أي مصدر للعملاء المحتملين يجلب العملاء الذين يدفعون؟",
+    "Which leads am I about to lose?": "أي العملاء المحتملين على وشك أن أفقدهم؟",
+    "to chat about your figures.": "للدردشة حول أرقامك.",
     " (it was also emailed)": " (تم إرساله أيضاً بالبريد الإلكتروني)",
     " by {owner}": " بواسطة {owner}",
     " · IP {acceptanceIp}": " · IP {acceptanceIp}",

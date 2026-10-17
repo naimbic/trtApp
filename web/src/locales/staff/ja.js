@@ -1,5 +1,13 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Ask a question… (Enter to send, Shift+Enter for a new line)": "質問を入力… (Enterで送信、Shift+Enterで改行)",
+    "Ask about your leads, clients and income": "リード・顧客・収入について質問する",
+    "Compare this year with last year, month by month.": "今年と昨年を月ごとに比較してください。",
+    "The assistant sees the same figures as the analyses: totals, rates and company names. Never emails, phone numbers or addresses.": "アシスタントには分析と同じ数値（合計、比率、会社名）だけが渡されます。メール、電話番号、住所は送られません。",
+    "Which clients owe us money, and who should I call first?": "未払いの顧客はどこで、最初に誰へ連絡すべきですか？",
+    "Which lead source brings the clients that pay?": "支払ってくれる顧客はどのリード経路から来ていますか？",
+    "Which leads am I about to lose?": "失いかけているリードはどれですか？",
+    "to chat about your figures.": "を追加すると、数値についてチャットできます。",
     " (it was also emailed)": " （メールでも送信されました）",
     " by {owner}": " 担当: {owner}",
     " · IP {acceptanceIp}": " · IP {acceptanceIp}",

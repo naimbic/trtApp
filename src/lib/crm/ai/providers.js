@@ -18,17 +18,19 @@ export class AIError extends Error {
 }
 
 /** The request for one question: { url, headers, body }. */
-export function buildChat(providerId, { model, system, user, maxTokens = 2000 }, apiKey) {
+export function buildChat(providerId, { model, system, user, messages, maxTokens = 2000 }, apiKey) {
+    // a conversation ([{ role, content }]) or one question
+    const turns = messages?.length ? messages : [{ role: 'user', content: user }]
     const p = PROVIDERS[providerId]
     if (!p) throw new AIError('Unknown AI provider', 400)
     if (p.kind === 'anthropic') {
-        return { url: `${baseOf(providerId)}/messages`, headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }, body: { model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: user }] } }
+        return { url: `${baseOf(providerId)}/messages`, headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }, body: { model, max_tokens: maxTokens, system, messages: turns } }
     }
     // OpenAI's reasoning models take max_completion_tokens; the others (and DeepSeek, OpenRouter) max_tokens
     const tokens = providerId === 'openai' && /^(o\d|gpt-5)/.test(model) ? 'max_completion_tokens' : 'max_tokens'
     const headers = { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` }
     if (providerId === 'openrouter') { headers['X-Title'] = 'trtCRM' }
-    return { url: `${baseOf(providerId)}/chat/completions`, headers, body: { model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], [tokens]: maxTokens } }
+    return { url: `${baseOf(providerId)}/chat/completions`, headers, body: { model, messages: [{ role: 'system', content: system }, ...turns], [tokens]: maxTokens } }
 }
 
 /** The answer text and the tokens used. */
@@ -66,10 +68,10 @@ async function call(providerId, url, init, fetchFn, timeoutMs) {
 }
 
 /** Asks one question. Returns { text, usage }. */
-export async function chat({ provider, apiKey, model, system, user, maxTokens, fetchFn = fetch, timeoutMs = 90000 }) {
+export async function chat({ provider, apiKey, model, system, user, messages, maxTokens, fetchFn = fetch, timeoutMs = 90000 }) {
     if (!apiKey) throw new AIError(`No API key for ${PROVIDERS[provider]?.label || provider} yet.`, 400)
     if (!model) throw new AIError('Choose a model first.', 400)
-    const r = buildChat(provider, { model, system, user, maxTokens }, apiKey)
+    const r = buildChat(provider, { model, system, user, messages, maxTokens }, apiKey)
     return parseChat(provider, await call(provider, r.url, { method: 'POST', headers: r.headers, body: JSON.stringify(r.body) }, fetchFn, timeoutMs))
 }
 

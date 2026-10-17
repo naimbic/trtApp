@@ -25,6 +25,9 @@ Amounts are per currency and never converted.
 Only a super administrator (`admin` / `crm.admin`): the page, the figures, the keys, the models and the analyses all refuse
 anyone else (403), and the menu entry is hidden for them.
 
+## Chat
+The AI page opens on a Chat: a conversation about the same figures (leads, clients, yearly income, refreshed every 5 minutes), with the provider and model chosen above it. The last 20 turns are sent each time, 60 messages an hour per person, and every use is in the activity log. API: `POST /api/crm/ai/chat` `{ messages, provider?, model?, lang? }`.
+
 ## Environment
 Nothing is required: keys are entered in the screen. Optional: `AI_BASE_URL_OPENAI`, `AI_BASE_URL_ANTHROPIC`,
 `AI_BASE_URL_DEEPSEEK`, `AI_BASE_URL_OPENROUTER` point a provider at a proxy or a self-hosted compatible server.

@@ -74,3 +74,9 @@ test('models: ids are listed per provider, without embedding or audio models, so
     assert.deepEqual(c, ['claude-a', 'claude-b']); assert.match(seen[1].url, /anthropic\.com\/v1\/models/); assert.equal(seen[1].init.headers['x-api-key'], 'K')
     await assert.rejects(listModels({ provider: 'openrouter', apiKey: '' }), /No API key/)
 })
+
+test('conversation: the whole chat is sent, to both API styles', () => {
+    const turns = [{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }, { role: 'user', content: 'c' }]
+    assert.deepEqual(buildChat('anthropic', { model: 'm', system: 'S', messages: turns }, 'K').body.messages, turns)
+    assert.deepEqual(buildChat('openai', { model: 'gpt-4o', system: 'S', messages: turns }, 'K').body.messages, [{ role: 'system', content: 'S' }, ...turns])
+})

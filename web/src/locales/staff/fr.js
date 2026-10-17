@@ -1,5 +1,13 @@
 // Staff area: fr. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Ask a question… (Enter to send, Shift+Enter for a new line)": "Posez une question… (Entrée pour envoyer, Maj+Entrée pour un saut de ligne)",
+    "Ask about your leads, clients and income": "Interrogez vos prospects, clients et revenus",
+    "Compare this year with last year, month by month.": "Compare cette année à l'an dernier, mois par mois.",
+    "The assistant sees the same figures as the analyses: totals, rates and company names. Never emails, phone numbers or addresses.": "L'assistant voit les mêmes chiffres que les analyses : totaux, taux et noms d'entreprises. Jamais d'e-mails, de numéros de téléphone ni d'adresses.",
+    "Which clients owe us money, and who should I call first?": "Quels clients nous doivent de l'argent, et qui appeler en premier ?",
+    "Which lead source brings the clients that pay?": "Quelle source de prospects amène les clients qui paient ?",
+    "Which leads am I about to lose?": "Quels prospects suis-je sur le point de perdre ?",
+    "to chat about your figures.": "pour discuter de vos chiffres.",
     " (it was also emailed)": " (également envoyé par e-mail)",
     " by {owner}": " par {owner}",
     " · IP {acceptanceIp}": " · IP {acceptanceIp}",

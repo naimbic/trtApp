@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import ReactMarkdown from 'react-markdown'
-import { TbSparkles, TbCopy, TbTargetArrow, TbUsers, TbChartLine, TbSettings, TbAlertTriangle, TbPercentage, TbClockHour4, TbCash, TbTrendingUp, TbTrendingDown, TbUserExclamation } from 'react-icons/tb'
+import { TbSparkles, TbCopy, TbTargetArrow, TbUsers, TbChartLine, TbSettings, TbMessageChatbot, TbAlertTriangle, TbPercentage, TbClockHour4, TbCash, TbTrendingUp, TbTrendingDown, TbUserExclamation } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
@@ -9,13 +9,14 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Skeleton from '@/components/ui/Skeleton'
 import classNames from '@/utils/classNames'
+import AiChat from './AiChat'
 import { api, notify } from '../kit/api'
 import { ColumnChart, DonutChart, TrendChart, PALETTE } from '../kit/charts'
 import { StatCard, Panel } from '../kit/widgets'
 import { tr } from '@/utils/t'
 import { useLocaleStore } from '@/store/localeStore'
 
-const KINDS = () => [['leads', tr('Leads'), <TbTargetArrow key="l" />], ['clients', tr('Clients'), <TbUsers key="c" />], ['income', tr('Yearly income'), <TbChartLine key="i" />]]
+const KINDS = () => [['chat', tr('Chat'), <TbMessageChatbot key="h" />], ['leads', tr('Leads'), <TbTargetArrow key="l" />], ['clients', tr('Clients'), <TbUsers key="c" />], ['income', tr('Yearly income'), <TbChartLine key="i" />]]
 const nf = (v) => Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })
 const pctTag = (v) => (v === null || v === undefined ? '—' : <span className={classNames('inline-flex items-center gap-0.5 font-semibold', v >= 0 ? 'text-emerald-600' : 'text-red-500')}>{v >= 0 ? <TbTrendingUp /> : <TbTrendingDown />}{Math.abs(v)}%</span>)
 const MD = 'text-sm leading-relaxed [&_h2]:mb-1.5 [&_h2]:mt-5 [&_h2]:text-base [&_h2]:font-bold [&_h2:first-child]:mt-0 [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:ps-5 [&_p]:mb-2 [&_strong]:font-semibold [&_table]:my-2 [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc [&_ul]:ps-5 dark:[&_td]:border-gray-600 dark:[&_th]:border-gray-600'
@@ -95,7 +96,8 @@ const FIGURES = { leads: LeadsFigures, clients: ClientsFigures, income: IncomeFi
 /** The super administrator's AI page: the figures of leads, clients and yearly income, and an AI reading of them. */
 const AiInsights = () => {
     const lang = useLocaleStore((s) => s.currentLang)
-    const [kind, setKind] = useState('leads')
+    const [kind, setKind] = useState('chat')
+    const [chatMessages, setChatMessages] = useState([])
     const [cfg, setCfg] = useState(null)
     const [provider, setProvider] = useState('')
     const [model, setModel] = useState('')
@@ -106,7 +108,7 @@ const AiInsights = () => {
     const [results, setResults] = useState({})
 
     useEffect(() => { api('/api/crm/ai/settings').then((s) => { setCfg(s); setProvider(s.provider); setModel(s.model) }).catch((e) => setError(e.message)) }, [])
-    useEffect(() => { if (figs[kind]) return; api(`/api/crm/ai/figures?kind=${kind}`).then((f) => setFigs((x) => ({ ...x, [kind]: f }))).catch((e) => setError(e.message)) }, [kind, figs])
+    useEffect(() => { if (kind === 'chat' || figs[kind]) return; api(`/api/crm/ai/figures?kind=${kind}`).then((f) => setFigs((x) => ({ ...x, [kind]: f }))).catch((e) => setError(e.message)) }, [kind, figs])
 
     const ready = useMemo(() => (cfg?.providers || []).filter((p) => p.hasKey), [cfg])
     const current = ready.find((p) => p.id === provider)
@@ -118,6 +120,7 @@ const AiInsights = () => {
 
     if (error && !cfg) return <Container><Alert showIcon type="warning">{error}</Alert></Container>
     const Figures = FIGURES[kind]
+    const isChat = kind === 'chat'
     const res = results[kind]
 
     return (
@@ -131,6 +134,7 @@ const AiInsights = () => {
                 {KINDS().map(([k, label, icon]) => <button key={k} type="button" onClick={() => setKind(k)} className={classNames('inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-semibold transition', kind === k ? 'bg-white text-primary shadow-sm dark:bg-gray-800' : 'text-gray-500 hover:text-gray-700')}>{icon}{label}</button>)}
             </div>
 
+            {isChat ? <AiChat cfg={cfg} ready={ready} provider={provider} setProvider={setProvider} model={model} setModel={setModel} messages={chatMessages} setMessages={setChatMessages} lang={lang} /> : <>
             <div className="mb-5 rounded-2xl border border-primary/30 bg-primary/5 p-4">
                 {cfg && !ready.length ? (
                     <Alert showIcon type="info">{tr('Add an API key (Claude, ChatGPT, DeepSeek or OpenRouter) in')} <Link to="/crm/settings?group=ai" className="font-semibold underline">{tr('Settings → AI')}</Link> {tr('to get the analysis written for you. The figures below work without it.')}</Alert>
@@ -158,6 +162,7 @@ const AiInsights = () => {
             </div>
 
             {!figs[kind] ? <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} height={92} />)}</div> : <Figures d={figs[kind]} />}
+            </>}
         </Container>
     )
 }

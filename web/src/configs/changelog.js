@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.49.0',
+        date: '2026-10-17',
+        title: 'Sign in with Google and GitHub, working',
+        items: ['The Google and GitHub buttons come back on the sign-in page, next to trtAgency and the password, and each one shows only when its keys are set (GOOGLE_AUTH_CLIENT_ID / _SECRET, GITHUB_AUTH_CLIENT_ID / _SECRET); before, they were set up but did nothing and a login would have produced a broken session', 'The session is the CRM user\'s own: the account is the user with the same verified email (Google says if the email is verified, GitHub gives its verified email); nobody gets an account just by having a Google or GitHub login, an administrator adds the person first; unverified email, no email, no account and deactivated members go back to the sign-in page with a clear message', 'Callback addresses to register: /api/auth/callback/google and /api/auth/callback/github on the CRM address; see docs/trtagency-signin.md']
+    },
+    {
         version: '0.48.0',
         date: '2026-10-16',
         title: 'Sign in with trtAgency (OpenID Connect)',

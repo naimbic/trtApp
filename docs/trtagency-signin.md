@@ -70,3 +70,25 @@ With the real provider: ask the trtAgency administrator to register the client i
 `npm test` runs the callback logic (state, replay, expiry, other browser, matching and linking rules) and the whole exchange
 against the fake provider (a good login, wrong nonce, expired token, wrong audience or issuer, a signature from another key,
 a reused code, a wrong PKCE verifier, userinfo fallback).
+
+# Sign in with Google and GitHub
+
+Both stay available next to trtAgency and the password. A button shows only when its keys are set:
+
+| Variable | Meaning |
+| --- | --- |
+| `GOOGLE_AUTH_CLIENT_ID`, `GOOGLE_AUTH_CLIENT_SECRET` | Google Cloud → APIs & Services → Credentials → OAuth client (web). Authorized redirect URI: `https://<crm domain>/api/auth/callback/google` |
+| `GITHUB_AUTH_CLIENT_ID`, `GITHUB_AUTH_CLIENT_SECRET` | GitHub → Settings → Developer settings → OAuth Apps. Authorization callback URL: `https://<crm domain>/api/auth/callback/github` |
+| `AUTH_URL` | optional, the public address of the web app, only needed when the server cannot tell it from the request (local development: `http://localhost:3200`) |
+
+Rules (see `src/lib/crm/socialLogin.js`):
+
+- Only people who **already have an account here** can sign in this way: the account is the user with the same email, and the
+  provider must vouch for it (Google says `email_verified`; GitHub only hands out its verified primary or public email).
+  Nobody gets an account just by having a Google or GitHub login: an administrator adds the person in Team first.
+- An unverified email, no email, no account or a deactivated team member goes back to `/sign-in` with a clear message.
+- Like trtAgency, the provider authenticates: the local password and two-step verification are not asked for this way of signing in.
+- The session is the CRM user's own (same cookie and 30-second re-check as a password sign-in).
+
+Local testing: use `localhost` (not `127.0.0.1`) in the browser and in `AUTH_URL`, because the provider cookies must stay on the
+host used for the callback. `npm test` covers the matching rules.

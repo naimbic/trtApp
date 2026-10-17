@@ -3301,5 +3301,6 @@ export default {
     "Your trtAgency account has no email address, which is needed to create your account here.": "trtAgencyのアカウントにメールアドレスがないため、ここでアカウントを作成できません。",
     "trtAgency answered with something we could not verify. Try again, or use your email and password.": "trtAgencyの応答を検証できませんでした。もう一度試すか、メールとパスワードでサインインしてください。",
     "trtAgency could not sign you in. Try again.": "trtAgencyでサインインできませんでした。もう一度お試しください。",
-    "trtAgency did not tell us who you are.": "trtAgencyからあなたの情報が届きませんでした。"
+    "trtAgency did not tell us who you are.": "trtAgencyからあなたの情報が届きませんでした。",
+    "Your email address is not verified by your provider.": "メールアドレスがプロバイダーで確認されていません。"
 }

@@ -5,6 +5,13 @@ import authConfig from '@/configs/auth.config'
 import validateCredential from '@/server/actions/user/validateCredential'
 import prisma from '@/lib/prisma'
 import { buildUserAuthority } from '@/lib/crm/authBuild'
+import { resolveSocialUser } from '@/lib/crm/socialLogin'
+
+// Google / GitHub: the account is the CRM user with the same verified email (see socialLogin.js)
+const socialDeps = {
+    findByEmail: (email) => prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } }),
+    authorityOf: (user) => buildUserAuthority(user),
+}
 
 const SESSION_RECHECK_MS = 30 * 1000
 
@@ -17,7 +24,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig,
     callbacks: {
         ...authConfig.callbacks,
-        async jwt({ token, user, trigger }) {
+        async signIn({ account, profile, user }) {
+            if (!account || account.provider === 'credentials') return true
+            const r = await resolveSocialUser({ account, profile, user }, socialDeps)
+            // a text is a place to send the person: the sign-in page explains what went wrong
+            return r.ok ? true : `${appConfig.unAuthenticatedEntryPath}?oidc_error=${r.code}`
+        },
+        async jwt({ token, user, trigger, account, profile }) {
+            // first step of a Google / GitHub sign-in: the session belongs to the CRM user, not to the provider's id
+            if (account && account.provider !== 'credentials') {
+                const r = await resolveSocialUser({ account, profile, user }, socialDeps)
+                if (!r.ok) return null
+                token.sub = r.user.id
+                token.name = r.user.name
+                token.email = r.user.email
+                token.authority = r.authority
+                token.picture = r.user.image
+                token.sv = r.user.sessionVersion || 0
+                token.chk = Date.now()
+                prisma.crmStaff.updateMany({ where: { userId: r.user.id }, data: { lastLogin: new Date(), lastActivity: new Date() } }).catch(() => {})
+                return token
+            }
             // Initial sign-in
             if (user) {
                 token.authority = user.authority

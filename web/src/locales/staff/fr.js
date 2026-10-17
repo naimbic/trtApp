@@ -3301,5 +3301,6 @@ export default {
     "Your trtAgency account has no email address, which is needed to create your account here.": "Votre compte trtAgency n'a pas d'adresse email, nécessaire pour créer votre compte ici.",
     "trtAgency answered with something we could not verify. Try again, or use your email and password.": "trtAgency a répondu avec quelque chose que nous n'avons pas pu vérifier. Réessayez ou utilisez votre email et mot de passe.",
     "trtAgency could not sign you in. Try again.": "trtAgency n'a pas pu vous connecter. Réessayez.",
-    "trtAgency did not tell us who you are.": "trtAgency ne nous a pas dit qui vous êtes."
+    "trtAgency did not tell us who you are.": "trtAgency ne nous a pas dit qui vous êtes.",
+    "Your email address is not verified by your provider.": "Votre adresse email n'est pas vérifiée par votre fournisseur."
 }

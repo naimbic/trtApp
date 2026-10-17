@@ -84,6 +84,6 @@ export async function startFakeProvider({ port = 4100, issuer, clientId = 'crm',
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
     const port = Number(process.env.PORT) || 4100
-    const p = await startFakeProvider({ port, clientId: process.env.CLIENT_ID || 'crm', clientSecret: process.env.CLIENT_SECRET || 'local-secret', redirectUri: process.env.REDIRECT_URI })
+    const p = await startFakeProvider({ port, issuer: process.env.ISSUER || undefined, clientId: process.env.CLIENT_ID || 'crm', clientSecret: process.env.CLIENT_SECRET || 'local-secret', redirectUri: process.env.REDIRECT_URI })
     console.log(`Fake trtAgency on ${p.issuer} (client ${process.env.CLIENT_ID || 'crm'}). Ctrl+C to stop.`)
 }

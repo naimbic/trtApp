@@ -26,13 +26,17 @@ const AccentApplier = () => {
             // the colour of every Rapport menu (they also live outside the page, so it sits on the root)
             root.style.setProperty('--rp-accent', accent && accent !== 'blue' ? accentHex(accent) : '#d8532d')
             root.style.setProperty('--rp-on-accent', accent && accent !== 'blue' ? onHex(accentHex(accent)) : '#ffffff')
-            // the Rapport layout: the colour paints its warm tiles, the dark card and the mesh behind the page
+            // the Rapport tokens read these through var(--rp-acc…), so the warm tiles, the dark card and the pipeline tiles are
+            // coloured everywhere, also in the floating layers outside the page (a dragged tile, the panels beside the dock)
+            const custom = accent && accent !== 'blue'
+            const h = custom ? accentHex(accent) : null
+            const rootSet = { '--rp-acc': h, '--rp-on-acc': h && onHex(h), '--rp-acc-deep': h && mix(h, '#000000', 0.55), '--rp-on-acc-deep': h && '#ffffff' }
+            Object.entries(rootSet).forEach(([k, v]) => (v ? root.style.setProperty(k, v) : root.style.removeProperty(k)))
+            // the mesh behind the page
             const rp = document.querySelector('.rp-app')
             if (rp) {
-                const custom = accent && accent !== 'blue'
-                const h = custom ? accentHex(accent) : null
-                const set = { '--rp-tomato': h, '--rp-on-tomato': h && onHex(h), '--rp-pine': h && mix(h, '#000000', 0.55), '--rp-on-pine': h && '#ffffff', '--rp-mesh-a': h && `${h}59`, '--rp-mesh-c': h && `${h}33` }
-                Object.entries(set).forEach(([k, v]) => (v ? rp.style.setProperty(k, v) : rp.style.removeProperty(k)))
+                const mesh = { '--rp-mesh-a': h && `${h}59`, '--rp-mesh-c': h && `${h}33` }
+                Object.entries(mesh).forEach(([k, v]) => (v ? rp.style.setProperty(k, v) : rp.style.removeProperty(k)))
             }
         }
         apply()

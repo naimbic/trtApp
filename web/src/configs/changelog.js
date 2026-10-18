@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.67.4',
+        date: '2026-10-18',
+        title: 'The chosen colour now reaches everything (no more red leftovers)',
+        items: ['Parts of the design lived outside the page (the tile you drag, the panels that open beside the dock, the floating menus) and kept the template\'s terracotta whatever colour was picked. The colour now sits at the root and every Rapport colour reads it, so they all turn green when you pick green']
+    },
+    {
         version: '0.67.3',
         date: '2026-10-18',
         title: 'Menus follow the chosen colour',

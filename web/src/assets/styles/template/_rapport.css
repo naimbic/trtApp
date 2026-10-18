@@ -26,8 +26,8 @@
     --rp-pill: #17191a; --rp-on-pill: #fbf8f2;
     --rp-good: #2f7a52; --rp-bad: #c8431f;
     --rp-butter: #f2c94c; --rp-on-butter: #17191a;
-    --rp-pine: #2f5c50; --rp-on-pine: #fbf8f2;
-    --rp-tomato: #c8431f; --rp-on-tomato: #fbf8f2;
+    --rp-pine: var(--rp-acc-deep, #2f5c50); --rp-on-pine: var(--rp-on-acc-deep, #fbf8f2);
+    --rp-tomato: var(--rp-acc, #c8431f); --rp-on-tomato: var(--rp-on-acc, #fbf8f2);
     --rp-plain: rgba(255, 255, 255, .58); --rp-on-plain: #17191a;
     --rp-cream: #fbf8f2; --rp-solid: #f6f4ef;
     --rp-r-ctl: 999px; --rp-gap: 16px;
@@ -62,7 +62,7 @@
     --rp-dock: rgba(255, 255, 255, .08); --rp-on-dock: #f1eee8;
     --rp-pill: #f1eee8; --rp-on-pill: #17191a;
     --rp-good: #6cc59a; --rp-bad: #f08a68;
-    --rp-tomato: #d8532d; --rp-plain: rgba(255, 255, 255, .07); --rp-on-plain: #f1eee8; --rp-solid: #1c201e;
+    --rp-tomato: var(--rp-acc, #d8532d); --rp-plain: rgba(255, 255, 255, .07); --rp-on-plain: #f1eee8; --rp-solid: #1c201e;
 }
 
 /* the slow mesh behind everything: transform only, off when motion is reduced */

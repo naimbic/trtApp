@@ -290,3 +290,11 @@ body:has(.rp-app) .segment-item.segment-item-active { background: var(--rp-pill)
 /* mega menu cards: lighter pane and a fainter border */
 .rp-card { background: color-mix(in srgb, var(--rp-well) 38%, transparent); border-color: color-mix(in srgb, var(--rp-line) 45%, transparent); }
 .rp-card .rp-link .ico { background: color-mix(in srgb, var(--rp-float) 80%, var(--rp-well)); }
+
+/* Tables of the lists (invoices...): a tinted header row and a soft outline with soft row lines */
+body:has(.rp-app) .table-default { border-collapse: separate; border-spacing: 0; border: 1px solid var(--rp-line); border-radius: 16px; overflow: hidden; }
+body:has(.rp-app) .table-default > thead > tr > th { background: var(--rp-well); color: var(--rp-muted); border-bottom: 1px solid var(--rp-line); }
+body:has(.rp-app) .table-default > thead, body:has(.rp-app) .table-default > tbody, body:has(.rp-app) .table-default > tfoot { border-top-width: 0; }
+body:has(.rp-app) .table-default > tbody > tr > td { border-top: 1px solid var(--rp-line); }
+body:has(.rp-app) .table-default > tbody > tr:first-child > td { border-top: 0; }
+body:has(.rp-app) .table-default > tfoot > tr > td { border-top: 1px solid var(--rp-line); background: var(--rp-well); }

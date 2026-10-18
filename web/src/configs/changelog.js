@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.79.2',
+        date: '2026-10-18',
+        title: 'Tables: tinted header and soft border',
+        items: ['The list tables (invoices and the other lists built on the same table) now have a tinted header row, a soft rounded outline and soft lines between rows']
+    },
+    {
         version: '0.79.1',
         date: '2026-10-18',
         title: 'Check and connect the recurring invoices already in the database',

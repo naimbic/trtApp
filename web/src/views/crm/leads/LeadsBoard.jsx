@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbTrophy, TbBan, TbUserCheck, TbPencil, TbUserPlus, TbPlug, TbTrash } from 'react-icons/tb'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
@@ -34,6 +35,8 @@ const LeadsBoard = () => {
     const [show, setShow] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [delAsk, setDelAsk] = useState(null)
+    const [ask, setAsk] = useState(null) // a lead about to be converted
     const [drawer, setDrawer] = useState({ open: !!routeId, id: routeId || null })
 
     useEffect(() => { const t = setTimeout(() => setQuery(search.trim()), 300); return () => clearTimeout(t) }, [search])
@@ -73,6 +76,22 @@ const LeadsBoard = () => {
         } catch (e) { notify('danger', e.message); load() }
     }
 
+    const flag = async (item, action, ok) => { try { await api(`/api/crm/pipeline/leads/${item.id}/flag`, { method: 'POST', body: { action } }); notify('success', ok); load() } catch (e) { notify('danger', e.message) } }
+    // change one thing of a lead from the menu: read it, then save it back with that thing changed
+    const patch = async (item, change, ok) => {
+        try {
+            const l = (await api(`/api/crm/pipeline/leads/${item.id}`)).lead
+            const keys = ['name', 'title', 'company', 'email', 'phone', 'website', 'description', 'address', 'city', 'state', 'zip', 'sourceId', 'statusId', 'assignedId', 'isPublic', 'lastContact']
+            await api(`/api/crm/pipeline/leads/${item.id}`, { method: 'PUT', body: { ...Object.fromEntries(keys.map((k) => [k, l[k] ?? null])), ...change } })
+            notify('success', ok); load()
+        } catch (e) { notify('danger', e.message) }
+    }
+    const remove = async (item) => { try { await api(`/api/crm/pipeline/leads/${item.id}`, { method: 'DELETE' }); notify('success', tr("Lead deleted")); load() } catch (e) { notify('danger', e.message) } }
+    const convert = async (item) => { try { const r = await api(`/api/crm/pipeline/leads/${item.id}/convert`, { method: 'POST', body: { includeNotes: false } }); notify('success', tr("Client created")); nav(`/crm/clients/${r.clientId}`) } catch (e) { notify('danger', e.message) } }
+    const moveTo = (item, toId) => {
+        const from = data.statuses.find((c) => c.leads.some((l) => l.id === item.id)), to = data.statuses.find((c) => String(c.id) === String(toId))
+        if (from && to && from.id !== to.id) onDragEnd({ source: { droppableId: from.id, index: from.leads.findIndex((l) => l.id === item.id) }, destination: { droppableId: to.id, index: to.leads.length } })
+    }
     const open = (id) => setDrawer({ open: true, id })
     const close = () => { setDrawer((d) => ({ ...d, open: false })); if (routeId) nav('/crm/leads', { replace: true }) }
     const staffOptions = staff.map((s) => ({ value: s.id, label: s.name }))
@@ -108,10 +127,26 @@ const LeadsBoard = () => {
                     emptyText={tr("No leads")}
                     canDrag={() => show === ''}
                     onOpen={(it) => open(it.id)}
-                    onMove={({ from, to, index, fromIndex }) => onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })}
+                    onMoveTo={show === '' ? moveTo : undefined}
+                    ends={show === '' ? [{ id: 'won', name: tr("Won"), sub: tr("Convert to a client"), icon: <TbTrophy /> }, { id: 'lost', name: tr("Lost"), sub: tr("Close the lead"), icon: <TbBan />, tone: 'lost' }] : []}
+                    actions={(it) => (show === '' ? [
+                        { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.[0]?.id === m.value, onClick: () => patch(it, { assignedId: m.value }, tr("Owner changed")) })) },
+                        { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },
+                        { label: tr("Convert to client"), icon: <TbUserCheck />, onClick: () => setAsk(it) },
+                        { label: tr("Edit"), icon: <TbPencil />, onClick: () => open(it.id) },
+                        { label: tr("Mark lost"), icon: <TbBan />, after: true, danger: true, onClick: () => flag(it, 'lost', tr("Marked as lost")) },
+                        { label: tr("Delete"), icon: <TbTrash />, after: true, danger: true, onClick: () => setDelAsk(it) },
+                    ] : [])}
+                    onMove={({ item, from, to, index, fromIndex }) => {
+                        if (String(to).startsWith('end:')) return String(to) === 'end:won' ? setAsk(item) : flag(item, 'lost', tr("Marked as lost"))
+                        onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
+                    }}
                     columns={data.statuses.map((c) => ({
                         id: c.id, name: c.name, color: c.color, count: c.count,
-                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), label: l.source || l.email || '', people: l.assigned ? <People list={[l.assigned]} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),
+                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), label: l.source || l.email || '', source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
+                            fields: [{ label: tr("Email"), value: l.email }, { label: tr("Phone"), value: l.phone }, { label: tr("Source"), value: l.source }, { label: tr("Owner"), value: l.assigned?.name }],
+                            team: l.assigned ? [l.assigned] : [],
+                            people: l.assigned ? <People list={[l.assigned]} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),
                         more: c.leads.length < c.count ? { left: Math.min(data.limit || 50, c.count - c.leads.length), onClick: () => more(c) } : null,
                     }))}
                 />
@@ -134,6 +169,12 @@ const LeadsBoard = () => {
                 </div>
             )}
 
+            <ConfirmDialog isOpen={!!ask} type="info" title={tr("Convert to a client?")} confirmText={tr("Convert")} onClose={() => setAsk(null)} onCancel={() => setAsk(null)} onConfirm={() => { const it = ask; setAsk(null); convert(it) }}>
+                <p>{ask?.title}</p>
+            </ConfirmDialog>
+            <ConfirmDialog isOpen={!!delAsk} type="danger" title={tr("Delete this lead?")} confirmText={tr("Delete")} onClose={() => setDelAsk(null)} onCancel={() => setDelAsk(null)} onConfirm={() => { const it = delAsk; setDelAsk(null); remove(it) }}>
+                <p>{delAsk?.title}</p>
+            </ConfirmDialog>
             <LeadDrawer open={drawer.open} id={drawer.id} staff={staff} onClose={close} onChanged={load} />
         </Container>
     )

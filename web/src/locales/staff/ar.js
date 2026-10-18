@@ -3598,5 +3598,21 @@ export default {
     "Lavender": "لافندر",
     "Peach": "خوخي",
     "Butter": "زبدي",
-    "Blush": "وردي فاتح"
+    "Blush": "وردي فاتح",
+    "Close the lead": "إغلاق العميل المحتمل",
+    "Convert to a client": "تحويل إلى عميل",
+    "Drop here": "أفلت هنا",
+    "Due date changed": "تم تغيير تاريخ الاستحقاق",
+    "In a month": "بعد شهر",
+    "In a week": "بعد أسبوع",
+    "Mark as complete": "وضع علامة مكتملة",
+    "Mark complete": "إكمال المهمة",
+    "Mark lost": "وضع علامة خسارة",
+    "Open full record": "فتح السجل الكامل",
+    "Owner changed": "تم تغيير المسؤول",
+    "Priority changed": "تم تغيير الأولوية",
+    "Remove the task": "حذف المهمة",
+    "Source changed": "تم تغيير المصدر",
+    "Team changed": "تم تغيير الفريق",
+    "Won": "مكتسب"
 }

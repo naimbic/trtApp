@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.64.0',
+        date: '2026-10-18',
+        title: 'Pipeline like the Rapport demo: tile menu, popup, Won / Lost rows',
+        items: ['Every tile has the three-dots button: Open, Move to… (a submenu of the stages), and the page\'s own entries with submenus (tasks: Priority, Due date, Assign to; leads: Assign to, Source), then Mark lost / Delete; menus open with a spring and slide between levels', 'Clicking a tile or choosing Open shows the same new popup: a head in the colour of its stage, the stage bar (press a step to move it), its fields, the team with photos and the actions; it slides in with the stage bar filling and the fields coming in one after the other', 'Won and Lost rows at the right of the board: drop a lead on Won to convert it to a client (with a confirmation) or on Lost to close it; for tasks they are Done and Delete (with a confirmation); they light up while you drag', 'Translated into French, Spanish, Japanese and Arabic']
+    },
+    {
         version: '0.63.2',
         date: '2026-10-18',
         title: 'Pipeline: the dragged tile follows the mouse and takes the colour of the column it is over',

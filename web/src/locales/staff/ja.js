@@ -3598,5 +3598,21 @@ export default {
     "Lavender": "ラベンダー",
     "Peach": "ピーチ",
     "Butter": "バター",
-    "Blush": "ブラッシュ"
+    "Blush": "ブラッシュ",
+    "Close the lead": "リードを終了",
+    "Convert to a client": "顧客に変換",
+    "Drop here": "ここにドロップ",
+    "Due date changed": "期限を変更しました",
+    "In a month": "1か月後",
+    "In a week": "1週間後",
+    "Mark as complete": "完了にする",
+    "Mark complete": "完了にする",
+    "Mark lost": "失注にする",
+    "Open full record": "詳細を開く",
+    "Owner changed": "担当者を変更しました",
+    "Priority changed": "優先度を変更しました",
+    "Remove the task": "タスクを削除",
+    "Source changed": "ソースを変更しました",
+    "Team changed": "チームを変更しました",
+    "Won": "成約"
 }

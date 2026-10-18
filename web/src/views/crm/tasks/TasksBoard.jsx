@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbPencil, TbFlag, TbUserPlus, TbCalendarDue } from 'react-icons/tb'
+import dayjs from 'dayjs'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -36,6 +38,7 @@ const TasksBoard = ({ projectId = null }) => {
     const [done, setDone] = useState(!!projectId)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [del, setDel] = useState(null) // a task about to be deleted
     const [drawer, setDrawer] = useState({ open: false, id: null })
 
     useEffect(() => { const t = setTimeout(() => setQuery(search), 300); return () => clearTimeout(t) }, [search])
@@ -75,6 +78,19 @@ const TasksBoard = ({ projectId = null }) => {
         void draggableId
     }
 
+    const moveTo = (item, toId) => {
+        const to = +toId, from = Object.keys(columns).find((k) => columns[k].some((t) => t.id === item.id))
+        if (from && +from !== to) onDragEnd({ source: { droppableId: String(from), index: columns[from].findIndex((t) => t.id === item.id) }, destination: { droppableId: String(to), index: (columns[to] || []).length } })
+    }
+    // change one thing of a task from the menu: read it, then save it back with that thing changed
+    const patch = async (item, change, ok) => {
+        try {
+            const d = await api(`/api/crm/work/tasks/${item.id}`), t = d.task
+            await api(`/api/crm/work/tasks/${item.id}`, { method: 'PUT', body: { ...t, startDate: t.startDate ? dayjs(t.startDate).format('YYYY-MM-DD') : null, dueDate: t.dueDate ? dayjs(t.dueDate).format('YYYY-MM-DD') : null, assigneeIds: t.assigneeIds, followerIds: t.followerIds, ...change(t) } })
+            notify('success', ok); load()
+        } catch (e) { notify('danger', e.message) }
+    }
+    const remove = async (item) => { try { await api(`/api/crm/work/tasks/${item.id}`, { method: 'DELETE' }); notify('success', tr("Task deleted")); load() } catch (e) { notify('danger', e.message) } }
     const open = (id) => (id ? nav(`/crm/tasks/${id}`) : setDrawer({ open: true, id: null }))
     const close = () => { setDrawer((d) => ({ ...d, open: false })); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
     const staffOptions = lookups.staff.map((s) => ({ value: s.id, label: s.name }))
@@ -108,13 +124,30 @@ const TasksBoard = ({ projectId = null }) => {
                     loading={loading}
                     canDrag={(t) => !!data.can.edit && t.canFinish !== false}
                     onOpen={(it) => open(it.id)}
-                    onMove={({ from, to, index, fromIndex }) => onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })}
+                    onMoveTo={data.can.edit ? moveTo : undefined}
+                    ends={data.can.edit ? [{ id: 'won', name: tr("Done"), sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
+                    actions={(it) => [
+                        ...(data.can.edit ? [
+                            { label: tr("Mark complete"), icon: <TbCircleCheck />, onClick: () => moveTo(it, 5) },
+                            { label: tr("Priority"), icon: <TbFlag />, sub: PRIORITY.map((p) => ({ label: p.label, checked: it.priority === p.value, color: ['#9ca3af', '#3b82f6', '#f97316', '#ef4444'][p.value - 1], onClick: () => patch(it, () => ({ priority: p.value }), tr("Priority changed")) })) },
+                            { label: tr("Due date"), icon: <TbCalendarDue />, sub: [[tr("Today"), 0], [tr("Tomorrow"), 1], [tr("In a week"), 7], [tr("In a month"), 30]].map(([label, n]) => ({ label, onClick: () => patch(it, () => ({ dueDate: dayjs().add(n, 'day').format('YYYY-MM-DD') }), tr("Due date changed")) })).concat([{ label: tr("No due date"), onClick: () => patch(it, () => ({ dueDate: null }), tr("Due date changed")) }]) },
+                            { label: tr("Assign to"), icon: <TbUserPlus />, sub: lookups.staff.map((m) => ({ label: m.name, checked: it.team?.some((x) => x.id === m.id), onClick: () => patch(it, (t) => ({ assigneeIds: t.assigneeIds.includes(m.id) ? t.assigneeIds.filter((x) => x !== m.id) : [...t.assigneeIds, m.id] }), tr("Team changed")) })) },
+                            { label: tr("Edit"), icon: <TbPencil />, onClick: () => setDrawer({ open: true, id: it.id }) },
+                        ] : []),
+                        ...(data.can.delete ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => setDel(it) }] : []),
+                    ]}
+                    onMove={({ item, from, to, index, fromIndex }) => {
+                        if (String(to).startsWith('end:')) return String(to) === 'end:won' ? moveTo(item, 5) : setDel(item)
+                        onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
+                    }}
                     columns={shownStatuses.map((s) => {
                         const all = columns[s.value] || []
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {
                             id: s.value, name: s.label, tone: TONE[s.value], count: all.length,
-                            items: all.slice(0, limit).map((t) => ({ id: t.id, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, people: <People list={t.assignees} size={26} /> })),
+                            items: all.slice(0, limit).map((t) => ({ id: t.id, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, priority: t.priority, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, kicker: `${tr("Task")}${t.rel?.label ? ` · ${t.rel.label}` : ''}`,
+                                fields: [{ label: tr("Priority"), value: prioOf(t.priority).label }, { label: tr("Due"), value: fmtDate(t.dueDate) }, { label: tr("Related to"), value: t.rel?.label }, { label: tr("Checklist"), value: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : '' }],
+                                team: t.assignees, people: <People list={t.assignees} size={26} /> })),
                             more: limit && all.length > limit ? { left: all.length - limit, onClick: () => setMore((m) => ({ ...m, [s.value]: true })) } : null,
                         }
                     })}
@@ -140,6 +173,9 @@ const TasksBoard = ({ projectId = null }) => {
                 </div>
             )}
 
+            <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this task?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const it = del; setDel(null); remove(it) }}>
+                <p>{del?.title}</p>
+            </ConfirmDialog>
             <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={{ ...(lookups.defaults ? { status: lookups.defaults.status, priority: lookups.defaults.priority, billable: lookups.defaults.billable, assigneeIds: lookups.defaults.assignMe && lookups.me ? [lookups.me] : [], followerIds: lookups.defaults.followMe && lookups.me ? [lookups.me] : [] } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={close} onChanged={load} />
         </Wrap>
     )

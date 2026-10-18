@@ -3598,5 +3598,21 @@ export default {
     "Lavender": "Lavande",
     "Peach": "Pêche",
     "Butter": "Beurre",
-    "Blush": "Rose poudré"
+    "Blush": "Rose poudré",
+    "Close the lead": "Clôturer le lead",
+    "Convert to a client": "Convertir en client",
+    "Drop here": "Déposer ici",
+    "Due date changed": "Échéance modifiée",
+    "In a month": "Dans un mois",
+    "In a week": "Dans une semaine",
+    "Mark as complete": "Marquer comme terminée",
+    "Mark complete": "Marquer terminée",
+    "Mark lost": "Marquer perdu",
+    "Open full record": "Ouvrir la fiche complète",
+    "Owner changed": "Responsable modifié",
+    "Priority changed": "Priorité modifiée",
+    "Remove the task": "Supprimer la tâche",
+    "Source changed": "Source modifiée",
+    "Team changed": "Équipe modifiée",
+    "Won": "Gagné"
 }

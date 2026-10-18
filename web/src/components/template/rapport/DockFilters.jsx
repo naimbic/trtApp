@@ -1,10 +1,11 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { PiCalendarDotsDuotone, PiCoinsDuotone, PiPaletteDuotone, PiGlobeDuotone, PiCheckBold } from 'react-icons/pi'
 import DatePicker from '@/components/ui/DatePicker'
 import Tooltip from '@/components/ui/Tooltip'
-import { useDashFilters, ACCENTS } from '@/store/dashFilterStore'
+import { createPortal } from 'react-dom'
+import { useDashFilters, ACCENTS, onHex } from '@/store/dashFilterStore'
 import { useThemeStore } from '@/store/themeStore'
 import classNames from '@/utils/classNames'
 import { tr } from '@/utils/t'
@@ -20,7 +21,9 @@ const DockFilters = () => {
     const { range, from, to, currencyId, accent, currencies, setRange, setCustom, setCurrency, setAccent } = useDashFilters()
     const direction = useThemeStore((s) => s.direction)
     const [open, setOpen] = useState(null)
-    const [top, setTop] = useState(0)
+    const [anchor, setAnchor] = useState({ y: 0 })
+    const [pos, setPos] = useState({ top: 0, arrow: 0 })
+    const panel = useRef(null)
     const [noRate, setNoRate] = useState([])
     const box = useRef(null)
     const several = currencies.length > 1
@@ -42,9 +45,16 @@ const DockFilters = () => {
 
     const toggle = (key, e) => {
         const r = e.currentTarget.getBoundingClientRect()
-        setTop(Math.max(12, Math.min(r.top - 8, window.innerHeight - 380)))
+        setAnchor({ y: r.top + r.height / 2 })
         setOpen(open === key ? null : key)
     }
+    // centred on its button, kept inside the window; the little arrow keeps pointing at the button
+    useLayoutEffect(() => {
+        if (!open || !panel.current) return
+        const h = panel.current.offsetHeight
+        const top = Math.max(12, Math.min(anchor.y - h / 2, window.innerHeight - h - 12))
+        setPos({ top, arrow: Math.max(18, Math.min(anchor.y - top, h - 18)) })
+    }, [open, anchor.y])
     const customValue = range === 'custom' && from && to ? [new Date(`${from}T00:00:00`), new Date(`${to}T00:00:00`)] : undefined
     const curLabel = currencyId === 'all' ? tr('ALL') : currencies.find((c) => c.id === currencyId)?.name || ''
     const Btn = ({ k, icon, label, tag }) => (
@@ -59,8 +69,8 @@ const DockFilters = () => {
             <Btn k="period" icon={<PiCalendarDotsDuotone />} label={tr('Period')} tag={tr(SHORT[range] || '')} />
             {several && <Btn k="currency" icon={<PiCoinsDuotone />} label={tr('Currency')} tag={curLabel} />}
             <Btn k="colour" icon={<PiPaletteDuotone />} label={tr('Colour')} tag={<span className="block h-2 w-2 rounded-full" style={{ background: ACCENTS.find((a) => a.key === accent)?.hex }} />} />
-            {open && (
-                <div className="rp-fpanel" style={{ top, ...(direction === 'rtl' ? { insetInlineStart: 'auto', right: 'calc(var(--rp-dock-x) + var(--rp-dock-w) + 12px)' } : { left: 'calc(var(--rp-dock-x) + var(--rp-dock-w) + 12px)' }) }}>
+            {open && createPortal(
+                <div ref={panel} className="rp-fpanel rp-portal" data-side={direction === 'rtl' ? 'left' : 'right'} style={{ top: pos.top, '--arrow': `${pos.arrow}px`, ...(direction === 'rtl' ? { right: 'calc(var(--rp-dock-x) + var(--rp-dock-w) + 18px)' } : { left: 'calc(var(--rp-dock-x) + var(--rp-dock-w) + 18px)' }) }}>
                     {open === 'period' && (
                         <>
                             <h6>{tr('Period')}</h6>
@@ -85,11 +95,12 @@ const DockFilters = () => {
                         <>
                             <h6>{tr('Colour')}</h6>
                             <div className="rp-fgrid">{ACCENTS.map((a) => (
-                                <button key={a.key} type="button" className={classNames('rp-fswatch')} style={{ background: a.hex }} aria-label={tr(a.label)} onClick={() => { setAccent(a.key); setOpen(null) }}>{accent === a.key && <PiCheckBold />}</button>
+                                <button key={a.key} type="button" className={classNames('rp-fswatch')} style={{ background: a.hex, color: onHex(a.hex) }} aria-label={tr(a.label)} onClick={() => { setAccent(a.key); setOpen(null) }}>{accent === a.key && <PiCheckBold />}</button>
                             ))}</div>
                         </>
                     )}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     )

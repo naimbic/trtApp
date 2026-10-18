@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { LayoutGroup, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion'
 import { PiCaretDownBold, PiArrowUpRightBold } from 'react-icons/pi'
 import { NAV_DESC } from './navDescriptions'
 import navigationConfig from '@/configs/navigation.config'
@@ -98,26 +98,31 @@ const RapportPills = () => {
                             <button type="button" className="rp-pill" data-active={active} aria-haspopup="true" aria-expanded={open === p.key} onClick={() => setOpen(open === p.key ? null : p.key)}>
                                 {bg}<span>{label(p.node)}<PiCaretDownBold style={{ fontSize: 10, opacity: 0.6, transform: open === p.key ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} /></span>
                             </button>
-                            {open === p.key && (
-                                <motion.div ref={keepInside} className="rp-panel" style={endAlign ? { insetInlineEnd: 0 } : { insetInlineStart: 0 }} initial={reduce ? false : { opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.18 }}>
-                                    <div className="rp-panel-grid" style={{ gridTemplateColumns: p.sections.slice(0, 3).map((x) => (x.items.length > 8 ? 'minmax(480px, 2fr)' : 'minmax(230px, 1fr)')).join(' ') }}>
-                                        {p.sections.map((s, n) => (
-                                            <div key={n}>
-                                                {s.title && <h6>{label(s.title)}</h6>}
-                                                <div className={s.items.length > 8 ? 'rp-panel-cols' : undefined}>
-                                                {s.items.map((it) => (
-                                                    <Link key={it.key} to={it.path} className="rp-link" data-active={matches(pathname, it.path)} target={it.isExternalLink ? '_blank' : undefined} onPointerMove={glow}>
-                                                        <span className="ico">{navigationIcon[it.icon] || <span className="rp-ico-dot" />}</span>
-                                                        <span className="rp-link-t"><b>{label(it)}</b>{desc(it) && <small>{desc(it)}</small>}</span>
-                                                        <PiArrowUpRightBold className="rp-link-go" />
-                                                    </Link>
-                                                ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            )}
+                            <AnimatePresence>
+                                {open === p.key && (
+                                    <motion.div key="panel" ref={keepInside} className="rp-panel" style={endAlign ? { insetInlineEnd: 0 } : { insetInlineStart: 0 }}
+                                        initial={reduce ? false : { opacity: 0, y: -14, scale: 0.96, clipPath: 'inset(0 0 100% 0 round 22px)' }}
+                                        animate={{ opacity: 1, y: 0, scale: 1, clipPath: 'inset(0 0 0% 0 round 22px)', transition: reduce ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 32, staggerChildren: 0.055, delayChildren: 0.05 } }}
+                                        exit={reduce ? undefined : { opacity: 0, y: -8, scale: 0.98, transition: { duration: 0.12 } }}>
+                                        <div className="rp-panel-grid" style={{ '--cols': Math.min(p.sections.length, 3) }}>
+                                            {p.sections.map((s, n) => (
+                                                <motion.section key={n} className="rp-card" variants={reduce ? undefined : { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 420, damping: 30 } } }} initial="hidden" animate="show">
+                                                    <header className="rp-card-h"><h6>{label(s.title || p.node)}</h6><em>{s.items.length}</em></header>
+                                                    <div className="rp-card-list">
+                                                        {s.items.map((it, i) => (
+                                                            <Link key={it.key} to={it.path} className="rp-link" style={{ '--i': Math.min(i, 12) }} data-active={matches(pathname, it.path)} target={it.isExternalLink ? '_blank' : undefined} onPointerMove={glow}>
+                                                                <span className="ico">{navigationIcon[it.icon] || <span className="rp-ico-dot" />}</span>
+                                                                <span className="rp-link-t"><b>{label(it)}</b>{desc(it) && <small>{desc(it)}</small>}</span>
+                                                                <PiArrowUpRightBold className="rp-link-go" />
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </motion.section>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     )
                 })}

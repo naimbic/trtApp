@@ -3575,5 +3575,17 @@ export default {
     "Questions for clients": "أسئلة للعملاء",
     "What happened lately": "ما حدث مؤخرًا",
     "Files across the CRM": "ملفات النظام بأكمله",
-    "Who did what, and when": "من فعل ماذا ومتى"
+    "Who did what, and when": "من فعل ماذا ومتى",
+    "Recent": "الأخيرة",
+    "Suggested": "مقترحة",
+    "Terracotta": "طيني",
+    "Pine": "صنوبري",
+    "Indigo": "نيلي",
+    "Sky": "سماوي",
+    "Pink": "وردي",
+    "Orange": "برتقالي",
+    "Gold": "ذهبي",
+    "Lime": "ليموني",
+    "Crimson": "قرمزي",
+    "Slate": "رمادي داكن"
 }

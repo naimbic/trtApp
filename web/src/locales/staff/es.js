@@ -3575,5 +3575,17 @@ export default {
     "Questions for clients": "Preguntas a clientes",
     "What happened lately": "Lo que ha pasado últimamente",
     "Files across the CRM": "Archivos de todo el CRM",
-    "Who did what, and when": "Quién hizo qué y cuándo"
+    "Who did what, and when": "Quién hizo qué y cuándo",
+    "Recent": "Recientes",
+    "Suggested": "Sugeridos",
+    "Terracotta": "Terracota",
+    "Pine": "Pino",
+    "Indigo": "Índigo",
+    "Sky": "Cielo",
+    "Pink": "Rosa",
+    "Orange": "Naranja",
+    "Gold": "Dorado",
+    "Lime": "Lima",
+    "Crimson": "Carmesí",
+    "Slate": "Pizarra"
 }

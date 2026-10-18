@@ -3575,5 +3575,17 @@ export default {
     "Questions for clients": "顧客への質問",
     "What happened lately": "最近の出来事",
     "Files across the CRM": "CRM全体のファイル",
-    "Who did what, and when": "誰がいつ何をしたか"
+    "Who did what, and when": "誰がいつ何をしたか",
+    "Recent": "最近",
+    "Suggested": "おすすめ",
+    "Terracotta": "テラコッタ",
+    "Pine": "パイン",
+    "Indigo": "インディゴ",
+    "Sky": "スカイ",
+    "Pink": "ピンク",
+    "Orange": "オレンジ",
+    "Gold": "ゴールド",
+    "Lime": "ライム",
+    "Crimson": "クリムゾン",
+    "Slate": "スレート"
 }

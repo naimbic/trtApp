@@ -107,19 +107,10 @@ const DropdownMenu = (props) => {
                 right: 'left',
             }[side],
         }),
-        initial: {
-            transform: 'translateY(-5%)',
-            opacity: 0,
-        },
-        duration: 200,
-        open: {
-            opacity: 1,
-            transform: 'translateY(0%)',
-        },
-        close: {
-            opacity: 0,
-            transform: 'translateY(-5%)',
-        },
+        initial: ({ side }) => ({ opacity: 0, transform: side === 'right' ? 'translateX(-14px) scale(.95)' : side === 'left' ? 'translateX(14px) scale(.95)' : 'translateY(-5%)' }),
+        duration: 240,
+        open: { opacity: 1, transform: 'translateX(0) translateY(0%) scale(1)' },
+        close: ({ side }) => ({ opacity: 0, transform: side === 'right' ? 'translateX(-10px) scale(.97)' : side === 'left' ? 'translateX(10px) scale(.97)' : 'translateY(-5%)' }),
     })
 
     const hover = useHover(context, {

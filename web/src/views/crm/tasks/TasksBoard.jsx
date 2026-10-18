@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { Link, useNavigate, useSearchParams } from 'react-router'
-import { TbPlus, TbSearch, TbChecklist, TbMessage, TbCalendar, TbLayoutKanban, TbList, TbRepeat } from 'react-icons/tb'
+import { useNavigate, useSearchParams } from 'react-router'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -10,6 +9,7 @@ import Segment from '@/components/ui/Segment'
 import Switcher from '@/components/ui/Switcher'
 import Table from '@/components/ui/Table'
 import cn from '@/utils/classNames'
+import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
 import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, statusOf } from './shared'
 import TaskDrawer from './TaskDrawer'
@@ -19,23 +19,7 @@ const { Tr, Th, Td, THead, TBody } = Table
 
 const Plain = ({ children }) => <div>{children}</div>
 
-const TaskCard = ({ t, onOpen }) => (
-    <div onClick={() => onOpen(t.id)} className="group cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
-        <div className={cn('h-1', prioOf(t.priority).bar)} />
-        <div className="space-y-2 p-3">
-            <div className="text-sm font-semibold leading-snug">{t.name}</div>
-            {t.rel && <div className="truncate text-xs text-gray-500">{t.rel.href ? <Link to={t.rel.href} onClick={(e) => e.stopPropagation()} className="hover:underline">{t.rel.label}</Link> : t.rel.label}</div>}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                {t.dueDate && <span className={cn('inline-flex items-center gap-1', isOverdue(t) && 'font-semibold text-red-500')}><TbCalendar />{fmtDate(t.dueDate)}</span>}
-                {t.checklistTotal > 0 && <span className="inline-flex items-center gap-1"><TbChecklist />{t.checklistDone}/{t.checklistTotal}</span>}
-                {t.comments > 0 && <span className="inline-flex items-center gap-1"><TbMessage />{t.comments}</span>}
-                {t.recurring && <TbRepeat title={tr("Recurring")} />}
-                <span className={cn('ml-auto text-[11px] font-medium', prioOf(t.priority).text)}>{prioOf(t.priority).label}</span>
-            </div>
-            <People list={t.assignees} />
-        </div>
-    </div>
-)
+const TONE = { 1: 'ink', 4: 'butter', 3: 'pine', 2: 'tomato', 5: 'good' }
 
 const TasksBoard = ({ projectId = null }) => {
     const nav = useNavigate()
@@ -120,29 +104,21 @@ const TasksBoard = ({ projectId = null }) => {
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
             {view === 'board' ? (
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="flex gap-4 overflow-x-auto pb-4">
-                        {shownStatuses.map((s) => (
-                            <div key={s.value} className="w-72 shrink-0 rounded-xl bg-gray-100/70 p-2 dark:bg-gray-900/40">
-                                <div className="flex items-center justify-between px-2 py-2"><div className="flex items-center gap-2 text-sm font-semibold"><span className={cn('h-2.5 w-2.5 rounded-full', s.dot)} />{s.label}</div><span className="rounded-full bg-white px-2 text-xs text-gray-500 dark:bg-gray-800">{(columns[s.value] || []).length}</span></div>
-                                <Droppable droppableId={String(s.value)}>
-                                    {(prov, snap) => (
-                                        <div ref={prov.innerRef} {...prov.droppableProps} className={cn('min-h-[120px] space-y-2 rounded-lg p-1 transition', snap.isDraggingOver && 'bg-blue-50 dark:bg-blue-900/10')}>
-                                            {(columns[s.value] || []).slice(0, lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined).map((t, i) => (
-                                                <Draggable key={t.id} draggableId={t.id} index={i} isDragDisabled={!data.can.edit || t.canFinish === false}>
-                                                    {(p) => <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps}><TaskCard t={t} onOpen={open} /></div>}
-                                                </Draggable>
-                                            ))}
-                                            {prov.placeholder}
-                                            {lookups.defaults?.kanbanLimit > 0 && !more[s.value] && (columns[s.value] || []).length > lookups.defaults.kanbanLimit && <button type="button" className="mb-3 w-full rounded-lg py-2 text-sm font-semibold text-primary hover:bg-primary/10" onClick={() => setMore((m) => ({ ...m, [s.value]: true }))}>{tr('Show {n} more', { n: (columns[s.value] || []).length - lookups.defaults.kanbanLimit })}</button>}
-                                            {!loading && !(columns[s.value] || []).length && <div className="py-6 text-center text-xs text-gray-400">{tr("Nothing here")}</div>}
-                                        </div>
-                                    )}
-                                </Droppable>
-                            </div>
-                        ))}
-                    </div>
-                </DragDropContext>
+                <Pipeline
+                    loading={loading}
+                    canDrag={(t) => !!data.can.edit && t.canFinish !== false}
+                    onOpen={(it) => open(it.id)}
+                    onMove={({ from, to, index, fromIndex }) => onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })}
+                    columns={shownStatuses.map((s) => {
+                        const all = columns[s.value] || []
+                        const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
+                        return {
+                            id: s.value, name: s.label, tone: TONE[s.value], count: all.length,
+                            items: all.slice(0, limit).map((t) => ({ id: t.id, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, people: <People list={t.assignees} size={26} /> })),
+                            more: limit && all.length > limit ? { left: all.length - limit, onClick: () => setMore((m) => ({ ...m, [s.value]: true })) } : null,
+                        }
+                    })}
+                />
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <Table>

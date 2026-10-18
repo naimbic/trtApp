@@ -8,6 +8,16 @@ export const ACCENTS = [
     { key: 'amber', label: 'Amber', hex: '#f59e0b' },
     { key: 'rose', label: 'Rose', hex: '#f43f5e' },
     { key: 'teal', label: 'Teal', hex: '#14b8a6' },
+    { key: 'terracotta', label: 'Terracotta', hex: '#d8532d' },
+    { key: 'pine', label: 'Pine', hex: '#2f7d62' },
+    { key: 'indigo', label: 'Indigo', hex: '#6366f1' },
+    { key: 'sky', label: 'Sky', hex: '#0ea5e9' },
+    { key: 'pink', label: 'Pink', hex: '#ec4899' },
+    { key: 'orange', label: 'Orange', hex: '#f97316' },
+    { key: 'gold', label: 'Gold', hex: '#d4a017' },
+    { key: 'lime', label: 'Lime', hex: '#84cc16' },
+    { key: 'crimson', label: 'Crimson', hex: '#dc2626' },
+    { key: 'slate', label: 'Slate', hex: '#475569' },
 ]
 
 export const RANGES = [
@@ -39,3 +49,11 @@ export const useDashFilters = create()(
 )
 
 export const accentHex = (key) => ACCENTS.find((a) => a.key === key)?.hex || ACCENTS[0].hex
+
+/** Readable text on a colour: dark on light colours (lime, gold, amber...), white on the rest. */
+export const onHex = (hex) => {
+    const n = parseInt(hex.slice(1), 16)
+    const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
+    const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255)
+    return L > 0.4 ? '#17191a' : '#ffffff'
+}

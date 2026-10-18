@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useThemeStore } from '@/store/themeStore'
-import { useDashFilters, accentHex } from '@/store/dashFilterStore'
+import { useDashFilters, accentHex, onHex } from '@/store/dashFilterStore'
 import presetThemeSchemaConfig from '@/configs/preset-theme-schema.config'
 import { mapTheme } from '@/utils/hooks/useThemeSchema'
 
@@ -20,8 +20,16 @@ const AccentApplier = () => {
             const root = document.documentElement
             const vars = accent === 'blue' || !accent
                 ? mapTheme(presetThemeSchemaConfig[schema || 'default']?.[mode] || presetThemeSchemaConfig.default?.[mode] || {})
-                : (() => { const h = accentHex(accent); return { '--primary': h, '--primary-deep': mix(h, '#000000', 0.18), '--primary-mild': mix(h, '#ffffff', 0.18), '--primary-subtle': `${h}1a`, '--neutral': '#ffffff' } })()
+                : (() => { const h = accentHex(accent); return { '--primary': h, '--primary-deep': mix(h, '#000000', 0.18), '--primary-mild': mix(h, '#ffffff', 0.18), '--primary-subtle': `${h}1a`, '--neutral': onHex(h) } })()
             Object.entries(vars).forEach(([k, v]) => v && root.style.setProperty(k, v))
+            // the Rapport layout: the colour paints its warm tiles, the dark card and the mesh behind the page
+            const rp = document.querySelector('.rp-app')
+            if (rp) {
+                const custom = accent && accent !== 'blue'
+                const h = custom ? accentHex(accent) : null
+                const set = { '--rp-tomato': h, '--rp-on-tomato': h && onHex(h), '--rp-pine': h && mix(h, '#000000', 0.55), '--rp-on-pine': h && '#ffffff', '--rp-mesh-a': h && `${h}59`, '--rp-mesh-c': h && `${h}33` }
+                Object.entries(set).forEach(([k, v]) => (v ? rp.style.setProperty(k, v) : rp.style.removeProperty(k)))
+            }
         }
         apply()
         const t = setTimeout(apply, 0) // after the template's own theme effect

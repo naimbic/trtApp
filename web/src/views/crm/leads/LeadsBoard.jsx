@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { useNavigate, useParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbMail, TbPhone, TbBuilding, TbClockHour4 } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
@@ -10,8 +9,7 @@ import Select from '@/components/ui/Select'
 import Segment from '@/components/ui/Segment'
 import Switcher from '@/components/ui/Switcher'
 import Table from '@/components/ui/Table'
-import Tag from '@/components/ui/Tag'
-import cn from '@/utils/classNames'
+import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
 import { usePageRange } from '@/store/pageFilterStore'
 import { People } from '../tasks/shared'
@@ -20,23 +18,6 @@ import { tr, trn } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const SHOW = [['', tr("Active")], ['lost', tr("Lost")], ['junk', tr("Junk")], ['converted', tr("Converted")]]
-
-const LeadCard = ({ l, onOpen }) => (
-    <div onClick={() => onOpen(l.id)} className="cursor-pointer space-y-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
-        <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0"><div className="truncate text-sm font-semibold">{l.name}</div>{l.company && <div className="flex items-center gap-1 truncate text-xs text-gray-500"><TbBuilding className="shrink-0" />{l.company}</div>}</div>
-            {l.source && <Tag className="shrink-0 !px-1.5 !py-0 text-[10px]">{l.source}</Tag>}
-        </div>
-        <div className="space-y-0.5 text-xs text-gray-500">
-            {l.email && <div className="flex items-center gap-1 truncate"><TbMail className="shrink-0" />{l.email}</div>}
-            {l.phone && <div className="flex items-center gap-1"><TbPhone className="shrink-0" />{l.phone}</div>}
-        </div>
-        <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-[11px] text-gray-400"><TbClockHour4 />{dayjs(l.lastContact || l.createdAt).format('DD MMM')}</span>
-            {l.assigned ? <People list={[l.assigned]} size={22} /> : <span className="text-[11px] text-gray-400">{tr("Unassigned")}</span>}
-        </div>
-    </div>
-)
 
 const LeadsBoard = () => {
     const nav = useNavigate()
@@ -122,31 +103,18 @@ const LeadsBoard = () => {
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
             {view === 'board' ? (
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="flex gap-4 overflow-x-auto pb-4">
-                        {data.statuses.map((c) => (
-                            <div key={c.id} className="w-72 shrink-0 rounded-xl bg-gray-100/70 p-2 dark:bg-gray-900/40">
-                                <div className="mb-1 flex items-center justify-between rounded-lg border-t-4 bg-white px-3 py-2 dark:bg-gray-800" style={{ borderTopColor: c.color }}>
-                                    <span className="truncate text-sm font-semibold" title={c.name}>{c.name}</span><span className="rounded-full bg-gray-100 px-2 text-xs text-gray-500 dark:bg-gray-700">{c.count}</span>
-                                </div>
-                                <Droppable droppableId={c.id}>
-                                    {(prov, snap) => (
-                                        <div ref={prov.innerRef} {...prov.droppableProps} className={cn('min-h-[100px] space-y-2 rounded-lg p-1 transition', snap.isDraggingOver && 'bg-blue-50 dark:bg-blue-900/10')}>
-                                            {c.leads.map((l, i) => (
-                                                <Draggable key={l.id} draggableId={l.id} index={i} isDragDisabled={show !== ''}>
-                                                    {(p) => <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps}><LeadCard l={l} onOpen={open} /></div>}
-                                                </Draggable>
-                                            ))}
-                                            {prov.placeholder}
-                                            {!loading && !c.leads.length && <div className="py-6 text-center text-xs text-gray-400">{tr("No leads")}</div>}
-                                            {c.leads.length < c.count && <Button size="xs" block onClick={() => more(c)}>{tr("Show")} {Math.min(data.limit || 50, c.count - c.leads.length)} {tr("more")}</Button>}
-                                        </div>
-                                    )}
-                                </Droppable>
-                            </div>
-                        ))}
-                    </div>
-                </DragDropContext>
+                <Pipeline
+                    loading={loading}
+                    emptyText={tr("No leads")}
+                    canDrag={() => show === ''}
+                    onOpen={(it) => open(it.id)}
+                    onMove={({ from, to, index, fromIndex }) => onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })}
+                    columns={data.statuses.map((c) => ({
+                        id: c.id, name: c.name, color: c.color, count: c.count,
+                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), label: l.source || l.email || '', people: l.assigned ? <People list={[l.assigned]} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),
+                        more: c.leads.length < c.count ? { left: Math.min(data.limit || 50, c.count - c.leads.length), onClick: () => more(c) } : null,
+                    }))}
+                />
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <Table>

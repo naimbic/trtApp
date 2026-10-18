@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.63.0',
+        date: '2026-10-18',
+        title: 'Shared pipeline board, equal-card mega menu, more colours, search suggestions',
+        items: ['New shared Pipeline board used by Leads, team tasks and project tasks: frosted columns with a coloured dot, count and drop highlight, coloured tiles (date, title, line under it, label and people) that are dealt in, lift on hover and tilt while dragged; the same data and saving as before', 'Mega menu: each section is a card of the same size that scrolls inside, with a count; the panel springs open, the cards and their rows come in one after the other', 'The colour picker now has 16 colours and really paints the new design (warm tiles, dark card, mesh, buttons); text on light colours switches to dark so it stays readable, in light and dark mode', 'Dock: the Period, Currency and Colour panels open centred on their button with an arrow, sliding out of the dock like the Settings menu (they were mispositioned by the dock blur); the Settings menu slides in too', 'Fixed the long empty space under pages (the menu tokens also gave every floating menu a full-screen height) and the revenue chart that could keep growing', 'Search: with an empty box it now suggests the pages you visited lately and the ones most used, each with its short description', 'Translated into French, Spanish, Japanese and Arabic']
+    },
+    {
         version: '0.62.2',
         date: '2026-10-18',
         title: 'Dev copy: own database seeded with three years of demo data',

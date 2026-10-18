@@ -2,57 +2,89 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { TbGripVertical, TbPencil, TbTrash, TbPlus } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
-import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import Switcher from '@/components/ui/Switcher'
 import Tooltip from '@/components/ui/Tooltip'
 import { api, notify, qs } from './api'
 import { tr } from '@/utils/t'
 
+const INLINE = ['text', 'email', 'url', 'number', 'money', 'date', 'boolean', 'color', 'select']
+const ctl = 'h-8 w-full rounded-lg border border-transparent bg-transparent px-2 text-sm hover:border-gray-200 focus:border-primary focus:bg-white focus:outline-none dark:hover:border-gray-600 dark:focus:bg-gray-800'
+
+/** One editable cell: text-like fields save on Enter / leaving the field, switches and selects save at once, colours after a short pause. */
+const Cell = ({ field, value, disabled, onCommit, draft }) => {
+    const [v, setV] = useState(value ?? '')
+    const timer = useRef(null)
+    useEffect(() => { setV(value ?? '') }, [value])
+    const label = tr(field.label)
+    if (field.type === 'boolean') return <Switcher checked={!!value} disabled={disabled} onChange={(c) => onCommit(c)} />
+    if (field.type === 'color') {
+        const ok = /^#[0-9a-f]{6}$/i.test(v || '')
+        return (
+            <span className="inline-flex items-center gap-2">
+                <input type="color" disabled={disabled} aria-label={label} value={ok ? v : '#9ca3af'} className="h-7 w-7 cursor-pointer rounded-full border-0 bg-transparent p-0"
+                    onChange={(e) => { const c = e.target.value; setV(c); clearTimeout(timer.current); timer.current = setTimeout(() => onCommit(c), 450) }} />
+                {ok && !disabled && !draft && <button type="button" className="text-xs text-gray-400 hover:text-red-500" onClick={() => { setV(''); onCommit('') }} title={tr("Clear")}>×</button>}
+            </span>
+        )
+    }
+    if (field.type === 'select') {
+        return (
+            <select disabled={disabled} aria-label={label} className={ctl} value={v ?? ''} onChange={(e) => { setV(e.target.value); onCommit(e.target.value) }}>
+                {!field.required && <option value="">—</option>}
+                {(field.options || []).map((o) => <option key={o.value} value={o.value}>{tr(o.label)}</option>)}
+            </select>
+        )
+    }
+    const num = ['number', 'money'].includes(field.type)
+    const done = () => { const next = num ? (v === '' ? '' : Number(v)) : String(v).trim(); if (next !== (value ?? '')) onCommit(next) }
+    return (
+        <input
+            disabled={disabled} aria-label={label} placeholder={draft ? label : undefined} className={ctl}
+            type={num ? 'number' : field.type === 'date' ? 'date' : field.type === 'email' ? 'email' : 'text'} step={field.type === 'money' ? '0.01' : undefined}
+            value={v ?? ''} onChange={(e) => setV(e.target.value)} onBlur={done}
+            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { setV(value ?? ''); e.currentTarget.blur() } }}
+        />
+    )
+}
+
 /**
- * A short list (groups, sources, statuses, categories) you can manage in place: add at the top, click a name to rename it,
- * drag the handle to reorder (when the list has an order), pick a colour (when it has one), delete with a confirmation.
- * `resource.lookup` = { orderField?, colorField? }. The pencil opens the full form for any other field.
+ * A settings list (groups, sources, statuses, taxes, currencies, payment modes...) edited in place, like a spreadsheet:
+ * type in a cell, flip a switch, pick a colour, drag the handle to reorder (when the list has an order), add a row at the top.
+ * `resource.lookup` = { orderField? }. The pencil opens the full form for the fields that do not fit a cell (long text...).
  */
 const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onOpen }) => {
-    const { orderField, colorField } = resource.lookup
+    const { orderField } = resource.lookup
+    const title = resource.titleField
+    const main = resource.fields.find((f) => f.key === title) || resource.fields[0]
+    const cols = resource.fields.filter((f) => f.key !== main.key && f.key !== orderField && INLINE.includes(f.type))
     const [rows, setRows] = useState([])
     const [loading, setLoading] = useState(true)
-    const [adding, setAdding] = useState('')
-    const [editing, setEditing] = useState(null) // { id, name }
+    const [draft, setDraft] = useState({})
     const [del, setDel] = useState(null)
     const [over, setOver] = useState(null)
     const drag = useRef(null)
+    const grid = { gridTemplateColumns: `${orderField ? '22px ' : ''}minmax(180px, 1.8fr) ${cols.map(() => 'minmax(96px, 1fr)').join(' ')} 76px` }
 
     const load = useCallback(async () => {
         try {
-            const d = await api(`/api/crm/${resource.key}?${qs({ pageIndex: 1, pageSize: 200, ...(orderField ? { sortKey: orderField, order: 'asc' } : { sortKey: 'name', order: 'asc' }) })}`)
+            const d = await api(`/api/crm/${resource.key}?${qs({ pageIndex: 1, pageSize: 200, sortKey: orderField || main.key, order: 'asc' })}`)
             setRows(d.list)
         } catch (e) { notify('danger', e.message) } finally { setLoading(false) }
-    }, [resource.key, orderField])
+    }, [resource.key, orderField, main.key])
     useEffect(() => { load() }, [load, reloadKey])
 
     const patch = (id, body) => api(`/api/crm/${resource.key}/${id}`, { method: 'PATCH', body })
+    const save = async (r, key, value) => {
+        setRows((l) => l.map((x) => (x.id === r.id ? { ...x, [key]: value } : x)))
+        try { await patch(r.id, { [key]: value === '' ? null : value }) } catch (e) { notify('danger', e.message); load() }
+    }
     const add = async () => {
-        const name = adding.trim()
-        if (!name) return
-        try {
-            await api(`/api/crm/${resource.key}`, { method: 'POST', body: { name, ...(orderField ? { [orderField]: rows.length + 1 } : {}) } })
-            setAdding('')
-            load()
-        } catch (e) { notify('danger', e.message) }
-    }
-    const rename = async () => {
-        const e = editing
-        setEditing(null)
-        const name = (e?.name || '').trim()
-        const cur = rows.find((r) => r.id === e?.id)
-        if (!e || !name || name === cur?.name) return
-        setRows((l) => l.map((r) => (r.id === e.id ? { ...r, name } : r)))
-        try { await patch(e.id, { name }) } catch (err) { notify('danger', err.message); load() }
-    }
-    const recolor = async (r, color) => {
-        setRows((l) => l.map((x) => (x.id === r.id ? { ...x, [colorField]: color } : x)))
-        try { await patch(r.id, { [colorField]: color }) } catch (err) { notify('danger', err.message); load() }
+        const body = { ...draft }
+        if (!String(body[main.key] || '').trim()) { notify('warning', tr("Type a {what} first", { what: tr(main.label).toLowerCase() })); return }
+        for (const [k, v] of Object.entries(body)) if (v === '' || v === undefined) delete body[k]
+        if (orderField) body[orderField] = rows.length + 1
+        try { await api(`/api/crm/${resource.key}`, { method: 'POST', body }); setDraft({}); load() } catch (e) { notify('danger', e.message) }
     }
     const remove = async (r) => {
         try { await api(`/api/crm/${resource.key}/${r.id}`, { method: 'DELETE' }); notify('success', tr("Deleted")); load() } catch (e) { notify('danger', e.message) }
@@ -71,45 +103,44 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
     }
 
     return (
-        <div className="mx-auto max-w-[760px]">
-            {canCreate && (
-                <div className="mb-4 flex gap-2">
-                    <Input size="sm" placeholder={tr("New {what}", { what: resource.label.toLowerCase() })} value={adding} onChange={(e) => setAdding(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') add() }} />
-                    <Button size="sm" variant="solid" icon={<TbPlus />} disabled={!adding.trim()} onClick={add}>{tr("Add")}</Button>
+        <div className="overflow-x-auto">
+            <div className="min-w-[560px] rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                <div className="grid items-center gap-3 border-b border-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:border-gray-700" style={grid}>
+                    {orderField && <span />}
+                    <span>{tr(main.label)}</span>
+                    {cols.map((f) => <span key={f.key}>{tr(f.label)}</span>)}
+                    <span />
                 </div>
-            )}
-            <div className="divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
-                {rows.map((r, i) => (
-                    <div
-                        key={r.id}
-                        className={`flex items-center gap-3 px-3 py-2.5 ${over === i ? 'bg-primary/5' : ''}`}
-                        draggable={!!orderField && canEdit && editing?.id !== r.id}
-                        onDragStart={() => { drag.current = i }}
-                        onDragOver={(e) => { if (drag.current !== null) { e.preventDefault(); setOver(i) } }}
-                        onDragEnd={() => { drag.current = null; setOver(null) }}
-                        onDrop={(e) => { e.preventDefault(); drop(i) }}
-                    >
-                        {orderField && <span className={`text-lg text-gray-400 ${canEdit ? 'cursor-grab' : ''}`} aria-hidden="true"><TbGripVertical /></span>}
-                        {colorField && (
-                            <input type="color" disabled={!canEdit} value={/^#[0-9a-f]{6}$/i.test(r[colorField] || '') ? r[colorField] : '#9ca3af'} onChange={(e) => recolor(r, e.target.value)} aria-label={tr("Color")} className="h-6 w-6 shrink-0 cursor-pointer rounded-full border-0 bg-transparent p-0" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                            {editing?.id === r.id ? (
-                                <Input autoFocus size="sm" value={editing.name} onChange={(e) => setEditing({ id: r.id, name: e.target.value })} onBlur={rename} onKeyDown={(e) => { if (e.key === 'Enter') rename(); if (e.key === 'Escape') setEditing(null) }} />
-                            ) : (
-                                <button type="button" disabled={!canEdit} className="block max-w-full truncate text-left font-medium hover:text-primary" onClick={() => setEditing({ id: r.id, name: r.name })} title={canEdit ? tr("Click to rename") : undefined}>{r.name}</button>
-                            )}
-                        </div>
-                        {r.isDefault && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700">{tr("Default")}</span>}
-                        <Tooltip title={canEdit ? tr("Edit") : tr("View")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => onOpen(r.id)} /></Tooltip>
-                        {canDelete && <Tooltip title={tr("Delete")}><Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setDel(r)} /></Tooltip>}
+                {canCreate && (
+                    <div className="grid items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-3 py-2 dark:border-gray-700 dark:bg-gray-700/20" style={grid} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); setTimeout(add, 0) } }}>
+                        {orderField && <span />}
+                        <input className={`${ctl} border-gray-200 bg-white dark:border-gray-600`} placeholder={tr("New {what}", { what: tr(resource.label).toLowerCase() })} aria-label={tr(main.label)} value={draft[main.key] || ''} onChange={(e) => setDraft((d) => ({ ...d, [main.key]: e.target.value }))} />
+                        {cols.map((f) => <div key={f.key}>{f.required || ['color', 'boolean', 'select'].includes(f.type) || f.type === 'number' ? <Cell draft field={f} value={draft[f.key]} onCommit={(val) => setDraft((d) => ({ ...d, [f.key]: val }))} /> : <span />}</div>)}
+                        <Button size="xs" variant="solid" icon={<TbPlus />} onClick={add}>{tr("Add")}</Button>
                     </div>
-                ))}
+                )}
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {rows.map((r, i) => (
+                        <div
+                            key={r.id}
+                            className={`grid items-center gap-3 px-3 py-1.5 ${over === i ? 'bg-primary/5' : ''}`} style={grid}
+                            onDragOver={(e) => { if (drag.current !== null) { e.preventDefault(); setOver(i) } }} onDrop={(e) => { e.preventDefault(); drop(i) }}
+                        >
+                            {orderField && <span className={`text-lg text-gray-400 ${canEdit ? 'cursor-grab' : ''}`} draggable={canEdit} onDragStart={() => { drag.current = i }} onDragEnd={() => { drag.current = null; setOver(null) }} aria-hidden="true"><TbGripVertical /></span>}
+                            <Cell field={main} value={r[main.key]} disabled={!canEdit} onCommit={(val) => (val === '' ? load() : save(r, main.key, val))} />
+                            {cols.map((f) => <div key={f.key}><Cell field={f} value={r[f.key]} disabled={!canEdit} onCommit={(val) => save(r, f.key, val)} /></div>)}
+                            <span className="flex justify-end gap-0.5">
+                                <Tooltip title={canEdit ? tr("Edit") : tr("View")}><Button size="xs" variant="plain" icon={<TbPencil />} onClick={() => onOpen(r.id)} /></Tooltip>
+                                {canDelete && <Tooltip title={tr("Delete")}><Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setDel(r)} /></Tooltip>}
+                            </span>
+                        </div>
+                    ))}
+                </div>
                 {loading && !rows.length && <div className="py-8 text-center text-gray-400">{tr("Loading…")}</div>}
                 {!loading && !rows.length && <div className="py-8 text-center text-gray-400">{tr("Nothing here yet")}</div>}
             </div>
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this item?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const r = del; setDel(null); remove(r) }}>
-                <p>{del?.name}</p>
+                <p>{del?.[main.key]}</p>
             </ConfirmDialog>
         </div>
     )

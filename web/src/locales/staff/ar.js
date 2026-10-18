@@ -3705,5 +3705,7 @@ export default {
     "Click to rename": "انقر لإعادة التسمية",
     "Delete this item?": "حذف هذا العنصر؟",
     "New {what}": "{what} جديد",
-    "Nothing here yet": "لا شيء هنا بعد"
+    "Nothing here yet": "لا شيء هنا بعد",
+    "Type a {what} first": "اكتب {what} أولاً",
+    "Clear": "مسح"
 }

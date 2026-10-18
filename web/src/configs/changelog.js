@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.78.0',
+        date: '2026-10-18',
+        title: 'Settings lists are edited in place',
+        items: ['Customer groups, lead sources and statuses, ticket statuses and priorities, services, item groups, contract types, expense categories, knowledge base groups, taxes, currencies, payment modes, tags, spam filters and consent purposes are now spreadsheet-like lists: type in a cell and press Enter, flip an on/off switch, pick a colour, choose from a menu, with no popup', 'A new row is added from the line at the top (type the name, press Enter); drag the handle to reorder the lists that have an order; the pencil still opens the full form for long text fields']
+    },
+    {
         version: '0.77.1',
         date: '2026-10-18',
         title: 'Lead sources get a colour; calendar invoices show their text',

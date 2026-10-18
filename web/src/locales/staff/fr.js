@@ -3705,5 +3705,7 @@ export default {
     "Click to rename": "Cliquer pour renommer",
     "Delete this item?": "Supprimer cet élément ?",
     "New {what}": "Nouveau {what}",
-    "Nothing here yet": "Rien ici pour l'instant"
+    "Nothing here yet": "Rien ici pour l'instant",
+    "Type a {what} first": "Saisissez d'abord un(e) {what}",
+    "Clear": "Effacer"
 }

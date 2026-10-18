@@ -406,7 +406,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'consent-purposes',
+        key: 'consent-purposes', lookup: {},
         model: 'crmConsentPurpose',
         label: 'Consent purpose',
         plural: 'Consent purposes',

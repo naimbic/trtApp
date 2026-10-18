@@ -233,7 +233,7 @@ const resources = [
         children: [], actions: [],
     },
     {
-        key: 'currencies', model: 'crmCurrency', label: 'Currency', plural: 'Currencies',
+        key: 'currencies', lookup: {}, model: 'crmCurrency', label: 'Currency', plural: 'Currencies',
         group: 'Setup', icon: 'TbCurrencyDollar', feature: 'settings',
         titleField: 'name', search: ['name', 'symbol'], defaultSort: { name: 'asc' },
         columns: [
@@ -277,7 +277,7 @@ const resources = [
         filters: [], children: [], actions: [],
     },
     {
-        key: 'taxes', model: 'crmTax', label: 'Tax', plural: 'Taxes',
+        key: 'taxes', lookup: {}, model: 'crmTax', label: 'Tax', plural: 'Taxes',
         group: 'Setup', icon: 'TbPercentage', feature: 'settings',
         titleField: 'name', search: ['name'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }, { key: 'taxRate', label: 'Rate (%)', type: 'number' }],
@@ -288,7 +288,7 @@ const resources = [
         filters: [], children: [], actions: [],
     },
     {
-        key: 'payment-modes', model: 'crmPaymentMode', label: 'Payment mode', plural: 'Payment modes',
+        key: 'payment-modes', lookup: {}, model: 'crmPaymentMode', label: 'Payment mode', plural: 'Payment modes',
         group: 'Setup', icon: 'TbCreditCard', feature: 'settings',
         titleField: 'name', search: ['name', 'description'], defaultSort: { name: 'asc' },
         columns: [
@@ -379,7 +379,7 @@ const resources = [
         fields: [], filters: [], readOnly: true, hidden: true,
     },
     {
-        key: 'tags', model: 'crmTag', label: 'Tag', plural: 'Tags',
+        key: 'tags', lookup: {}, model: 'crmTag', label: 'Tag', plural: 'Tags',
         group: 'Setup', icon: 'TbTag', feature: null,
         titleField: 'name', search: ['name'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],

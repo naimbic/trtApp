@@ -106,7 +106,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'ticket-priorities', model: 'crmTicketPriority', label: 'Ticket priority', plural: 'Ticket priorities',
+        key: 'ticket-priorities', lookup: {}, model: 'crmTicketPriority', label: 'Ticket priority', plural: 'Ticket priorities',
         group: 'Support', icon: 'TbFlag', feature: 'settings', titleField: 'name',
         search: ['name'], defaultSort: { legacyId: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
@@ -114,7 +114,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'services', model: 'crmService', label: 'Service', plural: 'Services',
+        key: 'services', lookup: {}, model: 'crmService', label: 'Service', plural: 'Services',
         group: 'Support', icon: 'TbTool', feature: 'settings', titleField: 'name',
         search: ['name'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
@@ -133,7 +133,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'spam-filters', model: 'crmSpamFilter', label: 'Spam filter', plural: 'Spam filters',
+        key: 'spam-filters', lookup: {}, model: 'crmSpamFilter', label: 'Spam filter', plural: 'Spam filters',
         group: 'Support', icon: 'TbShieldX', feature: 'settings', titleField: 'value',
         search: ['value'], defaultSort: { createdAt: 'desc' },
         columns: [
@@ -163,7 +163,7 @@ const resources = [
         fields: [], filters: [], readOnly: true,
     },
     {
-        key: 'kb-groups', nav: false, model: 'crmKnowledgeBaseGroup', label: 'Article group', plural: 'Article groups',
+        key: 'kb-groups', lookup: { orderField: 'groupOrder' }, nav: false, model: 'crmKnowledgeBaseGroup', label: 'Article group', plural: 'Article groups',
         group: 'Knowledge Base', icon: 'TbFolders', feature: 'knowledge_base', titleField: 'name',
         search: ['name', 'description'], defaultSort: { groupOrder: 'asc' },
         columns: [

@@ -3705,5 +3705,7 @@ export default {
     "Click to rename": "クリックして名前を変更",
     "Delete this item?": "この項目を削除しますか？",
     "New {what}": "新しい{what}",
-    "Nothing here yet": "まだ何もありません"
+    "Nothing here yet": "まだ何もありません",
+    "Type a {what} first": "先に{what}を入力してください",
+    "Clear": "クリア"
 }

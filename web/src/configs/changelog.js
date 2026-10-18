@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.75.4',
+        date: '2026-10-18',
+        title: 'All activity in 2 columns',
+        items: ['The date lists of All activity sit in 2 columns on wide screens (1 on small ones)']
+    },
+    {
         version: '0.75.3',
         date: '2026-10-18',
         title: 'All activity: plain list by date',

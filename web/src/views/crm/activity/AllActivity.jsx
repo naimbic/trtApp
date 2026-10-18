@@ -82,8 +82,9 @@ const AllActivity = () => {
                 })}
             </div>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
+            <div className="grid grid-cols-1 items-start gap-x-5 lg:grid-cols-2">
             {days.map((day) => (
-                <section key={day.d} className="mb-5">
+                <section key={day.d} className="mb-5 min-w-0">
                     <div className="mb-2 font-semibold uppercase text-gray-900 dark:text-gray-100">{dayjs(day.d).format('dddd, DD MMMM YYYY')}</div>
                     <div className="divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
                         {day.list.map((e) => {
@@ -96,10 +97,10 @@ const AllActivity = () => {
                                         <span className="font-medium text-gray-900 dark:text-gray-100">{local(e.title)}</span>
                                         {e.detail && <span className="ml-2 text-sm text-gray-500">{local(e.detail)}</span>}
                                     </div>
-                                    {e.client?.name && <button type="button" className="hidden shrink-0 items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 hover:text-primary sm:inline-flex dark:bg-gray-700" onClick={() => setClientId(e.client.id)}><TbBuilding />{e.client.name}</button>}
+                                    {e.client?.name && <button type="button" className="hidden max-w-[110px] shrink-0 items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 hover:text-primary sm:inline-flex dark:bg-gray-700" onClick={() => setClientId(e.client.id)}><TbBuilding className="shrink-0" /><span className="truncate">{e.client.name}</span></button>}
                                     <button type="button" className="inline-flex shrink-0 items-center gap-1.5 text-xs text-gray-500 hover:text-primary" onClick={() => e.who?.id && setStaffId(e.who.id)}>
-                                        <Avatar size={20} shape="circle" src={e.who?.image || undefined}>{e.who?.image ? null : (e.who?.name || '?').slice(0, 1).toUpperCase()}</Avatar>
-                                        <span className="hidden md:inline">{e.who?.name || tr('Client or system')}</span>
+                                        <Avatar size={20} shape="circle" src={e.who?.image || undefined} title={e.who?.name}>{e.who?.image ? null : (e.who?.name || '?').slice(0, 1).toUpperCase()}</Avatar>
+                                        <span className="hidden max-w-[90px] truncate 2xl:inline">{e.who?.name || tr('Client or system')}</span>
                                     </button>
                                     {e.link ? <button type="button" onClick={() => navigate(e.link)} className="shrink-0 text-gray-400 hover:text-primary" title={tr('Open')}><TbExternalLink /></button> : <span className="w-4 shrink-0" />}
                                 </div>
@@ -108,6 +109,7 @@ const AllActivity = () => {
                     </div>
                 </section>
             ))}
+            </div>
             {!busy && !events.length && !error && <div className="py-10 text-center text-gray-400">{tr('No activity to show')}</div>}
             {events.length > PAGE && <div className="mt-2 flex justify-end"><Pagination total={events.length} pageSize={PAGE} currentPage={page} onChange={setPage} /></div>}
             {busy && !events.length && <div className="py-10 text-center text-gray-400">{tr('Loading…')}</div>}

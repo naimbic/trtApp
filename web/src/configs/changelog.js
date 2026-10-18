@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.57.2',
+        date: '2026-10-18',
+        title: 'Cron command shows the address you are using',
+        items: ['Settings → Cron job: the command and the crontab line now use the address you opened the CRM on (for example app.trtcrm.com), instead of the PUBLIC_URL setting of the server, which still named the old staging address after the domain change', 'The server settings that still decide the address in emails, short links, the client portal and sign-in are PUBLIC_URL, AUTH_URL, NEXTAUTH_URL and TRTAGENCY_REDIRECT_URI; they must name https://app.trtcrm.com (see docs/DEPLOY-COOLIFY.md)']
+    },
+    {
         version: '0.57.1',
         date: '2026-10-18',
         title: 'Cron preview and run result, clear and linked',

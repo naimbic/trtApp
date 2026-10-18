@@ -3,7 +3,7 @@
  * Smoke test of the CRM API for one sign-in: opens every list the app has and reports what answers 5xx or an
  * unexpected 401. Read-only (GET requests only). Use it after each deployment, once per role:
  *
- *   BASE_URL=https://staging.trtcrm.com SMOKE_EMAIL=you@example.com SMOKE_PASSWORD='…' node scripts/smoke-api.mjs
+ *   BASE_URL=https://app.trtcrm.com SMOKE_EMAIL=you@example.com SMOKE_PASSWORD='…' node scripts/smoke-api.mjs
  *
  * 403 is normal for a member without the permission and is listed separately, so a role can be compared with what
  * it should reach. The password is only read from the environment and never printed.

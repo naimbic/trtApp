@@ -51,3 +51,7 @@ turn on cron and mail, and switch DNS.
 Calls use WebRTC with Google's public STUN servers, which works for most networks. For reliable calls behind strict
 firewalls add a TURN server (e.g. coturn) and set `TURN_URL` (e.g. `turn:turn.example.com:3478`), `TURN_USER` and `TURN_PASS`.
 Browsers only allow the microphone on https pages. An administrator turns calls on with the phone icon in the chat header.
+
+
+## Changing the domain
+Point the new domain at the app in Coolify, then set `PUBLIC_URL`, `AUTH_URL`, `NEXTAUTH_URL` and `TRTAGENCY_REDIRECT_URI` (`<domain>/api/crm/auth/trtagency/callback`) to the new address and redeploy. Register the new callbacks at the identity providers: `<domain>/api/crm/auth/trtagency/callback`, `<domain>/api/auth/callback/google`, `<domain>/api/auth/callback/github`. Emails, short links, the client portal and sign-in use these settings; the cron command in Settings shows the address you opened the CRM on.

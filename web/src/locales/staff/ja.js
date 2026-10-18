@@ -3627,5 +3627,12 @@ export default {
     "Change status": "ステータスを変更",
     "Invoice reopened": "請求書を再開しました",
     "Moved back to draft": "下書きに戻しました",
-    "still to collect from what was invoiced": "請求額のうち未回収"
+    "still to collect from what was invoiced": "請求額のうち未回収",
+    "Delete this document?": "この書類を削除しますか？",
+    "Deleted": "削除しました",
+    "Mark as unsigned": "未署名にする",
+    "Marked as unsigned": "未署名にしました",
+    "Restored": "復元しました",
+    "Status changed": "ステータスを変更しました",
+    "{n} expiring": "{n}件が期限間近"
 }

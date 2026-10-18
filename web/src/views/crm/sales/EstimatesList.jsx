@@ -21,6 +21,8 @@ import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { ESTIMATE_STATUS as STATUS, EstimateStatusTag as StatusTag, fmtDate } from './shared'
+import { useDocMenu } from './DocMenu'
+import { InvoiceHead } from './InvoiceInsights'
 import { tr } from '@/utils/t'
 import { moneyChange } from '../kit/widgets'
 
@@ -62,6 +64,14 @@ const EstimatesList = () => {
     }, [query, status, clientId, range, page, sort])
     useEffect(() => { load() }, [load])
 
+    const doc = useDocMenu({
+        path: '/crm/estimates', apiBase: '/api/crm/sales/estimates', perm: 'estimates', name: (r) => `${r.number} · ${r.client}`,
+        mail: { kind: 'estimate', template: 'estimate-send-to-client' },
+        canEdit: (r) => !r.invoiceId,
+        statuses: [[1, 'markDraft'], [2, 'markSent'], [4, 'markAccepted'], [3, 'markDeclined']].map(([st, action]) => ({ label: STATUS[st].label, action, current: (r) => r.status === st })),
+        convert: { label: tr("Convert to invoice"), perm: 'invoices', when: (r) => [2, 4, 5].includes(r.status) && !r.invoiceId, url: (r) => `/api/crm/sales/estimates/${r.id}/convert`, to: (res) => res.invoiceId && `/crm/invoices/${res.invoiceId}` },
+    }, load)
+
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
@@ -71,10 +81,15 @@ const EstimatesList = () => {
 
     return (
         <Container>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>{tr("Estimates")}</h3><p className="text-sm text-gray-500">{tr("Quotes sent to clients and what they answered")}</p></div>
-                {can('estimates', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/estimates/new')}>{tr("New estimate")}</Button>}
-            </div>
+            <InvoiceHead
+                title={tr("Estimates")}
+                action={can('estimates', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/estimates/new')}>{tr("New estimate")}</Button>}
+                stats={[
+                    { icon: <TbFileText />, label: tr("Estimates"), value: String(Object.values(data.stats.counts).reduce((a, b) => a + b, 0)) },
+                    { icon: <TbHourglass />, label: tr("Waiting for an answer"), value: m ? money(m.open, cur) : '—' },
+                    { icon: <TbCircleCheck />, label: tr("Accepted"), value: m ? money(m.accepted, cur) : '—' },
+                ]}
+            />
 
             {m && (
                 <TileGrid cols={4}>
@@ -94,7 +109,7 @@ const EstimatesList = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('number', tr("Estimate"))}{th('client', tr("Client"))}<Th>{tr("Reference")}</Th>{th('date', tr("Date"))}{th('expiryDate', tr("Valid until"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}</Tr></THead>
+                        <THead><Tr>{th('number', tr("Estimate"))}{th('client', tr("Client"))}<Th>{tr("Reference")}</Th>{th('date', tr("Date"))}{th('expiryDate', tr("Valid until"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
                                 <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/estimates/${r.id}`)}>
@@ -105,6 +120,7 @@ const EstimatesList = () => {
                                     <Td className={cn('whitespace-nowrap', r.status === 5 && 'text-amber-600')}>{fmtDate(r.expiryDate) || '—'}</Td>
                                     <Td className="text-right tabular-nums">{money(r.total, r.currencyId)}</Td>
                                     <Td><StatusTag status={r.status} />{r.invoiced && <span className="ml-1.5 text-xs text-emerald-600">{tr("invoiced")}</span>}</Td>
+                                    {doc.cell(r)}
                                 </Tr>
                             ))}
                         </TBody>
@@ -117,6 +133,7 @@ const EstimatesList = () => {
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>
+            {doc.dialogs}
         </Container>
     )
 }

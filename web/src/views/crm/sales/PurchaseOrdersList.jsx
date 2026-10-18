@@ -21,6 +21,8 @@ import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { PO_STATUS as STATUS, PoStatusTag as StatusTag, fmtDate } from './shared'
+import { useDocMenu } from './DocMenu'
+import { InvoiceHead } from './InvoiceInsights'
 import { tr } from '@/utils/t'
 import { moneyChange } from '../kit/widgets'
 
@@ -62,6 +64,13 @@ const PurchaseOrdersList = () => {
     }, [query, status, clientId, range, page, sort])
     useEffect(() => { load() }, [load])
 
+    const doc = useDocMenu({
+        path: '/crm/purchase-orders', apiBase: '/api/crm/sales/purchase-orders', perm: 'purchase_orders', name: (r) => `${r.number} · ${r.client}`,
+        mail: { kind: 'purchase_order', template: 'purchase-order-send-to-client' },
+        statuses: [[1, 'markDraft'], [2, 'markSent'], [3, 'markConfirmed'], [4, 'markDelivered'], [5, 'markCancelled']].map(([st, action]) => ({ label: STATUS[st].label, action, current: (r) => r.status === st })),
+        convert: { label: tr("Convert to invoice"), perm: 'invoices', when: (r) => [2, 3, 4].includes(r.status), url: (r) => `/api/crm/sales/purchase-orders/${r.id}/convert`, to: (res) => res.invoiceId && `/crm/invoices/${res.invoiceId}` },
+    }, load)
+
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
@@ -71,10 +80,15 @@ const PurchaseOrdersList = () => {
 
     return (
         <Container>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>{tr("Purchase orders")}</h3><p className="text-sm text-gray-500">{tr("Bons de commande: what clients ordered, what is left to deliver and to invoice")}</p></div>
-                {can('purchase_orders', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/purchase-orders/new')}>{tr("New purchase order")}</Button>}
-            </div>
+            <InvoiceHead
+                title={tr("Purchase orders")}
+                action={can('purchase_orders', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/purchase-orders/new')}>{tr("New purchase order")}</Button>}
+                stats={[
+                    { icon: <TbReceipt2 />, label: tr("All orders"), value: m ? money(m.total, cur) : '—' },
+                    { icon: <TbHourglass />, label: tr("To deliver"), value: m ? money(m.toDeliver, cur) : '—' },
+                    { icon: <TbAlertTriangle />, label: tr("Not invoiced yet"), value: m ? money(m.uninvoiced, cur) : '—' },
+                ]}
+            />
 
             {m && (
                 <TileGrid cols={3}>
@@ -93,7 +107,7 @@ const PurchaseOrdersList = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('number', tr("Order"))}{th('client', tr("Client"))}<Th>{tr("Client ref.")}</Th>{th('date', tr("Date"))}{th('deliveryDate', tr("Delivery"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}</Tr></THead>
+                        <THead><Tr>{th('number', tr("Order"))}{th('client', tr("Client"))}<Th>{tr("Client ref.")}</Th>{th('date', tr("Date"))}{th('deliveryDate', tr("Delivery"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
                                 <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/purchase-orders/${r.id}`)}>
@@ -104,6 +118,7 @@ const PurchaseOrdersList = () => {
                                     <Td className={cn('whitespace-nowrap', r.status === 5 && 'text-gray-400')}>{fmtDate(r.deliveryDate) || '—'}</Td>
                                     <Td className="text-right tabular-nums">{money(r.total, r.currencyId)}</Td>
                                     <Td><StatusTag status={r.status} />{r.invoiced && <span className="ml-1.5 text-xs text-emerald-600">{tr("invoiced")}</span>}</Td>
+                                    {doc.cell(r)}
                                 </Tr>
                             ))}
                         </TBody>
@@ -116,6 +131,7 @@ const PurchaseOrdersList = () => {
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>
+            {doc.dialogs}
         </Container>
     )
 }

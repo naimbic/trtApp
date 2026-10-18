@@ -3627,5 +3627,12 @@ export default {
     "Change status": "Changer le statut",
     "Invoice reopened": "Facture rouverte",
     "Moved back to draft": "Remise en brouillon",
-    "still to collect from what was invoiced": "reste à encaisser sur le facturé"
+    "still to collect from what was invoiced": "reste à encaisser sur le facturé",
+    "Delete this document?": "Supprimer ce document ?",
+    "Deleted": "Supprimé",
+    "Mark as unsigned": "Marquer comme non signé",
+    "Marked as unsigned": "Marqué comme non signé",
+    "Restored": "Restauré",
+    "Status changed": "Statut modifié",
+    "{n} expiring": "{n} bientôt expirés"
 }

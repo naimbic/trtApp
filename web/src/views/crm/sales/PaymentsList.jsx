@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { StatTile, TileGrid } from '@/components/crm/ListHeader'
-import { TbCash, TbListNumbers } from 'react-icons/tb'
+import { TbCash, TbListNumbers, TbCoins } from 'react-icons/tb'
 import { usePageRange } from '@/store/pageFilterStore'
 import { useNavigate } from 'react-router'
 import { TbSearch, TbTrash } from 'react-icons/tb'
@@ -21,6 +21,7 @@ import { api, notify, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
+import { InvoiceHead } from './InvoiceInsights'
 import { tr } from '@/utils/t'
 import { moneyChange } from '../kit/widgets'
 
@@ -76,7 +77,13 @@ const PaymentsList = () => {
 
     return (
         <Container>
-            <div className="mb-4"><h3>{tr("Payments")}</h3><p className="text-sm text-gray-500">{tr("Money received against invoices. Record a payment from the invoice itself.")}</p></div>
+            <InvoiceHead
+                title={tr("Payments")}
+                stats={[
+                    ...Object.entries(data.totals).slice(0, 2).map(([cid, v]) => ({ icon: <TbCoins />, label: tr("Received · {v1}", { v1: lookups.currencies.find((x) => x.id === cid)?.name || '' }), value: money(typeof v === 'object' ? v.total ?? v.amount ?? 0 : v, cid) })),
+                    { icon: <TbListNumbers />, label: tr("Payments"), value: String(data.total) },
+                ]}
+            />
             {Object.keys(data.totals).length > 0 && (
                 <TileGrid>
                     {Object.entries(data.totals).map(([cid, v], i) => <StatTile key={cid} title={tr("Received · {v1}", { v1: lookups.currencies.find((x) => x.id === cid)?.name || '' })} className={['bg-emerald-100', 'bg-sky-100', 'bg-amber-100'][i % 3]} change={moneyChange(data.trend, cid)} value={money(v, cid)} icon={<TbCash />} />)}

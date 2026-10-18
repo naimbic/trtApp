@@ -3627,5 +3627,12 @@ export default {
     "Change status": "Cambiar estado",
     "Invoice reopened": "Factura reabierta",
     "Moved back to draft": "Devuelta a borrador",
-    "still to collect from what was invoiced": "aún por cobrar de lo facturado"
+    "still to collect from what was invoiced": "aún por cobrar de lo facturado",
+    "Delete this document?": "¿Eliminar este documento?",
+    "Deleted": "Eliminado",
+    "Mark as unsigned": "Marcar como sin firmar",
+    "Marked as unsigned": "Marcado como sin firmar",
+    "Restored": "Restaurado",
+    "Status changed": "Estado cambiado",
+    "{n} expiring": "{n} por vencer"
 }

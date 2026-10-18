@@ -17,6 +17,8 @@ import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
+import { useDocMenu } from './DocMenu'
+import { InvoiceHead } from './InvoiceInsights'
 import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
@@ -53,6 +55,16 @@ const ContractsList = () => {
     }, [query, state, clientId, typeId, page, sort])
     useEffect(() => { load() }, [load])
 
+    const doc = useDocMenu({
+        path: '/crm/contracts', apiBase: '/api/crm/sales/contracts', perm: 'contracts', name: (r) => `${r.subject} · ${r.client}`,
+        canEdit: (r) => r.state !== 'trash',
+        extra: (r, { act }) => [
+            ...(can('contracts', 'edit') && r.state !== 'trash' ? [{ label: r.signed ? tr("Mark as unsigned") : tr("Mark as signed"), icon: <TbSignature />, onClick: () => act(() => api(`/api/crm/sales/contracts/${r.id}/actions`, { method: 'POST', body: { action: r.signed ? 'unsign' : 'sign' } }), r.signed ? tr("Marked as unsigned") : tr("Marked as signed")) }] : []),
+            ...(can('contracts', 'edit') && r.state === 'trash' ? [{ label: tr("Restore"), icon: <TbFileCertificate />, onClick: () => act(() => api(`/api/crm/sales/contracts/${r.id}/actions`, { method: 'POST', body: { action: 'restore' } }), tr("Restored")) }] : []),
+        ],
+        remove: (r) => api(`/api/crm/sales/contracts/${r.id}/actions`, { method: 'POST', body: { action: 'trash' } }),
+    }, load)
+
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const st = data.stats
@@ -60,10 +72,15 @@ const ContractsList = () => {
 
     return (
         <Container>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>{tr("Contracts")}</h3><p className="text-sm text-gray-500">{tr("Agreements, renewals and what is about to expire")}</p></div>
-                {can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/contracts/new')}>{tr("New contract")}</Button>}
-            </div>
+            <InvoiceHead
+                title={tr("Contracts")}
+                action={can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/contracts/new')}>{tr("New contract")}</Button>}
+                stats={[
+                    { icon: <TbFileCertificate />, label: tr("Active"), value: String(data.stats.counts?.active ?? 0), badge: (data.stats.counts?.expiring ?? 0) ? <span className="badge badge--butter">{tr("{n} expiring", { n: data.stats.counts.expiring })}</span> : null },
+                    { icon: <TbCoins />, label: tr("Value of live contracts"), value: money(data.stats.activeValue, baseCur, { decimals: 0 }) },
+                    { icon: <TbSignature />, label: tr("Waiting for a signature"), value: String(data.stats.unsigned || 0) },
+                ]}
+            />
             <TileGrid>
                 <StatTile title={tr("Active")} className="bg-emerald-100" value={st.counts?.active ?? 0} icon={<TbFileCertificate />} />
                 <StatTile title={tr("About to expire")} className={(st.counts?.expiring ?? 0) ? 'bg-amber-100' : 'bg-sky-100'} value={st.counts?.expiring ?? 0} sub={tr("Within 7 days")} icon={<TbClockExclamation />} />
@@ -80,7 +97,7 @@ const ContractsList = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('subject', tr("Subject"))}{th('client', tr("Client"))}{th('type', tr("Type"))}{th('value', tr("Value"), true)}{th('dateStart', tr("Start"))}{th('dateEnd', tr("End"))}<Th>{tr("Signed")}</Th><Th>{tr("Status")}</Th></Tr></THead>
+                        <THead><Tr>{th('subject', tr("Subject"))}{th('client', tr("Client"))}{th('type', tr("Type"))}{th('value', tr("Value"), true)}{th('dateStart', tr("Start"))}{th('dateEnd', tr("End"))}<Th>{tr("Signed")}</Th><Th>{tr("Status")}</Th>{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((c) => (
                                 <Tr key={c.id} className="cursor-pointer" onClick={() => navigate(`/crm/contracts/${c.id}`)}>
@@ -92,6 +109,7 @@ const ContractsList = () => {
                                     <Td className="whitespace-nowrap">{c.dateEnd ? fmtDate(c.dateEnd) : <span className="text-gray-400">{tr("No end")}</span>}{c.state === 'expiring' && <span className="ml-1.5 text-xs text-amber-600">{c.daysLeft}d</span>}</Td>
                                     <Td><Tag className={c.signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.signed ? tr("Yes") : tr("No")}</Tag></Td>
                                     <Td><StateTag state={c.state} /></Td>
+                                    {doc.cell(c)}
                                 </Tr>
                             ))}
                         </TBody>
@@ -104,6 +122,7 @@ const ContractsList = () => {
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>
+            {doc.dialogs}
         </Container>
     )
 }

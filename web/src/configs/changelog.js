@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.70.0',
+        date: '2026-10-18',
+        title: 'Estimates, proposals, purchase orders, contracts and payments like the invoices page',
+        items: ['Each of these lists now opens with the demo-style head (big title and three icon metrics) above its figure cards', 'Every row has the three-dots menu: Open, Edit, Download, Send (the email dialog), Change status (estimates: Draft, Sent, Accepted, Declined; proposals: Draft, Open, Sent, Revised, Accepted, Declined; purchase orders: Draft, Sent, Confirmed, Delivered, Cancelled), Convert to invoice where it applies, and Delete; contracts also get Mark as signed / unsigned and Restore from the trash', 'Payments get the new head only (their delete button stays); the Cash flow chart is on the invoices page only for now, because the other lists have no chart data yet']
+    },
+    {
         version: '0.69.2',
         date: '2026-10-18',
         title: 'Return arrow in submenus',

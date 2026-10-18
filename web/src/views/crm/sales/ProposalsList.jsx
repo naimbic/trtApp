@@ -21,6 +21,8 @@ import { api, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { PROPOSAL_STATUS as STATUS, ProposalStatusTag as StatusTag, fmtDate } from './shared'
+import { useDocMenu } from './DocMenu'
+import { InvoiceHead } from './InvoiceInsights'
 import { tr } from '@/utils/t'
 import { moneyChange } from '../kit/widgets'
 
@@ -62,6 +64,13 @@ const ProposalsList = () => {
     }, [query, status, clientId, range, page, sort])
     useEffect(() => { load() }, [load])
 
+    const doc = useDocMenu({
+        path: '/crm/proposals', apiBase: '/api/crm/sales/proposals', perm: 'proposals', name: (r) => `${r.number || ''} ${r.subject || ''}`.trim(),
+        mail: { kind: 'proposal', template: 'proposal-send-to-customer' },
+        statuses: [[6, 'markDraft'], [1, 'markOpen'], [4, 'markSent'], [5, 'markRevised'], [3, 'markAccepted'], [2, 'markDeclined']].map(([st, action]) => ({ label: STATUS[st].label, action, current: (r) => r.status === st })),
+        convert: { label: tr("Convert to invoice"), perm: 'invoices', when: (r) => r.status === 3, url: (r) => `/api/crm/sales/proposals/${r.id}/convert`, body: { to: 'invoice' }, to: (res) => res.invoiceId && `/crm/invoices/${res.invoiceId}` },
+    }, load)
+
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
@@ -71,10 +80,15 @@ const ProposalsList = () => {
 
     return (
         <Container>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>{tr("Proposals")}</h3><p className="text-sm text-gray-500">{tr("Offers to clients and leads, and what they answered")}</p></div>
-                {can('proposals', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/proposals/new')}>{tr("New proposal")}</Button>}
-            </div>
+            <InvoiceHead
+                title={tr("Proposals")}
+                action={can('proposals', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/proposals/new')}>{tr("New proposal")}</Button>}
+                stats={[
+                    { icon: <TbFileText />, label: tr("Proposals"), value: String(Object.values(data.stats.counts).reduce((a, b) => a + b, 0)) },
+                    { icon: <TbHourglass />, label: tr("Waiting for an answer"), value: m ? money(m.open, cur) : '—' },
+                    { icon: <TbCircleCheck />, label: tr("Accepted"), value: m ? money(m.accepted, cur) : '—' },
+                ]}
+            />
 
             {m && (
                 <TileGrid cols={4}>
@@ -94,7 +108,7 @@ const ProposalsList = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('number', tr("Proposal"))}{th('subject', tr("Subject"))}{th('to', tr("For"))}{th('date', tr("Date"))}{th('openTill', tr("Open until"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}</Tr></THead>
+                        <THead><Tr>{th('number', tr("Proposal"))}{th('subject', tr("Subject"))}{th('to', tr("For"))}{th('date', tr("Date"))}{th('openTill', tr("Open until"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
                                 <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/proposals/${r.id}`)}>
@@ -105,6 +119,7 @@ const ProposalsList = () => {
                                     <Td className={cn('whitespace-nowrap', r.status === 7 && 'text-amber-600')}>{fmtDate(r.openTill) || '—'}</Td>
                                     <Td className="text-right tabular-nums">{money(r.total, r.currencyId)}</Td>
                                     <Td><StatusTag status={r.status} />{r.converted && <span className="ml-1.5 text-xs text-emerald-600">{tr("converted")}</span>}</Td>
+                                    {doc.cell(r)}
                                 </Tr>
                             ))}
                         </TBody>
@@ -117,6 +132,7 @@ const ProposalsList = () => {
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>
+            {doc.dialogs}
         </Container>
     )
 }

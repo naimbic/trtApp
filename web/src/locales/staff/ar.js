@@ -3627,5 +3627,12 @@ export default {
     "Change status": "تغيير الحالة",
     "Invoice reopened": "أُعيد فتح الفاتورة",
     "Moved back to draft": "أُعيدت إلى مسودة",
-    "still to collect from what was invoiced": "ما زال مستحقًا من المفوتر"
+    "still to collect from what was invoiced": "ما زال مستحقًا من المفوتر",
+    "Delete this document?": "حذف هذا المستند؟",
+    "Deleted": "تم الحذف",
+    "Mark as unsigned": "وضع علامة غير موقّع",
+    "Marked as unsigned": "تم وضع علامة غير موقّع",
+    "Restored": "تمت الاستعادة",
+    "Status changed": "تم تغيير الحالة",
+    "{n} expiring": "{n} على وشك الانتهاء"
 }

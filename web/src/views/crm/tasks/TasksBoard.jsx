@@ -132,7 +132,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                     onOpen={(it) => open(it.id)}
                     onAdd={data.can.create ? (c) => setDrawer({ open: true, id: null, preset: { status: c.id }, k: 0 }) : undefined}
                     onMoveTo={data.can.edit ? moveTo : undefined}
-                    ends={data.can.edit ? [{ id: 'won', name: tr("Done"), sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, { id: 'progress', name: tr("In progress"), sub: tr("Start working on it"), icon: <TbLoader />, tone: 'progress' }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
+                    ends={data.can.edit ? [{ id: 'won', name: tr("Done"), metric: { value: done ? (columns[5] || []).length : "—", label: tr("completed") }, sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, { id: 'progress', name: tr("In progress"), metric: { value: (columns[4] || []).length, label: tr("tasks") }, sub: tr("Start working on it"), icon: <TbLoader />, tone: 'progress' }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), metric: { value: data.list.length, label: tr("in view") }, sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
                     actions={(it) => [
                         ...(data.can.edit ? [
                             { label: tr("Mark complete"), icon: <TbCircleCheck />, onClick: () => moveTo(it, 5) },

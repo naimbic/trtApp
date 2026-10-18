@@ -155,7 +155,7 @@ const Pipeline = ({ columns, ends = [], onMove, onOpen, onAdd, onMoveTo, actions
                                 {(prov, snap) => (
                                     <div ref={prov.innerRef} {...prov.droppableProps} className={cn('rp-pl-end', e.tone === 'lost' && 'is-lost', e.tone === 'progress' && 'is-progress', snap.isDraggingOver && 'is-over')}>
                                         <span className="rp-pl-end-ico">{e.icon}</span>
-                                        <span className="rp-pl-end-txt"><b>{e.name}</b><small>{e.sub}</small></span>
+                                        <span className="rp-pl-end-txt"><b>{e.name}</b>{e.metric && <span className="rp-pl-end-metric"><strong>{e.metric.value}</strong><em>{e.metric.label}</em></span>}<small>{e.sub}</small></span>
                                         <span className="rp-pl-end-hint">{tr('Drop here')}</span>
                                         <div className="rp-pl-end-ph">{prov.placeholder}</div>
                                     </div>

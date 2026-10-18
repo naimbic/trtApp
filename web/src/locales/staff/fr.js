@@ -3616,5 +3616,7 @@ export default {
     "Team changed": "Équipe modifiée",
     "Won": "Gagné",
     "Add to {name}": "Ajouter à {name}",
-    "Start working on it": "Commencer à y travailler"
+    "Start working on it": "Commencer à y travailler",
+    "in view": "affichées",
+    "lost": "perdus"
 }

@@ -134,7 +134,7 @@ const LeadsBoard = () => {
                     onOpen={(it) => open(it.id)}
                     onAdd={(c) => setDrawer({ open: true, id: null, preset: { statusId: c.id }, k: 0 })}
                     onMoveTo={show === '' ? moveTo : undefined}
-                    ends={show === '' ? [{ id: 'won', name: tr("Won"), sub: tr("Convert to a client"), icon: <TbTrophy /> }, { id: 'lost', name: tr("Lost"), sub: tr("Close the lead"), icon: <TbBan />, tone: 'lost' }] : []}
+                    ends={show === '' ? [{ id: 'won', name: tr("Won"), metric: { value: data.totals?.converted ?? 0, label: tr("converted") }, sub: tr("Convert to a client"), icon: <TbTrophy /> }, { id: 'lost', name: tr("Lost"), metric: { value: data.totals?.lost ?? 0, label: tr("lost") }, sub: tr("Close the lead"), icon: <TbBan />, tone: 'lost' }] : []}
                     actions={(it) => (show === '' ? [
                         { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.some((x) => x.id === m.value), onClick: () => patch(it, (l) => ({ assignedIds: (l.assignedIds || []).includes(m.value) ? l.assignedIds.filter((x) => x !== m.value) : [...(l.assignedIds || []), m.value] }), tr("Team changed")) })) },
                         { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },

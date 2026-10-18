@@ -3616,5 +3616,7 @@ export default {
     "Team changed": "チームを変更しました",
     "Won": "成約",
     "Add to {name}": "{name} に追加",
-    "Start working on it": "作業を始める"
+    "Start working on it": "作業を始める",
+    "in view": "表示中",
+    "lost": "失注"
 }

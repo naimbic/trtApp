@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.67.2',
+        date: '2026-10-18',
+        title: 'Won / Lost rows show their numbers',
+        items: ['The rows at the right of the boards now carry a metric like the Rapport demo: leads show how many were converted and how many were lost; tasks show how many are completed, in progress and in view']
+    },
+    {
         version: '0.67.1',
         date: '2026-10-18',
         title: 'Task board: In progress row, scrum panels rearranged',

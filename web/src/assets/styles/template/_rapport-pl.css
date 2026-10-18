@@ -122,3 +122,8 @@
 .rp-pl-name { flex: 1; }
 .rp-pl-end.is-progress { --t: #d9a21b; }
 .rp-pl-end.is-progress .rp-pl-end-ico { color: #17191a; }
+
+.rp-pl-end-metric { display: grid; justify-items: center; line-height: 1.05; padding-block: 2px; }
+.rp-pl-end-metric strong { font-size: 26px; font-weight: 800; letter-spacing: -.03em; color: var(--t); }
+.rp-pl-end.is-lost .rp-pl-end-metric strong { color: var(--rp-muted); }
+.rp-pl-end-metric em { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--rp-muted); }

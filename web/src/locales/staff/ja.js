@@ -3684,5 +3684,13 @@ export default {
     "No tasks": "タスクなし",
     "Reschedule": "日程変更",
     "{a}/{b} done": "{a}/{b} 完了",
-    "Add an event or a task": "予定またはタスクを追加"
+    "Add an event or a task": "予定またはタスクを追加",
+    "30 days": "30日間",
+    "All activity": "すべてのアクティビティ",
+    "All clients": "すべてのクライアント",
+    "All team members": "すべてのメンバー",
+    "Client or system": "クライアントまたはシステム",
+    "Clients involved": "関係するクライアント",
+    "Events in this period": "期間中のイベント",
+    "Team members involved": "関係するメンバー"
 }

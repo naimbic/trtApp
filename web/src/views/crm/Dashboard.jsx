@@ -453,36 +453,6 @@ const BusinessDashboard = () => {
                         />
                     </Card>
                 )}
-                {data.tasks && (
-                    <Card>
-                        <h4 className="mb-2">{tr("Tasks due this week")}</h4>
-                        <List
-                            rows={data.tasks.upcoming}
-                            empty={tr("No tasks due in the next 7 days")}
-                            render={(t) => (
-                                <>
-                                    <span className="truncate">{t.name}</span>
-                                    <span className="text-xs text-gray-500 shrink-0">{dayjs(t.dueDate).format('MMM D')} · {t.status}</span>
-                                </>
-                            )}
-                        />
-                    </Card>
-                )}
-                {data.recent && (
-                    <Card className="xl:col-span-2">
-                        <h4 className="mb-2">{tr("Recent sales activity")}</h4>
-                        <List
-                            rows={data.recent.activity}
-                            empty={tr("No activity yet")}
-                            render={(a) => (
-                                <>
-                                    <span className="truncate">{a.description}</span>
-                                    <span className="text-xs text-gray-500 shrink-0">{dayjs(a.date).format('MMM D, HH:mm')}</span>
-                                </>
-                            )}
-                        />
-                    </Card>
-                )}
             </div>
 
             {!data.sections.length && <Card><Empty>{tr("You do not have access to any dashboard metrics.")}</Empty></Card>}

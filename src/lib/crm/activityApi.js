@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { requirePermission } from '@/lib/crm/permissions'
+import { requirePermission, isCrmAdmin } from '@/lib/crm/permissions'
 import { realPicture } from '@/lib/crm/pictures'
 import { clientProfile } from '@/lib/crm/clientProfileApi'
 
@@ -79,4 +79,87 @@ export async function activityFeed({ kind, id, types, before, limit }) {
     const rows = all.filter((e) => (!want.length || want.includes(e.type)) && +new Date(e.date) < cut)
     const size = Math.min(Math.max(Number(limit) || PAGE, 5), 100)
     return { subject: data.subject, events: rows.slice(0, size), more: rows.length > size, counts, total: all.length }
+}
+
+const DAY = 86400000
+const CLIENT_OF = { invoice: 'crmInvoice', estimate: 'crmEstimate', contract: 'crmContract', project: 'crmProject' }
+
+/** Everything that happened in the CRM between two days, for all members (administrators only). */
+export async function allActivity({ from, to, staffId, clientId, types }) {
+    const session = await requirePermission(null)
+    if (!isCrmAdmin(session.user.authority || [])) throw fail('Forbidden', 403)
+    const end = to && !Number.isNaN(+new Date(to)) ? new Date(new Date(to).setHours(23, 59, 59, 999)) : new Date()
+    let start = from && !Number.isNaN(+new Date(from)) ? new Date(new Date(from).setHours(0, 0, 0, 0)) : new Date(+end - 6 * DAY)
+    if (+end - +start > 62 * DAY) start = new Date(+end - 62 * DAY)
+    const sid = oid(staffId)
+    const cid = oid(clientId)
+    const range = (f) => ({ [f]: { gte: start, lte: end } })
+    const q = (extra, f = 'createdAt', staffField = 'staffId') => ({ where: { ...range(f), ...(sid ? { [staffField]: sid } : {}), ...extra }, orderBy: { [f]: 'desc' }, take: LIMIT })
+    const [staffRows, log, sales, leads, projects, comments, timers, notes, vault, mails, invoices, estimates, expenses, tasks, projectsAdded, leadsAdded] = await Promise.all([
+        prisma.crmStaff.findMany({ select: { id: true, firstName: true, lastName: true, email: true, profileImage: true, active: true, lastLogin: true } }),
+        prisma.crmActivityLog.findMany(q()),
+        prisma.crmSalesActivity.findMany(q({}, 'createdAt')),
+        prisma.crmLeadActivityLog.findMany(q()),
+        prisma.crmProjectActivity.findMany(q()),
+        prisma.crmTaskComment.findMany(q()),
+        prisma.crmTaskTimer.findMany(q({}, 'startTime')),
+        prisma.crmNote.findMany(q({}, 'createdAt', 'addedFrom')),
+        prisma.crmPasswordLog.findMany(q()),
+        prisma.crmMailLog.findMany(q()),
+        prisma.crmInvoice.findMany({ ...q({}, 'createdAt', 'addedFrom'), select: { id: true, number: true, prefix: true, createdAt: true, addedFrom: true, clientId: true } }),
+        prisma.crmEstimate.findMany({ ...q({}, 'createdAt', 'addedFrom'), select: { id: true, number: true, prefix: true, createdAt: true, addedFrom: true, clientId: true } }),
+        prisma.crmExpense.findMany({ ...q({}, 'createdAt', 'addedFrom'), select: { id: true, expenseName: true, createdAt: true, addedFrom: true, clientId: true } }),
+        prisma.crmTask.findMany({ ...q({}, 'createdAt', 'addedFrom'), select: { id: true, name: true, createdAt: true, addedFrom: true } }),
+        prisma.crmProject.findMany({ ...q({}, 'createdAt', 'addedFrom'), select: { id: true, name: true, createdAt: true, addedFrom: true, clientId: true } }),
+        prisma.crmLead.findMany({ ...q({}, 'createdAt', 'addedFrom'), select: { id: true, name: true, createdAt: true, addedFrom: true } }),
+    ])
+    const people = new Map(staffRows.map((m) => [m.id, { id: m.id, name: name(m), image: realPicture(m.profileImage), active: m.active }]))
+
+    // which client a sales / project entry belongs to
+    const rels = {}
+    for (const a of sales) if (CLIENT_OF[a.relType] && a.relId) (rels[a.relType] ||= new Set()).add(a.relId)
+    for (const a of projects) (rels.project ||= new Set()).add(a.projectId)
+    const clientOf = {}
+    await Promise.all(Object.entries(rels).map(async ([t, ids]) => {
+        const rows = await prisma[CLIENT_OF[t]].findMany({ where: { id: { in: [...ids] } }, select: { id: true, clientId: true } })
+        for (const r of rows) clientOf[`${t}:${r.id}`] = r.clientId
+    }))
+
+    const ev = []
+    const add = (type, key, who, title, detail, date, link, client) => date && title && ev.push({ id: `${type}:${key}`, type, who, client: client || null, title, detail: detail || '', date, link: link || null })
+    const sysName = (r) => r.fullName || r.staffName || ''
+    for (const m of staffRows) if (m.lastLogin && m.lastLogin >= start && m.lastLogin <= end && (!sid || sid === m.id)) add('login', `l${m.id}`, m.id, 'Signed in', '', m.lastLogin)
+    for (const l of log) add('system', l.id, l.staffId, nice(l.description), '', l.createdAt, null, null)
+    for (const a of sales) {
+        const [type, base] = REL[a.relType] || ['system', null]
+        add(type, a.id, a.staffId, nice(a.description), '', a.date || a.createdAt, base && a.relId ? base + a.relId : null, clientOf[`${a.relType}:${a.relId}`])
+    }
+    for (const a of leads) add('lead', a.id, a.staffId, nice(a.description), nice(a.additionalData || ''), a.createdAt, `/crm/leads/${a.leadId}`)
+    for (const a of projects) add('project', a.id, a.staffId, nice(a.descriptionKey), nice(a.additionalData || ''), a.createdAt, `/crm/projects/${a.projectId}`, clientOf[`project:${a.projectId}`])
+    for (const c of comments) add('task', c.id, c.staffId, 'Commented on a task', strip(c.content).slice(0, 140), c.createdAt, `/crm/tasks-board?task=${c.taskId}`)
+    for (const t of timers) add('task', t.id, t.staffId, 'Worked on a task', t.endTime && t.startTime ? `${Math.max(1, Math.round((+new Date(t.endTime) - +new Date(t.startTime)) / 60000))} min${t.note ? ` · ${strip(t.note).slice(0, 80)}` : ''}` : 'timer running', t.startTime || t.createdAt, `/crm/tasks-board?task=${t.taskId}`)
+    for (const n of notes) add('note', n.id, n.addedFrom, 'Added a note', strip(n.description).slice(0, 140), n.createdAt)
+    for (const v of vault) add('vault', v.id, v.staffId, `Password vault: ${String(v.action || '').replace(/_/g, ' ')}`, v.detail || '', v.createdAt, '/crm/passwords')
+    for (const m of mails) add('mail', m.id, m.staffId, `Sent an email${m.status === 'failed' ? ' (failed)' : ''}`, [m.subject, m.to].filter(Boolean).join(' · ').slice(0, 140), m.createdAt)
+    for (const i of invoices) add('invoice', i.id, i.addedFrom, 'Created an invoice', `${i.prefix || ''}${i.number}`, i.createdAt, `/crm/invoices/${i.id}`, i.clientId)
+    for (const e of estimates) add('estimate', e.id, e.addedFrom, 'Created an estimate', `${e.prefix || ''}${e.number}`, e.createdAt, `/crm/estimates/${e.id}`, e.clientId)
+    for (const x of expenses) add('expense', x.id, x.addedFrom, 'Added an expense', x.expenseName || '', x.createdAt, null, x.clientId)
+    for (const t of tasks) add('task', `n${t.id}`, t.addedFrom, 'Created a task', t.name || '', t.createdAt, `/crm/tasks-board?task=${t.id}`)
+    for (const p of projectsAdded) add('project', `n${p.id}`, p.addedFrom, 'Created a project', p.name || '', p.createdAt, `/crm/projects/${p.id}`, p.clientId)
+    for (const l of leadsAdded) add('lead', `n${l.id}`, l.addedFrom, 'Created a lead', l.name || '', l.createdAt, `/crm/leads/${l.id}`)
+
+    const withClient = cid ? ev.filter((e) => e.client === cid) : ev
+    const want = String(types || '').split(',').filter(Boolean)
+    const rows = withClient.filter((e) => !want.length || want.includes(e.type)).sort((a, b) => +new Date(b.date) - +new Date(a.date))
+    // clients that show up, to fill the filter
+    const ids = [...new Set(ev.map((e) => e.client).filter(Boolean))]
+    const clients = ids.length ? await prisma.crmClient.findMany({ where: { id: { in: ids } }, select: { id: true, company: true } }) : []
+    const cname = new Map(clients.map((c) => [c.id, c.company || '']))
+    const out = rows.slice(0, 1500).map((e) => ({ ...e, who: e.who ? (people.get(e.who) || { id: e.who, name: '' }) : { id: null, name: '' }, client: e.client ? { id: e.client, name: cname.get(e.client) || '' } : null }))
+    const counts = withClient.reduce((o, e) => { o[e.type] = (o[e.type] || 0) + 1; return o }, {})
+    return {
+        from: start, to: end, events: out, total: rows.length, counts,
+        staff: staffRows.filter((m) => m.active || ev.some((e) => e.who === m.id)).map((m) => people.get(m.id)).sort((a, b) => a.name.localeCompare(b.name)),
+        clients: clients.map((c) => ({ id: c.id, name: c.company || '' })).sort((a, b) => a.name.localeCompare(b.name)),
+    }
 }

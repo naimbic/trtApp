@@ -3684,5 +3684,13 @@ export default {
     "No tasks": "لا مهام",
     "Reschedule": "إعادة الجدولة",
     "{a}/{b} done": "{a}/{b} منجزة",
-    "Add an event or a task": "إضافة حدث أو مهمة"
+    "Add an event or a task": "إضافة حدث أو مهمة",
+    "30 days": "30 يومًا",
+    "All activity": "كل النشاط",
+    "All clients": "كل العملاء",
+    "All team members": "كل الأعضاء",
+    "Client or system": "عميل أو النظام",
+    "Clients involved": "العملاء المعنيون",
+    "Events in this period": "الأحداث في هذه الفترة",
+    "Team members involved": "الأعضاء المعنيون"
 }

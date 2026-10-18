@@ -3684,5 +3684,13 @@ export default {
     "No tasks": "Sin tareas",
     "Reschedule": "Reprogramar",
     "{a}/{b} done": "{a}/{b} hechas",
-    "Add an event or a task": "Añadir un evento o una tarea"
+    "Add an event or a task": "Añadir un evento o una tarea",
+    "30 days": "30 días",
+    "All activity": "Toda la actividad",
+    "All clients": "Todos los clientes",
+    "All team members": "Todos los miembros",
+    "Client or system": "Cliente o sistema",
+    "Clients involved": "Clientes implicados",
+    "Events in this period": "Eventos en el periodo",
+    "Team members involved": "Miembros implicados"
 }

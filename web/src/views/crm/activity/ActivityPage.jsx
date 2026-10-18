@@ -12,7 +12,7 @@ import { api } from '../kit/api'
 import { tr } from '@/utils/t'
 
 // event type -> icon and colour (same family as the template's activity avatars)
-const TYPES = {
+export const TYPES = {
     login: [<TbLogin key="i" />, 'bg-sky-100 text-sky-600 dark:bg-sky-500/20'],
     invoice: [<TbFileInvoice key="i" />, 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20'],
     payment: [<TbCash key="i" />, 'bg-green-100 text-green-600 dark:bg-green-500/20'],
@@ -34,7 +34,7 @@ const TYPES = {
     system: [<TbSettings key="i" />, 'bg-gray-100 text-gray-600 dark:bg-gray-600'],
 }
 // filter groups shown above the timeline
-const GROUPS = [
+export const GROUPS = [
     ['login', 'Sign-ins', ['login']],
     ['sales', 'Sales', ['invoice', 'payment', 'estimate', 'accepted', 'proposal', 'contract', 'expense']],
     ['work', 'Work', ['project', 'task', 'ticket']],
@@ -53,7 +53,7 @@ const RULES = [
     [/^Password vault: (.*)$/, tr('Password vault: {v}')], [/^from (.*)$/, tr('from {v}')], [/^(\d+) days? after the lead was created$/, tr('{v} days after the lead was created')],
     [/^Lead created$/, tr('Lead created')], [/^Source (.*)$/, tr('source {v}')],
 ]
-const local = (s) => {
+export const local = (s) => {
     const text = String(s || '')
     if (!text) return ''
     for (const [re, key] of RULES) {

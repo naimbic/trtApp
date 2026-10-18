@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.75.0',
+        date: '2026-10-18',
+        title: 'All activity page for the super admin; dashboard cleanup',
+        items: ['New top-bar icon (super admins only) opens All activity: everything that happened in the CRM, grouped by day, with Today / 7 days / 30 days, a team member filter, a client filter and the same type chips as the member activity log', 'Clicking a name or a client in an entry filters the page on it', 'The dashboard no longer shows the Tasks due this week and Recent sales activity cards']
+    },
+    {
         version: '0.74.7',
         date: '2026-10-18',
         title: 'Top menu: click a group to go to its page',

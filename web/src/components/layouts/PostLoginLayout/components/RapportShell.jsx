@@ -1,6 +1,8 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router'
+import { TbActivity } from 'react-icons/tb'
+import { tr } from '@/utils/t'
 import { magnetic } from '@/vendor/rapport/motion'
 import RapportPills from '@/components/template/rapport/RapportPills'
 import RapportDock from '@/components/template/rapport/RapportDock'
@@ -36,6 +38,7 @@ const RapportShell = ({ children }) => {
     const { pathname } = useLocation()
     const mode = useThemeStore((s) => s.mode)
     const authority = useSessionUser((s) => s.user.authority) || []
+    const isAdmin = authority.includes('admin') || authority.includes('crm.admin')
     const canChat = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.chat.view')
     const hasTabs = usePageTabsStore((st) => !!st.tabs)
     // on a computer the period / currency / colour pickers live in the dock; on a phone (no dock) they stay in a toolbar under the top bar
@@ -64,6 +67,7 @@ const RapportShell = ({ children }) => {
                     <Link to={appConfig.authenticatedEntryPath} className="rp-brand"><LottieLogo height={36} /></Link>
                     <div className="rp-pills">{larger.lg && <RapportPills />}</div>
                     <div className="rp-actions">
+                        {isAdmin && <Link to="/crm/all-activity" className="header-action-item header-action-item-hoverable text-2xl" title={tr('All activity')} aria-label={tr('All activity')}><TbActivity /></Link>}
                         <LanguageSelector />
                         <Notification />
                         <UserProfileDropdown />

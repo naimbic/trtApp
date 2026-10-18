@@ -105,6 +105,7 @@ const crmRoutes = [
     { key: 'crm.contracts', path: '/crm/contracts', component: lazy(() => import('@/views/crm/sales/ContractsList')), authority: [] },
     { key: 'crm.contracts.view', path: '/crm/contracts/:id', component: lazy(() => import('@/views/crm/sales/ContractView')), authority: [] },
     { key: 'crm.mails', path: '/crm/mails', component: lazy(() => import('@/views/crm/mail/Mails')), authority: [] },
+    { key: 'crm.allActivity', path: '/crm/all-activity', component: lazy(() => import('@/views/crm/activity/AllActivity')), authority: ['admin', 'crm.admin'] },
     { key: 'crm.activity', path: '/crm/activity/:kind/:id', component: lazy(() => import('@/views/crm/activity/ActivityPage')), authority: [] },
     { key: 'versions', path: '/versions', component: lazy(() => import('@/views/crm/versions/VersionsPage')), authority: [] },
     { key: 'crm.issues', path: '/crm/issues', component: lazy(() => import('@/views/crm/issues/IssuesList')), authority: [] },

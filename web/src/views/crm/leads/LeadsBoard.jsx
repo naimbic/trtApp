@@ -81,8 +81,8 @@ const LeadsBoard = () => {
     const patch = async (item, change, ok) => {
         try {
             const l = (await api(`/api/crm/pipeline/leads/${item.id}`)).lead
-            const keys = ['name', 'title', 'company', 'email', 'phone', 'website', 'description', 'address', 'city', 'state', 'zip', 'sourceId', 'statusId', 'assignedId', 'isPublic', 'lastContact']
-            await api(`/api/crm/pipeline/leads/${item.id}`, { method: 'PUT', body: { ...Object.fromEntries(keys.map((k) => [k, l[k] ?? null])), ...change } })
+            const keys = ['name', 'title', 'company', 'email', 'phone', 'website', 'description', 'address', 'city', 'state', 'zip', 'sourceId', 'statusId', 'assignedIds', 'isPublic', 'lastContact']
+            await api(`/api/crm/pipeline/leads/${item.id}`, { method: 'PUT', body: { ...Object.fromEntries(keys.map((k) => [k, l[k] ?? null])), ...(typeof change === 'function' ? change(l) : change) } })
             notify('success', ok); load()
         } catch (e) { notify('danger', e.message) }
     }
@@ -136,7 +136,7 @@ const LeadsBoard = () => {
                     onMoveTo={show === '' ? moveTo : undefined}
                     ends={show === '' ? [{ id: 'won', name: tr("Won"), sub: tr("Convert to a client"), icon: <TbTrophy /> }, { id: 'lost', name: tr("Lost"), sub: tr("Close the lead"), icon: <TbBan />, tone: 'lost' }] : []}
                     actions={(it) => (show === '' ? [
-                        { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.[0]?.id === m.value, onClick: () => patch(it, { assignedId: m.value }, tr("Owner changed")) })) },
+                        { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.some((x) => x.id === m.value), onClick: () => patch(it, (l) => ({ assignedIds: (l.assignedIds || []).includes(m.value) ? l.assignedIds.filter((x) => x !== m.value) : [...(l.assignedIds || []), m.value] }), tr("Team changed")) })) },
                         { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },
                         { label: tr("Convert to client"), icon: <TbUserCheck />, onClick: () => setAsk(it) },
                         
@@ -151,8 +151,8 @@ const LeadsBoard = () => {
                         id: c.id, name: c.name, color: c.color, count: c.count,
                         items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), label: l.source || l.email || '', source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
                             fields: [{ label: tr("Email"), value: l.email }, { label: tr("Phone"), value: l.phone }, { label: tr("Source"), value: l.source }, { label: tr("Owner"), value: l.assigned?.name }],
-                            team: l.assigned ? [l.assigned] : [],
-                            people: l.assigned ? <People list={[l.assigned]} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),
+                            team: l.assignees || [],
+                            people: l.assignees?.length ? <People list={l.assignees} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),
                         more: c.leads.length < c.count ? { left: Math.min(data.limit || 50, c.count - c.leads.length), onClick: () => more(c) } : null,
                     }))}
                 />
@@ -165,7 +165,7 @@ const LeadsBoard = () => {
                                 <Tr key={l.id} className="cursor-pointer" onClick={() => open(l.id)}>
                                     <Td className="font-semibold">{l.name}</Td><Td>{l.company || '—'}</Td><Td>{l.email || '—'}</Td><Td>{l.phone || '—'}</Td>
                                     <Td><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: l.statusColor || '#94a3b8' }} />{l.status || '—'}</span></Td>
-                                    <Td>{l.source || '—'}</Td><Td>{l.assigned?.name || '—'}</Td><Td>{dayjs(l.createdAt).format('DD MMM YYYY')}</Td>
+                                    <Td>{l.source || '—'}</Td><Td>{l.assignees?.length ? l.assignees.map((x) => x.name).join(', ') : '—'}</Td><Td>{dayjs(l.createdAt).format('DD MMM YYYY')}</Td>
                                 </Tr>
                             ))}
                             {!loading && !list.list.length && <Tr><Td colSpan={8} className="py-10 text-center text-gray-500">{tr("No leads match")}</Td></Tr>}

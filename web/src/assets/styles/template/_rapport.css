@@ -228,3 +228,17 @@
 .rp-fswatch-pick input { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); opacity: 0; cursor: pointer; }
 .rp-hex { flex: 1; height: 36px; padding-inline: 12px; border-radius: 12px; border: 1px solid var(--rp-line); background: var(--rp-well); color: var(--rp-text); font: inherit; font-size: 13px; font-family: ui-monospace, monospace; text-transform: lowercase; }
 .rp-fswatch { box-shadow: 0 0 0 1px var(--rp-line); }
+
+/* every dropdown menu (profile, language, notifications, row actions…) wears the same look and motion as the Rapport menus */
+body:has(.rp-app) .dropdown-menu { background: var(--rp-float); color: var(--rp-text); border: 1px solid var(--rp-line); border-radius: 20px; padding: 8px; box-shadow: var(--rp-shadow-pop); }
+body:has(.rp-app) .dropdown-menu > li { animation: rp-row-in .38s var(--rp-ease) backwards; }
+body:has(.rp-app) .dropdown-menu > li:nth-child(1) { animation-delay: .06s; } body:has(.rp-app) .dropdown-menu > li:nth-child(2) { animation-delay: .09s; }
+body:has(.rp-app) .dropdown-menu > li:nth-child(3) { animation-delay: .12s; } body:has(.rp-app) .dropdown-menu > li:nth-child(4) { animation-delay: .15s; }
+body:has(.rp-app) .dropdown-menu > li:nth-child(5) { animation-delay: .18s; } body:has(.rp-app) .dropdown-menu > li:nth-child(6) { animation-delay: .21s; }
+body:has(.rp-app) .dropdown-menu > li:nth-child(n+7) { animation-delay: .24s; }
+body:has(.rp-app) .dropdown-menu [class*='menu-item-'] { border-radius: 12px; color: var(--rp-text); transition: background .15s, transform .2s var(--rp-ease); }
+body:has(.rp-app) .dropdown-menu .menu-item-default:hover, body:has(.rp-app) .dropdown-menu .menu-item-hoverable:hover, body:has(.rp-app) .dropdown-menu [class*='menu-item-']:not(.menu-item-header):not(.menu-item-divider):hover { background: var(--rp-well); transform: translateX(2px); }
+[dir='rtl'] body:has(.rp-app) .dropdown-menu [class*='menu-item-']:hover { transform: translateX(-2px); }
+body:has(.rp-app) .dropdown-menu .menu-item-divider { background: var(--rp-line); }
+body:has(.rp-app) .dropdown-menu .heading-text, body:has(.rp-app) .dropdown-menu .text-gray-900, body:has(.rp-app) .dropdown-menu .dark\:text-gray-100 { color: var(--rp-text); }
+@media (prefers-reduced-motion: reduce) { body:has(.rp-app) .dropdown-menu > li { animation: none; } }

@@ -226,7 +226,8 @@ model CrmLead {
   state                          String?
   address                        String?
   /// tblstaff.id (admin domain)
-  assigned                       String?        @db.ObjectId
+  assigned                       String?        @db.ObjectId // the first of the team (kept for filters and old data)
+  assignedIds                    String[]       @db.ObjectId // everyone the lead is assigned to
   /// tblleads_web_to_lead.id (plain FK)
   fromFormId                     String?        @db.ObjectId
   statusId                       String?        @db.ObjectId // status

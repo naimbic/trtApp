@@ -15,7 +15,7 @@ import { STATUS as TASK_STATUS } from '../tasks/shared'
 import { People } from '../tasks/shared'
 import { tr } from '@/utils/t'
 
-const EMPTY = { name: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedId: null, isPublic: false }
+const EMPTY = { name: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], isPublic: false }
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("Sent"), 5: tr("Revised"), 6: tr("Draft") }
 
@@ -40,7 +40,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             const d = await api(`/api/crm/pipeline/leads/${id}`)
             setDetail(d)
             const l = d.lead
-            setV({ ...EMPTY, name: l.name || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedId: l.assignedId, isPublic: !!l.isPublic })
+            setV({ ...EMPTY, name: l.name || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], isPublic: !!l.isPublic })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (!open) return; setDetail(null); setNote(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
@@ -62,7 +62,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                 <div><L>{tr("Status")}</L><Select isDisabled={!canEdit} options={lk.statuses.map((s) => ({ value: s.id, label: s.name }))} value={opt(lk.statuses, v.statusId)} onChange={(o) => set({ statusId: o?.value || null })} placeholder={tr("Default status")} /></div>
                 <div><L>{tr("Source")}</L><Select isClearable isDisabled={!canEdit} options={lk.sources.map((s) => ({ value: s.id, label: s.name }))} value={opt(lk.sources, v.sourceId)} onChange={(o) => set({ sourceId: o?.value || null })} /></div>
             </div>
-            <div><L>{tr("Assigned to")}</L><Select isClearable isDisabled={!canEdit} options={staff.map((s) => ({ value: s.id, label: s.name }))} value={opt(staff, v.assignedId)} onChange={(o) => set({ assignedId: o?.value || null })} placeholder={tr("Me")} /></div>
+            <div><L>{tr("Assigned to")}</L><Select isMulti isDisabled={!canEdit} options={staff.map((s) => ({ value: s.id, label: s.name }))} value={staff.filter((s) => (v.assignedIds || []).includes(s.id)).map((s) => ({ value: s.id, label: s.name }))} onChange={(o) => set({ assignedIds: (o || []).map((x) => x.value) })} placeholder={tr("Me")} /></div>
             <div className="grid grid-cols-2 gap-4">
                 <div><L>{tr("Name")}</L><Input disabled={!canEdit} value={v.name} onChange={(e) => set({ name: e.target.value })} /></div>
                 <div><L>{tr("Position")}</L><Input disabled={!canEdit} value={v.title} onChange={(e) => set({ title: e.target.value })} /></div>
@@ -127,7 +127,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     return (
         <Drawer
-            title={edit ? l?.name || tr("Lead") : tr("New lead")} kicker={edit ? `${tr("Lead")}${l?.company ? ` · ${l.company}` : ''}` : tr("New lead")} sub={l?.company} date={l?.lastContact ? `${tr("Last contact")} ${dayjs(l.lastContact).format('DD MMM')}` : ''} team={l?.assigned?.name ? <People list={[l.assigned]} size={30} /> : null} stage={stage} isOpen={open} onClose={onClose} width={640}
+            title={edit ? l?.name || tr("Lead") : tr("New lead")} kicker={edit ? `${tr("Lead")}${l?.company ? ` · ${l.company}` : ''}` : tr("New lead")} sub={l?.company} date={l?.lastContact ? `${tr("Last contact")} ${dayjs(l.lastContact).format('DD MMM')}` : ''} team={l?.assignees?.length ? <People list={l.assignees} max={5} size={30} /> : null} stage={stage} isOpen={open} onClose={onClose} width={640}
             footer={
                 <div className="flex w-full items-center gap-2">
                     {edit && detail?.can.delete && !l?.converted && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}

@@ -14,9 +14,11 @@ async function access(session) {
     return { authority, scope: viewScope(authority, 'leads'), staffId: await getStaffId(session), admin: isCrmAdmin(authority), session, can: (cap) => hasCap(authority, 'leads', cap) }
 }
 // "view own" staff always see leads assigned to or added by them; Perfex also lets any staff add and edit their own
-const visible = (a) => (a.scope === 'all' ? {} : a.staffId ? { OR: [{ assigned: a.staffId }, { addedFrom: a.staffId }, { isPublic: true }] } : { id: NONE })
-const mayEdit = (a, lead) => a.can('edit') || (!!a.staffId && (lead.assigned === a.staffId || lead.addedFrom === a.staffId))
+const visible = (a) => (a.scope === 'all' ? {} : a.staffId ? { OR: [{ assigned: a.staffId }, { assignedIds: { has: a.staffId } }, { addedFrom: a.staffId }, { isPublic: true }] } : { id: NONE })
+const mayEdit = (a, lead) => a.can('edit') || (!!a.staffId && (lead.assigned === a.staffId || (lead.assignedIds || []).includes(a.staffId) || lead.addedFrom === a.staffId))
 
+/** Everyone a lead is assigned to: the team list, or the single old owner. */
+const teamOf = (l) => (l.assignedIds?.length ? l.assignedIds : l.assigned ? [l.assigned] : [])
 const staffName = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || 'Staff'
 async function staffMap(ids) {
     const list = ids.length ? await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(ids.filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : []
@@ -26,7 +28,7 @@ async function staffMap(ids) {
 const card = (l, people, status, source) => ({
     id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title,
     statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null,
-    assigned: people[l.assigned] || null, lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId,
+    assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId,
 })
 
 const readable = (d) => String(d || '').replace(/^not_lead_activity_/, '').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
@@ -46,9 +48,9 @@ export async function listLeads(p = {}) {
     const and = [visible(a)]
     const show = p.show || ''
     if (show === 'lost') and.push({ lost: true }); else if (show === 'junk') and.push({ junk: true }); else if (show === 'converted') and.push({ clientId: { not: null } }); else and.push({ lost: false, junk: false })
-    if (oid(p.assigned)) and.push({ assigned: p.assigned })
+    if (oid(p.assigned)) and.push({ OR: [{ assigned: p.assigned }, { assignedIds: { has: p.assigned } }] })
     if (oid(p.sourceId)) and.push({ sourceId: p.sourceId })
-    if (p.mine === '1' && a.staffId) and.push({ assigned: a.staffId })
+    if (p.mine === '1' && a.staffId) and.push({ OR: [{ assigned: a.staffId }, { assignedIds: { has: a.staffId } }] })
     if (p.from || p.to) and.push({ createdAt: { ...(p.from ? { gte: new Date(p.from) } : {}), ...(p.to ? { lte: new Date(`${p.to}T23:59:59.999`) } : {}) } })
     if (p.query) { const c = { contains: p.query, mode: 'insensitive' }; and.push({ OR: [{ name: c }, { company: c }, { email: c }, { phoneNumber: c }] }) }
     const where = { AND: and }
@@ -57,13 +59,13 @@ export async function listLeads(p = {}) {
     const can = { create: true, edit: a.can('edit'), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') }
     if (p.view === 'list') {
         const rows = await prisma.crmLead.findMany({ where, orderBy: [{ createdAt: 'desc' }], take: 300 })
-        const people = await staffMap(rows.map((l) => l.assigned))
+        const people = await staffMap(rows.flatMap(teamOf))
         return { list: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])), total: await prisma.crmLead.count({ where }), can, statuses: statuses.map((s) => ({ id: s.id, name: s.name, color: s.color })), sources: sources.map((s) => ({ id: s.id, name: s.name })) }
     }
     // "load more" for one column
     if (oid(p.statusId) && p.offset) {
         const rows = await prisma.crmLead.findMany({ where: { AND: [...and, { statusId: p.statusId }] }, orderBy, skip: parseInt(p.offset, 10) || 0, take: limit })
-        const people = await staffMap(rows.map((l) => l.assigned))
+        const people = await staffMap(rows.flatMap(teamOf))
         return { leads: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])) }
     }
     const cols = []
@@ -74,7 +76,7 @@ export async function listLeads(p = {}) {
     }
     const orphan = { AND: [...and, { OR: [{ statusId: null }, { statusId: { notIn: statuses.map((s) => s.id) } }] }] }
     const orphans = await prisma.crmLead.findMany({ where: orphan, take: limit, orderBy })
-    const people = await staffMap([...cols.flatMap((c) => c.rows), ...orphans].map((l) => l.assigned))
+    const people = await staffMap([...cols.flatMap((c) => c.rows), ...orphans].flatMap(teamOf))
     const out = cols.map((c) => ({ id: c.id, name: c.name, color: c.color, count: c.count, leads: c.rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])) }))
     if (orphans.length) out.unshift({ id: 'none', name: 'No status', color: '#94a3b8', count: orphans.length, leads: orphans.map((l) => card(l, people, null, srcMap[l.sourceId])) })
     const totals = { lost: await prisma.crmLead.count({ where: { AND: [visible(a), { lost: true }] } }), junk: await prisma.crmLead.count({ where: { AND: [visible(a), { junk: true }] } }) }
@@ -101,9 +103,9 @@ export async function getLead(id) {
         prisma.crmProposal.findMany({ where: { relType: 'lead', relId: id }, orderBy: { createdAt: 'desc' }, select: { id: true, number: true, legacyId: true, subject: true, status: true, total: true } }),
         l.clientId ? prisma.crmClient.findUnique({ where: { id: l.clientId }, select: { id: true, company: true } }) : null,
     ])
-    const people = await staffMap([l.assigned, l.addedFrom, ...notes.map((n) => n.addedFrom)])
+    const people = await staffMap([...teamOf(l), l.addedFrom, ...notes.map((n) => n.addedFrom)])
     return {
-        lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
+        lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
         notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId })),
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
@@ -123,8 +125,8 @@ export async function saveLead(body, id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)
         if (prev.clientId && (await readSettings(['lead_lock_after_convert_to_customer'])).on('lead_lock_after_convert_to_customer') && !a.admin) throw fail('This lead is locked because it became a client')
-        const assigned = oid(body.assignedId)
-        if (assigned !== (prev.assigned || null)) { data.assigned = assigned; data.dateAssigned = assigned ? new Date() : null }
+        const team = body.assignedIds !== undefined ? [...new Set((body.assignedIds || []).map(oid).filter(Boolean))] : body.assignedId !== undefined ? [oid(body.assignedId)].filter(Boolean) : null
+        if (team && JSON.stringify(team) !== JSON.stringify(teamOf(prev))) { data.assignedIds = team; data.assigned = team[0] || null; data.dateAssigned = team.length ? new Date() : null }
         const st = oid(body.statusId)
         if (st && st !== prev.statusId) { data.statusId = st; data.lastStatusChange = new Date() }
         await prisma.crmLead.update({ where: { id }, data })
@@ -133,8 +135,10 @@ export async function saveLead(body, id) {
     }
     const def = await prisma.crmLeadStatus.findFirst({ where: { isDefault: true } }) || (await prisma.crmLeadStatus.findFirst({ orderBy: { statusOrder: 'asc' } }))
     const statusId = oid(body.statusId) || def?.id || null
-    const assigned = oid(body.assignedId) || a.staffId || null
-    const lead = await prisma.crmLead.create({ data: { ...data, statusId, assigned, dateAssigned: assigned ? new Date() : null, addedFrom: a.staffId, leadOrder: 0, lost: false, junk: false, lastStatusChange: new Date() } })
+    const team0 = body.assignedIds !== undefined ? [...new Set((body.assignedIds || []).map(oid).filter(Boolean))] : [oid(body.assignedId)].filter(Boolean)
+    const team = team0.length ? team0 : a.staffId ? [a.staffId] : []
+    const assigned = team[0] || null
+    const lead = await prisma.crmLead.create({ data: { ...data, statusId, assigned, assignedIds: team, dateAssigned: assigned ? new Date() : null, addedFrom: a.staffId, leadOrder: 0, lost: false, junk: false, lastStatusChange: new Date() } })
     await logActivity(lead.id, a, 'Lead created')
     return { success: true, id: lead.id }
 }

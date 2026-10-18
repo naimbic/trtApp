@@ -100,6 +100,7 @@ const DropdownMenu = (props) => {
 
     const { isMounted, styles } = useTransitionStyles(context, {
         common: ({ side }) => ({
+            transitionTimingFunction: 'cubic-bezier(.2, 1.25, .4, 1)',
             transformOrigin: {
                 top: 'bottom',
                 bottom: 'top',
@@ -107,10 +108,11 @@ const DropdownMenu = (props) => {
                 right: 'left',
             }[side],
         }),
-        initial: ({ side }) => ({ opacity: 0, transform: side === 'right' ? 'translateX(-14px) scale(.95)' : side === 'left' ? 'translateX(14px) scale(.95)' : 'translateY(-5%)' }),
-        duration: 240,
-        open: { opacity: 1, transform: 'translateX(0) translateY(0%) scale(1)' },
-        close: ({ side }) => ({ opacity: 0, transform: side === 'right' ? 'translateX(-10px) scale(.97)' : side === 'left' ? 'translateX(10px) scale(.97)' : 'translateY(-5%)' }),
+        // one motion for every menu: it springs out of its button (sideways beside the dock, down or up elsewhere)
+        initial: ({ side }) => ({ opacity: 0, transform: side === 'right' ? 'translateX(-14px) scale(.94)' : side === 'left' ? 'translateX(14px) scale(.94)' : `translateY(${side === 'top' ? 10 : -10}px) scale(.94)` }),
+        duration: 280,
+        open: { opacity: 1, transform: 'translateX(0) translateY(0) scale(1)' },
+        close: ({ side }) => ({ opacity: 0, transform: side === 'right' ? 'translateX(-10px) scale(.97)' : side === 'left' ? 'translateX(10px) scale(.97)' : `translateY(${side === 'top' ? 6 : -6}px) scale(.97)` }),
     })
 
     const hover = useHover(context, {

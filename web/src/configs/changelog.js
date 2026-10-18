@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.66.0',
+        date: '2026-10-18',
+        title: 'A lead can be assigned to several people; every menu moves the same',
+        items: ['Leads can be assigned to more than one person: pick the team in the lead popup, or toggle people from the tile menu (Assign to); every tile and the lead list show the whole team, and "My leads", the owner filter and view-own access count every member. Existing leads keep their single owner as the first member', 'All the other menus (profile, language, notifications, row actions…) now look and move like the Rapport menus: they spring out of their button, their rows slide in one after the other, and the rows lift on hover, in light and dark mode']
+    },
+    {
         version: '0.65.0',
         date: '2026-10-18',
         title: 'One popup for tasks and leads, + on every stage, columns fill the screen',

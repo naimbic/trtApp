@@ -110,7 +110,7 @@ const ContractView = () => {
                     </TabList>
                     <div className="pt-5">
                         {tab === 'files' && <AttachmentsPanel relType="contract" relId={id} canEdit={can('contracts', 'edit')} showClientToggle />}
-                        {tab === 'content' && (c.content ? <iframe title={tr("Contract")} src={`/api/crm/sales/contracts/${id}/html?v=${c.updatedAt || ''}`} className="block h-[860px] w-full rounded-2xl border-0" /> : <p className="text-gray-400">{tr("This contract has no text yet.")}{can('contracts', 'edit') && <button className="ml-1 text-primary" onClick={() => navigate(`/crm/contracts/${id}/edit`)}>{tr("Write it")}</button>}</p>)}
+                        {tab === 'content' && (c.content ? <iframe title={tr("Contract")} src={`/api/crm/sales/contracts/${id}/html?v=${c.updatedAt || ''}`} className="block h-[860px] w-full border-0" /> : <p className="text-gray-400">{tr("This contract has no text yet.")}{can('contracts', 'edit') && <button className="ml-1 text-primary" onClick={() => navigate(`/crm/contracts/${id}/edit`)}>{tr("Write it")}</button>}</p>)}
                         {tab === 'comments' && (
                             <div className="flex flex-col gap-4">
                                 <div className="flex gap-2"><Input textArea rows={2} placeholder={tr("Write a comment…")} value={comment} onChange={(e) => setComment(e.target.value)} /><Button variant="solid" onClick={addComment}>{tr("Add")}</Button></div>

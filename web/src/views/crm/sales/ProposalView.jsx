@@ -110,7 +110,7 @@ const ProposalView = () => {
                     )}
                 </Card>
 
-                <iframe title={tr("Proposal")} src={`/api/crm/sales/proposals/${id}/html?v=${e.updatedAt}`} className="block h-[900px] w-full rounded-2xl border-0" />
+                <iframe title={tr("Proposal")} src={`/api/crm/sales/proposals/${id}/html?v=${e.updatedAt}`} className="block h-[900px] w-full border-0" />
 
                 {items.length > 0 && <Card>
                     <div className="overflow-x-auto">

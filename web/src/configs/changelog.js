@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.72.3',
+        date: '2026-10-18',
+        title: 'Document tab: only the paper, edge to edge',
+        items: ['The paper colour no longer floods the whole frame (the page was painting its canvas with the paper colour, which looked like a second card with a long empty area): now only the paper card shows, as tall as the invoice, on the app background', 'On the invoice the document is no longer inset by the page container padding: it spans the full width of the content area']
+    },
+    {
         version: '0.72.2',
         date: '2026-10-18',
         title: 'Document tab: no grey box, full-width paper; Print button',

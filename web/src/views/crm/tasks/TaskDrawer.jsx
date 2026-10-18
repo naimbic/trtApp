@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus } from 'react-icons/tb'
-import Drawer from '@/components/ui/Drawer'
+import Drawer from '@/components/crm/PopupFrame'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -20,7 +20,7 @@ const EMPTY = { name: '', description: '', status: 1, priority: 2, startDate: nu
 const toDate = (d) => (d ? new Date(d) : null)
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 
-const TaskDrawer = ({ open, id, staff, presets, onClose, onChanged }) => {
+const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onChanged }) => {
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
     const [saving, setSaving] = useState(false)
@@ -44,7 +44,7 @@ const TaskDrawer = ({ open, id, staff, presets, onClose, onChanged }) => {
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    useEffect(() => { if (!open) return; setDetail(null); setItem(''); setComment(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load]) // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { if (!open) return; setDetail(null); setItem(''); setComment(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
     // live clock while a timer is running
     useEffect(() => { if (!detail?.running) return; const t = setInterval(() => setTick((n) => n + 1), 1000); return () => clearInterval(t) }, [detail?.running])
     const mounted = useRef(true)
@@ -158,10 +158,13 @@ const TaskDrawer = ({ open, id, staff, presets, onClose, onChanged }) => {
     return (
         <Drawer
             title={edit ? (detail?.task.name || tr("Task")) : tr("New task")}
+            kicker={edit ? `${tr("Task")}${detail?.task.rel?.label ? ` · ${detail.task.rel.label}` : ''}` : tr("New task")}
+            date={detail?.task.dueDate ? `${tr("Due")} ${dayjs(detail.task.dueDate).format('DD MMM')}` : ''}
+            team={detail?.task.assignees?.length ? <People list={detail.task.assignees} max={5} size={30} /> : null}
+            stage={stage}
             isOpen={open}
             onClose={onClose}
-            onRequestClose={onClose}
-            width={600}
+            width={640}
             footer={
                 <div className="flex w-full items-center gap-2">
                     {edit && detail?.can.delete && <Button variant="plain" className="text-red-500" onClick={() => setConfirmDel(true)}>{tr("Delete")}</Button>}

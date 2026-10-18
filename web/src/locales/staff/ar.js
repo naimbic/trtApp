@@ -3614,5 +3614,6 @@ export default {
     "Remove the task": "حذف المهمة",
     "Source changed": "تم تغيير المصدر",
     "Team changed": "تم تغيير الفريق",
-    "Won": "مكتسب"
+    "Won": "مكتسب",
+    "Add to {name}": "إضافة إلى {name}"
 }

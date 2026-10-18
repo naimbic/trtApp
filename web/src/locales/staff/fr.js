@@ -3614,5 +3614,6 @@ export default {
     "Remove the task": "Supprimer la tâche",
     "Source changed": "Source modifiée",
     "Team changed": "Équipe modifiée",
-    "Won": "Gagné"
+    "Won": "Gagné",
+    "Add to {name}": "Ajouter à {name}"
 }

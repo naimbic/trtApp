@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.65.0',
+        date: '2026-10-18',
+        title: 'One popup for tasks and leads, + on every stage, columns fill the screen',
+        items: ['The old side drawers of tasks and leads are now the new popup: same springy slide-in, a head in the colour of the stage, the stage bar (press a step to move it) and every field, tab, checklist, comment, timer and action of the old drawer inside it; clicking a tile, choosing Open, or opening a task or lead from a list all show it', 'A + at the top right of every stage creates a task or lead already in that stage; stage headers can show the total cash of their tiles whenever tiles carry an amount (leads and tasks have no amount today, so none shows yet)', 'Board columns are no longer cut: they share the full width, and only scroll sideways when there are too many to fit', 'Translated into French, Spanish, Japanese and Arabic']
+    },
+    {
         version: '0.64.0',
         date: '2026-10-18',
         title: 'Pipeline like the Rapport demo: tile menu, popup, Won / Lost rows',

@@ -86,14 +86,19 @@ const LeadsBoard = () => {
             notify('success', ok); load()
         } catch (e) { notify('danger', e.message) }
     }
+    // the colours and steps of the popup: the lead's stages, its own one highlighted
+    const stageOf = (id) => {
+        const cur = data.statuses.find((c) => c.leads.some((l) => l.id === id)) || data.statuses.find((c) => String(c.id) === String(drawer.preset?.statusId))
+        return { columns: data.statuses.map((c) => ({ id: c.id, name: c.name, color: c.color })), currentId: cur?.id, onPick: id && show === '' ? async (to) => { await moveTo({ id }, to); setDrawer((d) => ({ ...d, k: (d.k || 0) + 1 })) } : undefined }
+    }
     const remove = async (item) => { try { await api(`/api/crm/pipeline/leads/${item.id}`, { method: 'DELETE' }); notify('success', tr("Lead deleted")); load() } catch (e) { notify('danger', e.message) } }
     const convert = async (item) => { try { const r = await api(`/api/crm/pipeline/leads/${item.id}/convert`, { method: 'POST', body: { includeNotes: false } }); notify('success', tr("Client created")); nav(`/crm/clients/${r.clientId}`) } catch (e) { notify('danger', e.message) } }
     const moveTo = (item, toId) => {
         const from = data.statuses.find((c) => c.leads.some((l) => l.id === item.id)), to = data.statuses.find((c) => String(c.id) === String(toId))
         if (from && to && from.id !== to.id) onDragEnd({ source: { droppableId: from.id, index: from.leads.findIndex((l) => l.id === item.id) }, destination: { droppableId: to.id, index: to.leads.length } })
     }
-    const open = (id) => setDrawer({ open: true, id })
-    const close = () => { setDrawer((d) => ({ ...d, open: false })); if (routeId) nav('/crm/leads', { replace: true }) }
+    const open = (id) => setDrawer({ open: true, id, preset: null, k: 0 })
+    const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); if (routeId) nav('/crm/leads', { replace: true }) }
     const staffOptions = staff.map((s) => ({ value: s.id, label: s.name }))
     const sourceOptions = data.sources?.length ? data.sources.map((s) => ({ value: s.id, label: s.name })) : (list.sources || []).map((s) => ({ value: s.id, label: s.name }))
     const total = view === 'list' ? list.total : data.statuses.reduce((n, c) => n + c.count, 0)
@@ -127,13 +132,14 @@ const LeadsBoard = () => {
                     emptyText={tr("No leads")}
                     canDrag={() => show === ''}
                     onOpen={(it) => open(it.id)}
+                    onAdd={(c) => setDrawer({ open: true, id: null, preset: { statusId: c.id }, k: 0 })}
                     onMoveTo={show === '' ? moveTo : undefined}
                     ends={show === '' ? [{ id: 'won', name: tr("Won"), sub: tr("Convert to a client"), icon: <TbTrophy /> }, { id: 'lost', name: tr("Lost"), sub: tr("Close the lead"), icon: <TbBan />, tone: 'lost' }] : []}
                     actions={(it) => (show === '' ? [
                         { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.[0]?.id === m.value, onClick: () => patch(it, { assignedId: m.value }, tr("Owner changed")) })) },
                         { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },
                         { label: tr("Convert to client"), icon: <TbUserCheck />, onClick: () => setAsk(it) },
-                        { label: tr("Edit"), icon: <TbPencil />, onClick: () => open(it.id) },
+                        
                         { label: tr("Mark lost"), icon: <TbBan />, after: true, danger: true, onClick: () => flag(it, 'lost', tr("Marked as lost")) },
                         { label: tr("Delete"), icon: <TbTrash />, after: true, danger: true, onClick: () => setDelAsk(it) },
                     ] : [])}
@@ -175,7 +181,7 @@ const LeadsBoard = () => {
             <ConfirmDialog isOpen={!!delAsk} type="danger" title={tr("Delete this lead?")} confirmText={tr("Delete")} onClose={() => setDelAsk(null)} onCancel={() => setDelAsk(null)} onConfirm={() => { const it = delAsk; setDelAsk(null); remove(it) }}>
                 <p>{delAsk?.title}</p>
             </ConfirmDialog>
-            <LeadDrawer open={drawer.open} id={drawer.id} staff={staff} onClose={close} onChanged={load} />
+            <LeadDrawer open={drawer.open} id={drawer.id} staff={staff} presets={drawer.preset} refreshKey={drawer.k} stage={stageOf(drawer.id)} onClose={close} onChanged={load} />
         </Container>
     )
 }

@@ -39,7 +39,7 @@ const TasksBoard = ({ projectId = null }) => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [del, setDel] = useState(null) // a task about to be deleted
-    const [drawer, setDrawer] = useState({ open: false, id: null })
+    const [drawer, setDrawer] = useState({ open: false, id: null, preset: null, k: 0 })
 
     useEffect(() => { const t = setTimeout(() => setQuery(search), 300); return () => clearTimeout(t) }, [search])
     useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLookups).catch(() => {}) }, [])
@@ -90,9 +90,14 @@ const TasksBoard = ({ projectId = null }) => {
             notify('success', ok); load()
         } catch (e) { notify('danger', e.message) }
     }
+    // the colours and steps of the popup: the stages of the board, the task's own one highlighted
+    const stageOf = (id) => {
+        const t = data.list.find((x) => x.id === id)
+        return { columns: STATUS.map((s) => ({ id: s.value, name: s.label, tone: TONE[s.value] })), currentId: t ? t.status : (drawer.preset?.status || 1), onPick: id && data.can.edit ? async (to) => { await moveTo({ id }, to); setDrawer((d) => ({ ...d, k: (d.k || 0) + 1 })) } : undefined }
+    }
     const remove = async (item) => { try { await api(`/api/crm/work/tasks/${item.id}`, { method: 'DELETE' }); notify('success', tr("Task deleted")); load() } catch (e) { notify('danger', e.message) } }
-    const open = (id) => (id ? nav(`/crm/tasks/${id}`) : setDrawer({ open: true, id: null }))
-    const close = () => { setDrawer((d) => ({ ...d, open: false })); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
+    const open = (id) => setDrawer((d) => ({ open: true, id: id || null, preset: null, k: d.k }))
+    const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
     const staffOptions = lookups.staff.map((s) => ({ value: s.id, label: s.name }))
 
     const Wrap = projectId ? Plain : Container
@@ -124,6 +129,7 @@ const TasksBoard = ({ projectId = null }) => {
                     loading={loading}
                     canDrag={(t) => !!data.can.edit && t.canFinish !== false}
                     onOpen={(it) => open(it.id)}
+                    onAdd={data.can.create ? (c) => setDrawer({ open: true, id: null, preset: { status: c.id }, k: 0 }) : undefined}
                     onMoveTo={data.can.edit ? moveTo : undefined}
                     ends={data.can.edit ? [{ id: 'won', name: tr("Done"), sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
                     actions={(it) => [
@@ -132,7 +138,7 @@ const TasksBoard = ({ projectId = null }) => {
                             { label: tr("Priority"), icon: <TbFlag />, sub: PRIORITY.map((p) => ({ label: p.label, checked: it.priority === p.value, color: ['#9ca3af', '#3b82f6', '#f97316', '#ef4444'][p.value - 1], onClick: () => patch(it, () => ({ priority: p.value }), tr("Priority changed")) })) },
                             { label: tr("Due date"), icon: <TbCalendarDue />, sub: [[tr("Today"), 0], [tr("Tomorrow"), 1], [tr("In a week"), 7], [tr("In a month"), 30]].map(([label, n]) => ({ label, onClick: () => patch(it, () => ({ dueDate: dayjs().add(n, 'day').format('YYYY-MM-DD') }), tr("Due date changed")) })).concat([{ label: tr("No due date"), onClick: () => patch(it, () => ({ dueDate: null }), tr("Due date changed")) }]) },
                             { label: tr("Assign to"), icon: <TbUserPlus />, sub: lookups.staff.map((m) => ({ label: m.name, checked: it.team?.some((x) => x.id === m.id), onClick: () => patch(it, (t) => ({ assigneeIds: t.assigneeIds.includes(m.id) ? t.assigneeIds.filter((x) => x !== m.id) : [...t.assigneeIds, m.id] }), tr("Team changed")) })) },
-                            { label: tr("Edit"), icon: <TbPencil />, onClick: () => setDrawer({ open: true, id: it.id }) },
+                            
                         ] : []),
                         ...(data.can.delete ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => setDel(it) }] : []),
                     ]}
@@ -176,7 +182,7 @@ const TasksBoard = ({ projectId = null }) => {
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this task?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const it = del; setDel(null); remove(it) }}>
                 <p>{del?.title}</p>
             </ConfirmDialog>
-            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={{ ...(lookups.defaults ? { status: lookups.defaults.status, priority: lookups.defaults.priority, billable: lookups.defaults.billable, assigneeIds: lookups.defaults.assignMe && lookups.me ? [lookups.me] : [], followerIds: lookups.defaults.followMe && lookups.me ? [lookups.me] : [] } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={close} onChanged={load} />
+            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} refreshKey={drawer.k} stage={stageOf(drawer.id)} presets={{ ...(drawer.preset || {}), ...(lookups.defaults ? { status: lookups.defaults.status, priority: lookups.defaults.priority, billable: lookups.defaults.billable, assigneeIds: lookups.defaults.assignMe && lookups.me ? [lookups.me] : [], followerIds: lookups.defaults.followMe && lookups.me ? [lookups.me] : [] } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={close} onChanged={load} />
         </Wrap>
     )
 }

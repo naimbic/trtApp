@@ -3614,5 +3614,6 @@ export default {
     "Remove the task": "タスクを削除",
     "Source changed": "ソースを変更しました",
     "Team changed": "チームを変更しました",
-    "Won": "成約"
+    "Won": "成約",
+    "Add to {name}": "{name} に追加"
 }

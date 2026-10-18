@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText } from 'react-icons/tb'
 import dayjs from 'dayjs'
-import Drawer from '@/components/ui/Drawer'
+import Drawer from '@/components/crm/PopupFrame'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -12,13 +12,14 @@ import Tag from '@/components/ui/Tag'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify } from '../kit/api'
 import { STATUS as TASK_STATUS } from '../tasks/shared'
+import { People } from '../tasks/shared'
 import { tr } from '@/utils/t'
 
 const EMPTY = { name: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedId: null, isPublic: false }
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("Sent"), 5: tr("Revised"), 6: tr("Draft") }
 
-const LeadDrawer = ({ open, id, staff, onClose, onChanged }) => {
+const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onChanged }) => {
     const nav = useNavigate()
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
@@ -42,7 +43,7 @@ const LeadDrawer = ({ open, id, staff, onClose, onChanged }) => {
             setV({ ...EMPTY, name: l.name || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedId: l.assignedId, isPublic: !!l.isPublic })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
-    useEffect(() => { if (!open) return; setDetail(null); setNote(''); if (id) load(); else setV(EMPTY) }, [open, id, load])
+    useEffect(() => { if (!open) return; setDetail(null); setNote(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
 
     const run = async (fn, ok, after) => { try { const r = await fn(); if (ok) notify('success', ok); onChanged(); if (after) after(r); else await load() } catch (e) { notify('danger', e.message) } }
     const save = async () => {
@@ -126,7 +127,7 @@ const LeadDrawer = ({ open, id, staff, onClose, onChanged }) => {
 
     return (
         <Drawer
-            title={edit ? l?.name || tr("Lead") : tr("New lead")} isOpen={open} onClose={onClose} onRequestClose={onClose} width={600}
+            title={edit ? l?.name || tr("Lead") : tr("New lead")} kicker={edit ? `${tr("Lead")}${l?.company ? ` · ${l.company}` : ''}` : tr("New lead")} sub={l?.company} date={l?.lastContact ? `${tr("Last contact")} ${dayjs(l.lastContact).format('DD MMM')}` : ''} team={l?.assigned?.name ? <People list={[l.assigned]} size={30} /> : null} stage={stage} isOpen={open} onClose={onClose} width={640}
             footer={
                 <div className="flex w-full items-center gap-2">
                     {edit && detail?.can.delete && !l?.converted && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}

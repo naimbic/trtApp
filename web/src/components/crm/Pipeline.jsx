@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { TbCalendar, TbInbox, TbDots, TbChevronRight, TbCheck, TbX, TbArrowUpRight } from 'react-icons/tb'
+import { TbCalendar, TbInbox, TbDots, TbChevronRight, TbCheck, TbArrowUpRight, TbPlus } from 'react-icons/tb'
 import cn from '@/utils/classNames'
 import { tr } from '@/utils/t'
 
@@ -21,7 +21,7 @@ const onHex = (hex) => {
     const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
     return l > 0.62 ? '#17191a' : '#fbf8f2'
 }
-const colourOf = (col) => (TONES[col.tone] ? TONES[col.tone] : col.color && /^#/.test(col.color) ? [col.color, onHex(col.color)] : TONES.ink)
+export const colourOf = (col) => (TONES[col.tone] ? TONES[col.tone] : col.color && /^#/.test(col.color) ? [col.color, onHex(col.color)] : TONES.ink)
 
 /** One tile: the date on top, the title, the line under it, and a foot (a label on the left, people on the right). */
 const Tile = ({ item, onOpen, onMenu, dragging, index }) => (
@@ -84,70 +84,21 @@ const TileMenu = ({ anchor, columns, item, col, actions, onMoveTo, onClose }) =>
         </motion.div>, document.body)
 }
 
-/** The popup of a tile: a coloured head, the stage bar (press a step to move), its fields, the team and the actions. */
-const QuickView = ({ item, col, columns, actions, onMoveTo, onOpen, openLabel, onClose }) => {
-    const reduce = useReducedMotion()
-    const rtl = dirRtl()
-    const [t, on] = colourOf(col)
-    const idx = columns.findIndex((c) => String(c.id) === String(col.id))
-    useEffect(() => {
-        const esc = (e) => { if (e.key === 'Escape') onClose() }
-        document.addEventListener('keydown', esc)
-        return () => document.removeEventListener('keydown', esc)
-    }, [onClose])
-    const x = rtl ? -40 : 40
-    return createPortal(
-        <div className="rp-portal rp-qv-wrap">
-            <motion.div className="rp-qv-veil" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} />
-            <motion.aside className="rp-qv" role="dialog" aria-label={item.title} style={{ '--t': t, '--on': on }} initial={reduce ? false : { x, opacity: 0, scale: 0.97 }} animate={{ x: 0, opacity: 1, scale: 1 }} exit={{ x, opacity: 0, scale: 0.97 }} transition={SPRING}>
-                <button type="button" className="rp-qv-x" aria-label={tr('Close')} onClick={onClose}><TbX /></button>
-                <p className="rp-qv-kicker">{item.kicker}</p>
-                <motion.div className="rp-qv-head" initial={reduce ? false : { clipPath: 'inset(0 0 100% 0 round 24px)' }} animate={{ clipPath: 'inset(0 0 0% 0 round 24px)' }} transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}>
-                    <div className="rp-qv-row"><span>{item.date}</span><span className="rp-qv-pill"><i />{col.name}</span></div>
-                    <h2>{item.title}</h2>
-                    {item.sub && <p>{item.sub}</p>}
-                    <div className="rp-qv-foot"><b>{item.label}</b>{item.people}</div>
-                </motion.div>
-                <ol className="rp-qv-steps">
-                    {columns.map((c, i) => { const [ct] = colourOf(c); return (
-                        <li key={c.id}><button type="button" onClick={() => String(c.id) !== String(col.id) && onMoveTo?.(item, c.id)} aria-current={i === idx ? 'step' : undefined} disabled={!onMoveTo}>
-                            <span className="rp-qv-bar"><motion.i style={{ background: ct, transformOrigin: rtl ? '100% 50%' : '0 50%' }} initial={reduce ? false : { scaleX: 0 }} animate={{ scaleX: i <= idx ? 1 : 0 }} transition={{ delay: 0.15 + i * 0.07, duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }} /></span>
-                            <span className="rp-qv-lab">{c.name}</span>
-                        </button></li>
-                    ) })}
-                </ol>
-                {item.fields?.length > 0 && (
-                    <dl className="rp-qv-fields">
-                        {item.fields.map((f, i) => <motion.div key={f.label} initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }}><dt>{f.label}</dt><dd>{f.value || '—'}</dd></motion.div>)}
-                    </dl>
-                )}
-                {item.team?.length > 0 && (
-                    <div className="rp-qv-team"><h6>{tr('Team')}</h6><div>{item.team.map((m, i) => <motion.span key={m.id} className="rp-qv-mate" initial={reduce ? false : { opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 + i * 0.05, ...SPRING }}><span className="rp-qv-av">{m.image ? <img src={m.image} alt="" /> : (m.name || '?').split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</span>{m.name}</motion.span>)}</div></div>
-                )}
-                <div className="rp-qv-actions">
-                    <button type="button" className="rp-qv-btn is-main" onClick={() => { onClose(); onOpen?.(item) }}><TbArrowUpRight />{openLabel || tr('Open full record')}</button>
-                    {(actions || []).filter((a) => !a.sub).map((a, i) => <button key={i} type="button" className={cn('rp-qv-btn', a.danger && 'is-danger')} onClick={() => { onClose(); a.onClick?.() }}>{a.icon}{a.label}</button>)}
-                </div>
-            </motion.aside>
-        </div>, document.body)
-}
-
 /**
  * The shared pipeline board: leads, team tasks and project tasks all use it, so they look and move the same.
  *   columns  [{ id, name, color | tone, count, items:[{ id, title, sub, date, overdue, label, badge, people }], total, more:{ left, onClick } }]
  *   onMove   ({ item, from, to, index, fromIndex })  called after the tile dropped; the page saves it (and reloads when it fails)
- *   onOpen   (item)        opens the full record
+ *   onOpen   (item)        a tile was pressed / Open chosen: the page shows its popup (PopupFrame)
+ *   onAdd    (column)      the + at the top right of a stage
+ *   money    (n) => text   when tiles carry an `amount`, each stage header shows the total of its tiles
  *   onMoveTo (item, columnId)   the Move to… menu and the stage bar of the popup
  *   actions  (item, column) => [{ label, icon, onClick, danger, after }]   extra menu / popup actions (after: below the line)
  *   canDrag  (item, column) => bool
  */
-const Pipeline = ({ columns, ends = [], onMove, onOpen, openLabel, onMoveTo, actions, canDrag = () => true, loading = false, emptyText }) => {
+const Pipeline = ({ columns, ends = [], onMove, onOpen, onAdd, onMoveTo, actions, money, canDrag = () => true, loading = false, emptyText }) => {
     const [menu, setMenu] = useState(null)
-    const [quick, setQuick] = useState(null)
     const [dragging, setDragging] = useState(false)
     const findCol = (id) => columns.find((c) => c.items.some((i) => String(i.id) === String(id)))
-    const live = quick ? findCol(quick) : null
-    const liveItem = live?.items.find((i) => String(i.id) === String(quick))
     const menuCol = menu ? findCol(menu.item.id) : null
     const onDragEnd = ({ source, destination, draggableId }) => {
         setDragging(false)
@@ -170,7 +121,8 @@ const Pipeline = ({ columns, ends = [], onMove, onOpen, openLabel, onMoveTo, act
                                     <span className="rp-pl-dot" />
                                     <span className="rp-pl-name" title={c.name}>{c.name}</span>
                                     <span className="rp-pl-count">{c.count ?? c.items.length}</span>
-                                    {c.total && <span className="rp-pl-total">{c.total}</span>}
+                                    {(c.total || (money && c.items.some((i) => typeof i.amount === 'number'))) && <span className="rp-pl-total">{c.total || money(c.items.reduce((n, i) => n + (i.amount || 0), 0))}</span>}
+                                    {onAdd && <button type="button" className="rp-pl-add" aria-label={tr('Add to {name}', { name: c.name })} title={tr('Add')} onClick={() => onAdd(c)}><TbPlus /></button>}
                                 </header>
                                 <Droppable droppableId={String(c.id)}>
                                     {(prov, snap) => (
@@ -180,7 +132,7 @@ const Pipeline = ({ columns, ends = [], onMove, onOpen, openLabel, onMoveTo, act
                                                     {(p, s) => {
                                                         // while it is dragged the tile takes the colour of the column it is over
                                                         const [tt, oo] = s.draggingOver && tones[s.draggingOver] ? tones[s.draggingOver] : [t, on]
-                                                        const node = <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className={cn('rp-pl-card', s.isDragging && 'rp-portal')} style={{ ...p.draggableProps.style, '--t': tt, '--on': oo }}><Tile item={it} onOpen={(x) => setQuick(x.id)} onMenu={(item, el) => setMenu({ item, el })} dragging={s.isDragging} index={i} /></div>
+                                                        const node = <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className={cn('rp-pl-card', s.isDragging && 'rp-portal')} style={{ ...p.draggableProps.style, '--t': tt, '--on': oo }}><Tile item={it} onOpen={(x) => onOpen?.(x)} onMenu={(item, el) => setMenu({ item, el })} dragging={s.isDragging} index={i} /></div>
                                                         // lifted into the page body so no column (mask, scroll, animation) can offset or clip it
                                                         return s.isDragging ? createPortal(node, document.body) : node
                                                     }}
@@ -214,8 +166,7 @@ const Pipeline = ({ columns, ends = [], onMove, onOpen, openLabel, onMoveTo, act
                 )}
             </DragDropContext>
             <AnimatePresence>
-                {menu && menuCol && <TileMenu key="menu" anchor={menu.el} item={menu.item} col={menuCol} columns={columns} actions={[{ label: tr('Open'), icon: <TbArrowUpRight />, onClick: () => setQuick(menu.item.id) }, ...(actions?.(menu.item, menuCol) || [])]} onMoveTo={onMoveTo} onClose={() => setMenu(null)} />}
-                {quick && liveItem && <QuickView key="quick" item={liveItem} col={live} columns={columns} actions={actions?.(liveItem, live)} onMoveTo={onMoveTo} onOpen={onOpen} openLabel={openLabel} onClose={() => setQuick(null)} />}
+                {menu && menuCol && <TileMenu key="menu" anchor={menu.el} item={menu.item} col={menuCol} columns={columns} actions={[{ label: tr('Open'), icon: <TbArrowUpRight />, onClick: () => onOpen?.(menu.item) }, ...(actions?.(menu.item, menuCol) || [])]} onMoveTo={onMoveTo} onClose={() => setMenu(null)} />}
             </AnimatePresence>
         </div>
     )

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.69.0',
+        date: '2026-10-18',
+        title: 'Invoices like the Rapport finance page: Revenue, Invoices, Cash flow and a row menu',
+        items: ['Under the four figure cards, three Rapport cards that follow the same filters and currency: Revenue (collected against invoiced, drawn in), Invoices (a stacked bar of the statuses with counts and shares) and Cash flow (running totals; the gap is what is still to collect)', 'Every invoice row has a three-dots menu: Record payment (a form with the balance), Open, Edit, Download, Send (the email dialog), Change status (Draft, Sent, Cancel; a cancelled invoice can be reopened with Sent) and Delete; cancelling and deleting ask first', 'New status action "back to draft" (not possible once payments exist); the invoices list now also returns the chart series for each currency, ALL included with the Settings rates']
+    },
+    {
         version: '0.68.4',
         date: '2026-10-18',
         title: 'Status row says what it will do',

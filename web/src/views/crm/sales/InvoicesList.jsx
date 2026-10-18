@@ -4,7 +4,13 @@ import { StatTile, TileGrid, StatusPills } from '@/components/crm/ListHeader'
 import { useRegisterCurrency } from '@/store/pageFilterStore'
 import { TbReceipt2, TbCash, TbHourglass, TbAlertTriangle, TbCircleCheck, TbFileText } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbSearch } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbDots, TbExternalLink, TbPencil, TbDownload, TbMail, TbArrowsExchange, TbTrash, TbBan, TbSend, TbFileText as TbDraft } from 'react-icons/tb'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import Dialog from '@/components/ui/Dialog'
+import RowMenu from '@/components/crm/RowMenu'
+import SendMailDialog from '../mail/SendMailDialog'
+import InvoiceInsights from './InvoiceInsights'
+import { api as apiCall, notify } from '../kit/api'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Card from '@/components/ui/Card'
@@ -43,6 +49,13 @@ const InvoicesList = () => {
     const [cur, setCur] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [menu, setMenu] = useState(null) // { row, el }
+    const [payFor, setPayFor] = useState(null)
+    const [pay, setPay] = useState({ amount: '', paymentModeId: null, paymentDate: dayjs().format('YYYY-MM-DD'), note: '', transactionId: '' })
+    const [modes, setModes] = useState([])
+    const [mail, setMail] = useState(null) // { id, template }
+    const [confirm, setConfirm] = useState(null) // { row, kind }
+    const [busy, setBusy] = useState(false)
     const pageSize = 15
 
     useEffect(() => { const t = setTimeout(() => { setQuery(search.trim()); setPage(1) }, 300); return () => clearTimeout(t) }, [search])
@@ -62,6 +75,29 @@ const InvoicesList = () => {
     }, [query, status, clientId, range, page, sort])
     useEffect(() => { load() }, [load])
 
+    const act = async (fn, ok) => { try { await fn(); notify('success', ok); load() } catch (e) { notify('danger', e.message) } }
+    const state = (row, action, ok) => act(() => apiCall(`/api/crm/sales/invoices/${row.id}/state`, { method: 'POST', body: { action } }), ok)
+    const openPay = async (row) => {
+        if (!modes.length) apiCall('/api/crm/sales/lookups').then((l) => setModes(l.paymentModes || [])).catch(() => {})
+        setPay({ amount: row.due || '', paymentModeId: null, paymentDate: dayjs().format('YYYY-MM-DD'), note: '', transactionId: '' })
+        setPayFor(row)
+    }
+    const menuItems = (r) => {
+        const cancelled = r.status === 5, draft = r.status === 6
+        return [
+            ...(can('payments', 'create') && !cancelled && !draft && r.due > 0 ? [{ label: tr("Record payment"), icon: <TbCash />, onClick: () => openPay(r) }] : []),
+            { label: tr("Open"), icon: <TbExternalLink />, onClick: () => navigate(`/crm/invoices/${r.id}`) },
+            ...(can('invoices', 'edit') && !cancelled ? [{ label: tr("Edit"), icon: <TbPencil />, onClick: () => navigate(`/crm/invoices/${r.id}/edit`) }] : []),
+            { label: tr("Download"), icon: <TbDownload />, onClick: () => { window.location.href = `/api/crm/sales/invoices/${r.id}/pdf?download=1` } },
+            ...(can('invoices', 'edit') && !draft && !cancelled ? [{ label: tr("Send"), icon: <TbMail />, onClick: () => setMail({ id: r.id, template: 'invoice-send-to-client' }) }] : []),
+            ...(can('invoices', 'edit') ? [{ label: tr("Change status"), icon: <TbArrowsExchange />, sub: [
+                { label: tr("Draft"), icon: <TbDraft />, checked: draft, onClick: () => !draft && state(r, 'draft', tr("Moved back to draft")) },
+                { label: tr("Sent"), icon: <TbSend />, checked: !draft && !cancelled && r.sent, onClick: () => (cancelled ? state(r, 'uncancel', tr("Invoice reopened")).then?.(() => {}) : state(r, 'markSent', tr("Marked as sent"))) },
+                { label: tr("Cancel"), icon: <TbBan />, checked: cancelled, danger: true, onClick: () => !cancelled && setConfirm({ row: r, kind: 'cancel' }) },
+            ] }] : []),
+            ...(can('invoices', 'delete') ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => setConfirm({ row: r, kind: 'delete' }) }] : []),
+        ]
+    }
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
@@ -85,6 +121,8 @@ const InvoicesList = () => {
                 </TileGrid>
             )}
 
+            {m && data.stats.series?.[cur] && <InvoiceInsights series={data.stats.series[cur]} counts={data.stats.counts} money={(v) => money(v, cur)} moneyShort={(v) => money(v, cur)} />}
+
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <div className="w-full sm:w-60"><RelationSelect size="sm" placeholder={tr("Choose a client")} resource="clients" value={clientId} onChange={(v) => { setClientId(v); setPage(1) }} /></div>
@@ -94,7 +132,7 @@ const InvoicesList = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('number', tr("Invoice"))}{th('client', tr("Client"))}{th('date', tr("Date"))}{th('dueDate', tr("Due date"))}{th('total', tr("Amount"), true)}<Th className="text-right">{tr("Paid")}</Th>{th('due', tr("Balance"), true)}{th('status', tr("Status"))}</Tr></THead>
+                        <THead><Tr>{th('number', tr("Invoice"))}{th('client', tr("Client"))}{th('date', tr("Date"))}{th('dueDate', tr("Due date"))}{th('total', tr("Amount"), true)}<Th className="text-right">{tr("Paid")}</Th>{th('due', tr("Balance"), true)}{th('status', tr("Status"))}<Th className="w-12" /></Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
                                 <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/invoices/${r.id}`)}>
@@ -106,6 +144,7 @@ const InvoicesList = () => {
                                     <Td className="text-right tabular-nums text-gray-500">{r.paid ? money(r.paid, r.currencyId) : '—'}</Td>
                                     <Td className="text-right tabular-nums">{r.due ? money(r.due, r.currencyId) : '—'}</Td>
                                     <Td><StatusTag status={r.status} />{!r.sent && r.status === 1 && <span className="ml-1.5 text-xs text-gray-400">{tr("not sent")}</span>}</Td>
+                                    <Td className="text-right" onClick={(e) => e.stopPropagation()}><button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-lg text-gray-500 transition hover:rotate-90 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Actions")} aria-haspopup="menu" onClick={(e) => setMenu({ row: r, el: e.currentTarget })}><TbDots /></button></Td>
                                 </Tr>
                             ))}
                         </TBody>
@@ -118,6 +157,25 @@ const InvoicesList = () => {
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>
+
+            {menu && <RowMenu anchor={menu.el} items={menuItems(menu.row)} onClose={() => setMenu(null)} />}
+            <SendMailDialog open={!!mail} kind="invoice" id={mail?.id} template={mail?.template} onClose={() => setMail(null)} onSent={load} />
+            <Dialog isOpen={!!payFor} onClose={() => setPayFor(null)} onRequestClose={() => setPayFor(null)}>
+                <h5 className="mb-1">{tr("Record payment")}</h5>
+                <p className="mb-4 text-sm text-gray-500">{payFor?.number} · {payFor?.client}</p>
+                <div className="flex flex-col gap-3">
+                    <div><label className="form-label mb-2 block">{tr("Amount (max")} {payFor ? money(payFor.due, payFor.currencyId) : ''})</label><Input type="number" step="0.01" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value === '' ? '' : Number(e.target.value) })} /></div>
+                    <div><label className="form-label mb-2 block">{tr("Payment date")}</label><Input type="date" value={pay.paymentDate} onChange={(e) => setPay({ ...pay, paymentDate: e.target.value })} /></div>
+                    <div><label className="form-label mb-2 block">{tr("Payment mode")}</label><Select isClearable options={modes.map((m) => ({ value: m.id, label: m.name }))} value={modes.filter((m) => m.id === pay.paymentModeId).map((m) => ({ value: m.id, label: m.name }))[0] || null} onChange={(o) => setPay({ ...pay, paymentModeId: o?.value || null })} /></div>
+                    <div><label className="form-label mb-2 block">{tr("Transaction id")}</label><Input value={pay.transactionId} onChange={(e) => setPay({ ...pay, transactionId: e.target.value })} /></div>
+                    <div><label className="form-label mb-2 block">{tr("Note")}</label><Input textArea rows={2} value={pay.note} onChange={(e) => setPay({ ...pay, note: e.target.value })} /></div>
+                </div>
+                <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setPayFor(null)}>{tr("Cancel")}</Button><Button variant="solid" loading={busy} onClick={async () => { setBusy(true); try { await apiCall(`/api/crm/sales/invoices/${payFor.id}/payments`, { method: 'POST', body: pay }); notify('success', tr("Payment recorded")); setPayFor(null); load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) } }}>{tr("Save")}</Button></div>
+            </Dialog>
+            <ConfirmDialog isOpen={!!confirm} type={confirm?.kind === 'delete' ? 'danger' : 'warning'} title={confirm?.kind === 'delete' ? tr("Delete this invoice?") : tr("Cancel this invoice?")} confirmText={confirm?.kind === 'delete' ? tr("Delete") : tr("Cancel invoice")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)}
+                onConfirm={() => { const c = confirm; setConfirm(null); if (c.kind === 'delete') act(() => apiCall(`/api/crm/sales/invoices/${c.row.id}`, { method: 'DELETE' }), tr("Invoice deleted")); else state(c.row, 'cancel', tr("Invoice cancelled")) }}>
+                <p>{confirm?.row?.number} · {confirm?.row?.client}</p>
+            </ConfirmDialog>
         </Container>
     )
 }

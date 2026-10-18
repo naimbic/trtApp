@@ -268,6 +268,10 @@ export async function setInvoiceState(invoiceId, action) {
         await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status: INVOICE_STATUS.UNPAID } })
         await refreshStatus(invoiceId)
         await logActivity(invoiceId, 'Invoice marked as not cancelled', staffId)
+    } else if (action === 'draft') {
+        if ((await paidSum(invoiceId)) > 0) return fail('Cannot send an invoice that has payments back to draft')
+        await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status: INVOICE_STATUS.DRAFT, sent: false, dateSend: null } })
+        await logActivity(invoiceId, 'Invoice moved back to draft', staffId)
     } else if (action === 'markSent') {
         await prisma.crmInvoice.update({
             where: { id: invoiceId },

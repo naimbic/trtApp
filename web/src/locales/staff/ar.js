@@ -3622,5 +3622,10 @@ export default {
     "no activity for a while": "لا نشاط منذ فترة",
     "Change status to available": "غيّر الحالة إلى متاح",
     "Change status to away": "غيّر الحالة إلى غائب",
-    "Now": "الآن"
+    "Now": "الآن",
+    "Cash flow": "التدفق النقدي",
+    "Change status": "تغيير الحالة",
+    "Invoice reopened": "أُعيد فتح الفاتورة",
+    "Moved back to draft": "أُعيدت إلى مسودة",
+    "still to collect from what was invoiced": "ما زال مستحقًا من المفوتر"
 }

@@ -3622,5 +3622,10 @@ export default {
     "no activity for a while": "sin actividad desde hace un rato",
     "Change status to available": "Cambiar estado a disponible",
     "Change status to away": "Cambiar estado a ausente",
-    "Now": "Ahora"
+    "Now": "Ahora",
+    "Cash flow": "Flujo de caja",
+    "Change status": "Cambiar estado",
+    "Invoice reopened": "Factura reabierta",
+    "Moved back to draft": "Devuelta a borrador",
+    "still to collect from what was invoiced": "aún por cobrar de lo facturado"
 }

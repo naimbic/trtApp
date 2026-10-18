@@ -4,7 +4,7 @@ import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { trendOf } from '@/lib/crm/trend'
-import { tallyWithAll } from '@/lib/crm/rates'
+import { tallyWithAll, toBase } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
 
 const STATUS_LABEL = { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft' }
@@ -39,7 +39,7 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     const where = { AND: [scope, clientId ? { clientId } : {}, currencyId ? { currencyId } : {}, from || to ? { date: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(`${to}T23:59:59Z`) } : {}) } } : {}] }
     const invoices = await prisma.crmInvoice.findMany({ where, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, dueDate: true, total: true, currencyId: true, status: true, sent: true, recurring: true } })
     const padding = await numberPadding()
-    const payments = await prisma.crmPayment.findMany({ where: { invoiceId: { in: invoices.map((i) => i.id) } }, select: { invoiceId: true, amount: true } })
+    const payments = await prisma.crmPayment.findMany({ where: { invoiceId: { in: invoices.map((i) => i.id) } }, select: { invoiceId: true, amount: true, paymentDate: true } })
     const paid = {}
     payments.forEach((p) => (paid[p.invoiceId] = round2((paid[p.invoiceId] || 0) + (p.amount || 0))))
     const clients = await prisma.crmClient.findMany({ where: { id: { in: [...new Set(invoices.map((i) => i.clientId).filter(Boolean))] } }, select: { id: true, company: true } })
@@ -73,6 +73,26 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     const trend = trendOf(rows, (r) => r.date, tallyAll)
     const ratesMissing = rt.missing
 
+    // the charts: invoiced (by invoice date) and collected (by payment date) per bucket, for every currency in the cards
+    const startOfDay = (d) => new Date(`${day(d)}T00:00:00Z`)
+    const winTo = to ? startOfDay(to) : startOfDay(new Date())
+    const winFrom = from ? startOfDay(from) : new Date(Date.UTC(winTo.getUTCFullYear(), winTo.getUTCMonth() - 11, 1))
+    const spanDays = Math.round((winTo - winFrom) / 86400000) + 1
+    const byDay = spanDays <= 62
+    const bucket = (d) => (byDay ? day(d) : day(d).slice(0, 7))
+    const keys = []
+    if (byDay) for (let i = 0; i < spanDays; i++) keys.push(day(new Date(winFrom.getTime() + i * 86400000)))
+    else for (let d = new Date(Date.UTC(winFrom.getUTCFullYear(), winFrom.getUTCMonth(), 1)); d <= winTo && keys.length < 60; d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1))) keys.push(day(d).slice(0, 7))
+    const curOf = Object.fromEntries(rows.map((r) => [r.id, r.currencyId || 'none']))
+    const seriesFor = (key) => {
+        const inv = Object.fromEntries(keys.map((k) => [k, 0])), col = { ...inv }
+        const conv = (amt, cid) => (key === 'all' ? toBase(amt, cid === 'none' ? null : cid, rt) : cid === key ? amt : 0)
+        for (const r of rows) { if (r.status === 5 || r.status === 6) continue; const b = bucket(r.date); if (b in inv) inv[b] = round2(inv[b] + (conv(r.total, r.currencyId || 'none') || 0)) }
+        for (const p of payments) { if (!p.paymentDate) continue; const b = bucket(p.paymentDate); if (b in col) col[b] = round2(col[b] + (conv(p.amount, curOf[p.invoiceId]) || 0)) }
+        return { labels: keys, invoiced: keys.map((k) => inv[k]), collected: keys.map((k) => col[k]), byDay }
+    }
+    const series = Object.fromEntries(Object.keys(money).map((k) => [k, seriesFor(k)]))
+
     const q = query.trim().toLowerCase()
     if (status) rows = rows.filter((r) => String(r.status) === String(status))
     if (q) rows = rows.filter((r) => r.number.toLowerCase().includes(q) || r.client.toLowerCase().includes(q) || String(r.numberRaw) === q)
@@ -80,7 +100,7 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     const keyFn = { number: (r) => r.numberRaw, client: (r) => r.client.toLowerCase(), date: (r) => +new Date(r.date || 0), dueDate: (r) => +new Date(r.dueDate || 0), total: (r) => r.total, due: (r) => r.due, status: (r) => r.status }[sortKey] || ((r) => +new Date(r.date || 0))
     rows.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const { page, size, list } = paginate(rows, pageIndex, pageSize)
-    return { list, total: rows.length, pageIndex: page, pageSize: size, stats: { counts: statCounts, money, trend, ratesMissing } }
+    return { list, total: rows.length, pageIndex: page, pageSize: size, stats: { counts: statCounts, money, trend, ratesMissing, series } }
 }
 
 export async function listPayments({ query = '', modeId, clientId, from, to, pageIndex = 1, pageSize = 15, sortKey = 'paymentDate', order = 'desc' } = {}) {

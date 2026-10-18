@@ -3622,5 +3622,10 @@ export default {
     "no activity for a while": "しばらく操作がありません",
     "Change status to available": "ステータスを「対応可能」に変更",
     "Change status to away": "ステータスを「離席中」に変更",
-    "Now": "現在"
+    "Now": "現在",
+    "Cash flow": "キャッシュフロー",
+    "Change status": "ステータスを変更",
+    "Invoice reopened": "請求書を再開しました",
+    "Moved back to draft": "下書きに戻しました",
+    "still to collect from what was invoiced": "請求額のうち未回収"
 }

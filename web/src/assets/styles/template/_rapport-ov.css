@@ -365,3 +365,12 @@
 @media (pointer: coarse){.rp-ov [data-view="overview"] .ov-task{ min-height: 52px; }
 .rp-ov [data-view="overview"] .ov-task .check{ width: 24px; height: 24px; }
 }
+
+/* the finance cards above the invoice list */
+.rp-ov [data-view="overview"].inv-grid { display: grid; gap: var(--rp-gap); grid-template-columns: repeat(12, minmax(0, 1fr)); margin-bottom: 20px; }
+.rp-ov [data-view="overview"].inv-grid > .card { grid-area: auto; display: flex; flex-direction: column; }
+.rp-ov [data-view="overview"].inv-grid > .inv-rev { grid-column: span 7; }
+.rp-ov [data-view="overview"].inv-grid > .inv-status { grid-column: span 5; }
+.rp-ov [data-view="overview"].inv-grid > .inv-cash { grid-column: span 12; }
+.rp-ov [data-view="overview"].inv-grid .ov-rev__chart { flex: 1; min-height: 230px; position: relative; }
+@media (max-width: 1100px) { .rp-ov [data-view="overview"].inv-grid > .card { grid-column: span 12; } }

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.60.0',
+        date: '2026-10-18',
+        title: 'Banks tab, and a new top for documents',
+        items: ['Settings → Banks (under Billing) and Setup → Finance → Bank accounts: add the bank accounts used on your documents; the bank pickers on clients, invoices, estimates and purchase orders list exactly these accounts (the card moved out of Company)', 'Invoices, estimates, purchase orders and proposals (PDF, print view and client page): the logo now sits on the left with the company details under it; on the right are the document title and number and, right under them, the client\'s details (bill to) and the dates. The "swap" PDF setting now puts the client under the logo and the company on the right. Contracts: logo on the left, title on the right', 'On a phone the two sides stack']
+    },
+    {
         version: '0.59.0',
         date: '2026-10-18',
         title: 'Bank accounts per client and per document, reminder switch on the page, client languages',

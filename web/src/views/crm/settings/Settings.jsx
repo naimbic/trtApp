@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { TbAdjustmentsHorizontal, TbBellRinging, TbBrandGoogle, TbBuilding, TbCalendar, TbChecklist, TbClockPlay, TbFileDescription, TbFileInvoice, TbFileTypePdf, TbFilter, TbLifebuoy, TbMail, TbPresentation, TbReceipt2, TbReceiptRefund, TbRepeat, TbShoppingCart, TbSignature, TbSparkles, TbTags, TbUsers, TbWorld } from 'react-icons/tb'
+import { TbAdjustmentsHorizontal, TbBellRinging, TbBrandGoogle, TbBuilding, TbBuildingBank, TbCalendar, TbChecklist, TbClockPlay, TbFileDescription, TbFileInvoice, TbFileTypePdf, TbFilter, TbLifebuoy, TbMail, TbPresentation, TbReceipt2, TbReceiptRefund, TbRepeat, TbShoppingCart, TbSignature, TbSparkles, TbTags, TbUsers, TbWorld } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -18,7 +18,7 @@ import AiSettingsPanel from '../ai/AiSettingsPanel'
 import { refreshBranding } from '@/utils/hooks/useBranding'
 import { tr } from '@/utils/t'
 
-const ICONS = { TbAdjustmentsHorizontal, TbBuilding, TbWorld, TbMail, TbReceipt2, TbFileInvoice, TbFileDescription, TbPresentation, TbShoppingCart, TbReceiptRefund, TbRepeat, TbUsers, TbChecklist, TbLifebuoy, TbFilter, TbBrandGoogle, TbBellRinging, TbCalendar, TbSparkles, TbFileTypePdf, TbSignature, TbTags, TbClockPlay }
+const ICONS = { TbBuildingBank, TbAdjustmentsHorizontal, TbBuilding, TbWorld, TbMail, TbReceipt2, TbFileInvoice, TbFileDescription, TbPresentation, TbShoppingCart, TbReceiptRefund, TbRepeat, TbUsers, TbChecklist, TbLifebuoy, TbFilter, TbBrandGoogle, TbBellRinging, TbCalendar, TbSparkles, TbFileTypePdf, TbSignature, TbTags, TbClockPlay }
 
 // panel key -> resource key for the plain list managers
 const LISTS = { currencies: ['currencies', tr("The currencies you invoice in. Prefix puts the symbol before the amount, suffix after it.")], taxes: ['taxes', tr("The taxes you can add to document lines.")], ticketStatuses: ['ticket-statuses'], ticketPriorities: ['ticket-priorities'], departments: ['departments'], predefinedReplies: ['predefined-replies'], spamFilters: ['spam-filters'], leadStatuses: ['lead-statuses'], leadSources: ['lead-sources'], webToLead: ['web-to-lead'], tags: ['tags', tr("Tags can be attached to clients, leads, tasks and more.")] }

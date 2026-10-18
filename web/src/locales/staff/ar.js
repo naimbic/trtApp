@@ -1,5 +1,8 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Banks": "البنوك",
+    "The bank accounts printed on invoices, estimates and purchase orders": "الحسابات البنكية المطبوعة على الفواتير وعروض الأسعار وأوامر الشراء",
+    "Add every account you use (name, bank, holder, RIB / IBAN, SWIFT). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.": "أضف كل حساب تستخدمه (الاسم والبنك وصاحب الحساب وRIB / IBAN وSWIFT). يُطبع الحساب الافتراضي ما لم يكن للعميل أو للمستند حساب خاص: اختره في صفحة العميل أو في المستند نفسه. تملأ الحقول company_bank وcompany_rib وcompany_swift وcompany_bank_holder. حقول البنك/RIB/SWIFT المفردة في الشركة لا تُستخدم إلا عند عدم وجود حساب هنا.",
     "Bank account on its documents": "الحساب البنكي في مستنداته",
     "Bank account on the document": "الحساب البنكي في المستند",
     "Company language": "لغة الشركة",

@@ -12,8 +12,7 @@ import {
     PiGearSixDuotone, PiAtDuotone, PiCoinsDuotone, PiPercentDuotone, PiCreditCardDuotone, PiTextboxDuotone, PiHashDuotone, PiMapPinDuotone,
     PiChartBarDuotone, PiFolderOpenDuotone, PiLockKeyDuotone, PiCalendarBlankDuotone, PiListBulletsDuotone, PiAlarmDuotone,
     PiNotePencilDuotone, PiTargetDuotone, PiClipboardTextDuotone, PiBellDuotone, PiFilesDuotone, PiClockCounterClockwiseDuotone,
-    PiFoldersDuotone, PiUserCheckDuotone, PiBugBeetleDuotone, PiSlidersHorizontalDuotone, PiUsersDuotone, PiWrenchDuotone, PiDatabaseDuotone, PiChatsDuotone,
-} from 'react-icons/pi'
+    PiFoldersDuotone, PiUserCheckDuotone, PiBugBeetleDuotone, PiSlidersHorizontalDuotone, PiUsersDuotone, PiWrenchDuotone, PiDatabaseDuotone, PiChatsDuotone, PiBankDuotone } from 'react-icons/pi'
 
 // Sidebar item icons, keyed by `nav.<item key>` / `nav.<sub-group key>`.
 export default {
@@ -37,7 +36,7 @@ export default {
     'nav.staff': <PiUsersFourDuotone />, 'nav.roles': <PiShieldStarDuotone />, 'nav.departments': <PiTreeStructureDuotone />,
     'nav.announcements': <PiBellRingingDuotone />, 'nav.newsfeed': <PiNewspaperDuotone />, 'nav.modules': <PiPuzzlePieceDuotone />,
     'nav.platform-settings': <PiGearSixDuotone />, 'nav.mails': <PiAtDuotone />, 'nav.currencies': <PiCoinsDuotone />,
-    'nav.taxes': <PiPercentDuotone />, 'nav.payment-modes': <PiCreditCardDuotone />, 'nav.custom-fields': <PiTextboxDuotone />,
+    'nav.taxes': <PiPercentDuotone />, 'nav.payment-modes': <PiCreditCardDuotone />, 'nav.bank-accounts': <PiBankDuotone />, 'nav.custom-fields': <PiTextboxDuotone />,
     'nav.tags': <PiHashDuotone />, 'nav.countries': <PiMapPinDuotone />,
     'nav.reports': <PiChartBarDuotone />, 'nav.file-manager': <PiFolderOpenDuotone />, 'nav.passwords': <PiLockKeyDuotone />,
     'nav.events': <PiCalendarBlankDuotone />, 'nav.todos': <PiListBulletsDuotone />, 'nav.reminders': <PiAlarmDuotone />,

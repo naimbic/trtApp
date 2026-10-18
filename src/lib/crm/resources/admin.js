@@ -256,7 +256,7 @@ const resources = [
     },
     {
         key: 'bank-accounts', model: 'crmBankAccount', label: 'Bank account', plural: 'Bank accounts',
-        group: 'Setup', icon: 'TbBuildingBank', feature: 'settings', hidden: true, exclusive: 'isDefault',
+        group: 'Setup', icon: 'TbBuildingBank', feature: 'settings', exclusive: 'isDefault',
         titleField: 'name', search: ['name', 'bank', 'rib'], defaultSort: { name: 'asc' },
         columns: [
             { key: 'name', label: 'Name', type: 'text', link: true },

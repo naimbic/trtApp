@@ -49,7 +49,7 @@ const LAYOUT = {
     Administration: ['staff', 'roles', 'departments', S('comms', 'Communication', ['announcements', 'newsfeed']), 'modules'],
     Setup: [
         'platform-settings', 'mails',
-        S('finance', 'Finance', ['currencies', 'taxes', 'payment-modes']),
+        S('finance', 'Finance', ['currencies', 'taxes', 'payment-modes', 'bank-accounts']),
         S('data', 'Data', ['custom-fields', 'tags', 'countries']),
     ],
     Utilities: [

@@ -4,7 +4,7 @@ import { numberPadding } from '@/lib/crm/numbering'
 import { getOptions, buildHtml, mergeFields, deliver, findTemplate, companyLanguage, baseData } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { companyImageDataUri } from '@/lib/crm/company'
-import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf } from '@/lib/crm/invoicePdf'
+import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
 import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
 import { createInvoiceFromEstimate } from '@/lib/crm/sales/convert'
@@ -44,6 +44,7 @@ export async function loadEstimateDoc(id, hash, staff = false) {
 }
 
 export const CSS = `
+${HEADER_CSS}
 .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.logo{text-align:right}.top img{max-width:62%;height:auto}.title{text-align:left}.title h1{margin:0;font-size:2.7em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}
 table{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;font-size:.95em}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
@@ -70,8 +71,7 @@ async function documentHtml(d, lang, S) {
     if (Number(e.adjustment)) tr.push(`<tr><td>${L.adjustment}</td><td>${M(e.adjustment)}</td></tr>`)
     tr.push(`<tr class="grand"><td>${L.total}</td><td>${M(e.total)}</td></tr>`)
     const words = S.words.on ? `<p class="words"><strong>${lang === 'french' ? 'Arrêté le présent devis à la somme de' : 'Total in words'} :</strong> ${esc(amountInWords(e.total, { lang, currency: d.currency?.name, lowercase: S.words.lower }))}</p>` : ''
-    return `<div class="top"><div class="title"><h1>${T.estimate}</h1><div class="num">#${esc(d.number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
-<div class="cols">${S.swap ? info + org : org + info}</div>
+    return `${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: T.estimate, num: `#${esc(d.number)}`, org, info, swap: S.swap })}
 <table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>
 ${words}${e.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNote)}</div>` : ''}${e.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(e.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`

@@ -1,5 +1,8 @@
 // Staff area: fr. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Banks": "Banques",
+    "The bank accounts printed on invoices, estimates and purchase orders": "Les comptes bancaires imprimés sur les factures, devis et bons de commande",
+    "Add every account you use (name, bank, holder, RIB / IBAN, SWIFT). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.": "Ajoutez chaque compte utilisé (nom, banque, titulaire, RIB / IBAN, SWIFT). Le compte par défaut est imprimé sauf si un client ou un document a le sien : choisissez-le sur la fiche client ou sur le document. Ils alimentent les termes company_bank, company_rib, company_swift et company_bank_holder. Les champs uniques Banque / RIB / SWIFT de l'entreprise ne servent que tant qu'aucun compte n'existe ici.",
     "Bank account on its documents": "Compte bancaire sur ses documents",
     "Bank account on the document": "Compte bancaire sur le document",
     "Company language": "Langue de l'entreprise",

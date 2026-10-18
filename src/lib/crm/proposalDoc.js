@@ -5,7 +5,7 @@ import { getOptions } from '@/lib/crm/mailer'
 import { companyImageDataUri } from '@/lib/crm/company'
 import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
 import { companyTokenData, COMPANY_KEYS } from '@/lib/crm/docTokens'
-import { esc, stripTags, logoDataUri, fmtDate, LABELS } from '@/lib/crm/invoicePdf'
+import { esc, stripTags, logoDataUri, fmtDate, LABELS, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
 
 export const PROPOSAL = { OPEN: 1, DECLINED: 2, ACCEPTED: 3, SENT: 4, REVISED: 5, DRAFT: 6 }
 export const LABEL = { 1: 'Open', 2: 'Declined', 3: 'Accepted', 4: 'Sent', 5: 'Revised', 6: 'Draft' }
@@ -83,12 +83,13 @@ export async function proposalDocumentHtml(p, items, currency, S, number) {
     let content = safeProposalHtml(p.content)
     const hasItems = /\{proposal_items\}/.test(content)
     content = content.replace(/\{([a-z0-9_]+)\}/gi, (m, k) => (k in merge ? String(merge[k] ?? '') : ''))
-    return `<div class="top"><div class="title"><h1>${T.title}</h1><div class="num">#${esc(number)}</div></div><div class="logo">${logo ? `<img src="${logo}" style="width:${S.logoWidth * 1.5}px" alt="">` : `<strong style="font-size:18pt">${esc(co.company_name)}</strong>`}</div></div>
-<div class="cols">${S.swap ? `<div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>${L.date}: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div><div class="info org">${org}</div>` : `<div class="info org">${org}</div><div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>${L.date}: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div>`}</div>
+    const infoTo = `<div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>${L.date}: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div>`
+    return `${docHeader({ logo, width: S.logoWidth * 1.5, name: co.company_name, title: T.title, num: `#${esc(number)}`, org: `<div class="info org">${org}</div>`, info: infoTo, swap: S.swap })}
 ${p.subject ? `<h2 class="psub">${esc(p.subject)}</h2>` : ''}<div class="pcontent">${content}</div>${hasItems ? '' : itemsBlock}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }
 
-export const PROPOSAL_CSS = `.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.logo{text-align:right}.top img{max-width:62%;height:auto}.title{text-align:left}.title h1{margin:0;font-size:2.4em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}
+export const PROPOSAL_CSS = `${HEADER_CSS}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.logo{text-align:right}.top img{max-width:62%;height:auto}.title{text-align:left}.title h1{margin:0;font-size:2.4em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}.psub{font-size:1.5em;margin:6px 0 14px}
 .pcontent{line-height:1.6}.pcontent h1,.pcontent h2,.pcontent h3{margin:18px 0 8px}.pcontent img{max-width:100%;height:auto}.pcontent table{border-collapse:collapse;margin:8px 0}.pcontent td,.pcontent th{border:1px solid #e5e7eb;padding:6px 8px}
 table.items,table.tot{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;font-size:.95em}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}

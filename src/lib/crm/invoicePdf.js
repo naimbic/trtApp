@@ -42,6 +42,18 @@ function logoDataUri(file) {
 
 const fmtDate = (d, fmt, tz) => phpDate(d, fmt, tz)
 
+/**
+ * The top of every sales document: the logo and the company details on the left; on the right the document title and number, and
+ * under them the client's details (bill to, dates). `swap` (Settings → PDF) puts the client under the logo and the company on the right.
+ */
+export const HEADER_CSS = `.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;margin-bottom:22px}.hdr .hl{flex:1;min-width:0}.hdr .hl img{max-width:100%;height:auto}.hdr .hl .info{margin-top:14px}
+.hdr .hr{flex:1;min-width:0;text-align:right}.hdr .hr h1{margin:0;font-size:2.7em;letter-spacing:.5px;color:#111}.hdr .hr .num{font-weight:700;color:#4e4e4e;font-size:1.2em}.hdr .hr .status{margin-top:4px;font-weight:700;text-transform:uppercase}.hdr .hr .info{margin-top:16px;text-align:right}
+@media(max-width:640px){.hdr{flex-direction:column;gap:14px}.hdr .hr{text-align:left}.hdr .hr .info{text-align:left}}`
+export function docHeader({ logo, width, name, title, num, status = '', org, info, swap = false }) {
+    const mark = logo ? `<img src="${logo}" style="width:${width}px" alt="">` : `<strong style="font-size:18pt">${esc(name)}</strong>`
+    return `<div class="hdr"><div class="hl">${mark}${swap ? info : org}</div><div class="hr"><h1>${title}</h1><div class="num">${num}</div>${status}${swap ? org : info}</div></div>`
+}
+
 /** The company block at the top of documents: company_info_format with merge terms, or a built-in fallback. */
 async function organizationInfo(o, bank = null) {
     const get = await getOptions(COMPANY_KEYS)
@@ -159,6 +171,7 @@ export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
     return `<!doctype html><html lang="${fr ? 'fr' : 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${pub ? '<link rel="icon" href="/api/crm/branding/favicon">' : ''}<title>${esc(invoice.displayNumber)}</title><style>
 ${S.pageCss()}
 ${S.baseCss()}
+${HEADER_CSS}
 .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.top img{width:${S.logoWidth * 1.5}px;max-width:62%;height:auto}
 .logo{text-align:right}.title{text-align:left}.title h1{margin:0;font-size:2.7em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}.status{margin-top:4px;font-weight:700;text-transform:uppercase}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}
@@ -170,8 +183,7 @@ h4{margin:20px 0 6px;font-size:1.05em}.plain th{text-align:left;border-bottom:1p
 .mode{margin-bottom:8px}.block{white-space:pre-line}tr{page-break-inside:avoid}.sc{overflow-x:auto}
 ${pub ? PUBLIC_CSS : ''}
 </style></head><body${pub ? ' class="pub"' : ''}>
-${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}<div class="top"><div class="title"><h1>${L.invoice}</h1><div class="num">#${esc(invoice.displayNumber)}</div>${status}</div><div class="logo">${logo ? `<img src="${logo}" alt="">` : `<strong style="font-size:18pt">${esc(og('companyname'))}</strong>`}</div></div>
-<div class="cols">${S.swap ? infoBlock + orgBlock : orgBlock + infoBlock}</div>
+${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: L.invoice, num: `#${esc(invoice.displayNumber)}`, status, org: orgBlock, info: infoBlock, swap: S.swap })}
 <div class="sc"><table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table></div>
 <table class="tot">${totalRows.join('')}</table>
 ${words}${payTable}${modesBlock}

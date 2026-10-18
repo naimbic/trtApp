@@ -33,7 +33,7 @@ const numbering = (name, prefixKey, prefixDefault, nextKey, formatKey, resetKey,
 
 export const SECTIONS = [
     { section: 'General', groups: ['general', 'company', 'localization', 'email'] },
-    { section: 'Billing', groups: ['sales_general', 'invoices', 'estimates', 'proposals', 'purchase_orders', 'credit_notes', 'subscriptions'] },
+    { section: 'Billing', groups: ['sales_general', 'invoices', 'estimates', 'proposals', 'purchase_orders', 'credit_notes', 'subscriptions', 'banks'] },
     { section: 'Configure features', groups: ['clients', 'tasks', 'tickets', 'leads'] },
     { section: 'Integrations', groups: ['google', 'pusher'] },
     { section: 'More', groups: ['calendar', 'ai', 'pdf', 'e_sign', 'tags'] },
@@ -99,10 +99,15 @@ export const GROUPS = {
                 f('company_rib', 'RIB / IBAN', 'text', { token: 'company_rib' }),
                 f('company_swift', 'SWIFT / BIC', 'text', { token: 'company_swift' }),
             ] },
-            { title: 'Bank accounts', desc: 'The accounts printed on invoices, estimates and purchase orders (with the merge terms company_bank, company_rib, company_swift and company_bank_holder). The default one is used unless a client or a document has its own: choose it on the client, or on the document. The single Bank / RIB / SWIFT fields above are only used while no account exists here.', panel: 'bankAccounts' },
             { title: 'Company block on documents', desc: 'Free text printed at the top of invoices, estimates and other documents. Use merge terms; click one to insert it.', panel: 'companyFormat', fields: [
                 f('company_info_format', 'Company information format', 'html', { rows: 8 }),
             ] },
+        ],
+    },
+    banks: {
+        label: 'Banks', icon: 'TbBuildingBank', desc: 'The bank accounts printed on invoices, estimates and purchase orders',
+        cards: [
+            { title: 'Bank accounts', desc: 'Add every account you use (name, bank, holder, RIB / IBAN, SWIFT). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.', panel: 'bankAccounts' },
         ],
     },
     localization: {

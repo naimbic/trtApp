@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.79.1',
+        date: '2026-10-18',
+        title: 'Check and connect the recurring invoices already in the database',
+        items: ['New script scripts/recurring-check.mjs: lists every recurring invoice already in the database (imported or not) with its rule, last and next date and the copies linked to it, and flags copies whose original is missing and unlinked invoices that look like copies; with --link it attaches those to their original so they show Recurring invoice of … at the top', 'Old recurring invoices keep their rule and dates; the editor shows and keeps them (a Perfex invoice repeating every N months shows as every N months)']
+    },
+    {
         version: '0.79.0',
         date: '2026-10-18',
         title: 'Recurring invoices: set them up, link the copies, and the nightly job finds them',

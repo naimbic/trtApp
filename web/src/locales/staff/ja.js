@@ -3680,5 +3680,8 @@ export default {
     "Nothing is late": "遅れはありません",
     "Overdue, unfinished": "期限超過・未完了",
     "Previous": "前へ",
-    "needs attention": "要対応"
+    "needs attention": "要対応",
+    "No tasks": "タスクなし",
+    "Reschedule": "日程変更",
+    "{a}/{b} done": "{a}/{b} 完了"
 }

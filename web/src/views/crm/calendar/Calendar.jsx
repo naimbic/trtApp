@@ -5,7 +5,8 @@ import Container from '@/components/shared/Container'
 import CalendarView from '@/components/shared/CalendarView'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
-import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers, TbChevronLeft, TbChevronRight, TbCalendarEvent, TbCalendarWeek, TbAlertTriangle } from 'react-icons/tb'
+import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers, TbChevronLeft, TbChevronRight, TbCalendarEvent, TbCalendarWeek, TbAlertTriangle, TbDots, TbCheck, TbExternalLink, TbCircleCheck, TbRotate, TbUserPlus, TbCalendarDue } from 'react-icons/tb'
+import RowMenu from '@/components/crm/RowMenu'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import Tooltip from '@/components/ui/Tooltip'
 import { CATEGORIES } from './EventDialog'
@@ -73,23 +74,26 @@ const EventTip = ({ ev, timeText }) => {
     )
 }
 
-// Same look as the template's CalendarView events (coloured pill, time + bold title), plus a hover tooltip.
-const COLOR_BG = { red: 'bg-[#fbddd9]', orange: 'bg-[#ffc6ab]', yellow: 'bg-[#ffd993]', green: 'bg-[#bee9d3]', blue: 'bg-[#bce9fb]', purple: 'bg-[#ccbbfc]' }
+// Compact entries: a dot in the colour of the status (tasks) or of the event, the time, then the title; no pill, one line.
+const STATUS_DOT = { 1: '#9ca3af', 2: '#f59e0b', 3: '#8b5cf6', 4: '#3b82f6', 5: '#10b981' }
+const EVENT_DOT = { red: '#ef4444', orange: '#f97316', yellow: '#eab308', green: '#22c55e', blue: '#3b82f6', purple: '#8b5cf6' }
+const KIND_DOT = { events: '#3b82f6', reminders: '#f59e0b', tasks: '#f97316', invoices: '#ef4444', projects: '#8b5cf6', estimates: '#eab308', proposals: '#22c55e', contracts: '#0ea5e9' }
+const dotOf = (p) => (p.type === 'tasks' ? STATUS_DOT[p.status || 1] : p.type === 'events' ? EVENT_DOT[p.eventColor] || KIND_DOT.events : KIND_DOT[p.type])
+const nameOf = (p) => (p.type === 'tasks' && p.rawName ? p.rawName : localTitle(p.rawTitle || p.title))
 const renderEvent = (arg) => {
     const ev = arg.event
-    const { isStart, isEnd } = arg
+    const p = ev.extendedProps
     return (
         <Tooltip title={<EventTip ev={ev} timeText={arg.timeText} />} placement="top">
-            <div className={`custom-calendar-event ${COLOR_BG[ev.extendedProps.eventColor] || ''} text-gray-900 ${isEnd && !isStart ? 'rounded-tl-none! rounded-bl-none!' : ''} ${!isEnd && isStart ? 'rounded-tr-none! rounded-br-none!' : ''}`}>
-                {!(isEnd && !isStart) && <span>{arg.timeText}</span>}
-                <span className="ml-1 font-bold rtl:mr-1">{localTitle(ev.extendedProps.rawTitle || ev.title)}</span>
+            <div className={`sch-ev ${p.done ? 'is-done' : ''}`} style={{ '--c': dotOf(p) }}>
+                <i className="sch-ev__dot" />
+                {!ev.allDay && arg.timeText ? <span className="sch-ev__time">{arg.timeText}</span> : null}
+                <b className="sch-ev__title">{nameOf(p)}</b>
             </div>
         </Tooltip>
     )
 }
 
-
-const KIND_DOT = { events: '#3b82f6', reminders: '#f59e0b', tasks: '#f97316', invoices: '#ef4444', projects: '#8b5cf6', estimates: '#eab308', proposals: '#22c55e', contracts: '#0ea5e9' }
 const dayOf = (d) => dayjs(d).format('YYYY-MM-DD')
 const initialsOf = (n = '') => n.split(/\s+/).filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase()
 
@@ -113,6 +117,7 @@ const Calendar = () => {
     const [saving, setSaving] = useState(false)
     const [staff, setStaff] = useState([])
     const [selectedDay, setSelectedDay] = useState(dayOf(new Date()))
+    const [menu, setMenu] = useState(null) // { it, el }
     const [title, setTitle] = useState('')
     const [viewName, setViewName] = useState('dayGridMonth')
     const calRef = useRef(null)
@@ -128,7 +133,7 @@ const Calendar = () => {
     const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
     const seq = useRef(0)
-    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => setStaff(d.staff)).catch(() => {}) }, [])
+    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => setStaff((d.staff || []).filter((m) => m.active !== false))).catch(() => {}) }, [])
 
     const load = useCallback(async (r = range.current) => {
         if (!r) return
@@ -152,6 +157,7 @@ const Calendar = () => {
     const lateItems = useMemo(() => overdue.filter(keep), [overdue, keep])
     const agenda = useMemo(() => visible.filter((it) => onDay(it, selectedDay)).sort((a, b) => String(a.start).localeCompare(String(b.start))), [visible, selectedDay])
     const today = dayOf(new Date())
+    const dayTasks = agenda.filter((x) => x.type === 'tasks')
     const todayCount = visible.filter((it) => onDay(it, today)).length
     const weekStartFixed = dayjs().subtract((dayjs().day() - firstDay + 7) % 7, 'day')
     const weekCount = visible.filter((it) => { const s = dayOf(it.start); return s >= weekStartFixed.format('YYYY-MM-DD') && s <= weekStartFixed.add(6, 'day').format('YYYY-MM-DD') }).length
@@ -236,18 +242,70 @@ const Calendar = () => {
         }
     }
 
+
+    // ---- actions on an entry of the agenda
+    const setDone = async (it, done) => {
+        const patchList = (list) => list.map((x) => (x.id === it.id ? { ...x, done, status: done ? 5 : 4 } : x))
+        setItems(patchList); setOverdue((l) => (done ? l.filter((x) => x.id !== it.id) : l))
+        try { await api(`/api/crm/work/tasks/${it.rawTaskId}/move`, { method: 'POST', body: JSON.stringify({ status: done ? 5 : 4 }) }); load() } catch (e) { notifyOnce(e.message); load() }
+    }
+    const patchTask = async (it, change, ok) => {
+        try {
+            const d = await api(`/api/crm/work/tasks/${it.rawTaskId}`), t = d.task
+            await api(`/api/crm/work/tasks/${it.rawTaskId}`, { method: 'PUT', body: JSON.stringify({ ...t, startDate: t.startDate ? dayjs(t.startDate).format('YYYY-MM-DD') : null, dueDate: t.dueDate ? dayjs(t.dueDate).format('YYYY-MM-DD') : null, assigneeIds: t.assigneeIds, followerIds: t.followerIds, ...change(t) }) })
+            notify('success', ok); load()
+        } catch (e) { notifyOnce(e.message) }
+    }
+    const menuItems = (it) => {
+        const open = { label: tr("Open"), icon: <TbExternalLink />, onClick: () => openItem({ ...it, ...(it.extendedProps || {}) }) }
+        if (it.type !== 'tasks') return [open]
+        return [
+            open,
+            { label: it.done ? tr("Reopen") : tr("Mark complete"), icon: it.done ? <TbRotate /> : <TbCircleCheck />, onClick: () => setDone(it, !it.done) },
+            { label: tr("Assign to"), icon: <TbUserPlus />, sub: staff.map((m) => ({ label: m.name, checked: (it.who || []).includes(m.id), onClick: () => patchTask(it, (t) => ({ assigneeIds: t.assigneeIds.includes(m.id) ? t.assigneeIds.filter((x) => x !== m.id) : [...t.assigneeIds, m.id] }), tr("Team changed")) })) },
+            { label: tr("Reschedule"), icon: <TbCalendarDue />, sub: [[tr("Today"), 0], [tr("Tomorrow"), 1], [tr("In a week"), 7]].map(([label, n]) => ({ label, onClick: () => patchTask(it, () => ({ dueDate: dayjs().add(n, 'day').format('YYYY-MM-DD') }), tr("Due date changed")) })) },
+        ]
+    }
+    const byId = useMemo(() => Object.fromEntries(staff.map((m) => [m.id, m])), [staff])
+    const Faces = ({ ids = [], max = 3 }) => {
+        const list = [...new Set(ids)].map((id) => byId[id]).filter(Boolean)
+        if (!list.length) return null
+        return (
+            <span className="sch-faces" aria-hidden="true">
+                {list.slice(0, max).map((m) => (m.image ? <img key={m.id} src={m.image} alt="" title={m.name} /> : <span key={m.id} className="sch-faces__i" title={m.name}>{initialsOf(m.name)}</span>))}
+                {list.length > max && <span className="sch-faces__i sch-faces__more">+{list.length - max}</span>}
+            </span>
+        )
+    }
+    // the people behind the entries of each day, shown at the top right of its box
+    const peopleByDay = useMemo(() => {
+        const m = {}
+        for (const it of visible) {
+            if (!(it.who || []).length) continue
+            const startD = dayOf(it.start)
+            ;(m[startD] ||= new Set()); it.who.forEach((w) => m[startD].add(w))
+        }
+        return m
+    }, [visible])
+
     const togglePerson = (id) => setPeople((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
     const toggleKind = (k) => setShown((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]))
     const timeOf = (it) => (it.allDay ? tr("All day") : dayjs(it.start).format(hour12 ? 'h:mm A' : 'HH:mm'))
     const dayLabel = dayjs(selectedDay).format('dddd, D MMMM')
     const daysLate = (d) => Math.max(1, dayjs(today).diff(dayjs(d), 'day'))
 
-    const Row = ({ it, late }) => (
-        <li><button type="button" className="sch-row" onClick={() => openItem({ ...it, ...(it.extendedProps || {}) })}>
-            <i className="sch-row__dot" style={{ background: KIND_DOT[it.type] }} />
-            <span className="sch-row__txt"><b>{localTitle(it.rawTitle || it.title)}</b><small>{late ? `${it.detail || TYPE_LABEL[it.type] || ''} · ${tr("{n} days late", { n: daysLate(it.start) })}` : `${it.type === 'events' ? timeOf(it) : (it.detail || TYPE_LABEL[it.type] || '')}${it.clientName ? ` · ${it.clientName}` : ''}`}</small></span>
-            {late && <TbAlertTriangle className="sch-row__late" />}
-        </button></li>
+    const row = (it, late) => (
+        <li key={it.id} className={`sch-row ${it.done ? 'is-done' : ''}`}>
+            {it.type === 'tasks'
+                ? <button type="button" className="sch-check" aria-pressed={!!it.done} aria-label={it.done ? tr("Reopen") : tr("Mark complete")} onClick={() => setDone(it, !it.done)} style={{ '--c': dotOf(it) }}>{it.done && <TbCheck />}</button>
+                : <i className="sch-row__dot" style={{ background: dotOf(it) }} />}
+            <button type="button" className="sch-row__txt" onClick={() => openItem({ ...it, ...(it.extendedProps || {}) })}>
+                <b>{nameOf(it)}</b>
+                <small>{late ? `${it.detail || TYPE_LABEL[it.type] || ''} · ${tr("{n} days late", { n: daysLate(it.start) })}` : `${it.type === 'events' ? timeOf(it) : (it.detail || TYPE_LABEL[it.type] || '')}${it.clientName ? ` · ${it.clientName}` : ''}`}</small>
+            </button>
+            <Faces ids={it.who} />
+            <button type="button" className="sch-dots" aria-label={tr("Actions")} aria-haspopup="menu" onClick={(e) => setMenu({ it, el: e.currentTarget })}><TbDots /></button>
+        </li>
     )
     const selectedDayClass = (arg) => (dayOf(arg.date) === selectedDay ? ['is-selected'] : [])
 
@@ -290,21 +348,22 @@ const Calendar = () => {
                             {[['dayGridMonth', tr("Month")], ['timeGridWeek', tr("Week")], ['timeGridDay', tr("Day")]].map(([v, l]) => <button key={v} type="button" aria-pressed={viewName === v} onClick={() => changeView(v)}>{l}</button>)}
                         </div>
                     </header>
-                    <CalendarView ref={calRef} headerToolbar={false} eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={Number(app.calendar_events_limit) || 3} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} dayCellClassNames={selectedDayClass} height="auto" />
+                    <CalendarView ref={calRef} headerToolbar={false} eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={2} moreLinkContent={(a) => `+${a.num}`} dayCellContent={(a) => <span className="sch-daytop"><span className="sch-daynum">{a.dayNumberText}</span><Faces ids={[...(peopleByDay[dayOf(a.date)] || [])]} max={3} /></span>} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} dayCellClassNames={selectedDayClass} height="auto" />
                 </section>
                 <aside className="sch-side">
                     <section className="card sch-agenda">
-                        <header className="sch-card__head"><div><h2>{tr("Agenda")}</h2><p>{dayLabel}{selectedDay === today ? ` · ${tr("Today")}` : ''}</p></div><button type="button" className="sch-ibtn" onClick={() => openNew(selectedDay)} aria-label={tr("Add an event on this day")} title={tr("Add an event on this day")}><TbPlus /></button></header>
-                        <ul className="sch-list">{agenda.map((it) => <Row key={it.id} it={it} />)}</ul>
+                        <header className="sch-card__head"><div><p className="sch-day__name">{dayjs(selectedDay).format('dddd')}{selectedDay === today ? ` · ${tr("Today")}` : ''}</p><h2 className="sch-day__big">{dayjs(selectedDay).format('D MMMM')}</h2><p className="sch-day__sub">{dayTasks.length ? tr("{a}/{b} done", { a: dayTasks.filter((t) => t.done).length, b: dayTasks.length }) : tr("No tasks")} · {tr("Overdue")} <b className={lateItems.length ? 'is-late' : ''}>{lateItems.length}</b></p></div><button type="button" className="sch-ibtn" onClick={() => openNew(selectedDay)} aria-label={tr("Add an event on this day")} title={tr("Add an event on this day")}><TbPlus /></button></header>
+                        <ul className="sch-list">{agenda.map((it) => row(it, false))}</ul>
                         {!agenda.length && <p className="sch-empty">{tr("Nothing planned for this day.")}</p>}
                     </section>
                     <section className="card sch-late">
                         <header className="sch-card__head"><div><h2>{tr("Overdue")}</h2><p>{lateItems.length ? tr("{n} still open", { n: lateItems.length }) : tr("Nothing is late")}</p></div></header>
-                        <ul className="sch-list">{lateItems.slice(0, 12).map((it) => <Row key={it.id} it={it} late />)}</ul>
+                        <ul className="sch-list">{lateItems.slice(0, 12).map((it) => row(it, true))}</ul>
                         {lateItems.length > 12 && <p className="sch-empty">{tr("+{n} more", { n: lateItems.length - 12 })}</p>}
                     </section>
                 </aside>
             </div>
+            {menu && <RowMenu anchor={menu.el} items={menuItems(menu.it)} onClose={() => setMenu(null)} />}
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete this event?")} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
                 <p>{tr("The event is removed for everyone who was invited.")}</p>

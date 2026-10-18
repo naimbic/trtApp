@@ -3680,5 +3680,8 @@ export default {
     "Nothing is late": "لا شيء متأخر",
     "Overdue, unfinished": "متأخر وغير منجز",
     "Previous": "السابق",
-    "needs attention": "يحتاج اهتمامًا"
+    "needs attention": "يحتاج اهتمامًا",
+    "No tasks": "لا مهام",
+    "Reschedule": "إعادة الجدولة",
+    "{a}/{b} done": "{a}/{b} منجزة"
 }

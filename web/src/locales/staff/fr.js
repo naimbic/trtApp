@@ -3680,5 +3680,8 @@ export default {
     "Nothing is late": "Rien n'est en retard",
     "Overdue, unfinished": "En retard, non terminé",
     "Previous": "Précédent",
-    "needs attention": "à traiter"
+    "needs attention": "à traiter",
+    "No tasks": "Aucune tâche",
+    "Reschedule": "Reprogrammer",
+    "{a}/{b} done": "{a}/{b} terminées"
 }

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.74.1',
+        date: '2026-10-18',
+        title: 'Schedule: big day, tick-off agenda, compact equal cells',
+        items: ['The first card of the right column drops the "Agenda" title: the date is big, with "1/1 done · Overdue 6" under it; each task has a checkbox (ticking finishes it, ticking again reopens it), the assigned people and a three-dots menu (Open, Mark complete or Reopen, Assign to, Reschedule); events and other entries have their own dot and an Open menu; the Overdue list works the same way', 'Calendar boxes all have the same height; entries are one compact line (a dot in the colour of the task status or of the event, the time, then the title), at most two per day and then +N; finished tasks stay on their day, struck through; the people behind the day show as small photos at the top right of its box', 'The team filter only lists active people']
+    },
+    {
         version: '0.74.0',
         date: '2026-10-18',
         title: 'Schedule like the Rapport demo; no more piles of "Failed to fetch"',

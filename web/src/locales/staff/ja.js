@@ -1,5 +1,6 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "The Departments list (ticket departments and the people in them): see, add, edit and delete departments. Setup items such as currencies, taxes and ticket statuses stay under Settings.": "部署の一覧（チケット部署とそのメンバー）：表示・追加・編集・削除。通貨、税、チケットステータスなどの設定項目は引き続き「設定」にあります。",
     "Tools": "ツール",
     "Team chat": "チームチャット",
     "The Calendar page: tasks, deadlines, meetings and events. Without it the page and its menu entry are hidden.": "カレンダーページ（タスク、期限、会議、イベント）。無効にするとページとメニュー項目が非表示になります。",

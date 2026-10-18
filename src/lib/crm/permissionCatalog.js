@@ -39,6 +39,7 @@ export const FEATURE_HINTS = {
     dashboard: 'The Dashboard with revenue, invoices and client figures. Administrators and people who manage roles always see it; everyone else lands on the Team dashboard.',
     activity_log: 'See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.',
     finance: 'Without this, every income, total, balance and money chart shows *** (cards, lists, reports, client profiles).',
+    departments: 'The Departments list (ticket departments and the people in them): see, add, edit and delete departments. Setup items such as currencies, taxes and ticket statuses stay under Settings.',
     calendar: 'The Calendar page: tasks, deadlines, meetings and events. Without it the page and its menu entry are hidden.',
     chat: 'The chat bubble and the Chat page: team room, direct messages and calls. Without it they are hidden and the chat refuses this person.',
     file_manager: 'The File manager page (every upload in one place). Files attached to a record stay visible to people who may see that record.',
@@ -114,6 +115,7 @@ export const PERMISSION_GROUPS = [
         features: [
             { key: 'staff', label: 'Team members', caps: CRUD },
             { key: 'roles', label: 'Roles & permissions', caps: CRUD },
+            { key: 'departments', label: 'Departments', caps: CRUD },
             { key: 'settings', label: 'Settings', caps: ['view', 'edit'] },
             { key: 'email_templates', label: 'Email templates', caps: ['view', 'edit'] },
             { key: 'bulk_pdf_exporter', label: 'Bulk PDF exporter', caps: ['view'] },

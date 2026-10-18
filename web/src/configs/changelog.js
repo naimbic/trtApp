@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.52.2',
+        date: '2026-10-18',
+        title: 'Roles: Departments',
+        items: ['Roles & permissions (and each member\'s access) now has its own "Departments" row with View, Create, Edit and Delete, in the Administration group; before, departments hid under Settings and had no row of their own', 'Nobody loses anything on update: whoever could see Settings gets Departments → View and whoever could edit Settings gets Create, Edit and Delete; the Admin and Super Admin roles have it']
+    },
+    {
         version: '0.52.1',
         date: '2026-10-18',
         title: 'Fix: Admin-role members could not add departments (or any setup item)',

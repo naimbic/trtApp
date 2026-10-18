@@ -1,5 +1,6 @@
 // Staff area: es. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "The Departments list (ticket departments and the people in them): see, add, edit and delete departments. Setup items such as currencies, taxes and ticket statuses stay under Settings.": "La lista de departamentos (departamentos de tickets y sus miembros): ver, añadir, editar y eliminar. Los elementos de configuración (monedas, impuestos, estados de tickets) siguen en Ajustes.",
     "Tools": "Herramientas",
     "Team chat": "Chat del equipo",
     "The Calendar page: tasks, deadlines, meetings and events. Without it the page and its menu entry are hidden.": "La página Calendario: tareas, plazos, reuniones y eventos. Sin ella, la página y su entrada de menú se ocultan.",

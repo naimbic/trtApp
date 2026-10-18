@@ -108,7 +108,7 @@ const resources = [
     },
     {
         key: 'departments', model: 'crmDepartment', label: 'Department', plural: 'Departments',
-        group: 'Administration', icon: 'TbBuilding', feature: 'settings',
+        group: 'Administration', icon: 'TbBuilding', feature: 'departments',
         titleField: 'name', search: ['name', 'email'], defaultSort: { name: 'asc' },
         columns: [
             { key: 'name', label: 'Name', type: 'text', link: true },

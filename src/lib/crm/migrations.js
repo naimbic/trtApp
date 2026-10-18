@@ -53,6 +53,31 @@ export async function migrateToolPermissions() {
     await prisma.crmOption.create({ data: { name: MARK3, value: new Date().toISOString() } })
 }
 
+/**
+ * Departments got their own permission (they were under Settings): whoever could see or change Settings keeps the
+ * same power over departments. Runs once, marker-guarded.
+ */
+export async function migrateDepartmentPermissions() {
+    const MARK4 = 'perm_migration_departments_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK4 } })) return
+    const map = { view: ['view'], edit: ['create', 'edit', 'delete'] }
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        const rows = await prisma.crmStaffPermission.findMany({ where: { staffId: s.id, feature: { in: ['settings', 'departments'] } }, select: { feature: true, capability: true } })
+        const has = new Set(rows.filter((r) => r.feature === 'departments').map((r) => r.capability))
+        const add = rows.filter((r) => r.feature === 'settings').flatMap((r) => map[r.capability] || []).filter((c) => !has.has(c))
+        if (add.length) await prisma.crmStaffPermission.createMany({ data: [...new Set(add)].map((capability) => ({ staffId: s.id, feature: 'departments', capability })) })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms) || !Array.isArray(perms.settings)) continue
+        const add = perms.settings.flatMap((c) => map[c] || [])
+        if (add.length) perms.departments = [...new Set([...(perms.departments || []), ...add])]
+        await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK4, value: new Date().toISOString() } })
+}
+
 /** Creates the standard roles that do not exist yet (never changes an existing role). Runs once, marker-guarded. */
 export async function ensureStandardRoles() {
     const MARK2 = 'standard_roles_v1'

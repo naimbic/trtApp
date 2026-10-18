@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.79.0',
+        date: '2026-10-18',
+        title: 'Recurring invoices: set them up, link the copies, and the nightly job finds them',
+        items: ['The invoice editor now has Repeat every N days / weeks / months / years and Stop after (copies); before, recurring could not be set from the app at all', 'A copy made by a recurring invoice shows at the top Recurring invoice of INV-… · date, linked to the original; the original shows its repeat rule, its last copy and the next date', 'Fix: the nightly job never picked up recurring invoices (and recurring expenses) created in the app, because on MongoDB a filter on an empty link field matches nothing when the field was never written; copies are now skipped in code instead']
+    },
+    {
         version: '0.78.1',
         date: '2026-10-18',
         title: 'Compact toasts in the top right',

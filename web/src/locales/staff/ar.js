@@ -3707,5 +3707,16 @@ export default {
     "New {what}": "{what} جديد",
     "Nothing here yet": "لا شيء هنا بعد",
     "Type a {what} first": "اكتب {what} أولاً",
-    "Clear": "مسح"
+    "Clear": "مسح",
+    "Leave empty for a one-time invoice. A new copy is created automatically each time.": "اتركه فارغًا للفاتورة لمرة واحدة. تُنشأ نسخة جديدة تلقائيًا في كل مرة.",
+    "Months": "أشهر",
+    "Open the recurring invoice": "فتح الفاتورة المتكررة",
+    "Recurring invoice of": "فاتورة متكررة من",
+    "Repeats every {n} {unit}": "تتكرر كل {n} {unit}",
+    "Stop after (copies)": "التوقف بعد (نسخ)",
+    "Years": "سنوات",
+    "last copy": "آخر نسخة",
+    "months": "أشهر",
+    "next on {date}": "التالية في {date}",
+    "years": "سنوات"
 }

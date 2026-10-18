@@ -64,7 +64,8 @@ async function invoicesJob({ o, today, lines, dry }) {
     // 4) recurring invoices
     const action = o('new_recurring_invoice_action', 'generate_unpaid')
     const onlyPaid = o('create_invoice_from_recurring_only_on_paid_invoices') === '1'
-    const parents = await prisma.crmInvoice.findMany({ where: { recurring: { gt: 0 }, status: { notIn: [5, 6] }, isRecurringFrom: null } })
+    // (copies are skipped in code: on MongoDB `isRecurringFrom: null` does not match invoices where the field was never written)
+    const parents = (await prisma.crmInvoice.findMany({ where: { recurring: { gt: 0 }, status: { notIn: [5, 6] } } })).filter((p) => !p.isRecurringFrom)
     for (const p of parents) {
         if (p.cycles > 0 && p.totalCycles >= p.cycles) continue
         const unit = p.customRecurring ? p.recurringType || 'month' : 'month'
@@ -180,7 +181,7 @@ async function cleanupJob({ o, lines, dry }) {
 
 /* ---------------- recurring expenses ---------------- */
 async function expensesJob({ today, lines, dry }) {
-    const parents = await prisma.crmExpense.findMany({ where: { recurring: true, recurringFrom: null } })
+    const parents = (await prisma.crmExpense.findMany({ where: { recurring: true } })).filter((p) => !p.recurringFrom)
     for (const p of parents) {
         if (p.cycles > 0 && p.totalCycles >= p.cycles) continue // reached the number of repeats asked for
         const next = addUnits(p.lastRecurringDate || p.date || p.createdAt, p.repeatEvery || 1, p.recurringType || 'month')

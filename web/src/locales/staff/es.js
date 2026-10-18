@@ -3707,5 +3707,16 @@ export default {
     "New {what}": "Nuevo {what}",
     "Nothing here yet": "Todavía no hay nada",
     "Type a {what} first": "Escribe primero un {what}",
-    "Clear": "Borrar"
+    "Clear": "Borrar",
+    "Leave empty for a one-time invoice. A new copy is created automatically each time.": "Déjalo vacío para una factura puntual. Se crea una nueva copia automáticamente cada vez.",
+    "Months": "Meses",
+    "Open the recurring invoice": "Abrir la factura recurrente",
+    "Recurring invoice of": "Factura recurrente de",
+    "Repeats every {n} {unit}": "Se repite cada {n} {unit}",
+    "Stop after (copies)": "Parar después de (copias)",
+    "Years": "Años",
+    "last copy": "última copia",
+    "months": "meses",
+    "next on {date}": "próxima el {date}",
+    "years": "años"
 }

@@ -3707,5 +3707,16 @@ export default {
     "New {what}": "新しい{what}",
     "Nothing here yet": "まだ何もありません",
     "Type a {what} first": "先に{what}を入力してください",
-    "Clear": "クリア"
+    "Clear": "クリア",
+    "Leave empty for a one-time invoice. A new copy is created automatically each time.": "単発の請求書の場合は空のままにしてください。新しいコピーが毎回自動的に作成されます。",
+    "Months": "か月",
+    "Open the recurring invoice": "定期請求書を開く",
+    "Recurring invoice of": "定期請求書の元：",
+    "Repeats every {n} {unit}": "{n}{unit}ごとに繰り返し",
+    "Stop after (copies)": "停止するまでのコピー数",
+    "Years": "年",
+    "last copy": "直近のコピー",
+    "months": "か月",
+    "next on {date}": "次回：{date}",
+    "years": "年"
 }

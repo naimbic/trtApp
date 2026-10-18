@@ -90,7 +90,17 @@ export async function getInvoiceDocument(id) {
         prisma.crmSalesActivity.findMany({ where: { relType: REL, relId: id }, orderBy: { date: 'desc' }, take: 50 }),
     ])
     const paid = round2(payments.reduce((s, p) => s + (p.amount || 0), 0))
+    // a copy made by a recurring invoice points back to it; the recurring invoice itself points to its latest copy
+    const pad = await numberPadding()
+    const label = (r) => r && { id: r.id, displayNumber: formatDocumentNumber({ prefix: r.prefix, number: r.number, numberFormat: r.numberFormat, date: r.date, padding: pad }), date: r.date }
+    const pick = { id: true, number: true, prefix: true, numberFormat: true, date: true }
+    const [original, latest] = await Promise.all([
+        invoice.isRecurringFrom ? prisma.crmInvoice.findUnique({ where: { id: invoice.isRecurringFrom }, select: pick }) : null,
+        invoice.recurring > 0 ? prisma.crmInvoice.findFirst({ where: { isRecurringFrom: id }, orderBy: { createdAt: 'desc' }, select: pick }) : null,
+    ])
     return plain({
+        recurringFrom: label(original),
+        lastGenerated: label(latest),
         invoice: {
             ...invoice,
             displayNumber: formatDocumentNumber({
@@ -159,6 +169,11 @@ export async function saveInvoice(input) {
         terms: input.terms || null,
         // "send reminders to the client" (default on) is kept as the Perfex flag that cancels the overdue ones
         ...(input.remindClient !== undefined ? { cancelOverdueReminders: input.remindClient === false } : {}),
+        // recurring: repeat every N days / weeks / months / years, for a number of cycles (0 = until stopped)
+        ...(input.recurring !== undefined && !input.isRecurringCopy ? (() => {
+            const n = Math.max(0, Math.min(Math.floor(Number(input.recurring)) || 0, 365))
+            return { recurring: n, recurringType: n ? (['day', 'week', 'month', 'year'].includes(input.recurringType) ? input.recurringType : 'month') : null, customRecurring: n > 0, cycles: n ? Math.max(0, Math.floor(Number(input.cycles)) || 0) : 0 }
+        })() : {}),
     }
 
     let invoice
@@ -181,6 +196,7 @@ export async function saveInvoice(input) {
     } else {
         const existing = await prisma.crmInvoice.findUnique({ where: { id: input.id } })
         if (!existing) return fail('Invoice not found')
+        if (existing.isRecurringFrom) for (const k of ['recurring', 'recurringType', 'customRecurring', 'cycles']) delete data[k] // a copy does not repeat itself
         invoice = await prisma.crmInvoice.update({ where: { id: input.id }, data })
         const oldLines = await prisma.crmItemable.findMany({ where: { relType: REL, relId: invoice.id }, select: { id: true } })
         await prisma.crmItemTax.deleteMany({ where: { relType: REL, relId: invoice.id } })

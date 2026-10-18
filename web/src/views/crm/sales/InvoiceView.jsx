@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging, TbFileTypePdf, TbDownload, TbPrinter } from 'react-icons/tb'
+import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging, TbFileTypePdf, TbDownload, TbPrinter, TbRepeat } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -104,6 +104,18 @@ const InvoiceView = () => {
                 <h3 className="mr-1">{tr("Invoice")} {invoice.displayNumber}</h3>
                 <StatusTag status={st} />
                 {!invoice.sent && st === 1 && <span className="text-xs text-gray-400">{tr("not sent")}</span>}
+                {data.recurringFrom && (
+                    <Link to={`/crm/invoices/${data.recurringFrom.id}`} className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 hover:text-primary dark:bg-gray-700 dark:text-gray-300" title={tr("Open the recurring invoice")}>
+                        <TbRepeat />{tr("Recurring invoice of")} {data.recurringFrom.displayNumber} · {fmtDate(data.recurringFrom.date)}
+                    </Link>
+                )}
+                {invoice.recurring > 0 && (
+                    <span className="inline-flex flex-wrap items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                        <TbRepeat />{tr("Repeats every {n} {unit}", { n: invoice.recurring, unit: { day: tr("days"), week: tr("weeks"), month: tr("months"), year: tr("years") }[invoice.recurringType] || tr("months") })}
+                        {data.lastGenerated && <> · {tr("last copy")} <Link className="hover:text-primary hover:underline" to={`/crm/invoices/${data.lastGenerated.id}`}>{data.lastGenerated.displayNumber}</Link></>}
+                        {' · '}{tr("next on {date}", { date: dayjs(invoice.lastRecurringDate || invoice.date).add(invoice.recurring, invoice.recurringType || 'month').format('DD MMM YYYY') })}
+                    </span>
+                )}
                 <div className="ml-auto flex flex-wrap items-center gap-2">
                     {can('payments', 'create') && !cancelled && balance > 0 && <Button size="sm" variant="solid" icon={<TbCash />} onClick={() => { setPay((p) => ({ ...p, amount: balance })); setPayOpen(true) }}>{tr("Record payment")}</Button>}
                     {canEdit && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>{tr("Send")}</Button>}

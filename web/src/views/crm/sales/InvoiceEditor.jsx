@@ -16,6 +16,7 @@ import { tr } from '@/utils/t'
 import ReminderSwitch from '../kit/ReminderSwitch'
 import BankAccountSelect from '../kit/BankAccountSelect'
 
+const RECUR_UNITS = () => [{ value: 'day', label: tr("Days") }, { value: 'week', label: tr("Weeks") }, { value: 'month', label: tr("Months") }, { value: 'year', label: tr("Years") }]
 const emptyLine = () => ({ description: '', longDescription: '', qty: 1, rate: 0, unit: '', taxes: [] })
 const day = (v) => (v ? dayjs(v).format('YYYY-MM-DD') : '')
 const money2 = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -56,6 +57,7 @@ const InvoiceEditor = () => {
                     adjustment: inv?.adjustment || 0,
                     clientNote: inv ? inv.clientNote || '' : dd.clientNote || '', adminNote: inv?.adminNote || '', terms: inv ? inv.terms || '' : dd.terms || '',
                     remindClient: inv ? !inv.cancelOverdueReminders : true,
+                    recurring: inv?.recurring || 0, recurringType: inv?.recurringType || 'month', cycles: inv?.cycles || 0, isCopy: !!inv?.isRecurringFrom,
                     items: d?.items?.length ? d.items : [baseLine()],
                 })
             })
@@ -114,6 +116,22 @@ const InvoiceEditor = () => {
                         <div />
                         <div><label className="form-label mb-2 block">{tr("Invoice date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
                         <div><label className="form-label mb-2 block">{tr("Due date")}</label><Input type="date" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></div>
+                        {!v.isCopy && (
+                            <>
+                                <div className="md:col-span-2">
+                                    <label className="form-label mb-2 block">{tr("Repeat every")}</label>
+                                    <div className="flex gap-2">
+                                        <div className="w-24"><Input type="number" min={0} max={365} placeholder="0" value={v.recurring || ''} onChange={(e) => set({ recurring: e.target.value })} /></div>
+                                        <div className="w-40"><Select isSearchable={false} isDisabled={!Number(v.recurring)} options={RECUR_UNITS()} value={RECUR_UNITS().find((o) => o.value === v.recurringType)} onChange={(o) => set({ recurringType: o.value })} /></div>
+                                    </div>
+                                    <p className="mt-1 text-xs text-gray-400">{tr("Leave empty for a one-time invoice. A new copy is created automatically each time.")}</p>
+                                </div>
+                                <div>
+                                    <label className="form-label mb-2 block">{tr("Stop after (copies)")}</label>
+                                    <Input type="number" min={0} disabled={!Number(v.recurring)} placeholder={tr("Never")} value={v.cycles || ''} onChange={(e) => set({ cycles: e.target.value })} />
+                                </div>
+                            </>
+                        )}
                     </div>
                 </Card>
 

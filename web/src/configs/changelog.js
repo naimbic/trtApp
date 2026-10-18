@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.63.2',
+        date: '2026-10-18',
+        title: 'Pipeline: the dragged tile follows the mouse and takes the colour of the column it is over',
+        items: ['The tile you drag now sits right under the pointer (it was far below it because the column animation acted as a frame for it); it is lifted out of the column while dragging so nothing clips it', 'While dragging, the tile changes to the colour of the column it hovers and fades back if you leave', 'Page entrance animations no longer keep a transform after they end']
+    },
+    {
         version: '0.63.1',
         date: '2026-10-18',
         title: 'Better period panel, soft colours and a custom colour',

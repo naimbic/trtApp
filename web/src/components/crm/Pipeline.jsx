@@ -1,4 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
+import { createPortal } from 'react-dom'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { TbCalendar, TbInbox } from 'react-icons/tb'
 import cn from '@/utils/classNames'
@@ -51,6 +52,7 @@ const Pipeline = ({ columns, onMove, onOpen, canDrag = () => true, loading = fal
         const item = col?.items.find((i) => String(i.id) === draggableId)
         if (item) onMove?.({ item, from: source.droppableId, to: destination.droppableId, index: destination.index, fromIndex: source.index })
     }
+    const tones = Object.fromEntries(columns.map((c) => [String(c.id), colourOf(c)]))
     return (
         <div className="rp-pl">
             <DragDropContext onDragEnd={onDragEnd}>
@@ -70,7 +72,13 @@ const Pipeline = ({ columns, onMove, onOpen, canDrag = () => true, loading = fal
                                         <div ref={prov.innerRef} {...prov.droppableProps} className={cn('rp-pl-body', snap.isDraggingOver && 'is-over')}>
                                             {c.items.map((it, i) => (
                                                 <Draggable key={it.id} draggableId={String(it.id)} index={i} isDragDisabled={!canDrag(it, c)}>
-                                                    {(p, s) => <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className="rp-pl-card"><Tile item={it} onOpen={onOpen} dragging={s.isDragging} index={i} /></div>}
+                                                    {(p, s) => {
+                                                        // while it is dragged the tile takes the colour of the column it is over
+                                                        const [tt, oo] = s.draggingOver && tones[s.draggingOver] ? tones[s.draggingOver] : [t, on]
+                                                        const node = <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className={cn('rp-pl-card', s.isDragging && 'rp-portal')} style={{ ...p.draggableProps.style, '--t': tt, '--on': oo }}><Tile item={it} onOpen={onOpen} dragging={s.isDragging} index={i} /></div>
+                                                        // lifted into the page body so no column (mask, scroll, animation) can offset or clip it
+                                                        return s.isDragging ? createPortal(node, document.body) : node
+                                                    }}
                                                 </Draggable>
                                             ))}
                                             {prov.placeholder}

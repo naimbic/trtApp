@@ -2,7 +2,7 @@
 /* the shared pipeline board: glass columns, coloured tiles */
 .rp-pl { --pl-h: clamp(460px, calc(100dvh - 300px), 1200px); }
 .rp-pl-cols { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(268px, 1fr); gap: 14px; height: var(--pl-h); overflow-x: auto; padding-block-end: 4px; scrollbar-width: thin; scroll-snap-type: x proximity; }
-.rp-pl-col { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; padding: 12px 10px 0; border-radius: var(--rp-r-card); background: var(--rp-glass); border: 1px solid var(--rp-rim); box-shadow: var(--rp-shadow); scroll-snap-align: start; animation: rp-land .7s var(--rp-ease) both; animation-delay: calc(var(--ci, 0) * 70ms); }
+.rp-pl-col { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; padding: 12px 10px 0; border-radius: var(--rp-r-card); background: var(--rp-glass); border: 1px solid var(--rp-rim); box-shadow: var(--rp-shadow); scroll-snap-align: start; animation: rp-land .7s var(--rp-ease) backwards; animation-delay: calc(var(--ci, 0) * 70ms); }  /* backwards: a filled transform would keep acting as a containing block for the dragged tile */
 .rp-pl-head { display: flex; align-items: center; gap: 8px; padding: 0 4px 10px 6px; min-height: 40px; }
 .rp-pl-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--t); flex: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--t) 22%, transparent); }
 .rp-pl-name { font-size: 14.5px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -17,7 +17,7 @@
 
 /* the tile */
 .rp-pl-card { flex: none; outline: none; }
-.rp-face { position: relative; display: grid; gap: 3px; min-height: 132px; padding: 12px 14px 12px 16px; border-radius: var(--rp-r-tile, 22px); background: var(--t); color: var(--on); cursor: grab; user-select: none; -webkit-user-select: none; box-shadow: 0 1px 0 rgba(255, 255, 255, .18) inset, 0 14px 24px -20px rgba(30, 20, 10, .5); transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), box-shadow .3s var(--rp-ease); animation: rp-deal .6s var(--rp-ease) both; animation-delay: calc(var(--i, 0) * 45ms + .2s); }
+.rp-face { position: relative; display: grid; gap: 3px; min-height: 132px; padding: 12px 14px 12px 16px; border-radius: var(--rp-r-tile, 22px); background: var(--t); color: var(--on); cursor: grab; user-select: none; -webkit-user-select: none; box-shadow: 0 1px 0 rgba(255, 255, 255, .18) inset, 0 14px 24px -20px rgba(30, 20, 10, .5); transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), box-shadow .3s var(--rp-ease), background-color .25s var(--rp-ease), color .25s var(--rp-ease); animation: rp-deal .6s var(--rp-ease) backwards; animation-delay: calc(var(--i, 0) * 45ms + .2s); }
 @keyframes rp-deal { from { opacity: 0; transform: translateY(22px) rotate(-2.5deg) scale(.96); } to { opacity: 1; transform: none; } }
 .rp-face:hover { transform: translateY(-4px); box-shadow: 0 1px 0 rgba(255, 255, 255, .18) inset, 0 22px 28px -18px rgba(30, 20, 10, .55); }
 .rp-face.is-drag { transform: rotate(2.2deg) scale(1.03); box-shadow: 0 34px 50px -18px rgba(30, 20, 10, .5), 0 10px 20px -10px rgba(30, 20, 10, .3); cursor: grabbing; animation: none; }

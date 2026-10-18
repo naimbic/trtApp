@@ -19,6 +19,8 @@ import { StatusTag, fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import { tr, trn } from '@/utils/t'
+import RichText from '../kit/RichText'
+import { plainText } from '@/lib/crm/richText'
 
 /** Effective status for display (overdue derives from the due date, like the list). */
 const effective = (inv, paid) => {
@@ -144,7 +146,7 @@ const InvoiceView = () => {
                                     {items.map((it, i) => (
                                         <div key={it.id} className="grid grid-cols-[28px_minmax(0,1fr)_80px_110px_70px_120px] gap-x-3 border-b border-gray-100 py-3 text-sm last:border-0 dark:border-gray-700">
                                             <span className="text-gray-400">{i + 1}</span>
-                                            <div className="min-w-0"><div className="font-medium heading-text">{it.description}</div>{it.longDescription && <div className="mt-0.5 whitespace-pre-line text-xs text-gray-500">{it.longDescription}</div>}</div>
+                                            <div className="min-w-0"><div className="font-medium heading-text">{plainText(it.description)}</div>{it.longDescription && <RichText className="mt-0.5 text-xs text-gray-500" html={it.longDescription} />}</div>
                                             <span className="text-right tabular-nums">{it.qty}{it.unit ? ` ${it.unit}` : ''}</span>
                                             <span className="text-right tabular-nums">{money(it.rate)}</span>
                                             <span className="flex flex-wrap gap-1">{it.taxes.length ? it.taxes.map((t, k) => <span key={k} className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-700">{t.rate}%</span>) : <span className="text-gray-400">—</span>}</span>
@@ -167,8 +169,8 @@ const InvoiceView = () => {
                         {(invoice.clientNote || invoice.terms) && (
                             <Card>
                                 <div className="grid gap-4 text-sm md:grid-cols-2">
-                                    {invoice.clientNote && <div><div className={label}>{tr("Client note")}</div><p className="mt-1 whitespace-pre-line">{invoice.clientNote}</p></div>}
-                                    {invoice.terms && <div><div className={label}>{tr("Terms")}</div><p className="mt-1 whitespace-pre-line">{invoice.terms}</p></div>}
+                                    {invoice.clientNote && <div><div className={label}>{tr("Client note")}</div><RichText className="mt-1" html={invoice.clientNote} /></div>}
+                                    {invoice.terms && <div><div className={label}>{tr("Terms")}</div><RichText className="mt-1" html={invoice.terms} /></div>}
                                 </div>
                             </Card>
                         )}
@@ -194,7 +196,7 @@ const InvoiceView = () => {
                             <AttachmentsPanel relType="invoice" relId={id} canEdit={can('invoices', 'edit')} showClientToggle />
                         </Card>
 
-                        {invoice.adminNote && <Card><h5 className="mb-2">{tr("Internal note")}</h5><p className="whitespace-pre-line text-sm">{invoice.adminNote}</p></Card>}
+                        {invoice.adminNote && <Card><h5 className="mb-2">{tr("Internal note")}</h5><RichText className="text-sm" html={invoice.adminNote} /></Card>}
 
                         {activity.length > 0 && (
                             <Card>

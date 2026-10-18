@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.58.2',
+        date: '2026-10-18',
+        title: 'Fix: HTML showing inside invoice items',
+        items: ['Item descriptions, client notes, terms and internal notes that came from the old system as HTML (or as escaped HTML like &lt;p&gt;) were shown with their tags on the invoice, estimate, proposal and purchase order pages; they now show as formatted text (paragraphs, bold, lists, links), and the item title as plain text', 'Safe by design: only harmless tags are kept, scripts, styles, attributes and unknown tags are dropped; the editors show the same text without tags and keep the original until you change a line', 'The PDFs and public pages already cleaned these texts; nothing changes there']
+    },
+    {
         version: '0.58.1',
         date: '2026-10-18',
         title: 'Cron: a switch on each card, and who/how much in the preview',

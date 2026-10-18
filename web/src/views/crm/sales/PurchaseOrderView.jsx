@@ -14,6 +14,8 @@ import { makeMoney, useClientLookups } from '../clients/shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import { PoStatusTag, fmtDate } from './shared'
 import { tr } from '@/utils/t'
+import RichText from '../kit/RichText'
+import { plainText } from '@/lib/crm/richText'
 
 
 const PurchaseOrderView = () => {
@@ -95,7 +97,7 @@ const PurchaseOrderView = () => {
                             <tbody>
                                 {items.map((it) => (
                                     <tr key={it.id} className="border-b align-top">
-                                        <td className="py-2"><div className="font-medium">{it.description}</div>{it.longDescription && <div className="whitespace-pre-line text-gray-500">{it.longDescription}</div>}</td>
+                                        <td className="py-2"><div className="font-medium">{plainText(it.description)}</div>{it.longDescription && <RichText className="text-gray-500" html={it.longDescription} />}</td>
                                         <td className="py-2 text-right tabular-nums">{it.qty}{it.unit ? ` ${it.unit}` : ''}</td>
                                         <td className="py-2 text-right tabular-nums">{m(it.rate)}</td>
                                         <td className="py-2">{it.taxes.map((t) => `${t.rate}%`).join(', ') || '—'}</td>
@@ -117,9 +119,9 @@ const PurchaseOrderView = () => {
                 {(e.clientNote || e.adminNote || e.terms) && (
                     <Card>
                         <div className="grid gap-6 text-sm md:grid-cols-3">
-                            {e.clientNote && <div><div className="mb-1 font-semibold">{tr("Client note")}</div><p className="whitespace-pre-line text-gray-600 dark:text-gray-300">{e.clientNote}</p></div>}
-                            {e.adminNote && <div><div className="mb-1 font-semibold">{tr("Internal note")}</div><p className="whitespace-pre-line text-gray-600 dark:text-gray-300">{e.adminNote}</p></div>}
-                            {e.terms && <div><div className="mb-1 font-semibold">{tr("Terms & conditions")}</div><p className="whitespace-pre-line text-gray-600 dark:text-gray-300">{e.terms}</p></div>}
+                            {e.clientNote && <div><div className="mb-1 font-semibold">{tr("Client note")}</div><RichText className="text-gray-600 dark:text-gray-300" html={e.clientNote} /></div>}
+                            {e.adminNote && <div><div className="mb-1 font-semibold">{tr("Internal note")}</div><RichText className="text-gray-600 dark:text-gray-300" html={e.adminNote} /></div>}
+                            {e.terms && <div><div className="mb-1 font-semibold">{tr("Terms & conditions")}</div><RichText className="text-gray-600 dark:text-gray-300" html={e.terms} /></div>}
                         </div>
                     </Card>
                 )}

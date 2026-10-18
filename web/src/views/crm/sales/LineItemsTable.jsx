@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import StrictModeDroppable from '@/components/shared/StrictModeDroppable'
 import { tr } from '@/utils/t'
+import { plainText } from '@/lib/crm/richText'
 
 const money2 = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const COLS = 'grid grid-cols-[24px_minmax(0,1fr)_72px_104px_minmax(0,200px)_104px_32px] items-start gap-x-2'
@@ -53,7 +54,7 @@ const LineItemsTable = ({ items, onChange, taxOptions, newLine }) => {
                                             {(drag, snap) => (
                                                 <div ref={drag.innerRef} {...drag.draggableProps} className={`${COLS} mb-2 rounded-xl border bg-white p-2 dark:bg-gray-800 ${snap.isDragging ? 'border-primary shadow-lg' : 'border-gray-200 dark:border-gray-600'}`} style={drag.draggableProps.style}>
                                                     <span {...drag.dragHandleProps} title={tr("Drag to reorder")} className="flex h-9 cursor-grab items-center justify-center text-xl text-gray-400 hover:text-primary"><TbGripVertical /></span>
-                                                    <div className="min-w-0"><Input value={it.description} placeholder={tr("Description")} onChange={(e) => setLine(i, { description: e.target.value })} /><Input className="mt-1" textArea rows={2} value={it.longDescription} placeholder={tr("Long description (optional)")} onChange={(e) => setLine(i, { longDescription: e.target.value })} /></div>
+                                                    <div className="min-w-0"><Input value={plainText(it.description)} placeholder={tr("Description")} onChange={(e) => setLine(i, { description: e.target.value })} /><Input className="mt-1" textArea rows={2} value={plainText(it.longDescription)} placeholder={tr("Long description (optional)")} onChange={(e) => setLine(i, { longDescription: e.target.value })} /></div>
                                                     <Input type="number" step="any" value={it.qty} onChange={(e) => setLine(i, { qty: e.target.value === '' ? '' : Number(e.target.value) })} />
                                                     <Input type="number" step="0.01" value={it.rate} onChange={(e) => setLine(i, { rate: e.target.value === '' ? '' : Number(e.target.value) })} />
                                                     <Select isMulti menuPortalTarget={document.body} menuPosition="fixed" options={taxOptions} value={taxOptions.filter((o) => it.taxes.some((t) => `${t.name}|${t.rate}` === o.value))} onChange={(opts) => setLine(i, { taxes: (opts || []).map((o) => o.tax) })} />

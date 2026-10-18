@@ -15,6 +15,8 @@ import { makeMoney, useClientLookups } from '../clients/shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import { ProposalStatusTag, fmtDate } from './shared'
 import { tr } from '@/utils/t'
+import RichText from '../kit/RichText'
+import { plainText } from '@/lib/crm/richText'
 
 const effective = (p) => (p.openTill && [1, 4, 5].includes(p.status) && fmtDate(p.openTill) < fmtDate(new Date()) ? 7 : p.status)
 
@@ -118,7 +120,7 @@ const ProposalView = () => {
                             <tbody>
                                 {items.map((it) => (
                                     <tr key={it.id} className="border-b align-top">
-                                        <td className="py-2"><div className="font-medium">{it.description}</div>{it.longDescription && <div className="whitespace-pre-line text-gray-500">{it.longDescription}</div>}</td>
+                                        <td className="py-2"><div className="font-medium">{plainText(it.description)}</div>{it.longDescription && <RichText className="text-gray-500" html={it.longDescription} />}</td>
                                         <td className="py-2 text-right tabular-nums">{it.qty}{it.unit ? ` ${it.unit}` : ''}</td>
                                         <td className="py-2 text-right tabular-nums">{m(it.rate)}</td>
                                         <td className="py-2">{it.taxes.map((t) => `${t.rate}%`).join(', ') || '—'}</td>

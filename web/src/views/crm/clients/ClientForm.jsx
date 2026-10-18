@@ -17,7 +17,11 @@ import { tr } from '@/utils/t'
 import BankAccountSelect from '../kit/BankAccountSelect'
 
 const addr = { street: '', city: '', state: '', zip: '', country: null }
-const blank = { logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
+const blank = { diffBilling: false, diffShipping: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
+
+const norm = (x) => String(x ?? '').trim().toLowerCase()
+const sameAddress = (a, b) => ['street', 'city', 'state', 'zip'].every((k) => norm(a?.[k]) === norm(b?.[k])) && String(a?.country ?? '') === String(b?.country ?? '')
+const isBlankAddress = (a) => !['street', 'city', 'state', 'zip'].some((k) => norm(a?.[k])) && !a?.country
 
 const Address = ({ value, onChange, countries }) => (
     <div>
@@ -48,7 +52,12 @@ const ClientForm = () => {
     useEffect(() => {
         if (!id) return
         api(`/api/crm/customers/${id}`).then((c) => {
-            setV({ ...blank, logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
+            const main = { street: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null }
+            const bil = { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }
+            const shp = { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null }
+            // a billing / shipping address that is empty or the same as the address above is just "the same": its fields stay hidden
+            const differs = (x, ref) => !sameAddress(x, ref) && !isBlankAddress(x)
+            setV({ ...blank, diffBilling: differs(bil, main), diffShipping: differs(shp, differs(bil, main) ? bil : main), logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
         }).catch((e) => setError(e.message)).finally(() => setLoading(false))
     }, [id])
 
@@ -58,6 +67,11 @@ const ClientForm = () => {
         setError('')
         try {
             const body = { ...v }
+            // with the switches off, billing (and shipping) are simply the address above
+            const main = { street: v.address, city: v.city, state: v.state, zip: v.zip, country: v.country }
+            body.billing = v.diffBilling ? v.billing : { ...main }
+            body.shipping = v.diffShipping ? v.shipping : { ...body.billing }
+            delete body.diffBilling; delete body.diffShipping
             delete body.logoUrl
             if (id) delete body.contact
             const res = id ? await api(`/api/crm/customers/${id}`, { method: 'PATCH', body }) : await api('/api/crm/customers', { method: 'POST', body })
@@ -99,19 +113,31 @@ const ClientForm = () => {
                             </div>
                         </Card>
                         <Card>
-                            <h4 className="mb-6">{tr("Address")}</h4>
+                            <div className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                                <h4>{tr("Address")}</h4>
+                                <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+                                    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-500"><span>{tr("Different billing address")}</span><Switcher checked={!!v.diffBilling} onChange={(c) => set({ diffBilling: c, ...(c && isBlankAddress(v.billing) ? { billing: { street: v.address, city: v.city, state: v.state, zip: v.zip, country: v.country } } : {}) })} /></label>
+                                    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-500"><span>{tr("Different shipping address")}</span><Switcher checked={!!v.diffShipping} onChange={(c) => set({ diffShipping: c, ...(c && isBlankAddress(v.shipping) ? { shipping: { ...(v.diffBilling ? v.billing : { street: v.address, city: v.city, state: v.state, zip: v.zip, country: v.country }) } } : {}) })} /></label>
+                                </div>
+                            </div>
                             <Address value={{ street: v.address, city: v.city, state: v.state, zip: v.zip, country: v.country }} countries={lookups.countries} onChange={(a) => set({ address: a.street, city: a.city, state: a.state, zip: a.zip, country: a.country })} />
+                            {(v.diffBilling || v.diffShipping) && (
+                                <div className={`mt-5 grid grid-cols-1 gap-x-6 gap-y-5 border-t border-gray-100 pt-5 dark:border-gray-700 ${v.diffBilling && v.diffShipping ? 'xl:grid-cols-2' : ''}`}>
+                                    {v.diffBilling && (
+                                        <div>
+                                            <div className="mb-3 flex items-center justify-between"><h5>{tr("Billing address")}</h5><Button size="xs" type="button" onClick={() => set({ billing: { street: v.address, city: v.city, state: v.state, zip: v.zip, country: v.country } })}>{tr("Copy the address")}</Button></div>
+                                            <Address value={v.billing} countries={lookups.countries} onChange={(billing) => set({ billing })} />
+                                        </div>
+                                    )}
+                                    {v.diffShipping && (
+                                        <div>
+                                            <div className="mb-3 flex items-center justify-between"><h5>{tr("Shipping address")}</h5><Button size="xs" type="button" onClick={() => set({ shipping: v.diffBilling ? { ...v.billing } : { street: v.address, city: v.city, state: v.state, zip: v.zip, country: v.country } })}>{tr("Copy the billing address")}</Button></div>
+                                            <Address value={v.shipping} countries={lookups.countries} onChange={(shipping) => set({ shipping })} />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </Card>
-                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                            <Card>
-                                <div className="mb-4 flex items-center justify-between"><h4>{tr("Billing address")}</h4><Button size="xs" type="button" onClick={() => set({ billing: { street: v.address, city: v.city, state: v.state, zip: v.zip, country: v.country } })}>{tr("Same as address")}</Button></div>
-                                <Address value={v.billing} countries={lookups.countries} onChange={(billing) => set({ billing })} />
-                            </Card>
-                            <Card>
-                                <div className="mb-4 flex items-center justify-between"><h4>{tr("Shipping address")}</h4><Button size="xs" type="button" onClick={() => set({ shipping: { ...v.billing } })}>{tr("Same as billing")}</Button></div>
-                                <Address value={v.shipping} countries={lookups.countries} onChange={(shipping) => set({ shipping })} />
-                            </Card>
-                        </div>
                         {!id && (
                             <Card>
                                 <h4 className="mb-1">{tr("Primary contact")}</h4>

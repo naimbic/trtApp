@@ -1,5 +1,9 @@
 // Staff area: es. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Different billing address": "Dirección de facturación distinta",
+    "Different shipping address": "Dirección de envío distinta",
+    "Copy the address": "Copiar la dirección",
+    "Copy the billing address": "Copiar la dirección de facturación",
     "Banks": "Bancos",
     "The bank accounts printed on invoices, estimates and purchase orders": "Las cuentas bancarias impresas en facturas, presupuestos y pedidos",
     "Add every account you use (name, bank, holder, RIB / IBAN, SWIFT). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.": "Añade cada cuenta que uses (nombre, banco, titular, RIB / IBAN, SWIFT). Se imprime la cuenta por defecto salvo que un cliente o un documento tenga la suya: elígela en la ficha del cliente o en el propio documento. Rellenan los términos company_bank, company_rib, company_swift y company_bank_holder. Los campos únicos Banco / RIB / SWIFT de la empresa solo se usan mientras aquí no exista ninguna cuenta.",

@@ -1,5 +1,9 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Different billing address": "請求先住所が異なる",
+    "Different shipping address": "配送先住所が異なる",
+    "Copy the address": "住所をコピー",
+    "Copy the billing address": "請求先住所をコピー",
     "Banks": "銀行",
     "The bank accounts printed on invoices, estimates and purchase orders": "請求書・見積書・発注書に印刷される銀行口座",
     "Add every account you use (name, bank, holder, RIB / IBAN, SWIFT). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.": "使用する口座をすべて追加してください（名前、銀行、名義、RIB / IBAN、SWIFT）。顧客や書類に個別の口座がなければ既定の口座が印刷されます。顧客ページまたは書類で選択できます。company_bank、company_rib、company_swift、company_bank_holder に反映されます。会社情報の単一の銀行・RIB・SWIFT欄は、ここに口座がない間だけ使われます。",

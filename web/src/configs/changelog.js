@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.60.1',
+        date: '2026-10-18',
+        title: 'Client page: compact addresses',
+        items: ['The client edit page now shows only the Address card. At its top right two switches, both off by default, reveal a separate Billing address and Shipping address; while a switch is off, that address is simply the one above (it is saved as a copy, so documents print it)', 'A client whose billing or shipping address already differs opens with the matching switch on; turning a switch on starts from a copy of the address, with a button to copy it again']
+    },
+    {
         version: '0.60.0',
         date: '2026-10-18',
         title: 'Banks tab, and a new top for documents',

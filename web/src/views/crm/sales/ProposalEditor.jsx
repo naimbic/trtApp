@@ -16,6 +16,7 @@ import VisualEditor from '../mail/VisualEditor'
 import { useClientLookups } from '../clients/shared'
 import { makeMoney } from '../clients/shared'
 import { tr } from '@/utils/t'
+import ReminderSwitch from '../kit/ReminderSwitch'
 
 const emptyLine = () => ({ description: '', longDescription: '', qty: 1, rate: 0, unit: '', taxes: [] })
 const day = (v) => (v ? dayjs(v).format('YYYY-MM-DD') : '')
@@ -46,7 +47,7 @@ const ProposalEditor = () => {
                 setV({
                     subject: inv?.subject || '', relType: inv?.relType || (params.get('leadId') ? 'lead' : 'customer'), relId: inv?.relId || params.get('clientId') || params.get('leadId') || null,
                     proposalTo: inv?.proposalTo || '', email: inv?.email || '', phone: inv?.phone || '', address: inv?.address || '', city: inv?.city || '', state: inv?.state || '', zip: inv?.zip || '', country: inv?.country ?? null,
-                    content: inv?.content ?? '<p>Hello,</p><p>Thank you for your interest. Please find our offer below.</p><p>{proposal_items}</p><p>We look forward to working with you.</p>', allowComments: inv ? inv.allowComments !== false : true, assignedId: inv?.assignedId || null,
+                    content: inv?.content ?? '<p>Hello,</p><p>Thank you for your interest. Please find our offer below.</p><p>{proposal_items}</p><p>We look forward to working with you.</p>', allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || null,
                     date: day(inv?.date) || day(new Date()),
                     openTill: inv ? day(inv.openTill) : (dueAfter > 0 ? day(dayjs().add(dueAfter, 'day')) : ''),
                     currencyId: inv?.currencyId || def?.id || null,
@@ -172,6 +173,10 @@ const ProposalEditor = () => {
 
                 <Card>
                     <div className="flex items-center justify-between gap-4"><div><div className="font-semibold">{tr("Allow comments")}</div><div className="text-sm text-gray-500">{tr("The client can write comments on the public proposal page")}</div></div><Switcher checked={v.allowComments} onChange={(c) => set({ allowComments: c })} /></div>
+                </Card>
+
+                <Card>
+                    <ReminderSwitch checked={v.remindClient !== false} onChange={(c) => set({ remindClient: c })} title={tr("Send expiry reminders to the client")} hint={tr("Shortly before the proposal closes, the client receives a reminder email.")} />
                 </Card>
 
                 <div className="flex justify-end gap-2">

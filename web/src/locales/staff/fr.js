@@ -1,5 +1,13 @@
 // Staff area: fr. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "If the invoice is still unpaid after its due date, the client receives the reminder email.": "Si la facture reste impayée après son échéance, le client reçoit l'e-mail de rappel.",
+    "Nothing is emailed to the client automatically.": "Rien n'est envoyé automatiquement au client.",
+    "Send expiry reminders to the client": "Envoyer les rappels d'expiration au client",
+    "Send overdue reminders to the client": "Envoyer les rappels de retard de paiement au client",
+    "Shortly before the contract ends, the client receives a notice by email.": "Peu avant la fin du contrat, le client reçoit un avis par e-mail.",
+    "Shortly before the estimate expires, the client receives a reminder email.": "Peu avant l'expiration du devis, le client reçoit un e-mail de rappel.",
+    "Shortly before the proposal closes, the client receives a reminder email.": "Peu avant la clôture de la proposition, le client reçoit un e-mail de rappel.",
+    "The client is reminded automatically.": "Le client est relancé automatiquement.",
     "ALL": "TOUT",
     "All currencies, converted into the base currency": "Toutes les devises, converties dans la devise de base",
     "All currencies in the base currency. No rate for {n}: left out (set it in Settings → Currencies)": "Toutes les devises dans la devise de base. Pas de taux pour {n} : exclue (à définir dans Paramètres → Devises)",

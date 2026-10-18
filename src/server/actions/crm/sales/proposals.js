@@ -70,6 +70,7 @@ export async function saveProposal(input) {
         country: input.country != null && input.country !== '' ? Number(input.country) : null, email: t(input.email), phone: t(input.phone, 40), date: input.date ? new Date(input.date) : new Date(), openTill: input.openTill ? new Date(input.openTill) : null, currencyId: input.currencyId || null,
         subtotal: totals.subtotal, totalTax: totals.totalTax, total: totals.total, discountPercent: Number(input.discountPercent) || 0, discountTotal: totals.discountTotal, discountType, adjustment: Number(input.adjustment) || 0,
         allowComments: input.allowComments !== false, assignedId: input.assignedId || null,
+        ...(input.remindClient !== undefined ? { remindClient: input.remindClient !== false } : {}),
     }
     let proposal
     if (isNew) {

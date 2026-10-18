@@ -1,5 +1,13 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "If the invoice is still unpaid after its due date, the client receives the reminder email.": "請求書が支払期限を過ぎても未払いの場合、顧客にリマインダーメールが届きます。",
+    "Nothing is emailed to the client automatically.": "顧客には自動でメールが送信されません。",
+    "Send expiry reminders to the client": "有効期限のリマインダーを顧客に送信",
+    "Send overdue reminders to the client": "支払遅延のリマインダーを顧客に送信",
+    "Shortly before the contract ends, the client receives a notice by email.": "契約終了の少し前に、顧客へメールで通知が届きます。",
+    "Shortly before the estimate expires, the client receives a reminder email.": "見積書の期限の少し前に、顧客へリマインダーメールが届きます。",
+    "Shortly before the proposal closes, the client receives a reminder email.": "提案書の締切の少し前に、顧客へリマインダーメールが届きます。",
+    "The client is reminded automatically.": "顧客には自動でリマインドされます。",
     "ALL": "すべて",
     "All currencies, converted into the base currency": "すべての通貨を基準通貨に換算",
     "All currencies in the base currency. No rate for {n}: left out (set it in Settings → Currencies)": "すべての通貨を基準通貨で表示。{n} にはレートがないため除外されます（設定 → 通貨で設定）",

@@ -220,6 +220,7 @@ model CrmEstimate {
   showQuantityAs        Int       @default(1)
   pipelineOrder         Int       @default(1)
   isExpiryNotified      Boolean   @default(false)
+  remindClient          Boolean?  // null / true: the expiry reminder is emailed to the client; false: never
   acceptanceFirstname   String?
   acceptanceLastname    String?
   acceptanceEmail       String?
@@ -280,6 +281,7 @@ model CrmProposal {
   dateConverted       DateTime?
   pipelineOrder       Int       @default(1)
   isExpiryNotified    Boolean   @default(false)
+  remindClient          Boolean?  // null / true: the expiry reminder is emailed to the client; false: never
   acceptanceFirstname String?
   acceptanceLastname  String?
   acceptanceEmail     String?
@@ -343,6 +345,7 @@ model CrmContract {
   projectId           String?            @db.ObjectId
   addedFrom           String?            @db.ObjectId
   isExpiryNotified    Boolean            @default(false)
+  remindClient        Boolean?  // null / true: the expiration notice is emailed to the client; false: never
   contractValue       Float?
   trash               Boolean            @default(false)
   notVisibleToClient  Boolean            @default(false)

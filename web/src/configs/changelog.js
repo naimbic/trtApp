@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.56.0',
+        date: '2026-10-18',
+        title: 'Client reminders: a switch on each document',
+        items: ['Invoices have a "Send overdue reminders to the client" switch, on by default: when it is off, the automatic overdue reminder email is never sent for that invoice (the switch is the invoice\'s "cancel overdue reminders" flag, now visible in the editor)', 'The same kind of switch, on by default, on estimates, proposals and contracts for their automatic expiry reminder / expiration notice email; off means nothing is emailed to that client automatically', 'Emails you send yourself (Send, Send reminder from the document or the Mails page) are not blocked: the switch only stops the scheduled ones', 'Reminder emails stay off while the scheduled job is off (staging); nothing changes there']
+    },
+    {
         version: '0.55.0',
         date: '2026-10-18',
         title: 'Compact currency and colour pickers, and an ALL currencies view',

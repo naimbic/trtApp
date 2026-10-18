@@ -94,7 +94,8 @@ async function estimatesJob({ o, today, lines, dry }) {
     if (ex.count) lines.push(`${dry ? '[preview] ' : ''}${ex.count} estimate(s) ${dry ? 'would be ' : ''}marked expired`)
     const before = num(o('send_estimate_expiry_reminder_before'))
     if (before <= 0) return
-    const list = await prisma.crmEstimate.findMany({ where: { status: 2, isExpiryNotified: false, expiryDate: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })
+    // an estimate whose "send reminders to the client" switch is off is never emailed
+    const list = (await prisma.crmEstimate.findMany({ where: { status: 2, isExpiryNotified: false, expiryDate: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })).filter((e) => e.remindClient !== false)
     for (const e of list) {
         if (dry) { lines.push(`[preview] Expiry reminder would be sent for estimate ${e.prefix || ''}${e.number}`); continue }
         try { await sendMailCore({ kind: 'estimate', id: e.id, template: 'estimate-expiry-reminder' }); await prisma.crmEstimate.update({ where: { id: e.id }, data: { isExpiryNotified: true } }); lines.push(`Expiry reminder sent for estimate ${e.prefix || ''}${e.number}`) } catch (err) { lines.push(`! Estimate ${e.prefix || ''}${e.number}: ${err.message}`) }
@@ -104,7 +105,7 @@ async function estimatesJob({ o, today, lines, dry }) {
 async function proposalsJob({ o, today, lines, dry }) {
     const before = num(o('send_proposal_expiry_reminder_before'))
     if (before <= 0) return
-    const list = await prisma.crmProposal.findMany({ where: { status: { in: [1, 4, 5] }, isExpiryNotified: false, openTill: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })
+    const list = (await prisma.crmProposal.findMany({ where: { status: { in: [1, 4, 5] }, isExpiryNotified: false, openTill: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })).filter((p) => p.remindClient !== false)
     for (const p of list) {
         if (dry) { lines.push(`[preview] Expiry reminder would be sent for proposal "${p.subject || p.id}"`); continue }
         try { await sendMailCore({ kind: 'proposal', id: p.id, template: 'proposal-expiry-reminder' }); await prisma.crmProposal.update({ where: { id: p.id }, data: { isExpiryNotified: true } }); lines.push(`Expiry reminder sent for proposal "${p.subject || p.id}"`) } catch (err) { lines.push(`! Proposal "${p.subject || p.id}": ${err.message}`) }
@@ -114,7 +115,7 @@ async function proposalsJob({ o, today, lines, dry }) {
 async function contractsJob({ o, today, lines, dry }) {
     const before = num(o('contract_expiration_before'))
     if (before <= 0) return
-    const list = await prisma.crmContract.findMany({ where: { trash: false, isExpiryNotified: false, dateEnd: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })
+    const list = (await prisma.crmContract.findMany({ where: { trash: false, isExpiryNotified: false, dateEnd: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })).filter((c) => c.remindClient !== false)
     for (const c of list) {
         if (dry) { lines.push(`[preview] Expiry notice would be sent for contract "${c.subject}"`); continue }
         try {

@@ -76,7 +76,7 @@ export async function getContract(id) {
     const st = stateOf(c, today)
     return {
         id: c.id, clientId: c.clientId, typeId: c.contractTypeId, projectId: c.projectId, hash: c.hash, subject: c.subject, description: c.description, content: c.content, value: c.contractValue || 0, dateStart: c.dateStart, dateEnd: c.dateEnd,
-        client, type: type ? { id: type.id, name: type.name } : null, signed: c.signed, markedAsSigned: c.markedAsSigned, trash: c.trash, hidden: c.notVisibleToClient,
+        client, type: type ? { id: type.id, name: type.name } : null, signed: c.signed, markedAsSigned: c.markedAsSigned, trash: c.trash, hidden: c.notVisibleToClient, remindClient: c.remindClient !== false,
         // what the client signed with: name, email, the exact time, the address it came from and the drawn signature
         acceptance: c.signed ? { name: [c.acceptanceFirstname, c.acceptanceLastname].filter(Boolean).join(' '), email: c.acceptanceEmail, date: c.acceptanceDate, ip: c.acceptanceIp ? String(c.acceptanceIp).replace(/^::ffff:/i, '') : null, signature: c.signature?.startsWith('data:image/png;base64,') ? c.signature : null } : null,
         locked: !!(c.signed || c.markedAsSigned), eSigned: !!c.signature,
@@ -141,7 +141,7 @@ export async function saveContract(body, id) {
     const start = body.dateStart ? new Date(body.dateStart) : null, end = body.dateEnd ? new Date(body.dateEnd) : null
     if (!start || Number.isNaN(+start)) throw httpError('Choose the start date')
     if (end && (Number.isNaN(+end) || end < start)) throw httpError('The end date cannot be before the start date')
-    const data = { subject, description: String(body.description || '').trim() || null, content: body.content ?? null, clientId: oid(body.clientId), contractTypeId: oid(body.typeId), projectId: oid(body.projectId), dateStart: start, dateEnd: end, contractValue: body.value === '' || body.value == null ? null : Number(body.value) || 0, notVisibleToClient: !!body.hidden }
+    const data = { subject, description: String(body.description || '').trim() || null, content: body.content ?? null, clientId: oid(body.clientId), contractTypeId: oid(body.typeId), projectId: oid(body.projectId), dateStart: start, dateEnd: end, contractValue: body.value === '' || body.value == null ? null : Number(body.value) || 0, notVisibleToClient: !!body.hidden, ...(body.remindClient !== undefined ? { remindClient: body.remindClient !== false } : {}) }
     if (id) {
         const prev = await mustFind(session, id)
         if (prev.signed || prev.markedAsSigned) throw httpError('A signed contract cannot be edited', 409)

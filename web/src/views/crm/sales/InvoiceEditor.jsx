@@ -12,6 +12,7 @@ import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
 import { tr } from '@/utils/t'
+import ReminderSwitch from '../kit/ReminderSwitch'
 
 const emptyLine = () => ({ description: '', longDescription: '', qty: 1, rate: 0, unit: '', taxes: [] })
 const day = (v) => (v ? dayjs(v).format('YYYY-MM-DD') : '')
@@ -47,6 +48,7 @@ const InvoiceEditor = () => {
                     discountType: inv?.discountType || 'before_tax',
                     adjustment: inv?.adjustment || 0,
                     clientNote: inv ? inv.clientNote || '' : dd.clientNote || '', adminNote: inv?.adminNote || '', terms: inv ? inv.terms || '' : dd.terms || '',
+                    remindClient: inv ? !inv.cancelOverdueReminders : true,
                     items: d?.items?.length ? d.items : [baseLine()],
                 })
             })
@@ -137,6 +139,7 @@ const InvoiceEditor = () => {
                         <div><label className="form-label mb-2 block">{tr("Admin note (internal)")}</label><Input textArea rows={4} value={v.adminNote} onChange={(e) => set({ adminNote: e.target.value })} /></div>
                         <div><label className="form-label mb-2 block">{tr("Terms & conditions")}</label><Input textArea rows={4} value={v.terms} onChange={(e) => set({ terms: e.target.value })} /></div>
                     </div>
+                    <ReminderSwitch className="mt-5 flex items-center justify-between gap-4 border-t border-gray-100 pt-4 dark:border-gray-700" checked={v.remindClient !== false} onChange={(c) => set({ remindClient: c })} title={tr("Send overdue reminders to the client")} hint={tr("If the invoice is still unpaid after its due date, the client receives the reminder email.")} />
                 </Card>
 
                 <div className="flex justify-end gap-2">

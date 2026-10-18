@@ -150,6 +150,8 @@ export async function saveInvoice(input) {
         clientNote: input.clientNote || null,
         adminNote: input.adminNote || null,
         terms: input.terms || null,
+        // "send reminders to the client" (default on) is kept as the Perfex flag that cancels the overdue ones
+        ...(input.remindClient !== undefined ? { cancelOverdueReminders: input.remindClient === false } : {}),
     }
 
     let invoice

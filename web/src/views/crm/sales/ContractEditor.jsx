@@ -13,6 +13,7 @@ import { api, notify } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import VisualEditor from '../mail/VisualEditor'
 import { tr } from '@/utils/t'
+import ReminderSwitch from '../kit/ReminderSwitch'
 
 const TOKENS = ['contract_subject', 'contract_datestart', 'contract_dateend', 'contract_contract_value', 'contract_type', 'contract_id', 'contract_today', 'client_company', 'client_street', 'client_city', 'client_vat_number', 'company_name', 'address', 'vat_number_with_label']
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
@@ -33,7 +34,7 @@ const ContractEditor = () => {
         Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id ? api(`/api/crm/sales/contracts/${id}`) : null]).then(([l, c]) => {
             if (c?.locked) { notify('warning', tr("A signed contract cannot be edited")); navigate(`/crm/contracts/${id}`, { replace: true }); return }
             setTypes(l.stats?.types || [])
-            setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: day(c.dateStart), dateEnd: day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, signed: c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: null, projectId: null, dateStart: day(new Date()), dateEnd: '', value: '', description: '', content: '', hidden: false, signed: false })
+            setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: day(c.dateStart), dateEnd: day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: null, projectId: null, dateStart: day(new Date()), dateEnd: '', value: '', description: '', content: '', hidden: false, remindClient: true, signed: false })
         }).catch((e) => setError(e.message))
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -76,6 +77,7 @@ const ContractEditor = () => {
                     <div className="flex flex-col gap-4 xl:w-[340px]">
                         <Card>
                             <h4>{tr("Visibility")}</h4>
+                            <ReminderSwitch className="mt-5 flex items-center justify-between gap-6" checked={v.remindClient !== false} onChange={(c) => set({ remindClient: c })} title={tr("Send expiry reminders to the client")} hint={tr("Shortly before the contract ends, the client receives a notice by email.")} />
                             <div className="mt-5 flex items-center justify-between gap-6"><div><h6>{tr("Hide from the client")}</h6><p className="text-sm text-gray-500">{tr("The client link and the client area will not show this contract.")}</p></div><Switcher checked={v.hidden} onChange={(c) => set({ hidden: c })} /></div>
                         </Card>
                         <Card><h4>{tr("How it works")}</h4><ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-600 dark:text-gray-300"><li>{tr("Save the contract, check the preview.")}</li><li>{tr("Send it, or copy the client link.")}</li><li>{tr("The client reads it and signs on the page.")}</li><li>{tr("You get an email and the signature is kept with date and IP.")}</li></ol></Card>

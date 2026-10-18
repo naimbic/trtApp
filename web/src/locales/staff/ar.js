@@ -1,5 +1,13 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "If the invoice is still unpaid after its due date, the client receives the reminder email.": "إذا بقيت الفاتورة غير مدفوعة بعد تاريخ استحقاقها، يتلقى العميل بريد التذكير.",
+    "Nothing is emailed to the client automatically.": "لن يُرسل أي بريد تلقائي إلى العميل.",
+    "Send expiry reminders to the client": "إرسال تذكيرات انتهاء الصلاحية إلى العميل",
+    "Send overdue reminders to the client": "إرسال تذكيرات التأخر في السداد إلى العميل",
+    "Shortly before the contract ends, the client receives a notice by email.": "قبل انتهاء العقد بقليل، يتلقى العميل إشعاراً بالبريد الإلكتروني.",
+    "Shortly before the estimate expires, the client receives a reminder email.": "قبل انتهاء صلاحية العرض بقليل، يتلقى العميل بريد تذكير.",
+    "Shortly before the proposal closes, the client receives a reminder email.": "قبل إغلاق المقترح بقليل، يتلقى العميل بريد تذكير.",
+    "The client is reminded automatically.": "يتم تذكير العميل تلقائياً.",
     "ALL": "الكل",
     "All currencies, converted into the base currency": "كل العملات محوَّلة إلى العملة الأساسية",
     "All currencies in the base currency. No rate for {n}: left out (set it in Settings → Currencies)": "كل العملات بالعملة الأساسية. لا يوجد سعر لـ {n}: مستبعدة (حدده في الإعدادات ← العملات)",

@@ -43,3 +43,15 @@ export async function upload(url, formData, method = 'POST') {
 }
 
 export const formatBytes = (n = 0) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : n < 1073741824 ? `${(n / 1048576).toFixed(1)} MB` : `${(n / 1073741824).toFixed(2)} GB`)
+
+/** Prints a document page: loads it in a hidden frame and opens the browser's print dialog. Falls back to a new tab. */
+export function printPage(url) {
+    const f = document.createElement('iframe')
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'
+    f.onload = () => {
+        try { f.contentWindow.focus(); f.contentWindow.print() } catch { window.open(url, '_blank') }
+        setTimeout(() => f.remove(), 60000)
+    }
+    f.src = url
+    document.body.appendChild(f)
+}

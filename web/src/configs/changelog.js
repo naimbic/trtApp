@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.72.2',
+        date: '2026-10-18',
+        title: 'Document tab: no grey box, full-width paper; Print button',
+        items: ['The document page no longer has its own grey backdrop (that was the second card around the paper): only the paper card shows, across the full width, on the app background', 'A Print button next to Send on invoices, proposals, contracts (prints the paper page directly), and on estimates and purchase orders (opens the PDF, which you print from the viewer)']
+    },
+    {
         version: '0.72.1',
         date: '2026-10-18',
         title: 'Document tab: just the paper, full width',

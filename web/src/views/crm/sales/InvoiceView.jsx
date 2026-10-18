@@ -13,7 +13,7 @@ import Segment from '@/components/ui/Segment'
 import Dropdown from '@/components/ui/Dropdown'
 import EllipsisButton from '@/components/shared/EllipsisButton'
 import { calcDocument } from '@/lib/crm/sales/calc'
-import { api, notify, useCan } from '../kit/api'
+import { api, notify, useCan, printPage } from '../kit/api'
 import { makeMoney } from '../clients/shared'
 import { StatusTag, fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
@@ -107,6 +107,7 @@ const InvoiceView = () => {
                 <div className="ml-auto flex flex-wrap items-center gap-2">
                     {can('payments', 'create') && !cancelled && balance > 0 && <Button size="sm" variant="solid" icon={<TbCash />} onClick={() => { setPay((p) => ({ ...p, amount: balance })); setPayOpen(true) }}>{tr("Record payment")}</Button>}
                     {canEdit && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>{tr("Send")}</Button>}
+                    {st !== 6 && <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/invoices/${id}/html?print=1`)}>{tr("Print")}</Button>}
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     {canEdit && <Button size="sm" icon={<TbPencil />} onClick={guard(() => navigate(`/crm/invoices/${id}/edit`))}>{tr("Edit")}</Button>}
                     <Dropdown placement="bottom-end" renderTitle={<EllipsisButton size="sm" />}>

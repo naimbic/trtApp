@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbCopy, TbDownload, TbFileInvoice, TbFileTypePdf, TbMail, TbPencil, TbTrash } from 'react-icons/tb'
+import { TbArrowLeft, TbCopy, TbDownload, TbFileInvoice, TbFileTypePdf, TbMail, TbPencil, TbTrash, TbPrinter } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button'
 import Dropdown from '@/components/ui/Dropdown'
 import Input from '@/components/ui/Input'
 import { calcDocument } from '@/lib/crm/sales/calc'
-import { api, notify, useCan } from '../kit/api'
+import { api, notify, useCan, printPage } from '../kit/api'
 import { makeMoney, useClientLookups } from '../clients/shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import { ProposalStatusTag, fmtDate } from './shared'
@@ -74,6 +74,7 @@ const ProposalView = () => {
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/proposals/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/proposals/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('proposals', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
+                    <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/proposals/${id}/html?print=1`)}>{tr("Print")}</Button>
                     {e.status !== 6 && <Button size="sm" icon={<TbCopy />} onClick={copy}>{tr("Client link")}</Button>}
                     {can('estimates', 'create') && isClient && !e.estimateId && !locked && e.status !== 6 && <Button size="sm" icon={<TbFileInvoice />} loading={busy} onClick={() => setConfirm('estimate')}>{tr("To estimate")}</Button>}
                     {can('invoices', 'create') && isClient && !locked && e.status === 3 && <Button size="sm" variant="solid" icon={<TbFileInvoice />} loading={busy} onClick={() => setConfirm('invoice')}>{tr("To invoice")}</Button>}

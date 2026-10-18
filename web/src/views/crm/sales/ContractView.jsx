@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbMail, TbPencil, TbRefresh, TbSignature, TbTrash, TbTrashOff, TbFileTypePdf, TbCopy } from 'react-icons/tb'
+import { TbArrowLeft, TbMail, TbPencil, TbRefresh, TbSignature, TbTrash, TbTrashOff, TbFileTypePdf, TbCopy, TbPrinter } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -11,7 +11,7 @@ import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Tabs from '@/components/ui/Tabs'
 import Tag from '@/components/ui/Tag'
-import { api, notify, useCan } from '../kit/api'
+import { api, notify, useCan, printPage } from '../kit/api'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { StateTag } from './ContractsList'
 import { fmtDate } from './shared'
@@ -76,6 +76,7 @@ const ContractView = () => {
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/contracts/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     {c.hash && !c.trash && !c.hidden && <Button size="sm" icon={<TbCopy />} onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/api/crm/public/contract/${id}/${c.hash}`); notify('success', tr("Client link copied")) } catch { notify('danger', tr("Could not copy")) } }}>{tr("Client link")}</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbMail />} onClick={() => setMailOpen(true)}>{tr("Send")}</Button>}
+                    <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/contracts/${id}/html?print=1`)}>{tr("Print")}</Button>
                     {can('contracts', 'edit') && !c.trash && (!locked || superAdmin) && <Button size="sm" icon={<TbRefresh />} onClick={guard(() => setRenew({ newStartDate: dayjs(c.dateEnd || new Date()).format('YYYY-MM-DD'), newEndDate: dayjs(c.dateEnd || new Date()).add(1, 'year').format('YYYY-MM-DD'), newValue: c.value }))}>{tr("Renew")}</Button>}
                     {can('contracts', 'edit') && !c.eSigned && (!signed || superAdmin) && <Button size="sm" icon={<TbSignature />} loading={busy} onClick={guard((force) => act(signed ? 'unsign' : 'sign', { force }, signed ? tr("Marked as not signed") : tr("Marked as signed")))}>{signed ? tr("Mark as not signed") : tr("Mark as signed")}</Button>}
                     {can('contracts', 'edit') && (!locked || superAdmin) && <Button size="sm" icon={<TbPencil />} onClick={guard(() => navigate(`/crm/contracts/${id}/edit`))}>{tr("Edit")}</Button>}

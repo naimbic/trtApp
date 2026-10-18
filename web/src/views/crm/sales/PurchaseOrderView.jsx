@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbDownload, TbFileInvoice, TbFileTypePdf, TbMail, TbPencil, TbTrash } from 'react-icons/tb'
+import { TbArrowLeft, TbDownload, TbFileInvoice, TbFileTypePdf, TbMail, TbPencil, TbTrash, TbPrinter } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
@@ -9,7 +9,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Dropdown from '@/components/ui/Dropdown'
 import { calcDocument } from '@/lib/crm/sales/calc'
-import { api, notify, useCan } from '../kit/api'
+import { api, notify, useCan, printPage } from '../kit/api'
 import { makeMoney, useClientLookups } from '../clients/shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import { PoStatusTag, fmtDate } from './shared'
@@ -65,6 +65,7 @@ const PurchaseOrderView = () => {
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/purchase-orders/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/purchase-orders/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('purchase_orders', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
+                    <Button size="sm" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/purchase-orders/${id}/pdf`, '_blank')}>{tr("Print")}</Button>
                     {can('invoices', 'create') && !locked && [2, 3, 4].includes(st) && <Button size="sm" variant="solid" icon={<TbFileInvoice />} loading={busy} onClick={() => setConfirm('convert')}>{tr("Convert to invoice")}</Button>}
                     {can('purchase_orders', 'edit') && !locked && (
                         <Dropdown renderTitle={<Button size="sm" loading={busy}>{tr("Mark as…")}</Button>} placement="bottom-end">

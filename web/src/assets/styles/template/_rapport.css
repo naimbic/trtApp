@@ -242,3 +242,21 @@ body:has(.rp-app) .dropdown-menu .menu-item-default:hover, body:has(.rp-app) .dr
 body:has(.rp-app) .dropdown-menu .menu-item-divider { background: var(--rp-line); }
 body:has(.rp-app) .dropdown-menu .heading-text, body:has(.rp-app) .dropdown-menu .text-gray-900, body:has(.rp-app) .dropdown-menu .dark\:text-gray-100 { color: var(--rp-text); }
 @media (prefers-reduced-motion: reduce) { body:has(.rp-app) .dropdown-menu > li { animation: none; } }
+
+/* menus follow the colour picked in the dock (--rp-accent lives on the root, so portals see it too) */
+.rp-link:hover .ico, .rp-card .rp-link:hover .ico { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); }
+.rp-link::before, .rp-card .rp-link::before { background: radial-gradient(130px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--rp-accent, #d8532d) 22%, transparent), color-mix(in srgb, var(--rp-accent, #d8532d) 8%, transparent) 72%); }
+.rp-link[data-active='true'] { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); }
+.rp-link:hover .rp-link-go { color: var(--rp-accent, #d8532d); opacity: 1; }
+.rp-link[data-active='true'] .rp-link-go { color: inherit; }
+.rp-card-h h6 { color: var(--rp-accent, #d8532d); }
+.rp-card-h em { background: color-mix(in srgb, var(--rp-accent, #d8532d) 16%, var(--rp-float)); color: var(--rp-text); }
+.rp-card { border-color: color-mix(in srgb, var(--rp-accent, #d8532d) 18%, var(--rp-line)); }
+.rp-tm-row:hover { background: color-mix(in srgb, var(--rp-accent, #d8532d) 14%, transparent); }
+.rp-tm-row:hover svg:first-child { color: var(--rp-accent, #d8532d); opacity: 1; }
+.rp-fchip[data-on='true'] { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); }
+.rp-per-now { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); }
+.rp-per-row:hover { background: color-mix(in srgb, var(--rp-accent, #d8532d) 14%, transparent); }
+.rp-per-row[data-on='true'] svg { color: var(--rp-accent, #d8532d); }
+.rp-per-apply { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); }
+body:has(.rp-app) .dropdown-menu [class*='menu-item-']:not(.menu-item-header):not(.menu-item-divider):hover { background: color-mix(in srgb, var(--rp-accent, #d8532d) 14%, transparent); }

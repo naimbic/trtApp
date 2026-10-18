@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.67.3',
+        date: '2026-10-18',
+        title: 'Menus follow the chosen colour',
+        items: ['The mega menu (icon tiles, glow, active page, section cards), the tile and dropdown menus and the period and colour panels now take the colour picked in the dock, in light and dark mode; text on them switches to dark when the colour is light']
+    },
+    {
         version: '0.67.2',
         date: '2026-10-18',
         title: 'Won / Lost rows show their numbers',

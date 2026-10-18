@@ -23,6 +23,9 @@ const AccentApplier = () => {
                 ? mapTheme(presetThemeSchemaConfig[schema || 'default']?.[mode] || presetThemeSchemaConfig.default?.[mode] || {})
                 : (() => { const h = accentHex(accent); return { '--primary': h, '--primary-deep': mix(h, '#000000', 0.18), '--primary-mild': mix(h, '#ffffff', 0.18), '--primary-subtle': `${h}1a`, '--neutral': onHex(h) } })()
             Object.entries(vars).forEach(([k, v]) => v && root.style.setProperty(k, v))
+            // the colour of every Rapport menu (they also live outside the page, so it sits on the root)
+            root.style.setProperty('--rp-accent', accent && accent !== 'blue' ? accentHex(accent) : '#d8532d')
+            root.style.setProperty('--rp-on-accent', accent && accent !== 'blue' ? onHex(accentHex(accent)) : '#ffffff')
             // the Rapport layout: the colour paints its warm tiles, the dark card and the mesh behind the page
             const rp = document.querySelector('.rp-app')
             if (rp) {

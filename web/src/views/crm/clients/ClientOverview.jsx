@@ -55,7 +55,6 @@ const ClientOverview = ({ c, profile, lookups, money, cur, setCur, can, setTab, 
                 <Panel title={tr("Details")}>
                     <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                         <div><dt className="text-xs uppercase tracking-wide text-gray-400">{tr("Billing address")}</dt><dd className="heading-text">{addrLine(c.billing) || <span className="text-gray-400">—</span>}</dd></div>
-                        <div><dt className="text-xs uppercase tracking-wide text-gray-400">{tr("Shipping address")}</dt><dd className="heading-text">{addrLine(c.shipping) || <span className="text-gray-400">—</span>}</dd></div>
                         <div><dt className="text-xs uppercase tracking-wide text-gray-400">{tr("Company address")}</dt><dd className="heading-text">{addrLine({ street: c.address, city: c.city, state: c.state, zip: c.zip, countryName: c.countryName }) || <span className="text-gray-400">—</span>}</dd></div>
                         <div><dt className="text-xs uppercase tracking-wide text-gray-400">{tr("Phone")}</dt><dd className="heading-text">{c.phone || <span className="text-gray-400">—</span>}</dd></div>
                     </dl>

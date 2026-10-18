@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.60.2',
+        date: '2026-10-18',
+        title: 'No shipping address on clients',
+        items: ['The shipping address is gone from the client edit page and from the client overview, since you do not ship; the client page keeps only the address and the optional different billing address (existing shipping data is left untouched, just not shown)']
+    },
+    {
         version: '0.60.1',
         date: '2026-10-18',
         title: 'Client page: compact addresses',

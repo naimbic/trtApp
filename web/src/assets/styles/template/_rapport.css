@@ -286,5 +286,3 @@ body:has(.rp-app) .segment-item.segment-item-active { background: var(--rp-pill)
 .dropdown-menu.profile-menu [class*='menu-item-'] { min-height: 44px; }
 .dropdown-menu.profile-menu .menu-item-divider { min-height: 0; }
 
-/* the animated logo: its dark parts turn light in dark mode */
-.dark .lottie-logo { filter: invert(1) hue-rotate(180deg); }

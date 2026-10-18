@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.70.2',
+        date: '2026-10-18',
+        title: 'Logo takes the chosen colour and plays on each page',
+        items: ['In the animated logo, "CRM" and the dot take the colour picked in the dock (with the default colour the dot stays coral); "trt" follows the text colour, light in dark mode', 'No more hover animation: the logo plays when the page is loaded and every time you go to another page, and stays still when motion is reduced']
+    },
+    {
         version: '0.70.1',
         date: '2026-10-18',
         title: 'Animated logo in the top bar',

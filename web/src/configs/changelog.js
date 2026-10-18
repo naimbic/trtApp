@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.67.0',
+        date: '2026-10-18',
+        title: 'Project scrum board and every task link use the new pipeline and popup',
+        items: ['The project scrum board (/crm/projects/:id/board and the Scrum board page) keeps its burn-up, status and workload panels but its board is now the new pipeline: coloured tiles, three-dots menu with Priority / Due date / Assign to / Move to, the Done and Delete rows, the + on each stage and the new popup; moving a task refreshes the panels', 'Every link to a task (from the team dashboard, lists, timeline, time report…) now opens the tasks board with that task in the new popup instead of the old full page', 'Tasks inside a project (project page) already used the same board; all three places (team tasks, project tasks, scrum board) now behave identically']
+    },
+    {
         version: '0.66.0',
         date: '2026-10-18',
         title: 'A lead can be assigned to several people; every menu moves the same',

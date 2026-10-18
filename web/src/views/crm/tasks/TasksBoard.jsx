@@ -23,23 +23,23 @@ const Plain = ({ children }) => <div>{children}</div>
 
 const TONE = { 1: 'ink', 4: 'butter', 3: 'pine', 2: 'tomato', 5: 'good' }
 
-const TasksBoard = ({ projectId = null }) => {
+const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = null, onClosePopup }) => {
     const nav = useNavigate()
     const [params, setParams] = useSearchParams()
     const [data, setData] = useState({ list: [], counts: {}, can: {} })
     const [lookups, setLookups] = useState({ staff: [] })
     const [more, setMore] = useState({}) // columns opened beyond the card limit
-    const [view, setView] = useState(() => { try { return localStorage.getItem('tasks.view') || 'board' } catch { return 'board' } })
+    const [view, setView] = useState(() => { if (boardOnly) return 'board'; try { return localStorage.getItem('tasks.view') || 'board' } catch { return 'board' } })
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
     const [mine, setMine] = useState(false)
     const [assignee, setAssignee] = useState(null)
     const [priority, setPriority] = useState(null)
-    const [done, setDone] = useState(!!projectId)
+    const [done, setDone] = useState(!!projectId || boardOnly)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [del, setDel] = useState(null) // a task about to be deleted
-    const [drawer, setDrawer] = useState({ open: false, id: null, preset: null, k: 0 })
+    const [drawer, setDrawer] = useState({ open: !!openId, id: openId, preset: null, k: 0 })
 
     useEffect(() => { const t = setTimeout(() => setQuery(search), 300); return () => clearTimeout(t) }, [search])
     useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLookups).catch(() => {}) }, [])
@@ -49,8 +49,9 @@ const TasksBoard = ({ projectId = null }) => {
         try {
             setData(await api(`/api/crm/work/tasks?${qs({ query, mine: mine ? '1' : '', assignee: assignee || '', priority: priority || '', done: done ? '1' : '', ...(projectId ? { relType: 'project', relId: projectId } : {}) })}`))
             setError('')
+            onChanged?.()
         } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [query, mine, assignee, priority, done, projectId])
+    }, [query, mine, assignee, priority, done, projectId]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { load() }, [load])
 
     const setViewSaved = (v) => { setView(v); try { localStorage.setItem('tasks.view', v) } catch { /* private mode */ } }
@@ -97,13 +98,13 @@ const TasksBoard = ({ projectId = null }) => {
     }
     const remove = async (item) => { try { await api(`/api/crm/work/tasks/${item.id}`, { method: 'DELETE' }); notify('success', tr("Task deleted")); load() } catch (e) { notify('danger', e.message) } }
     const open = (id) => setDrawer((d) => ({ open: true, id: id || null, preset: null, k: d.k }))
-    const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
+    const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); onClosePopup?.(); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
     const staffOptions = lookups.staff.map((s) => ({ value: s.id, label: s.name }))
 
-    const Wrap = projectId ? Plain : Container
+    const Wrap = projectId || boardOnly ? Plain : Container
     return (
         <Wrap>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            {!boardOnly && <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>{projectId ? <h5>{tr("Tasks")}</h5> : <h3>{tr("Tasks")}</h3>}<p className="text-sm text-gray-500">{trn(data.list.length, "task")} {tr("shown")}</p></div>
                 <div className="flex items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
@@ -112,15 +113,15 @@ const TasksBoard = ({ projectId = null }) => {
                     </Segment>
                     {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>{tr("New task")}</Button>}
                 </div>
-            </div>
+            </div>}
 
-            <div className="mb-4 flex flex-wrap items-center gap-3">
+            {!boardOnly && <div className="mb-4 flex flex-wrap items-center gap-3">
                 <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search tasks")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any assignee")} options={staffOptions} value={staffOptions.find((o) => o.value === assignee) || null} onChange={(o) => { setAssignee(o?.value || null); setMine(false) }} /></div>
                 <div className="w-36"><Select size="sm" isClearable placeholder={tr("Any priority")} options={PRIORITY.map((p) => ({ value: p.value, label: p.label }))} value={priority ? { value: priority, label: prioOf(priority).label } : null} onChange={(o) => setPriority(o?.value || null)} /></div>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssignee(null) }} />{tr("My tasks")}</label>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={done} onChange={setDone} />{tr("Show completed")}</label>
-            </div>
+            </div>}
 
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 

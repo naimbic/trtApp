@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.74.3',
+        date: '2026-10-18',
+        title: 'Schedule: just the date on top, entries with a light bar',
+        items: ['The first card of the right column shows only the date (Fri, 16 Oct 2026) and the + button; the other lines are gone', 'Under each title in the agenda: time - date - kind (for example 9h - 16 Oct - Event, or 16 Oct - Task)', 'Entries in the calendar boxes are a light bar tinted with their colour and dark text, also on the selected day']
+    },
+    {
         version: '0.74.2',
         date: '2026-10-18',
         title: 'Schedule polish, and the colour picker on every page',

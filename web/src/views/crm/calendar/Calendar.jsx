@@ -303,7 +303,7 @@ const Calendar = () => {
                 : <i className="sch-row__dot" style={{ background: dotOf(it) }} />}
             <button type="button" className="sch-row__txt" onClick={() => openItem({ ...it, ...(it.extendedProps || {}) })}>
                 <b>{nameOf(it)}</b>
-                <small>{late ? `${it.detail || TYPE_LABEL[it.type] || ''} · ${tr("{n} days late", { n: daysLate(it.start) })}` : `${it.type === 'events' ? timeOf(it) : (it.detail || TYPE_LABEL[it.type] || '')}${it.clientName ? ` · ${it.clientName}` : ''}`}</small>
+                <small>{[it.type === 'events' && !it.allDay ? hTime(it.start) : null, dayjs(it.start).format('D MMM'), late ? tr("{n} days late", { n: daysLate(it.start) }) : null, TYPE_LABEL[it.type] || (it.type === 'events' ? tr("Event") : it.type === 'reminders' ? tr("Reminder") : '')].filter(Boolean).join(' - ')}</small>
             </button>
             <Faces ids={it.who} />
             <button type="button" className="sch-dots" aria-label={tr("Actions")} aria-haspopup="menu" onClick={(e) => setMenu({ it, el: e.currentTarget })}><TbDots /></button>
@@ -354,7 +354,7 @@ const Calendar = () => {
                 </section>
                 <aside className="sch-side">
                     <section className="card sch-agenda">
-                        <header className="sch-card__head"><div><p className="sch-day__name">{dayjs(selectedDay).format('dddd')}{selectedDay === today ? ` · ${tr("Today")}` : ''}</p><h2 className="sch-day__big">{dayjs(selectedDay).format('D MMMM')}</h2><p className="sch-day__sub">{dayTasks.length ? tr("{a}/{b} done", { a: dayTasks.filter((t) => t.done).length, b: dayTasks.length }) : tr("No tasks")} · {tr("Overdue")} <b className={lateItems.length ? 'is-late' : ''}>{lateItems.length}</b></p></div><button type="button" className="sch-ibtn" onClick={() => openNew(selectedDay)} aria-label={tr("Add an event on this day")} title={tr("Add an event on this day")}><TbPlus /></button></header>
+                        <header className="sch-card__head"><h2 className="sch-day__big">{dayjs(selectedDay).format('ddd, D MMM YYYY')}</h2><button type="button" className="sch-ibtn" onClick={() => openNew(selectedDay)} aria-label={tr("Add an event on this day")} title={tr("Add an event on this day")}><TbPlus /></button></header>
                         <ul className="sch-list">{agenda.map((it) => row(it, false))}</ul>
                         {!agenda.length && <p className="sch-empty">{tr("Nothing planned for this day.")}</p>}
                     </section>

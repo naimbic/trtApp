@@ -113,3 +113,9 @@
 .sch-cal .fc-daygrid-day-number { color: inherit !important; text-decoration: none !important; outline: none; }
 .sch-daynum { color: inherit; }
 .sch-cal .fc-daygrid-event-harness-abs { visibility: hidden !important; }
+
+/* entries: a light tinted bar with dark text, whatever colour the box is */
+.sch-ev { background: color-mix(in srgb, var(--c) 17%, var(--rp-float, #fff)); border-radius: 8px; padding: 3px 7px; color: var(--rp-text, #17191a) !important; }
+.sch-cal .fc-daygrid-day.is-selected .sch-ev, .sch-cal .fc-daygrid-day.is-selected .sch-ev__title, .sch-cal .fc-daygrid-day.is-selected .sch-ev__time { color: var(--rp-text, #17191a) !important; }
+.sch-cal .fc-daygrid-day.is-selected .sch-ev__dot { box-shadow: none; }
+.sch-day__big { margin: 0 !important; font-size: 26px !important; }

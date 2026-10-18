@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.79.3',
+        date: '2026-10-18',
+        title: 'Invoice document and PDF: tinted table header, soft border',
+        items: ['The items table and the payments table of the invoice document, its PDF and the other documents (estimates, proposals...) now have a tinted header row, a soft rounded outline and soft row lines']
+    },
+    {
         version: '0.79.2',
         date: '2026-10-18',
         title: 'Tables: tinted header and soft border',

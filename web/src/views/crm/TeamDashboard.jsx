@@ -299,6 +299,7 @@ const GoalBar = ({ label, value, target, percent, sub }) => {
 const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
     const [goalDlg, setGoalDlg] = useState(null)
     const { team, me, leaderboard, badges, series, labels } = perf
+    const vs = tr('vs previous {n} days', { n: days })
     const byId = Object.fromEntries(leaderboard.map((r) => [r.person.id, r]))
     const best = leaderboard[0]
     const maxScore = Math.max(1, ...leaderboard.map((r) => r.score))
@@ -322,9 +323,9 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
             </div>
 
             <div className="mb-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
-                <StatCard icon={<TbCircleCheck />} label={tr('Tasks completed')} value={team.completed} sub={<span>{<Delta cur={team.completed} prev={team.previous} />} {tr('vs previous {n} days', { n: days })}</span>} tone="green" />
-                <StatCard icon={<TbShieldCheck />} label={tr('Finished on time')} value={team.onTimeRate === null ? '—' : `${team.onTimeRate}%`} sub={tr('of the tasks completed')} tone={team.onTimeRate !== null && team.onTimeRate < 70 ? 'amber' : 'blue'} />
-                <StatCard icon={<TbBolt />} label={tr('Average time to finish')} value={team.avgDays === null ? '—' : tr('{n} days', { n: team.avgDays })} sub={tr('from start to done')} tone="violet" />
+                <StatCard icon={<TbCircleCheck />} label={tr('Tasks completed')} value={team.completed} change={{ cur: team.completed, prev: team.previous, label: vs }} sub={tr('{n} created', { n: team.created })} tone="green" />
+                <StatCard icon={<TbShieldCheck />} label={tr('Finished on time')} value={team.onTimeRate === null ? '—' : `${team.onTimeRate}%`} change={team.onTimeRate !== null && team.previousOnTimeRate !== null ? { cur: team.onTimeRate, prev: team.previousOnTimeRate, label: vs } : undefined} sub={tr('of the tasks completed')} tone={team.onTimeRate !== null && team.onTimeRate < 70 ? 'amber' : 'blue'} />
+                <StatCard icon={<TbBolt />} label={tr('Average time to finish')} value={team.avgDays === null ? '—' : tr('{n} days', { n: team.avgDays })} change={team.avgDays !== null && team.previousAvgDays !== null ? { cur: team.avgDays, prev: team.previousAvgDays, goodUp: false, label: vs } : undefined} sub={tr('from start to done')} tone="violet" />
                 {team.backlog !== undefined
                     ? <StatCard icon={<TbHourglass />} label={tr('Backlog')} value={team.backlog} sub={tr('oldest open task: {n} days', { n: team.oldest })} tone={team.oldest > 60 ? 'amber' : 'teal'} to="/crm/team-tasks" />
                     : <StatCard icon={<TbTrophy />} label={tr('My rank')} value={me.rank ? `#${me.rank}` : '—'} sub={tr('{n} tasks completed', { n: me.completed })} tone="amber" />}

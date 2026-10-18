@@ -28,6 +28,7 @@ const TimeReport = () => {
 
     if (error && !d) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div></Container>
     if (!d) return <Container><div className="flex flex-col gap-4"><Skeleton height={40} width={280} /><div className="grid grid-cols-2 gap-4 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} height={92} />)}</div><Skeleton height={300} /></div></Container>
+    const vs = tr('vs previous {n} days', { n: d.days })
     const sparse = d.labels.length > 31
     const max = Math.max(1, ...d.people.map((p) => p.hours))
 
@@ -45,10 +46,10 @@ const TimeReport = () => {
             </div>
 
             <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <StatCard icon={<TbClock />} label={tr('Time logged')} value={fmt(d.total)} sub={tr('in the last {n} days', { n: d.days })} tone="blue" />
-                <StatCard icon={<TbReceipt />} label={tr('Billable')} value={fmt(d.billable)} sub={d.total ? tr('{n}% of the time', { n: Math.round((d.billable / d.total) * 100) }) : '—'} tone="green" />
-                <StatCard icon={<TbListDetails />} label={tr('Entries')} value={d.entries} sub={tr('timer sessions')} tone="violet" />
-                <StatCard icon={<TbSunHigh />} label={tr('Per working day')} value={fmt(d.average)} sub={tr('days with time logged')} tone="amber" />
+                <StatCard icon={<TbClock />} label={tr('Time logged')} value={fmt(d.total)} change={{ cur: d.total, prev: d.previous.total, label: vs }} sub={tr('in the last {n} days', { n: d.days })} tone="blue" />
+                <StatCard icon={<TbReceipt />} label={tr('Billable')} value={fmt(d.billable)} change={{ cur: d.billable, prev: d.previous.billable, label: vs }} sub={d.total ? tr('{n}% of the time', { n: Math.round((d.billable / d.total) * 100) }) : '—'} tone="green" />
+                <StatCard icon={<TbListDetails />} label={tr('Entries')} value={d.entries} change={{ cur: d.entries, prev: d.previous.entries, label: vs }} sub={tr('timer sessions')} tone="violet" />
+                <StatCard icon={<TbSunHigh />} label={tr('Per working day')} value={fmt(d.average)} change={{ cur: d.average, prev: d.previous.average, label: vs }} sub={tr('days with time logged')} tone="amber" />
             </div>
 
             <div className="mb-4 grid gap-4 xl:grid-cols-3">

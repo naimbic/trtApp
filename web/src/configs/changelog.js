@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.53.0',
+        date: '2026-10-18',
+        title: 'Cards compared with the previous period (+23% / -33%)',
+        items: ['The cards now show how they moved: a green "+23%" or a red "-33%" with an arrow (for figures where less is better, like overdue, outstanding, open tasks and tickets, a fall is green). Dashboard: invoiced, collected, new leads, projects, estimates and open tasks and tickets against the previous period of the same length; outstanding, overdue and clients against the day the period began. Time report: time logged, billable, entries and per working day against the previous 7, 30 or 90 days. Team dashboard: tasks completed, finished on time and average time to finish against the previous period', 'Cards that are a live count with no history (for example "my open tasks today") keep showing the number only, since the CRM does not store what the count was yesterday']
+    },
+    {
         version: '0.52.3',
         date: '2026-10-18',
         title: 'Roles audit: announcements, leave, activity log, lead setup',

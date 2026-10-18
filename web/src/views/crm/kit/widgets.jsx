@@ -1,6 +1,8 @@
 import { Link } from 'react-router'
 import Card from '@/components/ui/Card'
+import { TbTrendingUp, TbTrendingDown, TbMinus } from 'react-icons/tb'
 import classNames from '@/utils/classNames'
+import { tr } from '@/utils/t'
 
 // Small building blocks shared by the dashboards and the scrum board.
 export const TONES = {
@@ -8,11 +10,38 @@ export const TONES = {
     green: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20', violet: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20', teal: 'bg-teal-100 text-teal-600 dark:bg-teal-500/20',
 }
 
-export const StatCard = ({ icon, label, value, sub, tone = 'blue', to }) => {
+/** Change against the previous period, in percent (null when there is nothing to compare with). */
+export const pctChange = (cur, prev) => {
+    const c = Number(cur), p = Number(prev)
+    if (!Number.isFinite(c) || !Number.isFinite(p)) return null
+    if (p === 0) return c === 0 ? 0 : null
+    return Math.round(((c - p) / Math.abs(p)) * 1000) / 10
+}
+
+/** "+23%" in green or "-33%" in red (`goodUp` false for figures where less is better: overdue, outstanding, backlog). */
+export const Delta = ({ cur, prev, goodUp = true, label, className }) => {
+    const p = pctChange(cur, prev)
+    if (cur === null || cur === undefined || prev === null || prev === undefined) return null
+    const isNew = p === null
+    const up = isNew ? Number(cur) > 0 : p > 0
+    const flat = !isNew && p === 0
+    const good = flat ? null : up === goodUp
+    const shown = isNew ? tr('new') : `${p > 0 ? '+' : p < 0 ? '-' : ''}${Math.abs(p)}%`
+    return (
+        <span className={classNames('inline-flex items-center gap-1 whitespace-nowrap', className)}>
+            <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold', flat ? 'bg-gray-100 text-gray-500 dark:bg-gray-700' : good ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15' : 'bg-red-50 text-red-500 dark:bg-red-500/15')}>
+                {flat ? <TbMinus /> : up ? <TbTrendingUp /> : <TbTrendingDown />}{shown}
+            </span>
+            {label && <span className="text-xs text-gray-400">{label}</span>}
+        </span>
+    )
+}
+
+export const StatCard = ({ icon, label, value, sub, tone = 'blue', to, change }) => {
     const body = (
         <Card className="h-full" bodyClass="p-4">
             <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0"><div className="text-sm text-gray-500">{label}</div><h3 className="mt-1">{value}</h3>{sub && <div className="mt-1 text-xs text-gray-500">{sub}</div>}</div>
+                <div className="min-w-0"><div className="text-sm text-gray-500">{label}</div><h3 className="mt-1">{value}</h3>{change && <div className="mt-1"><Delta {...change} /></div>}{sub && <div className="mt-1 text-xs text-gray-500">{sub}</div>}</div>
                 <div className={classNames('flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl', TONES[tone])}>{icon}</div>
             </div>
         </Card>

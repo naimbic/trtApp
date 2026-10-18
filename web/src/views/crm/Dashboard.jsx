@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router'
 import dayjs from 'dayjs'
 import Card from '@/components/ui/Card'
+import { Delta } from './kit/widgets'
 import { useDashFilters, accentHex } from '@/store/dashFilterStore'
 import Skeleton from '@/components/ui/Skeleton'
 import Tag from '@/components/ui/Tag'
@@ -169,7 +170,7 @@ const TONES = {
     teal: ['bg-teal-100 text-teal-600', PALETTE.teal],
 }
 
-const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark, accent }) => {
+const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark, accent, change }) => {
     const useAccent = accent && tone !== 'red'
     const color = useAccent ? accent : TONES[tone][1]
     const body = (
@@ -178,6 +179,7 @@ const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark, ac
                 <div className="min-w-0">
                     <div className="text-sm text-gray-500">{label}</div>
                     <h3 className="mt-1 truncate" title={title || undefined}>{value}</h3>
+                    {change && <div className="mt-1"><Delta {...change} /></div>}
                     {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
                 </div>
                 <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-2xl ${useAccent ? '' : TONES[tone][0]}`} style={useAccent ? { background: `${accent}1f`, color: accent } : undefined}>{icon}</div>
@@ -301,6 +303,10 @@ const BusinessDashboard = () => {
     const cum = (a) => { let r = 0; return a.map((v) => (r += v)) }
     const prevNewClients = data.prev?.clients ? padTo(pm.map((m) => data.prev.clients.byMonth?.[m] || 0)) : null
     const PREV = tr("Previous period")
+    const vsPrev = tr("vs previous period")
+    const vsStart = tr("since the period began")
+    const ch = (cur, prev, goodUp = true, label = vsPrev) => (prev === undefined || prev === null || cur === undefined || cur === null ? undefined : { cur, prev, goodUp, label })
+    const pd = data.prev
 
     return (
         <div className="flex flex-col gap-4">
@@ -322,20 +328,20 @@ const BusinessDashboard = () => {
 
             {data.invoices && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    <StatCard accent={accent} icon={<PiReceiptDuotone />} label={tr("Total invoiced")} value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub={tr("Excl. drafts & cancelled")} tone="blue" to="/crm/invoices" spark={invoicedSeries} />
-                    <StatCard accent={accent} icon={<PiHandCoinsDuotone />} label={tr("Collected")} value={moneyShort(inv?.paid)} title={money(inv?.paid)} sub={inv?.invoiced ? tr("{v1}% of invoiced", { v1: Math.round((inv.paid / inv.invoiced) * 100) }) : ''} tone="green" to="/crm/payments" spark={collectedSeries} />
-                    <StatCard accent={accent} icon={<PiHourglassHighDuotone />} label={tr("Outstanding")} value={moneyShort(inv?.outstanding)} title={money(inv?.outstanding)} sub={tr("Still to collect")} tone="amber" spark={cumInvoiced.map((v, i) => Math.max(v - cumCollected[i], 0))} />
-                    <StatCard accent={accent} icon={<PiWarningCircleDuotone />} label={tr("Overdue")} value={moneyShort(inv?.overdue)} title={money(inv?.overdue)} sub={`${nfi(inv?.overdueCount)} invoice(s)`} tone="red" />
+                    <StatCard accent={accent} icon={<PiReceiptDuotone />} label={tr("Total invoiced")} value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub={tr("Excl. drafts & cancelled")} change={ch(inv?.invoiced, pinv?.invoiced)} tone="blue" to="/crm/invoices" spark={invoicedSeries} />
+                    <StatCard accent={accent} icon={<PiHandCoinsDuotone />} label={tr("Collected")} value={moneyShort(inv?.paid)} title={money(inv?.paid)} sub={inv?.invoiced ? tr("{v1}% of invoiced", { v1: Math.round((inv.paid / inv.invoiced) * 100) }) : ''} change={ch(inv?.paid, pinv?.paid)} tone="green" to="/crm/payments" spark={collectedSeries} />
+                    <StatCard accent={accent} icon={<PiHourglassHighDuotone />} label={tr("Outstanding")} value={moneyShort(inv?.outstanding)} title={money(inv?.outstanding)} sub={tr("Still to collect")} change={ch(inv?.outstanding, inv?.outstandingAtStart, false, vsStart)} tone="amber" spark={cumInvoiced.map((v, i) => Math.max(v - cumCollected[i], 0))} />
+                    <StatCard accent={accent} icon={<PiWarningCircleDuotone />} label={tr("Overdue")} value={moneyShort(inv?.overdue)} title={money(inv?.overdue)} sub={`${nfi(inv?.overdueCount)} invoice(s)`} change={ch(inv?.overdue, inv?.overdueAtStart, false, vsStart)} tone="red" />
                 </div>
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                {data.clients && <StatCard accent={accent} icon={<PiUsersThreeDuotone />} label={tr("Clients")} value={nfi(data.clients.total)} sub={tr("{v1} active", { v1: nfi(data.clients.active) })} tone="blue" to="/crm/clients" spark={newClients} />}
-                {data.leads && <StatCard accent={accent} icon={<PiFunnelDuotone />} label={tr("Open leads")} value={nfi(data.leads.open)} sub={tr("{v1} converted", { v1: nfi(data.leads.converted) })} tone="purple" to="/crm/leads" />}
-                {data.projects && <StatCard accent={accent} icon={<PiKanbanDuotone />} label={tr("Projects")} value={nfi(data.projects.total)} sub={tr("{v1} in progress", { v1: nfi(data.projects.byStatus?.["In progress"]) })} tone="teal" to="/crm/projects" />}
-                {data.tasks && <StatCard accent={accent} icon={<PiCheckSquareDuotone />} label={tr("Open tasks")} value={nfi(data.tasks.open)} sub={tr("{v1} overdue", { v1: nfi(data.tasks.overdue) })} tone={data.tasks.overdue ? 'red' : 'green'} to="/crm/tasks" />}
-                {data.tickets && <StatCard accent={accent} icon={<PiLifebuoyDuotone />} label={tr("Open tickets")} value={nfi(data.tickets.open)} sub={tr("{v1} total", { v1: nfi(data.tickets.total) })} tone="amber" to="/crm/tickets" />}
-                {data.estimates && <StatCard accent={accent} icon={<PiFileTextDuotone />} label={tr("Estimates")} value={nfi(data.estimates.total)} sub={tr("{v1} sent", { v1: nfi(data.estimates.byStatus?.Sent) })} tone="blue" to="/crm/estimates" />}
+                {data.clients && <StatCard accent={accent} icon={<PiUsersThreeDuotone />} label={tr("Clients")} value={nfi(data.clients.total)} sub={tr("{v1} active", { v1: nfi(data.clients.active) })} change={ch(data.clients.total, data.clients.totalAtStart, true, vsStart)} tone="blue" to="/crm/clients" spark={newClients} />}
+                {data.leads && <StatCard accent={accent} icon={<PiFunnelDuotone />} label={tr("Open leads")} value={nfi(data.leads.open)} sub={tr("{v1} converted", { v1: nfi(data.leads.converted) })} change={ch(data.leads.open, pd?.leads?.open)} tone="purple" to="/crm/leads" />}
+                {data.projects && <StatCard accent={accent} icon={<PiKanbanDuotone />} label={tr("Projects")} value={nfi(data.projects.total)} sub={tr("{v1} in progress", { v1: nfi(data.projects.byStatus?.["In progress"]) })} change={ch(data.projects.total, pd?.projects?.total)} tone="teal" to="/crm/projects" />}
+                {data.tasks && <StatCard accent={accent} icon={<PiCheckSquareDuotone />} label={tr("Open tasks")} value={nfi(data.tasks.open)} sub={tr("{v1} overdue", { v1: nfi(data.tasks.overdue) })} change={ch(data.tasks.open, pd?.tasks?.open, false)} tone={data.tasks.overdue ? 'red' : 'green'} to="/crm/tasks" />}
+                {data.tickets && <StatCard accent={accent} icon={<PiLifebuoyDuotone />} label={tr("Open tickets")} value={nfi(data.tickets.open)} sub={tr("{v1} total", { v1: nfi(data.tickets.total) })} change={ch(data.tickets.open, pd?.tickets?.open, false)} tone="amber" to="/crm/tickets" />}
+                {data.estimates && <StatCard accent={accent} icon={<PiFileTextDuotone />} label={tr("Estimates")} value={nfi(data.estimates.total)} sub={tr("{v1} sent", { v1: nfi(data.estimates.byStatus?.Sent) })} change={ch(data.estimates.total, pd?.estimates?.total)} tone="blue" to="/crm/estimates" />}
             </div>
 
             {data.moneyHidden && (

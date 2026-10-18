@@ -45,8 +45,16 @@ export async function timeReport({ days = 30, staffId: only } = {}) {
         const key = proj || 'No project'
         perProject[key] = (perProject[key] || 0) + m
     }
+    // the same figures for the period just before, for the "+23%" on the cards
+    const prevSince = new Date(+since - days * DAY)
+    const prevRows = await prisma.crmTaskTimer.findMany({ where: { endTime: { gte: prevSince, lt: since }, startTime: { not: null }, ...(who ? { staffId: who } : {}) }, take: 10000, select: { taskId: true, staffId: true, startTime: true, endTime: true } })
+    const prevTasks = await prisma.crmTask.findMany({ where: { id: { in: [...new Set(prevRows.map((r) => r.taskId).filter(Boolean))] } }, select: { id: true, billable: true } })
+    const prevBillable = new Set(prevTasks.filter((t) => t.billable).map((t) => t.id))
+    let pTotal = 0, pBill = 0
+    for (const r of prevRows) { const m = ms(r); pTotal += m; if (prevBillable.has(r.taskId)) pBill += m }
+    const previous = { total: hours(pTotal), billable: hours(pBill), entries: prevRows.length, average: hours(pTotal / Math.max(1, new Set(prevRows.map((r) => `${r.staffId}|${new Date(r.endTime).toISOString().slice(0, 10)}`)).size)) }
     return {
-        days, all, labels,
+        days, all, labels, previous,
         total: hours(total), billable: hours(billable), entries: rows.length,
         average: hours(total / Math.max(1, new Set(rows.map((r) => `${r.staffId}|${new Date(r.endTime).toISOString().slice(0, 10)}`)).size)),
         perDay: labels.map((l) => hours(perDay[l])),

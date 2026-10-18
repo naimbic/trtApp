@@ -102,14 +102,25 @@ export async function getDashboardMetrics(params = {}) {
                 outstanding: 0,
                 overdue: 0,
                 overdueCount: 0,
+                outstandingAtStart: 0, // the same snapshots as the day the period began, for the comparison
+                overdueAtStart: 0,
                 byStatus: {},
                 invoicedByMonth: Object.fromEntries(months.map((m) => [m, 0])),
                 collectedByMonth: Object.fromEntries(months.map((m) => [m, 0])),
             })
         const clientTotals = {}
+        const paidBefore = {} // payments received before the period began
+        for (const p of payments) if (p.invoiceId && p.paymentDate && new Date(p.paymentDate) < since) paidBefore[p.invoiceId] = round2((paidBefore[p.invoiceId] || 0) + (p.amount || 0))
         for (const i of invoices) {
             if (i.status === 5 || i.status === 6) continue // cancelled / draft don't count as revenue
             const b = bucket(i.currencyId)
+            if (i.date && new Date(i.date) < since) {
+                const dueThen = round2(i.total - (paidBefore[i.id] || 0))
+                if (dueThen > 0) {
+                    b.outstandingAtStart = round2(b.outstandingAtStart + dueThen)
+                    if (i.dueDate && new Date(i.dueDate) < since) b.overdueAtStart = round2(b.overdueAtStart + dueThen)
+                }
+            }
             const paid = paidByInvoice[i.id] || 0
             const due = round2(i.total - paid)
             // snapshots (as of today, independent of the date filter)
@@ -173,17 +184,18 @@ export async function getDashboardMetrics(params = {}) {
     })
 
     await section('clients', 'customers', async () => {
-        const [total, active, newByMonthRows] = await Promise.all([
+        const [total, active, newByMonthRows, totalAtStart] = await Promise.all([
             prisma.crmClient.count(),
             prisma.crmClient.count({ where: { active: true } }),
             prisma.crmClient.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { createdAt: true } }),
+            prisma.crmClient.count({ where: { createdAt: { lt: since } } }),
         ])
         const byMonth = Object.fromEntries(months.map((m) => [m, 0]))
         for (const c of newByMonthRows) {
             const mk = bk(c.createdAt)
             if (mk in byMonth) byMonth[mk] += 1
         }
-        return { total, active, byMonth }
+        return { total, active, byMonth, totalAtStart }
     })
 
     await section('leads', 'leads', async () => {
@@ -268,7 +280,7 @@ export async function getDashboardMetrics(params = {}) {
             const len = R.until - R.from
             const pf = new Date(+R.from - len), pt = new Date(+R.from - 86400000)
             const p = await getDashboardMetrics({ range: 'custom', from: iso(pf), to: iso(pt), noPrev: true })
-            if (p) data.prev = { months: p.months, label: `${iso(pf)} → ${iso(pt)}`, invoices: p.invoices, expenses: p.expenses, clients: p.clients }
+            if (p) data.prev = { months: p.months, label: `${iso(pf)} → ${iso(pt)}`, invoices: p.invoices, expenses: p.expenses, clients: p.clients, leads: p.leads, projects: p.projects, tasks: p.tasks, tickets: p.tickets, estimates: p.estimates }
         } catch { /* comparison is optional */ }
     }
     return data

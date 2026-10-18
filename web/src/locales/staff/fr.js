@@ -1,5 +1,8 @@
 // Staff area: fr. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "since the period began": "depuis le début de la période",
+    "vs previous period": "par rapport à la période précédente",
+    "{n} created": "{n} créées",
     "Post, edit and delete the announcements the whole team sees.": "Publier, modifier et supprimer les annonces que toute l'équipe voit.",
     "Leave requests and days off (Attendance & leave in the menu). View own lets someone see their own; View lets a manager see everybody's.": "Demandes de congé et jours chômés (Présence et congés dans le menu). « Voir les siens » permet de voir les siens ; « Voir » permet à un responsable de voir ceux de tous.",
     "Attendance & leave": "Présence et congés",

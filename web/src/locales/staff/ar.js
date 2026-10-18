@@ -1,5 +1,8 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "since the period began": "منذ بداية الفترة",
+    "vs previous period": "مقارنة بالفترة السابقة",
+    "{n} created": "تم إنشاء {n}",
     "Post, edit and delete the announcements the whole team sees.": "نشر الإعلانات التي يراها الفريق كله وتعديلها وحذفها.",
     "Leave requests and days off (Attendance & leave in the menu). View own lets someone see their own; View lets a manager see everybody's.": "طلبات الإجازة وأيام العطلة (الحضور والإجازات في القائمة). «عرض الخاص» يتيح رؤية الخاص بالشخص، و«عرض» يتيح للمدير رؤية الجميع.",
     "Attendance & leave": "الحضور والإجازات",

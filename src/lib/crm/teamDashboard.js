@@ -217,7 +217,7 @@ export async function teamDashboard({ days = 30 } = {}) {
         out.performance = {
             goals: { ...goals, canSet: !!(wantAll || isCrmAdmin(authority)), week: { me: weekDone.filter(mine).length, team: wantAll ? weekDone.length : null, members: Object.keys(sm).length } },
             days, labels, series,
-            team: { completed: cur.length, previous: prev.length, created: series.created.reduce((s, x) => s + x, 0), onTimeRate: cur.length ? Math.round((cur.filter(onTime).length / cur.length) * 100) : null, avgDays: cur.length ? Math.round(avg(cur.map(speed)) * 10) / 10 : null },
+            team: { completed: cur.length, previous: prev.length, previousOnTimeRate: prev.length ? Math.round((prev.filter(onTime).length / prev.length) * 100) : null, previousAvgDays: prev.length ? Math.round(avg(prev.map(speed)) * 10) / 10 : null, created: series.created.reduce((s, x) => s + x, 0), onTimeRate: cur.length ? Math.round((cur.filter(onTime).length / cur.length) * 100) : null, avgDays: cur.length ? Math.round(avg(cur.map(speed)) * 10) / 10 : null },
             weekday,
             leaderboard: wantAll ? board.slice(0, 10) : [],
             badges: wantAll ? { top: board[0]?.person?.id || null, fastest: pickBy(board, (r) => enough(r) && r.avgDays !== null, (a, b) => a.avgDays - b.avgDays), reliable: pickBy(board, (r) => enough(r) && r.onTimeRate !== null, (a, b) => b.onTimeRate - a.onTimeRate || b.completed - a.completed), closer: pickBy(board, (r) => r.converted > 0, (a, b) => b.converted - a.converted), active: pickBy(board, (r) => r.comments + r.hours > 0, (a, b) => b.comments + b.hours - (a.comments + a.hours)) } : {},

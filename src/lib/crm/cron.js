@@ -31,6 +31,8 @@ const addUnits = (d, n, unit) => {
     else x.setUTCMonth(x.getUTCMonth() + n)
     return x
 }
+/** Remembers which document the line just pushed is about, so the screen can link to it (not stored in the log). */
+const ref = (lines, type, id, label) => { (lines.refs ||= [])[lines.length - 1] = { type, id: String(id), label } }
 const daysBetween = (a, b) => Math.floor((new Date(a) - new Date(b)) / DAY)
 
 /* ---------------- tasks ---------------- */
@@ -41,8 +43,9 @@ async function invoicesJob({ o, today, lines, dry }) {
     if (od.count) lines.push(`${dry ? '[preview] ' : ''}${od.count} invoice(s) ${dry ? 'would be ' : ''}marked overdue`)
 
     const send = async (inv, slug, label) => {
-        if (dry) { lines.push(`[preview] ${label.replace(' sent', ' would be sent').replace(' emailed', ' would be emailed')}: invoice ${inv.prefix || ''}${inv.number}`); return true }
-        try { await sendMailCore({ kind: 'invoice', id: inv.id, template: slug }); lines.push(`${label}: invoice ${inv.prefix || ''}${inv.number}`); return true } catch (e) { lines.push(`! ${label} failed for invoice ${inv.prefix || ''}${inv.number}: ${e.message}`); return false }
+        const nr = `${inv.prefix || ''}${inv.number}`
+        if (dry) { lines.push(`[preview] ${label.replace(' sent', ' would be sent').replace(' emailed', ' would be emailed')}: invoice ${nr}`); ref(lines, 'invoice', inv.id, nr); return true }
+        try { await sendMailCore({ kind: 'invoice', id: inv.id, template: slug }); lines.push(`${label}: invoice ${nr}`); ref(lines, 'invoice', inv.id, nr); return true } catch (e) { lines.push(`! ${label} failed for invoice ${nr}: ${e.message}`); ref(lines, 'invoice', inv.id, nr); return false }
     }
     // 2) due soon
     const before = num(o('invoice_due_notice_before')), againDue = num(o('invoice_due_notice_resend_after'))
@@ -67,9 +70,9 @@ async function invoicesJob({ o, today, lines, dry }) {
         if (next > today) continue
         if (onlyPaid) {
             const last = await prisma.crmInvoice.findFirst({ where: { isRecurringFrom: p.id }, orderBy: { createdAt: 'desc' } })
-            if ((last || p).status !== 2) { lines.push(`Recurring invoice ${p.prefix || ''}${p.number} skipped: the last one is not paid`); continue }
+            if ((last || p).status !== 2) { lines.push(`Recurring invoice ${p.prefix || ''}${p.number} skipped: the last one is not paid`); ref(lines, 'invoice', p.id, `${p.prefix || ''}${p.number}`); continue }
         }
-        if (dry) { lines.push(`[preview] A recurring invoice would be created from ${p.prefix || ''}${p.number}${action === 'generate_and_send' ? ' and emailed to the client' : ''}`); continue }
+        if (dry) { lines.push(`[preview] A recurring invoice would be created from ${p.prefix || ''}${p.number}${action === 'generate_and_send' ? ' and emailed to the client' : ''}`); ref(lines, 'invoice', p.id, `${p.prefix || ''}${p.number}`); continue }
         try {
             const { number, prefix, numberFormat } = await allocateNumber('invoice', today)
             const span = p.dueDate && p.date ? Math.max(daysBetween(p.dueDate, p.date), 0) : num(o('invoice_due_after'))
@@ -83,7 +86,7 @@ async function invoicesJob({ o, today, lines, dry }) {
             }
             await prisma.crmInvoice.update({ where: { id: p.id }, data: { totalCycles: p.totalCycles + 1, lastRecurringDate: today } })
             await prisma.crmSalesActivity.create({ data: { relType: 'invoice', relId: child.id, description: `Recurring invoice created from ${p.prefix || ''}${p.number}`, fullName: 'Automatic', date: new Date() } })
-            lines.push(`Recurring invoice created: ${prefix}${number}`)
+            lines.push(`Recurring invoice created: ${prefix}${number}`); ref(lines, 'invoice', child.id, `${prefix}${number}`)
             if (action === 'generate_and_send') await send({ ...child, prefix, number }, 'invoice-send-to-client', 'Recurring invoice emailed')
         } catch (e) { lines.push(`! Recurring invoice ${p.prefix || ''}${p.number} failed: ${e.message}`) }
     }
@@ -98,8 +101,8 @@ async function estimatesJob({ o, today, lines, dry }) {
     // an estimate whose "send reminders to the client" switch is off is never emailed
     const list = (await prisma.crmEstimate.findMany({ where: { status: 2, isExpiryNotified: false, expiryDate: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })).filter((e) => e.remindClient !== false)
     for (const e of list) {
-        if (dry) { lines.push(`[preview] Expiry reminder would be sent for estimate ${e.prefix || ''}${e.number}`); continue }
-        try { await sendMailCore({ kind: 'estimate', id: e.id, template: 'estimate-expiry-reminder' }); await prisma.crmEstimate.update({ where: { id: e.id }, data: { isExpiryNotified: true } }); lines.push(`Expiry reminder sent for estimate ${e.prefix || ''}${e.number}`) } catch (err) { lines.push(`! Estimate ${e.prefix || ''}${e.number}: ${err.message}`) }
+        if (dry) { lines.push(`[preview] Expiry reminder would be sent for estimate ${e.prefix || ''}${e.number}`); ref(lines, 'estimate', e.id, `${e.prefix || ''}${e.number}`); continue }
+        try { await sendMailCore({ kind: 'estimate', id: e.id, template: 'estimate-expiry-reminder' }); await prisma.crmEstimate.update({ where: { id: e.id }, data: { isExpiryNotified: true } }); lines.push(`Expiry reminder sent for estimate ${e.prefix || ''}${e.number}`); ref(lines, 'estimate', e.id, `${e.prefix || ''}${e.number}`) } catch (err) { lines.push(`! Estimate ${e.prefix || ''}${e.number}: ${err.message}`) }
     }
 }
 
@@ -108,8 +111,8 @@ async function proposalsJob({ o, today, lines, dry }) {
     if (before <= 0) return
     const list = (await prisma.crmProposal.findMany({ where: { status: { in: [1, 4, 5] }, isExpiryNotified: false, openTill: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })).filter((p) => p.remindClient !== false)
     for (const p of list) {
-        if (dry) { lines.push(`[preview] Expiry reminder would be sent for proposal "${p.subject || p.id}"`); continue }
-        try { await sendMailCore({ kind: 'proposal', id: p.id, template: 'proposal-expiry-reminder' }); await prisma.crmProposal.update({ where: { id: p.id }, data: { isExpiryNotified: true } }); lines.push(`Expiry reminder sent for proposal "${p.subject || p.id}"`) } catch (err) { lines.push(`! Proposal "${p.subject || p.id}": ${err.message}`) }
+        if (dry) { lines.push(`[preview] Expiry reminder would be sent for proposal "${p.subject || p.id}"`); ref(lines, 'proposal', p.id, p.subject || p.id); continue }
+        try { await sendMailCore({ kind: 'proposal', id: p.id, template: 'proposal-expiry-reminder' }); await prisma.crmProposal.update({ where: { id: p.id }, data: { isExpiryNotified: true } }); lines.push(`Expiry reminder sent for proposal "${p.subject || p.id}"`); ref(lines, 'proposal', p.id, p.subject || p.id) } catch (err) { lines.push(`! Proposal "${p.subject || p.id}": ${err.message}`) }
     }
 }
 
@@ -118,13 +121,13 @@ async function contractsJob({ o, today, lines, dry }) {
     if (before <= 0) return
     const list = (await prisma.crmContract.findMany({ where: { trash: false, isExpiryNotified: false, dateEnd: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })).filter((c) => c.remindClient !== false)
     for (const c of list) {
-        if (dry) { lines.push(`[preview] Expiry notice would be sent for contract "${c.subject}"`); continue }
+        if (dry) { lines.push(`[preview] Expiry notice would be sent for contract "${c.subject}"`); ref(lines, 'contract', c.id, c.subject); continue }
         try {
             await sendMailCore({ kind: 'contract', id: c.id, template: 'contract-expiration' }).catch((e) => lines.push(`! Contract "${c.subject}" client email: ${e.message}`))
             const staff = c.addedFrom ? await prisma.crmStaff.findUnique({ where: { id: c.addedFrom }, select: { email: true, firstName: true } }) : null
             if (staff?.email) await sendTemplate({ slug: 'contract-expiration-to-staff', to: staff.email, relType: 'contract', relId: c.id, data: { staff_firstname: staff.firstName || '', contract_subject: c.subject || '', contract_description: c.description || '', contract_datestart: c.dateStart?.toISOString().slice(0, 10) || '', contract_dateend: c.dateEnd?.toISOString().slice(0, 10) || '' } })
             await prisma.crmContract.update({ where: { id: c.id }, data: { isExpiryNotified: true } })
-            lines.push(`Expiry notice sent for contract "${c.subject}"`)
+            lines.push(`Expiry notice sent for contract "${c.subject}"`); ref(lines, 'contract', c.id, c.subject)
         } catch (err) { lines.push(`! Contract "${c.subject}": ${err.message}`) }
     }
 }
@@ -136,7 +139,7 @@ async function tasksJob({ o, today, lines, dry }) {
     if (before <= 0) return
     const list = await prisma.crmTask.findMany({ where: { status: { not: 5 }, deadlineNotified: false, dueDate: { gte: today, lte: new Date(today.getTime() + before * DAY) } }, include: { assignees: true } })
     for (const t of list) {
-        if (dry) { lines.push(`[preview] Deadline reminder would be sent for task "${t.name}"`); continue }
+        if (dry) { lines.push(`[preview] Deadline reminder would be sent for task "${t.name}"`); ref(lines, 'task', t.id, t.name); continue }
         let sent = 0
         for (const a of t.assignees) {
             const s = await prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true, firstName: true, lastName: true, active: true } })
@@ -145,7 +148,7 @@ async function tasksJob({ o, today, lines, dry }) {
             if (r.sent) sent++; else lines.push(`! Task "${t.name}": ${r.error}`)
         }
         await prisma.crmTask.update({ where: { id: t.id }, data: { deadlineNotified: true } })
-        if (sent) lines.push(`Deadline reminder sent for task "${t.name}" (${sent})`)
+        if (sent) { lines.push(`Deadline reminder sent for task "${t.name}" (${sent})`); ref(lines, 'task', t.id, t.name) }
     }
 }
 
@@ -157,10 +160,10 @@ async function ticketsJob({ o, lines, dry }) {
     if (!answered || !closed) return
     const list = await prisma.crmTicket.findMany({ where: { statusId: answered.id, lastReply: { lt: new Date(Date.now() - hours * 3600000) } } })
     for (const t of list) {
-        if (dry) { lines.push(`[preview] Ticket "${t.subject}" would be closed`); continue }
+        if (dry) { lines.push(`[preview] Ticket "${t.subject}" would be closed`); ref(lines, 'ticket', t.id, t.subject); continue }
         await prisma.crmTicket.update({ where: { id: t.id }, data: { statusId: closed.id } })
         if (t.email) await sendTemplate({ slug: 'auto-close-ticket', to: t.email, relType: 'ticket', relId: t.id, data: { contact_firstname: (t.name || '').split(' ')[0], contact_lastname: (t.name || '').split(' ').slice(1).join(' '), ticket_subject: t.subject || '', ticket_id: t.legacyId ?? t.id, ticket_url: `${publicBase()}/crm/tickets/${t.id}` } })
-        lines.push(`Ticket "${t.subject}" closed automatically`)
+        lines.push(`Ticket "${t.subject}" closed automatically`); ref(lines, 'ticket', t.id, t.subject)
     }
 }
 
@@ -210,6 +213,7 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
     running ??= (async () => {
         const t0 = Date.now()
         const lines = []
+        const groups = [] // which lines belong to which job, for the screen
         let ok = true
         try {
             const o = await getOptions(OPTION_KEYS)
@@ -224,6 +228,7 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
                 const before = lines.length
                 try { await j.run({ o, today, lines, dry }) } catch (e) { ok = false; lines.push(`! ${j.label} failed: ${e.message}`); console.error('[cron]', j.key, e) }
                 if (lines.length === before) lines.push(`${j.label}: nothing to do`)
+                groups.push({ key: j.key, label: j.label, from: before, to: lines.length })
                 if ((j.hour || j.daily) && !dry) done[`cron_last_${j.key}`] = ymd
             }
             if (!dry) await setOptions({ ...done, last_cron_run: Math.floor(Date.now() / 1000) })
@@ -231,7 +236,7 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
         const summary = lines.filter((l) => !l.endsWith('nothing to do')).slice(0, 3).join(' · ') || 'Nothing to do'
         const run = await prisma.crmCronRun.create({ data: { trigger: dry ? 'preview' : trigger, ok: ok && !lines.some((l) => l.startsWith('!')), summary: summary.slice(0, 300), lines, ms: Date.now() - t0 } })
         await prisma.crmCronRun.deleteMany({ where: { startedAt: { lt: new Date(Date.now() - 30 * DAY) } } }).catch(() => {})
-        return { ok: run.ok, lines, ms: run.ms }
+        return { ok: run.ok, lines, refs: lines.refs || [], groups, ms: run.ms }
     })().finally(() => { running = null })
     return running
 }

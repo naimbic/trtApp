@@ -14,6 +14,7 @@ import RecordDrawer from '../kit/RecordDrawer'
 import { api, notify, useCan } from '../kit/api'
 import { MailServerSettings } from '../mail/Mails'
 import { TokenChip } from './fields'
+import CronResult from './CronResult'
 import { CLIENT_TOKENS, COMPANY_TOKENS, SAMPLE_CLIENT, companyData, renderFormat } from './tokens'
 import { tr } from '@/utils/t'
 
@@ -129,6 +130,8 @@ export const ClientPermissionsPanel = () => (
     </div>
 )
 
+const unitWord = ({ every, unit }) => tr(every === 1 ? unit : `${unit}s`)
+
 /** The cron command, a manual run and the recent runs. */
 export const CronPanel = ({ log }) => {
     const [info, setInfo] = useState(null)
@@ -169,9 +172,9 @@ export const CronPanel = ({ log }) => {
                 {info.lastRun ? tr("Last run {v1}.", { v1: new Date(info.lastRun).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) }) : tr("The cron job has not run yet.")} {tr("Set it to run every 5 to 15 minutes; each task then does its work at the hour you choose below.")}
             </Alert>
             {info.mode === 'built_in' ? (
-                <Alert showIcon type="info" className="mb-4">{tr("The CRM runs the automatic tasks itself, every {n} {unit}.", { n: info.schedule.every, unit: tr(info.schedule.unit === 'minute' ? 'minutes' : info.schedule.unit === 'hour' ? 'hours' : 'days') })} {info.nextRun ? tr("Next run around {v1}.", { v1: new Date(info.nextRun).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) }) : tr("It starts once “Run the automatic tasks” is turned on.")} {tr("The command below is not needed.")}</Alert>
+                <Alert showIcon type="info" className="mb-4">{tr("The CRM runs the automatic tasks itself, every {n} {unit}.", { n: info.schedule.every, unit: unitWord(info.schedule) })} {info.nextRun ? tr("Next run around {v1}.", { v1: new Date(info.nextRun).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) }) : tr("It starts once “Run the automatic tasks” is turned on.")} {tr("The command below is not needed.")}</Alert>
             ) : (
-                <Alert showIcon type="info" className="mb-4">{tr("An external scheduler calls the command below, every {n} {unit}: use this crontab line.", { n: info.schedule.every, unit: tr(info.schedule.unit === 'minute' ? 'minutes' : info.schedule.unit === 'hour' ? 'hours' : 'days') })}</Alert>
+                <Alert showIcon type="info" className="mb-4">{tr("An external scheduler calls the command below, every {n} {unit}: use this crontab line.", { n: info.schedule.every, unit: unitWord(info.schedule) })}</Alert>
             )}
             <div className="mb-1.5 text-sm font-semibold">{tr("Cron command")}</div>
             <div className="mb-2 flex gap-2"><Input readOnly value={info.command} onFocus={(e) => e.target.select()} /><Button icon={<TbCopy />} onClick={() => copy(info.command)}>{tr("Copy")}</Button></div>
@@ -183,7 +186,7 @@ export const CronPanel = ({ log }) => {
                 <Button variant="solid" icon={<TbPlayerPlay />} disabled={busy} onClick={() => setConfirmRun(true)}>{tr("Run cron manually")}</Button>
                 <span className="text-xs text-gray-400">{tr("Both ignore the hour settings. The preview sends and changes nothing.")}</span>
             </div>
-            {result && <pre className="mt-4 max-h-72 overflow-auto rounded-xl bg-gray-50 p-4 text-xs dark:bg-gray-700/40">{result.dry ? tr("PREVIEW (nothing was sent or changed)\n\n") : ''}{result.lines.join('\n')}</pre>}
+            {result && <CronResult result={result} />}
             <ConfirmDialog isOpen={confirmRun} type="warning" title={tr("Run all automatic tasks now?")} confirmText={tr("Run now")} onClose={() => setConfirmRun(false)} onRequestClose={() => setConfirmRun(false)} onCancel={() => setConfirmRun(false)} onConfirm={() => run(false)}>
                 <p>{tr("Reminders are emailed to your real clients and recurring invoices are created, exactly as the scheduled run would do. Use “Preview” first to see the list.")}</p>
             </ConfirmDialog>

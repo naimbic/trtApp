@@ -1,5 +1,18 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "minute": "دقيقة",
+    "hour": "ساعة",
+    "Nothing to do": "لا شيء للقيام به",
+    "Nothing to do:": "لا شيء للقيام به:",
+    "Nothing was sent or changed.": "لم يُرسل أو يتغير أي شيء.",
+    "Result": "النتيجة",
+    "Run finished": "اكتمل التشغيل",
+    "Skipped": "تم التخطي",
+    "Will happen": "سيحدث",
+    "failed": "فشلت",
+    "skipped": "تم تخطيها",
+    "to do": "للتنفيذ",
+    "Cleanup": "التنظيف",
     "How often the automatic tasks wake up. Each task still does its work once a day at the hour set in its own card below (tickets every time).": "عدد مرات استيقاظ المهام التلقائية. تعمل كل مهمة مرة واحدة يومياً في الساعة المحددة في بطاقتها أدناه (التذاكر في كل مرة).",
     "Who runs it": "من ينفّذها",
     "The CRM itself (nothing to set up on the server)": "نظام CRM نفسه (لا حاجة لإعداد الخادم)",

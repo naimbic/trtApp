@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.57.1',
+        date: '2026-10-18',
+        title: 'Cron preview and run result, clear and linked',
+        items: ['The result of "Preview what would happen" and "Run cron manually" is now laid out instead of plain text: a summary on top (Preview or Run finished, with the counts to do / done / skipped / failed), one card per task (Invoices, Estimates, Proposals, Contracts, Tasks, Tickets...) with a coloured icon and a Will happen / Done / Skipped / Failed tag on every line, and the tasks with nothing to do gathered in one line', 'Every invoice, estimate, proposal, contract, task and ticket named in the result is a link that opens it', 'Long lists scroll inside their card; "every 1 days" now reads "every 1 day"']
+    },
+    {
         version: '0.57.0',
         date: '2026-10-18',
         title: 'Cron job schedule: every N minutes, hours or days',

@@ -1,5 +1,18 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "minute": "分",
+    "hour": "時間",
+    "Nothing to do": "実行するものはありません",
+    "Nothing to do:": "実行するものなし：",
+    "Nothing was sent or changed.": "送信も変更も行われていません。",
+    "Result": "結果",
+    "Run finished": "実行が完了しました",
+    "Skipped": "スキップ",
+    "Will happen": "実行予定",
+    "failed": "失敗",
+    "skipped": "スキップ",
+    "to do": "予定",
+    "Cleanup": "クリーンアップ",
     "How often the automatic tasks wake up. Each task still does its work once a day at the hour set in its own card below (tickets every time).": "自動タスクが起動する頻度。各タスクは、下のそれぞれのカードで設定した時刻に1日1回実行されます（チケットは毎回）。",
     "Who runs it": "実行する主体",
     "The CRM itself (nothing to set up on the server)": "CRM自身（サーバー設定は不要）",

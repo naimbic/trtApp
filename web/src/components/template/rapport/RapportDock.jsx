@@ -37,7 +37,7 @@ const RapportDock = () => {
                         <Link to={i.to} className="rp-dock-btn" data-active={pathname === i.to || pathname.startsWith(`${i.to}/`)} aria-label={tr(i.label)}>{i.icon}</Link>
                     </Tooltip>
                 ))}
-                {(pathname === '/dashboard' || hasPageFilter(pathname)) && <DockFilters />}
+                <DockFilters full={pathname === '/dashboard' || hasPageFilter(pathname)} />
                 <span className="rp-dock-sep" />
                 <SettingsMenu placement={direction === 'rtl' ? 'left-end' : 'right-end'} />
                 <Tooltip title={mode === 'dark' ? tr('Light mode') : tr('Dark mode')} placement={place}>

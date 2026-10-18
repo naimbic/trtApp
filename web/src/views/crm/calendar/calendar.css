@@ -84,3 +84,32 @@
 .sch-cal .fc-daygrid-day.is-selected .sch-ev, .sch-cal .fc-daygrid-day.is-selected .fc-daygrid-more-link { color: var(--rp-on-pill, #fff); }
 .sch-cal .fc-timegrid-event .sch-ev { background: color-mix(in srgb, var(--c) 22%, var(--rp-float, #fff)); border-inline-start: 3px solid var(--c); border-radius: 8px; height: 100%; padding: 3px 6px; align-items: flex-start; }
 .sch-cal .fc-timegrid-event .sch-ev__dot { display: none; }
+
+/* the day number on the left, the people on the right; the selected day in the chosen colour; readable entries */
+.sch-cal .fc-daygrid-day-top { display: block; }
+.sch-cal .fc-daygrid-day-number { display: block; width: 100%; }
+.sch-daytop { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.sch-daytop .sch-faces img, .sch-daytop .sch-faces__i { width: 24px; height: 24px; font-size: 9.5px; }
+.sch-cal .fc-daygrid-day.is-selected .fc-daygrid-day-frame { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); }
+.sch-cal .fc-daygrid-day.is-selected .sch-faces img, .sch-cal .fc-daygrid-day.is-selected .sch-faces__i { box-shadow: 0 0 0 2px var(--rp-accent, #d8532d); }
+.sch-cal .fc-daygrid-day.is-selected .sch-ev, .sch-cal .fc-daygrid-day.is-selected .fc-daygrid-more-link { color: var(--rp-on-accent, #fff); }
+.sch-cal .fc-daygrid-day.is-selected .sch-ev__dot { box-shadow: 0 0 0 2px var(--rp-on-accent, #fff); }
+.sch-cal .fc-event, .sch-cal .fc-event-main, .sch-cal .fc-daygrid-event { color: var(--rp-text, #17191a); }
+.sch-ev { color: var(--rp-text, #17191a); }
+.sch-ev__title { font-weight: 600; }
+.sch-cal .fc-timegrid-event .sch-ev { color: var(--rp-text, #17191a); }
+.sch-card__head--late { align-items: center; }
+.sch-badge { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 9px; border-radius: 999px; font-size: 13px; font-weight: 800; background: var(--rp-well, #eee); color: var(--rp-muted, #777); }
+.sch-badge.is-red { background: #d6402a; color: #fff; }
+
+/* the people sit at the top end of the box, whatever the number does */
+.sch-cal .fc-daygrid-day-frame { position: relative; }
+.sch-cal .fc-daygrid-day-top, .sch-cal .fc-daygrid-day-number { display: block; width: auto; }
+.sch-daytop { display: block; }
+.sch-daytop .sch-faces { position: absolute; inset-block-start: 7px; inset-inline-end: 8px; }
+.sch-daytop .sch-faces img, .sch-daytop .sch-faces__i { width: 25px; height: 25px; font-size: 10px; }
+.sch-cal .fc-daygrid-day-top, .sch-cal .fc-daygrid-day-number { position: static !important; }
+.sch-cal .fc-daygrid-day-number { z-index: auto; }
+.sch-cal .fc-daygrid-day-number { color: inherit !important; text-decoration: none !important; outline: none; }
+.sch-daynum { color: inherit; }
+.sch-cal .fc-daygrid-event-harness-abs { visibility: hidden !important; }

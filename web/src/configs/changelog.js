@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.74.2',
+        date: '2026-10-18',
+        title: 'Schedule polish, and the colour picker on every page',
+        items: ['The colour button of the left dock is now on every page (the period and currency buttons still only where a page uses them)', 'Calendar boxes: the day number on the left and the people on the right (bigger photos); the selected day takes the colour you picked; entries read dot (task status or event colour), then the time as 9h or 14h30, then the title, in text colours that stay readable on any box', 'The Overdue card is just the title and the count in a red circle']
+    },
+    {
         version: '0.74.1',
         date: '2026-10-18',
         title: 'Schedule: big day, tick-off agenda, compact equal cells',

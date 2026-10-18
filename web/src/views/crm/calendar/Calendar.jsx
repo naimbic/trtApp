@@ -79,6 +79,8 @@ const STATUS_DOT = { 1: '#9ca3af', 2: '#f59e0b', 3: '#8b5cf6', 4: '#3b82f6', 5: 
 const EVENT_DOT = { red: '#ef4444', orange: '#f97316', yellow: '#eab308', green: '#22c55e', blue: '#3b82f6', purple: '#8b5cf6' }
 const KIND_DOT = { events: '#3b82f6', reminders: '#f59e0b', tasks: '#f97316', invoices: '#ef4444', projects: '#8b5cf6', estimates: '#eab308', proposals: '#22c55e', contracts: '#0ea5e9' }
 const dotOf = (p) => (p.type === 'tasks' ? STATUS_DOT[p.status || 1] : p.type === 'events' ? EVENT_DOT[p.eventColor] || KIND_DOT.events : KIND_DOT[p.type])
+/** 9h, 9h30, 14h: the compact clock used on the calendar and in the agenda */
+const hTime = (d) => { const t = dayjs(d); return `${t.hour()}h${t.minute() ? String(t.minute()).padStart(2, '0') : ''}` }
 const nameOf = (p) => (p.type === 'tasks' && p.rawName ? p.rawName : localTitle(p.rawTitle || p.title))
 const renderEvent = (arg) => {
     const ev = arg.event
@@ -87,7 +89,7 @@ const renderEvent = (arg) => {
         <Tooltip title={<EventTip ev={ev} timeText={arg.timeText} />} placement="top">
             <div className={`sch-ev ${p.done ? 'is-done' : ''}`} style={{ '--c': dotOf(p) }}>
                 <i className="sch-ev__dot" />
-                {!ev.allDay && arg.timeText ? <span className="sch-ev__time">{arg.timeText}</span> : null}
+                {!ev.allDay && ev.start ? <span className="sch-ev__time">{hTime(ev.start)}</span> : null}
                 <b className="sch-ev__title">{nameOf(p)}</b>
             </div>
         </Tooltip>
@@ -290,7 +292,7 @@ const Calendar = () => {
 
     const togglePerson = (id) => setPeople((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
     const toggleKind = (k) => setShown((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]))
-    const timeOf = (it) => (it.allDay ? tr("All day") : dayjs(it.start).format(hour12 ? 'h:mm A' : 'HH:mm'))
+    const timeOf = (it) => (it.allDay ? tr("All day") : hTime(it.start))
     const dayLabel = dayjs(selectedDay).format('dddd, D MMMM')
     const daysLate = (d) => Math.max(1, dayjs(today).diff(dayjs(d), 'day'))
 
@@ -357,7 +359,7 @@ const Calendar = () => {
                         {!agenda.length && <p className="sch-empty">{tr("Nothing planned for this day.")}</p>}
                     </section>
                     <section className="card sch-late">
-                        <header className="sch-card__head"><div><h2>{tr("Overdue")}</h2><p>{lateItems.length ? tr("{n} still open", { n: lateItems.length }) : tr("Nothing is late")}</p></div></header>
+                        <header className="sch-card__head sch-card__head--late"><h2>{tr("Overdue")}</h2><span className={`sch-badge ${lateItems.length ? 'is-red' : ''}`}>{lateItems.length}</span></header>
                         <ul className="sch-list">{lateItems.slice(0, 12).map((it) => row(it, true))}</ul>
                         {lateItems.length > 12 && <p className="sch-empty">{tr("+{n} more", { n: lateItems.length - 12 })}</p>}
                     </section>

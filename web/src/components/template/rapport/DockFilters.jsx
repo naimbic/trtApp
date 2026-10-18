@@ -31,7 +31,7 @@ const SHORT = { today: 'Today', '7d': '7D', '30d': '30D', month: 'Month', lastmo
  * The period, currency and colour pickers, moved into the dock: an icon each with its current value underneath; pressing one opens a
  * small panel beside the dock. Shown on the pages that have these filters.
  */
-const DockFilters = () => {
+const DockFilters = ({ full = true }) => {
     const { range, from, to, currencyId, accent, customHex, currencies, setRange, setCustom, setCurrency, setAccent, setCustomHex } = useDashFilters()
     const [draft, setDraft] = useState({ from: '', to: '' })
     const [hexText, setHexText] = useState('')
@@ -83,8 +83,8 @@ const DockFilters = () => {
     return (
         <div ref={box} className="contents">
             <span className="rp-dock-sep" />
-            <Btn k="period" icon={<PiCalendarDotsDuotone />} label={tr('Period')} tag={tr(SHORT[range] || '')} />
-            {several && <Btn k="currency" icon={<PiCoinsDuotone />} label={tr('Currency')} tag={curLabel} />}
+            {full && <Btn k="period" icon={<PiCalendarDotsDuotone />} label={tr('Period')} tag={tr(SHORT[range] || '')} />}
+            {full && several && <Btn k="currency" icon={<PiCoinsDuotone />} label={tr('Currency')} tag={curLabel} />}
             <Btn k="colour" icon={<PiPaletteDuotone />} label={tr('Colour')} tag={<span className="block h-2 w-2 rounded-full" style={{ background: ACCENTS.find((a) => a.key === accent)?.hex }} />} />
             {open && createPortal(
                 <div ref={panel} className="rp-fpanel rp-portal" data-side={direction === 'rtl' ? 'left' : 'right'} style={{ top: pos.top, '--arrow': `${pos.arrow}px`, ...(direction === 'rtl' ? { right: 'calc(var(--rp-dock-x) + var(--rp-dock-w) + 18px)' } : { left: 'calc(var(--rp-dock-x) + var(--rp-dock-w) + 18px)' }) }}>

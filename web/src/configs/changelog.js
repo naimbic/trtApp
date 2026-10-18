@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.68.3',
+        date: '2026-10-18',
+        title: 'Status changes at once when you set yourself away',
+        items: ['Setting yourself as away (or back to available) from the profile menu now changes the dot on the avatar, the menu row and the chat status immediately, without waiting for the next presence check']
+    },
+    {
         version: '0.68.2',
         date: '2026-10-18',
         title: 'One global status: the profile menu follows the avatar dot',

@@ -12,7 +12,7 @@ import ChatThread from '@/components/crm/chat/ChatThread'
 import { StatusDot, usePingOnIncrease } from '@/components/crm/chat/chatKit'
 import { chatApi as api, chatPost as post, chatPatch as patch, chatDelete as del } from '@/components/crm/chat/chatClient'
 import { upload as uploadFile, notify } from '../kit/api'
-import { useChatStatus, STATUS } from '@/store/chatStatusStore'
+import { useChatStatus, useMyStatus, STATUS } from '@/store/chatStatusStore'
 import { tr } from '@/utils/t'
 
 const POLL = 6000
@@ -118,8 +118,8 @@ const InfoPanel = ({ room, data, theirStatus, onClose, reload, onLeft }) => {
                     <div className="space-y-0.5">
                         {members.map((s) => (
                             <div key={s.id} className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5">
-                                <Face r={{ kind: 'direct', image: s.image, status: s.id === me.id ? useChatStatus.getState().state : s.status }} size={32} />
-                                <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{s.name}{s.id === me.id && <span className="ml-1 font-normal text-gray-400">{tr("(you)")}</span>}</div><div className="text-[11px] text-gray-400">{s.id === room.createdBy ? tr("Creator") : STATUS[(s.id === me.id ? useChatStatus.getState().state : s.status) || 'offline'].label}</div></div>
+                                <Face r={{ kind: 'direct', image: s.image, status: s.id === me.id ? (useChatStatus.getState().away ? 'away' : useChatStatus.getState().state) : s.status }} size={32} />
+                                <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{s.name}{s.id === me.id && <span className="ml-1 font-normal text-gray-400">{tr("(you)")}</span>}</div><div className="text-[11px] text-gray-400">{s.id === room.createdBy ? tr("Creator") : STATUS[(s.id === me.id ? (useChatStatus.getState().away ? 'away' : useChatStatus.getState().state) : s.status) || 'offline'].label}</div></div>
                                 {room.kind === 'group' && owner && s.id !== me.id && <button type="button" title={tr("Remove")} className="text-gray-300 opacity-0 hover:text-red-500 group-hover:opacity-100" onClick={() => run(() => patch(`/rooms/${room.id}`, { remove: [s.id] }))}><PiXBold /></button>}
                             </div>
                         ))}
@@ -153,7 +153,7 @@ const ChatPage = () => {
     const [theirStatus, setTheirStatus] = useState(null)
     const muted = useChatStatus((s) => s.muted)
     const setMuted = useChatStatus((s) => s.setMuted)
-    const mine = useChatStatus((s) => s.state)
+    const mine = useMyStatus()
     const roomId = params.get('room')
 
     const refresh = useCallback(async () => { try { setData(await api('/rooms')); setError('') } catch (e) { setError(e.message) } }, [])

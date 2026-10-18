@@ -22,3 +22,6 @@ export const STATUS = {
     away: { label: 'Away', dot: 'bg-orange-400' },
     offline: { label: 'Offline', dot: 'bg-gray-300' },
 }
+
+/** What to show for me right now: away as soon as I choose it, otherwise the live state (available / idle). */
+export const useMyStatus = () => useChatStatus((s) => (s.away ? 'away' : s.state))

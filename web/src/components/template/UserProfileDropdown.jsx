@@ -7,7 +7,7 @@ import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuot
 import { useThemeStore } from '@/store/themeStore'
 import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
-import { useChatStatus, STATUS } from '@/store/chatStatusStore'
+import { useChatStatus, useMyStatus, STATUS } from '@/store/chatStatusStore'
 import { tr } from '@/utils/t'
 
 const dropdownItemList = [
@@ -23,7 +23,7 @@ const _UserDropdown = ({ className }) => {
 
     const { signOut } = useAuth()
     const me = useMe()
-    const chatState = useChatStatus((st) => st.state)
+    const chatState = useMyStatus()
     const away = useChatStatus((st) => st.away)
     const setAway = useChatStatus((st) => st.setAway)
     const mode = useThemeStore((st) => st.mode)

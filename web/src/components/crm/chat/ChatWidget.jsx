@@ -9,7 +9,7 @@ import CallOverlay from './CallOverlay'
 import useCall from './useCall'
 import { upload as uploadFile } from '@/views/crm/kit/api'
 import { StatusDot, usePresence, usePingOnIncrease } from './chatKit'
-import { useChatStatus, STATUS } from '@/store/chatStatusStore'
+import { useChatStatus, useMyStatus, STATUS } from '@/store/chatStatusStore'
 import { chatApi, chatPost } from './chatClient'
 import { tr, trn } from '@/utils/t'
 
@@ -47,7 +47,7 @@ const ChatWidget = () => {
     const [theirStatus, setTheirStatus] = useState(null)
     const muted = useChatStatus((s) => s.muted)
     const setMuted = useChatStatus((s) => s.setMuted)
-    const mine = useChatStatus((s) => s.state)
+    const mine = useMyStatus()
 
     const refresh = useCallback(async () => { try { setData(await api('/rooms')) } catch { /* not signed in or no staff profile: stay hidden */ } }, [])
     useEffect(() => { refresh(); const t = setInterval(() => { if (!document.hidden) refresh() }, POLL); return () => clearInterval(t) }, [refresh])

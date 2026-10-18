@@ -453,6 +453,12 @@ export const GROUPS = {
             { title: 'Automatic tasks', desc: 'Nothing is sent or changed automatically until you turn this on. Use Preview in the command section first to see what would happen.', fields: [
                 yes('cron_enabled', 'Run the automatic tasks when the cron job is called', { default: '0' }),
             ] },
+            { title: 'Schedule', desc: 'How often the automatic tasks wake up. Each task still does its work once a day at the hour set in its own card below (tickets every time).', fields: [
+                sel('cron_mode', 'Who runs it', [['built_in', 'The CRM itself (nothing to set up on the server)'], ['external', 'An external scheduler that calls the command below']], { default: 'external' }),
+                f('cron_every', 'Run every', 'number', { min: 1, max: 59, default: '15', hint: 'Minutes up to 59, hours up to 23, days up to 30.' }),
+                sel('cron_unit', 'Unit', [['minute', 'Minutes'], ['hour', 'Hours'], ['day', 'Days']], { default: 'minute' }),
+                f('cron_at_hour', 'At (hour of day, 0–23)', 'number', { min: 0, max: 23, default: '9', hint: 'Only used when the unit is days.' }),
+            ] },
             { title: 'Command', panel: 'cronCommand' },
             { title: 'Invoices', desc: 'Overdue and due-soon reminders, and recurring invoices.', fields: [
                 f('invoice_auto_operations_hour', 'Run at (hour of day, 0–23)', 'number', { min: 0, max: 23, default: '9' }),

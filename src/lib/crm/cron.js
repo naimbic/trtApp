@@ -5,6 +5,7 @@ import { sendMailCore } from '@/lib/crm/mailApi'
 import { allocateNumber } from '@/lib/crm/sales/docNumbering'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { runRecurringTasks, stopForgottenTimers } from '@/lib/crm/recurringTasks'
+import { normalizeSchedule, crontabExpr, nextRun } from '@/lib/crm/cronSchedule'
 
 /**
  * The cron job. Call it often (every 5–15 minutes); each task does its work once a day at the hour set in
@@ -237,11 +238,13 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
 
 /** The cron key (created the first time it is needed) and the command to schedule. */
 export async function cronInfo() {
-    const o = await getOptions(['cron_key', 'last_cron_run', 'cron_enabled'])
+    const o = await getOptions(['cron_key', 'last_cron_run', 'cron_enabled', 'cron_mode', 'cron_every', 'cron_unit', 'cron_at_hour'])
     let key = o('cron_key')
     if (!key) { key = crypto.randomBytes(16).toString('hex'); await setOptions({ cron_key: key }) }
     const last = Number(o('last_cron_run')) || 0
-    return { enabled: o('cron_enabled') === '1', command: `wget -q -O- "${publicBase()}/api/cron/index?key=${key}"`, key, lastRun: last ? new Date(last * 1000).toISOString() : null }
+    const schedule = normalizeSchedule({ every: o('cron_every'), unit: o('cron_unit'), atHour: o('cron_at_hour') })
+    const mode = o('cron_mode', 'external') === 'built_in' ? 'built_in' : 'external'
+    return { enabled: o('cron_enabled') === '1', mode, schedule: { ...schedule, expr: crontabExpr(schedule) }, nextRun: mode === 'built_in' && o('cron_enabled') === '1' ? nextRun(schedule, { lastRunMs: last * 1000 }).toISOString() : null, command: `wget -q -O- "${publicBase()}/api/cron/index?key=${key}"`, key, lastRun: last ? new Date(last * 1000).toISOString() : null }
 }
 
 export async function cronKeyValid(key) {

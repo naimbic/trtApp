@@ -168,11 +168,16 @@ export const CronPanel = ({ log }) => {
             <Alert showIcon type={info.lastRun && Date.now() - new Date(info.lastRun).getTime() < 26 * 3600 * 1000 ? 'success' : 'warning'} className="mb-4">
                 {info.lastRun ? tr("Last run {v1}.", { v1: new Date(info.lastRun).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) }) : tr("The cron job has not run yet.")} {tr("Set it to run every 5 to 15 minutes; each task then does its work at the hour you choose below.")}
             </Alert>
+            {info.mode === 'built_in' ? (
+                <Alert showIcon type="info" className="mb-4">{tr("The CRM runs the automatic tasks itself, every {n} {unit}.", { n: info.schedule.every, unit: tr(info.schedule.unit === 'minute' ? 'minutes' : info.schedule.unit === 'hour' ? 'hours' : 'days') })} {info.nextRun ? tr("Next run around {v1}.", { v1: new Date(info.nextRun).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) }) : tr("It starts once “Run the automatic tasks” is turned on.")} {tr("The command below is not needed.")}</Alert>
+            ) : (
+                <Alert showIcon type="info" className="mb-4">{tr("An external scheduler calls the command below, every {n} {unit}: use this crontab line.", { n: info.schedule.every, unit: tr(info.schedule.unit === 'minute' ? 'minutes' : info.schedule.unit === 'hour' ? 'hours' : 'days') })}</Alert>
+            )}
             <div className="mb-1.5 text-sm font-semibold">{tr("Cron command")}</div>
             <div className="mb-2 flex gap-2"><Input readOnly value={info.command} onFocus={(e) => e.target.select()} /><Button icon={<TbCopy />} onClick={() => copy(info.command)}>{tr("Copy")}</Button></div>
-            <p className="mb-4 text-xs text-gray-400">{tr("Add it to your server's crontab, or to any scheduler that can call a web address (for example")} <code>*/10 * * * *</code>).</p>
+            <p className="mb-4 text-xs text-gray-400">{tr("Add it to your server's crontab, or to any scheduler that can call a web address (for example")} <code>{info.schedule.expr}</code>).</p>
             <div className="mb-1.5 text-sm font-semibold">{tr("crontab line")}</div>
-            <div className="mb-4 flex gap-2"><Input readOnly value={`*/10 * * * * ${info.command}`} onFocus={(e) => e.target.select()} /><Button icon={<TbCopy />} onClick={() => copy(`*/10 * * * * ${info.command}`)}>{tr("Copy")}</Button></div>
+            <div className="mb-4 flex gap-2"><Input readOnly value={`${info.schedule.expr} ${info.command}`} onFocus={(e) => e.target.select()} /><Button icon={<TbCopy />} onClick={() => copy(`${info.schedule.expr} ${info.command}`)}>{tr("Copy")}</Button></div>
             <div className="flex flex-wrap items-center gap-3">
                 <Button icon={busy ? <Spinner size={16} /> : <TbEye />} disabled={busy} onClick={() => run(true)}>{tr("Preview what would happen")}</Button>
                 <Button variant="solid" icon={<TbPlayerPlay />} disabled={busy} onClick={() => setConfirmRun(true)}>{tr("Run cron manually")}</Button>

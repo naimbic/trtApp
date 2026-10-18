@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.57.0',
+        date: '2026-10-18',
+        title: 'Cron job schedule: every N minutes, hours or days',
+        items: ['Settings → Cron job has a new Schedule card: choose who runs the automatic tasks (the CRM itself, or an external scheduler that calls the command), then "Run every" a number of minutes, hours or days (for days, also the hour of the day)', 'The CRM can now run its automatic tasks by itself: with "The CRM itself" chosen and "Run the automatic tasks" turned on, it wakes up on your schedule, with nothing to set up on the server; every run appears in Recent runs as "scheduler"', 'With an external scheduler, the crontab line shown below the command now matches your choice (for example */5 * * * * for every 5 minutes, 0 9 * * * for every day at 9)', 'Nothing changes until you turn "Run the automatic tasks" on: it stays off by default; each task still works once a day at the hour of its own card']
+    },
+    {
         version: '0.56.0',
         date: '2026-10-18',
         title: 'Client reminders: a switch on each document',

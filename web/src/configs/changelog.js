@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.52.1',
+        date: '2026-10-18',
+        title: 'Fix: Admin-role members could not add departments (or any setup item)',
+        items: ['Settings and Email templates only offer View and Edit in Roles, but adding and deleting (departments, currencies, taxes, payment modes, ticket statuses and priorities, services, predefined replies, custom fields...) asked for Create and Delete, which nobody could be given: only the Super Admin saw the "New" buttons. Edit now covers adding and deleting for those two, so every member whose role has Settings → Edit can add departments and the other setup items', 'Same gap closed for Checklist templates (Roles offers Create and Delete only): Create now also lets the person open and edit them', 'A test now walks every feature the screens use and fails if an action cannot be granted in Roles']
+    },
+    {
         version: '0.52.0',
         date: '2026-10-18',
         title: 'Roles: Calendar, Team chat and File manager',

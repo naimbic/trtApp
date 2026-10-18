@@ -23,7 +23,7 @@ const GROUP_ORDER = [
 
 const authorityFor = (feature) =>
     feature
-        ? ['admin', 'crm.admin', `crm.${feature}.view`, `crm.${feature}.view_own`]
+        ? ['admin', 'crm.admin', `crm.${feature}.view`, `crm.${feature}.view_own`, ...(feature === 'checklist_templates' ? ['crm.checklist_templates.create'] : [])]
         : ['admin', 'crm.admin', 'user']
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-')

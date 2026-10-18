@@ -1,5 +1,6 @@
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { IMPLIED_BY } from '@/lib/crm/capRules'
 
 /**
  * Perfex-style permission model on top of trtApp authority strings.
@@ -20,6 +21,8 @@ export const isCrmAdmin = (authority = []) =>
 export const hasCap = (authority = [], feature, cap) => {
     if (isCrmAdmin(authority)) return true
     if (authority.includes(`crm.${feature}.${cap}`)) return true
+    const by = IMPLIED_BY[feature]?.[cap]
+    if (by && authority.includes(`crm.${feature}.${by}`)) return true
     if (cap === 'view_own') return authority.includes(`crm.${feature}.view`)
     return false
 }

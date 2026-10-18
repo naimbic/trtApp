@@ -16,9 +16,13 @@ export const notify = (type, msg) => toast.push(createElement(Notification, { ty
 
 // ---- permissions (same rules as src/lib/crm/permissions.js on the server)
 export const isAdmin = (authority = []) => authority.includes('admin') || authority.includes('crm.admin')
+// same table as IMPLIED_BY in src/lib/crm/permissions.js
+const IMPLIED_BY = { settings: { create: 'edit', delete: 'edit' }, email_templates: { create: 'edit', delete: 'edit' }, checklist_templates: { view: 'create', view_own: 'create', edit: 'create' } }
 export const hasCap = (authority = [], feature, cap) => {
     if (isAdmin(authority)) return true
     if (authority.includes(`crm.${feature}.${cap}`)) return true
+    const by = IMPLIED_BY[feature]?.[cap]
+    if (by && authority.includes(`crm.${feature}.${by}`)) return true
     if (cap === 'view_own') return authority.includes(`crm.${feature}.view`)
     return false
 }

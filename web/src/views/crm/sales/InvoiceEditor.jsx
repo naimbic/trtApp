@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify } from '../kit/api'
+import { useSessionUser } from '@/store/authStore'
 import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
@@ -28,6 +29,8 @@ const InvoiceEditor = () => {
     const [error, setError] = useState('')
     const [saving, setSaving] = useState(false)
     const [v, setV] = useState(null)
+    const authority = useSessionUser((x) => x.user.authority) || []
+    const superAdmin = authority.includes('admin') || authority.includes('crm.admin')
 
     useEffect(() => {
         Promise.all([api('/api/crm/sales/lookups'), id ? api(`/api/crm/sales/invoices/${id}`) : null])
@@ -35,6 +38,8 @@ const InvoiceEditor = () => {
                 setLookups(l)
                 setDoc(d)
                 const inv = d?.invoice
+                // a paid invoice is final: only a super admin edits it (the caution was shown when they pressed Edit)
+                if (inv?.status === 2 && !superAdmin) { notify('warning', tr("A paid invoice cannot be changed. Only a super admin can do that.")); navigate(`/crm/invoices/${id}`); return }
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
                 const dd = l.defaults || {}
                 const dueAfter = dd.dueAfter !== '' && dd.dueAfter != null ? Number(dd.dueAfter) : 30
@@ -86,7 +91,7 @@ const InvoiceEditor = () => {
         setSaving(true)
         setError('')
         try {
-            const body = { ...v, draft }
+            const body = { ...v, draft, force: doc?.invoice?.status === 2 }
             const res = id ? await api(`/api/crm/sales/invoices/${id}`, { method: 'PUT', body }) : await api('/api/crm/sales/invoices', { method: 'POST', body })
             notify('success', tr("Invoice saved"))
             navigate(`/crm/invoices/${res.id}`)

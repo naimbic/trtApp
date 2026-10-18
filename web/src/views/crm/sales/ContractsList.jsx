@@ -58,11 +58,12 @@ const ContractsList = () => {
     const doc = useDocMenu({
         path: '/crm/contracts', apiBase: '/api/crm/sales/contracts', perm: 'contracts', name: (r) => `${r.subject} · ${r.client}`,
         canEdit: (r) => r.state !== 'trash',
-        extra: (r, { act }) => [
-            ...(can('contracts', 'edit') && r.state !== 'trash' ? [{ label: r.signed ? tr("Mark as unsigned") : tr("Mark as signed"), icon: <TbSignature />, onClick: () => act(() => api(`/api/crm/sales/contracts/${r.id}/actions`, { method: 'POST', body: { action: r.signed ? 'unsign' : 'sign' } }), r.signed ? tr("Marked as unsigned") : tr("Marked as signed")) }] : []),
+        lock: { when: (r) => !!r.signed },
+        extra: (r, { act, guard, superAdmin }) => [
+            ...(can('contracts', 'edit') && r.state !== 'trash' && (!r.signed || superAdmin) ? [{ label: r.signed ? tr("Mark as unsigned") : tr("Mark as signed"), icon: <TbSignature />, onClick: guard(r, (force) => act(() => api(`/api/crm/sales/contracts/${r.id}/actions`, { method: 'POST', body: { action: r.signed ? 'unsign' : 'sign', force } }), r.signed ? tr("Marked as unsigned") : tr("Marked as signed"))) }] : []),
             ...(can('contracts', 'edit') && r.state === 'trash' ? [{ label: tr("Restore"), icon: <TbFileCertificate />, onClick: () => act(() => api(`/api/crm/sales/contracts/${r.id}/actions`, { method: 'POST', body: { action: 'restore' } }), tr("Restored")) }] : []),
         ],
-        remove: (r) => api(`/api/crm/sales/contracts/${r.id}/actions`, { method: 'POST', body: { action: 'trash' } }),
+        remove: (r, force) => api(`/api/crm/sales/contracts/${r.id}/actions`, { method: 'POST', body: { action: 'trash', force } }),
     }, load)
 
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))

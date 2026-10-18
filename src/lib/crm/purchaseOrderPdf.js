@@ -3,7 +3,7 @@ import { calcDocument, round2, formatDocumentNumber } from '@/lib/crm/sales/calc
 import { numberPadding } from '@/lib/crm/numbering'
 import { getOptions } from '@/lib/crm/mailer'
 import { companyImageDataUri } from '@/lib/crm/company'
-import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
+import { pdfSettings, formatMoney, paperCss } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
 import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
 import { bankTokensFor } from '@/lib/crm/bankDb'
@@ -51,7 +51,7 @@ export async function renderPurchaseOrderHtml(id) {
 <table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>
 ${words}${p.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(p.clientNote)}</div>` : ''}${p.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(p.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
-    return { number, html: `<!doctype html><html><head><meta charset="utf-8"><title>${esc(number)}</title><style>${S.pageCss()}${S.baseCss()}${CSS}</style></head><body>${body}</body></html>` }
+    return { number, html: `<!doctype html><html><head><meta charset="utf-8"><title>${esc(number)}</title><style>${S.pageCss()}${S.baseCss()}${CSS}${paperCss()}</style></head><body>${body}</body></html>` }
 }
 
 export async function purchaseOrderPdf(id) {

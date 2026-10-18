@@ -10,7 +10,7 @@ import { getOptions } from '@/lib/crm/mailer'
 import { formatDocumentNumber, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import { companyImageDataUri } from '@/lib/crm/company'
-import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
+import { pdfSettings, formatMoney, paperCss } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
 import { companyTokenData, renderInfoFormat, clientTokenData, phpDate, COMPANY_KEYS } from '@/lib/crm/docTokens'
 import { bankTokensFor } from '@/lib/crm/bankDb'
@@ -101,6 +101,8 @@ body.pub{background:#f3f4f6;font-size:14px}
 @media(max-width:640px){.pub .card{padding:18px}.pub .cols{flex-direction:column;gap:14px}.pub .tot{width:100%}.pub .top{flex-direction:column-reverse;gap:12px}.pub .top img{max-width:70%}.pub .items th:nth-child(1),.pub .items td:nth-child(1){display:none}}
 @media print{.pub .bar{display:none}body.pub{background:#fff}.pub .wrap{max-width:none;padding:0}.pub .card{border:0;border-radius:0;padding:0}.pub .banner{display:none}}`
 
+/** The stamp across a paid, overdue or cancelled invoice. */
+const stampHtml = (status, fr) => (status === 2 ? `<span class="stamp">${fr ? 'Payée' : 'Paid'}</span>` : status === 4 ? `<span class="stamp late">${fr ? 'En retard' : 'Overdue'}</span>` : status === 5 ? `<span class="stamp mute">${fr ? 'Annulée' : 'Cancelled'}</span>` : '')
 export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
     const doc = hash ? await loadPublicDocument(id, hash) : await getInvoiceDocument(id)
     if (!doc) return null
@@ -182,8 +184,9 @@ table{width:100%;border-collapse:collapse}.items th{background:${S.head};color:$
 h4{margin:20px 0 6px;font-size:1.05em}.plain th{text-align:left;border-bottom:1px solid #111;padding:5px 6px}.plain td{padding:5px 6px}.plain .r,.plain th.r{text-align:right}
 .mode{margin-bottom:8px}.block{white-space:pre-line}tr{page-break-inside:avoid}.sc{overflow-x:auto}
 ${pub ? PUBLIC_CSS : ''}
+${paperCss()}
 </style></head><body${pub ? ' class="pub"' : ''}>
-${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: L.invoice, num: `#${esc(invoice.displayNumber)}`, status, org: orgBlock, info: infoBlock, swap: S.swap })}
+${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}${stampHtml(invoice.status, fr)}${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: L.invoice, num: `#${esc(invoice.displayNumber)}`, status, org: orgBlock, info: infoBlock, swap: S.swap })}
 <div class="sc"><table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table></div>
 <table class="tot">${totalRows.join('')}</table>
 ${words}${payTable}${modesBlock}

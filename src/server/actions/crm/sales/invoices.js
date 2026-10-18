@@ -6,6 +6,7 @@ import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import { allocateNumber, checkDeletable, afterDelete } from '@/lib/crm/sales/docNumbering'
+import { lockProblem } from '@/lib/crm/docLock'
 
 const REL = 'invoice'
 const plain = (v) => JSON.parse(JSON.stringify(v))
@@ -120,6 +121,11 @@ export async function saveInvoice(input) {
     const isNew = !input.id
     const session = await requirePermission('invoices', isNew ? 'create' : 'edit')
     const staffId = await getStaffId(session)
+    if (!isNew) {
+        const was = await prisma.crmInvoice.findUnique({ where: { id: input.id }, select: { status: true } })
+        const lock = lockProblem({ authority: session.user.authority || [], locked: was?.status === INVOICE_STATUS.PAID, force: input.force, noun: 'paid invoice' })
+        if (lock) return fail(lock)
+    }
 
     if (!input.clientId) return fail('Client is required')
     const items = (input.items || []).filter((i) => String(i.description || '').trim())
@@ -235,11 +241,14 @@ export async function recordPayment(invoiceId, { amount, paymentModeId, paymentD
     return { success: true }
 }
 
-export async function deletePayment(paymentId) {
+export async function deletePayment(paymentId, force = false) {
     const session = await requirePermission('payments', 'delete')
     const staffId = await getStaffId(session)
     const payment = await prisma.crmPayment.findUnique({ where: { id: paymentId } })
     if (!payment) return fail('Payment not found')
+    const inv = payment.invoiceId ? await prisma.crmInvoice.findUnique({ where: { id: payment.invoiceId }, select: { status: true } }) : null
+    const lock = lockProblem({ authority: session.user.authority || [], locked: inv?.status === INVOICE_STATUS.PAID, force, noun: 'payment of a paid invoice' })
+    if (lock) return fail(lock)
     await prisma.crmPayment.delete({ where: { id: paymentId } })
     if (payment.invoiceId) {
         // A draft only stays a draft while it has no payments, so re-evaluate from UNPAID.
@@ -254,11 +263,13 @@ export async function deletePayment(paymentId) {
 }
 
 /** action: 'cancel' | 'uncancel' | 'markSent' | 'markUnpaid' (draft -> unpaid). */
-export async function setInvoiceState(invoiceId, action) {
+export async function setInvoiceState(invoiceId, action, force = false) {
     const session = await requirePermission('invoices', 'edit')
     const staffId = await getStaffId(session)
     const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId } })
     if (!invoice) return fail('Invoice not found')
+    const lock = lockProblem({ authority: session.user.authority || [], locked: invoice.status === INVOICE_STATUS.PAID, force, noun: 'paid invoice' })
+    if (lock) return fail(lock)
 
     if (action === 'cancel') {
         if ((await paidSum(invoiceId)) > 0) return fail('Cannot cancel an invoice that has payments')

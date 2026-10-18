@@ -8,7 +8,7 @@ import { tr } from '@/utils/t'
 export async function api(url, init = {}) {
     const res = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init, body: init.body && typeof init.body !== 'string' ? JSON.stringify(init.body) : init.body })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(tr(json.error || tr('Request failed ({status})', { status: res.status })))
+    if (!res.ok) throw new Error(tr(String(json.error || json.message || tr('Request failed ({status})', { status: res.status })).replace(/^LOCKED(_CONFIRM)?: /, '')))
     return json
 }
 

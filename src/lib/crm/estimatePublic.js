@@ -5,7 +5,7 @@ import { getOptions, buildHtml, mergeFields, deliver, findTemplate, companyLangu
 import { publicBase } from '@/lib/crm/shortLinks'
 import { companyImageDataUri } from '@/lib/crm/company'
 import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
-import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
+import { pdfSettings, formatMoney, paperCss } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
 import { createInvoiceFromEstimate } from '@/lib/crm/sales/convert'
 import { bankTokensFor } from '@/lib/crm/bankDb'
@@ -83,7 +83,7 @@ export async function estimatePdf(id, hash, staff = false) {
     const d = await loadEstimateDoc(id, hash, staff)
     if (!d) return null
     const S = await pdfSettings('estimate')
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${CSS}</style></head><body>${await documentHtml(d, S.lang, S)}</body></html>`
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${CSS}${paperCss()}</style></head><body>${await documentHtml(d, S.lang, S)}</body></html>`
     return { pdf: await htmlToPdf(html), name: `${d.number.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}.pdf` }
 }
 
@@ -105,6 +105,7 @@ input,textarea{width:100%;border:1px solid #d1d5db;border-radius:9px;padding:10p
 dialog{border:0;border-radius:16px;padding:26px;max-width:480px;width:calc(100% - 28px);box-shadow:0 20px 60px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(17,24,39,.5)}dialog h3{margin-bottom:6px}.pad{border:1px dashed #9ca3af;border-radius:10px;background:#fafafa;touch-action:none;width:100%;height:150px;display:block;margin-top:6px}.err{color:#dc2626;font-size:13px;margin-top:8px;min-height:18px}.acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 @media(max-width:640px){.card{padding:18px}.cols{flex-direction:column;gap:14px}.tot{width:100%}.items th:nth-child(1),.items td:nth-child(1){display:none}}
 @media print{.bar,.no-print{display:none}body{background:#fff}.card{border:0;padding:0}}
+${paperCss()}
 </style></head><body>
 <div class="bar"><div class="in"><b>${esc(p.companyName)}</b><span class="sp"></span><a class="btn gr-b" href="${p.base}/pdf">${T.pdf}</a>${p.acting ? `${p.noRefuse ? '' : `<button class="btn no-b" onclick="document.getElementById('refuse').showModal()">${T.refuse}</button>`}<button class="btn ok-b" onclick="document.getElementById('accept').showModal()">${T.accept}</button>` : ''}</div></div>
 <div class="wrap">${p.banner}<div class="card">${p.docHtml}</div>

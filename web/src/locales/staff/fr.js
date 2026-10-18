@@ -3646,5 +3646,13 @@ export default {
     "offered in this period": "proposé sur la période",
     "received in this period": "reçu sur la période",
     "sent to clients in this period": "envoyé aux clients sur la période",
-    "started in the last 12 months": "démarrés sur les 12 derniers mois"
+    "started in the last 12 months": "démarrés sur les 12 derniers mois",
+    "A paid invoice cannot be changed. Only a super admin can do that.": "Une facture payée ne peut pas être modifiée. Seul un super admin peut le faire.",
+    "A paid invoice is final. Changing it can upset your accounts and reports. Only a super admin can do it, and only if you know why.": "Une facture payée est définitive. La modifier peut fausser vos comptes et rapports. Seul un super admin peut le faire, et seulement en connaissance de cause.",
+    "A paid or signed document is final. Changing it can upset your accounts and what the client agreed to. Only a super admin can do it, and only if you know why.": "Un document payé ou signé est définitif. Le modifier peut fausser vos comptes et ce que le client a accepté. Seul un super admin peut le faire, en connaissance de cause.",
+    "A signed contract is final. Changing it can go against what the client agreed to. Only a super admin can do it, and only if you know why.": "Un contrat signé est définitif. Le modifier peut aller à l'encontre de ce que le client a accepté. Seul un super admin peut le faire, en connaissance de cause.",
+    "Change it anyway": "Modifier quand même",
+    "This contract is signed": "Ce contrat est signé",
+    "This document is final": "Ce document est définitif",
+    "This invoice is paid": "Cette facture est payée"
 }

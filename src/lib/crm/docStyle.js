@@ -50,3 +50,27 @@ export function formatMoney(n, cur, s, { noSymbol = false } = {}) {
     const sym = cur?.symbol || cur?.name || ''
     return cur?.placement === 'before' ? `${sym}${v}` : `${v} ${sym}`.trim()
 }
+
+/**
+ * The Rapport "paper" look for every sales document (invoice, estimate, proposal, purchase order, contract), on screen and in the PDF:
+ * small spaced labels, hairlines, a plain table, a bold total with a thick rule and, on invoices, a stamp. On screen the page is a warm
+ * paper card; when printing (the PDF) it is the plain page. Appended after each document's own CSS.
+ */
+export const paperCss = () => `
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;color:#17191a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media screen{html{background:#ebe8e1}body:not(.pub){position:relative;max-width:840px;margin:28px auto;padding:46px 52px;background:#fbf8f2;border-radius:20px;box-shadow:0 30px 60px -30px rgba(60,40,20,.35)}
+body.pub{background:#ebe8e1}.pub .card,.card{background:#fbf8f2;border-color:#e3ded4;border-radius:20px;box-shadow:0 30px 60px -30px rgba(60,40,20,.3);position:relative}.pub .bar,.bar{border-color:#e3ded4;background:#fbf8f2}}
+.hdr{padding-bottom:6px}.hdr .hr h1{margin:0;font-size:.78em;text-transform:uppercase;letter-spacing:.16em;color:#676a66;font-weight:700}
+.hdr .hr .num{font-size:1.9em;font-weight:800;letter-spacing:-.02em;color:#17191a;font-variant-numeric:tabular-nums}.hdr .hr .status{font-size:.8em;letter-spacing:.1em}
+.hdr .hl .info,.org{color:#4a4d49}.info{color:#4a4d49}.info strong{color:#17191a}
+.lbl{font-size:.72em;text-transform:uppercase;letter-spacing:.12em;color:#676a66;font-weight:700;margin-bottom:3px}
+.dates{display:flex;flex-wrap:wrap;gap:4px 22px;padding:10px 0;margin-top:12px;border-top:1px solid #e3ded4;border-bottom:1px solid #e3ded4;color:#676a66}.dates strong{color:#17191a;font-variant-numeric:tabular-nums}.hdr .hr .info{text-align:right}.hdr .hr .dates{justify-content:flex-end}
+.items{border-collapse:collapse}.items th{background:transparent!important;color:#676a66!important;font-size:.76em;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:9px 8px;border-bottom:1px solid #e3ded4}
+.items td{padding:11px 8px;border-bottom:1px solid #e3ded4;font-variant-numeric:tabular-nums}.items .n{color:#a29f95}.long{color:#676a66}
+.tot{width:min(300px,100%)}.tot td{padding:5px 0;background:transparent!important;border:0;color:#4a4d49;font-weight:500;font-variant-numeric:tabular-nums}
+.tot tr.grand td{border-top:2px solid #17191a;padding-top:9px;color:#17191a;font-weight:800;font-size:1.15em}
+.words{color:#676a66}h4{margin:22px 0 6px;font-size:.76em;text-transform:uppercase;letter-spacing:.12em;color:#676a66}.plain th{color:#676a66;font-size:.76em;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #e3ded4!important}.plain td{border-bottom:1px solid #eee9de}
+.stamp{position:absolute;left:56px;top:182px;transform:rotate(-11deg);border:3px solid #2f7d62;color:#2f7d62;border-radius:12px;padding:5px 18px;font-weight:800;font-size:22pt;letter-spacing:.14em;text-transform:uppercase;opacity:.82;pointer-events:none;mix-blend-mode:multiply}
+.stamp.late{border-color:#c8431f;color:#c8431f;font-size:18pt}.stamp.mute{border-color:#8b8f93;color:#8b8f93;font-size:18pt}
+@media print{html,body{background:transparent!important}body{max-width:none!important;margin:0!important;padding:0!important;box-shadow:none!important;border-radius:0!important}.stamp{top:34mm;left:3mm}}
+@media(max-width:640px){.stamp{left:16px;top:170px}}`

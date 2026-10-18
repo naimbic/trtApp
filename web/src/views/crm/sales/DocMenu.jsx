@@ -7,6 +7,7 @@ import RowMenu from '@/components/crm/RowMenu'
 import SendMailDialog from '../mail/SendMailDialog'
 import Table from '@/components/ui/Table'
 import { api, notify, useCan } from '../kit/api'
+import { useSessionUser } from '@/store/authStore'
 import { tr } from '@/utils/t'
 
 const { Th, Td } = Table
@@ -23,21 +24,28 @@ export const useDocMenu = (cfg, reload) => {
     const [menu, setMenu] = useState(null)
     const [mail, setMail] = useState(null)
     const [confirm, setConfirm] = useState(null)
+    const [caution, setCaution] = useState(null) // { row, fn }: a final document (paid, signed) a super admin is about to change
+    const authority = useSessionUser((st) => st.user.authority) || []
+    const superAdmin = authority.includes('admin') || authority.includes('crm.admin')
     const act = async (fn, ok) => { try { const r = await fn(); notify('success', ok); reload(); return r } catch (e) { notify('danger', e.message) } }
-    const state = (r, action, ok) => act(() => api(`${cfg.apiBase}/${r.id}/state`, { method: 'POST', body: { action } }), ok)
+    const frozen = (r) => !!cfg.lock?.when(r)
+    // changing something final asks a super admin to confirm first (the server demands it too); anyone else never gets the item
+    const guard = (r, fn) => () => (frozen(r) ? setCaution({ row: r, fn }) : fn(false))
+    const state = (r, action, ok, force) => act(() => api(`${cfg.apiBase}/${r.id}/state`, { method: 'POST', body: { action, force } }), ok)
     const name = (r) => (cfg.name ? cfg.name(r) : r.number || r.subject || r.name || '')
     const items = (r) => {
         if (cfg.items) return cfg.items(r, { navigate, act, can, confirmDelete: () => setConfirm({ row: r, kind: 'delete' }) })
-        const editable = can(cfg.perm, 'edit') && (cfg.canEdit ? cfg.canEdit(r) : true)
+        const locked = frozen(r)
+        const editable = can(cfg.perm, 'edit') && (cfg.canEdit ? cfg.canEdit(r) : true) && (!locked || superAdmin)
         return [
             { label: tr("Open"), icon: <TbExternalLink />, onClick: () => navigate(`${cfg.path}/${r.id}`) },
-            ...(editable ? [{ label: tr("Edit"), icon: <TbPencil />, onClick: () => navigate(`${cfg.path}/${r.id}/edit`) }] : []),
+            ...(editable ? [{ label: tr("Edit"), icon: <TbPencil />, onClick: guard(r, () => navigate(`${cfg.path}/${r.id}/edit`)) }] : []),
             { label: tr("Download"), icon: <TbDownload />, onClick: () => { window.location.href = `${cfg.apiBase}/${r.id}/pdf?download=1` } },
             ...(cfg.mail && editable ? [{ label: tr("Send"), icon: <TbMail />, onClick: () => setMail({ id: r.id }) }] : []),
-            ...(cfg.statuses && editable ? [{ label: tr("Change status"), icon: <TbArrowsExchange />, sub: cfg.statuses.map((s) => ({ label: s.label, icon: s.icon, checked: s.current(r), onClick: () => !s.current(r) && state(r, s.action, tr("Status changed")) })) }] : []),
+            ...(cfg.statuses && editable ? [{ label: tr("Change status"), icon: <TbArrowsExchange />, sub: cfg.statuses.map((s) => ({ label: s.label, icon: s.icon, checked: s.current(r), onClick: guard(r, (force) => !s.current(r) && state(r, s.action, tr("Status changed"), force)) })) }] : []),
             ...(cfg.convert && can(cfg.convert.perm, 'create') && cfg.convert.when(r) ? [{ label: cfg.convert.label, icon: <TbFileInvoice />, onClick: () => setConfirm({ row: r, kind: 'convert' }) }] : []),
-            ...(cfg.extra ? cfg.extra(r, { act, navigate, can }) : []),
-            ...(can(cfg.perm, 'delete') ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => setConfirm({ row: r, kind: 'delete' }) }] : []),
+            ...(cfg.extra ? cfg.extra(r, { act, navigate, can, guard, locked, superAdmin }) : []),
+            ...(can(cfg.perm, 'delete') && (!locked || superAdmin) ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: guard(r, (force) => setConfirm({ row: r, kind: 'delete', force })) }] : []),
         ]
     }
     const doConvert = async (r) => {
@@ -56,8 +64,12 @@ export const useDocMenu = (cfg, reload) => {
             <>
                 {menu && <RowMenu anchor={menu.el} items={items(menu.row)} onClose={() => setMenu(null)} />}
                 {cfg.mail && <SendMailDialog open={!!mail} kind={cfg.mail.kind} id={mail?.id} template={cfg.mail.template} onClose={() => setMail(null)} onSent={reload} />}
+                <ConfirmDialog isOpen={!!caution} type="warning" title={tr("This document is final")} confirmText={tr("Change it anyway")} onClose={() => setCaution(null)} onCancel={() => setCaution(null)} onConfirm={() => { const c = caution; setCaution(null); c.fn(true) }}>
+                    <p>{caution && name(caution.row)}</p>
+                    <p className="mt-2 text-sm text-red-600">{tr("A paid or signed document is final. Changing it can upset your accounts and what the client agreed to. Only a super admin can do it, and only if you know why.")}</p>
+                </ConfirmDialog>
                 <ConfirmDialog isOpen={!!confirm} type={confirm?.kind === 'delete' ? 'danger' : 'info'} title={confirm?.kind === 'delete' ? tr("Delete this document?") : cfg.convert?.label} confirmText={confirm?.kind === 'delete' ? tr("Delete") : tr("Convert")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)}
-                    onConfirm={() => { const c = confirm; setConfirm(null); if (c.kind === 'delete') act(() => (cfg.remove ? cfg.remove(c.row) : api(`${cfg.apiBase}/${c.row.id}`, { method: 'DELETE' })), tr("Deleted")); else doConvert(c.row) }}>
+                    onConfirm={() => { const c = confirm; setConfirm(null); if (c.kind === 'delete') act(() => (cfg.remove ? cfg.remove(c.row, c.force) : api(`${cfg.apiBase}/${c.row.id}${c.force ? '?force=1' : ''}`, { method: 'DELETE' })), tr("Deleted")); else doConvert(c.row) }}>
                     <p>{confirm && name(confirm.row)}</p>
                 </ConfirmDialog>
             </>

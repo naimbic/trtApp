@@ -3646,5 +3646,13 @@ export default {
     "offered in this period": "期間中に提案",
     "received in this period": "期間中の入金",
     "sent to clients in this period": "期間中に顧客へ送付",
-    "started in the last 12 months": "過去12か月に開始"
+    "started in the last 12 months": "過去12か月に開始",
+    "A paid invoice cannot be changed. Only a super admin can do that.": "支払い済みの請求書は変更できません。スーパー管理者のみ可能です。",
+    "A paid invoice is final. Changing it can upset your accounts and reports. Only a super admin can do it, and only if you know why.": "支払い済みの請求書は確定です。変更すると会計やレポートに影響します。理由を理解したスーパー管理者のみ実行できます。",
+    "A paid or signed document is final. Changing it can upset your accounts and what the client agreed to. Only a super admin can do it, and only if you know why.": "支払い済みまたは署名済みの書類は確定です。変更すると会計や顧客の合意に影響します。理由を理解したスーパー管理者のみ実行できます。",
+    "A signed contract is final. Changing it can go against what the client agreed to. Only a super admin can do it, and only if you know why.": "署名済みの契約は確定です。変更すると顧客の合意に反する可能性があります。理由を理解したスーパー管理者のみ実行できます。",
+    "Change it anyway": "それでも変更する",
+    "This contract is signed": "この契約は署名済みです",
+    "This document is final": "この書類は確定しています",
+    "This invoice is paid": "この請求書は支払い済みです"
 }

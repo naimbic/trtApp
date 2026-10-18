@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { buildSeries } from '@/lib/crm/series'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
+import { lockProblem } from '@/lib/crm/docLock'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const EXPIRING_DAYS = 7
@@ -98,6 +99,10 @@ export async function contractAction(id, { action, ...body }) {
     const session = await requirePermission('contracts', 'edit')
     const c = await mustFind(session, id)
     const staffId = await getStaffId(session)
+    if (action !== 'sign' && action !== 'restore') {
+        const lock = lockProblem({ authority: session.user.authority || [], locked: !!(c.signed || c.markedAsSigned), force: body.force, noun: 'signed contract' })
+        if (lock) throw httpError(lock, lock.startsWith('LOCKED_CONFIRM') ? 409 : 403)
+    }
     if (action === 'sign') await prisma.crmContract.update({ where: { id }, data: { markedAsSigned: true, signed: true, acceptanceDate: c.acceptanceDate || new Date() } })
     else if (action === 'unsign') {
         // only a manual "marked as signed" can be taken back; what the client signed on screen is final
@@ -151,7 +156,8 @@ export async function saveContract(body, id) {
     const data = { subject, description: String(body.description || '').trim() || null, content: body.content ?? null, clientId: oid(body.clientId), contractTypeId: oid(body.typeId), projectId: oid(body.projectId), dateStart: start, dateEnd: end, contractValue: body.value === '' || body.value == null ? null : Number(body.value) || 0, notVisibleToClient: !!body.hidden, ...(body.remindClient !== undefined ? { remindClient: body.remindClient !== false } : {}) }
     if (id) {
         const prev = await mustFind(session, id)
-        if (prev.signed || prev.markedAsSigned) throw httpError('A signed contract cannot be edited', 409)
+        const lock = lockProblem({ authority: session.user.authority || [], locked: !!(prev.signed || prev.markedAsSigned), force: body.force, noun: 'signed contract' })
+        if (lock) throw httpError(lock, lock.startsWith('LOCKED_CONFIRM') ? 409 : 403)
         await prisma.crmContract.update({ where: { id }, data })
         return { success: true, id }
     }
@@ -160,10 +166,11 @@ export async function saveContract(body, id) {
     return { success: true, id: c.id }
 }
 
-export async function deleteContract(id) {
+export async function deleteContract(id, force = false) {
     const session = await requirePermission('contracts', 'delete')
     const cur = await mustFind(session, id)
-    if (cur.signed || cur.markedAsSigned) throw httpError('A signed contract cannot be deleted', 409)
+    const lock = lockProblem({ authority: session.user.authority || [], locked: !!(cur.signed || cur.markedAsSigned), force, noun: 'signed contract' })
+    if (lock) throw httpError(lock, lock.startsWith('LOCKED_CONFIRM') ? 409 : 403)
     await prisma.crmContractComment.deleteMany({ where: { contractId: id } })
     await prisma.crmContractRenewal.deleteMany({ where: { contractId: id } })
     await prisma.crmFile.deleteMany({ where: { relType: 'contract', relId: id } }).catch(() => {})

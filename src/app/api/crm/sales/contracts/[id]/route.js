@@ -20,9 +20,9 @@ export async function PUT(request, { params }) {
     }
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
     try {
-        return NextResponse.json(await deleteContract((await params).id))
+        return NextResponse.json(await deleteContract((await params).id, new URL(request.url).searchParams.get('force') === '1'))
     } catch (e) {
         return errorResponse(e)
     }

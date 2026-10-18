@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/crm/permissions'
 import { loadContractDoc, contractHtml } from '@/lib/crm/contractPublic'
-import { pdfSettings } from '@/lib/crm/docStyle'
+import { pdfSettings, paperCss } from '@/lib/crm/docStyle'
 import { CONTRACT_CSS } from '@/lib/crm/contractDoc'
 import { errorResponse } from '@/lib/crm/crud'
 
@@ -12,7 +12,7 @@ export async function GET(_request, { params }) {
         const d = await loadContractDoc((await params).id, null, true)
         if (!d) return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
         const S = await pdfSettings('contract')
-        const html = `<!doctype html><html><head><meta charset="utf-8"><title>${d.number}</title><style>${S.baseCss()}body{padding:18px 26px}${CONTRACT_CSS}</style></head><body>${await contractHtml(d, S)}</body></html>`
+        const html = `<!doctype html><html><head><meta charset="utf-8"><title>${d.number}</title><style>${S.baseCss()}body{padding:18px 26px}${CONTRACT_CSS}${paperCss()}</style></head><body>${await contractHtml(d, S)}</body></html>`
         return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } })
     } catch (e) { return errorResponse(e) }
 }

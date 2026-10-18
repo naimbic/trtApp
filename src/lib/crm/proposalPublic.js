@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { getOptions, buildHtml, mergeFields, deliver, findTemplate, companyLanguage, baseData, sendTemplate } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
-import { pdfSettings } from '@/lib/crm/docStyle'
+import { pdfSettings, paperCss } from '@/lib/crm/docStyle'
 import { esc, htmlToPdf, fmtDate } from '@/lib/crm/invoicePdf'
 import { CSS, TXT as BASE_TXT, renderPublicPage, initials } from '@/lib/crm/estimatePublic'
 import { createInvoiceFromDocument } from '@/lib/crm/sales/convert'
@@ -42,7 +42,7 @@ export async function proposalPdf(id, hash, staff = false) {
     const d = await loadProposalDoc(id, hash, staff)
     if (!d) return null
     const S = await pdfSettings('proposal')
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${PROPOSAL_CSS}</style></head><body>${await proposalHtmlDoc(d, S)}</body></html>`
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${PROPOSAL_CSS}${paperCss()}</style></head><body>${await proposalHtmlDoc(d, S)}</body></html>`
     return { pdf: await htmlToPdf(html), name: `${d.number.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}.pdf` }
 }
 
@@ -62,7 +62,7 @@ export async function proposalPage(id, hash) {
     const base = `/api/crm/public/proposal/${id}/${hash}`
     const page = renderPublicPage({ lang, T, number: d.number, companyName: o('companyname'), banner, commentsHtml: p.allowComments ? commentsHtml : '', commentsCount: d.comments.length, docHtml: await proposalHtmlDoc(d, S), base, acting, identity: o('proposal_accept_identity_confirmation', '1') === '1', legalText: o('e_sign_legal_text'), contact })
     // the shared page uses the estimate CSS; proposals add their own block styles and may hide the comment box
-    return page.replace('</style>', `${PROPOSAL_CSS}${p.allowComments ? '' : '.no-print form,.no-print h3{display:none}'}</style>`)
+    return page.replace('</style>', `${PROPOSAL_CSS}${p.allowComments ? '' : '.no-print form,.no-print h3{display:none}'}${paperCss()}</style>`)
 }
 
 /* ---------------- client answers ---------------- */

@@ -17,6 +17,7 @@ import { StateTag } from './ContractsList'
 import { fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
+import { useSessionUser } from '@/store/authStore'
 import { tr } from '@/utils/t'
 import ReminderCard from '../kit/ReminderCard'
 
@@ -37,6 +38,9 @@ const ContractView = () => {
     const [comment, setComment] = useState('')
     const [busy, setBusy] = useState(false)
     const [confirm, setConfirm] = useState(null)
+    const [caution, setCaution] = useState(null) // a signed contract a super admin is about to change: the function to run (with force)
+    const authority = useSessionUser((x) => x.user.authority) || []
+    const superAdmin = authority.includes('admin') || authority.includes('crm.admin')
     const [mailOpen, setMailOpen] = useState(false)
 
     const load = useCallback(() => api(`/api/crm/sales/contracts/${id}`).then((d) => { setC(d); setError('') }).catch((e) => setError(e.message)), [id])
@@ -52,13 +56,14 @@ const ContractView = () => {
     }
     const delComment = async (cid) => { try { await api(`/api/crm/sales/contracts/${id}/comments?commentId=${cid}`, { method: 'DELETE' }); load() } catch (e) { notify('danger', e.message) } }
     const del = async () => {
-        try { await api(`/api/crm/sales/contracts/${id}`, { method: 'DELETE' }); notify('success', tr("Contract deleted")); navigate('/crm/contracts') } catch (e) { notify('danger', e.message); setConfirm(null) }
+        try { await api(`/api/crm/sales/contracts/${id}${locked ? '?force=1' : ''}`, { method: 'DELETE' }); notify('success', tr("Contract deleted")); navigate('/crm/contracts') } catch (e) { notify('danger', e.message); setConfirm(null) }
     }
 
     if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/contracts')}>{tr("Back to contracts")}</Button></Container>
     if (!c) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
     const signed = c.signed || c.markedAsSigned
-    const locked = !!c.locked // a signed contract is final: no edit, no delete
+    const locked = !!c.locked // a signed contract is final: no edit, no delete; only a super admin, after confirming
+    const guard = (fn) => () => (locked ? setCaution(() => fn) : fn(false))
 
     return (
         <Container>
@@ -71,11 +76,11 @@ const ContractView = () => {
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/contracts/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     {c.hash && !c.trash && !c.hidden && <Button size="sm" icon={<TbCopy />} onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/api/crm/public/contract/${id}/${c.hash}`); notify('success', tr("Client link copied")) } catch { notify('danger', tr("Could not copy")) } }}>{tr("Client link")}</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbMail />} onClick={() => setMailOpen(true)}>{tr("Send")}</Button>}
-                    {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbRefresh />} onClick={() => setRenew({ newStartDate: dayjs(c.dateEnd || new Date()).format('YYYY-MM-DD'), newEndDate: dayjs(c.dateEnd || new Date()).add(1, 'year').format('YYYY-MM-DD'), newValue: c.value })}>{tr("Renew")}</Button>}
-                    {can('contracts', 'edit') && !c.eSigned && <Button size="sm" icon={<TbSignature />} loading={busy} onClick={() => act(signed ? 'unsign' : 'sign', {}, signed ? tr("Marked as not signed") : tr("Marked as signed"))}>{signed ? tr("Mark as not signed") : tr("Mark as signed")}</Button>}
-                    {can('contracts', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/contracts/${id}/edit`)}>{tr("Edit")}</Button>}
-                    {can('contracts', 'edit') && (c.trash ? <Button size="sm" icon={<TbTrashOff />} loading={busy} onClick={() => act('restore', {}, tr("Contract restored"))}>{tr("Restore")}</Button> : <Button size="sm" icon={<TbTrash />} loading={busy} onClick={() => act('trash', {}, tr("Moved to trash"))}>{tr("Trash")}</Button>)}
-                    {can('contracts', 'delete') && !locked && <Button size="sm" variant="plain" className="text-red-500" onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}
+                    {can('contracts', 'edit') && !c.trash && (!locked || superAdmin) && <Button size="sm" icon={<TbRefresh />} onClick={guard(() => setRenew({ newStartDate: dayjs(c.dateEnd || new Date()).format('YYYY-MM-DD'), newEndDate: dayjs(c.dateEnd || new Date()).add(1, 'year').format('YYYY-MM-DD'), newValue: c.value }))}>{tr("Renew")}</Button>}
+                    {can('contracts', 'edit') && !c.eSigned && (!signed || superAdmin) && <Button size="sm" icon={<TbSignature />} loading={busy} onClick={guard((force) => act(signed ? 'unsign' : 'sign', { force }, signed ? tr("Marked as not signed") : tr("Marked as signed")))}>{signed ? tr("Mark as not signed") : tr("Mark as signed")}</Button>}
+                    {can('contracts', 'edit') && (!locked || superAdmin) && <Button size="sm" icon={<TbPencil />} onClick={guard(() => navigate(`/crm/contracts/${id}/edit`))}>{tr("Edit")}</Button>}
+                    {can('contracts', 'edit') && (c.trash ? <Button size="sm" icon={<TbTrashOff />} loading={busy} onClick={() => act('restore', {}, tr("Contract restored"))}>{tr("Restore")}</Button> : (locked && !superAdmin ? null : <Button size="sm" icon={<TbTrash />} loading={busy} onClick={guard((force) => act('trash', { force }, tr("Moved to trash")))}>{tr("Trash")}</Button>))}
+                    {can('contracts', 'delete') && (!locked || superAdmin) && <Button size="sm" variant="plain" className="text-red-500" onClick={guard(() => setConfirm('delete'))}>{tr("Delete")}</Button>}
                 </div>
             </div>
 
@@ -133,9 +138,12 @@ const ContractView = () => {
                         <div><label className="form-label mb-2 block">{tr("New value")}</label><Input type="number" step="0.01" value={renew.newValue ?? ''} onChange={(e) => setRenew({ ...renew, newValue: e.target.value })} /></div>
                     </div>
                 )}
-                <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setRenew(null)}>{tr("Cancel")}</Button><Button variant="solid" loading={busy} onClick={async () => { if (await act('renew', renew, tr("Contract renewed"))) setRenew(null) }}>{tr("Renew")}</Button></div>
+                <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setRenew(null)}>{tr("Cancel")}</Button><Button variant="solid" loading={busy} onClick={async () => { if (await act('renew', { ...renew, force: locked }, tr("Contract renewed"))) setRenew(null) }}>{tr("Renew")}</Button></div>
             </Dialog>
 
+            <ConfirmDialog isOpen={!!caution} type="warning" title={tr("This contract is signed")} confirmText={tr("Change it anyway")} onClose={() => setCaution(null)} onCancel={() => setCaution(null)} onConfirm={() => { const fn = caution; setCaution(null); fn(true) }}>
+                <p className="text-sm text-red-600">{tr("A signed contract is final. Changing it can go against what the client agreed to. Only a super admin can do it, and only if you know why.")}</p>
+            </ConfirmDialog>
             <ConfirmDialog isOpen={confirm === 'delete'} type="danger" title={tr("Delete this contract?")} confirmText={tr("Delete")} onClose={() => setConfirm(null)} onRequestClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={del}>
                 <p>{tr("The contract is removed for good. Use Trash instead if you may need it again.")}</p>
             </ConfirmDialog>

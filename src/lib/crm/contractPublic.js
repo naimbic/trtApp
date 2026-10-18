@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { getOptions, sendTemplate } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
-import { pdfSettings } from '@/lib/crm/docStyle'
+import { pdfSettings, paperCss } from '@/lib/crm/docStyle'
 import { esc, htmlToPdf, fmtDate } from '@/lib/crm/invoicePdf'
 import { TXT as BASE_TXT, renderPublicPage, initials } from '@/lib/crm/estimatePublic'
 import { contractDocumentHtml, contractNumber, CONTRACT_CSS, signStamp } from '@/lib/crm/contractDoc'
@@ -38,7 +38,7 @@ export async function contractPdf(id, hash, staff = false) {
     const d = await loadContractDoc(id, hash, staff)
     if (!d) return null
     const S = await pdfSettings('contract')
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${CONTRACT_CSS}</style></head><body>${await contractHtml(d, S)}</body></html>`
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${CONTRACT_CSS}${paperCss()}</style></head><body>${await contractHtml(d, S)}</body></html>`
     return { pdf: await htmlToPdf(html), name: `contract-${(d.contract.subject || d.number).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}.pdf` }
 }
 
@@ -59,7 +59,7 @@ export async function contractPage(id, hash) {
     const commentsHtml = d.comments.length ? d.comments.map((m) => `<div class="cm"><div class="av ${m.staffId ? 'st' : ''}">${esc(initials(m.authorName || ''))}</div><div><div class="meta"><strong>${esc(m.authorName || (m.staffId ? T.team : ''))}</strong>${m.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(m.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${esc(m.content || '')}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
     const base = `/api/crm/public/contract/${id}/${hash}`
     const page = renderPublicPage({ lang, T, number: `${c.subject || ''} ${d.number}`.trim(), companyName: o('companyname'), banner, commentsHtml, commentsCount: d.comments.length, docHtml: await contractHtml(d, S), base, acting, noRefuse: true, identity: true, legalText: o('e_sign_legal_text'), contact })
-    return page.replace('</style>', `${CONTRACT_CSS}</style>`)
+    return page.replace('</style>', `${CONTRACT_CSS}${paperCss()}</style>`)
 }
 
 const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v || '')

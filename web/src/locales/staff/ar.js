@@ -3646,5 +3646,13 @@ export default {
     "offered in this period": "عُرض في هذه الفترة",
     "received in this period": "استُلم في هذه الفترة",
     "sent to clients in this period": "أُرسل للعملاء في هذه الفترة",
-    "started in the last 12 months": "بدأت في آخر 12 شهرًا"
+    "started in the last 12 months": "بدأت في آخر 12 شهرًا",
+    "A paid invoice cannot be changed. Only a super admin can do that.": "لا يمكن تغيير فاتورة مدفوعة. المشرف الأعلى فقط يستطيع ذلك.",
+    "A paid invoice is final. Changing it can upset your accounts and reports. Only a super admin can do it, and only if you know why.": "الفاتورة المدفوعة نهائية. تغييرها قد يخلّ بحساباتك وتقاريرك. المشرف الأعلى فقط يستطيع ذلك، وبعلم بالسبب.",
+    "A paid or signed document is final. Changing it can upset your accounts and what the client agreed to. Only a super admin can do it, and only if you know why.": "المستند المدفوع أو الموقّع نهائي. تغييره قد يخلّ بحساباتك وبما وافق عليه العميل. المشرف الأعلى فقط يستطيع ذلك، وبعلم بالسبب.",
+    "A signed contract is final. Changing it can go against what the client agreed to. Only a super admin can do it, and only if you know why.": "العقد الموقّع نهائي. تغييره قد يخالف ما وافق عليه العميل. المشرف الأعلى فقط يستطيع ذلك، وبعلم بالسبب.",
+    "Change it anyway": "غيّره على أي حال",
+    "This contract is signed": "هذا العقد موقّع",
+    "This document is final": "هذا المستند نهائي",
+    "This invoice is paid": "هذه الفاتورة مدفوعة"
 }

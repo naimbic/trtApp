@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.72.0',
+        date: '2026-10-18',
+        title: 'Paid invoices and signed contracts are final; documents in the Rapport paper look',
+        items: ['A paid invoice (its edit, status changes, payments) and a signed contract (edit, trash, delete, renew, unsign) can no longer be changed. Only a super admin can, and only after a caution asking them to confirm; the server refuses everyone else, so it holds even outside the screens. A contract the client signed on screen can still never be un-signed', 'Documents (invoice, estimate, proposal, purchase order, contract) now look like the Rapport invoice: a warm paper card on screen (the Document tab and the client page), small spaced labels, hairlines, a plain table, a bold total with a thick rule, and a stamp across paid, overdue and cancelled invoices', 'Downloads stay PDF files with the same look (the page is plain white when printed); your Settings for logo, font size, numbering and the bank block still apply, but the table heading colour setting no longer tints the new plain table']
+    },
+    {
         version: '0.71.0',
         date: '2026-10-18',
         title: 'Estimates, proposals, contracts and payments get their chart; payments get a row menu; lighter mega menu cards',

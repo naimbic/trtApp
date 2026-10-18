@@ -18,6 +18,7 @@ import { makeMoney } from '../clients/shared'
 import { StatusTag, fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
+import { useSessionUser } from '@/store/authStore'
 import { tr, trn } from '@/utils/t'
 import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
@@ -45,6 +46,9 @@ const InvoiceView = () => {
     const [payOpen, setPayOpen] = useState(false)
     const [pay, setPay] = useState({ amount: '', paymentModeId: null, paymentDate: dayjs().format('YYYY-MM-DD'), note: '', transactionId: '' })
     const [confirm, setConfirm] = useState(null) // 'cancel' | 'delete' | { payment }
+    const [caution, setCaution] = useState(null) // a paid invoice a super admin is about to change: the function to run (with force)
+    const authority = useSessionUser((x) => x.user.authority) || []
+    const superAdmin = authority.includes('admin') || authority.includes('crm.admin')
 
     const load = useCallback(() => Promise.all([api(`/api/crm/sales/invoices/${id}`), api('/api/crm/sales/lookups')]).then(([d, l]) => { setData(d); setLookups(l); setError('') }).catch((e) => setError(e.message)), [id])
     useEffect(() => { load() }, [load])
@@ -58,6 +62,8 @@ const InvoiceView = () => {
     const money = (n) => makeMoney(lookups.currencies)(n, invoice.currencyId)
     const st = effective(invoice, paid)
     const cancelled = invoice.status === 5
+    const paidFinal = invoice.status === 2 // a paid invoice is final: only a super admin changes it, after confirming
+    const guard = (fn) => () => (paidFinal ? setCaution(() => fn) : fn(false))
     const modeName = Object.fromEntries(lookups.paymentModes.map((m) => [m.id, m.name]))
 
     const run = async (fn, ok) => {
@@ -78,12 +84,12 @@ const InvoiceView = () => {
     const doConfirm = async () => {
         const c = confirm
         setConfirm(null)
-        if (c === 'cancel') await run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'cancel' } }), tr("Invoice cancelled"))
+        if (c === 'cancel') await run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'cancel', force: paidFinal } }), tr("Invoice cancelled"))
         else if (c === 'delete') { if (await run(() => api(`/api/crm/sales/invoices/${id}`, { method: 'DELETE' }), tr("Invoice deleted"))) navigate('/crm/invoices') }
-        else if (c?.payment) await run(() => api(`/api/crm/sales/payments/${c.payment.id}`, { method: 'DELETE' }), tr("Payment deleted"))
+        else if (c?.payment) await run(() => api(`/api/crm/sales/payments/${c.payment.id}${paidFinal ? '?force=1' : ''}`, { method: 'DELETE' }), tr("Payment deleted"))
     }
 
-    const canEdit = can('invoices', 'edit') && !cancelled
+    const canEdit = can('invoices', 'edit') && !cancelled && (!paidFinal || superAdmin)
     const dueIn = invoice.dueDate ? dayjs(fmtDate(invoice.dueDate)).diff(dayjs(fmtDate(new Date())), 'day') : null
     const pct = invoice.total > 0 ? Math.min(100, Math.round((paid / invoice.total) * 100)) : 0
     const dueHint = st === 2 || cancelled || dueIn == null ? null : dueIn < 0 ? { text: `${trn(-dueIn, 'day')} ${tr('overdue')}`, cls: 'text-red-500' } : { text: dueIn === 0 ? tr("Due today") : `${tr('in')} ${trn(dueIn, 'day')}`, cls: 'text-gray-400' }
@@ -102,14 +108,14 @@ const InvoiceView = () => {
                     {can('payments', 'create') && !cancelled && balance > 0 && <Button size="sm" variant="solid" icon={<TbCash />} onClick={() => { setPay((p) => ({ ...p, amount: balance })); setPayOpen(true) }}>{tr("Record payment")}</Button>}
                     {canEdit && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
-                    {canEdit && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/invoices/${id}/edit`)}>{tr("Edit")}</Button>}
+                    {canEdit && <Button size="sm" icon={<TbPencil />} onClick={guard(() => navigate(`/crm/invoices/${id}/edit`))}>{tr("Edit")}</Button>}
                     <Dropdown placement="bottom-end" renderTitle={<EllipsisButton size="sm" />}>
                         <Dropdown.Item eventKey="dl" onClick={() => { window.location.href = `/api/crm/sales/invoices/${id}/pdf?download=1` }}><TbDownload className="text-lg" /><span>{tr("Download PDF")}</span></Dropdown.Item>
                         {canEdit && [1, 3, 4].includes(st) && <Dropdown.Item eventKey="rem" onClick={() => setMail('invoice-overdue-notice')}><TbBellRinging className="text-lg" /><span>{tr("Send reminder")}</span></Dropdown.Item>}
                         {canEdit && payments.length > 0 && <Dropdown.Item eventKey="rec" onClick={() => setMail('invoice-payment-recorded')}><TbMail className="text-lg" /><span>{tr("Send receipt")}</span></Dropdown.Item>}
-                        {canEdit && !invoice.sent && <Dropdown.Item eventKey="sent" onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'markSent' } }), tr("Marked as sent"))}><TbSend className="text-lg" /><span>{tr("Mark as sent")}</span></Dropdown.Item>}
-                        {can('invoices', 'edit') && (cancelled ? <Dropdown.Item eventKey="un" onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'uncancel' } }), tr("Invoice restored"))}><TbBan className="text-lg" /><span>{tr("Mark as not cancelled")}</span></Dropdown.Item> : <Dropdown.Item eventKey="cx" onClick={() => setConfirm('cancel')}><TbBan className="text-lg" /><span>{tr("Cancel invoice")}</span></Dropdown.Item>)}
-                        {can('invoices', 'delete') && <Dropdown.Item eventKey="del" onClick={() => setConfirm('delete')}><TbTrash className="text-lg text-red-500" /><span className="text-red-500">{tr("Delete")}</span></Dropdown.Item>}
+                        {canEdit && !invoice.sent && <Dropdown.Item eventKey="sent" onClick={guard((force) => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'markSent', force } }), tr("Marked as sent")))}><TbSend className="text-lg" /><span>{tr("Mark as sent")}</span></Dropdown.Item>}
+                        {can('invoices', 'edit') && (cancelled ? <Dropdown.Item eventKey="un" onClick={guard((force) => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'uncancel', force } }), tr("Invoice restored")))}><TbBan className="text-lg" /><span>{tr("Mark as not cancelled")}</span></Dropdown.Item> : <Dropdown.Item eventKey="cx" onClick={guard(() => setConfirm('cancel'))}><TbBan className="text-lg" /><span>{tr("Cancel invoice")}</span></Dropdown.Item>)}
+                        {can('invoices', 'delete') && (!paidFinal || superAdmin) && <Dropdown.Item eventKey="del" onClick={() => setConfirm('delete')}><TbTrash className="text-lg text-red-500" /><span className="text-red-500">{tr("Delete")}</span></Dropdown.Item>}
                     </Dropdown>
                 </div>
             </div>
@@ -186,7 +192,7 @@ const InvoiceView = () => {
                                     {payments.map((p) => (
                                         <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                                             <div className="min-w-0"><div className="font-semibold tabular-nums">{money(p.amount)}</div><div className="truncate text-xs text-gray-500">{fmtDate(p.paymentDate)} · {modeName[p.paymentModeId] || p.paymentMethod || '—'}{p.transactionId ? ` · ${p.transactionId}` : ''}</div>{p.note && <div className="truncate text-xs text-gray-400">{p.note}</div>}</div>
-                                            {can('payments', 'delete') && <Button size="xs" variant="plain" icon={<TbTrash />} onClick={() => setConfirm({ payment: p })} />}
+                                            {can('payments', 'delete') && (!paidFinal || superAdmin) && <Button size="xs" variant="plain" icon={<TbTrash />} onClick={guard(() => setConfirm({ payment: p }))} />}
                                         </li>
                                     ))}
                                 </ul>
@@ -222,6 +228,9 @@ const InvoiceView = () => {
                 <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setPayOpen(false)}>{tr("Cancel")}</Button><Button variant="solid" loading={busy} onClick={async () => { if (await run(() => api(`/api/crm/sales/invoices/${id}/payments`, { method: 'POST', body: pay }), tr("Payment recorded"))) setPayOpen(false) }}>{tr("Save")}</Button></div>
             </Dialog>
 
+            <ConfirmDialog isOpen={!!caution} type="warning" title={tr("This invoice is paid")} confirmText={tr("Change it anyway")} onClose={() => setCaution(null)} onCancel={() => setCaution(null)} onConfirm={() => { const fn = caution; setCaution(null); fn(true) }}>
+                <p className="text-sm text-red-600">{tr("A paid invoice is final. Changing it can upset your accounts and reports. Only a super admin can do it, and only if you know why.")}</p>
+            </ConfirmDialog>
             <ConfirmDialog isOpen={!!confirm} type={confirm === 'cancel' ? 'warning' : 'danger'} title={confirm === 'cancel' ? tr("Cancel this invoice?") : confirm === 'delete' ? tr("Delete this invoice?") : tr("Delete this payment?")} confirmText={confirm === 'cancel' ? tr("Cancel invoice") : tr("Delete")} onClose={() => setConfirm(null)} onRequestClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={doConfirm}>
                 <p>{confirm === 'cancel' ? tr("A cancelled invoice no longer counts as revenue. It can be restored later. Invoices with payments cannot be cancelled.") : confirm === 'delete' ? tr("The invoice, its lines and its activity will be removed. Invoices with payments cannot be deleted.") : tr("The payment will be removed and the invoice status recalculated.")}</p>
             </ConfirmDialog>

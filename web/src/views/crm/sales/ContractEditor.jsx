@@ -10,6 +10,7 @@ import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import { TbArrowNarrowLeft } from 'react-icons/tb'
 import { api, notify } from '../kit/api'
+import { useSessionUser } from '@/store/authStore'
 import RelationSelect from '../kit/RelationSelect'
 import VisualEditor from '../mail/VisualEditor'
 import { tr } from '@/utils/t'
@@ -28,11 +29,15 @@ const ContractEditor = () => {
     const [v, setV] = useState(null)
     const [error, setError] = useState('')
     const [saving, setSaving] = useState(false)
+    const authority = useSessionUser((x) => x.user.authority) || []
+    const superAdmin = authority.includes('admin') || authority.includes('crm.admin')
+    const [wasLocked, setWasLocked] = useState(false)
     const set = (p) => setV((x) => ({ ...x, ...p }))
 
     useEffect(() => {
         Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id ? api(`/api/crm/sales/contracts/${id}`) : null]).then(([l, c]) => {
-            if (c?.locked) { notify('warning', tr("A signed contract cannot be edited")); navigate(`/crm/contracts/${id}`, { replace: true }); return }
+            if (c?.locked && !superAdmin) { notify('warning', tr("A signed contract cannot be edited")); navigate(`/crm/contracts/${id}`, { replace: true }); return }
+            setWasLocked(!!c?.locked)
             setTypes(l.stats?.types || [])
             setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: day(c.dateStart), dateEnd: day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: null, projectId: null, dateStart: day(new Date()), dateEnd: '', value: '', description: '', content: '', hidden: false, remindClient: true, signed: false })
         }).catch((e) => setError(e.message))
@@ -41,7 +46,7 @@ const ContractEditor = () => {
     const save = async () => {
         setSaving(true); setError('')
         try {
-            const r = await api(id ? `/api/crm/sales/contracts/${id}` : '/api/crm/sales/contracts', { method: id ? 'PUT' : 'POST', body: v })
+            const r = await api(id ? `/api/crm/sales/contracts/${id}` : '/api/crm/sales/contracts', { method: id ? 'PUT' : 'POST', body: { ...v, force: wasLocked } })
             notify('success', id ? tr("Contract saved") : tr("Contract created")); navigate(`/crm/contracts/${r.id}`)
         } catch (e) { setError(e.message); window.scrollTo({ top: 0, behavior: 'smooth' }) } finally { setSaving(false) }
     }

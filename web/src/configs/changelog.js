@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.72.6',
+        date: '2026-10-18',
+        title: 'Paper page as wide as the page body',
+        items: ['The paper page takes the full width of the page body, exactly like the other pages (same left and right edges as their content), instead of a narrow centred sheet']
+    },
+    {
         version: '0.72.5',
         date: '2026-10-18',
         title: 'Enter makes a new line in an item description',

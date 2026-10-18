@@ -123,15 +123,7 @@ const InvoiceView = () => {
             <div className="mb-4"><Segment size="sm" value={view} onChange={(v) => v && setView(v)}><Segment.Item value="details">{tr("Details")}</Segment.Item><Segment.Item value="document">{tr("Document")}</Segment.Item></Segment></div>
 
             {view === 'document' && (
-                <div className="rounded-2xl bg-gray-100 p-3 sm:p-6 dark:bg-gray-900/40">
-                    <div className="mx-auto mb-3 flex max-w-[860px] items-center justify-between gap-2 text-sm text-gray-500">
-                        <span>{tr("This is the invoice your client receives")}</span>
-                        <span className="flex gap-2"><Button size="xs" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>{tr("Open PDF")}</Button><Button size="xs" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/invoices/${id}/pdf?download=1` }}>{tr("Download")}</Button></span>
-                    </div>
-                    <div className="mx-auto max-w-[860px] overflow-hidden rounded-lg bg-white px-4 py-6 shadow-md ring-1 ring-black/5 sm:px-10 sm:py-10">
-                        <iframe title={tr("Invoice document")} onLoad={sizeFrame} src={`/api/crm/sales/invoices/${id}/html?v=${Math.round((invoice.total || 0) * 100)}-${payments.length}-${st}-${items.map((i) => i.id).join('')}-${invoice.updatedAt || ''}`} className="block h-[1180px] w-full bg-white" />
-                    </div>
-                </div>
+                <iframe title={tr("Invoice document")} onLoad={sizeFrame} src={`/api/crm/sales/invoices/${id}/html?v=${Math.round((invoice.total || 0) * 100)}-${payments.length}-${st}-${items.map((i) => i.id).join('')}-${invoice.updatedAt || ''}`} className="block h-[1180px] w-full rounded-2xl border-0" />
             )}
 
             <div className={view === 'document' ? 'hidden' : ''}>

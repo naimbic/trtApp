@@ -109,10 +109,7 @@ const ProposalView = () => {
                     )}
                 </Card>
 
-                <Card bodyClass="p-0 sm:p-0">
-                    <div className="flex items-center justify-between border-b px-4 py-2 text-sm text-gray-500"><span>{tr("The document your client reads")}</span><Button size="xs" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/proposals/${id}/pdf`, '_blank')}>{tr("Open PDF")}</Button></div>
-                    <iframe title={tr("Proposal")} src={`/api/crm/sales/proposals/${id}/html?v=${e.updatedAt}`} className="block h-[720px] w-full bg-white" />
-                </Card>
+                <iframe title={tr("Proposal")} src={`/api/crm/sales/proposals/${id}/html?v=${e.updatedAt}`} className="block h-[900px] w-full rounded-2xl border-0" />
 
                 {items.length > 0 && <Card>
                     <div className="overflow-x-auto">

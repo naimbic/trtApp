@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.72.1',
+        date: '2026-10-18',
+        title: 'Document tab: just the paper, full width',
+        items: ['The Document tab of an invoice, and the document of a proposal and of a contract, are now only the paper page itself, full width: no card around it, no title and no buttons (use the PDF and Download buttons at the top of the page)']
+    },
+    {
         version: '0.72.0',
         date: '2026-10-18',
         title: 'Paid invoices and signed contracts are final; documents in the Rapport paper look',

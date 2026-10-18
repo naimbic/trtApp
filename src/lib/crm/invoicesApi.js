@@ -4,6 +4,7 @@ import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { trendOf } from '@/lib/crm/trend'
+import { buildSeries } from '@/lib/crm/series'
 import { tallyWithAll, toBase } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
 
@@ -127,11 +128,12 @@ export async function listPayments({ query = '', modeId, clientId, from, to, pag
     const sumAll = (list) => tallyWithAll(sumBy, list, ['amount'], rt)
     const totals = sumAll(rows)
     const trend = trendOf(rows, (r) => r.paymentDate, sumAll)
+    const series = buildSeries({ from, to, rt, cur: Object.keys(totals), rows, lines: [{ key: 'received', pick: (r) => ({ date: r.paymentDate, amount: r.amount, currencyId: r.currencyId }) }] })
     const q = query.trim().toLowerCase()
     if (q) rows = rows.filter((r) => r.invoiceNumber.toLowerCase().includes(q) || r.client.toLowerCase().includes(q) || r.transactionId.toLowerCase().includes(q) || r.mode.toLowerCase().includes(q))
     const dir = order === 'asc' ? 1 : -1
     const keyFn = { paymentDate: (r) => +new Date(r.paymentDate || 0), amount: (r) => r.amount, client: (r) => r.client.toLowerCase(), invoiceNumber: (r) => r.invoiceNumber, mode: (r) => r.mode.toLowerCase() }[sortKey] || ((r) => +new Date(r.paymentDate || 0))
     rows.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const { page, size, list } = paginate(rows, pageIndex, pageSize)
-    return { list, total: rows.length, pageIndex: page, pageSize: size, totals, trend, modes: modes.map((m) => ({ id: m.id, name: m.name })) }
+    return { list, total: rows.length, pageIndex: page, pageSize: size, totals, trend, series, modes: modes.map((m) => ({ id: m.id, name: m.name })) }
 }

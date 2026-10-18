@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { StatTile, TileGrid } from '@/components/crm/ListHeader'
-import { TbCash, TbListNumbers, TbCoins } from 'react-icons/tb'
+import { TbCash, TbListNumbers, TbCoins, TbExternalLink, TbDownload } from 'react-icons/tb'
 import { usePageRange } from '@/store/pageFilterStore'
 import { useNavigate } from 'react-router'
 import { TbSearch, TbTrash } from 'react-icons/tb'
@@ -21,7 +21,8 @@ import { api, notify, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
-import { InvoiceHead } from './InvoiceInsights'
+import { InvoiceHead, DocChart, shortMoney, sumOf } from './InvoiceInsights'
+import { useDocMenu } from './DocMenu'
 import { tr } from '@/utils/t'
 import { moneyChange } from '../kit/widgets'
 
@@ -59,6 +60,16 @@ const PaymentsList = () => {
     }, [query, modeId, clientId, range, page, sort])
     useEffect(() => { load() }, [load])
 
+    const doc = useDocMenu({
+        perm: 'payments',
+        items: (p, { navigate: go, can: may }) => [
+            { label: tr("Open invoice"), icon: <TbExternalLink />, onClick: () => go(`/crm/invoices/${p.invoiceId}`) },
+            { label: tr("Download invoice"), icon: <TbDownload />, onClick: () => { window.location.href = `/api/crm/sales/invoices/${p.invoiceId}/pdf?download=1` } },
+            ...(may('payments', 'delete') ? [{ label: tr("Delete payment"), icon: <TbTrash />, danger: true, after: true, onClick: () => setDel(p) }] : []),
+        ],
+    }, load)
+    const chartCur = Object.keys(data.series || {})[0]
+
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const modeOptions = data.modes.map((m) => ({ value: m.id, label: m.name }))
@@ -90,6 +101,7 @@ const PaymentsList = () => {
                     <StatTile title={tr("Payments")} className="bg-purple-100" value={data.total} sub={tr("For the current filters")} icon={<TbListNumbers />} />
                 </TileGrid>
             )}
+            {chartCur && data.series[chartCur] && <DocChart title={tr("Payments received")} sumLabel={tr("received in this period")} sum={sumOf(data.series[chartCur], 'received')} series={data.series[chartCur]} money={(v) => money(v, chartCur)} moneyShort={shortMoney(lookups.currencies, chartCur)} cfg={[{ key: 'received', name: tr("Received"), tone: 'pine' }]} />}
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <div className="w-52"><Select size="sm" isClearable placeholder={tr("All payment modes")} options={modeOptions} value={modeOptions.find((o) => o.value === modeId) || null} onChange={(o) => { setModeId(o ? o.value : null); setPage(1) }} /></div>
@@ -99,7 +111,7 @@ const PaymentsList = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('paymentDate', tr("Date"))}{th('invoiceNumber', tr("Invoice"))}{th('client', tr("Client"))}{th('mode', tr("Payment mode"))}<Th>{tr("Transaction")}</Th>{th('amount', tr("Amount"), true)}{can('payments', 'delete') && <Th />}</Tr></THead>
+                        <THead><Tr>{th('paymentDate', tr("Date"))}{th('invoiceNumber', tr("Invoice"))}{th('client', tr("Client"))}{th('mode', tr("Payment mode"))}<Th>{tr("Transaction")}</Th>{th('amount', tr("Amount"), true)}{can('payments', 'delete') && <Th />}{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((p) => (
                                 <Tr key={p.id} className="cursor-pointer" onClick={() => navigate(`/crm/invoices/${p.invoiceId}`)}>
@@ -109,7 +121,7 @@ const PaymentsList = () => {
                                     <Td>{p.mode}</Td>
                                     <Td className="max-w-[160px] truncate text-gray-500">{p.transactionId}</Td>
                                     <Td className="text-right tabular-nums">{money(p.amount, p.currencyId)}</Td>
-                                    {can('payments', 'delete') && <Td className="text-right" onClick={(e) => e.stopPropagation()}><Tooltip title={tr("Delete payment")}><Button size="xs" variant="plain" icon={<TbTrash />} onClick={() => setDel(p)} /></Tooltip></Td>}
+                                    {doc.cell(p)}
                                 </Tr>
                             ))}
                         </TBody>
@@ -122,6 +134,7 @@ const PaymentsList = () => {
                     <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
                 </div>
             </AdaptiveCard>
+            {doc.dialogs}
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this payment?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onRequestClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={remove}>
                 <p>{del && tr("{v1} on {invoiceNumber} will be removed and the invoice status recalculated.", { v1: money(del.amount, del.currencyId), invoiceNumber: del.invoiceNumber })}</p>
             </ConfirmDialog>

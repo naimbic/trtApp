@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.71.0',
+        date: '2026-10-18',
+        title: 'Estimates, proposals, contracts and payments get their chart; payments get a row menu; lighter mega menu cards',
+        items: ['Under their figure cards these lists now have a chart card like the invoices: estimates and proposals (offered against accepted, by period and currency), contracts (value by start date and the signed part) and payments (money received); big numbers are short (12.5K, 1.2M) with the currency', 'Payments rows get the three-dots menu: Open invoice, Download invoice and Delete payment (it replaces the old delete button)', 'The section cards of the mega menu use a lighter pane and a fainter border']
+    },
+    {
         version: '0.70.2',
         date: '2026-10-18',
         title: 'Logo takes the chosen colour and plays on each page',

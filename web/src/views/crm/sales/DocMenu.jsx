@@ -27,6 +27,7 @@ export const useDocMenu = (cfg, reload) => {
     const state = (r, action, ok) => act(() => api(`${cfg.apiBase}/${r.id}/state`, { method: 'POST', body: { action } }), ok)
     const name = (r) => (cfg.name ? cfg.name(r) : r.number || r.subject || r.name || '')
     const items = (r) => {
+        if (cfg.items) return cfg.items(r, { navigate, act, can, confirmDelete: () => setConfirm({ row: r, kind: 'delete' }) })
         const editable = can(cfg.perm, 'edit') && (cfg.canEdit ? cfg.canEdit(r) : true)
         return [
             { label: tr("Open"), icon: <TbExternalLink />, onClick: () => navigate(`${cfg.path}/${r.id}`) },

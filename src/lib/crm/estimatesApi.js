@@ -5,6 +5,7 @@ import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { trendOf } from '@/lib/crm/trend'
 import { tallyWithAll } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
+import { buildSeries } from '@/lib/crm/series'
 
 const LABEL = { 1: 'Draft', 2: 'Sent', 3: 'Declined', 4: 'Accepted', 5: 'Expired' }
 const day = (d) => new Date(d).toISOString().slice(0, 10)
@@ -42,6 +43,10 @@ export async function listEstimates({ query = '', status, clientId, currencyId, 
     const money = tallyAll(rows)
     const trend = trendOf(rows, (r) => r.date, tallyAll)
     const ratesMissing = rt.missing
+    const series = buildSeries({ from, to, rt, cur: Object.keys(money), rows, lines: [
+        { key: 'estimated', pick: (r) => (r.status === 1 ? null : { date: r.date, amount: r.total, currencyId: r.currencyId }) },
+        { key: 'accepted', pick: (r) => (r.status === 4 ? { date: r.date, amount: r.total, currencyId: r.currencyId } : null) },
+    ] })
     const q = query.trim().toLowerCase()
     if (status) rows = rows.filter((r) => String(r.status) === String(status))
     if (q) rows = rows.filter((r) => r.number.toLowerCase().includes(q) || r.client.toLowerCase().includes(q) || r.referenceNo.toLowerCase().includes(q) || String(r.numberRaw) === q)
@@ -49,5 +54,5 @@ export async function listEstimates({ query = '', status, clientId, currencyId, 
     const keyFn = { number: (r) => r.numberRaw, client: (r) => r.client.toLowerCase(), date: (r) => +new Date(r.date || 0), expiryDate: (r) => +new Date(r.expiryDate || 0), total: (r) => r.total, status: (r) => r.status }[sortKey] || ((r) => +new Date(r.date || 0))
     rows.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1), size = Math.min(Math.max(parseInt(pageSize, 10) || 10, 1), 200)
-    return { list: rows.slice((page - 1) * size, page * size), total: rows.length, pageIndex: page, pageSize: size, stats: { counts, money, trend, ratesMissing } }
+    return { list: rows.slice((page - 1) * size, page * size), total: rows.length, pageIndex: page, pageSize: size, stats: { counts, money, trend, ratesMissing, series } }
 }

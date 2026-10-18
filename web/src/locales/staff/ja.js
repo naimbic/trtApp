@@ -3634,5 +3634,17 @@ export default {
     "Marked as unsigned": "未署名にしました",
     "Restored": "復元しました",
     "Status changed": "ステータスを変更しました",
-    "{n} expiring": "{n}件が期限間近"
+    "{n} expiring": "{n}件が期限間近",
+    "Contract value over time": "契約金額の推移",
+    "Download invoice": "請求書をダウンロード",
+    "Estimated": "見積額",
+    "Estimates over time": "見積の推移",
+    "Open invoice": "請求書を開く",
+    "Payments received": "入金額",
+    "Proposals over time": "提案の推移",
+    "Proposed": "提案額",
+    "offered in this period": "期間中に提案",
+    "received in this period": "期間中の入金",
+    "sent to clients in this period": "期間中に顧客へ送付",
+    "started in the last 12 months": "過去12か月に開始"
 }

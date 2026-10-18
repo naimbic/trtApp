@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { gsap, $, dur, landCards, countTo, settled, fileIn, riseTitle } from '@/vendor/rapport/motion'
 import { areaChart } from '@/vendor/rapport/charts'
 import { FORMATS } from '@/vendor/rapport/ui'
+import { compact } from '../kit/charts'
 import { tr } from '@/utils/t'
 
 const Card = ({ id, cls, title, tools, children }) => (
@@ -92,3 +93,54 @@ export const InvoiceHead = ({ title, stats, action }) => {
         </div>
     )
 }
+
+/**
+ * A chart card for the other lists (estimates, proposals, contracts, payments): a headline figure and an area chart of one or two lines.
+ *   series  { labels, byDay, lines:[{ key, values }] }    cfg  [{ key, name, tone, dashed, cumulative }]
+ */
+export const DocChart = ({ title, sumLabel, sum, series, cfg, money, moneyShort }) => {
+    const root = useRef(null)
+    const live = useRef({ chart: null, first: true })
+    const labels = useMemo(() => (series?.labels || []).map((k) => (series.byDay ? dayjs(k).format('D MMM') : dayjs(`${k}-01`).format('MMM YY'))), [series])
+    const lines = () => cfg.map((c) => {
+        const v = (series.lines.find((l) => l.key === c.key) || { values: [] }).values
+        let t = 0
+        return { name: c.name, values: c.cumulative ? v.map((x) => (t += x)) : v, tone: c.tone, dashed: c.dashed }
+    })
+    useLayoutEffect(() => {
+        const el = root.current
+        if (!el || !series) return undefined
+        const ctx = gsap.context(() => {
+            live.current.chart = areaChart($('[data-k="chart"]', el), { labels, label: title, format: moneyShort, height: 230, series: lines() })
+            landCards([el.querySelector('.card')], { delay: 0.05 })
+            live.current.chart.play(0.25)
+        }, el)
+        return () => ctx.revert()
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        if (live.current.first) { live.current.first = false; return }
+        live.current.chart?.update(lines(), labels)
+        const b = $('[data-k="sum"]', root.current)
+        if (b) countTo(b, sum, (v) => money(v), { duration: 0.9 })
+    }, [JSON.stringify(series?.lines), sum]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!series) return null
+    return (
+        <div className="rp-ov inv-insights" ref={root}>
+            <div data-view="overview" className="inv-grid">
+                <Card id="doc-chart" cls="inv-cash" title={title}>
+                    <div className="ov-rev__sum"><b className="ov-rev__total num" data-k="sum">{money(sum)}</b><span className="ov-rev__sub">{sumLabel}</span></div>
+                    <div className="legend ov-rev__legend">{cfg.map((c) => <span key={c.key}>{c.dashed ? <i className="ov-dash" aria-hidden="true" /> : <i className={`tone--${c.tone}`} />}{c.name}</span>)}</div>
+                    <div className="ov-rev__chart" data-k="chart" />
+                </Card>
+            </div>
+        </div>
+    )
+}
+
+/** Short money for chart axes and tooltips: 12.5K, 1.2M, with the currency symbol of `cur`. */
+export const shortMoney = (currencies, cur) => (v) => {
+    const c = currencies.find((x) => x.id === cur) || (cur === 'all' ? currencies.find((x) => x.isDefault) || currencies[0] : currencies.find((x) => x.isDefault))
+    const sym = c?.symbol || c?.name || '', n = compact(v)
+    return c?.placement === 'after' ? `${n} ${sym}` : `${sym ? sym + ' ' : ''}${n}`
+}
+export const sumOf = (series, key) => (series?.lines.find((l) => l.key === key)?.values || []).reduce((a, b) => a + b, 0)

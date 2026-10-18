@@ -18,7 +18,7 @@ import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
 import { useDocMenu } from './DocMenu'
-import { InvoiceHead } from './InvoiceInsights'
+import { InvoiceHead, DocChart, shortMoney, sumOf } from './InvoiceInsights'
 import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
@@ -87,6 +87,8 @@ const ContractsList = () => {
                 <StatTile title={tr("Value of live contracts")} className="bg-sky-100" value={money(st.activeValue, baseCur, { decimals: 0 })} icon={<TbCoins />} />
                 <StatTile title={tr("Waiting for a signature")} className="bg-purple-100" value={st.unsigned || 0} icon={<TbSignature />} />
             </TileGrid>
+            {data.stats.series && <DocChart title={tr("Contract value over time")} sumLabel={tr("started in the last 12 months")} sum={sumOf(data.stats.series, 'value')} series={data.stats.series} money={(v) => money(v, baseCur, { decimals: 0 })} moneyShort={shortMoney(lookups.currencies, baseCur)} cfg={[{ key: 'value', name: tr("Contract value"), tone: 'tomato' }, { key: 'signed', name: tr("Signed"), tone: 'pine', dashed: true }]} />}
+
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <div className="w-52"><Select size="sm" isClearable placeholder={tr("All types")} options={typeOptions} value={typeOptions.find((o) => o.value === typeId) || null} onChange={(o) => { setTypeId(o ? o.value : null); setPage(1) }} /></div>

@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { buildSeries } from '@/lib/crm/series'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
@@ -48,6 +49,12 @@ export async function listContracts({ query = '', state, clientId, typeId, pageI
     let activeValue = 0
     list.forEach((c) => { counts[c.state] += 1; if (c.state === 'active' || c.state === 'expiring') activeValue += c.value })
     const unsigned = list.filter((c) => !c.signed && c.state !== 'trash').length
+    // the chart: the value of contracts by start date, and the part of it that is signed (contracts carry one value, no currency)
+    const live = list.filter((c) => c.state !== 'trash')
+    const series = buildSeries({ cur: ['all'], rt: { rates: {}, baseId: null }, rows: live, lines: [
+        { key: 'value', pick: (c) => ({ date: c.dateStart, amount: c.value, currencyId: null }) },
+        { key: 'signed', pick: (c) => (c.signed ? { date: c.dateStart, amount: c.value, currencyId: null } : null) },
+    ] })
 
     const q = query.trim().toLowerCase()
     if (state) list = list.filter((c) => c.state === state)
@@ -58,7 +65,7 @@ export async function listContracts({ query = '', state, clientId, typeId, pageI
     list.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1)
     const size = Math.min(Math.max(parseInt(pageSize, 10) || 15, 1), 200)
-    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name })) } }
+    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name })) } }
 }
 
 export async function getContract(id) {

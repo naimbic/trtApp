@@ -3634,5 +3634,17 @@ export default {
     "Marked as unsigned": "تم وضع علامة غير موقّع",
     "Restored": "تمت الاستعادة",
     "Status changed": "تم تغيير الحالة",
-    "{n} expiring": "{n} على وشك الانتهاء"
+    "{n} expiring": "{n} على وشك الانتهاء",
+    "Contract value over time": "قيمة العقود عبر الزمن",
+    "Download invoice": "تنزيل الفاتورة",
+    "Estimated": "المقدَّر",
+    "Estimates over time": "عروض الأسعار عبر الزمن",
+    "Open invoice": "فتح الفاتورة",
+    "Payments received": "المدفوعات المستلمة",
+    "Proposals over time": "المقترحات عبر الزمن",
+    "Proposed": "المقترح",
+    "offered in this period": "عُرض في هذه الفترة",
+    "received in this period": "استُلم في هذه الفترة",
+    "sent to clients in this period": "أُرسل للعملاء في هذه الفترة",
+    "started in the last 12 months": "بدأت في آخر 12 شهرًا"
 }

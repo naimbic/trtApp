@@ -6,6 +6,7 @@ import { effectiveStatus, numberFormatter, numberOf, LABEL, EXPIRED } from '@/li
 import { trendOf } from '@/lib/crm/trend'
 import { tallyWithAll } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
+import { buildSeries } from '@/lib/crm/series'
 
 const NAME = { ...LABEL, [EXPIRED]: 'Expired' }
 
@@ -39,6 +40,10 @@ export async function listProposals({ query = '', status, relType, currencyId, f
     const money = tallyAll(rows)
     const trend = trendOf(rows, (r) => r.date, tallyAll)
     const ratesMissing = rt.missing
+    const series = buildSeries({ from, to, rt, cur: Object.keys(money), rows, lines: [
+        { key: 'proposed', pick: (r) => (r.status === 6 ? null : { date: r.date, amount: r.total, currencyId: r.currencyId }) },
+        { key: 'accepted', pick: (r) => (r.status === 3 ? { date: r.date, amount: r.total, currencyId: r.currencyId } : null) },
+    ] })
     const q = query.trim().toLowerCase()
     if (status) rows = rows.filter((r) => String(r.status) === String(status))
     if (q) rows = rows.filter((r) => r.number.toLowerCase().includes(q) || r.subject.toLowerCase().includes(q) || r.to.toLowerCase().includes(q))
@@ -46,5 +51,5 @@ export async function listProposals({ query = '', status, relType, currencyId, f
     const keyFn = { number: (r) => r.numberRaw, subject: (r) => r.subject.toLowerCase(), to: (r) => r.to.toLowerCase(), date: (r) => +new Date(r.date || 0), openTill: (r) => +new Date(r.openTill || 0), total: (r) => r.total, status: (r) => r.status }[sortKey] || ((r) => +new Date(r.date || 0))
     rows.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1), size = Math.min(Math.max(parseInt(pageSize, 10) || 10, 1), 200)
-    return { list: rows.slice((page - 1) * size, page * size), total: rows.length, pageIndex: page, pageSize: size, stats: { counts, money, trend, ratesMissing } }
+    return { list: rows.slice((page - 1) * size, page * size), total: rows.length, pageIndex: page, pageSize: size, stats: { counts, money, trend, ratesMissing, series } }
 }

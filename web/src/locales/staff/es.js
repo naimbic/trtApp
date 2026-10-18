@@ -3634,5 +3634,17 @@ export default {
     "Marked as unsigned": "Marcado como sin firmar",
     "Restored": "Restaurado",
     "Status changed": "Estado cambiado",
-    "{n} expiring": "{n} por vencer"
+    "{n} expiring": "{n} por vencer",
+    "Contract value over time": "Valor de contratos en el tiempo",
+    "Download invoice": "Descargar factura",
+    "Estimated": "Estimado",
+    "Estimates over time": "Presupuestos en el tiempo",
+    "Open invoice": "Abrir factura",
+    "Payments received": "Pagos recibidos",
+    "Proposals over time": "Propuestas en el tiempo",
+    "Proposed": "Propuesto",
+    "offered in this period": "ofrecido en el periodo",
+    "received in this period": "recibido en el periodo",
+    "sent to clients in this period": "enviado a clientes en el periodo",
+    "started in the last 12 months": "iniciados en los últimos 12 meses"
 }

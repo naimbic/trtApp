@@ -22,7 +22,7 @@ import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { PROPOSAL_STATUS as STATUS, ProposalStatusTag as StatusTag, fmtDate } from './shared'
 import { useDocMenu } from './DocMenu'
-import { InvoiceHead } from './InvoiceInsights'
+import { InvoiceHead, DocChart, shortMoney, sumOf } from './InvoiceInsights'
 import { tr } from '@/utils/t'
 import { moneyChange } from '../kit/widgets'
 
@@ -98,6 +98,8 @@ const ProposalsList = () => {
                     <StatTile title={tr("Declined")} className="bg-amber-100" value={data.stats.counts[2] || 0} icon={<TbAlertTriangle />} />
                 </TileGrid>
             )}
+
+            {m && data.stats.series?.[cur] && <DocChart title={tr("Proposals over time")} sumLabel={tr("offered in this period")} sum={sumOf(data.stats.series[cur], 'proposed')} series={data.stats.series[cur]} money={(v) => money(v, cur)} moneyShort={shortMoney(lookups.currencies, cur)} cfg={[{ key: 'proposed', name: tr("Proposed"), tone: 'tomato' }, { key: 'accepted', name: tr("Accepted"), tone: 'pine', dashed: true }]} />}
 
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">

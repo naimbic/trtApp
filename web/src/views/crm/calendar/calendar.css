@@ -1,4 +1,54 @@
-/* 12px of space around the date and events inside every day square */
-.calendar .fc .fc-daygrid-day-frame { padding: 12px; }
-.calendar .fc .fc-daygrid-day-top { margin-bottom: 4px; }
-.calendar .fc .fc-daygrid-day-number { padding: 0; }
+/*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
+/* the schedule: filters, the calendar card and the agenda column */
+.sch-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 16px; }
+.sch-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sch-sep { width: 1px; height: 26px; background: var(--rp-line, #e3ded4); }
+.sch-chip { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px 0 5px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--rp-glass-2, rgba(255,255,255,.7)); color: var(--rp-text, inherit); border: 1px solid var(--rp-rim, transparent); cursor: pointer; transition: background .2s, color .2s, transform .25s cubic-bezier(.3, 1.6, .5, 1); }
+.sch-chip:not(:has(.sch-chip__av, img)) { padding-inline-start: 13px; }
+.sch-chip:hover { transform: translateY(-1px); }
+.sch-chip[aria-pressed='true'] { background: var(--rp-pill, #17191a); color: var(--rp-on-pill, #fff); border-color: transparent; }
+.sch-chip img, .sch-chip__av { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: var(--rp-well, #eee); color: var(--rp-text, inherit); }
+.sch-chip[aria-pressed='true'] .sch-chip__av { background: rgba(255, 255, 255, .2); color: inherit; }
+.sch-chip__dot { width: 9px; height: 9px; border-radius: 50%; }
+.sch-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--rp-gap, 16px); align-items: start; }
+@media (max-width: 1100px) { .sch-grid { grid-template-columns: minmax(0, 1fr); } }
+.sch-cal { padding: 16px 16px 12px; }
+.sch-cal__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 12px; }
+.sch-period { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.02em; flex: 1; min-width: 160px; }
+.sch-loading { margin-inline-start: 6px; opacity: .4; }
+.sch-nav { display: flex; align-items: center; gap: 6px; }
+.sch-ibtn { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--rp-well, #eee); color: inherit; font-size: 18px; cursor: pointer; transition: background .2s, transform .3s cubic-bezier(.3, 1.7, .5, 1); }
+.sch-ibtn:hover { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); transform: scale(1.08); }
+.sch-today { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--rp-line, #ddd); background: transparent; font-weight: 700; font-size: 13px; color: inherit; cursor: pointer; }
+.sch-today:hover { background: var(--rp-well, #eee); }
+.sch-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; background: var(--rp-glass-2, rgba(255,255,255,.7)); border: 1px solid var(--rp-rim, transparent); }
+.sch-seg button { height: 30px; padding: 0 14px; border-radius: 999px; border: 0; background: transparent; color: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s, color .2s; }
+.sch-seg button[aria-pressed='true'] { background: var(--rp-pill, #17191a); color: var(--rp-on-pill, #fff); }
+/* FullCalendar inside: rounded day cells, today ringed, the selected day a solid block */
+.sch-cal .calendar .fc { --fc-border-color: transparent; --fc-page-bg-color: transparent; --fc-neutral-bg-color: transparent; --fc-today-bg-color: transparent; }
+.sch-cal .fc-scrollgrid, .sch-cal .fc-scrollgrid td, .sch-cal .fc-scrollgrid th { border: 0 !important; }
+.sch-cal .fc .fc-col-header-cell { padding: 6px 0 10px; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--rp-muted, #777); }
+.sch-cal .fc-daygrid-day-frame { margin: 3px; border-radius: 16px; background: var(--rp-well, rgba(0,0,0,.04)); min-height: 96px; padding: 8px !important; transition: background .2s, box-shadow .2s; cursor: pointer; }
+.sch-cal .fc-daygrid-day:hover .fc-daygrid-day-frame { background: color-mix(in srgb, var(--rp-accent, #d8532d) 12%, var(--rp-well, #eee)); }
+.sch-cal .fc-day-today .fc-daygrid-day-frame { box-shadow: inset 0 0 0 2px var(--rp-accent, #d8532d); }
+.sch-cal .fc-day-other .fc-daygrid-day-frame { opacity: .45; }
+.sch-cal .fc-daygrid-day.is-selected .fc-daygrid-day-frame { background: var(--rp-pill, #17191a); color: var(--rp-on-pill, #fff); }
+.sch-cal .fc-daygrid-day.is-selected .fc-daygrid-day-number { color: inherit; }
+.sch-cal .fc-daygrid-day-number { font-weight: 700; font-size: 13px; padding: 0 !important; }
+.sch-cal .fc-timegrid-slot, .sch-cal .fc-timegrid-axis { border-color: var(--rp-line, #e3ded4) !important; }
+.sch-cal .fc-event { border-radius: 8px; border: 0; }
+.sch-side { display: grid; gap: var(--rp-gap, 16px); }
+.sch-card__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.sch-card__head h2 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.sch-card__head p { margin: 2px 0 0; font-size: 12.5px; color: var(--rp-muted, #777); }
+.sch-agenda, .sch-late { padding: 16px; }
+.sch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.sch-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 14px; border: 0; background: transparent; text-align: start; color: inherit; cursor: pointer; transition: background .15s, transform .2s var(--rp-ease, ease); }
+.sch-row:hover { background: color-mix(in srgb, var(--rp-accent, #d8532d) 12%, transparent); transform: translateX(2px); }
+[dir='rtl'] .sch-row:hover { transform: translateX(-2px); }
+.sch-row__dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.sch-row__txt { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
+.sch-row__txt b { font-size: 13.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sch-row__txt small { font-size: 12px; color: var(--rp-muted, #777); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sch-row__late { color: #d6402a; flex: none; }
+.sch-empty { margin: 6px 4px 2px; font-size: 13px; color: var(--rp-muted, #777); }

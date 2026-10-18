@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { realPicture } from '@/lib/crm/pictures'
 import { auth } from '@/auth'
 import { viewScope, hasCap, isCrmAdmin, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
@@ -90,6 +91,7 @@ export async function getCalendarItems({ from, to }) {
             reminderBeforeType: e.reminderBeforeType || 'minutes',
             owner: e.userId ? staffName[e.userId] || '' : '',
             invited: invited && !mine,
+            who: [...new Set([e.userId, ...(e.attendeeIds || [])].filter(Boolean))],
         })
     }
 
@@ -99,14 +101,17 @@ export async function getCalendarItems({ from, to }) {
     const range = { gte: start, lt: end }
     const day = (d) => new Date(d).toISOString().slice(0, 10)
     const allClients = Object.fromEntries((await prisma.crmClient.findMany({ select: { id: true, company: true } })).map((c) => [c.id, c.company]))
-    const add = (type, id, title, date, color, href, detail = '', clientId = null) => items.push({ id: `${type}:${id}`, title, start: day(date), allDay: true, eventColor: color, type, editable: false, href, detail, clientName: clientId ? allClients[clientId] || '' : '' })
+    const mk = (type, id, title, date, color, href, detail = '', clientId = null, who = []) => ({ id: `${type}:${id}`, title, start: day(date), allDay: true, eventColor: color, type, editable: false, href, detail, clientName: clientId ? allClients[clientId] || '' : '', who })
+    const add = (...a) => items.push(mk(...a))
 
     if (ctx.can('tasks') && on('show_tasks_on_calendar')) {
         layers.push('tasks')
         const mine = lay('calendar_only_assigned_tasks', '0') === '1' && ctx.staffId // "Only my tasks"
         const assigned = mine ? (await prisma.crmTaskAssigned.findMany({ where: { staffId: ctx.staffId }, select: { taskId: true } })).map((x) => x.taskId) : null
         const rows = await prisma.crmTask.findMany({ where: { dueDate: range, status: { not: 5 }, ...(assigned ? { id: { in: assigned } } : {}) }, select: { id: true, name: true, dueDate: true } })
-        rows.forEach((t) => add('tasks', t.id, `Task: ${t.name}`, t.dueDate, 'orange', `/crm/tasks/${t.id}`, 'Task due'))
+        const asg = rows.length ? await prisma.crmTaskAssigned.findMany({ where: { taskId: { in: rows.map((t) => t.id) } }, select: { taskId: true, staffId: true } }) : []
+        const who = (id) => asg.filter((x) => x.taskId === id).map((x) => x.staffId)
+        rows.forEach((t) => add('tasks', t.id, `Task: ${t.name}`, t.dueDate, 'orange', `/crm/tasks/${t.id}`, 'Task due', null, who(t.id)))
     }
     // the person's own reminders, for the kinds of record chosen in Settings → Calendar
     if (ctx.staffId) {
@@ -115,14 +120,14 @@ export async function getCalendarItems({ from, to }) {
             layers.push('reminders')
             const rows = await prisma.crmReminder.findMany({ where: { staffId: ctx.staffId, date: range, relType: { in: kinds }, ...(lay('hide_notified_reminders_from_calendar', '0') === '1' ? { isNotified: false } : {}) }, select: { id: true, description: true, date: true, relType: true, relId: true } })
             const href = (r) => ({ customer: `/crm/clients/${r.relId}`, lead: `/crm/leads/${r.relId}`, invoice: `/crm/invoices/${r.relId}`, estimate: `/crm/estimates/${r.relId}`, proposal: `/crm/proposals/${r.relId}`, ticket: `/crm/tickets/${r.relId}`, task: `/crm/tasks/${r.relId}` }[r.relType] || null)
-            rows.forEach((r) => add('reminders', r.id, `Reminder: ${(r.description || '').slice(0, 80)}`, r.date, 'yellow', href(r), 'Reminder'))
+            rows.forEach((r) => add('reminders', r.id, `Reminder: ${(r.description || '').slice(0, 80)}`, r.date, 'yellow', href(r), 'Reminder', null, [ctx.staffId]))
         }
     }
     if (ctx.can('invoices') && on('show_invoices_on_calendar')) {
         layers.push('invoices')
-        const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, status: true, dueDate: true, total: true } })
+        const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, status: true, dueDate: true, total: true, addedFrom: true, saleAgentId: true } })
         const pad = await numberPadding()
-        rows.forEach((i) => add('invoices', i.id, `Invoice ${docNumberOf(i, pad)} due · ${round2(i.total).toLocaleString('en-US')}`, i.dueDate, 'red', `/crm/invoices/${i.id}`, `Invoice due · ${round2(i.total).toLocaleString('en-US')}`, i.clientId))
+        rows.forEach((i) => add('invoices', i.id, `Invoice ${docNumberOf(i, pad)} due · ${round2(i.total).toLocaleString('en-US')}`, i.dueDate, 'red', `/crm/invoices/${i.id}`, `Invoice due · ${round2(i.total).toLocaleString('en-US')}`, i.clientId, [i.saleAgentId || i.addedFrom].filter(Boolean)))
     }
     if (ctx.can('projects') && on('show_projects_on_calendar')) {
         layers.push('projects')
@@ -145,7 +150,24 @@ export async function getCalendarItems({ from, to }) {
         const rows = await prisma.crmContract.findMany({ where: { dateEnd: range }, select: { id: true, clientId: true, subject: true, dateEnd: true } })
         rows.forEach((c) => add('contracts', c.id, `Contract ends: ${c.subject || ''}`, c.dateEnd, 'blue', `/crm/contracts/${c.id}`, 'Contract ends', c.clientId))
     }
-    return { items, layers }
+
+    // what is late and still open, whatever month is on screen: tasks past their due date and unpaid invoices past theirs
+    const overdue = []
+    const today0 = new Date(); today0.setUTCHours(0, 0, 0, 0)
+    if (ctx.can('tasks') && on('show_tasks_on_calendar')) {
+        const mine = lay('calendar_only_assigned_tasks', '0') === '1' && ctx.staffId
+        const assigned = mine ? (await prisma.crmTaskAssigned.findMany({ where: { staffId: ctx.staffId }, select: { taskId: true } })).map((x) => x.taskId) : null
+        const late = await prisma.crmTask.findMany({ where: { dueDate: { lt: today0 }, status: { not: 5 }, ...(assigned ? { id: { in: assigned } } : {}) }, orderBy: { dueDate: 'asc' }, take: 40, select: { id: true, name: true, dueDate: true } })
+        const asg = late.length ? await prisma.crmTaskAssigned.findMany({ where: { taskId: { in: late.map((t) => t.id) } }, select: { taskId: true, staffId: true } }) : []
+        late.forEach((t) => overdue.push(mk('tasks', t.id, t.name, t.dueDate, 'orange', `/crm/tasks/${t.id}`, 'Task overdue', null, asg.filter((x) => x.taskId === t.id).map((x) => x.staffId))))
+    }
+    if (ctx.can('invoices') && on('show_invoices_on_calendar')) {
+        const late = await prisma.crmInvoice.findMany({ where: { dueDate: { lt: today0 }, status: { notIn: [2, 5, 6] } }, orderBy: { dueDate: 'asc' }, take: 40, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, dueDate: true, total: true, addedFrom: true, saleAgentId: true } })
+        const lpad = await numberPadding()
+        late.forEach((i) => overdue.push(mk('invoices', i.id, `Invoice ${docNumberOf(i, lpad)}`, i.dueDate, 'red', `/crm/invoices/${i.id}`, `Unpaid · ${round2(i.total).toLocaleString('en-US')}`, i.clientId, [i.saleAgentId || i.addedFrom].filter(Boolean))))
+    }
+    overdue.sort((a, b) => a.start.localeCompare(b.start))
+    return { items, layers, overdue }
 }
 
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
@@ -236,8 +258,8 @@ export async function deleteCalendarEvent(id) {
 export async function calendarLookups() {
     const ctx = await context()
     if (!ctx) throw Object.assign(new Error('Unauthorized'), { status: 401 })
-    const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true }, orderBy: { firstName: 'asc' } })
-    return { staff: staff.map((x) => ({ id: x.id, name: `${x.firstName || ''} ${x.lastName || ''}`.trim() || x.email, email: x.email })), me: ctx.staffId }
+    const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true }, orderBy: { firstName: 'asc' } })
+    return { staff: staff.map((x) => ({ id: x.id, name: `${x.firstName || ''} ${x.lastName || ''}`.trim() || x.email, email: x.email, image: realPicture(x.profileImage) })), me: ctx.staffId }
 }
 
 /** One event as .ics (download / "add to calendar"). */

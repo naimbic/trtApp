@@ -3672,5 +3672,13 @@ export default {
     "Table": "Tableau",
     "activated": "activé",
     "deactivated": "désactivé",
-    "{a} overdue": "{a} en retard"
+    "{a} overdue": "{a} en retard",
+    "+{n} more": "+{n} de plus",
+    "Add an event on this day": "Ajouter un événement ce jour",
+    "Calendar view": "Vue du calendrier",
+    "Next": "Suivant",
+    "Nothing is late": "Rien n'est en retard",
+    "Overdue, unfinished": "En retard, non terminé",
+    "Previous": "Précédent",
+    "needs attention": "à traiter"
 }

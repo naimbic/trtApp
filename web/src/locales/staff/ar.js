@@ -3672,5 +3672,13 @@ export default {
     "Table": "جدول",
     "activated": "تم التفعيل",
     "deactivated": "تم التعطيل",
-    "{a} overdue": "{a} متأخر"
+    "{a} overdue": "{a} متأخر",
+    "+{n} more": "+{n} أخرى",
+    "Add an event on this day": "إضافة حدث في هذا اليوم",
+    "Calendar view": "عرض التقويم",
+    "Next": "التالي",
+    "Nothing is late": "لا شيء متأخر",
+    "Overdue, unfinished": "متأخر وغير منجز",
+    "Previous": "السابق",
+    "needs attention": "يحتاج اهتمامًا"
 }

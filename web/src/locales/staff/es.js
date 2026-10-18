@@ -3672,5 +3672,13 @@ export default {
     "Table": "Tabla",
     "activated": "activado",
     "deactivated": "desactivado",
-    "{a} overdue": "{a} vencidos"
+    "{a} overdue": "{a} vencidos",
+    "+{n} more": "+{n} más",
+    "Add an event on this day": "Añadir un evento este día",
+    "Calendar view": "Vista del calendario",
+    "Next": "Siguiente",
+    "Nothing is late": "Nada está atrasado",
+    "Overdue, unfinished": "Atrasado y sin terminar",
+    "Previous": "Anterior",
+    "needs attention": "requiere atención"
 }

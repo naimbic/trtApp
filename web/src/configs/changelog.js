@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.74.0',
+        date: '2026-10-18',
+        title: 'Schedule like the Rapport demo; no more piles of "Failed to fetch"',
+        items: ['The calendar is a two-column Schedule: the calendar on the left (rounded day cells, today ringed, the selected day a solid block, Month / Week / Day and previous / today / next), and on the right the Agenda of the selected day plus an Overdue list (tasks past their due date and unpaid invoices past theirs, whatever month is on screen). Click a day to fill the agenda; drag across days or hours, or use + / New event, to create an event', 'Filters under the head: team chips (show only what concerns the people you pick: their events, invitations, assigned tasks, reminders and invoices) and kind chips (events, reminders, tasks, invoices, projects, estimates, proposals, contracts); the head shows today, this week and the overdue count', 'The server now sends who each calendar entry concerns, the overdue list and the team photos', 'The repeated "Failed to fetch" toasts are fixed: the calendar only asks the server again when the date range really changes, an older answer never overwrites a newer one, and the same error shows once (not again for 20 seconds)']
+    },
+    {
         version: '0.73.0',
         date: '2026-10-18',
         title: 'Clients like the Rapport customer directory: head with metrics, Grid / Table, one menu',

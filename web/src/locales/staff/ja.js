@@ -3672,5 +3672,13 @@ export default {
     "Table": "テーブル",
     "activated": "有効にしました",
     "deactivated": "無効にしました",
-    "{a} overdue": "{a} 延滞"
+    "{a} overdue": "{a} 延滞",
+    "+{n} more": "他{n}件",
+    "Add an event on this day": "この日に予定を追加",
+    "Calendar view": "カレンダー表示",
+    "Next": "次へ",
+    "Nothing is late": "遅れはありません",
+    "Overdue, unfinished": "期限超過・未完了",
+    "Previous": "前へ",
+    "needs attention": "要対応"
 }

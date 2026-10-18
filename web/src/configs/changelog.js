@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.63.1',
+        date: '2026-10-18',
+        title: 'Better period panel, soft colours and a custom colour',
+        items: ['Period panel: shows the days now in view on top, then each preset with the dates it covers (so "Last month" or "12 months" is never a guess), a check on the active one, and a From / To custom range with an Apply button', 'Colour panel: 8 new soft colours (mist grey, sage and mint greens, baby blue, lavender, peach, butter, blush) kept apart from the vivid ones, plus a custom colour: pick it on the colour wheel or type a hex code; text on light colours stays dark and readable, in light and dark mode', 'Translated into French, Spanish, Japanese and Arabic']
+    },
+    {
         version: '0.63.0',
         date: '2026-10-18',
         title: 'Shared pipeline board, equal-card mega menu, more colours, search suggestions',

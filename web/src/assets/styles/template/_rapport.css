@@ -174,7 +174,7 @@
 /* dock filters: current value under the icon, panel beside the dock */
 .rp-dock-filter { height: 52px; flex-direction: column; gap: 0; border-radius: 22px; font-size: 19px; }
 .rp-dock-tag { display: block; margin-top: -2px; font-size: 9px; font-weight: 800; letter-spacing: .02em; line-height: 1; opacity: .85; max-width: 44px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rp-fpanel { position: fixed; z-index: 90; width: 286px; color: var(--rp-text); padding: 14px; border-radius: 22px; background: var(--rp-float); color: var(--rp-text); border: 1px solid var(--rp-line); box-shadow: var(--rp-shadow-pop); pointer-events: auto; animation: rp-pop-r .3s var(--rp-ease) both; }
+.rp-fpanel { position: fixed; z-index: 90; width: 300px; max-height: calc(100vh - 24px); overflow-y: auto; color: var(--rp-text); padding: 14px; border-radius: 22px; background: var(--rp-float); color: var(--rp-text); border: 1px solid var(--rp-line); box-shadow: var(--rp-shadow-pop); pointer-events: auto; animation: rp-pop-r .3s var(--rp-ease) both; }
 .rp-fpanel[data-side='left'] { animation-name: rp-pop-l; }
 @keyframes rp-pop-r { from { opacity: 0; transform: translateX(-16px) scale(.95); transform-origin: left center; } to { opacity: 1; transform: none; } }
 @keyframes rp-pop-l { from { opacity: 0; transform: translateX(16px) scale(.95); transform-origin: right center; } to { opacity: 1; transform: none; } }
@@ -200,3 +200,31 @@
 .rp-card .rp-link::before { background: radial-gradient(120px circle at var(--mx, 50%) var(--my, 50%), var(--rp-float), var(--rp-float)); }
 .rp-card .rp-link .ico { background: var(--rp-float); }
 .rp-card .rp-link:hover .ico { background: var(--rp-pill); }
+
+/* period panel: what is showing, then each preset with the days it covers */
+.rp-per-now { display: grid; gap: 2px; padding: 12px 14px; margin-bottom: 8px; border-radius: 16px; background: var(--rp-pill); color: var(--rp-on-pill); }
+.rp-per-now small { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.rp-per-now b { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.rp-per-list { display: grid; gap: 1px; }
+.rp-per-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 12px; text-align: start; border: 0; background: transparent; color: var(--rp-text); cursor: pointer; transition: background .15s, transform .2s var(--rp-ease); }
+.rp-per-row:hover { background: var(--rp-well); transform: translateX(2px); }
+[dir='rtl'] .rp-per-row:hover { transform: translateX(-2px); }
+.rp-per-row > span { display: grid; line-height: 1.2; }
+.rp-per-row b { font-size: 13.5px; font-weight: 700; }
+.rp-per-row small { font-size: 11.5px; color: var(--rp-muted); }
+.rp-per-row[data-on='true'] { background: var(--rp-well); }
+.rp-per-row[data-on='true'] svg { color: var(--rp-tomato); font-size: 16px; }
+.rp-per-custom { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rp-per-custom label { display: grid; gap: 3px; }
+.rp-per-custom small { font-size: 11px; font-weight: 700; color: var(--rp-muted); }
+.rp-per-custom input { height: 38px; padding-inline: 10px; border-radius: 12px; border: 1px solid var(--rp-line); background: var(--rp-well); color: var(--rp-text); font: inherit; font-size: 13px; color-scheme: light; }
+.dark .rp-per-custom input { color-scheme: dark; }
+.rp-per-apply { width: 100%; margin-top: 10px; height: 38px; border-radius: 999px; border: 0; font-weight: 700; font-size: 13.5px; background: var(--rp-pill); color: var(--rp-on-pill); cursor: pointer; transition: opacity .2s, transform .2s; }
+.rp-per-apply:hover:not(:disabled) { transform: translateY(-1px); }
+.rp-per-apply:disabled { opacity: .4; cursor: default; }
+/* colour panel: custom picker */
+.rp-custom { display: flex; align-items: center; gap: 10px; }
+.rp-fswatch-pick { position: relative; overflow: hidden; }
+.rp-fswatch-pick input { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); opacity: 0; cursor: pointer; }
+.rp-hex { flex: 1; height: 36px; padding-inline: 12px; border-radius: 12px; border: 1px solid var(--rp-line); background: var(--rp-well); color: var(--rp-text); font: inherit; font-size: 13px; font-family: ui-monospace, monospace; text-transform: lowercase; }
+.rp-fswatch { box-shadow: 0 0 0 1px var(--rp-line); }

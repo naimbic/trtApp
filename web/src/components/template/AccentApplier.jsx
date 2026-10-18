@@ -13,6 +13,7 @@ const mix = (hex, to, t) => {
 /** The colour picked in the top bar paints every page (buttons, links, active tabs, progress…), not only the dashboard. */
 const AccentApplier = () => {
     const accent = useDashFilters((s) => s.accent)
+    const customHex = useDashFilters((s) => s.customHex)
     const mode = useThemeStore((s) => s.mode)
     const schema = useThemeStore((s) => s.themeSchema)
     useEffect(() => {
@@ -34,7 +35,7 @@ const AccentApplier = () => {
         apply()
         const t = setTimeout(apply, 0) // after the template's own theme effect
         return () => clearTimeout(t)
-    }, [accent, mode, schema])
+    }, [accent, customHex, mode, schema])
     return null
 }
 

@@ -3587,5 +3587,16 @@ export default {
     "Gold": "ゴールド",
     "Lime": "ライム",
     "Crimson": "クリムゾン",
-    "Slate": "スレート"
+    "Slate": "スレート",
+    "Apply": "適用",
+    "Showing": "表示中",
+    "Soft": "ソフト",
+    "Mist": "ミスト",
+    "Sage": "セージ",
+    "Mint": "ミント",
+    "Baby blue": "ベビーブルー",
+    "Lavender": "ラベンダー",
+    "Peach": "ピーチ",
+    "Butter": "バター",
+    "Blush": "ブラッシュ"
 }

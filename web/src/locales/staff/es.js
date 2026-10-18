@@ -3587,5 +3587,16 @@ export default {
     "Gold": "Dorado",
     "Lime": "Lima",
     "Crimson": "Carmesí",
-    "Slate": "Pizarra"
+    "Slate": "Pizarra",
+    "Apply": "Aplicar",
+    "Showing": "Mostrando",
+    "Soft": "Suave",
+    "Mist": "Niebla",
+    "Sage": "Salvia",
+    "Mint": "Menta",
+    "Baby blue": "Azul claro",
+    "Lavender": "Lavanda",
+    "Peach": "Melocotón",
+    "Butter": "Mantequilla",
+    "Blush": "Rubor"
 }

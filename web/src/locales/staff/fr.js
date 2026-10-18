@@ -3587,5 +3587,16 @@ export default {
     "Gold": "Or",
     "Lime": "Citron vert",
     "Crimson": "Cramoisi",
-    "Slate": "Ardoise"
+    "Slate": "Ardoise",
+    "Apply": "Appliquer",
+    "Showing": "Affichage",
+    "Soft": "Doux",
+    "Mist": "Brume",
+    "Sage": "Sauge",
+    "Mint": "Menthe",
+    "Baby blue": "Bleu clair",
+    "Lavender": "Lavande",
+    "Peach": "Pêche",
+    "Butter": "Beurre",
+    "Blush": "Rose poudré"
 }

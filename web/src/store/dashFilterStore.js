@@ -18,6 +18,15 @@ export const ACCENTS = [
     { key: 'lime', label: 'Lime', hex: '#84cc16' },
     { key: 'crimson', label: 'Crimson', hex: '#dc2626' },
     { key: 'slate', label: 'Slate', hex: '#475569' },
+    // soft, light colours: the text on them turns dark by itself
+    { key: 'mist', label: 'Mist', hex: '#cbd2da', soft: true },
+    { key: 'sage', label: 'Sage', hex: '#a9d6b5', soft: true },
+    { key: 'mint', label: 'Mint', hex: '#a0e4d0', soft: true },
+    { key: 'baby', label: 'Baby blue', hex: '#a9d8f2', soft: true },
+    { key: 'lavender', label: 'Lavender', hex: '#c8bbf8', soft: true },
+    { key: 'peach', label: 'Peach', hex: '#fbc2a3', soft: true },
+    { key: 'butter', label: 'Butter', hex: '#f6df8c', soft: true },
+    { key: 'blush', label: 'Blush', hex: '#f6c1d3', soft: true },
 ]
 
 export const RANGES = [
@@ -34,21 +43,23 @@ export const useDashFilters = create()(
             to: '',
             currencyId: null,
             accent: 'blue',
+            customHex: '#7c3aed',
             currencies: [], // filled by the dashboard once data is loaded (not persisted)
             setRange: (range) => set({ range }),
             setCustom: (patch) => set({ range: 'custom', ...patch }),
             setCurrency: (currencyId) => set({ currencyId }),
             setAccent: (accent) => set({ accent }),
+            setCustomHex: (customHex) => set({ customHex, accent: 'custom' }),
             setCurrencies: (currencies) => set({ currencies }),
         }),
         {
             name: 'dashboardFilters',
-            partialize: (s) => ({ range: s.range, from: s.from, to: s.to, currencyId: s.currencyId, accent: s.accent }),
+            partialize: (s) => ({ range: s.range, from: s.from, to: s.to, currencyId: s.currencyId, accent: s.accent, customHex: s.customHex }),
         },
     ),
 )
 
-export const accentHex = (key) => ACCENTS.find((a) => a.key === key)?.hex || ACCENTS[0].hex
+export const accentHex = (key) => (key === 'custom' ? useDashFilters.getState().customHex || '#7c3aed' : ACCENTS.find((a) => a.key === key)?.hex || ACCENTS[0].hex)
 
 /** Readable text on a colour: dark on light colours (lime, gold, amber...), white on the rest. */
 export const onHex = (hex) => {

@@ -3587,5 +3587,16 @@ export default {
     "Gold": "ذهبي",
     "Lime": "ليموني",
     "Crimson": "قرمزي",
-    "Slate": "رمادي داكن"
+    "Slate": "رمادي داكن",
+    "Apply": "تطبيق",
+    "Showing": "المعروض",
+    "Soft": "ناعمة",
+    "Mist": "ضبابي",
+    "Sage": "مريمية",
+    "Mint": "نعناعي",
+    "Baby blue": "أزرق فاتح",
+    "Lavender": "لافندر",
+    "Peach": "خوخي",
+    "Butter": "زبدي",
+    "Blush": "وردي فاتح"
 }

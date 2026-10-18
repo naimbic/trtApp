@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.58.1',
+        date: '2026-10-18',
+        title: 'Cron: a switch on each card, and who/how much in the preview',
+        items: ['Each Cron job card (Invoices, Estimates, Proposals, Contracts, Expenses, Tasks, Tickets, and a new Cleanup card) has its own On/Off switch at the top right, instead of one separate list of switches; a card switched off is dimmed and its category is skipped', 'The preview now shows, under every invoice, estimate, proposal and contract line: the client name, the email address(es) it would go to (or a red "No email address: it would fail"), the amount (amount still due for invoices), the date and how many days overdue or left; still read-only, nothing is created or sent']
+    },
+    {
         version: '0.58.0',
         date: '2026-10-18',
         title: 'Cron job: switch each category on or off',

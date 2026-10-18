@@ -6,6 +6,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
+import Switcher from '@/components/ui/Switcher'
 import Alert from '@/components/ui/Alert'
 import cn from '@/utils/classNames'
 import { GROUPS, SECTIONS } from '@/lib/crm/settings/registry'
@@ -110,20 +111,27 @@ const Settings = () => {
                     {error && <Alert showIcon type="danger" className="mb-4">{error}</Alert>}
                     {!data && !error ? <div className="flex h-60 items-center justify-center"><Spinner size={32} /></div> : data && (
                         <div className="flex flex-col gap-4">
-                            {meta.cards.map((c) => (
+                            {meta.cards.map((c) => {
+                                const tg = c.fields?.find((x) => x.cardToggle) // a category's own on/off switch, at the top right of its card
+                                const on = !tg || ['1', 1, true].includes(values[tg.key] ?? tg.default)
+                                return (
                                 <Card key={c.title}>
-                                    <h5 className="mb-0.5">{c.title}</h5>
+                                    <div className="flex items-start justify-between gap-4">
+                                        <h5 className="mb-0.5">{c.title}</h5>
+                                        {tg && <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500"><span className={on ? 'text-emerald-600' : 'text-gray-400'}>{on ? tr("On") : tr("Off")}</span><Switcher checked={on} disabled={!canEdit} onChange={(v) => setValue(tg.key, v ? '1' : '0')} /></label>}
+                                    </div>
                                     {c.desc && <p className="mb-4 text-sm text-gray-500">{c.desc}</p>}
                                     {!c.desc && <div className="mb-3" />}
-                                    {c.fields?.length > 0 && (
-                                        <div className="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2 [&>div.md\:col-span-2:has(button[role=switch])]:border-t">
-                                            {c.fields.map((x) => <Field key={x.key} field={x} value={values[x.key]} secretSet={secrets[x.key]} onChange={(v, instant) => setValue(x.key, v, instant)} canEdit={canEdit} taxes={ctx.taxes} />)}
+                                    {c.fields?.filter((x) => !x.cardToggle).length > 0 && (
+                                        <div className={cn("grid grid-cols-1 gap-x-5 gap-y-4 transition-opacity md:grid-cols-2 [&>div.md\\:col-span-2:has(button[role=switch])]:border-t", !on && "opacity-50")}>
+                                            {c.fields.filter((x) => !x.cardToggle).map((x) => <Field key={x.key} field={x} value={values[x.key]} secretSet={secrets[x.key]} onChange={(v, instant) => setValue(x.key, v, instant)} canEdit={canEdit} taxes={ctx.taxes} />)}
                                             {c.panel && <Panel name={c.panel} group={group} values={values} setValue={setValue} ctx={ctx} />}
                                         </div>
                                     )}
                                     {!c.fields?.length && c.panel && <Panel name={c.panel} group={group} values={values} setValue={setValue} ctx={ctx} />}
                                 </Card>
-                            ))}
+                                )
+                            })}
                         </div>
                     )}
                     {hasFields && canEdit && dirty && (

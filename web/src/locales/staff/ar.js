@@ -1,5 +1,16 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "No email address: it would fail": "لا يوجد عنوان بريد: سيفشل الإرسال",
+    "Run the invoice tasks": "تشغيل مهام الفواتير",
+    "Run the estimate tasks": "تشغيل مهام عروض الأسعار",
+    "Run the proposal tasks": "تشغيل مهام المقترحات",
+    "Run the contract tasks": "تشغيل مهام العقود",
+    "Run the expense tasks": "تشغيل مهام المصروفات",
+    "Run the task tasks": "تشغيل مهام المهام",
+    "Run the ticket tasks": "تشغيل مهام التذاكر",
+    "Run the cleanup": "تشغيل التنظيف",
+    "Recurring expenses.": "المصروفات المتكررة.",
+    "Deletes old activity log entries once a day (how old is set in Settings → General).": "يحذف إدخالات سجل النشاط القديمة مرة يومياً (يُحدَّد العمر في الإعدادات ← عام).",
     "Which tasks run": "المهام التي تعمل",
     "Switch a whole category off and the schedule skips it: nothing is sent or changed for it, and \"Preview\" and \"Run manually\" show it as turned off.": "أوقف فئة كاملة فتتخطاها الجدولة: لا يُرسل ولا يتغير شيء لها، ويعرضها «المعاينة» و«التشغيل اليدوي» على أنها متوقفة.",
     "Invoices: overdue and due-soon reminders, recurring invoices": "الفواتير: تذكيرات الاستحقاق والتأخر، الفواتير المتكررة",

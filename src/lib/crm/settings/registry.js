@@ -453,16 +453,6 @@ export const GROUPS = {
             { title: 'Automatic tasks', desc: 'Nothing is sent or changed automatically until you turn this on. Use Preview in the command section first to see what would happen.', fields: [
                 yes('cron_enabled', 'Run the automatic tasks when the cron job is called', { default: '0' }),
             ] },
-            { title: 'Which tasks run', desc: 'Switch a whole category off and the schedule skips it: nothing is sent or changed for it, and "Preview" and "Run manually" show it as turned off.', fields: [
-                yes('cron_job_invoices', 'Invoices: overdue and due-soon reminders, recurring invoices', { default: '1' }),
-                yes('cron_job_estimates', 'Estimates: expiry reminders and marking expired', { default: '1' }),
-                yes('cron_job_proposals', 'Proposals: expiry reminders', { default: '1' }),
-                yes('cron_job_contracts', 'Contracts: expiry notices', { default: '1' }),
-                yes('cron_job_expenses', 'Expenses: recurring expenses', { default: '1' }),
-                yes('cron_job_tasks', 'Tasks: deadline reminders, recurring tasks, forgotten timers', { default: '1' }),
-                yes('cron_job_tickets', 'Tickets: close tickets after no answer', { default: '1' }),
-                yes('cron_job_cleanup', 'Cleanup: delete old activity log entries', { default: '1' }),
-            ] },
             { title: 'Schedule', desc: 'How often the automatic tasks wake up. Each task still does its work once a day at the hour set in its own card below (tickets every time).', fields: [
                 sel('cron_mode', 'Who runs it', [['built_in', 'The CRM itself (nothing to set up on the server)'], ['external', 'An external scheduler that calls the command below']], { default: 'external' }),
                 f('cron_every', 'Run every', 'number', { min: 1, max: 59, default: '15', hint: 'Minutes up to 59, hours up to 23, days up to 30.' }),
@@ -471,6 +461,7 @@ export const GROUPS = {
             ] },
             { title: 'Command', panel: 'cronCommand' },
             { title: 'Invoices', desc: 'Overdue and due-soon reminders, and recurring invoices.', fields: [
+                yes('cron_job_invoices', 'Run the invoice tasks', { default: '1', cardToggle: true }),
                 f('invoice_auto_operations_hour', 'Run at (hour of day, 0–23)', 'number', { min: 0, max: 23, default: '9' }),
                 f('invoice_due_notice_before', 'Remind this many days before the due date', 'number', { min: 0, max: 60, default: '0', hint: '0 = no reminder before the due date.' }),
                 f('invoice_due_notice_resend_after', 'Remind again after (days)', 'number', { min: 0, max: 60, default: '0' }),
@@ -480,26 +471,39 @@ export const GROUPS = {
                 sel('new_recurring_invoice_action', 'New recurring invoice', [['generate_and_send', 'Create it and email it to the client'], ['generate_unpaid', 'Create it as unpaid'], ['generate_draft', 'Create it as a draft']], { default: 'generate_unpaid' }),
             ] },
             { title: 'Estimates', fields: [
+                yes('cron_job_estimates', 'Run the estimate tasks', { default: '1', cardToggle: true }),
                 f('estimates_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('send_estimate_expiry_reminder_before', 'Expiry reminder, days before', 'number', { min: 0, max: 60, default: '0', hint: '0 = no reminder.' }),
             ] },
             { title: 'Proposals', fields: [
+                yes('cron_job_proposals', 'Run the proposal tasks', { default: '1', cardToggle: true }),
                 f('proposals_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('send_proposal_expiry_reminder_before', 'Expiry reminder, days before', 'number', { min: 0, max: 60, default: '0', hint: '0 = no reminder.' }),
             ] },
-            { title: 'Expenses', fields: [f('expenses_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' })] },
+            { title: 'Expenses', desc: 'Recurring expenses.', fields: [
+                yes('cron_job_expenses', 'Run the expense tasks', { default: '1', cardToggle: true }),
+                f('expenses_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
+            ] },
             { title: 'Contracts', fields: [
+                yes('cron_job_contracts', 'Run the contract tasks', { default: '1', cardToggle: true }),
                 f('contracts_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('contract_expiration_before', 'Expiry notice, days before', 'number', { min: 0, max: 120, default: '0', hint: '0 = no notice.' }),
                 f('contract_sign_reminder_every_days', 'Remind unsigned contracts every (days)', 'number', { min: 0, max: 60, default: '0', soon: true }),
             ] },
             { title: 'Tasks', fields: [
+                yes('cron_job_tasks', 'Run the task tasks', { default: '1', cardToggle: true }),
                 f('tasks_reminder_notification_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('tasks_reminder_notification_before', 'Deadline reminder, days before', 'number', { min: 0, max: 30, default: '0', hint: '0 = no reminder.' }),
                 f('automatically_stop_task_timer_after_hours', 'Stop forgotten timers after (hours)', 'number', { min: 0, max: 72, default: '0' }),
                 yes('reminder_for_completed_but_not_billed_tasks', 'Remind about completed tasks that are not billed', { soon: true }),
             ] },
-            { title: 'Tickets', fields: [f('autoclose_tickets_after', 'Close tickets after no answer for (hours)', 'number', { min: 0, max: 8760, default: '0', hint: '0 = never.' })] },
+            { title: 'Tickets', fields: [
+                yes('cron_job_tickets', 'Run the ticket tasks', { default: '1', cardToggle: true }),
+                f('autoclose_tickets_after', 'Close tickets after no answer for (hours)', 'number', { min: 0, max: 8760, default: '0', hint: '0 = never.' }),
+            ] },
+            { title: 'Cleanup', desc: 'Deletes old activity log entries once a day (how old is set in Settings → General).', fields: [
+                yes('cron_job_cleanup', 'Run the cleanup', { default: '1', cardToggle: true }),
+            ] },
             { title: 'Recent runs', panel: 'cronLog' },
         ],
     },

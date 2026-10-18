@@ -1,5 +1,16 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "No email address: it would fail": "メールアドレスがありません：失敗します",
+    "Run the invoice tasks": "請求書のタスクを実行",
+    "Run the estimate tasks": "見積書のタスクを実行",
+    "Run the proposal tasks": "提案書のタスクを実行",
+    "Run the contract tasks": "契約のタスクを実行",
+    "Run the expense tasks": "経費のタスクを実行",
+    "Run the task tasks": "タスクのタスクを実行",
+    "Run the ticket tasks": "チケットのタスクを実行",
+    "Run the cleanup": "クリーンアップを実行",
+    "Recurring expenses.": "定期経費。",
+    "Deletes old activity log entries once a day (how old is set in Settings → General).": "古いアクティビティログを1日1回削除します（期間は設定 → 一般で指定）。",
     "Which tasks run": "実行するタスク",
     "Switch a whole category off and the schedule skips it: nothing is sent or changed for it, and \"Preview\" and \"Run manually\" show it as turned off.": "カテゴリ全体をオフにすると、スケジュールはそれをスキップします。送信も変更も行われず、「プレビュー」と「手動実行」ではオフと表示されます。",
     "Invoices: overdue and due-soon reminders, recurring invoices": "請求書：支払期限・期限超過のリマインダー、定期請求書",

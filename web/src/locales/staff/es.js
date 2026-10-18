@@ -1,5 +1,16 @@
 // Staff area: es. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "No email address: it would fail": "Sin dirección de correo: fallaría",
+    "Run the invoice tasks": "Ejecutar las tareas de facturas",
+    "Run the estimate tasks": "Ejecutar las tareas de presupuestos",
+    "Run the proposal tasks": "Ejecutar las tareas de propuestas",
+    "Run the contract tasks": "Ejecutar las tareas de contratos",
+    "Run the expense tasks": "Ejecutar las tareas de gastos",
+    "Run the task tasks": "Ejecutar las tareas de tareas",
+    "Run the ticket tasks": "Ejecutar las tareas de tickets",
+    "Run the cleanup": "Ejecutar la limpieza",
+    "Recurring expenses.": "Gastos recurrentes.",
+    "Deletes old activity log entries once a day (how old is set in Settings → General).": "Elimina entradas antiguas del registro de actividad una vez al día (la antigüedad se fija en Ajustes → General).",
     "Which tasks run": "Qué tareas se ejecutan",
     "Switch a whole category off and the schedule skips it: nothing is sent or changed for it, and \"Preview\" and \"Run manually\" show it as turned off.": "Desactiva una categoría entera y la programación la omite: no se envía ni cambia nada, y «Vista previa» y «Ejecutar manualmente» la muestran como desactivada.",
     "Invoices: overdue and due-soon reminders, recurring invoices": "Facturas: recordatorios de vencimiento y de vencidas, facturas recurrentes",

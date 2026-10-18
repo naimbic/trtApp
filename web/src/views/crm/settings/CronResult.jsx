@@ -1,10 +1,25 @@
 import { Link } from 'react-router'
-import { TbReceipt2, TbFileDescription, TbFileText, TbContract, TbCashBanknote, TbChecklist, TbTrash, TbLifebuoy, TbSend, TbCheck, TbPlayerSkipForward, TbAlertTriangle, TbMinus, TbEye, TbArrowUpRight } from 'react-icons/tb'
+import { TbReceipt2, TbFileDescription, TbFileText, TbContract, TbCashBanknote, TbChecklist, TbTrash, TbLifebuoy, TbSend, TbCheck, TbPlayerSkipForward, TbAlertTriangle, TbMinus, TbEye, TbArrowUpRight, TbUser, TbMail, TbMailOff, TbCoin, TbCalendarDue } from 'react-icons/tb'
 import classNames from '@/utils/classNames'
 import { tr } from '@/utils/t'
 
 const JOB_ICON = { invoices: TbReceipt2, estimates: TbFileDescription, proposals: TbFileText, contracts: TbContract, expenses: TbCashBanknote, tasks: TbChecklist, cleanup: TbTrash, tickets: TbLifebuoy }
 const ROUTE = { invoice: '/crm/invoices', estimate: '/crm/estimates', proposal: '/crm/proposals', contract: '/crm/contracts', task: '/crm/tasks', ticket: '/crm/tickets' }
+
+/** Who and how much: the client, who the email would go to, the amount and how late (shown in the preview). */
+const Info = ({ info }) => {
+    if (!info) return null
+    return (
+        <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+            {info.client && <span className="inline-flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-200"><TbUser className="text-sm text-gray-400" />{info.client}</span>}
+            {info.noEmail
+                ? <span className="inline-flex items-center gap-1 font-semibold text-red-500"><TbMailOff className="text-sm" />{tr('No email address: it would fail')}</span>
+                : <span className="inline-flex items-center gap-1"><TbMail className="text-sm text-gray-400" />{info.to.join(', ')}</span>}
+            {info.amount && <span className="inline-flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-200"><TbCoin className="text-sm text-gray-400" />{info.amount}</span>}
+            {info.dueDate && <span className="inline-flex items-center gap-1"><TbCalendarDue className="text-sm text-gray-400" />{info.dueDate}{info.daysLabel ? ` · ${info.daysLabel}` : ''}</span>}
+        </span>
+    )
+}
 
 /** What a line of the cron log means: will happen (preview), done, skipped, failed, or nothing to do. */
 export const kindOf = (t) => (t.startsWith('!') ? 'error' : / turned off$/.test(t) ? 'off' : / nothing to do$/.test(t) ? 'idle' : /skipped/.test(t) ? 'skip' : t.startsWith('[preview]') ? 'would' : 'done')
@@ -59,7 +74,10 @@ const CronResult = ({ result }) => {
                                 return (
                                     <li key={n} className="flex items-start gap-3 px-4 py-2.5 text-sm">
                                         <span className={classNames('mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm', k.dot)}><KI /></span>
-                                        <span className="min-w-0 flex-1 break-words"><LineText text={clean(i.text)} r={i.ref} /></span>
+                                        <span className="min-w-0 flex-1 break-words">
+                                            <LineText text={clean(i.text)} r={i.ref} />
+                                            <Info info={i.ref?.info} />
+                                        </span>
                                         <span className={classNames('shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold', k.chip)}>{k.label}</span>
                                     </li>
                                 )

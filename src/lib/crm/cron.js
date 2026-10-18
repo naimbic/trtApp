@@ -6,6 +6,7 @@ import { allocateNumber } from '@/lib/crm/sales/docNumbering'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { runRecurringTasks, stopForgottenTimers } from '@/lib/crm/recurringTasks'
 import { normalizeSchedule, crontabExpr, nextRun } from '@/lib/crm/cronSchedule'
+import { docInfo } from '@/lib/crm/cronPreview'
 
 /**
  * The cron job. Call it often (every 5–15 minutes); each task does its work once a day at the hour set in
@@ -239,7 +240,11 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
         const summary = lines.filter((l) => !l.endsWith('nothing to do') && !l.endsWith('turned off')).slice(0, 3).join(' · ') || 'Nothing to do'
         const run = await prisma.crmCronRun.create({ data: { trigger: dry ? 'preview' : trigger, ok: ok && !lines.some((l) => l.startsWith('!')), summary: summary.slice(0, 300), lines, ms: Date.now() - t0 } })
         await prisma.crmCronRun.deleteMany({ where: { startedAt: { lt: new Date(Date.now() - 30 * DAY) } } }).catch(() => {})
-        return { ok: run.ok, lines, refs: lines.refs || [], groups, ms: run.ms }
+        const refs = lines.refs || []
+        if (dry) { // the preview also says who each email would go to, how much, and how late (read only)
+            for (const r of refs) if (r?.id && ['invoice', 'estimate', 'proposal', 'contract'].includes(r.type)) { try { r.info = await docInfo(r.type, r.id) } catch { /* the line is still shown */ } }
+        }
+        return { ok: run.ok, lines, refs, groups, ms: run.ms }
     })().finally(() => { running = null })
     return running
 }

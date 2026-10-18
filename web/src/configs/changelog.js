@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.72.4',
+        date: '2026-10-18',
+        title: 'Paper page at a normal width',
+        items: ['The paper page is back to a normal width (860 px, centred) instead of stretching across the whole screen']
+    },
+    {
         version: '0.72.3',
         date: '2026-10-18',
         title: 'Document tab: only the paper, edge to edge',

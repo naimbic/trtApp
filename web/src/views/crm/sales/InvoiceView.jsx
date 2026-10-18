@@ -124,7 +124,7 @@ const InvoiceView = () => {
             <div className="mb-4"><Segment size="sm" value={view} onChange={(v) => v && setView(v)}><Segment.Item value="details">{tr("Details")}</Segment.Item><Segment.Item value="document">{tr("Document")}</Segment.Item></Segment></div>
 
             {view === 'document' && (
-                <iframe title={tr("Invoice document")} onLoad={sizeFrame} src={`/api/crm/sales/invoices/${id}/html?v=${Math.round((invoice.total || 0) * 100)}-${payments.length}-${st}-${items.map((i) => i.id).join('')}-${invoice.updatedAt || ''}`} className="-mx-4 block h-[1180px] w-[calc(100%+2rem)] max-w-none border-0 sm:-mx-6 sm:w-[calc(100%+3rem)] md:-mx-8 md:w-[calc(100%+4rem)]" />
+                <iframe title={tr("Invoice document")} onLoad={sizeFrame} src={`/api/crm/sales/invoices/${id}/html?v=${Math.round((invoice.total || 0) * 100)}-${payments.length}-${st}-${items.map((i) => i.id).join('')}-${invoice.updatedAt || ''}`} className="block h-[1180px] w-full border-0" />
             )}
 
             <div className={view === 'document' ? 'hidden' : ''}>

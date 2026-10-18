@@ -58,7 +58,7 @@ export function formatMoney(n, cur, s, { noSymbol = false } = {}) {
  */
 export const paperCss = () => `
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;color:#17191a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-@media screen{html{background:rgba(255,255,255,.004)}/* not fully transparent, or the page would paint the whole canvas with the paper colour */body:not(.pub){position:relative;max-width:none;margin:0;padding:46px 52px;background:#fbf8f2;border-radius:20px;box-shadow:0 30px 60px -30px rgba(60,40,20,.35)}
+@media screen{html{background:rgba(255,255,255,.004)}/* not fully transparent, or the page would paint the whole canvas with the paper colour */body:not(.pub){position:relative;max-width:860px;margin:0 auto;padding:46px 52px;background:#fbf8f2;border-radius:20px;box-shadow:0 30px 60px -30px rgba(60,40,20,.35)}
 body.pub{background:#ebe8e1}.pub .card,.card{background:#fbf8f2;border-color:#e3ded4;border-radius:20px;box-shadow:0 30px 60px -30px rgba(60,40,20,.3);position:relative}.pub .bar,.bar{border-color:#e3ded4;background:#fbf8f2}}
 .hdr{padding-bottom:6px}.hdr .hr h1{margin:0;font-size:.78em;text-transform:uppercase;letter-spacing:.16em;color:#676a66;font-weight:700}
 .hdr .hr .num{font-size:1.9em;font-weight:800;letter-spacing:-.02em;color:#17191a;font-variant-numeric:tabular-nums}.hdr .hr .status{font-size:.8em;letter-spacing:.1em}

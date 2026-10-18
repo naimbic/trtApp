@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.74.5',
+        date: '2026-10-18',
+        title: 'Schedule: the + is above everything in the box',
+        items: ['The + of a day box now sits above the entries, the +N link and the people, so it can always be seen and clicked']
+    },
+    {
         version: '0.74.4',
         date: '2026-10-18',
         title: 'Schedule: + on hover, tighter entries, you first',

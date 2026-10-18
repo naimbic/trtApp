@@ -1,0 +1,38 @@
+/* KPI cards: one look for every figure card (views/crm/kit/KpiCard.jsx): entrance, hover lift, icon pop, sparkline fade. */
+@keyframes kpi-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes kpi-glow {
+    0%, 100% { opacity: 0.1; transform: scale(1); }
+    50% { opacity: 0.2; transform: scale(1.15); }
+}
+@keyframes kpi-spark {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+.kpi-item { display: block; height: 100%; text-align: start; animation: kpi-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.kpi-item:nth-child(1) { animation-delay: 0ms; }
+.kpi-item:nth-child(2) { animation-delay: 70ms; }
+.kpi-item:nth-child(3) { animation-delay: 140ms; }
+.kpi-item:nth-child(4) { animation-delay: 210ms; }
+.kpi-item:nth-child(5) { animation-delay: 280ms; }
+.kpi-item:nth-child(6) { animation-delay: 350ms; }
+.kpi-item:nth-child(n + 7) { animation-delay: 420ms; }
+
+.kpi-card { transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease; }
+.kpi-item:hover .kpi-card, .kpi-item:focus-visible .kpi-card { transform: translateY(-3px); box-shadow: 0 14px 30px -14px rgb(15 23 42 / 0.35); }
+.kpi-item:active .kpi-card { transform: translateY(-1px) scale(0.99); }
+
+.kpi-icon { transition: transform 0.35s cubic-bezier(0.3, 1.7, 0.5, 1); }
+.kpi-item:hover .kpi-icon { transform: scale(1.12) rotate(-7deg); }
+
+.kpi-glow { animation: kpi-glow 5s ease-in-out infinite; }
+.kpi-spark { animation: kpi-spark 0.8s 0.35s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+    .kpi-item, .kpi-glow, .kpi-spark { animation: none; }
+    .kpi-card, .kpi-icon { transition: none; }
+    .kpi-item:hover .kpi-card, .kpi-item:hover .kpi-icon { transform: none; }
+}

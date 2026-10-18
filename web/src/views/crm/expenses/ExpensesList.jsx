@@ -19,16 +19,12 @@ import { api, qs } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import ExpenseDrawer from './ExpenseDrawer'
 import { tr, trn } from '@/utils/t'
-import { Delta } from '../kit/widgets'
+import { KpiCard } from '../kit/KpiCard'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const STATES = [['', tr("All")], ['billable', tr("To invoice")], ['invoiced', tr("Invoiced")], ['nonbillable', tr("Not billable")], ['recurring', tr("Recurring")]]
-const Stat = ({ title, value, className, icon, sub, change }) => (
-    <div className={classNames('flex items-center justify-between rounded-2xl p-4', className)}>
-        <div><div className="mb-3 font-bold text-gray-900">{title}</div><h3 className="text-gray-900">{value}</h3>{change && <div className="mt-1"><Delta {...change} /></div>}{sub && <div className="mt-1 text-xs text-gray-700">{sub}</div>}</div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-2xl text-white">{icon}</div>
-    </div>
-)
+const toneOf = (cls = '') => (/sky|blue/.test(cls) ? 'blue' : /emerald|green/.test(cls) ? 'green' : /purple|violet/.test(cls) ? 'violet' : /amber|yellow|orange/.test(cls) ? 'amber' : /red|rose/.test(cls) ? 'red' : /teal|cyan/.test(cls) ? 'teal' : /pink/.test(cls) ? 'pink' : 'blue')
+const Stat = ({ title, value, className, icon, sub, change }) => <KpiCard label={title} value={value} sub={sub} icon={icon} tone={toneOf(className)} change={change} />
 
 const ExpensesList = () => {
     const [sp, setSp] = useSearchParams()

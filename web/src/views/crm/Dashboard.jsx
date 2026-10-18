@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router'
 import dayjs from 'dayjs'
 import Card from '@/components/ui/Card'
-import { Delta } from './kit/widgets'
+import { KpiCard } from './kit/KpiCard'
 import { useDashFilters, accentHex } from '@/store/dashFilterStore'
 import Skeleton from '@/components/ui/Skeleton'
 import Tag from '@/components/ui/Tag'
@@ -170,25 +170,7 @@ const TONES = {
     teal: ['bg-teal-100 text-teal-600', PALETTE.teal],
 }
 
-const StatCard = ({ icon, label, value, title, sub, tone = 'blue', to, spark, accent, change }) => {
-    const useAccent = accent && tone !== 'red'
-    const color = useAccent ? accent : TONES[tone][1]
-    const body = (
-        <Card className="h-full overflow-hidden" bodyClass="p-4 flex flex-col h-full">
-            <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                    <div className="text-sm text-gray-500">{label}</div>
-                    <h3 className="mt-1 truncate" title={title || undefined}>{value}</h3>
-                    {change && <div className="mt-1"><Delta {...change} /></div>}
-                    {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
-                </div>
-                <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-2xl ${useAccent ? '' : TONES[tone][0]}`} style={useAccent ? { background: `${accent}1f`, color: accent } : undefined}>{icon}</div>
-            </div>
-            {spark && spark.length > 1 && <div className="-mx-4 -mb-4 mt-2"><Sparkline data={spark} color={color} /></div>}
-        </Card>
-    )
-    return to ? <Link to={to}>{body}</Link> : body
-}
+const StatCard = (props) => <KpiCard {...props} />
 
 const Empty = ({ children = tr("No data yet") }) => <div className="text-sm text-gray-400 py-6 text-center">{children}</div>
 

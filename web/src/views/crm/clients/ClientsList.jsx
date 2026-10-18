@@ -19,11 +19,10 @@ import Pagination from '@/components/ui/Pagination'
 import { api, notify, qs, useCan } from '../kit/api'
 import { useClientLookups, makeMoney } from './shared'
 import { tr } from '@/utils/t'
+import { KpiCard } from '../kit/KpiCard'
 
 const { Tr, Th, Td, THead, TBody } = Table
-const Stat = ({ label, value, sub }) => (
-    <Card bodyClass="p-4"><div className="text-sm text-gray-500">{label}</div><h3 className="mt-1">{value ?? '–'}</h3>{sub && <div className="mt-0.5 text-xs text-gray-500">{sub}</div>}</Card>
-)
+const Stat = ({ label, value, sub, icon, tone }) => <KpiCard label={label} value={value ?? '–'} sub={sub} icon={icon} tone={tone} />
 
 const ClientsList = () => {
     const navigate = useNavigate()

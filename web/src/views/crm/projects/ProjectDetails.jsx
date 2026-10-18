@@ -21,6 +21,7 @@ import TaskList from '../tasks/TaskList'
 import { People, initials } from '../tasks/shared'
 import { STATUS, BILLING, StatusTag, Bar, fmt, hours, useStaff } from './shared'
 import { tr, trn } from '@/utils/t'
+import { KpiCard } from '../kit/KpiCard'
 
 const NAV = [
     { value: 'overview', label: tr("Overview"), icon: <TbFileInfo /> },
@@ -35,7 +36,7 @@ const L = ({ children }) => <label className="form-label mb-2 block">{children}<
 const Row = ({ label, children }) => <div><span className="font-semibold heading-text">{label}: </span><span className="font-semibold">{children}</span></div>
 const kindOf = (t = '') => (t.startsWith('image') ? 'image' : t.includes('pdf') ? 'pdf' : t.includes('sheet') || t.includes('excel') ? 'sheet' : t.includes('zip') ? 'archive' : t.includes('word') || t.includes('text') ? 'doc' : 'file')
 
-const Stat = ({ icon, label, value }) => <div className="rounded-xl bg-gray-100 p-4 dark:bg-gray-800"><div className="flex items-center gap-2 text-sm text-gray-500">{icon}{label}</div><div className="mt-1 text-xl font-bold heading-text">{value}</div></div>
+const Stat = ({ icon, label, value, tone = 'blue' }) => <KpiCard icon={icon} label={label} value={value} tone={tone} />
 
 const ProjectDetails = () => {
     const { id } = useParams()

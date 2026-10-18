@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.54.0',
+        date: '2026-10-18',
+        title: 'New figure cards, with animation',
+        items: ['One new card design for every figure card in the CRM (Dashboard, Team dashboard, Scrum board, Time report, AI insights, Reports, client billing, projects and the tiles on Invoices, Payments, Estimates, Proposals, Purchase orders, Expenses and Clients): the name on the left, the icon in a soft rounded square on the right, the figure big underneath, the +/- percentage and the note below it, and the small chart along the bottom', 'Animations: cards slide in one after the other, the figure counts up to its value (and again when it changes), the card lifts and the icon pops on hover, a soft glow breathes behind the icon, the chart fades in; people who asked their device to reduce motion get none of it', 'Same look in light and dark mode and on a phone']
+    },
+    {
         version: '0.53.1',
         date: '2026-10-18',
         title: 'Percent on every money card',

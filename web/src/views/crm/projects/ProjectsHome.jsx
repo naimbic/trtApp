@@ -23,6 +23,7 @@ import { initials } from '../tasks/shared'
 import ProjectDialog from './ProjectDialog'
 import { tr, savedLang } from '@/utils/t'
 import { localTitle } from '../calendar/titles'
+import { KpiCard } from '../kit/KpiCard'
 
 const labelClass = {
     Urgent: 'bg-red-200 dark:bg-red-200 dark:text-gray-900',
@@ -33,14 +34,8 @@ const labelClass = {
 const GANTT_COLORS = { ongoing: '#38bdf8', hold: '#fbbf24', upcoming: '#a78bfa', milestone: '#6ee7b7' }
 const EVENT_ICON = { events: [<TbCalendar key="e" />, 'bg-sky-200', tr("Event")], tasks: [<TbChecklist key="t" />, 'bg-emerald-200', tr("Task")], projects: [<TbBriefcase key="p" />, 'bg-purple-200', tr("Project deadline")], invoices: [<TbFileText key="i" />, 'bg-amber-200', tr("Invoice")], estimates: [<TbFileText key="s" />, 'bg-amber-200', tr("Estimate")], proposals: [<TbFileText key="r" />, 'bg-amber-200', tr("Proposal")], contracts: [<TbFlag key="c" />, 'bg-pink-200', tr("Contract")] }
 
-const StatisticCard = ({ title, className, icon, value }) => (
-    <div className={classNames('flex flex-col justify-center rounded-2xl p-4', className)}>
-        <div className="relative flex items-center justify-between">
-            <div><div className="mb-4 font-bold text-gray-900">{title}</div><h1 className="mb-1 text-gray-900">{value}</h1></div>
-            <div className="flex max-h-12 min-h-12 min-w-12 max-w-12 items-center justify-center rounded-full bg-gray-900 text-2xl text-white">{icon}</div>
-        </div>
-    </div>
-)
+const toneOf = (cls = '') => (/sky|blue/.test(cls) ? 'blue' : /emerald|green/.test(cls) ? 'green' : /purple|violet/.test(cls) ? 'violet' : /amber|yellow|orange/.test(cls) ? 'amber' : /red|rose/.test(cls) ? 'red' : /teal|cyan/.test(cls) ? 'teal' : /pink/.test(cls) ? 'pink' : 'blue')
+const StatisticCard = ({ title, className, icon, value }) => <KpiCard label={title} value={value} icon={icon} tone={toneOf(className)} />
 
 const Overview = ({ data, onCreate, canCreate }) => (
     <Card>

@@ -9,24 +9,13 @@ import classNames from '@/utils/classNames'
 import { api, qs } from '../kit/api'
 import { PALETTE, DonutChart } from '../kit/charts'
 import { tr } from '@/utils/t'
+import { KpiCard } from '../kit/KpiCard'
 
 const growth = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 100) : cur > 0 ? 100 : cur < 0 ? -100 : 0) // nothing before: +100%
 const labelOf = (l) => (l.length === 7 ? dayjs(`${l}-01`).format('MMM YY') : dayjs(l).format('DD MMM'))
 
-const Tile = ({ title, value, sub, icon, iconClass, g, active, onClick }) => (
-    <button type="button" disabled={!onClick} className={classNames('rounded-2xl p-4 text-left outline-hidden transition duration-150', onClick && 'cursor-pointer', active && 'bg-white shadow-md dark:bg-gray-900')} onClick={onClick}>
-        <div className="flex justify-between gap-2">
-            <div className="min-w-0">
-                <div className="mb-3 text-sm font-semibold">{title}</div>
-                <h4 className="mb-1">{value}</h4>
-                {g !== undefined ? (
-                    <div className="inline-flex flex-wrap items-center gap-1">{g === null ? <span className="text-xs text-gray-400">{tr("no earlier data")}</span> : <><GrowShrinkValue className="font-bold" value={g} suffix="%" positiveIcon="+" negativeIcon="" /><span className="text-xs">{tr("vs the period before")}</span></>}</div>
-                ) : <div className="text-xs">{sub}</div>}
-            </div>
-            <div className={classNames('flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl text-gray-900', iconClass)}>{icon}</div>
-        </div>
-    </button>
-)
+const toneOf = (cls = '') => (/sky|blue/.test(cls) ? 'blue' : /emerald|green/.test(cls) ? 'green' : /purple|violet/.test(cls) ? 'violet' : /amber|yellow|orange/.test(cls) ? 'amber' : /red|rose/.test(cls) ? 'red' : /teal|cyan/.test(cls) ? 'teal' : /pink/.test(cls) ? 'pink' : 'blue')
+const Tile = ({ title, value, sub, icon, iconClass, g, active, onClick }) => <KpiCard label={title} value={value} icon={icon} tone={toneOf(iconClass)} active={active} onClick={onClick} change={g === undefined || g === null ? undefined : { pct: g, label: tr("vs the period before") }} sub={g === undefined ? sub : g === null ? tr("no earlier data") : undefined} />
 
 /**
  * Billing section of the client overview, in the same style as the Reports overview: growth tiles, a line for the

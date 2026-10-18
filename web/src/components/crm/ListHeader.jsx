@@ -1,14 +1,10 @@
 import Segment from '@/components/ui/Segment'
 import cn from '@/utils/classNames'
-import { Delta } from '@/views/crm/kit/widgets'
+import { KpiCard } from '@/views/crm/kit/KpiCard'
 
-/** The pastel figure tile used on every list (same look as the template dashboards). */
-export const StatTile = ({ title, value, sub, icon, className, change }) => (
-    <div className={cn('flex items-center justify-between gap-3 rounded-2xl px-4 py-3', className)}>
-        <div className="min-w-0"><div className="text-sm font-bold text-gray-900">{title}</div><h4 className="truncate text-gray-900">{value ?? '–'}</h4>{change && <div className="mt-0.5"><Delta {...change} /></div>}{sub && <div className="truncate text-xs text-gray-700">{sub}</div>}</div>
-        {icon && <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xl text-white">{icon}</div>}
-    </div>
-)
+/** The figure tile of every list (see KpiCard); the old pastel class only picks the colour. */
+const toneOf = (cls = '') => (/sky|blue/.test(cls) ? 'blue' : /emerald|green/.test(cls) ? 'green' : /purple|violet/.test(cls) ? 'violet' : /amber|yellow|orange/.test(cls) ? 'amber' : /red|rose/.test(cls) ? 'red' : /teal|cyan/.test(cls) ? 'teal' : /pink/.test(cls) ? 'pink' : 'blue')
+export const StatTile = ({ title, value, sub, icon, className, change, tone }) => <KpiCard label={title} value={value ?? '–'} sub={sub} icon={icon} tone={tone || toneOf(className)} change={change} />
 
 export const TileGrid = ({ children, cols = 4 }) => <div className={cn('mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2', cols === 4 ? 'xl:grid-cols-4' : cols === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-3')}>{children}</div>
 

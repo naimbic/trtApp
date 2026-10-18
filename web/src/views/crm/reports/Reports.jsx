@@ -19,6 +19,7 @@ import Tabs from '@/components/ui/Tabs'
 import classNames from '@/utils/classNames'
 import { api, qs } from '../kit/api'
 import { tr, trn } from '@/utils/t'
+import { KpiCard } from '../kit/KpiCard'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const TABS = { sales: tr("Sales"), profit: tr("Profit & expenses"), leads: tr("Leads"), support: tr("Support"), work: tr("Work & time") }
@@ -60,18 +61,8 @@ const donut = (rows, f) => (rows.length ? <Chart type="donut" height={260} serie
 /* ------------------------------------------------------------------ ecommerce-dashboard style layout */
 const growth = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 100) : cur > 0 ? 100 : cur < 0 ? -100 : 0) // nothing before: +100%
 
-const Tile = ({ title, value, icon, iconClass, g, active, onClick, compare }) => (
-    <button className={classNames('cursor-pointer rounded-2xl p-4 outline-hidden transition duration-150 ltr:text-left rtl:text-right', active && 'bg-white shadow-md dark:bg-gray-900')} onClick={onClick}>
-        <div className="relative flex justify-between gap-2 md:flex-col-reverse 2xl:flex-row">
-            <div>
-                <div className="mb-4 text-sm font-semibold">{title}</div>
-                <h3 className="mb-1">{value}</h3>
-                <div className="inline-flex flex-wrap items-center gap-1">{g === null || g === undefined ? <span className="text-xs text-gray-400">{tr("no earlier data")}</span> : <><GrowShrinkValue className="font-bold" value={g} suffix="%" positiveIcon="+" negativeIcon="" /><span className="text-xs">{compare}</span></>}</div>
-            </div>
-            <div className={classNames('flex h-12 max-h-12 min-h-12 w-12 min-w-12 max-w-12 items-center justify-center rounded-full text-2xl text-gray-900', iconClass)}>{icon}</div>
-        </div>
-    </button>
-)
+const toneOf = (cls = '') => (/sky|blue/.test(cls) ? 'blue' : /emerald|green/.test(cls) ? 'green' : /purple|violet/.test(cls) ? 'violet' : /amber|yellow|orange/.test(cls) ? 'amber' : /red|rose/.test(cls) ? 'red' : /teal|cyan/.test(cls) ? 'teal' : /pink/.test(cls) ? 'pink' : 'blue')
+const Tile = ({ title, value, icon, iconClass, g, active, onClick, compare }) => <KpiCard label={title} value={value} icon={icon} tone={toneOf(iconClass)} active={active} onClick={onClick} change={g === null || g === undefined ? undefined : { pct: g, label: compare }} sub={g === null || g === undefined ? tr("no earlier data") : undefined} />
 
 const Overview = ({ d, tiles }) => {
     const [sel, setSel] = useState(0)

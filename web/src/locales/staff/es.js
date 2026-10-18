@@ -3700,5 +3700,6 @@ export default {
     "Remove from favorites": "Quitar de favoritos",
     "average progress": "de progreso medio",
     "of {n}": "de {n}",
-    "{n} past deadline": "{n} fuera de plazo"
+    "{n} past deadline": "{n} fuera de plazo",
+    "Dev by": "Desarrollado por"
 }

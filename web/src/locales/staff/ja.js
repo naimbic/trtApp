@@ -3700,5 +3700,6 @@ export default {
     "Remove from favorites": "お気に入りから外す",
     "average progress": "平均進捗",
     "of {n}": "/ {n}",
-    "{n} past deadline": "{n}件が期限超過"
+    "{n} past deadline": "{n}件が期限超過",
+    "Dev by": "開発："
 }

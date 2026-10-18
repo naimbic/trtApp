@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.76.1',
+        date: '2026-10-18',
+        title: 'Page footer: version and developer credit',
+        items: ['The page footer now reads: Copyright © year trtCRM All rights reserved. · v0.76.1 (opens the Versions page with the release history) · Dev by trtAgency (linked to https://www.trtdigital.ma), all on the same line']
+    },
+    {
         version: '0.76.0',
         date: '2026-10-18',
         title: 'Projects as cards; Schedule shows everyone for super admins',

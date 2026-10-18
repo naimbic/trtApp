@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.70.1',
+        date: '2026-10-18',
+        title: 'Animated logo in the top bar',
+        items: ['The Rapport top bar shows the animated logo (assets/lottie/trtLogo.json): it plays once when the page opens and again when the pointer passes over it; it stays still when motion is reduced, and its dark parts turn light in dark mode. The other layouts keep the image logo']
+    },
+    {
         version: '0.70.0',
         date: '2026-10-18',
         title: 'Estimates, proposals, purchase orders, contracts and payments like the invoices page',

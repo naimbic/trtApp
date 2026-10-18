@@ -14,7 +14,7 @@ import ChatWidget from '@/components/crm/chat/ChatWidget'
 import AccentApplier from '@/components/template/AccentApplier'
 import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components/template/LayoutBase'
-import Logo from '@/components/template/Logo'
+import LottieLogo from '@/components/template/LottieLogo'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { useThemeStore } from '@/store/themeStore'
 import { useSessionUser } from '@/store/authStore'
@@ -61,7 +61,7 @@ const RapportShell = ({ children }) => {
             <div className="rp-frame">
                 <header className="rp-top">
                     {smaller.lg && <MobileNav />}
-                    <Link to={appConfig.authenticatedEntryPath} className="rp-brand"><Logo type="full" mode={mode} imgClass="h-8 w-auto" /></Link>
+                    <Link to={appConfig.authenticatedEntryPath} className="rp-brand"><LottieLogo height={36} /></Link>
                     <div className="rp-pills">{larger.lg && <RapportPills />}</div>
                     <div className="rp-actions">
                         <LanguageSelector />

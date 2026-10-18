@@ -3618,5 +3618,6 @@ export default {
     "Add to {name}": "{name} に追加",
     "Start working on it": "作業を始める",
     "in view": "表示中",
-    "lost": "失注"
+    "lost": "失注",
+    "no activity for a while": "しばらく操作がありません"
 }

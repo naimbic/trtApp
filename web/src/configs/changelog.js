@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.68.2',
+        date: '2026-10-18',
+        title: 'One global status: the profile menu follows the avatar dot',
+        items: ['The status row in the profile menu shows the same status as the dot on the avatar (Available, Idle after a while without activity, Away) and changes with it; below it, the action (Set as away / Set as available)', 'The status is tracked for everyone in the app, also people who cannot use the chat, so the dot goes orange when you are idle']
+    },
+    {
         version: '0.68.1',
         date: '2026-10-18',
         title: 'Wider profile menu',

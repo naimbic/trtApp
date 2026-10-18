@@ -22,6 +22,10 @@ import { usePageTabsStore } from '@/store/pageTabsStore'
 import { hasPageFilter } from '@/store/pageFilterStore'
 import appConfig from '@/configs/app.config'
 import { LAYOUT_RAPPORT } from '@/constants/theme.constant'
+import { usePresence } from '@/components/crm/chat/chatKit'
+
+/** Keeps the global status (available / idle / away) alive for people without the chat; the chat widget does it for the rest. */
+const PresenceKeeper = () => { usePresence(() => {}); return null }
 
 /**
  * The Rapport layout: a slow mesh of colour behind frosted panes, the dark dock at the edge, a pill navigation at the top and the
@@ -68,7 +72,7 @@ const RapportShell = ({ children }) => {
                 {toolbar && <div className="rp-toolbar">{toolbar}</div>}
                 <main className="rp-main">{children}</main>
             </div>
-            {canChat && <ChatWidget />}
+            {canChat ? <ChatWidget /> : <PresenceKeeper />}
         </LayoutBase>
     )
 }

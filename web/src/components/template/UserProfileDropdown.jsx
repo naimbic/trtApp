@@ -64,9 +64,13 @@ const _UserDropdown = ({ className }) => {
                 </div>
             </Dropdown.Item>
             <Dropdown.Item variant="divider" />
-            <Dropdown.Item eventKey="Status" className="gap-2" onClick={() => setAway(!away)}>
-                <span className={`h-3 w-3 rounded-full ${away ? 'bg-emerald-500' : 'bg-orange-400'}`} />
-                <span>{away ? tr("Set as available (now {v1})", { v1: STATUS[chatState].label.toLowerCase() }) : tr("Set as away")}</span>
+            <Dropdown.Item eventKey="Status" className="gap-3" onClick={() => setAway(!away)}>
+                {/* the same status as the dot on the avatar: it follows the global presence (available, idle after a while, away) */}
+                <span className={`h-3 w-3 shrink-0 rounded-full ${STATUS[chatState].dot}`} />
+                <span className="leading-tight">
+                    <span className="block text-sm font-semibold">{tr(STATUS[chatState].label)}{chatState === 'idle' ? ` · ${tr("no activity for a while")}` : ''}</span>
+                    <span className="block text-xs text-gray-400">{away ? tr("Set as available") : tr("Set as away")}</span>
+                </span>
             </Dropdown.Item>
             <Dropdown.Item variant="divider" />
             {dropdownItemList.filter((item) => !item.need || authority.includes('admin') || authority.includes('crm.admin') || authority.includes(`crm.${item.need}.view`)).map((item) => (

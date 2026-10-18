@@ -3618,5 +3618,6 @@ export default {
     "Add to {name}": "Añadir a {name}",
     "Start working on it": "Empezar a trabajar en ello",
     "in view": "a la vista",
-    "lost": "perdidos"
+    "lost": "perdidos",
+    "no activity for a while": "sin actividad desde hace un rato"
 }

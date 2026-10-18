@@ -3618,5 +3618,6 @@ export default {
     "Add to {name}": "إضافة إلى {name}",
     "Start working on it": "ابدأ العمل عليها",
     "in view": "معروضة",
-    "lost": "خاسرة"
+    "lost": "خاسرة",
+    "no activity for a while": "لا نشاط منذ فترة"
 }

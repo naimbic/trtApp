@@ -1,4 +1,7 @@
+/*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
+import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router'
+import { magnetic } from '@/vendor/rapport/motion'
 import RapportPills from '@/components/template/rapport/RapportPills'
 import RapportDock from '@/components/template/rapport/RapportDock'
 import DashboardFilters from '@/components/template/DashboardFilters'
@@ -33,6 +36,16 @@ const RapportShell = ({ children }) => {
     const hasTabs = usePageTabsStore((st) => !!st.tabs)
     // on a computer the period / currency / colour pickers live in the dock; on a phone (no dock) they stay in a toolbar under the top bar
     const filters = pathname === '/dashboard' || hasPageFilter(pathname)
+    // the template's magnetic hands: dock buttons, the profile, bell and language lean toward the pointer
+    useEffect(() => {
+        const MAG = '.rp-dock-btn, .rp-dock .header-action-item, .rp-actions .header-action-item, .rp-brand'
+        let t = null
+        const apply = () => { document.querySelectorAll(MAG).forEach((el) => el.classList.add('magnetic')); magnetic() }
+        apply()
+        const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(apply, 120) })
+        mo.observe(document.body, { childList: true, subtree: true })
+        return () => { mo.disconnect(); clearTimeout(t) }
+    }, [])
     const toolbar = hasTabs ? <PageTabs /> : filters && !larger.lg ? <DashboardFilters /> : null
 
     return (

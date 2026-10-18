@@ -17,6 +17,7 @@ import {
     FloatingList,
     FloatingNode,
     FloatingPortal,
+    offset,
     safePolygon,
     shift,
     useClick,
@@ -93,7 +94,7 @@ const DropdownMenu = (props) => {
         placement:
             placement ||
             (isNested ? getNestedDefaultPlacement() : getDefaultPlacement()),
-        middleware: [flip(), shift()],
+        middleware: [offset(({ placement: pl }) => (!isNested && /^(left|right)/.test(pl) ? 18 : 0)), flip(), shift({ padding: 8 })],
         whileElementsMounted: autoUpdate,
     })
 

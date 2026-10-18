@@ -1,3 +1,4 @@
+/*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { Link, useLocation } from 'react-router'
 import DockFilters from './DockFilters'
 import { hasPageFilter } from '@/store/pageFilterStore'
@@ -38,7 +39,7 @@ const RapportDock = () => {
                 ))}
                 {(pathname === '/dashboard' || hasPageFilter(pathname)) && <DockFilters />}
                 <span className="rp-dock-sep" />
-                <SettingsMenu />
+                <SettingsMenu placement={direction === 'rtl' ? 'left-end' : 'right-end'} />
                 <Tooltip title={mode === 'dark' ? tr('Light mode') : tr('Dark mode')} placement={place}>
                     <button type="button" className="rp-dock-btn" aria-label={mode === 'dark' ? tr('Light mode') : tr('Dark mode')} onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}>{mode === 'dark' ? <PiSunDuotone /> : <PiMoonDuotone />}</button>
                 </Tooltip>

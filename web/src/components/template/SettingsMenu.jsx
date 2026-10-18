@@ -17,22 +17,30 @@ const ITEMS = [
     { label: tr("All settings"), desc: tr("Every setup option"), path: '/crm/settings', icon: <PiSlidersHorizontalDuotone />, need: ['settings'] },
 ]
 
-const _SettingsMenu = ({ className }) => {
+const _SettingsMenu = ({ className, placement = 'bottom-end' }) => {
     const authority = useSessionUser((s) => s.user.authority) || []
+    const side = /^(left|right)/.test(placement)
     const admin = authority.includes('admin') || authority.includes('crm.admin')
     const allowed = (need) => !need.length || admin || need.some((f) => authority.some((a) => a.startsWith(`crm.${f}.`)))
     return (
-        <Dropdown className="flex" toggleClassName="flex items-center" renderTitle={<div className={`${className || ''} text-2xl`} title={tr("Settings")}><PiGearSixDuotone /></div>} placement="bottom-end">
+        <Dropdown className="flex" toggleClassName="flex items-center" renderTitle={<div className={`${className || ''} text-2xl`} title={tr("Settings")}><PiGearSixDuotone /></div>} placement={placement}>
             <Dropdown.Item variant="header"><div className="px-3 py-2 text-sm font-bold text-gray-900 dark:text-gray-100">{tr("Settings")}</div></Dropdown.Item>
             <Dropdown.Item variant="divider" />
             {ITEMS.filter((i) => allowed(i.need)).map((i) => (
                 <Dropdown.Item key={i.path} eventKey={i.label} className="px-0">
+                    {side ? (
+                        <Link className="rp-link w-full" to={i.path} onPointerMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`); e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`) }}>
+                            <span className="ico">{i.icon}</span>
+                            <span className="rp-link-t"><b>{i.label}</b><small>{i.desc}</small></span>
+                        </Link>
+                    ) : (
                     <Link className="flex h-full w-full px-2 py-1" to={i.path}>
                         <span className="flex w-full items-center gap-3">
                             <span className="text-xl text-gray-500">{i.icon}</span>
                             <span className="leading-tight"><span className="block text-sm font-semibold">{i.label}</span><span className="block text-xs text-gray-400">{i.desc}</span></span>
                         </span>
                     </Link>
+                    )}
                 </Dropdown.Item>
             ))}
         </Dropdown>

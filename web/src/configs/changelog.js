@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.62.1',
+        date: '2026-10-18',
+        title: 'Rapport menus: mega menu with icons and descriptions, magnetic hover, dock Settings menu',
+        items: ['Top menu panels redone: every entry is one row with an icon tile, the title and a short description, an arrow that slides in, a glow that follows the mouse and an icon that pops and tilts on hover; wide sections use two columns and a panel never leaves the window', 'Dock: buttons, the profile picture, bell, language and logo now lean toward the mouse like in the Rapport template, and their icons pop on hover; the Settings menu opens beside the dock (right in English, left in Arabic) with the same rich rows instead of dropping below it', 'Descriptions translated into French, Spanish, Japanese and Arabic', 'Our own Rapport files now carry the TRT Digital copyright header; the notices of the licensed Rapport component stay untouched on its files, as the licence requires']
+    },
+    {
         version: '0.62.0',
         date: '2026-10-18',
         title: 'Dashboard exactly like the Rapport Overview, filters in the dock',

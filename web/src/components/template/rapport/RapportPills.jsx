@@ -1,7 +1,9 @@
+/*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { LayoutGroup, motion, useReducedMotion } from 'framer-motion'
-import { PiCaretDownBold } from 'react-icons/pi'
+import { PiCaretDownBold, PiArrowUpRightBold } from 'react-icons/pi'
+import { NAV_DESC } from './navDescriptions'
 import navigationConfig from '@/configs/navigation.config'
 import navigationIcon from '@/configs/navigation-icon.config'
 import appConfig from '@/configs/app.config'
@@ -76,8 +78,12 @@ const RapportPills = () => {
 
     const enter = (key) => { clearTimeout(timer.current); if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) timer.current = setTimeout(() => setOpen(key), 90) }
     const leave = () => { clearTimeout(timer.current); if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) timer.current = setTimeout(() => setOpen(null), 180) }
+    // a wide panel never leaves the window: slide it back by what sticks out
+    const keepInside = (el) => { if (!el) return; el.style.translate = ''; const r = el.getBoundingClientRect(); const over = r.right - (window.innerWidth - 16), under = 16 - r.left; el.style.translate = over > 0 ? `${-over}px` : under > 0 ? `${under}px` : '' }
     const label = (n) => t(n.translateKey, n.title)
-    const Icon = ({ n }) => <span className="ico">{navigationIcon[n.icon] || null}</span>
+    const desc = (n) => (NAV_DESC[String(n.key).replace(/^crm\./, '')] ? tr(NAV_DESC[String(n.key).replace(/^crm\./, '')]) : null)
+    // the light under the pointer: the row glows where the mouse is
+    const glow = (e) => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`); e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`) }
 
     return (
         <LayoutGroup id="rp-pills">
@@ -93,14 +99,18 @@ const RapportPills = () => {
                                 {bg}<span>{label(p.node)}<PiCaretDownBold style={{ fontSize: 10, opacity: 0.6, transform: open === p.key ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} /></span>
                             </button>
                             {open === p.key && (
-                                <motion.div className="rp-panel" style={endAlign ? { insetInlineEnd: 0 } : { insetInlineStart: 0 }} initial={reduce ? false : { opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.18 }}>
-                                    <div className="rp-panel-grid" style={{ gridTemplateColumns: `repeat(${Math.min(3, p.sections.length)}, minmax(210px, 1fr))` }}>
+                                <motion.div ref={keepInside} className="rp-panel" style={endAlign ? { insetInlineEnd: 0 } : { insetInlineStart: 0 }} initial={reduce ? false : { opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.18 }}>
+                                    <div className="rp-panel-grid" style={{ gridTemplateColumns: p.sections.slice(0, 3).map((x) => (x.items.length > 8 ? 'minmax(480px, 2fr)' : 'minmax(230px, 1fr)')).join(' ') }}>
                                         {p.sections.map((s, n) => (
                                             <div key={n}>
                                                 {s.title && <h6>{label(s.title)}</h6>}
                                                 <div className={s.items.length > 8 ? 'rp-panel-cols' : undefined}>
                                                 {s.items.map((it) => (
-                                                    <Link key={it.key} to={it.path} className="rp-link" data-active={matches(pathname, it.path)} target={it.isExternalLink ? '_blank' : undefined}><Icon n={it} />{label(it)}</Link>
+                                                    <Link key={it.key} to={it.path} className="rp-link" data-active={matches(pathname, it.path)} target={it.isExternalLink ? '_blank' : undefined} onPointerMove={glow}>
+                                                        <span className="ico">{navigationIcon[it.icon] || <span className="rp-ico-dot" />}</span>
+                                                        <span className="rp-link-t"><b>{label(it)}</b>{desc(it) && <small>{desc(it)}</small>}</span>
+                                                        <PiArrowUpRightBold className="rp-link-go" />
+                                                    </Link>
                                                 ))}
                                                 </div>
                                             </div>

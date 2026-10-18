@@ -1,3 +1,4 @@
+/*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router'
 import dayjs from 'dayjs'

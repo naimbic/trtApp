@@ -1,4 +1,5 @@
 /* Ported from the licensed Rapport template (OVERSHOOT): page head, cards, controls, charts and the Overview page, scoped to .rp-ov and re-pointed at the --rp-* tokens. */
+/* Adapted by TRT Digital for trtCRM (scoped to .rp-ov, mapped to the --rp-* tokens). The original notice above stays. */
 .rp-ov .head{ display: flex; align-items: center; flex-wrap: wrap; gap: 18px clamp(28px, 4vw, 72px); margin-bottom: 24px; }
 .rp-ov .head__lead{ display: flex; align-items: center; gap: 18px; flex: none; }
 .rp-ov .head__title{ font-size: clamp(28px, 2.6vw, 38px); line-height: 1.04; font-weight: 600; letter-spacing: -.025em; }

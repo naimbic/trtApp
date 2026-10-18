@@ -1,3 +1,4 @@
+/*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { PiCalendarDotsDuotone, PiCoinsDuotone, PiPaletteDuotone, PiGlobeDuotone, PiCheckBold } from 'react-icons/pi'

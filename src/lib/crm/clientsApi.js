@@ -95,9 +95,15 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
     const [rows, total, all] = await Promise.all([
         prisma.crmClient.findMany({ where, orderBy, skip: (page - 1) * size, take: size, include: { contacts: true, groupLinks: { include: { group: true } } } }),
         prisma.crmClient.count({ where }),
-        prisma.crmClient.findMany({ where: sc, select: { active: true } }),
+        prisma.crmClient.findMany({ where: sc, select: { id: true, active: true, createdAt: true } }),
     ])
     const money = await moneyFor(rows.map((r) => r.id))
+    // the figures of the page head: new this week, and what the whole book still owes (in the base currency, with the Settings rates)
+    const weekAgo = new Date(Date.now() - 7 * 86400000)
+    const bookMoney = await moneyFor(all.map((a) => a.id), true)
+    let owed = 0, late = 0
+    for (const m of Object.values(bookMoney)) { owed = round2(owed + (m[ALL]?.outstanding || 0)); late = round2(late + (m[ALL]?.overdue || 0)) }
+    const baseCurrencyId = (await loadRates()).baseId
     const contactCount = await prisma.crmContact.count({})
     const activeContacts = await prisma.crmContact.count({ where: { active: true } })
     return {
@@ -112,7 +118,7 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
             }
         }),
         total, pageIndex: page, pageSize: size,
-        stats: { total: all.length, active: all.filter((a) => a.active).length, inactive: all.filter((a) => !a.active).length, contacts: contactCount, activeContacts },
+        stats: { total: all.length, active: all.filter((a) => a.active).length, inactive: all.filter((a) => !a.active).length, contacts: contactCount, activeContacts, newThisWeek: all.filter((a) => a.createdAt >= weekAgo).length, outstanding: owed, overdue: late, baseCurrencyId },
     }
 }
 

@@ -375,3 +375,40 @@
 .rp-ov [data-view="overview"].inv-grid .ov-rev__chart { flex: 1; min-height: 230px; position: relative; }
 @media (max-width: 1100px) { .rp-ov [data-view="overview"].inv-grid > .card { grid-column: span 12; } }
 .rp-ov .head__tools { margin-inline-start: auto; align-self: center; }
+
+/* ── clients: toolbar and cards (the Rapport customer directory) ── */
+.cx-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
+.cx-tools .cx-search { width: min(320px, 100%); }
+.cx-spacer { flex: 1; }
+.rp-cx .cx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--rp-gap, 16px); }
+.rp-cx .cx-card { position: relative; display: grid; gap: 10px; padding: 18px; border-radius: var(--rp-r-card); background: var(--rp-glass); border: 1px solid var(--rp-rim); box-shadow: var(--rp-shadow); cursor: pointer; color: var(--rp-text); transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), box-shadow .3s var(--rp-ease); animation: rp-land .6s var(--rp-ease) backwards; animation-delay: calc(var(--i, 0) * 45ms); }
+.rp-cx .cx-card:hover { transform: translateY(-4px); box-shadow: var(--rp-shadow-pop); }
+.rp-cx .cx-card:focus-visible { outline: 2px solid var(--rp-text); outline-offset: 3px; }
+.cx-card__top { display: flex; justify-content: space-between; align-items: flex-start; }
+.cx-card__tools { display: inline-flex; align-items: center; gap: 6px; margin: -4px -6px 0 0; }
+.cx-off { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--rp-well); color: var(--rp-muted); }
+.cx-logo { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 18px; object-fit: cover; font-weight: 800; font-size: 17px; letter-spacing: -.02em; }
+.cx-logo--sm { width: 36px; height: 36px; border-radius: 12px; font-size: 13px; flex: none; }
+.cx-logo--butter { background: var(--rp-butter); color: var(--rp-on-butter); } .cx-logo--pine { background: var(--rp-pine); color: var(--rp-on-pine); }
+.cx-logo--tomato { background: var(--rp-tomato); color: var(--rp-on-tomato); } .cx-logo--ink { background: var(--rp-solid); color: #fbf8f2; }
+.cx-card__name { margin: 4px 0 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-card__role { margin: -6px 0 0; color: var(--rp-muted); font-size: 13px; display: flex; align-items: center; gap: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cx-pin { flex: none; font-size: 13px; }
+.cx-card__facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 16px; background: var(--rp-well); }
+.cx-card__facts dt { font-size: 11.5px; color: var(--rp-muted); }
+.cx-card__facts dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cx-card__facts dd.is-late { color: #d6402a; }
+.cx-card__health { display: flex; align-items: center; gap: 10px; font-size: 12.5px; min-height: 18px; }
+.cx-muted { color: var(--rp-muted); font-size: 12.5px; }
+.cx-meter { flex: 1; height: 6px; border-radius: 999px; background: var(--rp-well); overflow: hidden; }
+.cx-meter i { display: block; height: 100%; border-radius: inherit; transform-origin: 0 50%; animation: rp-fill .9s var(--rp-ease) backwards; animation-delay: .3s; }
+[dir='rtl'] .cx-meter i { transform-origin: 100% 50%; }
+.cx-meter i.pine { background: var(--rp-pine); } .cx-meter i.butter { background: var(--rp-butter); } .cx-meter i.tomato { background: var(--rp-tomato); }
+@keyframes rp-fill { from { transform: scaleX(0); } }
+.cx-card__foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; }
+.cx-chip { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--rp-well); max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-card__acts { display: flex; gap: 6px; }
+.cx-ibtn { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--rp-well); color: var(--rp-text); font-size: 16px; transition: background .2s, color .2s, transform .3s cubic-bezier(.3, 1.7, .5, 1); }
+.cx-ibtn:hover { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); transform: scale(1.1); }
+.badge--plain { background: var(--rp-well); color: var(--rp-muted); }
+@media (prefers-reduced-motion: reduce) { .rp-cx .cx-card, .cx-meter i { animation: none; transition: none; } }

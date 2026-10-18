@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.73.0',
+        date: '2026-10-18',
+        title: 'Clients like the Rapport customer directory: head with metrics, Grid / Table, one menu',
+        items: ['The Clients page opens with the demo head: a big title and three icon metrics (clients in your book with the new ones this week, active clients with their share, and what the whole book still owes with the overdue part, in the base currency with the Settings rates)', 'A toolbar with search, status (All / Active / Inactive), group, sort (name, newest, city), a Grid / Table switch that is remembered, Export to CSV and New client', 'Grid shows one card per client: logo or initials, name, contact and city, outstanding and client since, a payment meter (the paid share of what was invoiced, red when something is overdue), the group and quick email and call buttons', 'Cards and table rows share the same three-dots menu: Open, Edit, New invoice, Send an email, Call, Activity log, Activate / Deactivate and Delete (with a confirmation)']
+    },
+    {
         version: '0.72.7',
         date: '2026-10-18',
         title: 'Enter works in the long description too',

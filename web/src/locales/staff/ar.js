@@ -3683,5 +3683,6 @@ export default {
     "needs attention": "يحتاج اهتمامًا",
     "No tasks": "لا مهام",
     "Reschedule": "إعادة الجدولة",
-    "{a}/{b} done": "{a}/{b} منجزة"
+    "{a}/{b} done": "{a}/{b} منجزة",
+    "Add an event or a task": "إضافة حدث أو مهمة"
 }

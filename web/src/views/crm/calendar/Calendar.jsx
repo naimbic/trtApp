@@ -5,7 +5,7 @@ import Container from '@/components/shared/Container'
 import CalendarView from '@/components/shared/CalendarView'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
-import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers, TbChevronLeft, TbChevronRight, TbCalendarEvent, TbCalendarWeek, TbAlertTriangle, TbDots, TbCheck, TbExternalLink, TbCircleCheck, TbRotate, TbUserPlus, TbCalendarDue } from 'react-icons/tb'
+import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers, TbChevronLeft, TbChevronRight, TbCalendarEvent, TbCalendarWeek, TbAlertTriangle, TbDots, TbCheck, TbExternalLink, TbCircleCheck, TbRotate, TbUserPlus, TbCalendarDue, TbChecklist } from 'react-icons/tb'
 import RowMenu from '@/components/crm/RowMenu'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import Tooltip from '@/components/ui/Tooltip'
@@ -120,6 +120,7 @@ const Calendar = () => {
     const [staff, setStaff] = useState([])
     const [selectedDay, setSelectedDay] = useState(dayOf(new Date()))
     const [menu, setMenu] = useState(null) // { it, el }
+    const [addMenu, setAddMenu] = useState(null) // { day, el }: the + on a day box
     const [title, setTitle] = useState('')
     const [viewName, setViewName] = useState('dayGridMonth')
     const calRef = useRef(null)
@@ -135,7 +136,7 @@ const Calendar = () => {
     const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
     const seq = useRef(0)
-    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => setStaff((d.staff || []).filter((m) => m.active !== false))).catch(() => {}) }, [])
+    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => { setStaff((d.staff || []).filter((m) => m.active !== false)); if (d.me) setPeople([d.me]) }).catch(() => {}) }, [])
 
     const load = useCallback(async (r = range.current) => {
         if (!r) return
@@ -324,6 +325,7 @@ const Calendar = () => {
             />
             <div className="sch-filters">
                 <div className="sch-chips" role="group" aria-label={tr("Team")}>
+                    <button type="button" className="sch-chip sch-chip--all" aria-pressed={!people.length} onClick={() => setPeople([])}><TbUsers className="sch-chip__ico" />{tr("All")}</button>
                     {staff.map((m) => (
                         <button key={m.id} type="button" className="sch-chip" aria-pressed={people.includes(m.id)} onClick={() => togglePerson(m.id)} title={m.name}>
                             {m.image ? <img src={m.image} alt="" /> : <span className="sch-chip__av">{initialsOf(m.name)}</span>}<span className="sch-chip__name">{m.name.split(' ')[0]}</span>
@@ -350,7 +352,7 @@ const Calendar = () => {
                             {[['dayGridMonth', tr("Month")], ['timeGridWeek', tr("Week")], ['timeGridDay', tr("Day")]].map(([v, l]) => <button key={v} type="button" aria-pressed={viewName === v} onClick={() => changeView(v)}>{l}</button>)}
                         </div>
                     </header>
-                    <CalendarView ref={calRef} headerToolbar={false} eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={2} moreLinkContent={(a) => `+${a.num}`} dayCellContent={(a) => <span className="sch-daytop"><span className="sch-daynum">{a.dayNumberText}</span><Faces ids={[...(peopleByDay[dayOf(a.date)] || [])]} max={3} /></span>} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} dayCellClassNames={selectedDayClass} height="auto" />
+                    <CalendarView ref={calRef} headerToolbar={false} eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={2} moreLinkContent={(a) => `+${a.num}`} dayCellContent={(a) => <span className="sch-daytop"><span className="sch-daynum">{a.dayNumberText}</span><Faces ids={[...(peopleByDay[dayOf(a.date)] || [])]} max={3} /><button type="button" className="sch-add" aria-label={tr("Add an event or a task")} title={tr("Add an event or a task")} onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAddMenu({ day: dayOf(a.date), el: e.currentTarget }) }}><TbPlus /></button></span>} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} dayCellClassNames={selectedDayClass} height="auto" />
                 </section>
                 <aside className="sch-side">
                     <section className="card sch-agenda">
@@ -365,6 +367,7 @@ const Calendar = () => {
                     </section>
                 </aside>
             </div>
+            {addMenu && <RowMenu anchor={addMenu.el} items={[{ label: tr("New event"), icon: <TbCalendarEvent />, onClick: () => openNew(addMenu.day) }, { label: tr("New task"), icon: <TbChecklist />, onClick: () => navigate(`/crm/tasks?new=1&due=${addMenu.day}`) }]} onClose={() => setAddMenu(null)} />}
             {menu && <RowMenu anchor={menu.el} items={menuItems(menu.it)} onClose={() => setMenu(null)} />}
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete this event?")} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>

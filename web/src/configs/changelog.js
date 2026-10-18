@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.74.4',
+        date: '2026-10-18',
+        title: 'Schedule: + on hover, tighter entries, you first',
+        items: ['Hovering a day box shows a + button: it offers New event (the form opens on that day) or New task (the task form opens with that day as the due date)', 'Entries inside a box sit closer together', 'The team filter starts on you (the signed-in person) and has an All chip to see everyone']
+    },
+    {
         version: '0.74.3',
         date: '2026-10-18',
         title: 'Schedule: just the date on top, entries with a light bar',

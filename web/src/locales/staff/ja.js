@@ -3683,5 +3683,6 @@ export default {
     "needs attention": "要対応",
     "No tasks": "タスクなし",
     "Reschedule": "日程変更",
-    "{a}/{b} done": "{a}/{b} 完了"
+    "{a}/{b} done": "{a}/{b} 完了",
+    "Add an event or a task": "予定またはタスクを追加"
 }

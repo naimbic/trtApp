@@ -3683,5 +3683,6 @@ export default {
     "needs attention": "requiere atención",
     "No tasks": "Sin tareas",
     "Reschedule": "Reprogramar",
-    "{a}/{b} done": "{a}/{b} hechas"
+    "{a}/{b} done": "{a}/{b} hechas",
+    "Add an event or a task": "Añadir un evento o una tarea"
 }

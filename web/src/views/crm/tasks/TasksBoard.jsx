@@ -44,6 +44,13 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     useEffect(() => { const t = setTimeout(() => setQuery(search), 300); return () => clearTimeout(t) }, [search])
     useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLookups).catch(() => {}) }, [])
     useEffect(() => { const id = params.get('task'); if (id) setDrawer({ open: true, id }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    // /crm/tasks?new=1&due=YYYY-MM-DD (the + on a calendar day): the new task form opens with that due date
+    useEffect(() => {
+        if (!params.get('new')) return
+        const due = params.get('due') ? new Date(`${params.get('due')}T12:00:00`) : null
+        setDrawer({ open: true, id: null, preset: due ? { startDate: due, dueDate: due } : null, k: 0 })
+        params.delete('new'); params.delete('due'); setParams(params, { replace: true })
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const load = useCallback(async () => {
         try {

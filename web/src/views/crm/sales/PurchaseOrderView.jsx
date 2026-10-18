@@ -98,7 +98,7 @@ const PurchaseOrderView = () => {
                             <tbody>
                                 {items.map((it) => (
                                     <tr key={it.id} className="border-b align-top">
-                                        <td className="py-2"><div className="font-medium">{plainText(it.description)}</div>{it.longDescription && <RichText className="text-gray-500" html={it.longDescription} />}</td>
+                                        <td className="py-2"><div className="font-medium whitespace-pre-line">{plainText(it.description)}</div>{it.longDescription && <RichText className="text-gray-500" html={it.longDescription} />}</td>
                                         <td className="py-2 text-right tabular-nums">{it.qty}{it.unit ? ` ${it.unit}` : ''}</td>
                                         <td className="py-2 text-right tabular-nums">{m(it.rate)}</td>
                                         <td className="py-2">{it.taxes.map((t) => `${t.rate}%`).join(', ') || '—'}</td>

@@ -146,7 +146,7 @@ const InvoiceView = () => {
                                     {items.map((it, i) => (
                                         <div key={it.id} className="grid grid-cols-[28px_minmax(0,1fr)_80px_110px_70px_120px] gap-x-3 border-b border-gray-100 py-3 text-sm last:border-0 dark:border-gray-700">
                                             <span className="text-gray-400">{i + 1}</span>
-                                            <div className="min-w-0"><div className="font-medium heading-text">{plainText(it.description)}</div>{it.longDescription && <RichText className="mt-0.5 text-xs text-gray-500" html={it.longDescription} />}</div>
+                                            <div className="min-w-0"><div className="font-medium heading-text whitespace-pre-line">{plainText(it.description)}</div>{it.longDescription && <RichText className="mt-0.5 text-xs text-gray-500" html={it.longDescription} />}</div>
                                             <span className="text-right tabular-nums">{it.qty}{it.unit ? ` ${it.unit}` : ''}</span>
                                             <span className="text-right tabular-nums">{money(it.rate)}</span>
                                             <span className="flex flex-wrap gap-1">{it.taxes.length ? it.taxes.map((t, k) => <span key={k} className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-700">{t.rate}%</span>) : <span className="text-gray-400">—</span>}</span>

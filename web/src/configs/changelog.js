@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.72.7',
+        date: '2026-10-18',
+        title: 'Enter works in the long description too',
+        items: ['The "Long description" box of an item had the same trimming problem, so Enter at the end of a line was erased at once; it now keeps your line breaks like the description does, and grows with the text', 'The first description box is compact again (it grows line by line); the line breaks of a description also show on the invoice, estimate, proposal and purchase order pages']
+    },
+    {
         version: '0.72.6',
         date: '2026-10-18',
         title: 'Paper page as wide as the page body',

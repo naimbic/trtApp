@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.69.2',
+        date: '2026-10-18',
+        title: 'Return arrow in submenus',
+        items: ['The first row of every submenu (Change status, Move to…, Priority, Assign to…) is now a return arrow followed by the menu name; the arrow nudges back on hover and flips in Arabic']
+    },
+    {
         version: '0.69.1',
         date: '2026-10-18',
         title: 'Invoices: demo-style head with three metrics, short numbers in the chart',

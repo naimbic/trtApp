@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { TbCalendar, TbInbox, TbDots, TbChevronRight, TbCheck, TbArrowUpRight, TbPlus } from 'react-icons/tb'
+import { TbCalendar, TbInbox, TbDots, TbChevronRight, TbCheck, TbArrowUpRight, TbPlus, TbArrowLeft } from 'react-icons/tb'
 import cn from '@/utils/classNames'
 import { tr } from '@/utils/t'
 
@@ -74,7 +74,7 @@ const TileMenu = ({ anchor, columns, item, col, actions, onMoveTo, onClose }) =>
                     </motion.div>
                 ) : (
                     <motion.div key="sub" initial={reduce ? false : { opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 14 }} transition={{ duration: 0.14 }}>
-                        <button type="button" className="rp-tm-back" onClick={() => setSub(null)}>‹ {sub.title}</button>
+                        <button type="button" className="rp-tm-back" onClick={() => setSub(null)}><TbArrowLeft className="rp-tm-return" />{sub.title}</button>
                         <div className="rp-tm-scroll">
                             {sub.list.map((o, i) => <button key={i} type="button" role="menuitem" className="rp-tm-row" onClick={() => run(o.onClick)}>{o.color ? <i className="rp-tm-dot" style={{ background: o.color }} /> : o.icon}<span>{o.label}</span>{o.checked && <TbCheck className="rp-tm-go" />}</button>)}
                         </div>

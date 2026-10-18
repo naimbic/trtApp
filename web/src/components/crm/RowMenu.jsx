@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { TbChevronRight, TbCheck } from 'react-icons/tb'
+import { TbChevronRight, TbCheck, TbArrowLeft } from 'react-icons/tb'
 import cn from '@/utils/classNames'
 
 const SPRING = { type: 'spring', stiffness: 460, damping: 32 }
@@ -41,7 +41,7 @@ const RowMenu = ({ anchor, items, onClose }) => {
                     </motion.div>
                 ) : (
                     <motion.div key="sub" initial={reduce ? false : { opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 14 }} transition={{ duration: 0.14 }}>
-                        <button type="button" className="rp-tm-back" onClick={() => setSub(null)}>‹ {sub.title}</button>
+                        <button type="button" className="rp-tm-back" onClick={() => setSub(null)}><TbArrowLeft className="rp-tm-return" />{sub.title}</button>
                         <div className="rp-tm-scroll">
                             {sub.list.map((o, i) => <button key={i} type="button" role="menuitem" className={cn('rp-tm-row', o.danger && 'is-danger')} onClick={() => run(o.onClick)}>{o.color ? <i className="rp-tm-dot" style={{ background: o.color }} /> : o.icon}<span>{o.label}</span>{o.checked && <TbCheck className="rp-tm-go" />}</button>)}
                         </div>

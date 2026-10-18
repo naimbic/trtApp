@@ -127,3 +127,11 @@
 .rp-pl-end-metric strong { font-size: 26px; font-weight: 800; letter-spacing: -.03em; color: var(--t); }
 .rp-pl-end.is-lost .rp-pl-end-metric strong { color: var(--rp-muted); }
 .rp-pl-end-metric em { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--rp-muted); }
+
+/* the return row of a submenu: an arrow, then the menu's name */
+.rp-tm-back { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px 10px; text-align: start; border-radius: 12px; transition: background .15s, color .15s; }
+.rp-tm-back:hover { background: var(--rp-well); color: var(--rp-text); }
+.rp-tm-return { font-size: 16px; transition: transform .25s var(--rp-ease); }
+.rp-tm-back:hover .rp-tm-return { transform: translateX(-3px); }
+[dir='rtl'] .rp-tm-return { transform: scaleX(-1); }
+[dir='rtl'] .rp-tm-back:hover .rp-tm-return { transform: scaleX(-1) translateX(-3px); }

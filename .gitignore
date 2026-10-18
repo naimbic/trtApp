@@ -48,3 +48,6 @@ perfex-import-report.json
 perfex-import-apply-report.json
 data-backups/
 storage/
+
+# design reference project (kept locally, not part of the app)
+/.168-rapport/

@@ -12,3 +12,5 @@ platform-client
 Dockerfile.api
 Dockerfile.web
 docker-compose.coolify.yml
+
+.168-rapport

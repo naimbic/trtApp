@@ -37,3 +37,10 @@ test('roles: every resource feature the app uses exists and can be viewed by som
         assert.ok(def.caps.includes('view') || def.caps.includes('view_own') || IMPLIED_BY[m[1]]?.view || def.auto?.view_own, `${m[1]} cannot be viewed by a non-administrator`)
     }
 })
+test('roles: a resource that is written under another permission names one that exists, and setup items need Settings', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs')
+    const dir = new URL('./resources/', import.meta.url)
+    const seen = []
+    for (const f of readdirSync(dir)) for (const m of readFileSync(new URL(f, dir), 'utf8').matchAll(/writeFeature: '([a-z_]+)'/g)) { seen.push(m[1]); assert.ok(FEATURES.some((x) => x.key === m[1]), `writeFeature ${m[1]} is not in the catalog`) }
+    assert.ok(seen.length >= 4, 'the lead setup items (sources, statuses, web-to-lead, email integration) are written under Settings')
+})

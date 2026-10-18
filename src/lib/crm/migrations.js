@@ -54,28 +54,35 @@ export async function migrateToolPermissions() {
 }
 
 /**
- * Departments got their own permission (they were under Settings): whoever could see or change Settings keeps the
- * same power over departments. Runs once, marker-guarded.
+ * A function that used to hide under another permission gets its own row in Roles: whoever could do something with the old
+ * feature keeps the same power over the new one ({ oldCapability: [newCapabilities] }). Runs once per split, marker-guarded.
  */
-export async function migrateDepartmentPermissions() {
-    const MARK4 = 'perm_migration_departments_v1'
-    if (await prisma.crmOption.findFirst({ where: { name: MARK4 } })) return
-    const map = { view: ['view'], edit: ['create', 'edit', 'delete'] }
-    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
-        const rows = await prisma.crmStaffPermission.findMany({ where: { staffId: s.id, feature: { in: ['settings', 'departments'] } }, select: { feature: true, capability: true } })
-        const has = new Set(rows.filter((r) => r.feature === 'departments').map((r) => r.capability))
-        const add = rows.filter((r) => r.feature === 'settings').flatMap((r) => map[r.capability] || []).filter((c) => !has.has(c))
-        if (add.length) await prisma.crmStaffPermission.createMany({ data: [...new Set(add)].map((capability) => ({ staffId: s.id, feature: 'departments', capability })) })
+const SPLITS = [
+    { mark: 'perm_migration_departments_v1', from: 'settings', to: 'departments', map: { view: ['view'], edit: ['create', 'edit', 'delete'] } },
+    { mark: 'perm_migration_announcements_v1', from: 'settings', to: 'announcements', map: { view: ['view'], edit: ['create', 'edit', 'delete'] } },
+    { mark: 'perm_migration_activity_log_v1', from: 'settings', to: 'activity_log', map: { view: ['view'] } },
+    { mark: 'perm_migration_leave_v1', from: 'tasks', to: 'leave', map: { view: ['view'], view_own: ['view_own'], create: ['create'], edit: ['edit'], delete: ['delete'] } },
+]
+export async function splitPermissions() {
+    for (const { mark, from, to, map } of SPLITS) {
+        if (await prisma.crmOption.findFirst({ where: { name: mark } })) continue
+        for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+            const rows = await prisma.crmStaffPermission.findMany({ where: { staffId: s.id, feature: { in: [from, to] } }, select: { feature: true, capability: true } })
+            const has = new Set(rows.filter((r) => r.feature === to).map((r) => r.capability))
+            const add = [...new Set(rows.filter((r) => r.feature === from).flatMap((r) => map[r.capability] || []))].filter((c) => !has.has(c))
+            if (add.length) await prisma.crmStaffPermission.createMany({ data: add.map((capability) => ({ staffId: s.id, feature: to, capability })) })
+        }
+        for (const role of await prisma.crmRole.findMany()) {
+            let perms
+            try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+            if (!perms || typeof perms !== 'object' || Array.isArray(perms) || !Array.isArray(perms[from])) continue
+            const add = perms[from].flatMap((c) => map[c] || [])
+            if (!add.length) continue
+            perms[to] = [...new Set([...(perms[to] || []), ...add])]
+            await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
+        }
+        await prisma.crmOption.create({ data: { name: mark, value: new Date().toISOString() } })
     }
-    for (const role of await prisma.crmRole.findMany()) {
-        let perms
-        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
-        if (!perms || typeof perms !== 'object' || Array.isArray(perms) || !Array.isArray(perms.settings)) continue
-        const add = perms.settings.flatMap((c) => map[c] || [])
-        if (add.length) perms.departments = [...new Set([...(perms.departments || []), ...add])]
-        await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
-    }
-    await prisma.crmOption.create({ data: { name: MARK4, value: new Date().toISOString() } })
 }
 
 /** Creates the standard roles that do not exist yet (never changes an existing role). Runs once, marker-guarded. */

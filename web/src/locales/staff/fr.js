@@ -1,5 +1,9 @@
 // Staff area: fr. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Post, edit and delete the announcements the whole team sees.": "Publier, modifier et supprimer les annonces que toute l'équipe voit.",
+    "Leave requests and days off (Attendance & leave in the menu). View own lets someone see their own; View lets a manager see everybody's.": "Demandes de congé et jours chômés (Présence et congés dans le menu). « Voir les siens » permet de voir les siens ; « Voir » permet à un responsable de voir ceux de tous.",
+    "Attendance & leave": "Présence et congés",
+    "Staff always see their own leave": "Chaque membre voit toujours ses propres congés",
     "The Departments list (ticket departments and the people in them): see, add, edit and delete departments. Setup items such as currencies, taxes and ticket statuses stay under Settings.": "La liste des départements (départements de tickets et leurs membres) : voir, ajouter, modifier et supprimer. Les éléments de configuration (devises, taxes, statuts de tickets) restent sous Paramètres.",
     "Tools": "Outils",
     "Team chat": "Chat d'équipe",

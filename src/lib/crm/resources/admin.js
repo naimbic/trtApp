@@ -133,7 +133,7 @@ const resources = [
     },
     {
         key: 'announcements', model: 'crmAnnouncement', label: 'Announcement', plural: 'Announcements',
-        group: 'Administration', icon: 'TbSpeakerphone', feature: 'settings',
+        group: 'Administration', icon: 'TbSpeakerphone', feature: 'announcements',
         titleField: 'name', search: ['name', 'message'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'name', label: 'Subject', type: 'text', link: true },
@@ -187,7 +187,7 @@ const resources = [
     },
     {
         key: 'activity-log', model: 'crmActivityLog', label: 'Activity', plural: 'Activity log',
-        group: 'Utilities', icon: 'TbHistory', feature: 'settings',
+        group: 'Utilities', icon: 'TbHistory', feature: 'activity_log',
         titleField: 'description', search: ['description', 'fullName', 'staffName'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'createdAt', label: 'Date', type: 'datetime' },

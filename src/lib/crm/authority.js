@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma'
  * linked to an INACTIVE Perfex staff member (inactive accounts must never sign in).
  */
 // Capabilities Perfex grants every active staff member without a checkbox (see permissionCatalog `auto`).
-const IMPLICIT = ['customers.view_own', 'payments.view_own', 'projects.view_own', 'tasks.view_own', 'leads.view_own', 'leads.create', 'leads.edit']
+const IMPLICIT = ['customers.view_own', 'payments.view_own', 'projects.view_own', 'tasks.view_own', 'leave.view_own', 'leads.view_own', 'leads.create', 'leads.edit']
 
 export async function buildCrmAuthority(userId) {
     try {

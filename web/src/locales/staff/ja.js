@@ -1,5 +1,9 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Post, edit and delete the announcements the whole team sees.": "チーム全員に表示されるお知らせの投稿・編集・削除。",
+    "Leave requests and days off (Attendance & leave in the menu). View own lets someone see their own; View lets a manager see everybody's.": "休暇申請と休日（メニューの「勤怠と休暇」）。「自分の分を表示」は自分の分、「表示」は管理者が全員分を見られます。",
+    "Attendance & leave": "勤怠と休暇",
+    "Staff always see their own leave": "スタッフは常に自分の休暇を確認できます",
     "The Departments list (ticket departments and the people in them): see, add, edit and delete departments. Setup items such as currencies, taxes and ticket statuses stay under Settings.": "部署の一覧（チケット部署とそのメンバー）：表示・追加・編集・削除。通貨、税、チケットステータスなどの設定項目は引き続き「設定」にあります。",
     "Tools": "ツール",
     "Team chat": "チームチャット",

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.52.3',
+        date: '2026-10-18',
+        title: 'Roles audit: announcements, leave, activity log, lead setup',
+        items: ['Every screen was checked against Roles. New rows: Announcements (View, Create, Edit, Delete) and Attendance & leave (leave requests and days off, with View own for each person); the Activity log page now follows the Activity log row instead of Settings. Everybody keeps what they had: whoever had Settings, or Tasks for leave, gets the matching rows once on update', 'Security fix: any team member could add, edit or delete lead sources, lead statuses, web-to-lead forms and the lead email integration (the automatic "create/edit leads" right covered them); those setup items now need Settings → Edit, while everyone who may see leads can still pick them in a lead', 'Documented and unchanged on purpose: AI insights (super administrator only), notes, to-dos, reminders, notifications and files attached to a record (personal or follow the record), the newsfeed and tags (shared by the whole team)']
+    },
+    {
         version: '0.52.2',
         date: '2026-10-18',
         title: 'Roles: Departments',

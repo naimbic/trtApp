@@ -1,5 +1,9 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Post, edit and delete the announcements the whole team sees.": "نشر الإعلانات التي يراها الفريق كله وتعديلها وحذفها.",
+    "Leave requests and days off (Attendance & leave in the menu). View own lets someone see their own; View lets a manager see everybody's.": "طلبات الإجازة وأيام العطلة (الحضور والإجازات في القائمة). «عرض الخاص» يتيح رؤية الخاص بالشخص، و«عرض» يتيح للمدير رؤية الجميع.",
+    "Attendance & leave": "الحضور والإجازات",
+    "Staff always see their own leave": "يرى الموظفون إجازاتهم دائماً",
     "The Departments list (ticket departments and the people in them): see, add, edit and delete departments. Setup items such as currencies, taxes and ticket statuses stay under Settings.": "قائمة الأقسام (أقسام التذاكر وأعضاؤها): عرض الأقسام وإضافتها وتعديلها وحذفها. تبقى عناصر الإعداد مثل العملات والضرائب وحالات التذاكر ضمن الإعدادات.",
     "Tools": "الأدوات",
     "Team chat": "دردشة الفريق",

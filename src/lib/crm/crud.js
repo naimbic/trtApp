@@ -248,7 +248,7 @@ const audit = async (session, resource, action, id, label) => {
 export async function createRecord(key, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
-    const session = await requirePermission(resource.feature, 'create')
+    const session = await requirePermission(resource.writeFeature || resource.feature, 'create')
     rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const data = buildData(resource, body)
@@ -266,7 +266,7 @@ export async function createRecord(key, body) {
 export async function updateRecord(key, id, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
-    const session = await requirePermission(resource.feature, 'edit')
+    const session = await requirePermission(resource.writeFeature || resource.feature, 'edit')
     rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const current = await getRecord(key, id) // enforces view_own scope
@@ -281,7 +281,7 @@ export async function updateRecord(key, id, body) {
 export async function deleteRecord(key, id) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
-    const session = await requirePermission(resource.feature, 'delete')
+    const session = await requirePermission(resource.writeFeature || resource.feature, 'delete')
     rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const row = await getRecord(key, id)

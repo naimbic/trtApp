@@ -76,12 +76,16 @@ export async function listProjects(q = {}) {
         const st = stats[p.id]
         return {
             id: p.id, name: p.name, status: p.status, statusLabel: STATUS[p.status] || '', client: p.clientId ? { id: p.clientId, name: cMap[p.clientId] || '' } : null,
-            progress: progressOf(p, st), tasksTotal: st.total, tasksDone: st.done, startDate: p.startDate, deadline: p.deadline,
+            progress: progressOf(p, st), tasksTotal: st.total, tasksDone: st.done, seconds: Math.round(st.seconds), estimatedHours: p.estimatedHours, projectCost: p.projectCost, billingType: p.billingType, ratePerHour: p.projectRatePerHour, createdAt: p.createdAt, startDate: p.startDate, deadline: p.deadline,
             overdue: !!p.deadline && [1, 2, 3].includes(p.status) && new Date(p.deadline) < new Date(new Date().toDateString()),
             members: members.filter((m) => m.projectId === p.id).map((m) => people[m.staffId]).filter(Boolean),
         }
     })
-    return { list, counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
+    const totals = {
+        total: list.length, active: list.filter((p) => p.status === 2).length, finished: list.filter((p) => p.status === 4).length, overdue: list.filter((p) => p.overdue).length,
+        openTasks: list.reduce((n, p) => n + p.tasksTotal - p.tasksDone, 0), seconds: list.reduce((n, p) => n + p.seconds, 0), avgProgress: list.length ? Math.round(list.reduce((n, p) => n + p.progress, 0) / list.length) : 0,
+    }
+    return { list, counts, stats: totals, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
 }
 
 async function loadOne(id, a) {

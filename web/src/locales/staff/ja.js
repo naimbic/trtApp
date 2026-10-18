@@ -3692,5 +3692,13 @@ export default {
     "Client or system": "クライアントまたはシステム",
     "Clients involved": "関係するクライアント",
     "Events in this period": "期間中のイベント",
-    "Team members involved": "関係するメンバー"
+    "Team members involved": "関係するメンバー",
+    "Add to favorites": "お気に入りに追加",
+    "No members": "メンバーなし",
+    "No projects found": "プロジェクトが見つかりません",
+    "Projects in progress": "進行中のプロジェクト",
+    "Remove from favorites": "お気に入りから外す",
+    "average progress": "平均進捗",
+    "of {n}": "/ {n}",
+    "{n} past deadline": "{n}件が期限超過"
 }

@@ -3692,5 +3692,13 @@ export default {
     "Client or system": "عميل أو النظام",
     "Clients involved": "العملاء المعنيون",
     "Events in this period": "الأحداث في هذه الفترة",
-    "Team members involved": "الأعضاء المعنيون"
+    "Team members involved": "الأعضاء المعنيون",
+    "Add to favorites": "إضافة إلى المفضلة",
+    "No members": "لا أعضاء",
+    "No projects found": "لم يتم العثور على مشاريع",
+    "Projects in progress": "المشاريع الجارية",
+    "Remove from favorites": "إزالة من المفضلة",
+    "average progress": "متوسط التقدم",
+    "of {n}": "من {n}",
+    "{n} past deadline": "{n} متأخرة عن الموعد"
 }

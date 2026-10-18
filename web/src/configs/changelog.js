@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.76.0',
+        date: '2026-10-18',
+        title: 'Projects as cards; Schedule shows everyone for super admins',
+        items: ['Projects (the Projects menu entry) is now the Rapport page: a head with three metrics (in progress, open tasks, time logged), search, status tabs, date filters, sort, Grid / Table, and project cards with client, status, start date, deadline, time logged, billing, progress, members and tasks done, plus a three-dots menu (Open, Scrum board, Edit, Favorite, Delete)', 'The old projects dashboard is still available at /crm/projects/overview', 'Schedule: super admins start with All selected in the team filter (everyone else still starts on themselves)']
+    },
+    {
         version: '0.75.4',
         date: '2026-10-18',
         title: 'All activity in 2 columns',

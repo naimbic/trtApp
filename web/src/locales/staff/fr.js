@@ -3692,5 +3692,13 @@ export default {
     "Client or system": "Client ou système",
     "Clients involved": "Clients concernés",
     "Events in this period": "Événements sur la période",
-    "Team members involved": "Membres concernés"
+    "Team members involved": "Membres concernés",
+    "Add to favorites": "Ajouter aux favoris",
+    "No members": "Aucun membre",
+    "No projects found": "Aucun projet trouvé",
+    "Projects in progress": "Projets en cours",
+    "Remove from favorites": "Retirer des favoris",
+    "average progress": "de progression moyenne",
+    "of {n}": "sur {n}",
+    "{n} past deadline": "{n} en retard"
 }

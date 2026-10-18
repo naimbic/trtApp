@@ -8,6 +8,7 @@ import {
     LAYOUT_FRAMELESS_SIDE,
     LAYOUT_CONTENT_OVERLAY,
     LAYOUT_BLANK,
+    LAYOUT_RAPPORT,
 } from '@/constants/theme.constant'
 import CollapsibleSideSvg from '@/assets/svg/CollapsibleSideSvg'
 import StackedSideSvg from '@/assets/svg/StackedSideSvg'
@@ -17,7 +18,16 @@ import ContentOverlaySvg from '@/assets/svg/ContentOverlaySvg'
 import BlankSvg from '@/assets/svg/BlankSvg'
 import { tr } from '@/utils/t'
 
+const RapportThumb = () => (
+    <svg viewBox="0 0 120 80" width="100%" height="100%" aria-hidden="true"><rect width="120" height="80" rx="6" fill="#ebe8e1" /><rect x="6" y="18" width="7" height="44" rx="3.5" fill="#17191a" /><rect x="30" y="6" width="60" height="8" rx="4" fill="#fff" opacity=".8" /><rect x="52" y="7" width="14" height="6" rx="3" fill="#17191a" /><rect x="22" y="22" width="44" height="22" rx="6" fill="#fff" opacity=".7" /><rect x="70" y="22" width="40" height="22" rx="6" fill="#17191a" /><rect x="22" y="48" width="30" height="24" rx="6" fill="#2f5c50" /><rect x="56" y="48" width="54" height="24" rx="6" fill="#fff" opacity=".7" /></svg>
+)
+
 const layouts = [
+    {
+        value: LAYOUT_RAPPORT,
+        label: tr("Rapport"),
+        svg: <RapportThumb />,
+    },
     {
         value: LAYOUT_COLLAPSIBLE_SIDE,
         label: tr("Collapsible"),

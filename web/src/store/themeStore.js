@@ -31,6 +31,12 @@ export const useThemeStore = create()(
         }),
         {
             name: 'theme',
+            version: 2,
+            // the Rapport layout is the new default: people who still had the old default layout move to it once (they can switch back in the theme panel)
+            migrate: (state, version) => {
+                if (version < 2 && state?.layout?.type === 'collapsibleSide') return { ...state, layout: { ...state.layout, type: 'rapport' } }
+                return state
+            },
         },
     ),
 )

@@ -6,6 +6,7 @@ import {
     LAYOUT_FRAMELESS_SIDE,
     LAYOUT_CONTENT_OVERLAY,
     LAYOUT_BLANK,
+    LAYOUT_RAPPORT,
 } from '@/constants/theme.constant'
 import Loading from '@/components/shared/Loading'
 import AccountLanguage from '@/components/template/AccountLanguage'
@@ -19,6 +20,7 @@ const layouts = {
     [LAYOUT_FRAMELESS_SIDE]: lazy(() => import('./components/FrameLessSide')),
     [LAYOUT_CONTENT_OVERLAY]: lazy(() => import('./components/ContentOverlay')),
     [LAYOUT_BLANK]: lazy(() => import('./components/Blank')),
+    [LAYOUT_RAPPORT]: lazy(() => import('./components/RapportShell')),
 }
 
 const PostLoginLayout = ({ layoutType, children }) => {

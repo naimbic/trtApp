@@ -1,5 +1,8 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Main navigation": "メインナビゲーション",
+    "Quick access": "クイックアクセス",
+    "Rapport": "Rapport",
     "Different billing address": "請求先住所が異なる",
     "Different shipping address": "配送先住所が異なる",
     "Copy the address": "住所をコピー",

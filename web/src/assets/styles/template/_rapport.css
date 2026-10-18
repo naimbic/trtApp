@@ -1,0 +1,134 @@
+/*
+ * Rapport look (design reference: the licensed "Rapport" template): warm paper under a slow mesh, frosted cards, a floating dark
+ * dock and a pill navigation. Everything is scoped to .rp-app (the Rapport layout), so the other layouts keep their old look.
+ * Logical properties only (inline-start / inline-end), so Arabic (right to left) mirrors by itself.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap');
+
+.rp-app {
+    --rp-font: 'Urbanist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --rp-bg: #ebe8e1;
+    --rp-mesh-a: #f2d3bd; --rp-mesh-b: #cfdfcd; --rp-mesh-c: #f1e4bf;
+    --rp-glass: rgba(255, 255, 255, .52);
+    --rp-glass-2: rgba(255, 255, 255, .68);
+    --rp-glass-3: rgba(255, 255, 255, .86);
+    --rp-float: #fdfcf9;
+    --rp-well: rgba(23, 25, 26, .06);
+    --rp-line: rgba(23, 25, 26, .09);
+    --rp-line-2: rgba(23, 25, 26, .16);
+    --rp-rim: rgba(255, 255, 255, .78);
+    --rp-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 24px 48px -30px rgba(70, 50, 30, .28);
+    --rp-shadow-pop: 0 24px 60px -18px rgba(40, 30, 20, .32), 0 2px 6px rgba(40, 30, 20, .08);
+    --rp-text: #17191a; --rp-muted: #676a66; --rp-faint: #8e918c;
+    --rp-ink: #17191a; --rp-on-ink: #fbf8f2;
+    --rp-dock: #17191a; --rp-on-dock: #fbf8f2;
+    --rp-pill: #17191a; --rp-on-pill: #fbf8f2;
+    --rp-good: #2f7a52; --rp-bad: #c8431f;
+    --rp-r-card: 26px; --rp-r-tile: 22px;
+    --rp-dock-x: 20px; --rp-dock-w: 60px;
+    --rp-gutter: clamp(14px, 1.6vw, 28px);
+    --rp-ease: cubic-bezier(.2, .8, .2, 1);
+    position: relative;
+    min-height: 100vh;
+    background: var(--rp-bg);
+    color: var(--rp-text);
+    font-family: var(--rp-font);
+}
+.dark .rp-app {
+    --rp-bg: #111412;
+    --rp-mesh-a: rgba(200, 67, 31, .28); --rp-mesh-b: rgba(47, 92, 80, .5); --rp-mesh-c: rgba(242, 201, 76, .1);
+    --rp-glass: rgba(255, 255, 255, .05);
+    --rp-glass-2: rgba(255, 255, 255, .085);
+    --rp-glass-3: #222624;
+    --rp-float: #242927;
+    --rp-well: rgba(255, 255, 255, .06);
+    --rp-line: rgba(255, 255, 255, .08);
+    --rp-line-2: rgba(255, 255, 255, .16);
+    --rp-rim: rgba(255, 255, 255, .07);
+    --rp-shadow: 0 1px 0 rgba(255, 255, 255, .05) inset, 0 24px 48px -30px rgba(0, 0, 0, .7);
+    --rp-shadow-pop: 0 24px 60px -18px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .08);
+    --rp-text: #f1eee8; --rp-muted: #a3a6a0; --rp-faint: #7d807b;
+    --rp-ink: #f1eee8; --rp-on-ink: #17191a;
+    --rp-dock: rgba(255, 255, 255, .08); --rp-on-dock: #f1eee8;
+    --rp-pill: #f1eee8; --rp-on-pill: #17191a;
+    --rp-good: #6cc59a; --rp-bad: #f08a68;
+}
+
+/* the slow mesh behind everything: transform only, off when motion is reduced */
+.rp-mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.rp-mesh::before, .rp-mesh::after, .rp-mesh i { content: ''; position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%; filter: blur(80px); opacity: .85; will-change: transform; }
+.rp-mesh::before { background: var(--rp-mesh-a); inset-block-start: -22vmax; inset-inline-start: -14vmax; animation: rp-drift-a 38s ease-in-out infinite alternate; }
+.rp-mesh::after { background: var(--rp-mesh-b); inset-block-end: -26vmax; inset-inline-end: -16vmax; animation: rp-drift-b 46s ease-in-out infinite alternate; }
+.rp-mesh i { background: var(--rp-mesh-c); inset-block-start: 20vh; inset-inline-start: 38vw; width: 42vmax; height: 42vmax; animation: rp-drift-c 52s ease-in-out infinite alternate; }
+@keyframes rp-drift-a { to { transform: translate3d(14vmax, 10vmax, 0) scale(1.1); } }
+@keyframes rp-drift-b { to { transform: translate3d(-12vmax, -9vmax, 0) scale(1.08); } }
+@keyframes rp-drift-c { to { transform: translate3d(-10vmax, 12vmax, 0) scale(.92); } }
+
+/* frame: content starts one gutter after the dock */
+.rp-frame { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; padding-inline: var(--rp-gutter); }
+@media (min-width: 1024px) { .rp-frame { padding-inline-start: calc(var(--rp-dock-x) + var(--rp-dock-w) + var(--rp-gutter)); } }
+.rp-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+/* ── top bar ───────────────────────────────────────────────────────────── */
+.rp-top { display: flex; align-items: center; gap: 14px; padding-block: 18px 6px; }
+.rp-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; font-weight: 800; font-size: 20px; letter-spacing: -.02em; color: var(--rp-text); }
+.rp-brand img { height: 34px; width: auto; }
+.rp-pills { flex: 1; display: flex; justify-content: center; min-width: 0; }
+.rp-pillbar { display: inline-flex; align-items: center; gap: 2px; padding: 5px; border-radius: 999px; background: var(--rp-glass-2); border: 1px solid var(--rp-rim); box-shadow: var(--rp-shadow); max-width: 100%; }
+.rp-pill { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding-inline: 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--rp-muted); white-space: nowrap; transition: color .2s var(--rp-ease); cursor: pointer; border: 0; background: transparent; }
+.rp-pill:hover { color: var(--rp-text); }
+.rp-pill[data-active='true'] { color: var(--rp-on-pill); }
+.rp-pill > span:not(.rp-pill-bg) { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px; }
+.rp-pill-bg { position: absolute; inset: 0; border-radius: 999px; background: var(--rp-pill); box-shadow: 0 6px 16px -6px rgba(23, 25, 26, .5); }
+.rp-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.rp-actions .header-action-item { color: var(--rp-text); }
+.rp-toolbar { display: flex; justify-content: flex-end; padding-block: 6px 0; }
+.rp-toolbar > div { max-width: 100%; }
+
+/* dropdown panel of a pill: opaque, so legibility never depends on blur */
+.rp-panel { width: max-content; position: absolute; z-index: 60; inset-block-start: calc(100% + 10px); min-width: 280px; max-width: min(760px, 92vw); padding: 12px; border-radius: 22px; background: var(--rp-float); border: 1px solid var(--rp-line); box-shadow: var(--rp-shadow-pop); }
+.rp-panel-grid { display: grid; gap: 4px 18px; }
+.rp-panel-cols { column-count: 2; column-gap: 18px; }
+.rp-panel-cols > a { break-inside: avoid; }
+.rp-panel h6 { margin: 8px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--rp-faint); }
+.rp-link { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 14px; font-size: 14px; font-weight: 600; color: var(--rp-text); transition: background .15s var(--rp-ease), transform .15s var(--rp-ease); }
+.rp-link:hover { background: var(--rp-well); transform: translateX(2px); }
+[dir='rtl'] .rp-link:hover { transform: translateX(-2px); }
+.rp-link[data-active='true'] { background: var(--rp-pill); color: var(--rp-on-pill); }
+.rp-link .ico { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 10px; background: var(--rp-well); font-size: 17px; flex-shrink: 0; }
+.rp-link[data-active='true'] .ico { background: rgba(255, 255, 255, .16); }
+
+/* ── dock ──────────────────────────────────────────────────────────────── */
+.rp-dock { position: fixed; z-index: 50; inset-block: 0; inset-inline-start: var(--rp-dock-x); display: flex; align-items: center; pointer-events: none; }
+.rp-dock-in { pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 4px; width: var(--rp-dock-w); padding: 12px 0; border-radius: 999px; background: var(--rp-dock); color: var(--rp-on-dock); box-shadow: var(--rp-shadow-pop); backdrop-filter: blur(14px); }
+.rp-dock-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; font-size: 21px; color: inherit; opacity: .78; transition: opacity .2s var(--rp-ease), transform .25s cubic-bezier(.3, 1.7, .5, 1), background .2s; border: 0; background: transparent; cursor: pointer; }
+.rp-dock-btn:hover { opacity: 1; background: rgba(255, 255, 255, .12); transform: scale(1.1); }
+.rp-dock-btn[data-active='true'] { opacity: 1; background: rgba(255, 255, 255, .18); }
+.rp-dock-sep { width: 26px; height: 1px; margin-block: 4px; background: rgba(255, 255, 255, .18); }
+.rp-dock .header-action-item { color: inherit; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; font-size: 21px; }
+
+/* ── frosted panes: every card inside the Rapport layout ───────────────── */
+.rp-app .card { background: var(--rp-glass) !important; border: 1px solid var(--rp-rim) !important; border-radius: var(--rp-r-card) !important; box-shadow: var(--rp-shadow) !important; color: var(--rp-text); }
+.rp-app .kpi-card { background: var(--rp-glass-2) !important; border-color: var(--rp-rim) !important; border-radius: var(--rp-r-card) !important; box-shadow: var(--rp-shadow) !important; }
+.rp-app .kpi-card.border-primary { border-color: var(--rp-ink) !important; }
+.rp-app .kpi-item:hover .kpi-card { box-shadow: var(--rp-shadow-pop) !important; }
+.rp-app h3, .rp-app h4, .rp-app h5 { letter-spacing: -.015em; }
+.rp-app .heading-text { color: var(--rp-text); }
+
+/* page title: big, airy */
+.rp-title { font-size: clamp(30px, 3.2vw, 44px); line-height: 1.02; font-weight: 700; letter-spacing: -.03em; margin: 0; }
+.rp-title .word { display: inline-block; overflow: hidden; vertical-align: top; padding-block-end: .08em; }
+.rp-title .ch { display: inline-block; will-change: transform; }
+.rp-sub { margin-top: 6px; color: var(--rp-muted); font-size: 14px; }
+
+/* sections land one after the other */
+@keyframes rp-land { from { opacity: 0; transform: translateY(26px) scale(.985); } to { opacity: 1; transform: none; } }
+.rp-land > * { animation: rp-land .8s var(--rp-ease) both; }
+.rp-land > *:nth-child(1) { animation-delay: .05s; } .rp-land > *:nth-child(2) { animation-delay: .12s; } .rp-land > *:nth-child(3) { animation-delay: .19s; }
+.rp-land > *:nth-child(4) { animation-delay: .26s; } .rp-land > *:nth-child(5) { animation-delay: .33s; } .rp-land > *:nth-child(n+6) { animation-delay: .4s; }
+
+@media (max-width: 1023px) { .rp-pills { display: none; } .rp-top { padding-block: 12px 4px; } }
+@media (prefers-reduced-motion: reduce) {
+    .rp-mesh::before, .rp-mesh::after, .rp-mesh i, .rp-land > * { animation: none !important; }
+    .rp-dock-btn, .rp-link, .rp-pill { transition: none; }
+}

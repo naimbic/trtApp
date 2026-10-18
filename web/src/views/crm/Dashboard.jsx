@@ -22,6 +22,7 @@ import {
 } from 'react-icons/pi'
 import { tr } from '@/utils/t'
 import { useSessionUser } from '@/store/authStore'
+import RiseTitle from './kit/RiseTitle'
 
 // ---------- formatting
 const nf = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -292,11 +293,11 @@ const BusinessDashboard = () => {
     const pd = data.prev
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="rp-land flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h3>{tr("Dashboard")}</h3>
-                    <p className="text-sm text-gray-500">{data.range?.key === 'custom' ? '' : `${tr(data.range?.label)} · `}{data.range?.from} → {data.range?.to}{loading ? tr(" · updating…") : ''}</p>
+                    <RiseTitle text={tr("Dashboard")} />
+                    <p className="rp-sub">{data.range?.key === 'custom' ? '' : `${tr(data.range?.label)} · `}{data.range?.from} → {data.range?.to}{loading ? tr(" · updating…") : ''}</p>
                 </div>
             </div>
 

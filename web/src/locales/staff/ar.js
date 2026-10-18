@@ -1,5 +1,8 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Main navigation": "التنقل الرئيسي",
+    "Quick access": "وصول سريع",
+    "Rapport": "Rapport",
     "Different billing address": "عنوان فوترة مختلف",
     "Different shipping address": "عنوان شحن مختلف",
     "Copy the address": "نسخ العنوان",

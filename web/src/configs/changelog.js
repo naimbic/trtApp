@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.61.0',
+        date: '2026-10-18',
+        title: 'Rapport look, step 1: design tokens, dock, pill navigation, Dashboard',
+        items: ['New default layout "Rapport" (Rapport design reference): a slow warm mesh of colour behind frosted cards, a dark dock at the edge of the screen (search, team dashboard, calendar, chat, reports, AI, settings, light/dark), and a pill navigation at the top (Dashboard, then the CRM groups you may open, the rest under More; the dark pill slides to the page you are on and each pill opens a panel with its links). Period, currency and colour pickers sit in a toolbar under it', 'Everything mirrors in Arabic (dock and logo on the right, pills right to left); on a phone the dock and pills fold into the usual menu drawer; light and dark mode both follow the new tokens', 'Dashboard: big page title that rises letter by letter (whole-word for Arabic and Japanese, which must not be split), sections that land one after the other, frosted figure cards; all cards in this layout get the frosted pane look', 'Reduced-motion is respected (no mesh drift, no entrances). The old layouts are still in the theme panel (Rapport, Collapsible, Stacked, Top bar...); people who still had the old default move to Rapport once and can switch back there', 'Design source stays out of the repo: the licensed .168-rapport folder is ignored; the next steps (Leads pipeline, Clients grid, Calendar, Reports) will follow page by page']
+    },
+    {
         version: '0.60.2',
         date: '2026-10-18',
         title: 'No shipping address on clients',

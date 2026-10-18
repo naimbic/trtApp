@@ -15,11 +15,11 @@ const dropdownItemList = [
     { label: tr("Password & security"), path: '/account/profile?tab=security', icon: <PiShieldCheckDuotone /> },
     { label: tr("Team & roles"), path: '/team', icon: <PiUsersThreeDuotone /> },
     { label: tr("Mail settings"), path: '/crm/mails?tab=settings', icon: <PiEnvelopeSimpleDuotone /> },
-    { label: tr("Calendar sync"), path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone /> },
+    { label: tr("Calendar sync"), path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone />, need: 'calendar' },
 ]
 
 const _UserDropdown = ({ className }) => {
-    const { avatar, userName, email } = useSessionUser((state) => state.user)
+    const { avatar, userName, email, authority = [] } = useSessionUser((state) => state.user)
 
     const { signOut } = useAuth()
     const me = useMe()
@@ -68,7 +68,7 @@ const _UserDropdown = ({ className }) => {
                 <span>{away ? tr("Set as available (now {v1})", { v1: STATUS[chatState].label.toLowerCase() }) : tr("Set as away")}</span>
             </Dropdown.Item>
             <Dropdown.Item variant="divider" />
-            {dropdownItemList.map((item) => (
+            {dropdownItemList.filter((item) => !item.need || authority.includes('admin') || authority.includes('crm.admin') || authority.includes(`crm.${item.need}.view`)).map((item) => (
                 <Dropdown.Item
                     key={item.label}
                     eventKey={item.label}

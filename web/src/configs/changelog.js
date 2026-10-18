@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.52.0',
+        date: '2026-10-18',
+        title: 'Roles: Calendar, Team chat and File manager',
+        items: ['Roles & permissions (and each member\'s access) now has a "Tools" group with Calendar, Team chat and File manager: until now anybody signed in could use them; switching one off hides its menu entry, page and chat bubble and the server refuses the request too', 'Nobody loses anything on update: every existing role and member gets the three switched on once, and all standard roles include them; switch them off where you want', 'Audit result: every other function already has its permission (customers, leads, invoices, tasks, projects, tickets, vault, reports, settings, mails, goals, surveys...); the AI page stays for the super administrator only, and notes, to-dos, reminders and notifications are personal to each person']
+    },
+    {
         version: '0.51.1',
         date: '2026-10-17',
         title: 'Claude keys that belong to no workspace',

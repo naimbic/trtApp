@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
-import { viewScope, isCrmAdmin, getStaffId } from '@/lib/crm/permissions'
+import { viewScope, hasCap, isCrmAdmin, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { buildIcs } from '@/lib/crm/ics'
@@ -30,6 +30,7 @@ async function context() {
     const session = await auth()
     if (!session?.user?.id) return null
     const authority = session.user.authority || []
+    if (!hasCap(authority, 'calendar', 'view')) throw Object.assign(new Error('You do not have access to the calendar'), { status: 403 })
     return { session, authority, staffId: await getStaffId(session), admin: isCrmAdmin(authority), can: (f) => viewScope(authority, f) === 'all' }
 }
 

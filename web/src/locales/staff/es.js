@@ -1,5 +1,10 @@
 // Staff area: es. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Tools": "Herramientas",
+    "Team chat": "Chat del equipo",
+    "The Calendar page: tasks, deadlines, meetings and events. Without it the page and its menu entry are hidden.": "La página Calendario: tareas, plazos, reuniones y eventos. Sin ella, la página y su entrada de menú se ocultan.",
+    "The chat bubble and the Chat page: team room, direct messages and calls. Without it they are hidden and the chat refuses this person.": "La burbuja de chat y la página Chat: sala del equipo, mensajes directos y llamadas. Sin ella se ocultan y el chat rechaza a esta persona.",
+    "The File manager page (every upload in one place). Files attached to a record stay visible to people who may see that record.": "La página Gestor de archivos (todas las subidas en un lugar). Los archivos adjuntos a un registro siguen visibles para quien puede ver ese registro.",
     "Workspace id saved": "ID de workspace guardado",
     "Workspace id (only if Claude says the key is not scoped to a workspace)": "ID de workspace (solo si Claude dice que la clave no tiene workspace)",
     "Find it in console.anthropic.com → Settings → Workspaces. Or create a key inside one workspace and none is needed.": "Búscalo en console.anthropic.com → Settings → Workspaces. O crea una clave dentro de un workspace y no hace falta.",

@@ -29,6 +29,30 @@ export async function migratePermissions() {
     await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
 }
 
+const TOOLS = ['calendar', 'chat', 'file_manager']
+
+/**
+ * Calendar, Team chat and File manager became permissions: everybody (and every role) keeps them, so nobody loses a page
+ * they use today; switch them off per role or person afterwards. Runs once, marker-guarded.
+ */
+export async function migrateToolPermissions() {
+    const MARK3 = 'perm_migration_tools_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK3 } })) return
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        const have = new Set((await prisma.crmStaffPermission.findMany({ where: { staffId: s.id, capability: 'view', feature: { in: TOOLS } }, select: { feature: true } })).map((r) => r.feature))
+        const add = TOOLS.filter((f) => !have.has(f))
+        if (add.length) await prisma.crmStaffPermission.createMany({ data: add.map((feature) => ({ staffId: s.id, feature, capability: 'view' })) })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms)) continue
+        for (const f of TOOLS) if (!perms[f]) perms[f] = ['view']
+        await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK3, value: new Date().toISOString() } })
+}
+
 /** Creates the standard roles that do not exist yet (never changes an existing role). Runs once, marker-guarded. */
 export async function ensureStandardRoles() {
     const MARK2 = 'standard_roles_v1'

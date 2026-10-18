@@ -40,6 +40,7 @@ export async function listMedia({ parentId, query, relType, relId, kind, flat, f
     const ctx = await who()
     if (recent) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: false, relType: null }, orderBy: { createdAt: 'desc' }, take: Math.min(parseInt(recent, 10) || 20, 100) })).map(shape), total: 0, path: [] })
     if (foldersOnly) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: true, relType: null }, orderBy: { name: 'asc' }, take: 500 })).map(shape), total: 0, path: [] })
+    if (!relType && !hasCap(ctx.authority, 'file_manager', 'view')) throw new PermissionError('You do not have access to the file manager', 403)
     relAccess(ctx, relType, 'view')
     const where = relType ? { relType, relId } : { relType: null, ...(query || kind || flat ? {} : { parentId: OID.test(parentId || '') ? parentId : null }) }
     if (kind) where.kind = kind

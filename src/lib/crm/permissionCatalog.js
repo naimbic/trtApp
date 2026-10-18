@@ -39,6 +39,9 @@ export const FEATURE_HINTS = {
     dashboard: 'The Dashboard with revenue, invoices and client figures. Administrators and people who manage roles always see it; everyone else lands on the Team dashboard.',
     activity_log: 'See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.',
     finance: 'Without this, every income, total, balance and money chart shows *** (cards, lists, reports, client profiles).',
+    calendar: 'The Calendar page: tasks, deadlines, meetings and events. Without it the page and its menu entry are hidden.',
+    chat: 'The chat bubble and the Chat page: team room, direct messages and calls. Without it they are hidden and the chat refuses this person.',
+    file_manager: 'The File manager page (every upload in one place). Files attached to a record stay visible to people who may see that record.',
     reports: 'Choose which reports this person may open. Money reports also need "See money amounts".',
 }
 
@@ -90,6 +93,14 @@ export const PERMISSION_GROUPS = [
         features: [
             { key: 'tickets', label: 'Tickets', caps: STD },
             { key: 'knowledge_base', label: 'Knowledge base', caps: CRUD },
+        ],
+    },
+    {
+        group: 'Tools',
+        features: [
+            { key: 'calendar', label: 'Calendar', caps: ['view'], auto: {} },
+            { key: 'chat', label: 'Team chat', caps: ['view'], auto: {} },
+            { key: 'file_manager', label: 'File manager', caps: ['view'], auto: {} },
         ],
     },
     {

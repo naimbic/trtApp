@@ -7,12 +7,12 @@ import { tr } from '@/utils/t'
 
 const ITEMS = [
     { label: tr("Company & logos"), desc: tr("Details printed on documents"), path: '/crm/settings?group=company', icon: <PiBuildingsDuotone />, need: ['settings'] },
-    { label: tr("File manager"), desc: tr("Uploads in DigitalOcean Spaces"), path: '/crm/file-manager', icon: <PiFolderOpenDuotone />, need: [] },
+    { label: tr("File manager"), desc: tr("Uploads in DigitalOcean Spaces"), path: '/crm/file-manager', icon: <PiFolderOpenDuotone />, need: ['file_manager'] },
     { label: tr("Mail server & templates"), desc: tr("SMTP, email designs, sent log"), path: '/crm/mails', icon: <PiEnvelopeSimpleDuotone />, need: ['email_templates'] },
     { label: tr("Team members"), desc: tr("Accounts and access"), path: '/team', icon: <PiUsersThreeDuotone />, need: ['staff'] },
     { label: tr("Roles & permissions"), desc: tr("What each role can do"), path: '/crm/roles', icon: <PiShieldCheckDuotone />, need: ['roles', 'staff'] },
     { label: tr("Taxes & currencies"), desc: tr("Money settings"), path: '/crm/taxes', icon: <PiCoinsDuotone />, need: ['settings'] },
-    { label: tr("Calendar sync"), desc: tr("Google & Apple Calendar"), path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone />, need: [] },
+    { label: tr("Calendar sync"), desc: tr("Google & Apple Calendar"), path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone />, need: ['calendar'] },
     { label: tr("Account security"), desc: tr("Password and sessions"), path: '/account/security', icon: <PiIdentificationBadgeDuotone />, need: [] },
     { label: tr("All settings"), desc: tr("Every setup option"), path: '/crm/settings', icon: <PiSlidersHorizontalDuotone />, need: ['settings'] },
 ]

@@ -16,5 +16,5 @@ export const customNavItems = [
     { group: 'Utilities', key: 'ai', title: 'AI insights', path: '/crm/ai', feature: null, superOnly: true },
     { group: 'Utilities', key: 'reports', title: 'Reports', path: '/crm/reports', feature: 'reports' },
     { group: 'Utilities', key: 'passwords', title: 'Password vault', path: '/crm/passwords', feature: 'passwords' },
-    { group: 'Utilities', key: 'file-manager', title: 'File manager', path: '/crm/file-manager', feature: null },
+    { group: 'Utilities', key: 'file-manager', title: 'File manager', path: '/crm/file-manager', feature: 'file_manager' },
 ]

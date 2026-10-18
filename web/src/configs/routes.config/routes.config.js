@@ -13,6 +13,7 @@ const ROUTE_FEATURE = [
     ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'], ['/crm/timeline', 'tasks'],
     ['/crm/leads', 'leads'], ['/crm/projects', 'projects'], ['/crm/tickets', 'tickets'], ['/crm/passwords', 'passwords'],
     ['/crm/knowledge-base', 'knowledge_base'], ['/crm/reports', 'reports'], ['/crm/activity', 'activity_log'],
+    ['/crm/chat', 'chat'], ['/crm/file-manager', 'file_manager'], ['/calendar', 'calendar'],
 ]
 // who may open a screen: the people with the view (or view own) permission of its feature, and administrators
 const featureOf = (path) => ROUTE_FEATURE.find(([p]) => path === p || path.startsWith(`${p}/`))?.[1]

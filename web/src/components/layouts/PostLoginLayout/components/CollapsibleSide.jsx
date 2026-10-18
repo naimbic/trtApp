@@ -12,9 +12,12 @@ import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components//template/LayoutBase'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { LAYOUT_COLLAPSIBLE_SIDE } from '@/constants/theme.constant'
+import { useSessionUser } from '@/store/authStore'
 
 const CollapsibleSide = ({ children }) => {
     const { larger, smaller } = useResponsive()
+    const authority = useSessionUser((s) => s.user.authority) || []
+    const canChat = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.chat.view')
 
     return (
         <LayoutBase
@@ -48,7 +51,7 @@ const CollapsibleSide = ({ children }) => {
                     </div>
                 </div>
             </div>
-            <ChatWidget />
+            {canChat && <ChatWidget />}
         </LayoutBase>
     )
 }

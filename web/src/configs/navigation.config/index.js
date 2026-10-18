@@ -44,7 +44,7 @@ const navigationConfig = [
         translateKey: 'nav.calendar',
         icon: 'calendar',
         type: NAV_ITEM_TYPE_ITEM,
-        authority: [],
+        authority: ['admin', 'crm.admin', 'crm.calendar.view'],
         subMenu: [],
     },
     {
@@ -54,7 +54,7 @@ const navigationConfig = [
         translateKey: 'nav.chat',
         icon: 'chat',
         type: NAV_ITEM_TYPE_ITEM,
-        authority: [],
+        authority: ['admin', 'crm.admin', 'crm.chat.view'],
         subMenu: [],
     },
     {

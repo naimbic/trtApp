@@ -114,7 +114,7 @@ export async function onlineStaff(exceptId = null) {
 }
 
 async function ctx() {
-    const session = await requirePermission(null)
+    const session = await requirePermission('chat', 'view')
     const staffId = await getStaffId(session)
     if (!staffId) throw fail('Chat needs a staff profile linked to your login', 403)
     const me = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })

@@ -3,8 +3,8 @@ import { PLACEMENT } from '../utils/constants'
 
 export const toastDefaultProps = {
     placement: PLACEMENT.TOP_END,
-    offsetX: 30,
-    offsetY: 30,
+    offsetX: 16,
+    offsetY: 16,
     transitionType: 'scale',
     block: false,
 }
@@ -39,7 +39,9 @@ function getWrapper(wrapperId) {
 
 const toast = (message) => toast.push(message)
 
-toast.push = (message, options = toastDefaultProps) => {
+toast.push = (message, requested = toastDefaultProps) => {
+    // every message appears in the top right corner, whatever the caller asked for
+    const options = { ...requested, placement: toastDefaultProps.placement, offsetX: toastDefaultProps.offsetX, offsetY: toastDefaultProps.offsetY }
     let id = options.placement
     if (options.block) {
         id = castPlacment(options.placement)

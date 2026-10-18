@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.78.1',
+        date: '2026-10-18',
+        title: 'Compact toasts in the top right',
+        items: ['Messages (saved, deleted, errors...) now appear in the top right corner, smaller (icon and one line), and disappear faster (under 2 seconds), above menus and panels']
+    },
+    {
         version: '0.78.0',
         date: '2026-10-18',
         title: 'Settings lists are edited in place',

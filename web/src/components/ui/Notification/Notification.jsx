@@ -10,14 +10,14 @@ const Notification = (props) => {
         children,
         closable = false,
         customIcon,
-        duration = 3000,
+        duration = 1800,
         onClose,
         style,
         ref,
         title,
         triggerByToast,
         type,
-        width = 350,
+        width = 'auto',
         ...rest
     } = props
 
@@ -59,12 +59,12 @@ const Notification = (props) => {
                 )}
             >
                 {type && !customIcon ? (
-                    <div className="mr-3 mt-0.5">
+                    <div className="mr-2 mt-px text-lg">
                         <StatusIcon type={type} />
                     </div>
                 ) : null}
                 {customIcon && <div className="mr-3">{customIcon}</div>}
-                <div className="mr-4">
+                <div className="mr-1">
                     {title && (
                         <div
                             className={classNames(

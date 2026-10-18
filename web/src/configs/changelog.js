@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.76.3',
+        date: '2026-10-18',
+        title: 'Mails: ready-made designs in Spanish, Japanese and Arabic',
+        items: ['The Ready-made design and Apply ready-made designs to all buttons now also work for the Spanish, Japanese and Arabic templates (all 93 designed templates are translated; Arabic is laid out right-to-left)', 'Templates created on first use (for example purchase orders) also get the design in those languages']
+    },
+    {
         version: '0.76.2',
         date: '2026-10-18',
         title: 'Fix: saving an email template',

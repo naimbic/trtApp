@@ -55,7 +55,7 @@ const Templates = () => {
     const visual = useRef(null)
     const editable = can('email_templates', 'edit')
     const lang = language || list.language
-    const hasDesign = ['french', 'english'].includes(lang)
+    const hasDesign = ['english', 'french', 'spanish', 'japanese', 'arabic'].includes(lang)
 
     const load = useCallback(async () => {
         const q = new URLSearchParams(); if (language) q.set('language', language); if (type) q.set('type', type); if (search.trim()) q.set('query', search.trim())

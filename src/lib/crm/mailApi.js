@@ -4,7 +4,7 @@ import { formatDocumentNumber, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import fs from 'node:fs'
 import path from 'node:path'
-import { buildMessage, SHELL } from '@/lib/crm/mailDesign/build'
+import { buildMessage, SHELL, DESIGN_LANGUAGES } from '@/lib/crm/mailDesign/build'
 import { shortLink } from '@/lib/crm/shortLinks'
 import { activeLanguages, syncTemplateLanguages } from '@/lib/crm/templateLanguages'
 import { baseData, buildHtml, companyLanguage, deliver, findTemplate, getOptions, getSmtp, setOptions, smtpReady, testConnection, mergeFields, escapeHtml } from '@/lib/crm/mailer'
@@ -344,10 +344,10 @@ function backup(name, payload) {
     return path.relative(process.cwd(), file)
 }
 
-/** Replaces templates by the ready-made designs (French / English). One slug, or every template of the language. */
+/** Replaces templates by the ready-made designs (English, French, Spanish, Japanese, Arabic). One slug, or every template of the language. */
 export async function applyDesigns({ language, slug, shell } = {}) {
     await requirePermission('email_templates', 'edit')
-    if (!['french', 'english'].includes(language)) fail('Ready-made designs exist for French and English')
+    if (!DESIGN_LANGUAGES.includes(language)) fail('Ready-made designs exist for English, French, Spanish, Japanese and Arabic')
     const rows = await prisma.crmEmailTemplate.findMany({ where: { language, ...(slug ? { slug } : {}) } })
     if (slug && !rows.length) fail('Template not found')
     const file = backup('email-templates', rows.map(({ id, slug: sl, language: l, subject, message }) => ({ id, slug: sl, language: l, subject, message })))

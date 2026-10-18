@@ -3619,5 +3619,8 @@ export default {
     "Start working on it": "Commencer à y travailler",
     "in view": "affichées",
     "lost": "perdus",
-    "no activity for a while": "aucune activité depuis un moment"
+    "no activity for a while": "aucune activité depuis un moment",
+    "Change status to available": "Passer en disponible",
+    "Change status to away": "Passer en absent",
+    "Now": "Actuellement"
 }

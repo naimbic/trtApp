@@ -65,11 +65,11 @@ const _UserDropdown = ({ className }) => {
             </Dropdown.Item>
             <Dropdown.Item variant="divider" />
             <Dropdown.Item eventKey="Status" className="gap-3" onClick={() => setAway(!away)}>
-                {/* the same status as the dot on the avatar: it follows the global presence (available, idle after a while, away) */}
-                <span className={`h-3 w-3 shrink-0 rounded-full ${STATUS[chatState].dot}`} />
+                {/* the dot is the colour of the status you would switch to: orange for away, green for available */}
+                <span className={`h-3 w-3 shrink-0 rounded-full ${away ? 'bg-emerald-500 shadow-[0_0_8px_2px_rgba(16,185,129,0.55)]' : 'bg-orange-400 shadow-[0_0_8px_2px_rgba(251,146,60,0.6)]'}`} />
                 <span className="leading-tight">
-                    <span className="block text-sm font-semibold">{tr(STATUS[chatState].label)}{chatState === 'idle' ? ` · ${tr("no activity for a while")}` : ''}</span>
-                    <span className="block text-xs text-gray-400">{away ? tr("Set as available") : tr("Set as away")}</span>
+                    <span className="block text-sm font-semibold">{away ? tr("Change status to available") : tr("Change status to away")}</span>
+                    <span className="block text-xs text-gray-400">{tr("Now")}: {tr(STATUS[chatState].label)}{chatState === 'idle' ? ` · ${tr("no activity for a while")}` : ''}</span>
                 </span>
             </Dropdown.Item>
             <Dropdown.Item variant="divider" />

@@ -3619,5 +3619,8 @@ export default {
     "Start working on it": "ابدأ العمل عليها",
     "in view": "معروضة",
     "lost": "خاسرة",
-    "no activity for a while": "لا نشاط منذ فترة"
+    "no activity for a while": "لا نشاط منذ فترة",
+    "Change status to available": "غيّر الحالة إلى متاح",
+    "Change status to away": "غيّر الحالة إلى غائب",
+    "Now": "الآن"
 }

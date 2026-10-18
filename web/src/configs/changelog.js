@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.68.4',
+        date: '2026-10-18',
+        title: 'Status row says what it will do',
+        items: ['In the profile menu the status row now names the action: "Change status to away" while you are available or idle, "Change status to available" while you are away; the current status (Available, Idle, Away) is shown under it, and a glowing dot in the colour of the status you would switch to (orange for away, green for available)']
+    },
+    {
         version: '0.68.3',
         date: '2026-10-18',
         title: 'Status changes at once when you set yourself away',

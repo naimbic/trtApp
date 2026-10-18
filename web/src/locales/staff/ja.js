@@ -3619,5 +3619,8 @@ export default {
     "Start working on it": "作業を始める",
     "in view": "表示中",
     "lost": "失注",
-    "no activity for a while": "しばらく操作がありません"
+    "no activity for a while": "しばらく操作がありません",
+    "Change status to available": "ステータスを「対応可能」に変更",
+    "Change status to away": "ステータスを「離席中」に変更",
+    "Now": "現在"
 }

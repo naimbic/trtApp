@@ -4,6 +4,8 @@ import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { effectiveStatus, numberFormatter, numberOf, LABEL, EXPIRED } from '@/lib/crm/proposalDoc'
 import { trendOf } from '@/lib/crm/trend'
+import { tallyWithAll } from '@/lib/crm/rates'
+import { loadRates } from '@/lib/crm/ratesDb'
 
 const NAME = { ...LABEL, [EXPIRED]: 'Expired' }
 
@@ -32,8 +34,11 @@ export async function listProposals({ query = '', status, relType, currencyId, f
         }
         return money
     }
-    const money = tally(rows)
-    const trend = trendOf(rows, (r) => r.date, tally)
+    const rt = await loadRates()
+    const tallyAll = (list) => tallyWithAll(tally, list, ['total'], rt)
+    const money = tallyAll(rows)
+    const trend = trendOf(rows, (r) => r.date, tallyAll)
+    const ratesMissing = rt.missing
     const q = query.trim().toLowerCase()
     if (status) rows = rows.filter((r) => String(r.status) === String(status))
     if (q) rows = rows.filter((r) => r.number.toLowerCase().includes(q) || r.subject.toLowerCase().includes(q) || r.to.toLowerCase().includes(q))
@@ -41,5 +46,5 @@ export async function listProposals({ query = '', status, relType, currencyId, f
     const keyFn = { number: (r) => r.numberRaw, subject: (r) => r.subject.toLowerCase(), to: (r) => r.to.toLowerCase(), date: (r) => +new Date(r.date || 0), openTill: (r) => +new Date(r.openTill || 0), total: (r) => r.total, status: (r) => r.status }[sortKey] || ((r) => +new Date(r.date || 0))
     rows.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1), size = Math.min(Math.max(parseInt(pageSize, 10) || 10, 1), 200)
-    return { list: rows.slice((page - 1) * size, page * size), total: rows.length, pageIndex: page, pageSize: size, stats: { counts, money, trend } }
+    return { list: rows.slice((page - 1) * size, page * size), total: rows.length, pageIndex: page, pageSize: size, stats: { counts, money, trend, ratesMissing } }
 }

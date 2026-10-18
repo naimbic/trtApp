@@ -1,6 +1,8 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { resolveRange } from '@/lib/crm/dashboard'
+import { toBase, ALL } from '@/lib/crm/rates'
+import { loadRates } from '@/lib/crm/ratesDb'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 
@@ -39,30 +41,37 @@ function buckets(R) {
 export async function runReport(kind, params = {}, opts = {}) {
     await gate(kind)
     const R = resolveRange({ range: params.range || 'year', from: params.from, to: params.to })
-    const cur = (await prisma.crmCurrency.findMany()).find((c) => c.id === params.currencyId) || (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }))
-    const curId = cur?.id || null
+    // ALL: every currency converted into the base one with the rates of the Currencies setup (one without a rate is left out)
+    const isAll = params.currencyId === ALL
+    const rt = await loadRates()
+    const kOf = (currencyId) => (isAll ? toBase(1, currencyId, rt) : 1)
+    const scale = (rows, fields, currencyOf = (r) => r.currencyId) => (isAll ? rows.map((r) => { const k = kOf(currencyOf(r)); return k === null ? null : { ...r, ...Object.fromEntries(fields.map((f) => [f, (r[f] || 0) * k])) } }).filter(Boolean) : rows)
+    const cur = (await prisma.crmCurrency.findMany()).find((c) => c.id === (isAll ? rt.baseId : params.currencyId)) || (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }))
+    const curId = isAll ? null : cur?.id || null
     const B = buckets(R)
     const inRange = { gte: R.from, lt: R.until }
-    const out = { kind, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso, granularity: R.granularity }, labels: R.keys, currency: cur ? { id: cur.id, name: cur.name, symbol: cur.symbol, placement: cur.placement } : null }
+    const out = { kind, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso, granularity: R.granularity }, labels: R.keys, currency: cur ? { id: cur.id, name: cur.name, symbol: cur.symbol, placement: cur.placement } : null, all: isAll, ratesMissing: isAll ? rt.missing : [] }
     const cw = curId ? { currencyId: curId } : {}
 
     if (kind === 'sales') {
         const [invoices, payments, allOpen, clients, modes] = await Promise.all([
             prisma.crmInvoice.findMany({ where: { ...cw, date: inRange } }),
             prisma.crmPayment.findMany({ where: { paymentDate: inRange } }),
-            prisma.crmInvoice.findMany({ where: { ...cw, status: { in: [1, 3, 4] } }, select: { id: true, total: true, dueDate: true, clientId: true } }),
+            prisma.crmInvoice.findMany({ where: { ...cw, status: { in: [1, 3, 4] } }, select: { id: true, total: true, dueDate: true, clientId: true, currencyId: true } }),
             prisma.crmClient.findMany({ select: { id: true, company: true } }),
             prisma.crmPaymentMode.findMany(),
         ])
-        const live = invoices.filter(INV_OK)
+        const live = scale(invoices.filter(INV_OK), ['total', 'totalTax'])
+        const openScaled = scale(allOpen, ['total'])
+        const kById = Object.fromEntries([...live, ...openScaled].map((i) => [i.id, kOf(i.currencyId)]))
         const invById = Object.fromEntries((await prisma.crmInvoice.findMany({ where: { id: { in: [...new Set(payments.map((p) => p.invoiceId).filter(Boolean))] } }, select: { id: true, currencyId: true, clientId: true } })).map((i) => [i.id, i]))
-        const pays = payments.filter((p) => !curId || invById[p.invoiceId]?.currencyId === curId)
-        const paidAll = await prisma.crmPayment.findMany({ where: { invoiceId: { in: [...live.map((i) => i.id), ...allOpen.map((i) => i.id)] } }, select: { invoiceId: true, amount: true } })
+        const pays = isAll ? scale(payments, ['amount'], (p) => invById[p.invoiceId]?.currencyId) : payments.filter((p) => !curId || invById[p.invoiceId]?.currencyId === curId)
+        const paidAll = await prisma.crmPayment.findMany({ where: { invoiceId: { in: [...live.map((i) => i.id), ...openScaled.map((i) => i.id)] } }, select: { invoiceId: true, amount: true } })
         const paidBy = {}
-        for (const p of paidAll) paidBy[p.invoiceId] = round2((paidBy[p.invoiceId] || 0) + (p.amount || 0))
+        for (const p of paidAll) paidBy[p.invoiceId] = round2((paidBy[p.invoiceId] || 0) + (p.amount || 0) * (kById[p.invoiceId] ?? 1))
         const cName = Object.fromEntries(clients.map((c) => [c.id, c.company]))
         const today = new Date(new Date().toDateString())
-        const open = allOpen.map((i) => ({ ...i, due: round2(i.total - (paidBy[i.id] || 0)) })).filter((i) => i.due > 0)
+        const open = openScaled.map((i) => ({ ...i, due: round2(i.total - (paidBy[i.id] || 0)) })).filter((i) => i.due > 0)
         const aging = [['Not yet due', (d) => d <= 0], ['1–30 days', (d) => d >= 1 && d <= 30], ['31–60 days', (d) => d >= 31 && d <= 60], ['61–90 days', (d) => d >= 61 && d <= 90], ['Over 90 days', (d) => d > 90]].map(([label, f]) => { const rows = open.filter((i) => f(i.dueDate ? Math.floor((today - new Date(i.dueDate)) / DAY) : 0)); return { label, count: rows.length, amount: sum(rows, (i) => i.due) } })
         const inv = B.blank(), paid = B.blank(), cnt = B.blank()
         for (const i of live) { const k = B.key(i.date); if (k in inv) { inv[k] = round2(inv[k] + i.total); cnt[k]++ } }
@@ -70,7 +79,8 @@ export async function runReport(kind, params = {}, opts = {}) {
         const byClient = {}
         for (const i of live) { const c = (byClient[i.clientId || 'x'] ||= { id: i.clientId, name: cName[i.clientId] || i.deletedCustomerName || '—', invoiced: 0, paid: 0, invoices: 0 }); c.invoiced = round2(c.invoiced + i.total); c.paid = round2(c.paid + (paidBy[i.id] || 0)); c.invoices++ }
         const ids = live.map((i) => i.id)
-        const lines = ids.length ? await prisma.crmItemable.findMany({ where: { relType: 'invoice', relId: { in: ids } }, select: { id: true, relId: true, description: true, qty: true, rate: true } }) : []
+        const lines0 = ids.length ? await prisma.crmItemable.findMany({ where: { relType: 'invoice', relId: { in: ids } }, select: { id: true, relId: true, description: true, qty: true, rate: true } }) : []
+        const lines = isAll ? lines0.map((l) => ({ ...l, rate: (l.rate || 0) * (kById[l.relId] ?? 1) })) : lines0
         const taxRows = ids.length ? await prisma.crmItemTax.findMany({ where: { relType: 'invoice', relId: { in: ids } }, select: { itemableId: true, relId: true, taxName: true, taxRate: true } }) : []
         const byItem = {}
         for (const l of lines) { const k = (l.description || '').trim().toLowerCase().slice(0, 80); const it = (byItem[k] ||= { name: (l.description || '').trim().slice(0, 80), qty: 0, revenue: 0, invoices: new Set() }); it.qty = round2(it.qty + (l.qty || 0)); it.revenue = round2(it.revenue + (l.qty || 0) * (l.rate || 0)); it.invoices.add(l.relId) }
@@ -98,14 +108,15 @@ export async function runReport(kind, params = {}, opts = {}) {
             tax: Object.values(tax).sort((a, b) => b.amount - a.amount), aging,
         })
     } else if (kind === 'profit') {
-        const [payments, expenses, cats, taxes] = await Promise.all([
+        const [payments, expenses0, cats, taxes] = await Promise.all([
             prisma.crmPayment.findMany({ where: { paymentDate: inRange } }),
             prisma.crmExpense.findMany({ where: { ...cw, date: inRange } }),
             prisma.crmExpenseCategory.findMany(), prisma.crmTax.findMany(),
         ])
+        const expenses = scale(expenses0, ['amount'])
         const invs = await prisma.crmInvoice.findMany({ where: { id: { in: [...new Set(payments.map((p) => p.invoiceId).filter(Boolean))] } }, select: { id: true, currencyId: true } })
         const iCur = Object.fromEntries(invs.map((i) => [i.id, i.currencyId]))
-        const pays = payments.filter((p) => !curId || iCur[p.invoiceId] === curId)
+        const pays = isAll ? scale(payments, ['amount'], (p) => iCur[p.invoiceId]) : payments.filter((p) => !curId || iCur[p.invoiceId] === curId)
         const tx = Object.fromEntries(taxes.map((t) => [t.id, t.taxRate])), cName = Object.fromEntries(cats.map((c) => [c.id, c.name]))
         const exp = (e) => round2((e.amount || 0) * (1 + ((tx[e.taxId] || 0) + (tx[e.tax2Id] || 0)) / 100))
         const inc = B.blank(), out2 = B.blank()

@@ -5,6 +5,8 @@ import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { numberFormatter as proposalNumber } from '@/lib/crm/proposalDoc'
 import { round2 } from '@/lib/crm/sales/calc'
 import { resolveRange } from '@/lib/crm/dashboard'
+import { toBase, ALL } from '@/lib/crm/rates'
+import { loadRates } from '@/lib/crm/ratesDb'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -200,9 +202,16 @@ export async function clientBilling(id, params = {}) {
     const P = resolveRange({ range: 'custom', from: prevFrom.toISOString().slice(0, 10), to: new Date(R.from.getTime() - 86400000).toISOString().slice(0, 10) })
     const [invoices] = await Promise.all([prisma.crmInvoice.findMany({ where: { clientId: id, status: { notIn: [5, 6] } }, select: { id: true, total: true, date: true, createdAt: true, currencyId: true } })])
     const currencies = [...new Set(invoices.map((i) => i.currencyId || 'none'))]
-    const cur = currencies.includes(params.currencyId) ? params.currencyId : currencies[0] || null
-    const mine = invoices.filter((i) => (i.currencyId || 'none') === cur)
-    const pays = mine.length ? await prisma.crmPayment.findMany({ where: { invoiceId: { in: mine.map((i) => i.id) }, paymentDate: { gte: prevFrom, lt: R.until } }, select: { amount: true, paymentDate: true } }) : []
+    // ALL: every currency converted into the base one with the saved rates (one without a rate is left out)
+    const isAll = params.currencyId === ALL
+    const rt = await loadRates()
+    const cur = isAll ? ALL : currencies.includes(params.currencyId) ? params.currencyId : currencies[0] || null
+    const kBy = {}
+    const mine = isAll
+        ? invoices.map((i) => { const k = toBase(1, i.currencyId, rt); if (k === null) return null; kBy[i.id] = k; return { ...i, total: (i.total || 0) * k } }).filter(Boolean)
+        : invoices.filter((i) => (i.currencyId || 'none') === cur)
+    const pays0 = mine.length ? await prisma.crmPayment.findMany({ where: { invoiceId: { in: mine.map((i) => i.id) }, paymentDate: { gte: prevFrom, lt: R.until } }, select: { amount: true, paymentDate: true, invoiceId: true } }) : []
+    const pays = isAll ? pays0.map((p) => ({ ...p, amount: (p.amount || 0) * (kBy[p.invoiceId] ?? 1) })) : pays0
     const key = (d, g) => { const x = new Date(d); return g === 'day' ? x.toISOString().slice(0, 10) : `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, '0')}` }
     const build = (win, rows, pick) => {
         const out = Object.fromEntries(win.keys.map((k) => [k, 0]))
@@ -220,7 +229,7 @@ export async function clientBilling(id, params = {}) {
     const sum = (a) => round2(a.reduce((x, y) => x + y, 0))
     const pack = (k) => ({ series: now[k], prev: before[k], total: sum(now[k]), prevTotal: sum(before[k]) })
     return {
-        labels: R.keys, granularity: R.granularity, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso }, currencies, currencyId: cur,
+        labels: R.keys, granularity: R.granularity, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso }, currencies, currencyId: cur, ratesMissing: isAll ? rt.missing : [],
         invoiced: pack('invoiced'), paid: pack('paid'), count: pack('count'),
     }
 }

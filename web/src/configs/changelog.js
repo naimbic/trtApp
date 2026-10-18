@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.55.0',
+        date: '2026-10-18',
+        title: 'Compact currency and colour pickers, and an ALL currencies view',
+        items: ['The top bar is lighter: the currency switch and the colour dots now show only the chosen one (a small coin icon with the currency, a palette icon with the colour); rest the pointer on it (or tap it) and the others slide out, including ALL for currencies', 'ALL adds every currency together in the base currency: Dashboard, Invoices, Payments, Estimates, Proposals, Purchase orders, Expenses, Reports and a client\'s billing all follow it, cards and charts included', 'Settings → Currencies has a new "Rate to the base currency" (1 unit of this currency = how many base units): ALL uses it. A currency without a rate is left out of ALL, never guessed, and the ALL button shows an amber dot with the names while it is missing one', 'Expenses totals are now added in the base currency with those rates too (before, amounts of different currencies were added as if they were the same)']
+    },
+    {
         version: '0.54.0',
         date: '2026-10-18',
         title: 'New figure cards, with animation',

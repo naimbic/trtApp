@@ -4,6 +4,8 @@ import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { trendOf } from '@/lib/crm/trend'
+import { tallyWithAll } from '@/lib/crm/rates'
+import { loadRates } from '@/lib/crm/ratesDb'
 
 const STATUS_LABEL = { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft' }
 const day = (d) => new Date(d).toISOString().slice(0, 10)
@@ -65,8 +67,11 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
         }
         return money
     }
-    const money = tally(rows)
-    const trend = trendOf(rows, (r) => r.date, tally)
+    const rt = await loadRates()
+    const tallyAll = (list) => tallyWithAll(tally, list, ['total', 'paid', 'due'], rt)
+    const money = tallyAll(rows)
+    const trend = trendOf(rows, (r) => r.date, tallyAll)
+    const ratesMissing = rt.missing
 
     const q = query.trim().toLowerCase()
     if (status) rows = rows.filter((r) => String(r.status) === String(status))
@@ -75,7 +80,7 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     const keyFn = { number: (r) => r.numberRaw, client: (r) => r.client.toLowerCase(), date: (r) => +new Date(r.date || 0), dueDate: (r) => +new Date(r.dueDate || 0), total: (r) => r.total, due: (r) => r.due, status: (r) => r.status }[sortKey] || ((r) => +new Date(r.date || 0))
     rows.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const { page, size, list } = paginate(rows, pageIndex, pageSize)
-    return { list, total: rows.length, pageIndex: page, pageSize: size, stats: { counts: statCounts, money, trend } }
+    return { list, total: rows.length, pageIndex: page, pageSize: size, stats: { counts: statCounts, money, trend, ratesMissing } }
 }
 
 export async function listPayments({ query = '', modeId, clientId, from, to, pageIndex = 1, pageSize = 15, sortKey = 'paymentDate', order = 'desc' } = {}) {
@@ -98,8 +103,10 @@ export async function listPayments({ query = '', modeId, clientId, from, to, pag
         return { id: p.id, amount: p.amount, paymentDate: p.paymentDate, modeId: p.paymentModeId, mode: mode[p.paymentModeId] || p.paymentMethod || '', transactionId: p.transactionId || '', note: p.note || '', invoiceId: p.invoiceId, invoiceNumber: i ? docNumberOf(i, padding) : '', clientId: i?.clientId || null, client: cname[i?.clientId] || '', currencyId: i?.currencyId || null }
     })
     const sumBy = (list) => { const t = {}; list.forEach((r) => (t[r.currencyId || 'none'] = round2((t[r.currencyId || 'none'] || 0) + r.amount))); return t }
-    const totals = sumBy(rows)
-    const trend = trendOf(rows, (r) => r.paymentDate, sumBy)
+    const rt = await loadRates()
+    const sumAll = (list) => tallyWithAll(sumBy, list, ['amount'], rt)
+    const totals = sumAll(rows)
+    const trend = trendOf(rows, (r) => r.paymentDate, sumAll)
     const q = query.trim().toLowerCase()
     if (q) rows = rows.filter((r) => r.invoiceNumber.toLowerCase().includes(q) || r.client.toLowerCase().includes(q) || r.transactionId.toLowerCase().includes(q) || r.mode.toLowerCase().includes(q))
     const dir = order === 'asc' ? 1 : -1

@@ -36,7 +36,10 @@ export function usePageRange() {
 }
 
 /** Shows the page's currencies in the top-bar filter and keeps the page and the bar on the same one. */
-export function useRegisterCurrency(options, value, onChange) {
+export function useRegisterCurrency(rawOptions, value, onChange) {
+    // the pages list their real currencies; with two or more the bar also offers ALL (everything converted into the base currency)
+    const real = rawOptions.filter((o) => o.id !== 'all')
+    const options = real.length > 1 ? [...real, { id: 'all', name: 'ALL' }] : real
     const sig = options.map((o) => o.id).join(',')
     const picked = useDashFilters((s) => s.currencyId)
     useEffect(() => { useDashFilters.setState({ currencies: options }) }, [sig]) // eslint-disable-line react-hooks/exhaustive-deps

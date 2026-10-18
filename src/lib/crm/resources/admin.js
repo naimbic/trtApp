@@ -241,6 +241,7 @@ const resources = [
             { key: 'symbol', label: 'Symbol', type: 'text' },
             { key: 'placement', label: 'Placement', type: 'text' },
             { key: 'isDefault', label: 'Default', type: 'boolean' },
+            { key: 'rate', label: 'Rate to base', type: 'number' },
         ],
         fields: [
             { key: 'name', label: 'Name (ISO code)', type: 'text', required: true, section: 'General' },
@@ -249,6 +250,7 @@ const resources = [
             { key: 'thousandSeparator', label: 'Thousand separator', type: 'text', section: 'Format' },
             { key: 'placement', label: 'Symbol placement', type: 'select', section: 'Format', options: [{ value: 'before', label: 'Before amount' }, { value: 'after', label: 'After amount' }] },
             { key: 'isDefault', label: 'Base currency', type: 'boolean', section: 'Format' },
+            { key: 'rate', label: 'Rate to the base currency (1 unit of this currency = ? base)', type: 'number', section: 'Rate', help: 'Used by the ALL view to add currencies together. Leave empty for the base currency; a currency without a rate is left out of ALL.' },
         ],
         filters: [], children: [], actions: [],
     },

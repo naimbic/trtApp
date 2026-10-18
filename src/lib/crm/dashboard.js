@@ -3,6 +3,8 @@ import { auth } from '@/auth'
 import { viewScope, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
+import { toBase, ALL } from '@/lib/crm/rates'
+import { loadRates } from '@/lib/crm/ratesDb'
 
 const iso = (d) => d.toISOString().slice(0, 10)
 const monthKey = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
@@ -83,6 +85,8 @@ export async function getDashboardMetrics(params = {}) {
     }
 
     const currencies = await prisma.crmCurrency.findMany({ orderBy: { name: 'asc' } })
+    const rt = await loadRates() // for the ALL view: every currency converted into the base one
+    data.ratesMissing = rt.missing
     data.currencies = currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, isDefault: c.isDefault, placement: c.placement }))
 
     await section('invoices', 'invoices', async () => {
@@ -111,57 +115,63 @@ export async function getDashboardMetrics(params = {}) {
         const clientTotals = {}
         const paidBefore = {} // payments received before the period began
         for (const p of payments) if (p.invoiceId && p.paymentDate && new Date(p.paymentDate) < since) paidBefore[p.invoiceId] = round2((paidBefore[p.invoiceId] || 0) + (p.amount || 0))
+        // every figure goes to its own currency and, converted with its rate, to ALL
+        const targets = (cid) => { const k = toBase(1, cid, rt); return k === null ? [[bucket(cid), 1]] : cid === ALL ? [[bucket(cid), 1]] : [[bucket(cid), 1], [bucket(ALL), k]] }
         for (const i of invoices) {
             if (i.status === 5 || i.status === 6) continue // cancelled / draft don't count as revenue
-            const b = bucket(i.currencyId)
-            if (i.date && new Date(i.date) < since) {
-                const dueThen = round2(i.total - (paidBefore[i.id] || 0))
-                if (dueThen > 0) {
-                    b.outstandingAtStart = round2(b.outstandingAtStart + dueThen)
-                    if (i.dueDate && new Date(i.dueDate) < since) b.overdueAtStart = round2(b.overdueAtStart + dueThen)
-                }
-            }
             const paid = paidByInvoice[i.id] || 0
             const due = round2(i.total - paid)
-            // snapshots (as of today, independent of the date filter)
-            b.outstanding = round2(b.outstanding + Math.max(due, 0))
             const overdue = due > 0 && i.dueDate && new Date(i.dueDate) < startOfToday
-            if (overdue) {
-                b.overdue = round2(b.overdue + due)
-                b.overdueCount += 1
+            const dueThen = i.date && new Date(i.date) < since ? round2(i.total - (paidBefore[i.id] || 0)) : 0
+            for (const [b, k] of targets(i.currencyId)) {
+                if (dueThen > 0) {
+                    b.outstandingAtStart = round2(b.outstandingAtStart + dueThen * k)
+                    if (i.dueDate && new Date(i.dueDate) < since) b.overdueAtStart = round2(b.overdueAtStart + dueThen * k)
+                }
+                // snapshots (as of today, independent of the date filter)
+                b.outstanding = round2(b.outstanding + Math.max(due, 0) * k)
+                if (overdue) {
+                    b.overdue = round2(b.overdue + due * k)
+                    b.overdueCount += 1
+                }
+                // period figures: invoices dated inside the selected range
+                if (!inRange(i.date)) continue
+                b.invoiced = round2(b.invoiced + i.total * k)
+                const st = INVOICE_STATUS[i.status] || String(i.status)
+                b.byStatus[st] = (b.byStatus[st] || 0) + 1
+                const mk = bk(i.date)
+                if (mk in b.invoicedByMonth) b.invoicedByMonth[mk] = round2(b.invoicedByMonth[mk] + i.total * k)
             }
-            // period figures: invoices dated inside the selected range
-            if (!inRange(i.date)) continue
-            b.invoiced = round2(b.invoiced + i.total)
-            const st = INVOICE_STATUS[i.status] || String(i.status)
-            b.byStatus[st] = (b.byStatus[st] || 0) + 1
-            const mk = bk(i.date)
-            if (mk in b.invoicedByMonth) b.invoicedByMonth[mk] = round2(b.invoicedByMonth[mk] + i.total)
-            if (i.clientId) {
-                const k = `${i.clientId}|${i.currencyId || 'none'}`
-                clientTotals[k] = round2((clientTotals[k] || 0) + i.total)
+            if (inRange(i.date) && i.clientId) {
+                const kk = `${i.clientId}|${i.currencyId || 'none'}`
+                clientTotals[kk] = round2((clientTotals[kk] || 0) + i.total)
             }
         }
         // collected = payments dated inside the selected range
         for (const p of payments) {
             const inv = invById[p.invoiceId]
             if (!inv || !inRange(p.paymentDate)) continue
-            const b = bucket(inv.currencyId)
-            b.paid = round2(b.paid + (p.amount || 0))
-            const mk = bk(p.paymentDate)
-            if (mk in b.collectedByMonth) b.collectedByMonth[mk] = round2(b.collectedByMonth[mk] + (p.amount || 0))
+            for (const [b, k] of targets(inv.currencyId)) {
+                b.paid = round2(b.paid + (p.amount || 0) * k)
+                const mk = bk(p.paymentDate)
+                if (mk in b.collectedByMonth) b.collectedByMonth[mk] = round2(b.collectedByMonth[mk] + (p.amount || 0) * k)
+            }
         }
 
         const clientIds = [...new Set(Object.keys(clientTotals).map((k) => k.split('|')[0]))]
         const clients = await prisma.crmClient.findMany({ where: { id: { in: clientIds } }, select: { id: true, company: true } })
         const clientName = Object.fromEntries(clients.map((c) => [c.id, c.company]))
-        const topClients = Object.entries(clientTotals)
-            .map(([k, total]) => {
-                const [clientId, currencyId] = k.split('|')
-                return { clientId, currencyId, company: clientName[clientId] || '—', total }
-            })
-            .sort((a, b) => b.total - a.total)
-            .slice(0, 8)
+        // the best clients of each currency, and of ALL (every client's invoices converted into the base currency)
+        const perCurrency = {}
+        const allByClient = {}
+        for (const [k, total] of Object.entries(clientTotals)) {
+            const [clientId, currencyId] = k.split('|')
+            ;(perCurrency[currencyId] ||= []).push({ clientId, currencyId, company: clientName[clientId] || '—', total })
+            const f = toBase(1, currencyId === 'none' ? null : currencyId, rt)
+            if (f !== null) allByClient[clientId] = round2((allByClient[clientId] || 0) + total * f)
+        }
+        perCurrency[ALL] = Object.entries(allByClient).map(([clientId, total]) => ({ clientId, currencyId: ALL, company: clientName[clientId] || '—', total }))
+        const topClients = Object.values(perCurrency).flatMap((list) => list.sort((a, b) => b.total - a.total).slice(0, 8))
 
         const overdueList = invoices
             .filter((i) => i.status !== 5 && i.status !== 6 && i.dueDate && new Date(i.dueDate) < startOfToday && round2(i.total - (paidByInvoice[i.id] || 0)) > 0)
@@ -176,9 +186,12 @@ export async function getDashboardMetrics(params = {}) {
         const rows = await prisma.crmExpense.findMany({ where: { date: { gte: since, lt: until } }, select: { amount: true, currencyId: true, date: true } })
         const byCurrency = {}
         for (const e of rows) {
-            const b = (byCurrency[e.currencyId || 'none'] ||= Object.fromEntries(months.map((m) => [m, 0])))
+            const k = toBase(1, e.currencyId, rt)
             const mk = bk(e.date)
-            if (mk in b) b[mk] = round2(b[mk] + (e.amount || 0))
+            for (const [cid, f] of [[e.currencyId || 'none', 1], ...(k === null ? [] : [[ALL, k]])]) {
+                const b = (byCurrency[cid] ||= Object.fromEntries(months.map((m) => [m, 0])))
+                if (mk in b) b[mk] = round2(b[mk] + (e.amount || 0) * f)
+            }
         }
         return { byCurrency }
     })

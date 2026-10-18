@@ -169,6 +169,7 @@ model CrmCurrency {
   thousandSeparator String?
   placement         String?  // 'before' | 'after'
   isDefault         Boolean  @default(false)
+  rate              Float?   // how many units of the base currency one unit of this one is worth (used by the ALL view)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

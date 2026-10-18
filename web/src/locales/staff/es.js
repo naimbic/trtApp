@@ -1,5 +1,10 @@
 // Staff area: es. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "ALL": "TODO",
+    "All currencies, converted into the base currency": "Todas las monedas, convertidas a la moneda base",
+    "All currencies in the base currency. No rate for {n}: left out (set it in Settings → Currencies)": "Todas las monedas en la moneda base. Sin tipo para {n}: se omite (defínelo en Ajustes → Monedas)",
+    "Rate to base": "Tipo a la base",
+    "Rate to the base currency (1 unit of this currency = ? base)": "Tipo a la moneda base (1 unidad de esta moneda = ? base)",
     "last 12 months vs the 12 before": "últimos 12 meses frente a los 12 anteriores",
     "since the period began": "desde que empezó el periodo",
     "vs previous period": "frente al periodo anterior",

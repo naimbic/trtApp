@@ -4,6 +4,8 @@ import { getOptions } from '@/lib/crm/mailer'
 import { saveInvoice } from '@/server/actions/crm/sales/invoices'
 import { round2 } from '@/lib/crm/sales/calc'
 import { trendOf } from '@/lib/crm/trend'
+import { toBase } from '@/lib/crm/rates'
+import { loadRates } from '@/lib/crm/ratesDb'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -59,13 +61,17 @@ export async function listExpenses(q = {}) {
     ])
     const cMap = Object.fromEntries(clients.map((c) => [c.id, c.company])), pMap = Object.fromEntries(projects.map((p) => [p.id, p.name])), iMap = Object.fromEntries(invoices.map((i) => [i.id, `${i.prefix || ''}${i.number}`]))
     // totals of everything the filters match (not just this page), per currency, plus category and month breakdowns
+    // the totals are in the base currency (each expense converted with the rate saved on its currency; one without a rate is left out)
+    const rt = await loadRates()
     const sums = (list) => {
         const s = { total: 0, tax: 0, billable: 0, invoiced: 0, count: list.length }
         for (const e of list) {
+            const k = toBase(1, e.currencyId, rt)
+            if (k === null) continue
             const t = withTax(e, tx)
-            s.total = round2(s.total + t.total); s.tax = round2(s.tax + t.tax)
-            if (e.billable && !e.invoiceId) s.billable = round2(s.billable + t.total)
-            if (e.invoiceId) s.invoiced = round2(s.invoiced + t.total)
+            s.total = round2(s.total + t.total * k); s.tax = round2(s.tax + t.tax * k)
+            if (e.billable && !e.invoiceId) s.billable = round2(s.billable + t.total * k)
+            if (e.invoiceId) s.invoiced = round2(s.invoiced + t.total * k)
         }
         return s
     }
@@ -73,13 +79,15 @@ export async function listExpenses(q = {}) {
     const trend = trendOf(all, (e) => e.date, sums)
     const byCat = {}, byMonth = {}
     for (const e of all) {
+        const rate = toBase(1, e.currencyId, rt)
+        if (rate === null) continue
         const t = withTax(e, tx)
-        byCat[e.categoryId || 'none'] = round2((byCat[e.categoryId || 'none'] || 0) + t.total)
-        if (e.date) { const k = new Date(e.date).toISOString().slice(0, 7); byMonth[k] = round2((byMonth[k] || 0) + t.total) }
+        byCat[e.categoryId || 'none'] = round2((byCat[e.categoryId || 'none'] || 0) + t.total * rate)
+        if (e.date) { const k = new Date(e.date).toISOString().slice(0, 7); byMonth[k] = round2((byMonth[k] || 0) + t.total * rate) }
     }
     return {
         list: rows.map((e) => ({ id: e.id, number: e.legacyId, name: e.expenseName || cat[e.categoryId] || 'Expense', category: cat[e.categoryId] || '', categoryId: e.categoryId, amount: e.amount, ...withTax(e, tx), currencyId: e.currencyId, date: e.date, reference: e.referenceNo, paymentMode: mode[e.paymentModeId] || '', client: e.clientId ? { id: e.clientId, name: cMap[e.clientId] || '' } : null, project: e.projectId ? { id: e.projectId, name: pMap[e.projectId] || '' } : null, billable: e.billable, invoice: e.invoiceId ? { id: e.invoiceId, number: iMap[e.invoiceId] || '' } : null, recurring: e.recurring, repeated: !!e.recurringFrom, note: e.note })),
-        total, pageIndex: page, pageSize: size, stats: { ...stats, trend },
+        total, pageIndex: page, pageSize: size, stats: { ...stats, trend, ratesMissing: rt.missing },
         topCategories: Object.entries(byCat).map(([id, v]) => ({ id, name: cat[id] || 'Uncategorised', value: v })).sort((x, y) => y.value - x.value).slice(0, 6),
         months: Object.entries(byMonth).sort(([x], [y]) => x.localeCompare(y)).slice(-12).map(([month, value]) => ({ month, value })),
         lookups: lk, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete'), invoice: hasCap(a.authority, 'invoices', 'create') },

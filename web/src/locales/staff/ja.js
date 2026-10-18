@@ -1,5 +1,10 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "ALL": "すべて",
+    "All currencies, converted into the base currency": "すべての通貨を基準通貨に換算",
+    "All currencies in the base currency. No rate for {n}: left out (set it in Settings → Currencies)": "すべての通貨を基準通貨で表示。{n} にはレートがないため除外されます（設定 → 通貨で設定）",
+    "Rate to base": "基準へのレート",
+    "Rate to the base currency (1 unit of this currency = ? base)": "基準通貨へのレート（この通貨1単位 = 基準通貨いくつ）",
     "last 12 months vs the 12 before": "直近12か月と、その前の12か月の比較",
     "since the period began": "期間開始時点から",
     "vs previous period": "前の期間との比較",

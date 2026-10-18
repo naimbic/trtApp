@@ -3,6 +3,8 @@ import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
+import { toBase, ALL } from '@/lib/crm/rates'
+import { loadRates } from '@/lib/crm/ratesDb'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const str = (v) => (v === undefined || v === null || String(v).trim() === '' ? null : String(v).trim())
@@ -20,9 +22,10 @@ export async function scope(session) {
 const contactName = (c) => (c ? [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email || '' : '')
 
 /** Per-client money summary per currency, from invoices (draft/cancelled ignored) and their payments. */
-async function moneyFor(clientIds) {
+async function moneyFor(clientIds, withAll = false) {
     const out = {}
     if (!clientIds.length) return out
+    const rt = withAll ? await loadRates() : null
     const invoices = await prisma.crmInvoice.findMany({
         where: { clientId: { in: clientIds }, status: { notIn: [5, 6] } },
         select: { id: true, clientId: true, currencyId: true, total: true, dueDate: true },
@@ -33,15 +36,19 @@ async function moneyFor(clientIds) {
     const today = new Date()
     for (const i of invoices) {
         const cur = (out[i.clientId] ||= {})
-        const b = (cur[i.currencyId || 'none'] ||= { invoiced: 0, paid: 0, outstanding: 0, overdue: 0, invoices: 0 })
         const p = paid[i.id] || 0
         const due = round2(i.total - p)
-        b.invoices += 1
-        b.invoiced = round2(b.invoiced + i.total)
-        b.paid = round2(b.paid + p)
-        if (due > 0) {
-            b.outstanding = round2(b.outstanding + due)
-            if (i.dueDate && new Date(i.dueDate) < today) b.overdue = round2(b.overdue + due)
+        // its own currency and, for the detail page, ALL (converted with the saved rate; no rate: left out of ALL)
+        const k = rt ? toBase(1, i.currencyId, rt) : null
+        for (const [key, f] of [[i.currencyId || 'none', 1], ...(k === null ? [] : [[ALL, k]])]) {
+            const b = (cur[key] ||= { invoiced: 0, paid: 0, outstanding: 0, overdue: 0, invoices: 0 })
+            b.invoices += 1
+            b.invoiced = round2(b.invoiced + i.total * f)
+            b.paid = round2(b.paid + p * f)
+            if (due > 0) {
+                b.outstanding = round2(b.outstanding + due * f)
+                if (i.dueDate && new Date(i.dueDate) < today) b.overdue = round2(b.overdue + due * f)
+            }
         }
     }
     return out
@@ -126,7 +133,7 @@ export async function getClientDetail(id) {
         prisma.crmNote.count({ where: { relType: 'customer', ...rel } }),
         prisma.crmFile.count({ where: { relType: 'customer', ...rel } }),
     ])
-    const money = (await moneyFor([id]))[id] || {}
+    const money = (await moneyFor([id], true))[id] || {}
     return {
         id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId,
         address: c.address, city: c.city, state: c.state, zip: c.zip, country: c.country, countryName: cname[c.country] || '',

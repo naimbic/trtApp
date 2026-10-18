@@ -220,7 +220,8 @@ const BusinessDashboard = () => {
                 setData(d)
                 setError(null)
                 const used = Object.keys(d.invoices?.byCurrency || {})
-                setCurrencies(d.currencies.filter((c) => used.includes(c.id)))
+                const realCur = d.currencies.filter((c) => used.includes(c.id))
+                setCurrencies(realCur.length > 1 ? [...realCur, { id: 'all', name: 'ALL' }] : realCur)
                 if (!used.includes(useDashFilters.getState().currencyId)) {
                     const def = d.currencies.find((c) => c.isDefault && used.includes(c.id)) || d.currencies.find((c) => used.includes(c.id))
                     setCurrency(def?.id || used[0] || null)
@@ -235,10 +236,10 @@ const BusinessDashboard = () => {
 
     const currencyId = pickedCurrency
 
-    const cur = useMemo(() => data?.currencies.find((c) => c.id === currencyId), [data, currencyId])
+    const cur = useMemo(() => data?.currencies.find((c) => c.id === currencyId) || (currencyId === 'all' ? data?.currencies.find((c) => c.isDefault) || data?.currencies[0] : undefined), [data, currencyId])
     const fmt = (v, id, short) => {
         if (moneyHidden()) return MASK
-        const c = data?.currencies.find((x) => x.id === id) || cur
+        const c = data?.currencies.find((x) => x.id === id) || cur || data?.currencies.find((x) => x.isDefault)
         const s = c?.symbol || c?.name || ''
         const n = short ? compact(v) : nf(v)
         return c?.placement === 'after' ? `${n} ${s}` : `${s ? s + ' ' : ''}${n}`

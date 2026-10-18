@@ -1,5 +1,10 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "ALL": "الكل",
+    "All currencies, converted into the base currency": "كل العملات محوَّلة إلى العملة الأساسية",
+    "All currencies in the base currency. No rate for {n}: left out (set it in Settings → Currencies)": "كل العملات بالعملة الأساسية. لا يوجد سعر لـ {n}: مستبعدة (حدده في الإعدادات ← العملات)",
+    "Rate to base": "السعر إلى الأساس",
+    "Rate to the base currency (1 unit of this currency = ? base)": "السعر إلى العملة الأساسية (وحدة واحدة من هذه العملة = ؟ أساسية)",
     "last 12 months vs the 12 before": "آخر 12 شهراً مقابل الـ12 السابقة",
     "since the period began": "منذ بداية الفترة",
     "vs previous period": "مقارنة بالفترة السابقة",

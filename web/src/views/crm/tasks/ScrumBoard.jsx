@@ -113,15 +113,20 @@ const ScrumBoard = () => {
                                 <StatCard icon={<TbCircleCheck />} label={tr('Completed')} value={`${m.rate}%`} sub={m.avgDays === null ? tr('{n} done', { n: m.done }) : tr('{n} done · {d} days on average', { n: m.done, d: m.avgDays })} tone="green" />
                                 <StatCard icon={<TbUsers />} label={tr('Team')} value={m.workload.length} sub={tr('{n} tasks without an owner', { n: m.unassigned })} tone={m.unassigned ? 'amber' : 'teal'} />
                             </div>
-                            <div className="mb-4 grid gap-4 xl:grid-cols-3">
-                                <Panel className="xl:col-span-2" title={tr('Burn-up')} subtitle={tr('Tasks in the project and tasks finished, last 21 days')}>
-                                    <TrendChart labels={m.labels.map((l) => dayjs(l).format('D MMM'))} height={250} colors={[PALETTE.blue, PALETTE.green]} series={[{ name: tr('All tasks'), data: m.scope }, { name: tr('Finished'), data: m.finished }]} />
-                                </Panel>
-                                <Panel title={tr('By status')} subtitle={tr('{n} tasks', { n: m.total })}>
-                                    <DonutChart data={m.byStatus} height={250} title={tr('Tasks')} />
-                                </Panel>
-                            </div>
-                            <div className="mb-2 grid gap-4 xl:grid-cols-3">
+                        </>
+                    )}
+                </div>
+            )}
+
+            {!projectId ? (
+                <div className="mt-8 rounded-2xl border border-dashed border-gray-300 py-16 text-center text-gray-400 dark:border-gray-600">{tr('Choose a project above to open its scrum board.')}</div>
+            ) : (
+                <>
+                <div className="mt-6">
+                    <TasksBoard projectId={projectId} boardOnly onChanged={load} />
+                </div>
+                {!loading && data.list.length > 0 && showInsights && (
+                            <div className="mt-6 grid gap-4 xl:grid-cols-3">
                                 <Panel className="xl:col-span-2" title={tr('Who works on what')} subtitle={tr('Open and finished tasks per person')}>
                                     {m.workload.length ? (
                                         <div className="flex flex-col gap-3.5">
@@ -147,17 +152,8 @@ const ScrumBoard = () => {
                                     ) : <p className="py-6 text-center text-sm text-gray-400">{tr('Nothing due in the next days. 🎉')}</p>}
                                 </Panel>
                             </div>
-                        </>
-                    )}
-                </div>
-            )}
-
-            {!projectId ? (
-                <div className="mt-8 rounded-2xl border border-dashed border-gray-300 py-16 text-center text-gray-400 dark:border-gray-600">{tr('Choose a project above to open its scrum board.')}</div>
-            ) : (
-                <div className="mt-6">
-                    <TasksBoard projectId={projectId} boardOnly onChanged={load} />
-                </div>
+                )}
+                </>
             )}
         </AdaptiveCard>
     )

@@ -3615,5 +3615,6 @@ export default {
     "Source changed": "Fuente cambiada",
     "Team changed": "Equipo cambiado",
     "Won": "Ganado",
-    "Add to {name}": "Añadir a {name}"
+    "Add to {name}": "Añadir a {name}",
+    "Start working on it": "Empezar a trabajar en ello"
 }

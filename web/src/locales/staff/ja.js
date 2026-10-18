@@ -3615,5 +3615,6 @@ export default {
     "Source changed": "ソースを変更しました",
     "Team changed": "チームを変更しました",
     "Won": "成約",
-    "Add to {name}": "{name} に追加"
+    "Add to {name}": "{name} に追加",
+    "Start working on it": "作業を始める"
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbPencil, TbFlag, TbUserPlus, TbCalendarDue } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbPencil, TbFlag, TbUserPlus, TbCalendarDue, TbLoader } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Container from '@/components/shared/Container'
@@ -132,7 +132,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                     onOpen={(it) => open(it.id)}
                     onAdd={data.can.create ? (c) => setDrawer({ open: true, id: null, preset: { status: c.id }, k: 0 }) : undefined}
                     onMoveTo={data.can.edit ? moveTo : undefined}
-                    ends={data.can.edit ? [{ id: 'won', name: tr("Done"), sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
+                    ends={data.can.edit ? [{ id: 'won', name: tr("Done"), sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, { id: 'progress', name: tr("In progress"), sub: tr("Start working on it"), icon: <TbLoader />, tone: 'progress' }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
                     actions={(it) => [
                         ...(data.can.edit ? [
                             { label: tr("Mark complete"), icon: <TbCircleCheck />, onClick: () => moveTo(it, 5) },
@@ -144,7 +144,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         ...(data.can.delete ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => setDel(it) }] : []),
                     ]}
                     onMove={({ item, from, to, index, fromIndex }) => {
-                        if (String(to).startsWith('end:')) return String(to) === 'end:won' ? moveTo(item, 5) : setDel(item)
+                        if (String(to).startsWith('end:')) return String(to) === 'end:won' ? moveTo(item, 5) : String(to) === 'end:progress' ? moveTo(item, 4) : setDel(item)
                         onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
                     }}
                     columns={shownStatuses.map((s) => {

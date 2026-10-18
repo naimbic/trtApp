@@ -120,3 +120,5 @@
 .rp-pl-add { width: 30px; height: 30px; margin-inline-start: 4px; border-radius: 50%; display: grid; place-items: center; border: 0; background: var(--rp-well); color: var(--rp-text); cursor: pointer; font-size: 17px; flex: none; transition: transform .35s cubic-bezier(.3, 1.7, .5, 1), background .2s, color .2s; }
 .rp-pl-add:hover { transform: rotate(90deg) scale(1.1); background: var(--t); color: var(--on); }
 .rp-pl-name { flex: 1; }
+.rp-pl-end.is-progress { --t: #d9a21b; }
+.rp-pl-end.is-progress .rp-pl-end-ico { color: #17191a; }

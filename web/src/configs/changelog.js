@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.67.1',
+        date: '2026-10-18',
+        title: 'Task board: In progress row, scrum panels rearranged',
+        items: ['The rows at the right of the task board are now Done, In progress and Delete: drop a task on In progress to start it', 'Scrum board: the Burn-up and By status cards are gone, and Who works on what and Due soon now sit under the board']
+    },
+    {
         version: '0.67.0',
         date: '2026-10-18',
         title: 'Project scrum board and every task link use the new pipeline and popup',

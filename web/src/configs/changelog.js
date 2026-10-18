@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.72.5',
+        date: '2026-10-18',
+        title: 'Enter makes a new line in an item description',
+        items: ['In the line items of invoices, estimates, proposals and purchase orders, the description is now a growing text box: Enter starts a new line, and the line breaks show on the document and in the PDF']
+    },
+    {
         version: '0.72.4',
         date: '2026-10-18',
         title: 'Paper page at a normal width',

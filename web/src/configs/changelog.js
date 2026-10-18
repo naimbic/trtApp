@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.62.2',
+        date: '2026-10-18',
+        title: 'Dev copy: own database seeded with three years of demo data',
+        items: ['A dev copy of trtCRM (branch dev, its own address) can start from an empty database: with DEMO_SEED=1 the container creates the tables, the admin login, the demo team and about three years of demo clients, leads, projects, tasks, tickets, invoices, payments and expenses (DEMO_YEARS changes the span). Nothing changes where the variable is not set, so staging is untouched', 'scripts/seed-crm-demo.mjs takes --years N (1 to 5) to spread the history over several years']
+    },
+    {
         version: '0.62.1',
         date: '2026-10-18',
         title: 'Rapport menus: mega menu with icons and descriptions, magnetic hover, dock Settings menu',

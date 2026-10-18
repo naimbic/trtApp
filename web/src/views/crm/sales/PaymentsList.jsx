@@ -22,6 +22,7 @@ import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
 import { tr } from '@/utils/t'
+import { moneyChange } from '../kit/widgets'
 
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -78,7 +79,7 @@ const PaymentsList = () => {
             <div className="mb-4"><h3>{tr("Payments")}</h3><p className="text-sm text-gray-500">{tr("Money received against invoices. Record a payment from the invoice itself.")}</p></div>
             {Object.keys(data.totals).length > 0 && (
                 <TileGrid>
-                    {Object.entries(data.totals).map(([cid, v], i) => <StatTile key={cid} title={tr("Received · {v1}", { v1: lookups.currencies.find((x) => x.id === cid)?.name || '' })} className={['bg-emerald-100', 'bg-sky-100', 'bg-amber-100'][i % 3]} value={money(v, cid)} icon={<TbCash />} />)}
+                    {Object.entries(data.totals).map(([cid, v], i) => <StatTile key={cid} title={tr("Received · {v1}", { v1: lookups.currencies.find((x) => x.id === cid)?.name || '' })} className={['bg-emerald-100', 'bg-sky-100', 'bg-amber-100'][i % 3]} change={moneyChange(data.trend, cid)} value={money(v, cid)} icon={<TbCash />} />)}
                     <StatTile title={tr("Payments")} className="bg-purple-100" value={data.total} sub={tr("For the current filters")} icon={<TbListNumbers />} />
                 </TileGrid>
             )}

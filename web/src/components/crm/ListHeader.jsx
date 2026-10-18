@@ -1,10 +1,11 @@
 import Segment from '@/components/ui/Segment'
 import cn from '@/utils/classNames'
+import { Delta } from '@/views/crm/kit/widgets'
 
 /** The pastel figure tile used on every list (same look as the template dashboards). */
-export const StatTile = ({ title, value, sub, icon, className }) => (
+export const StatTile = ({ title, value, sub, icon, className, change }) => (
     <div className={cn('flex items-center justify-between gap-3 rounded-2xl px-4 py-3', className)}>
-        <div className="min-w-0"><div className="text-sm font-bold text-gray-900">{title}</div><h4 className="truncate text-gray-900">{value ?? '–'}</h4>{sub && <div className="truncate text-xs text-gray-700">{sub}</div>}</div>
+        <div className="min-w-0"><div className="text-sm font-bold text-gray-900">{title}</div><h4 className="truncate text-gray-900">{value ?? '–'}</h4>{change && <div className="mt-0.5"><Delta {...change} /></div>}{sub && <div className="truncate text-xs text-gray-700">{sub}</div>}</div>
         {icon && <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xl text-white">{icon}</div>}
     </div>
 )

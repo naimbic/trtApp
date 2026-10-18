@@ -12,7 +12,7 @@ import classNames from '@/utils/classNames'
 import AiChat from './AiChat'
 import { api, notify } from '../kit/api'
 import { ColumnChart, DonutChart, TrendChart, PALETTE } from '../kit/charts'
-import { StatCard, Panel } from '../kit/widgets'
+import { StatCard, Panel, Delta } from '../kit/widgets'
 import { tr } from '@/utils/t'
 import { useLocaleStore } from '@/store/localeStore'
 
@@ -71,12 +71,13 @@ const IncomeFigures = ({ d }) => {
     const labels = d.years.map((y) => String(y.year))
     const months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
     const ytd = d.yearToDate
+    const yoy = tr('last 12 months vs the 12 before')
     return (
         <>
             <div className="mb-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
-                <StatCard icon={<TbCash />} label={tr('Invoiced, all time')} value={nf(d.lifetime.invoiced)} sub={d.mainCurrency} tone="blue" />
-                <StatCard icon={<TbCash />} label={tr('Collected, all time')} value={nf(d.lifetime.collected)} sub={tr('{n}% of the invoiced', { n: d.lifetime.invoiced ? Math.round((d.lifetime.collected / d.lifetime.invoiced) * 100) : 0 })} tone="green" />
-                <StatCard icon={<TbCash />} label={tr('Expenses, all time')} value={nf(d.lifetime.expenses)} sub={d.mainCurrency} tone="amber" />
+                <StatCard icon={<TbCash />} label={tr('Invoiced, all time')} value={nf(d.lifetime.invoiced)} change={{ ...d.last12Months.invoiced, label: yoy }} sub={d.mainCurrency} tone="blue" />
+                <StatCard icon={<TbCash />} label={tr('Collected, all time')} value={nf(d.lifetime.collected)} change={{ ...d.last12Months.collected, label: yoy }} sub={tr('{n}% of the invoiced', { n: d.lifetime.invoiced ? Math.round((d.lifetime.collected / d.lifetime.invoiced) * 100) : 0 })} tone="green" />
+                <StatCard icon={<TbCash />} label={tr('Expenses, all time')} value={nf(d.lifetime.expenses)} change={{ ...d.last12Months.expenses, goodUp: false, label: yoy }} sub={d.mainCurrency} tone="amber" />
                 <StatCard icon={<TbTrendingUp />} label={tr('{y} so far', { y: ytd.year })} value={nf(ytd.invoiced)} sub={ytd.samePeriodLastYear ? <span>{pctTag(ytd.changePct)} {tr('vs the same months of {y}', { y: ytd.year - 1 })}</span> : tr('nothing invoiced in the same months of {y}', { y: ytd.year - 1 })} tone={ytd.changePct < 0 ? 'red' : 'green'} />
             </div>
             <div className="mb-4 grid gap-4 xl:grid-cols-3">

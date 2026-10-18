@@ -22,6 +22,7 @@ import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { PROPOSAL_STATUS as STATUS, ProposalStatusTag as StatusTag, fmtDate } from './shared'
 import { tr } from '@/utils/t'
+import { moneyChange } from '../kit/widgets'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const ORDER = [6, 1, 4, 5, 3, 2, 7]
@@ -64,6 +65,7 @@ const ProposalsList = () => {
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
+    const tc = (metric, goodUp) => moneyChange(data.stats.trend, cur, metric, goodUp)
     const currencies = Object.keys(data.stats.money)
     useRegisterCurrency(currencies.map((k) => ({ id: k, name: lookups.currencies.find((x) => x.id === k)?.name || '?' })), cur, setCur)
 
@@ -76,8 +78,8 @@ const ProposalsList = () => {
 
             {m && (
                 <TileGrid cols={4}>
-                    <StatTile title={tr("Waiting for an answer")} className="bg-sky-100" value={money(m.open, cur)} icon={<TbHourglass />} />
-                    <StatTile title={tr("Accepted")} className="bg-emerald-100" value={money(m.accepted, cur)} icon={<TbCircleCheck />} />
+                    <StatTile title={tr("Waiting for an answer")} change={tc('open')} className="bg-sky-100" value={money(m.open, cur)} icon={<TbHourglass />} />
+                    <StatTile title={tr("Accepted")} change={tc('accepted')} className="bg-emerald-100" value={money(m.accepted, cur)} icon={<TbCircleCheck />} />
                     <StatTile title={tr("Proposals")} className="bg-purple-100" value={Object.values(data.stats.counts).reduce((a, b) => a + b, 0)} icon={<TbFileText />} />
                     <StatTile title={tr("Declined")} className="bg-amber-100" value={data.stats.counts[2] || 0} icon={<TbAlertTriangle />} />
                 </TileGrid>

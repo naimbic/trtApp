@@ -19,12 +19,13 @@ import { api, qs } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import ExpenseDrawer from './ExpenseDrawer'
 import { tr, trn } from '@/utils/t'
+import { Delta } from '../kit/widgets'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const STATES = [['', tr("All")], ['billable', tr("To invoice")], ['invoiced', tr("Invoiced")], ['nonbillable', tr("Not billable")], ['recurring', tr("Recurring")]]
-const Stat = ({ title, value, className, icon, sub }) => (
+const Stat = ({ title, value, className, icon, sub, change }) => (
     <div className={classNames('flex items-center justify-between rounded-2xl p-4', className)}>
-        <div><div className="mb-3 font-bold text-gray-900">{title}</div><h3 className="text-gray-900">{value}</h3>{sub && <div className="mt-1 text-xs text-gray-700">{sub}</div>}</div>
+        <div><div className="mb-3 font-bold text-gray-900">{title}</div><h3 className="text-gray-900">{value}</h3>{change && <div className="mt-1"><Delta {...change} /></div>}{sub && <div className="mt-1 text-xs text-gray-700">{sub}</div>}</div>
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-2xl text-white">{icon}</div>
     </div>
 )
@@ -56,6 +57,7 @@ const ExpensesList = () => {
     useEffect(() => { const o = sp.get('open'); if (o) { setDrawer({ open: true, id: o }); sp.delete('open'); setSp(sp, { replace: true }) } }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const cur = data.lookups.currencies.find((c) => c.isDefault) || data.lookups.currencies[0]
+    const ec = (k, goodUp = true) => { const t = data.stats.trend; return t ? { cur: t.cur[k] ?? 0, prev: t.prev[k] ?? 0, goodUp, label: tr('vs previous {n} days', { n: t.days }) } : undefined }
     const m = (n, c = cur) => `${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c?.symbol || c?.name || ''}`.trim()
     const curOf = (id) => data.lookups.currencies.find((c) => c.id === id) || cur
     const catOpts = data.lookups.categories.map((c) => ({ value: c.id, label: c.name }))
@@ -73,9 +75,9 @@ const ExpensesList = () => {
             </div>
 
             <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <Stat title={tr("Total spent")} className="bg-sky-100" value={m(data.stats.total)} sub={tr("{v1} tax included", { v1: m(data.stats.tax) })} icon={<TbReceipt2 />} />
-                <Stat title={tr("To invoice")} className="bg-purple-100" value={m(data.stats.billable)} sub={tr("Billable, not invoiced yet")} icon={<TbCashBanknote />} />
-                <Stat title={tr("Invoiced")} className="bg-emerald-100" value={m(data.stats.invoiced)} icon={<TbFileInvoice />} />
+                <Stat title={tr("Total spent")} change={ec('total', false)} className="bg-sky-100" value={m(data.stats.total)} sub={tr("{v1} tax included", { v1: m(data.stats.tax) })} icon={<TbReceipt2 />} />
+                <Stat title={tr("To invoice")} change={ec('billable')} className="bg-purple-100" value={m(data.stats.billable)} sub={tr("Billable, not invoiced yet")} icon={<TbCashBanknote />} />
+                <Stat title={tr("Invoiced")} change={ec('invoiced')} className="bg-emerald-100" value={m(data.stats.invoiced)} icon={<TbFileInvoice />} />
                 <Stat title={tr("Expenses")} className="bg-amber-100" value={data.stats.count ?? 0} sub="in this selection" icon={<TbRepeat />} />
             </div>
 

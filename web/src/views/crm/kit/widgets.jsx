@@ -14,19 +14,26 @@ export const TONES = {
 export const pctChange = (cur, prev) => {
     const c = Number(cur), p = Number(prev)
     if (!Number.isFinite(c) || !Number.isFinite(p)) return null
-    if (p === 0) return c === 0 ? 0 : null
+    if (p === 0) return c === 0 ? 0 : c > 0 ? 100 : -100 // nothing before: shown as +100% rather than a word
     return Math.round(((c - p) / Math.abs(p)) * 1000) / 10
+}
+
+/** The `change` of a money tile from the server's trend ({ cur, prev } per currency and figure, last 30 days against the 30 before). */
+export const moneyChange = (trend, currencyId, metric, goodUp = true) => {
+    if (!trend?.cur) return undefined
+    const key = currencyId || 'none'
+    const pick = (side) => (metric ? side?.[key]?.[metric] : side?.[key]) ?? 0
+    return { cur: pick(trend.cur), prev: pick(trend.prev), goodUp, label: tr('vs previous {n} days', { n: trend.days || 30 }) }
 }
 
 /** "+23%" in green or "-33%" in red (`goodUp` false for figures where less is better: overdue, outstanding, backlog). */
 export const Delta = ({ cur, prev, goodUp = true, label, className }) => {
     const p = pctChange(cur, prev)
     if (cur === null || cur === undefined || prev === null || prev === undefined) return null
-    const isNew = p === null
-    const up = isNew ? Number(cur) > 0 : p > 0
-    const flat = !isNew && p === 0
+    const up = p > 0
+    const flat = p === 0
     const good = flat ? null : up === goodUp
-    const shown = isNew ? tr('new') : `${p > 0 ? '+' : p < 0 ? '-' : ''}${Math.abs(p)}%`
+    const shown = `${p > 0 ? '+' : p < 0 ? '-' : ''}${Math.abs(p)}%`
     return (
         <span className={classNames('inline-flex items-center gap-1 whitespace-nowrap', className)}>
             <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold', flat ? 'bg-gray-100 text-gray-500 dark:bg-gray-700' : good ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15' : 'bg-red-50 text-red-500 dark:bg-red-500/15')}>

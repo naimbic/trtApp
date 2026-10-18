@@ -1,5 +1,6 @@
 // Staff area: es. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "last 12 months vs the 12 before": "últimos 12 meses frente a los 12 anteriores",
     "since the period began": "desde que empezó el periodo",
     "vs previous period": "frente al periodo anterior",
     "{n} created": "{n} creadas",

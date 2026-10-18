@@ -116,6 +116,15 @@ export async function incomeData() {
             return { year: y, invoiced: r2(s.invoiced), invoices: s.invoices, avgInvoice: s.invoices ? r2(s.invoiced / s.invoices) : 0, collected: r2(s.collected), expenses: r2(s.expenses), netCollectedMinusExpenses: r2(s.collected - s.expenses), invoicedChangePct: prev ? pct(s.invoiced, prev.invoiced) : null, collectedChangePct: prev ? pct(s.collected, prev.collected) : null, bestMonth: best ? { month: best[0], invoiced: r2(best[1]) } : null, partialYear: y === nowY, firstYear: idx === 0 }
         })
     }
+    // the last 12 months against the 12 months before, for the comparison on the cards
+    const nowT = Date.now(), y1 = 365 * DAY
+    const roll = { invoiced: { cur: 0, prev: 0 }, collected: { cur: 0, prev: 0 }, expenses: { cur: 0, prev: 0 } }
+    const put = (k, d, v) => { const t = +new Date(d); if (t > nowT - y1 && t <= nowT) roll[k].cur += v; else if (t > nowT - 2 * y1 && t <= nowT - y1) roll[k].prev += v }
+    const mainCur = Object.keys(per).sort((a, b) => Object.values(per[b]).reduce((x, s) => x + s.invoiced, 0) - Object.values(per[a]).reduce((x, s) => x + s.invoiced, 0))[0]
+    for (const i of invoices) if (curName(i.currencyId) === mainCur && i.date) put('invoiced', i.date, i.total || 0)
+    for (const p of payments) if (p.paymentDate && curName(p.invoice?.currencyId) === mainCur) put('collected', p.paymentDate, p.amount || 0)
+    for (const e of expenses) if (e.date && curName(e.currencyId) === mainCur) put('expenses', e.date, e.amount || 0)
+    for (const k of Object.keys(roll)) { roll[k].cur = r2(roll[k].cur); roll[k].prev = r2(roll[k].prev) }
     const lifetime = (currency) => Object.values(per[currency]).reduce((a, s) => ({ invoiced: a.invoiced + s.invoiced, collected: a.collected + s.collected, expenses: a.expenses + s.expenses }), { invoiced: 0, collected: 0, expenses: 0 })
     const currencies = Object.keys(per).sort((a, b) => lifetime(b).invoiced - lifetime(a).invoiced)
     const mainName = currencies[0] || null
@@ -124,7 +133,7 @@ export async function incomeData() {
     return {
         mainCurrency: mainName, years: mainName ? build(mainName) : [],
         lifetime: mainName ? Object.fromEntries(Object.entries(lifetime(mainName)).map(([k, v]) => [k, r2(v)])) : null,
-        yearToDate: ytd, monthlyThisYear: mainName ? monthsOf(nowY) : [], monthlyLastYear: mainName ? monthsOf(nowY - 1) : [],
+        yearToDate: ytd, last12Months: roll, monthlyThisYear: mainName ? monthsOf(nowY) : [], monthlyLastYear: mainName ? monthsOf(nowY - 1) : [],
         otherCurrencies: currencies.slice(1, 4).map((c) => ({ currency: c, years: build(c) })),
         note: 'Amounts are per currency and never converted; "invoiced" excludes drafts and cancelled invoices; "collected" is the payments received in the year.',
     }

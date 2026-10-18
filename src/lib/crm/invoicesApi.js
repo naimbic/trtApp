@@ -3,6 +3,7 @@ import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
+import { trendOf } from '@/lib/crm/trend'
 
 const STATUS_LABEL = { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft' }
 const day = (d) => new Date(d).toISOString().slice(0, 10)
@@ -51,16 +52,21 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
 
     // stats ignore the status filter so the cards stay meaningful
     const statCounts = {}
-    const money = {}
-    for (const r of rows) {
-        statCounts[r.status] = (statCounts[r.status] || 0) + 1
-        if (r.status === 5 || r.status === 6) continue
-        const m = (money[r.currencyId || 'none'] ||= { invoiced: 0, paid: 0, outstanding: 0, overdue: 0 })
-        m.invoiced = round2(m.invoiced + r.total)
-        m.paid = round2(m.paid + r.paid)
-        m.outstanding = round2(m.outstanding + r.due)
-        if (r.status === 4) m.overdue = round2(m.overdue + r.due)
+    for (const r of rows) statCounts[r.status] = (statCounts[r.status] || 0) + 1
+    const tally = (list) => {
+        const money = {}
+        for (const r of list) {
+            if (r.status === 5 || r.status === 6) continue
+            const m = (money[r.currencyId || 'none'] ||= { invoiced: 0, paid: 0, outstanding: 0, overdue: 0 })
+            m.invoiced = round2(m.invoiced + r.total)
+            m.paid = round2(m.paid + r.paid)
+            m.outstanding = round2(m.outstanding + r.due)
+            if (r.status === 4) m.overdue = round2(m.overdue + r.due)
+        }
+        return money
     }
+    const money = tally(rows)
+    const trend = trendOf(rows, (r) => r.date, tally)
 
     const q = query.trim().toLowerCase()
     if (status) rows = rows.filter((r) => String(r.status) === String(status))
@@ -69,7 +75,7 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     const keyFn = { number: (r) => r.numberRaw, client: (r) => r.client.toLowerCase(), date: (r) => +new Date(r.date || 0), dueDate: (r) => +new Date(r.dueDate || 0), total: (r) => r.total, due: (r) => r.due, status: (r) => r.status }[sortKey] || ((r) => +new Date(r.date || 0))
     rows.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const { page, size, list } = paginate(rows, pageIndex, pageSize)
-    return { list, total: rows.length, pageIndex: page, pageSize: size, stats: { counts: statCounts, money } }
+    return { list, total: rows.length, pageIndex: page, pageSize: size, stats: { counts: statCounts, money, trend } }
 }
 
 export async function listPayments({ query = '', modeId, clientId, from, to, pageIndex = 1, pageSize = 15, sortKey = 'paymentDate', order = 'desc' } = {}) {
@@ -91,13 +97,14 @@ export async function listPayments({ query = '', modeId, clientId, from, to, pag
         const i = byId[p.invoiceId]
         return { id: p.id, amount: p.amount, paymentDate: p.paymentDate, modeId: p.paymentModeId, mode: mode[p.paymentModeId] || p.paymentMethod || '', transactionId: p.transactionId || '', note: p.note || '', invoiceId: p.invoiceId, invoiceNumber: i ? docNumberOf(i, padding) : '', clientId: i?.clientId || null, client: cname[i?.clientId] || '', currencyId: i?.currencyId || null }
     })
-    const totals = {}
-    rows.forEach((r) => (totals[r.currencyId || 'none'] = round2((totals[r.currencyId || 'none'] || 0) + r.amount)))
+    const sumBy = (list) => { const t = {}; list.forEach((r) => (t[r.currencyId || 'none'] = round2((t[r.currencyId || 'none'] || 0) + r.amount))); return t }
+    const totals = sumBy(rows)
+    const trend = trendOf(rows, (r) => r.paymentDate, sumBy)
     const q = query.trim().toLowerCase()
     if (q) rows = rows.filter((r) => r.invoiceNumber.toLowerCase().includes(q) || r.client.toLowerCase().includes(q) || r.transactionId.toLowerCase().includes(q) || r.mode.toLowerCase().includes(q))
     const dir = order === 'asc' ? 1 : -1
     const keyFn = { paymentDate: (r) => +new Date(r.paymentDate || 0), amount: (r) => r.amount, client: (r) => r.client.toLowerCase(), invoiceNumber: (r) => r.invoiceNumber, mode: (r) => r.mode.toLowerCase() }[sortKey] || ((r) => +new Date(r.paymentDate || 0))
     rows.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const { page, size, list } = paginate(rows, pageIndex, pageSize)
-    return { list, total: rows.length, pageIndex: page, pageSize: size, totals, modes: modes.map((m) => ({ id: m.id, name: m.name })) }
+    return { list, total: rows.length, pageIndex: page, pageSize: size, totals, trend, modes: modes.map((m) => ({ id: m.id, name: m.name })) }
 }

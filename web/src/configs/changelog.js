@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.53.1',
+        date: '2026-10-18',
+        title: 'Percent on every money card',
+        items: ['A card whose previous period had nothing now shows "+100%" instead of the word "new" (and everywhere the comparison said "no earlier data"), so every card shows a percentage', 'Money cards on the lists now show the percentage too, last 30 days against the 30 days before, counted with the same rule as the figure: Invoices (invoiced, paid, outstanding, overdue), Payments (received), Estimates and Proposals (waiting for an answer, accepted), Purchase orders (all orders, to deliver, not invoiced yet) and Expenses (total spent, to invoice, invoiced); a rise in outstanding, overdue or expenses is red and a fall is green', 'AI insights, Yearly income: invoiced, collected and expenses show the last 12 months against the 12 months before']
+    },
+    {
         version: '0.53.0',
         date: '2026-10-18',
         title: 'Cards compared with the previous period (+23% / -33%)',

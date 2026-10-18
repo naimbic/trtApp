@@ -1,5 +1,6 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "last 12 months vs the 12 before": "直近12か月と、その前の12か月の比較",
     "since the period began": "期間開始時点から",
     "vs previous period": "前の期間との比較",
     "{n} created": "{n}件作成",

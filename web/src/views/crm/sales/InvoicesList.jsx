@@ -22,6 +22,7 @@ import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { STATUS, StatusTag, fmtDate } from './shared'
 import { tr } from '@/utils/t'
+import { moneyChange } from '../kit/widgets'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const ORDER = [6, 1, 3, 4, 2, 5]
@@ -64,6 +65,7 @@ const InvoicesList = () => {
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
+    const tc = (metric, goodUp) => moneyChange(data.stats.trend, cur, metric, goodUp)
     const currencies = Object.keys(data.stats.money)
     useRegisterCurrency(currencies.map((k) => ({ id: k, name: lookups.currencies.find((x) => x.id === k)?.name || '?' })), cur, setCur)
 
@@ -76,10 +78,10 @@ const InvoicesList = () => {
 
             {m && (
                 <TileGrid cols={4}>
-                    <StatTile title={tr("Invoiced")} className="bg-sky-100" value={money(m.invoiced, cur)} icon={<TbReceipt2 />} sub={tr("Drafts and cancelled not counted")} />
-                    <StatTile title={tr("Paid")} className="bg-emerald-100" value={money(m.paid, cur)} icon={<TbCash />} />
-                    <StatTile title={tr("Outstanding")} className="bg-purple-100" value={money(m.outstanding, cur)} icon={<TbHourglass />} />
-                    <StatTile title={tr("Overdue")} className={m.overdue > 0 ? 'bg-red-100' : 'bg-amber-100'} value={money(m.overdue, cur)} icon={<TbAlertTriangle />} sub={tr("For the current filters")} />
+                    <StatTile title={tr("Invoiced")} change={tc('invoiced')} className="bg-sky-100" value={money(m.invoiced, cur)} icon={<TbReceipt2 />} sub={tr("Drafts and cancelled not counted")} />
+                    <StatTile title={tr("Paid")} change={tc('paid')} className="bg-emerald-100" value={money(m.paid, cur)} icon={<TbCash />} />
+                    <StatTile title={tr("Outstanding")} change={tc('outstanding', false)} className="bg-purple-100" value={money(m.outstanding, cur)} icon={<TbHourglass />} />
+                    <StatTile title={tr("Overdue")} change={tc('overdue', false)} className={m.overdue > 0 ? 'bg-red-100' : 'bg-amber-100'} value={money(m.overdue, cur)} icon={<TbAlertTriangle />} sub={tr("For the current filters")} />
                 </TileGrid>
             )}
 

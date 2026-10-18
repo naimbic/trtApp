@@ -22,6 +22,7 @@ import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { PO_STATUS as STATUS, PoStatusTag as StatusTag, fmtDate } from './shared'
 import { tr } from '@/utils/t'
+import { moneyChange } from '../kit/widgets'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const ORDER = [1, 2, 3, 4, 5]
@@ -64,6 +65,7 @@ const PurchaseOrdersList = () => {
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
+    const tc = (metric, goodUp) => moneyChange(data.stats.trend, cur, metric, goodUp)
     const currencies = Object.keys(data.stats.money)
     useRegisterCurrency(currencies.map((k) => ({ id: k, name: lookups.currencies.find((x) => x.id === k)?.name || '?' })), cur, setCur)
 
@@ -76,9 +78,9 @@ const PurchaseOrdersList = () => {
 
             {m && (
                 <TileGrid cols={3}>
-                    <StatTile title={tr("All orders")} className="bg-sky-100" value={money(m.total, cur)} icon={<TbReceipt2 />} />
-                    <StatTile title={tr("To deliver")} className="bg-purple-100" value={money(m.toDeliver, cur)} icon={<TbHourglass />} />
-                    <StatTile title={tr("Not invoiced yet")} className="bg-amber-100" value={money(m.uninvoiced, cur)} icon={<TbAlertTriangle />} />
+                    <StatTile title={tr("All orders")} change={tc('total')} className="bg-sky-100" value={money(m.total, cur)} icon={<TbReceipt2 />} />
+                    <StatTile title={tr("To deliver")} change={tc('toDeliver')} className="bg-purple-100" value={money(m.toDeliver, cur)} icon={<TbHourglass />} />
+                    <StatTile title={tr("Not invoiced yet")} change={tc('uninvoiced', false)} className="bg-amber-100" value={money(m.uninvoiced, cur)} icon={<TbAlertTriangle />} />
                 </TileGrid>
             )}
 

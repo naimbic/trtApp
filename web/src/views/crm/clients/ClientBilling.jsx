@@ -10,7 +10,7 @@ import { api, qs } from '../kit/api'
 import { PALETTE, DonutChart } from '../kit/charts'
 import { tr } from '@/utils/t'
 
-const growth = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 100) : null)
+const growth = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 100) : cur > 0 ? 100 : cur < 0 ? -100 : 0) // nothing before: +100%
 const labelOf = (l) => (l.length === 7 ? dayjs(`${l}-01`).format('MMM YY') : dayjs(l).format('DD MMM'))
 
 const Tile = ({ title, value, sub, icon, iconClass, g, active, onClick }) => (

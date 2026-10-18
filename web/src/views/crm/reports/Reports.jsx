@@ -58,7 +58,7 @@ const bars = (d, series, colors, f) => (
 const donut = (rows, f) => (rows.length ? <Chart type="donut" height={260} series={rows.map((r) => r.value)} customOptions={{ labels: rows.map((r) => r.name), colors: PALETTE, legend: { position: 'bottom', fontSize: '12px' }, dataLabels: { enabled: false }, tooltip: { y: { formatter: (v) => (f ? f(v) : String(v)) } } }} /> : <Empty />)
 
 /* ------------------------------------------------------------------ ecommerce-dashboard style layout */
-const growth = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 100) : null)
+const growth = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 100) : cur > 0 ? 100 : cur < 0 ? -100 : 0) // nothing before: +100%
 
 const Tile = ({ title, value, icon, iconClass, g, active, onClick, compare }) => (
     <button className={classNames('cursor-pointer rounded-2xl p-4 outline-hidden transition duration-150 ltr:text-left rtl:text-right', active && 'bg-white shadow-md dark:bg-gray-900')} onClick={onClick}>

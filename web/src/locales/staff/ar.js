@@ -1,5 +1,6 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "last 12 months vs the 12 before": "آخر 12 شهراً مقابل الـ12 السابقة",
     "since the period began": "منذ بداية الفترة",
     "vs previous period": "مقارنة بالفترة السابقة",
     "{n} created": "تم إنشاء {n}",

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.76.2',
+        date: '2026-10-18',
+        title: 'Fix: saving an email template',
+        items: ['Saving a template in Mails failed with "Request failed (405)": the editor sent a PUT to a route that only accepts PATCH; it now sends PATCH']
+    },
+    {
         version: '0.76.1',
         date: '2026-10-18',
         title: 'Page footer: version and developer credit',

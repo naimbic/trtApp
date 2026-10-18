@@ -77,7 +77,7 @@ const Templates = () => {
     const save = async () => {
         setSaving(true)
         try {
-            await api(`/api/crm/email-templates/${form.id}`, { method: 'PUT', body: { subject: form.subject, message: form.message, fromName: form.fromName, active: form.active } })
+            await api(`/api/crm/email-templates/${form.id}`, { method: 'PATCH', body: { subject: form.subject, message: form.message, fromName: form.fromName, active: form.active } })
             notify('success', tr("Template saved")); load()
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }

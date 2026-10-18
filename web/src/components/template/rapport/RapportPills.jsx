@@ -1,6 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion'
 import { PiCaretDownBold, PiArrowUpRightBold } from 'react-icons/pi'
 import { NAV_DESC } from './navDescriptions'
@@ -34,6 +34,7 @@ const matches = (pathname, path) => pathname === path || pathname.startsWith(`${
  */
 const RapportPills = () => {
     const { pathname } = useLocation()
+    const navigate = useNavigate()
     const user = useSessionUser((s) => s.user.authority) || []
     const { t } = useTranslation(!appConfig.activeNavTranslation)
     const [open, setOpen] = useState(null)
@@ -51,7 +52,8 @@ const RapportPills = () => {
         const shown = groups.slice(0, MAX_PILLS), rest = groups.slice(MAX_PILLS)
         const list = []
         if (first) list.push({ key: first.key, node: first, link: first.path })
-        shown.forEach((g) => list.push(g))
+        // a group pill leads to the group's main page (the first link of its menu): Customers → Clients, Leads → Leads…
+        shown.forEach((g) => list.push({ ...g, main: g.sections[0]?.items[0]?.path }))
         const moreSections = [...rest.flatMap((g) => [{ title: g.node, items: g.sections.flatMap((s) => s.items) }]), ...(extras.length ? [{ title: null, items: extras }] : [])]
         if (moreSections.length) list.push({ key: 'more', node: { title: tr('More'), translateKey: 'nav.more' }, sections: moreSections })
         return list
@@ -95,7 +97,7 @@ const RapportPills = () => {
                     const endAlign = i > pills.length / 2
                     return (
                         <div key={p.key} className="relative" onMouseEnter={() => enter(p.key)} onMouseLeave={leave}>
-                            <button type="button" className="rp-pill" data-active={active} aria-haspopup="true" aria-expanded={open === p.key} onClick={() => setOpen(open === p.key ? null : p.key)}>
+                            <button type="button" className="rp-pill" data-active={active} aria-haspopup="true" aria-expanded={open === p.key} onClick={() => { if (p.main && window.matchMedia('(hover: hover) and (pointer: fine)').matches) { clearTimeout(timer.current); setOpen(null); navigate(p.main) } else setOpen(open === p.key ? null : p.key) }} onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(p.key) } }}>
                                 {bg}<span>{label(p.node)}<PiCaretDownBold style={{ fontSize: 10, opacity: 0.6, transform: open === p.key ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} /></span>
                             </button>
                             <AnimatePresence>

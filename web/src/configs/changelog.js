@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.74.7',
+        date: '2026-10-18',
+        title: 'Top menu: click a group to go to its page',
+        items: ['With a mouse, hovering a top menu group (Sales, Customers, Leads, Projects, Tasks, Support) still opens its panel, and clicking the group itself now goes to its main page (Customers → Clients, Leads → Leads, Sales → Invoices, Projects → Projects, Tasks → My tasks, Support → Tickets); More only opens its panel', 'On touch screens a tap still opens the panel, as before, and the arrow-down key opens it from the keyboard']
+    },
+    {
         version: '0.74.6',
         date: '2026-10-18',
         title: 'Ctrl K / ⌘K opens the search; change a task status from the calendar',

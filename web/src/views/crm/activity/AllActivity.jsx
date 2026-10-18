@@ -14,7 +14,7 @@ import { InvoiceHead } from '../sales/InvoiceInsights'
 import { TYPES, GROUPS, local } from './ActivityPage'
 import { tr } from '@/utils/t'
 
-const PAGE = 3 // days per page
+const PAGE = 40 // entries per page
 const RANGES = { today: 0, week: 6, month: 29 }
 
 /** Super admin: everything that happened in the CRM, by day, filtered by team member and client. */
@@ -42,12 +42,12 @@ const AllActivity = () => {
     useEffect(() => { setPage(1) }, [range, staffId, clientId, types])
 
     const events = useMemo(() => data?.events || [], [data])
+    const shown = useMemo(() => events.slice((page - 1) * PAGE, page * PAGE), [events, page])
     const days = useMemo(() => {
         const out = []
-        events.forEach((e) => { const d = dayjs(e.date).format('YYYY-MM-DD'); if (out[out.length - 1]?.d !== d) out.push({ d, list: [] }); out[out.length - 1].list.push(e) })
-        return out.map((day) => ({ ...day, cats: GROUPS.map((g) => ({ g, list: day.list.filter((e) => g[2].includes(e.type)) })).filter((c) => c.list.length) }))
-    }, [events])
-    const pageDays = days.slice((page - 1) * PAGE, page * PAGE)
+        shown.forEach((e) => { const d = dayjs(e.date).format('YYYY-MM-DD'); if (out[out.length - 1]?.d !== d) out.push({ d, list: [] }); out[out.length - 1].list.push(e) })
+        return out
+    }, [shown])
     const counts = data?.counts || {}
     const groupCount = (g) => g[2].reduce((n, t) => n + (counts[t] || 0), 0)
     const staffOptions = (data?.staff || []).map((m) => ({ value: m.id, label: m.name }))
@@ -82,39 +82,26 @@ const AllActivity = () => {
                 })}
             </div>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
-            {pageDays.map((day) => (
-                <section key={day.d} className="mb-6">
-                    <div className="mb-3 flex items-baseline justify-between">
-                        <h5 className="uppercase">{dayjs(day.d).format('dddd, DD MMMM YYYY')}</h5>
-                        <span className="text-xs text-gray-400">{tr('{n} events', { n: day.list.length })}</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        {day.cats.map(({ g, list }) => {
-                            const [icon, tone] = TYPES[g[2][0]] || TYPES.system
+            {days.map((day) => (
+                <section key={day.d} className="mb-5">
+                    <div className="mb-2 font-semibold uppercase text-gray-900 dark:text-gray-100">{dayjs(day.d).format('dddd, DD MMMM YYYY')}</div>
+                    <div className="divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
+                        {day.list.map((e) => {
+                            const [icon, tone] = TYPES[e.type] || TYPES.system
                             return (
-                                <div key={g[0]} className="flex h-[340px] flex-col rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                                    <div className="mb-2 flex items-center gap-2.5">
-                                        <Avatar size={30} shape="circle" className={tone}>{icon}</Avatar>
-                                        <span className="flex-1 font-semibold text-gray-900 dark:text-gray-100">{tr(g[1])}</span>
-                                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500 dark:bg-gray-700">{list.length}</span>
+                                <div key={e.id} className="flex items-center gap-3 px-4 py-2.5">
+                                    <span className="w-11 shrink-0 text-xs text-gray-400">{dayjs(e.date).format('HH:mm')}</span>
+                                    <Avatar size={26} shape="circle" className={cn('shrink-0', tone)}>{icon}</Avatar>
+                                    <div className="min-w-0 flex-1">
+                                        <span className="font-medium text-gray-900 dark:text-gray-100">{local(e.title)}</span>
+                                        {e.detail && <span className="ml-2 text-sm text-gray-500">{local(e.detail)}</span>}
                                     </div>
-                                    <div className="-mr-2 flex-1 divide-y divide-gray-100 overflow-y-auto pr-2 dark:divide-gray-700">
-                                        {list.map((e) => (
-                                            <div key={e.id} className="flex items-start gap-2.5 py-2">
-                                                <Avatar size={24} shape="circle" className="mt-0.5 shrink-0" src={e.who?.image || undefined} title={e.who?.name}>{e.who?.image ? null : (e.who?.name || '?').slice(0, 1).toUpperCase()}</Avatar>
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="text-sm font-medium leading-snug text-gray-900 dark:text-gray-100">{local(e.title)}</div>
-                                                    {e.detail && <div className="line-clamp-1 text-xs text-gray-500">{local(e.detail)}</div>}
-                                                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
-                                                        <button type="button" className="truncate hover:text-primary" onClick={() => e.who?.id && setStaffId(e.who.id)}>{e.who?.name || tr('Client or system')}</button>
-                                                        {e.client?.name && <button type="button" className="inline-flex min-w-0 items-center gap-1 rounded-full bg-gray-100 px-1.5 hover:text-primary dark:bg-gray-700" onClick={() => setClientId(e.client.id)}><TbBuilding className="shrink-0" /><span className="truncate">{e.client.name}</span></button>}
-                                                    </div>
-                                                </div>
-                                                <span className="shrink-0 text-xs text-gray-400">{dayjs(e.date).format('HH:mm')}</span>
-                                                {e.link && <button type="button" onClick={() => navigate(e.link)} className="shrink-0 text-gray-400 hover:text-primary" title={tr('Open')}><TbExternalLink /></button>}
-                                            </div>
-                                        ))}
-                                    </div>
+                                    {e.client?.name && <button type="button" className="hidden shrink-0 items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 hover:text-primary sm:inline-flex dark:bg-gray-700" onClick={() => setClientId(e.client.id)}><TbBuilding />{e.client.name}</button>}
+                                    <button type="button" className="inline-flex shrink-0 items-center gap-1.5 text-xs text-gray-500 hover:text-primary" onClick={() => e.who?.id && setStaffId(e.who.id)}>
+                                        <Avatar size={20} shape="circle" src={e.who?.image || undefined}>{e.who?.image ? null : (e.who?.name || '?').slice(0, 1).toUpperCase()}</Avatar>
+                                        <span className="hidden md:inline">{e.who?.name || tr('Client or system')}</span>
+                                    </button>
+                                    {e.link ? <button type="button" onClick={() => navigate(e.link)} className="shrink-0 text-gray-400 hover:text-primary" title={tr('Open')}><TbExternalLink /></button> : <span className="w-4 shrink-0" />}
                                 </div>
                             )
                         })}
@@ -122,7 +109,7 @@ const AllActivity = () => {
                 </section>
             ))}
             {!busy && !events.length && !error && <div className="py-10 text-center text-gray-400">{tr('No activity to show')}</div>}
-            {days.length > PAGE && <div className="mt-2 flex justify-end"><Pagination total={days.length} pageSize={PAGE} currentPage={page} onChange={setPage} /></div>}
+            {events.length > PAGE && <div className="mt-2 flex justify-end"><Pagination total={events.length} pageSize={PAGE} currentPage={page} onChange={setPage} /></div>}
             {busy && !events.length && <div className="py-10 text-center text-gray-400">{tr('Loading…')}</div>}
         </Container>
     )

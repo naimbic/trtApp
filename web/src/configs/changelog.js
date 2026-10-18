@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.75.3',
+        date: '2026-10-18',
+        title: 'All activity: plain list by date',
+        items: ['All activity is a plain list grouped by date: time, type, what happened, client and who, one line each, with pages of 40 entries']
+    },
+    {
         version: '0.75.2',
         date: '2026-10-18',
         title: 'All activity: one card per category',

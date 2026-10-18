@@ -1,4 +1,6 @@
 import { Link, useLocation } from 'react-router'
+import DockFilters from './DockFilters'
+import { hasPageFilter } from '@/store/pageFilterStore'
 import { PiUsersThreeDuotone, PiCalendarBlankDuotone, PiChatsDuotone, PiChartBarDuotone, PiSparkleDuotone, PiSunDuotone, PiMoonDuotone } from 'react-icons/pi'
 import Tooltip from '@/components/ui/Tooltip'
 import Search from '@/components/template/Search'
@@ -34,6 +36,7 @@ const RapportDock = () => {
                         <Link to={i.to} className="rp-dock-btn" data-active={pathname === i.to || pathname.startsWith(`${i.to}/`)} aria-label={tr(i.label)}>{i.icon}</Link>
                     </Tooltip>
                 ))}
+                {(pathname === '/dashboard' || hasPageFilter(pathname)) && <DockFilters />}
                 <span className="rp-dock-sep" />
                 <SettingsMenu />
                 <Tooltip title={mode === 'dark' ? tr('Light mode') : tr('Dark mode')} placement={place}>

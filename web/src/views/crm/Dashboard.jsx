@@ -23,6 +23,8 @@ import {
 import { tr } from '@/utils/t'
 import { useSessionUser } from '@/store/authStore'
 import RiseTitle from './kit/RiseTitle'
+import RapportOverview from './dashboard/RapportOverview'
+import { pctChange } from './kit/KpiCard'
 
 // ---------- formatting
 const nf = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -292,14 +294,26 @@ const BusinessDashboard = () => {
     const ch = (cur, prev, goodUp = true, label = vsPrev) => (prev === undefined || prev === null || cur === undefined || cur === null ? undefined : { cur, prev, goodUp, label })
     const pd = data.prev
 
+    // the Overview of the Rapport template leads the page whenever the money figures are shown
+    const overview = !!(data.invoices && inv && !data.moneyHidden)
+    const sameCur = (c) => (c.currencyId || 'none') === (currencyId || 'none')
+
     return (
-        <div className="rp-land flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className={`${overview ? '' : 'rp-land '}flex flex-col gap-4`}>
+            {overview && (
+                <RapportOverview
+                    data={data} inv={inv} labels={labels} currencyId={currencyId} money={money} moneyShort={moneyShort}
+                    series={{ invoiced: invoicedSeries, collected: collectedSeries, prevInvoiced, prevCollected }}
+                    paidDelta={pinv ? pctChange(inv.paid, pinv.paid) : null}
+                    topClients={data.invoices.topClients.filter(sameCur)} upcoming={data.tasks?.upcoming || []} activity={data.recent?.activity || []}
+                />
+            )}
+            {!overview && <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <RiseTitle text={tr("Dashboard")} />
                     <p className="rp-sub">{data.range?.key === 'custom' ? '' : `${tr(data.range?.label)} · `}{data.range?.from} → {data.range?.to}{loading ? tr(" · updating…") : ''}</p>
                 </div>
-            </div>
+            </div>}
 
             {data.moneyHidden && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -310,7 +324,7 @@ const BusinessDashboard = () => {
                 </div>
             )}
 
-            {data.invoices && (
+            {data.invoices && !overview && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                     <StatCard accent={accent} icon={<PiReceiptDuotone />} label={tr("Total invoiced")} value={moneyShort(inv?.invoiced)} title={money(inv?.invoiced)} sub={tr("Excl. drafts & cancelled")} change={ch(inv?.invoiced, pinv?.invoiced)} tone="blue" to="/crm/invoices" spark={invoicedSeries} />
                     <StatCard accent={accent} icon={<PiHandCoinsDuotone />} label={tr("Collected")} value={moneyShort(inv?.paid)} title={money(inv?.paid)} sub={inv?.invoiced ? tr("{v1}% of invoiced", { v1: Math.round((inv.paid / inv.invoiced) * 100) }) : ''} change={ch(inv?.paid, pinv?.paid)} tone="green" to="/crm/payments" spark={collectedSeries} />
@@ -332,7 +346,7 @@ const BusinessDashboard = () => {
                 <Panel title={tr("Revenue and cash flow")} subtitle={tr("Invoiced, collected and expenses")}><div className="flex h-40 items-center justify-center text-center text-gray-400"><div><div className="text-3xl font-bold">{MASK}</div><div className="mt-1 text-sm">{tr("Financial figures are hidden for your account.")}</div></div></div></Panel>
             )}
 
-            {inv && (
+            {inv && !overview && (
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                     <Panel className="xl:col-span-2" title={tr("Revenue · {v1}", { v1: tr(data.range?.label)?.toLowerCase() })} subtitle={tr("Invoiced vs collected vs expenses ({name})", { name: cur?.name })}>
                         <TrendChart

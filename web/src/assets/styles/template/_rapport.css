@@ -24,6 +24,12 @@
     --rp-dock: #17191a; --rp-on-dock: #fbf8f2;
     --rp-pill: #17191a; --rp-on-pill: #fbf8f2;
     --rp-good: #2f7a52; --rp-bad: #c8431f;
+    --rp-butter: #f2c94c; --rp-on-butter: #17191a;
+    --rp-pine: #2f5c50; --rp-on-pine: #fbf8f2;
+    --rp-tomato: #c8431f; --rp-on-tomato: #fbf8f2;
+    --rp-plain: rgba(255, 255, 255, .58); --rp-on-plain: #17191a;
+    --rp-cream: #fbf8f2; --rp-solid: #f6f4ef;
+    --rp-r-ctl: 999px; --rp-gap: 16px;
     --rp-r-card: 26px; --rp-r-tile: 22px;
     --rp-dock-x: 20px; --rp-dock-w: 60px;
     --rp-gutter: clamp(14px, 1.6vw, 28px);
@@ -52,6 +58,7 @@
     --rp-dock: rgba(255, 255, 255, .08); --rp-on-dock: #f1eee8;
     --rp-pill: #f1eee8; --rp-on-pill: #17191a;
     --rp-good: #6cc59a; --rp-bad: #f08a68;
+    --rp-tomato: #d8532d; --rp-plain: rgba(255, 255, 255, .07); --rp-on-plain: #f1eee8; --rp-solid: #1c201e;
 }
 
 /* the slow mesh behind everything: transform only, off when motion is reduced */
@@ -108,7 +115,7 @@
 .rp-dock .header-action-item { color: inherit; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; font-size: 21px; }
 
 /* ── frosted panes: every card inside the Rapport layout ───────────────── */
-.rp-app .card { background: var(--rp-glass) !important; border: 1px solid var(--rp-rim) !important; border-radius: var(--rp-r-card) !important; box-shadow: var(--rp-shadow) !important; color: var(--rp-text); }
+.rp-app .card:not(.rp-ov .card) { background: var(--rp-glass) !important; border: 1px solid var(--rp-rim) !important; border-radius: var(--rp-r-card) !important; box-shadow: var(--rp-shadow) !important; color: var(--rp-text); }
 .rp-app .kpi-card { background: var(--rp-glass-2) !important; border-color: var(--rp-rim) !important; border-radius: var(--rp-r-card) !important; box-shadow: var(--rp-shadow) !important; }
 .rp-app .kpi-card.border-primary { border-color: var(--rp-ink) !important; }
 .rp-app .kpi-item:hover .kpi-card { box-shadow: var(--rp-shadow-pop) !important; }
@@ -132,3 +139,18 @@
     .rp-mesh::before, .rp-mesh::after, .rp-mesh i, .rp-land > * { animation: none !important; }
     .rp-dock-btn, .rp-link, .rp-pill { transition: none; }
 }
+
+/* dock filters: current value under the icon, panel beside the dock */
+.rp-dock-filter { height: 52px; flex-direction: column; gap: 0; border-radius: 22px; font-size: 19px; }
+.rp-dock-tag { display: block; margin-top: -2px; font-size: 9px; font-weight: 800; letter-spacing: .02em; line-height: 1; opacity: .85; max-width: 44px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-fpanel { position: fixed; z-index: 70; width: 270px; padding: 14px; border-radius: 22px; background: var(--rp-float); color: var(--rp-text); border: 1px solid var(--rp-line); box-shadow: var(--rp-shadow-pop); pointer-events: auto; animation: rp-land .25s var(--rp-ease) both; }
+.rp-fpanel h6 { margin: 4px 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--rp-faint); }
+.rp-fpanel h6:not(:first-child) { margin-top: 14px; }
+.rp-fgrid { display: flex; flex-wrap: wrap; gap: 6px; }
+.rp-fchip { display: inline-flex; align-items: center; gap: 5px; height: 34px; padding-inline: 14px; border-radius: 999px; font-size: 13px; font-weight: 700; background: var(--rp-well); color: var(--rp-text); border: 0; cursor: pointer; transition: background .15s, color .15s, transform .15s; }
+.rp-fchip:hover { transform: translateY(-1px); background: var(--rp-line); }
+.rp-fchip[data-on='true'] { background: var(--rp-pill); color: var(--rp-on-pill); }
+.rp-fdot { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; display: inline-block; }
+.rp-fnote { margin-top: 10px; font-size: 12px; color: var(--rp-muted); }
+.rp-fswatch { width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; border: 2px solid var(--rp-float); box-shadow: 0 0 0 1px var(--rp-line); cursor: pointer; transition: transform .2s cubic-bezier(.3,1.7,.5,1); }
+.rp-fswatch:hover { transform: scale(1.12); }

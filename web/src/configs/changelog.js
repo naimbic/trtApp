@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.62.0',
+        date: '2026-10-18',
+        title: 'Dashboard exactly like the Rapport Overview, filters in the dock',
+        items: ['The Dashboard now is the template\'s Overview, with its own motion (GSAP): the title rises, the three figures file in and count up, the cards land one after the other, the revenue curve draws itself and morphs between Collected and Invoiced, the "Money waiting" tiles are dealt like cards, the Collection ring sweeps, the status bars and client meters fill, tasks and activity file in. Arabic and Japanese titles fade in whole instead of letter by letter', 'New "Money waiting" panel: the biggest unpaid or overdue invoices and the open estimates, with their due dates and clients; each tile opens the document', 'Period, currency (with ALL and its no-rate warning) and colour pickers moved to the left dock, each showing its current value under the icon; on a phone they stay in the toolbar under the header', 'The other dashboard blocks (leads, tasks, clients, finance) stay below the Overview, unchanged', 'Texts translated into French, Spanish, Japanese and Arabic']
+    },
+    {
         version: '0.61.0',
         date: '2026-10-18',
         title: 'Rapport look, step 1: design tokens, dock, pill navigation, Dashboard',

@@ -31,7 +31,9 @@ const RapportShell = ({ children }) => {
     const authority = useSessionUser((s) => s.user.authority) || []
     const canChat = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.chat.view')
     const hasTabs = usePageTabsStore((st) => !!st.tabs)
-    const toolbar = hasTabs ? <PageTabs /> : pathname === '/dashboard' || hasPageFilter(pathname) ? <DashboardFilters /> : null
+    // on a computer the period / currency / colour pickers live in the dock; on a phone (no dock) they stay in a toolbar under the top bar
+    const filters = pathname === '/dashboard' || hasPageFilter(pathname)
+    const toolbar = hasTabs ? <PageTabs /> : filters && !larger.lg ? <DashboardFilters /> : null
 
     return (
         <LayoutBase type={LAYOUT_RAPPORT} className="rp-app app-layout-rapport flex flex-auto flex-col">

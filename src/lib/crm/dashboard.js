@@ -287,6 +287,35 @@ export async function getDashboardMetrics(params = {}) {
         }
     })
 
+    // the money waiting: the biggest unpaid / overdue invoices and open estimates, shown as coloured tiles on the Overview
+    if (money && (can('invoices') || can('estimates'))) {
+        try {
+            const items = []
+            if (can('invoices')) {
+                const inv = await prisma.crmInvoice.findMany({ where: { status: { in: [1, 3, 4] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, dueDate: true, total: true, currencyId: true, status: true }, orderBy: { total: 'desc' }, take: 400 })
+                const pays = await prisma.crmPayment.findMany({ where: { invoiceId: { in: inv.map((i) => i.id) } }, select: { invoiceId: true, amount: true } })
+                const paid = {}
+                for (const p of pays) paid[p.invoiceId] = (paid[p.invoiceId] || 0) + (p.amount || 0)
+                for (const i of inv) {
+                    const due = round2((i.total || 0) - (paid[i.id] || 0))
+                    if (due <= 0) continue
+                    const k = toBase(1, i.currencyId, rt)
+                    items.push({ kind: 'invoice', id: i.id, clientId: i.clientId, number: docNumberOf(i, padding), amount: due, amountBase: k === null ? null : round2(due * k), currencyId: i.currencyId || null, date: i.dueDate, tone: i.dueDate && new Date(i.dueDate) < startOfToday ? 'tomato' : 'butter', status: i.dueDate && new Date(i.dueDate) < startOfToday ? 'Overdue' : 'Unpaid' })
+                }
+            }
+            if (can('estimates')) {
+                const est = await prisma.crmEstimate.findMany({ where: { status: 2 }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, expiryDate: true, total: true, currencyId: true }, orderBy: { total: 'desc' }, take: 100 })
+                for (const e of est) {
+                    const k = toBase(1, e.currencyId, rt)
+                    items.push({ kind: 'estimate', id: e.id, clientId: e.clientId, number: docNumberOf(e, padding, null), amount: e.total || 0, amountBase: k === null ? null : round2((e.total || 0) * k), currencyId: e.currencyId || null, date: e.expiryDate, tone: 'pine', status: 'Waiting for an answer' })
+                }
+            }
+            const top = items.sort((a, b) => (b.amountBase ?? b.amount) - (a.amountBase ?? a.amount)).slice(0, 60)
+            const names = Object.fromEntries((await prisma.crmClient.findMany({ where: { id: { in: [...new Set(top.map((x) => x.clientId).filter(Boolean))] } }, select: { id: true, company: true } })).map((c) => [c.id, c.company]))
+            data.hot = top.map((x) => ({ ...x, client: names[x.clientId] || '' }))
+        } catch (e) { data.hot = [] }
+    }
+
     // the same figures for the period just before, so the charts can draw it as a comparison line
     if (!params.noPrev) {
         try {

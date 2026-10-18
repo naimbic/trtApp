@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.69.1',
+        date: '2026-10-18',
+        title: 'Invoices: demo-style head with three metrics, short numbers in the chart',
+        items: ['The Revenue and Invoices big cards are replaced by the head of the Dashboard: a big title and three metrics with their icons (Revenue collected, number of Invoices with the overdue count, Cash flow still to collect); the four figure cards stay, then the Cash flow chart', 'Charts show big numbers short with the currency (12.5K MAD, 1.2M MAD) on the axis and in the tooltip']
+    },
+    {
         version: '0.69.0',
         date: '2026-10-18',
         title: 'Invoices like the Rapport finance page: Revenue, Invoices, Cash flow and a row menu',

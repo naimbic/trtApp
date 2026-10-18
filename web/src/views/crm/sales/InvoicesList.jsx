@@ -4,12 +4,13 @@ import { StatTile, TileGrid, StatusPills } from '@/components/crm/ListHeader'
 import { useRegisterCurrency } from '@/store/pageFilterStore'
 import { TbReceipt2, TbCash, TbHourglass, TbAlertTriangle, TbCircleCheck, TbFileText } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbSearch, TbDots, TbExternalLink, TbPencil, TbDownload, TbMail, TbArrowsExchange, TbTrash, TbBan, TbSend, TbFileText as TbDraft } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbDots, TbPercentage, TbExternalLink, TbPencil, TbDownload, TbMail, TbArrowsExchange, TbTrash, TbBan, TbSend, TbFileText as TbDraft } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Dialog from '@/components/ui/Dialog'
 import RowMenu from '@/components/crm/RowMenu'
 import SendMailDialog from '../mail/SendMailDialog'
-import InvoiceInsights from './InvoiceInsights'
+import { InvoiceHead, InvoiceCash } from './InvoiceInsights'
+import { compact } from '../kit/charts'
 import { api as apiCall, notify } from '../kit/api'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
@@ -98,6 +99,12 @@ const InvoicesList = () => {
             ...(can('invoices', 'delete') ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => setConfirm({ row: r, kind: 'delete' }) }] : []),
         ]
     }
+    // short money for the charts: 12.5K, 1.2M, with the currency
+    const short = (v) => {
+        const c = lookups.currencies.find((x) => x.id === cur) || (cur === 'all' ? lookups.currencies.find((x) => x.isDefault) || lookups.currencies[0] : undefined)
+        const sym = c?.symbol || c?.name || '', n = compact(v)
+        return c?.placement === 'after' ? `${n} ${sym}` : `${sym ? sym + ' ' : ''}${n}`
+    }
     const sortBy = (key) => setSort((s) => (s.key === key ? { key, order: s.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }))
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const m = data.stats.money[cur]
@@ -107,10 +114,15 @@ const InvoicesList = () => {
 
     return (
         <Container>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>{tr("Invoices")}</h3><p className="text-sm text-gray-500">{tr("Track what you billed, what was paid and what is overdue")}</p></div>
-                {can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/invoices/new')}>{tr("New invoice")}</Button>}
-            </div>
+            <InvoiceHead
+                title={tr("Invoices")}
+                action={can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/invoices/new')}>{tr("New invoice")}</Button>}
+                stats={[
+                    { icon: <TbCash />, label: tr("Revenue"), value: m ? money(m.paid, cur) : '—' },
+                    { icon: <TbReceipt2 />, label: tr("Invoices"), value: String(Object.entries(data.stats.counts).filter(([k]) => ![5, 6].includes(+k)).reduce((n, [, v]) => n + v, 0)), badge: data.stats.counts[4] ? <span className="badge badge--tomato">{tr("{n} overdue", { n: data.stats.counts[4] })}</span> : null },
+                    { icon: <TbPercentage />, label: tr("Cash flow"), value: m ? money(m.outstanding, cur) : '—' },
+                ]}
+            />
 
             {m && (
                 <TileGrid cols={4}>
@@ -121,7 +133,7 @@ const InvoicesList = () => {
                 </TileGrid>
             )}
 
-            {m && data.stats.series?.[cur] && <InvoiceInsights series={data.stats.series[cur]} counts={data.stats.counts} money={(v) => money(v, cur)} moneyShort={(v) => money(v, cur)} />}
+            {m && data.stats.series?.[cur] && <InvoiceCash series={data.stats.series[cur]} money={(v) => money(v, cur)} moneyShort={short} />}
 
             <AdaptiveCard>
                 <div className="mb-4 flex flex-wrap items-center gap-3">

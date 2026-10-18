@@ -40,6 +40,7 @@ model CrmClient {
   defaultLanguage       String?
   /// tblcurrencies.id (admin domain)
   defaultCurrencyId     String?  @db.ObjectId
+  bankAccountId         String?  @db.ObjectId // the bank account printed on this client's documents (empty: the company's default one)
   showPrimaryContact    Boolean  @default(false)
   stripeId              String?
   registrationConfirmed Boolean  @default(true)

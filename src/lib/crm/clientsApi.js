@@ -5,6 +5,7 @@ import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { toBase, ALL } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
+import { activeLanguages } from '@/lib/crm/templateLanguages'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const str = (v) => (v === undefined || v === null || String(v).trim() === '' ? null : String(v).trim())
@@ -66,6 +67,7 @@ export async function clientLookups() {
         numberPadding: await numberPadding(),
         countries: countries.filter((c) => c.legacyId != null).map((c) => ({ value: c.legacyId, label: c.shortName || c.longName || c.iso2 })),
         currencies: currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, placement: c.placement, isDefault: c.isDefault })),
+        languages: await activeLanguages(), // the languages switched on in Settings → Localization
         groups: groups.map((g) => ({ id: g.id, name: g.name })),
         staff: staff.map((s) => ({ id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.email })),
     }
@@ -135,7 +137,7 @@ export async function getClientDetail(id) {
     ])
     const money = (await moneyFor([id], true))[id] || {}
     return {
-        id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId,
+        id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null,
         address: c.address, city: c.city, state: c.state, zip: c.zip, country: c.country, countryName: cname[c.country] || '',
         billing: { street: c.billingStreet, city: c.billingCity, state: c.billingState, zip: c.billingZip, country: c.billingCountry, countryName: cname[c.billingCountry] || '' },
         shipping: { street: c.shippingStreet, city: c.shippingCity, state: c.shippingState, zip: c.shippingZip, country: c.shippingCountry, countryName: cname[c.shippingCountry] || '' },
@@ -163,6 +165,7 @@ const fieldsFrom = (b) => {
     set('country', b.country === undefined ? undefined : num(b.country))
     set('defaultLanguage', b.language === undefined ? undefined : str(b.language))
     set('defaultCurrencyId', b.currencyId === undefined ? undefined : b.currencyId || null)
+    set('bankAccountId', b.bankAccountId === undefined ? undefined : b.bankAccountId || null)
     if (b.active !== undefined) d.active = !!b.active
     for (const [k, p] of [['billing', 'billing'], ['shipping', 'shipping']]) {
         const a = b[k]

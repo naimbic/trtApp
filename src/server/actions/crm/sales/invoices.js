@@ -140,6 +140,7 @@ export async function saveInvoice(input) {
         date: input.date ? new Date(input.date) : new Date(),
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
         currencyId: input.currencyId || null,
+        ...(input.bankAccountId !== undefined ? { bankAccountId: input.bankAccountId || null } : {}),
         subtotal: totals.subtotal,
         totalTax: totals.totalTax,
         total: totals.total,

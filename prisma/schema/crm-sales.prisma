@@ -78,6 +78,7 @@ model CrmItemTax {
 /// tblinvoices. createdAt <- datecreated.
 /// status: 1 unpaid, 2 paid, 3 partially paid, 4 overdue, 5 cancelled, 6 draft
 model CrmInvoice {
+  bankAccountId String? @db.ObjectId // the bank account printed on this document (empty: the client's, else the company's default)
   id                     String    @id @default(auto()) @map("_id") @db.ObjectId
   legacyId               Int?
   sent                   Boolean   @default(false)
@@ -175,6 +176,7 @@ model CrmPayment {
 /// tblestimates. createdAt <- datecreated.
 /// status: 1 draft, 2 sent, 3 declined, 4 accepted, 5 expired
 model CrmEstimate {
+  bankAccountId String? @db.ObjectId // the bank account printed on this document (empty: the client's, else the company's default)
   id                    String    @id @default(auto()) @map("_id") @db.ObjectId
   legacyId              Int?
   sent                  Boolean   @default(false)
@@ -644,6 +646,7 @@ model CrmEstimateComment {
 
 /// Bon de commande: the client's order confirmation between an estimate and the invoice.
 model CrmPurchaseOrder {
+  bankAccountId String? @db.ObjectId // the bank account printed on this document (empty: the client's, else the company's default)
   id               String    @id @default(auto()) @map("_id") @db.ObjectId
   clientId         String?   @db.ObjectId
   number           Int

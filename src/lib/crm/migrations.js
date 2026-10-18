@@ -85,6 +85,21 @@ export async function splitPermissions() {
     }
 }
 
+/**
+ * The company's single bank (Bank / RIB / SWIFT in Settings → Company) becomes the first, default bank account, so the printed
+ * documents do not change; more accounts can then be added and chosen per client or per document. Runs once, marker-guarded.
+ */
+export async function seedBankAccount() {
+    const MARK5 = 'bank_accounts_seed_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK5 } })) return
+    if (!(await prisma.crmBankAccount.count())) {
+        const rows = await prisma.crmOption.findMany({ where: { name: { in: ['company_bank', 'company_rib', 'company_swift'] } } })
+        const o = Object.fromEntries(rows.map((r) => [r.name, r.value]))
+        if (o.company_bank || o.company_rib) await prisma.crmBankAccount.create({ data: { name: String(o.company_bank || 'Main account').slice(0, 80), bank: o.company_bank || null, rib: o.company_rib || null, swift: o.company_swift || null, isDefault: true, active: true } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK5, value: new Date().toISOString() } })
+}
+
 /** Creates the standard roles that do not exist yet (never changes an existing role). Runs once, marker-guarded. */
 export async function ensureStandardRoles() {
     const MARK2 = 'standard_roles_v1'

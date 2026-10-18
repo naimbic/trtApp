@@ -190,6 +190,7 @@ const resources = [
             { key: 'status', label: 'Status', type: 'select', options: ESTIMATE_STATUS },
         ],
         fields: [
+            { key: 'remindClient', label: 'Send reminders to the client', type: 'boolean', section: 'Status' },
             client,
             { ...project, section: 'General' },
             ...numberFields,
@@ -239,6 +240,7 @@ const resources = [
             { key: 'status', label: 'Status', type: 'select', options: PROPOSAL_STATUS },
         ],
         fields: [
+            { key: 'remindClient', label: 'Send reminders to the client', type: 'boolean', section: 'Status' },
             { key: 'subject', label: 'Subject', type: 'text', required: true, section: 'General' },
             { key: 'relType', label: 'Related', type: 'select', options: sel([['customer', 'Customer'], ['lead', 'Lead']]), required: true, section: 'General' },
             { key: 'relId', label: 'Related record', type: 'relation', resource: 'clients', section: 'General' },
@@ -310,6 +312,7 @@ const resources = [
             { key: 'signed', label: 'Signed', type: 'boolean' },
         ],
         fields: [
+            { key: 'remindClient', label: 'Send reminders to the client', type: 'boolean', section: 'Status' },
             { key: 'subject', label: 'Subject', type: 'text', required: true, section: 'General' },
             { ...client, section: 'General' },
             { key: 'projectId', label: 'Project', type: 'relation', resource: 'projects', section: 'General' },

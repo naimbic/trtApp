@@ -17,6 +17,7 @@ import { ProposalStatusTag, fmtDate } from './shared'
 import { tr } from '@/utils/t'
 import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
+import ReminderCard from '../kit/ReminderCard'
 
 const effective = (p) => (p.openTill && [1, 4, 5].includes(p.status) && fmtDate(p.openTill) < fmtDate(new Date()) ? 7 : p.status)
 
@@ -159,6 +160,8 @@ const ProposalView = () => {
                         <div className="flex gap-2"><Input textArea rows={2} placeholder={tr("Reply to the client… (visible on the public proposal page)")} value={reply} onChange={(ev) => setReply(ev.target.value)} /><Button variant="solid" loading={busy} onClick={sendReply}>{tr("Reply")}</Button></div>
                     )}
                 </Card>
+
+                <ReminderCard resource="proposals" id={id} value={e.remindClient !== false} canEdit={can('proposals', 'edit')} title={tr("Send expiry reminders to the client")} hint={tr("Shortly before the proposal closes, the client receives a reminder email.")} />
 
                 <Card><h4 className="mb-3">{tr("Files")}</h4><AttachmentsPanel relType="proposal" relId={id} canEdit={can('proposals', 'edit')} showClientToggle /></Card>
 

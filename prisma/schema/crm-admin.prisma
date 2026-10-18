@@ -861,3 +861,19 @@ model CrmCronRun {
   @@index([startedAt])
   @@map("crm_cron_runs")
 }
+
+// A bank account printed on invoices, estimates and purchase orders (several can exist: one per currency, per client...).
+model CrmBankAccount {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   // what people pick, e.g. "Attijari MAD" or "BNP EUR"
+  bank      String?
+  holder    String?
+  rib       String?  // RIB or IBAN
+  swift     String?
+  isDefault Boolean  @default(false)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("crm_bank_accounts")
+}

@@ -14,9 +14,10 @@ import ImageUpload from '@/components/crm/ImageUpload'
 import { api, notify, useCan } from '../kit/api'
 import { useClientLookups } from './shared'
 import { tr } from '@/utils/t'
+import BankAccountSelect from '../kit/BankAccountSelect'
 
 const addr = { street: '', city: '', state: '', zip: '', country: null }
-const blank = { logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
+const blank = { logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
 
 const Address = ({ value, onChange, countries }) => (
     <div>
@@ -47,7 +48,7 @@ const ClientForm = () => {
     useEffect(() => {
         if (!id) return
         api(`/api/crm/customers/${id}`).then((c) => {
-            setV({ ...blank, logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
+            setV({ ...blank, logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
         }).catch((e) => setError(e.message)).finally(() => setLoading(false))
     }, [id])
 
@@ -75,6 +76,7 @@ const ClientForm = () => {
     const groupOptions = lookups.groups.map((g) => ({ value: g.id, label: g.name }))
     const staffOptions = lookups.staff.map((s) => ({ value: s.id, label: s.name }))
     const currencyOptions = lookups.currencies.map((c) => ({ value: c.id, label: c.name }))
+    const languageOptions = (lookups.languages || []).map((l) => ({ value: l, label: l.charAt(0).toUpperCase() + l.slice(1) })) // only the languages switched on in the settings
 
     if (loading) return <Container><div className="py-16 text-center text-gray-400">{tr("Loading…")}</div></Container>
     return (
@@ -92,7 +94,8 @@ const ClientForm = () => {
                                 <FormItem label={tr("Website")}><Input type="url" value={v.website} onChange={(e) => set({ website: e.target.value })} /></FormItem>
                                 <FormItem label={tr("Industry")}><Input placeholder={tr("e.g. Real estate, Retail…")} value={v.industry} onChange={(e) => set({ industry: e.target.value })} /></FormItem>
                                 <FormItem label={tr("Default currency")}><Select isClearable options={currencyOptions} value={currencyOptions.find((o) => o.value === v.currencyId) || null} onChange={(o) => set({ currencyId: o ? o.value : null })} /></FormItem>
-                                <FormItem label={tr("Default language")}><Input placeholder={tr("e.g. french")} value={v.language} onChange={(e) => set({ language: e.target.value })} /></FormItem>
+                                <FormItem label={tr("Bank account on its documents")}><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The company's default account")} /></FormItem>
+                                <FormItem label={tr("Default language")}><Select isClearable placeholder={tr("Company language")} options={languageOptions} value={v.language ? languageOptions.find((o) => o.value === v.language.toLowerCase()) || { value: v.language, label: v.language } : null} onChange={(o) => set({ language: o?.value || '' })} /></FormItem>
                             </div>
                         </Card>
                         <Card>

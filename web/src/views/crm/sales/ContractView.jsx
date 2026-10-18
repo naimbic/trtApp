@@ -18,6 +18,7 @@ import { fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import { tr } from '@/utils/t'
+import ReminderCard from '../kit/ReminderCard'
 
 const { TabList, TabNav } = Tabs
 const Field = ({ label, children }) => (<div><div className="mb-0.5 text-xs uppercase tracking-wide text-gray-400">{label}</div><div>{children || <span className="text-gray-400">—</span>}</div></div>)
@@ -89,6 +90,8 @@ const ContractView = () => {
                 {c.description && <p className="mt-4 whitespace-pre-line border-t pt-3 text-sm text-gray-500">{c.description}</p>}
                 {c.hidden && <p className="mt-3 text-xs text-gray-400">{tr("Not visible to the client.")}</p>}
             </Card>
+
+            {c.dateEnd && <div className="mb-4"><ReminderCard resource="contracts" id={id} value={c.remindClient !== false} canEdit={can('contracts', 'edit')} title={tr("Send expiry reminders to the client")} hint={tr("Shortly before the contract ends, the client receives a notice by email.")} /></div>}
 
             <AdaptiveCard>
                 <Tabs value={tab} onChange={setTab}>

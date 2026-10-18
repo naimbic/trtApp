@@ -99,6 +99,7 @@ export const GROUPS = {
                 f('company_rib', 'RIB / IBAN', 'text', { token: 'company_rib' }),
                 f('company_swift', 'SWIFT / BIC', 'text', { token: 'company_swift' }),
             ] },
+            { title: 'Bank accounts', desc: 'The accounts printed on invoices, estimates and purchase orders (with the merge terms company_bank, company_rib, company_swift and company_bank_holder). The default one is used unless a client or a document has its own: choose it on the client, or on the document. The single Bank / RIB / SWIFT fields above are only used while no account exists here.', panel: 'bankAccounts' },
             { title: 'Company block on documents', desc: 'Free text printed at the top of invoices, estimates and other documents. Use merge terms; click one to insert it.', panel: 'companyFormat', fields: [
                 f('company_info_format', 'Company information format', 'html', { rows: 8 }),
             ] },

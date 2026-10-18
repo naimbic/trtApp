@@ -53,7 +53,7 @@ export async function savePurchaseOrder(input) {
     const discountType = input.discountType || 'before_tax'
     const totals = calcDocument({ items, discountPercent: input.discountPercent, discountFixed: input.discountFixed, discountType, adjustment: input.adjustment })
     const data = {
-        clientId: input.clientId, date: input.date ? new Date(input.date) : new Date(), deliveryDate: input.deliveryDate ? new Date(input.deliveryDate) : null, currencyId: input.currencyId || null,
+        clientId: input.clientId, date: input.date ? new Date(input.date) : new Date(), deliveryDate: input.deliveryDate ? new Date(input.deliveryDate) : null, currencyId: input.currencyId || null, ...(input.bankAccountId !== undefined ? { bankAccountId: input.bankAccountId || null } : {}),
         subtotal: totals.subtotal, totalTax: totals.totalTax, total: totals.total, discountPercent: Number(input.discountPercent) || 0, discountTotal: totals.discountTotal, discountType,
         adjustment: Number(input.adjustment) || 0, clientNote: input.clientNote || null, adminNote: input.adminNote || null, terms: input.terms || null, referenceNo: input.referenceNo || null,
     }

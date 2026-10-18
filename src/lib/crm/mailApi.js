@@ -8,6 +8,7 @@ import { buildMessage, SHELL } from '@/lib/crm/mailDesign/build'
 import { shortLink } from '@/lib/crm/shortLinks'
 import { activeLanguages, syncTemplateLanguages } from '@/lib/crm/templateLanguages'
 import { baseData, buildHtml, companyLanguage, deliver, findTemplate, getOptions, getSmtp, setOptions, smtpReady, testConnection, mergeFields, escapeHtml } from '@/lib/crm/mailer'
+import { bankTokensFor } from '@/lib/crm/bankDb'
 
 const plain = (v) => JSON.parse(JSON.stringify(v))
 const fail = (message) => { throw new PermissionError(message, 400) }
@@ -147,6 +148,7 @@ async function loadContext(kind, id) {
     } else fail('Unknown document type')
 
     const client = clientId ? await prisma.crmClient.findUnique({ where: { id: clientId } }) : null
+    const bank = ['invoice', 'estimate', 'purchase_order'].includes(kind) ? await bankTokensFor({ docAccountId: doc.bankAccountId, clientId }) : null // the account of this document, else of its client
     const contacts = clientId ? await prisma.crmContact.findMany({ where: { clientId, active: true }, orderBy: { isPrimary: 'desc' } }) : []
     const flag = KINDS[kind].contactFlag
     const recipients = contacts.filter((c) => c.email).map((c) => ({
@@ -156,7 +158,7 @@ async function loadContext(kind, id) {
     if (recipients.length && !recipients.some((r) => r.checked)) recipients[0].checked = true
     const lead = recipients.find((r) => r.checked) || recipients[0]
     const [first = '', ...rest] = (lead?.name || '').split(' ')
-    Object.assign(data, base, {
+    Object.assign(data, base, bank || {}, {
         client_company: client?.company || doc.proposalTo || '', client_phonenumber: client?.phoneNumber || '', client_vat_number: client?.vat || '',
         contact_firstname: first, contact_lastname: rest.join(' '), contact_email: lead?.email || '',
     })

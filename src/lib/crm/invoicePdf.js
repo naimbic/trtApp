@@ -13,6 +13,7 @@ import { companyImageDataUri } from '@/lib/crm/company'
 import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
 import { companyTokenData, renderInfoFormat, clientTokenData, phpDate, COMPANY_KEYS } from '@/lib/crm/docTokens'
+import { bankTokensFor } from '@/lib/crm/bankDb'
 
 const run = promisify(execFile)
 // Item descriptions are stored as small HTML snippets: keep basic formatting, drop everything else.
@@ -42,9 +43,9 @@ function logoDataUri(file) {
 const fmtDate = (d, fmt, tz) => phpDate(d, fmt, tz)
 
 /** The company block at the top of documents: company_info_format with merge terms, or a built-in fallback. */
-async function organizationInfo(o) {
+async function organizationInfo(o, bank = null) {
     const get = await getOptions(COMPANY_KEYS)
-    const data = companyTokenData(get)
+    const data = companyTokenData(get, undefined, bank)
     const fmt = o('company_info_format')
     if (fmt) return renderInfoFormat(fmt, data)
     const lines = [data.company_name, data.address, [data.zip_code, data.city].filter(Boolean).join(' '), data.phone, data.vat_number_with_label]
@@ -107,7 +108,7 @@ export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
     const showModes = unpaid ? modes.filter((m) => m.showOnPdf && m.active !== false && m.description) : []
     const logo = await companyImageDataUri('logo', logoDataUri(og('company_logo')), S.logoKeys)
     const signature = S.showSignature ? await companyImageDataUri('signature', '') : ''
-    const org = await organizationInfo(og)
+    const org = await organizationInfo(og, await bankTokensFor({ docAccountId: invoice.bankAccountId, clientId: invoice.clientId }))
     const bill = await customerInfo(client, invoice, L)
 
     const extra = []

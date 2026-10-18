@@ -255,6 +255,28 @@ const resources = [
         filters: [], children: [], actions: [],
     },
     {
+        key: 'bank-accounts', model: 'crmBankAccount', label: 'Bank account', plural: 'Bank accounts',
+        group: 'Setup', icon: 'TbBuildingBank', feature: 'settings', hidden: true, exclusive: 'isDefault',
+        titleField: 'name', search: ['name', 'bank', 'rib'], defaultSort: { name: 'asc' },
+        columns: [
+            { key: 'name', label: 'Name', type: 'text', link: true },
+            { key: 'bank', label: 'Bank', type: 'text' },
+            { key: 'rib', label: 'RIB / IBAN', type: 'text' },
+            { key: 'isDefault', label: 'Default', type: 'boolean' },
+            { key: 'active', label: 'Active', type: 'boolean' },
+        ],
+        fields: [
+            { key: 'name', label: 'Name (what people pick)', type: 'text', required: true, section: 'General' },
+            { key: 'bank', label: 'Bank', type: 'text', section: 'General' },
+            { key: 'holder', label: 'Account holder', type: 'text', section: 'General' },
+            { key: 'rib', label: 'RIB / IBAN', type: 'text', section: 'General' },
+            { key: 'swift', label: 'SWIFT / BIC', type: 'text', section: 'General' },
+            { key: 'isDefault', label: 'Default account (used when the client and the document have none)', type: 'boolean', section: 'General' },
+            { key: 'active', label: 'Active', type: 'boolean', section: 'General' },
+        ],
+        filters: [], children: [], actions: [],
+    },
+    {
         key: 'taxes', model: 'crmTax', label: 'Tax', plural: 'Taxes',
         group: 'Setup', icon: 'TbPercentage', feature: 'settings',
         titleField: 'name', search: ['name'], defaultSort: { name: 'asc' },

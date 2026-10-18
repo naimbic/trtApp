@@ -17,6 +17,7 @@ import { EstimateStatusTag, fmtDate } from './shared'
 import { tr } from '@/utils/t'
 import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
+import ReminderCard from '../kit/ReminderCard'
 
 const effective = (e) => (e.status === 2 && e.expiryDate && fmtDate(e.expiryDate) < fmtDate(new Date()) ? 5 : e.status)
 
@@ -159,6 +160,8 @@ const EstimateView = () => {
                         <div className="flex gap-2"><Input textArea rows={2} placeholder={tr("Reply to the client… (visible on the public estimate page)")} value={reply} onChange={(ev) => setReply(ev.target.value)} /><Button variant="solid" loading={busy} onClick={sendReply}>{tr("Reply")}</Button></div>
                     )}
                 </Card>
+
+                <ReminderCard resource="estimates" id={id} value={e.remindClient !== false} canEdit={can('estimates', 'edit')} title={tr("Send expiry reminders to the client")} hint={tr("Shortly before the estimate expires, the client receives a reminder email.")} />
 
                 <Card><h4 className="mb-3">{tr("Files")}</h4><AttachmentsPanel relType="estimate" relId={id} canEdit={can('estimates', 'edit')} showClientToggle /></Card>
 

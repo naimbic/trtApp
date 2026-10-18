@@ -12,6 +12,7 @@ import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
 import { tr } from '@/utils/t'
+import BankAccountSelect from '../kit/BankAccountSelect'
 
 const emptyLine = () => ({ description: '', longDescription: '', qty: 1, rate: 0, unit: '', taxes: [] })
 const day = (v) => (v ? dayjs(v).format('YYYY-MM-DD') : '')
@@ -42,6 +43,7 @@ const PurchaseOrderEditor = () => {
                     date: day(inv?.date) || day(new Date()),
                     deliveryDate: day(inv?.deliveryDate) || day(dayjs().add(dueAfter, 'day')), referenceNo: inv?.referenceNo || '',
                     currencyId: inv?.currencyId || def?.id || null,
+                    bankAccountId: inv?.bankAccountId || null,
                     discountPercent: inv?.discountPercent || 0,
                     discountFixed: inv && !inv.discountPercent ? inv.discountTotal || 0 : 0,
                     discountType: inv?.discountType || 'before_tax',
@@ -101,6 +103,7 @@ const PurchaseOrderEditor = () => {
                     <div className="grid gap-4 md:grid-cols-4">
                         <div className="md:col-span-2"><label className="form-label mb-2 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={(cid) => set({ clientId: cid })} /></div>
                         <div><label className="form-label mb-2 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
+                        <div><label className="form-label mb-2 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
                         <div><label className="form-label mb-2 block">{tr("Client's order number")}</label><Input value={v.referenceNo} placeholder={tr("Optional")} onChange={(e) => set({ referenceNo: e.target.value })} /></div>
                         <div><label className="form-label mb-2 block">{tr("Order date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
                         <div><label className="form-label mb-2 block">{tr("Expected delivery")}</label><Input type="date" value={v.deliveryDate} onChange={(e) => set({ deliveryDate: e.target.value })} /></div>

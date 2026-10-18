@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.59.0',
+        date: '2026-10-18',
+        title: 'Bank accounts per client and per document, reminder switch on the page, client languages',
+        items: ['Bank accounts: Settings → Company → Bank accounts lists as many accounts as you need (name, bank, holder, RIB/IBAN, SWIFT, one default). The account printed on a document is chosen in this order: the document\'s own ("Bank account on the document" in the invoice, estimate and purchase order editors), then its client\'s ("Bank account on its documents" on the client edit page), then the default one. It fills {company_bank}, {company_rib}, {company_swift} and the new {company_bank_holder} in the PDFs, the public pages and the emails. Your existing single bank (Bank / RIB / SWIFT) becomes the first, default account on update, so nothing changes until you add another', 'The "send reminders to the client" switch is now also on the invoice, estimate, proposal and contract pages (a card with an On/Off switch that saves at once), not only at the bottom of the editor', 'Client edit page: Default language is now a list of the languages switched on in Settings → Localization (it was free text), next to the new bank account choice', 'Only one account can be the default: choosing a new default clears the old one (also for currencies)']
+    },
+    {
         version: '0.58.2',
         date: '2026-10-18',
         title: 'Fix: HTML showing inside invoice items',

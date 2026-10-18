@@ -245,6 +245,12 @@ const audit = async (session, resource, action, id, label) => {
     }
 }
 
+/** A resource with `exclusive: 'isDefault'` has one default: choosing it clears the others. */
+async function onlyOne(resource, row) {
+    const k = resource.exclusive
+    if (k && row[k] === true) await delegate(resource).updateMany({ where: { id: { not: row.id } }, data: { [k]: false } })
+}
+
 export async function createRecord(key, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
@@ -259,6 +265,7 @@ export async function createRecord(key, body) {
     if (resource.staffField && !data[resource.staffField]) data[resource.staffField] = await getStaffId(session)
     if (restricted(resource, session) && resource.privateField) data[resource.privateField] = await getStaffId(session)
     const row = await delegate(resource).create({ data })
+    await onlyOne(resource, row)
     await audit(session, resource, 'Created', row.id, row[resource.titleField])
     return row
 }
@@ -274,6 +281,7 @@ export async function updateRecord(key, id, body) {
     if (locked) throw new PermissionError(locked, 409)
     const data = buildData(resource, body, { partial: true })
     const row = await delegate(resource).update({ where: { id }, data })
+    await onlyOne(resource, row)
     await audit(session, resource, 'Updated', id, row[resource.titleField])
     return row
 }

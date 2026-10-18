@@ -25,6 +25,7 @@ const LISTS = { currencies: ['currencies', tr("The currencies you invoice in. Pr
 
 const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'ai') return <AiSettingsPanel />
+    if (name === 'bankAccounts') return <ResourceManager resourceKey="bank-accounts" />
     if (name === 'smtp') return <MailServerSettings />
     if (name === 'companyFormat') return <FormatPanel kind="company" fieldKey="company_info_format" values={values} setValue={setValue} />
     if (name === 'customerFormat') return <FormatPanel kind="client" fieldKey="customer_info_format" values={values} setValue={setValue} customFields={ctx.customFields} />

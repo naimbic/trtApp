@@ -21,6 +21,7 @@ import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import { tr, trn } from '@/utils/t'
 import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
+import ReminderCard from '../kit/ReminderCard'
 
 /** Effective status for display (overdue derives from the due date, like the list). */
 const effective = (inv, paid) => {
@@ -177,6 +178,7 @@ const InvoiceView = () => {
                     </div>
 
                     <div className="flex flex-col gap-4">
+                        {[1, 3, 4].includes(st) && <ReminderCard resource="invoices" id={id} field="cancelOverdueReminders" inverted value={!invoice.cancelOverdueReminders} canEdit={canEdit} title={tr("Send overdue reminders to the client")} hint={tr("If the invoice is still unpaid after its due date, the client receives the reminder email.")} />}
                         <Card>
                             <h5 className="mb-3">{tr("Payments")}</h5>
                             {payments.length ? (

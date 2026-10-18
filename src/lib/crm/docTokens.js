@@ -12,14 +12,15 @@ const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 export const COMPANY_KEYS = ['invoice_company_name', 'companyname', 'invoice_company_address', 'invoice_company_city', 'company_state', 'invoice_company_postal_code', 'invoice_company_country_code', 'invoice_company_phonenumber', 'company_email', 'company_vat', 'company_ice', 'company_if', 'company_rc', 'company_patente', 'company_cnss', 'company_capital', 'company_bank', 'company_rib', 'company_swift', 'main_domain']
 
 /** `o` is the getter returned by getOptions(). */
-export function companyTokenData(o, vatLabel = 'VAT Number') {
+export function companyTokenData(o, vatLabel = 'VAT Number', bank = null) {
     const vat = o('company_vat')
     return {
         company_name: o('invoice_company_name', o('companyname')), address: o('invoice_company_address'), city: o('invoice_company_city'), state: o('company_state'),
         zip_code: o('invoice_company_postal_code'), country_code: o('invoice_company_country_code'), phone: o('invoice_company_phonenumber'), email: o('company_email'),
         vat_number: vat, vat_number_with_label: vat ? `${vatLabel}: ${vat}` : '', website: o('main_domain'),
         company_ice: o('company_ice'), company_if: o('company_if'), company_rc: o('company_rc'), company_patente: o('company_patente'),
-        company_cnss: o('company_cnss'), company_capital: o('company_capital'), company_bank: o('company_bank'), company_rib: o('company_rib'), company_swift: o('company_swift'),
+        company_cnss: o('company_cnss'), company_capital: o('company_capital'), company_bank: o('company_bank'), company_rib: o('company_rib'), company_swift: o('company_swift'), company_bank_holder: '',
+        ...(bank || {}), // the bank account chosen for this document (or its client) replaces the company's single one
     }
 }
 

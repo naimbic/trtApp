@@ -7,6 +7,7 @@ import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers, TbChevronLeft, TbChevronRight, TbCalendarEvent, TbCalendarWeek, TbAlertTriangle, TbDots, TbCheck, TbExternalLink, TbCircleCheck, TbRotate, TbUserPlus, TbCalendarDue, TbChecklist } from 'react-icons/tb'
 import RowMenu from '@/components/crm/RowMenu'
+import { STATUS } from '../tasks/shared'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import Tooltip from '@/components/ui/Tooltip'
 import { CATEGORIES } from './EventDialog'
@@ -247,11 +248,13 @@ const Calendar = () => {
 
 
     // ---- actions on an entry of the agenda
-    const setDone = async (it, done) => {
-        const patchList = (list) => list.map((x) => (x.id === it.id ? { ...x, done, status: done ? 5 : 4 } : x))
-        setItems(patchList); setOverdue((l) => (done ? l.filter((x) => x.id !== it.id) : l))
-        try { await api(`/api/crm/work/tasks/${it.rawTaskId}/move`, { method: 'POST', body: JSON.stringify({ status: done ? 5 : 4 }) }); load() } catch (e) { notifyOnce(e.message); load() }
+    const setTaskStatus = async (it, status) => {
+        const done = status === 5
+        const patchList = (list) => list.map((x) => (x.id === it.id ? { ...x, done, status } : x))
+        setItems(patchList); setOverdue((l) => (done ? l.filter((x) => x.id !== it.id) : patchList(l)))
+        try { await api(`/api/crm/work/tasks/${it.rawTaskId}/move`, { method: 'POST', body: JSON.stringify({ status }) }); load() } catch (e) { notifyOnce(e.message); load() }
     }
+    const setDone = (it, done) => setTaskStatus(it, done ? 5 : 4)
     const patchTask = async (it, change, ok) => {
         try {
             const d = await api(`/api/crm/work/tasks/${it.rawTaskId}`), t = d.task
@@ -265,6 +268,7 @@ const Calendar = () => {
         return [
             open,
             { label: it.done ? tr("Reopen") : tr("Mark complete"), icon: it.done ? <TbRotate /> : <TbCircleCheck />, onClick: () => setDone(it, !it.done) },
+            { label: tr("Change status"), icon: <TbChecklist />, sub: STATUS.map((st) => ({ label: st.label, color: STATUS_DOT[st.value], checked: (it.status || 1) === st.value, onClick: () => setTaskStatus(it, st.value) })) },
             { label: tr("Assign to"), icon: <TbUserPlus />, sub: staff.map((m) => ({ label: m.name, checked: (it.who || []).includes(m.id), onClick: () => patchTask(it, (t) => ({ assigneeIds: t.assigneeIds.includes(m.id) ? t.assigneeIds.filter((x) => x !== m.id) : [...t.assigneeIds, m.id] }), tr("Team changed")) })) },
             { label: tr("Reschedule"), icon: <TbCalendarDue />, sub: [[tr("Today"), 0], [tr("Tomorrow"), 1], [tr("In a week"), 7]].map(([label, n]) => ({ label, onClick: () => patchTask(it, () => ({ dueDate: dayjs().add(n, 'day').format('YYYY-MM-DD') }), tr("Due date changed")) })) },
         ]

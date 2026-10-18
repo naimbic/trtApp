@@ -139,6 +139,15 @@ const _Search = ({ className }) => {
         debounceFn(e.target.value)
     }
 
+    // Ctrl K / ⌘ K opens (and closes) the search from anywhere
+    useEffect(() => {
+        const onKey = (e) => {
+            if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); setSearchDialogOpen((o) => !o) }
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [])
+
     useEffect(() => {
         if (searchDialogOpen) {
             const timeout = setTimeout(() => inputRef.current?.focus(), 100)
@@ -157,6 +166,7 @@ const _Search = ({ className }) => {
             <div
                 className={classNames(className, 'text-2xl')}
                 onClick={handleSearchOpen}
+                title={`${tr("Search...")} (${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'})`}
             >
                 <PiMagnifyingGlassDuotone />
             </div>
@@ -177,6 +187,7 @@ const _Search = ({ className }) => {
                                 onChange={handleSearch}
                             />
                         </div>
+                        <span className="flex items-center gap-2 text-xs text-gray-400"><kbd className="rounded border border-gray-200 px-1.5 py-0.5 font-sans dark:border-gray-600">{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'}</kbd></span>
                         <Button size="xs" onClick={handleSearchClose}>
                             {tr("Esc")}
                         </Button>

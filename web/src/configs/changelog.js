@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.74.6',
+        date: '2026-10-18',
+        title: 'Ctrl K / ⌘K opens the search; change a task status from the calendar',
+        items: ['Ctrl K (⌘K on a Mac) opens the search from any page and closes it again; the shortcut is shown on the search button and in the search box', 'The three-dots menu of a task in the calendar agenda and in the Overdue list has Change status with the five statuses (the dot shows each colour)']
+    },
+    {
         version: '0.74.5',
         date: '2026-10-18',
         title: 'Schedule: the + is above everything in the box',

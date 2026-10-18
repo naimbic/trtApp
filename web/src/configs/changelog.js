@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.77.1',
+        date: '2026-10-18',
+        title: 'Lead sources get a colour; calendar invoices show their text',
+        items: ['Lead sources can now have a colour (pick it in Lead sources, like the statuses); the colour shows as a dot before the source on the lead cards, in the lead Source picker and in the Source menu', 'Calendar: invoices, estimates, proposals, contracts, projects and reminders showed an empty card in the month grid; they show their title again']
+    },
+    {
         version: '0.77.0',
         date: '2026-10-18',
         title: 'Customer groups and other short lists: edit in place, reorder, delete',

@@ -27,7 +27,7 @@ async function staffMap(ids) {
 
 const card = (l, people, status, source) => ({
     id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title,
-    statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null,
+    statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null, sourceColor: source?.color || null,
     assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId,
 })
 
@@ -60,7 +60,7 @@ export async function listLeads(p = {}) {
     if (p.view === 'list') {
         const rows = await prisma.crmLead.findMany({ where, orderBy: [{ createdAt: 'desc' }], take: 300 })
         const people = await staffMap(rows.flatMap(teamOf))
-        return { list: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])), total: await prisma.crmLead.count({ where }), can, statuses: statuses.map((s) => ({ id: s.id, name: s.name, color: s.color })), sources: sources.map((s) => ({ id: s.id, name: s.name })) }
+        return { list: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])), total: await prisma.crmLead.count({ where }), can, statuses: statuses.map((s) => ({ id: s.id, name: s.name, color: s.color })), sources: sources.map((s) => ({ id: s.id, name: s.name, color: s.color || null })) }
     }
     // "load more" for one column
     if (oid(p.statusId) && p.offset) {
@@ -231,7 +231,7 @@ export async function leadLookups() {
     const [staff, statuses, sources] = await Promise.all([
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
         prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' }, select: { id: true, name: true, color: true } }),
-        prisma.crmLeadSource.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+        prisma.crmLeadSource.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, color: true } }),
     ])
     return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), statuses, sources }
 }

@@ -31,7 +31,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const edit = !!id
     const canEdit = edit ? detail?.can.edit : true
     const set = (p) => setV((x) => ({ ...x, ...p }))
-    const opt = (list, val) => { const x = list.find((o) => o.id === val); return x ? { value: x.id, label: x.name } : null }
+    const opt = (list, val) => { const x = list.find((o) => o.id === val); return x ? { value: x.id, label: x.name, color: x.color } : null }
 
     useEffect(() => { if (open && !lk.statuses.length) api('/api/crm/pipeline/leads/lookups').then(setLk).catch(() => {}) }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
     const load = useCallback(async () => {
@@ -60,7 +60,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
                 <div><L>{tr("Status")}</L><Select isDisabled={!canEdit} options={lk.statuses.map((s) => ({ value: s.id, label: s.name }))} value={opt(lk.statuses, v.statusId)} onChange={(o) => set({ statusId: o?.value || null })} placeholder={tr("Default status")} /></div>
-                <div><L>{tr("Source")}</L><Select isClearable isDisabled={!canEdit} options={lk.sources.map((s) => ({ value: s.id, label: s.name }))} value={opt(lk.sources, v.sourceId)} onChange={(o) => set({ sourceId: o?.value || null })} /></div>
+                <div><L>{tr("Source")}</L><Select isClearable isDisabled={!canEdit} formatOptionLabel={(o) => <span className="inline-flex items-center gap-2">{o.color && <i className="h-2.5 w-2.5 rounded-full" style={{ background: o.color }} />}{o.label}</span>} options={lk.sources.map((s) => ({ value: s.id, label: s.name, color: s.color }))} value={opt(lk.sources, v.sourceId)} onChange={(o) => set({ sourceId: o?.value || null })} /></div>
             </div>
             <div><L>{tr("Assigned to")}</L><Select isMulti isDisabled={!canEdit} options={staff.map((s) => ({ value: s.id, label: s.name }))} value={staff.filter((s) => (v.assignedIds || []).includes(s.id)).map((s) => ({ value: s.id, label: s.name }))} onChange={(o) => set({ assignedIds: (o || []).map((x) => x.value) })} placeholder={tr("Me")} /></div>
             <div className="grid grid-cols-2 gap-4">

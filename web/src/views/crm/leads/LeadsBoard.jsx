@@ -100,7 +100,7 @@ const LeadsBoard = () => {
     const open = (id) => setDrawer({ open: true, id, preset: null, k: 0 })
     const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); if (routeId) nav('/crm/leads', { replace: true }) }
     const staffOptions = staff.map((s) => ({ value: s.id, label: s.name }))
-    const sourceOptions = data.sources?.length ? data.sources.map((s) => ({ value: s.id, label: s.name })) : (list.sources || []).map((s) => ({ value: s.id, label: s.name }))
+    const sourceOptions = data.sources?.length ? data.sources.map((s) => ({ value: s.id, label: s.name, color: s.color })) : (list.sources || []).map((s) => ({ value: s.id, label: s.name, color: s.color }))
     const total = view === 'list' ? list.total : data.statuses.reduce((n, c) => n + c.count, 0)
 
     return (
@@ -137,7 +137,7 @@ const LeadsBoard = () => {
                     ends={show === '' ? [{ id: 'won', name: tr("Won"), metric: { value: data.totals?.converted ?? 0, label: tr("converted") }, sub: tr("Convert to a client"), icon: <TbTrophy /> }, { id: 'lost', name: tr("Lost"), metric: { value: data.totals?.lost ?? 0, label: tr("lost") }, sub: tr("Close the lead"), icon: <TbBan />, tone: 'lost' }] : []}
                     actions={(it) => (show === '' ? [
                         { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.some((x) => x.id === m.value), onClick: () => patch(it, (l) => ({ assignedIds: (l.assignedIds || []).includes(m.value) ? l.assignedIds.filter((x) => x !== m.value) : [...(l.assignedIds || []), m.value] }), tr("Team changed")) })) },
-                        { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },
+                        { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, color: m.color, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },
                         { label: tr("Convert to client"), icon: <TbUserCheck />, onClick: () => setAsk(it) },
                         
                         { label: tr("Mark lost"), icon: <TbBan />, after: true, danger: true, onClick: () => flag(it, 'lost', tr("Marked as lost")) },
@@ -149,7 +149,7 @@ const LeadsBoard = () => {
                     }}
                     columns={data.statuses.map((c) => ({
                         id: c.id, name: c.name, color: c.color, count: c.count,
-                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), label: l.source || l.email || '', source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
+                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
                             fields: [{ label: tr("Email"), value: l.email }, { label: tr("Phone"), value: l.phone }, { label: tr("Source"), value: l.source }, { label: tr("Owner"), value: l.assigned?.name }],
                             team: l.assignees || [],
                             people: l.assignees?.length ? <People list={l.assignees} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),

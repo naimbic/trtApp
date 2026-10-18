@@ -135,3 +135,7 @@
 .rp-tm-back:hover .rp-tm-return { transform: translateX(-3px); }
 [dir='rtl'] .rp-tm-return { transform: scaleX(-1); }
 [dir='rtl'] .rp-tm-back:hover .rp-tm-return { transform: scaleX(-1) translateX(-3px); }
+
+/* a source with a colour shows a dot of that colour before its name (same idea as the status colours) */
+.rp-face-label.has-dot { display: inline-flex; align-items: center; gap: 6px; }
+.rp-face-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--lc); box-shadow: 0 0 0 2px color-mix(in srgb, var(--lc) 30%, transparent); }

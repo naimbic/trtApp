@@ -185,6 +185,7 @@ model CrmLeadSource {
   updatedAt DateTime @updatedAt
 
   name      String
+  color     String?
 
   leads     CrmLead[]
 

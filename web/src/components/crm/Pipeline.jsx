@@ -36,7 +36,7 @@ const Tile = ({ item, onOpen, onMenu, dragging, index }) => (
         <div className="rp-face-title">{item.title}</div>
         {item.sub && <div className="rp-face-sub">{item.sub}</div>}
         <div className="rp-face-foot">
-            <span className="rp-face-label">{item.label}</span>
+            <span className={cn('rp-face-label', item.labelColor && 'has-dot')} style={item.labelColor ? { '--lc': item.labelColor } : undefined}>{item.labelColor && <i className="rp-face-dot" />}{item.label}</span>
             {item.people}
         </div>
     </div>

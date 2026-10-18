@@ -274,7 +274,7 @@ const resources = [
         kanban: { statusResource: 'lead-statuses', statusField: 'statusId', orderField: 'leadOrder' },
     },
     {
-        key: 'lead-sources', lookup: {},
+        key: 'lead-sources', lookup: { colorField: 'color' },
         model: 'crmLeadSource',
         label: 'Lead source',
         plural: 'Lead sources',
@@ -284,8 +284,8 @@ const resources = [
         titleField: 'name',
         search: ['name'],
         defaultSort: { name: 'asc' },
-        columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
-        fields: [{ key: 'name', label: 'Name', type: 'text', required: true, section: 'General' }],
+        columns: [{ key: 'name', label: 'Name', type: 'text', link: true }, { key: 'color', label: 'Color', type: 'color' }],
+        fields: [{ key: 'name', label: 'Name', type: 'text', required: true, section: 'General' }, { key: 'color', label: 'Color', type: 'color', section: 'General' }],
         filters: [],
     },
     {

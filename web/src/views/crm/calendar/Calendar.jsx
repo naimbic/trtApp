@@ -83,7 +83,7 @@ const KIND_DOT = { events: '#3b82f6', reminders: '#f59e0b', tasks: '#f97316', in
 const dotOf = (p) => (p.type === 'tasks' ? STATUS_DOT[p.status || 1] : p.type === 'events' ? EVENT_DOT[p.eventColor] || KIND_DOT.events : KIND_DOT[p.type])
 /** 9h, 9h30, 14h: the compact clock used on the calendar and in the agenda */
 const hTime = (d) => { const t = dayjs(d); return `${t.hour()}h${t.minute() ? String(t.minute()).padStart(2, '0') : ''}` }
-const nameOf = (p) => (p.type === 'tasks' && p.rawName ? p.rawName : localTitle(p.rawTitle || p.title))
+const nameOf = (p, title) => (p.type === 'tasks' && p.rawName ? p.rawName : localTitle(p.rawTitle || title || p.title))
 const renderEvent = (arg) => {
     const ev = arg.event
     const p = ev.extendedProps
@@ -92,7 +92,7 @@ const renderEvent = (arg) => {
             <div className={`sch-ev ${p.done ? 'is-done' : ''}`} style={{ '--c': dotOf(p) }}>
                 <i className="sch-ev__dot" />
                 {!ev.allDay && ev.start ? <span className="sch-ev__time">{hTime(ev.start)}</span> : null}
-                <b className="sch-ev__title">{nameOf(p)}</b>
+                <b className="sch-ev__title">{nameOf(p, ev.title)}</b>
             </div>
         </Tooltip>
     )
@@ -309,7 +309,7 @@ const Calendar = () => {
                 ? <button type="button" className="sch-check" aria-pressed={!!it.done} aria-label={it.done ? tr("Reopen") : tr("Mark complete")} onClick={() => setDone(it, !it.done)} style={{ '--c': dotOf(it) }}>{it.done && <TbCheck />}</button>
                 : <i className="sch-row__dot" style={{ background: dotOf(it) }} />}
             <button type="button" className="sch-row__txt" onClick={() => openItem({ ...it, ...(it.extendedProps || {}) })}>
-                <b>{nameOf(it)}</b>
+                <b>{nameOf(it, it.title)}</b>
                 <small>{[it.type === 'events' && !it.allDay ? hTime(it.start) : null, dayjs(it.start).format('D MMM'), late ? tr("{n} days late", { n: daysLate(it.start) }) : null, TYPE_LABEL[it.type] || (it.type === 'events' ? tr("Event") : it.type === 'reminders' ? tr("Reminder") : '')].filter(Boolean).join(' - ')}</small>
             </button>
             <Faces ids={it.who} />

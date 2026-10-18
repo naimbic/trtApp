@@ -1,5 +1,16 @@
 // Staff area: ar. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Which tasks run": "المهام التي تعمل",
+    "Switch a whole category off and the schedule skips it: nothing is sent or changed for it, and \"Preview\" and \"Run manually\" show it as turned off.": "أوقف فئة كاملة فتتخطاها الجدولة: لا يُرسل ولا يتغير شيء لها، ويعرضها «المعاينة» و«التشغيل اليدوي» على أنها متوقفة.",
+    "Invoices: overdue and due-soon reminders, recurring invoices": "الفواتير: تذكيرات الاستحقاق والتأخر، الفواتير المتكررة",
+    "Estimates: expiry reminders and marking expired": "عروض الأسعار: تذكيرات الانتهاء ووسمها منتهية",
+    "Proposals: expiry reminders": "المقترحات: تذكيرات الانتهاء",
+    "Contracts: expiry notices": "العقود: إشعارات الانتهاء",
+    "Expenses: recurring expenses": "المصروفات: المصروفات المتكررة",
+    "Tasks: deadline reminders, recurring tasks, forgotten timers": "المهام: تذكيرات المواعيد، المهام المتكررة، المؤقتات المنسية",
+    "Tickets: close tickets after no answer": "التذاكر: إغلاق التذاكر دون رد",
+    "Cleanup: delete old activity log entries": "التنظيف: حذف إدخالات سجل النشاط القديمة",
+    "Turned off:": "متوقف:",
     "minute": "دقيقة",
     "hour": "ساعة",
     "Nothing to do": "لا شيء للقيام به",

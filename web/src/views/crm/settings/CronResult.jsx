@@ -7,7 +7,7 @@ const JOB_ICON = { invoices: TbReceipt2, estimates: TbFileDescription, proposals
 const ROUTE = { invoice: '/crm/invoices', estimate: '/crm/estimates', proposal: '/crm/proposals', contract: '/crm/contracts', task: '/crm/tasks', ticket: '/crm/tickets' }
 
 /** What a line of the cron log means: will happen (preview), done, skipped, failed, or nothing to do. */
-export const kindOf = (t) => (t.startsWith('!') ? 'error' : / nothing to do$/.test(t) ? 'idle' : /skipped/.test(t) ? 'skip' : t.startsWith('[preview]') ? 'would' : 'done')
+export const kindOf = (t) => (t.startsWith('!') ? 'error' : / turned off$/.test(t) ? 'off' : / nothing to do$/.test(t) ? 'idle' : /skipped/.test(t) ? 'skip' : t.startsWith('[preview]') ? 'would' : 'done')
 const clean = (t) => t.replace(/^\[preview\]\s*/, '').replace(/^!\s*/, '')
 
 const KIND = () => ({
@@ -34,7 +34,8 @@ const CronResult = ({ result }) => {
     const items = (g) => lines.slice(g.from, g.to).map((text, n) => ({ text, kind: kindOf(text), ref: refs[g.from + n] || null }))
     const grouped = groups.map((g) => ({ ...g, items: items(g) }))
     const idle = grouped.filter((g) => g.items.every((i) => i.kind === 'idle'))
-    const busy = grouped.filter((g) => !idle.includes(g))
+    const off = grouped.filter((g) => g.items.every((i) => i.kind === 'off'))
+    const busy = grouped.filter((g) => !idle.includes(g) && !off.includes(g))
     const loose = lines.filter((_, n) => !groups.some((g) => n >= g.from && n < g.to) && result.groups?.length)
     const count = (k) => grouped.reduce((a, g) => a + g.items.filter((i) => i.kind === k).length, 0)
     const K = KIND()
@@ -51,9 +52,9 @@ const CronResult = ({ result }) => {
                 const Icon = JOB_ICON[g.key] || TbMinus
                 return (
                     <div key={g.key} className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-700/30"><Icon className="text-lg text-gray-500" /><span className="font-bold">{tr(g.label)}</span><span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-600 dark:text-gray-200">{g.items.filter((i) => i.kind !== 'idle').length}</span></div>
+                        <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-700/30"><Icon className="text-lg text-gray-500" /><span className="font-bold">{tr(g.label)}</span><span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-600 dark:text-gray-200">{g.items.filter((i) => i.kind !== 'idle' && i.kind !== 'off').length}</span></div>
                         <ul className="max-h-[26rem] divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700">
-                            {g.items.filter((i) => i.kind !== 'idle').map((i, n) => {
+                            {g.items.filter((i) => i.kind !== 'idle' && i.kind !== 'off').map((i, n) => {
                                 const k = K[i.kind], KI = k.icon
                                 return (
                                     <li key={n} className="flex items-start gap-3 px-4 py-2.5 text-sm">
@@ -69,6 +70,13 @@ const CronResult = ({ result }) => {
             })}
 
             {loose.length > 0 && <ul className="rounded-xl border border-red-200 p-3 text-sm text-red-600 dark:border-red-500/30">{loose.map((l, n) => <li key={n}>{clean(l)}</li>)}</ul>}
+
+            {off.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                    <span className="font-semibold">{tr('Turned off:')}</span>
+                    {off.map((g) => { const Icon = JOB_ICON[g.key] || TbMinus; return <span key={g.key} className="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-400 line-through dark:border-gray-600"><Icon />{tr(g.label)}</span> })}
+                </div>
+            )}
 
             {idle.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">

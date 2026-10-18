@@ -14,7 +14,8 @@ import { normalizeSchedule, crontabExpr, nextRun } from '@/lib/crm/cronSchedule'
 const DAY = 86400000
 const num = (v) => Number(v) || 0
 
-const OPTION_KEYS = ['automatically_stop_task_timer_after_hours', 'default_timezone', 'cron_key', 'cron_enabled', 'invoice_auto_operations_hour', 'invoice_due_notice_before', 'invoice_due_notice_resend_after', 'automatically_send_invoice_overdue_reminder_after', 'automatically_resend_invoice_overdue_reminder_after', 'create_invoice_from_recurring_only_on_paid_invoices', 'new_recurring_invoice_action', 'invoice_due_after',
+const JOB_SWITCH = ['invoices', 'estimates', 'proposals', 'contracts', 'expenses', 'tasks', 'tickets', 'cleanup'].map((k) => `cron_job_${k}`)
+const OPTION_KEYS = [...JOB_SWITCH, 'automatically_stop_task_timer_after_hours', 'default_timezone', 'cron_key', 'cron_enabled', 'invoice_auto_operations_hour', 'invoice_due_notice_before', 'invoice_due_notice_resend_after', 'automatically_send_invoice_overdue_reminder_after', 'automatically_resend_invoice_overdue_reminder_after', 'create_invoice_from_recurring_only_on_paid_invoices', 'new_recurring_invoice_action', 'invoice_due_after',
     'estimates_auto_operations_hour', 'send_estimate_expiry_reminder_before', 'proposals_auto_operations_hour', 'send_proposal_expiry_reminder_before', 'contracts_auto_operations_hour', 'contract_expiration_before', 'tasks_reminder_notification_hour', 'tasks_reminder_notification_before', 'autoclose_tickets_after', 'delete_activity_log_older_then',
     'cron_last_invoices', 'cron_last_estimates', 'cron_last_proposals', 'cron_last_contracts', 'cron_last_tasks', 'cron_last_expenses', 'expenses_auto_operations_hour', 'cron_last_cleanup', 'last_cron_run']
 
@@ -221,6 +222,8 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
             const { today, hour, ymd } = clock(o('default_timezone'))
             const done = {}
             for (const j of JOBS) {
+                // a category switched off in Settings → Cron job is skipped, whatever started the run
+                if (o(`cron_job_${j.key}`, '1') === '0') { lines.push(`${j.label}: turned off`); groups.push({ key: j.key, label: j.label, from: lines.length - 1, to: lines.length }); continue }
                 const last = o(`cron_last_${j.key}`)
                 const atHour = j.hour ? num(o(j.hour, '9')) : 0
                 const due = force || (j.hour ? hour >= atHour && last !== ymd : j.daily ? last !== ymd : true)
@@ -233,7 +236,7 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
             }
             if (!dry) await setOptions({ ...done, last_cron_run: Math.floor(Date.now() / 1000) })
         } catch (e) { ok = false; lines.push(`! Cron failed: ${e.message}`); console.error('[cron]', e) }
-        const summary = lines.filter((l) => !l.endsWith('nothing to do')).slice(0, 3).join(' · ') || 'Nothing to do'
+        const summary = lines.filter((l) => !l.endsWith('nothing to do') && !l.endsWith('turned off')).slice(0, 3).join(' · ') || 'Nothing to do'
         const run = await prisma.crmCronRun.create({ data: { trigger: dry ? 'preview' : trigger, ok: ok && !lines.some((l) => l.startsWith('!')), summary: summary.slice(0, 300), lines, ms: Date.now() - t0 } })
         await prisma.crmCronRun.deleteMany({ where: { startedAt: { lt: new Date(Date.now() - 30 * DAY) } } }).catch(() => {})
         return { ok: run.ok, lines, refs: lines.refs || [], groups, ms: run.ms }

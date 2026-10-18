@@ -1,5 +1,16 @@
 // Staff area: fr. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Which tasks run": "Quelles tâches s’exécutent",
+    "Switch a whole category off and the schedule skips it: nothing is sent or changed for it, and \"Preview\" and \"Run manually\" show it as turned off.": "Désactivez une catégorie entière et la planification l'ignore : rien n'est envoyé ni modifié pour elle, et « Aperçu » et « Exécuter manuellement » l'affichent comme désactivée.",
+    "Invoices: overdue and due-soon reminders, recurring invoices": "Factures : rappels de retard et d’échéance, factures récurrentes",
+    "Estimates: expiry reminders and marking expired": "Devis : rappels d’expiration et passage en expiré",
+    "Proposals: expiry reminders": "Propositions : rappels d’expiration",
+    "Contracts: expiry notices": "Contrats : avis d’expiration",
+    "Expenses: recurring expenses": "Dépenses : dépenses récurrentes",
+    "Tasks: deadline reminders, recurring tasks, forgotten timers": "Tâches : rappels d’échéance, tâches récurrentes, minuteurs oubliés",
+    "Tickets: close tickets after no answer": "Tickets : fermer les tickets sans réponse",
+    "Cleanup: delete old activity log entries": "Nettoyage : supprimer les anciennes entrées du journal d’activité",
+    "Turned off:": "Désactivé :",
     "minute": "minute",
     "hour": "heure",
     "Nothing to do": "Rien à faire",

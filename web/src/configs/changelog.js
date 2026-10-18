@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.58.0',
+        date: '2026-10-18',
+        title: 'Cron job: switch each category on or off',
+        items: ['Settings → Cron job → "Which tasks run": one switch per category (Invoices, Estimates, Proposals, Contracts, Expenses, Tasks, Tickets, Cleanup), all on by default; a category switched off is skipped by the schedule and by "Run manually", and Preview lists it under "Turned off"', 'Handy to keep, for example, only invoice reminders running while the rest is tested']
+    },
+    {
         version: '0.57.2',
         date: '2026-10-18',
         title: 'Cron command shows the address you are using',

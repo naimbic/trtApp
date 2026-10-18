@@ -453,6 +453,16 @@ export const GROUPS = {
             { title: 'Automatic tasks', desc: 'Nothing is sent or changed automatically until you turn this on. Use Preview in the command section first to see what would happen.', fields: [
                 yes('cron_enabled', 'Run the automatic tasks when the cron job is called', { default: '0' }),
             ] },
+            { title: 'Which tasks run', desc: 'Switch a whole category off and the schedule skips it: nothing is sent or changed for it, and "Preview" and "Run manually" show it as turned off.', fields: [
+                yes('cron_job_invoices', 'Invoices: overdue and due-soon reminders, recurring invoices', { default: '1' }),
+                yes('cron_job_estimates', 'Estimates: expiry reminders and marking expired', { default: '1' }),
+                yes('cron_job_proposals', 'Proposals: expiry reminders', { default: '1' }),
+                yes('cron_job_contracts', 'Contracts: expiry notices', { default: '1' }),
+                yes('cron_job_expenses', 'Expenses: recurring expenses', { default: '1' }),
+                yes('cron_job_tasks', 'Tasks: deadline reminders, recurring tasks, forgotten timers', { default: '1' }),
+                yes('cron_job_tickets', 'Tickets: close tickets after no answer', { default: '1' }),
+                yes('cron_job_cleanup', 'Cleanup: delete old activity log entries', { default: '1' }),
+            ] },
             { title: 'Schedule', desc: 'How often the automatic tasks wake up. Each task still does its work once a day at the hour set in its own card below (tickets every time).', fields: [
                 sel('cron_mode', 'Who runs it', [['built_in', 'The CRM itself (nothing to set up on the server)'], ['external', 'An external scheduler that calls the command below']], { default: 'external' }),
                 f('cron_every', 'Run every', 'number', { min: 1, max: 59, default: '15', hint: 'Minutes up to 59, hours up to 23, days up to 30.' }),

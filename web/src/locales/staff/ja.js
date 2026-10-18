@@ -1,5 +1,16 @@
 // Staff area: ja. The key is the English text; what is missing shows in English. Generated from the translators' files by scripts/i18n-merge.mjs, then maintained by hand.
 export default {
+    "Which tasks run": "実行するタスク",
+    "Switch a whole category off and the schedule skips it: nothing is sent or changed for it, and \"Preview\" and \"Run manually\" show it as turned off.": "カテゴリ全体をオフにすると、スケジュールはそれをスキップします。送信も変更も行われず、「プレビュー」と「手動実行」ではオフと表示されます。",
+    "Invoices: overdue and due-soon reminders, recurring invoices": "請求書：支払期限・期限超過のリマインダー、定期請求書",
+    "Estimates: expiry reminders and marking expired": "見積書：期限リマインダーと期限切れへの変更",
+    "Proposals: expiry reminders": "提案書：期限リマインダー",
+    "Contracts: expiry notices": "契約：期限通知",
+    "Expenses: recurring expenses": "経費：定期経費",
+    "Tasks: deadline reminders, recurring tasks, forgotten timers": "タスク：期限リマインダー、定期タスク、停止忘れのタイマー",
+    "Tickets: close tickets after no answer": "チケット：無回答のチケットを自動で閉じる",
+    "Cleanup: delete old activity log entries": "クリーンアップ：古いアクティビティログの削除",
+    "Turned off:": "オフ：",
     "minute": "分",
     "hour": "時間",
     "Nothing to do": "実行するものはありません",

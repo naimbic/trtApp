@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.75.2',
+        date: '2026-10-18',
+        title: 'All activity: one card per category',
+        items: ['Under each day the activity is gathered by category (Sign-ins, Sales, Work, Leads, Notes and emails, Other): one card per category, equal height, entries scroll inside the card', 'Pages now hold 3 days each']
+    },
+    {
         version: '0.75.1',
         date: '2026-10-18',
         title: 'All activity: cards, 3 columns, pages',

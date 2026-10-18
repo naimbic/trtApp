@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.68.0',
+        date: '2026-10-18',
+        title: 'Tabs and switches like the Rapport demo',
+        items: ['Every set of tabs in the app (pages, popups, settings, the page tabs in the top bar) is now the demo\'s pill track with a dark pill that glides to the active tab; counts and icons sit inside the tab', 'The Board / List and Active / Lost style switches use the same pill look; both follow light and dark mode and mirror in Arabic']
+    },
+    {
         version: '0.67.4',
         date: '2026-10-18',
         title: 'The chosen colour now reaches everything (no more red leftovers)',

@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import classNames from '../utils/classNames'
 import { useTabs } from './context'
 import useCallbackRef from '../hooks/useCallbackRef'
@@ -13,7 +14,7 @@ const TabNav = (props) => {
         ...rest
     } = props
 
-    const { value, onValueChange, variant } = useTabs()
+    const { value, onValueChange, variant, barId } = useTabs()
     const isSelected = valueProp === value
 
     const onTabNavClick = useCallbackRef(() => {
@@ -44,8 +45,9 @@ const TabNav = (props) => {
             onKeyDown={onTabNavClick}
             {...rest}
         >
+            {isSelected && <motion.span layoutId={`tab-bg-${barId}`} className="tab-nav-bg" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />}
             {icon && <div className="tab-nav-icon">{icon}</div>}
-            {children}
+            <span className="tab-nav-text">{children}</span>
         </div>
     )
 }

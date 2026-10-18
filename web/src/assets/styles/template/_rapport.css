@@ -260,3 +260,22 @@ body:has(.rp-app) .dropdown-menu .heading-text, body:has(.rp-app) .dropdown-menu
 .rp-per-row[data-on='true'] svg { color: var(--rp-accent, #d8532d); }
 .rp-per-apply { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); }
 body:has(.rp-app) .dropdown-menu [class*='menu-item-']:not(.menu-item-header):not(.menu-item-divider):hover { background: color-mix(in srgb, var(--rp-accent, #d8532d) 14%, transparent); }
+
+/* ── tabs, everywhere: the Rapport pill track with a dark pill that slides to the active tab ── */
+.tab-nav-bg { display: none; }
+body:has(.rp-app) .tab-list { display: flex; width: max-content; max-width: 100%; gap: 2px; padding: 4px; border: 1px solid var(--rp-rim); border-radius: 999px; background: var(--rp-glass-2); box-shadow: var(--rp-shadow); scrollbar-width: none; }
+body:has(.rp-app) .tab-list::-webkit-scrollbar { display: none; }
+body:has(.rp-app) .tab-nav { position: relative; z-index: 0; margin: 0; padding: 9px 17px; border: 0 !important; border-radius: 999px; background: transparent !important; color: var(--rp-text) !important; font-size: 13.5px; font-weight: 600; white-space: nowrap; transition: background .2s var(--rp-ease), color .2s var(--rp-ease); }
+body:has(.rp-app) .tab-nav:not(.tab-nav-active):not(.tab-nav-disabled):hover { background: var(--rp-well) !important; }
+body:has(.rp-app) .tab-nav.tab-nav-active { color: var(--rp-on-pill) !important; }
+body:has(.rp-app) .tab-nav-bg { display: block; position: absolute; inset: 0; z-index: -1; border-radius: 999px; background: var(--rp-pill); box-shadow: 0 6px 16px -6px rgba(23, 25, 26, .5); }
+body:has(.rp-app) .tab-nav-text { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+body:has(.rp-app) .tab-nav-icon { margin: 0 6px 0 0; }
+[dir='rtl'] body:has(.rp-app) .tab-nav-icon { margin: 0 0 0 6px; }
+.tab-nav-count { font-style: normal; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, currentColor 14%, transparent); }
+
+/* segmented switches (Board / List, Active / Lost…) wear the same pill look */
+body:has(.rp-app) .segment { padding: 4px; gap: 2px; border: 1px solid var(--rp-rim); border-radius: 999px; background: var(--rp-glass-2) !important; box-shadow: var(--rp-shadow); }
+body:has(.rp-app) .segment-item { border-radius: 999px; color: var(--rp-text); font-weight: 600; transition: background .2s var(--rp-ease), color .2s var(--rp-ease), transform .25s var(--rp-ease); }
+body:has(.rp-app) .segment-item:not(.segment-item-active):not(.segment-item-disabled):hover { background: var(--rp-well); color: var(--rp-text); }
+body:has(.rp-app) .segment-item.segment-item-active { background: var(--rp-pill) !important; color: var(--rp-on-pill) !important; box-shadow: 0 6px 16px -6px rgba(23, 25, 26, .5); }

@@ -1,5 +1,6 @@
 import { TabsContextProvider } from './context'
 import useControllableState from '../hooks/useControllableState'
+import { useId } from 'react'
 import classNames from 'classnames'
 
 const Tabs = (props) => {
@@ -19,6 +20,7 @@ const Tabs = (props) => {
         defaultProp: defaultValue,
     })
 
+    const barId = useId() // the sliding pill of this set of tabs
     const tabsClass = classNames('tabs', className)
 
     return (
@@ -27,6 +29,7 @@ const Tabs = (props) => {
                 value: value,
                 onValueChange: setValue,
                 variant,
+                barId,
             }}
         >
             <div className={tabsClass} {...rest} ref={ref} />

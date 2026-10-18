@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.77.0',
+        date: '2026-10-18',
+        title: 'Customer groups and other short lists: edit in place, reorder, delete',
+        items: ['Customer groups, lead sources and statuses, ticket statuses, item groups, contract types and expense categories are now managed in place: add at the top, click a name to rename it, pick a colour, delete with a confirmation, and drag the handle to reorder the lists that have an order (customer groups, lead statuses, ticket statuses); the pencil still opens the full form', 'Fix: a customer group that had clients could not be deleted ("violates the required relation"); deleting it now just removes the group from those clients', 'Customer groups have a new order that is used in the client pickers']
+    },
+    {
         version: '0.76.3',
         date: '2026-10-18',
         title: 'Mails: ready-made designs in Spanish, Japanese and Arabic',

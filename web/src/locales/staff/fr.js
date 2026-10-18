@@ -3701,5 +3701,9 @@ export default {
     "average progress": "de progression moyenne",
     "of {n}": "sur {n}",
     "{n} past deadline": "{n} en retard",
-    "Dev by": "Développé par"
+    "Dev by": "Développé par",
+    "Click to rename": "Cliquer pour renommer",
+    "Delete this item?": "Supprimer cet élément ?",
+    "New {what}": "Nouveau {what}",
+    "Nothing here yet": "Rien ici pour l'instant"
 }

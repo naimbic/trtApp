@@ -88,7 +88,7 @@ const resources = [
         hidden: true,
     },
     {
-        key: 'ticket-statuses', model: 'crmTicketStatus', label: 'Ticket status', plural: 'Ticket statuses',
+        key: 'ticket-statuses', lookup: { orderField: 'statusOrder', colorField: 'statusColor' }, model: 'crmTicketStatus', label: 'Ticket status', plural: 'Ticket statuses',
         group: 'Support', icon: 'TbProgressCheck', feature: 'settings', titleField: 'name',
         search: ['name'], defaultSort: { statusOrder: 'asc' },
         columns: [

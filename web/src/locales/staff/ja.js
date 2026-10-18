@@ -3701,5 +3701,9 @@ export default {
     "average progress": "平均進捗",
     "of {n}": "/ {n}",
     "{n} past deadline": "{n}件が期限超過",
-    "Dev by": "開発："
+    "Dev by": "開発：",
+    "Click to rename": "クリックして名前を変更",
+    "Delete this item?": "この項目を削除しますか？",
+    "New {what}": "新しい{what}",
+    "Nothing here yet": "まだ何もありません"
 }

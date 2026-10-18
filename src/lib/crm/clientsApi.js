@@ -60,7 +60,7 @@ export async function clientLookups() {
     const [countries, currencies, groups, staff] = await Promise.all([
         prisma.crmCountry.findMany({ orderBy: { shortName: 'asc' } }),
         prisma.crmCurrency.findMany({ orderBy: { name: 'asc' } }),
-        prisma.crmCustomerGroup.findMany({ orderBy: { name: 'asc' } }),
+        prisma.crmCustomerGroup.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
         prisma.crmStaff.findMany({ where: { active: true }, orderBy: { firstName: 'asc' } }),
     ])
     return {

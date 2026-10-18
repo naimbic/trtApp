@@ -135,6 +135,7 @@ model CrmCustomerGroup {
   updatedAt DateTime @updatedAt
 
   name      String
+  sortOrder Int?
 
   links     CrmCustomerGroupLink[]
 

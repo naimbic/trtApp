@@ -56,7 +56,7 @@ const numberFields = [
 const resources = [
     // ------------------------------------------------------------------ items
     {
-        key: 'item-groups', model: 'crmItemGroup', label: 'Item group', plural: 'Item groups', group: G, icon: 'TbCategory',
+        key: 'item-groups', lookup: {}, model: 'crmItemGroup', label: 'Item group', plural: 'Item groups', group: G, icon: 'TbCategory',
         feature: 'items', titleField: 'name', search: ['name'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
         fields: [{ key: 'name', label: 'Name', type: 'text', required: true, section: 'General' }],
@@ -290,7 +290,7 @@ const resources = [
 
     // -------------------------------------------------------------- contracts
     {
-        key: 'contract-types', model: 'crmContractType', label: 'Contract type', plural: 'Contract types', group: G, icon: 'TbTags',
+        key: 'contract-types', lookup: {}, model: 'crmContractType', label: 'Contract type', plural: 'Contract types', group: G, icon: 'TbTags',
         feature: 'contracts', titleField: 'name', search: ['name'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
         fields: [{ key: 'name', label: 'Name', type: 'text', required: true, section: 'General' }],
@@ -385,7 +385,7 @@ const resources = [
 
     // --------------------------------------------------------------- expenses
     {
-        key: 'expense-categories', model: 'crmExpenseCategory', label: 'Expense category', plural: 'Expense categories', group: G, icon: 'TbCategory2',
+        key: 'expense-categories', lookup: {}, model: 'crmExpenseCategory', label: 'Expense category', plural: 'Expense categories', group: G, icon: 'TbCategory2',
         feature: 'expenses', titleField: 'name', search: ['name', 'description'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }, { key: 'description', label: 'Description', type: 'text' }],
         fields: [

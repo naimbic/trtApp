@@ -117,7 +117,7 @@ const resources = [
         children: [{ resource: 'consents', fk: 'contactId', label: 'Consents' }],
     },
     {
-        key: 'customer-groups',
+        key: 'customer-groups', lookup: { orderField: 'sortOrder' }, cascade: [{ model: 'crmCustomerGroupLink', fk: 'groupId' }],
         model: 'crmCustomerGroup',
         label: 'Customer group',
         plural: 'Customer groups',
@@ -126,9 +126,9 @@ const resources = [
         feature: 'customers',
         titleField: 'name',
         search: ['name'],
-        defaultSort: { name: 'asc' },
+        defaultSort: [{ sortOrder: 'asc' }, { name: 'asc' }],
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
-        fields: [{ key: 'name', label: 'Name', type: 'text', required: true, section: 'General' }],
+        fields: [{ key: 'name', label: 'Name', type: 'text', required: true, section: 'General' }, { key: 'sortOrder', label: 'Order', type: 'number', section: 'General' }],
         filters: [],
         children: [{ resource: 'client-group-links', fk: 'groupId', label: 'Clients' }],
     },
@@ -274,7 +274,7 @@ const resources = [
         kanban: { statusResource: 'lead-statuses', statusField: 'statusId', orderField: 'leadOrder' },
     },
     {
-        key: 'lead-sources',
+        key: 'lead-sources', lookup: {},
         model: 'crmLeadSource',
         label: 'Lead source',
         plural: 'Lead sources',
@@ -289,7 +289,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'lead-statuses',
+        key: 'lead-statuses', lookup: { orderField: 'statusOrder', colorField: 'color' },
         model: 'crmLeadStatus',
         label: 'Lead status',
         plural: 'Lead statuses',

@@ -9,6 +9,7 @@ import { getResource } from '@/lib/crm/resources'
 import { customNavItems } from '@/lib/crm/custom-nav'
 import ResourceTable from './kit/ResourceTable'
 import RecordDrawer from './kit/RecordDrawer'
+import LookupManager from './kit/LookupManager'
 import { useCan } from './kit/api'
 import { tr } from '@/utils/t'
 
@@ -46,15 +47,19 @@ const ResourcePage = () => {
                 </div>
                 {canCreate && <Button variant="solid" icon={<TbPlus />} onClick={() => setDrawer({ open: true, id: null })}>{tr("New")} {resource.label.toLowerCase()}</Button>}
             </div>
-            <AdaptiveCard>
-                <ResourceTable
-                    key={resource.key}
-                    resource={resource}
-                    reloadKey={reload}
-                    onRowClick={(row) => setDrawer({ open: true, id: row.id })}
-                    rowActions={(row) => <Tooltip title={canEdit ? tr("Edit") : tr("View")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => setDrawer({ open: true, id: row.id })} /></Tooltip>}
-                />
-            </AdaptiveCard>
+            {resource.lookup ? (
+                <LookupManager key={resource.key} resource={resource} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} reloadKey={reload} onOpen={(id) => setDrawer({ open: true, id })} />
+            ) : (
+                <AdaptiveCard>
+                    <ResourceTable
+                        key={resource.key}
+                        resource={resource}
+                        reloadKey={reload}
+                        onRowClick={(row) => setDrawer({ open: true, id: row.id })}
+                        rowActions={(row) => <Tooltip title={canEdit ? tr("Edit") : tr("View")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => setDrawer({ open: true, id: row.id })} /></Tooltip>}
+                    />
+                </AdaptiveCard>
+            )}
             <RecordDrawer
                 key={resource.key}
                 resource={resource}

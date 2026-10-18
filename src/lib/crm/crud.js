@@ -295,6 +295,7 @@ export async function deleteRecord(key, id) {
     const row = await getRecord(key, id)
     const locked = resource.lock?.(row)
     if (locked) throw new PermissionError(locked, 409)
+    for (const c of resource.cascade || []) await prisma[c.model].deleteMany({ where: { [c.fk]: id } }) // rows that only point at this one go with it
     await delegate(resource).delete({ where: { id } })
     await audit(session, resource, 'Deleted', id, row[resource.titleField])
     return { id }

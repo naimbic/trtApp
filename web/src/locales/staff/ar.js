@@ -3701,5 +3701,9 @@ export default {
     "average progress": "متوسط التقدم",
     "of {n}": "من {n}",
     "{n} past deadline": "{n} متأخرة عن الموعد",
-    "Dev by": "تطوير"
+    "Dev by": "تطوير",
+    "Click to rename": "انقر لإعادة التسمية",
+    "Delete this item?": "حذف هذا العنصر؟",
+    "New {what}": "{what} جديد",
+    "Nothing here yet": "لا شيء هنا بعد"
 }

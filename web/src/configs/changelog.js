@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.68.1',
+        date: '2026-10-18',
+        title: 'Wider profile menu',
+        items: ['The profile menu is wider (340 px) with taller rows, so the name, email, role and every entry have room', 'Section titles of the mega menu (Administration, Setup…) are dark again instead of taking the picked colour, so they stay readable with light colours']
+    },
+    {
         version: '0.68.0',
         date: '2026-10-18',
         title: 'Tabs and switches like the Rapport demo',

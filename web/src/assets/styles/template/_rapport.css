@@ -249,7 +249,7 @@ body:has(.rp-app) .dropdown-menu .heading-text, body:has(.rp-app) .dropdown-menu
 .rp-link[data-active='true'] { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); }
 .rp-link:hover .rp-link-go { color: var(--rp-accent, #d8532d); opacity: 1; }
 .rp-link[data-active='true'] .rp-link-go { color: inherit; }
-.rp-card-h h6 { color: var(--rp-accent, #d8532d); }
+.rp-card-h h6 { color: var(--rp-text); font-size: 12px; }
 .rp-card-h em { background: color-mix(in srgb, var(--rp-accent, #d8532d) 16%, var(--rp-float)); color: var(--rp-text); }
 .rp-card { border-color: color-mix(in srgb, var(--rp-accent, #d8532d) 18%, var(--rp-line)); }
 .rp-tm-row:hover { background: color-mix(in srgb, var(--rp-accent, #d8532d) 14%, transparent); }
@@ -279,3 +279,9 @@ body:has(.rp-app) .segment { padding: 4px; gap: 2px; border: 1px solid var(--rp-
 body:has(.rp-app) .segment-item { border-radius: 999px; color: var(--rp-text); font-weight: 600; transition: background .2s var(--rp-ease), color .2s var(--rp-ease), transform .25s var(--rp-ease); }
 body:has(.rp-app) .segment-item:not(.segment-item-active):not(.segment-item-disabled):hover { background: var(--rp-well); color: var(--rp-text); }
 body:has(.rp-app) .segment-item.segment-item-active { background: var(--rp-pill) !important; color: var(--rp-on-pill) !important; box-shadow: 0 6px 16px -6px rgba(23, 25, 26, .5); }
+
+/* the profile menu is wider: name, email and role breathe, rows have room */
+.dropdown-menu.profile-menu { min-width: 340px; }
+.dropdown-menu.profile-menu .menu-item-header { padding-block: 6px; }
+.dropdown-menu.profile-menu [class*='menu-item-'] { min-height: 44px; }
+.dropdown-menu.profile-menu .menu-item-divider { min-height: 0; }

@@ -47,6 +47,7 @@ const _UserDropdown = ({ className }) => {
                 </div>
             }
             placement="bottom-end"
+            menuClass="profile-menu"
         >
             <Dropdown.Item variant="header">
                 <div className="py-2 px-3 flex items-center gap-3">

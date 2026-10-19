@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.86.4',
+        date: '2026-10-19',
+        title: 'Footer: version and credit on the right',
+        items: ['The footer no longer shows Terms & Conditions | Privacy & Policy. The version number (linked to the versions page) and Dev by trtAgency now sit on the right.']
+    },
+    {
         version: '0.86.3',
         date: '2026-10-19',
         title: 'Leads menu in one column; menu on note cards',

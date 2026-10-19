@@ -12,28 +12,12 @@ const FooterContent = () => {
             <span>
                 {tr("Copyright ©")} {`${new Date().getFullYear()}`}{' '}
                 <span className="font-semibold">{`${APP_NAME}`}</span> {tr("All rights reserved.")}
-                <span className="mx-2 text-muted">·</span>
+            </span>
+            <span>
                 <Link to="/versions" className="hover:underline" title={tr("What's new")}>v{VERSION}</Link>
                 <span className="mx-2 text-muted">·</span>
                 {tr("Dev by")} <a className="font-semibold hover:underline" href="https://www.trtdigital.ma" target="_blank" rel="noopener noreferrer">trtAgency</a>
             </span>
-            <div className="">
-                <a
-                    className="text-gray"
-                    href="/#"
-                    onClick={(e) => e.preventDefault()}
-                >
-                    {tr("Term & Conditions")}
-                </a>
-                <span className="mx-2 text-muted"> | </span>
-                <a
-                    className="text-gray"
-                    href="/#"
-                    onClick={(e) => e.preventDefault()}
-                >
-                    {tr("Privacy & Policy")}
-                </a>
-            </div>
         </div>
     )
 }

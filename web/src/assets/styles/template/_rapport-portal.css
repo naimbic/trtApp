@@ -1,0 +1,64 @@
+/* Client area (portal) in the Rapport look: the customer-profile page of the template, for the client who signs in */
+.rp-frame--portal { padding-inline-start: var(--rp-gutter) !important; }
+.rp-frame--portal .rp-top { flex-wrap: wrap; row-gap: 10px; }
+.rp-frame--portal .rp-pills { overflow-x: auto; scrollbar-width: none; }
+.rp-frame--portal .rp-pills::-webkit-scrollbar { display: none; }
+@media (max-width: 1023px) { .rp-frame--portal .rp-pills { display: flex !important; order: 3; flex-basis: 100%; justify-content: flex-start; } }
+.rp-foot-portal { padding: 22px 0 14px; text-align: center; font-size: 12px; color: var(--rp-muted); }
+
+.pt { display: grid; gap: var(--rp-gap, 16px); grid-template-columns: minmax(0, 340px) minmax(0, 1fr); align-items: start; }
+@media (max-width: 1023px) { .pt { grid-template-columns: minmax(0, 1fr); } }
+.pt-col { display: grid; gap: var(--rp-gap, 16px); min-width: 0; }
+.pt-card { padding: 20px; border-radius: var(--rp-r-card); background: var(--rp-glass); border: 1px solid var(--rp-rim); box-shadow: var(--rp-shadow); min-width: 0; }
+.pt-card h3, .pt-card__title { margin: 0 0 14px; font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: var(--rp-text); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pt-card__title a { font-size: 12.5px; font-weight: 700; color: var(--rp-muted); }
+.pt-card__title a:hover { color: var(--rp-text); }
+
+/* profile: the photo sits inside a ring that is the share of what was invoiced that is paid */
+.pt-prof { text-align: center; }
+.pt-ring { --p: 0; position: relative; width: 112px; height: 112px; margin: 2px auto 14px; border-radius: 50%; background: conic-gradient(var(--rp-pine) calc(var(--p) * 1%), var(--rp-well) 0); display: grid; place-items: center; }
+.pt-ring > span { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%; background: var(--rp-float, #fff); overflow: hidden; font-size: 30px; font-weight: 800; color: var(--rp-text); }
+.pt-ring img { width: 100%; height: 100%; object-fit: cover; }
+.pt-ring small { position: absolute; inset-block-end: -4px; inset-inline-end: -2px; padding: 2px 8px; border-radius: 999px; background: var(--rp-pine); color: var(--rp-on-pine); font-size: 11px; font-weight: 800; }
+.pt-name { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+.pt-role { margin: 3px 0 0; color: var(--rp-muted); font-size: 13.5px; }
+.pt-acts { display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.pt-act { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding-inline: 14px; border-radius: 999px; background: var(--rp-well); color: var(--rp-text); font-size: 13px; font-weight: 700; transition: background .2s, color .2s, transform .2s; }
+.pt-act:hover { background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); transform: translateY(-1px); }
+
+/* detailed information */
+.pt-dl { display: grid; gap: 10px; margin: 0; }
+.pt-dl > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; font-size: 13.5px; }
+.pt-dl dt { color: var(--rp-muted); }
+.pt-dl dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+/* interaction history: the documents as solid tiles, the colour is the state */
+.pt-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.pt-tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.pt-tile { position: relative; display: grid; gap: 6px; align-content: start; min-height: 132px; padding: 16px; border-radius: 22px; background: var(--rp-plain); color: var(--rp-on-plain); transition: transform .25s var(--rp-ease), box-shadow .25s; }
+.pt-tile:hover { transform: translateY(-4px); box-shadow: var(--rp-shadow-pop); }
+.pt-tile--butter { background: var(--rp-butter); color: var(--rp-on-butter); } .pt-tile--pine { background: var(--rp-pine); color: var(--rp-on-pine); }
+.pt-tile--tomato { background: var(--rp-tomato); color: var(--rp-on-tomato); } .pt-tile--ink { background: var(--rp-solid); color: #fbf8f2; }
+.pt-tile__date { margin: 0; font-size: 12px; font-weight: 700; opacity: .75; }
+.pt-tile__title { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.pt-tile__amt { margin: auto 0 0; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pt-tile__st { position: absolute; inset-block-start: 14px; inset-inline-end: 14px; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.28); font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.pt-empty { padding: 28px 0; text-align: center; color: var(--rp-muted); }
+
+/* payments funnel */
+.pt-fun { display: grid; gap: 12px; }
+.pt-fun__row { display: grid; gap: 5px; font-size: 13px; }
+.pt-fun__row > div { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; }
+.pt-fun__row span.pt-bar { display: block; height: 10px; border-radius: 999px; background: var(--rp-well); overflow: hidden; }
+.pt-bar i { display: block; height: 100%; border-radius: inherit; transform-origin: 0 50%; animation: rp-fill .9s var(--rp-ease) backwards; }
+[dir='rtl'] .pt-bar i { transform-origin: 100% 50%; }
+.pt-bar i.ink { background: var(--rp-solid); } .pt-bar i.pine { background: var(--rp-pine); } .pt-bar i.tomato { background: var(--rp-tomato); } .pt-bar i.butter { background: var(--rp-butter); }
+
+/* switches (client area access, email notifications) */
+.pt-sw { display: grid; gap: 4px; }
+.pt-sw label { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--rp-line); font-size: 13.5px; font-weight: 600; }
+.pt-sw label:last-child { border-bottom: 0; }
+.pt-sw small { display: block; font-weight: 500; color: var(--rp-muted); font-size: 12px; }
+.pt-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pt-chip { padding: 4px 11px; border-radius: 999px; background: var(--rp-well); font-size: 12.5px; font-weight: 700; }
+.pt-chip.is-off { opacity: .45; text-decoration: line-through; }

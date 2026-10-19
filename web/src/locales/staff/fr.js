@@ -3721,5 +3721,8 @@ export default {
     "years": "ans",
     "A new copy is created automatically each time.": "Une nouvelle copie est créée automatiquement à chaque fois.",
     "Recurring invoice": "Facture récurrente",
-    "Pick the invoice date, then the due date.": "Choisissez la date de facture, puis l'échéance."
+    "Pick the invoice date, then the due date.": "Choisissez la date de facture, puis l'échéance.",
+    "Client area access": "Accès à l'espace client",
+    "Client area: what this contact can see": "Espace client : ce que ce contact peut voir",
+    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "Les sections que les clients voient après connexion. Chaque contact peut aussi être limité individuellement (Contacts → Accès à l'espace client)."
 }

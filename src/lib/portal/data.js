@@ -20,13 +20,16 @@ const pub = (type, id, hash) => `/api/crm/public/${type}/${id}/${hash}`
 
 const currencies = async () => Object.fromEntries((await prisma.crmCurrency.findMany()).map((c) => [c.id, { name: c.name, symbol: c.symbol, placement: c.placement }]))
 
+// the email notifications a contact can switch on or off (Perfex: contact -> Email notifications)
+export const MAIL_SWITCHES = ['invoiceEmails', 'estimateEmails', 'creditNoteEmails', 'contractEmails', 'taskEmails', 'projectEmails', 'ticketEmails']
+
 export async function me() {
     const s = await requirePortal()
     const c = s.contact
     const unreadTickets = (await prisma.crmTicket.findMany({ where: { clientId: s.client.id, clientRead: 0 }, select: { lastReply: true } })).filter((t) => t.lastReply).length
     const co = await prisma.crmOption.findMany({ where: { name: { in: ['companyname', 'company_logo', 'company_logo_dark'] } } })
     const o = Object.fromEntries(co.map((x) => [x.name, x.value]))
-    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null },
+    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage), notifications: Object.fromEntries(MAIL_SWITCHES.map((k) => [k, c[k] !== false])) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null, details: { phone: s.client.phoneNumber || null, website: s.client.website || null, vat: s.client.vat || null, address: [s.client.address, s.client.zip, s.client.city].filter(Boolean).join(', ') || null, since: s.client.createdAt } },
         // the contact's own choice, else the client's language: it follows them on every browser
         language: codeOfLanguage(c.language) || codeOfLanguage(s.client.defaultLanguage), can: s.can, unreadTickets, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
 }
@@ -194,6 +197,7 @@ export async function updateProfile(body) {
     if ('lastName' in body) data.lastName = String(body.lastName || '').trim().slice(0, 80) || null
     if ('phone' in body) data.phoneNumber = String(body.phone || '').trim().slice(0, 40) || null
     if ('title' in body) data.title = String(body.title || '').trim().slice(0, 80) || null
+    if (body.notifications && typeof body.notifications === 'object') for (const k of MAIL_SWITCHES) if (k in body.notifications) data[k] = body.notifications[k] === true
     if ('language' in body) data.language = codeOfLanguage(body.language) ? String(body.language).toLowerCase() : null
     await prisma.crmContact.update({ where: { id: s.contact.id }, data })
     return { success: true }

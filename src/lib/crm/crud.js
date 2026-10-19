@@ -49,6 +49,7 @@ const coerce = (field, value) => {
         case 'relation':
             return empty ? null : String(value)
         case 'multiselect':
+        case 'sections':
         case 'tags':
             return Array.isArray(value) ? value.map(String) : empty ? [] : String(value).split(',').map((s) => s.trim()).filter(Boolean)
         case 'json':

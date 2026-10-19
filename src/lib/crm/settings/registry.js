@@ -270,6 +270,10 @@ export const GROUPS = {
         label: 'Clients', icon: 'TbUsers', desc: 'Client information, access and custom fields',
         cards: [
             { title: 'Client block on documents', desc: 'How the client appears on invoices and estimates. Click a merge term to insert it.', panel: 'customerFormat', fields: [f('customer_info_format', 'Client information format', 'html', { rows: 7 })] },
+            { title: 'Client area', desc: 'The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).', fields: [
+                yes('portal_section_invoices', 'Invoices', { default: '1' }), yes('portal_section_estimates', 'Estimates', { default: '1' }), yes('portal_section_proposals', 'Proposals', { default: '1' }),
+                yes('portal_section_contracts', 'Contracts', { default: '1' }), yes('portal_section_projects', 'Projects', { default: '1' }), yes('portal_section_support', 'Support', { default: '1' }),
+            ] },
             { title: 'Rules', fields: [
                 yes('company_is_required', 'Company name is required'),
                 yes('company_requires_vat_number_field', 'The VAT / ICE field is required'),

@@ -99,6 +99,8 @@ model CrmContact {
   taskEmails              Boolean   @default(true)
   projectEmails           Boolean   @default(true)
   ticketEmails            Boolean   @default(true)
+  /// client-area sections this contact must NOT see (empty = all that Settings allows)
+  portalHidden            String[]
 
   permissions             CrmContactPermission[]
   consents                CrmConsent[]

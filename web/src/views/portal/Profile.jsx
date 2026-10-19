@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Switcher from '@/components/ui/Switcher'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -9,6 +10,9 @@ import { portal } from './api'
 import { usePortal } from './PortalApp'
 import { useI18n } from './i18n'
 
+const SECTION_LABEL = { invoices: 'Invoices', estimates: 'Estimates', proposals: 'Proposals', contracts: 'Contracts', projects: 'Projects', support: 'Support' }
+const MAILS = [['invoiceEmails', 'Invoices', 'When an invoice is sent, due or overdue, and payment receipts'], ['estimateEmails', 'Estimates', 'When an estimate is sent or its answer is needed'], ['creditNoteEmails', 'Credit notes', 'When a credit note is issued'], ['contractEmails', 'Contracts', 'When a contract needs your signature or is signed'], ['projectEmails', 'Projects', 'Updates on your projects'], ['taskEmails', 'Tasks', 'Updates on tasks that involve you'], ['ticketEmails', 'Support', 'Replies to your support requests']]
+
 const Profile = () => {
     const { t } = useI18n()
     const { me, reload } = usePortal()
@@ -17,9 +21,15 @@ const Profile = () => {
     const [pw, setPw] = useState({ current: '', password: '', again: '' })
     useEffect(() => { if (window.location.hash === '#password') setTimeout(() => document.getElementById('password')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150) }, [])
     const [msg, setMsg] = useState(null)
+    const [mail, setMail] = useState(c.notifications || {})
     const [busy, setBusy] = useState('')
     const note = (type, text) => { setMsg({ type, text }); window.scrollTo({ top: 0, behavior: 'smooth' }) }
     const save = async () => { setBusy('p'); try { await portal('/profile', { method: 'PUT', body: v }); await reload(); note('success', t('Your details were saved')) } catch (e) { note('danger', e.message) } finally { setBusy('') } }
+    const flip = async (key, on) => {
+        const was = mail[key]
+        setMail((m) => ({ ...m, [key]: on }))
+        try { await portal('/profile', { method: 'PUT', body: { notifications: { [key]: on } }, quiet: true }); reload() } catch (e) { setMail((m) => ({ ...m, [key]: was })); note('danger', e.message) }
+    }
     const change = async () => {
         if (pw.password !== pw.again) return note('danger', t('The two new passwords are not the same'))
         setBusy('w'); try { await portal('/auth/password', { method: 'POST', body: { current: pw.current, password: pw.password } }); setPw({ current: '', password: '', again: '' }); note('success', t('Your password was changed')) } catch (e) { note('danger', e.message) } finally { setBusy('') }
@@ -40,6 +50,20 @@ const Profile = () => {
                     </div>
                     <div className="flex justify-end"><Button variant="solid" type="submit" loading={busy === 'p'}>{t('Save changes')}</Button></div>
                 </Form>
+            </Card>
+            <Card className="mb-4">
+                <h5 className="mb-1">{t('Email notifications')}</h5>
+                <p className="mb-3 text-sm text-gray-500">{t('Choose which emails you receive from {company}.', { company: me.company.name || me.client.company })}</p>
+                <div className="pt-sw">
+                    {MAILS.map(([key, label, hint]) => (
+                        <label key={key}><span>{t(label)}<small>{t(hint)}</small></span><Switcher checked={mail[key] !== false} disabled={me.preview} onChange={(on) => flip(key, on)} /></label>
+                    ))}
+                </div>
+            </Card>
+            <Card className="mb-4">
+                <h5 className="mb-1">{t('What you can see')}</h5>
+                <p className="mb-3 text-sm text-gray-500">{t('The sections of this client area that are open to you. Ask {company} if one is missing.', { company: me.company.name || me.client.company })}</p>
+                <div className="pt-chips">{Object.keys(SECTION_LABEL).map((k) => <span key={k} className={`pt-chip${me.can.includes(k) ? '' : ' is-off'}`}>{t(SECTION_LABEL[k])}</span>)}</div>
             </Card>
             <Card id="password">
                 <h5 className="mb-5">{t('Password')}</h5>

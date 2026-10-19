@@ -3721,5 +3721,8 @@ export default {
     "years": "سنوات",
     "A new copy is created automatically each time.": "تُنشأ نسخة جديدة تلقائيًا في كل مرة.",
     "Recurring invoice": "فاتورة متكررة",
-    "Pick the invoice date, then the due date.": "اختر تاريخ الفاتورة ثم تاريخ الاستحقاق."
+    "Pick the invoice date, then the due date.": "اختر تاريخ الفاتورة ثم تاريخ الاستحقاق.",
+    "Client area access": "الوصول إلى منطقة العميل",
+    "Client area: what this contact can see": "منطقة العميل: ما يمكن لهذه الجهة رؤيته",
+    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "الأقسام التي يراها العملاء بعد تسجيل الدخول. يمكن أيضًا تقييد كل جهة اتصال على حدة (جهات الاتصال ← الوصول إلى منطقة العميل)."
 }

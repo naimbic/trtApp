@@ -1,141 +1,161 @@
-import { useEffect, useState } from 'react'
+/*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { TbCash, TbFileInvoice, TbAlertTriangle, TbCircleCheck, TbExternalLink, TbBriefcase, TbLifebuoy, TbChevronRight } from 'react-icons/tb'
-import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
-import Table from '@/components/ui/Table'
+import { TbCash, TbCircleCheck, TbBriefcase, TbLifebuoy, TbMail, TbPhone, TbAlertTriangle, TbMessage } from 'react-icons/tb'
+import Segment from '@/components/ui/Segment'
 import Skeleton from '@/components/ui/Skeleton'
-import classNames from '@/utils/classNames'
+import Container from '@/components/shared/Container'
+import { InvoiceHead } from '../crm/sales/InvoiceInsights'
 import { portal, money } from './api'
 import { usePortal } from './PortalApp'
 import { useI18n } from './i18n'
-import { StatusTag, Bar, Empty } from './ui'
 
-const { Tr, Th, Td, THead, TBody } = Table
+const initials = (n = '') => n.split(/\s+/).filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase()
+const TONE = { Paid: 'pine', Accepted: 'pine', Signed: 'pine', Finished: 'pine', Complete: 'pine', Overdue: 'tomato', Declined: 'tomato', Expired: 'ink', Cancelled: 'ink', Unpaid: 'butter', 'Partially paid': 'butter', 'To sign': 'butter', Sent: 'butter', Open: 'butter', Revised: 'butter' }
+const DONE = ['pine', 'ink']
 
-/** One figure with an icon; clickable when it has a destination. */
-const Tile = ({ icon, tone, label, value, sub, to, alert }) => {
-    const body = (
-        <div className={classNames('flex h-full items-center gap-3 rounded-2xl border bg-white p-4 transition dark:bg-gray-800', alert ? 'border-red-200 dark:border-red-500/40' : 'border-gray-200 dark:border-gray-700', to && 'hover:border-primary hover:shadow-sm')}>
-            <span className={classNames('flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl', tone)}>{icon}</span>
-            <div className="min-w-0">
-                <div className="truncate text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
-                <div className="truncate text-xl font-bold heading-text">{value}</div>
-                {sub && <div className="truncate text-xs text-red-600"><bdi>{sub}</bdi></div>}
-            </div>
-        </div>
-    )
-    return to ? <Link to={to} className="block">{body}</Link> : body
-}
-
-const CardHead = ({ title, to, label }) => (
-    <div className="mb-3 flex items-center justify-between gap-3"><h5>{title}</h5>{to && <Link to={to} className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline">{label}<TbChevronRight className="rtl:rotate-180" /></Link>}</div>
-)
-
-const Dashboard = () => {
+/** The customer profile of the template, for the client who signs in: the account, its documents as tiles, what is owed. */
+const Overview = () => {
     const { me } = usePortal()
     const { t, date } = useI18n()
     const [d, setD] = useState(null)
     const [error, setError] = useState('')
+    const [filter, setFilter] = useState('all')
     useEffect(() => { portal('/dashboard').then(setD).catch((e) => setError(e.message)) }, [])
-    if (error) return <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>
-    if (!d) return <div className="flex flex-col gap-4"><Skeleton height={40} width={280} /><div className="grid grid-cols-2 gap-4 lg:grid-cols-5">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={84} />)}</div><Skeleton height={220} /></div>
 
-    const m = d.money[0]
+    const tiles = useMemo(() => {
+        if (!d) return []
+        const list = [
+            ...d.invoices.map((i) => ({ key: `i${i.id}`, kind: t('Invoice'), number: i.number, date: i.dueDate || i.date, amount: i.total, currency: i.currency, status: i.statusLabel, link: i.link })),
+            ...d.estimates.map((e) => ({ key: `e${e.id}`, kind: t('Estimate'), number: e.number, date: e.date, amount: e.total, currency: e.currency, status: e.statusLabel, link: e.link })),
+            ...d.proposals.map((p) => ({ key: `p${p.id}`, kind: t('Proposal'), number: p.number, sub: p.subject, date: p.date, amount: p.total, currency: p.currency, status: p.statusLabel, link: p.link })),
+            ...d.contracts.map((c) => ({ key: `c${c.id}`, kind: t('Contract'), number: c.number, date: c.startDate || c.date, status: c.statusLabel, link: c.link })),
+        ].map((x) => ({ ...x, tone: TONE[x.status] || 'plain' }))
+        return list.filter((x) => filter === 'all' || (filter === 'wait' ? !DONE.includes(x.tone) : DONE.includes(x.tone)))
+    }, [d, filter, t])
+
+    if (error) return <Container><div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div></Container>
+    if (!d) return <Container><div className="flex flex-col gap-4"><Skeleton height={90} /><div className="grid gap-4 lg:grid-cols-3"><Skeleton height={320} /><div className="lg:col-span-2"><Skeleton height={320} /></div></div></div></Container>
+
     const can = (x) => d.can.includes(x)
+    const m = d.money[0]
+    const share = m && m.invoiced > 0 ? Math.round((m.paid / m.invoiced) * 100) : null
+    const info = me.client.details || {}
     const actionTitle = (a) => ({
-        overdue: t('Invoice {ref} is overdue', { ref: a.ref }),
-        invoice: t('Invoice {ref} is waiting for payment', { ref: a.ref }),
-        estimate: t('Estimate {ref} is waiting for your answer', { ref: a.ref }),
-        proposal: t('Proposal {ref} is waiting for your answer', { ref: a.ref }),
+        overdue: t('Invoice {ref} is overdue', { ref: a.ref }), invoice: t('Invoice {ref} is waiting for payment', { ref: a.ref }),
+        estimate: t('Estimate {ref} is waiting for your answer', { ref: a.ref }), proposal: t('Proposal {ref} is waiting for your answer', { ref: a.ref }),
         contract: t('Contract “{ref}” is waiting for your signature', { ref: a.ref }),
     }[a.kind] || a.title)
-    const actionDetail = (a) => (a.amount != null ? t('{amount} left', { amount: money(a.amount, a.currency) }) : a.detail)
-    const wide = (withSide, side) => (withSide && side ? 'xl:col-span-2' : 'xl:col-span-3')
-    const offers = [
-        ...d.estimates.map((e) => ({ key: `e${e.id}`, label: t('Estimate'), number: e.number, status: e.statusLabel, link: e.link })),
-        ...d.proposals.map((p) => ({ key: `p${p.id}`, label: t('Proposal'), number: p.number, sub: p.subject, status: p.statusLabel, link: p.link })),
-        ...d.contracts.map((c) => ({ key: `c${c.id}`, label: t('Contract'), number: c.number, status: c.statusLabel, link: c.link })),
-    ].slice(0, 6)
+    const stats = [
+        { icon: <TbCash />, label: t('To pay'), value: m ? money(m.due, m.currency) : '—', badge: m?.overdue > 0 ? <span className="badge badge--tomato">{t('{amount} overdue', { amount: money(m.overdue, m.currency) })}</span> : <span className="badge badge--plain">{t('Nothing overdue')}</span> },
+        { icon: <TbCircleCheck />, label: t('Paid'), value: m ? money(m.paid, m.currency) : '—', badge: share !== null ? <span className="badge badge--pine">{share}%</span> : null },
+        { icon: <TbBriefcase />, label: can('projects') ? t('Projects in progress') : t('Open requests'), value: String(can('projects') ? d.counts.projectsActive : d.counts.ticketsOpen), badge: can('projects') && can('support') ? <span className="badge badge--plain">{t('{n} open requests', { n: d.counts.ticketsOpen })}</span> : null },
+    ]
 
     return (
-        <div className="flex flex-col gap-4">
-            <div><h3>{t('Hello {name} 👋', { name: me.contact.firstName || me.contact.name })}</h3><p className="text-gray-500">{me.company.name ? t('Here is where things stand with {company}.', { company: me.company.name }) : t('Here is where things stand with us.')}</p></div>
-
-            {d.actions.length > 0 && (
-                <Card className="border-amber-200 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/5">
-                    <h5 className="mb-3">{t('Waiting for you')}</h5>
-                    <div className="grid gap-2 lg:grid-cols-2">
-                        {d.actions.map((a, i) => (
-                            <a key={i} href={a.link} target="_blank" rel="noreferrer" className={classNames('flex items-start gap-3 rounded-xl border bg-white p-3 text-sm transition hover:shadow dark:bg-gray-800', a.kind === 'overdue' ? 'border-red-200 text-red-700' : 'border-blue-200 text-blue-700')}>
-                                <TbAlertTriangle className="mt-0.5 shrink-0 text-lg" /><div className="min-w-0 flex-1"><div className="font-semibold">{actionTitle(a)}</div>{actionDetail(a) && <div className="truncate text-xs opacity-80">{actionDetail(a)}</div>}</div><TbExternalLink className="mt-0.5 shrink-0" />
-                            </a>
-                        ))}
-                    </div>
-                </Card>
-            )}
-
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-                {can('invoices') && (m ? (
-                    <>
-                        <Tile icon={<TbCash />} tone={m.overdue > 0 ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-600'} label={t('To pay')} value={<bdi>{money(m.due, m.currency)}</bdi>} sub={m.overdue > 0 ? t('{amount} overdue', { amount: money(m.overdue, m.currency) }) : null} to="/portal/invoices" alert={m.overdue > 0} />
-                        <Tile icon={<TbCircleCheck />} tone="bg-emerald-100 text-emerald-600" label={t('Paid')} value={<bdi>{money(m.paid, m.currency)}</bdi>} to="/portal/invoices" />
-                        <Tile icon={<TbFileInvoice />} tone="bg-sky-100 text-sky-600" label={t('Invoiced')} value={<bdi>{money(m.invoiced, m.currency)}</bdi>} to="/portal/invoices" />
-                    </>
-                ) : <Tile icon={<TbFileInvoice />} tone="bg-sky-100 text-sky-600" label={t('Invoices')} value="0" />)}
-                {can('projects') && <Tile icon={<TbBriefcase />} tone="bg-indigo-100 text-indigo-600" label={t('Projects in progress')} value={d.counts.projectsActive} to="/portal/projects" />}
-                {can('support') && <Tile icon={<TbLifebuoy />} tone="bg-amber-100 text-amber-600" label={t('Open requests')} value={d.counts.ticketsOpen} to="/portal/tickets" />}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-                {can('invoices') && (
-                    <Card className={wide(true, offers.length > 0)}>
-                        <CardHead title={t('Latest invoices')} to="/portal/invoices" label={t('All invoices')} />
-                        {d.invoices.length ? (
-                            <div className="overflow-x-auto"><Table><THead><Tr><Th>{t('Invoice')}</Th><Th>{t('Due')}</Th><Th className="text-right">{t('Total')}</Th><Th>{t('Status')}</Th></Tr></THead>
-                                <TBody>{d.invoices.map((i) => <Tr key={i.id}><Td><a className="font-semibold heading-text hover:text-primary" href={i.link} target="_blank" rel="noreferrer">{i.number}</a></Td><Td>{date(i.dueDate)}</Td><Td className="text-right tabular-nums"><bdi>{money(i.total, i.currency)}</bdi></Td><Td><StatusTag label={i.statusLabel} /></Td></Tr>)}</TBody></Table></div>
-                        ) : <Empty>{t('No invoices yet.')}</Empty>}
-                    </Card>
-                )}
-                {offers.length > 0 && (
-                    <Card>
-                        <CardHead title={t('Offers and contracts')} />
-                        <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {offers.map((o) => (
-                                <a key={o.key} href={o.link} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 py-2.5">
-                                    <span className="min-w-0"><span className="block truncate font-semibold heading-text hover:text-primary">{o.label} {o.number}</span>{o.sub && <span className="block truncate text-xs text-gray-500">{o.sub}</span>}</span>
-                                    <StatusTag label={o.status} />
+        <Container>
+            <InvoiceHead title={t('Hello {name} 👋', { name: me.contact.firstName || me.contact.name })} stats={stats} />
+            <div className="rp-ov">
+                {d.actions.length > 0 && (
+                    <div className="pt-card" style={{ marginBottom: 'var(--rp-gap, 16px)' }}>
+                        <h3>{t('Waiting for you')}</h3>
+                        <div className="grid gap-2 lg:grid-cols-2">
+                            {d.actions.map((a, i) => (
+                                <a key={i} href={a.link} target="_blank" rel="noreferrer" className="flex items-start gap-3 rounded-2xl p-3 text-sm font-semibold transition hover:-translate-y-0.5" style={{ background: a.kind === 'overdue' ? 'var(--rp-tomato)' : 'var(--rp-butter)', color: a.kind === 'overdue' ? 'var(--rp-on-tomato)' : 'var(--rp-on-butter)' }}>
+                                    <TbAlertTriangle className="mt-0.5 shrink-0 text-lg" />
+                                    <span className="min-w-0 flex-1">{actionTitle(a)}{a.amount != null && <small className="block opacity-80">{t('{amount} left', { amount: money(a.amount, a.currency) })}</small>}</span>
                                 </a>
                             ))}
                         </div>
-                    </Card>
+                    </div>
                 )}
-                {can('projects') && (
-                    <Card className={wide(true, can('support'))}>
-                        <CardHead title={t('Projects')} to="/portal/projects" label={t('All projects')} />
-                        <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {d.projects.map((p) => (
-                                <Link key={p.id} to={`/portal/projects/${p.id}`} className="block py-3">
-                                    <div className="mb-2 flex items-center justify-between gap-3"><span className="font-bold heading-text hover:text-primary">{p.name}</span><StatusTag label={p.statusLabel} /></div>
-                                    <Bar value={p.progress} />
-                                </Link>
-                            ))}
-                            {!d.projects.length && <Empty>{t('No projects yet.')}</Empty>}
+                <div className="pt">
+                    <div className="pt-col">
+                        <section className="pt-card pt-prof">
+                            <div className="pt-ring" style={{ '--p': share ?? 0 }}>
+                                <span>{me.contact.image ? <img src={me.contact.image} alt="" /> : initials(me.contact.name)}</span>
+                                {share !== null && <small title={t('Share of what was invoiced that is paid')}>{share}%</small>}
+                            </div>
+                            <h2 className="pt-name">{me.contact.name}</h2>
+                            <p className="pt-role">{[me.contact.title, me.client.company].filter(Boolean).join(' · ')}</p>
+                            <div className="pt-acts">
+                                {can('support') && <Link className="pt-act" to="/portal/tickets"><TbMessage />{t('New request')}</Link>}
+                                {me.contact.email && <a className="pt-act" href={`mailto:${me.contact.email}`}><TbMail />{t('Email')}</a>}
+                                {me.contact.phone && <a className="pt-act" href={`tel:${me.contact.phone}`}><TbPhone />{t('Call')}</a>}
+                            </div>
+                        </section>
+                        <section className="pt-card">
+                            <h3>{t('Detailed information')}<Link className="text-xs font-bold" to="/portal/profile" style={{ color: 'var(--rp-muted)' }}>{t('Edit')}</Link></h3>
+                            <dl className="pt-dl">
+                                <div><dt>{t('Company')}</dt><dd>{me.client.company || '—'}</dd></div>
+                                <div><dt>{t('Email')}</dt><dd>{me.contact.email || '—'}</dd></div>
+                                <div><dt>{t('Phone')}</dt><dd>{me.contact.phone || info.phone || '—'}</dd></div>
+                                {info.website && <div><dt>{t('Website')}</dt><dd>{info.website}</dd></div>}
+                                {info.vat && <div><dt>{t('VAT / ICE')}</dt><dd>{info.vat}</dd></div>}
+                                {info.address && <div><dt>{t('Address')}</dt><dd>{info.address}</dd></div>}
+                                {info.since && <div><dt>{t('Client since')}</dt><dd>{date(info.since, 'MMM YYYY')}</dd></div>}
+                            </dl>
+                        </section>
+                    </div>
+                    <div className="pt-col">
+                        <section className="pt-card">
+                            <div className="pt-tools">
+                                <h3 style={{ margin: 0 }}>{t('Interaction history')}</h3>
+                                <Segment size="sm" value={filter} onChange={(v) => setFilter(Array.isArray(v) ? v[0] : v)}>
+                                    <Segment.Item value="all">{t('All')}</Segment.Item><Segment.Item value="wait">{t('Waiting')}</Segment.Item><Segment.Item value="done">{t('Done')}</Segment.Item>
+                                </Segment>
+                            </div>
+                            {tiles.length ? (
+                                <div className="pt-tiles">
+                                    {tiles.map((x) => (
+                                        <a key={x.key} className={`pt-tile pt-tile--${x.tone}`} href={x.link} target="_blank" rel="noreferrer">
+                                            <p className="pt-tile__date">{x.kind} · {date(x.date)}</p>
+                                            <span className="pt-tile__st">{t(x.status)}</span>
+                                            <h4 className="pt-tile__title">{x.number}</h4>
+                                            {x.sub && <p className="pt-tile__date">{x.sub}</p>}
+                                            {x.amount != null && <p className="pt-tile__amt">{money(x.amount, x.currency)}</p>}
+                                        </a>
+                                    ))}
+                                </div>
+                            ) : <p className="pt-empty">{filter === 'wait' ? t('Nothing is waiting for you. 🎉') : t('No documents yet.')}</p>}
+                        </section>
+                        <div className="grid gap-4 xl:grid-cols-2" style={{ gap: 'var(--rp-gap, 16px)' }}>
+                            {can('invoices') && m && (
+                                <section className="pt-card">
+                                    <h3>{t('Payments')}<Link to="/portal/invoices">{t('All invoices')}</Link></h3>
+                                    <div className="pt-fun">
+                                        {[[t('Invoiced'), m.invoiced, 'ink'], [t('Paid'), m.paid, 'pine'], [t('To pay'), m.due, m.overdue > 0 ? 'tomato' : 'butter']].map(([label, v, tone]) => (
+                                            <div key={label} className="pt-fun__row"><div><span>{label}</span><b className="tabular-nums"><bdi>{money(v, m.currency)}</bdi></b></div><span className="pt-bar"><i className={tone} style={{ transform: `scaleX(${m.invoiced ? Math.max(v / m.invoiced, 0.02) : 0.02})` }} /></span></div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+                            {can('projects') && (
+                                <section className="pt-card">
+                                    <h3>{t('Projects')}<Link to="/portal/projects">{t('All projects')}</Link></h3>
+                                    <div className="pt-fun">
+                                        {d.projects.map((p) => (
+                                            <Link key={p.id} to={`/portal/projects/${p.id}`} className="pt-fun__row"><div><span>{p.name}</span><b>{p.progress}%</b></div><span className="pt-bar"><i className={p.progress >= 80 ? 'pine' : 'butter'} style={{ transform: `scaleX(${Math.max(p.progress, 2) / 100})` }} /></span></Link>
+                                        ))}
+                                        {!d.projects.length && <p className="pt-empty">{t('No projects yet.')}</p>}
+                                    </div>
+                                </section>
+                            )}
+                            {can('support') && (
+                                <section className="pt-card">
+                                    <h3>{t('Support')}<Link to="/portal/tickets">{t('New request')}</Link></h3>
+                                    <div>
+                                        {d.tickets.map((k) => <Link key={k.id} to={`/portal/tickets/${k.id}`} className="flex items-center justify-between gap-3 py-2 text-sm font-semibold"><span className="min-w-0 truncate"><TbLifebuoy className="mr-1 inline" />#{k.number} {k.subject}</span></Link>)}
+                                        {!d.tickets.length && <p className="pt-empty">{t('No support requests yet.')}</p>}
+                                    </div>
+                                </section>
+                            )}
                         </div>
-                    </Card>
-                )}
-                {can('support') && (
-                    <Card>
-                        <div className="mb-3 flex items-center justify-between gap-3"><h5>{t('Support')}</h5><Link to="/portal/tickets"><Button asElement="div" size="xs" variant="solid">{t('New request')}</Button></Link></div>
-                        <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {d.tickets.map((k) => <Link key={k.id} to={`/portal/tickets/${k.id}`} className="flex items-center justify-between gap-3 py-2.5"><span className="min-w-0 truncate font-semibold heading-text hover:text-primary">#{k.number} {k.subject}</span>{k.status && <span className="flex shrink-0 items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: k.status.color }} />{k.status.name}</span>}</Link>)}
-                            {!d.tickets.length && <Empty>{t('No support requests yet.')}</Empty>}
-                        </div>
-                    </Card>
-                )}
+                    </div>
+                </div>
             </div>
-        </div>
+        </Container>
     )
 }
 
-export default Dashboard
+export default Overview

@@ -12,7 +12,7 @@ import RelationSelect from './RelationSelect'
 import { api, notify } from './api'
 import { tr } from '@/utils/t'
 
-const empty = (f) => (f.type === 'boolean' ? false : ['multiselect', 'tags'].includes(f.type) ? [] : '')
+const empty = (f) => (f.type === 'boolean' ? false : ['multiselect', 'tags', 'sections'].includes(f.type) ? [] : '')
 const initValue = (f, v) => {
     if (v === undefined || v === null) return empty(f)
     if (['date', 'datetime'].includes(f.type)) return v ? new Date(v) : null
@@ -40,6 +40,15 @@ const Control = ({ f, value, onChange, disabled }) => {
         case 'multiselect':
         case 'tags':
             return <Input disabled={disabled} placeholder={tr("comma, separated")} value={Array.isArray(value) ? value.join(', ') : ''} onChange={(e) => onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} />
+        case 'sections': // switches: on = the contact can see it; the stored list holds what is switched OFF
+            return (
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 sm:grid-cols-3">
+                    {(f.options || []).map((o) => {
+                        const hidden = Array.isArray(value) ? value : []
+                        return <label key={o.value} className="flex items-center gap-2 text-sm"><Switcher checked={!hidden.includes(o.value)} disabled={disabled} onChange={(on) => onChange(on ? hidden.filter((x) => x !== o.value) : [...hidden, o.value])} />{tr(o.label)}</label>
+                    })}
+                </div>
+            )
         case 'relation':
             return <RelationSelect resource={f.resource} value={value || null} onChange={onChange} disabled={disabled} />
         case 'color':
@@ -144,7 +153,7 @@ const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = t
                             {sections.length > 1 && <h6 className="mb-3 text-gray-500">{title}</h6>}
                             <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
                                 {list.map((f) => (
-                                    <FormItem key={f.key} label={f.label} asterisk={f.required} className={['textarea', 'richtext', 'json'].includes(f.type) ? 'sm:col-span-2' : ''}>
+                                    <FormItem key={f.key} label={f.label} asterisk={f.required} className={['textarea', 'richtext', 'json', 'sections'].includes(f.type) ? 'sm:col-span-2' : ''}>
                                         <Control f={f} value={v[f.key]} disabled={!canEdit} onChange={(val) => setV((s) => ({ ...s, [f.key]: val }))} />
                                     </FormItem>
                                 ))}

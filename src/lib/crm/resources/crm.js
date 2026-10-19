@@ -102,6 +102,7 @@ const resources = [
             { key: 'direction', label: 'Direction', type: 'select', section: 'General', options: [{ value: 'ltr', label: 'LTR' }, { value: 'rtl', label: 'RTL' }] },
             { key: 'isPrimary', label: 'Primary contact', type: 'boolean', section: 'General' },
             { key: 'active', label: 'Active', type: 'boolean', section: 'General' },
+            { key: 'portalHidden', label: 'Client area: what this contact can see', type: 'sections', section: 'Client area access', options: [{ value: 'invoices', label: 'Invoices' }, { value: 'estimates', label: 'Estimates' }, { value: 'proposals', label: 'Proposals' }, { value: 'contracts', label: 'Contracts' }, { value: 'projects', label: 'Projects' }, { value: 'support', label: 'Support' }] },
             { key: 'invoiceEmails', label: 'Invoice emails', type: 'boolean', section: 'Email notifications' },
             { key: 'estimateEmails', label: 'Estimate emails', type: 'boolean', section: 'Email notifications' },
             { key: 'creditNoteEmails', label: 'Credit note emails', type: 'boolean', section: 'Email notifications' },

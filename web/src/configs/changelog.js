@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.80.0',
+        date: '2026-10-19',
+        title: 'Client area in the Rapport look, with access and notification switches',
+        items: ['The client area (login portal) now has the Rapport look: pill menu, a head with To pay / Paid / Projects, and an Overview like the customer profile of the template: the person with a ring showing how much is paid, detailed information, the documents as colour tiles (the colour is the state), payments and projects bars, support', 'What a contact can see is switchable again: each contact has Client area access switches (Invoices, Estimates, Proposals, Contracts, Projects, Support) in its form, and Settings → Clients → Client area switches a section off for everyone; the menu shows only what is allowed', 'Email notifications (invoices, estimates, credit notes, contracts, projects, tasks, support) are switches in the contact form for staff and in My profile for the client, saved at once', 'My profile also lists the sections open to the signed-in client']
+    },
+    {
         version: '0.79.6',
         date: '2026-10-19',
         title: 'Invoice editor: one period picker for the dates',

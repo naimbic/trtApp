@@ -3721,5 +3721,8 @@ export default {
     "years": "年",
     "A new copy is created automatically each time.": "新しいコピーが毎回自動的に作成されます。",
     "Recurring invoice": "定期請求書",
-    "Pick the invoice date, then the due date.": "請求日、続いて支払期限を選択してください。"
+    "Pick the invoice date, then the due date.": "請求日、続いて支払期限を選択してください。",
+    "Client area access": "クライアントエリアへのアクセス",
+    "Client area: what this contact can see": "クライアントエリア：この連絡先が見られる内容",
+    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "ログイン後にクライアントが見られるセクションです。連絡先ごとに個別に制限することもできます（連絡先 → クライアントエリアへのアクセス）。"
 }

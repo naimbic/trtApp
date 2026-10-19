@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.82.4',
+        date: '2026-10-19',
+        title: 'Schedule starts on All for everyone',
+        items: ['The team filter of the Schedule now starts on All for every user, not only for super admins; pick a person to narrow it down']
+    },
+    {
         version: '0.82.3',
         date: '2026-10-19',
         title: 'Documents and PDF: totals are part of the items table',

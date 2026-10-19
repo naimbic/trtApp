@@ -16,7 +16,6 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EventDialog from './EventDialog'
 import SyncDialog from './SyncDialog'
 import useMe from '@/utils/hooks/useMe'
-import { useSessionUser } from '@/store/authStore'
 import './calendar.css'
 import { tr } from '@/utils/t'
 import { localTitle } from './titles'
@@ -127,7 +126,6 @@ const Calendar = () => {
     const [viewName, setViewName] = useState('dayGridMonth')
     const calRef = useRef(null)
     const me = useMe()
-    const superAdmin = (useSessionUser((st) => st.user.authority) || []).some((a) => a === 'admin' || a === 'crm.admin')
     const display = me?.display || {}
     const [app, setApp] = useState({})
     useEffect(() => { api('/api/crm/settings/app').then(setApp).catch(() => {}) }, [])
@@ -139,7 +137,7 @@ const Calendar = () => {
     const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
     const seq = useRef(0)
-    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => { setStaff((d.staff || []).filter((m) => m.active !== false)); if (d.me && !superAdmin) setPeople([d.me]) }).catch(() => {}) }, [])
+    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => { setStaff((d.staff || []).filter((m) => m.active !== false)) }).catch(() => {}) }, [])
 
     const load = useCallback(async (r = range.current) => {
         if (!r) return

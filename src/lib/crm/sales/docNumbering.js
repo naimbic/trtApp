@@ -60,3 +60,15 @@ export async function afterDelete(kind, doc) {
     const next = Number(await opt(k.next, '0')) || 0
     if (next === doc.number + 1) await setOpt(k.next, doc.number)
 }
+
+/**
+ * A draft that came from Perfex carries the placeholder number 1000000000. The moment it stops being a draft (a payment, "mark as sent"...)
+ * it gets the next real number, prefix and format, like a new document. Returns the document's number info (changed or not).
+ */
+export async function ensureRealNumber(kind, doc) {
+    if (!doc || !(doc.number >= REAL)) return null
+    const k = KINDS[kind]
+    const { number, prefix, numberFormat } = await allocateNumber(kind, doc.date)
+    await prisma[k.model].update({ where: { id: doc.id }, data: { number, prefix, numberFormat } })
+    return { number, prefix, numberFormat }
+}

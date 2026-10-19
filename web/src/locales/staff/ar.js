@@ -3736,5 +3736,8 @@ export default {
     "paid": "مدفوع",
     "All languages": "كل اللغات",
     "This client has no contact with an email address. Add one in Other recipients.": "ليس لهذا العميل أي جهة اتصال لها بريد إلكتروني. أضف واحدة في مستلمون آخرون.",
-    "from": "من"
+    "from": "من",
+    "Show the signature on invoices (until paid)": "إظهار التوقيع على الفواتير (حتى تُدفع)",
+    "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "يطبع التوقيع من عام ← شعارات المستندات. تتوقف الفاتورة عن طباعته بعد دفعها.",
+    "Prints the signature from General → Document logos. On: it prints on every invoice and contract, paid or not. Off: it prints on no PDF.": "يطبع التوقيع من عام ← شعارات المستندات. عند التشغيل: يُطبع على كل فاتورة وعقد، مدفوعًا أو لا. عند الإيقاف: لا يُطبع على أي ملف PDF."
 }

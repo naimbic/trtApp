@@ -3736,5 +3736,8 @@ export default {
     "paid": "支払い済み",
     "All languages": "すべての言語",
     "This client has no contact with an email address. Add one in Other recipients.": "このクライアントにはメールアドレスのある連絡先がありません。「その他の宛先」に追加してください。",
-    "from": "送信元"
+    "from": "送信元",
+    "Show the signature on invoices (until paid)": "請求書に署名を表示（支払い済みになるまで）",
+    "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "「一般 → ドキュメントのロゴ」の署名を印刷します。請求書は支払い済みになると印刷されなくなります。",
+    "Prints the signature from General → Document logos. On: it prints on every invoice and contract, paid or not. Off: it prints on no PDF.": "「一般 → ドキュメントのロゴ」の署名を印刷します。オン：支払い済みかどうかに関わらず、すべての請求書と契約書に印刷されます。オフ：どのPDFにも印刷されません。"
 }

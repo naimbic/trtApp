@@ -3736,5 +3736,8 @@ export default {
     "paid": "payé",
     "All languages": "Toutes les langues",
     "This client has no contact with an email address. Add one in Other recipients.": "Ce client n'a aucun contact avec une adresse e-mail. Ajoutez-en une dans Autres destinataires.",
-    "from": "de"
+    "from": "de",
+    "Show the signature on invoices (until paid)": "Afficher la signature sur les factures (jusqu'au paiement)",
+    "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "Imprime la signature de Général → Logos des documents. Une facture ne l'imprime plus une fois payée.",
+    "Prints the signature from General → Document logos. On: it prints on every invoice and contract, paid or not. Off: it prints on no PDF.": "Imprime la signature de Général → Logos des documents. Activé : elle s'imprime sur chaque facture et contrat, payé ou non. Désactivé : elle ne s'imprime sur aucun PDF."
 }

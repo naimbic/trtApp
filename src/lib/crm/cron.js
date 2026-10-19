@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { getOptions, setOptions, sendTemplate } from '@/lib/crm/mailer'
 import { sendMailCore } from '@/lib/crm/mailApi'
-import { allocateNumber } from '@/lib/crm/sales/docNumbering'
+import { allocateNumber, ensureRealNumber } from '@/lib/crm/sales/docNumbering'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { runRecurringTasks, stopForgottenTimers } from '@/lib/crm/recurringTasks'
 import { normalizeSchedule, crontabExpr, nextRun } from '@/lib/crm/cronSchedule'
@@ -39,6 +39,13 @@ const daysBetween = (a, b) => Math.floor((new Date(a) - new Date(b)) / DAY)
 
 /* ---------------- tasks ---------------- */
 async function invoicesJob({ o, today, lines, dry }) {
+    // 0) invoices that are no longer drafts but still carry the draft placeholder number (1000000000) get a real number
+    const stuck = await prisma.crmInvoice.findMany({ where: { number: { gte: 1_000_000_000 }, status: { not: 6 } }, orderBy: { date: 'asc' } })
+    for (const inv of stuck) {
+        if (dry) { lines.push(`[preview] invoice ${inv.prefix || ''}${inv.number} would get a real number`); continue }
+        const n = await ensureRealNumber('invoice', inv)
+        if (n) lines.push(`Invoice given its real number: ${n.prefix || ''}${n.number}`)
+    }
     // 1) unpaid invoices past their due date become Overdue
     const odWhere = { status: { in: [1, 3] }, dueDate: { lt: today } }
     const od = dry ? { count: await prisma.crmInvoice.count({ where: odWhere }) } : await prisma.crmInvoice.updateMany({ where: odWhere, data: { status: 4 } })

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.82.5',
+        date: '2026-10-19',
+        title: 'Real number for a draft that gets paid; signature on every document until paid',
+        items: ['Fix: an imported draft invoice carries the placeholder number 1000000000; when a payment was added it became Paid but kept that number (FA - 1000000000-01-2026). It now gets the next real number, prefix and format the moment it stops being a draft (a payment, mark as sent...), and the daily cron job also gives a real number to any invoice still stuck with the placeholder (run it from Settings → Cron job → Run manually to fix the existing ones)', 'The company signature (Settings → General → Document logos) prints on invoices and contracts only, each with its own switch in Settings → PDF (on by default): on, it prints on every invoice and contract whether paid or not; off, it prints on no PDF']
+    },
+    {
         version: '0.82.4',
         date: '2026-10-19',
         title: 'Schedule starts on All for everyone',

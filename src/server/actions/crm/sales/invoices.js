@@ -5,7 +5,7 @@ import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
-import { allocateNumber, checkDeletable, afterDelete } from '@/lib/crm/sales/docNumbering'
+import { allocateNumber, checkDeletable, afterDelete, ensureRealNumber } from '@/lib/crm/sales/docNumbering'
 import { lockProblem } from '@/lib/crm/docLock'
 
 const REL = 'invoice'
@@ -56,6 +56,7 @@ const refreshStatus = async (invoiceId) => {
     const payments = await prisma.crmPayment.findMany({ where: { invoiceId }, select: { amount: true } })
     const status = invoiceStatusFromPayments(invoice, payments)
     if (status !== invoice.status) await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status } })
+    if (status !== INVOICE_STATUS.DRAFT) await ensureRealNumber('invoice', invoice) // a draft with a placeholder number gets its real one now
     return status
 }
 

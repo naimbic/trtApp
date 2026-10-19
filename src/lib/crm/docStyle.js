@@ -28,7 +28,7 @@ export async function pdfSettings(kind = 'invoice') {
         words: { on: o('total_to_words_enabled') === '1', lower: o('total_to_words_lowercase') === '1' },
         dateFormat: o('dateformat', 'd/m/Y|%d/%m/%Y'), timezone: o('default_timezone') || undefined,
         legalText: o('e_sign_legal_text'),
-        showSignature: o(`show_pdf_signature_${kind}`) === '1',
+        showSignature: ['invoice', 'contract'].includes(kind) && o(`show_pdf_signature_${kind}`, '1') !== '0', // only invoices and contracts; on by default; ON prints it on every invoice / contract (paid or not), OFF prints it nowhere
         logoKeys: [`${kind}_logo_url`, 'company_logo_url'],
         /** CSS @page + base typography + optional page numbers. */
         pageCss: () => `@page{size:${size === 'LETTER' ? 'letter' : size.toLowerCase()} ${orient === 'LANDSCAPE' ? 'landscape' : 'portrait'};margin:14mm 14mm 16mm 14mm${o('show_page_number_on_pdf') === '1' ? ';@bottom-center{content:counter(page) " / " counter(pages);font-size:8pt;color:#8a8a8a}' : ''}}`,

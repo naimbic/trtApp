@@ -3724,5 +3724,7 @@ export default {
     "Pick the invoice date, then the due date.": "請求日、続いて支払期限を選択してください。",
     "Client area access": "クライアントエリアへのアクセス",
     "Client area: what this contact can see": "クライアントエリア：この連絡先が見られる内容",
-    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "ログイン後にクライアントが見られるセクションです。連絡先ごとに個別に制限することもできます（連絡先 → クライアントエリアへのアクセス）。"
+    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "ログイン後にクライアントが見られるセクションです。連絡先ごとに個別に制限することもできます（連絡先 → クライアントエリアへのアクセス）。",
+    "The sections this client sees after signing in to its client area. Switch one off to hide it for all its contacts.": "このクライアントがクライアントエリアにログインした後に見られるセクションです。オフにすると、すべての連絡先から非表示になります。",
+    "The sections clients see after signing in. Each client can also be limited on its own (open the client, Edit → Client area access).": "ログイン後にクライアントが見られるセクションです。クライアントごとに個別に制限することもできます（クライアントを開く → 編集 → クライアントエリアへのアクセス）。"
 }

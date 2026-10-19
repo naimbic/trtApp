@@ -17,7 +17,7 @@ import { tr } from '@/utils/t'
 import BankAccountSelect from '../kit/BankAccountSelect'
 
 const addr = { street: '', city: '', state: '', zip: '', country: null }
-const blank = { diffBilling: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
+const blank = { diffBilling: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, portalHidden: [], active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
 
 const norm = (x) => String(x ?? '').trim().toLowerCase()
 const sameAddress = (a, b) => ['street', 'city', 'state', 'zip'].every((k) => norm(a?.[k]) === norm(b?.[k])) && String(a?.country ?? '') === String(b?.country ?? '')
@@ -56,7 +56,7 @@ const ClientForm = () => {
             const bil = { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }
             // a billing address that is empty or the same as the address above is just "the same": its fields stay hidden
             const differs = (x, ref) => !sameAddress(x, ref) && !isBlankAddress(x)
-            setV({ ...blank, diffBilling: differs(bil, main), logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
+            setV({ ...blank, diffBilling: differs(bil, main), logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
         }).catch((e) => setError(e.message)).finally(() => setLoading(false))
     }, [id])
 
@@ -160,6 +160,15 @@ const ClientForm = () => {
                             <h4 className="mb-2">{tr("Customer admins")}</h4>
                             <p className="text-sm text-gray-500">{tr("Staff who can see this client with “view own”.")}</p>
                             <div className="mt-4"><Select isMulti isClearable placeholder={tr("Assign staff…")} options={staffOptions} value={staffOptions.filter((o) => v.adminIds.includes(o.value))} onChange={(opts) => set({ adminIds: (opts || []).map((o) => o.value) })} /></div>
+                        </Card>
+                        <Card>
+                            <h4>{tr("Client area access")}</h4>
+                            <p className="text-sm text-gray-500">{tr("The sections this client sees after signing in to its client area. Switch one off to hide it for all its contacts.")}</p>
+                            <div className="mt-4 grid gap-2.5">
+                                {[['invoices', tr("Invoices")], ['estimates', tr("Estimates")], ['proposals', tr("Proposals")], ['contracts', tr("Contracts")], ['projects', tr("Projects")], ['support', tr("Support")]].map(([key, label]) => (
+                                    <label key={key} className="flex items-center justify-between gap-4 text-sm"><span>{label}</span><Switcher checked={!(v.portalHidden || []).includes(key)} onChange={(on) => set({ portalHidden: on ? (v.portalHidden || []).filter((x) => x !== key) : [...(v.portalHidden || []), key] })} /></label>
+                                ))}
+                            </div>
                         </Card>
                         <Card>
                             <h4>{tr("Account")}</h4>

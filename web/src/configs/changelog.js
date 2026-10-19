@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.80.1',
+        date: '2026-10-19',
+        title: 'Client area access is set per client',
+        items: ['What a client sees in its client area (Invoices, Estimates, Proposals, Contracts, Projects, Support) is now set on the client edit page, Client area access, so each client has its own options; Settings → Clients → Client area stays as the switch for everyone', 'The access switches are no longer on the contact form (the email notification switches stay there and in the client My profile)']
+    },
+    {
         version: '0.80.0',
         date: '2026-10-19',
         title: 'Client area in the Rapport look, with access and notification switches',

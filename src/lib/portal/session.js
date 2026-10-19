@@ -32,12 +32,12 @@ const parse = (raw) => {
 
 /**
  * Sections the contact may use: the ones Settings → Clients → Client area allows (all on by default), minus the ones
- * switched off on the contact itself.
+ * switched off on the client itself (client edit page).
  */
-export async function allowedSections(contact) {
+export async function allowedSections(client) {
     const rows = await prisma.crmOption.findMany({ where: { name: { in: SECTIONS.map((k) => `portal_section_${k}`) } }, select: { name: true, value: true } })
     const off = new Set(rows.filter((r) => r.value === '0').map((r) => r.name.replace('portal_section_', '')))
-    const hidden = new Set(contact?.portalHidden || [])
+    const hidden = new Set(client?.portalHidden || [])
     return SECTIONS.filter((k) => !off.has(k) && !hidden.has(k))
 }
 
@@ -50,7 +50,7 @@ export async function getPortalSession() {
     if (!contact || !contact.active || contact.clientId !== p.k || +new Date(contact.lastPasswordChange || 0) !== p.pv) return null
     const client = await prisma.crmClient.findUnique({ where: { id: contact.clientId } })
     if (!client || (!client.active && !p.imp)) return null
-    const can = await allowedSections(contact)
+    const can = await allowedSections(client)
     return { contact, client, can, preview: !!p.imp }
 }
 

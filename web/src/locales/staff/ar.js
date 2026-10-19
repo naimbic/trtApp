@@ -3724,5 +3724,7 @@ export default {
     "Pick the invoice date, then the due date.": "اختر تاريخ الفاتورة ثم تاريخ الاستحقاق.",
     "Client area access": "الوصول إلى منطقة العميل",
     "Client area: what this contact can see": "منطقة العميل: ما يمكن لهذه الجهة رؤيته",
-    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "الأقسام التي يراها العملاء بعد تسجيل الدخول. يمكن أيضًا تقييد كل جهة اتصال على حدة (جهات الاتصال ← الوصول إلى منطقة العميل)."
+    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "الأقسام التي يراها العملاء بعد تسجيل الدخول. يمكن أيضًا تقييد كل جهة اتصال على حدة (جهات الاتصال ← الوصول إلى منطقة العميل).",
+    "The sections this client sees after signing in to its client area. Switch one off to hide it for all its contacts.": "الأقسام التي يراها هذا العميل بعد تسجيل الدخول إلى منطقته. أوقف أحدها لإخفائه عن جميع جهات اتصاله.",
+    "The sections clients see after signing in. Each client can also be limited on its own (open the client, Edit → Client area access).": "الأقسام التي يراها العملاء بعد تسجيل الدخول. يمكن أيضًا تقييد كل عميل على حدة (افتح العميل ← تعديل ← الوصول إلى منطقة العميل)."
 }

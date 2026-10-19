@@ -3724,5 +3724,7 @@ export default {
     "Pick the invoice date, then the due date.": "Elige la fecha de la factura y luego el vencimiento.",
     "Client area access": "Acceso al área de cliente",
     "Client area: what this contact can see": "Área de cliente: lo que este contacto puede ver",
-    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "Las secciones que los clientes ven al iniciar sesión. Cada contacto también puede limitarse por separado (Contactos → Acceso al área de cliente)."
+    "The sections clients see after signing in. Each contact can also be limited on its own (Contacts → Client area access).": "Las secciones que los clientes ven al iniciar sesión. Cada contacto también puede limitarse por separado (Contactos → Acceso al área de cliente).",
+    "The sections this client sees after signing in to its client area. Switch one off to hide it for all its contacts.": "Las secciones que este cliente ve al iniciar sesión en su área de cliente. Desactiva una para ocultarla a todos sus contactos.",
+    "The sections clients see after signing in. Each client can also be limited on its own (open the client, Edit → Client area access).": "Las secciones que los clientes ven al iniciar sesión. Cada cliente también puede limitarse por separado (abre el cliente, Editar → Acceso al área de cliente)."
 }

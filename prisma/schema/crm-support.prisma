@@ -214,6 +214,8 @@ model CrmKnowledgeBaseGroup {
   active      Boolean               @default(true)
   color       String?
   groupOrder  Int?
+  /// interface language code (en, fr, es, ja, ar); empty = shown in every language
+  language    String?
   articles    CrmKnowledgeBaseArticle[]
   createdAt   DateTime              @default(now())
   updatedAt   DateTime              @updatedAt

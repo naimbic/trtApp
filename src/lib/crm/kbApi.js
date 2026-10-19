@@ -37,6 +37,10 @@ async function votes(articleIds) {
 
 const card = (a, group, v, f) => ({ id: a.id, subject: a.subject, group: group ? { id: group.id, name: group.name, color: group.color } : null, excerpt: strip(a.description).slice(0, 160), minutes: readingTime(a.description), views: v[a.id] || 0, helpful: f[a.id]?.yes || 0, notHelpful: f[a.id]?.no || 0, active: a.active, staffOnly: a.staffArticle, updatedAt: a.updatedAt, createdAt: a.createdAt })
 
+const LANGS = ['en', 'fr', 'es', 'ja', 'ar']
+/** Groups written in another language than the viewer's stay out of the way (a group with no language shows in every language). */
+const inLang = (g, lang) => !LANGS.includes(lang) || !g.language || g.language === lang
+
 async function ctx() {
     const session = await requirePermission('knowledge_base', 'view')
     const a = session.user.authority || []
@@ -44,13 +48,15 @@ async function ctx() {
 }
 
 /** Help-center home for staff: groups with counts, popular and (when searching) matching articles. */
-export async function kbHub({ q = '', groupId } = {}) {
+export async function kbHub({ q = '', groupId, lang } = {}) {
     const c = await ctx()
     const [groups, articles] = await Promise.all([prisma.crmKnowledgeBaseGroup.findMany({ orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] }), prisma.crmKnowledgeBaseArticle.findMany({ orderBy: [{ articleOrder: 'asc' }, { subject: 'asc' }] })])
-    const live = articles.filter((a) => a.active)
+    const shown = groups.filter((g) => inLang(g, lang))
+    const okGroup = new Set(shown.map((g) => g.id))
+    const live = articles.filter((a) => a.active && (!a.groupId || okGroup.has(a.groupId)))
     const [v, f] = await Promise.all([views(live.map((a) => a.id)), votes(live.map((a) => a.id))])
     const gMap = Object.fromEntries(groups.map((g) => [g.id, g]))
-    const out = { groups: groups.filter((g) => g.active || c.can('edit')).map((g) => ({ id: g.id, name: g.name, description: g.description || '', color: g.color, active: g.active, count: live.filter((a) => a.groupId === g.id).length })), can: { create: c.can('create'), edit: c.can('edit'), delete: c.can('delete') }, total: live.length }
+    const out = { groups: shown.filter((g) => g.active || c.can('edit')).map((g) => ({ id: g.id, name: g.name, description: g.description || '', color: g.color, active: g.active, count: live.filter((a) => a.groupId === g.id).length })), can: { create: c.can('create'), edit: c.can('edit'), delete: c.can('delete') }, total: live.length }
     const term = String(q).trim().toLowerCase()
     if (term || oid(groupId)) {
         let list = live
@@ -70,7 +76,7 @@ export async function kbManage() {
     const [groups, articles] = await Promise.all([prisma.crmKnowledgeBaseGroup.findMany({ orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] }), prisma.crmKnowledgeBaseArticle.findMany({ orderBy: { updatedAt: 'desc' } })])
     const [v, f] = await Promise.all([views(articles.map((a) => a.id)), votes(articles.map((a) => a.id))])
     const gMap = Object.fromEntries(groups.map((g) => [g.id, g]))
-    return { list: articles.map((a) => card(a, gMap[a.groupId], v, f)), groups: groups.map((g) => ({ id: g.id, name: g.name, description: g.description || '', color: g.color, active: g.active, order: g.groupOrder, count: articles.filter((a) => a.groupId === g.id).length })), can: { create: c.can('create'), edit: c.can('edit'), delete: c.can('delete') } }
+    return { list: articles.map((a) => card(a, gMap[a.groupId], v, f)), groups: groups.map((g) => ({ id: g.id, name: g.name, description: g.description || '', color: g.color, active: g.active, order: g.groupOrder, language: g.language || null, count: articles.filter((a) => a.groupId === g.id).length })), can: { create: c.can('create'), edit: c.can('edit'), delete: c.can('delete') } }
 }
 
 export async function getArticle(id, { raw = false } = {}) {
@@ -112,7 +118,7 @@ export async function saveGroup(body, id) {
     if (!(id ? c.can('edit') : c.can('create'))) throw fail('You are not allowed to do that', 403)
     const name = nz(body.name)?.slice(0, 80)
     if (!name) throw fail('Name the group')
-    const data = { name, description: nz(body.description)?.slice(0, 300) || null, color: /^#[0-9a-f]{6}$/i.test(body.color || '') ? body.color : null, active: body.active !== false, groupSlug: slugify(name) }
+    const data = { name, description: nz(body.description)?.slice(0, 300) || null, color: /^#[0-9a-f]{6}$/i.test(body.color || '') ? body.color : null, active: body.active !== false, groupSlug: slugify(name), ...(body.language !== undefined ? { language: LANGS.includes(body.language) ? body.language : null } : {}) }
     if (id) { await prisma.crmKnowledgeBaseGroup.update({ where: { id }, data }); return { success: true, id } }
     const last = await prisma.crmKnowledgeBaseGroup.findFirst({ orderBy: { groupOrder: 'desc' }, select: { groupOrder: true } })
     const g = await prisma.crmKnowledgeBaseGroup.create({ data: { ...data, groupOrder: (last?.groupOrder || 0) + 1 } })
@@ -129,8 +135,8 @@ export async function deleteGroup(id) {
 }
 
 /* ---------------- client area (articles meant for clients only) ---------------- */
-export async function portalHub({ q = '', groupId } = {}) {
-    const groups = await prisma.crmKnowledgeBaseGroup.findMany({ where: { active: true }, orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] })
+export async function portalHub({ q = '', groupId, lang } = {}) {
+    const groups = (await prisma.crmKnowledgeBaseGroup.findMany({ where: { active: true }, orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] })).filter((g) => inLang(g, lang))
     const articles = await prisma.crmKnowledgeBaseArticle.findMany({ where: { active: true, staffArticle: false, OR: [{ groupId: { in: groups.map((g) => g.id) } }, { groupId: null }] }, orderBy: [{ articleOrder: 'asc' }, { subject: 'asc' }] })
     const [v, f] = await Promise.all([views(articles.map((a) => a.id)), votes(articles.map((a) => a.id))])
     const gMap = Object.fromEntries(groups.map((g) => [g.id, g]))

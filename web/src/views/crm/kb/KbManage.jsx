@@ -32,6 +32,7 @@ const GroupDialog = ({ open, onClose, groups, onChanged }) => {
                     <div key={g.id} className="flex items-center gap-2">
                         <input type="color" value={g.color || '#64748b'} onChange={(e) => patch(g, { color: e.target.value })} className="h-8 w-8 shrink-0 cursor-pointer rounded border-0 bg-transparent p-0" />
                         <Input size="sm" defaultValue={g.name} onBlur={(e) => e.target.value.trim() && e.target.value !== g.name && patch(g, { name: e.target.value })} />
+                        <select aria-label={tr("Language")} value={g.language || ''} onChange={(e) => patch(g, { language: e.target.value || null })} className="h-8 w-28 shrink-0 rounded-lg border border-gray-200 bg-transparent px-1.5 text-xs dark:border-gray-600"><option value="">{tr("All languages")}</option>{[['en', 'English'], ['fr', 'Français'], ['es', 'Español'], ['ja', '日本語'], ['ar', 'العربية']].map(([c, l]) => <option key={c} value={c}>{l}</option>)}</select>
                         <span className="w-8 shrink-0 text-right text-xs text-gray-400">{g.count}</span>
                         <Switcher checked={g.active} onChange={(c) => patch(g, { active: c })} />
                         <button type="button" className="text-red-500" onClick={() => setDel(g)}><TbTrash /></button>

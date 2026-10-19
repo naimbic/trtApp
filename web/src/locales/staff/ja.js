@@ -3733,5 +3733,6 @@ export default {
     "Interaction history": "やり取りの履歴",
     "Projects and tickets": "プロジェクトとチケット",
     "Still owed": "未払い額",
-    "paid": "支払い済み"
+    "paid": "支払い済み",
+    "All languages": "すべての言語"
 }

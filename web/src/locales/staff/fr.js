@@ -3733,5 +3733,6 @@ export default {
     "Interaction history": "Historique des échanges",
     "Projects and tickets": "Projets et tickets",
     "Still owed": "Reste à payer",
-    "paid": "payé"
+    "paid": "payé",
+    "All languages": "Toutes les langues"
 }

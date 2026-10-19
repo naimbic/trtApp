@@ -3733,5 +3733,6 @@ export default {
     "Interaction history": "Historial de interacciones",
     "Projects and tickets": "Proyectos y tickets",
     "Still owed": "Aún por cobrar",
-    "paid": "pagado"
+    "paid": "pagado",
+    "All languages": "Todos los idiomas"
 }

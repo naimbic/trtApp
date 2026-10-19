@@ -9,14 +9,14 @@ import { portal } from './api'
 import { useI18n } from './i18n'
 
 export const Knowledge = () => {
-    const { t } = useI18n()
+    const { t, lang } = useI18n()
     const nav = useNavigate()
     const [sp, setSp] = useSearchParams()
     const q = sp.get('q') || '', groupId = sp.get('group') || ''
     const [text, setText] = useState(q)
     const [d, setD] = useState(null)
     useEffect(() => setText(q), [q])
-    const load = useCallback(() => portal(`/kb?${new URLSearchParams(Object.entries({ q, groupId }).filter(([, v]) => v)).toString()}`).then(setD).catch(() => setD({ groups: [], popular: [] })), [q, groupId])
+    const load = useCallback(() => portal(`/kb?${new URLSearchParams(Object.entries({ q, groupId, lang }).filter(([, v]) => v)).toString()}`).then(setD).catch(() => setD({ groups: [], popular: [] })), [q, groupId, lang])
     useEffect(() => { setD(null); load() }, [load])
     const search = () => setSp(text.trim() ? { q: text.trim() } : {})
     const open = (id) => nav(`/portal/help/${id}`)

@@ -1,3 +1,4 @@
+import { useLocaleStore } from '@/store/localeStore'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { TbPlus, TbSettings, TbArrowLeft } from 'react-icons/tb'
@@ -11,13 +12,14 @@ import { tr, trn } from '@/utils/t'
 const KbHub = () => {
     const nav = useNavigate()
     const [sp, setSp] = useSearchParams()
+    const lang = useLocaleStore((s) => s.currentLang)
     const q = sp.get('q') || ''
     const groupId = sp.get('group') || ''
     const [text, setText] = useState(q)
     const [d, setD] = useState(null)
     const [error, setError] = useState('')
     useEffect(() => setText(q), [q])
-    const load = useCallback(async () => { try { setD(await api(`/api/crm/kb/hub?${qs({ q, groupId })}`)); setError('') } catch (e) { setError(e.message) } }, [q, groupId])
+    const load = useCallback(async () => { try { setD(await api(`/api/crm/kb/hub?${qs({ q, groupId, lang })}`)); setError('') } catch (e) { setError(e.message) } }, [q, groupId, lang])
     useEffect(() => { setD(null); load() }, [load])
     const search = () => { const n = {}; if (text.trim()) n.q = text.trim(); setSp(n) }
     const open = (id) => nav(`/crm/knowledge-base/article/${id}`)

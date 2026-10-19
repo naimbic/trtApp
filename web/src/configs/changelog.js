@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.82.0',
+        date: '2026-10-19',
+        title: 'New help center: trtCRM and trtDigital articles in every language in use',
+        items: ['New script scripts/seed-help-center.mjs: --replace deletes the existing help center (articles, groups, votes, view counts) and creates 14 articles in two groups, trtCRM (how to use the client area: signing in, overview, invoices, recurring invoices, estimates and proposals, contracts, projects, support, notifications) and trtDigital (about us, how a project works, billing, support and contact, privacy), in each language of Settings → Languages in use (English, French, Spanish, Japanese, Arabic); without --replace nothing existing is touched, --dry only reports', 'Help center groups have a language (new selector in the group manager): people see the groups of their own language, and groups set to All languages show for everyone; the client area uses the language chosen in its header']
+    },
+    {
         version: '0.81.1',
         date: '2026-10-19',
         title: 'Client page: left column stays in view',

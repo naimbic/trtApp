@@ -3733,5 +3733,6 @@ export default {
     "Interaction history": "سجل التفاعلات",
     "Projects and tickets": "المشاريع والتذاكر",
     "Still owed": "المتبقي للدفع",
-    "paid": "مدفوع"
+    "paid": "مدفوع",
+    "All languages": "كل اللغات"
 }

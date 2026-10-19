@@ -3741,5 +3741,7 @@ export default {
     "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "「一般 → ドキュメントのロゴ」の署名を印刷します。請求書は支払い済みになると印刷されなくなります。",
     "Prints the signature from General → Document logos. On: it prints once an invoice is paid or a contract is signed, never before. Off: it prints on no PDF.": "「一般 → ドキュメントのロゴ」の署名を印刷します。オン：支払い済みかどうかに関わらず、すべての請求書と契約書に印刷されます。オフ：どのPDFにも印刷されません。",
     "The invoice, its lines, its activity and its payments will be removed. This can upset your accounts and reports.": "請求書、その明細、アクティビティ、および入金が削除されます。会計やレポートに影響する可能性があります。",
-    "Pick a date and a time": "日付と時刻を選択"
+    "Pick a date and a time": "日付と時刻を選択",
+    "Bank account assigned": "銀行口座を割り当てました",
+    "Number - month - year: PREFIX 0012 - 12 - 26": "番号 - 月 - 年：プレフィックス 0012 - 12 - 26"
 }

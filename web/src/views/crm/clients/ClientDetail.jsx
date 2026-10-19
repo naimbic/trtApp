@@ -222,7 +222,7 @@ const ClientDetail = () => {
             <div className="pt">
                 <div className="pt-col pt-col--sticky">
                     <ClientProfileCard c={c} profile={profile} cur={cur} id={id} can={can} a={actions} />
-                    <ClientInfoCard c={c} profile={profile} lookups={lookups} />
+                    <ClientInfoCard c={c} profile={profile} lookups={lookups} id={id} can={can} onSaved={load} />
                     <ClientContactsCard c={c} profile={profile} can={can} a={actions} />
                 </div>
                 <div className="pt-col">

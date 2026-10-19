@@ -60,6 +60,9 @@ const refreshStatus = async (invoiceId) => {
     return status
 }
 
+/** The bank account assigned to a client (profile), used for its documents when none is chosen. */
+const clientBank = async (clientId) => (clientId ? (await prisma.crmClient.findUnique({ where: { id: clientId }, select: { bankAccountId: true } }))?.bankAccountId : null) || null
+
 /** Lookups for the editor: taxes, currencies, payment modes. */
 export async function getInvoiceLookups() {
     await requirePermission('invoices', 'view')
@@ -71,6 +74,7 @@ export async function getInvoiceLookups() {
     const o = async (n, fb = '') => (await prisma.crmOption.findUnique({ where: { name: n } }))?.value ?? fb
     const defaultTaxes = [...String(await o('default_tax')).matchAll(/s:\d+:"([^"]*)"/g)].map((m) => { const [name, rate] = m[1].split('|'); return { name, rate: Number(rate) } })
     return plain({
+        numbering: { prefix: await o('invoice_prefix', 'INV-'), numberFormat: Number(await o('invoice_number_format', '1')) || 1, padding: await numberPadding() },
         defaults: { dueAfter: await o('invoice_due_after'), clientNote: await o('predefined_clientnote_invoice'), terms: await o('predefined_terms_invoice'), taxes: defaultTaxes },
         taxes: taxes.map((t) => ({ name: t.name, rate: t.taxRate })),
         currencies: currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, isDefault: c.isDefault, placement: c.placement })),
@@ -157,7 +161,7 @@ export async function saveInvoice(input) {
         date: input.date ? new Date(input.date) : new Date(),
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
         currencyId: input.currencyId || null,
-        ...(input.bankAccountId !== undefined ? { bankAccountId: input.bankAccountId || null } : {}),
+        ...(input.bankAccountId !== undefined ? { bankAccountId: input.bankAccountId || (await clientBank(input.clientId)) } : {}), // none chosen: the bank assigned to the client
         subtotal: totals.subtotal,
         totalTax: totals.totalTax,
         total: totals.total,

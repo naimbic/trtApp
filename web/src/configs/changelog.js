@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.84.1',
+        date: '2026-10-19',
+        title: 'Invoice number in the first section; client bank account fills the invoice',
+        items: ['The invoice editor now starts with the number as it will read, #FA - 0089 - 09 - 26: the prefix and the month / year follow the settings and the invoice date, and administrators type the number in the middle (empty = the next one)', 'New number format in Settings → Billing → Invoices: Number - month - year, for example FA - 0089 - 09 - 26', 'The bank account assigned to a client now shows in its Detailed information and can be changed there; choosing a client on an invoice (or an estimate) picks that bank automatically, and an invoice saved without one gets the client\'s bank']
+    },
+    {
         version: '0.84.0',
         date: '2026-10-19',
         title: 'Popups in the Rapport look',

@@ -8,6 +8,8 @@ import EllipsisButton from '@/components/shared/EllipsisButton'
 import Tag from '@/components/ui/Tag'
 import Tooltip from '@/components/ui/Tooltip'
 import ImageUpload from '@/components/crm/ImageUpload'
+import BankAccountSelect from '../kit/BankAccountSelect'
+import { api, notify } from '../kit/api'
 import cn from '@/utils/classNames'
 import { useMemo, useState } from 'react'
 import Segment from '@/components/ui/Segment'
@@ -68,7 +70,7 @@ export const ClientProfileCard = ({ c, profile, cur, id, can, a }) => {
 }
 
 /** Detailed information: the facts that used to sit in the header line. */
-export const ClientInfoCard = ({ c, profile, lookups }) => {
+export const ClientInfoCard = ({ c, profile, lookups, id, can, onSaved }) => {
     const site = c.website && (c.website.startsWith('http') ? c.website : `https://${c.website}`)
     return (
         <section className="pt-card">
@@ -82,6 +84,16 @@ export const ClientInfoCard = ({ c, profile, lookups }) => {
                 <Row label={tr("Language")}>{c.language}</Row>
                 <Row label={tr("Managed by")}>{c.admins.map((x) => x.name).join(', ')}</Row>
                 <Row label={tr("Since")}>{dayjs(c.createdAt).format('DD MMM YYYY')}</Row>
+                <Row label={tr("Bank account")}>
+                    <div className="max-w-full" onClick={(e) => e.stopPropagation()}>
+                        <BankAccountSelect
+                            isDisabled={!can('customers', 'edit')}
+                            value={c.bankAccountId || null}
+                            emptyLabel={tr("Company default")}
+                            onChange={async (bid) => { try { await api(`/api/crm/customers/${id}`, { method: 'PATCH', body: { bankAccountId: bid || null } }); notify('success', tr("Bank account assigned")); onSaved?.() } catch (e) { notify('danger', e.message) } }}
+                        />
+                    </div>
+                </Row>
                 {profile?.lastLogin && <Row label={tr("Last seen")}>{dayjs(profile.lastLogin.date).fromNow?.() || dayjs(profile.lastLogin.date).format('DD MMM YYYY')}</Row>}
             </dl>
         </section>

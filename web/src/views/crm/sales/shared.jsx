@@ -42,14 +42,42 @@ export const PROPOSAL_STATUS = {
 }
 export const ProposalStatusTag = ({ status }) => <Tag className={PROPOSAL_STATUS[status]?.cls}>{PROPOSAL_STATUS[status]?.label || status}</Tag>
 
-/** Administrators and super admins can type the number of a document themselves (empty on a new one = the next number). */
-export const NumberField = ({ value, onChange }) => {
+const prefixOf = (p) => (/\s-$/.test(p || '') ? `${p} ` : p || '')
+/** What stands around the typed number for the chosen format: before / after, for example "FA - " [0089] " - 09 - 26". */
+const around = ({ prefix, format, date }) => {
+    const [y, m] = String(date || new Date().toISOString()).slice(0, 10).split('-')
+    const yyyy = y || String(new Date().getFullYear()), mm = m || '01', yy = yyyy.slice(2)
+    const pre = prefixOf(prefix)
+    switch (Number(format)) {
+        case 2: return [`${pre}${yyyy}-`, '']
+        case 3: return [pre, `-${yy}`]
+        case 4: return [pre, `-${mm}-${yyyy}`]
+        case 5: return [pre, ` - ${mm} - ${yy}`]
+        default: return [pre, '']
+    }
+}
+
+/**
+ * The number of a document as it will read, for example #FA - [0089] - 09 - 26: the prefix and the month / year follow the settings and the
+ * document date, the number in the middle is typed by administrators and super admins (empty on a new document = the next number).
+ */
+export const NumberField = ({ value, onChange, prefix, format, padding = 6, date, label = true }) => {
     const authority = useSessionUser((x) => x.user.authority) || []
-    if (!(authority.includes('admin') || authority.includes('crm.admin'))) return null
+    const admin = authority.includes('admin') || authority.includes('crm.admin')
+    const [before, after] = around({ prefix, format, date })
+    const shown = value === '' || value === undefined || value === null ? '' : String(value).padStart(padding, '0')
+    const frame = 'flex h-11 items-center rounded-xl border border-gray-300 bg-white px-3 text-sm dark:border-gray-600 dark:bg-gray-800'
+    if (!admin && !prefix) return null
     return (
-        <label className="flex items-center gap-2 text-sm">
-            <span className="text-gray-500">{tr("Number")}</span>
-            <input type="number" min={1} placeholder={tr("auto")} value={value ?? ''} onChange={(e) => onChange(e.target.value)} className="h-9 w-28 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-800" />
-        </label>
+        <div>
+            {label && <label className="form-label mb-1 block">{tr("Number")}</label>}
+            <div className={frame}>
+                <span className="whitespace-pre text-gray-400">#{before}</span>
+                {admin ? (
+                    <input type="number" min={1} placeholder={'-'.repeat(Math.min(padding, 4))} value={value ?? ''} onChange={(e) => onChange(e.target.value)} className="mx-1 w-20 rounded-md bg-gray-100 px-1.5 py-0.5 text-center font-bold tabular-nums outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700" aria-label={tr("Number")} />
+                ) : <span className="mx-1 font-bold tabular-nums">{shown || '----'}</span>}
+                <span className="whitespace-pre text-gray-400">{after}</span>
+            </div>
+        </div>
     )
 }

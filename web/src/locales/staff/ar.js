@@ -3741,5 +3741,7 @@ export default {
     "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "يطبع التوقيع من عام ← شعارات المستندات. تتوقف الفاتورة عن طباعته بعد دفعها.",
     "Prints the signature from General → Document logos. On: it prints once an invoice is paid or a contract is signed, never before. Off: it prints on no PDF.": "يطبع التوقيع من عام ← شعارات المستندات. عند التشغيل: يُطبع على كل فاتورة وعقد، مدفوعًا أو لا. عند الإيقاف: لا يُطبع على أي ملف PDF.",
     "The invoice, its lines, its activity and its payments will be removed. This can upset your accounts and reports.": "ستُحذف الفاتورة وبنودها ونشاطها ومدفوعاتها. قد يؤثر ذلك على حساباتك وتقاريرك.",
-    "Pick a date and a time": "اختر تاريخًا ووقتًا"
+    "Pick a date and a time": "اختر تاريخًا ووقتًا",
+    "Bank account assigned": "تم تعيين الحساب البنكي",
+    "Number - month - year: PREFIX 0012 - 12 - 26": "الرقم - الشهر - السنة: البادئة 0012 - 12 - 26"
 }

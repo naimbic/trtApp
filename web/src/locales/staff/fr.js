@@ -3741,5 +3741,7 @@ export default {
     "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "Imprime la signature de Général → Logos des documents. Une facture ne l'imprime plus une fois payée.",
     "Prints the signature from General → Document logos. On: it prints once an invoice is paid or a contract is signed, never before. Off: it prints on no PDF.": "Imprime la signature de Général → Logos des documents. Activé : elle s'imprime sur chaque facture et contrat, payé ou non. Désactivé : elle ne s'imprime sur aucun PDF.",
     "The invoice, its lines, its activity and its payments will be removed. This can upset your accounts and reports.": "La facture, ses lignes, son activité et ses paiements seront supprimés. Cela peut fausser votre comptabilité et vos rapports.",
-    "Pick a date and a time": "Choisir une date et une heure"
+    "Pick a date and a time": "Choisir une date et une heure",
+    "Bank account assigned": "Compte bancaire attribué",
+    "Number - month - year: PREFIX 0012 - 12 - 26": "Numéro - mois - année : PRÉFIXE 0012 - 12 - 26"
 }

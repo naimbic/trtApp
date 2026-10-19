@@ -77,6 +77,12 @@ const InvoiceEditor = () => {
     const money = (n) => makeMoney(lookups.currencies)(n, v.currencyId)
     const newLine = () => ({ ...emptyLine(), taxes: (lookups.defaults?.taxes || []).filter((t) => lookups.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
     const set = (patch) => setV((s) => ({ ...s, ...patch }))
+    // choosing a client also picks the bank account assigned to it (change it below if this invoice needs another)
+    const changeClient = async (cid) => {
+        set({ clientId: cid })
+        if (!cid) return
+        try { const c = await api(`/api/crm/customers/${cid}`); setV((s) => (s.clientId === cid ? { ...s, bankAccountId: c.bankAccountId || null } : s)) } catch { /* the document still falls back to the client's account */ }
+    }
     const num = (key) => (e) => set({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
 
     const addFromCatalog = async (itemId) => {
@@ -108,14 +114,14 @@ const InvoiceEditor = () => {
 
     return (
         <Container>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3>{id ? tr("Edit invoice {v1}", { v1: doc?.invoice?.displayNumber || '' }) : tr("New invoice")}</h3><NumberField value={v?.number} onChange={(n) => set({ number: n })} /></div>
+            <h3 className="mb-4">{id ? tr("Edit invoice {v1}", { v1: doc?.invoice?.displayNumber || '' }) : tr("New invoice")}</h3>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="flex flex-col gap-4">
                 <Card>
                     <div className="grid gap-3 md:grid-cols-12">
-                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={(cid) => set({ clientId: cid })} /></div>
+                        <div className="md:col-span-3"><NumberField value={v.number} onChange={(n) => set({ number: n })} prefix={doc?.invoice?.prefix ?? lookups.numbering?.prefix} format={doc?.invoice?.numberFormat ?? lookups.numbering?.numberFormat} padding={lookups.numbering?.padding} date={v.date} /></div>
+                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={changeClient} /></div>
                         <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
-                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
                         <div className="md:col-span-4">
                             <label className="form-label mb-1 block">{tr("Invoice date")} → {tr("Due date")}</label>
                             <DatePicker.DatePickerRange
@@ -125,8 +131,8 @@ const InvoiceEditor = () => {
                                 value={[dayjs(v.date).toDate(), dayjs(v.dueDate || v.date).toDate()]}
                                 onChange={(vals) => { if (Array.isArray(vals) && vals[0] && vals[1]) set({ date: dayjs(vals[0]).format('YYYY-MM-DD'), dueDate: dayjs(vals[1]).format('YYYY-MM-DD') }) }}
                             />
-                            <p className="mt-1 text-xs text-gray-400">{tr("Pick the invoice date, then the due date.")}</p>
                         </div>
+                        <div className="md:col-span-6"><label className="form-label mb-1 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
                     </div>
                     {!v.isCopy && (
                         <div className="mt-3 grid items-end gap-3 border-t border-gray-100 pt-3 md:grid-cols-12 dark:border-gray-700">

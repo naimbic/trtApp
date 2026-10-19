@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import Switcher from '@/components/ui/Switcher'
 import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify } from '../kit/api'
 import { useSessionUser } from '@/store/authStore'
@@ -109,30 +110,28 @@ const InvoiceEditor = () => {
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="flex flex-col gap-4">
                 <Card>
-                    <div className="grid gap-4 md:grid-cols-4">
-                        <div className="md:col-span-2"><label className="form-label mb-2 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={(cid) => set({ clientId: cid })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
-                        <div />
-                        <div><label className="form-label mb-2 block">{tr("Invoice date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("Due date")}</label><Input type="date" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></div>
-                        {!v.isCopy && (
-                            <>
-                                <div className="md:col-span-2">
-                                    <label className="form-label mb-2 block">{tr("Repeat every")}</label>
-                                    <div className="flex gap-2">
-                                        <div className="w-24"><Input type="number" min={0} max={365} placeholder="0" value={v.recurring || ''} onChange={(e) => set({ recurring: e.target.value })} /></div>
-                                        <div className="w-40"><Select isSearchable={false} isDisabled={!Number(v.recurring)} options={RECUR_UNITS()} value={RECUR_UNITS().find((o) => o.value === v.recurringType)} onChange={(o) => set({ recurringType: o.value })} /></div>
-                                    </div>
-                                    <p className="mt-1 text-xs text-gray-400">{tr("Leave empty for a one-time invoice. A new copy is created automatically each time.")}</p>
-                                </div>
-                                <div>
-                                    <label className="form-label mb-2 block">{tr("Stop after (copies)")}</label>
-                                    <Input type="number" min={0} disabled={!Number(v.recurring)} placeholder={tr("Never")} value={v.cycles || ''} onChange={(e) => set({ cycles: e.target.value })} />
-                                </div>
-                            </>
-                        )}
+                    <div className="grid gap-3 md:grid-cols-12">
+                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={(cid) => set({ clientId: cid })} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
+                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Invoice date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Due date")}</label><Input type="date" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></div>
                     </div>
+                    {!v.isCopy && (
+                        <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+                            <label className="flex items-center gap-2 pb-1.5 font-semibold"><Switcher checked={Number(v.recurring) > 0} onChange={(on) => set({ recurring: on ? 1 : 0 })} />{tr("Recurring invoice")}</label>
+                            {Number(v.recurring) > 0 && (
+                                <>
+                                    <div className="flex items-end gap-2">
+                                        <div><label className="form-label mb-1 block">{tr("Repeat every")}</label><div className="w-24"><Input type="number" min={1} max={365} value={v.recurring} onChange={(e) => set({ recurring: e.target.value })} /></div></div>
+                                        <div className="w-36"><Select isSearchable={false} options={RECUR_UNITS()} value={RECUR_UNITS().find((o) => o.value === v.recurringType)} onChange={(o) => set({ recurringType: o.value })} /></div>
+                                    </div>
+                                    <div><label className="form-label mb-1 block">{tr("Stop after (copies)")}</label><div className="w-32"><Input type="number" min={0} placeholder={tr("Never")} value={v.cycles || ''} onChange={(e) => set({ cycles: e.target.value })} /></div></div>
+                                    <p className="pb-2 text-xs text-gray-400">{tr("A new copy is created automatically each time.")}</p>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </Card>
 
                 <Card>
@@ -142,13 +141,13 @@ const InvoiceEditor = () => {
                     </div>
                     <LineItemsTable items={v.items} onChange={(items) => set({ items })} taxOptions={taxOptions} newLine={newLine} />
 
-                    <div className="mt-6 grid gap-6 md:grid-cols-2">
-                        <div className="grid grid-cols-2 content-start gap-4">
-                            <div><label className="form-label mb-2 block">{tr("Discount %")}</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
-                            <div><label className="form-label mb-2 block">{tr("Fixed discount")}</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
-                            <div><label className="form-label mb-2 block">{tr("Discount applies")}</label><Select options={[{ value: 'before_tax', label: tr("Before tax") }, { value: 'after_tax', label: tr("After tax") }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? tr("After tax") : tr("Before tax") }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
-                            <div><label className="form-label mb-2 block">{tr("Adjustment")}</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
-                        </div>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div><label className="form-label mb-1 block">{tr("Discount %")}</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
+                        <div><label className="form-label mb-1 block">{tr("Fixed discount")}</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
+                        <div><label className="form-label mb-1 block">{tr("Discount applies")}</label><Select options={[{ value: 'before_tax', label: tr("Before tax") }, { value: 'after_tax', label: tr("After tax") }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? tr("After tax") : tr("Before tax") }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
+                        <div><label className="form-label mb-1 block">{tr("Adjustment")}</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
+                    </div>
+                    <div className="mt-4">
                         <dl className="ml-auto w-full max-w-sm text-sm">
                             <div className="flex justify-between py-1"><dt>{tr("Sub total")}</dt><dd className="tabular-nums">{money(totals.subtotal)}</dd></div>
                             {totals.discountTotal > 0 && <div className="flex justify-between py-1"><dt>{tr("Discount")}</dt><dd className="tabular-nums">-{money(totals.discountTotal)}</dd></div>}

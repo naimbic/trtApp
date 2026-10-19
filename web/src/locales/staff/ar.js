@@ -3718,5 +3718,7 @@ export default {
     "last copy": "آخر نسخة",
     "months": "أشهر",
     "next on {date}": "التالية في {date}",
-    "years": "سنوات"
+    "years": "سنوات",
+    "A new copy is created automatically each time.": "تُنشأ نسخة جديدة تلقائيًا في كل مرة.",
+    "Recurring invoice": "فاتورة متكررة"
 }

@@ -3718,5 +3718,7 @@ export default {
     "last copy": "直近のコピー",
     "months": "か月",
     "next on {date}": "次回：{date}",
-    "years": "年"
+    "years": "年",
+    "A new copy is created automatically each time.": "新しいコピーが毎回自動的に作成されます。",
+    "Recurring invoice": "定期請求書"
 }

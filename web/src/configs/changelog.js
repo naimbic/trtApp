@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.79.4',
+        date: '2026-10-19',
+        title: 'Invoice editor: compact layout',
+        items: ['Client, currency, bank account, invoice date and due date are on one row', 'Recurring is a switch: when on, Repeat every, the unit and Stop after appear on one row next to it', 'Discount %, Fixed discount, Discount applies and Adjustment are on one row above the totals']
+    },
+    {
         version: '0.79.3',
         date: '2026-10-18',
         title: 'Invoice document and PDF: tinted table header, soft border',

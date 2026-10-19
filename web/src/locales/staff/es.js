@@ -3718,5 +3718,7 @@ export default {
     "last copy": "última copia",
     "months": "meses",
     "next on {date}": "próxima el {date}",
-    "years": "años"
+    "years": "años",
+    "A new copy is created automatically each time.": "Se crea una nueva copia automáticamente cada vez.",
+    "Recurring invoice": "Factura recurrente"
 }

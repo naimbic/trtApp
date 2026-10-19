@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.86.7',
+        date: '2026-10-19',
+        title: 'Create menu really opens the popup',
+        items: ['The + menu in the top bar now hands the request to the page it opens (Notes or Tasks board), which opens the new note / new task popup as soon as it is ready, also when you are already on that page.']
+    },
+    {
         version: '0.86.6',
         date: '2026-10-19',
         title: 'Create menu opens the page and the popup',

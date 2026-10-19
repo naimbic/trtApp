@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import Dropdown from '@/components/ui/Dropdown'
+import { requestCreate } from '@/utils/createIntent'
 import { TbActivity, TbChecklist, TbNotes, TbPlus } from 'react-icons/tb'
 import { tr } from '@/utils/t'
 import { magnetic } from '@/vendor/rapport/motion'
@@ -70,8 +71,8 @@ const RapportShell = ({ children }) => {
                     <div className="rp-pills">{larger.lg && <RapportPills />}</div>
                     <div className="rp-actions">
                         <Dropdown placement="bottom-end" renderTitle={<button type="button" className="header-action-item header-action-item-hoverable text-2xl" title={tr('Create')} aria-label={tr('Create')}><TbPlus /></button>}>
-                            <Dropdown.Item eventKey="task" onClick={() => navigate(`/crm/tasks-board?new=1`)}><span className="flex items-center"><TbChecklist className="mr-2 text-lg" />{tr('New task')}</span></Dropdown.Item>
-                            <Dropdown.Item eventKey="note" onClick={() => navigate('/crm/notes?new=1')}><span className="flex items-center"><TbNotes className="mr-2 text-lg" />{tr('New note')}</span></Dropdown.Item>
+                            <Dropdown.Item eventKey="task" onClick={() => { requestCreate('task'); navigate('/crm/tasks-board') }}><span className="flex items-center"><TbChecklist className="mr-2 text-lg" />{tr('New task')}</span></Dropdown.Item>
+                            <Dropdown.Item eventKey="note" onClick={() => { requestCreate('note'); navigate('/crm/notes') }}><span className="flex items-center"><TbNotes className="mr-2 text-lg" />{tr('New note')}</span></Dropdown.Item>
                         </Dropdown>
                         {isAdmin && <Link to="/crm/all-activity" className="header-action-item header-action-item-hoverable text-2xl" title={tr('All activity')} aria-label={tr('All activity')}><TbActivity /></Link>}
                         <LanguageSelector />

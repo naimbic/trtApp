@@ -17,6 +17,7 @@ import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, statusOf } from '
 import TaskDrawer from './TaskDrawer'
 import NoteDialog, { NOTES_EVENT } from './NoteDialog'
 import { tr, trn } from '@/utils/t'
+import { onCreate } from '@/utils/createIntent'
 
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -63,6 +64,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
 
     useEffect(() => { const t = setTimeout(() => setQuery(search), 300); return () => clearTimeout(t) }, [search])
     useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLookups).catch(() => {}) }, [])
+    useEffect(() => onCreate('task', () => setDrawer({ open: true, id: null, preset: null, k: Date.now() })), [])
     useEffect(() => { const id = params.get('task'); if (id) setDrawer({ open: true, id }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
     // /crm/tasks?new=1&due=YYYY-MM-DD (the + on a calendar day): the new task form opens with that due date
     useEffect(() => {

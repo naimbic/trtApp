@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.81.1',
+        date: '2026-10-19',
+        title: 'Client page: left column stays in view',
+        items: ['On wide screens the left column of the client page (profile, detailed information, contacts) is sticky: it stays in view while the tabs scroll, and scrolls on its own when it is taller than the screen']
+    },
+    {
         version: '0.81.0',
         date: '2026-10-19',
         title: 'Client page like the template customer profile',

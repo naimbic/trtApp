@@ -83,34 +83,29 @@ const ConfirmDialog = (props) => {
     }
 
     return (
-        <Dialog contentClassName="pb-0 px-0" {...rest}>
-            <div className="px-6 pb-6 pt-2 flex">
+        <Dialog {...rest}>
+            <div className="flex pb-5 pt-1">
                 <div>
                     <StatusIcon status={type} />
                 </div>
-                <div className="ml-4 rtl:mr-4">
+                <div className="ml-4 pr-8 rtl:mr-4 rtl:pl-8 rtl:pr-0">
                     <h5 className="mb-2">{title}</h5>
                     {children}
                 </div>
             </div>
-            <div className="px-6 py-3 bg-gray-100 dark:bg-gray-700 rounded-bl-2xl rounded-br-2xl">
-                <div className="flex justify-end items-center gap-2">
-                    <Button
-                        size="sm"
-                        onClick={handleCancel}
-                        {...cancelButtonProps}
-                    >
-                        {cancelText}
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="solid"
-                        onClick={handleConfirm}
-                        {...confirmButtonProps}
-                    >
-                        {confirmText}
-                    </Button>
-                </div>
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-4 dark:border-gray-700">
+                <Button size="sm" onClick={handleCancel} {...cancelButtonProps}>
+                    {cancelText}
+                </Button>
+                <Button
+                    size="sm"
+                    variant="solid"
+                    className={type === 'danger' ? '!bg-red-500 hover:!bg-red-600 active:!bg-red-700' : undefined}
+                    onClick={handleConfirm}
+                    {...confirmButtonProps}
+                >
+                    {confirmText}
+                </Button>
             </div>
         </Dialog>
     )

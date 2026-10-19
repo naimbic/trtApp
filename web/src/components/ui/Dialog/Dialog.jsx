@@ -60,7 +60,8 @@ const Dialog = (props) => {
 
     const defaultDialogContentClass = 'dialog-content'
 
-    const dialogClass = classNames(defaultDialogContentClass, contentClassName)
+    // never taller than the screen: a long form scrolls inside the popup, its buttons stay reachable
+    const dialogClass = classNames(defaultDialogContentClass, 'max-h-[calc(100vh-3rem)] overflow-y-auto', contentClassName)
 
     return (
         <Modal
@@ -74,7 +75,7 @@ const Dialog = (props) => {
                 afterOpen: 'dialog-overlay-after-open',
                 beforeClose: 'dialog-overlay-before-close',
             }}
-            portalClassName={classNames('dialog-portal', portalClassName)}
+            portalClassName={classNames('dialog-portal rp-portal', portalClassName)}
             bodyOpenClassName={classNames('dialog-open', bodyOpenClassName)}
             ariaHideApp={false}
             isOpen={isOpen}

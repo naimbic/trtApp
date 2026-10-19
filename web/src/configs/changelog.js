@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.84.0',
+        date: '2026-10-19',
+        title: 'Popups in the Rapport look',
+        items: ['Every popup now follows the Rapport design: a soft blurred backdrop, one warm rounded sheet centred on the screen, bold titles, rounded fields, pill buttons and a round close button that turns to the accent colour', 'A popup is never taller than the screen: long forms scroll inside, and in the event popup the Delete / Cancel / Save buttons stay pinned at the bottom', 'Confirmation popups lost the grey footer band: a thin line, Cancel and a red Delete for dangerous actions']
+    },
+    {
         version: '0.83.0',
         date: '2026-10-19',
         title: 'Event popup: one period field, client or lead',

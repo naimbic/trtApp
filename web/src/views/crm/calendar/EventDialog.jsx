@@ -112,15 +112,16 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
     }
 
     return (
-        <Dialog isOpen={open} width={680} onClose={onClose} onRequestClose={onClose}>
-            <div className="mb-4 flex flex-wrap items-center gap-2 pr-10">
+        <Dialog isOpen={open} width={680} height="min(calc(100vh - 48px), 860px)" contentClassName="flex flex-col overflow-hidden" onClose={onClose} onRequestClose={onClose}>
+            <div className="mb-4 flex shrink-0 flex-wrap items-center gap-2 pr-10">
                 <h5 className="mr-auto">{readOnly ? tr("Event") : edit ? tr("Edit event") : tr("New event")}</h5>
                 {edit && v.meetingUrl && <Button size="sm" variant="solid" icon={<TbVideo />} onClick={() => window.open(v.meetingUrl, '_blank', 'noopener')}>{tr("Join meeting")}</Button>}
                 {edit && v.start && <Button size="sm" icon={<TbBrandGoogle />} onClick={() => window.open(googleLink(v), '_blank', 'noopener')}>{tr("Google Calendar")}</Button>}
                 {edit && <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/calendar/ics?id=${selected.id}` }}>{tr(".ics")}</Button>}
             </div>
             {readOnly && <p className="mb-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:bg-gray-700">{tr("You were invited to this event")}{selected.owner ? tr(" by {owner}", { owner: selected.owner }) : ''}{tr(". Only the organiser can change it.")}</p>}
-            <Form className="flex max-h-[68vh] flex-1 flex-col overflow-y-auto pr-1" onSubmit={submit}>
+            <Form className="flex min-h-0 flex-1 flex-col" containerClassName="flex min-h-0 flex-1 flex-col" onSubmit={submit}>
+                <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                 <fieldset disabled={readOnly || saving} className="contents">
                     <div className="mb-3 flex flex-wrap gap-1.5">
                         {CATEGORIES.map((c) => (
@@ -179,7 +180,8 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                         </div>
                     )}
                 </fieldset>
-                <div className="mt-2 flex items-center gap-2">
+                </div>
+                <div className="mt-3 flex shrink-0 items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
                     {edit && !readOnly && <Button type="button" variant="plain" className="text-red-500" onClick={onDelete} disabled={saving}>{tr("Delete")}</Button>}
                     <div className="ml-auto flex gap-2">
                         <Button type="button" onClick={onClose}>{readOnly ? tr("Close") : tr("Cancel")}</Button>

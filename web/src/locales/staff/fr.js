@@ -3734,5 +3734,7 @@ export default {
     "Projects and tickets": "Projets et tickets",
     "Still owed": "Reste à payer",
     "paid": "payé",
-    "All languages": "Toutes les langues"
+    "All languages": "Toutes les langues",
+    "This client has no contact with an email address. Add one in Other recipients.": "Ce client n'a aucun contact avec une adresse e-mail. Ajoutez-en une dans Autres destinataires.",
+    "from": "de"
 }

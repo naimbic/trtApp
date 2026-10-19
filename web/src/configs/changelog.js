@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.82.2',
+        date: '2026-10-19',
+        title: 'Send by email: sender small, recipients as switches, PDF off by default',
+        items: ['The From box is gone: the sender is shown small next to the title', 'To is one row of switches with the contact names (the address shows on hover), and Attach the invoice as a PDF is a switch that starts off']
+    },
+    {
         version: '0.82.1',
         date: '2026-10-19',
         title: 'Send by email: compact, always fits the screen',

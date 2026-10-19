@@ -3734,5 +3734,7 @@ export default {
     "Projects and tickets": "プロジェクトとチケット",
     "Still owed": "未払い額",
     "paid": "支払い済み",
-    "All languages": "すべての言語"
+    "All languages": "すべての言語",
+    "This client has no contact with an email address. Add one in Other recipients.": "このクライアントにはメールアドレスのある連絡先がありません。「その他の宛先」に追加してください。",
+    "from": "送信元"
 }

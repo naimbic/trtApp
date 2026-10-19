@@ -3734,5 +3734,7 @@ export default {
     "Projects and tickets": "المشاريع والتذاكر",
     "Still owed": "المتبقي للدفع",
     "paid": "مدفوع",
-    "All languages": "كل اللغات"
+    "All languages": "كل اللغات",
+    "This client has no contact with an email address. Add one in Other recipients.": "ليس لهذا العميل أي جهة اتصال لها بريد إلكتروني. أضف واحدة في مستلمون آخرون.",
+    "from": "من"
 }

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.86.0',
+        date: '2026-10-19',
+        title: 'Notes beside the tasks; choose Email / Telegram / WhatsApp',
+        items: ['New quick notes: just a title and a description, private to their author, shown as a Notes column at the left of the Tasks board and as rows at the top of the list; New note button, click to edit, drag a note to a status column (or Make it a task in its menu) to turn it into a task', 'Profile → Notifications (team) and My profile (clients) now say How do you want to be notified?: Email, Telegram and WhatsApp are three switches, any combination; with Email off the automatic emails to that person (invoices, estimates, tickets, reminders...) are not sent, while sign-in, password and invitation emails always are', 'The invoice number keeps its month and year as before (the extra number format added in 0.84.1 is removed)']
+    },
+    {
         version: '0.85.0',
         date: '2026-10-19',
         title: 'Notifications by WhatsApp and Telegram',

@@ -223,4 +223,6 @@ export default {
     "Telegram": "Telegram",
     "WhatsApp": "WhatsApp",
     "WhatsApp and Telegram": "WhatsAppとTelegram",
+    "How do you want to be notified?": "通知の受け取り方を選択してください",
+    "Pick one or several: the same notification arrives on each channel you switch on.": "1つまたは複数を選択してください。オンにしたすべてのチャネルに同じ通知が届きます。",
 }

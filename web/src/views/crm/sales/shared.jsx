@@ -52,7 +52,6 @@ const around = ({ prefix, format, date }) => {
         case 2: return [`${pre}${yyyy}-`, '']
         case 3: return [pre, `-${yy}`]
         case 4: return [pre, `-${mm}-${yyyy}`]
-        case 5: return [pre, ` - ${mm} - ${yy}`]
         default: return [pre, '']
     }
 }

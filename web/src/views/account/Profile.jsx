@@ -108,7 +108,7 @@ const Profile = () => {
     const save = async () => {
         setSaving(true)
         try {
-            const d = await api('/api/crm/profile', { method: 'PUT', body: { user: { firstName: u.firstName, lastName: u.lastName, title: u.title, phone: u.phone, dialCode: u.dialCode, country: u.country, address: u.address, city: u.city, postcode: u.postcode, birthday: u.birthday }, staff: { facebook: s.facebook, linkedin: s.linkedin, website: s.website, skype: s.skype, whatsapp: s.whatsapp, telegramChatId: s.telegramChatId, notifyTelegram: s.notifyTelegram, notifyWhatsapp: s.notifyWhatsapp, bio: s.bio, timezone: s.timezone, defaultLanguage: s.defaultLanguage, direction: s.direction, emailSignature: s.emailSignature }, preferences: p } })
+            const d = await api('/api/crm/profile', { method: 'PUT', body: { user: { firstName: u.firstName, lastName: u.lastName, title: u.title, phone: u.phone, dialCode: u.dialCode, country: u.country, address: u.address, city: u.city, postcode: u.postcode, birthday: u.birthday }, staff: { facebook: s.facebook, linkedin: s.linkedin, website: s.website, skype: s.skype, whatsapp: s.whatsapp, telegramChatId: s.telegramChatId, notifyEmail: s.notifyEmail, notifyTelegram: s.notifyTelegram, notifyWhatsapp: s.notifyWhatsapp, bio: s.bio, timezone: s.timezone, defaultLanguage: s.defaultLanguage, direction: s.direction, emailSignature: s.emailSignature }, preferences: p } })
             const f = { user: d.user, staff: d.staff || {}, preferences: d.preferences }
             setData(d); setForm(f); setSaved(JSON.stringify(f))
             setUser({ ...sessionUser, userName: `${d.user.firstName} ${d.user.lastName}`.trim() })
@@ -216,9 +216,10 @@ const Profile = () => {
                             </div>
                         </Card>
                         <Card className="mt-4">
-                            <h5 className="mb-0.5">{tr("WhatsApp and Telegram")}</h5>
-                            <p className="mb-4 text-sm text-gray-500">{tr("The same notifications as by email, as a short message with the link. Your administrator sets up the accounts in Settings.")}</p>
+                            <h5 className="mb-0.5">{tr("How do you want to be notified?")}</h5>
+                            <p className="mb-4 text-sm text-gray-500">{tr("Pick one or several: the same notification arrives on each channel you switch on. Your administrator sets up Telegram and WhatsApp in Settings.")}</p>
                             <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                                <div className="flex items-center justify-between gap-4 py-3.5"><div><div className="font-semibold">{tr("Email")}</div><div className="text-sm text-gray-500">{u.email}</div></div><Switcher checked={s.notifyEmail !== false} onChange={(v) => setS({ notifyEmail: v })} /></div>
                                 <div className="flex items-center justify-between gap-4 py-3.5"><div><div className="font-semibold">{tr("WhatsApp")}</div><div className="text-sm text-gray-500">{s.whatsapp ? s.whatsapp : tr("Add your WhatsApp number in the Profile tab first.")}</div></div><Switcher checked={!!s.notifyWhatsapp} disabled={!s.whatsapp} onChange={(v) => setS({ notifyWhatsapp: v })} /></div>
                                 <div className="flex flex-wrap items-center justify-between gap-4 py-3.5"><div><div className="font-semibold">{tr("Telegram")}</div><div className="text-sm text-gray-500">{tr("Send /start to the company bot, then enter your chat id (for example from @userinfobot).")}</div></div><div className="flex items-center gap-3"><div className="w-44"><Input size="sm" placeholder="123456789" value={s.telegramChatId || ''} onChange={(e) => setS({ telegramChatId: e.target.value })} /></div><Switcher checked={!!s.notifyTelegram} disabled={!String(s.telegramChatId || '').trim()} onChange={(v) => setS({ notifyTelegram: v })} /></div></div>
                             </div>

@@ -223,4 +223,6 @@ export default {
     "Telegram": "Telegram",
     "WhatsApp": "WhatsApp",
     "WhatsApp and Telegram": "WhatsApp et Telegram",
+    "How do you want to be notified?": "Comment voulez-vous être notifié ?",
+    "Pick one or several: the same notification arrives on each channel you switch on.": "Choisissez un ou plusieurs canaux : la même notification arrive sur chaque canal activé.",
 }

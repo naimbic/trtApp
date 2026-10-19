@@ -3768,5 +3768,14 @@ export default {
     "Template language": "Idioma de la plantilla",
     "For example en, fr, es, ja, ar.": "Por ejemplo en, fr, es, ja, ar.",
     "Notify by WhatsApp": "Notificar por WhatsApp",
-    "Notify by Telegram": "Notificar por Telegram"
+    "Notify by Telegram": "Notificar por Telegram",
+    "Drag to a column to make it a task": "Arrastra a una columna para convertirla en tarea",
+    "Give the note a title": "Dale un título a la nota",
+    "How do you want to be notified?": "¿Cómo quiere recibir las notificaciones?",
+    "Make it a task": "Convertir en tarea",
+    "New note": "Nueva nota",
+    "Note deleted": "Nota eliminada",
+    "Note saved": "Nota guardada",
+    "Pick one or several: the same notification arrives on each channel you switch on. Your administrator sets up Telegram and WhatsApp in Settings.": "Elija uno o varios: la misma notificación llega por cada canal que active. Su administrador configura Telegram y WhatsApp en Ajustes.",
+    "The note is now a task": "La nota ahora es una tarea"
 }

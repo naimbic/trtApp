@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer'
 import prisma from '@/lib/prisma'
-import { notifyChannels } from '@/lib/crm/channels'
+import { notifyChannels, emailAllowed } from '@/lib/crm/channels'
 import { companyTokenData, COMPANY_KEYS } from '@/lib/crm/docTokens'
 import { buildMessage, DESIGN_LANGUAGES } from '@/lib/crm/mailDesign/build'
 
@@ -133,7 +133,8 @@ export async function sendTemplate({ slug, to, data = {}, relType = null, relId 
     if (!t || t.active === false) return { sent: false, error: `Email template "${slug}" is missing or turned off` }
     const full = { ...(await baseData()), ...data }
     const subject = mergeFields(t.subject, full)
-    const res = await deliver({ to, subject, html: await buildHtml(t.message, full) })
+    // the person may have chosen to be notified only on Telegram / WhatsApp (sign-in and password emails always go)
+    const res = (await emailAllowed(Array.isArray(to) ? to[0] : to, slug)) ? await deliver({ to, subject, html: await buildHtml(t.message, full) }) : { sent: false, error: 'The recipient chose not to receive email notifications', skipped: true }
     await prisma.crmMailLog.create({ data: { to, subject, template: slug, relType, relId: relId || undefined, status: res.sent ? 'sent' : 'failed', error: res.error || null } }).catch(() => {})
     await notifyChannels({ email: Array.isArray(to) ? to[0] : to, subject, data: full, relType, relId }) // the same message by Telegram / WhatsApp, for people who switched it on
     return res

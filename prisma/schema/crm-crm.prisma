@@ -106,6 +106,7 @@ model CrmContact {
   /// notifications by Telegram / WhatsApp (empty = off)
   telegramChatId          String?
   whatsappNumber          String?
+  notifyEmail             Boolean? // empty = yes; off = no automatic email (sign-in and password emails always go)
   notifyTelegram          Boolean?
   notifyWhatsapp          Boolean?
 

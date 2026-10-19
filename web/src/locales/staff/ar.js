@@ -3768,5 +3768,14 @@ export default {
     "Template language": "لغة القالب",
     "For example en, fr, es, ja, ar.": "مثل en أو fr أو es أو ja أو ar.",
     "Notify by WhatsApp": "الإشعار عبر واتساب",
-    "Notify by Telegram": "الإشعار عبر تيليغرام"
+    "Notify by Telegram": "الإشعار عبر تيليغرام",
+    "Drag to a column to make it a task": "اسحبها إلى عمود لتحويلها إلى مهمة",
+    "Give the note a title": "أعطِ الملاحظة عنوانًا",
+    "How do you want to be notified?": "كيف تريد أن تتلقى الإشعارات؟",
+    "Make it a task": "تحويلها إلى مهمة",
+    "New note": "ملاحظة جديدة",
+    "Note deleted": "تم حذف الملاحظة",
+    "Note saved": "تم حفظ الملاحظة",
+    "Pick one or several: the same notification arrives on each channel you switch on. Your administrator sets up Telegram and WhatsApp in Settings.": "اختر قناة أو أكثر: يصل الإشعار نفسه عبر كل قناة تُفعّلها. يقوم المسؤول بإعداد تيليغرام وواتساب في الإعدادات.",
+    "The note is now a task": "أصبحت الملاحظة مهمة"
 }

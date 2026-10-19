@@ -11,7 +11,7 @@ const yes = (key, label, o = {}) => f(key, label, 'switch', o)
 const sel = (key, label, options, o = {}) => f(key, label, 'select', { options: options.map((x) => (Array.isArray(x) ? { value: x[0], label: x[1] } : { value: x, label: x })), ...o })
 
 export const DATE_FORMATS = [['d/m/Y|%d/%m/%Y', '31/12/2026 (day/month/year)'], ['m/d/Y|%m/%d/%Y', '12/31/2026 (month/day/year)'], ['Y-m-d|%Y-%m-%d', '2026-12-31'], ['d-m-Y|%d-%m-%Y', '31-12-2026'], ['d.m.Y|%d.%m.%Y', '31.12.2026'], ['d M Y|%d %b %Y', '31 Dec 2026'], ['M d, Y|%b %d, %Y', 'Dec 31, 2026']]
-export const NUMBER_FORMATS = [['1', 'Number only: PREFIX0012'], ['2', 'Number / year: PREFIX0012/2026'], ['3', 'Year / number: PREFIX2026/0012'], ['4', 'Number / month / year: PREFIX0012/12/2026'], ['5', 'Number - month - year: PREFIX 0012 - 12 - 26']]
+export const NUMBER_FORMATS = [['1', 'Number only: PREFIX0012'], ['2', 'Number / year: PREFIX0012/2026'], ['3', 'Year / number: PREFIX2026/0012'], ['4', 'Number / month / year: PREFIX0012/12/2026']]
 export const LANGUAGES = ['english', 'french', 'arabic', 'spanish', 'german', 'italian', 'portuguese', 'dutch', 'turkish', 'russian', 'japanese']
 export const RESET = [['never', 'Never (one running number)'], ['yearly', 'Every year (back to 1 on 1 January)'], ['monthly', 'Every month (back to 1 on the 1st)']]
 export const PAGE_FORMATS = ['A4-PORTRAIT', 'A4-LANDSCAPE', 'A5-PORTRAIT', 'LETTER-PORTRAIT', 'LETTER-LANDSCAPE'].map((v) => [v, v.replace('-', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase())])

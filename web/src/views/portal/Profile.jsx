@@ -63,9 +63,10 @@ const Profile = () => {
                 </div>
             </Card>
             <Card className="mb-4">
-                <h5 className="mb-1">{t('WhatsApp and Telegram')}</h5>
-                <p className="mb-3 text-sm text-gray-500">{t('Get the same notifications as a short message with the link.')}</p>
+                <h5 className="mb-1">{t('How do you want to be notified?')}</h5>
+                <p className="mb-3 text-sm text-gray-500">{t('Pick one or several: the same notification arrives on each channel you switch on.')}</p>
                 <div className="pt-sw">
+                    <label><span>{t('Email')}<small>{c.email}</small></span><Switcher checked={ch.notifyEmail !== false} disabled={me.preview} onChange={(on) => saveChannels({ ...ch, notifyEmail: on })} /></label>
                     <label><span>{t('WhatsApp')}<small><input className="mt-1 w-52 rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm dark:border-gray-600" placeholder="+212 6 12 34 56 78" value={ch.whatsappNumber || ''} disabled={me.preview} onChange={(e) => setCh({ ...ch, whatsappNumber: e.target.value })} onBlur={() => saveChannels(ch)} /></small></span><Switcher checked={!!ch.notifyWhatsapp} disabled={me.preview || !String(ch.whatsappNumber || '').trim()} onChange={(on) => saveChannels({ ...ch, notifyWhatsapp: on })} /></label>
                     <label><span>{t('Telegram')}<small><input className="mt-1 w-52 rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm dark:border-gray-600" placeholder="123456789" value={ch.telegramChatId || ''} disabled={me.preview} onChange={(e) => setCh({ ...ch, telegramChatId: e.target.value })} onBlur={() => saveChannels(ch)} /></small></span><Switcher checked={!!ch.notifyTelegram} disabled={me.preview || !String(ch.telegramChatId || '').trim()} onChange={(on) => saveChannels({ ...ch, notifyTelegram: on })} /></label>
                 </div>

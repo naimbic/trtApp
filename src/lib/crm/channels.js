@@ -61,3 +61,16 @@ export async function notifyChannels({ email, subject, data, relType, relId }) {
         if (c.whatsapp && who.notifyWhatsapp && wa) log(`whatsapp:${wa}`, await sendWhatsapp(wa, text, c))
     } catch { /* a failed message must never break the email or the action behind it */ }
 }
+
+// emails a person needs to sign in or recover access are never switched off by a notification preference
+const ESSENTIAL = /password|reset|verif|invite|two[-_ ]?factor|otp|confirm|activation|welcome|portal/i
+
+/** False when the person behind this address chose not to receive automatic emails (Profile → Notifications). */
+export async function emailAllowed(email, slug) {
+    try {
+        if (!email || ESSENTIAL.test(String(slug || ''))) return true
+        const mail = String(email).trim()
+        const who = (await prisma.crmContact.findFirst({ where: { email: { equals: mail, mode: 'insensitive' }, active: true }, select: { notifyEmail: true } })) || (await prisma.crmStaff.findFirst({ where: { email: { equals: mail, mode: 'insensitive' } }, select: { notifyEmail: true } }))
+        return who?.notifyEmail !== false
+    } catch { return true }
+}

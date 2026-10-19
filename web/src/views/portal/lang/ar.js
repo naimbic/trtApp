@@ -223,4 +223,6 @@ export default {
     "Telegram": "تيليغرام",
     "WhatsApp": "واتساب",
     "WhatsApp and Telegram": "واتساب وتيليغرام",
+    "How do you want to be notified?": "كيف تريد أن تتلقى الإشعارات؟",
+    "Pick one or several: the same notification arrives on each channel you switch on.": "اختر قناة أو أكثر: يصل الإشعار نفسه عبر كل قناة تُفعّلها.",
 }

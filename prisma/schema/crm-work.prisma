@@ -479,3 +479,16 @@ model CrmTaskTemplate {
 
   @@map("crm_task_templates")
 }
+
+/// Quick notes of a team member: just a title and a description, listed next to the tasks. Private to their author.
+model CrmQuickNote {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  addedFrom   String?  @db.ObjectId // staff
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([addedFrom])
+  @@map("crm_quick_notes")
+}

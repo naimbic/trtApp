@@ -3768,5 +3768,14 @@ export default {
     "Template language": "テンプレートの言語",
     "For example en, fr, es, ja, ar.": "例：en, fr, es, ja, ar。",
     "Notify by WhatsApp": "WhatsAppで通知",
-    "Notify by Telegram": "Telegramで通知"
+    "Notify by Telegram": "Telegramで通知",
+    "Drag to a column to make it a task": "列にドラッグするとタスクになります",
+    "Give the note a title": "メモにタイトルを付けてください",
+    "How do you want to be notified?": "通知の受け取り方を選択してください",
+    "Make it a task": "タスクにする",
+    "New note": "新しいメモ",
+    "Note deleted": "メモを削除しました",
+    "Note saved": "メモを保存しました",
+    "Pick one or several: the same notification arrives on each channel you switch on. Your administrator sets up Telegram and WhatsApp in Settings.": "1つまたは複数を選択してください。オンにしたすべてのチャネルに同じ通知が届きます。TelegramとWhatsAppは管理者が設定で設定します。",
+    "The note is now a task": "メモをタスクにしました"
 }

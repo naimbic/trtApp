@@ -524,6 +524,21 @@ const resources = [
             { key: 'reason', label: 'Reason', type: 'text' },
         ],
     },
+    {
+        key: 'quick-notes', model: 'crmQuickNote', label: 'Note', plural: 'Notes',
+        group: 'Tasks', icon: 'TbNote', feature: null, privateField: 'addedFrom', nav: false,
+        titleField: 'title', search: ['title', 'description'], defaultSort: { createdAt: 'desc' },
+        columns: [
+            { key: 'title', label: 'Title', type: 'text', link: true },
+            { key: 'description', label: 'Description', type: 'text' },
+            { key: 'createdAt', label: 'Created', type: 'datetime' },
+        ],
+        fields: [
+            { key: 'title', label: 'Title', type: 'text', required: true, section: 'General' },
+            { key: 'description', label: 'Description', type: 'textarea', section: 'General' },
+        ],
+        filters: [], children: [], actions: [],
+    },
 ]
 
 export default resources

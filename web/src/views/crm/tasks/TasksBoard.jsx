@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbPencil, TbFlag, TbUserPlus, TbCalendarDue, TbLoader } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbPencil, TbFlag, TbUserPlus, TbCalendarDue, TbLoader, TbNote, TbArrowRight } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Container from '@/components/shared/Container'
@@ -15,6 +15,7 @@ import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
 import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, statusOf } from './shared'
 import TaskDrawer from './TaskDrawer'
+import NoteDialog from './NoteDialog'
 import { tr, trn } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
@@ -40,6 +41,24 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     const [error, setError] = useState('')
     const [del, setDel] = useState(null) // a task about to be deleted
     const [drawer, setDrawer] = useState({ open: !!openId, id: openId, preset: null, k: 0 })
+    const [notes, setNotes] = useState([]) // quick notes: only a title and a description, shown beside the tasks
+    const [noteDialog, setNoteDialog] = useState({ open: false, note: null })
+    const notesOn = !projectId && !boardOnly
+    const loadNotes = useCallback(() => { if (notesOn) api('/api/crm/quick-notes?pageSize=200').then((d) => setNotes(d.list || [])).catch(() => {}) }, [notesOn])
+    useEffect(() => { loadNotes() }, [loadNotes])
+    const shownNotes = useMemo(() => { const q = query.trim().toLowerCase(); return notes.filter((n) => !q || `${n.title} ${n.description || ''}`.toLowerCase().includes(q)) }, [notes, query])
+    const isNote = (it) => String(it?.id || '').startsWith('n:')
+    const noteOf = (it) => notes.find((n) => `n:${n.id}` === it.id)
+    // a note becomes a task: moved to a status column or chosen from its menu
+    const promote = async (it, status) => {
+        const n = noteOf(it)
+        if (!n) return
+        try {
+            await api('/api/crm/work/tasks', { method: 'POST', body: { name: n.title, description: n.description || '', status: +status || 1 } })
+            await api(`/api/crm/quick-notes/${n.id}`, { method: 'DELETE' })
+            notify('success', tr("The note is now a task")); loadNotes(); load()
+        } catch (e) { notify('danger', e.message) }
+    }
 
     useEffect(() => { const t = setTimeout(() => setQuery(search), 300); return () => clearTimeout(t) }, [search])
     useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLookups).catch(() => {}) }, [])
@@ -87,6 +106,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     }
 
     const moveTo = (item, toId) => {
+        if (isNote(item)) return promote(item, toId)
         const to = +toId, from = Object.keys(columns).find((k) => columns[k].some((t) => t.id === item.id))
         if (from && +from !== to) onDragEnd({ source: { droppableId: String(from), index: columns[from].findIndex((t) => t.id === item.id) }, destination: { droppableId: String(to), index: (columns[to] || []).length } })
     }
@@ -118,6 +138,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         <Segment.Item value="board"><span className="inline-flex items-center gap-1"><TbLayoutKanban />{tr("Board")}</span></Segment.Item>
                         <Segment.Item value="list"><span className="inline-flex items-center gap-1"><TbList />{tr("List")}</span></Segment.Item>
                     </Segment>
+                    {notesOn && <Button icon={<TbNote />} onClick={() => setNoteDialog({ open: true, note: null })}>{tr("New note")}</Button>}
                     {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>{tr("New task")}</Button>}
                 </div>
             </div>}
@@ -135,12 +156,15 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
             {view === 'board' ? (
                 <Pipeline
                     loading={loading}
-                    canDrag={(t) => !!data.can.edit && t.canFinish !== false}
-                    onOpen={(it) => open(it.id)}
-                    onAdd={data.can.create ? (c) => setDrawer({ open: true, id: null, preset: { status: c.id }, k: 0 }) : undefined}
+                    canDrag={(t) => (isNote(t) ? !!data.can.edit : !!data.can.edit && t.canFinish !== false)}
+                    onOpen={(it) => (isNote(it) ? setNoteDialog({ open: true, note: noteOf(it) }) : open(it.id))}
+                    onAdd={(c) => (c.id === 'notes' ? setNoteDialog({ open: true, note: null }) : data.can.create ? setDrawer({ open: true, id: null, preset: { status: c.id }, k: 0 }) : undefined)}
                     onMoveTo={data.can.edit ? moveTo : undefined}
                     ends={data.can.edit ? [{ id: 'won', name: tr("Done"), metric: { value: done ? (columns[5] || []).length : "—", label: tr("completed") }, sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, { id: 'progress', name: tr("In progress"), metric: { value: (columns[4] || []).length, label: tr("tasks") }, sub: tr("Start working on it"), icon: <TbLoader />, tone: 'progress' }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), metric: { value: data.list.length, label: tr("in view") }, sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
-                    actions={(it) => [
+                    actions={(it) => isNote(it) ? [
+                        { label: tr("Make it a task"), icon: <TbArrowRight />, onClick: () => promote(it, 1) },
+                        { label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: async () => { try { await api(`/api/crm/quick-notes/${noteOf(it).id}`, { method: 'DELETE' }); notify('success', tr("Note deleted")); loadNotes() } catch (e) { notify('danger', e.message) } } },
+                    ] : [
                         ...(data.can.edit ? [
                             { label: tr("Mark complete"), icon: <TbCircleCheck />, onClick: () => moveTo(it, 5) },
                             { label: tr("Priority"), icon: <TbFlag />, sub: PRIORITY.map((p) => ({ label: p.label, checked: it.priority === p.value, color: ['#9ca3af', '#3b82f6', '#f97316', '#ef4444'][p.value - 1], onClick: () => patch(it, () => ({ priority: p.value }), tr("Priority changed")) })) },
@@ -151,10 +175,11 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         ...(data.can.delete ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => setDel(it) }] : []),
                     ]}
                     onMove={({ item, from, to, index, fromIndex }) => {
+                        if (isNote(item)) { if (to !== 'notes' && !String(to).startsWith('end:')) promote(item, to); return }
                         if (String(to).startsWith('end:')) return String(to) === 'end:won' ? moveTo(item, 5) : String(to) === 'end:progress' ? moveTo(item, 4) : setDel(item)
                         onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
                     }}
-                    columns={shownStatuses.map((s) => {
+                    columns={[...(notesOn ? [{ id: 'notes', name: tr("Notes"), tone: 'butter', count: shownNotes.length, items: shownNotes.map((n) => ({ id: `n:${n.id}`, title: n.title, sub: String(n.description || '').slice(0, 90), date: fmtDate(n.createdAt), label: '', fields: [{ label: tr("Description"), value: n.description }], team: [], people: <span className="text-[11px] opacity-70">{tr("Drag to a column to make it a task")}</span> })) }] : []), ...shownStatuses.map((s) => {
                         const all = columns[s.value] || []
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {
@@ -164,13 +189,20 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                                 team: t.assignees, people: <People list={t.assignees} size={26} /> })),
                             more: limit && all.length > limit ? { left: all.length - limit, onClick: () => setMore((m) => ({ ...m, [s.value]: true })) } : null,
                         }
-                    })}
+                    })]}
                 />
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <Table>
                         <THead><Tr><Th>{tr("Task")}</Th><Th>{tr("Related to")}</Th><Th>{tr("Status")}</Th><Th>{tr("Priority")}</Th><Th>{tr("Assigned")}</Th><Th>{tr("Due")}</Th></Tr></THead>
                         <TBody>
+                            {shownNotes.map((n) => (
+                                <Tr key={`n:${n.id}`} className="cursor-pointer bg-amber-50/40 dark:bg-amber-500/5" onClick={() => setNoteDialog({ open: true, note: n })}>
+                                    <Td className="font-semibold"><span className="inline-flex items-center gap-2"><TbNote className="text-amber-500" />{n.title}</span></Td>
+                                    <Td colSpan={4} className="max-w-[420px] truncate text-gray-500">{n.description || '—'}</Td>
+                                    <Td className="text-gray-400">{fmtDate(n.createdAt)}</Td>
+                                </Tr>
+                            ))}
                             {data.list.map((t) => (
                                 <Tr key={t.id} className="cursor-pointer" onClick={() => open(t.id)}>
                                     <Td className="font-semibold">{t.name}</Td>
@@ -187,6 +219,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                 </div>
             )}
 
+            <NoteDialog open={noteDialog.open} note={noteDialog.note} onClose={() => setNoteDialog((d) => ({ ...d, open: false }))} onSaved={loadNotes} />
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this task?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const it = del; setDel(null); remove(it) }}>
                 <p>{del?.title}</p>
             </ConfirmDialog>

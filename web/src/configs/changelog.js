@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.86.5',
+        date: '2026-10-19',
+        title: 'Create menu in the top bar; new notes show at once',
+        items: ['The top-bar note icon is now a + menu: New task or New note.', 'A note added from the top bar (or anywhere) now appears at once on the Notes page and the Tasks board, with no refresh.']
+    },
+    {
         version: '0.86.4',
         date: '2026-10-19',
         title: 'Footer: version and credit on the right',

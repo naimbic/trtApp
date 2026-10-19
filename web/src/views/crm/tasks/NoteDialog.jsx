@@ -6,6 +6,10 @@ import Button from '@/components/ui/Button'
 import { api, notify } from '../kit/api'
 import { tr } from '@/utils/t'
 
+// Tell every open notes list (Notes page, Tasks board) that a note was added, changed or removed.
+export const NOTES_EVENT = 'crm:notes-changed'
+const NOTES_CHANGED = () => window.dispatchEvent(new Event(NOTES_EVENT))
+
 /** A quick note: just a title and a description. note = null creates one. */
 const NoteDialog = ({ open, note, onClose, onSaved }) => {
     const [v, setV] = useState({ title: '', description: '' })
@@ -17,12 +21,12 @@ const NoteDialog = ({ open, note, onClose, onSaved }) => {
         try {
             await api(note ? `/api/crm/quick-notes/${note.id}` : '/api/crm/quick-notes', { method: note ? 'PATCH' : 'POST', body: { title: v.title.trim(), description: v.description } })
             notify('success', note ? tr("Note saved") : tr("Note added"))
-            onSaved?.(); onClose()
+            onSaved?.(); NOTES_CHANGED(); onClose()
         } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const remove = async () => {
         setBusy(true)
-        try { await api(`/api/crm/quick-notes/${note.id}`, { method: 'DELETE' }); notify('success', tr("Note deleted")); onSaved?.(); onClose() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+        try { await api(`/api/crm/quick-notes/${note.id}`, { method: 'DELETE' }); notify('success', tr("Note deleted")); onSaved?.(); NOTES_CHANGED(); onClose() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     return (
         <Dialog isOpen={open} width={520} onClose={onClose} onRequestClose={onClose}>

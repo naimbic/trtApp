@@ -9,7 +9,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify } from '../kit/api'
 import { InvoiceHead } from '../sales/InvoiceInsights'
-import NoteDialog from './NoteDialog'
+import NoteDialog, { NOTES_EVENT } from './NoteDialog'
 import { tr } from '@/utils/t'
 
 /** All my quick notes as a grid of cards: title and description. Click one to edit it. */
@@ -20,6 +20,7 @@ const NotesPage = () => {
     const [del, setDel] = useState(null)
     const load = useCallback(() => { api('/api/crm/quick-notes?pageSize=500').then((d) => setNotes(d.list || [])).catch(() => setNotes([])) }, [])
     useEffect(() => { load() }, [load])
+    useEffect(() => { window.addEventListener(NOTES_EVENT, load); return () => window.removeEventListener(NOTES_EVENT, load) }, [load])
     const shown = useMemo(() => { const q = query.trim().toLowerCase(); return (notes || []).filter((n) => !q || `${n.title} ${n.description || ''}`.toLowerCase().includes(q)) }, [notes, query])
 
     const run = async (fn, ok) => { try { await fn(); notify('success', ok); load() } catch (e) { notify('danger', e.message) } }

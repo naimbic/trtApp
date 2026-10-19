@@ -15,7 +15,7 @@ import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
 import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, statusOf } from './shared'
 import TaskDrawer from './TaskDrawer'
-import NoteDialog from './NoteDialog'
+import NoteDialog, { NOTES_EVENT } from './NoteDialog'
 import { tr, trn } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
@@ -46,6 +46,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     const notesOn = !projectId && !boardOnly
     const loadNotes = useCallback(() => { if (notesOn) api('/api/crm/quick-notes?pageSize=200').then((d) => setNotes(d.list || [])).catch(() => {}) }, [notesOn])
     useEffect(() => { loadNotes() }, [loadNotes])
+    useEffect(() => { window.addEventListener(NOTES_EVENT, loadNotes); return () => window.removeEventListener(NOTES_EVENT, loadNotes) }, [loadNotes])
     const shownNotes = useMemo(() => { const q = query.trim().toLowerCase(); return notes.filter((n) => !q || `${n.title} ${n.description || ''}`.toLowerCase().includes(q)) }, [notes, query])
     const isNote = (it) => String(it?.id || '').startsWith('n:')
     const noteOf = (it) => notes.find((n) => `n:${n.id}` === it.id)
@@ -69,7 +70,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
         const due = params.get('due') ? new Date(`${params.get('due')}T12:00:00`) : null
         setDrawer({ open: true, id: null, preset: due ? { startDate: due, dueDate: due } : null, k: 0 })
         params.delete('new'); params.delete('due'); setParams(params, { replace: true })
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [params.get('new')]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const load = useCallback(async () => {
         try {

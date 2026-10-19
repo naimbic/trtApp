@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.82.3',
+        date: '2026-10-19',
+        title: 'Documents and PDF: totals are part of the items table',
+        items: ['Sub total, taxes, total and total paid are now the last rows of the same table as the items (same border, tinted rows, values under the Amount column) in invoices, estimates, proposals and purchase orders, on screen and in the PDF', 'Previously the totals were a separate small block below the table']
+    },
+    {
         version: '0.82.2',
         date: '2026-10-19',
         title: 'Send by email: sender small, recipients as switches, PDF off by default',

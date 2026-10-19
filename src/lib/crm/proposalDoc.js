@@ -3,7 +3,7 @@ import { calcDocument, round2 } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import { getOptions } from '@/lib/crm/mailer'
 import { companyImageDataUri } from '@/lib/crm/company'
-import { pdfSettings, formatMoney } from '@/lib/crm/docStyle'
+import { pdfSettings, formatMoney, attachTotals } from '@/lib/crm/docStyle'
 import { companyTokenData, COMPANY_KEYS } from '@/lib/crm/docTokens'
 import { esc, stripTags, logoDataUri, fmtDate, LABELS, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
 
@@ -62,7 +62,8 @@ function itemsHtml(p, items, currency, S, L) {
 const TXT = { french: { title: 'OFFRE DE PRIX', to: 'À l’attention de', openTill: 'Valable jusqu’au', subject: 'Objet' }, english: { title: 'PROPOSAL', to: 'Prepared for', openTill: 'Open until', subject: 'Subject' } }
 
 /** The proposal document body (staff view, PDF and public page). */
-export async function proposalDocumentHtml(p, items, currency, S, number) {
+export const proposalDocumentHtml = async (p, items, currency, S, number) => attachTotals(await proposalDocumentHtmlRaw(p, items, currency, S, number))
+async function proposalDocumentHtmlRaw(p, items, currency, S, number) {
     const L = LABELS[S.lang], T = TXT[S.lang]
     const og = await getOptions([...COMPANY_KEYS, 'company_logo', 'company_info_format', 'invoice_company_name'])
     const D = (x) => fmtDate(x, S.dateFormat, S.timezone)

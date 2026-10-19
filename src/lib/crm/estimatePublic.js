@@ -5,7 +5,7 @@ import { getOptions, buildHtml, mergeFields, deliver, findTemplate, companyLangu
 import { publicBase } from '@/lib/crm/shortLinks'
 import { companyImageDataUri } from '@/lib/crm/company'
 import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
-import { pdfSettings, formatMoney, paperCss } from '@/lib/crm/docStyle'
+import { pdfSettings, formatMoney, paperCss, attachTotals } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
 import { createInvoiceFromEstimate } from '@/lib/crm/sales/convert'
 import { bankTokensFor } from '@/lib/crm/bankDb'
@@ -53,7 +53,8 @@ table{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;
 h4{margin:20px 0 6px;font-size:1.05em}.block{white-space:pre-line}tr{page-break-inside:avoid}`
 
 /** The estimate document itself (shared by the PDF and the public page). */
-async function documentHtml(d, lang, S) {
+const documentHtml = async (d, lang, S) => attachTotals(await documentHtmlRaw(d, lang, S))
+async function documentHtmlRaw(d, lang, S) {
     const og = await getOptions(['company_info_format', 'company_logo', 'companyname'])
     const L = LABELS[lang], T = TXT[lang]
     const M = (n) => formatMoney(n, d.currency, S), Mi = (n) => formatMoney(n, d.currency, S, { noSymbol: S.itemsNoSymbol }), D = (x) => fmtDate(x, S.dateFormat, S.timezone)

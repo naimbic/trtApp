@@ -10,7 +10,7 @@ import { getOptions } from '@/lib/crm/mailer'
 import { formatDocumentNumber, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import { companyImageDataUri } from '@/lib/crm/company'
-import { pdfSettings, formatMoney, paperCss } from '@/lib/crm/docStyle'
+import { pdfSettings, formatMoney, paperCss, attachTotals } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
 import { companyTokenData, renderInfoFormat, clientTokenData, phpDate, COMPANY_KEYS } from '@/lib/crm/docTokens'
 import { bankTokensFor } from '@/lib/crm/bankDb'
@@ -103,7 +103,8 @@ body.pub{background:#f3f4f6;font-size:14px}
 
 /** The stamp across a paid, overdue or cancelled invoice. */
 const stampHtml = (status, fr) => (status === 2 ? `<span class="stamp">${fr ? 'Payée' : 'Paid'}</span>` : status === 4 ? `<span class="stamp late">${fr ? 'En retard' : 'Overdue'}</span>` : status === 5 ? `<span class="stamp mute">${fr ? 'Annulée' : 'Cancelled'}</span>` : '')
-export async function renderInvoiceHtml(id, { hash, pdfHref } = {}) {
+export const renderInvoiceHtml = async (id, o) => { const h = await renderInvoiceHtmlRaw(id, o); return h && attachTotals(h) }
+async function renderInvoiceHtmlRaw(id, { hash, pdfHref } = {}) {
     const doc = hash ? await loadPublicDocument(id, hash) : await getInvoiceDocument(id)
     if (!doc) return null
     const { invoice, items, payments, client, currency, paid } = doc

@@ -3,7 +3,7 @@ import { calcDocument, round2, formatDocumentNumber } from '@/lib/crm/sales/calc
 import { numberPadding } from '@/lib/crm/numbering'
 import { getOptions } from '@/lib/crm/mailer'
 import { companyImageDataUri } from '@/lib/crm/company'
-import { pdfSettings, formatMoney, paperCss } from '@/lib/crm/docStyle'
+import { pdfSettings, formatMoney, paperCss, attachTotals } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
 import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
 import { bankTokensFor } from '@/lib/crm/bankDb'
@@ -21,7 +21,8 @@ table{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;
 .words{margin:14px 0 0}.sig{margin-top:28px;text-align:right}.sig img{max-height:90px;max-width:260px}h4{margin:20px 0 6px;font-size:1.05em}.block{white-space:pre-line}tr{page-break-inside:avoid}`
 
 /** Staff-only document (the caller checked the permission). */
-export async function renderPurchaseOrderHtml(id) {
+export const renderPurchaseOrderHtml = async (id) => { const r = await renderPurchaseOrderHtmlRaw(id); return r && { ...r, html: attachTotals(r.html) } }
+async function renderPurchaseOrderHtmlRaw(id) {
     const p = await prisma.crmPurchaseOrder.findUnique({ where: { id } })
     if (!p) return null
     const [lines, client, currency] = await Promise.all([

@@ -67,10 +67,19 @@ body.pub{background:#ebe8e1}.pub .card,.card{background:#fbf8f2;border-color:#e3
 .dates{display:flex;flex-wrap:wrap;gap:4px 22px;padding:10px 0;margin-top:12px;border-top:1px solid #e3ded4;border-bottom:1px solid #e3ded4;color:#676a66}.dates strong{color:#17191a;font-variant-numeric:tabular-nums}.hdr .hr .info{text-align:right}.hdr .hr .dates{justify-content:flex-end}
 .items{border-collapse:separate;border-spacing:0;border:1px solid #e3ded4;border-radius:12px;overflow:hidden}.items thead{background:#efeadf}.items th{background:transparent!important;color:#676a66!important;font-size:.76em;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:10px 10px;border-bottom:1px solid #e3ded4}
 .items td>strong:first-child{white-space:pre-line}.items td{padding:11px 10px;border-bottom:1px solid #ebe6db;font-variant-numeric:tabular-nums}.items tbody tr:last-child td{border-bottom:0}.items .n{color:#a29f95}.long{color:#676a66}
-.tot{width:min(300px,100%)}.tot td{padding:5px 0;background:transparent!important;border:0;color:#4a4d49;font-weight:500;font-variant-numeric:tabular-nums}
+.items tfoot td{padding:0;background:#f7f4ec;border-bottom:0;border-top:1px solid #e3ded4;font-variant-numeric:tabular-nums}.items tfoot tr:first-child td{border-top:1px solid #e3ded4}.fr{display:flex;justify-content:flex-end;align-items:baseline;padding:7px 10px;color:#4a4d49;font-weight:500}.fl{flex:1;text-align:right;padding-right:34px}.fv{min-width:120px;text-align:right;font-weight:600;color:#17191a}.items tfoot tr.grand td{background:#efeadf}.items tfoot tr.grand .fr{padding:10px;color:#17191a;font-weight:800;font-size:1.12em}.items tfoot tr.grand .fv{font-weight:800}.tot{width:min(300px,100%)}.tot td{padding:5px 0;background:transparent!important;border:0;color:#4a4d49;font-weight:500;font-variant-numeric:tabular-nums}
 .tot tr.grand td{border-top:2px solid #17191a;padding-top:9px;color:#17191a;font-weight:800;font-size:1.15em}
 .words{color:#676a66}h4{margin:22px 0 6px;font-size:.76em;text-transform:uppercase;letter-spacing:.12em;color:#676a66}.plain{border-collapse:separate;border-spacing:0;border:1px solid #e3ded4;border-radius:12px;overflow:hidden}.plain thead{background:#efeadf}.plain th{background:transparent;color:#676a66;font-size:.76em;text-transform:uppercase;letter-spacing:.08em;padding:9px 10px;border-bottom:1px solid #e3ded4!important}.plain td{padding:9px 10px;border-bottom:1px solid #ebe6db}.plain tbody tr:last-child td{border-bottom:0}
 .stamp{position:absolute;left:56px;top:182px;transform:rotate(-11deg);border:3px solid #2f7d62;color:#2f7d62;border-radius:12px;padding:5px 18px;font-weight:800;font-size:22pt;letter-spacing:.14em;text-transform:uppercase;opacity:.82;pointer-events:none;mix-blend-mode:multiply}
 .stamp.late{border-color:#c8431f;color:#c8431f;font-size:18pt}.stamp.mute{border-color:#8b8f93;color:#8b8f93;font-size:18pt}
 @media print{html,body{background:transparent!important}body{max-width:none!important;margin:0!important;padding:0!important;box-shadow:none!important;border-radius:0!important}.stamp{top:34mm;left:3mm}}
 @media(max-width:640px){.stamp{left:16px;top:170px}}`
+
+/**
+ * Moves the totals (sub total, taxes, total...) into the foot of the items table, so they read as the last rows of the same table:
+ * `</table><table class="tot">rows</table>` becomes `<tfoot>` rows spanning the whole table, value on the right under the Amount column.
+ */
+export const attachTotals = (html) => String(html).replace(/<\/tbody>\s*<\/table>(\s*<\/div>)?\s*<table class="tot">([\s\S]*?)<\/table>/g, (m, close, rows) => {
+    const foot = rows.replace(/<tr( class="grand")?>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/g, (x, g, l, v) => `<tr class="ft${g ? ' grand' : ''}"><td colspan="99"><div class="fr"><span class="fl">${l}</span><b class="fv">${v}</b></div></td></tr>`)
+    return `</tbody><tfoot>${foot}</tfoot></table>${close || ''}`
+})

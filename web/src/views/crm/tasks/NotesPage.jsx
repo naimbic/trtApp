@@ -1,6 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
+import { useSearchParams } from 'react-router'
 import { TbCopy, TbChecklist, TbDots, TbNotes, TbPencil, TbPlus, TbSearch, TbTrash } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
@@ -18,6 +19,13 @@ const NotesPage = () => {
     const [query, setQuery] = useState('')
     const [dlg, setDlg] = useState({ open: false, note: null })
     const [del, setDel] = useState(null)
+    const [params, setParams] = useSearchParams()
+    // /crm/notes?new=1 (the + menu in the top bar): the new note popup opens straight away
+    useEffect(() => {
+        if (!params.get('new')) return
+        setDlg({ open: true, note: null })
+        params.delete('new'); setParams(params, { replace: true })
+    }, [params.get('new')]) // eslint-disable-line react-hooks/exhaustive-deps
     const load = useCallback(() => { api('/api/crm/quick-notes?pageSize=500').then((d) => setNotes(d.list || [])).catch(() => setNotes([])) }, [])
     useEffect(() => { load() }, [load])
     useEffect(() => { window.addEventListener(NOTES_EVENT, load); return () => window.removeEventListener(NOTES_EVENT, load) }, [load])

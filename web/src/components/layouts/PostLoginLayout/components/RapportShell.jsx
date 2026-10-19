@@ -1,9 +1,8 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import Dropdown from '@/components/ui/Dropdown'
 import { TbActivity, TbChecklist, TbNotes, TbPlus } from 'react-icons/tb'
-import NoteDialog from '@/views/crm/tasks/NoteDialog'
 import { tr } from '@/utils/t'
 import { magnetic } from '@/vendor/rapport/motion'
 import RapportPills from '@/components/template/rapport/RapportPills'
@@ -41,7 +40,6 @@ const RapportShell = ({ children }) => {
     const mode = useThemeStore((s) => s.mode)
     const authority = useSessionUser((s) => s.user.authority) || []
     const navigate = useNavigate()
-    const [noteOpen, setNoteOpen] = useState(false)
     const isAdmin = authority.includes('admin') || authority.includes('crm.admin')
     const canChat = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.chat.view')
     const hasTabs = usePageTabsStore((st) => !!st.tabs)
@@ -73,7 +71,7 @@ const RapportShell = ({ children }) => {
                     <div className="rp-actions">
                         <Dropdown placement="bottom-end" renderTitle={<button type="button" className="header-action-item header-action-item-hoverable text-2xl" title={tr('Create')} aria-label={tr('Create')}><TbPlus /></button>}>
                             <Dropdown.Item eventKey="task" onClick={() => navigate(`/crm/tasks-board?new=1`)}><span className="flex items-center"><TbChecklist className="mr-2 text-lg" />{tr('New task')}</span></Dropdown.Item>
-                            <Dropdown.Item eventKey="note" onClick={() => setNoteOpen(true)}><span className="flex items-center"><TbNotes className="mr-2 text-lg" />{tr('New note')}</span></Dropdown.Item>
+                            <Dropdown.Item eventKey="note" onClick={() => navigate('/crm/notes?new=1')}><span className="flex items-center"><TbNotes className="mr-2 text-lg" />{tr('New note')}</span></Dropdown.Item>
                         </Dropdown>
                         {isAdmin && <Link to="/crm/all-activity" className="header-action-item header-action-item-hoverable text-2xl" title={tr('All activity')} aria-label={tr('All activity')}><TbActivity /></Link>}
                         <LanguageSelector />
@@ -84,7 +82,6 @@ const RapportShell = ({ children }) => {
                 {toolbar && <div className="rp-toolbar">{toolbar}</div>}
                 <main className="rp-main">{children}</main>
             </div>
-            <NoteDialog open={noteOpen} note={null} onClose={() => setNoteOpen(false)} />
             {canChat ? <ChatWidget /> : <PresenceKeeper />}
         </LayoutBase>
     )

@@ -118,16 +118,14 @@ const InvoiceEditor = () => {
                         <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Due date")}</label><Input type="date" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></div>
                     </div>
                     {!v.isCopy && (
-                        <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 border-t border-gray-100 pt-3 dark:border-gray-700">
-                            <label className="flex items-center gap-2 pb-1.5 font-semibold"><Switcher checked={Number(v.recurring) > 0} onChange={(on) => set({ recurring: on ? 1 : 0 })} />{tr("Recurring invoice")}</label>
+                        <div className="mt-3 grid items-end gap-3 border-t border-gray-100 pt-3 md:grid-cols-12 dark:border-gray-700">
+                            <label className="flex items-center gap-2 pb-1.5 font-semibold md:col-span-3"><Switcher checked={Number(v.recurring) > 0} onChange={(on) => set({ recurring: on ? 1 : 0 })} />{tr("Recurring invoice")}</label>
                             {Number(v.recurring) > 0 && (
                                 <>
-                                    <div className="flex items-end gap-2">
-                                        <div><label className="form-label mb-1 block">{tr("Repeat every")}</label><div className="w-24"><Input type="number" min={1} max={365} value={v.recurring} onChange={(e) => set({ recurring: e.target.value })} /></div></div>
-                                        <div className="w-36"><Select isSearchable={false} options={RECUR_UNITS()} value={RECUR_UNITS().find((o) => o.value === v.recurringType)} onChange={(o) => set({ recurringType: o.value })} /></div>
-                                    </div>
-                                    <div><label className="form-label mb-1 block">{tr("Stop after (copies)")}</label><div className="w-32"><Input type="number" min={0} placeholder={tr("Never")} value={v.cycles || ''} onChange={(e) => set({ cycles: e.target.value })} /></div></div>
-                                    <p className="pb-2 text-xs text-gray-400">{tr("A new copy is created automatically each time.")}</p>
+                                    <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Repeat every")}</label><Input type="number" min={1} max={365} value={v.recurring} onChange={(e) => set({ recurring: e.target.value })} /></div>
+                                    <div className="md:col-span-3"><Select isSearchable={false} options={RECUR_UNITS()} value={RECUR_UNITS().find((o) => o.value === v.recurringType)} onChange={(o) => set({ recurringType: o.value })} /></div>
+                                    <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Stop after (copies)")}</label><Input type="number" min={0} placeholder={tr("Never")} value={v.cycles || ''} onChange={(e) => set({ cycles: e.target.value })} /></div>
+                                    <p className="pb-2 text-xs text-gray-400 md:col-span-2">{tr("A new copy is created automatically each time.")}</p>
                                 </>
                             )}
                         </div>

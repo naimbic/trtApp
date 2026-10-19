@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.79.5',
+        date: '2026-10-19',
+        title: 'Invoice editor: recurring row uses the full width',
+        items: ['The recurring row spreads over the full width, on the same columns as the row above: switch, Repeat every, unit, Stop after and the note']
+    },
+    {
         version: '0.79.4',
         date: '2026-10-19',
         title: 'Invoice editor: compact layout',

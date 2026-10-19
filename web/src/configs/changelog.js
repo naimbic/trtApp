@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.82.1',
+        date: '2026-10-19',
+        title: 'Send by email: compact, always fits the screen',
+        items: ['The Send by email popup is more compact: Template, From and Other recipients on one row, the recipients as a wrapping line, Subject and Attach as a PDF on one row', 'The popup now fits the screen height: only its middle part scrolls and the preview takes the remaining space, so the Cancel and Send email buttons are always visible']
+    },
+    {
         version: '0.82.0',
         date: '2026-10-19',
         title: 'New help center: trtCRM and trtDigital articles in every language in use',

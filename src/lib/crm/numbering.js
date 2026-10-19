@@ -1,14 +1,14 @@
 import prisma from '@/lib/prisma'
 import { formatDocumentNumber } from '@/lib/crm/sales/calc'
 
-let cache = { at: 0, padding: 6 }
+let cache = { at: 0, padding: 3 }
 /** Forget the cached padding (called when settings change). */
-export const resetNumberingCache = () => { cache = { at: 0, padding: 6 } }
+export const resetNumberingCache = () => { cache = { at: 0, padding: 3 } }
 /** `number_padding_prefixes` option (cached for a minute). Perfex default is 6; TRT uses 3. */
 export async function numberPadding() {
     if (Date.now() - cache.at < 60000) return cache.padding
     const o = await prisma.crmOption.findUnique({ where: { name: 'number_padding_prefixes' } })
-    cache = { at: Date.now(), padding: Number(o?.value) > 0 ? Number(o.value) : 6 }
+    cache = { at: Date.now(), padding: Number(o?.value) > 0 ? Number(o.value) : 3 }
     return cache.padding
 }
 

@@ -196,6 +196,7 @@ export const GROUPS = {
         label: 'Invoices', icon: 'TbFileInvoice', desc: 'Numbering, defaults and what clients see',
         cards: [
             numbering('invoice', 'invoice_prefix', 'FA -', 'next_invoice_number', 'invoice_number_format', 'invoice_number_reset', 'delete_only_on_last_invoice', 'invoice_number_decrement_on_delete'),
+            { title: 'Existing invoices', desc: 'Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.', panel: 'invoiceFormatApply' },
             { title: 'Defaults for new invoices', fields: [
                 f('invoice_due_after', 'Due after (days)', 'number', { min: 0, max: 365, hint: 'The due date a new invoice starts with.' }),
                 f('predefined_clientnote_invoice', 'Client note', 'textarea', { rows: 3 }),

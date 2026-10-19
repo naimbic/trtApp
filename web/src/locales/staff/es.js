@@ -3777,5 +3777,11 @@ export default {
     "Note deleted": "Nota eliminada",
     "Note saved": "Nota guardada",
     "Pick one or several: the same notification arrives on each channel you switch on. Your administrator sets up Telegram and WhatsApp in Settings.": "Elija uno o varios: la misma notificación llega por cada canal que active. Su administrador configura Telegram y WhatsApp en Ajustes.",
-    "The note is now a task": "La nota ahora es una tarea"
+    "The note is now a task": "La nota ahora es una tarea",
+    "Apply the numbering to all invoices?": "¿Aplicar la numeración a todas las facturas?",
+    "Apply to all existing invoices": "Aplicar a todas las facturas existentes",
+    "Every invoice gets the saved prefix and number format. Only how the number reads changes, never the number.": "Cada factura recibe el prefijo y el formato guardados. Solo cambia cómo se lee el número, nunca el número.",
+    "{n} invoices now read {prefix}…": "{n} facturas ahora se leen {prefix}…",
+    "Existing invoices": "Facturas existentes",
+    "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.": "Guarde primero la numeración de arriba. Después dé a cada factura el mismo prefijo y formato, para que todas se lean igual (por ejemplo FA - 101 - 10 - 2026). Los números no cambian."
 }

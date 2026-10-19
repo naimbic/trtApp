@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
  */
 const REAL = 1_000_000_000
 export const KINDS = {
-    invoice: { model: 'crmInvoice', label: 'invoice', prefix: 'invoice_prefix', defPrefix: 'INV-', format: 'invoice_number_format', next: 'next_invoice_number', reset: 'invoice_number_reset', onlyLast: 'delete_only_on_last_invoice', decrement: 'invoice_number_decrement_on_delete' },
+    invoice: { model: 'crmInvoice', label: 'invoice', prefix: 'invoice_prefix', defPrefix: 'FA -', defFormat: '4', format: 'invoice_number_format', next: 'next_invoice_number', reset: 'invoice_number_reset', onlyLast: 'delete_only_on_last_invoice', decrement: 'invoice_number_decrement_on_delete' },
     purchase_order: { model: 'crmPurchaseOrder', label: 'purchase order', prefix: 'purchase_order_prefix', defPrefix: 'BC-', format: 'purchase_order_number_format', next: 'next_purchase_order_number', reset: 'purchase_order_number_reset', onlyLast: 'delete_only_on_last_purchase_order', decrement: 'purchase_order_number_decrement_on_delete' },
     estimate: { model: 'crmEstimate', label: 'estimate', prefix: 'estimate_prefix', defPrefix: 'EST-', format: 'estimate_number_format', next: 'next_estimate_number', reset: 'estimate_number_reset', onlyLast: 'delete_only_on_last_estimate', decrement: 'estimate_number_decrement_on_delete' },
 }
@@ -41,7 +41,7 @@ export async function allocateNumber(kind, date) {
         number = next > 0 ? next : (await highest(k, null)) + 1
     }
     await setOpt(k.next, number + 1)
-    return { number, prefix: await opt(k.prefix, k.defPrefix), numberFormat: Number(await opt(k.format, '1')) || 1 }
+    return { number, prefix: await opt(k.prefix, k.defPrefix), numberFormat: Number(await opt(k.format, k.defFormat || '1')) || 1 }
 }
 
 /** Throws a message string when the document may not be deleted under the "only the last one" rule. */

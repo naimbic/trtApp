@@ -3777,5 +3777,11 @@ export default {
     "Note deleted": "メモを削除しました",
     "Note saved": "メモを保存しました",
     "Pick one or several: the same notification arrives on each channel you switch on. Your administrator sets up Telegram and WhatsApp in Settings.": "1つまたは複数を選択してください。オンにしたすべてのチャネルに同じ通知が届きます。TelegramとWhatsAppは管理者が設定で設定します。",
-    "The note is now a task": "メモをタスクにしました"
+    "The note is now a task": "メモをタスクにしました",
+    "Apply the numbering to all invoices?": "すべての請求書に番号形式を適用しますか?",
+    "Apply to all existing invoices": "既存のすべての請求書に適用",
+    "Every invoice gets the saved prefix and number format. Only how the number reads changes, never the number.": "すべての請求書に保存済みの接頭辞と番号形式が設定されます。変わるのは番号の表示だけで、番号自体は変わりません。",
+    "{n} invoices now read {prefix}…": "{n} 件の請求書が {prefix}… 形式になりました",
+    "Existing invoices": "既存の請求書",
+    "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.": "まず上の番号設定を保存してください。その後、すべての請求書に同じ接頭辞と番号形式を設定すると、同じ表記になります(例: FA - 101 - 10 - 2026)。番号自体は変わりません。"
 }

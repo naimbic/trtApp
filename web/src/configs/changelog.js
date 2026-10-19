@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.86.1',
+        date: '2026-10-19',
+        title: 'Invoices read FA - 101 - 10 - 2026; notes icon in the top bar',
+        items: ['New invoices now read #FA - 101 - 10 - 2026 by default: prefix "FA -", the number, then month and year (number format 4), with the number padded to 3 digits instead of 6.', 'New Settings → Billing → Invoices → Existing invoices: one button, Apply to all existing invoices, gives every invoice the saved prefix and number format so old ones such as INV-000122 read the same way. The numbers themselves never change.', 'A New note icon sits in the top bar on every page: click it, type a title and a description, save. Notes still appear beside the tasks.']
+    },
+    {
         version: '0.86.0',
         date: '2026-10-19',
         title: 'Notes beside the tasks; choose Email / Telegram / WhatsApp',

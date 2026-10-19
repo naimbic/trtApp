@@ -3777,5 +3777,11 @@ export default {
     "Note deleted": "تم حذف الملاحظة",
     "Note saved": "تم حفظ الملاحظة",
     "Pick one or several: the same notification arrives on each channel you switch on. Your administrator sets up Telegram and WhatsApp in Settings.": "اختر قناة أو أكثر: يصل الإشعار نفسه عبر كل قناة تُفعّلها. يقوم المسؤول بإعداد تيليغرام وواتساب في الإعدادات.",
-    "The note is now a task": "أصبحت الملاحظة مهمة"
+    "The note is now a task": "أصبحت الملاحظة مهمة",
+    "Apply the numbering to all invoices?": "هل تريد تطبيق الترقيم على جميع الفواتير؟",
+    "Apply to all existing invoices": "تطبيق على جميع الفواتير الحالية",
+    "Every invoice gets the saved prefix and number format. Only how the number reads changes, never the number.": "تحصل كل فاتورة على البادئة والتنسيق المحفوظين. يتغير شكل عرض الرقم فقط، ولا يتغير الرقم نفسه.",
+    "{n} invoices now read {prefix}…": "أصبحت {n} فاتورة تظهر بصيغة {prefix}…",
+    "Existing invoices": "الفواتير الحالية",
+    "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.": "احفظ الترقيم أعلاه أولاً. ثم امنح كل فاتورة البادئة والتنسيق نفسيهما لتظهر جميعها بالشكل نفسه (مثال: FA - 101 - 10 - 2026). الأرقام نفسها لا تتغير."
 }

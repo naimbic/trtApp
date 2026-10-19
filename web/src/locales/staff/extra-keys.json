@@ -1334,5 +1334,7 @@
  "relId is required",
  "relType and relId are required",
  "trtCRM",
- "userAgent"
+ "userAgent",
+ "Existing invoices",
+ "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change."
 ]

@@ -214,3 +214,21 @@ export const ChannelsTestPanel = () => {
         </div>
     )
 }
+
+/** Applies the saved invoice prefix and number format to every invoice (after a confirmation). */
+export const InvoiceFormatPanel = () => {
+    const [ask, setAsk] = useState(false)
+    const [busy, setBusy] = useState(false)
+    const run = async () => {
+        setAsk(false); setBusy(true)
+        try { const r = await api('/api/crm/sales/invoices/apply-format', { method: 'POST' }); notify('success', tr("{n} invoices now read {prefix}…", { n: r.updated, prefix: r.prefix })) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+    }
+    return (
+        <>
+            <Button size="sm" loading={busy} onClick={() => setAsk(true)}>{tr("Apply to all existing invoices")}</Button>
+            <ConfirmDialog isOpen={ask} type="warning" title={tr("Apply the numbering to all invoices?")} confirmText={tr("Apply")} onClose={() => setAsk(false)} onCancel={() => setAsk(false)} onConfirm={run}>
+                <p>{tr("Every invoice gets the saved prefix and number format. Only how the number reads changes, never the number.")}</p>
+            </ConfirmDialog>
+        </>
+    )
+}

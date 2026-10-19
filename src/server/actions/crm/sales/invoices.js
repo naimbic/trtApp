@@ -74,7 +74,7 @@ export async function getInvoiceLookups() {
     const o = async (n, fb = '') => (await prisma.crmOption.findUnique({ where: { name: n } }))?.value ?? fb
     const defaultTaxes = [...String(await o('default_tax')).matchAll(/s:\d+:"([^"]*)"/g)].map((m) => { const [name, rate] = m[1].split('|'); return { name, rate: Number(rate) } })
     return plain({
-        numbering: { prefix: await o('invoice_prefix', 'INV-'), numberFormat: Number(await o('invoice_number_format', '1')) || 1, padding: await numberPadding() },
+        numbering: { prefix: await o('invoice_prefix', 'FA -'), numberFormat: Number(await o('invoice_number_format', '4')) || 4, padding: await numberPadding() },
         defaults: { dueAfter: await o('invoice_due_after'), clientNote: await o('predefined_clientnote_invoice'), terms: await o('predefined_terms_invoice'), taxes: defaultTaxes },
         taxes: taxes.map((t) => ({ name: t.name, rate: t.taxRate })),
         currencies: currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, isDefault: c.isDefault, placement: c.placement })),
@@ -353,4 +353,14 @@ export async function deleteInvoice(id, force = false) {
     await afterDelete('invoice', invoice)
     void session
     return { success: true }
+}
+
+/** Gives every invoice the prefix and number format of Settings → Billing → Invoices (the numbers themselves stay the same). */
+export async function applyInvoiceFormat() {
+    await requirePermission('settings', 'edit')
+    const o = async (n, fb) => (await prisma.crmOption.findUnique({ where: { name: n } }))?.value ?? fb
+    const prefix = await o('invoice_prefix', 'FA -')
+    const numberFormat = Number(await o('invoice_number_format', '4')) || 4
+    const r = await prisma.crmInvoice.updateMany({ where: { number: { lt: 1_000_000_000 } }, data: { prefix, numberFormat } })
+    return { success: true, updated: r.count, prefix, numberFormat }
 }

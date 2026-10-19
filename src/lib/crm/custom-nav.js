@@ -7,6 +7,7 @@ export const customNavItems = [
     { group: 'Tasks', key: 'time-report', title: 'Time report', path: '/crm/time-report', feature: 'tasks' },
     { group: 'Tasks', key: 'issues', title: 'Issues', path: '/crm/issues', feature: 'issues' },
     { group: 'Projects', key: 'scrum-board', title: 'Scrum board', path: '/crm/scrum-board', feature: 'tasks' },
+    { group: 'Tasks', key: 'notes', title: 'Notes', path: '/crm/notes', feature: 'tasks' },
     { group: 'Tasks', key: 'tasks-board', title: 'Tasks board', path: '/crm/tasks-board', feature: 'tasks' },
     { group: 'Setup', key: 'platform-settings', title: 'Settings', path: '/crm/settings', feature: 'settings' },
     { group: 'Setup', key: 'mails', title: 'Mails', path: '/crm/mails', feature: 'email_templates' },

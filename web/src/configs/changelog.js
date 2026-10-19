@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.86.2',
+        date: '2026-10-19',
+        title: 'A Notes page',
+        items: ['New Notes page in the Tasks menu (right after My tasks): all your notes as cards with their title and description, a search box and a New note button. Click a card to edit or delete it. The top-bar note icon still adds one from any page.']
+    },
+    {
         version: '0.86.1',
         date: '2026-10-19',
         title: 'Invoices read FA - 101 - 10 - 2026; notes icon in the top bar',

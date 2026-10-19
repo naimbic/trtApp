@@ -23,6 +23,7 @@ export const NAV_DESC = {
     timeline: 'Tasks along the calendar',
     'time-report': 'Hours logged by day',
     issues: 'Problems to follow up',
+    'notes': 'Quick notes: a title and a description',
     'tasks-board': 'Tasks as cards by status',
     tasks: 'Every task in one list',
     'task-timers': 'Running and past timers',

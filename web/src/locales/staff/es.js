@@ -3783,5 +3783,8 @@ export default {
     "Every invoice gets the saved prefix and number format. Only how the number reads changes, never the number.": "Cada factura recibe el prefijo y el formato guardados. Solo cambia cómo se lee el número, nunca el número.",
     "{n} invoices now read {prefix}…": "{n} facturas ahora se leen {prefix}…",
     "Existing invoices": "Facturas existentes",
-    "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.": "Guarde primero la numeración de arriba. Después dé a cada factura el mismo prefijo y formato, para que todas se lean igual (por ejemplo FA - 101 - 10 - 2026). Los números no cambian."
+    "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.": "Guarde primero la numeración de arriba. Después dé a cada factura el mismo prefijo y formato, para que todas se lean igual (por ejemplo FA - 101 - 10 - 2026). Los números no cambian.",
+    "Quick notes: a title and a description": "Notas rápidas: un título y una descripción",
+    "No notes yet. Use New note to add one.": "Aún no hay notas. Use Nueva nota para añadir una.",
+    "Search": "Buscar"
 }

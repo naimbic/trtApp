@@ -151,6 +151,23 @@ export const GROUPS = {
             ] },
         ],
     },
+    messaging: {
+        label: 'WhatsApp & Telegram', icon: 'TbBrandWhatsapp', desc: 'Send notifications by WhatsApp and Telegram, next to email',
+        cards: [
+            { title: 'Telegram', desc: 'Create a bot with @BotFather and paste its token. Each person then sends /start to the bot and enters their chat id (for example from @userinfobot) in their profile.', fields: [
+                yes('telegram_enabled', 'Send notifications by Telegram'),
+                f('telegram_bot_token', 'Bot token', 'password'),
+            ] },
+            { title: 'WhatsApp (Cloud API)', desc: 'From Meta for Developers → WhatsApp → API setup: the phone number ID and a permanent access token. Outside a 24 hour conversation WhatsApp only delivers approved templates: give the name of a template with one body variable and its language, or leave it empty for plain messages.', fields: [
+                yes('whatsapp_enabled', 'Send notifications by WhatsApp'),
+                f('whatsapp_phone_number_id', 'Phone number ID', 'text'),
+                f('whatsapp_access_token', 'Access token', 'password'),
+                f('whatsapp_template', 'Template name (optional)', 'text'),
+                f('whatsapp_template_lang', 'Template language', 'text', { default: 'en', hint: 'For example en, fr, es, ja, ar.' }),
+            ] },
+            { title: 'Test', panel: 'channelsTest' },
+        ],
+    },
     sales_general: {
         label: 'General', icon: 'TbReceipt2', desc: 'Money format, taxes and totals for all documents',
         cards: [

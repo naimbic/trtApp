@@ -219,4 +219,8 @@ export default {
     "Tasks": "المهام",
     "Updates on tasks that involve you": "تحديثات المهام التي تخصك",
     "Replies to your support requests": "الردود على طلبات الدعم",
+    "Get the same notifications as a short message with the link.": "احصل على الإشعارات نفسها كرسالة قصيرة مع الرابط.",
+    "Telegram": "تيليغرام",
+    "WhatsApp": "واتساب",
+    "WhatsApp and Telegram": "واتساب وتيليغرام",
 }

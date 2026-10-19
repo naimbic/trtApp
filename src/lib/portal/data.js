@@ -29,7 +29,7 @@ export async function me() {
     const unreadTickets = (await prisma.crmTicket.findMany({ where: { clientId: s.client.id, clientRead: 0 }, select: { lastReply: true } })).filter((t) => t.lastReply).length
     const co = await prisma.crmOption.findMany({ where: { name: { in: ['companyname', 'company_logo', 'company_logo_dark'] } } })
     const o = Object.fromEntries(co.map((x) => [x.name, x.value]))
-    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage), notifications: Object.fromEntries(MAIL_SWITCHES.map((k) => [k, c[k] !== false])) }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null, details: { phone: s.client.phoneNumber || null, website: s.client.website || null, vat: s.client.vat || null, address: [s.client.address, s.client.zip, s.client.city].filter(Boolean).join(', ') || null, since: s.client.createdAt } },
+    return { preview: !!s.preview, contact: { id: c.id, firstName: c.firstName, lastName: c.lastName, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email, email: c.email, phone: c.phoneNumber, title: c.title, image: realPicture(c.profileImage), notifications: Object.fromEntries(MAIL_SWITCHES.map((k) => [k, c[k] !== false])), channels: { whatsappNumber: c.whatsappNumber || '', telegramChatId: c.telegramChatId || '', notifyWhatsapp: !!c.notifyWhatsapp, notifyTelegram: !!c.notifyTelegram } }, client: { id: s.client.id, company: s.client.company, logoUrl: s.client.logoUrl || null, language: s.client.defaultLanguage || null, details: { phone: s.client.phoneNumber || null, website: s.client.website || null, vat: s.client.vat || null, address: [s.client.address, s.client.zip, s.client.city].filter(Boolean).join(', ') || null, since: s.client.createdAt } },
         // the contact's own choice, else the client's language: it follows them on every browser
         language: codeOfLanguage(c.language) || codeOfLanguage(s.client.defaultLanguage), can: s.can, unreadTickets, company: { name: o.companyname || '', logo: /^https?:/.test(o.company_logo || '') ? o.company_logo : null } }
 }
@@ -198,6 +198,12 @@ export async function updateProfile(body) {
     if ('phone' in body) data.phoneNumber = String(body.phone || '').trim().slice(0, 40) || null
     if ('title' in body) data.title = String(body.title || '').trim().slice(0, 80) || null
     if (body.notifications && typeof body.notifications === 'object') for (const k of MAIL_SWITCHES) if (k in body.notifications) data[k] = body.notifications[k] === true
+    if (body.channels && typeof body.channels === 'object') {
+        const ch = body.channels
+        if ('whatsappNumber' in ch) { const v = String(ch.whatsappNumber || '').trim().slice(0, 25); if (v && !/^[0-9 +().-]{5,25}$/.test(v)) throw Object.assign(new Error('Enter a valid WhatsApp number'), { status: 400 }); data.whatsappNumber = v || null }
+        if ('telegramChatId' in ch) { const v = String(ch.telegramChatId || '').trim().slice(0, 40); if (v && !/^-?[0-9]{4,20}$/.test(v)) throw Object.assign(new Error('The Telegram chat id is a number'), { status: 400 }); data.telegramChatId = v || null }
+        for (const k of ['notifyWhatsapp', 'notifyTelegram']) if (k in ch) data[k] = ch[k] === true
+    }
     if ('language' in body) data.language = codeOfLanguage(body.language) ? String(body.language).toLowerCase() : null
     await prisma.crmContact.update({ where: { id: s.contact.id }, data })
     return { success: true }

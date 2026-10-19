@@ -219,4 +219,8 @@ export default {
     "Tasks": "タスク",
     "Updates on tasks that involve you": "あなたに関わるタスクの更新",
     "Replies to your support requests": "サポートリクエストへの返信",
+    "Get the same notifications as a short message with the link.": "同じ通知をリンク付きの短いメッセージで受け取れます。",
+    "Telegram": "Telegram",
+    "WhatsApp": "WhatsApp",
+    "WhatsApp and Telegram": "WhatsAppとTelegram",
 }

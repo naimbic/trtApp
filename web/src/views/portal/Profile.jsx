@@ -22,6 +22,7 @@ const Profile = () => {
     useEffect(() => { if (window.location.hash === '#password') setTimeout(() => document.getElementById('password')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150) }, [])
     const [msg, setMsg] = useState(null)
     const [mail, setMail] = useState(c.notifications || {})
+    const [ch, setCh] = useState(c.channels || {})
     const [busy, setBusy] = useState('')
     const note = (type, text) => { setMsg({ type, text }); window.scrollTo({ top: 0, behavior: 'smooth' }) }
     const save = async () => { setBusy('p'); try { await portal('/profile', { method: 'PUT', body: v }); await reload(); note('success', t('Your details were saved')) } catch (e) { note('danger', e.message) } finally { setBusy('') } }
@@ -30,6 +31,7 @@ const Profile = () => {
         setMail((m) => ({ ...m, [key]: on }))
         try { await portal('/profile', { method: 'PUT', body: { notifications: { [key]: on } }, quiet: true }); reload() } catch (e) { setMail((m) => ({ ...m, [key]: was })); note('danger', e.message) }
     }
+    const saveChannels = async (next) => { setCh(next); try { await portal('/profile', { method: 'PUT', body: { channels: next }, quiet: true }); reload() } catch (e) { note('danger', e.message) } }
     const change = async () => {
         if (pw.password !== pw.again) return note('danger', t('The two new passwords are not the same'))
         setBusy('w'); try { await portal('/auth/password', { method: 'POST', body: { current: pw.current, password: pw.password } }); setPw({ current: '', password: '', again: '' }); note('success', t('Your password was changed')) } catch (e) { note('danger', e.message) } finally { setBusy('') }
@@ -58,6 +60,14 @@ const Profile = () => {
                     {MAILS.map(([key, label, hint]) => (
                         <label key={key}><span>{t(label)}<small>{t(hint)}</small></span><Switcher checked={mail[key] !== false} disabled={me.preview} onChange={(on) => flip(key, on)} /></label>
                     ))}
+                </div>
+            </Card>
+            <Card className="mb-4">
+                <h5 className="mb-1">{t('WhatsApp and Telegram')}</h5>
+                <p className="mb-3 text-sm text-gray-500">{t('Get the same notifications as a short message with the link.')}</p>
+                <div className="pt-sw">
+                    <label><span>{t('WhatsApp')}<small><input className="mt-1 w-52 rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm dark:border-gray-600" placeholder="+212 6 12 34 56 78" value={ch.whatsappNumber || ''} disabled={me.preview} onChange={(e) => setCh({ ...ch, whatsappNumber: e.target.value })} onBlur={() => saveChannels(ch)} /></small></span><Switcher checked={!!ch.notifyWhatsapp} disabled={me.preview || !String(ch.whatsappNumber || '').trim()} onChange={(on) => saveChannels({ ...ch, notifyWhatsapp: on })} /></label>
+                    <label><span>{t('Telegram')}<small><input className="mt-1 w-52 rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm dark:border-gray-600" placeholder="123456789" value={ch.telegramChatId || ''} disabled={me.preview} onChange={(e) => setCh({ ...ch, telegramChatId: e.target.value })} onBlur={() => saveChannels(ch)} /></small></span><Switcher checked={!!ch.notifyTelegram} disabled={me.preview || !String(ch.telegramChatId || '').trim()} onChange={(on) => saveChannels({ ...ch, notifyTelegram: on })} /></label>
                 </div>
             </Card>
             <Card className="mb-4">

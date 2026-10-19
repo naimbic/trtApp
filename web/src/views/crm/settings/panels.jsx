@@ -193,3 +193,24 @@ export const CronPanel = ({ log }) => {
         </div>
     )
 }
+
+/** Sends a test message with the Telegram / WhatsApp accounts that are saved (save the settings first). */
+export const ChannelsTestPanel = () => {
+    const [to, setTo] = useState({ telegram: '', whatsapp: '' })
+    const [busy, setBusy] = useState('')
+    const send = async (channel) => {
+        setBusy(channel)
+        try { await api('/api/crm/channels/test', { method: 'POST', body: { channel, to: to[channel] } }); notify('success', tr("Test message sent")) } catch (e) { notify('danger', e.message) } finally { setBusy('') }
+    }
+    return (
+        <div className="grid gap-4 md:grid-cols-2">
+            {[['telegram', tr("Telegram chat id"), '123456789'], ['whatsapp', tr("WhatsApp number"), '+212600000000']].map(([ch, label, ph]) => (
+                <div key={ch}>
+                    <label className="form-label mb-1 block">{label}</label>
+                    <div className="flex gap-2"><Input size="sm" placeholder={ph} value={to[ch]} onChange={(e) => setTo((t) => ({ ...t, [ch]: e.target.value }))} /><Button size="sm" variant="solid" loading={busy === ch} disabled={!to[ch].trim()} onClick={() => send(ch)}>{tr("Send a test")}</Button></div>
+                </div>
+            ))}
+            <p className="text-xs text-gray-400 md:col-span-2">{tr("Save the settings above first: the test uses the saved accounts.")}</p>
+        </div>
+    )
+}

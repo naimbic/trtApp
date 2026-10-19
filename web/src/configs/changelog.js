@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.85.0',
+        date: '2026-10-19',
+        title: 'Notifications by WhatsApp and Telegram',
+        items: ['New Settings → WhatsApp & Telegram: the Telegram bot token, the WhatsApp Cloud API phone number ID and access token (with an optional approved template for messages outside the 24 hour window), and a test sender', 'Every email template that is sent (invoice, estimate, proposal, contract, ticket, reminders...) also goes out as a short message with the subject and the link, to the Telegram chat and the WhatsApp number of the contact or team member, when they switched it on', 'Team members set their WhatsApp number, Telegram chat id and switches in Profile → Notifications; clients in My profile (client area); administrators can also set them in the staff and contact forms', 'Not tested against the real services (no accounts here): the messages were checked with a simulated network']
+    },
+    {
         version: '0.84.1',
         date: '2026-10-19',
         title: 'Invoice number in the first section; client bank account fills the invoice',

@@ -13,6 +13,10 @@
 // ---------------------------------------------------------------- staff / roles
 model CrmStaff {
   id                      String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// notifications by Telegram / WhatsApp (empty = off)
+  telegramChatId          String?
+  notifyTelegram          Boolean?
+  notifyWhatsapp          Boolean?
   legacyId                Int?     // staff.staffid
   /// Link to the template's `User` (login). Plain field, no @relation.
   userId                  String?  @db.ObjectId

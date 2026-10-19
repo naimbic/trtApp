@@ -48,6 +48,7 @@ export async function getProfile() {
         },
         staff: staff ? {
             id: staff.id, facebook: staff.facebook || '', linkedin: staff.linkedin || '', skype: staff.skype || '', whatsapp: staff.whatsapp || '', website: staff.website || '',
+            telegramChatId: staff.telegramChatId || '', notifyTelegram: !!staff.notifyTelegram, notifyWhatsapp: !!staff.notifyWhatsapp,
             bio: staff.bio || '', timezone: staff.timezone || '', defaultLanguage: staff.defaultLanguage || '', direction: staff.direction || 'ltr', emailSignature: staff.emailSignature || '',
             role: staff.role?.name || null, lastLogin: staff.lastLogin, departments,
         } : null,
@@ -82,6 +83,8 @@ export async function updateProfile(body) {
     for (const k of ['facebook', 'linkedin', 'website']) if (k in s) { const v = clean(s[k], 200); if (v && !URL_RE.test(v)) fail(`${k[0].toUpperCase() + k.slice(1)} must be a full link starting with https://`); staffData[k] = v || null }
     if ('skype' in s) staffData.skype = clean(s.skype, 80) || null
     if ('whatsapp' in s) { const v = clean(s.whatsapp, 25); if (v && !/^[0-9 +().-]{5,25}$/.test(v)) fail('Enter a valid WhatsApp number'); staffData.whatsapp = v || null }
+    if ('telegramChatId' in s) { const v = clean(s.telegramChatId, 40); if (v && !/^-?[0-9]{4,20}$|^@[A-Za-z0-9_]{4,40}$/.test(v)) fail('The Telegram chat id is a number (or @channelname)'); staffData.telegramChatId = v || null }
+    for (const k of ['notifyTelegram', 'notifyWhatsapp']) if (k in s) staffData[k] = s[k] === true
     if ('bio' in s) staffData.bio = clean(s.bio, 500) || null
     if ('timezone' in s) { const v = clean(s.timezone, 60); if (v && TIMEZONES.size && !TIMEZONES.has(v)) fail('Unknown time zone'); staffData.timezone = v || null }
     if ('defaultLanguage' in s) staffData.defaultLanguage = clean(s.defaultLanguage, 30) || null

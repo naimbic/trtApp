@@ -219,4 +219,8 @@ export default {
     "Tasks": "Tareas",
     "Updates on tasks that involve you": "Novedades de las tareas que te implican",
     "Replies to your support requests": "Respuestas a tus solicitudes de soporte",
+    "Get the same notifications as a short message with the link.": "Reciba las mismas notificaciones como un mensaje corto con el enlace.",
+    "Telegram": "Telegram",
+    "WhatsApp": "WhatsApp",
+    "WhatsApp and Telegram": "WhatsApp y Telegram",
 }

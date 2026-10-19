@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import prisma from '@/lib/prisma'
+import { notifyChannels } from '@/lib/crm/channels'
 import { companyTokenData, COMPANY_KEYS } from '@/lib/crm/docTokens'
 import { buildMessage, DESIGN_LANGUAGES } from '@/lib/crm/mailDesign/build'
 
@@ -134,5 +135,6 @@ export async function sendTemplate({ slug, to, data = {}, relType = null, relId 
     const subject = mergeFields(t.subject, full)
     const res = await deliver({ to, subject, html: await buildHtml(t.message, full) })
     await prisma.crmMailLog.create({ data: { to, subject, template: slug, relType, relId: relId || undefined, status: res.sent ? 'sent' : 'failed', error: res.error || null } }).catch(() => {})
+    await notifyChannels({ email: Array.isArray(to) ? to[0] : to, subject, data: full, relType, relId }) // the same message by Telegram / WhatsApp, for people who switched it on
     return res
 }

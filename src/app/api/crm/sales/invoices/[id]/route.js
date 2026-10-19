@@ -22,10 +22,10 @@ export async function PUT(request, { params }) {
     }
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
     try {
         const { id } = await params
-        const r = await deleteInvoice(id)
+        const r = await deleteInvoice(id, request.nextUrl.searchParams.get('force') === '1')
         return NextResponse.json(r, { status: r.success ? 200 : 400 })
     } catch (e) {
         return errorResponse(e)

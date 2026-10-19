@@ -3739,5 +3739,6 @@ export default {
     "from": "送信元",
     "Show the signature on invoices (until paid)": "請求書に署名を表示（支払い済みになるまで）",
     "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "「一般 → ドキュメントのロゴ」の署名を印刷します。請求書は支払い済みになると印刷されなくなります。",
-    "Prints the signature from General → Document logos. On: it prints on every invoice and contract, paid or not. Off: it prints on no PDF.": "「一般 → ドキュメントのロゴ」の署名を印刷します。オン：支払い済みかどうかに関わらず、すべての請求書と契約書に印刷されます。オフ：どのPDFにも印刷されません。"
+    "Prints the signature from General → Document logos. On: it prints once an invoice is paid or a contract is signed, never before. Off: it prints on no PDF.": "「一般 → ドキュメントのロゴ」の署名を印刷します。オン：支払い済みかどうかに関わらず、すべての請求書と契約書に印刷されます。オフ：どのPDFにも印刷されません。",
+    "The invoice, its lines, its activity and its payments will be removed. This can upset your accounts and reports.": "請求書、その明細、アクティビティ、および入金が削除されます。会計やレポートに影響する可能性があります。"
 }

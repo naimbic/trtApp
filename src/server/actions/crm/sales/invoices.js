@@ -5,7 +5,7 @@ import { readSettings } from '@/lib/crm/appSettings'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
-import { allocateNumber, checkDeletable, afterDelete, ensureRealNumber } from '@/lib/crm/sales/docNumbering'
+import { allocateNumber, checkDeletable, afterDelete, ensureRealNumber, manualNumber, applyManualNumber } from '@/lib/crm/sales/docNumbering'
 import { lockProblem } from '@/lib/crm/docLock'
 
 const REL = 'invoice'
@@ -177,6 +177,8 @@ export async function saveInvoice(input) {
         })() : {}),
     }
 
+    const manual = await manualNumber('crmInvoice', input, session.user.authority || [])
+    if (manual.problem) return fail(manual.problem)
     let invoice
     if (isNew) {
         // prefix, format, next number and the restart rule all come from Settings → Billing → Invoices
@@ -204,6 +206,7 @@ export async function saveInvoice(input) {
         await prisma.crmItemable.deleteMany({ where: { id: { in: oldLines.map((l) => l.id) } } })
     }
 
+    await applyManualNumber('crmInvoice', invoice.id, manual.number)
     for (const [idx, it] of items.entries()) {
         const line = await prisma.crmItemable.create({
             data: {
@@ -317,12 +320,20 @@ export async function setInvoiceState(invoiceId, action, force = false) {
     return { success: true }
 }
 
-/** Delete an invoice that has no payments (Perfex also removes its lines, taxes and activity). */
-export async function deleteInvoice(id) {
+const isCrmAdminAuth = (authority = []) => authority.includes('admin') || authority.includes('crm.admin')
+
+/** Delete an invoice (one with payments only by an administrator, after confirming) (Perfex also removes its lines, taxes and activity). */
+export async function deleteInvoice(id, force = false) {
     const session = await requirePermission('invoices', 'delete')
     const invoice = await prisma.crmInvoice.findUnique({ where: { id } })
     if (!invoice) return fail('Invoice not found')
-    if ((await prisma.crmPayment.count({ where: { invoiceId: id } })) > 0) return fail('This invoice has payments. Delete the payments first, or cancel the invoice instead.')
+    const paymentCount = await prisma.crmPayment.count({ where: { invoiceId: id } })
+    if (paymentCount > 0) {
+        // administrators and super admins may delete an invoice together with its payments, after confirming
+        if (!isCrmAdminAuth(session.user.authority || [])) return fail('This invoice has payments. Delete the payments first, or cancel the invoice instead.')
+        if (!force) return fail(`LOCKED_CONFIRM: This invoice has ${paymentCount} payment(s). Deleting it deletes them too and can upset your accounts; confirm to go on.`)
+        await prisma.crmPayment.deleteMany({ where: { invoiceId: id } })
+    }
     const blocked = await checkDeletable('invoice', invoice)
     if (blocked) return fail(blocked)
     const lines = await prisma.crmItemable.findMany({ where: { relType: REL, relId: id }, select: { id: true } })

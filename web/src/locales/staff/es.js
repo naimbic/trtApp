@@ -3739,5 +3739,6 @@ export default {
     "from": "de",
     "Show the signature on invoices (until paid)": "Mostrar la firma en las facturas (hasta que se paguen)",
     "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "Imprime la firma de General → Logotipos de documentos. Una factura deja de imprimirla cuando se paga.",
-    "Prints the signature from General → Document logos. On: it prints on every invoice and contract, paid or not. Off: it prints on no PDF.": "Imprime la firma de General → Logotipos de documentos. Activado: se imprime en cada factura y contrato, pagado o no. Desactivado: no se imprime en ningún PDF."
+    "Prints the signature from General → Document logos. On: it prints once an invoice is paid or a contract is signed, never before. Off: it prints on no PDF.": "Imprime la firma de General → Logotipos de documentos. Activado: se imprime en cada factura y contrato, pagado o no. Desactivado: no se imprime en ningún PDF.",
+    "The invoice, its lines, its activity and its payments will be removed. This can upset your accounts and reports.": "Se eliminarán la factura, sus líneas, su actividad y sus pagos. Esto puede alterar su contabilidad y sus informes."
 }

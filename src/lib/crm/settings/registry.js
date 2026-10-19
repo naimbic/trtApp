@@ -440,7 +440,7 @@ export const GROUPS = {
                 yes('show_transactions_on_invoice_pdf', 'List the payments received'),
                 yes('show_status_on_pdf_ei', 'Show the status (invoices and estimates)'),
             ] },
-            { title: 'Signature', desc: 'Prints the signature from General → Document logos. On: it prints on every invoice and contract, paid or not. Off: it prints on no PDF.', fields: [yes('show_pdf_signature_invoice', 'Show the signature on invoices', { default: '1' }), yes('show_pdf_signature_contract', 'Show the signature on contracts', { default: '1' })] },
+            { title: 'Signature', desc: 'Prints the signature from General → Document logos. On: it prints once an invoice is paid or a contract is signed, never before. Off: it prints on no PDF.', fields: [yes('show_pdf_signature_invoice', 'Show the signature on invoices', { default: '1' }), yes('show_pdf_signature_contract', 'Show the signature on contracts', { default: '1' })] },
         ],
     },
     e_sign: {

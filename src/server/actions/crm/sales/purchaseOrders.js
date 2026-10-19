@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, formatDocumentNumber } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
-import { allocateNumber, checkDeletable, afterDelete } from '@/lib/crm/sales/docNumbering'
+import { allocateNumber, checkDeletable, afterDelete, manualNumber, applyManualNumber } from '@/lib/crm/sales/docNumbering'
 import { createInvoiceFromDocument, createPurchaseOrderFromEstimate } from '@/lib/crm/sales/convert'
 
 const REL = 'purchase_order'
@@ -57,6 +57,8 @@ export async function savePurchaseOrder(input) {
         subtotal: totals.subtotal, totalTax: totals.totalTax, total: totals.total, discountPercent: Number(input.discountPercent) || 0, discountTotal: totals.discountTotal, discountType,
         adjustment: Number(input.adjustment) || 0, clientNote: input.clientNote || null, adminNote: input.adminNote || null, terms: input.terms || null, referenceNo: input.referenceNo || null,
     }
+    const manual = await manualNumber('crmPurchaseOrder', input, session.user.authority || [])
+    if (manual.problem) return fail(manual.problem)
     let order
     if (isNew) {
         const { number, prefix, numberFormat } = await allocateNumber('purchase_order', data.date)
@@ -70,6 +72,7 @@ export async function savePurchaseOrder(input) {
         await prisma.crmItemTax.deleteMany({ where: { relType: REL, relId: order.id } })
         await prisma.crmItemable.deleteMany({ where: { id: { in: old.map((l) => l.id) } } })
     }
+    await applyManualNumber('crmPurchaseOrder', order.id, manual.number)
     for (const [idx, it] of items.entries()) {
         const line = await prisma.crmItemable.create({ data: { relType: REL, relId: order.id, description: String(it.description).trim(), longDescription: it.longDescription || null, qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || null, itemOrder: idx + 1 } })
         for (const t of it.taxes || []) await prisma.crmItemTax.create({ data: { itemableId: line.id, relType: REL, relId: order.id, taxName: t.name || `${t.rate}%`, taxRate: Number(t.rate) || 0 } })

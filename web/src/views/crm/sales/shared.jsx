@@ -1,4 +1,5 @@
 import Tag from '@/components/ui/Tag'
+import { useSessionUser } from '@/store/authStore'
 import { tr } from '@/utils/t'
 
 export const STATUS = {
@@ -40,3 +41,15 @@ export const PROPOSAL_STATUS = {
     7: { label: tr("Expired"), cls: 'bg-amber-100 text-amber-700' },
 }
 export const ProposalStatusTag = ({ status }) => <Tag className={PROPOSAL_STATUS[status]?.cls}>{PROPOSAL_STATUS[status]?.label || status}</Tag>
+
+/** Administrators and super admins can type the number of a document themselves (empty on a new one = the next number). */
+export const NumberField = ({ value, onChange }) => {
+    const authority = useSessionUser((x) => x.user.authority) || []
+    if (!(authority.includes('admin') || authority.includes('crm.admin'))) return null
+    return (
+        <label className="flex items-center gap-2 text-sm">
+            <span className="text-gray-500">{tr("Number")}</span>
+            <input type="number" min={1} placeholder={tr("auto")} value={value ?? ''} onChange={(e) => onChange(e.target.value)} className="h-9 w-28 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-800" />
+        </label>
+    )
+}

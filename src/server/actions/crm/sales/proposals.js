@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, formatDocumentNumber } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
+import { manualNumber, applyManualNumber } from '@/lib/crm/sales/docNumbering'
 import { createInvoiceFromDocument, createEstimateFromProposal } from '@/lib/crm/sales/convert'
 import { displayNumber, loadItems, nextProposalNumber } from '@/lib/crm/proposalDoc'
 
@@ -72,6 +73,8 @@ export async function saveProposal(input) {
         allowComments: input.allowComments !== false, assignedId: input.assignedId || null,
         ...(input.remindClient !== undefined ? { remindClient: input.remindClient !== false } : {}),
     }
+    const manual = await manualNumber('crmProposal', input, session.user.authority || [])
+    if (manual.problem) return fail(manual.problem)
     let proposal
     if (isNew) {
         proposal = await prisma.crmProposal.create({ data: { ...data, number: await nextProposalNumber(), status: 6, hash: crypto.randomUUID().replace(/-/g, ''), addedFrom: staffId || undefined, assignedId: data.assignedId || staffId || undefined } })
@@ -84,6 +87,7 @@ export async function saveProposal(input) {
         await prisma.crmItemTax.deleteMany({ where: { relType: REL, relId: proposal.id } })
         await prisma.crmItemable.deleteMany({ where: { id: { in: old.map((l) => l.id) } } })
     }
+    await applyManualNumber('crmProposal', proposal.id, manual.number)
     for (const [idx, it] of items.entries()) {
         const line = await prisma.crmItemable.create({ data: { relType: REL, relId: proposal.id, description: String(it.description).trim(), longDescription: it.longDescription || null, qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || null, itemOrder: idx + 1 } })
         for (const tx of it.taxes || []) await prisma.crmItemTax.create({ data: { itemableId: line.id, relType: REL, relId: proposal.id, taxName: tx.name || `${tx.rate}%`, taxRate: Number(tx.rate) || 0 } })

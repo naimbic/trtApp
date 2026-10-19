@@ -29,7 +29,7 @@ export async function contractDocumentHtml(c, client, type, S) {
     const og = await getOptions([...COMPANY_KEYS, 'company_logo', 'company_info_format'])
     const D = (x) => fmtDate(x, S.dateFormat, S.timezone)
     const logo = await companyImageDataUri('logo', logoDataUri(og('company_logo')), ['contract_logo_url', 'company_logo_url'])
-    const signatureImg = S.showSignature ? await companyImageDataUri('signature', '') : ''
+    const signatureImg = S.showSignature && (c.signed || c.markedAsSigned) ? await companyImageDataUri('signature', '') : ''
     const co = companyTokenData(og)
     const ct = await clientTokenData(client, {})
     const cur = await prisma.crmCurrency.findFirst({ where: { isDefault: true } })

@@ -15,6 +15,7 @@ import Segment from '@/components/ui/Segment'
 import VisualEditor from '../mail/VisualEditor'
 import { useClientLookups } from '../clients/shared'
 import { makeMoney } from '../clients/shared'
+import { NumberField } from './shared'
 import { tr } from '@/utils/t'
 import ReminderSwitch from '../kit/ReminderSwitch'
 
@@ -44,7 +45,7 @@ const ProposalEditor = () => {
                 const dd = l.defaults || {}
                 const dueAfter = dd.openFor !== '' && dd.openFor != null ? Number(dd.openFor) : 14
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
-                setV({
+                setV({ number: inv?.number ?? '',
                     subject: inv?.subject || '', relType: inv?.relType || (params.get('leadId') ? 'lead' : 'customer'), relId: inv?.relId || params.get('clientId') || params.get('leadId') || null,
                     proposalTo: inv?.proposalTo || '', email: inv?.email || '', phone: inv?.phone || '', address: inv?.address || '', city: inv?.city || '', state: inv?.state || '', zip: inv?.zip || '', country: inv?.country ?? null,
                     content: inv?.content ?? '<p>Hello,</p><p>Thank you for your interest. Please find our offer below.</p><p>{proposal_items}</p><p>We look forward to working with you.</p>', allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || null,
@@ -108,7 +109,7 @@ const ProposalEditor = () => {
 
     return (
         <Container>
-            <h3 className="mb-4">{id ? tr("Edit proposal {v1}", { v1: doc?.proposal?.displayNumber || '' }) : tr("New proposal")}</h3>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3>{id ? tr("Edit proposal {v1}", { v1: doc?.proposal?.displayNumber || '' }) : tr("New proposal")}</h3><NumberField value={v?.number} onChange={(n) => set({ number: n })} /></div>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="flex flex-col gap-4">
                 <Card>

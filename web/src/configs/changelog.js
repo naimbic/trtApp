@@ -2,10 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.82.6',
+        date: '2026-10-19',
+        title: 'Admins can delete invoices with payments and set document numbers',
+        items: ['Administrators and super admins can delete an invoice that has payments (the payments are deleted with it, after a confirmation), and delete a payment of a paid invoice from the Payments list; before, the Payments list always answered This payment of a paid invoice is final', 'Administrators and super admins can type the number of an invoice, an estimate, a proposal or a purchase order in its editor (Number, top right; empty on a new document = the next number); a number already used is refused and the next-number setting moves ahead of it', 'Signature: the switch only allows it. With the switch on, the signature prints once the invoice is paid or the contract is signed, never before; with it off, it prints on no PDF']
+    },
+    {
         version: '0.82.5',
         date: '2026-10-19',
         title: 'Real number for a draft that gets paid; signature on every document until paid',
-        items: ['Fix: an imported draft invoice carries the placeholder number 1000000000; when a payment was added it became Paid but kept that number (FA - 1000000000-01-2026). It now gets the next real number, prefix and format the moment it stops being a draft (a payment, mark as sent...), and the daily cron job also gives a real number to any invoice still stuck with the placeholder (run it from Settings → Cron job → Run manually to fix the existing ones)', 'The company signature (Settings → General → Document logos) prints on invoices and contracts only, each with its own switch in Settings → PDF (on by default): on, it prints on every invoice and contract whether paid or not; off, it prints on no PDF']
+        items: ['Fix: an imported draft invoice carries the placeholder number 1000000000; when a payment was added it became Paid but kept that number (FA - 1000000000-01-2026). It now gets the next real number, prefix and format the moment it stops being a draft (a payment, mark as sent...), and the daily cron job also gives a real number to any invoice still stuck with the placeholder (run it from Settings → Cron job → Run manually to fix the existing ones)', 'The company signature (Settings → General → Document logos) prints on invoices and contracts only, each with its own switch in Settings → PDF (on by default): on, it only prints once the invoice is paid or the contract is signed, never before; off, it prints on no PDF']
     },
     {
         version: '0.82.4',

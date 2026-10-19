@@ -85,7 +85,7 @@ const InvoiceView = () => {
         const c = confirm
         setConfirm(null)
         if (c === 'cancel') await run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'cancel', force: paidFinal } }), tr("Invoice cancelled"))
-        else if (c === 'delete') { if (await run(() => api(`/api/crm/sales/invoices/${id}`, { method: 'DELETE' }), tr("Invoice deleted"))) navigate('/crm/invoices') }
+        else if (c === 'delete') { if (await run(() => api(`/api/crm/sales/invoices/${id}${superAdmin ? '?force=1' : ''}`, { method: 'DELETE' }), tr("Invoice deleted"))) navigate('/crm/invoices') }
         else if (c?.payment) await run(() => api(`/api/crm/sales/payments/${c.payment.id}${paidFinal ? '?force=1' : ''}`, { method: 'DELETE' }), tr("Payment deleted"))
     }
 
@@ -237,7 +237,7 @@ const InvoiceView = () => {
                 <p className="text-sm text-red-600">{tr("A paid invoice is final. Changing it can upset your accounts and reports. Only a super admin can do it, and only if you know why.")}</p>
             </ConfirmDialog>
             <ConfirmDialog isOpen={!!confirm} type={confirm === 'cancel' ? 'warning' : 'danger'} title={confirm === 'cancel' ? tr("Cancel this invoice?") : confirm === 'delete' ? tr("Delete this invoice?") : tr("Delete this payment?")} confirmText={confirm === 'cancel' ? tr("Cancel invoice") : tr("Delete")} onClose={() => setConfirm(null)} onRequestClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={doConfirm}>
-                <p>{confirm === 'cancel' ? tr("A cancelled invoice no longer counts as revenue. It can be restored later. Invoices with payments cannot be cancelled.") : confirm === 'delete' ? tr("The invoice, its lines and its activity will be removed. Invoices with payments cannot be deleted.") : tr("The payment will be removed and the invoice status recalculated.")}</p>
+                <p>{confirm === 'cancel' ? tr("A cancelled invoice no longer counts as revenue. It can be restored later. Invoices with payments cannot be cancelled.") : confirm === 'delete' ? (superAdmin ? tr("The invoice, its lines, its activity and its payments will be removed. This can upset your accounts and reports.") : tr("The invoice, its lines and its activity will be removed. Invoices with payments cannot be deleted.")) : tr("The payment will be removed and the invoice status recalculated.")}</p>
             </ConfirmDialog>
                     <SendMailDialog open={!!mail} kind="invoice" id={id} template={mail} onClose={() => setMail(null)} onSent={load} />
         </Container>

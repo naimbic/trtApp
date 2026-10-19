@@ -196,7 +196,7 @@ const InvoicesList = () => {
                 <p className="mt-2 text-sm text-red-600">{tr("A paid invoice is final. Changing it can upset your accounts and reports. Only a super admin can do it, and only if you know why.")}</p>
             </ConfirmDialog>
             <ConfirmDialog isOpen={!!confirm} type={confirm?.kind === 'delete' ? 'danger' : 'warning'} title={confirm?.kind === 'delete' ? tr("Delete this invoice?") : tr("Cancel this invoice?")} confirmText={confirm?.kind === 'delete' ? tr("Delete") : tr("Cancel invoice")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)}
-                onConfirm={() => { const c = confirm; setConfirm(null); if (c.kind === 'delete') act(() => apiCall(`/api/crm/sales/invoices/${c.row.id}`, { method: 'DELETE' }), tr("Invoice deleted")); else state(c.row, 'cancel', tr("Invoice cancelled"), c.force) }}>
+                onConfirm={() => { const c = confirm; setConfirm(null); if (c.kind === 'delete') act(() => apiCall(`/api/crm/sales/invoices/${c.row.id}${superAdmin ? '?force=1' : ''}`, { method: 'DELETE' }), tr("Invoice deleted")); else state(c.row, 'cancel', tr("Invoice cancelled"), c.force) }}>
                 <p>{confirm?.row?.number} · {confirm?.row?.client}</p>
             </ConfirmDialog>
         </Container>

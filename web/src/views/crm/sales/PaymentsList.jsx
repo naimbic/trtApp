@@ -23,6 +23,7 @@ import { useClientLookups, makeMoney } from '../clients/shared'
 import { fmtDate } from './shared'
 import { InvoiceHead, DocChart, shortMoney, sumOf } from './InvoiceInsights'
 import { useDocMenu } from './DocMenu'
+import { useSessionUser } from '@/store/authStore'
 import { tr } from '@/utils/t'
 import { moneyChange } from '../kit/widgets'
 
@@ -74,9 +75,11 @@ const PaymentsList = () => {
     const th = (key, label, right) => <Th className={cn('cursor-pointer select-none', right && 'text-right')} onClick={() => sortBy(key)}>{label}{sort.key === key ? (sort.order === 'asc' ? ' ↑' : ' ↓') : ''}</Th>
     const modeOptions = data.modes.map((m) => ({ value: m.id, label: m.name }))
 
+    const authority = useSessionUser((x) => x.user.authority) || []
+    const admin = authority.includes('admin') || authority.includes('crm.admin') // administrators confirm in the dialog; the server still refuses everyone else
     const remove = async () => {
         try {
-            await api(`/api/crm/sales/payments/${del.id}`, { method: 'DELETE' })
+            await api(`/api/crm/sales/payments/${del.id}${admin ? '?force=1' : ''}`, { method: 'DELETE' })
             notify('success', tr("Payment deleted"))
             load()
         } catch (e) {

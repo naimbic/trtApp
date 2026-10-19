@@ -3739,5 +3739,6 @@ export default {
     "from": "من",
     "Show the signature on invoices (until paid)": "إظهار التوقيع على الفواتير (حتى تُدفع)",
     "Prints the signature from General → Document logos. An invoice stops printing it once it is paid.": "يطبع التوقيع من عام ← شعارات المستندات. تتوقف الفاتورة عن طباعته بعد دفعها.",
-    "Prints the signature from General → Document logos. On: it prints on every invoice and contract, paid or not. Off: it prints on no PDF.": "يطبع التوقيع من عام ← شعارات المستندات. عند التشغيل: يُطبع على كل فاتورة وعقد، مدفوعًا أو لا. عند الإيقاف: لا يُطبع على أي ملف PDF."
+    "Prints the signature from General → Document logos. On: it prints once an invoice is paid or a contract is signed, never before. Off: it prints on no PDF.": "يطبع التوقيع من عام ← شعارات المستندات. عند التشغيل: يُطبع على كل فاتورة وعقد، مدفوعًا أو لا. عند الإيقاف: لا يُطبع على أي ملف PDF.",
+    "The invoice, its lines, its activity and its payments will be removed. This can upset your accounts and reports.": "ستُحذف الفاتورة وبنودها ونشاطها ومدفوعاتها. قد يؤثر ذلك على حساباتك وتقاريرك."
 }

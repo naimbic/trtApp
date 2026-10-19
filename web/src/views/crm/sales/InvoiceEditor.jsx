@@ -14,6 +14,7 @@ import { useSessionUser } from '@/store/authStore'
 import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
+import { NumberField } from './shared'
 import { tr } from '@/utils/t'
 import ReminderSwitch from '../kit/ReminderSwitch'
 import BankAccountSelect from '../kit/BankAccountSelect'
@@ -47,7 +48,7 @@ const InvoiceEditor = () => {
                 const dd = l.defaults || {}
                 const dueAfter = dd.dueAfter !== '' && dd.dueAfter != null ? Number(dd.dueAfter) : 30
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
-                setV({
+                setV({ number: inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,
                     date: day(inv?.date) || day(new Date()),
                     dueDate: day(inv?.dueDate) || day(dayjs().add(dueAfter, 'day')),
@@ -107,7 +108,7 @@ const InvoiceEditor = () => {
 
     return (
         <Container>
-            <h3 className="mb-4">{id ? tr("Edit invoice {v1}", { v1: doc?.invoice?.displayNumber || '' }) : tr("New invoice")}</h3>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3>{id ? tr("Edit invoice {v1}", { v1: doc?.invoice?.displayNumber || '' }) : tr("New invoice")}</h3><NumberField value={v?.number} onChange={(n) => set({ number: n })} /></div>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="flex flex-col gap-4">
                 <Card>

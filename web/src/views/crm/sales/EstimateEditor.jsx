@@ -11,6 +11,7 @@ import { api, notify } from '../kit/api'
 import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
+import { NumberField } from './shared'
 import { tr } from '@/utils/t'
 import ReminderSwitch from '../kit/ReminderSwitch'
 import BankAccountSelect from '../kit/BankAccountSelect'
@@ -39,7 +40,7 @@ const EstimateEditor = () => {
                 const dd = l.defaults || {}
                 const dueAfter = dd.validFor !== '' && dd.validFor != null ? Number(dd.validFor) : 14
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
-                setV({
+                setV({ number: inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,
                     date: day(inv?.date) || day(new Date()),
                     expiryDate: day(inv?.expiryDate) || day(dayjs().add(dueAfter, 'day')), referenceNo: inv?.referenceNo || '',
@@ -98,7 +99,7 @@ const EstimateEditor = () => {
 
     return (
         <Container>
-            <h3 className="mb-4">{id ? tr("Edit estimate {v1}", { v1: doc?.estimate?.displayNumber || '' }) : tr("New estimate")}</h3>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3>{id ? tr("Edit estimate {v1}", { v1: doc?.estimate?.displayNumber || '' }) : tr("New estimate")}</h3><NumberField value={v?.number} onChange={(n) => set({ number: n })} /></div>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="flex flex-col gap-4">
                 <Card>

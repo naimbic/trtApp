@@ -11,6 +11,7 @@ import { api, notify } from '../kit/api'
 import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
+import { NumberField } from './shared'
 import { tr } from '@/utils/t'
 import BankAccountSelect from '../kit/BankAccountSelect'
 
@@ -38,7 +39,7 @@ const PurchaseOrderEditor = () => {
                 const dd = l.defaults || {}
                 const dueAfter = dd.deliveryIn !== '' && dd.deliveryIn != null ? Number(dd.deliveryIn) : 14
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
-                setV({
+                setV({ number: inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,
                     date: day(inv?.date) || day(new Date()),
                     deliveryDate: day(inv?.deliveryDate) || day(dayjs().add(dueAfter, 'day')), referenceNo: inv?.referenceNo || '',
@@ -96,7 +97,7 @@ const PurchaseOrderEditor = () => {
 
     return (
         <Container>
-            <h3 className="mb-4">{id ? tr("Edit purchase order {v1}", { v1: doc?.order?.displayNumber || '' }) : tr("New purchase order")}</h3>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3>{id ? tr("Edit purchase order {v1}", { v1: doc?.order?.displayNumber || '' }) : tr("New purchase order")}</h3><NumberField value={v?.number} onChange={(n) => set({ number: n })} /></div>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="flex flex-col gap-4">
                 <Card>

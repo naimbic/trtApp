@@ -72,3 +72,34 @@ export async function ensureRealNumber(kind, doc) {
     await prisma[k.model].update({ where: { id: doc.id }, data: { number, prefix, numberFormat } })
     return { number, prefix, numberFormat }
 }
+
+const isAdmin = (authority = []) => authority.includes('admin') || authority.includes('crm.admin')
+const COUNTER = { crmInvoice: 'invoice', crmEstimate: 'estimate', crmPurchaseOrder: 'purchase_order' }
+
+/**
+ * Administrators and super admins may type the number of a document themselves.
+ * Returns { number } (the number to apply, or null: nothing to change) or { problem } (message). Call before writing; apply with applyManualNumber.
+ */
+export async function manualNumber(model, input, authority) {
+    const raw = input?.number
+    if (!isAdmin(authority) || raw === undefined || raw === null || raw === '') return { number: null }
+    const n = Number(raw)
+    if (!Number.isInteger(n) || n < 1 || n >= REAL) return { problem: 'The number must be a whole number above 0' }
+    const hasPrefix = !!COUNTER[model] // proposals have no prefix
+    const cur = input.id ? await prisma[model].findUnique({ where: { id: input.id }, select: hasPrefix ? { number: true, prefix: true } : { number: true } }) : null
+    if (cur && cur.number === n) return { number: null }
+    const clash = await prisma[model].findFirst({ where: { number: n, ...(input.id ? { id: { not: input.id } } : {}), ...(cur && hasPrefix ? { prefix: cur.prefix } : {}) }, select: { id: true } })
+    if (clash) return { problem: `The number ${n} is already used by another document` }
+    return { number: n }
+}
+
+/** Writes the number chosen with manualNumber and keeps the "next number" setting ahead of it. */
+export async function applyManualNumber(model, id, number) {
+    if (!number) return
+    await prisma[model].update({ where: { id }, data: { number } })
+    const kind = COUNTER[model]
+    if (kind) {
+        const next = Number(await opt(KINDS[kind].next, '0')) || 0
+        if (number >= next) await setOpt(KINDS[kind].next, number + 1)
+    }
+}

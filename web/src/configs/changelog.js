@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.86.3',
+        date: '2026-10-19',
+        title: 'Leads menu in one column; menu on note cards',
+        items: ['The Leads menu now shows a single column: Leads and the lead setup entries in one list.', 'Each note card has a three-dot menu that appears on hover: Edit, Duplicate, Copy text, Make it a task and Delete (with a confirmation).']
+    },
+    {
         version: '0.86.2',
         date: '2026-10-19',
         title: 'A Notes page',

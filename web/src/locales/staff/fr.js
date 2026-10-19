@@ -3786,5 +3786,8 @@ export default {
     "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.": "Enregistrez d'abord la numérotation ci-dessus. Donnez ensuite à chaque facture le même préfixe et le même format, pour qu'elles s'écrivent toutes pareil (par exemple FA - 101 - 10 - 2026). Les numéros eux-mêmes ne changent pas.",
     "Quick notes: a title and a description": "Notes rapides : un titre et une description",
     "No notes yet. Use New note to add one.": "Aucune note pour le moment. Utilisez Nouvelle note pour en ajouter une.",
-    "Search": "Rechercher"
+    "Search": "Rechercher",
+    "Duplicate": "Dupliquer",
+    "Copy text": "Copier le texte",
+    "Delete this note?": "Supprimer cette note ?"
 }

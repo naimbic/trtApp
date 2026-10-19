@@ -3786,5 +3786,8 @@ export default {
     "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.": "まず上の番号設定を保存してください。その後、すべての請求書に同じ接頭辞と番号形式を設定すると、同じ表記になります(例: FA - 101 - 10 - 2026)。番号自体は変わりません。",
     "Quick notes: a title and a description": "クイックメモ:タイトルと説明",
     "No notes yet. Use New note to add one.": "メモはまだありません。「新しいメモ」で追加してください。",
-    "Search": "検索"
+    "Search": "検索",
+    "Duplicate": "複製",
+    "Copy text": "テキストをコピー",
+    "Delete this note?": "このメモを削除しますか?"
 }

@@ -3786,5 +3786,8 @@ export default {
     "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.": "احفظ الترقيم أعلاه أولاً. ثم امنح كل فاتورة البادئة والتنسيق نفسيهما لتظهر جميعها بالشكل نفسه (مثال: FA - 101 - 10 - 2026). الأرقام نفسها لا تتغير.",
     "Quick notes: a title and a description": "ملاحظات سريعة: عنوان ووصف",
     "No notes yet. Use New note to add one.": "لا توجد ملاحظات بعد. استخدم «ملاحظة جديدة» لإضافة واحدة.",
-    "Search": "بحث"
+    "Search": "بحث",
+    "Duplicate": "تكرار",
+    "Copy text": "نسخ النص",
+    "Delete this note?": "حذف هذه الملاحظة؟"
 }

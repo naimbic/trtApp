@@ -32,6 +32,9 @@ const matches = (pathname, path) => pathname === path || pathname.startsWith(`${
  * The pill navigation of the Rapport layout: Dashboard, then the CRM groups the person may open (the rest under "More"); a pill opens
  * a panel with its links. The dark pill slides to the page you are on. Built from the same menu as the side menu, so authority holds.
  */
+// The Leads menu is a single column: its sub-groups are folded into one list.
+const oneColumn = (key, sections) => (/leads$/i.test(String(key)) && sections.length > 1 ? [{ ...sections[0], items: sections.flatMap((x) => x.items) }] : sections)
+
 const RapportPills = () => {
     const { pathname } = useLocation()
     const navigate = useNavigate()
@@ -46,7 +49,7 @@ const RapportPills = () => {
         const ok = (n) => allowed(n.authority, user)
         const top = (key) => navigationConfig.find((n) => n.key === key && ok(n))
         const crm = navigationConfig.find((n) => n.key === 'crm')
-        const groups = (crm?.subMenu || []).filter(ok).map((g) => ({ key: g.key, node: g, sections: sectionsOf(g, ok) })).filter((g) => g.sections.length)
+        const groups = (crm?.subMenu || []).filter(ok).map((g) => ({ key: g.key, node: g, sections: oneColumn(g.key, sectionsOf(g, ok)) })).filter((g) => g.sections.length)
         const first = top('dashboard') || top('team-dashboard')
         const extras = [top('team-dashboard') !== first && top('team-dashboard'), top('calendar'), top('chat'), top('team')].filter(Boolean)
         const shown = groups.slice(0, MAX_PILLS), rest = groups.slice(MAX_PILLS)

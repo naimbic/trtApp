@@ -3720,5 +3720,6 @@ export default {
     "next on {date}": "prochaine le {date}",
     "years": "ans",
     "A new copy is created automatically each time.": "Une nouvelle copie est créée automatiquement à chaque fois.",
-    "Recurring invoice": "Facture récurrente"
+    "Recurring invoice": "Facture récurrente",
+    "Pick the invoice date, then the due date.": "Choisissez la date de facture, puis l'échéance."
 }

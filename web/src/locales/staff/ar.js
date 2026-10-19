@@ -3720,5 +3720,6 @@ export default {
     "next on {date}": "التالية في {date}",
     "years": "سنوات",
     "A new copy is created automatically each time.": "تُنشأ نسخة جديدة تلقائيًا في كل مرة.",
-    "Recurring invoice": "فاتورة متكررة"
+    "Recurring invoice": "فاتورة متكررة",
+    "Pick the invoice date, then the due date.": "اختر تاريخ الفاتورة ثم تاريخ الاستحقاق."
 }

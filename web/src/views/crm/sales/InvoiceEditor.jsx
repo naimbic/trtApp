@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import DatePicker from '@/components/ui/DatePicker'
 import Switcher from '@/components/ui/Switcher'
 import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify } from '../kit/api'
@@ -114,8 +115,17 @@ const InvoiceEditor = () => {
                         <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={(cid) => set({ clientId: cid })} /></div>
                         <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
                         <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
-                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Invoice date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
-                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Due date")}</label><Input type="date" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></div>
+                        <div className="md:col-span-4">
+                            <label className="form-label mb-1 block">{tr("Invoice date")} → {tr("Due date")}</label>
+                            <DatePicker.DatePickerRange
+                                clearable={false}
+                                inputFormat="DD MMM YYYY"
+                                separator="→"
+                                value={[dayjs(v.date).toDate(), dayjs(v.dueDate || v.date).toDate()]}
+                                onChange={(vals) => { if (Array.isArray(vals) && vals[0] && vals[1]) set({ date: dayjs(vals[0]).format('YYYY-MM-DD'), dueDate: dayjs(vals[1]).format('YYYY-MM-DD') }) }}
+                            />
+                            <p className="mt-1 text-xs text-gray-400">{tr("Pick the invoice date, then the due date.")}</p>
+                        </div>
                     </div>
                     {!v.isCopy && (
                         <div className="mt-3 grid items-end gap-3 border-t border-gray-100 pt-3 md:grid-cols-12 dark:border-gray-700">

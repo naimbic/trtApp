@@ -3720,5 +3720,6 @@ export default {
     "next on {date}": "次回：{date}",
     "years": "年",
     "A new copy is created automatically each time.": "新しいコピーが毎回自動的に作成されます。",
-    "Recurring invoice": "定期請求書"
+    "Recurring invoice": "定期請求書",
+    "Pick the invoice date, then the due date.": "請求日、続いて支払期限を選択してください。"
 }

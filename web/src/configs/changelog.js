@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.79.6',
+        date: '2026-10-19',
+        title: 'Invoice editor: one period picker for the dates',
+        items: ['Invoice date and Due date are one start → stop period picker (the same component as the dashboard period); a new invoice still starts with the due date set by Settings (due after N days)']
+    },
+    {
         version: '0.79.5',
         date: '2026-10-19',
         title: 'Invoice editor: recurring row uses the full width',

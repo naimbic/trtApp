@@ -54,6 +54,9 @@ export async function getCalendarItems({ from, to }) {
     const clientIds = [...new Set(events.map((e) => e.clientId).filter(Boolean))]
     const clientRows = clientIds.length ? await prisma.crmClient.findMany({ where: { id: { in: clientIds } }, select: { id: true, company: true } }) : []
     const clientName = Object.fromEntries(clientRows.map((c) => [c.id, c.company]))
+    const leadIds = [...new Set(events.map((e) => e.leadId).filter(Boolean))]
+    const leadRows = leadIds.length ? await prisma.crmLead.findMany({ where: { id: { in: leadIds } }, select: { id: true, name: true, company: true } }) : []
+    const leadName = Object.fromEntries(leadRows.map((l) => [l.id, l.name || l.company || '']))
     const projectIds = [...new Set(events.map((e) => e.projectId).filter(Boolean))]
     const projectRows = projectIds.length ? await prisma.crmProject.findMany({ where: { id: { in: projectIds } }, select: { id: true, name: true } }) : []
     const projectName = Object.fromEntries(projectRows.map((x) => [x.id, x.name]))
@@ -81,6 +84,8 @@ export async function getCalendarItems({ from, to }) {
             meetingUrl: e.meetingUrl || '',
             clientId: e.clientId || null,
             clientName: e.clientId ? clientName[e.clientId] || '' : '',
+            leadId: e.leadId || null,
+            leadName: e.leadId ? leadName[e.leadId] || '' : '',
             category: e.category || 'meeting',
             projectId: e.projectId || null,
             projectName: e.projectId ? projectName[e.projectId] || '' : '',
@@ -194,7 +199,8 @@ const clean = (b) => {
         meetingUrl: meetingUrl || null,
         category: ['meeting', 'call', 'visit', 'deadline', 'reminder', 'other'].includes(b.category) ? b.category : 'meeting',
         projectId: OID.test(b.projectId || '') ? b.projectId : null,
-        clientId: OID.test(b.clientId || '') ? b.clientId : null,
+        clientId: OID.test(b.clientId || '') && !OID.test(b.leadId || '') ? b.clientId : null, // a client or a lead, not both
+        leadId: OID.test(b.leadId || '') ? b.leadId : null,
         attendeeIds: [...new Set((b.attendeeIds || []).filter((x) => OID.test(x)))],
         attendeeEmails: emails,
         reminderBefore: Number.isFinite(remind) ? remind : null,

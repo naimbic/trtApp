@@ -8,9 +8,10 @@ import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import Switcher from '@/components/ui/Switcher'
-import DatePicker from '@/components/ui/DatePicker'
 import { Form, FormItem } from '@/components/ui/Form'
 import RelationSelect from '../kit/RelationSelect'
+import DateTimeRange from './DateTimeRange'
+import Segment from '@/components/ui/Segment'
 import { tr } from '@/utils/t'
 
 const { Control } = components
@@ -54,7 +55,7 @@ const googleLink = (v) => {
 }
 const jitsi = () => `https://meet.jit.si/TRT-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`
 
-const EMPTY = { category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
+const EMPTY = { category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
 const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, onClose }) => {
@@ -78,6 +79,8 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
             location: selected.location || '',
             meetingUrl: selected.meetingUrl || '',
             clientId: selected.clientId || null,
+            leadId: selected.leadId || null,
+            aboutType: selected.leadId ? 'lead' : 'client',
             attendeeIds: selected.attendeeIds || [],
             attendeeEmails: (selected.attendeeEmails || []).join(', '),
             reminderBefore: selected.reminderBefore ?? '',
@@ -89,7 +92,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
     const readOnly = edit && selected.editable === false
     const set = (patch) => setV((x) => ({ ...x, ...patch }))
     const staffOpts = staff.map((s) => ({ value: s.id, label: s.name }))
-    const hasGuests = v.attendeeIds.length > 0 || v.attendeeEmails.trim() || v.clientId
+    const hasGuests = v.attendeeIds.length > 0 || v.attendeeEmails.trim() || (v.aboutType === 'client' && v.clientId)
 
     const submit = (e) => {
         e.preventDefault()
@@ -102,13 +105,11 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
         const end = v.allDay ? noon(v.end || v.start) : v.end
         onSubmit({
             title: v.title.trim(), description: v.description, start: start.toISOString(), end: end ? end.toISOString() : null, color: v.color, isPublic: v.isPublic,
-            allDay: v.allDay, category: v.category, projectId: v.projectId, location: v.location, meetingUrl: v.meetingUrl.trim(), clientId: v.clientId, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
+            allDay: v.allDay, category: v.category, projectId: v.projectId, location: v.location, meetingUrl: v.meetingUrl.trim(), clientId: v.aboutType === 'client' ? v.clientId : null, leadId: v.aboutType === 'lead' ? v.leadId : null, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
             reminderBefore: v.reminderBefore === '' ? null : Number(v.reminderBefore), reminderBeforeType: v.reminderBeforeType,
-            sendInvites: v.sendInvites && !!hasGuests, inviteClient: v.sendInvites && v.inviteClient && !!v.clientId,
+            sendInvites: v.sendInvites && !!hasGuests, inviteClient: v.sendInvites && v.inviteClient && v.aboutType === 'client' && !!v.clientId,
         })
     }
-
-    const Picker = v.allDay ? DatePicker : DatePicker.DateTimepicker
 
     return (
         <Dialog isOpen={open} width={680} onClose={onClose} onRequestClose={onClose}>
@@ -130,12 +131,18 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                         <Input type="text" autoComplete="off" placeholder={tr("Meeting with the client…")} value={v.title} onChange={(e) => set({ title: e.target.value })} />
                     </FormItem>
                     <div className="mb-3 flex items-center gap-2 text-sm"><Switcher checked={v.allDay} onChange={(c) => set({ allDay: c })} /> {tr("All day")}</div>
+                    <FormItem label={tr("Date")}><DateTimeRange start={v.start} end={v.end} allDay={v.allDay} disabled={readOnly || saving} onChange={(r) => set(r)} /></FormItem>
                     <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-                        <FormItem label={tr("Start")}><Picker value={v.start} onChange={(d) => set({ start: d })} /></FormItem>
-                        <FormItem label={tr("End")}><Picker value={v.end} onChange={(d) => set({ end: d })} /></FormItem>
-                    </div>
-                    <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-                        <FormItem label={tr("Client")}><RelationSelect resource="clients" value={v.clientId} onChange={(id) => set({ clientId: id, inviteClient: id ? v.inviteClient : false })} /></FormItem>
+                        <FormItem label={v.aboutType === 'lead' ? tr("Lead") : tr("Client")}>
+                            <div className="flex items-center gap-2">
+                                <Segment size="sm" value={v.aboutType} onChange={(t) => { const x = Array.isArray(t) ? t[0] : t; if (x) set({ aboutType: x, inviteClient: false }) }}><Segment.Item value="client">{tr("Client")}</Segment.Item><Segment.Item value="lead">{tr("Lead")}</Segment.Item></Segment>
+                                <div className="min-w-0 flex-1">
+                                    {v.aboutType === 'lead'
+                                        ? <RelationSelect key="lead" resource="leads" value={v.leadId} onChange={(id) => set({ leadId: id })} />
+                                        : <RelationSelect key="client" resource="clients" value={v.clientId} onChange={(id) => set({ clientId: id, inviteClient: id ? v.inviteClient : false })} />}
+                                </div>
+                            </div>
+                        </FormItem>
                         <FormItem label={tr("Team members")}>
                             <Select isMulti placeholder={tr("Add people")} options={staffOpts} value={staffOpts.filter((o) => v.attendeeIds.includes(o.value))} onChange={(o) => set({ attendeeIds: (o || []).map((x) => x.value) })} />
                         </FormItem>
@@ -168,7 +175,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                     {hasGuests && !readOnly && (
                         <div className="mb-2 rounded-xl border border-gray-200 p-3 dark:border-gray-600">
                             <div className="flex items-center gap-2 text-sm"><Switcher checked={v.sendInvites} onChange={(c) => set({ sendInvites: c })} /><TbCalendarPlus className="text-lg" /> {tr("Email an invitation with the calendar file to guests")}</div>
-                            {v.sendInvites && v.clientId && <div className="mt-2 flex items-center gap-2 text-sm"><Switcher checked={v.inviteClient} onChange={(c) => set({ inviteClient: c })} /> {tr("Also invite the client's main contact")}</div>}
+                            {v.sendInvites && v.aboutType === 'client' && v.clientId && <div className="mt-2 flex items-center gap-2 text-sm"><Switcher checked={v.inviteClient} onChange={(c) => set({ inviteClient: c })} /> {tr("Also invite the client's main contact")}</div>}
                         </div>
                     )}
                 </fieldset>

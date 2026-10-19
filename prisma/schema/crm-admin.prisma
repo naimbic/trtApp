@@ -465,6 +465,7 @@ model CrmEvent {
   category           String?   // meeting | call | visit | deadline | reminder | other
   projectId          String?   @db.ObjectId
   clientId           String?   @db.ObjectId
+  leadId             String?   @db.ObjectId // the event can be about a lead instead of a client
   attendeeIds        String[]  @db.ObjectId // staff invited to the event
   attendeeEmails     String[]  // external guests
   createdAt          DateTime  @default(now())

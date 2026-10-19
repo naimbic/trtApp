@@ -54,7 +54,7 @@ const EventTip = ({ ev, timeText }) => {
             <div className="flex max-w-xs flex-col gap-1">
                 <div className="font-semibold">{p.rawTitle || ev.title}</div>
                 <div className="text-xs opacity-80">{p.detail || TYPE_LABEL[p.type]}</div>
-                <Row icon={TbBuilding}>{p.clientName}</Row>
+                <Row icon={TbBuilding}>{p.clientName || p.leadName}</Row>
                 <div className="text-xs opacity-60">{tr("Click to open")}</div>
             </div>
         )
@@ -64,7 +64,7 @@ const EventTip = ({ ev, timeText }) => {
         <div className="flex max-w-xs flex-col gap-1">
             <div className="font-semibold">{localTitle(p.rawTitle)}</div>
             <div className="text-xs opacity-80">{cat.label} · {p.allDay ? tr("All day") : timeText || ''}</div>
-            <Row icon={TbBuilding}>{p.clientName}</Row>
+            <Row icon={TbBuilding}>{p.clientName || p.leadName}</Row>
             <Row icon={TbUsers}>{[...(p.attendees || []).map((a) => a.name), ...(p.attendeeEmails || [])].filter(Boolean).join(', ')}</Row>
             <Row icon={TbMapPin}>{p.location}</Row>
             <Row icon={TbVideo}>{p.meetingUrl && tr("Video meeting · click to open and join")}</Row>
@@ -194,7 +194,7 @@ const Calendar = () => {
             open: true,
             selected: {
                 type: 'EDIT', id: p.rawId, title: p.rawTitle, description: p.description, start: p.rawStart, end: p.rawEnd, allDay: p.allDay,
-                eventColor: p.eventColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, clientId: p.clientId,
+                eventColor: p.eventColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, clientId: p.clientId, leadId: p.leadId,
                 category: p.category, projectId: p.projectId, attendeeIds: p.attendeeIds, attendeeEmails: p.attendeeEmails, reminderBefore: p.reminderBefore, reminderBeforeType: p.reminderBeforeType,
                 editable: p.canEdit, owner: p.owner,
             },

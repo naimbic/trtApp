@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.83.0',
+        date: '2026-10-19',
+        title: 'Event popup: one period field, client or lead',
+        items: ['The event popup has a single Date field for the whole period: click it, pick the first and the last day on the calendar, set the start and end times (hidden for all-day events) and press Done; the field reads like 21 Oct 2026, 09:00 → 10:30', 'An event can be about a Client or a Lead: switch between the two beside the picker; the lead shows in the event tooltip like the client does']
+    },
+    {
         version: '0.82.6',
         date: '2026-10-19',
         title: 'Admins can delete invoices with payments and set document numbers',

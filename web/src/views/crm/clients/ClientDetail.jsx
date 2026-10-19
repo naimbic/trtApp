@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -20,7 +20,8 @@ import RecordDrawer from '../kit/RecordDrawer'
 import { api, notify, qs, useCan } from '../kit/api'
 import { useClientLookups, makeMoney } from './shared'
 import { Timeline, FollowUpDialog } from './ProfileParts'
-import ClientHeader from './ClientHeader'
+import { ClientProfileCard, ClientInfoCard, ClientContactsCard, ClientJourneyCard } from './ClientSide'
+import { InvoiceHead } from '../sales/InvoiceInsights'
 import ClientOverview from './ClientOverview'
 import NewTicketDialog from '../tickets/NewTicketDialog'
 import ProjectDialog from '../projects/ProjectDialog'
@@ -209,23 +210,38 @@ const ClientDetail = () => {
 
     return (
         <Container>
-            <div className="flex flex-col gap-4">
-                <ClientHeader c={c} profile={profile} lookups={lookups} id={id} can={can} a={actions} />
-
-                <Card>
-                    <Tabs value={tab} onChange={setTab}>
-                        <TabList>
-                            {tabs.map((t) => <TabNav key={t.key} value={t.key} className="flex-1 !px-2.5 text-sm">{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
-                        </TabList>
-                        <div className="p-4">
-                            {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}
-                            {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
-                            {tab === 'payments' && <PaymentsTab id={id} money={money} />}
-                            {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
-                            {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}
-                        </div>
-                    </Tabs>
-                </Card>
+            <InvoiceHead
+                title={tr("Client information")}
+                action={<Button size="sm" icon={<TbArrowLeft className="rtl:rotate-180" />} onClick={() => navigate('/crm/clients')}>{tr("Back to clients")}</Button>}
+                stats={[
+                    { icon: <TbCash />, label: tr("Billed, all time"), value: cur && c.money[cur] ? money(c.money[cur].invoiced, cur, { decimals: 0 }) : '—', badge: cur && c.money[cur] ? <span className="badge badge--butter">{money(c.money[cur].paid, cur, { decimals: 0 })} {tr("paid")}</span> : null },
+                    { icon: <TbCircleCheck />, label: tr("Still owed"), value: cur && c.money[cur] ? money(c.money[cur].outstanding, cur, { decimals: 0 }) : '—', badge: cur && c.money[cur]?.overdue > 0 ? <span className="badge badge--tomato">{money(c.money[cur].overdue, cur, { decimals: 0 })} {tr("overdue")}</span> : <span className="badge badge--plain">{tr("Nothing overdue")}</span> },
+                    { icon: <TbBriefcase />, label: tr("Projects and tickets"), value: String((c.counts.projects || 0) + (c.counts.tickets || 0)), badge: <span className="badge badge--plain">{c.counts.invoices || 0} {tr("invoices")}</span> },
+                ]}
+            />
+            <div className="pt">
+                <div className="pt-col">
+                    <ClientProfileCard c={c} profile={profile} cur={cur} id={id} can={can} a={actions} />
+                    <ClientInfoCard c={c} profile={profile} lookups={lookups} />
+                    <ClientContactsCard c={c} profile={profile} can={can} a={actions} />
+                </div>
+                <div className="pt-col">
+                    <ClientJourneyCard profile={profile} />
+                    <Card>
+                        <Tabs value={tab} onChange={setTab}>
+                            <TabList>
+                                {tabs.map((t) => <TabNav key={t.key} value={t.key} className="!px-2.5 text-sm">{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
+                            </TabList>
+                            <div className="p-4">
+                                {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}
+                                {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
+                                {tab === 'payments' && <PaymentsTab id={id} money={money} />}
+                                {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
+                                {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}
+                            </div>
+                        </Tabs>
+                    </Card>
+                </div>
             </div>
 
             <FollowUpDialog key={followUp || 'none'} open={!!followUp} initialType={followUp || 'note'} clientId={id} onClose={() => setFollowUp(null)} onSaved={() => { loadProfile(); load() }} />

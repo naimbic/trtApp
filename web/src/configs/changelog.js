@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.81.0',
+        date: '2026-10-19',
+        title: 'Client page like the template customer profile',
+        items: ['The client page now follows the template customer profile: a head with Billed, Still owed and Projects and tickets, a profile card (the logo inside a ring showing how much is paid, status and groups, all the quick actions: follow up, email, call, new invoice / estimate / proposal / project / ticket, note, WhatsApp, activity log, edit, delete), Detailed information, Contacts with their client area actions, and the lead-to-client path', 'The tabs (Overview, Invoices, Payments, Contracts, Estimates, Proposals, Projects, Tickets, Activity, Notes, Files, Contacts) and everything in them are unchanged; the Overview starts with Interaction history, the latest events as colour tiles with All / Sales / Work / Notes and emails filters']
+    },
+    {
         version: '0.80.1',
         date: '2026-10-19',
         title: 'Client area access is set per client',

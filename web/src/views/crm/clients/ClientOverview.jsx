@@ -4,6 +4,7 @@ import cn from '@/utils/classNames'
 import { StackedStat } from '../kit/charts'
 import ClientBilling from './ClientBilling'
 import { Attention, Engagement, Reminders } from './ProfileParts'
+import { ClientHistoryTiles } from './ClientSide'
 import { tr } from '@/utils/t'
 
 const addrLine = (a) => [a?.street, [a?.zip, a?.city].filter(Boolean).join(' '), a?.state, a?.countryName].filter(Boolean).join(', ')
@@ -22,6 +23,9 @@ const ClientOverview = ({ c, profile, lookups, money, cur, setCur, can, setTab, 
 
     return (
         <div className="flex flex-col gap-4">
+            {/* 0. Interaction history: the latest events as colour tiles */}
+            {profile && <Panel title={tr("Interaction history")}><ClientHistoryTiles items={profile.timeline} onMore={() => setTab('activity')} /></Panel>}
+
             {/* 1. Billing: period and currency come from the top-bar filter */}
             <Panel title={tr("Billing")}>
                 <ClientBilling id={id} c={c} lookups={lookups} money={money} cur={cur} setCur={setCur} charts={charts} />

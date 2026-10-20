@@ -189,8 +189,8 @@ const Team = () => {
                         </THead>
                         <TBody>
                             {rows.map((m) => (
-                                <Tr key={m.id} className={m.active ? undefined : 'opacity-60'}>
-                                    <Td>
+                                <Tr key={m.id}>
+                                    <Td className={m.active ? undefined : 'opacity-60 grayscale'}>
                                         <div className="flex items-center gap-3">
                                             <ScoreRing score={m.score} size={44}><Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar></ScoreRing>
                                             <div className="min-w-0">
@@ -199,7 +199,7 @@ const Team = () => {
                                             </div>
                                         </div>
                                     </Td>
-                                    <Td>
+                                    <Td className={m.active ? undefined : 'opacity-60 grayscale'}>
                                         <div className="flex flex-wrap items-center gap-1.5">
                                             {m.admin ? <Tag className="bg-purple-100 text-purple-700">{tr("Super Admin")}</Tag> : (
                                                 <div className="w-36">
@@ -208,7 +208,7 @@ const Team = () => {
                                             )}
                                         </div>
                                     </Td>
-                                    <Td>
+                                    <Td className={m.active ? undefined : 'opacity-60 grayscale'}>
                                         <div className="flex flex-wrap gap-1.5">
                                             {m.departments.length ? m.departments.map((d) => <Tag key={d.id}>{d.name}</Tag>) : <span className="text-gray-400">—</span>}
                                         </div>
@@ -220,8 +220,8 @@ const Team = () => {
                                             {!m.hasLogin && <Tooltip title={tr("No login account yet")}><Tag className="bg-amber-100 text-amber-700">{tr("No login")}</Tag></Tooltip>}
                                         </div>
                                     </Td>
-                                    <Td className="whitespace-nowrap text-gray-500">{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : tr("Never")}{m.lastActive && <div className="text-xs text-gray-400">{tr("Active")} {dayjs(m.lastActive).format('MMM D, HH:mm')}</div>}</Td>
-                                    <Td>
+                                    <Td className={`whitespace-nowrap text-gray-500 ${m.active ? '' : 'opacity-60 grayscale'}`}>{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : tr("Never")}{m.lastActive && <div className="text-xs text-gray-400">{tr("Active")} {dayjs(m.lastActive).format('MMM D, HH:mm')}</div>}</Td>
+                                    <Td className={m.active ? undefined : 'opacity-60 grayscale'}>
                                         <div className={`flex items-center justify-end gap-0.5 ${m.active ? '' : 'pointer-events-none'}`}>
                                             <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
                                             {canActivity && <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>}

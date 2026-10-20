@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.91.4',
+        date: '2026-10-20',
+        title: 'Active switch stays usable on inactive members',
+        items: ['In the Team list the Active / Inactive switch of a greyed-out member is no longer greyed: the other columns and the action icons are, the switch stays normal so you can turn the member back on.']
+    },
+    {
         version: '0.91.3',
         date: '2026-10-20',
         title: 'Inactive members are greyed and locked',

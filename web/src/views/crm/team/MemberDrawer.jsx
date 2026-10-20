@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { TbFileText, TbTrash, TbUpload, TbExternalLink } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
+import Segment from '@/components/ui/Segment'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
@@ -30,7 +31,7 @@ const Section = ({ title, hint, children }) => (
 )
 
 /** A document of the member (CV or portfolio): upload, open, remove. */
-const DocUpload = ({ memberId, kind, label, doc, onChanged }) => {
+export const DocUpload = ({ memberId, kind, label, doc, onChanged }) => {
     const input = useRef(null)
     const [busy, setBusy] = useState(false)
     const send = async (file) => {
@@ -64,10 +65,12 @@ const DocUpload = ({ memberId, kind, label, doc, onChanged }) => {
 const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit, onClose, onChanged }) => {
     const { options: currencyOptions, defaultId } = usePayMoney()
     const [v, setV] = useState(blank)
+    const [tab, setTab] = useState('profile')
     const edit = !!member
 
     useEffect(() => {
         if (!open) return
+        setTab('profile')
         setV(member ? {
             ...blank, image: member.image, jobTitle: member.jobTitle || '', bio: member.bio || '', website: member.website || '', whatsapp: member.whatsapp || '', linkedin: member.linkedin || '',
             firstName: member.firstName || '', lastName: member.lastName || '', email: member.email || '', phone: member.phone || '', roleId: member.roleId || null,
@@ -97,9 +100,15 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
                 </div>
                 <label className="flex shrink-0 items-center gap-2 text-sm font-semibold">{tr('Active')}<Switcher checked={v.active} onChange={(c) => set({ active: c })} /></label>
             </div>
-            <div className="max-h-[62vh] overflow-y-auto pr-1">
+            <Segment size="sm" value={tab} onChange={(t) => t && setTab(Array.isArray(t) ? t[0] : t)} className="mb-4">
+                <Segment.Item value="profile">{tr('Profile')}</Segment.Item>
+                <Segment.Item value="pay">{tr('Pay and contract')}</Segment.Item>
+                <Segment.Item value="docs">{tr('Documents')}</Segment.Item>
+            </Segment>
+            <div className="max-h-[56vh] min-h-[280px] overflow-y-auto pr-1">
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
 
+                {tab === 'profile' && (<>
                 <Section title={tr('Identity')}>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                         <Field label={`${tr('First name')} *`}><Input value={v.firstName} onChange={(e) => set({ firstName: e.target.value })} autoComplete="off" /></Field>
@@ -114,9 +123,7 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
                 <Section title={tr('Position')}>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                         <Field label={tr('Role')} className="col-span-2"><Select isClearable placeholder={tr('No role')} options={roleOptions} value={roleOptions.find((o) => o.value === v.roleId) || null} onChange={(o) => set({ roleId: o?.value || null })} /></Field>
-                        <Field label={tr('Hire date')}><Input type="date" value={v.hireDate} onChange={(e) => set({ hireDate: e.target.value })} /></Field>
-                        <Field label={tr('Fire date')}><Input type="date" value={v.fireDate} min={v.hireDate || undefined} onChange={(e) => set({ fireDate: e.target.value })} /></Field>
-                        <Field label={tr('Departments')} className="col-span-2 md:col-span-4"><Select isMulti placeholder={tr('Select departments')} options={deptOptions} value={deptOptions.filter((o) => v.departmentIds.includes(o.value))} onChange={(opts) => set({ departmentIds: (opts || []).map((o) => o.value) })} /></Field>
+                        <Field label={tr('Departments')} className="col-span-2"><Select isMulti placeholder={tr('Select departments')} options={deptOptions} value={deptOptions.filter((o) => v.departmentIds.includes(o.value))} onChange={(opts) => set({ departmentIds: (opts || []).map((o) => o.value) })} /></Field>
                     </div>
                     {roleChanged && (
                         <div className="mt-3 flex items-start gap-2 text-sm text-gray-500">
@@ -125,27 +132,6 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
                         </div>
                     )}
                 </Section>
-
-                {canAdmin && (
-                    <Section title={tr('Pay')} hint={tr('Only super administrators see this')}>
-                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                            <Field label={tr('Monthly salary')}><Input type="number" min="0" step="0.01" value={v.salary} onChange={(e) => set({ salary: e.target.value })} /></Field>
-                            <Field label={tr('Currency')}><Select options={currencyOptions} value={currencyOptions.find((o) => o.value === v.salaryCurrencyId) || null} onChange={(o) => set({ salaryCurrencyId: o?.value || null })} /></Field>
-                            <Field label={tr('Paid on day')}><Input type="number" min="1" max="31" placeholder="10" value={v.payDay} onChange={(e) => set({ payDay: e.target.value })} /></Field>
-                            <Field label={tr('CNSS')}><div className="flex h-11 items-center gap-2"><Switcher checked={v.cnss} onChange={(c) => set({ cnss: c })} /><span className="text-sm text-gray-500">{v.cnss ? tr('Declared') : tr('Not declared')}</span></div></Field>
-                            <Field label={tr('RIB (bank account)')} className="col-span-2 md:col-span-4"><Input placeholder="000 000 0000000000000000 00" value={v.rib} onChange={(e) => set({ rib: e.target.value })} autoComplete="off" /></Field>
-                        </div>
-                    </Section>
-                )}
-
-                {edit && (
-                    <Section title={tr('Documents')}>
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            <DocUpload memberId={member.id} kind="cv" label={tr('CV')} doc={member.cv} onChanged={onChanged} />
-                            <DocUpload memberId={member.id} kind="portfolio" label={tr('Portfolio file')} doc={member.portfolioFile} onChanged={onChanged} />
-                        </div>
-                    </Section>
-                )}
 
                 {edit && (
                     <Section title={tr('About and links')}>
@@ -168,6 +154,35 @@ const MemberDrawer = ({ open, member, lookups, canAdmin, saving, error, onSubmit
                         )}
                     </Section>
                 )}
+                </>)}
+                {tab === 'pay' && (<>
+                <Section title={tr('Contract')}>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                        <Field label={tr('Hire date')}><Input type="date" value={v.hireDate} onChange={(e) => set({ hireDate: e.target.value })} /></Field>
+                        <Field label={tr('Fire date')}><Input type="date" value={v.fireDate} min={v.hireDate || undefined} onChange={(e) => set({ fireDate: e.target.value })} /></Field>
+                    </div>
+                </Section>
+                {canAdmin && (
+                    <Section title={tr('Pay')} hint={tr('Only super administrators see this')}>
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                            <Field label={tr('Monthly salary')}><Input type="number" min="0" step="0.01" value={v.salary} onChange={(e) => set({ salary: e.target.value })} /></Field>
+                            <Field label={tr('Currency')}><Select options={currencyOptions} value={currencyOptions.find((o) => o.value === v.salaryCurrencyId) || null} onChange={(o) => set({ salaryCurrencyId: o?.value || null })} /></Field>
+                            <Field label={tr('Paid on day')}><Input type="number" min="1" max="31" placeholder="10" value={v.payDay} onChange={(e) => set({ payDay: e.target.value })} /></Field>
+                            <Field label={tr('CNSS')}><div className="flex h-11 items-center gap-2"><Switcher checked={v.cnss} onChange={(c) => set({ cnss: c })} /><span className="text-sm text-gray-500">{v.cnss ? tr('Declared') : tr('Not declared')}</span></div></Field>
+                            <Field label={tr('RIB (bank account)')} className="col-span-2 md:col-span-4"><Input placeholder="000 000 0000000000000000 00" value={v.rib} onChange={(e) => set({ rib: e.target.value })} autoComplete="off" /></Field>
+                        </div>
+                    </Section>
+                )}
+
+                </>)}
+                {tab === 'docs' && (edit ? (
+                    <Section title={tr('Documents')}>
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <DocUpload memberId={member.id} kind="cv" label={tr('CV')} doc={member.cv} onChanged={onChanged} />
+                            <DocUpload memberId={member.id} kind="portfolio" label={tr('Portfolio file')} doc={member.portfolioFile} onChanged={onChanged} />
+                        </div>
+                    </Section>
+                ) : <div className="py-8 text-center text-sm text-gray-400">{tr('Create the member first, then upload the CV and portfolio here.')}</div>)}
             </div>
             <div className="mt-5 flex justify-end gap-2">
                 <Button onClick={onClose}>{tr('Cancel')}</Button>

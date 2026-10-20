@@ -10,7 +10,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import Tooltip from '@/components/ui/Tooltip'
 import { useSessionUser } from '@/store/authStore'
 import SalaryCard from './SalaryCard'
-import MemberDrawer from './MemberDrawer'
+import MemberDrawer, { DocUpload } from './MemberDrawer'
 import MemberAccessDrawer from './MemberAccessDrawer'
 import { useMemberActions, api as teamApi, notify as teamNotify } from './MemberActions'
 import ScoreRing from '@/components/crm/ScoreRing'
@@ -135,6 +135,36 @@ const StaffProfile = () => {
                             {m.email && m.lastLogin && ' - '}
                             {m.lastLogin && <>{tr('Last login')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</span></>}
                         </p>
+                    </section>
+                    <section className="pt-card">
+                        <h3>{tr('Employment')}</h3>
+                        <dl className="mb-3 space-y-1.5 text-sm">
+                            <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('Hire date')}</dt><dd className="font-semibold">{m.hireDate ? dayjs(m.hireDate).format('DD MMM YYYY') : '–'}</dd></div>
+                            {m.fireDate && <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('Fire date')}</dt><dd className="font-semibold text-red-500">{dayjs(m.fireDate).format('DD MMM YYYY')}</dd></div>}
+                            {canAdmin && <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('CNSS')}</dt><dd className="font-semibold">{m.cnss ? tr('Declared') : tr('Not declared')}</dd></div>}
+                            {canAdmin && (
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-gray-400">{tr('RIB')}</dt>
+                                    <dd className="flex min-w-0 items-center gap-2 font-semibold">
+                                        <span className="select-all truncate tracking-wide">{m.rib || '–'}</span>
+                                        {m.rib && <button type="button" className="shrink-0 text-xs font-semibold text-primary hover:underline" onClick={() => navigator.clipboard?.writeText(m.rib).then(() => teamNotify('success', tr('Copied')), () => {})}>{tr('Copy')}</button>}
+                                    </dd>
+                                </div>
+                            )}
+                        </dl>
+                        <div className="flex flex-col gap-2">
+                            {canEdit ? (
+                                <>
+                                    <DocUpload memberId={id} kind="cv" label={tr('CV')} doc={m.cv} onChanged={load} />
+                                    <DocUpload memberId={id} kind="portfolio" label={tr('Portfolio file')} doc={m.portfolioFile} onChanged={load} />
+                                </>
+                            ) : (
+                                <>
+                                    {m.cv && <a className="pt-act" href={m.cv.url} target="_blank" rel="noopener noreferrer">{tr('CV')} · {m.cv.name}</a>}
+                                    {m.portfolioFile && <a className="pt-act" href={m.portfolioFile.url} target="_blank" rel="noopener noreferrer">{tr('Portfolio file')} · {m.portfolioFile.name}</a>}
+                                </>
+                            )}
+                        </div>
                     </section>
                     {wh && <WorkChart wh={wh} />}
                 </div>

@@ -3900,5 +3900,8 @@ export default {
     "The fire date is before the hire date": "解雇日が入社日より前です",
     "Only a super administrator can change salary and bank details": "給与と銀行情報を変更できるのはスーパー管理者のみです",
     "The RIB must be 10 to 34 digits or letters": "RIBは10〜34桁の数字または英字にしてください",
-    "Choose CV or portfolio": "履歴書かポートフォリオを選んでください"
+    "Choose CV or portfolio": "履歴書かポートフォリオを選んでください",
+    "Create the member first, then upload the CV and portfolio here.": "先にメンバーを作成してから、ここで履歴書とポートフォリオをアップロードしてください。",
+    "Employment": "雇用情報",
+    "Pay and contract": "給与と契約"
 }

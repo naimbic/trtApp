@@ -3900,5 +3900,8 @@ export default {
     "The fire date is before the hire date": "تاريخ الفصل قبل تاريخ التوظيف",
     "Only a super administrator can change salary and bank details": "يمكن للمشرف الأعلى فقط تغيير الراتب والبيانات البنكية",
     "The RIB must be 10 to 34 digits or letters": "يجب أن يتكون الـ RIB من 10 إلى 34 رقمًا أو حرفًا",
-    "Choose CV or portfolio": "اختر السيرة الذاتية أو معرض الأعمال"
+    "Choose CV or portfolio": "اختر السيرة الذاتية أو معرض الأعمال",
+    "Create the member first, then upload the CV and portfolio here.": "أنشئ العضو أولًا ثم ارفع السيرة الذاتية ومعرض الأعمال هنا.",
+    "Employment": "التوظيف",
+    "Pay and contract": "الراتب والعقد"
 }

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.90.1',
+        date: '2026-10-20',
+        title: 'RIB, CV and portfolio now visible on the profile; popup in tabs',
+        items: ['Staff profile: a new Employment card under the left card shows the hire date (and fire date), CNSS and the RIB with a Copy button (super administrators), and the CV and portfolio file with Upload / Replace / remove right there.', 'The member popup now has three tabs, Profile, Pay and contract (hire / fire dates, salary, currency, pay day, CNSS, RIB) and Documents (CV and portfolio), so nothing is hidden below a long scroll.']
+    },
+    {
         version: '0.90.0',
         date: '2026-10-20',
         title: 'Team member form as a popup; salary, RIB, CNSS, hire / fire dates, CV and portfolio',

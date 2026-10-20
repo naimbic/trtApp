@@ -3900,5 +3900,8 @@ export default {
     "The fire date is before the hire date": "La date de départ est avant la date d'embauche",
     "Only a super administrator can change salary and bank details": "Seul un super administrateur peut modifier le salaire et les coordonnées bancaires",
     "The RIB must be 10 to 34 digits or letters": "Le RIB doit comporter de 10 à 34 chiffres ou lettres",
-    "Choose CV or portfolio": "Choisissez CV ou portfolio"
+    "Choose CV or portfolio": "Choisissez CV ou portfolio",
+    "Create the member first, then upload the CV and portfolio here.": "Créez d'abord le membre, puis téléversez ici le CV et le portfolio.",
+    "Employment": "Emploi",
+    "Pay and contract": "Paie et contrat"
 }

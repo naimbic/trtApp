@@ -384,7 +384,7 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
                         <DonutChart data={perf.byStatus} height={270} title={tr('Open')} />
                     </Panel>
                 ) : (
-                    <Panel title={tr('My completed tasks')} subtitle={<span><Delta cur={me.completed} prev={me.previous} /> {tr('vs previous {n} days', { n: days })}</span>}>
+                    <Panel title={tr('My completed tasks')} subtitle={<Delta cur={me.completed} prev={me.previous} />}>
                         <TrendChart type="area" labels={lbls} height={250} colors={[PALETTE.purple]} series={[{ name: tr('Completed'), data: series.mine }]} />
                     </Panel>
                 )}

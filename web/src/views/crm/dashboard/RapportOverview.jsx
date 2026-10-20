@@ -130,7 +130,7 @@ const RapportOverview = ({ data, inv, labels, series, currencyId, money, moneySh
     }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const delta = paidDelta
-    const badge = delta === null || delta === undefined ? null : { text: `${delta >= 0 ? '+' : '−'}${Math.abs(delta)}% ${tr('vs previous period')}`, tone: delta >= 0 ? 'pine' : 'tomato' }
+    const badge = delta === null || delta === undefined ? null : { text: `${delta >= 0 ? '+' : '−'}${Math.abs(delta)}%`, tone: delta >= 0 ? 'pine' : 'tomato' }
     const tileDate = (x) => (x.date ? `${x.kind === 'estimate' ? tr('Expires') : tr('Due')} ${dayjs(x.date).format('MMM D')}` : '')
     const paceLeft = outstanding
 

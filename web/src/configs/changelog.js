@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.92.1',
+        date: '2026-10-20',
+        title: 'Metrics show only the percentage',
+        items: ['The "vs previous period" / "vs previous 30 days" caption is gone from every metric: dashboard, lists, team dashboard, time report, expenses and the Overview badges now show only +45% or -45% (green or red as before). The dashed previous-period line in charts stays.']
+    },
+    {
         version: '0.92.0',
         date: '2026-10-20',
         title: 'Phone layout: filters in the menu, compact heads, simple footer',

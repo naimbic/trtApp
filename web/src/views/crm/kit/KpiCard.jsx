@@ -22,7 +22,7 @@ export const moneyChange = (trend, currencyId, metric, goodUp = true) => {
 }
 
 /** "+23%" in green or "-33%" in red (`goodUp` false for figures where less is better). Give either cur + prev, or the percent itself. */
-export const Delta = ({ cur, prev, pct, goodUp = true, label, className }) => {
+export const Delta = ({ cur, prev, pct, goodUp = true, className }) => {
     const p = pct !== undefined && pct !== null ? Number(pct) : cur === null || cur === undefined || prev === null || prev === undefined ? null : pctChange(cur, prev)
     if (p === null || !Number.isFinite(p)) return null
     const flat = p === 0, up = p > 0, good = flat ? null : up === goodUp
@@ -31,7 +31,7 @@ export const Delta = ({ cur, prev, pct, goodUp = true, label, className }) => {
             <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-bold tabular-nums', flat ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300' : good ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-red-50 text-red-500 dark:bg-red-500/15 dark:text-red-400')}>
                 {flat ? <TbMinus /> : up ? <TbTrendingUp /> : <TbTrendingDown />}{`${p > 0 ? '+' : p < 0 ? '-' : ''}${Math.abs(p)}%`}
             </span>
-            {label && <span className="text-xs text-gray-400">{label}</span>}
+            {/* only the percentage: the "vs previous period" caption was dropped on purpose */}
         </span>
     )
 }

@@ -3789,5 +3789,20 @@ export default {
     "Search": "Buscar",
     "Duplicate": "Duplicar",
     "Copy text": "Copiar texto",
-    "Delete this note?": "¿Eliminar esta nota?"
+    "Delete this note?": "¿Eliminar esta nota?",
+    "Done in 30 days": "Hechas en 30 días",
+    "Finished on time: {n}%": "Terminadas a tiempo: {n} %",
+    "Hours tracked (30 days)": "Horas registradas (30 días)",
+    "No score yet: nothing to measure in the last {n} days": "Aún sin puntuación: nada que medir en los últimos {n} días",
+    "Nothing completed yet": "Nada completado todavía",
+    "Nothing open": "Nada abierto",
+    "Of the finished tasks, the share done by the due date": "De las tareas terminadas, la parte hecha antes del vencimiento",
+    "Of the tasks due or finished in the last 30 days, the share that is complete": "De las tareas vencidas o terminadas en los últimos 30 días, la parte completada",
+    "Recently completed": "Completadas recientemente",
+    "Score {n}% · last {d} days": "Puntuación {n} % · últimos {d} días",
+    "Tasks completed: {n}%": "Tareas completadas: {n} %",
+    "The score is the average of the measures that have data.": "La puntuación es el promedio de las medidas que tienen datos.",
+    "Time tracked": "Tiempo registrado",
+    "Time tracked: {n}%": "Tiempo registrado: {n} %",
+    "Timer hours against 8 hours per working day; only counted when they use timers": "Horas del cronómetro frente a 8 horas por día laborable; solo cuenta si usan el cronómetro"
 }

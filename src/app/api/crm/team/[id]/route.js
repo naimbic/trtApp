@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server'
-import { updateMember } from '@/lib/crm/team'
+import { updateMember, getMember } from '@/lib/crm/team'
 import { errorResponse } from '@/lib/crm/crud'
+
+export async function GET(request, { params }) {
+    try {
+        const { id } = await params
+        return NextResponse.json(await getMember(id))
+    } catch (e) {
+        return errorResponse(e)
+    }
+}
 
 export async function PATCH(request, { params }) {
     try {

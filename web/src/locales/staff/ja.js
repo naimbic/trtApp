@@ -3789,5 +3789,20 @@ export default {
     "Search": "検索",
     "Duplicate": "複製",
     "Copy text": "テキストをコピー",
-    "Delete this note?": "このメモを削除しますか?"
+    "Delete this note?": "このメモを削除しますか?",
+    "Done in 30 days": "30日間の完了数",
+    "Finished on time: {n}%": "期限内に完了: {n}%",
+    "Hours tracked (30 days)": "記録時間(30日間)",
+    "No score yet: nothing to measure in the last {n} days": "スコアはまだありません。過去{n}日間に測定対象がありません",
+    "Nothing completed yet": "完了したものはまだありません",
+    "Nothing open": "未完了はありません",
+    "Of the finished tasks, the share done by the due date": "完了したタスクのうち、期限までに終えた割合",
+    "Of the tasks due or finished in the last 30 days, the share that is complete": "過去30日間に期限が来た、または完了したタスクのうち、完了した割合",
+    "Recently completed": "最近完了",
+    "Score {n}% · last {d} days": "スコア {n}% · 過去{d}日間",
+    "Tasks completed: {n}%": "完了したタスク: {n}%",
+    "The score is the average of the measures that have data.": "スコアは、データのある指標の平均です。",
+    "Time tracked": "記録時間",
+    "Time tracked: {n}%": "記録時間: {n}%",
+    "Timer hours against 8 hours per working day; only counted when they use timers": "タイマーの時間を1営業日8時間と比較。タイマーを使う場合のみ対象"
 }

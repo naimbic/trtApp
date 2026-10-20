@@ -3789,5 +3789,20 @@ export default {
     "Search": "بحث",
     "Duplicate": "تكرار",
     "Copy text": "نسخ النص",
-    "Delete this note?": "حذف هذه الملاحظة؟"
+    "Delete this note?": "حذف هذه الملاحظة؟",
+    "Done in 30 days": "المنجزة خلال 30 يومًا",
+    "Finished on time: {n}%": "أُنجزت في الوقت: {n}%",
+    "Hours tracked (30 days)": "الساعات المسجلة (30 يومًا)",
+    "No score yet: nothing to measure in the last {n} days": "لا توجد درجة بعد: لا شيء للقياس في آخر {n} يومًا",
+    "Nothing completed yet": "لا شيء مكتمل بعد",
+    "Nothing open": "لا شيء مفتوح",
+    "Of the finished tasks, the share done by the due date": "من المهام المنجزة، نسبة ما أُنجز قبل الموعد النهائي",
+    "Of the tasks due or finished in the last 30 days, the share that is complete": "من المهام المستحقة أو المنجزة خلال آخر 30 يومًا، نسبة المكتملة",
+    "Recently completed": "المكتملة مؤخرًا",
+    "Score {n}% · last {d} days": "الدرجة {n}% · آخر {d} يومًا",
+    "Tasks completed: {n}%": "المهام المكتملة: {n}%",
+    "The score is the average of the measures that have data.": "الدرجة هي متوسط المقاييس التي لها بيانات.",
+    "Time tracked": "الوقت المسجل",
+    "Time tracked: {n}%": "الوقت المسجل: {n}%",
+    "Timer hours against 8 hours per working day; only counted when they use timers": "ساعات المؤقت مقابل 8 ساعات لكل يوم عمل؛ تُحتسب فقط إذا استخدموا المؤقت"
 }

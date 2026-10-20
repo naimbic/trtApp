@@ -16,6 +16,7 @@ import PasswordInput from '@/components/shared/PasswordInput'
 import { useAuth } from '@/auth'
 import Alert from '@/components/ui/Alert'
 import ImageUpload from '@/components/crm/ImageUpload'
+import ScoreRing from '@/components/crm/ScoreRing'
 import { countryList } from '@/constants/countries.constant'
 import { useSessionUser } from '@/store/authStore'
 import { useAppSettings } from '@/store/appSettingsStore'
@@ -137,7 +138,7 @@ const Profile = () => {
             <Card bodyClass="p-0" className="mb-4 overflow-hidden">
                 <div className="h-28 bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 sm:h-32" />
                 <div className="flex flex-col gap-4 px-6 pb-5 sm:flex-row sm:items-end">
-                    <div className="-mt-14 sm:-mt-16"><ImageUpload url={u.image} name={fullName} size={112} uploadUrl="/api/crm/profile/avatar" onChange={onAvatar} /></div>
+                    <div className="-mt-14 sm:-mt-16"><ScoreRing score={data.score} size={128} width={6} badge><ImageUpload url={u.image} name={fullName} size={112} uploadUrl="/api/crm/profile/avatar" onChange={onAvatar} /></ScoreRing></div>
                     <div className="min-w-0 flex-1 sm:pb-1">
                         <h3 className="truncate">{fullName}</h3>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">

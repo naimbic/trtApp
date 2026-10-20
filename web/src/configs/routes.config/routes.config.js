@@ -54,6 +54,7 @@ const crmRoutes = [
         component: lazy(() => import('@/views/crm/team/Team')),
         authority: [],
     },
+    { key: 'crm.staff.view', path: '/crm/staff/:id', component: lazy(() => import('@/views/crm/team/StaffProfile')), authority: [] },
     {
         key: 'crm.roles',
         path: '/crm/roles',

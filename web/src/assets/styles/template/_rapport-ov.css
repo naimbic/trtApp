@@ -426,3 +426,13 @@
 .pj-tasks { display: inline-flex; align-items: center; gap: 4px; }
 .cx-card__health b { font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .pj-date { height: 36px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--rp-line, rgba(0,0,0,.12)); background: var(--rp-glass, transparent); color: var(--rp-muted); font-size: 13px; }
+
+/* score ring: the avatar inside a ring that fills with the member's score */
+.cx-ring { --p: 0; --sz: 44px; --w: 3px; --c: var(--rp-pine, #2f5c50); position: relative; display: inline-grid; place-items: center; flex: none; width: var(--sz); height: var(--sz); border-radius: 50%; background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--rp-well, #e8e5de) 0); }
+.cx-ring > span { display: grid; place-items: center; width: calc(var(--sz) - var(--w) * 2); height: calc(var(--sz) - var(--w) * 2); border-radius: 50%; background: var(--rp-float, #fff); overflow: hidden; }
+.cx-ring[data-tone="mid"] { --c: var(--rp-butter, #f2c94c); }
+.cx-ring[data-tone="low"] { --c: #e0533d; }
+.cx-ring[data-tone="none"] { --c: transparent; }
+.cx-ring > small { position: absolute; inset-block-end: -4px; inset-inline-end: -4px; padding: 0 6px; border-radius: 999px; background: var(--c); color: var(--rp-on-pine, #fff); font-size: 10px; font-weight: 800; line-height: 16px; }
+.cx-ring[data-tone="mid"] > small { color: var(--rp-on-butter, #17191a); }
+.cx-ring[data-tone="none"] > small { display: none; }

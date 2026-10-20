@@ -7,6 +7,7 @@ import { parseRolePermissions, toPermissionRows } from '@/lib/crm/rolePermission
 import { createAuthToken, signOutEverywhere } from '@/lib/crm/authTokens'
 import { webBaseUrl } from '@/lib/crm/account'
 import { sendMail, isMailConfigured } from '@/lib/mail'
+import { staffScores } from '@/lib/crm/staffScore'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -73,10 +74,25 @@ export async function listTeam({ search = '', status = 'all' } = {}) {
     }
     const rows = await withDepartments(await prisma.crmStaff.findMany({ where, include, orderBy: [{ active: 'desc' }, { firstName: 'asc' }] }))
     const all = await prisma.crmStaff.findMany({ select: { active: true, admin: true, userId: true } })
+    const scores = await staffScores(rows.map((r) => r.id)).catch(() => ({}))
     return {
-        members: rows.map(shape),
+        members: rows.map((r) => ({ ...shape(r), score: scores[r.id] || null })),
         stats: { total: all.length, active: all.filter((s) => s.active).length, inactive: all.filter((s) => !s.active).length, admins: all.filter((s) => s.admin && s.active).length, withLogin: all.filter((s) => s.userId).length },
     }
+}
+
+/** One member with their score and what they are working on (the staff profile page). */
+export async function getMember(id) {
+    await requirePermission('staff', 'view')
+    const row = await prisma.crmStaff.findUnique({ where: { id }, include })
+    if (!row) throw httpError('Member not found', 404)
+    await withDepartments(row)
+    const score = (await staffScores([id]))[id] || null
+    const links = await prisma.crmTaskAssigned.findMany({ where: { staffId: id }, select: { taskId: true } })
+    const tasks = links.length ? await prisma.crmTask.findMany({ where: { id: { in: links.map((l) => l.taskId) } }, select: { id: true, name: true, status: true, priority: true, dueDate: true, dateFinished: true }, take: 500 }) : []
+    const open = tasks.filter((t) => t.status !== 5).sort((a, b) => (+new Date(a.dueDate || 8.64e15)) - (+new Date(b.dueDate || 8.64e15))).slice(0, 10)
+    const done = tasks.filter((t) => t.status === 5).sort((a, b) => (+new Date(b.dateFinished || 0)) - (+new Date(a.dateFinished || 0))).slice(0, 6)
+    return { member: { ...shape(row), score }, open, done }
 }
 
 async function applyRolePermissions(staffId, roleId) {

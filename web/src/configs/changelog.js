@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.87.0',
+        date: '2026-10-20',
+        title: 'Score ring for team members; staff profile page',
+        items: ['Each team member now has a score ring around their picture, like the paid ring on a customer: the average of tasks completed (due or finished in the last 30 days), finished on time, and timer hours against 8 hours per working day (only when they use timers). Hover the ring to see each part; green from 75%, yellow from 50%, red below, no ring when there is nothing to measure.', 'The ring shows in the Team list and on your own profile.', 'New staff profile page (click a name in Team): the big ring, contact buttons, how the score is made, open tasks and recently completed tasks.']
+    },
+    {
         version: '0.86.7',
         date: '2026-10-19',
         title: 'Create menu really opens the popup',

@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StatTile } from '@/components/crm/ListHeader'
 import { TbUsers, TbCircleCheck, TbCircleOff, TbLogin } from 'react-icons/tb'
 import dayjs from 'dayjs'
-import { useLocation, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { TbPlus, TbSearch, TbPencil, TbHistory, TbKey, TbLockPassword, TbCopy, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
 import Avatar from '@/components/ui/Avatar'
+import ScoreRing from '@/components/crm/ScoreRing'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
@@ -249,9 +250,9 @@ const Team = () => {
                                 <Tr key={m.id}>
                                     <Td>
                                         <div className="flex items-center gap-3">
-                                            <Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar>
+                                            <ScoreRing score={m.score} size={44}><Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar></ScoreRing>
                                             <div className="min-w-0">
-                                                <div className="font-semibold heading-text">{m.name}</div>
+                                                <Link to={`/crm/staff/${m.id}`} className="font-semibold heading-text hover:underline">{m.name}</Link>
                                                 <div className="truncate text-xs text-gray-500">{m.email}{m.phone ? ` · ${m.phone}` : ''}</div>
                                             </div>
                                         </div>

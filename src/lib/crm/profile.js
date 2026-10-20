@@ -5,7 +5,7 @@ import { PermissionError, requirePermission, isCrmAdmin, getStaffId, hasCap } fr
 import { clearFailures } from '@/lib/crm/loginGuard'
 import { deliver, buildHtml, baseData } from '@/lib/crm/mailer'
 import { resolveImage, dropImage, MediaError } from '@/lib/media'
-
+import { staffScores } from '@/lib/crm/staffScore'
 const plain = (v) => JSON.parse(JSON.stringify(v))
 const fail = (message, status = 400) => { throw new PermissionError(message, status) }
 const clean = (v, max = 200) => String(v ?? '').trim().slice(0, max)
@@ -52,6 +52,7 @@ export async function getProfile() {
             bio: staff.bio || '', timezone: staff.timezone || '', defaultLanguage: staff.defaultLanguage || '', direction: staff.direction || 'ltr', emailSignature: staff.emailSignature || '',
             role: staff.role?.name || null, lastLogin: staff.lastLogin, departments,
         } : null,
+        score: staff ? ((await staffScores([staff.id]).catch(() => ({})))[staff.id] || null) : null,
         admin: isCrmAdmin(session.user.authority || []),
         canChangeEmail: hasCap(session.user.authority || [], 'profile', 'change_email'),
         preferences: mergePrefs(staff?.preferences),

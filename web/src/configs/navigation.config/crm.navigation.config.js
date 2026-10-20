@@ -46,7 +46,7 @@ const LAYOUT = {
         S('email', 'Email & spam', ['spam-filters', 'ticket-pipe-log', 'tracked-mails', 'mail-queue']),
     ],
     'Knowledge Base': ['help-center', 'kb-manage'],
-    Administration: ['staff', 'work-hours', 'roles', 'departments', S('comms', 'Communication', ['announcements', 'newsfeed']), 'modules'],
+    Administration: ['staff', 'work-hours', 'payroll', 'roles', 'departments', S('comms', 'Communication', ['announcements', 'newsfeed']), 'modules'],
     Setup: [
         'platform-settings', 'mails',
         S('finance', 'Finance', ['currencies', 'taxes', 'payment-modes', 'bank-accounts']),

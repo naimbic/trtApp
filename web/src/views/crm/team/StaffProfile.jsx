@@ -9,6 +9,7 @@ import Switcher from '@/components/ui/Switcher'
 import Dropdown from '@/components/ui/Dropdown'
 import Tooltip from '@/components/ui/Tooltip'
 import { useSessionUser } from '@/store/authStore'
+import SalaryCard from './SalaryCard'
 import MemberDrawer from './MemberDrawer'
 import MemberAccessDrawer from './MemberAccessDrawer'
 import { useMemberActions, api as teamApi, notify as teamNotify } from './MemberActions'
@@ -145,6 +146,7 @@ const StaffProfile = () => {
                         <Measure label={tr('Time tracked')} hint={tr('Timer hours against 8 hours per working day; only counted when they use timers')} v={p.hours ?? null} />
                         <p className="mt-3 text-xs text-gray-400">{tr('The score is the average of the measures that have data.')}</p>
                     </section>
+                    {canAdmin && <SalaryCard staffId={id} name={m.name} />}
                     {wh && (
                         <section className="pt-card">
                             <h3>{tr('Work hours, last 14 days')}<span className="text-sm font-semibold text-gray-500">{hm(wh.totals.active)} / {hm(wh.totals.expected)}{wh.totals.overtime > 0 ? ` · +${hm(wh.totals.overtime)}` : ''}</span></h3>

@@ -1349,5 +1349,12 @@
  "Thursday (hours)",
  "Friday (hours)",
  "Saturday (hours)",
- "Sunday (hours)"
+ "Sunday (hours)",
+ "Only a super administrator can see payroll",
+ "The salary must be a positive number",
+ "The pay day is a day of the month, 1 to 31",
+ "The first month must look like 2026-04",
+ "Enter the amount paid",
+ "Choose the month it is for",
+ "The payment date is not valid"
 ]

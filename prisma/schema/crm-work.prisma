@@ -508,3 +508,25 @@ model CrmWorkDay {
   @@index([day])
   @@map("crm_work_days")
 }
+
+/// A payment made to a team member: the monthly salary, a bonus, an advance... (payroll, super admins only)
+model CrmStaffPayment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  staffId    String   @db.ObjectId
+  /// the month it is for, YYYY-MM
+  month      String
+  amount     Float
+  currencyId String?  @db.ObjectId
+  paidDate   DateTime
+  /// salary | bonus | advance | other
+  kind       String   @default("salary")
+  method     String?
+  note       String?
+  addedBy    String?  @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([staffId])
+  @@index([month])
+  @@map("crm_staff_payments")
+}

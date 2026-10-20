@@ -46,6 +46,13 @@ model CrmStaff {
   /// staff.is_not_staff: 1 => external user (not counted as staff)
   isNotStaff              Boolean  @default(false)
   hourlyRate              Float    @default(0)
+  /// monthly salary (payroll, super admins only)
+  salary                  Float?
+  salaryCurrencyId        String?  @db.ObjectId
+  /// day of the month the salary is paid
+  payDay                  Int?
+  /// first month the salary is due (YYYY-MM)
+  salaryStart             String?
   twoFactorAuthEnabled    Boolean  @default(false)
   emailSignature          String?
   jobTitle                String?

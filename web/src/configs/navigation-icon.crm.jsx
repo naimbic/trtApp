@@ -33,7 +33,7 @@ export default {
     'nav.services': <PiHeadsetDuotone />, 'nav.predefined-replies': <PiChatTextDuotone />, 'nav.spam-filters': <PiProhibitDuotone />,
     'nav.ticket-pipe-log': <PiEnvelopeDuotone />, 'nav.tracked-mails': <PiPaperPlaneTiltDuotone />, 'nav.mail-queue': <PiTrayDuotone />,
     'nav.help-center': <PiBookOpenTextDuotone />, 'nav.kb-manage': <PiPencilLineDuotone />,
-    'nav.staff': <PiUsersFourDuotone />, 'nav.work-hours': <PiAlarmDuotone />, 'nav.roles': <PiShieldStarDuotone />, 'nav.departments': <PiTreeStructureDuotone />,
+    'nav.staff': <PiUsersFourDuotone />, 'nav.work-hours': <PiAlarmDuotone />, 'nav.payroll': <PiCoinsDuotone />, 'nav.roles': <PiShieldStarDuotone />, 'nav.departments': <PiTreeStructureDuotone />,
     'nav.announcements': <PiBellRingingDuotone />, 'nav.newsfeed': <PiNewspaperDuotone />, 'nav.modules': <PiPuzzlePieceDuotone />,
     'nav.platform-settings': <PiGearSixDuotone />, 'nav.mails': <PiAtDuotone />, 'nav.currencies': <PiCoinsDuotone />,
     'nav.taxes': <PiPercentDuotone />, 'nav.payment-modes': <PiCreditCardDuotone />, 'nav.bank-accounts': <PiBankDuotone />, 'nav.custom-fields': <PiTextboxDuotone />,

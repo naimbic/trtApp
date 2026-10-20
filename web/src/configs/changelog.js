@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.89.0',
+        date: '2026-10-20',
+        title: 'Salaries and payroll: what the team costs',
+        items: ['Staff profile: a new Salary & payments card (super administrators only) with the monthly salary, currency, pay day and first month due, the last months of the year as Paid / Partly paid / Late / To pay, a Pay button for an unpaid month, and the list of payments (salary, advance, bonus, other) that you can add, edit or delete.', 'New Payroll page in the Administration menu (super administrators only): monthly payroll, paid this month, paid this year, who is still to pay, a bar chart of the team cost by month (paid against due), and every member with this month\'s status and a Pay button. Amounts are shown in the default currency, converted with the currency rates.', 'A salary or an advance pays the salary of the month; a bonus or other payment counts as an extra cost.']
+    },
+    {
         version: '0.88.5',
         date: '2026-10-20',
         title: 'Staff card: role tag under the name, info at the bottom',

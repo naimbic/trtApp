@@ -118,6 +118,17 @@ export const GROUPS = {
                 sel('time_format', 'Time format', [['24', '24 hours (14:30)'], ['12', '12 hours (2:30 PM)']], { default: '24' }),
                 f('default_timezone', 'Default time zone', 'timezone'),
             ] },
+            { title: 'Working hours', desc: 'The working week the Work hours page measures against: hours per day, without the break. The time is the company clock above.', fields: [
+                f('work_start', 'Day starts at', 'text', { default: '09:00', hint: 'HH:MM, for example 09:00. Opening the CRM after this time plus the grace below counts as late.' }),
+                f('work_late_after', 'Grace before late (minutes)', 'number', { default: 15, min: 0, max: 240 }),
+                f('work_hours_mon', 'Monday (hours)', 'number', { default: 8, min: 0, max: 24 }),
+                f('work_hours_tue', 'Tuesday (hours)', 'number', { default: 8, min: 0, max: 24 }),
+                f('work_hours_wed', 'Wednesday (hours)', 'number', { default: 8, min: 0, max: 24 }),
+                f('work_hours_thu', 'Thursday (hours)', 'number', { default: 8, min: 0, max: 24 }),
+                f('work_hours_fri', 'Friday (hours)', 'number', { default: 8, min: 0, max: 24 }),
+                f('work_hours_sat', 'Saturday (hours)', 'number', { default: 4, min: 0, max: 24 }),
+                f('work_hours_sun', 'Sunday (hours)', 'number', { default: 0, min: 0, max: 24 }),
+            ] },
             { title: 'Language', fields: [
                 f('active_languages', 'Languages in use', 'languages', { default: 'english,french,spanish,japanese,arabic', options: LANGUAGES.map((l) => ({ value: l, label: l[0].toUpperCase() + l.slice(1) })), hint: 'Email templates exist in these languages only. Add a language and its templates are created from the English ones, ready to translate.' }),
                 sel('active_language', 'Default language', LANGUAGES.map((l) => [l, l[0].toUpperCase() + l.slice(1)]), { default: 'english' }),

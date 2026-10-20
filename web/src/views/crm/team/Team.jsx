@@ -278,7 +278,7 @@ const Team = () => {
                                             {!m.hasLogin && <Tooltip title={tr("No login account yet")}><Tag className="bg-amber-100 text-amber-700">{tr("No login")}</Tag></Tooltip>}
                                         </div>
                                     </Td>
-                                    <Td className="whitespace-nowrap text-gray-500">{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : tr("Never")}</Td>
+                                    <Td className="whitespace-nowrap text-gray-500">{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : tr("Never")}{m.lastActive && <div className="text-xs text-gray-400">{tr("Active")} {dayjs(m.lastActive).format('MMM D, HH:mm')}</div>}</Td>
                                     <Td>
                                         <div className="flex items-center justify-end gap-0.5">
                                             <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>

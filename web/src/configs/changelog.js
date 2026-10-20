@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.88.0',
+        date: '2026-10-20',
+        title: 'Work hours: who opens first, who stays, who works a lot',
+        items: ['While a team member really uses the CRM (tab visible, a click, key press or scroll in the last two minutes) the app records a heartbeat every minute: first time opened each day, last time active and active hours. Nothing outside the CRM is measured.', 'New Work hours page (Administration menu): everyone ranked by active hours for today, this week, last week, this month or 30 days, with days worked, hours against the working week, overtime, the time they usually open and leave, and late arrivals.', 'New Settings → Localization → Working hours: the day start time, a grace before late, and the hours for each day. Default: 8 hours Monday to Friday, 4 on Saturday, none on Sunday, starting at 09:00 on the company time zone.', 'The staff profile shows the last 14 days (opened, last active, active, expected); the Team list shows when each member was last active.']
+    },
+    {
         version: '0.87.1',
         date: '2026-10-20',
         title: 'Score rings on pictures across the app',

@@ -1336,5 +1336,18 @@
  "trtCRM",
  "userAgent",
  "Existing invoices",
- "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change."
+ "Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.",
+ "Works the most",
+ "Working hours",
+ "The working week the Work hours page measures against: hours per day, without the break. The time is the company clock above.",
+ "Day starts at",
+ "HH:MM, for example 09:00. Opening the CRM after this time plus the grace below counts as late.",
+ "Grace before late (minutes)",
+ "Monday (hours)",
+ "Tuesday (hours)",
+ "Wednesday (hours)",
+ "Thursday (hours)",
+ "Friday (hours)",
+ "Saturday (hours)",
+ "Sunday (hours)"
 ]

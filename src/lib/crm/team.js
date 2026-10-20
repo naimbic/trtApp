@@ -8,6 +8,7 @@ import { createAuthToken, signOutEverywhere } from '@/lib/crm/authTokens'
 import { webBaseUrl } from '@/lib/crm/account'
 import { sendMail, isMailConfigured } from '@/lib/mail'
 import { staffScores } from '@/lib/crm/staffScore'
+import { lastActiveMap } from '@/lib/crm/workHours'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -75,8 +76,9 @@ export async function listTeam({ search = '', status = 'all' } = {}) {
     const rows = await withDepartments(await prisma.crmStaff.findMany({ where, include, orderBy: [{ active: 'desc' }, { firstName: 'asc' }] }))
     const all = await prisma.crmStaff.findMany({ select: { active: true, admin: true, userId: true } })
     const scores = await staffScores(rows.map((r) => r.id)).catch(() => ({}))
+    const active = await lastActiveMap().catch(() => ({}))
     return {
-        members: rows.map((r) => ({ ...shape(r), score: scores[r.id] || null })),
+        members: rows.map((r) => ({ ...shape(r), score: scores[r.id] || null, lastActive: active[r.id] || null })),
         stats: { total: all.length, active: all.filter((s) => s.active).length, inactive: all.filter((s) => !s.active).length, admins: all.filter((s) => s.admin && s.active).length, withLogin: all.filter((s) => s.userId).length },
     }
 }

@@ -492,3 +492,19 @@ model CrmQuickNote {
   @@index([addedFrom])
   @@map("crm_quick_notes")
 }
+
+/// One row per team member per day (company time zone): when the CRM was first and last used that day and for how long they were active.
+model CrmWorkDay {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  staffId       String   @db.ObjectId
+  /// YYYY-MM-DD on the company clock
+  day           String
+  firstSeen     DateTime
+  lastSeen      DateTime
+  activeSeconds Int      @default(0)
+  pings         Int      @default(0)
+
+  @@unique([staffId, day])
+  @@index([day])
+  @@map("crm_work_days")
+}

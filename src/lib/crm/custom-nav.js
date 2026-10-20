@@ -9,6 +9,7 @@ export const customNavItems = [
     { group: 'Projects', key: 'scrum-board', title: 'Scrum board', path: '/crm/scrum-board', feature: 'tasks' },
     { group: 'Tasks', key: 'notes', title: 'Notes', path: '/crm/notes', feature: 'tasks' },
     { group: 'Tasks', key: 'tasks-board', title: 'Tasks board', path: '/crm/tasks-board', feature: 'tasks' },
+    { group: 'Administration', key: 'work-hours', title: 'Work hours', path: '/crm/work-hours', feature: 'staff' },
     { group: 'Setup', key: 'platform-settings', title: 'Settings', path: '/crm/settings', feature: 'settings' },
     { group: 'Setup', key: 'mails', title: 'Mails', path: '/crm/mails', feature: 'email_templates' },
     { group: 'Sales', key: 'purchase-orders', title: 'Purchase orders', path: '/crm/purchase-orders', feature: 'purchase_orders' },

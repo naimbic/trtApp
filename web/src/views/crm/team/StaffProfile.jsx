@@ -9,6 +9,7 @@ import Tag from '@/components/ui/Tag'
 import ScoreRing from '@/components/crm/ScoreRing'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import { api } from '../kit/api'
+import { hm, clock } from './WorkHours'
 import { tr } from '@/utils/t'
 
 const initials = (m) => (m.name || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase()
@@ -35,7 +36,9 @@ const StaffProfile = () => {
     const navigate = useNavigate()
     const [d, setD] = useState(null)
     const [error, setError] = useState('')
+    const [wh, setWh] = useState(null)
     useEffect(() => { api(`/api/crm/team/${id}`).then(setD).catch((e) => setError(e.message)) }, [id])
+    useEffect(() => { api(`/api/crm/work-hours?staffId=${id}&from=${dayjs().subtract(13, 'day').format('YYYY-MM-DD')}&to=${dayjs().format('YYYY-MM-DD')}`).then((x) => setWh(x.people?.[0] || null)).catch(() => setWh(null)) }, [id])
 
     if (error) return <Container><div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div></Container>
     if (!d) return <Container><div className="py-10 text-center text-gray-400">{tr('Loading…')}</div></Container>
@@ -86,6 +89,27 @@ const StaffProfile = () => {
                         <Measure label={tr('Time tracked')} hint={tr('Timer hours against 8 hours per working day; only counted when they use timers')} v={p.hours ?? null} />
                         <p className="mt-3 text-xs text-gray-400">{tr('The score is the average of the measures that have data.')}</p>
                     </section>
+                    {wh && (
+                        <section className="pt-card">
+                            <h3>{tr('Work hours, last 14 days')}<span className="text-sm font-semibold text-gray-500">{hm(wh.totals.active)} / {hm(wh.totals.expected)}{wh.totals.overtime > 0 ? ` · +${hm(wh.totals.overtime)}` : ''}</span></h3>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead><tr className="text-left text-xs text-gray-400"><th className="py-1 font-semibold">{tr('Day')}</th><th className="font-semibold">{tr('Opened')}</th><th className="font-semibold">{tr('Last active')}</th><th className="text-right font-semibold">{tr('Active')}</th><th className="text-right font-semibold">{tr('Expected')}</th></tr></thead>
+                                    <tbody>
+                                        {[...wh.rows].reverse().map((r) => (
+                                            <tr key={r.day} className="border-t border-gray-100 dark:border-gray-700">
+                                                <td className="py-1.5">{dayjs(r.day).format('ddd DD MMM')}</td>
+                                                <td className={r.late ? 'text-red-500' : ''}>{clock(r.first)}</td>
+                                                <td>{clock(r.last)}</td>
+                                                <td className={`text-right font-semibold ${r.hours > r.expected && r.expected >= 0 && r.hours > 0 ? 'text-amber-600' : ''}`}>{r.hours ? hm(r.hours) : '–'}</td>
+                                                <td className="text-right text-gray-400">{r.expected ? hm(r.expected) : '–'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    )}
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                         <section className="pt-card"><h3>{tr('Open tasks')}</h3>{d.open.length ? d.open.map((t) => <TaskRow key={t.id} t={t} />) : <div className="py-4 text-center text-sm text-gray-400">{tr('Nothing open')}</div>}</section>
                         <section className="pt-card"><h3>{tr('Recently completed')}</h3>{d.done.length ? d.done.map((t) => <TaskRow key={t.id} t={t} />) : <div className="py-4 text-center text-sm text-gray-400">{tr('Nothing completed yet')}</div>}</section>

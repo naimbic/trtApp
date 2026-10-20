@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import Dropdown from '@/components/ui/Dropdown'
 import { requestCreate } from '@/utils/createIntent'
+import useWorkTracker from '@/utils/useWorkTracker'
 import { TbActivity, TbChecklist, TbNotes, TbPlus } from 'react-icons/tb'
 import { tr } from '@/utils/t'
 import { magnetic } from '@/vendor/rapport/motion'
@@ -41,6 +42,7 @@ const RapportShell = ({ children }) => {
     const mode = useThemeStore((s) => s.mode)
     const authority = useSessionUser((s) => s.user.authority) || []
     const navigate = useNavigate()
+    useWorkTracker()
     const isAdmin = authority.includes('admin') || authority.includes('crm.admin')
     const canChat = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.chat.view')
     const hasTabs = usePageTabsStore((st) => !!st.tabs)

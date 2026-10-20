@@ -53,7 +53,9 @@ const googleLink = (v) => {
     const q = new URLSearchParams({ action: 'TEMPLATE', text: v.title || tr("Event"), dates: `${gDate(s, v.allDay)}/${gDate(end, v.allDay)}`, details, location: v.location || '' })
     return `https://calendar.google.com/calendar/render?${q}`
 }
-const jitsi = () => `https://meet.jit.si/TRT-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`
+// the company's own video server
+const MEET_HOST = 'https://meet.3a.ma'
+const jitsi = () => `${MEET_HOST}/TRT-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`
 
 const EMPTY = { category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
@@ -157,7 +159,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                             <Input placeholder={tr("https://meet.google.com/… or Zoom, Teams")} value={v.meetingUrl} onChange={(e) => set({ meetingUrl: e.target.value })} />
                             {!readOnly && <Button type="button" icon={<TbWand />} onClick={() => set({ meetingUrl: jitsi() })}>{tr("Create")}</Button>}
                         </div>
-                        {!readOnly && <p className="mt-1 text-xs text-gray-400"><b>{tr("Create")}</b> {tr("makes a free video room (Jitsi). For Google Meet use")} <a className="text-primary underline" href="https://meet.new" target="_blank" rel="noreferrer">{tr("meet.new")}</a> {tr("and paste the link.")}</p>}
+                        {!readOnly && <p className="mt-1 text-xs text-gray-400"><b>{tr("Create")}</b> {tr("makes a video room on meet.3a.ma. For Google Meet use")} <a className="text-primary underline" href="https://meet.new" target="_blank" rel="noreferrer">{tr("meet.new")}</a> {tr("and paste the link.")}</p>}
                     </FormItem>
                     <FormItem label={tr("Location")}><Input placeholder={tr("Office, address…")} value={v.location} onChange={(e) => set({ location: e.target.value })} /></FormItem>
                     <FormItem label={tr("Description")}><Input textArea rows={2} placeholder={tr("Agenda, notes…")} value={v.description} onChange={(e) => set({ description: e.target.value })} /></FormItem>

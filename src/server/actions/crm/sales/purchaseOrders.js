@@ -2,6 +2,7 @@
 
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
+import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, formatDocumentNumber } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
@@ -27,7 +28,8 @@ export async function getPurchaseOrderDefaults() {
 }
 
 export async function getPurchaseOrderDocument(id) {
-    await requirePermission('purchase_orders', 'view')
+    const session = await requirePermission('purchase_orders', 'view')
+    await assertDocVisible(session, 'purchase_order', id)
     const p = await prisma.crmPurchaseOrder.findUnique({ where: { id } })
     if (!p) return null
     const [items, client, currency, activity, invoice, estimate] = await Promise.all([
@@ -46,6 +48,7 @@ export async function getPurchaseOrderDocument(id) {
 export async function savePurchaseOrder(input) {
     const isNew = !input.id
     const session = await requirePermission('purchase_orders', isNew ? 'create' : 'edit')
+    if (!isNew) await assertDocVisible(session, 'purchase_order', input.id)
     const staffId = await getStaffId(session)
     if (!input.clientId) return fail('Client is required')
     const items = (input.items || []).filter((i) => String(i.description || '').trim())
@@ -84,6 +87,7 @@ export async function savePurchaseOrder(input) {
 /** action: markDraft | markSent | markConfirmed | markDelivered | markCancelled */
 export async function setPurchaseOrderState(id, action) {
     const session = await requirePermission('purchase_orders', 'edit')
+    await assertDocVisible(session, 'purchase_order', id)
     const staffId = await getStaffId(session)
     const p = await prisma.crmPurchaseOrder.findUnique({ where: { id } })
     if (!p) return fail('Purchase order not found')
@@ -96,7 +100,8 @@ export async function setPurchaseOrderState(id, action) {
 }
 
 export async function deletePurchaseOrder(id) {
-    await requirePermission('purchase_orders', 'delete')
+    const session = await requirePermission('purchase_orders', 'delete')
+    await assertDocVisible(session, 'purchase_order', id)
     const p = await prisma.crmPurchaseOrder.findUnique({ where: { id } })
     if (!p) return fail('Purchase order not found')
     if (p.invoiceId) return fail('This purchase order was invoiced. Delete the invoice first if you really need to remove it.')
@@ -113,6 +118,7 @@ export async function deletePurchaseOrder(id) {
 
 export async function convertPurchaseOrderToInvoice(id) {
     const session = await requirePermission('invoices', 'create')
+    await assertDocVisible(session, 'purchase_order', id)
     await requirePermission('purchase_orders', 'view')
     const staffId = await getStaffId(session)
     const p = await prisma.crmPurchaseOrder.findUnique({ where: { id } })
@@ -129,6 +135,7 @@ export async function convertPurchaseOrderToInvoice(id) {
 export async function purchaseOrderFromEstimate(estimateId) {
     const session = await requirePermission('purchase_orders', 'create')
     await requirePermission('estimates', 'view')
+    await assertDocVisible(session, 'estimate', estimateId)
     const staffId = await getStaffId(session)
     const e = await prisma.crmEstimate.findUnique({ where: { id: estimateId } })
     if (!e) return fail('Estimate not found')

@@ -3922,5 +3922,6 @@ export default {
     "To pay: {month}": "支払対象: {month}",
     "Salaries are paid after the month": "給与は月の終了後に支払う",
     "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "月は翌月1日から支払対象になり、その月の支払日に支払います(10月分は11月1日から、10日払い)。オフにすると当月を表示して支払います。",
-    "Inactive: switch on to edit this member": "無効:編集するにはオンにしてください"
+    "Inactive: switch on to edit this member": "無効:編集するにはオンにしてください",
+    "makes a video room on meet.3a.ma. For Google Meet use": "meet.3a.ma にビデオルームを作成します。Google Meet の場合は"
 }

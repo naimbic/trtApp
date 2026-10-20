@@ -303,15 +303,30 @@ export async function deleteRecord(key, id) {
 }
 
 /** Options for relation pickers: [{ value, label }] */
+// Names that every team member needs to fill in a form (who to assign, which currency, tax, status, department...). They carry no
+// private data, so any signed-in person may read them; the rest of the pickers follow the permission of what they list.
+const OPEN_PICKERS = new Set(['staff', 'currencies', 'taxes', 'payment-modes', 'departments', 'ticket-statuses', 'ticket-priorities', 'services', 'kb-groups', 'item-groups', 'customer-groups', 'lead-sources', 'lead-statuses', 'contract-types', 'expense-categories', 'countries'])
+
 export async function listOptions(key, { query = '', ids } = {}) {
     const resource = resolveResource(key)
-    const session = await requirePermission(resource.feature, 'view')
+    const session = await requirePermission(OPEN_PICKERS.has(resource.key) ? null : resource.feature, 'view')
     if (restricted(resource, session)) return []
-    const where = ids?.length
+    // "View own": the pickers offer only the records the person may open (a selection already made is always labelled)
+    let own = null
+    if (!ids?.length) {
+        try {
+            // customers follow the clients page: the ones the person is an admin of
+            own = resource.key === 'clients'
+                ? (viewScope(session.user.authority || [], 'customers') === 'all' ? null : await (await import('@/lib/crm/clientsApi')).scope(session))
+                : await ownWhere(resource, session, {})
+        } catch { return [] }
+    }
+    const base = ids?.length
         ? { id: { in: ids } }
         : query
           ? { [resource.titleField]: { contains: query, mode: 'insensitive' } }
           : {}
+    const where = own ? { AND: [base, own] } : base
     const rows = await delegate(resource).findMany({
         where,
         take: 25,

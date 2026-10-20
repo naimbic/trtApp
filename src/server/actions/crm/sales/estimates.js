@@ -3,6 +3,7 @@
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
+import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, formatDocumentNumber } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
@@ -30,7 +31,8 @@ export async function getEstimateDefaults() {
 }
 
 export async function getEstimateDocument(id) {
-    await requirePermission('estimates', 'view')
+    const session = await requirePermission('estimates', 'view')
+    await assertDocVisible(session, 'estimate', id)
     const e = await prisma.crmEstimate.findUnique({ where: { id } })
     if (!e) return null
     const [items, client, currency, comments, activity, invoice] = await Promise.all([
@@ -49,6 +51,7 @@ export async function getEstimateDocument(id) {
 export async function saveEstimate(input) {
     const isNew = !input.id
     const session = await requirePermission('estimates', isNew ? 'create' : 'edit')
+    if (!isNew) await assertDocVisible(session, 'estimate', input.id)
     const staffId = await getStaffId(session)
     if (!input.clientId) return fail('Client is required')
     const items = (input.items || []).filter((i) => String(i.description || '').trim())
@@ -89,6 +92,7 @@ export async function saveEstimate(input) {
 /** action: markDraft | markSent | markAccepted | markDeclined */
 export async function setEstimateState(id, action) {
     const session = await requirePermission('estimates', 'edit')
+    await assertDocVisible(session, 'estimate', id)
     const staffId = await getStaffId(session)
     const e = await prisma.crmEstimate.findUnique({ where: { id } })
     if (!e) return fail('Estimate not found')
@@ -102,7 +106,8 @@ export async function setEstimateState(id, action) {
 }
 
 export async function deleteEstimate(id) {
-    await requirePermission('estimates', 'delete')
+    const session = await requirePermission('estimates', 'delete')
+    await assertDocVisible(session, 'estimate', id)
     const e = await prisma.crmEstimate.findUnique({ where: { id } })
     if (!e) return fail('Estimate not found')
     if (e.invoiceId) return fail('This estimate was invoiced. Delete the invoice first if you really need to remove it.')
@@ -120,6 +125,7 @@ export async function deleteEstimate(id) {
 
 export async function convertEstimate(id) {
     const session = await requirePermission('invoices', 'create')
+    await assertDocVisible(session, 'estimate', id)
     await requirePermission('estimates', 'view')
     const staffId = await getStaffId(session)
     const e = await prisma.crmEstimate.findUnique({ where: { id } })
@@ -134,6 +140,7 @@ export async function convertEstimate(id) {
 
 export async function addEstimateComment(id, content) {
     const session = await requirePermission('estimates', 'edit')
+    await assertDocVisible(session, 'estimate', id)
     const staffId = await getStaffId(session)
     const text = String(content || '').trim().slice(0, 2000)
     if (!text) return fail('Write your reply first')
@@ -143,7 +150,9 @@ export async function addEstimateComment(id, content) {
 }
 
 export async function deleteEstimateComment(commentId) {
-    await requirePermission('estimates', 'edit')
+    const session = await requirePermission('estimates', 'edit')
+    const own = await prisma.crmEstimateComment.findUnique({ where: { id: commentId }, select: { estimateId: true } })
+    if (own?.estimateId) await assertDocVisible(session, 'estimate', own.estimateId)
     await prisma.crmEstimateComment.delete({ where: { id: commentId } }).catch(() => {})
     return { success: true }
 }

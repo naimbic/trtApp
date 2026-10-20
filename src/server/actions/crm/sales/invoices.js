@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
+import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
@@ -65,7 +66,7 @@ const clientBank = async (clientId) => (clientId ? (await prisma.crmClient.findU
 
 /** Lookups for the editor: taxes, currencies, payment modes. */
 export async function getInvoiceLookups() {
-    await requirePermission('invoices', 'view')
+    await requireAnySalesView() // the estimate, proposal and purchase order editors use these lookups too
     const [taxes, currencies, paymentModes] = await Promise.all([
         prisma.crmTax.findMany({ orderBy: { name: 'asc' } }),
         prisma.crmCurrency.findMany({ orderBy: { name: 'asc' } }),
@@ -84,7 +85,8 @@ export async function getInvoiceLookups() {
 
 /** Full invoice for the view/edit pages. */
 export async function getInvoiceDocument(id) {
-    await requirePermission('invoices', 'view')
+    const session = await requirePermission('invoices', 'view')
+    await assertDocVisible(session, 'invoice', id)
     const invoice = await prisma.crmInvoice.findUnique({ where: { id } })
     if (!invoice) return null
     const [items, payments, client, currency, activity] = await Promise.all([
@@ -135,6 +137,7 @@ export async function getInvoiceDocument(id) {
 export async function saveInvoice(input) {
     const isNew = !input.id
     const session = await requirePermission('invoices', isNew ? 'create' : 'edit')
+    if (!isNew) await assertDocVisible(session, 'invoice', input.id)
     const staffId = await getStaffId(session)
     if (!isNew) {
         const was = await prisma.crmInvoice.findUnique({ where: { id: input.id }, select: { status: true } })
@@ -239,6 +242,7 @@ export async function saveInvoice(input) {
 /** Record a payment and update the invoice status like Perfex. */
 export async function recordPayment(invoiceId, { amount, paymentModeId, paymentDate, note, transactionId } = {}) {
     const session = await requirePermission('payments', 'create')
+    await assertDocVisible(session, 'invoice', invoiceId)
     const staffId = await getStaffId(session)
 
     const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId } })
@@ -270,6 +274,7 @@ export async function deletePayment(paymentId, force = false) {
     const staffId = await getStaffId(session)
     const payment = await prisma.crmPayment.findUnique({ where: { id: paymentId } })
     if (!payment) return fail('Payment not found')
+    if (payment.invoiceId) await assertDocVisible(session, 'invoice', payment.invoiceId)
     const inv = payment.invoiceId ? await prisma.crmInvoice.findUnique({ where: { id: payment.invoiceId }, select: { status: true } }) : null
     const lock = lockProblem({ authority: session.user.authority || [], locked: inv?.status === INVOICE_STATUS.PAID, force, noun: 'payment of a paid invoice' })
     if (lock) return fail(lock)
@@ -289,6 +294,7 @@ export async function deletePayment(paymentId, force = false) {
 /** action: 'cancel' | 'uncancel' | 'markSent' | 'markUnpaid' (draft -> unpaid). */
 export async function setInvoiceState(invoiceId, action, force = false) {
     const session = await requirePermission('invoices', 'edit')
+    await assertDocVisible(session, 'invoice', invoiceId)
     const staffId = await getStaffId(session)
     const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId } })
     if (!invoice) return fail('Invoice not found')
@@ -329,6 +335,7 @@ const isCrmAdminAuth = (authority = []) => authority.includes('admin') || author
 /** Delete an invoice (one with payments only by an administrator, after confirming) (Perfex also removes its lines, taxes and activity). */
 export async function deleteInvoice(id, force = false) {
     const session = await requirePermission('invoices', 'delete')
+    await assertDocVisible(session, 'invoice', id)
     const invoice = await prisma.crmInvoice.findUnique({ where: { id } })
     if (!invoice) return fail('Invoice not found')
     const paymentCount = await prisma.crmPayment.count({ where: { invoiceId: id } })

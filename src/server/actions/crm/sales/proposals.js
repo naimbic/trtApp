@@ -2,6 +2,7 @@
 
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
+import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { calcDocument, formatDocumentNumber } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
@@ -37,7 +38,8 @@ export async function proposalPrefill(relType, relId) {
 }
 
 export async function getProposalDocument(id) {
-    await requirePermission('proposals', 'view')
+    const session = await requirePermission('proposals', 'view')
+    await assertDocVisible(session, 'proposal', id)
     const p = await prisma.crmProposal.findUnique({ where: { id } })
     if (!p) return null
     const [items, currency, comments, activity, invoice, estimate, client, lead] = await Promise.all([
@@ -58,6 +60,7 @@ export async function getProposalDocument(id) {
 export async function saveProposal(input) {
     const isNew = !input.id
     const session = await requirePermission('proposals', isNew ? 'create' : 'edit')
+    if (!isNew) await assertDocVisible(session, 'proposal', input.id)
     const staffId = await getStaffId(session)
     if (!String(input.subject || '').trim()) return fail('Subject is required')
     if (!['customer', 'lead'].includes(input.relType) || !/^[0-9a-f]{24}$/i.test(input.relId || '')) return fail('Choose the client or lead this proposal is for')
@@ -99,6 +102,7 @@ export async function saveProposal(input) {
 /** action: markDraft | markOpen | markSent | markRevised | markAccepted | markDeclined */
 export async function setProposalState(id, action) {
     const session = await requirePermission('proposals', 'edit')
+    await assertDocVisible(session, 'proposal', id)
     const staffId = await getStaffId(session)
     const p = await prisma.crmProposal.findUnique({ where: { id } })
     if (!p) return fail('Proposal not found')
@@ -111,7 +115,8 @@ export async function setProposalState(id, action) {
 }
 
 export async function deleteProposal(id) {
-    await requirePermission('proposals', 'delete')
+    const session = await requirePermission('proposals', 'delete')
+    await assertDocVisible(session, 'proposal', id)
     const p = await prisma.crmProposal.findUnique({ where: { id } })
     if (!p) return fail('Proposal not found')
     if (p.invoiceId) return fail('This proposal was invoiced. Delete the invoice first if you really need to remove it.')
@@ -127,6 +132,7 @@ export async function deleteProposal(id) {
 /** to: 'estimate' | 'invoice' */
 export async function convertProposal(id, to) {
     const session = await requirePermission(to === 'invoice' ? 'invoices' : 'estimates', 'create')
+    await assertDocVisible(session, 'proposal', id)
     await requirePermission('proposals', 'view')
     const staffId = await getStaffId(session)
     const p = await prisma.crmProposal.findUnique({ where: { id } })
@@ -142,6 +148,7 @@ export async function convertProposal(id, to) {
 
 export async function addProposalComment(id, content) {
     const session = await requirePermission('proposals', 'edit')
+    await assertDocVisible(session, 'proposal', id)
     const staffId = await getStaffId(session)
     const text = String(content || '').trim().slice(0, 2000)
     if (!text) return fail('Write your reply first')
@@ -151,7 +158,9 @@ export async function addProposalComment(id, content) {
 }
 
 export async function deleteProposalComment(commentId) {
-    await requirePermission('proposals', 'edit')
+    const session = await requirePermission('proposals', 'edit')
+    const own = await prisma.crmProposalComment.findUnique({ where: { id: commentId }, select: { proposalId: true } })
+    if (own?.proposalId) await assertDocVisible(session, 'proposal', own.proposalId)
     await prisma.crmProposalComment.delete({ where: { id: commentId } }).catch(() => {})
     return { success: true }
 }

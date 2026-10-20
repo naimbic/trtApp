@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.93.0',
+        date: '2026-10-20',
+        title: 'Permissions that really follow "View own"; meetings on meet.3a.ma',
+        items: ['Create meeting link now makes the room on https://meet.3a.ma instead of meet.jit.si.', 'Fixed: with "View own" a person could still open anyone\'s estimate, invoice, proposal, purchase order or contract by its link or PDF, edit it, delete it or add comments. Every one of those now checks that the document is theirs (the same rule as the lists), also the PDF / HTML views.', 'Fixed: a person with only the Estimates (or Proposals, Purchase orders, Credit notes, Expenses...) permission could not open the editor because its lookups required the Invoices permission. Any sales permission opens them now.', 'Fixed: form pickers were blocked or leaked: the customer picker listed every customer even with "View own" (it now offers only the customers you are assigned to, like the Customers page), while staff, currency, tax, payment mode, department, ticket status and similar pickers returned an empty list. Those name-only pickers are now open to every team member.', 'A permission changed from the member\'s access screen reaches the person\'s session within 5 seconds (it was 30).', 'New scripts/permissions-check.mjs: an automatic check of View own / View / no permission on estimates, invoices, proposals, purchase orders and contracts, creating an estimate and a changed permission; 67 checks, run it with the dev server up.', 'To let someone create estimates for a customer with "View own", assign them as an admin of that customer (or give them View on Customers).']
+    },
+    {
         version: '0.92.2',
         date: '2026-10-20',
         title: 'Event popup no longer closes when switching Client / Lead',

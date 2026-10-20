@@ -3922,5 +3922,6 @@ export default {
     "To pay: {month}": "للدفع: {month}",
     "Salaries are paid after the month": "تُدفع الرواتب بعد انتهاء الشهر",
     "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "يظهر الشهر مستحقًا من اليوم الأول من الشهر التالي ويُدفع في يوم الدفع من ذلك الشهر (أكتوبر في 1 نوفمبر ويُدفع في 10). عطّله لدفع الشهر الحالي وعرضه.",
-    "Inactive: switch on to edit this member": "غير نشط: فعّله لتعديل هذا العضو"
+    "Inactive: switch on to edit this member": "غير نشط: فعّله لتعديل هذا العضو",
+    "makes a video room on meet.3a.ma. For Google Meet use": "ينشئ غرفة فيديو على meet.3a.ma. لاستخدام Google Meet استعمل"
 }

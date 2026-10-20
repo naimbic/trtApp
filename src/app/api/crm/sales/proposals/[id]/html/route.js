@@ -3,13 +3,15 @@ import { requirePermission } from '@/lib/crm/permissions'
 import { loadProposalDoc, proposalHtmlDoc } from '@/lib/crm/proposalPublic'
 import { pdfSettings, paperCss } from '@/lib/crm/docStyle'
 import { PROPOSAL_CSS } from '@/lib/crm/proposalDoc'
+import { assertDocVisible } from '@/lib/crm/docAccess'
 import { errorResponse } from '@/lib/crm/crud'
 
 // Staff preview of the document exactly as the PDF will print it.
 export async function GET(_request, { params }) {
     try {
-        await requirePermission('proposals', 'view')
+        const session = await requirePermission('proposals', 'view')
         const { id } = await params
+        await assertDocVisible(session, 'proposal', id)
         const d = await loadProposalDoc(id, null, true)
         if (!d) return NextResponse.json({ error: 'Proposal not found' }, { status: 404 })
         const S = await pdfSettings('proposal')

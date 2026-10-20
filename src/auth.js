@@ -13,7 +13,7 @@ const socialDeps = {
     authorityOf: (user) => buildUserAuthority(user),
 }
 
-const SESSION_RECHECK_MS = 30 * 1000
+const SESSION_RECHECK_MS = 5 * 1000 // a changed permission reaches the person's session within seconds
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     trustHost: true,
@@ -54,7 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 return token
             }
 
-            // Re-check the account at most every 30s: honours "sign out everywhere", deactivation and
+            // Re-check the account at most every 5s: honours "sign out everywhere", deactivation and
             // permission changes without waiting for the user to sign in again.
             if (token.sub && (trigger === 'update' || !token.chk || Date.now() - token.chk > SESSION_RECHECK_MS)) {
                 const dbUser = await prisma.user.findUnique({ where: { id: token.sub } })

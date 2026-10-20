@@ -3922,5 +3922,6 @@ export default {
     "To pay: {month}": "Por pagar: {month}",
     "Salaries are paid after the month": "Los salarios se pagan después del mes",
     "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "Un mes pasa a pagar desde el día 1 del mes siguiente y se paga el día de pago de ese mes (octubre el 1 de noviembre, pagado el 10). Desactive para pagar y mostrar el mes actual.",
-    "Inactive: switch on to edit this member": "Inactivo: actívelo para editar a este miembro"
+    "Inactive: switch on to edit this member": "Inactivo: actívelo para editar a este miembro",
+    "makes a video room on meet.3a.ma. For Google Meet use": "crea una sala de vídeo en meet.3a.ma. Para Google Meet use"
 }

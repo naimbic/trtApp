@@ -125,7 +125,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     // the colours and steps of the popup: the stages of the board, the task's own one highlighted
     const stageOf = (id) => {
         const t = data.list.find((x) => x.id === id)
-        return { columns: STATUS.map((s) => ({ id: s.value, name: s.label, ...(s.custom ? { color: s.color } : { tone: TONE[s.value] }) })), currentId: t ? t.status : (drawer.preset?.status || 1), onPick: id && data.can.edit ? async (to) => { await moveTo({ id }, to); setDrawer((d) => ({ ...d, k: (d.k || 0) + 1 })) } : undefined }
+        return { columns: STATUS.map((s) => ({ id: s.value, name: s.label, ...(TONE[s.value] && !s.custom ? { tone: TONE[s.value] } : { color: s.color }) })), currentId: t ? t.status : (drawer.preset?.status || 1), onPick: id && data.can.edit ? async (to) => { await moveTo({ id }, to); setDrawer((d) => ({ ...d, k: (d.k || 0) + 1 })) } : undefined }
     }
     const remove = async (item) => { try { await api(`/api/crm/work/tasks/${item.id}`, { method: 'DELETE' }); notify('success', tr("Task deleted")); load() } catch (e) { notify('danger', e.message) } }
     const open = (id) => setDrawer((d) => ({ open: true, id: id || null, preset: null, k: d.k }))
@@ -187,7 +187,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         const all = columns[s.value] || []
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {
-                            id: s.value, name: s.label, ...(s.custom ? { color: s.color } : { tone: TONE[s.value] }), count: all.length,
+                            id: s.value, name: s.label, ...(TONE[s.value] && !s.custom ? { tone: TONE[s.value] } : { color: s.color }), count: all.length,
                             items: all.slice(0, limit).map((t) => ({ id: t.id, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, priority: t.priority, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, kicker: `${tr("Task")}${t.rel?.label ? ` · ${t.rel.label}` : ''}`,
                                 fields: [{ label: tr("Priority"), value: prioOf(t.priority).label }, { label: tr("Due"), value: fmtDate(t.dueDate) }, { label: tr("Related to"), value: t.rel?.label }, { label: tr("Checklist"), value: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : '' }],
                                 team: t.assignees, people: <People list={t.assignees} size={26} /> })),

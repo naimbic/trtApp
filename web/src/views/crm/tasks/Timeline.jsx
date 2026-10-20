@@ -8,7 +8,7 @@ import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
 import classNames from '@/utils/classNames'
 import { api } from '../kit/api'
-import { statusOf, initials, useTaskStatuses } from './shared'
+import { STATUS, statusOf, initials, useTaskStatuses } from './shared'
 import { tr } from '@/utils/t'
 
 const DAY = 86400000
@@ -74,7 +74,7 @@ const Timeline = () => {
             {model.rows.length > 0 && (
                 <>
                     <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
-                        {[1, 4, 3, 2, 5].map((s) => <span key={s} className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: statusOf(s).color }} />{statusOf(s).label}</span>)}
+                        {STATUS.map((st) => <span key={st.value} className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: st.color }} />{st.label}</span>)}
                         <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-red-500" />{tr('Overdue')}</span>
                     </div>
                     <div className="mt-3 flex overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">

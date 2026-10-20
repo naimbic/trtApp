@@ -530,3 +530,15 @@ model CrmStaffPayment {
   @@index([month])
   @@map("crm_staff_payments")
 }
+
+/// A task status (the board columns). The first five codes (1 not started, 2 awaiting feedback, 3 testing, 4 in progress, 5 complete)
+/// come with the app; 1, 4 and 5 are used by the app itself (new tasks, timers, completed) and cannot be deleted. New ones get the next code.
+model CrmTaskStatus {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  code        Int     @unique
+  name        String
+  color       String?
+  statusOrder Int     @default(0)
+
+  @@map("crm_task_statuses")
+}

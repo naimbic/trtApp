@@ -12,7 +12,7 @@ import cn from '@/utils/classNames'
 import { GROUPS, SECTIONS } from '@/lib/crm/settings/registry'
 import { api, notify, useCan } from '../kit/api'
 import { Field } from './fields'
-import { InvoiceFormatPanel, PayrollExpensesPanel, TaskStatusesPanel, ChannelsTestPanel, ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel, ResourceManager } from './panels'
+import { InvoiceFormatPanel, PayrollExpensesPanel, ChannelsTestPanel, ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel, ResourceManager } from './panels'
 import { MailServerSettings } from '../mail/Mails'
 import AiSettingsPanel from '../ai/AiSettingsPanel'
 import { refreshBranding } from '@/utils/hooks/useBranding'
@@ -21,7 +21,7 @@ import { tr } from '@/utils/t'
 const ICONS = { TbBrandWhatsapp, TbBuildingBank, TbAdjustmentsHorizontal, TbBuilding, TbWorld, TbMail, TbReceipt2, TbFileInvoice, TbFileDescription, TbPresentation, TbShoppingCart, TbReceiptRefund, TbRepeat, TbUsers, TbChecklist, TbLifebuoy, TbFilter, TbBrandGoogle, TbBellRinging, TbCalendar, TbSparkles, TbFileTypePdf, TbSignature, TbTags, TbClockPlay }
 
 // panel key -> resource key for the plain list managers
-const LISTS = { currencies: ['currencies', tr("The currencies you invoice in. Prefix puts the symbol before the amount, suffix after it.")], taxes: ['taxes', tr("The taxes you can add to document lines.")], ticketStatuses: ['ticket-statuses'], ticketPriorities: ['ticket-priorities'], departments: ['departments'], predefinedReplies: ['predefined-replies'], spamFilters: ['spam-filters'], leadStatuses: ['lead-statuses'], leadSources: ['lead-sources'], webToLead: ['web-to-lead'], tags: ['tags', tr("Tags can be attached to clients, leads, tasks and more.")] }
+const LISTS = { taskStatuses: ['task-statuses', tr("The columns of the Tasks board. Type to rename, pick a colour, drag to reorder, add a row for a new status. New tasks start as Not started; the app needs Not started, In progress and Complete, so those cannot be deleted. Deleting another one sends its tasks back to Not started.")], currencies: ['currencies', tr("The currencies you invoice in. Prefix puts the symbol before the amount, suffix after it.")], taxes: ['taxes', tr("The taxes you can add to document lines.")], ticketStatuses: ['ticket-statuses'], ticketPriorities: ['ticket-priorities'], departments: ['departments'], predefinedReplies: ['predefined-replies'], spamFilters: ['spam-filters'], leadStatuses: ['lead-statuses'], leadSources: ['lead-sources'], webToLead: ['web-to-lead'], tags: ['tags', tr("Tags can be attached to clients, leads, tasks and more.")] }
 
 const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'ai') return <AiSettingsPanel />
@@ -30,7 +30,6 @@ const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'channelsTest') return <ChannelsTestPanel />
     if (name === 'invoiceFormatApply') return <InvoiceFormatPanel />
     if (name === 'payrollExpensesApply') return <PayrollExpensesPanel />
-    if (name === 'taskStatuses') return <TaskStatusesPanel />
     if (name === 'companyFormat') return <FormatPanel kind="company" fieldKey="company_info_format" values={values} setValue={setValue} />
     if (name === 'customerFormat') return <FormatPanel kind="client" fieldKey="customer_info_format" values={values} setValue={setValue} customFields={ctx.customFields} />
     if (name === 'emailDesign') return <EmailDesignPanel values={values} setValue={setValue} />

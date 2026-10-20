@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.95.0',
+        date: '2026-10-20',
+        title: 'Task statuses as a free list, like the lead statuses',
+        items: ['Settings → Tasks → Statuses is now the same free list as the lead statuses: type a name to rename, pick a colour, drag to reorder, add a row for a brand new status, delete the ones you do not need. It replaces the five fixed rows of 0.94.0.', 'New statuses become columns of the Tasks board and appear in the list, the task page and popup, the calendar menu, the timeline, the dashboard and the client portal.', 'Not started (new tasks), In progress (set when a timer starts) and Complete (finished) are needed by the app, so they can be renamed, recoloured and moved but not deleted. Deleting any other status sends its tasks back to Not started.']
+    },
+    {
         version: '0.94.0',
         date: '2026-10-20',
         title: 'Rename and recolour task statuses',

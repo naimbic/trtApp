@@ -256,6 +256,22 @@ const resources = [
         hidden: true,
     },
     {
+        key: 'task-statuses', lookup: { orderField: 'statusOrder', colorField: 'color' },
+        model: 'crmTaskStatus', label: 'Task status', plural: 'Task statuses', group: 'Tasks', icon: 'TbListDetails', nav: false,
+        writeFeature: 'settings', titleField: 'name', search: ['name'], defaultSort: { statusOrder: 'asc' },
+        columns: [
+            { key: 'name', label: 'Name', type: 'text', link: true },
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'statusOrder', label: 'Order', type: 'number' },
+        ],
+        fields: [
+            { key: 'name', label: 'Name', type: 'text', required: true, section: 'General' },
+            { key: 'color', label: 'Color', type: 'color', section: 'General' },
+            { key: 'statusOrder', label: 'Order', type: 'number', section: 'General' },
+        ],
+        filters: [],
+    },
+    {
         key: 'tasks',
         nav: false, // the board page (Tasks board) is the same screen
         model: 'crmTask',

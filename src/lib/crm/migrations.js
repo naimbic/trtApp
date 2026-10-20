@@ -137,3 +137,8 @@ export async function splitAdmins() {
     }
     await prisma.crmOption.create({ data: { name: MARK3, value: new Date().toISOString() } })
 }
+
+/** The five task statuses that come with the app, created once so the list in Settings is never empty. Safe to run on every start. */
+export async function seedTaskStatuses() {
+    await (await import('@/lib/crm/taskStatuses')).ensureTaskStatuses()
+}

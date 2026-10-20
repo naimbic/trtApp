@@ -1,4 +1,5 @@
 import { realPicture } from '@/lib/crm/pictures'
+import { getTaskStatuses } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
@@ -10,6 +11,9 @@ const COMPLETE = 5
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const NONE = '000000000000000000000000'
+
+/** The codes of every task status (the five that come with the app plus the ones added in Settings). */
+async function statusCodes() { return new Set((await getTaskStatuses()).map((x) => x.value)) }
 
 async function access(session) {
     const authority = session.user.authority || []
@@ -117,7 +121,8 @@ export async function listTasks(p = {}) {
     const from = day(p.from), to = day(p.to)
     if (from || to) and.push({ AND: [{ [field]: { not: null } }, { [field]: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(+to + 86400000) } : {}) } }] })
     if (p.noDate === '1') and.push({ [field]: null })
-    const statuses = String(p.statuses || '').split(',').map((x) => parseInt(x, 10)).filter((x) => [1, 2, 3, 4, 5].includes(x))
+    const valid = await statusCodes()
+    const statuses = String(p.statuses || '').split(',').map((x) => parseInt(x, 10)).filter((x) => valid.has(x))
     if (statuses.length) and.push({ status: { in: statuses } })
     if (p.unassigned === '1') and.push({ assignees: { none: {} }, status: { not: COMPLETE } })
     if (p.overdue === '1') and.push({ AND: [{ dueDate: { not: null } }, { dueDate: { lt: day(p.today) || day(new Date().toISOString().slice(0, 10)) } }], status: { not: COMPLETE } })
@@ -195,7 +200,8 @@ export async function saveTask(body, id) {
     // platform defaults for a new task (Settings → Tasks); an explicit value always wins
     const S = id ? null : await readSettings(NEW_TASK_KEYS)
     const prio = [1, 2, 3, 4].includes(+body.priority) ? +body.priority : [1, 2, 3, 4].includes(S?.num('default_task_priority')) ? S.num('default_task_priority') : 2
-    const status = [1, 2, 3, 4, 5].includes(+body.status) ? +body.status : [1, 2, 3, 4, 5].includes(S?.num('default_task_status')) ? S.num('default_task_status') : 1
+    const valid = await statusCodes()
+    const status = valid.has(+body.status) ? +body.status : valid.has(S?.num('default_task_status')) ? S.num('default_task_status') : 1
     if (body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date')
     const data = {
         name, description: body.description ?? null, priority: prio, status,
@@ -265,7 +271,7 @@ export async function moveTask(id, { status, order }) {
     const session = await requirePermission('tasks', 'edit')
     const a = await access(session)
     const t = await loadOne(id, a)
-    const st = [1, 2, 3, 4, 5].includes(+status) ? +status : t.status
+    const st = (await statusCodes()).has(+status) ? +status : t.status
     if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
     if (st === COMPLETE && t.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) }
     await prisma.crmTask.update({ where: { id }, data: { status: st, kanbanOrder: Number.isFinite(+order) ? Math.round(+order) : t.kanbanOrder, dateFinished: st === COMPLETE ? t.dateFinished || new Date() : null } })
@@ -276,7 +282,7 @@ export async function moveTask(id, { status, order }) {
 export async function reorderTasks(status, ids) {
     const session = await requirePermission('tasks', 'edit')
     const a = await access(session)
-    const st = [1, 2, 3, 4, 5].includes(+status) ? +status : null
+    const st = (await statusCodes()).has(+status) ? +status : null
     if (!st || !Array.isArray(ids)) throw fail('Bad request')
     const where = await visibleWhere(a)
     let denied = 0, blocked = 0

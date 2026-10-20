@@ -200,6 +200,7 @@ async function ownerFilter(resource, session) {
 
 export async function listRecords(key, params = {}) {
     const resource = resolveResource(key)
+    if (resource.key === 'task-statuses') await (await import('@/lib/crm/taskStatuses')).ensureTaskStatuses()
     const session = await requirePermission(resource.feature, 'view')
     const page = Math.max(parseInt(params.pageIndex || '1', 10), 1)
     const size = Math.min(Math.max(parseInt(params.pageSize || '10', 10), 1), 200)
@@ -246,6 +247,16 @@ const audit = async (session, resource, action, id, label) => {
     }
 }
 
+// Server-side rules of a few lookup lists (kept here, not in the resource config, because that config is shared with the browser).
+//   beforeCreate(data)  fills what the person cannot type   lockDelete(row) -> text when it must not be deleted   afterDelete(row)  tidies what pointed at it
+const HOOKS = {
+    'task-statuses': {
+        beforeCreate: async (data) => { const { nextCode } = await import('@/lib/crm/taskStatusesCalc'); data.code = nextCode((await prisma.crmTaskStatus.findMany({ select: { code: true } })).map((r) => r.code)) },
+        lockDelete: async (row) => (await import('@/lib/crm/taskStatusesCalc')).deleteBlock(row.code),
+        afterDelete: async (row) => (await import('@/lib/crm/taskStatuses')).moveTasksFrom(row.code),
+    },
+}
+
 /** A resource with `exclusive: 'isDefault'` has one default: choosing it clears the others. */
 async function onlyOne(resource, row) {
     const k = resource.exclusive
@@ -254,6 +265,7 @@ async function onlyOne(resource, row) {
 
 export async function createRecord(key, body) {
     const resource = resolveResource(key)
+    if (resource.key === 'task-statuses') await (await import('@/lib/crm/taskStatuses')).ensureTaskStatuses()
     if (resource.readOnly) throw new PermissionError('Read only', 405)
     const session = await requirePermission(resource.writeFeature || resource.feature, 'create')
     rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
@@ -265,6 +277,7 @@ export async function createRecord(key, body) {
     // resources whose author column is not `addedFrom` (e.g. ticket replies -> adminId)
     if (resource.staffField && !data[resource.staffField]) data[resource.staffField] = await getStaffId(session)
     if (restricted(resource, session) && resource.privateField) data[resource.privateField] = await getStaffId(session)
+    await HOOKS[resource.key]?.beforeCreate?.(data)
     const row = await delegate(resource).create({ data })
     await onlyOne(resource, row)
     await audit(session, resource, 'Created', row.id, row[resource.titleField])
@@ -296,8 +309,11 @@ export async function deleteRecord(key, id) {
     const row = await getRecord(key, id)
     const locked = resource.lock?.(row)
     if (locked) throw new PermissionError(locked, 409)
+    const blocked = await HOOKS[resource.key]?.lockDelete?.(row)
+    if (blocked) throw new PermissionError(blocked, 409)
     for (const c of resource.cascade || []) await prisma[c.model].deleteMany({ where: { [c.fk]: id } }) // rows that only point at this one go with it
     await delegate(resource).delete({ where: { id } })
+    await HOOKS[resource.key]?.afterDelete?.(row)
     await audit(session, resource, 'Deleted', id, row[resource.titleField])
     return { id }
 }

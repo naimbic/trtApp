@@ -3932,5 +3932,8 @@ export default {
     "Task statuses": "Estados de las tareas",
     "Rename the five statuses and pick their colours. The board columns, the list, the calendar, the timeline and the dashboard follow. Existing tasks keep their status.": "Cambie el nombre de los cinco estados y elija sus colores. El tablero, la lista, el calendario, la cronología y el panel los siguen. Las tareas existentes conservan su estado.",
     "A status colour must look like #3b82f6": "El color de un estado debe verse como #3b82f6",
-    "Two statuses cannot have the same name": "Dos estados no pueden tener el mismo nombre"
+    "Two statuses cannot have the same name": "Dos estados no pueden tener el mismo nombre",
+    "The columns of the Tasks board. Type to rename, pick a colour, drag to reorder, add a row for a new status. New tasks start as Not started; the app needs Not started, In progress and Complete, so those cannot be deleted. Deleting another one sends its tasks back to Not started.": "Las columnas del tablero de tareas. Escriba para renombrar, elija un color, arrastre para reordenar, añada una fila para un estado nuevo. Las tareas nuevas empiezan como «No iniciada»; la aplicación necesita No iniciada, En curso y Completa, que no se pueden eliminar. Eliminar otro estado devuelve sus tareas a «No iniciada».",
+    "This status is used by the app (new tasks, timers, finished tasks) and cannot be deleted. Rename or recolour it instead.": "Este estado lo usa la aplicación (tareas nuevas, cronómetros, tareas terminadas) y no se puede eliminar. Cámbiele el nombre o el color.",
+    "The columns of the Tasks board and the names you see on every task.": "Las columnas del tablero de tareas y los nombres que ve en cada tarea."
 }

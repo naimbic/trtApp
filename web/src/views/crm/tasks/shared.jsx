@@ -1,38 +1,32 @@
 import Avatar from '@/components/ui/Avatar'
 import StaffRing from '@/components/crm/StaffRing'
 import dayjs from 'dayjs'
+import { useEffect } from 'react'
 import { create } from 'zustand'
 import { tr } from '@/utils/t'
 
-// The five status codes are fixed (they are stored on every task); each one can be renamed and recoloured in Settings -> Tasks.
-// STATUS is changed in place when those settings arrive, and useTaskStatuses() makes a screen draw again when it happens.
+// The five statuses that come with the app (codes 1-5, stored on every task) plus any added in Settings -> Tasks -> Statuses.
+// STATUS is replaced in place when that list arrives, and useTaskStatuses() makes a screen draw again when it happens.
 const DEFAULT_STATUS = [
-    { value: 1, label: tr("Not started"), color: '#9ca3af' },
-    { value: 4, label: tr("In progress"), color: '#3b82f6' },
-    { value: 3, label: tr("Testing"), color: '#8b5cf6' },
-    { value: 2, label: tr("Awaiting feedback"), color: '#f59e0b' },
-    { value: 5, label: tr("Complete"), color: '#10b981' },
+    { value: 1, en: 'Not started', label: tr("Not started"), color: '#9ca3af' },
+    { value: 4, en: 'In progress', label: tr("In progress"), color: '#3b82f6' },
+    { value: 3, en: 'Testing', label: tr("Testing"), color: '#8b5cf6' },
+    { value: 2, en: 'Awaiting feedback', label: tr("Awaiting feedback"), color: '#f59e0b' },
+    { value: 5, en: 'Complete', label: tr("Complete"), color: '#10b981' },
 ]
-export const STATUS = DEFAULT_STATUS.map((s) => ({ ...s, custom: false }))
+export const STATUS = DEFAULT_STATUS.map((s) => ({ value: s.value, label: s.label, color: s.color, custom: false }))
 const useStatusVersion = create(() => ({ v: 0 }))
 export const applyTaskStatuses = (list = []) => {
-    for (const s of list) {
-        const t = STATUS.find((x) => x.value === +s.value), d = DEFAULT_STATUS.find((x) => x.value === +s.value)
-        if (!t || !d) continue
-        t.label = s.custom && s.name !== d.label ? s.name : d.label
-        t.color = s.color || d.color
-        t.custom = !!s.custom
-    }
+    if (!list.length) return
+    STATUS.splice(0, STATUS.length, ...list.map((s) => {
+        const d = DEFAULT_STATUS.find((x) => x.value === +s.value)
+        return { value: +s.value, label: d && s.name === d.en ? d.label : s.name, color: s.color || d?.color || '#9ca3af', custom: !d || !!s.custom }
+    }))
     useStatusVersion.setState((st) => ({ v: st.v + 1 }))
 }
-let statusLoad = null
-export const loadTaskStatuses = (force = false) => {
-    if (statusLoad && !force) return statusLoad
-    statusLoad = fetch('/api/crm/work/task-statuses', { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.statuses) applyTaskStatuses(d.statuses) }).catch(() => { statusLoad = null })
-    return statusLoad
-}
-/** Call at the top of a screen that prints task statuses: loads the names and colours once and redraws when they arrive. */
-export const useTaskStatuses = () => { useStatusVersion((s) => s.v); loadTaskStatuses() }
+export const loadTaskStatuses = () => fetch('/api/crm/work/task-statuses', { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.statuses) applyTaskStatuses(d.statuses) }).catch(() => {})
+/** Call at the top of a screen that prints task statuses: reads the list when the screen opens and redraws when it arrives. */
+export const useTaskStatuses = () => { useStatusVersion((s) => s.v); useEffect(() => { loadTaskStatuses() }, []) }
 export const taskColorByName = (name) => STATUS.find((s) => s.label === name)?.color
 /** A soft tint of a status colour (pills, chips). */
 export const statusPillStyle = (v) => { const c = statusOf(v).color; return { background: `${c}26`, color: c } }

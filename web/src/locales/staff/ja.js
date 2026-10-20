@@ -3932,5 +3932,8 @@ export default {
     "Task statuses": "タスクのステータス",
     "Rename the five statuses and pick their colours. The board columns, the list, the calendar, the timeline and the dashboard follow. Existing tasks keep their status.": "5つのステータスの名前と色を変更できます。ボード、リスト、カレンダー、タイムライン、ダッシュボードに反映されます。既存のタスクのステータスは変わりません。",
     "A status colour must look like #3b82f6": "ステータスの色は #3b82f6 の形式にしてください",
-    "Two statuses cannot have the same name": "同じ名前のステータスは作れません"
+    "Two statuses cannot have the same name": "同じ名前のステータスは作れません",
+    "The columns of the Tasks board. Type to rename, pick a colour, drag to reorder, add a row for a new status. New tasks start as Not started; the app needs Not started, In progress and Complete, so those cannot be deleted. Deleting another one sends its tasks back to Not started.": "タスクボードの列です。入力して名前を変更、色を選択、ドラッグで並べ替え、行を追加して新しいステータスを作成できます。新しいタスクは「未着手」から始まります。アプリは「未着手」「進行中」「完了」を必要とするため、これらは削除できません。他のステータスを削除すると、そのタスクは「未着手」に戻ります。",
+    "This status is used by the app (new tasks, timers, finished tasks) and cannot be deleted. Rename or recolour it instead.": "このステータスはアプリが使用している(新規タスク、タイマー、完了タスク)ため削除できません。名前や色を変更してください。",
+    "The columns of the Tasks board and the names you see on every task.": "タスクボードの列と、各タスクに表示される名前です。"
 }

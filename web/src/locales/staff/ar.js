@@ -3932,5 +3932,8 @@ export default {
     "Task statuses": "حالات المهام",
     "Rename the five statuses and pick their colours. The board columns, the list, the calendar, the timeline and the dashboard follow. Existing tasks keep their status.": "أعد تسمية الحالات الخمس واختر ألوانها. تتبعها اللوحة والقائمة والتقويم والجدول الزمني ولوحة التحكم. تحتفظ المهام الحالية بحالتها.",
     "A status colour must look like #3b82f6": "يجب أن يكون لون الحالة بصيغة #3b82f6",
-    "Two statuses cannot have the same name": "لا يمكن أن يحمل حالتان الاسم نفسه"
+    "Two statuses cannot have the same name": "لا يمكن أن يحمل حالتان الاسم نفسه",
+    "The columns of the Tasks board. Type to rename, pick a colour, drag to reorder, add a row for a new status. New tasks start as Not started; the app needs Not started, In progress and Complete, so those cannot be deleted. Deleting another one sends its tasks back to Not started.": "أعمدة لوحة المهام. اكتب لإعادة التسمية، اختر لونًا، اسحب لإعادة الترتيب، وأضف صفًا لحالة جديدة. تبدأ المهام الجديدة بحالة «لم تبدأ»؛ يحتاج التطبيق إلى «لم تبدأ» و«قيد التنفيذ» و«مكتملة» لذا لا يمكن حذفها. حذف حالة أخرى يعيد مهامها إلى «لم تبدأ».",
+    "This status is used by the app (new tasks, timers, finished tasks) and cannot be deleted. Rename or recolour it instead.": "تستخدم هذه الحالة في التطبيق (المهام الجديدة والمؤقتات والمهام المنتهية) ولا يمكن حذفها. أعد تسميتها أو غيّر لونها.",
+    "The columns of the Tasks board and the names you see on every task.": "أعمدة لوحة المهام والأسماء التي تراها على كل مهمة."
 }

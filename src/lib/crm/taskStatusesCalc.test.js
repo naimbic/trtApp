@@ -1,27 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mergeTaskStatuses, cleanTaskStatuses, TASK_STATUS_DEFAULTS } from './taskStatusesCalc.js'
+import { nextCode, deleteBlock, shapeStatuses, TASK_STATUS_DEFAULTS } from './taskStatusesCalc.js'
 
-test('nothing saved: the five defaults in board order', () => {
-    const list = mergeTaskStatuses(null)
-    assert.deepEqual(list.map((s) => s.value), [1, 4, 3, 2, 5])
-    assert.equal(list[0].name, 'Not started')
-    assert.ok(list.every((s) => !s.custom))
+test('a new status takes the next free code, never below 6', () => {
+    assert.equal(nextCode([]), 6)
+    assert.equal(nextCode([1, 2, 3, 4, 5]), 6)
+    assert.equal(nextCode([1, 2, 3, 4, 5, 6, 9]), 10)
 })
 
-test('a saved name and colour replace the default, the rest keep theirs', () => {
-    const list = mergeTaskStatuses(JSON.stringify({ 4: { name: 'Doing', color: '#FF0000' }, 5: { name: '   ', color: 'nope' } }))
-    assert.equal(list.find((s) => s.value === 4).name, 'Doing')
-    assert.equal(list.find((s) => s.value === 4).color, '#ff0000')
-    assert.equal(list.find((s) => s.value === 5).name, TASK_STATUS_DEFAULTS[5].name)
-    assert.equal(list.find((s) => s.value === 5).color, TASK_STATUS_DEFAULTS[5].color)
+test('the statuses the app relies on cannot be deleted', () => {
+    for (const code of [1, 4, 5]) assert.ok(deleteBlock(code))
+    for (const code of [2, 3, 6, 12]) assert.equal(deleteBlock(code), null)
+})
+
+test('statuses come back in board order and say what is custom', () => {
+    const rows = TASK_STATUS_DEFAULTS.map((d, i) => ({ id: `id${i}`, code: d.code, name: d.code === 4 ? 'Doing' : d.name, color: d.color, statusOrder: d.statusOrder }))
+    rows.push({ id: 'x', code: 6, name: 'Review', color: '#ec4899', statusOrder: 3 })
+    const list = shapeStatuses(rows)
+    assert.deepEqual(list.map((s) => s.value), [1, 4, 3, 6, 2, 5])
     assert.equal(list.find((s) => s.value === 4).custom, true)
-})
-
-test('saving checks colours and refuses duplicate names', () => {
-    assert.throws(() => cleanTaskStatuses({ 1: { name: 'A', color: 'red' } }), /colour/)
-    assert.throws(() => cleanTaskStatuses({ 1: { name: 'Same' }, 2: { name: 'same' } }), /same name/)
-    const ok = cleanTaskStatuses({ 1: { name: ' Backlog ', color: '#111111' } })
-    assert.equal(ok[1].name, 'Backlog')
-    assert.equal(ok[4].name, 'In progress')
+    assert.equal(list.find((s) => s.value === 1).custom, false)
+    assert.equal(list.find((s) => s.value === 6).builtIn, false)
 })

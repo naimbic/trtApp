@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.97.0',
+        date: '2026-10-20',
+        title: 'Goals redesigned: live progress, periods and steps',
+        items: ['New Goals page in the Rapport look: each goal is a card with where it stands today (e.g. 62,000 / 100,000), a progress bar with milestone dots and a tick for where it should be today, the status (Ahead, On track, Behind, Achieved, Missed), the days left and what is still needed per day.', 'New goal popup with proper fields: what to reach (income collected, invoiced, profit, new customers, new leads, leads won, new contracts, tasks completed), the target, who it is for (whole company or one team member), the period (every month, every quarter, every year, or fixed dates; the first three follow the current period by themselves), steps and a note. Progress is measured live from your payments, invoices, expenses, customers, leads, contracts and tasks, in the default currency.', 'Steps (the process): milestones that complete by themselves when the measured value reaches them (one click adds 25 / 50 / 75 / 100%), and action steps with an optional due date that you tick off on the card.', 'With no goal yet the page suggests ideas to start from; every goal has a hover menu (Edit, Duplicate, Delete). Goals imported from Perfex are shown as not measured until you edit them.']
+    },
+    {
         version: '0.96.1',
         date: '2026-10-20',
         title: 'Mail settings for administrators only',

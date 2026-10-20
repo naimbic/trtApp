@@ -673,6 +673,12 @@ model CrmGoal {
   goalType         Int?
   contractType     Int?      // contract type id (legacy int) when goalType concerns contracts
   achievement      Float?    // target
+  /// what is measured (income, invoiced, profit, customers, leads, converted, contracts, tasks); empty on goals imported from Perfex
+  kind             String?
+  /// month | quarter | year (follows the current one) | fixed (startDate to endDate)
+  period           String?
+  /// the steps of the goal (JSON text): milestones that complete when the measured value reaches them, and tick-off action steps
+  stepsRaw         String?
   notifyWhenFail   Boolean   @default(false)
   notifyWhenAchieve Boolean  @default(false)
   notified         Boolean   @default(false)

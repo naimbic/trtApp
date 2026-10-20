@@ -1370,5 +1370,9 @@
  "Existing payroll payments",
  "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).",
  "Salaries are paid after the month",
- "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month."
+ "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.",
+ "Task statuses",
+ "Rename the five statuses and pick their colours. The board columns, the list, the calendar, the timeline and the dashboard follow. Existing tasks keep their status.",
+ "A status colour must look like #3b82f6",
+ "Two statuses cannot have the same name"
 ]

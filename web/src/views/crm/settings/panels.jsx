@@ -16,6 +16,7 @@ import { MailServerSettings } from '../mail/Mails'
 import { TokenChip } from './fields'
 import CronResult from './CronResult'
 import { CLIENT_TOKENS, COMPANY_TOKENS, SAMPLE_CLIENT, companyData, renderFormat } from './tokens'
+import { applyTaskStatuses } from '../tasks/shared'
 import { tr } from '@/utils/t'
 
 /** Any registry resource as a small manager: table + create/edit drawer. */
@@ -247,5 +248,40 @@ export const PayrollExpensesPanel = () => {
                 <p>{tr("Every payroll payment that has no expense yet gets one in the Payroll category. Payments that already have one are not touched. Expenses entered by hand are never changed.")}</p>
             </ConfirmDialog>
         </>
+    )
+}
+
+const STATUS_SWATCHES = ['#9ca3af', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#f97316', '#ec4899', '#14b8a6', '#111827']
+
+/** Settings -> Tasks: rename the five task statuses and pick their colours (the codes stay the same, so no task changes). */
+export const TaskStatusesPanel = () => {
+    const [rows, setRows] = useState(null)
+    const [busy, setBusy] = useState(false)
+    useEffect(() => { api('/api/crm/work/task-statuses').then((d) => setRows(d.statuses)).catch((e) => notify('danger', e.message)) }, [])
+    if (!rows) return <Spinner />
+    const set = (value, patch) => setRows((cur) => cur.map((r) => (r.value === value ? { ...r, ...patch } : r)))
+    const done = (d, msg) => { setRows(d.statuses); applyTaskStatuses(d.statuses); notify('success', msg) }
+    const save = async () => {
+        setBusy(true)
+        try { done(await api('/api/crm/work/task-statuses', { method: 'PUT', body: { statuses: Object.fromEntries(rows.map((r) => [r.value, { name: r.name, color: r.color }])) } }), tr('Statuses saved')) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+    }
+    const reset = async () => {
+        setBusy(true)
+        try { done(await api('/api/crm/work/task-statuses', { method: 'DELETE' }), tr('Statuses back to the original names and colours')) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+    }
+    return (
+        <div className="flex flex-col gap-3">
+            {rows.map((r) => (
+                <div key={r.value} className="flex flex-wrap items-center gap-3">
+                    <span className="size-4 shrink-0 rounded-full" style={{ background: r.color }} />
+                    <div className="w-56 max-w-full"><Input size="sm" maxLength={40} value={r.name} onChange={(e) => set(r.value, { name: e.target.value })} /></div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        {STATUS_SWATCHES.map((c) => <button key={c} type="button" aria-label={c} onClick={() => set(r.value, { color: c })} className="size-6 rounded-full border-2" style={{ background: c, borderColor: r.color === c ? 'var(--rp-text, #111)' : 'transparent' }} />)}
+                        <input type="color" aria-label={tr('Pick a colour')} value={r.color} onChange={(e) => set(r.value, { color: e.target.value })} className="size-7 cursor-pointer rounded-full border-0 bg-transparent p-0" />
+                    </div>
+                </div>
+            ))}
+            <div className="flex gap-2 pt-1"><Button size="sm" variant="solid" loading={busy} onClick={save}>{tr('Save statuses')}</Button><Button size="sm" loading={busy} onClick={reset}>{tr('Back to the original')}</Button></div>
+        </div>
     )
 }

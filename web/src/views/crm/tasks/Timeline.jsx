@@ -8,16 +8,16 @@ import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
 import classNames from '@/utils/classNames'
 import { api } from '../kit/api'
-import { statusOf, initials } from './shared'
+import { statusOf, initials, useTaskStatuses } from './shared'
 import { tr } from '@/utils/t'
 
 const DAY = 86400000
 const utc = (d) => Date.UTC(new Date(d).getUTCFullYear(), new Date(d).getUTCMonth(), new Date(d).getUTCDate())
-const BAR = { 1: 'bg-slate-400', 4: 'bg-blue-500', 3: 'bg-purple-500', 2: 'bg-amber-500', 5: 'bg-emerald-500' }
 const LEFT = 270
 
 /** Tasks on a calendar: one bar per task from its start to its due date, grouped by project, with today marked. */
 const Timeline = () => {
+    useTaskStatuses()
     const nav = useNavigate()
     const [projects, setProjects] = useState([])
     const [projectId, setProjectId] = useState('')
@@ -74,7 +74,7 @@ const Timeline = () => {
             {model.rows.length > 0 && (
                 <>
                     <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
-                        {[1, 4, 3, 2, 5].map((s) => <span key={s} className="inline-flex items-center gap-1.5"><span className={classNames('h-2.5 w-2.5 rounded-sm', BAR[s])} />{statusOf(s).label}</span>)}
+                        {[1, 4, 3, 2, 5].map((s) => <span key={s} className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: statusOf(s).color }} />{statusOf(s).label}</span>)}
                         <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-red-500" />{tr('Overdue')}</span>
                     </div>
                     <div className="mt-3 flex overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
@@ -103,7 +103,7 @@ const Timeline = () => {
                                     const late = r.t.status !== 5 && r.t.dueDate && e < model.today
                                     return (
                                         <div key={i} className="relative h-9 border-b border-gray-100 dark:border-gray-800" style={{ backgroundImage: 'linear-gradient(to right, rgba(148,163,184,0.12) 1px, transparent 1px)', backgroundSize: `${w}px 100%` }}>
-                                            <button type="button" title={`${r.t.name} · ${dayjs(s).format('D MMM')} → ${dayjs(e).format('D MMM')}`} onClick={() => nav(`/crm/tasks/${r.t.id}`)} className={classNames('absolute top-2 h-5 overflow-hidden rounded-md px-1.5 text-start text-[11px] font-semibold leading-5 text-white shadow-sm hover:brightness-110', late ? 'bg-red-500' : BAR[r.t.status])} style={{ left, width: wd }}>{wd > 70 ? r.t.name : ''}</button>
+                                            <button type="button" title={`${r.t.name} · ${dayjs(s).format('D MMM')} → ${dayjs(e).format('D MMM')}`} onClick={() => nav(`/crm/tasks/${r.t.id}`)} className={classNames('absolute top-2 h-5 overflow-hidden rounded-md px-1.5 text-start text-[11px] font-semibold leading-5 text-white shadow-sm hover:brightness-110', late && 'bg-red-500')} style={{ left, width: wd, ...(late ? {} : { background: statusOf(r.t.status).color }) }}>{wd > 70 ? r.t.name : ''}</button>
                                         </div>
                                     )
                                 })}

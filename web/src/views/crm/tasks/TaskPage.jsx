@@ -14,7 +14,7 @@ import Tag from '@/components/ui/Tag'
 import Timeline from '@/components/ui/Timeline'
 import classNames from '@/utils/classNames'
 import { api, notify } from '../kit/api'
-import { STATUS, PRIORITY, statusOf, prioOf, initials, duration } from './shared'
+import { STATUS, PRIORITY, statusOf, prioOf, initials, duration, useTaskStatuses } from './shared'
 import { tr } from '@/utils/t'
 
 const portal = { menuPortalTarget: document.body, menuPosition: 'fixed', styles: { menuPortal: (b) => ({ ...b, zIndex: 10000 }) } }
@@ -34,6 +34,7 @@ const TABS = [['comments', tr('Comments'), <TbMessage key="c" />], ['subtasks', 
 
 /** One task, laid out like the template's issue page: properties, description, tabs, and the activity panel on the right. */
 const TaskPage = () => {
+    useTaskStatuses()
     const { id } = useParams()
     const nav = useNavigate()
     const [d, setD] = useState(null)

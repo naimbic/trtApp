@@ -338,6 +338,7 @@ export const GROUPS = {
                 sel('default_task_priority', 'Default priority', [['1', 'Low'], ['2', 'Medium'], ['3', 'High'], ['4', 'Urgent']], { default: '2' }),
                 sel('default_task_status', 'Default status', [['1', 'Not started'], ['4', 'In progress'], ['3', 'Testing'], ['2', 'Awaiting feedback'], ['5', 'Complete']], { default: '1' }),
             ] },
+            { title: 'Task statuses', desc: 'Rename the five statuses and pick their colours. The board columns, the list, the calendar, the timeline and the dashboard follow. Existing tasks keep their status.', panel: 'taskStatuses' },
             { title: 'Timers', fields: [
                 yes('auto_stop_tasks_timers_on_new_timer', 'Stop other timers when one starts'),
                 yes('timer_started_change_status_in_progress', 'Move the task to In progress when a timer starts', { default: '1' }),

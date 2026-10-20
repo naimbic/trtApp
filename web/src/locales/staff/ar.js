@@ -3923,5 +3923,14 @@ export default {
     "Salaries are paid after the month": "تُدفع الرواتب بعد انتهاء الشهر",
     "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "يظهر الشهر مستحقًا من اليوم الأول من الشهر التالي ويُدفع في يوم الدفع من ذلك الشهر (أكتوبر في 1 نوفمبر ويُدفع في 10). عطّله لدفع الشهر الحالي وعرضه.",
     "Inactive: switch on to edit this member": "غير نشط: فعّله لتعديل هذا العضو",
-    "makes a video room on meet.3a.ma. For Google Meet use": "ينشئ غرفة فيديو على meet.3a.ma. لاستخدام Google Meet استعمل"
+    "makes a video room on meet.3a.ma. For Google Meet use": "ينشئ غرفة فيديو على meet.3a.ma. لاستخدام Google Meet استعمل",
+    "Back to the original": "العودة إلى الأصل",
+    "Pick a colour": "اختر لونًا",
+    "Save statuses": "حفظ الحالات",
+    "Statuses back to the original names and colours": "عادت الحالات إلى أسمائها وألوانها الأصلية",
+    "Statuses saved": "تم حفظ الحالات",
+    "Task statuses": "حالات المهام",
+    "Rename the five statuses and pick their colours. The board columns, the list, the calendar, the timeline and the dashboard follow. Existing tasks keep their status.": "أعد تسمية الحالات الخمس واختر ألوانها. تتبعها اللوحة والقائمة والتقويم والجدول الزمني ولوحة التحكم. تحتفظ المهام الحالية بحالتها.",
+    "A status colour must look like #3b82f6": "يجب أن يكون لون الحالة بصيغة #3b82f6",
+    "Two statuses cannot have the same name": "لا يمكن أن يحمل حالتان الاسم نفسه"
 }

@@ -12,7 +12,7 @@ import cn from '@/utils/classNames'
 import { GROUPS, SECTIONS } from '@/lib/crm/settings/registry'
 import { api, notify, useCan } from '../kit/api'
 import { Field } from './fields'
-import { InvoiceFormatPanel, PayrollExpensesPanel, ChannelsTestPanel, ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel, ResourceManager } from './panels'
+import { InvoiceFormatPanel, PayrollExpensesPanel, TaskStatusesPanel, ChannelsTestPanel, ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel, ResourceManager } from './panels'
 import { MailServerSettings } from '../mail/Mails'
 import AiSettingsPanel from '../ai/AiSettingsPanel'
 import { refreshBranding } from '@/utils/hooks/useBranding'
@@ -30,6 +30,7 @@ const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'channelsTest') return <ChannelsTestPanel />
     if (name === 'invoiceFormatApply') return <InvoiceFormatPanel />
     if (name === 'payrollExpensesApply') return <PayrollExpensesPanel />
+    if (name === 'taskStatuses') return <TaskStatusesPanel />
     if (name === 'companyFormat') return <FormatPanel kind="company" fieldKey="company_info_format" values={values} setValue={setValue} />
     if (name === 'customerFormat') return <FormatPanel kind="client" fieldKey="customer_info_format" values={values} setValue={setValue} customFields={ctx.customFields} />
     if (name === 'emailDesign') return <EmailDesignPanel values={values} setValue={setValue} />

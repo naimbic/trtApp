@@ -1,4 +1,5 @@
 import { realPicture } from '@/lib/crm/pictures'
+import { taskStatusNames } from '@/lib/crm/taskStatuses'
 import prisma from '@/lib/prisma'
 import { requirePortal } from '@/lib/portal/session'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
@@ -121,9 +122,10 @@ export async function getProject(id) {
         prisma.crmProjectFile.findMany({ where: { projectId: id, visibleToCustomer: true }, orderBy: { createdAt: 'desc' }, select: { id: true, subject: true, fileName: true, createdAt: true } }),
     ])
     const done = tasks.filter((t) => t.status === 5).length
+    const TN = await taskStatusNames()
     return {
         project: { id: p.id, name: p.name, description: p.description || '', status: p.status, statusLabel: PROJ[p.status], startDate: p.startDate, deadline: p.deadline, progress: p.status === 4 ? 100 : tasks.length ? Math.round((done / tasks.length) * 100) : p.progress || 0 },
-        tasks: tasks.map((t) => ({ ...t, statusLabel: TASK[t.status] })), milestones: milestones.map((m) => ({ id: m.id, name: m.name, dueDate: m.dueDate, color: m.color })),
+        tasks: tasks.map((t) => ({ ...t, statusLabel: TN[t.status] || TASK[t.status] })), milestones: milestones.map((m) => ({ id: m.id, name: m.name, dueDate: m.dueDate, color: m.color })),
         files: files.map((f) => ({ id: f.id, name: f.subject || f.fileName, date: f.createdAt })),
     }
 }

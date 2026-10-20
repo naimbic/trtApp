@@ -18,7 +18,7 @@ import Table from '@/components/ui/Table'
 import Tag from '@/components/ui/Tag'
 import classNames from '@/utils/classNames'
 import { api, qs, notify } from '../kit/api'
-import { STATUS, PRIORITY, statusOf, prioOf, initials } from './shared'
+import { STATUS, PRIORITY, statusOf, prioOf, initials, useTaskStatuses, statusPillStyle } from './shared'
 import TaskDrawer from './TaskDrawer'
 import TemplatesDialog from './TemplatesDialog'
 import { tr, trn } from '@/utils/t'
@@ -31,7 +31,7 @@ const STATUS_PILL = { 1: 'bg-amber-200 dark:bg-amber-200', 4: 'bg-sky-200 dark:b
 const PRIO_PILL = { 1: 'bg-purple-200 dark:bg-purple-200', 2: 'bg-orange-200 dark:bg-orange-200', 3: 'bg-red-200 dark:bg-red-200', 4: 'bg-red-300 dark:bg-red-300' }
 const ORDER_KEY = 'tasks.groupOrder'
 
-const Pill = ({ cls, children }) => <Tag className={classNames('mr-2 rtl:ml-2 mb-2', cls, PILL)}>{children}</Tag>
+const Pill = ({ cls, style, children }) => <Tag className={classNames('mr-2 rtl:ml-2 mb-2', cls, !style && PILL)} style={style}>{children}</Tag>
 
 /** One line, same columns as the template: grip, check, name, status, priority, date, person. */
 const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }) => {
@@ -54,7 +54,7 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }
                     </div>
                 )}
             </Td>
-            <Td className="w-[150px]"><Pill cls={STATUS_PILL[t.status]}>{statusOf(t.status).label}</Pill></Td>
+            <Td className="w-[150px]"><Pill cls={statusOf(t.status).custom ? undefined : STATUS_PILL[t.status]} style={statusOf(t.status).custom ? statusPillStyle(t.status) : undefined}>{statusOf(t.status).label}</Pill></Td>
             <Td className="w-[130px]"><Pill cls={PRIO_PILL[t.priority]}>{prioOf(t.priority).label}</Pill></Td>
             <Td className="w-[140px]"><span className={classNames('font-semibold', t.dueDate && !done && dayjs(t.dueDate).endOf('day').isBefore(dayjs()) && 'text-red-500')}>{t.dueDate ? dayjs(t.dueDate).format('MMMM DD') : '-'}</span></Td>
             <Td className="w-[200px]">
@@ -129,6 +129,7 @@ const taskDefaults = (l) => (l.defaults ? { status: l.defaults.status, priority:
 
 /** "My tasks" and "Team tasks": the template's grouped task list, one group per project. */
 const TaskList = ({ projectId = null }) => {
+    useTaskStatuses()
     const { pathname } = useLocation()
     const nav = useNavigate()
     const scope = projectId ? 'team' : pathname.endsWith('team-tasks') ? 'team' : 'mine'

@@ -15,7 +15,7 @@ import Avatar from '@/components/ui/Avatar'
 import { api, notify } from '../kit/api'
 import { DonutChart, TrendChart, PALETTE } from '../kit/charts'
 import { StatCard, Panel } from '../kit/widgets'
-import { STATUS, prioOf, statusOf, initials } from './shared'
+import { STATUS, prioOf, statusOf, initials, useTaskStatuses } from './shared'
 import TasksBoard from './TasksBoard'
 import { tr } from '@/utils/t'
 
@@ -54,6 +54,7 @@ function insights(list) {
 
 /** One project's tasks as columns by status, in the template's scrum board look. */
 const ScrumBoard = () => {
+    useTaskStatuses()
     const params = useParams()
     const nav = useNavigate()
     const [sp, setSp] = useSearchParams()

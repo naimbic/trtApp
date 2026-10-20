@@ -13,7 +13,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import dayjs from 'dayjs'
 import { api, notify } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
-import { STATUS, PRIORITY, REL_TYPES, People, duration, initials } from './shared'
+import { STATUS, PRIORITY, REL_TYPES, People, duration, initials, useTaskStatuses } from './shared'
 import Avatar from '@/components/ui/Avatar'
 import { tr } from '@/utils/t'
 
@@ -22,6 +22,7 @@ const toDate = (d) => (d ? new Date(d) : null)
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 
 const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onChanged }) => {
+    useTaskStatuses()
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
     const [saving, setSaving] = useState(false)

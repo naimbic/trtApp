@@ -1,15 +1,41 @@
 import Avatar from '@/components/ui/Avatar'
 import StaffRing from '@/components/crm/StaffRing'
 import dayjs from 'dayjs'
+import { create } from 'zustand'
 import { tr } from '@/utils/t'
 
-export const STATUS = [
-    { value: 1, label: tr("Not started"), dot: 'bg-gray-400' },
-    { value: 4, label: tr("In progress"), dot: 'bg-blue-500' },
-    { value: 3, label: tr("Testing"), dot: 'bg-violet-500' },
-    { value: 2, label: tr("Awaiting feedback"), dot: 'bg-amber-500' },
-    { value: 5, label: tr("Complete"), dot: 'bg-emerald-500' },
+// The five status codes are fixed (they are stored on every task); each one can be renamed and recoloured in Settings -> Tasks.
+// STATUS is changed in place when those settings arrive, and useTaskStatuses() makes a screen draw again when it happens.
+const DEFAULT_STATUS = [
+    { value: 1, label: tr("Not started"), color: '#9ca3af' },
+    { value: 4, label: tr("In progress"), color: '#3b82f6' },
+    { value: 3, label: tr("Testing"), color: '#8b5cf6' },
+    { value: 2, label: tr("Awaiting feedback"), color: '#f59e0b' },
+    { value: 5, label: tr("Complete"), color: '#10b981' },
 ]
+export const STATUS = DEFAULT_STATUS.map((s) => ({ ...s, custom: false }))
+const useStatusVersion = create(() => ({ v: 0 }))
+export const applyTaskStatuses = (list = []) => {
+    for (const s of list) {
+        const t = STATUS.find((x) => x.value === +s.value), d = DEFAULT_STATUS.find((x) => x.value === +s.value)
+        if (!t || !d) continue
+        t.label = s.custom && s.name !== d.label ? s.name : d.label
+        t.color = s.color || d.color
+        t.custom = !!s.custom
+    }
+    useStatusVersion.setState((st) => ({ v: st.v + 1 }))
+}
+let statusLoad = null
+export const loadTaskStatuses = (force = false) => {
+    if (statusLoad && !force) return statusLoad
+    statusLoad = fetch('/api/crm/work/task-statuses', { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.statuses) applyTaskStatuses(d.statuses) }).catch(() => { statusLoad = null })
+    return statusLoad
+}
+/** Call at the top of a screen that prints task statuses: loads the names and colours once and redraws when they arrive. */
+export const useTaskStatuses = () => { useStatusVersion((s) => s.v); loadTaskStatuses() }
+export const taskColorByName = (name) => STATUS.find((s) => s.label === name)?.color
+/** A soft tint of a status colour (pills, chips). */
+export const statusPillStyle = (v) => { const c = statusOf(v).color; return { background: `${c}26`, color: c } }
 export const PRIORITY = [
     { value: 1, label: tr("Low"), bar: 'bg-gray-300', text: "text-gray-500" },
     { value: 2, label: tr("Medium"), bar: 'bg-blue-400', text: "text-blue-600" },

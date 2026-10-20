@@ -3923,5 +3923,14 @@ export default {
     "Salaries are paid after the month": "Los salarios se pagan después del mes",
     "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "Un mes pasa a pagar desde el día 1 del mes siguiente y se paga el día de pago de ese mes (octubre el 1 de noviembre, pagado el 10). Desactive para pagar y mostrar el mes actual.",
     "Inactive: switch on to edit this member": "Inactivo: actívelo para editar a este miembro",
-    "makes a video room on meet.3a.ma. For Google Meet use": "crea una sala de vídeo en meet.3a.ma. Para Google Meet use"
+    "makes a video room on meet.3a.ma. For Google Meet use": "crea una sala de vídeo en meet.3a.ma. Para Google Meet use",
+    "Back to the original": "Volver al original",
+    "Pick a colour": "Elegir un color",
+    "Save statuses": "Guardar los estados",
+    "Statuses back to the original names and colours": "Estados restaurados a los nombres y colores originales",
+    "Statuses saved": "Estados guardados",
+    "Task statuses": "Estados de las tareas",
+    "Rename the five statuses and pick their colours. The board columns, the list, the calendar, the timeline and the dashboard follow. Existing tasks keep their status.": "Cambie el nombre de los cinco estados y elija sus colores. El tablero, la lista, el calendario, la cronología y el panel los siguen. Las tareas existentes conservan su estado.",
+    "A status colour must look like #3b82f6": "El color de un estado debe verse como #3b82f6",
+    "Two statuses cannot have the same name": "Dos estados no pueden tener el mismo nombre"
 }

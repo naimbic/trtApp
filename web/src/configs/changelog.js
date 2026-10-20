@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.94.0',
+        date: '2026-10-20',
+        title: 'Rename and recolour task statuses',
+        items: ['New Settings → Tasks → Task statuses: rename each of the five statuses (Not started, In progress, Testing, Awaiting feedback, Complete) and pick its colour from the swatches or any colour; Back to the original restores them. Existing tasks keep their status, only the name and colour change.', 'The new names and colours show on the Tasks board columns, list, task page and popup, timeline, calendar, dashboard "Tasks by status" and the client portal. A status you do not touch keeps the template colours.', 'Everybody signed in reads the names; only people who may edit Settings change them.']
+    },
+    {
         version: '0.93.0',
         date: '2026-10-20',
         title: 'Permissions that really follow "View own"; meetings on meet.3a.ma',

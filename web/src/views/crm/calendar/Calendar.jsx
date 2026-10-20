@@ -7,7 +7,7 @@ import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers, TbChevronLeft, TbChevronRight, TbCalendarEvent, TbCalendarWeek, TbAlertTriangle, TbDots, TbCheck, TbExternalLink, TbCircleCheck, TbRotate, TbUserPlus, TbCalendarDue, TbChecklist } from 'react-icons/tb'
 import RowMenu from '@/components/crm/RowMenu'
-import { STATUS } from '../tasks/shared'
+import { STATUS, useTaskStatuses } from '../tasks/shared'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import Tooltip from '@/components/ui/Tooltip'
 import { CATEGORIES } from './EventDialog'
@@ -76,7 +76,8 @@ const EventTip = ({ ev, timeText }) => {
 }
 
 // Compact entries: a dot in the colour of the status (tasks) or of the event, the time, then the title; no pill, one line.
-const STATUS_DOT = { 1: '#9ca3af', 2: '#f59e0b', 3: '#8b5cf6', 4: '#3b82f6', 5: '#10b981' }
+// the colour of a task status follows Settings -> Tasks
+const STATUS_DOT = new Proxy({}, { get: (_t, k) => STATUS.find((s) => s.value === +k)?.color })
 const EVENT_DOT = { red: '#ef4444', orange: '#f97316', yellow: '#eab308', green: '#22c55e', blue: '#3b82f6', purple: '#8b5cf6' }
 const KIND_DOT = { events: '#3b82f6', reminders: '#f59e0b', tasks: '#f97316', invoices: '#ef4444', projects: '#8b5cf6', estimates: '#eab308', proposals: '#22c55e', contracts: '#0ea5e9' }
 const dotOf = (p) => (p.type === 'tasks' ? STATUS_DOT[p.status || 1] : p.type === 'events' ? EVENT_DOT[p.eventColor] || KIND_DOT.events : KIND_DOT[p.type])
@@ -109,6 +110,7 @@ const onDay = (it, day) => {
 }
 
 const Calendar = () => {
+    useTaskStatuses()
     const navigate = useNavigate()
     const [items, setItems] = useState([])
     const [overdue, setOverdue] = useState([])

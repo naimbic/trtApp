@@ -1,4 +1,5 @@
 import { moneyHidden, MASK } from '@/utils/money'
+import { useTaskStatuses, taskColorByName } from './tasks/shared'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router'
 import dayjs from 'dayjs'
@@ -103,7 +104,7 @@ const ColumnChart = ({ labels, series, colors, height = 260, money, negativeColo
 )
 
 /** Status breakdown as a stacked summary line plus one progress line per status (Perfex / Ecme style). */
-const StatusBars = ({ data, totalLabel = 'Total' }) => {
+const StatusBars = ({ data, totalLabel = 'Total', colorOf }) => {
     const names = Object.keys(data || {}).sort((a, b) => data[b] - data[a])
     const total = names.reduce((sum, n) => sum + (data[n] || 0), 0)
     if (!names.length || !total) return <Empty />
@@ -117,7 +118,7 @@ const StatusBars = ({ data, totalLabel = 'Total' }) => {
             </div>
             <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 mb-5">
                 {names.map((n, i) => (
-                    <div key={n} title={`${tr(n)}: ${data[n]}`} style={{ width: `${(data[n] / total) * 100}%`, background: statusColor(n, i) }} />
+                    <div key={n} title={`${tr(n)}: ${data[n]}`} style={{ width: `${(data[n] / total) * 100}%`, background: (colorOf && colorOf(n)) || statusColor(n, i) }} />
                 ))}
             </div>
             <ul className="flex flex-col gap-3.5">
@@ -127,7 +128,7 @@ const StatusBars = ({ data, totalLabel = 'Total' }) => {
                         <li key={n}>
                             <div className="flex items-center justify-between text-sm mb-1.5">
                                 <span className="flex items-center gap-2 min-w-0">
-                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: statusColor(n, i) }} />
+                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: (colorOf && colorOf(n)) || statusColor(n, i) }} />
                                     <span className="truncate">{tr(n)}</span>
                                 </span>
                                 <span className="shrink-0 ml-3">
@@ -136,7 +137,7 @@ const StatusBars = ({ data, totalLabel = 'Total' }) => {
                                 </span>
                             </div>
                             <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                                <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 1.5)}%`, background: statusColor(n, i) }} />
+                                <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 1.5)}%`, background: (colorOf && colorOf(n)) || statusColor(n, i) }} />
                             </div>
                         </li>
                     )
@@ -390,7 +391,7 @@ const BusinessDashboard = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 {data.leads && <Panel title={tr("Open leads by status")}><StatusBars data={data.leads.byStatus} totalLabel={tr("Open leads")} /></Panel>}
-                {data.tasks && <Panel title={tr("Tasks by status")}><StatusBars data={data.tasks.byStatus} totalLabel={tr("Tasks")} /></Panel>}
+                {data.tasks && <Panel title={tr("Tasks by status")}><StatusBars data={data.tasks.byStatus} totalLabel={tr("Tasks")} colorOf={taskColorByName} /></Panel>}
                 {data.projects && <Panel title={tr("Projects by status")}><StatusBars data={data.projects.byStatus} totalLabel={tr("Projects")} /></Panel>}
                 {data.tickets && <Panel title={tr("Tickets by status")}><StatusBars data={data.tickets.byStatus} totalLabel={tr("Tickets")} /></Panel>}
             </div>
@@ -462,6 +463,7 @@ const BusinessDashboard = () => {
 
 /** The business dashboard is for administrators; everyone else lands on the Team dashboard. */
 const Dashboard = () => {
+    useTaskStatuses()
     const authority = useSessionUser((s) => s.user.authority) || []
     const allowed = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.dashboard.view') || authority.includes('crm.roles.view')
     return allowed ? <BusinessDashboard /> : <Navigate to="/team-dashboard" replace />

@@ -5,6 +5,7 @@ import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { toBase, ALL } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
+import { taskStatusNames } from '@/lib/crm/taskStatuses'
 
 const iso = (d) => d.toISOString().slice(0, 10)
 const monthKey = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
@@ -235,6 +236,7 @@ export async function getDashboardMetrics(params = {}) {
     })
 
     await section('tasks', 'tasks', async () => {
+        const TN = await taskStatusNames()
         const rows = await prisma.crmTask.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { id: true, name: true, status: true, dueDate: true, priority: true } })
         const open = rows.filter((t) => t.status !== 5)
         const overdue = open.filter((t) => t.dueDate && new Date(t.dueDate) < startOfToday)
@@ -243,12 +245,12 @@ export async function getDashboardMetrics(params = {}) {
             .filter((t) => t.dueDate && new Date(t.dueDate) >= startOfToday && new Date(t.dueDate) <= week)
             .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
             .slice(0, 8)
-            .map((t) => ({ id: t.id, name: t.name, dueDate: t.dueDate, status: TASK_STATUS[t.status] }))
+            .map((t) => ({ id: t.id, name: t.name, dueDate: t.dueDate, status: TN[t.status] || TASK_STATUS[t.status] }))
         return {
             total: rows.length,
             open: open.length,
             overdue: overdue.length,
-            byStatus: count(rows, (t) => TASK_STATUS[t.status] || String(t.status)),
+            byStatus: count(rows, (t) => TN[t.status] || TASK_STATUS[t.status] || String(t.status)),
             upcoming,
         }
     })

@@ -3923,5 +3923,14 @@ export default {
     "Salaries are paid after the month": "給与は月の終了後に支払う",
     "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "月は翌月1日から支払対象になり、その月の支払日に支払います(10月分は11月1日から、10日払い)。オフにすると当月を表示して支払います。",
     "Inactive: switch on to edit this member": "無効:編集するにはオンにしてください",
-    "makes a video room on meet.3a.ma. For Google Meet use": "meet.3a.ma にビデオルームを作成します。Google Meet の場合は"
+    "makes a video room on meet.3a.ma. For Google Meet use": "meet.3a.ma にビデオルームを作成します。Google Meet の場合は",
+    "Back to the original": "元に戻す",
+    "Pick a colour": "色を選ぶ",
+    "Save statuses": "ステータスを保存",
+    "Statuses back to the original names and colours": "ステータスを元の名前と色に戻しました",
+    "Statuses saved": "ステータスを保存しました",
+    "Task statuses": "タスクのステータス",
+    "Rename the five statuses and pick their colours. The board columns, the list, the calendar, the timeline and the dashboard follow. Existing tasks keep their status.": "5つのステータスの名前と色を変更できます。ボード、リスト、カレンダー、タイムライン、ダッシュボードに反映されます。既存のタスクのステータスは変わりません。",
+    "A status colour must look like #3b82f6": "ステータスの色は #3b82f6 の形式にしてください",
+    "Two statuses cannot have the same name": "同じ名前のステータスは作れません"
 }

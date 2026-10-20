@@ -13,7 +13,7 @@ import Table from '@/components/ui/Table'
 import cn from '@/utils/classNames'
 import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
-import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, statusOf } from './shared'
+import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, statusOf, useTaskStatuses } from './shared'
 import TaskDrawer from './TaskDrawer'
 import NoteDialog, { NOTES_EVENT } from './NoteDialog'
 import { tr, trn } from '@/utils/t'
@@ -26,6 +26,7 @@ const Plain = ({ children }) => <div>{children}</div>
 const TONE = { 1: 'ink', 4: 'butter', 3: 'pine', 2: 'tomato', 5: 'good' }
 
 const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = null, onClosePopup }) => {
+    useTaskStatuses()
     const nav = useNavigate()
     const [params, setParams] = useSearchParams()
     const [data, setData] = useState({ list: [], counts: {}, can: {} })
@@ -124,7 +125,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     // the colours and steps of the popup: the stages of the board, the task's own one highlighted
     const stageOf = (id) => {
         const t = data.list.find((x) => x.id === id)
-        return { columns: STATUS.map((s) => ({ id: s.value, name: s.label, tone: TONE[s.value] })), currentId: t ? t.status : (drawer.preset?.status || 1), onPick: id && data.can.edit ? async (to) => { await moveTo({ id }, to); setDrawer((d) => ({ ...d, k: (d.k || 0) + 1 })) } : undefined }
+        return { columns: STATUS.map((s) => ({ id: s.value, name: s.label, ...(s.custom ? { color: s.color } : { tone: TONE[s.value] }) })), currentId: t ? t.status : (drawer.preset?.status || 1), onPick: id && data.can.edit ? async (to) => { await moveTo({ id }, to); setDrawer((d) => ({ ...d, k: (d.k || 0) + 1 })) } : undefined }
     }
     const remove = async (item) => { try { await api(`/api/crm/work/tasks/${item.id}`, { method: 'DELETE' }); notify('success', tr("Task deleted")); load() } catch (e) { notify('danger', e.message) } }
     const open = (id) => setDrawer((d) => ({ open: true, id: id || null, preset: null, k: d.k }))
@@ -186,7 +187,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         const all = columns[s.value] || []
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {
-                            id: s.value, name: s.label, tone: TONE[s.value], count: all.length,
+                            id: s.value, name: s.label, ...(s.custom ? { color: s.color } : { tone: TONE[s.value] }), count: all.length,
                             items: all.slice(0, limit).map((t) => ({ id: t.id, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, priority: t.priority, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, kicker: `${tr("Task")}${t.rel?.label ? ` · ${t.rel.label}` : ''}`,
                                 fields: [{ label: tr("Priority"), value: prioOf(t.priority).label }, { label: tr("Due"), value: fmtDate(t.dueDate) }, { label: tr("Related to"), value: t.rel?.label }, { label: tr("Checklist"), value: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : '' }],
                                 team: t.assignees, people: <People list={t.assignees} size={26} /> })),
@@ -210,7 +211,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                                 <Tr key={t.id} className="cursor-pointer" onClick={() => open(t.id)}>
                                     <Td className="font-semibold">{t.name}</Td>
                                     <Td className="text-gray-500">{t.rel?.label || '—'}</Td>
-                                    <Td><span className="inline-flex items-center gap-2"><span className={cn('h-2 w-2 rounded-full', statusOf(t.status).dot)} />{statusOf(t.status).label}</span></Td>
+                                    <Td><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: statusOf(t.status).color }} />{statusOf(t.status).label}</span></Td>
                                     <Td className={prioOf(t.priority).text}>{prioOf(t.priority).label}</Td>
                                     <Td><People list={t.assignees} /></Td>
                                     <Td className={isOverdue(t) ? 'font-semibold text-red-500' : ''}>{fmtDate(t.dueDate) || '—'}</Td>

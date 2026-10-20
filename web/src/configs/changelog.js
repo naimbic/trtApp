@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.92.2',
+        date: '2026-10-20',
+        title: 'Event popup no longer closes when switching Client / Lead',
+        items: ['Fixed: in the event popup, clicking Lead (or Client) submitted the form, which saved the event and closed the popup. The segmented buttons are no longer submit buttons, so this is fixed for every popup and form that uses them.']
+    },
+    {
         version: '0.92.1',
         date: '2026-10-20',
         title: 'Metrics show only the percentage',

@@ -77,6 +77,7 @@ const SegmentItem = (props) => {
     ) : (
         <button
             ref={ref}
+            type="button" // never a submit button: inside a form (the event popup) a click must not submit it
             className={classNames(
                 'segment-item',
                 getSegmentSize(),

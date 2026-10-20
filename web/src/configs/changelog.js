@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.88.3',
+        date: '2026-10-20',
+        title: 'Actions on the staff profile card',
+        items: ['The staff profile card now has an Active on / off switch and round icons with tooltips: Edit, Activity log, Permissions, Set a password, and a menu with Reset link, One-time password, Sign out everywhere and Reset two-step verification. They use the same permissions and dialogs as the Team list.']
+    },
+    {
         version: '0.88.2',
         date: '2026-10-20',
         title: 'Work hours chart under the staff profile',

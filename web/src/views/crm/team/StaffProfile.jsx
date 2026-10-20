@@ -1,16 +1,26 @@
 /*! © 2026 TRT Digital — trtCRM. */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbChecklist, TbAlertTriangle, TbCircleCheck, TbClock, TbMail, TbPhone, TbBrandWhatsapp } from 'react-icons/tb'
+import { TbArrowLeft, TbChecklist, TbAlertTriangle, TbCircleCheck, TbClock, TbMail, TbPhone, TbBrandWhatsapp, TbPencil, TbHistory, TbShieldLock, TbLockPassword, TbLink, TbKey, TbLogout, TbDeviceMobileOff, TbDots } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Avatar from '@/components/ui/Avatar'
 import Tag from '@/components/ui/Tag'
+import Switcher from '@/components/ui/Switcher'
+import Dropdown from '@/components/ui/Dropdown'
+import Tooltip from '@/components/ui/Tooltip'
+import { useSessionUser } from '@/store/authStore'
+import MemberDrawer from './MemberDrawer'
+import MemberAccessDrawer from './MemberAccessDrawer'
+import { useMemberActions, api as teamApi, notify as teamNotify } from './MemberActions'
 import ScoreRing from '@/components/crm/ScoreRing'
 import { InvoiceHead } from '../sales/InvoiceInsights'
-import { api } from '../kit/api'
+import { api, useCan } from '../kit/api'
 import { hm, WorkDays, WorkChart } from './WorkHours'
 import { tr } from '@/utils/t'
+
+/** Round quick action with a tooltip (same as the customer card). */
+const Act = ({ icon, label, onClick }) => <Tooltip title={label}><button type="button" className="cx-ibtn" aria-label={label} onClick={onClick}>{icon}</button></Tooltip>
 
 const initials = (m) => (m.name || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase()
 
@@ -37,7 +47,36 @@ const StaffProfile = () => {
     const [d, setD] = useState(null)
     const [error, setError] = useState('')
     const [wh, setWh] = useState(null)
-    useEffect(() => { api(`/api/crm/team/${id}`).then(setD).catch((e) => setError(e.message)) }, [id])
+    const can = useCan()
+    const authority = useSessionUser((s) => s.user.authority) || []
+    const canAdmin = authority.includes('admin') || authority.includes('crm.admin')
+    const canEdit = can('staff', 'edit')
+    const canActivity = canAdmin || authority.includes('crm.activity_log.view')
+    const [lookups, setLookups] = useState({ roles: [], departments: [] })
+    const [drawer, setDrawer] = useState(false)
+    const [access, setAccess] = useState(false)
+    const [saving, setSaving] = useState(false)
+    const [formError, setFormError] = useState('')
+    const load = useCallback(() => api(`/api/crm/team/${id}`).then(setD).catch((e) => setError(e.message)), [id])
+    const { setConfirm, setSetPw, dialogs } = useMemberActions({ reload: load })
+    useEffect(() => { load() }, [load])
+    useEffect(() => { if (canEdit) api('/api/crm/team/lookups').then(setLookups).catch(() => {}) }, [canEdit])
+    const toggleActive = async (checked) => {
+        setD((x) => ({ ...x, member: { ...x.member, active: checked } }))
+        try {
+            await teamApi(`/api/crm/team/${id}`, { method: 'PATCH', body: JSON.stringify({ active: checked }) })
+            teamNotify('success', checked ? tr('{name} activated', { name: d.member.name }) : tr('{name} deactivated', { name: d.member.name }))
+            load()
+        } catch (e) { teamNotify('danger', e.message); load() }
+    }
+    const submit = async (v) => {
+        setSaving(true); setFormError('')
+        try {
+            await teamApi(`/api/crm/team/${id}`, { method: 'PATCH', body: JSON.stringify({ ...v, hourlyRate: v.hourlyRate === '' ? 0 : Number(v.hourlyRate) }) })
+            teamNotify('success', tr('Member updated'))
+            setDrawer(false); load()
+        } catch (e) { setFormError(e.message) } finally { setSaving(false) }
+    }
     useEffect(() => { api(`/api/crm/work-hours?staffId=${id}&from=${dayjs().subtract(13, 'day').format('YYYY-MM-DD')}&to=${dayjs().format('YYYY-MM-DD')}`).then((x) => setWh(x.people?.[0] || null)).catch(() => setWh(null)) }, [id])
 
     if (error) return <Container><div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div></Container>
@@ -76,6 +115,26 @@ const StaffProfile = () => {
                             {phone && <a className="pt-act" href={`tel:${phone.replace(/\s/g, '')}`}><TbPhone />{tr('Call')}</a>}
                             {(m.whatsapp || phone) && <a className="pt-act" href={`https://wa.me/${(m.whatsapp || phone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"><TbBrandWhatsapp />{tr('WhatsApp')}</a>}
                         </div>
+                        {canEdit && (
+                            <div className="mt-3 flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 text-sm dark:bg-gray-700/40">
+                                <span className="font-semibold">{m.active ? tr('Active') : tr('Inactive')}</span>
+                                <Switcher checked={m.active} onChange={toggleActive} />
+                            </div>
+                        )}
+                        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                            {canEdit && <Act icon={<TbPencil />} label={tr('Edit')} onClick={() => { setFormError(''); setDrawer(true) }} />}
+                            {canActivity && <Act icon={<TbHistory />} label={tr('Activity log')} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} />}
+                            {canEdit && <Act icon={<TbShieldLock />} label={tr('Permissions')} onClick={() => setAccess(true)} />}
+                            {canEdit && m.hasLogin && <Act icon={<TbLockPassword />} label={tr('Set a password')} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} />}
+                            {(canEdit && m.hasLogin) || (canAdmin && m.twoFactor) ? (
+                                <Dropdown placement="bottom-end" renderTitle={<button type="button" className="cx-ibtn" aria-label={tr('More')}><TbDots /></button>}>
+                                    {canEdit && m.hasLogin && <Dropdown.Item eventKey="link" onClick={() => setConfirm({ member: m, kind: 'link' })}><TbLink className="mr-2 text-lg" />{tr('Reset link')}</Dropdown.Item>}
+                                    {canEdit && m.hasLogin && <Dropdown.Item eventKey="reset" onClick={() => setConfirm({ member: m, kind: 'reset' })}><TbKey className="mr-2 text-lg" />{tr('One-time password')}</Dropdown.Item>}
+                                    {canEdit && m.hasLogin && <Dropdown.Item eventKey="signout" onClick={() => setConfirm({ member: m, kind: 'signout' })}><TbLogout className="mr-2 text-lg" />{tr('Sign out everywhere')}</Dropdown.Item>}
+                                    {canAdmin && m.twoFactor && <Dropdown.Item eventKey="twofactor" onClick={() => setConfirm({ member: m, kind: 'twofactor' })}><TbDeviceMobileOff className="mr-2 text-lg" />{tr('Reset two-step verification')}</Dropdown.Item>}
+                                </Dropdown>
+                            ) : null}
+                        </div>
                         <dl className="mt-4 space-y-2 text-left text-sm">
                             {m.email && <div><dt className="text-xs text-gray-400">{tr('Email')}</dt><dd className="truncate">{m.email}</dd></div>}
                             {phone && <div><dt className="text-xs text-gray-400">{tr('Phone')}</dt><dd>{phone}</dd></div>}
@@ -104,6 +163,9 @@ const StaffProfile = () => {
                     </div>
                 </div>
             </div>
+            <MemberAccessDrawer open={access} memberId={id} onClose={() => setAccess(false)} onSaved={load} />
+            <MemberDrawer open={drawer} member={m} lookups={lookups} canAdmin={canAdmin} saving={saving} error={formError} onSubmit={submit} onClose={() => setDrawer(false)} />
+            {dialogs}
         </Container>
     )
 }

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.90.2',
+        date: '2026-10-20',
+        title: 'Employment details in the first profile card',
+        items: ['The separate Employment card is gone: hire date, CNSS, RIB (with Copy) and the CV / portfolio files now sit in the first staff card, just above the email and last login line.']
+    },
+    {
         version: '0.90.1',
         date: '2026-10-20',
         title: 'RIB, CV and portfolio now visible on the profile; popup in tabs',

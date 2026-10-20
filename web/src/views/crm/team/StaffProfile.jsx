@@ -130,15 +130,7 @@ const StaffProfile = () => {
                                 </Dropdown>
                             ) : null}
                         </div>
-                        <p className="mt-3 border-t border-gray-100 pt-3 text-center text-[11px] leading-tight text-gray-500 dark:border-gray-700">
-                            {m.email && <>{tr('Email')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{m.email}</span></>}
-                            {m.email && m.lastLogin && ' - '}
-                            {m.lastLogin && <>{tr('Last login')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</span></>}
-                        </p>
-                    </section>
-                    <section className="pt-card">
-                        <h3>{tr('Employment')}</h3>
-                        <dl className="mb-3 space-y-1.5 text-sm">
+                        <dl className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-left text-[13px] dark:border-gray-700">
                             <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('Hire date')}</dt><dd className="font-semibold">{m.hireDate ? dayjs(m.hireDate).format('DD MMM YYYY') : '–'}</dd></div>
                             {m.fireDate && <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('Fire date')}</dt><dd className="font-semibold text-red-500">{dayjs(m.fireDate).format('DD MMM YYYY')}</dd></div>}
                             {canAdmin && <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('CNSS')}</dt><dd className="font-semibold">{m.cnss ? tr('Declared') : tr('Not declared')}</dd></div>}
@@ -152,7 +144,7 @@ const StaffProfile = () => {
                                 </div>
                             )}
                         </dl>
-                        <div className="flex flex-col gap-2">
+                        <div className="mt-3 flex flex-col gap-2 text-left">
                             {canEdit ? (
                                 <>
                                     <DocUpload memberId={id} kind="cv" label={tr('CV')} doc={m.cv} onChanged={load} />
@@ -165,6 +157,11 @@ const StaffProfile = () => {
                                 </>
                             )}
                         </div>
+                        <p className="mt-3 border-t border-gray-100 pt-3 text-center text-[11px] leading-tight text-gray-500 dark:border-gray-700">
+                            {m.email && <>{tr('Email')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{m.email}</span></>}
+                            {m.email && m.lastLogin && ' - '}
+                            {m.lastLogin && <>{tr('Last login')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</span></>}
+                        </p>
                     </section>
                     {wh && <WorkChart wh={wh} />}
                 </div>

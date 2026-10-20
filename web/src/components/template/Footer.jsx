@@ -10,12 +10,16 @@ const FooterContent = () => {
     return (
         <div className="flex items-center justify-between flex-auto w-full">
             <span>
-                {tr("Copyright ©")} {`${new Date().getFullYear()}`}{' '}
-                <span className="font-semibold">{`${APP_NAME}`}</span> {tr("All rights reserved.")}
+                <span className="hidden sm:inline">
+                    {tr("Copyright ©")} {`${new Date().getFullYear()}`}{' '}
+                    <span className="font-semibold">{`${APP_NAME}`}</span> {tr("All rights reserved.")}
+                </span>
+                {/* on a phone: only the version, at the left */}
+                <Link to="/versions" className="hover:underline sm:hidden" title={tr("What's new")}>v{VERSION}</Link>
             </span>
             <span>
-                <Link to="/versions" className="hover:underline" title={tr("What's new")}>v{VERSION}</Link>
-                <span className="mx-2 text-muted">·</span>
+                <Link to="/versions" className="hidden hover:underline sm:inline" title={tr("What's new")}>v{VERSION}</Link>
+                <span className="mx-2 hidden text-muted sm:inline">·</span>
                 {tr("Dev by")} <a className="font-semibold hover:underline" href="https://www.trtdigital.ma" target="_blank" rel="noopener noreferrer">trtAgency</a>
             </span>
         </div>

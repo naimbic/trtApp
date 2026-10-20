@@ -11,13 +11,14 @@ import { useRouteKeyStore } from '@/store/routeKeyStore'
 import { useSessionUser } from '@/store/authStore'
 import { tr } from '@/utils/t'
 
+const DashboardFilters = lazy(() => import('@/components/template/DashboardFilters'))
 const VerticalMenuContent = lazy(
     () => import('@/components/template/VerticalMenuContent'),
 )
 
 const MobileNavToggle = withHeaderItem(NavToggle)
 
-const MobileNav = ({ translationSetup = appConfig.activeNavTranslation }) => {
+const MobileNav = ({ translationSetup = appConfig.activeNavTranslation, filters = false }) => {
     const [isOpen, setIsOpen] = useState(false)
 
     const handleOpenDrawer = () => {
@@ -48,6 +49,7 @@ const MobileNav = ({ translationSetup = appConfig.activeNavTranslation }) => {
                 onRequestClose={handleDrawerClose}
             >
                 <Suspense fallback={<></>}>
+                    {isOpen && filters && <div className="border-b border-gray-200 dark:border-gray-700"><DashboardFilters stacked /></div>}
                     {isOpen && (
                         <VerticalMenuContent
                             collapsed={false}

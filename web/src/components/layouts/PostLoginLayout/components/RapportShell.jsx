@@ -9,7 +9,6 @@ import { tr } from '@/utils/t'
 import { magnetic } from '@/vendor/rapport/motion'
 import RapportPills from '@/components/template/rapport/RapportPills'
 import RapportDock from '@/components/template/rapport/RapportDock'
-import DashboardFilters from '@/components/template/DashboardFilters'
 import PageTabs from '@/components/template/PageTabs'
 import MobileNav from '@/components/template/MobileNav'
 import UserProfileDropdown from '@/components/template/UserProfileDropdown'
@@ -58,7 +57,8 @@ const RapportShell = ({ children }) => {
         mo.observe(document.body, { childList: true, subtree: true })
         return () => { mo.disconnect(); clearTimeout(t) }
     }, [])
-    const toolbar = hasTabs ? <PageTabs /> : filters && !larger.lg ? <DashboardFilters /> : null
+    // on a phone or tablet the period / currency / colour pickers are at the top of the left menu
+    const toolbar = hasTabs ? <PageTabs /> : null
 
     return (
         <LayoutBase type={LAYOUT_RAPPORT} className="rp-app app-layout-rapport flex flex-auto flex-col">
@@ -68,7 +68,7 @@ const RapportShell = ({ children }) => {
             {larger.lg && <RapportDock />}
             <div className="rp-frame">
                 <header className="rp-top">
-                    {smaller.lg && <MobileNav />}
+                    {smaller.lg && <MobileNav filters={filters} />}
                     <Link to={appConfig.authenticatedEntryPath} className="rp-brand"><LottieLogo height={36} /></Link>
                     <div className="rp-pills">{larger.lg && <RapportPills />}</div>
                     <div className="rp-actions">
@@ -76,7 +76,7 @@ const RapportShell = ({ children }) => {
                             <Dropdown.Item eventKey="task" onClick={() => { requestCreate('task'); navigate('/crm/tasks-board') }}><span className="flex items-center"><TbChecklist className="mr-2 text-lg" />{tr('New task')}</span></Dropdown.Item>
                             <Dropdown.Item eventKey="note" onClick={() => { requestCreate('note'); navigate('/crm/notes') }}><span className="flex items-center"><TbNotes className="mr-2 text-lg" />{tr('New note')}</span></Dropdown.Item>
                         </Dropdown>
-                        {isAdmin && <Link to="/crm/all-activity" className="header-action-item header-action-item-hoverable text-2xl" title={tr('All activity')} aria-label={tr('All activity')}><TbActivity /></Link>}
+                        {isAdmin && larger.lg && <Link to="/crm/all-activity" className="header-action-item header-action-item-hoverable text-2xl" title={tr('All activity')} aria-label={tr('All activity')}><TbActivity /></Link>}
                         <LanguageSelector />
                         <Notification />
                         <UserProfileDropdown />

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.92.0',
+        date: '2026-10-20',
+        title: 'Phone layout: filters in the menu, compact heads, simple footer',
+        items: ['On a phone or tablet the All activity icon moves into the profile menu (administrators).', 'The period, currency and colour pickers move from the toolbar into the left menu, above the navigation, on the pages that have them.', 'Page titles stay on one line and the metrics under them are compact two-column tiles.', 'The footer shows only the version at the left and "Dev by" at the right; the copyright line is hidden on phones.']
+    },
+    {
         version: '0.91.4',
         date: '2026-10-20',
         title: 'Active switch stays usable on inactive members',

@@ -436,3 +436,18 @@
 .cx-ring > small { position: absolute; inset-block-end: -4px; inset-inline-end: -4px; padding: 0 6px; border-radius: 999px; background: var(--c); color: var(--rp-on-pine, #fff); font-size: 10px; font-weight: 800; line-height: 16px; }
 .cx-ring[data-tone="mid"] > small { color: var(--rp-on-butter, #17191a); }
 .cx-ring[data-tone="none"] > small { display: none; }
+
+/* phones: the page title on one line and compact metrics */
+@media (max-width: 640px) {
+  .rp-ov .head { gap: 10px; margin-bottom: 14px; }
+  .rp-ov .head__lead { flex: 1 1 100%; min-width: 0; }
+  .rp-ov .head__title { display: block; max-width: 100%; font-size: 24px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rp-ov .head__title .word { white-space: nowrap; }
+  .rp-ov .head__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+  .rp-ov .head .stat { min-width: 0; gap: 8px; padding: 7px 10px; border-radius: 14px; background: var(--rp-glass); border: 1px solid var(--rp-line); }
+  .rp-ov .head .stat__ico { width: 30px; height: 30px; flex: none; font-size: 15px; }
+  .rp-ov .head .stat__body { min-width: 0; }
+  .rp-ov .head .stat__value { gap: 6px; font-size: 15px; line-height: 1.2; }
+  .rp-ov .head .stat__value b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rp-ov .head .stat__label { max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+}

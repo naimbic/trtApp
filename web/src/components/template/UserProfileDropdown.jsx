@@ -3,11 +3,12 @@ import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useSessionUser } from '@/store/authStore'
 import { Link } from 'react-router'
-import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiCalendarCheckDuotone, PiMoonDuotone, PiSunDuotone } from 'react-icons/pi'
+import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiCalendarCheckDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone } from 'react-icons/pi'
 import { useThemeStore } from '@/store/themeStore'
 import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
 import { useChatStatus, useMyStatus, STATUS } from '@/store/chatStatusStore'
+import useResponsive from '@/utils/hooks/useResponsive'
 import { tr } from '@/utils/t'
 
 const dropdownItemList = [
@@ -22,6 +23,7 @@ const _UserDropdown = ({ className }) => {
     const { avatar, userName, email, authority = [] } = useSessionUser((state) => state.user)
 
     const { signOut } = useAuth()
+    const { smaller } = useResponsive()
     const me = useMe()
     const chatState = useMyStatus()
     const away = useChatStatus((st) => st.away)
@@ -73,6 +75,12 @@ const _UserDropdown = ({ className }) => {
                 </span>
             </Dropdown.Item>
             <Dropdown.Item variant="divider" />
+            {/* the all-activity icon of the top bar lives here on a phone */}
+            {smaller.lg && (authority.includes('admin') || authority.includes('crm.admin')) && (
+                <Dropdown.Item eventKey="all-activity" className="px-0">
+                    <Link className="flex h-full w-full px-2" to="/crm/all-activity"><span className="flex w-full items-center gap-2"><span className="text-xl"><PiPulseDuotone /></span><span>{tr("All activity")}</span></span></Link>
+                </Dropdown.Item>
+            )}
             {dropdownItemList.filter((item) => !item.need || authority.includes('admin') || authority.includes('crm.admin') || authority.includes(`crm.${item.need}.view`)).map((item) => (
                 <Dropdown.Item
                     key={item.label}

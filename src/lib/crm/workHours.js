@@ -44,7 +44,11 @@ const rangeOf = (from, to, tz) => {
 
 /** Everyone's hours over a range (or one member's), ranked by active hours. */
 export async function hoursReport({ from, to, staffId = null } = {}) {
-    await requirePermission('staff', 'view')
+    // a member may always see their own hours ('me'); everyone else's needs the Team permission
+    const session = await auth()
+    const mine = await getStaffId(session)
+    if (staffId === 'me') { if (!mine) throw Object.assign(new Error('Unauthorized'), { status: 401 }); staffId = mine }
+    if (!staffId || staffId !== mine) await requirePermission('staff', 'view')
     const { tz, schedule } = await getSchedule()
     const r = rangeOf(from, to, tz)
     const staff = await prisma.crmStaff.findMany({ where: { active: true, ...(staffId ? { id: staffId } : {}) }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true, jobTitle: true } })

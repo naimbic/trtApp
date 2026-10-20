@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.88.1',
+        date: '2026-10-20',
+        title: 'Work hours on your own profile',
+        items: ['My profile has a new Work hours tab: today, the last 14 days against the working week, overtime, the time you usually open and leave, and the day by day table. Everyone can see their own hours; other people\'s hours still need the Team permission.']
+    },
+    {
         version: '0.88.0',
         date: '2026-10-20',
         title: 'Work hours: who opens first, who stays, who works a lot',

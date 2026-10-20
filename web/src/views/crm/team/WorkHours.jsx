@@ -27,6 +27,26 @@ const rangeOf = (k) => {
     return [now.subtract(29, 'day'), now]
 }
 
+/** The day by day table of one member (a person from the work hours report, with rows). */
+export const WorkDays = ({ wh }) => (
+    <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+            <thead><tr className="text-left text-xs text-gray-400"><th className="py-1 font-semibold">{tr('Day')}</th><th className="font-semibold">{tr('Opened')}</th><th className="font-semibold">{tr('Last active')}</th><th className="text-right font-semibold">{tr('Active')}</th><th className="text-right font-semibold">{tr('Expected')}</th></tr></thead>
+            <tbody>
+                {[...wh.rows].reverse().map((r) => (
+                    <tr key={r.day} className="border-t border-gray-100 dark:border-gray-700">
+                        <td className="py-1.5">{dayjs(r.day).format('ddd DD MMM')}</td>
+                        <td className={r.late ? 'text-red-500' : ''}>{clock(r.first)}</td>
+                        <td>{clock(r.last)}</td>
+                        <td className={`text-right font-semibold ${r.hours > r.expected ? 'text-amber-600' : ''}`}>{r.hours ? hm(r.hours) : '–'}</td>
+                        <td className="text-right text-gray-400">{r.expected ? hm(r.expected) : '–'}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+)
+
 /** Who works, since when and for how long: active time in the CRM against the company's working week. */
 const WorkHours = () => {
     const navigate = useNavigate()

@@ -3832,5 +3832,7 @@ export default {
     "Thursday (hours)": "الخميس (ساعات)",
     "Friday (hours)": "الجمعة (ساعات)",
     "Saturday (hours)": "السبت (ساعات)",
-    "Sunday (hours)": "الأحد (ساعات)"
+    "Sunday (hours)": "الأحد (ساعات)",
+    "Last 14 days": "آخر 14 يومًا",
+    "Not opened yet": "لم يُفتح بعد"
 }

@@ -3832,5 +3832,7 @@ export default {
     "Thursday (hours)": "Jeudi (heures)",
     "Friday (hours)": "Vendredi (heures)",
     "Saturday (hours)": "Samedi (heures)",
-    "Sunday (hours)": "Dimanche (heures)"
+    "Sunday (hours)": "Dimanche (heures)",
+    "Last 14 days": "14 derniers jours",
+    "Not opened yet": "Pas encore ouvert"
 }

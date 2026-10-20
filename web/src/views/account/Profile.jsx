@@ -24,6 +24,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { api, notify } from '@/views/crm/kit/api'
 import { resetMe } from '@/utils/hooks/useMe'
 import Security from './Security'
+import MyWorkHours from './MyWorkHours'
 import { tr } from '@/utils/t'
 import { UI_LANGUAGES, codeOfLanguage } from '@/lib/crm/langCodes'
 import { useLocaleStore } from '@/store/localeStore'
@@ -162,9 +163,11 @@ const Profile = () => {
                     <TabNav value="security">{tr("Security")}</TabNav>
                     <TabNav value="notifications">{tr("Notifications")}</TabNav>
                     <TabNav value="preferences">{tr("Preferences")}</TabNav>
+                    <TabNav value="hours">{tr("Work hours")}</TabNav>
                     <TabNav value="access">{tr("Access")}</TabNav>
                 </TabList>
                 <div className="pt-5">
+                    <TabContent value="hours"><MyWorkHours /></TabContent>
                     <TabContent value="profile">
                         <Section title={tr("Personal information")} desc={tr("Shown to your team and on documents you send.")}>
                             <Field label={tr("First name")}><Input value={u.firstName} onChange={(e) => setU({ firstName: e.target.value })} /></Field>

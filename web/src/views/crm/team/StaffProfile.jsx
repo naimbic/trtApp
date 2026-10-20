@@ -100,56 +100,58 @@ const StaffProfile = () => {
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[340px_1fr]">
                 <div className="pt-col pt-col--sticky">
                     <section className="pt-card pt-prof relative">
-                        {canEdit && <div className="absolute right-4 top-4"><Tooltip title={m.active ? tr('Active') : tr('Inactive')}><span><Switcher checked={m.active} onChange={toggleActive} /></span></Tooltip></div>}
-                        <div className="mb-2 flex justify-center">
-                            <ScoreRing score={s} size={116} width={6} badge>
-                                <Avatar shape="circle" size={102} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar>
-                            </ScoreRing>
+                        {canEdit && <div className="absolute right-4 top-4"><Tooltip title={m.active ? tr('Active') : tr('Inactive: switch on to edit this member')}><span><Switcher checked={m.active} onChange={toggleActive} /></span></Tooltip></div>}
+                        <div className={m.active ? undefined : 'opacity-60 grayscale'}>
+                            <div className="mb-2 flex justify-center">
+                                <ScoreRing score={s} size={116} width={6} badge>
+                                    <Avatar shape="circle" size={102} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar>
+                                </ScoreRing>
+                            </div>
+                            <h2 className="pt-name flex items-center justify-center gap-2">
+                                <span className={`inline-block size-2.5 shrink-0 rounded-full ${m.online ? 'bg-emerald-500' : 'bg-gray-300'}`} style={m.online ? { boxShadow: '0 0 0 3px rgba(16,185,129,.22), 0 0 10px 2px rgba(16,185,129,.75)' } : undefined} title={m.online ? tr('Online') : m.lastSeen ? tr('Offline · last seen {when}', { when: dayjs(m.lastSeen).format('DD MMM, HH:mm') }) : tr('Offline')} />
+                                <span className="min-w-0 truncate">{m.name}</span>
+                            </h2>
+                            {(m.jobTitle || m.departments.length > 0) && <p className="pt-role">{[m.jobTitle, ...m.departments.map((x) => x.name)].filter(Boolean).join(' · ')}</p>}
+                            {(m.admin || m.role?.name) && <div className="mt-1.5 flex justify-center"><span className={`rounded-md px-2.5 py-1 text-xs font-bold ${m.admin ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>{m.admin ? tr('Super Admin') : m.role.name}</span></div>}
+                            <div className="pt-acts">
+                                {m.email && <a className="pt-act" href={`mailto:${m.email}`}><TbMail />{tr('Email')}</a>}
+                                {phone && <a className="pt-act" href={`tel:${phone.replace(/\s/g, '')}`}><TbPhone />{tr('Call')}</a>}
+                                {(m.whatsapp || phone) && <a className="pt-act" href={`https://wa.me/${(m.whatsapp || phone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"><TbBrandWhatsapp />{tr('WhatsApp')}</a>}
+                            </div>
+                            <div className={`mt-2.5 flex flex-wrap justify-center gap-1.5 ${m.active ? '' : 'pointer-events-none'}`} aria-disabled={!m.active}>
+                                {canEdit && <Act icon={<TbPencil />} label={tr('Edit')} onClick={() => { setFormError(''); setDrawer(true) }} />}
+                                {canActivity && <Act icon={<TbHistory />} label={tr('Activity log')} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} />}
+                                {canEdit && <Act icon={<TbShieldLock />} label={tr('Permissions')} onClick={() => setAccess(true)} />}
+                                {canEdit && m.hasLogin && <Act icon={<TbLockPassword />} label={tr('Set a password')} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} />}
+                                {(canEdit && m.hasLogin) || (canAdmin && m.twoFactor) ? (
+                                    <Dropdown placement="bottom-end" renderTitle={<button type="button" className="cx-ibtn" aria-label={tr('More')}><TbDots /></button>}>
+                                        {canEdit && m.hasLogin && <Dropdown.Item eventKey="link" onClick={() => setConfirm({ member: m, kind: 'link' })}><TbLink className="mr-2 text-lg" />{tr('Reset link')}</Dropdown.Item>}
+                                        {canEdit && m.hasLogin && <Dropdown.Item eventKey="reset" onClick={() => setConfirm({ member: m, kind: 'reset' })}><TbKey className="mr-2 text-lg" />{tr('One-time password')}</Dropdown.Item>}
+                                        {canEdit && m.hasLogin && <Dropdown.Item eventKey="signout" onClick={() => setConfirm({ member: m, kind: 'signout' })}><TbLogout className="mr-2 text-lg" />{tr('Sign out everywhere')}</Dropdown.Item>}
+                                        {canAdmin && m.twoFactor && <Dropdown.Item eventKey="twofactor" onClick={() => setConfirm({ member: m, kind: 'twofactor' })}><TbDeviceMobileOff className="mr-2 text-lg" />{tr('Reset two-step verification')}</Dropdown.Item>}
+                                    </Dropdown>
+                                ) : null}
+                            </div>
+                            <dl className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-left text-[13px] dark:border-gray-700">
+                                <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('Hire date')}</dt><dd className="font-semibold">{m.hireDate ? dayjs(m.hireDate).format('DD MMM YYYY') : '–'}</dd></div>
+                                {m.fireDate && <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('Fire date')}</dt><dd className="font-semibold text-red-500">{dayjs(m.fireDate).format('DD MMM YYYY')}</dd></div>}
+                                {canAdmin && <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('CNSS')}</dt><dd className="font-semibold">{m.cnss ? tr('Declared') : tr('Not declared')}</dd></div>}
+                                {canAdmin && (
+                                    <div className="flex items-center justify-between gap-3">
+                                        <dt className="text-gray-400">{tr('RIB')}</dt>
+                                        <dd className="flex min-w-0 items-center gap-2 font-semibold">
+                                            <span className="select-all truncate tracking-wide">{m.rib || '–'}</span>
+                                            {m.rib && <button type="button" className="shrink-0 text-xs font-semibold text-primary hover:underline" onClick={() => navigator.clipboard?.writeText(m.rib).then(() => teamNotify('success', tr('Copied')), () => {})}>{tr('Copy')}</button>}
+                                        </dd>
+                                    </div>
+                                )}
+                            </dl>
+                            <p className="mt-3 border-t border-gray-100 pt-3 text-center text-[11px] leading-tight text-gray-500 dark:border-gray-700">
+                                {m.email && <>{tr('Email')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{m.email}</span></>}
+                                {m.email && m.lastLogin && ' - '}
+                                {m.lastLogin && <>{tr('Last login')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</span></>}
+                            </p>
                         </div>
-                        <h2 className="pt-name flex items-center justify-center gap-2">
-                            <span className={`inline-block size-2.5 shrink-0 rounded-full ${m.online ? 'bg-emerald-500' : 'bg-gray-300'}`} style={m.online ? { boxShadow: '0 0 0 3px rgba(16,185,129,.22), 0 0 10px 2px rgba(16,185,129,.75)' } : undefined} title={m.online ? tr('Online') : m.lastSeen ? tr('Offline · last seen {when}', { when: dayjs(m.lastSeen).format('DD MMM, HH:mm') }) : tr('Offline')} />
-                            <span className="min-w-0 truncate">{m.name}</span>
-                        </h2>
-                        {(m.jobTitle || m.departments.length > 0) && <p className="pt-role">{[m.jobTitle, ...m.departments.map((x) => x.name)].filter(Boolean).join(' · ')}</p>}
-                        {(m.admin || m.role?.name) && <div className="mt-1.5 flex justify-center"><span className={`rounded-md px-2.5 py-1 text-xs font-bold ${m.admin ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>{m.admin ? tr('Super Admin') : m.role.name}</span></div>}
-                        <div className="pt-acts">
-                            {m.email && <a className="pt-act" href={`mailto:${m.email}`}><TbMail />{tr('Email')}</a>}
-                            {phone && <a className="pt-act" href={`tel:${phone.replace(/\s/g, '')}`}><TbPhone />{tr('Call')}</a>}
-                            {(m.whatsapp || phone) && <a className="pt-act" href={`https://wa.me/${(m.whatsapp || phone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"><TbBrandWhatsapp />{tr('WhatsApp')}</a>}
-                        </div>
-                        <div className="mt-2.5 flex flex-wrap justify-center gap-1.5">
-                            {canEdit && <Act icon={<TbPencil />} label={tr('Edit')} onClick={() => { setFormError(''); setDrawer(true) }} />}
-                            {canActivity && <Act icon={<TbHistory />} label={tr('Activity log')} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} />}
-                            {canEdit && <Act icon={<TbShieldLock />} label={tr('Permissions')} onClick={() => setAccess(true)} />}
-                            {canEdit && m.hasLogin && <Act icon={<TbLockPassword />} label={tr('Set a password')} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} />}
-                            {(canEdit && m.hasLogin) || (canAdmin && m.twoFactor) ? (
-                                <Dropdown placement="bottom-end" renderTitle={<button type="button" className="cx-ibtn" aria-label={tr('More')}><TbDots /></button>}>
-                                    {canEdit && m.hasLogin && <Dropdown.Item eventKey="link" onClick={() => setConfirm({ member: m, kind: 'link' })}><TbLink className="mr-2 text-lg" />{tr('Reset link')}</Dropdown.Item>}
-                                    {canEdit && m.hasLogin && <Dropdown.Item eventKey="reset" onClick={() => setConfirm({ member: m, kind: 'reset' })}><TbKey className="mr-2 text-lg" />{tr('One-time password')}</Dropdown.Item>}
-                                    {canEdit && m.hasLogin && <Dropdown.Item eventKey="signout" onClick={() => setConfirm({ member: m, kind: 'signout' })}><TbLogout className="mr-2 text-lg" />{tr('Sign out everywhere')}</Dropdown.Item>}
-                                    {canAdmin && m.twoFactor && <Dropdown.Item eventKey="twofactor" onClick={() => setConfirm({ member: m, kind: 'twofactor' })}><TbDeviceMobileOff className="mr-2 text-lg" />{tr('Reset two-step verification')}</Dropdown.Item>}
-                                </Dropdown>
-                            ) : null}
-                        </div>
-                        <dl className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-left text-[13px] dark:border-gray-700">
-                            <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('Hire date')}</dt><dd className="font-semibold">{m.hireDate ? dayjs(m.hireDate).format('DD MMM YYYY') : '–'}</dd></div>
-                            {m.fireDate && <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('Fire date')}</dt><dd className="font-semibold text-red-500">{dayjs(m.fireDate).format('DD MMM YYYY')}</dd></div>}
-                            {canAdmin && <div className="flex justify-between gap-3"><dt className="text-gray-400">{tr('CNSS')}</dt><dd className="font-semibold">{m.cnss ? tr('Declared') : tr('Not declared')}</dd></div>}
-                            {canAdmin && (
-                                <div className="flex items-center justify-between gap-3">
-                                    <dt className="text-gray-400">{tr('RIB')}</dt>
-                                    <dd className="flex min-w-0 items-center gap-2 font-semibold">
-                                        <span className="select-all truncate tracking-wide">{m.rib || '–'}</span>
-                                        {m.rib && <button type="button" className="shrink-0 text-xs font-semibold text-primary hover:underline" onClick={() => navigator.clipboard?.writeText(m.rib).then(() => teamNotify('success', tr('Copied')), () => {})}>{tr('Copy')}</button>}
-                                    </dd>
-                                </div>
-                            )}
-                        </dl>
-                        <p className="mt-3 border-t border-gray-100 pt-3 text-center text-[11px] leading-tight text-gray-500 dark:border-gray-700">
-                            {m.email && <>{tr('Email')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{m.email}</span></>}
-                            {m.email && m.lastLogin && ' - '}
-                            {m.lastLogin && <>{tr('Last login')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</span></>}
-                        </p>
                     </section>
                     {wh && <WorkChart wh={wh} />}
                 </div>

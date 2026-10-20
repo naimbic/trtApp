@@ -3921,5 +3921,6 @@ export default {
     "Still to pay for {month}": "لم يُدفع بعد عن {month}",
     "To pay: {month}": "للدفع: {month}",
     "Salaries are paid after the month": "تُدفع الرواتب بعد انتهاء الشهر",
-    "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "يظهر الشهر مستحقًا من اليوم الأول من الشهر التالي ويُدفع في يوم الدفع من ذلك الشهر (أكتوبر في 1 نوفمبر ويُدفع في 10). عطّله لدفع الشهر الحالي وعرضه."
+    "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "يظهر الشهر مستحقًا من اليوم الأول من الشهر التالي ويُدفع في يوم الدفع من ذلك الشهر (أكتوبر في 1 نوفمبر ويُدفع في 10). عطّله لدفع الشهر الحالي وعرضه.",
+    "Inactive: switch on to edit this member": "غير نشط: فعّله لتعديل هذا العضو"
 }

@@ -3921,5 +3921,6 @@ export default {
     "Still to pay for {month}": "Reste à payer pour {month}",
     "To pay: {month}": "À payer : {month}",
     "Salaries are paid after the month": "Les salaires sont payés après le mois",
-    "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "Un mois devient dû à partir du 1er du mois suivant et est payé le jour de paie de ce mois (octobre le 1er novembre, payé le 10). Désactivez pour payer et afficher le mois en cours."
+    "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "Un mois devient dû à partir du 1er du mois suivant et est payé le jour de paie de ce mois (octobre le 1er novembre, payé le 10). Désactivez pour payer et afficher le mois en cours.",
+    "Inactive: switch on to edit this member": "Inactif : activez pour modifier ce membre"
 }

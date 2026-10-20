@@ -189,7 +189,7 @@ const Team = () => {
                         </THead>
                         <TBody>
                             {rows.map((m) => (
-                                <Tr key={m.id}>
+                                <Tr key={m.id} className={m.active ? undefined : 'opacity-60'}>
                                     <Td>
                                         <div className="flex items-center gap-3">
                                             <ScoreRing score={m.score} size={44}><Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar></ScoreRing>
@@ -222,7 +222,7 @@ const Team = () => {
                                     </Td>
                                     <Td className="whitespace-nowrap text-gray-500">{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : tr("Never")}{m.lastActive && <div className="text-xs text-gray-400">{tr("Active")} {dayjs(m.lastActive).format('MMM D, HH:mm')}</div>}</Td>
                                     <Td>
-                                        <div className="flex items-center justify-end gap-0.5">
+                                        <div className={`flex items-center justify-end gap-0.5 ${m.active ? '' : 'pointer-events-none'}`}>
                                             <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
                                             {canActivity && <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>}
                                             <Tooltip title={tr("Permissions")}><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>

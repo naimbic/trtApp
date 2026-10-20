@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.91.3',
+        date: '2026-10-20',
+        title: 'Inactive members are greyed and locked',
+        items: ['When a member is inactive the staff card is greyed out and its action icons (edit, activity, permissions, password, reset, sign out) are disabled until you switch them on again with the Active switch at the top right. In the Team list inactive rows are greyed and their actions disabled too; the Active switch stays usable.']
+    },
+    {
         version: '0.91.2',
         date: '2026-10-20',
         title: 'Salaries paid after the month',

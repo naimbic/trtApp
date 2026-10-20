@@ -232,3 +232,20 @@ export const InvoiceFormatPanel = () => {
         </>
     )
 }
+
+export const PayrollExpensesPanel = () => {
+    const [ask, setAsk] = useState(false)
+    const [busy, setBusy] = useState(false)
+    const run = async () => {
+        setAsk(false); setBusy(true)
+        try { const r = await api('/api/crm/payroll/expenses', { method: 'POST' }); notify('success', tr("{n} expenses created", { n: r.created })) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+    }
+    return (
+        <>
+            <Button size="sm" loading={busy} onClick={() => setAsk(true)}>{tr("Create expenses for existing payments")}</Button>
+            <ConfirmDialog isOpen={ask} type="warning" title={tr("Create the missing payroll expenses?")} confirmText={tr("Create")} onClose={() => setAsk(false)} onCancel={() => setAsk(false)} onConfirm={run}>
+                <p>{tr("Every payroll payment that has no expense yet gets one in the Payroll category. Payments that already have one are not touched. Expenses entered by hand are never changed.")}</p>
+            </ConfirmDialog>
+        </>
+    )
+}

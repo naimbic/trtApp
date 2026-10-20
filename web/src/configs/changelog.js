@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.91.0',
+        date: '2026-10-20',
+        title: 'Payroll payments as expenses',
+        items: ['New Settings → Sales → General → Payroll and expenses: Record payroll payments as expenses (off by default). When on, every salary, advance and bonus recorded in Payroll also creates one expense in the category "Payroll" (named like "Salary - Sara Amrani - October 2026", dated the day it was paid); editing the payment updates the expense and deleting it removes the expense. Expense lists, reports and exports then include the team cost.', 'A button, Create expenses for existing payments, adds the expenses of payments recorded before. It only creates the missing ones and never changes expenses entered by hand.']
+    },
+    {
         version: '0.90.3',
         date: '2026-10-20',
         title: 'CV and portfolio only in the popup',

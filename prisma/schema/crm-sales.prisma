@@ -540,9 +540,12 @@ model CrmExpense {
   sendInvoiceToCustomer Boolean             @default(false)
   recurringFrom         String?             @db.ObjectId // -> CrmExpense
   addedFrom             String?             @db.ObjectId
+  /// the payroll payment this expense was created from (Settings: record payroll payments as expenses)
+  staffPaymentId        String?             @db.ObjectId
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
+  @@index([staffPaymentId])
   @@index([categoryId])
   @@index([clientId])
   @@index([projectId])

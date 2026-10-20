@@ -200,6 +200,10 @@ export const GROUPS = {
                 yes('total_to_words_enabled', 'Show the total in words'),
                 yes('total_to_words_lowercase', 'Use lowercase letters'),
             ] },
+            { title: 'Payroll and expenses', desc: 'Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category "Payroll"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.', fields: [
+                yes('payroll_to_expenses', 'Record payroll payments as expenses', { hint: 'New, edited and deleted payments update their expense. Existing payments are added with the button below.' }),
+            ] },
+            { title: 'Existing payroll payments', desc: 'Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).', panel: 'payrollExpensesApply' },
             { title: 'Sales agent', fields: [yes('automatically_set_logged_in_staff_sales_agent', 'Set the signed-in person as sale agent', { default: '1' })] },
         ],
     },

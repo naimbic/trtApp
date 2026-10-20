@@ -3903,5 +3903,15 @@ export default {
     "Choose CV or portfolio": "Elija CV o portafolio",
     "Create the member first, then upload the CV and portfolio here.": "Cree primero al miembro y luego suba aquí el CV y el portafolio.",
     "Employment": "Empleo",
-    "Pay and contract": "Pago y contrato"
+    "Pay and contract": "Pago y contrato",
+    "Create expenses for existing payments": "Crear los gastos de los pagos existentes",
+    "Create the missing payroll expenses?": "¿Crear los gastos de nómina que faltan?",
+    "Every payroll payment that has no expense yet gets one in the Payroll category. Payments that already have one are not touched. Expenses entered by hand are never changed.": "Cada pago de nómina sin gasto recibe uno en la categoría Nómina. Los pagos que ya tienen uno no se tocan. Los gastos introducidos a mano nunca se modifican.",
+    "{n} expenses created": "{n} gastos creados",
+    "Payroll and expenses": "Nómina y gastos",
+    "Record payroll payments as expenses": "Registrar los pagos de nómina como gastos",
+    "Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category \"Payroll\"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.": "Los salarios, anticipos y primas registrados en Nómina también pueden aparecer como gastos (categoría «Nómina»), para que los informes de gastos y beneficios incluyan el coste del equipo. No lo active si ya introduce los salarios como gastos.",
+    "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "Los pagos nuevos, editados y eliminados actualizan su gasto. Los pagos existentes se añaden con el botón de abajo.",
+    "Existing payroll payments": "Pagos de nómina existentes",
+    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "Active primero el interruptor de arriba y guarde. Luego cree los gastos de los pagos ya registrados en Nómina (solo los que aún no tienen)."
 }

@@ -1362,5 +1362,11 @@
  "The fire date is before the hire date",
  "Only a super administrator can change salary and bank details",
  "The RIB must be 10 to 34 digits or letters",
- "Choose CV or portfolio"
+ "Choose CV or portfolio",
+ "Payroll and expenses",
+ "Record payroll payments as expenses",
+ "Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category \"Payroll\"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.",
+ "New, edited and deleted payments update their expense. Existing payments are added with the button below.",
+ "Existing payroll payments",
+ "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet)."
 ]

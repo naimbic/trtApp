@@ -3903,5 +3903,15 @@ export default {
     "Choose CV or portfolio": "Choisissez CV ou portfolio",
     "Create the member first, then upload the CV and portfolio here.": "Créez d'abord le membre, puis téléversez ici le CV et le portfolio.",
     "Employment": "Emploi",
-    "Pay and contract": "Paie et contrat"
+    "Pay and contract": "Paie et contrat",
+    "Create expenses for existing payments": "Créer les dépenses des paiements existants",
+    "Create the missing payroll expenses?": "Créer les dépenses de paie manquantes ?",
+    "Every payroll payment that has no expense yet gets one in the Payroll category. Payments that already have one are not touched. Expenses entered by hand are never changed.": "Chaque paiement de paie sans dépense en reçoit une dans la catégorie Paie. Les paiements qui en ont déjà une ne sont pas modifiés. Les dépenses saisies à la main ne sont jamais changées.",
+    "{n} expenses created": "{n} dépenses créées",
+    "Payroll and expenses": "Paie et dépenses",
+    "Record payroll payments as expenses": "Enregistrer les paiements de paie comme dépenses",
+    "Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category \"Payroll\"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.": "Les salaires, avances et primes enregistrés dans Paie peuvent aussi apparaître comme dépenses (catégorie « Paie »), pour que les rapports de dépenses et de bénéfices incluent le coût de l'équipe. Ne l'activez pas si vous saisissez déjà les salaires comme dépenses.",
+    "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "Les paiements nouveaux, modifiés et supprimés mettent à jour leur dépense. Les paiements existants s'ajoutent avec le bouton ci-dessous.",
+    "Existing payroll payments": "Paiements de paie existants",
+    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "Activez d'abord l'interrupteur ci-dessus et enregistrez. Créez ensuite les dépenses des paiements déjà enregistrés dans Paie (seulement ceux qui n'en ont pas encore)."
 }

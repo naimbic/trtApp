@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
 import { isCrmAdmin } from '@/lib/crm/permissions'
+import { syncPaymentExpense, removePaymentExpense, createMissingExpenses } from '@/lib/crm/payrollExpenses'
 import { KINDS, monthOf, lastMonths, monthsOfYear, dueFor, monthStatus, toBase } from '@/lib/crm/payrollCalc'
 
 const DEFAULT_PAY_DAY = 10 // salaries are sent on the 10th unless the member has another day
@@ -71,9 +72,13 @@ export async function addPayment(body) {
     if (!body.staffId || !(await prisma.crmStaff.findUnique({ where: { id: body.staffId }, select: { id: true } }))) throw httpError('Member not found', 404)
     const data = cleanPayment(body)
     const row = await prisma.crmStaffPayment.create({ data: { staffId: body.staffId, ...data } })
+    await syncPaymentExpense(row).catch(() => {})
     // a salary paid with a prime (a bonus): the prime is recorded as its own payment, in the same month
     const prime = Number(body.prime)
-    if (data.kind === 'salary' && Number.isFinite(prime) && prime > 0) await prisma.crmStaffPayment.create({ data: { staffId: body.staffId, ...data, kind: 'bonus', amount: prime, note: data.note || null } })
+    if (data.kind === 'salary' && Number.isFinite(prime) && prime > 0) {
+        const bonus = await prisma.crmStaffPayment.create({ data: { staffId: body.staffId, ...data, kind: 'bonus', amount: prime, note: data.note || null } })
+        await syncPaymentExpense(bonus).catch(() => {})
+    }
     return shapePayment(row)
 }
 
@@ -81,12 +86,14 @@ export async function updatePayment(id, body) {
     await requireAdmin()
     const row = await prisma.crmStaffPayment.update({ where: { id }, data: cleanPayment(body) }).catch(() => null)
     if (!row) throw httpError('Payment not found', 404)
+    await syncPaymentExpense(row).catch(() => {})
     return shapePayment(row)
 }
 
 export async function deletePayment(id) {
     await requireAdmin()
     await prisma.crmStaffPayment.delete({ where: { id } }).catch(() => { throw httpError('Payment not found', 404) })
+    await removePaymentExpense(id).catch(() => {})
     return { success: true }
 }
 
@@ -129,4 +136,10 @@ export async function payrollOverview(yearParam) {
             late: members.filter((m) => m.thisMonth.status === 'late' || m.thisMonth.status === 'partial').length,
         },
     }
+}
+
+/** Creates the missing expenses of the payments already recorded (Settings button). */
+export async function createExpensesForPayments() {
+    await requireAdmin()
+    return { success: true, created: await createMissingExpenses() }
 }

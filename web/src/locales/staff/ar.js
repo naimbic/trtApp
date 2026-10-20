@@ -3903,5 +3903,15 @@ export default {
     "Choose CV or portfolio": "اختر السيرة الذاتية أو معرض الأعمال",
     "Create the member first, then upload the CV and portfolio here.": "أنشئ العضو أولًا ثم ارفع السيرة الذاتية ومعرض الأعمال هنا.",
     "Employment": "التوظيف",
-    "Pay and contract": "الراتب والعقد"
+    "Pay and contract": "الراتب والعقد",
+    "Create expenses for existing payments": "إنشاء مصروفات للدفعات الحالية",
+    "Create the missing payroll expenses?": "هل تريد إنشاء مصروفات الرواتب الناقصة؟",
+    "Every payroll payment that has no expense yet gets one in the Payroll category. Payments that already have one are not touched. Expenses entered by hand are never changed.": "تحصل كل دفعة راتب بلا مصروف على مصروف في فئة الرواتب. الدفعات التي لها مصروف لا تُمَسّ. ولا تتغير المصروفات المدخلة يدويًا.",
+    "{n} expenses created": "تم إنشاء {n} مصروفات",
+    "Payroll and expenses": "الرواتب والمصروفات",
+    "Record payroll payments as expenses": "تسجيل دفعات الرواتب كمصروفات",
+    "Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category \"Payroll\"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.": "يمكن أن تظهر الرواتب والسلف والمكافآت المسجلة في الرواتب كمصروفات (فئة «الرواتب») لتشمل تقارير المصروفات والأرباح تكلفة الفريق. لا تفعّل هذا إن كنت تدخل الرواتب كمصروفات بنفسك.",
+    "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "الدفعات الجديدة والمعدلة والمحذوفة تحدّث مصروفها. أما الدفعات الحالية فتُضاف بالزر أدناه.",
+    "Existing payroll payments": "دفعات الرواتب الحالية",
+    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "فعّل المفتاح أعلاه واحفظ أولًا. ثم أنشئ مصروفات الدفعات المسجلة في الرواتب (التي لا مصروف لها بعد فقط)."
 }

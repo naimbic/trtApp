@@ -3903,5 +3903,15 @@ export default {
     "Choose CV or portfolio": "履歴書かポートフォリオを選んでください",
     "Create the member first, then upload the CV and portfolio here.": "先にメンバーを作成してから、ここで履歴書とポートフォリオをアップロードしてください。",
     "Employment": "雇用情報",
-    "Pay and contract": "給与と契約"
+    "Pay and contract": "給与と契約",
+    "Create expenses for existing payments": "既存の支払いの経費を作成",
+    "Create the missing payroll expenses?": "不足している給与経費を作成しますか?",
+    "Every payroll payment that has no expense yet gets one in the Payroll category. Payments that already have one are not touched. Expenses entered by hand are never changed.": "経費のない給与支払いごとに「給与」カテゴリの経費を作成します。すでにあるものは変更しません。手入力の経費は変更されません。",
+    "{n} expenses created": "{n} 件の経費を作成しました",
+    "Payroll and expenses": "給与と経費",
+    "Record payroll payments as expenses": "給与の支払いを経費として記録",
+    "Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category \"Payroll\"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.": "給与に記録した給与・前払い・賞与を経費(カテゴリ「給与」)としても表示し、経費・利益レポートにチームのコストを含めます。すでに給与を経費として手入力している場合はオンにしないでください。",
+    "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "新規・編集・削除した支払いは経費にも反映されます。既存の支払いは下のボタンで追加します。",
+    "Existing payroll payments": "既存の給与支払い",
+    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "まず上のスイッチをオンにして保存してください。その後、給与に記録済みの支払いの経費を作成します(まだ経費がないものだけ)。"
 }

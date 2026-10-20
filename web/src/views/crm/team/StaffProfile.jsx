@@ -72,7 +72,7 @@ const StaffProfile = () => {
     const submit = async (v) => {
         setSaving(true); setFormError('')
         try {
-            await teamApi(`/api/crm/team/${id}`, { method: 'PATCH', body: JSON.stringify({ ...v, hourlyRate: v.hourlyRate === '' ? 0 : Number(v.hourlyRate) }) })
+            await teamApi(`/api/crm/team/${id}`, { method: 'PATCH', body: JSON.stringify(v) })
             teamNotify('success', tr('Member updated'))
             setDrawer(false); load()
         } catch (e) { setFormError(e.message) } finally { setSaving(false) }
@@ -160,7 +160,7 @@ const StaffProfile = () => {
                 </div>
             </div>
             <MemberAccessDrawer open={access} memberId={id} onClose={() => setAccess(false)} onSaved={load} />
-            <MemberDrawer open={drawer} member={m} lookups={lookups} canAdmin={canAdmin} saving={saving} error={formError} onSubmit={submit} onClose={() => setDrawer(false)} />
+            <MemberDrawer open={drawer} member={m} lookups={lookups} canAdmin={canAdmin} saving={saving} error={formError} onSubmit={submit} onClose={() => setDrawer(false)} onChanged={load} />
             {dialogs}
         </Container>
     )

@@ -12,6 +12,8 @@ test('what is due follows the salary and its start month', () => {
     assert.equal(dueFor('2026-04', 5000, '2026-04'), 5000)
     assert.equal(dueFor('2026-04', 5000, null), 5000)
     assert.equal(dueFor('2026-04', 0, null), 0)
+    assert.equal(dueFor('2026-07', 5000, '2026-04', '2026-06'), 0) // after the fire month
+    assert.equal(dueFor('2026-06', 5000, '2026-04', '2026-06'), 5000)
 })
 
 test('month status', () => {

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.90.0',
+        date: '2026-10-20',
+        title: 'Team member form as a popup; salary, RIB, CNSS, hire / fire dates, CV and portfolio',
+        items: ['Edit / Add team member is now a popup in the template look, in sections (Identity, Position, Pay, Documents, About and links) instead of a long side panel.', 'Pay (super administrators only): monthly salary (replaces the hourly rate), currency, the day it is paid (10 by default), the RIB and a CNSS declared switch. Only super administrators receive these fields from the server.', 'Hire date and fire date: the salary is due from the hire month and stops after the fire month. CV and a portfolio file can be uploaded, replaced and removed on each member.', 'Skype and Facebook are gone; Website is now called Portfolio (also on your own profile).', 'Paying a month is one click: the staff profile card has a Pay (month) button; the popup is filled with the salary and shows the RIB with a Copy button and CNSS, and has a free Prime (bonus) field that is recorded as a bonus in the same month. The same Prime field is on the Payroll page Pay button.']
+    },
+    {
         version: '0.89.0',
         date: '2026-10-20',
         title: 'Salaries and payroll: what the team costs',

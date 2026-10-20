@@ -95,7 +95,7 @@ const Payroll = () => {
             {d && !d.members.length && <div className="py-10 text-center text-gray-400">{tr('No team members to show')}</div>}
             {!d && !error && <div className="py-10 text-center text-gray-400">{tr('Loading…')}</div>}
             <p className="mt-4 text-xs text-gray-400">{tr('Only super administrators see this page. Set a salary and record payments on each member\'s profile.')}</p>
-            <PaymentDialog open={pay.open} onClose={() => setPay({ open: false, member: null, preset: null })} staffId={pay.member?.id} name={pay.member?.name} preset={pay.preset} onSaved={load} />
+            <PaymentDialog open={pay.open} onClose={() => setPay({ open: false, member: null, preset: null })} staffId={pay.member?.id} name={pay.member?.name} preset={pay.preset} rib={pay.member?.rib} cnss={pay.member?.cnss} onSaved={load} />
         </Container>
     )
 }

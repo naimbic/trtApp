@@ -13,8 +13,8 @@ export function lastMonths(n, now = new Date()) {
 /** The 12 months of a year. */
 export const monthsOfYear = (year) => Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`)
 
-/** What the salary makes due for a month: nothing before the start month, the salary after. */
-export const dueFor = (month, salary, start) => (salary > 0 && (!start || month >= start) ? salary : 0)
+/** What the salary makes due for a month: nothing before the start (hire) month or after the end (fire) month. */
+export const dueFor = (month, salary, start, end) => (salary > 0 && (!start || month >= start) && (!end || month <= end) ? salary : 0)
 
 /** none (nothing due) | paid | partial | late (a past month with something unpaid) | due (this month or later). */
 export function monthStatus(due, paid, month, current) {

@@ -8,6 +8,8 @@ import { createAuthToken, signOutEverywhere } from '@/lib/crm/authTokens'
 import { webBaseUrl } from '@/lib/crm/account'
 import { sendMail, isMailConfigured } from '@/lib/mail'
 import { staffScores } from '@/lib/crm/staffScore'
+import { extras } from '@/lib/crm/memberFields'
+import { processUpload, putMedia, deleteMedia, keyFromUrl } from '@/lib/media'
 import { lastActiveMap } from '@/lib/crm/workHours'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
@@ -45,7 +47,14 @@ const shape = (s) => ({
     skype: s.skype || '',
     lastLogin: s.lastLogin,
     createdAt: s.createdAt,
+    hireDate: s.hireDate || null,
+    fireDate: s.fireDate || null,
+    cv: s.cvUrl ? { url: s.cvUrl, name: s.cvName || 'CV' } : null,
+    portfolioFile: s.portfolioFileUrl ? { url: s.portfolioFileUrl, name: s.portfolioFileName || 'Portfolio' } : null,
 })
+
+/** Money and bank details: only super administrators receive them. */
+const privateShape = (s) => ({ salary: s.salary ?? '', salaryCurrencyId: s.salaryCurrencyId || null, payDay: s.payDay ?? '', rib: s.rib || '', cnss: !!s.cnss })
 
 // Departments are resolved separately: links to deleted departments must not break the whole list.
 const include = { role: true, departments: true }
@@ -66,7 +75,7 @@ export async function teamLookups() {
 }
 
 export async function listTeam({ search = '', status = 'all' } = {}) {
-    await requirePermission('staff', 'view')
+    const session = await requirePermission('staff', 'view')
     const where = {
         ...(status === 'active' ? { active: true } : status === 'inactive' ? { active: false } : {}),
         ...(search
@@ -74,11 +83,12 @@ export async function listTeam({ search = '', status = 'all' } = {}) {
             : {}),
     }
     const rows = await withDepartments(await prisma.crmStaff.findMany({ where, include, orderBy: [{ active: 'desc' }, { firstName: 'asc' }] }))
+    const admin = isCrmAdmin(session.user.authority || [])
     const all = await prisma.crmStaff.findMany({ select: { active: true, admin: true, userId: true } })
     const scores = await staffScores(rows.map((r) => r.id)).catch(() => ({}))
     const active = await lastActiveMap().catch(() => ({}))
     return {
-        members: rows.map((r) => ({ ...shape(r), score: scores[r.id] || null, lastActive: active[r.id] || null })),
+        members: rows.map((r) => ({ ...shape(r), ...(admin ? privateShape(r) : {}), score: scores[r.id] || null, lastActive: active[r.id] || null })),
         stats: { total: all.length, active: all.filter((s) => s.active).length, inactive: all.filter((s) => !s.active).length, admins: all.filter((s) => s.admin && s.active).length, withLogin: all.filter((s) => s.userId).length },
     }
 }
@@ -92,7 +102,7 @@ export async function listScores() {
 
 /** One member with their score and what they are working on (the staff profile page). */
 export async function getMember(id) {
-    await requirePermission('staff', 'view')
+    const session = await requirePermission('staff', 'view')
     const row = await prisma.crmStaff.findUnique({ where: { id }, include })
     if (!row) throw httpError('Member not found', 404)
     await withDepartments(row)
@@ -101,7 +111,36 @@ export async function getMember(id) {
     const tasks = links.length ? await prisma.crmTask.findMany({ where: { id: { in: links.map((l) => l.taskId) } }, select: { id: true, name: true, status: true, priority: true, dueDate: true, dateFinished: true }, take: 500 }) : []
     const open = tasks.filter((t) => t.status !== 5).sort((a, b) => (+new Date(a.dueDate || 8.64e15)) - (+new Date(b.dueDate || 8.64e15))).slice(0, 10)
     const done = tasks.filter((t) => t.status === 5).sort((a, b) => (+new Date(b.dateFinished || 0)) - (+new Date(a.dateFinished || 0))).slice(0, 6)
-    return { member: { ...shape(row), score }, open, done }
+    return { member: { ...shape(row), ...(isCrmAdmin(session.user.authority || []) ? privateShape(row) : {}), score }, open, done }
+}
+
+const DOCS = { cv: ['cvUrl', 'cvName'], portfolio: ['portfolioFileUrl', 'portfolioFileName'] }
+
+/** Upload (or replace) the CV or the portfolio file of a member. */
+export async function uploadMemberDoc(id, kind, file) {
+    await requirePermission('staff', 'edit')
+    const cols = DOCS[kind]
+    if (!cols) throw httpError('Choose CV or portfolio')
+    const s = await prisma.crmStaff.findUnique({ where: { id } })
+    if (!s) throw httpError('Member not found', 404)
+    const p = await processUpload(file, { purpose: 'attachment' })
+    const { url } = await putMedia(p, 'staff-documents')
+    await prisma.crmStaff.update({ where: { id }, data: { [cols[0]]: url, [cols[1]]: p.name } })
+    const old = keyFromUrl(s[cols[0]])
+    if (old) await deleteMedia(old).catch(() => {})
+    return { [kind === 'cv' ? 'cv' : 'portfolioFile']: { url, name: p.name } }
+}
+
+export async function removeMemberDoc(id, kind) {
+    await requirePermission('staff', 'edit')
+    const cols = DOCS[kind]
+    if (!cols) throw httpError('Choose CV or portfolio')
+    const s = await prisma.crmStaff.findUnique({ where: { id } })
+    if (!s) throw httpError('Member not found', 404)
+    await prisma.crmStaff.update({ where: { id }, data: { [cols[0]]: null, [cols[1]]: null } })
+    const old = keyFromUrl(s[cols[0]])
+    if (old) await deleteMedia(old).catch(() => {})
+    return { success: true }
 }
 
 async function applyRolePermissions(staffId, roleId) {
@@ -142,7 +181,7 @@ export async function createMember(body, request) {
         data: {
             userId: user.id, email, firstName, lastName: lastName || null, phoneNumber: body.phone || null,
             roleId: body.roleId || null, admin: !!body.admin, active: body.active !== false,
-            hourlyRate: Number(body.hourlyRate) || 0, defaultLanguage: body.language || null,
+            hourlyRate: Number(body.hourlyRate) || 0, defaultLanguage: body.language || null, ...extras(body, admin),
         },
     })
     await applyRolePermissions(staff.id, staff.roleId)
@@ -180,6 +219,7 @@ export async function updateMember(id, body) {
         if (v && !/^https?:\/\/[^\s]+$/i.test(v)) throw httpError(`${k[0].toUpperCase() + k.slice(1)} must be a full link starting with https://`)
         data[k] = v || null
     }
+    Object.assign(data, extras(body, admin, s))
     if (body.email !== undefined && body.email.toLowerCase() !== s.email) {
         const email = String(body.email).trim().toLowerCase()
         if (!EMAIL.test(email)) throw httpError('A valid email is required')

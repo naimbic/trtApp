@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb'
+import { TbCash, TbPencil, TbPlus, TbTrash } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify } from '../kit/api'
@@ -41,11 +41,12 @@ const SalaryCard = ({ staffId, name }) => {
                 {tr('Salary & payments')}
                 <span className="flex gap-1.5">
                     <Button size="xs" icon={<TbPencil />} onClick={() => setSalaryDlg(true)}>{tr('Salary')}</Button>
-                    <Button size="xs" variant="solid" icon={<TbPlus />} onClick={() => setPay({ open: true, preset: d.salary.amount ? { amount: d.salary.amount, currencyId: cur } : null, edit: null })}>{tr('Payment')}</Button>
+                    <Button size="xs" icon={<TbPlus />} onClick={() => setPay({ open: true, preset: d.salary.amount ? { amount: d.salary.amount, currencyId: cur } : null, edit: null })}>{tr('Payment')}</Button>
+                    {d.salary.amount > 0 && thisMonth && thisMonth.status !== 'paid' && thisMonth.status !== 'none' && <Button size="xs" variant="solid" icon={<TbCash />} onClick={() => setPay({ open: true, edit: null, preset: { month: d.current, kind: 'salary', amount: Math.max(0, thisMonth.due - thisMonth.paid), currencyId: cur } })}>{tr('Pay {month}', { month: dayjs(`${d.current}-01`).format('MMMM') })}</Button>}
                 </span>
             </h3>
             <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-                <Tile label={tr('Monthly salary')} value={d.salary.amount ? money(d.salary.amount, cur) : '–'} sub={d.salary.payDay ? tr('Paid on day {n}', { n: d.salary.payDay }) : null} />
+                <Tile label={tr('Monthly salary')} value={d.salary.amount ? money(d.salary.amount, cur) : '–'} sub={[d.salary.payDay ? tr('Paid on day {n}', { n: d.salary.payDay }) : null, d.salary.cnss ? tr('CNSS') : null].filter(Boolean).join(' · ') || null} />
                 <Tile label={tr('This month')} value={thisMonth ? <StatusTag s={thisMonth.status} /> : '–'} sub={thisMonth?.due ? `${money(thisMonth.paid, cur)} / ${money(thisMonth.due, cur)}` : null} />
                 <Tile label={tr('Paid this year')} value={money(paidYear, cur)} />
                 <Tile label={tr('Unpaid')} value={unpaid > 0 ? <span className="text-red-500">{money(unpaid, cur)}</span> : '–'} />
@@ -82,7 +83,7 @@ const SalaryCard = ({ staffId, name }) => {
                 </>
             )}
             <SalaryDialog open={salaryDlg} onClose={() => setSalaryDlg(false)} staffId={staffId} name={name} salary={d.salary} onSaved={load} />
-            <PaymentDialog open={pay.open} onClose={() => setPay({ open: false, preset: null, edit: null })} staffId={staffId} name={name} preset={pay.preset} edit={pay.edit} onSaved={load} />
+            <PaymentDialog open={pay.open} onClose={() => setPay({ open: false, preset: null, edit: null })} staffId={staffId} name={name} preset={pay.preset} edit={pay.edit} rib={d.salary.rib} cnss={d.salary.cnss} onSaved={load} />
             <ConfirmDialog isOpen={!!del} type="danger" title={tr('Delete this payment?')} confirmText={tr('Delete')} onClose={() => setDel(null)} onRequestClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={remove}>
                 <p>{del && `${KIND_LABEL[del.kind]()} · ${money(del.amount, del.currencyId || cur)} · ${dayjs(`${del.month}-01`).format('MMM YYYY')}`}</p>
             </ConfirmDialog>

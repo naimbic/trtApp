@@ -59,14 +59,14 @@ export const SalaryDialog = ({ open, onClose, staffId, name, salary, onSaved }) 
 }
 
 /** Record (or edit) a payment to a member: salary, advance, bonus or other. preset fills the form; edit = the payment being changed. */
-export const PaymentDialog = ({ open, onClose, staffId, name, preset, edit, onSaved }) => {
+export const PaymentDialog = ({ open, onClose, staffId, name, preset, edit, rib, cnss, onSaved }) => {
     const { options, defaultId } = usePayMoney()
     const [v, setV] = useState({})
     const [busy, setBusy] = useState(false)
     useEffect(() => {
         if (!open) return
         setV(edit ? { month: edit.month, kind: edit.kind, amount: edit.amount, currencyId: edit.currencyId || defaultId, paidDate: dayjs(edit.paidDate).format('YYYY-MM-DD'), method: edit.method, note: edit.note }
-            : { month: dayjs().format('YYYY-MM'), kind: 'salary', amount: '', currencyId: defaultId, paidDate: dayjs().format('YYYY-MM-DD'), method: '', note: '', ...(preset || {}) })
+            : { month: dayjs().format('YYYY-MM'), kind: 'salary', amount: '', currencyId: defaultId, paidDate: dayjs().format('YYYY-MM-DD'), method: '', note: '', prime: '', ...(preset || {}) })
     }, [open, edit, preset, defaultId])
     const kinds = Object.keys(KIND_LABEL).map((k) => ({ value: k, label: KIND_LABEL[k]() }))
     const save = async () => {
@@ -79,12 +79,15 @@ export const PaymentDialog = ({ open, onClose, staffId, name, preset, edit, onSa
     return (
         <Dialog isOpen={open} width={480} onClose={onClose} onRequestClose={onClose}>
             <h5 className="mb-1 pr-10">{edit ? tr('Edit payment') : tr('Record a payment')}</h5>
-            <p className="mb-4 text-sm text-gray-500">{name}</p>
+            <p className="mb-1 text-sm text-gray-500">{name}{cnss ? ` · ${tr('CNSS')}` : ''}</p>
+            {rib && <p className="mb-4 flex items-center gap-2 text-sm"><span className="text-gray-400">{tr('RIB')}</span><b className="select-all tracking-wide">{rib}</b><button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={() => { navigator.clipboard?.writeText(rib).then(() => notify('success', tr('Copied')), () => {}) }}>{tr('Copy')}</button></p>}
+            {!rib && <div className="mb-3" />}
             <div className="grid grid-cols-2 gap-3">
                 <Field label={tr('Type')}><Select isSearchable={false} options={kinds} value={kinds.find((o) => o.value === v.kind) || null} onChange={(o) => setV({ ...v, kind: o?.value || 'salary' })} /></Field>
                 <Field label={tr('For the month')}><Input type="month" value={v.month || ''} onChange={(e) => setV({ ...v, month: e.target.value })} /></Field>
                 <Field label={tr('Amount')}><Input type="number" min="0" step="0.01" autoFocus value={v.amount ?? ''} onChange={(e) => setV({ ...v, amount: e.target.value })} /></Field>
                 <Field label={tr('Currency')}><Select options={options} value={options.find((o) => o.value === v.currencyId) || null} onChange={(o) => setV({ ...v, currencyId: o?.value || null })} /></Field>
+                {!edit && v.kind === 'salary' && <Field label={tr('Prime (bonus)')}><Input type="number" min="0" step="0.01" placeholder="0" value={v.prime ?? ''} onChange={(e) => setV({ ...v, prime: e.target.value })} /></Field>}
                 <Field label={tr('Paid on')}><Input type="date" value={v.paidDate || ''} onChange={(e) => setV({ ...v, paidDate: e.target.value })} /></Field>
                 <Field label={tr('Method')}><Input placeholder={tr('Transfer, cash, cheque…')} value={v.method || ''} onChange={(e) => setV({ ...v, method: e.target.value })} /></Field>
                 <div className="col-span-2"><Field label={tr('Note')}><Input value={v.note || ''} onChange={(e) => setV({ ...v, note: e.target.value })} /></Field></div>

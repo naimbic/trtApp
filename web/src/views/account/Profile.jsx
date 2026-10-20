@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbBrandFacebook, TbBrandLinkedin, TbBrandSkype, TbBrandWhatsapp, TbWorld } from 'react-icons/tb'
+import { TbBrandLinkedin, TbBrandWhatsapp, TbWorld } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -193,10 +193,8 @@ const Profile = () => {
                             <Field label={tr("Postal code")}><Input value={u.postcode} onChange={(e) => setU({ postcode: e.target.value })} /></Field>
                         </Section>
                         <Section title={tr("Online")} desc={tr("Links must start with https://")}>
-                            <Field label={tr("Website")}><Input prefix={<TbWorld className="text-lg" />} placeholder={tr("https://")} value={s.website} onChange={(e) => setS({ website: e.target.value })} /></Field>
+                            <Field label={tr("Portfolio")}><Input prefix={<TbWorld className="text-lg" />} placeholder={tr("https://")} value={s.website} onChange={(e) => setS({ website: e.target.value })} /></Field>
                             <Field label={tr("LinkedIn")}><Input prefix={<TbBrandLinkedin className="text-lg" />} placeholder={tr("https://linkedin.com/in/…")} value={s.linkedin} onChange={(e) => setS({ linkedin: e.target.value })} /></Field>
-                            <Field label={tr("Facebook")}><Input prefix={<TbBrandFacebook className="text-lg" />} placeholder={tr("https://facebook.com/…")} value={s.facebook} onChange={(e) => setS({ facebook: e.target.value })} /></Field>
-                            <Field label={tr("Skype")}><Input prefix={<TbBrandSkype className="text-lg" />} value={s.skype} onChange={(e) => setS({ skype: e.target.value })} /></Field>
                         </Section>
                         <Section title={tr("Language & time")} desc={tr("Used for dates in the calendar and for emails sent in your name.")}>
                             <Field label={tr("Language")}><Select isDisabled={app?.disable_language === '1' && !isAdminUser} isClearable placeholder={tr("Company default")} options={LANGUAGES} value={LANGUAGES.find((l) => l.value === s.defaultLanguage) || null} onChange={(o) => setS({ defaultLanguage: o?.value || '' })} /></Field>

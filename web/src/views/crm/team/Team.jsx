@@ -86,7 +86,7 @@ const Team = () => {
         setSaving(true)
         setFormError('')
         try {
-            const body = { ...v, hourlyRate: v.hourlyRate === '' ? 0 : Number(v.hourlyRate) }
+            const body = { ...v }
             if (drawer.member) {
                 await api(`/api/crm/team/${drawer.member.id}`, { method: 'PATCH', body: JSON.stringify(body) })
                 notify('success', tr("Member updated"))
@@ -250,7 +250,7 @@ const Team = () => {
             )}
 
             <MemberAccessDrawer open={access.open} memberId={access.id} onClose={() => setAccess({ open: false, id: null })} onSaved={load} />
-            <MemberDrawer open={drawer.open} member={drawer.member} lookups={lookups} canAdmin={canAdmin} saving={saving} error={formError} onSubmit={submit} onClose={() => setDrawer({ open: false, member: null })} />
+            <MemberDrawer open={drawer.open} member={drawer.member} lookups={lookups} canAdmin={canAdmin} saving={saving} error={formError} onSubmit={submit} onClose={() => setDrawer({ open: false, member: null })} onChanged={load} />
 
             {dialogs}
         </Container>

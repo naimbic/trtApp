@@ -1356,5 +1356,11 @@
  "The first month must look like 2026-04",
  "Enter the amount paid",
  "Choose the month it is for",
- "The payment date is not valid"
+ "The payment date is not valid",
+ "The hire date is not valid",
+ "The fire date is not valid",
+ "The fire date is before the hire date",
+ "Only a super administrator can change salary and bank details",
+ "The RIB must be 10 to 34 digits or letters",
+ "Choose CV or portfolio"
 ]

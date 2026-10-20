@@ -53,6 +53,16 @@ model CrmStaff {
   payDay                  Int?
   /// first month the salary is due (YYYY-MM)
   salaryStart             String?
+  /// bank account (RIB), super admins only
+  rib                     String?
+  /// declared to the CNSS (social security)
+  cnss                    Boolean  @default(false)
+  hireDate                DateTime?
+  fireDate                DateTime?
+  cvUrl                   String?
+  cvName                  String?
+  portfolioFileUrl        String?
+  portfolioFileName       String?
   twoFactorAuthEnabled    Boolean  @default(false)
   emailSignature          String?
   jobTitle                String?

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import StaffRing from '@/components/crm/StaffRing'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
 import { TbHierarchy2, TbBookmark, TbArrowLeft, TbTag, TbUser, TbCircleDashed, TbCalendarDue, TbFlag, TbBriefcase, TbCalendar, TbTrash, TbPencil, TbPlayerPlay, TbPlayerStop, TbCheck, TbX, TbMessage, TbFile, TbClock, TbPlus, TbListCheck } from 'react-icons/tb'
@@ -119,7 +120,7 @@ const TaskPage = () => {
                         </Prop>
                         <Prop icon={<TbUser />} label={tr('Assigned to')}>
                             {e ? <Select size="sm" isMulti {...portal} options={opt} value={opt.filter((o) => t.assigneeIds.includes(o.value))} onChange={(os) => save({ assigneeIds: (os || []).map((o) => o.value) })} />
-                                : <div className="flex -space-x-1.5">{t.assignees.map((p) => <Avatar key={p.id} size={28} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar>)}{!t.assignees.length && '-'}</div>}
+                                : <div className="flex -space-x-1.5">{t.assignees.map((p) => <StaffRing key={p.id} id={p.id} name={p.name} size={28}><Avatar size={28} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar></StaffRing>)}{!t.assignees.length && '-'}</div>}
                         </Prop>
                         <Prop icon={<TbCircleDashed />} label={tr('Status')}>
                             {e && t.canFinish !== false ? <Select size="sm" isSearchable={false} {...portal} options={STATUS.map((s) => ({ value: s.value, label: s.label }))} value={{ value: t.status, label: statusOf(t.status).label }} onChange={(o) => save({ status: o.value })} /> : <Tag className={classNames(STATUS_PILL[t.status], 'dark:text-gray-900')}>{statusOf(t.status).label}</Tag>}
@@ -160,7 +161,7 @@ const TaskPage = () => {
                                 <div className="space-y-5">
                                     {d.comments.map((c) => (
                                         <div key={c.id} className="flex gap-3">
-                                            <Avatar size={36} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr('Client') : '?'))}</Avatar>
+                                            <StaffRing id={c.staff?.id} name={c.staff?.name} size={36}><Avatar size={36} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr('Client') : '?'))}</Avatar></StaffRing>
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2 text-sm"><span className="font-bold heading-text">{c.staff?.name || (c.fromClient ? tr('Client') : tr('Unknown'))}</span><span className="text-gray-400">|</span><span className="text-gray-400">{dayjs(c.createdAt).format('DD MMM YYYY')}</span>{(c.mine || can.delete) && <button type="button" className="ml-auto text-gray-300 hover:text-red-500" onClick={() => delComment(c)}><TbTrash /></button>}</div>
                                                 <div className="mt-1 whitespace-pre-line text-sm">{c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')}</div>
@@ -178,7 +179,7 @@ const TaskPage = () => {
                                         <div key={x.id} className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/40">
                                             <input type="checkbox" checked={x.status === 5} disabled={!x.canFinish} title={x.canFinish ? undefined : tr('Only the people assigned to this task, or who created it, can change its status')} onChange={() => toggleSub(x)} />
                                             <Link to={`/crm/tasks/${x.id}`} className={classNames('min-w-0 flex-1 truncate text-sm font-semibold hover:text-primary', x.status === 5 && 'text-gray-400 line-through')}>{x.name}</Link>
-                                            <div className="flex -space-x-1.5">{x.assignees.slice(0, 3).map((p) => <Avatar key={p.id} size={22} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar>)}</div>
+                                            <div className="flex -space-x-1.5">{x.assignees.slice(0, 3).map((p) => <StaffRing key={p.id} id={p.id} name={p.name} size={22}><Avatar size={22} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar></StaffRing>)}</div>
                                             {x.dueDate && <span className="w-14 shrink-0 text-end text-xs text-gray-500">{dayjs(x.dueDate).format('DD MMM')}</span>}
                                         </div>
                                     ))}

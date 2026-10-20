@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.87.1',
+        date: '2026-10-20',
+        title: 'Score rings on pictures across the app',
+        items: ['The score ring now shows around a team member\'s picture on the Tasks board and list, the task page and popup (assignees and comments), Timeline, Scrum board, Time report and the Team dashboard, with the name and score on hover.', 'Scores are shown to people who may see the team (Team permission); everyone else sees plain pictures.']
+    },
+    {
         version: '0.87.0',
         date: '2026-10-20',
         title: 'Score ring for team members; staff profile page',

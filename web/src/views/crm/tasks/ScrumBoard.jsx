@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import StaffRing from '@/components/crm/StaffRing'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { TbPlus, TbPaperclip, TbMessageCircle, TbCalendar, TbExternalLink, TbList, TbChecklist, TbLoader, TbAlertTriangle, TbCircleCheck, TbUsers, TbChevronDown, TbChevronUp, TbHierarchy2 } from 'react-icons/tb'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
@@ -132,7 +133,7 @@ const ScrumBoard = () => {
                                         <div className="flex flex-col gap-3.5">
                                             {m.workload.map((w) => (
                                                 <div key={w.person.id} className="flex items-center gap-3">
-                                                    <Avatar size={30} shape="circle" src={w.person.image || undefined}>{initials(w.person.name)}</Avatar>
+                                                    <StaffRing id={w.person.id} name={w.person.name} size={30}><Avatar size={30} shape="circle" src={w.person.image || undefined}>{initials(w.person.name)}</Avatar></StaffRing>
                                                     <div className="min-w-0 flex-1">
                                                         <div className="mb-1 flex items-center justify-between text-sm"><span className="truncate font-semibold">{w.person.name}</span><span className="text-xs text-gray-500">{tr('{n} open', { n: w.open })}{w.overdue > 0 && <b className="text-red-500"> · {tr('{n} overdue', { n: w.overdue })}</b>}<span className="text-emerald-600"> · {tr('{n} done', { n: w.done })}</span></span></div>
                                                         <div className="flex h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full bg-red-400" style={{ width: `${(w.overdue / maxLoad) * 100}%` }} /><div className="h-full bg-primary" style={{ width: `${((w.open - w.overdue) / maxLoad) * 100}%` }} /><div className="h-full bg-emerald-400" style={{ width: `${(w.done / maxLoad) * 100}%` }} /></div>

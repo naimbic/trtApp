@@ -81,6 +81,13 @@ export async function listTeam({ search = '', status = 'all' } = {}) {
     }
 }
 
+/** Score of every active member, for the rings next to names and pictures (people who may see the team). */
+export async function listScores() {
+    await requirePermission('staff', 'view')
+    const ids = (await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true } })).map((s) => s.id)
+    return { scores: await staffScores(ids) }
+}
+
 /** One member with their score and what they are working on (the staff profile page). */
 export async function getMember(id) {
     await requirePermission('staff', 'view')

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import StaffRing from '@/components/crm/StaffRing'
 import { Link, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -54,7 +55,7 @@ const TeamDashboard = () => {
         <Container>
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-4">
-                    <Avatar size={52} shape="circle" src={d.me.image || undefined}>{initials(d.me.name)}</Avatar>
+                    <StaffRing id={d.me.id} name={d.me.name} size={52}><Avatar size={52} shape="circle" src={d.me.image || undefined}>{initials(d.me.name)}</Avatar></StaffRing>
                     <div><h3>{greet().replace('{name}', first)}</h3><p className="text-gray-500">{dayjs().format('dddd, DD MMMM YYYY')}{online?.length > 0 && <span> · {tr('{n} colleagues online', { n: online.length })}</span>}</p></div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -119,7 +120,7 @@ const TeamDashboard = () => {
                                 <div className="flex flex-col gap-3.5">
                                     {tasks.team.workload.map((w) => (
                                         <div key={w.id} className="flex items-center gap-3">
-                                            <Avatar size={30} shape="circle" src={w.image || undefined}>{initials(w.name)}</Avatar>
+                                            <StaffRing id={w.id} name={w.name} size={30}><Avatar size={30} shape="circle" src={w.image || undefined}>{initials(w.name)}</Avatar></StaffRing>
                                             <div className="min-w-0 flex-1">
                                                 <div className="mb-1 flex items-center justify-between text-sm"><span className="truncate font-semibold">{w.name}</span><span className="text-xs text-gray-500">{trn(w.open, 'open task')}{w.overdue > 0 && <b className="text-red-500"> · {tr('{n} overdue', { n: w.overdue })}</b>}{w.done > 0 && <span className="text-emerald-600"> · {tr('{n} done', { n: w.done })}</span>}</span></div>
                                                 <div className="flex h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full bg-red-400" style={{ width: `${(w.overdue / maxLoad) * 100}%` }} /><div className="h-full bg-primary" style={{ width: `${((w.open - w.overdue) / maxLoad) * 100}%` }} /></div>
@@ -175,7 +176,7 @@ const TeamDashboard = () => {
                             <ul className="flex flex-col gap-3.5">
                                 {activity.map((a, i) => (
                                     <li key={i} className="flex items-start gap-3">
-                                        <Avatar size={28} shape="circle" src={a.staff?.image || undefined}>{a.staff ? initials(a.staff.name) : '·'}</Avatar>
+                                        <StaffRing id={a.staff?.id} name={a.staff?.name} size={28}><Avatar size={28} shape="circle" src={a.staff?.image || undefined}>{a.staff ? initials(a.staff.name) : '·'}</Avatar></StaffRing>
                                         <div className="min-w-0 text-sm">
                                             <span className="font-semibold heading-text">{a.staff?.name || tr('Someone')}</span> <span className="text-gray-500">{{ comment: tr('commented on'), done: tr('completed'), lead: tr('added the lead'), issue: tr('commented on issue') }[a.type]}</span>{' '}
                                             {a.link ? <Link to={a.link} className="font-semibold text-primary hover:underline">{a.text}</Link> : <b>{a.text}</b>}
@@ -365,7 +366,7 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
                             <Card key={k} className="h-full" bodyClass="p-4">
                                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><span className={classNames('flex h-6 w-6 items-center justify-center rounded-full text-base', TONES[tone])}>{icon}</span>{title}</div>
                                 <div className="mt-3 flex items-center gap-3">
-                                    <Avatar size={40} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar>
+                                    <StaffRing id={r.person.id} name={r.person.name} size={40}><Avatar size={40} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar></StaffRing>
                                     <div className="min-w-0"><div className="truncate font-bold heading-text">{r.person.name}</div><div className="truncate text-xs text-gray-500">{detail(r)}</div></div>
                                 </div>
                             </Card>
@@ -399,7 +400,7 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
                                     {leaderboard.map((r, i) => (
                                         <tr key={r.person.id} className={r.person.id === meId ? 'bg-primary/5' : ''}>
                                             <td className="py-2.5 pe-2"><span className={classNames('flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold', MEDAL[i] || 'bg-gray-100 text-gray-500 dark:bg-gray-700')}>{i + 1}</span></td>
-                                            <td className="py-2.5"><div className="flex items-center gap-2.5"><Avatar size={28} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar><span className="truncate font-semibold">{r.person.name}</span></div></td>
+                                            <td className="py-2.5"><div className="flex items-center gap-2.5"><StaffRing id={r.person.id} name={r.person.name} size={28}><Avatar size={28} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar></StaffRing><span className="truncate font-semibold">{r.person.name}</span></div></td>
                                             <td className="py-2.5 text-end font-bold">{r.completed}</td>
                                             <td className={classNames('py-2.5 text-end', r.onTimeRate !== null && r.onTimeRate < 60 ? 'text-red-500' : '')}>{r.onTimeRate === null ? '—' : `${r.onTimeRate}%`}</td>
                                             <td className="py-2.5 text-end">{r.avgDays === null ? '—' : r.avgDays}</td>

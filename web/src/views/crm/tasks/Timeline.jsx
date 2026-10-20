@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import StaffRing from '@/components/crm/StaffRing'
 import { useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
@@ -83,7 +84,7 @@ const Timeline = () => {
                                 <div key={i} className="flex h-9 items-center justify-between bg-gray-50 px-3 text-sm font-bold dark:bg-gray-900"><span className="truncate">{r.head}</span><span className="text-xs font-normal text-gray-400">{r.count}</span></div>
                             ) : (
                                 <button key={i} type="button" onClick={() => nav(`/crm/tasks/${r.t.id}`)} className="flex h-9 w-full items-center gap-2 px-3 text-start text-sm hover:bg-gray-50 dark:hover:bg-gray-800" style={{ paddingInlineStart: 12 + r.depth * 16 }}>
-                                    {r.t.assignees[0] ? <Avatar size={20} shape="circle" src={r.t.assignees[0].image || undefined}>{initials(r.t.assignees[0].name)}</Avatar> : <span className="h-5 w-5 rounded-full bg-gray-100 dark:bg-gray-700" />}
+                                    {r.t.assignees[0] ? <StaffRing id={r.t.assignees[0].id} name={r.t.assignees[0].name} size={20}><Avatar size={20} shape="circle" src={r.t.assignees[0].image || undefined}>{initials(r.t.assignees[0].name)}</Avatar></StaffRing> : <span className="h-5 w-5 rounded-full bg-gray-100 dark:bg-gray-700" />}
                                     <span className={classNames('truncate', r.t.status === 5 && 'text-gray-400 line-through')}>{r.t.name}</span>
                                 </button>
                             ))}

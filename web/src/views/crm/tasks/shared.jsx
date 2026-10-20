@@ -1,5 +1,5 @@
 import Avatar from '@/components/ui/Avatar'
-import Tooltip from '@/components/ui/Tooltip'
+import StaffRing from '@/components/crm/StaffRing'
 import dayjs from 'dayjs'
 import { tr } from '@/utils/t'
 
@@ -32,7 +32,7 @@ export const People = ({ list = [], max = 3, size = 24 }) => {
     const shown = list.slice(0, max)
     return (
         <div className="flex -space-x-1.5">
-            {shown.map((p) => <Tooltip key={p.id} title={p.name}><Avatar size={size} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar></Tooltip>)}
+            {shown.map((p) => <StaffRing key={p.id} id={p.id} name={p.name} size={size}><Avatar size={size} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar></StaffRing>)}
             {list.length > max && <Avatar size={size} shape="circle" className="ring-2 ring-white dark:ring-gray-800">+{list.length - max}</Avatar>}
         </div>
     )

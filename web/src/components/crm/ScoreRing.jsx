@@ -16,7 +16,7 @@ export const scoreTip = (s) => {
     ].filter(Boolean).join(' · ')
 }
 
-const ScoreRing = ({ score: s, size = 44, width = 3, badge = false, children }) => {
+const ScoreRing = ({ score: s, size = 44, width = 3, badge = false, name, children }) => {
     const score = s?.score ?? null
     const ring = (
         <span className="cx-ring" data-tone={toneOf(score)} style={{ '--p': score ?? 0, '--sz': `${size}px`, '--w': `${width}px` }}>
@@ -24,7 +24,7 @@ const ScoreRing = ({ score: s, size = 44, width = 3, badge = false, children }) 
             {badge && score !== null && <small>{score}%</small>}
         </span>
     )
-    return <Tooltip title={scoreTip(s)}>{ring}</Tooltip>
+    return <Tooltip title={name ? `${name} · ${scoreTip(s)}` : scoreTip(s)}>{ring}</Tooltip>
 }
 
 export default ScoreRing

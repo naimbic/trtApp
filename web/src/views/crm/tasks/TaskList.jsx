@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import StaffRing from '@/components/crm/StaffRing'
 import { useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -59,7 +60,7 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }
             <Td className="w-[200px]">
                 {who ? (
                     <div className="flex items-center gap-2">
-                        <Avatar size="sm" shape="circle" src={who.image || undefined}>{initials(who.name)}</Avatar>
+                        <StaffRing id={who.id} name={who.name} size={28}><Avatar size={28} shape="circle" src={who.image || undefined}>{initials(who.name)}</Avatar></StaffRing>
                         <span className="heading-text truncate font-bold">{who.name}</span>
                         {t.assignees.length > 1 && <span className="text-xs text-gray-400">+{t.assignees.length - 1}</span>}
                     </div>

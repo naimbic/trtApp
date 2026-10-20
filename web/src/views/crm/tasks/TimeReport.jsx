@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import StaffRing from '@/components/crm/StaffRing'
 import { Link } from 'react-router'
 import dayjs from 'dayjs'
 import { TbDownload, TbClock, TbReceipt, TbListDetails, TbSunHigh } from 'react-icons/tb'
@@ -68,7 +69,7 @@ const TimeReport = () => {
                             <div className="flex flex-col gap-3.5">
                                 {d.people.map((p) => (
                                     <div key={p.person.id} className="flex items-center gap-3">
-                                        <Avatar size={30} shape="circle" src={p.person.image || undefined}>{initials(p.person.name)}</Avatar>
+                                        <StaffRing id={p.person.id} name={p.person.name} size={30}><Avatar size={30} shape="circle" src={p.person.image || undefined}>{initials(p.person.name)}</Avatar></StaffRing>
                                         <div className="min-w-0 flex-1">
                                             <div className="mb-1 flex items-center justify-between text-sm"><span className="truncate font-semibold">{p.person.name}</span><span className="text-xs text-gray-500"><b className="text-gray-700 dark:text-gray-200">{fmt(p.hours)}</b> · {tr('{n} tasks', { n: p.tasks })}</span></div>
                                             <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full rounded-full bg-primary" style={{ width: `${(p.hours / max) * 100}%` }} /></div>

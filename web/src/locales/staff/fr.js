@@ -3834,5 +3834,8 @@ export default {
     "Saturday (hours)": "Samedi (heures)",
     "Sunday (hours)": "Dimanche (heures)",
     "Last 14 days": "14 derniers jours",
-    "Not opened yet": "Pas encore ouvert"
+    "Not opened yet": "Pas encore ouvert",
+    "Target reached": "Objectif atteint",
+    "Under target": "Sous l'objectif",
+    "No activity": "Aucune activité"
 }

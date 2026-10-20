@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.88.2',
+        date: '2026-10-20',
+        title: 'Work hours chart under the staff profile',
+        items: ['A bar chart under the left section of the staff profile (and on your own Work hours tab): one bar per day for the last 14 days, green when the expected hours are reached, blue when under, amber for overtime, with a dash for the expected hours. Hover a bar for the opening and last active times.', 'The left column of the staff profile now stays in view while you scroll.']
+    },
+    {
         version: '0.88.1',
         date: '2026-10-20',
         title: 'Work hours on your own profile',

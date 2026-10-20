@@ -3834,5 +3834,8 @@ export default {
     "Saturday (hours)": "土曜日(時間)",
     "Sunday (hours)": "日曜日(時間)",
     "Last 14 days": "過去14日間",
-    "Not opened yet": "まだ開いていません"
+    "Not opened yet": "まだ開いていません",
+    "Target reached": "目標達成",
+    "Under target": "目標未満",
+    "No activity": "活動なし"
 }

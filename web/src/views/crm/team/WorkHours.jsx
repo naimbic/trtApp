@@ -27,6 +27,49 @@ const rangeOf = (k) => {
     return [now.subtract(29, 'day'), now]
 }
 
+/**
+ * The last days as bars, easy to read: the bar is the active time that day, green up to the hours expected,
+ * amber above (overtime), blue when under; the dash is the expected hours. Hover a bar for the details.
+ */
+export const WorkChart = ({ wh, title }) => {
+    const rows = wh.rows
+    const top = Math.max(4, Math.ceil(Math.max(...rows.map((r) => Math.max(r.hours, r.expected)))))
+    const H = 110
+    return (
+        <section className="pt-card">
+            <h3>{title || tr('Last 14 days')}<span className="text-sm font-semibold text-gray-500">{hm(wh.totals.active)} / {hm(wh.totals.expected)}</span></h3>
+            <div className="relative" style={{ height: H + 22 }}>
+                {[0, 0.5, 1].map((f) => (
+                    <div key={f} className="absolute inset-x-0 border-t border-dashed border-gray-200 dark:border-gray-700" style={{ bottom: 22 + H * f }}><span className="absolute -top-2 left-0 bg-white pr-1 text-[10px] text-gray-400 dark:bg-gray-800">{Math.round(top * f)}h</span></div>
+                ))}
+                <div className="absolute inset-x-6 bottom-0 flex items-end justify-between gap-[3px]" style={{ height: H + 22 }}>
+                    {rows.map((r) => {
+                        const used = Math.min(r.hours, r.expected)
+                        const over = Math.max(0, r.hours - r.expected)
+                        const tip = `${dayjs(r.day).format('ddd DD MMM')} · ${r.hours ? hm(r.hours) : tr('No activity')}${r.expected ? ` / ${hm(r.expected)}` : ''}${r.first !== null ? ` · ${tr('Opened')} ${clock(r.first)}, ${tr('Last active')} ${clock(r.last)}` : ''}`
+                        return (
+                            <div key={r.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end" title={tip}>
+                                <div className="relative flex w-full flex-1 flex-col justify-end">
+                                    {r.expected > 0 && <div className="absolute inset-x-[-1px] border-t-2 border-gray-400/70" style={{ bottom: `${(r.expected / top) * 100}%` }} />}
+                                    {over > 0 && <div className="w-full rounded-t bg-amber-400" style={{ height: `${(over / top) * 100}%` }} />}
+                                    {used > 0 && <div className={`w-full ${over > 0 ? '' : 'rounded-t'} ${used >= r.expected ? 'bg-emerald-500' : 'bg-sky-400'}`} style={{ height: `${(used / top) * 100}%` }} />}
+                                </div>
+                                <div className={`mt-1 h-5 text-center text-[10px] leading-tight ${r.expected ? 'text-gray-500' : 'text-gray-300'}`}>{dayjs(r.day).format('dd').slice(0, 1)}<br />{dayjs(r.day).format('D')}</div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
+                <span className="inline-flex items-center gap-1"><i className="inline-block size-2 rounded-sm bg-emerald-500" />{tr('Target reached')}</span>
+                <span className="inline-flex items-center gap-1"><i className="inline-block size-2 rounded-sm bg-sky-400" />{tr('Under target')}</span>
+                <span className="inline-flex items-center gap-1"><i className="inline-block size-2 rounded-sm bg-amber-400" />{tr('Overtime')}</span>
+                <span className="inline-flex items-center gap-1"><i className="inline-block h-0 w-3 border-t-2 border-gray-400/70" />{tr('Expected')}</span>
+            </div>
+        </section>
+    )
+}
+
 /** The day by day table of one member (a person from the work hours report, with rows). */
 export const WorkDays = ({ wh }) => (
     <div className="overflow-x-auto">

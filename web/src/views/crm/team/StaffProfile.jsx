@@ -9,7 +9,7 @@ import Tag from '@/components/ui/Tag'
 import ScoreRing from '@/components/crm/ScoreRing'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import { api } from '../kit/api'
-import { hm, WorkDays } from './WorkHours'
+import { hm, WorkDays, WorkChart } from './WorkHours'
 import { tr } from '@/utils/t'
 
 const initials = (m) => (m.name || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase()
@@ -58,29 +58,32 @@ const StaffProfile = () => {
             />
             <button type="button" className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary" onClick={() => navigate('/crm/staff')}><TbArrowLeft />{tr('Team')}</button>
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[320px_1fr]">
-                <section className="pt-card pt-prof">
-                    <div className="mb-3 flex justify-center">
-                        <ScoreRing score={s} size={128} width={6} badge>
-                            <Avatar shape="circle" size={114} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar>
-                        </ScoreRing>
-                    </div>
-                    <h2 className="pt-name">{m.name}</h2>
-                    <p className="pt-role">{[m.jobTitle, m.admin ? tr('Super Admin') : m.role?.name].filter(Boolean).join(' · ') || ' '}</p>
-                    <div className="mt-2 flex flex-wrap justify-center gap-1.5">
-                        <Tag className={m.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{m.active ? tr('Active') : tr('Inactive')}</Tag>
-                        {m.departments.map((x) => <Tag key={x.id}>{x.name}</Tag>)}
-                    </div>
-                    <div className="pt-acts">
-                        {m.email && <a className="pt-act" href={`mailto:${m.email}`}><TbMail />{tr('Email')}</a>}
-                        {phone && <a className="pt-act" href={`tel:${phone.replace(/\s/g, '')}`}><TbPhone />{tr('Call')}</a>}
-                        {(m.whatsapp || phone) && <a className="pt-act" href={`https://wa.me/${(m.whatsapp || phone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"><TbBrandWhatsapp />{tr('WhatsApp')}</a>}
-                    </div>
-                    <dl className="mt-4 space-y-2 text-left text-sm">
-                        {m.email && <div><dt className="text-xs text-gray-400">{tr('Email')}</dt><dd className="truncate">{m.email}</dd></div>}
-                        {phone && <div><dt className="text-xs text-gray-400">{tr('Phone')}</dt><dd>{phone}</dd></div>}
-                        {m.lastLogin && <div><dt className="text-xs text-gray-400">{tr('Last login')}</dt><dd>{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</dd></div>}
-                    </dl>
-                </section>
+                <div className="pt-col pt-col--sticky">
+                    <section className="pt-card pt-prof">
+                        <div className="mb-3 flex justify-center">
+                            <ScoreRing score={s} size={128} width={6} badge>
+                                <Avatar shape="circle" size={114} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar>
+                            </ScoreRing>
+                        </div>
+                        <h2 className="pt-name">{m.name}</h2>
+                        <p className="pt-role">{[m.jobTitle, m.admin ? tr('Super Admin') : m.role?.name].filter(Boolean).join(' · ') || ' '}</p>
+                        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+                            <Tag className={m.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{m.active ? tr('Active') : tr('Inactive')}</Tag>
+                            {m.departments.map((x) => <Tag key={x.id}>{x.name}</Tag>)}
+                        </div>
+                        <div className="pt-acts">
+                            {m.email && <a className="pt-act" href={`mailto:${m.email}`}><TbMail />{tr('Email')}</a>}
+                            {phone && <a className="pt-act" href={`tel:${phone.replace(/\s/g, '')}`}><TbPhone />{tr('Call')}</a>}
+                            {(m.whatsapp || phone) && <a className="pt-act" href={`https://wa.me/${(m.whatsapp || phone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"><TbBrandWhatsapp />{tr('WhatsApp')}</a>}
+                        </div>
+                        <dl className="mt-4 space-y-2 text-left text-sm">
+                            {m.email && <div><dt className="text-xs text-gray-400">{tr('Email')}</dt><dd className="truncate">{m.email}</dd></div>}
+                            {phone && <div><dt className="text-xs text-gray-400">{tr('Phone')}</dt><dd>{phone}</dd></div>}
+                            {m.lastLogin && <div><dt className="text-xs text-gray-400">{tr('Last login')}</dt><dd>{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</dd></div>}
+                        </dl>
+                    </section>
+                    {wh && <WorkChart wh={wh} />}
+                </div>
                 <div className="flex min-w-0 flex-col gap-4">
                     <section className="pt-card">
                         <h3>{tr('Score')}<span className="text-2xl font-extrabold">{s?.score === null || !s ? '–' : `${s.score}%`}</span></h3>

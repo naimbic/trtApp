@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import Card from '@/components/ui/Card'
 import { api } from '@/views/crm/kit/api'
-import { WorkDays, hm, clock } from '@/views/crm/team/WorkHours'
+import { WorkDays, WorkChart, hm, clock } from '@/views/crm/team/WorkHours'
 import { tr } from '@/utils/t'
 
 const Tile = ({ label, value, sub }) => (
@@ -33,6 +33,7 @@ const MyWorkHours = () => {
                 <Tile label={tr('Overtime')} value={t.overtime > 0 ? `+${hm(t.overtime)}` : '–'} />
                 <Tile label={tr('Usually opens at')} value={clock(t.avgFirst)} sub={`${tr('Usually leaves at')} ${clock(t.avgLast)}`} />
             </div>
+            <div className="mb-4"><WorkChart wh={wh} /></div>
             <WorkDays wh={wh} />
             <p className="mt-4 text-xs text-gray-400">{tr('Hours are the time the CRM is open and in use (a click, key press or scroll in the last two minutes). Nothing outside the CRM is measured. The working week is set in Settings → Localization → Working hours.')}</p>
         </Card>

@@ -3834,5 +3834,8 @@ export default {
     "Saturday (hours)": "السبت (ساعات)",
     "Sunday (hours)": "الأحد (ساعات)",
     "Last 14 days": "آخر 14 يومًا",
-    "Not opened yet": "لم يُفتح بعد"
+    "Not opened yet": "لم يُفتح بعد",
+    "Target reached": "تم بلوغ الهدف",
+    "Under target": "دون الهدف",
+    "No activity": "لا نشاط"
 }

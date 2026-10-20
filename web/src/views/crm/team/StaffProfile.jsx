@@ -60,6 +60,7 @@ const StaffProfile = () => {
     const load = useCallback(() => api(`/api/crm/team/${id}`).then(setD).catch((e) => setError(e.message)), [id])
     const { setConfirm, setSetPw, dialogs } = useMemberActions({ reload: load })
     useEffect(() => { load() }, [load])
+    useEffect(() => { const t = setInterval(load, 60000); return () => clearInterval(t) }, [load]) // the online dot stays current
     useEffect(() => { if (canEdit) api('/api/crm/team/lookups').then(setLookups).catch(() => {}) }, [canEdit])
     const toggleActive = async (checked) => {
         setD((x) => ({ ...x, member: { ...x.member, active: checked } }))
@@ -106,7 +107,7 @@ const StaffProfile = () => {
                             </ScoreRing>
                         </div>
                         <h2 className="pt-name flex items-center justify-center gap-2">
-                            <span className={`inline-block size-2.5 shrink-0 rounded-full ${m.active ? 'bg-emerald-500' : 'bg-gray-300'}`} style={m.active ? { boxShadow: '0 0 0 3px rgba(16,185,129,.22), 0 0 10px 2px rgba(16,185,129,.75)' } : undefined} title={m.active ? tr('Active') : tr('Inactive')} />
+                            <span className={`inline-block size-2.5 shrink-0 rounded-full ${m.online ? 'bg-emerald-500' : 'bg-gray-300'}`} style={m.online ? { boxShadow: '0 0 0 3px rgba(16,185,129,.22), 0 0 10px 2px rgba(16,185,129,.75)' } : undefined} title={m.online ? tr('Online') : m.lastSeen ? tr('Offline · last seen {when}', { when: dayjs(m.lastSeen).format('DD MMM, HH:mm') }) : tr('Offline')} />
                             <span className="min-w-0 truncate">{m.name}</span>
                         </h2>
                         {(m.jobTitle || m.departments.length > 0) && <p className="pt-role">{[m.jobTitle, ...m.departments.map((x) => x.name)].filter(Boolean).join(' · ')}</p>}

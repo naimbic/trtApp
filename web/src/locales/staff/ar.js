@@ -3913,5 +3913,6 @@ export default {
     "Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category \"Payroll\"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.": "يمكن أن تظهر الرواتب والسلف والمكافآت المسجلة في الرواتب كمصروفات (فئة «الرواتب») لتشمل تقارير المصروفات والأرباح تكلفة الفريق. لا تفعّل هذا إن كنت تدخل الرواتب كمصروفات بنفسك.",
     "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "الدفعات الجديدة والمعدلة والمحذوفة تحدّث مصروفها. أما الدفعات الحالية فتُضاف بالزر أدناه.",
     "Existing payroll payments": "دفعات الرواتب الحالية",
-    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "فعّل المفتاح أعلاه واحفظ أولًا. ثم أنشئ مصروفات الدفعات المسجلة في الرواتب (التي لا مصروف لها بعد فقط)."
+    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "فعّل المفتاح أعلاه واحفظ أولًا. ثم أنشئ مصروفات الدفعات المسجلة في الرواتب (التي لا مصروف لها بعد فقط).",
+    "Offline · last seen {when}": "غير متصل · آخر ظهور {when}"
 }

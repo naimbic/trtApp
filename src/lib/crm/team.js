@@ -10,7 +10,7 @@ import { sendMail, isMailConfigured } from '@/lib/mail'
 import { staffScores } from '@/lib/crm/staffScore'
 import { extras } from '@/lib/crm/memberFields'
 import { processUpload, putMedia, deleteMedia, keyFromUrl } from '@/lib/media'
-import { lastActiveMap } from '@/lib/crm/workHours'
+import { lastActiveMap, onlineStatus } from '@/lib/crm/workHours'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -107,11 +107,12 @@ export async function getMember(id) {
     if (!row) throw httpError('Member not found', 404)
     await withDepartments(row)
     const score = (await staffScores([id]))[id] || null
+    const presence = (await onlineStatus([id]).catch(() => ({})))[id] || { online: false, lastSeen: null }
     const links = await prisma.crmTaskAssigned.findMany({ where: { staffId: id }, select: { taskId: true } })
     const tasks = links.length ? await prisma.crmTask.findMany({ where: { id: { in: links.map((l) => l.taskId) } }, select: { id: true, name: true, status: true, priority: true, dueDate: true, dateFinished: true }, take: 500 }) : []
     const open = tasks.filter((t) => t.status !== 5).sort((a, b) => (+new Date(a.dueDate || 8.64e15)) - (+new Date(b.dueDate || 8.64e15))).slice(0, 10)
     const done = tasks.filter((t) => t.status === 5).sort((a, b) => (+new Date(b.dateFinished || 0)) - (+new Date(a.dateFinished || 0))).slice(0, 6)
-    return { member: { ...shape(row), ...(isCrmAdmin(session.user.authority || []) ? privateShape(row) : {}), score }, open, done }
+    return { member: { ...shape(row), ...(isCrmAdmin(session.user.authority || []) ? privateShape(row) : {}), score, online: presence.online, lastSeen: presence.lastSeen }, open, done }
 }
 
 const DOCS = { cv: ['cvUrl', 'cvName'], portfolio: ['portfolioFileUrl', 'portfolioFileName'] }

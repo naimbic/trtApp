@@ -3913,5 +3913,6 @@ export default {
     "Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category \"Payroll\"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.": "Les salaires, avances et primes enregistrés dans Paie peuvent aussi apparaître comme dépenses (catégorie « Paie »), pour que les rapports de dépenses et de bénéfices incluent le coût de l'équipe. Ne l'activez pas si vous saisissez déjà les salaires comme dépenses.",
     "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "Les paiements nouveaux, modifiés et supprimés mettent à jour leur dépense. Les paiements existants s'ajoutent avec le bouton ci-dessous.",
     "Existing payroll payments": "Paiements de paie existants",
-    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "Activez d'abord l'interrupteur ci-dessus et enregistrez. Créez ensuite les dépenses des paiements déjà enregistrés dans Paie (seulement ceux qui n'en ont pas encore)."
+    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "Activez d'abord l'interrupteur ci-dessus et enregistrez. Créez ensuite les dépenses des paiements déjà enregistrés dans Paie (seulement ceux qui n'en ont pas encore).",
+    "Offline · last seen {when}": "Hors ligne · vu le {when}"
 }

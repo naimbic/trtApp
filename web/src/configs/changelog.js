@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.91.1',
+        date: '2026-10-20',
+        title: 'The glowing dot shows online / offline',
+        items: ['On the staff profile the dot before the name now means online (green and glowing) or offline (grey), not active / inactive. A member counts as online when the CRM or the chat was used in the last 3 minutes; hover the dot to see when they were last seen. The page refreshes it every minute. Active / inactive stays on the switch at the top right.']
+    },
+    {
         version: '0.91.0',
         date: '2026-10-20',
         title: 'Payroll payments as expenses',

@@ -3913,5 +3913,6 @@ export default {
     "Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category \"Payroll\"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.": "Los salarios, anticipos y primas registrados en Nómina también pueden aparecer como gastos (categoría «Nómina»), para que los informes de gastos y beneficios incluyan el coste del equipo. No lo active si ya introduce los salarios como gastos.",
     "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "Los pagos nuevos, editados y eliminados actualizan su gasto. Los pagos existentes se añaden con el botón de abajo.",
     "Existing payroll payments": "Pagos de nómina existentes",
-    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "Active primero el interruptor de arriba y guarde. Luego cree los gastos de los pagos ya registrados en Nómina (solo los que aún no tienen)."
+    "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "Active primero el interruptor de arriba y guarde. Luego cree los gastos de los pagos ya registrados en Nómina (solo los que aún no tienen).",
+    "Offline · last seen {when}": "Desconectado · visto {when}"
 }

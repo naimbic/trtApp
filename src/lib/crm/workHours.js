@@ -69,3 +69,19 @@ export async function lastActiveMap() {
     for (const w of rows) if (!out[w.staffId] || w.lastSeen > out[w.staffId]) out[w.staffId] = w.lastSeen
     return out
 }
+
+const ONLINE_WITHIN_MS = 3 * 60 * 1000
+
+/** Online or offline right now, and when they were last seen: the newest of the work heartbeat and the chat presence. */
+export async function onlineStatus(ids) {
+    const since = new Date(Date.now() - 2 * 86400000)
+    const [days, chat] = await Promise.all([
+        prisma.crmWorkDay.findMany({ where: { staffId: { in: ids }, lastSeen: { gte: since } }, select: { staffId: true, lastSeen: true } }),
+        prisma.crmChatPresence.findMany({ where: { memberKey: { in: ids.map((i) => `staff:${i}`) } }, select: { memberKey: true, lastSeen: true } }),
+    ])
+    const seen = {}
+    const note = (id, d) => { if (d && (!seen[id] || d > seen[id])) seen[id] = d }
+    for (const w of days) note(w.staffId, w.lastSeen)
+    for (const c of chat) note(c.memberKey.slice(6), c.lastSeen)
+    return Object.fromEntries(ids.map((id) => [id, { online: !!seen[id] && Date.now() - +seen[id] <= ONLINE_WITHIN_MS, lastSeen: seen[id] || null }]))
+}

@@ -196,6 +196,12 @@ model CrmLeadSource {
 
   name      String
   color     String?
+  /// order in the list and the pickers
+  sourceOrder Int?
+  /// the source a new lead gets when none is chosen
+  isDefault Boolean?
+  /// off: not offered for new leads (leads that already have it keep it)
+  isActive  Boolean?
 
   leads     CrmLead[]
 
@@ -214,6 +220,8 @@ model CrmLeadStatus {
   statusOrder Int?     // statusorder
   color       String?
   isDefault   Boolean  @default(false) // isdefault
+  /// off: no column for new leads (a column that still has leads stays visible)
+  isActive    Boolean?
 
   leads       CrmLead[]
 

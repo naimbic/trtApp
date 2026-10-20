@@ -19,5 +19,11 @@ export const deleteBlock = (code) => (PROTECTED_CODES.includes(+code) ? 'This st
 /** Rows in board order with the plain shape the screens use. */
 export const shapeStatuses = (rows = []) => [...rows].sort((a, b) => (a.statusOrder - b.statusOrder) || (a.code - b.code)).map((r) => {
     const d = TASK_STATUS_DEFAULTS.find((x) => x.code === r.code)
-    return { id: r.id, value: r.code, name: r.name, color: r.color || d?.color || '#9ca3af', order: r.statusOrder, builtIn: !!d, custom: !d || r.name !== d.name || (r.color || d.color) !== d.color, protected: PROTECTED_CODES.includes(r.code) }
+    return { id: r.id, value: r.code, name: r.name, color: r.color || d?.color || '#9ca3af', order: r.statusOrder, isDefault: r.isDefault === true, active: r.isActive !== false, builtIn: !!d, custom: !d || r.name !== d.name || (r.color || d.color) !== d.color, protected: PROTECTED_CODES.includes(r.code) }
 })
+
+/** The status of a new task: the one marked Default (and active), else the first active one, else Not started. */
+export const defaultStatusCode = (rows = []) => {
+    const list = shapeStatuses(rows)
+    return (list.find((s) => s.isDefault && s.active) || list.find((s) => s.active) || { value: START_CODE }).value
+}

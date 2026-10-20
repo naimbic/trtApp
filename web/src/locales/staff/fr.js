@@ -3935,5 +3935,8 @@ export default {
     "Two statuses cannot have the same name": "Deux statuts ne peuvent pas avoir le même nom",
     "The columns of the Tasks board. Type to rename, pick a colour, drag to reorder, add a row for a new status. New tasks start as Not started; the app needs Not started, In progress and Complete, so those cannot be deleted. Deleting another one sends its tasks back to Not started.": "Les colonnes du tableau des tâches. Tapez pour renommer, choisissez une couleur, glissez pour réorganiser, ajoutez une ligne pour un nouveau statut. Les nouvelles tâches commencent à « Non commencée » ; l'application a besoin de Non commencée, En cours et Terminée, qui ne peuvent donc pas être supprimées. Supprimer un autre statut renvoie ses tâches à « Non commencée ».",
     "This status is used by the app (new tasks, timers, finished tasks) and cannot be deleted. Rename or recolour it instead.": "Ce statut est utilisé par l'application (nouvelles tâches, chronomètres, tâches terminées) et ne peut pas être supprimé. Renommez-le ou changez sa couleur.",
-    "The columns of the Tasks board and the names you see on every task.": "Les colonnes du tableau des tâches et les noms que vous voyez sur chaque tâche."
+    "The columns of the Tasks board and the names you see on every task.": "Les colonnes du tableau des tâches et les noms que vous voyez sur chaque tâche.",
+    "In use": "Utilisé",
+    "Not used": "Non utilisé",
+    "Records using it": "Éléments qui l'utilisent"
 }

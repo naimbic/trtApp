@@ -270,7 +270,7 @@ const Calendar = () => {
         return [
             open,
             { label: it.done ? tr("Reopen") : tr("Mark complete"), icon: it.done ? <TbRotate /> : <TbCircleCheck />, onClick: () => setDone(it, !it.done) },
-            { label: tr("Change status"), icon: <TbChecklist />, sub: STATUS.map((st) => ({ label: st.label, color: STATUS_DOT[st.value], checked: (it.status || 1) === st.value, onClick: () => setTaskStatus(it, st.value) })) },
+            { label: tr("Change status"), icon: <TbChecklist />, sub: STATUS.filter((st) => st.active || st.value === (it.status || 1)).map((st) => ({ label: st.label, color: STATUS_DOT[st.value], checked: (it.status || 1) === st.value, onClick: () => setTaskStatus(it, st.value) })) },
             { label: tr("Assign to"), icon: <TbUserPlus />, sub: staff.map((m) => ({ label: m.name, checked: (it.who || []).includes(m.id), onClick: () => patchTask(it, (t) => ({ assigneeIds: t.assigneeIds.includes(m.id) ? t.assigneeIds.filter((x) => x !== m.id) : [...t.assigneeIds, m.id] }), tr("Team changed")) })) },
             { label: tr("Reschedule"), icon: <TbCalendarDue />, sub: [[tr("Today"), 0], [tr("Tomorrow"), 1], [tr("In a week"), 7]].map(([label, n]) => ({ label, onClick: () => patchTask(it, () => ({ dueDate: dayjs().add(n, 'day').format('YYYY-MM-DD') }), tr("Due date changed")) })) },
         ]

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { nextCode, deleteBlock, shapeStatuses, TASK_STATUS_DEFAULTS } from './taskStatusesCalc.js'
+import { nextCode, deleteBlock, shapeStatuses, defaultStatusCode, TASK_STATUS_DEFAULTS } from './taskStatusesCalc.js'
 
 test('a new status takes the next free code, never below 6', () => {
     assert.equal(nextCode([]), 6)
@@ -21,4 +21,14 @@ test('statuses come back in board order and say what is custom', () => {
     assert.equal(list.find((s) => s.value === 4).custom, true)
     assert.equal(list.find((s) => s.value === 1).custom, false)
     assert.equal(list.find((s) => s.value === 6).builtIn, false)
+})
+
+test('the default status of a new task', () => {
+    const rows = TASK_STATUS_DEFAULTS.map((d) => ({ id: `i${d.code}`, code: d.code, name: d.name, color: d.color, statusOrder: d.statusOrder }))
+    assert.equal(defaultStatusCode(rows), 1) // nothing marked: the first one
+    rows.find((r) => r.code === 3).isDefault = true
+    assert.equal(defaultStatusCode(rows), 3)
+    rows.find((r) => r.code === 3).isActive = false // turned off: not offered any more
+    assert.equal(defaultStatusCode(rows), 1)
+    assert.equal(shapeStatuses(rows).find((s) => s.value === 3).active, false)
 })

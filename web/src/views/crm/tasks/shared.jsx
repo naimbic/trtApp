@@ -14,13 +14,13 @@ const DEFAULT_STATUS = [
     { value: 2, en: 'Awaiting feedback', label: tr("Awaiting feedback"), color: '#f59e0b' },
     { value: 5, en: 'Complete', label: tr("Complete"), color: '#10b981' },
 ]
-export const STATUS = DEFAULT_STATUS.map((s) => ({ value: s.value, label: s.label, color: s.color, custom: false }))
+export const STATUS = DEFAULT_STATUS.map((s) => ({ value: s.value, label: s.label, color: s.color, custom: false, active: true, isDefault: s.value === 1 }))
 const useStatusVersion = create(() => ({ v: 0 }))
 export const applyTaskStatuses = (list = []) => {
     if (!list.length) return
     STATUS.splice(0, STATUS.length, ...list.map((s) => {
         const d = DEFAULT_STATUS.find((x) => x.value === +s.value)
-        return { value: +s.value, label: d && s.name === d.en ? d.label : s.name, color: s.color || d?.color || '#9ca3af', custom: !d || !!s.custom }
+        return { value: +s.value, label: d && s.name === d.en ? d.label : s.name, color: s.color || d?.color || '#9ca3af', custom: !d || !!s.custom, active: s.active !== false, isDefault: !!s.isDefault }
     }))
     useStatusVersion.setState((st) => ({ v: st.v + 1 }))
 }

@@ -256,18 +256,21 @@ const resources = [
         hidden: true,
     },
     {
-        key: 'task-statuses', lookup: { orderField: 'statusOrder', colorField: 'color' },
+        key: 'task-statuses', lookup: { orderField: 'statusOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmTask', field: 'status', by: 'code' },
         model: 'crmTaskStatus', label: 'Task status', plural: 'Task statuses', group: 'Tasks', icon: 'TbListDetails', nav: false,
         writeFeature: 'settings', titleField: 'name', search: ['name'], defaultSort: { statusOrder: 'asc' },
         columns: [
             { key: 'name', label: 'Name', type: 'text', link: true },
             { key: 'color', label: 'Color', type: 'color' },
-            { key: 'statusOrder', label: 'Order', type: 'number' },
+            { key: 'isDefault', label: 'Default', type: 'boolean' },
+            { key: 'isActive', label: 'Active', type: 'boolean', defaultOn: true },
         ],
         fields: [
             { key: 'name', label: 'Name', type: 'text', required: true, section: 'General' },
             { key: 'color', label: 'Color', type: 'color', section: 'General' },
             { key: 'statusOrder', label: 'Order', type: 'number', section: 'General' },
+            { key: 'isDefault', label: 'Default', type: 'boolean', section: 'General' },
+            { key: 'isActive', label: 'Active', type: 'boolean', defaultOn: true, section: 'General' },
         ],
         filters: [],
     },

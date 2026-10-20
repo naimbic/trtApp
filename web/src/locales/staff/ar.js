@@ -3935,5 +3935,8 @@ export default {
     "Two statuses cannot have the same name": "لا يمكن أن يحمل حالتان الاسم نفسه",
     "The columns of the Tasks board. Type to rename, pick a colour, drag to reorder, add a row for a new status. New tasks start as Not started; the app needs Not started, In progress and Complete, so those cannot be deleted. Deleting another one sends its tasks back to Not started.": "أعمدة لوحة المهام. اكتب لإعادة التسمية، اختر لونًا، اسحب لإعادة الترتيب، وأضف صفًا لحالة جديدة. تبدأ المهام الجديدة بحالة «لم تبدأ»؛ يحتاج التطبيق إلى «لم تبدأ» و«قيد التنفيذ» و«مكتملة» لذا لا يمكن حذفها. حذف حالة أخرى يعيد مهامها إلى «لم تبدأ».",
     "This status is used by the app (new tasks, timers, finished tasks) and cannot be deleted. Rename or recolour it instead.": "تستخدم هذه الحالة في التطبيق (المهام الجديدة والمؤقتات والمهام المنتهية) ولا يمكن حذفها. أعد تسميتها أو غيّر لونها.",
-    "The columns of the Tasks board and the names you see on every task.": "أعمدة لوحة المهام والأسماء التي تراها على كل مهمة."
+    "The columns of the Tasks board and the names you see on every task.": "أعمدة لوحة المهام والأسماء التي تراها على كل مهمة.",
+    "In use": "قيد الاستخدام",
+    "Not used": "غير مستخدم",
+    "Records using it": "السجلات التي تستخدمه"
 }

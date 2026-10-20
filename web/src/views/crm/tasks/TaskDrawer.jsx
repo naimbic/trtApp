@@ -74,7 +74,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         <div className="space-y-4">
             <div><L>{tr("Subject")}</L><Input disabled={!canEdit} value={v.name} onChange={(e) => set({ name: e.target.value })} placeholder={tr("What needs to be done?")} /></div>
             <div className="grid grid-cols-2 gap-4">
-                <div><L>{tr("Status")}</L><Select isDisabled={!canEdit || (edit && detail?.task?.canFinish === false)} options={STATUS.map((s) => ({ value: s.value, label: s.label }))} value={STATUS.filter((s) => s.value === +v.status).map((s) => ({ value: s.value, label: s.label }))[0]} onChange={(o) => set({ status: o.value })} /></div>
+                <div><L>{tr("Status")}</L><Select isDisabled={!canEdit || (edit && detail?.task?.canFinish === false)} options={STATUS.filter((s) => s.active || s.value === +v.status).map((s) => ({ value: s.value, label: s.label }))} value={STATUS.filter((s) => s.value === +v.status).map((s) => ({ value: s.value, label: s.label }))[0]} onChange={(o) => set({ status: o.value })} /></div>
                 <div><L>{tr("Priority")}</L><Select isDisabled={!canEdit} options={PRIORITY.map((p) => ({ value: p.value, label: p.label }))} value={PRIORITY.filter((p) => p.value === +v.priority).map((p) => ({ value: p.value, label: p.label }))[0]} onChange={(o) => set({ priority: o.value })} /></div>
                 <div><L>{tr("Start date")}</L><DatePicker disabled={!canEdit} value={v.startDate} onChange={(d) => set({ startDate: d })} /></div>
                 <div><L>{tr("Due date")}</L><DatePicker disabled={!canEdit} value={v.dueDate} onChange={(d) => set({ dueDate: d })} /></div>

@@ -90,7 +90,8 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
         for (const t of data.list) (by[t.status] ||= []).push(t)
         return by
     }, [data.list])
-    const shownStatuses = done ? STATUS : STATUS.filter((s) => s.value !== 5 || (columns[5] || []).length)
+    // a status turned off has no column until a task sits in it; Complete shows when asked for or when it has tasks
+    const shownStatuses = STATUS.filter((s) => (s.active || (columns[s.value] || []).length) && (done || s.value !== 5 || (columns[5] || []).length))
 
     const onDragEnd = async ({ source, destination, draggableId }) => {
         if (!destination || !data.can.edit) return

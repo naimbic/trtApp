@@ -124,7 +124,7 @@ const TaskPage = () => {
                                 : <div className="flex -space-x-1.5">{t.assignees.map((p) => <StaffRing key={p.id} id={p.id} name={p.name} size={28}><Avatar size={28} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar></StaffRing>)}{!t.assignees.length && '-'}</div>}
                         </Prop>
                         <Prop icon={<TbCircleDashed />} label={tr('Status')}>
-                            {e && t.canFinish !== false ? <Select size="sm" isSearchable={false} {...portal} options={STATUS.map((s) => ({ value: s.value, label: s.label }))} value={{ value: t.status, label: statusOf(t.status).label }} onChange={(o) => save({ status: o.value })} /> : <Tag className={classNames(STATUS_PILL[t.status], 'dark:text-gray-900')}>{statusOf(t.status).label}</Tag>}
+                            {e && t.canFinish !== false ? <Select size="sm" isSearchable={false} {...portal} options={STATUS.filter((s) => s.active || s.value === t.status).map((s) => ({ value: s.value, label: s.label }))} value={{ value: t.status, label: statusOf(t.status).label }} onChange={(o) => save({ status: o.value })} /> : <Tag className={classNames(STATUS_PILL[t.status], 'dark:text-gray-900')}>{statusOf(t.status).label}</Tag>}
                         </Prop>
                         <Prop icon={<TbCalendarDue />} label={tr('Due date')}>
                             {e ? <Input size="sm" type="date" value={day(t.dueDate) || ''} onChange={(ev) => save({ dueDate: ev.target.value || null })} /> : <span className="font-semibold">{t.dueDate ? dayjs(t.dueDate).format('MMMM DD') : '-'}</span>}

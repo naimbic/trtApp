@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.96.0',
+        date: '2026-10-20',
+        title: 'Lead sources, lead statuses and task statuses: the same full list',
+        items: ['The three lists in Settings now work the same way and have the same columns: drag to reorder, type a name, pick a colour, a Default switch (only one is default), an Active switch (off = not offered in forms and pickers, and no board column while empty; what already uses it keeps it), and how many records use each one.', 'Lead sources get an order, a default (a new lead without a source takes it) and Active. Lead statuses get Active. Task statuses get Default (replaces the old "Default status" setting under Settings → Tasks) and Active.', 'A search box appears above a list of more than six rows; a turned-off row is dimmed but its switch stays normal so you can turn it back on.']
+    },
+    {
         version: '0.95.0',
         date: '2026-10-20',
         title: 'Task statuses as a free list, like the lead statuses',

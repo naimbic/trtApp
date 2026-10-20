@@ -17,7 +17,7 @@ const Cell = ({ field, value, disabled, onCommit, draft }) => {
     const timer = useRef(null)
     useEffect(() => { setV(value ?? '') }, [value])
     const label = tr(field.label)
-    if (field.type === 'boolean') return <Switcher checked={!!value} disabled={disabled} onChange={(c) => onCommit(c)} />
+    if (field.type === 'boolean') return <Switcher checked={value === undefined || value === null ? !!field.defaultOn : !!value} disabled={disabled} onChange={(c) => onCommit(c)} />
     if (field.type === 'color') {
         const ok = /^#[0-9a-f]{6}$/i.test(v || '')
         return (
@@ -63,8 +63,10 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
     const [draft, setDraft] = useState({})
     const [del, setDel] = useState(null)
     const [over, setOver] = useState(null)
+    const [q, setQ] = useState('')
+    const uses = !!resource.usage // how many records use each item
     const drag = useRef(null)
-    const grid = { gridTemplateColumns: `${orderField ? '22px ' : ''}minmax(180px, 1.8fr) ${cols.map(() => 'minmax(96px, 1fr)').join(' ')} 76px` }
+    const grid = { gridTemplateColumns: `${orderField ? '22px ' : ''}minmax(180px, 1.8fr) ${cols.map(() => 'minmax(96px, 1fr)').join(' ')} ${uses ? '64px ' : ''}76px` }
 
     const load = useCallback(async () => {
         try {
@@ -83,6 +85,7 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
         const body = { ...draft }
         if (!String(body[main.key] || '').trim()) { notify('warning', tr("Type a {what} first", { what: tr(main.label).toLowerCase() })); return }
         for (const [k, v] of Object.entries(body)) if (v === '' || v === undefined) delete body[k]
+        for (const f of cols) if (f.type === 'boolean' && f.defaultOn && body[f.key] === undefined) body[f.key] = true
         if (orderField) body[orderField] = rows.length + 1
         try { await api(`/api/crm/${resource.key}`, { method: 'POST', body }); setDraft({}); load() } catch (e) { notify('danger', e.message) }
     }
@@ -104,11 +107,13 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
 
     return (
         <div className="overflow-x-auto">
+            {rows.length > 6 && <div className="mb-2 w-60"><input type="search" className={`${ctl} border-gray-200 bg-white dark:border-gray-600`} placeholder={tr("Search…")} value={q} onChange={(e) => setQ(e.target.value)} /></div>}
             <div className="min-w-[560px] rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                 <div className="grid items-center gap-3 border-b border-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:border-gray-700" style={grid}>
                     {orderField && <span />}
                     <span>{tr(main.label)}</span>
                     {cols.map((f) => <span key={f.key}>{tr(f.label)}</span>)}
+                    {uses && <span>{tr("In use")}</span>}
                     <span />
                 </div>
                 {canCreate && (
@@ -116,19 +121,21 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
                         {orderField && <span />}
                         <input className={`${ctl} border-gray-200 bg-white dark:border-gray-600`} placeholder={tr("New {what}", { what: tr(resource.label).toLowerCase() })} aria-label={tr(main.label)} value={draft[main.key] || ''} onChange={(e) => setDraft((d) => ({ ...d, [main.key]: e.target.value }))} />
                         {cols.map((f) => <div key={f.key}>{f.required || ['color', 'boolean', 'select'].includes(f.type) || f.type === 'number' ? <Cell draft field={f} value={draft[f.key]} onCommit={(val) => setDraft((d) => ({ ...d, [f.key]: val }))} /> : <span />}</div>)}
+                        {uses && <span />}
                         <Button size="xs" variant="solid" icon={<TbPlus />} onClick={add}>{tr("Add")}</Button>
                     </div>
                 )}
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {rows.map((r, i) => (
+                    {rows.map((r, i) => (!q.trim() || String(r[main.key] || '').toLowerCase().includes(q.trim().toLowerCase())) && (
                         <div
                             key={r.id}
                             className={`grid items-center gap-3 px-3 py-1.5 ${over === i ? 'bg-primary/5' : ''}`} style={grid}
                             onDragOver={(e) => { if (drag.current !== null) { e.preventDefault(); setOver(i) } }} onDrop={(e) => { e.preventDefault(); drop(i) }}
                         >
                             {orderField && <span className={`text-lg text-gray-400 ${canEdit ? 'cursor-grab' : ''}`} draggable={canEdit} onDragStart={() => { drag.current = i }} onDragEnd={() => { drag.current = null; setOver(null) }} aria-hidden="true"><TbGripVertical /></span>}
-                            <Cell field={main} value={r[main.key]} disabled={!canEdit} onCommit={(val) => (val === '' ? load() : save(r, main.key, val))} />
-                            {cols.map((f) => <div key={f.key}><Cell field={f} value={r[f.key]} disabled={!canEdit} onCommit={(val) => save(r, f.key, val)} /></div>)}
+                            <div className={r.isActive === false ? 'opacity-50' : undefined}><Cell field={main} value={r[main.key]} disabled={!canEdit} onCommit={(val) => (val === '' ? load() : save(r, main.key, val))} /></div>
+                            {cols.map((f) => <div key={f.key} className={r.isActive === false && f.key !== 'isActive' ? 'opacity-50' : undefined}><Cell field={f} value={r[f.key]} disabled={!canEdit} onCommit={(val) => save(r, f.key, val)} /></div>)}
+                            {uses && <span className={`text-sm tabular-nums ${r._uses ? 'font-semibold text-gray-700 dark:text-gray-200' : 'text-gray-300'}`} title={r._uses ? tr("Records using it") : tr("Not used")}>{r._uses || 0}</span>}
                             <span className="flex justify-end gap-0.5">
                                 <Tooltip title={canEdit ? tr("Edit") : tr("View")}><Button size="xs" variant="plain" icon={<TbPencil />} onClick={() => onOpen(r.id)} /></Tooltip>
                                 {canDelete && <Tooltip title={tr("Delete")}><Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setDel(r)} /></Tooltip>}

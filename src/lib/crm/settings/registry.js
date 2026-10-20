@@ -336,7 +336,6 @@ export const GROUPS = {
                 yes('new_task_auto_follower_current_member', 'Add the creator as a follower'),
                 yes('task_biillable_checked_on_creation', 'Billable by default'),
                 sel('default_task_priority', 'Default priority', [['1', 'Low'], ['2', 'Medium'], ['3', 'High'], ['4', 'Urgent']], { default: '2' }),
-                sel('default_task_status', 'Default status', [['1', 'Not started'], ['4', 'In progress'], ['3', 'Testing'], ['2', 'Awaiting feedback'], ['5', 'Complete']], { default: '1' }),
             ] },
             { title: 'Statuses', desc: 'The columns of the Tasks board and the names you see on every task.', panel: 'taskStatuses' },
             { title: 'Timers', fields: [

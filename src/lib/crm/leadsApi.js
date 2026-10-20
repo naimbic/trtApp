@@ -54,7 +54,7 @@ export async function listLeads(p = {}) {
     if (p.from || p.to) and.push({ createdAt: { ...(p.from ? { gte: new Date(p.from) } : {}), ...(p.to ? { lte: new Date(`${p.to}T23:59:59.999`) } : {}) } })
     if (p.query) { const c = { contains: p.query, mode: 'insensitive' }; and.push({ OR: [{ name: c }, { company: c }, { email: c }, { phoneNumber: c }] }) }
     const where = { AND: and }
-    const [statuses, sources] = await Promise.all([prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' } }), prisma.crmLeadSource.findMany({ orderBy: { name: 'asc' } })])
+    const [statuses, sources] = await Promise.all([prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' } }), prisma.crmLeadSource.findMany({ orderBy: [{ sourceOrder: 'asc' }, { name: 'asc' }] })])
     const sMap = Object.fromEntries(statuses.map((s) => [s.id, s])), srcMap = Object.fromEntries(sources.map((s) => [s.id, s]))
     const can = { create: true, edit: a.can('edit'), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') }
     if (p.view === 'list') {
@@ -72,6 +72,7 @@ export async function listLeads(p = {}) {
     for (const s of statuses) {
         const w = { AND: [...and, { statusId: s.id }] }
         const [rows, count] = await Promise.all([prisma.crmLead.findMany({ where: w, orderBy, take: limit }), prisma.crmLead.count({ where: w })])
+        if (s.isActive === false && !count) continue // a status turned off has no column until a lead sits in it
         cols.push({ id: s.id, name: s.name, color: s.color || '#64748b', count, rows })
     }
     const orphan = { AND: [...and, { OR: [{ statusId: null }, { statusId: { notIn: statuses.map((s) => s.id) } }] }] }
@@ -135,6 +136,7 @@ export async function saveLead(body, id) {
     }
     const def = await prisma.crmLeadStatus.findFirst({ where: { isDefault: true } }) || (await prisma.crmLeadStatus.findFirst({ orderBy: { statusOrder: 'asc' } }))
     const statusId = oid(body.statusId) || def?.id || null
+    if (!data.sourceId) data.sourceId = (await prisma.crmLeadSource.findFirst({ where: { isDefault: true } }))?.id || null // the default source
     const team0 = body.assignedIds !== undefined ? [...new Set((body.assignedIds || []).map(oid).filter(Boolean))] : [oid(body.assignedId)].filter(Boolean)
     const team = team0.length ? team0 : a.staffId ? [a.staffId] : []
     const assigned = team[0] || null
@@ -230,8 +232,8 @@ export async function leadLookups() {
     await requirePermission('leads', 'view')
     const [staff, statuses, sources] = await Promise.all([
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
-        prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' }, select: { id: true, name: true, color: true } }),
-        prisma.crmLeadSource.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, color: true } }),
+        prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' }, select: { id: true, name: true, color: true, isActive: true } }),
+        prisma.crmLeadSource.findMany({ orderBy: [{ sourceOrder: 'asc' }, { name: 'asc' }], select: { id: true, name: true, color: true, isActive: true } }),
     ])
     return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), statuses, sources }
 }

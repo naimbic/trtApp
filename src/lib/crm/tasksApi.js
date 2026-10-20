@@ -1,5 +1,5 @@
 import { realPicture } from '@/lib/crm/pictures'
-import { getTaskStatuses } from '@/lib/crm/taskStatuses'
+import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
@@ -201,7 +201,7 @@ export async function saveTask(body, id) {
     const S = id ? null : await readSettings(NEW_TASK_KEYS)
     const prio = [1, 2, 3, 4].includes(+body.priority) ? +body.priority : [1, 2, 3, 4].includes(S?.num('default_task_priority')) ? S.num('default_task_priority') : 2
     const valid = await statusCodes()
-    const status = valid.has(+body.status) ? +body.status : valid.has(S?.num('default_task_status')) ? S.num('default_task_status') : 1
+    const status = valid.has(+body.status) ? +body.status : await defaultTaskStatus()
     if (body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date')
     const data = {
         name, description: body.description ?? null, priority: prio, status,
@@ -412,7 +412,7 @@ export async function taskLookups() {
     const S = await readSettings([...NEW_TASK_KEYS, 'tasks_kanban_limit'])
     return {
         staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), milestones, me: await getStaffId(session),
-        defaults: { priority: S.num('default_task_priority', 2), status: S.num('default_task_status', 1), billable: S.on('task_biillable_checked_on_creation'), assignMe: S.on('new_task_auto_assign_current_member'), followMe: S.on('new_task_auto_follower_current_member'), kanbanLimit: S.num('tasks_kanban_limit', 0) },
+        defaults: { priority: S.num('default_task_priority', 2), status: await defaultTaskStatus(), billable: S.on('task_biillable_checked_on_creation'), assignMe: S.on('new_task_auto_assign_current_member'), followMe: S.on('new_task_auto_follower_current_member'), kanbanLimit: S.num('tasks_kanban_limit', 0) },
     }
 }
 

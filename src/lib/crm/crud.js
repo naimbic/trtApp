@@ -215,6 +215,7 @@ export async function listRecords(key, params = {}) {
         d.count({ where }),
     ])
     await attachRelations(resource, rows)
+    await attachUsage(resource, rows)
     return { list: rows, total, pageIndex: page, pageSize: size }
 }
 
@@ -255,6 +256,19 @@ const HOOKS = {
         lockDelete: async (row) => (await import('@/lib/crm/taskStatusesCalc')).deleteBlock(row.code),
         afterDelete: async (row) => (await import('@/lib/crm/taskStatuses')).moveTasksFrom(row.code),
     },
+}
+
+/** resource.usage = { model, field, by: 'id' | 'code' }: how many records of that model use each row (shown as "In use" in the settings lists). */
+async function attachUsage(resource, rows) {
+    const u = resource.usage
+    if (!u || !rows.length || !prisma[u.model]) return rows
+    let counts = {}
+    try {
+        const g = await prisma[u.model].groupBy({ by: [u.field], _count: { _all: true } })
+        counts = Object.fromEntries(g.map((x) => [String(x[u.field]), x._count._all]))
+    } catch { return rows }
+    for (const r of rows) r._uses = counts[String(u.by === 'code' ? r.code : r.id)] || 0
+    return rows
 }
 
 /** A resource with `exclusive: 'isDefault'` has one default: choosing it clears the others. */
@@ -343,12 +357,14 @@ export async function listOptions(key, { query = '', ids } = {}) {
           ? { [resource.titleField]: { contains: query, mode: 'insensitive' } }
           : {}
     const where = own ? { AND: [base, own] } : base
-    const rows = await delegate(resource).findMany({
+    // lists with an Active switch: the ones turned off are not offered (a selection already made is still labelled)
+    const hasActive = (resource.fields || []).some((f) => f.key === 'isActive')
+    const rows = (await delegate(resource).findMany({
         where,
-        take: 25,
-        orderBy: { [resource.titleField]: 'asc' },
-        select: { id: true, [resource.titleField]: true },
-    })
+        take: hasActive && !ids?.length ? 200 : 25,
+        orderBy: resource.lookup?.orderField && !query ? { [resource.lookup.orderField]: 'asc' } : { [resource.titleField]: 'asc' },
+        select: { id: true, [resource.titleField]: true, ...(hasActive ? { isActive: true } : {}) },
+    })).filter((r) => ids?.length || r.isActive !== false).slice(0, 25)
     return rows.map((r) => ({ value: r.id, label: String(r[resource.titleField] ?? r.id) }))
 }
 

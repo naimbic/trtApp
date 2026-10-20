@@ -539,6 +539,10 @@ model CrmTaskStatus {
   name        String
   color       String?
   statusOrder Int     @default(0)
+  /// the status of a new task
+  isDefault   Boolean?
+  /// off: not offered for tasks and no board column while empty
+  isActive    Boolean?
 
   @@map("crm_task_statuses")
 }

@@ -10,7 +10,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import Tooltip from '@/components/ui/Tooltip'
 import { useSessionUser } from '@/store/authStore'
 import SalaryCard from './SalaryCard'
-import MemberDrawer, { DocUpload } from './MemberDrawer'
+import MemberDrawer from './MemberDrawer'
 import MemberAccessDrawer from './MemberAccessDrawer'
 import { useMemberActions, api as teamApi, notify as teamNotify } from './MemberActions'
 import ScoreRing from '@/components/crm/ScoreRing'
@@ -144,19 +144,6 @@ const StaffProfile = () => {
                                 </div>
                             )}
                         </dl>
-                        <div className="mt-3 flex flex-col gap-2 text-left">
-                            {canEdit ? (
-                                <>
-                                    <DocUpload memberId={id} kind="cv" label={tr('CV')} doc={m.cv} onChanged={load} />
-                                    <DocUpload memberId={id} kind="portfolio" label={tr('Portfolio file')} doc={m.portfolioFile} onChanged={load} />
-                                </>
-                            ) : (
-                                <>
-                                    {m.cv && <a className="pt-act" href={m.cv.url} target="_blank" rel="noopener noreferrer">{tr('CV')} · {m.cv.name}</a>}
-                                    {m.portfolioFile && <a className="pt-act" href={m.portfolioFile.url} target="_blank" rel="noopener noreferrer">{tr('Portfolio file')} · {m.portfolioFile.name}</a>}
-                                </>
-                            )}
-                        </div>
                         <p className="mt-3 border-t border-gray-100 pt-3 text-center text-[11px] leading-tight text-gray-500 dark:border-gray-700">
                             {m.email && <>{tr('Email')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{m.email}</span></>}
                             {m.email && m.lastLogin && ' - '}

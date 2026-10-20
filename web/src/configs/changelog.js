@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.90.3',
+        date: '2026-10-20',
+        title: 'CV and portfolio only in the popup',
+        items: ['The CV and portfolio files are no longer on the staff card; upload, replace and remove them from the member popup (Documents tab). Hire date, CNSS and RIB stay in the first card.']
+    },
+    {
         version: '0.90.2',
         date: '2026-10-20',
         title: 'Employment details in the first profile card',

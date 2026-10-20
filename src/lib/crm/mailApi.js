@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { requirePermission, getStaffId, PermissionError } from '@/lib/crm/permissions'
+import { requirePermission, getStaffId, PermissionError, isCrmAdmin } from '@/lib/crm/permissions'
 import { formatDocumentNumber, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import fs from 'node:fs'
@@ -251,15 +251,21 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
 
 /* ---------- settings, test, log ---------- */
 const requireAdminish = () => requirePermission('email_templates', 'view')
+// The mail server (host, account, password) belongs to the administrators: editing templates does not give access to it.
+async function requireMailAdmin() {
+    const session = await requirePermission(null, 'view')
+    if (!isCrmAdmin(session.user.authority || [])) throw new PermissionError('Only an administrator can use the mail server settings', 403)
+    return session
+}
 
 export async function getMailSettings() {
-    await requireAdminish()
+    await requireMailAdmin()
     const s = await getSmtp()
     return { host: s.host, port: s.port, encryption: s.encryption, username: s.user, email: s.email, fromName: s.fromName, hasPassword: !!s.pass, ready: smtpReady(s) }
 }
 
 export async function saveMailSettings(b) {
-    await requirePermission('email_templates', 'edit')
+    await requireMailAdmin()
     const port = Number(b.port)
     if (!b.host?.trim()) fail('SMTP host is required')
     if (!(port > 0 && port < 65536)) fail('Port must be a number between 1 and 65535')
@@ -271,7 +277,7 @@ export async function saveMailSettings(b) {
 }
 
 export async function testMailSettings({ to }) {
-    await requirePermission('email_templates', 'edit')
+    await requireMailAdmin()
     const conn = await testConnection()
     if (!conn.ok) fail(conn.error)
     if (to) {

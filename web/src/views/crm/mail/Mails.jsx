@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSessionUser } from '@/store/authStore'
 import { Link, useSearchParams } from 'react-router'
 import { TbSearch, TbWand } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -258,13 +259,16 @@ const Log = () => {
 
 const Mails = () => {
     const [params, setParams] = useSearchParams()
-    const tab = params.get('tab') || 'templates'
+    const authority = useSessionUser((s) => s.user.authority) || []
+    const isAdmin = authority.includes('admin') || authority.includes('crm.admin') // the mail server is for administrators
+    const asked = params.get('tab') || 'templates'
+    const tab = asked === 'settings' && !isAdmin ? 'templates' : asked
     return (
         <Container>
             <div className="mb-4"><h3>{tr("Mails")}</h3><p className="text-sm text-gray-500">{tr("Templates for quotes, invoices, payments and reminders, the mail server, and everything that was sent")}</p></div>
             <AdaptiveCard>
                 <Tabs value={tab} onChange={(v) => setParams({ tab: v })}>
-                    <TabList><TabNav value="templates">{tr("Templates")}</TabNav><TabNav value="settings">{tr("Mail server")}</TabNav><TabNav value="log">{tr("Sent log")}</TabNav></TabList>
+                    <TabList><TabNav value="templates">{tr("Templates")}</TabNav>{isAdmin && <TabNav value="settings">{tr("Mail server")}</TabNav>}<TabNav value="log">{tr("Sent log")}</TabNav></TabList>
                     <div className="pt-5">
                         {tab === 'templates' && <Templates />}
                         {tab === 'settings' && <Settings />}

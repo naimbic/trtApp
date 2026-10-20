@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.96.1',
+        date: '2026-10-20',
+        title: 'Mail settings for administrators only',
+        items: ['The Mail settings entry of the profile menu and the Mail server tab of the Mails page are now only for administrators. The server refuses the SMTP settings (read, save, test) to everyone else, also to people who may edit email templates; templates and the sent log keep their own permission.', 'The Team & roles entry of the profile menu only shows to people who may see team members or roles.']
+    },
+    {
         version: '0.96.0',
         date: '2026-10-20',
         title: 'Lead sources, lead statuses and task statuses: the same full list',

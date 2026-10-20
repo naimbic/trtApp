@@ -3938,5 +3938,6 @@ export default {
     "The columns of the Tasks board and the names you see on every task.": "Las columnas del tablero de tareas y los nombres que ve en cada tarea.",
     "In use": "En uso",
     "Not used": "Sin usar",
-    "Records using it": "Registros que lo usan"
+    "Records using it": "Registros que lo usan",
+    "Only an administrator can use the mail server settings": "Solo un administrador puede usar los ajustes del servidor de correo"
 }

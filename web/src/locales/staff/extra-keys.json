@@ -1376,5 +1376,6 @@
  "A status colour must look like #3b82f6",
  "Two statuses cannot have the same name",
  "This status is used by the app (new tasks, timers, finished tasks) and cannot be deleted. Rename or recolour it instead.",
- "The columns of the Tasks board and the names you see on every task."
+ "The columns of the Tasks board and the names you see on every task.",
+ "Only an administrator can use the mail server settings"
 ]

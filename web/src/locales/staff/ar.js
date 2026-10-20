@@ -3938,5 +3938,6 @@ export default {
     "The columns of the Tasks board and the names you see on every task.": "أعمدة لوحة المهام والأسماء التي تراها على كل مهمة.",
     "In use": "قيد الاستخدام",
     "Not used": "غير مستخدم",
-    "Records using it": "السجلات التي تستخدمه"
+    "Records using it": "السجلات التي تستخدمه",
+    "Only an administrator can use the mail server settings": "يمكن للمشرف فقط استخدام إعدادات خادم البريد"
 }

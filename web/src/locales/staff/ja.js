@@ -3938,5 +3938,6 @@ export default {
     "The columns of the Tasks board and the names you see on every task.": "タスクボードの列と、各タスクに表示される名前です。",
     "In use": "使用中",
     "Not used": "未使用",
-    "Records using it": "使用しているレコード"
+    "Records using it": "使用しているレコード",
+    "Only an administrator can use the mail server settings": "メールサーバー設定を使用できるのは管理者のみです"
 }

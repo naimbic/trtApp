@@ -14,8 +14,8 @@ import { tr } from '@/utils/t'
 const dropdownItemList = [
     { label: tr("My profile"), path: '/account/profile', icon: <PiUserDuotone /> },
     { label: tr("Password & security"), path: '/account/profile?tab=security', icon: <PiShieldCheckDuotone /> },
-    { label: tr("Team & roles"), path: '/team', icon: <PiUsersThreeDuotone /> },
-    { label: tr("Mail settings"), path: '/crm/mails?tab=settings', icon: <PiEnvelopeSimpleDuotone /> },
+    { label: tr("Team & roles"), path: '/team', icon: <PiUsersThreeDuotone />, any: ['staff', 'roles'] },
+    { label: tr("Mail settings"), path: '/crm/mails?tab=settings', icon: <PiEnvelopeSimpleDuotone />, adminOnly: true },
     { label: tr("Calendar sync"), path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone />, need: 'calendar' },
 ]
 
@@ -81,7 +81,12 @@ const _UserDropdown = ({ className }) => {
                     <Link className="flex h-full w-full px-2" to="/crm/all-activity"><span className="flex w-full items-center gap-2"><span className="text-xl"><PiPulseDuotone /></span><span>{tr("All activity")}</span></span></Link>
                 </Dropdown.Item>
             )}
-            {dropdownItemList.filter((item) => !item.need || authority.includes('admin') || authority.includes('crm.admin') || authority.includes(`crm.${item.need}.view`)).map((item) => (
+            {dropdownItemList.filter((item) => {
+                const admin = authority.includes('admin') || authority.includes('crm.admin')
+                if (item.adminOnly) return admin
+                if (item.any) return admin || item.any.some((f) => authority.includes(`crm.${f}.view`))
+                return !item.need || admin || authority.includes(`crm.${item.need}.view`)
+            }).map((item) => (
                 <Dropdown.Item
                     key={item.label}
                     eventKey={item.label}

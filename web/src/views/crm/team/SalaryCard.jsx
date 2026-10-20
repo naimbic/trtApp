@@ -27,8 +27,9 @@ const SalaryCard = ({ staffId, name }) => {
     useEffect(() => { load() }, [load])
     if (!d) return null
     const cur = d.salary.currencyId || defaultId
-    const thisMonth = d.months.find((m) => m.month === d.current)
-    const year = d.months.filter((m) => m.month.startsWith(d.current.slice(0, 4)))
+    const dueName = dayjs(`${d.dueMonth}-01`).format('MMMM')
+    const thisMonth = d.months.find((m) => m.month === d.dueMonth)
+    const year = d.months
     const paidYear = d.payments.filter((p) => p.month.startsWith(d.current.slice(0, 4))).reduce((n, p) => n + p.amount, 0)
     const unpaid = d.months.filter((m) => m.status === 'late' || m.status === 'partial').reduce((n, m) => n + (m.due - m.paid), 0)
     const remove = async () => {
@@ -41,13 +42,13 @@ const SalaryCard = ({ staffId, name }) => {
                 {tr('Salary & payments')}
                 <span className="flex gap-1.5">
                     <Button size="xs" icon={<TbPencil />} onClick={() => setSalaryDlg(true)}>{tr('Salary')}</Button>
-                    <Button size="xs" icon={<TbPlus />} onClick={() => setPay({ open: true, preset: d.salary.amount ? { amount: d.salary.amount, currencyId: cur } : null, edit: null })}>{tr('Payment')}</Button>
-                    {d.salary.amount > 0 && thisMonth && thisMonth.status !== 'paid' && thisMonth.status !== 'none' && <Button size="xs" variant="solid" icon={<TbCash />} onClick={() => setPay({ open: true, edit: null, preset: { month: d.current, kind: 'salary', amount: Math.max(0, thisMonth.due - thisMonth.paid), currencyId: cur } })}>{tr('Pay {month}', { month: dayjs(`${d.current}-01`).format('MMMM') })}</Button>}
+                    <Button size="xs" icon={<TbPlus />} onClick={() => setPay({ open: true, preset: d.salary.amount ? { month: d.dueMonth, amount: d.salary.amount, currencyId: cur } : { month: d.dueMonth }, edit: null })}>{tr('Payment')}</Button>
+                    {d.salary.amount > 0 && thisMonth && thisMonth.status !== 'paid' && thisMonth.status !== 'none' && <Button size="xs" variant="solid" icon={<TbCash />} onClick={() => setPay({ open: true, edit: null, preset: { month: d.dueMonth, kind: 'salary', amount: Math.max(0, thisMonth.due - thisMonth.paid), currencyId: cur } })}>{tr('Pay {month}', { month: dueName })}</Button>}
                 </span>
             </h3>
             <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-                <Tile label={tr('Monthly salary')} value={d.salary.amount ? money(d.salary.amount, cur) : '–'} sub={[d.salary.payDay ? tr('Paid on day {n}', { n: d.salary.payDay }) : null, d.salary.cnss ? tr('CNSS') : null].filter(Boolean).join(' · ') || null} />
-                <Tile label={tr('This month')} value={thisMonth ? <StatusTag s={thisMonth.status} /> : '–'} sub={thisMonth?.due ? `${money(thisMonth.paid, cur)} / ${money(thisMonth.due, cur)}` : null} />
+                <Tile label={tr('Monthly salary')} value={d.salary.amount ? money(d.salary.amount, cur) : '–'} sub={[d.salary.payDay ? (d.arrears ? tr('Paid on day {n} of the next month', { n: d.salary.payDay }) : tr('Paid on day {n}', { n: d.salary.payDay })) : null, d.salary.cnss ? tr('CNSS') : null].filter(Boolean).join(' · ') || null} />
+                <Tile label={tr('To pay: {month}', { month: dueName })} value={thisMonth ? <StatusTag s={thisMonth.status} /> : '–'} sub={thisMonth?.due ? `${money(thisMonth.paid, cur)} / ${money(thisMonth.due, cur)}` : null} />
                 <Tile label={tr('Paid this year')} value={money(paidYear, cur)} />
                 <Tile label={tr('Unpaid')} value={unpaid > 0 ? <span className="text-red-500">{money(unpaid, cur)}</span> : '–'} />
             </div>

@@ -48,6 +48,7 @@ const Payroll = () => {
     const load = useCallback(() => { api(`/api/crm/payroll?year=${year}`).then((x) => { setD(x); setError('') }).catch((e) => setError(e.message)) }, [year])
     useEffect(() => { setD(null); load() }, [load])
     const base = d?.baseCurrencyId
+    const dueName = d?.dueMonth ? dayjs(`${d.dueMonth}-01`).format('MMMM') : ''
 
     return (
         <Container>
@@ -55,9 +56,9 @@ const Payroll = () => {
                 title={tr('Payroll')}
                 stats={[
                     { icon: <TbCash />, label: tr('Monthly payroll'), value: d ? money(d.totals.monthlyPayroll, base) : '–' },
-                    { icon: <TbCalendarDollar />, label: tr('Paid this month'), value: d ? money(d.totals.paidThisMonth, base) : '–' },
+                    { icon: <TbCalendarDollar />, label: tr('Paid for {month}', { month: dueName }), value: d ? money(d.totals.paidThisMonth, base) : '–' },
                     { icon: <TbReportMoney />, label: tr('Paid in {year}', { year }), value: d ? money(d.totals.yearPaid, base) : '–' },
-                    { icon: <TbAlertTriangle />, label: tr('Still to pay this month'), value: d ? String(d.totals.late) : '–' },
+                    { icon: <TbAlertTriangle />, label: tr('Still to pay for {month}', { month: dueName }), value: d ? String(d.totals.late) : '–' },
                 ]}
             />
             <div className="cx-tools">
@@ -70,7 +71,7 @@ const Payroll = () => {
             {d && <CostChart months={d.months} money={money} base={base} current={d.current} />}
             <div className="overflow-x-auto">
                 <Table hoverable>
-                    <THead><Tr><Th>{tr('Member')}</Th><Th className="text-right">{tr('Monthly salary')}</Th><Th>{tr('Paid on day')}</Th><Th>{tr('This month')}</Th><Th className="text-right">{tr('Paid in {year}', { year })}</Th><Th /></Tr></THead>
+                    <THead><Tr><Th>{tr('Member')}</Th><Th className="text-right">{tr('Monthly salary')}</Th><Th>{tr('Paid on day')}</Th><Th>{tr('Due: {month}', { month: dueName })}</Th><Th className="text-right">{tr('Paid in {year}', { year })}</Th><Th /></Tr></THead>
                     <TBody>
                         {(d?.members || []).map((m) => (
                             <Tr key={m.id} className="cursor-pointer" onClick={() => navigate(`/crm/staff/${m.id}`)}>
@@ -85,7 +86,7 @@ const Payroll = () => {
                                 <Td><div className="flex items-center gap-2"><StatusTag s={m.thisMonth.status} />{m.thisMonth.due > 0 && <span className="text-xs text-gray-400">{money(m.thisMonth.paid, m.currencyId || base)} / {money(m.thisMonth.due, m.currencyId || base)}</span>}</div></Td>
                                 <Td className="text-right">{money(m.yearPaid, base)}</Td>
                                 <Td className="text-right" onClick={(e) => e.stopPropagation()}>
-                                    {['late', 'partial', 'due'].includes(m.thisMonth.status) && <Button size="xs" onClick={() => setPay({ open: true, member: m, preset: { month: d.current, kind: 'salary', amount: Math.max(0, m.thisMonth.due - m.thisMonth.paid), currencyId: m.currencyId } })}>{tr('Pay')}</Button>}
+                                    {['late', 'partial', 'due'].includes(m.thisMonth.status) && <Button size="xs" onClick={() => setPay({ open: true, member: m, preset: { month: d.dueMonth, kind: 'salary', amount: Math.max(0, m.thisMonth.due - m.thisMonth.paid), currencyId: m.currencyId } })}>{tr('Pay')}</Button>}
                                 </Td>
                             </Tr>
                         ))}

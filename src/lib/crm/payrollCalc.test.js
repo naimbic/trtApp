@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { lastMonths, monthsOfYear, dueFor, monthStatus, toBase } from './payrollCalc.js'
+import { lastMonths, monthsOfYear, dueFor, monthStatus, toBase, dueMonthOf, lateBefore } from './payrollCalc.js'
 
 test('months', () => {
     assert.deepEqual(lastMonths(3, new Date(2026, 0, 15)), ['2025-11', '2025-12', '2026-01'])
@@ -27,4 +27,17 @@ test('month status', () => {
 test('amounts in the base currency', () => {
     assert.equal(toBase(100, 10), 1000)
     assert.equal(toBase(100, null), 100)
+})
+
+test('paid in arrears: October shows from the 1st of November', () => {
+    assert.equal(dueMonthOf(new Date(2026, 9, 20), true), '2026-09') // 20 October: September is the one to pay
+    assert.equal(dueMonthOf(new Date(2026, 10, 1), true), '2026-10') // 1 November: October becomes due
+    assert.equal(dueMonthOf(new Date(2026, 0, 5), true), '2025-12')
+    assert.equal(dueMonthOf(new Date(2026, 9, 20), false), '2026-10')
+})
+
+test('the due month is late only after the pay day', () => {
+    assert.equal(monthStatus(5000, 0, '2026-09', lateBefore(new Date(2026, 9, 8), true, 10)), 'due') // 8 October, pay day 10
+    assert.equal(monthStatus(5000, 0, '2026-09', lateBefore(new Date(2026, 9, 12), true, 10)), 'late') // 12 October
+    assert.equal(monthStatus(5000, 0, '2026-10', lateBefore(new Date(2026, 9, 12), false, 10)), 'due') // not in arrears
 })

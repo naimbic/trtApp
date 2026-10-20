@@ -200,6 +200,9 @@ export const GROUPS = {
                 yes('total_to_words_enabled', 'Show the total in words'),
                 yes('total_to_words_lowercase', 'Use lowercase letters'),
             ] },
+            { title: 'Payroll', fields: [
+                yes('payroll_in_arrears', 'Salaries are paid after the month', { default: '1', hint: 'A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.' }),
+            ] },
             { title: 'Payroll and expenses', desc: 'Salaries, advances and bonuses recorded in Payroll can also appear as expenses (category "Payroll"), so expense and profit reports include the team cost. Do not turn this on if you already enter salaries as expenses yourself.', fields: [
                 yes('payroll_to_expenses', 'Record payroll payments as expenses', { hint: 'New, edited and deleted payments update their expense. Existing payments are added with the button below.' }),
             ] },

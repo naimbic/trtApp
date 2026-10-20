@@ -3914,5 +3914,12 @@ export default {
     "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "Les paiements nouveaux, modifiés et supprimés mettent à jour leur dépense. Les paiements existants s'ajoutent avec le bouton ci-dessous.",
     "Existing payroll payments": "Paiements de paie existants",
     "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "Activez d'abord l'interrupteur ci-dessus et enregistrez. Créez ensuite les dépenses des paiements déjà enregistrés dans Paie (seulement ceux qui n'en ont pas encore).",
-    "Offline · last seen {when}": "Hors ligne · vu le {when}"
+    "Offline · last seen {when}": "Hors ligne · vu le {when}",
+    "Due: {month}": "À payer : {month}",
+    "Paid for {month}": "Payé pour {month}",
+    "Paid on day {n} of the next month": "Payé le {n} du mois suivant",
+    "Still to pay for {month}": "Reste à payer pour {month}",
+    "To pay: {month}": "À payer : {month}",
+    "Salaries are paid after the month": "Les salaires sont payés après le mois",
+    "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "Un mois devient dû à partir du 1er du mois suivant et est payé le jour de paie de ce mois (octobre le 1er novembre, payé le 10). Désactivez pour payer et afficher le mois en cours."
 }

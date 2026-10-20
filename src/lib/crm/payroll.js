@@ -2,8 +2,10 @@ import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
 import { isCrmAdmin } from '@/lib/crm/permissions'
 import { syncPaymentExpense, removePaymentExpense, createMissingExpenses } from '@/lib/crm/payrollExpenses'
-import { KINDS, monthOf, lastMonths, monthsOfYear, dueFor, monthStatus, toBase } from '@/lib/crm/payrollCalc'
+import { KINDS, monthOf, lastMonths, monthsOfYear, dueFor, monthStatus, toBase, dueMonthOf, lateBefore } from '@/lib/crm/payrollCalc'
 
+/** Settings -> Sales -> General -> Payroll: salaries are paid after the month (on by default). */
+const inArrears = async () => (await prisma.crmOption.findUnique({ where: { name: 'payroll_in_arrears' } }))?.value !== '0'
 const DEFAULT_PAY_DAY = 10 // salaries are sent on the 10th unless the member has another day
 // the first month due is the hire month when there is a hire date; nothing is due after the fire month
 const startOf = (s) => (s.hireDate ? monthOf(new Date(s.hireDate)) : s.salaryStart || null)
@@ -34,15 +36,20 @@ export async function getPayroll(staffId) {
     const staff = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { id: true, salary: true, salaryCurrencyId: true, payDay: true, salaryStart: true, rib: true, cnss: true, hireDate: true, fireDate: true } })
     if (!staff) throw httpError('Member not found', 404)
     const payments = await prisma.crmStaffPayment.findMany({ where: { staffId }, orderBy: [{ paidDate: 'desc' }, { createdAt: 'desc' }], take: 500 })
-    const now = monthOf(new Date())
-    const months = lastMonths(12).map((m) => {
+    const today = new Date()
+    const now = monthOf(today)
+    const arrears = await inArrears()
+    const dueMonth = dueMonthOf(today, arrears)
+    const late = lateBefore(today, arrears, staff.payDay || DEFAULT_PAY_DAY)
+    // in arrears the current month is not shown until it is over: October appears on the 1st of November
+    const months = lastMonths(12).filter((m) => m <= dueMonth).map((m) => {
         const of = payments.filter((p) => p.month === m)
         const due = dueFor(m, staff.salary || 0, startOf(staff), endOf(staff))
         const paid = of.filter(paysSalary).reduce((n, p) => n + p.amount, 0)
         const extra = of.filter((p) => !paysSalary(p)).reduce((n, p) => n + p.amount, 0)
-        return { month: m, due, paid, extra, status: monthStatus(due, paid, m, now) }
+        return { month: m, due, paid, extra, status: monthStatus(due, paid, m, late) }
     })
-    return { salary: { amount: staff.salary || 0, currencyId: staff.salaryCurrencyId || null, payDay: staff.payDay || DEFAULT_PAY_DAY, start: staff.salaryStart || '', rib: staff.rib || '', cnss: !!staff.cnss }, months, payments: payments.map(shapePayment), current: now }
+    return { salary: { amount: staff.salary || 0, currencyId: staff.salaryCurrencyId || null, payDay: staff.payDay || DEFAULT_PAY_DAY, start: staff.salaryStart || '', rib: staff.rib || '', cnss: !!staff.cnss }, months, payments: payments.map(shapePayment), current: now, dueMonth, arrears }
 }
 
 export async function saveSalary(staffId, body) {
@@ -103,34 +110,36 @@ export async function payrollOverview(yearParam) {
     const now = new Date()
     const year = /^\d{4}$/.test(String(yearParam || '')) ? Number(yearParam) : now.getFullYear()
     const current = monthOf(now)
+    const arrears = await inArrears()
+    const dueMonth = dueMonthOf(now, arrears)
     const { rates, baseId } = await rateMap()
     const conv = (amount, currencyId) => toBase(amount, currencyId ? rates[currencyId] : 1)
     const [staff, payments] = await Promise.all([
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true, jobTitle: true, salary: true, salaryCurrencyId: true, salaryStart: true, payDay: true, hireDate: true, fireDate: true, cnss: true, rib: true } }),
-        prisma.crmStaffPayment.findMany({ where: { month: { startsWith: `${year}-` } } }),
+        prisma.crmStaffPayment.findMany({ where: { OR: [{ month: { startsWith: `${year}-` } }, { month: dueMonth }] } }),
     ])
     const months = monthsOfYear(year)
     const byMonth = Object.fromEntries(months.map((m) => [m, { month: m, paid: 0, expected: 0 }]))
     for (const p of payments) if (byMonth[p.month]) byMonth[p.month].paid += conv(p.amount, p.currencyId)
-    for (const s of staff) for (const m of months) if (m <= current || year < now.getFullYear()) byMonth[m].expected += conv(dueFor(m, s.salary || 0, startOf(s), endOf(s)), s.salaryCurrencyId)
+    for (const s of staff) for (const m of months) if (m <= dueMonth) byMonth[m].expected += conv(dueFor(m, s.salary || 0, startOf(s), endOf(s)), s.salaryCurrencyId)
     const members = staff.map((s) => {
         const mine = payments.filter((p) => p.staffId === s.id)
-        const due = dueFor(current, s.salary || 0, startOf(s), endOf(s))
-        const paid = mine.filter((p) => p.month === current && paysSalary(p)).reduce((n, p) => n + p.amount, 0)
+        const due = dueFor(dueMonth, s.salary || 0, startOf(s), endOf(s))
+        const paid = mine.filter((p) => p.month === dueMonth && paysSalary(p)).reduce((n, p) => n + p.amount, 0)
         return {
             id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.email, jobTitle: s.jobTitle || '', image: s.profileImage || null,
             salary: s.salary || 0, currencyId: s.salaryCurrencyId || null, payDay: s.payDay || DEFAULT_PAY_DAY, cnss: !!s.cnss, rib: s.rib || '',
-            thisMonth: { due, paid, status: monthStatus(due, paid, current, current) },
-            yearPaid: mine.reduce((n, p) => n + conv(p.amount, p.currencyId), 0),
+            thisMonth: { due, paid, status: monthStatus(due, paid, dueMonth, lateBefore(now, arrears, s.payDay || DEFAULT_PAY_DAY)) },
+            yearPaid: mine.filter((p) => p.month.startsWith(`${year}-`)).reduce((n, p) => n + conv(p.amount, p.currencyId), 0),
         }
     }).sort((a, b) => b.yearPaid - a.yearPaid || b.salary - a.salary)
-    const cur = byMonth[current]
+    const cur = byMonth[dueMonth]
     return {
-        year, current, baseCurrencyId: baseId,
+        year, current, dueMonth, arrears, baseCurrencyId: baseId,
         months: months.map((m) => ({ ...byMonth[m], paid: Math.round(byMonth[m].paid * 100) / 100, expected: Math.round(byMonth[m].expected * 100) / 100 })),
         members,
         totals: {
-            monthlyPayroll: Math.round(staff.reduce((n, s) => n + conv(dueFor(current, s.salary || 0, startOf(s), endOf(s)), s.salaryCurrencyId), 0) * 100) / 100,
+            monthlyPayroll: Math.round(staff.reduce((n, s) => n + conv(dueFor(dueMonth, s.salary || 0, startOf(s), endOf(s)), s.salaryCurrencyId), 0) * 100) / 100,
             paidThisMonth: Math.round((cur?.paid || 0) * 100) / 100,
             yearPaid: Math.round(Object.values(byMonth).reduce((n, m) => n + m.paid, 0) * 100) / 100,
             late: members.filter((m) => m.thisMonth.status === 'late' || m.thisMonth.status === 'partial').length,

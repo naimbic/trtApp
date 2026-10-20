@@ -26,3 +26,15 @@ export function monthStatus(due, paid, month, current) {
 
 /** An amount in the base currency: rate = how many base units one unit of its currency is worth (missing = 1). */
 export const toBase = (amount, rate) => (Number(amount) || 0) * (rate && rate > 0 ? rate : 1)
+
+/**
+ * The month whose salary is the one to pay now. Paid in arrears (the default) a month is due from the 1st of the next one,
+ * so in October the salary to pay is September's; otherwise it is the current month's.
+ */
+export const dueMonthOf = (now = new Date(), arrears = true) => (arrears ? monthOf(new Date(now.getFullYear(), now.getMonth() - 1, 1)) : monthOf(now))
+
+/** Months before this one are late: the due month stays "to pay" until its pay day has passed. */
+export function lateBefore(now = new Date(), arrears = true, payDay = 10) {
+    const current = monthOf(now)
+    return arrears && now.getDate() <= payDay ? dueMonthOf(now, true) : current
+}

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.91.2',
+        date: '2026-10-20',
+        title: 'Salaries paid after the month',
+        items: ['Payroll now follows how you pay: the salary of a month is paid after it ends, on the pay day (10 by default) of the next month. October is not shown until the 1st of November; until then the month to pay is September, "to pay" until the 10th and "late" after it. The salary card, the Pay button, the Payroll tiles and the chart use that month, and the payment popup opens on it.', 'New Settings → Sales → General → Payroll → Salaries are paid after the month (on by default); turn it off to show and pay the current month instead.']
+    },
+    {
         version: '0.91.1',
         date: '2026-10-20',
         title: 'The glowing dot shows online / offline',

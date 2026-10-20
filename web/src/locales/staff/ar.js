@@ -3914,5 +3914,12 @@ export default {
     "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "الدفعات الجديدة والمعدلة والمحذوفة تحدّث مصروفها. أما الدفعات الحالية فتُضاف بالزر أدناه.",
     "Existing payroll payments": "دفعات الرواتب الحالية",
     "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "فعّل المفتاح أعلاه واحفظ أولًا. ثم أنشئ مصروفات الدفعات المسجلة في الرواتب (التي لا مصروف لها بعد فقط).",
-    "Offline · last seen {when}": "غير متصل · آخر ظهور {when}"
+    "Offline · last seen {when}": "غير متصل · آخر ظهور {when}",
+    "Due: {month}": "المستحق: {month}",
+    "Paid for {month}": "المدفوع عن {month}",
+    "Paid on day {n} of the next month": "يُدفع في اليوم {n} من الشهر التالي",
+    "Still to pay for {month}": "لم يُدفع بعد عن {month}",
+    "To pay: {month}": "للدفع: {month}",
+    "Salaries are paid after the month": "تُدفع الرواتب بعد انتهاء الشهر",
+    "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "يظهر الشهر مستحقًا من اليوم الأول من الشهر التالي ويُدفع في يوم الدفع من ذلك الشهر (أكتوبر في 1 نوفمبر ويُدفع في 10). عطّله لدفع الشهر الحالي وعرضه."
 }

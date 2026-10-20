@@ -3914,5 +3914,12 @@ export default {
     "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "Los pagos nuevos, editados y eliminados actualizan su gasto. Los pagos existentes se añaden con el botón de abajo.",
     "Existing payroll payments": "Pagos de nómina existentes",
     "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "Active primero el interruptor de arriba y guarde. Luego cree los gastos de los pagos ya registrados en Nómina (solo los que aún no tienen).",
-    "Offline · last seen {when}": "Desconectado · visto {when}"
+    "Offline · last seen {when}": "Desconectado · visto {when}",
+    "Due: {month}": "A pagar: {month}",
+    "Paid for {month}": "Pagado por {month}",
+    "Paid on day {n} of the next month": "Se paga el día {n} del mes siguiente",
+    "Still to pay for {month}": "Aún por pagar de {month}",
+    "To pay: {month}": "Por pagar: {month}",
+    "Salaries are paid after the month": "Los salarios se pagan después del mes",
+    "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "Un mes pasa a pagar desde el día 1 del mes siguiente y se paga el día de pago de ese mes (octubre el 1 de noviembre, pagado el 10). Desactive para pagar y mostrar el mes actual."
 }

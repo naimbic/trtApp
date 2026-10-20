@@ -3914,5 +3914,12 @@ export default {
     "New, edited and deleted payments update their expense. Existing payments are added with the button below.": "新規・編集・削除した支払いは経費にも反映されます。既存の支払いは下のボタンで追加します。",
     "Existing payroll payments": "既存の給与支払い",
     "Turn the switch above on and save first. Then create the expenses of the payments already recorded in Payroll (only those that have none yet).": "まず上のスイッチをオンにして保存してください。その後、給与に記録済みの支払いの経費を作成します(まだ経費がないものだけ)。",
-    "Offline · last seen {when}": "オフライン · 最終確認 {when}"
+    "Offline · last seen {when}": "オフライン · 最終確認 {when}",
+    "Due: {month}": "支払対象: {month}",
+    "Paid for {month}": "{month}分の支払い",
+    "Paid on day {n} of the next month": "翌月{n}日払い",
+    "Still to pay for {month}": "{month}分の未払い",
+    "To pay: {month}": "支払対象: {month}",
+    "Salaries are paid after the month": "給与は月の終了後に支払う",
+    "A month shows as due from the 1st of the next month and is paid on the pay day of that month (October on 1 November, paid on the 10th). Turn off to pay and show the current month.": "月は翌月1日から支払対象になり、その月の支払日に支払います(10月分は11月1日から、10日払い)。オフにすると当月を表示して支払います。"
 }

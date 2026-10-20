@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.88.4',
+        date: '2026-10-20',
+        title: 'Compact staff profile card',
+        items: ['Staff profile card: the Active switch is at the top right, a green glowing dot sits before the name (grey when inactive) with a small role / Admin tag after it, and the email and last login are on one line. The Active / Inactive tag and the contact list below the icons are gone.']
+    },
+    {
         version: '0.88.3',
         date: '2026-10-20',
         title: 'Actions on the staff profile card',

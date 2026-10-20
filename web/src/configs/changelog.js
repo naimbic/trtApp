@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.88.5',
+        date: '2026-10-20',
+        title: 'Staff card: role tag under the name, info at the bottom',
+        items: ['Staff profile card: the role / Super Admin tag is now a clear coloured tag under the name (purple for Super Admin, blue for a role), and the email and last login line moved to the bottom of the card.']
+    },
+    {
         version: '0.88.4',
         date: '2026-10-20',
         title: 'Compact staff profile card',

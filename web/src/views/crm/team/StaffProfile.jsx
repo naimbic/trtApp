@@ -107,14 +107,9 @@ const StaffProfile = () => {
                         <h2 className="pt-name flex items-center justify-center gap-2">
                             <span className={`inline-block size-2.5 shrink-0 rounded-full ${m.active ? 'bg-emerald-500' : 'bg-gray-300'}`} style={m.active ? { boxShadow: '0 0 0 3px rgba(16,185,129,.22), 0 0 10px 2px rgba(16,185,129,.75)' } : undefined} title={m.active ? tr('Active') : tr('Inactive')} />
                             <span className="min-w-0 truncate">{m.name}</span>
-                            {(m.admin || m.role?.name) && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold leading-4 text-primary">{m.admin ? tr('Super Admin') : m.role.name}</span>}
                         </h2>
                         {(m.jobTitle || m.departments.length > 0) && <p className="pt-role">{[m.jobTitle, ...m.departments.map((x) => x.name)].filter(Boolean).join(' · ')}</p>}
-                        <p className="mt-1.5 text-[11px] leading-tight text-gray-500">
-                            {m.email && <>{tr('Email')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{m.email}</span></>}
-                            {m.email && m.lastLogin && ' - '}
-                            {m.lastLogin && <>{tr('Last login')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</span></>}
-                        </p>
+                        {(m.admin || m.role?.name) && <div className="mt-1.5 flex justify-center"><span className={`rounded-md px-2.5 py-1 text-xs font-bold ${m.admin ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>{m.admin ? tr('Super Admin') : m.role.name}</span></div>}
                         <div className="pt-acts">
                             {m.email && <a className="pt-act" href={`mailto:${m.email}`}><TbMail />{tr('Email')}</a>}
                             {phone && <a className="pt-act" href={`tel:${phone.replace(/\s/g, '')}`}><TbPhone />{tr('Call')}</a>}
@@ -134,6 +129,11 @@ const StaffProfile = () => {
                                 </Dropdown>
                             ) : null}
                         </div>
+                        <p className="mt-3 border-t border-gray-100 pt-3 text-center text-[11px] leading-tight text-gray-500 dark:border-gray-700">
+                            {m.email && <>{tr('Email')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{m.email}</span></>}
+                            {m.email && m.lastLogin && ' - '}
+                            {m.lastLogin && <>{tr('Last login')} : <span className="font-semibold text-gray-700 dark:text-gray-300">{dayjs(m.lastLogin).format('DD MMM YYYY, HH:mm')}</span></>}
+                        </p>
                     </section>
                     {wh && <WorkChart wh={wh} />}
                 </div>

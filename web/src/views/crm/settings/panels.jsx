@@ -9,6 +9,7 @@ import Spinner from '@/components/ui/Spinner'
 import Tag from '@/components/ui/Tag'
 import { getResource } from '@/lib/crm/resources'
 import { SHELL } from '@/lib/crm/mailDesign/build'
+import { buildSignature, SIGNATURE_CSS } from '@/lib/crm/mailDesign/signature'
 import ResourceTable from '../kit/ResourceTable'
 import RecordDrawer from '../kit/RecordDrawer'
 import { api, notify, useCan } from '../kit/api'
@@ -70,16 +71,51 @@ export const FormatPanel = ({ kind, fieldKey, values, setValue, customFields = [
     )
 }
 
-/** Email header/footer: restore the trtCRM design and preview it. */
+/** Email header/footer: restore the trtCRM design, build a mobile-ready signature, and preview it on a computer or a phone. */
 export const EmailDesignPanel = ({ values, setValue }) => {
-    const preview = `${values.email_header || ''}<h2 style="font-family:Arial,sans-serif;margin:0 0 12px">Your invoice is ready</h2><p style="font-family:Arial,sans-serif;line-height:1.6">Hello, this is how your emails look with this header and footer.</p>${values.email_signature || ''}${values.email_footer || ''}`
+    const [phone, setPhone] = useState(false)
+    const [sig, setSig] = useState({ logo: '', name: '', title: '', company: '', phone: '', email: '', website: '', address: '', color: '#2563eb' })
+    const [open, setOpen] = useState(false)
+    useEffect(() => {
+        // the company's logo and name are the starting point of the signature
+        api('/api/crm/branding').then((b) => {
+            const logo = b?.logo || b?.logoLight || b?.logoDark || ''
+            setSig((x) => ({ ...x, company: x.company || values.companyname || b?.name || '', logo: x.logo || (logo ? (/^https?:/i.test(logo) ? logo : `${window.location.origin}${logo}`) : '') }))
+        }).catch(() => {})
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    const set = (k) => (e) => setSig((x) => ({ ...x, [k]: e.target.value }))
+    const built = buildSignature(sig)
+    const signature = values.email_signature || ''
+    const preview = `${values.email_header || ''}<h2 style="font-family:Arial,sans-serif;margin:0 0 12px">${tr("Your invoice is ready")}</h2><p style="font-family:Arial,sans-serif;line-height:1.6">${tr("Hello, this is how your emails look with this header and footer.")}</p>${signature ? `<style>${SIGNATURE_CSS}</style><div class="sig">${signature}</div>` : ''}${values.email_footer || ''}`
     return (
         <div className="md:col-span-2">
             <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Button size="sm" icon={<TbRefresh />} onClick={() => { setValue('email_header', SHELL.header); setValue('email_footer', SHELL.footer); notify('success', tr("trtCRM design restored. Save to apply it.")) }}>{tr("Restore the trtCRM design")}</Button>
-                <span className="text-xs text-gray-400">{tr("Merge terms such as")} {tr("{companyname}")} {tr("work in the header, footer and signature.")}</span>
+                <Button size="sm" onClick={() => setOpen((o) => !o)}>{tr("Signature builder")}</Button>
+                <span className="ml-auto flex gap-1 rounded-lg bg-gray-100 p-0.5 text-xs font-semibold dark:bg-gray-700">
+                    <button type="button" onClick={() => setPhone(false)} className={`rounded-md px-2.5 py-1 ${!phone ? 'bg-white shadow-sm dark:bg-gray-600' : 'text-gray-500'}`}>{tr("Computer")}</button>
+                    <button type="button" onClick={() => setPhone(true)} className={`rounded-md px-2.5 py-1 ${phone ? 'bg-white shadow-sm dark:bg-gray-600' : 'text-gray-500'}`}>{tr("Phone")}</button>
+                </span>
             </div>
-            <iframe title={tr("Email preview")} sandbox="" srcDoc={preview.replace(/\{companyname\}/g, tr("Your company")).replace(/\{[a-z_]+\}/g, '')} className="h-72 w-full rounded-xl border border-gray-200 bg-white dark:border-gray-600" />
+            <p className="mb-3 text-xs text-gray-400">{tr("Merge terms such as")} {tr("{companyname}")} {tr("work in the header, footer and signature.")}</p>
+            {open && (
+                <div className="mb-4 rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+                    <p className="mb-3 text-sm text-gray-500">{tr("Fill in the details: the signature is built with a small logo on the left and the details on the right, and the logo goes above the details on a phone. Then use it and save.")}</p>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                        {[['logo', 'Logo address (https://…)'], ['name', 'Name'], ['title', 'Job title'], ['company', 'Company'], ['phone', 'Phone'], ['email', 'Email'], ['website', 'Website'], ['address', 'Address']].map(([k, l]) => (
+                            <div key={k}><label className="form-label mb-1 block">{tr(l)}</label><Input size="sm" value={sig[k]} onChange={set(k)} /></div>
+                        ))}
+                        <div><label className="form-label mb-1 block">{tr("Colour")}</label><input type="color" value={sig.color} onChange={set('color')} className="h-8 w-14 cursor-pointer rounded border border-gray-200 bg-transparent p-0.5" /></div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <iframe title={tr("Signature preview")} sandbox="" srcDoc={`<body style="margin:12px;font-family:Arial">${built}</body>`} className={`h-36 rounded-lg border border-gray-200 bg-white ${phone ? 'w-[340px]' : 'w-full max-w-[560px]'}`} />
+                        <Button size="sm" variant="solid" onClick={() => { setValue('email_signature', built); notify('success', tr("Signature ready. Save to apply it.")) }}>{tr("Use this signature")}</Button>
+                    </div>
+                </div>
+            )}
+            <div className={`mx-auto ${phone ? 'w-[390px] max-w-full' : 'w-full'}`}>
+                <iframe title={tr("Email preview")} sandbox="" srcDoc={preview.replace(/\{companyname\}/g, tr("Your company")).replace(/\{[a-z_]+\}/g, '')} className={`w-full rounded-xl border border-gray-200 bg-white dark:border-gray-600 ${phone ? 'h-[520px]' : 'h-72'}`} />
+            </div>
         </div>
     )
 }

@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import prisma from '@/lib/prisma'
+import { SIGNATURE_CSS } from '@/lib/crm/mailDesign/signature'
 import { notifyChannels, emailAllowed } from '@/lib/crm/channels'
 import { companyTokenData, COMPANY_KEYS } from '@/lib/crm/docTokens'
 import { buildMessage, DESIGN_LANGUAGES } from '@/lib/crm/mailDesign/build'
@@ -61,7 +62,10 @@ export const stripHtml = (h) => String(h || '').replace(/<style[\s\S]*?<\/style>
 /** Perfex layout: header + message + signature + footer. */
 export async function buildHtml(message, data, fallback) {
     const o = await getOptions(['email_header', 'email_footer', 'email_signature'])
-    return mergeFields(`${o('email_header')}${message}${o('email_signature')}${o('email_footer')}`, data, fallback)
+    const sig = o('email_signature')
+    // the signature is tidied for phones whatever it contains: a capped logo, stacked on a small screen
+    const wrapped = sig ? `<style>${SIGNATURE_CSS}</style><div class="sig">${sig}</div>` : ''
+    return mergeFields(`${o('email_header')}${message}${wrapped}${o('email_footer')}`, data, fallback)
 }
 
 /** Template for a slug in the company language, falling back to English then any language. */

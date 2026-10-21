@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.102.0',
+        date: '2026-10-21',
+        title: 'Mobile-ready emails and signature, and a new Milestones page',
+        items: ['Emails: every ready-made template and the email design now adapt to phones: the detail rows stack, the button fills the width, long links wrap, the code is smaller and the page fits the screen. Use Settings > Email > Signature & design, or Mail templates > Apply the design, to update the templates you already have.', 'Signature: the logo is capped to a small fixed size (it no longer takes the room of the details), and on a phone it sits above the details. This applies to any signature, also the ones written by hand. A new Signature builder makes one from your logo, name, title, phone, email, website and address, with a Computer / Phone preview.', 'Milestones is a new page: every project with its milestones, each with a colour, due date and state (On track, Due soon, Overdue, Done), a progress bar from its tasks and the number of late tasks. Add a milestone from the line at the top of each project, drag to reorder, filter by state or project, and search.', 'The milestone popup holds the name, project, due date, colour, description (with a switch to show it to the customer) and its tasks, with a line to add a task straight into it. The row menu can complete all open tasks of a milestone, and deleting a milestone keeps its tasks in the project.'],
+    },
+    {
         version: '0.101.0',
         date: '2026-10-21',
         title: 'Lead email integration works: website forms become leads',

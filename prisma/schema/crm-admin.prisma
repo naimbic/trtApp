@@ -705,6 +705,11 @@ model CrmSurvey {
   active          Boolean  @default(true)
   hash            String?
   onlyForLoggedIn Boolean  @default(false)
+  /// shown after the answers are sent (empty: a plain thank you)
+  thankYou        String?
+  /// open from / until (empty: no limit)
+  startsAt        DateTime?
+  endsAt          DateTime?
   createdAt       DateTime @default(now()) // surveys.datecreated
   updatedAt       DateTime @updatedAt
 

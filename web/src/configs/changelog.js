@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.98.0',
+        date: '2026-10-21',
+        title: 'Surveys redesigned: builder, public page and results',
+        items: ['New Surveys page in the Rapport look: a card per survey with its state (Open, Scheduled, Closed, Off), questions, responses and last answer, an Open for answers switch, Results, Copy link, and a hover menu (Edit, Duplicate, Open the public page, Delete).', 'New survey popup: title, introduction, thank-you message, opens / closes dates, an address to go to afterwards, one answer per device, only for people signed in; and a question builder with single choice, multiple choice, yes / no, 1 to 5 rating, short and long text, required switch and move up / down.', 'Every survey has a public page (a short readable link) that anyone can answer on a phone or computer; it respects the dates, the on / off switch, one answer per device and a rate limit.', 'Results: per question the share of each answer, the rating average with its distribution, and the written answers; Export CSV gives one line per response.', 'Surveys imported from Perfex keep their questions and answers.']
+    },
+    {
         version: '0.97.0',
         date: '2026-10-20',
         title: 'Goals redesigned: live progress, periods and steps',

@@ -325,6 +325,16 @@ model CrmContractType {
   id        String        @id @default(auto()) @map("_id") @db.ObjectId
   legacyId  Int?
   name      String
+  color     String?
+  /// order in the list and the pickers
+  typeOrder Int?
+  /// the type a new contract starts with
+  isDefault Boolean?
+  /// off: not offered for new contracts (contracts that already have it keep it)
+  isActive  Boolean?
+  description String?
+  /// a new contract of this type ends this many months after it starts (empty = no end date)
+  defaultMonths Int?
   contracts CrmContract[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt

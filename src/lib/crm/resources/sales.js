@@ -290,10 +290,25 @@ const resources = [
 
     // -------------------------------------------------------------- contracts
     {
-        key: 'contract-types', lookup: {}, model: 'crmContractType', label: 'Contract type', plural: 'Contract types', group: G, icon: 'TbTags',
-        feature: 'contracts', titleField: 'name', search: ['name'], defaultSort: { name: 'asc' },
-        columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
-        fields: [{ key: 'name', label: 'Name', type: 'text', required: true, section: 'General' }],
+        key: 'contract-types', lookup: { orderField: 'typeOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmContract', field: 'contractTypeId', by: 'id' },
+        model: 'crmContractType', label: 'Contract type', plural: 'Contract types', group: G, icon: 'TbTags',
+        feature: 'contracts', titleField: 'name', search: ['name'], defaultSort: { typeOrder: 'asc' },
+        columns: [
+            { key: 'name', label: 'Name', type: 'text', link: true },
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'defaultMonths', label: 'Length (months)', type: 'number' },
+            { key: 'isDefault', label: 'Default', type: 'boolean' },
+            { key: 'isActive', label: 'Active', type: 'boolean', defaultOn: true },
+        ],
+        fields: [
+            { key: 'name', label: 'Name', type: 'text', required: true, section: 'General' },
+            { key: 'color', label: 'Color', type: 'color', section: 'General' },
+            { key: 'defaultMonths', label: 'Length (months)', type: 'number', section: 'General' },
+            { key: 'typeOrder', label: 'Order', type: 'number', section: 'General' },
+            { key: 'isDefault', label: 'Default', type: 'boolean', section: 'General' },
+            { key: 'isActive', label: 'Active', type: 'boolean', defaultOn: true, section: 'General' },
+            { key: 'description', label: 'Description', type: 'textarea', section: 'General' },
+        ],
         children: [{ resource: 'contracts', fk: 'contractTypeId', label: 'Contracts' }],
     },
     {

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.101.0',
+        date: '2026-10-21',
+        title: 'Lead email integration works: website forms become leads',
+        items: ['Leads → Lead email integration is now real. Add the mailbox your website forms send to (IMAP server, email, password), test the connection, and the CRM reads it automatically (every N minutes, or Check now).', 'Only form emails become leads: filter by sender (for example the website address), by words in the subject or text, and require that the email looks like a form. Everything else stays untouched in the mailbox. Preview shows how the latest emails would be read before you switch it on.', 'Each lead gets the name, email, phone, company, website, city and the message, read from "Label: value" lines or an HTML table in English, French, Spanish or Arabic; your own field names can be added, and anything not recognised is kept in the description. It also gets the source, status and owner you chose, an activity entry, the original email, and a follow-up task due in a few hours.', 'The same person writing again is not duplicated: the message is added to their lead as a note with a new follow-up task. A sender who is already a customer raises a task instead. Every email is logged with what was decided and why (Activity), and the mailbox password is stored encrypted and never shown again.', 'Settings → Cron job has a new switch for it; the mailbox settings need the Settings permission.', 'Contract types now work like Lead sources: edit in place, colour, drag to reorder, Active switch, Default type for new contracts, how many contracts use each, and a Length in months that fills the end date of a new contract. The pencil adds a description.'],
+    },
+    {
         version: '0.100.0',
         date: '2026-10-21',
         title: 'Departments edited like Lead sources',

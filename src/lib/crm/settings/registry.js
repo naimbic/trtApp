@@ -547,6 +547,9 @@ export const GROUPS = {
                 yes('cron_job_tickets', 'Run the ticket tasks', { default: '1', cardToggle: true }),
                 f('autoclose_tickets_after', 'Close tickets after no answer for (hours)', 'number', { min: 0, max: 8760, default: '0', hint: '0 = never.' }),
             ] },
+            { title: 'Lead emails', desc: 'Reads the mailboxes set up in Leads → Lead email integration and turns contact-form emails into leads (each mailbox has its own check interval).', fields: [
+                yes('cron_job_leadmail', 'Read the lead mailboxes', { default: '1', cardToggle: true }),
+            ] },
             { title: 'Cleanup', desc: 'Deletes old activity log entries once a day (how old is set in Settings → General).', fields: [
                 yes('cron_job_cleanup', 'Run the cleanup', { default: '1', cardToggle: true }),
             ] },

@@ -360,6 +360,34 @@ model CrmLeadEmailIntegration {
   deleteAfterImport        Boolean   @default(false)
   createTaskIfCustomer     Boolean   @default(true)
 
+  /// --- trtCRM mailbox reader ---
+  /// the password, encrypted with the app secret (never sent to the browser)
+  passwordEnc              String?
+  imapPort                 Int?
+  /// login name when it is not the email address
+  imapUser                 String?
+  /// only emails received after this moment are read
+  startFrom                DateTime?
+  /// comma separated: an email is a lead only when every filter that is filled in matches
+  fromFilter               String?
+  subjectFilter            String?
+  bodyFilter               String?
+  /// the email must look like a form (an address and at least two "Label: value" lines)
+  requireForm              Boolean?
+  /// own names for the fields, one per line: Name = Your name, Full name
+  fieldMap                 String?
+  /// create a task "Follow up" for the responsible person
+  followUpTask             Boolean?
+  followUpHours            Int?
+  markSeen                 Boolean?
+  /// last email (UID) looked at, and the mailbox it belongs to
+  lastUid                  Int?
+  uidValidity              String?
+  lastRunAt                DateTime?
+  lastResult               String?
+  lastError                String?
+  importedCount            Int?
+
   @@map("crm_leads_email_integration")
 }
 
@@ -596,4 +624,26 @@ model CrmChatSignal {
   @@index([toKey, delivered])
   @@index([callId])
   @@map("crm_chat_signal")
+}
+
+/// One row per email the mailbox reader looked at: what it decided and why (the follow-up trail of the lead email integration)
+model CrmLeadEmailImport {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt     DateTime @default(now())
+  integrationId String   @db.ObjectId
+  messageId     String
+  uid           Int?
+  subject       String?
+  fromAddress   String?
+  receivedAt    DateTime?
+  /// imported | duplicate | skipped
+  result        String
+  reason        String?
+  leadId        String?  @db.ObjectId
+  /// the fields found in the email, as JSON text
+  fields        String?
+
+  @@unique([integrationId, messageId])
+  @@index([integrationId, createdAt])
+  @@map("crm_lead_email_imports")
 }

@@ -18,6 +18,7 @@ import ReminderSwitch from '../kit/ReminderSwitch'
 
 const TOKENS = ['contract_subject', 'contract_datestart', 'contract_dateend', 'contract_contract_value', 'contract_type', 'contract_id', 'contract_today', 'client_company', 'client_street', 'client_city', 'client_vat_number', 'company_name', 'address', 'vat_number_with_label']
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
+const addMonths = (d, n) => { const x = new Date(`${d}T00:00:00`); x.setMonth(x.getMonth() + Number(n)); x.setDate(x.getDate() - 1); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}` }
 const day = (d) => (d ? dayjs(d).format('YYYY-MM-DD') : '')
 
 const ContractEditor = () => {
@@ -38,8 +39,11 @@ const ContractEditor = () => {
         Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id ? api(`/api/crm/sales/contracts/${id}`) : null]).then(([l, c]) => {
             if (c?.locked && !superAdmin) { notify('warning', tr("A signed contract cannot be edited")); navigate(`/crm/contracts/${id}`, { replace: true }); return }
             setWasLocked(!!c?.locked)
-            setTypes(l.stats?.types || [])
-            setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: day(c.dateStart), dateEnd: day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: null, projectId: null, dateStart: day(new Date()), dateEnd: '', value: '', description: '', content: '', hidden: false, remindClient: true, signed: false })
+            const tl = l.stats?.types || []
+            setTypes(tl)
+            // the type that is the default (and its length) is already chosen on a new contract
+            const def = !c ? tl.find((t) => t.isDefault) : null
+            setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: day(c.dateStart), dateEnd: day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: def?.id || null, projectId: null, dateStart: day(new Date()), dateEnd: def?.months ? addMonths(day(new Date()), def.months) : '', value: '', description: '', content: '', hidden: false, remindClient: true, signed: false })
         }).catch((e) => setError(e.message))
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -51,7 +55,14 @@ const ContractEditor = () => {
         } catch (e) { setError(e.message); window.scrollTo({ top: 0, behavior: 'smooth' }) } finally { setSaving(false) }
     }
     if (!v) return <Container><div className="py-16 text-center text-gray-400">{error || tr("Loading…")}</div></Container>
-    const typeOpts = types.map((t) => ({ value: t.id, label: t.name }))
+    const typeOpts = types.filter((t) => t.active !== false || t.id === v.typeId).map((t) => ({ value: t.id, label: t.name }))
+    // choosing a type with a length fills the end date (counted from the start date) when it is empty or was filled by a type before
+    const chooseType = (o) => {
+        const t = types.find((x) => x.id === o?.value)
+        const prev = types.find((x) => x.id === v.typeId)
+        const auto = !v.dateEnd || (prev?.months && v.dateEnd === addMonths(v.dateStart, prev.months))
+        set({ typeId: o?.value || null, ...(t?.months && auto && v.dateStart ? { dateEnd: addMonths(v.dateStart, t.months) } : {}) })
+    }
 
     return (
         <div className="flex h-full w-full flex-col justify-between">
@@ -66,8 +77,8 @@ const ContractEditor = () => {
                             <div className="mb-4"><L>{tr("Subject")}</L><Input value={v.subject} placeholder={tr("e.g. Website maintenance 2026")} onChange={(e) => set({ subject: e.target.value })} /></div>
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div><L>{tr("Client")}</L><RelationSelect resource="clients" value={v.clientId} onChange={(x) => set({ clientId: x || null })} /></div>
-                                <div><L>{tr("Contract type")}</L><Select isClearable options={typeOpts} value={typeOpts.find((o) => o.value === v.typeId) || null} onChange={(o) => set({ typeId: o?.value || null })} /></div>
-                                <div><L>{tr("Start date")}</L><Input type="date" value={v.dateStart} onChange={(e) => set({ dateStart: e.target.value })} /></div>
+                                <div><L>{tr("Contract type")}</L><Select isClearable options={typeOpts} value={typeOpts.find((o) => o.value === v.typeId) || null} onChange={chooseType} /></div>
+                                <div><L>{tr("Start date")}</L><Input type="date" value={v.dateStart} onChange={(e) => { const m = types.find((x) => x.id === v.typeId)?.months; set({ dateStart: e.target.value, ...(m && e.target.value && (!v.dateEnd || v.dateEnd === addMonths(v.dateStart, m)) ? { dateEnd: addMonths(e.target.value, m) } : {}) }) }} /></div>
                                 <div><L>{tr("End date (empty = no end)")}</L><Input type="date" value={v.dateEnd} onChange={(e) => set({ dateEnd: e.target.value })} /></div>
                                 <div><L>{tr("Contract value")}</L><Input type="number" step="0.01" min={0} value={v.value} onChange={(e) => set({ value: e.target.value })} /></div>
                             </div>

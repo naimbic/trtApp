@@ -396,7 +396,7 @@ const resources = [
         plural: 'Lead email integration',
         group: 'Leads',
         icon: 'TbMailForward',
-        feature: 'leads', writeFeature: 'settings',
+        feature: 'settings',
         titleField: 'email',
         search: ['email'],
         defaultSort: { createdAt: 'desc' },

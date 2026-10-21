@@ -198,6 +198,10 @@ async function ownerFilter(resource, session) {
     return { OR: [{ [resource.shareByRel]: me }, { relType: { in: relAllowed(session.user.authority || []) } }] }
 }
 
+// columns that must never leave the server (the mailbox reader keeps a password)
+const SECRET = { 'lead-email-integration': ['password', 'passwordEnc'] }
+const hideSecrets = (resource, rows) => { for (const k of SECRET[resource.key] || []) for (const r of rows) delete r[k] }
+
 export async function listRecords(key, params = {}) {
     const resource = resolveResource(key)
     if (resource.key === 'task-statuses') await (await import('@/lib/crm/taskStatuses')).ensureTaskStatuses()
@@ -216,6 +220,7 @@ export async function listRecords(key, params = {}) {
     ])
     await attachRelations(resource, rows)
     await attachUsage(resource, rows)
+    hideSecrets(resource, rows)
     return { list: rows, total, pageIndex: page, pageSize: size }
 }
 
@@ -231,6 +236,7 @@ export async function getRecord(key, id) {
         if (!ok) throw new PermissionError('Forbidden', 403)
     }
     await attachRelations(resource, [row])
+    hideSecrets(resource, [row])
     return row
 }
 

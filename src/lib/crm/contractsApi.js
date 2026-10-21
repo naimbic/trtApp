@@ -37,7 +37,7 @@ export async function listContracts({ query = '', state, clientId, typeId, pageI
     const [rows, clients, types] = await Promise.all([
         prisma.crmContract.findMany({ where, select: { id: true, subject: true, clientId: true, contractTypeId: true, contractValue: true, dateStart: true, dateEnd: true, signed: true, markedAsSigned: true, trash: true, createdAt: true } }),
         prisma.crmClient.findMany({ select: { id: true, company: true } }),
-        prisma.crmContractType.findMany(),
+        prisma.crmContractType.findMany({ orderBy: [{ typeOrder: 'asc' }, { name: 'asc' }] }),
     ])
     const cname = Object.fromEntries(clients.map((c) => [c.id, c.company]))
     const tname = Object.fromEntries(types.map((t) => [t.id, t.name]))
@@ -66,7 +66,7 @@ export async function listContracts({ query = '', state, clientId, typeId, pageI
     list.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1)
     const size = Math.min(Math.max(parseInt(pageSize, 10) || 15, 1), 200)
-    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name })) } }
+    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name, color: t.color || null, isDefault: !!t.isDefault, active: t.isActive !== false, months: t.defaultMonths || null })) } }
 }
 
 export async function getContract(id) {

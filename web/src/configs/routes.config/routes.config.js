@@ -7,7 +7,7 @@ export const publicRoutes = [...authRoute]
 
 // Every CRM resource shares one generic route; hand-built screens get their own entry first.
 const ROUTE_FEATURE = [
-    ['/crm/settings', 'settings'], ['/crm/company', 'settings'], ['/team', 'staff'], ['/crm/staff', 'staff'], ['/crm/work-hours', 'staff'], ['/crm/goals', 'goals'], ['/crm/surveys', 'surveys'], ['/crm/payroll', 'staff'], ['/crm/roles', 'roles'],
+    ['/crm/settings', 'settings'], ['/crm/company', 'settings'], ['/team', 'staff'], ['/crm/staff', 'staff'], ['/crm/work-hours', 'staff'], ['/crm/goals', 'goals'], ['/crm/surveys', 'surveys'], ['/crm/lead-email-integration', 'settings'], ['/crm/payroll', 'staff'], ['/crm/roles', 'roles'],
     ['/crm/clients', 'customers'], ['/crm/invoices', 'invoices'], ['/crm/estimates', 'estimates'], ['/crm/purchase-orders', 'purchase_orders'], ['/crm/proposals', 'proposals'], ['/crm/contracts', 'contracts'],
     ['/crm/payments', 'payments'], ['/crm/expenses', 'expenses'], ['/crm/mails', 'email_templates'], ['/crm/issues', 'issues'],
     ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/notes', 'tasks'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'], ['/crm/timeline', 'tasks'],
@@ -54,6 +54,7 @@ const crmRoutes = [
         component: lazy(() => import('@/views/crm/team/Team')),
         authority: [],
     },
+    { key: 'crm.lead-email-integration', path: '/crm/lead-email-integration', component: lazy(() => import('@/views/crm/leads/LeadMailPage')), authority: [] },
     { key: 'crm.surveys', path: '/crm/surveys', component: lazy(() => import('@/views/crm/surveys/SurveysPage')), authority: [] },
     { key: 'crm.goals', path: '/crm/goals', component: lazy(() => import('@/views/crm/goals/GoalsPage')), authority: [] },
     { key: 'crm.payroll', path: '/crm/payroll', component: lazy(() => import('@/views/crm/team/Payroll')), authority: [] },

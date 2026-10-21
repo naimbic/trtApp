@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.99.0',
+        date: '2026-10-21',
+        title: 'Faster on slow internet, and a security clean-up',
+        items: ['Security: any signed-in team member could list every user and change roles or passwords through a leftover template endpoint (/api/roles/users). Roles and users are now administrator-only, and the other leftover demo endpoints (customers, invoices, products, projects, help, changelog and similar) answer only to a signed-in session.', 'Security headers added on the web server: no content sniffing, no embedding in other sites, strict referrer policy, restricted camera and microphone, and HTTPS only (HSTS).', 'Faster: lists that rarely change (statuses, currencies, taxes, categories, company settings, form pickers) are kept in the browser (IndexedDB) per person. They show instantly, refresh in the background, and are used when the connection is slow or gone. They are cleared when anything is saved and when you sign out.', 'Faster: a service worker keeps the app files (scripts, styles, fonts, images) in the browser, so the CRM opens quickly on a slow connection. It never stores data from the API.', 'Better compression for text files on the web server.'],
+    },
+    {
         version: '0.98.0',
         date: '2026-10-21',
         title: 'Surveys redesigned: builder, public page and results',

@@ -3,9 +3,16 @@ import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { useSessionUser } from '@/store/authStore'
 import { tr } from '@/utils/t'
+import { cachedGet, isCacheable } from '@/utils/offlineCache'
 
 /** JSON fetch against the CRM API. Throws Error(message) with the server's message. */
 export async function api(url, init = {}) {
+    const method = (init.method || 'GET').toUpperCase()
+    if (method === 'GET' && !init.nocache && isCacheable(url)) return cachedGet(url, () => request(url, init))
+    return request(url, init)
+}
+
+async function request(url, init = {}) {
     const res = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init, body: init.body && typeof init.body !== 'string' ? JSON.stringify(init.body) : init.body })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(tr(String(json.error || json.message || tr('Request failed ({status})', { status: res.status })).replace(/^LOCKED(_CONFIRM)?: /, '')))

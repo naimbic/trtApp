@@ -99,6 +99,13 @@ try {
     await prisma.crmStaffPermission.create({ data: { staffId: mover.staffId, feature: 'estimates', capability: 'view_own' } })
     await new Promise((r) => setTimeout(r, 6500))
     check('after 6 seconds: estimates open', (await mv('GET', '/api/crm/sales/estimates')).status === 200)
+
+    console.log('\n== template leftovers and user management')
+    for (const u of ['roles/users', 'roles', 'changelog', 'customers', 'helps/articles']) check(`anonymous: /api/${u} refused`, (await fetch(`${BASE}/api/${u}`)).status === 401)
+    const plain = await login(await makeUser('plain', { estimates: ['view_own'] }))
+    check('non-admin: cannot list users via /api/roles/users', (await plain('GET', '/api/roles/users')).status === 403)
+    check('non-admin: cannot change a role via /api/roles/users', (await plain('PUT', '/api/roles/users', { action: 'updateRole', userId: '000000000000000000000001', role: 'admin' })).status === 403)
+    check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) await prisma[model].delete({ where: { id } }).catch(() => {})
     await prisma.crmStaffPermission.deleteMany({ where: { staffId: { in: made.staff } } }).catch(() => {})

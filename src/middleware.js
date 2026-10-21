@@ -13,6 +13,8 @@ const { auth } = NextAuth(authConfig)
 const publicRoutes = Object.entries(_publicRoutes).map(([key]) => key)
 const authRoutes = Object.entries(_authRoutes).map(([key]) => key)
 
+const DEMO_API = /^\/api\/(ai|customers|invoices|products|projects|pricing|redirects|roles|helps|md|logs|search|contacts|files|setting|changelog|conversations|chat|mail|sites|admin|debug)(\/|$)/
+
 const apiAuthPrefix = `${appConfig.apiPrefix}/auth`
 
 export default auth((req) => {
@@ -31,6 +33,11 @@ export default auth((req) => {
             const body = JSON.parse(atob(raw.split('.')[0].replace(/-/g, '+').replace(/_/g, '/')))
             if (body?.imp) return Response.json({ error: 'Preview mode is read-only' }, { status: 403 })
         } catch { /* no portal cookie */ }
+    }
+
+    /** Leftover template demo endpoints (mock data, but also real staff lists): a session is required for all of them */
+    if (isApiRoute && !isSignedIn && DEMO_API.test(nextUrl.pathname)) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     /** Skip auth middleware for all api routes — they handle auth internally */

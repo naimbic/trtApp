@@ -2,7 +2,18 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 
+/** Roles and users are managed by administrators only */
+async function requireAdmin() {
+    const session = await auth()
+    const a = session?.user?.authority || []
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!a.includes('admin') && !a.includes('crm.admin')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return null
+}
+
 export async function GET(request) {
+    const denied = await requireAdmin()
+    if (denied) return denied
     try {
         const { searchParams } = new URL(request.url)
         const pageIndex = parseInt(searchParams.get('pageIndex') || '1')
@@ -68,10 +79,8 @@ export async function GET(request) {
 
 export async function PUT(request) {
     try {
-        const session = await auth()
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
+        const denied = await requireAdmin()
+        if (denied) return denied
 
         const body = await request.json()
         const { action } = body

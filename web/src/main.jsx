@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import { loadStaffLang } from '@/utils/t'
 import { useThemeStore } from '@/store/themeStore'
+import { dropCache } from '@/utils/offlineCache'
 import { clearUserData } from '@/utils/clearUserData'
 import { localizeShared } from '@/utils/localizeShared'
 
@@ -15,6 +16,8 @@ window.fetch = async (...args) => {
     // data of the API belongs to whoever is signed in: never answer it from the browser cache
     if (url.startsWith('/api/')) args[1] = { cache: 'no-store', ...args[1] }
     const res = await nativeFetch(...args)
+    // anything saved through the API may change the cached lookup lists
+    if (url.startsWith('/api/crm/') && !['GET', 'HEAD', undefined].includes(args[1]?.method?.toUpperCase?.())) dropCache()
     if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/portal') && !url.startsWith('/api/crm/auth/') && !redirecting) {
         redirecting = true
         try {
@@ -40,3 +43,8 @@ loadStaffLang().then(async (lang) => {
         </React.StrictMode>,
     )
 })
+
+// The app files (not the data) are kept in the browser by a service worker, so the CRM opens fast on a slow connection.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
+}

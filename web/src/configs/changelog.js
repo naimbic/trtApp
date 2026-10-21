@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.99.1',
+        date: '2026-10-21',
+        title: 'Authenticator app shows its real state',
+        items: ['Fixed: on servers where the test switch that skips the second step at sign-in is on (TWO_FACTOR_OFF), Settings > Two-step verification kept showing "Set up" after the Authenticator app was turned on. The page now always shows the real state; the switch only affects the sign-in check.'],
+    },
+    {
         version: '0.99.0',
         date: '2026-10-21',
         title: 'Faster on slow internet, and a security clean-up',

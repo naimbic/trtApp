@@ -61,12 +61,16 @@ async function ensureRow(userId) {
 }
 
 export async function twoFactorStatus(userId) {
-    // TWO_FACTOR_OFF=1 skips the second step for everyone (test/staging servers only)
-    if (process.env.TWO_FACTOR_OFF === '1') return { app: false, email: false, recoveryLeft: 0, enabled: false }
     const r = await row(userId)
     return { app: !!r?.totpEnabled, email: !!r?.emailEnabled, recoveryLeft: r?.recoveryHashes?.length || 0, enabled: !!(r?.totpEnabled || r?.emailEnabled) }
 }
-export const hasTwoFactor = async (userId) => (await twoFactorStatus(userId)).enabled
+// TWO_FACTOR_OFF=1 skips the second step at sign-in for everyone (test/staging servers only); the settings page still shows the real state
+/** What the sign-in step has to ask for: nothing when the test switch is on */
+export async function loginStatus(userId) {
+    if (process.env.TWO_FACTOR_OFF === '1') return { app: false, email: false, recoveryLeft: 0, enabled: false }
+    return twoFactorStatus(userId)
+}
+export const hasTwoFactor = async (userId) => process.env.TWO_FACTOR_OFF !== '1' && (await twoFactorStatus(userId)).enabled
 
 async function checkPassword(userId, password) {
     const u = await prisma.user.findUnique({ where: { id: userId }, select: { password: true } })
@@ -184,7 +188,7 @@ export async function resetTwoFactor(userId) {
 /* ---------- sign-in ---------- */
 /** Emails a sign-in code (only call after the password was verified). */
 export async function sendLoginEmailCode(user) {
-    const s = await twoFactorStatus(user.id)
+    const s = await loginStatus(user.id)
     if (!s.email) throw httpError('Email codes are not turned on for this account')
     return sendCode(user, 'login')
 }

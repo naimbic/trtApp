@@ -69,7 +69,7 @@ export async function teamLookups() {
     await requirePermission('staff', 'view')
     const [roles, departments] = await Promise.all([
         prisma.crmRole.findMany({ orderBy: { name: 'asc' } }),
-        prisma.crmDepartment.findMany({ orderBy: { name: 'asc' } }),
+        prisma.crmDepartment.findMany({ where: { NOT: { isActive: false } }, orderBy: [{ departmentOrder: 'asc' }, { name: 'asc' }] }),
     ])
     return { roles: roles.map((r) => ({ id: r.id, name: r.name })), departments: departments.map((d) => ({ id: d.id, name: d.name })) }
 }

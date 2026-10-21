@@ -47,7 +47,7 @@ async function lookups() {
     const [statuses, priorities, departments, services, staff, predefined] = await Promise.all([
         prisma.crmTicketStatus.findMany({ orderBy: { statusOrder: 'asc' } }),
         prisma.crmTicketPriority.findMany({ orderBy: { legacyId: 'asc' } }),
-        prisma.crmDepartment.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+        prisma.crmDepartment.findMany({ where: { NOT: { isActive: false } }, orderBy: [{ departmentOrder: 'asc' }, { name: 'asc' }], select: { id: true, name: true } }),
         prisma.crmService.findMany({ orderBy: { name: 'asc' } }),
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
         prisma.crmPredefinedReply.findMany({ orderBy: { name: 'asc' } }),

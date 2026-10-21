@@ -144,6 +144,11 @@ model CrmDepartment {
   deleteAfterImport Boolean @default(false)
   calendarId       String?
   hideFromClient   Boolean  @default(false)
+  color            String?
+  /// order in the list and the pickers
+  departmentOrder  Int?
+  /// off: not offered for new tickets and staff (records that already have it keep it)
+  isActive         Boolean?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

@@ -57,7 +57,7 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
     const { orderField } = resource.lookup
     const title = resource.titleField
     const main = resource.fields.find((f) => f.key === title) || resource.fields[0]
-    const cols = resource.fields.filter((f) => f.key !== main.key && f.key !== orderField && INLINE.includes(f.type))
+    const cols = resource.fields.filter((f) => f.key !== main.key && f.key !== orderField && f.inline !== false && INLINE.includes(f.type))
     const [rows, setRows] = useState([])
     const [loading, setLoading] = useState(true)
     const [draft, setDraft] = useState({})

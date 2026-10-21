@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.100.0',
+        date: '2026-10-21',
+        title: 'Departments edited like Lead sources',
+        items: ['Departments is now an in-place list like Lead sources: type a name, pick a colour, flip Hidden from clients and Active, drag to reorder, add a department from the row at the top, and see how many tickets use each one. The pencil opens the full form with the email and IMAP settings.', 'A department turned off is no longer offered for new tickets or staff; records that already have it keep it.'],
+    },
+    {
         version: '0.99.1',
         date: '2026-10-21',
         title: 'Authenticator app shows its real state',

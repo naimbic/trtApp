@@ -4204,5 +4204,7 @@ export default {
     "edited": "تم التعديل",
     "{n} comments": "{n} تعليقات",
     "You can only edit your own comments": "يمكنك تعديل تعليقاتك فقط",
-    "You can only edit your own notes": "يمكنك تعديل ملاحظاتك فقط"
+    "You can only edit your own notes": "يمكنك تعديل ملاحظاتك فقط",
+    "comment": "تعليق",
+    "comments": "تعليقات"
 }

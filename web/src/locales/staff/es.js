@@ -4204,5 +4204,7 @@ export default {
     "edited": "editado",
     "{n} comments": "{n} comentarios",
     "You can only edit your own comments": "Solo puedes editar tus propios comentarios",
-    "You can only edit your own notes": "Solo puedes editar tus propias notas"
+    "You can only edit your own notes": "Solo puedes editar tus propias notas",
+    "comment": "comentario",
+    "comments": "comentarios"
 }

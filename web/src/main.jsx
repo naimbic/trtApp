@@ -20,7 +20,7 @@ window.fetch = async (...args) => {
     // anything saved through the API may change the cached lookup lists
     if (url.startsWith('/api/crm/') && !['GET', 'HEAD', undefined].includes(args[1]?.method?.toUpperCase?.())) dropCache()
     // a new comment, note, reply or message that names a colleague with @: tell them (once the save worked)
-    if (res.ok && url.startsWith('/api/crm/') && !url.startsWith('/api/crm/mentions') && !/\/(comments|notes)(\?|$)/.test(url) && args[1]?.method?.toUpperCase?.() === 'POST' && typeof args[1].body === 'string' && args[1].body.includes('@')) {
+    if (res.ok && url.startsWith('/api/crm/') && !url.startsWith('/api/crm/mentions') && !url.startsWith('/api/crm/auth/') && !/\/(comments|notes)(\?|$)/.test(url) && args[1]?.method?.toUpperCase?.() === 'POST' && typeof args[1].body === 'string' && args[1].body.includes('@')) {
         try {
             const texts = textsOf(JSON.parse(args[1].body))
             if (texts.some((t) => t.includes('@'))) {
@@ -31,7 +31,7 @@ window.fetch = async (...args) => {
             }
         } catch { /* not JSON: a file upload or a form */ }
     }
-    if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/portal') && !url.startsWith('/api/crm/auth/') && !redirecting) {
+    if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/portal') && !url.startsWith('/api/crm/auth/') && !url.startsWith('/api/crm/mentions') && !redirecting) {
         redirecting = true
         try {
             clearUserData()

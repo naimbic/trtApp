@@ -139,5 +139,7 @@
   "Done",
   "Overdue",
   "Task setup",
-  "Names, colours and order of the task statuses"
+  "Names, colours and order of the task statuses",
+  "comment",
+  "comments"
 ]

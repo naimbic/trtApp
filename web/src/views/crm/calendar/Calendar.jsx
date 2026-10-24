@@ -185,16 +185,15 @@ const Calendar = () => {
     // week and day views: a dashed frame with the hour follows the pointer, with a + to add something at that hour
     const onHover = (e) => {
         if (viewName === 'dayGridMonth') return setHov(null)
-        const col = e.target.closest?.('.fc-timegrid-col')
-        if (!col || e.target.closest('.fc-event') || e.target.closest('.sch-hover__add')) return setHov((h) => (e.target.closest?.('.sch-hover__add') ? h : null))
-        const wrap = wrapRef.current, frame = col.querySelector('.fc-timegrid-col-frame'), lane = wrap?.querySelector('.fc-timegrid-slot-lane')
-        if (!wrap || !frame || !lane) return
-        const fr = frame.getBoundingClientRect(), w = wrap.getBoundingClientRect(), h = lane.getBoundingClientRect().height
-        if (!h) return
-        const idx = Math.max(0, Math.floor((e.clientY - fr.top) / h))
-        const mins = idx * 30
-        const time = `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`
-        setHov({ day: col.getAttribute('data-date'), time, style: { left: fr.left - w.left + 2, top: fr.top - w.top + idx * h + 1, width: fr.width - 4, height: h - 2 } })
+        if (addMenu || e.target.closest?.('.sch-hover__add')) return
+        const stack = document.elementsFromPoint(e.clientX, e.clientY)
+        if (stack.some((x) => x.classList?.contains('fc-event') || x.closest?.('.fc-event'))) return setHov(null)
+        const lane = stack.find((x) => x.classList?.contains('fc-timegrid-slot-lane') && x.getAttribute('data-time'))
+        const cols = [...(wrapRef.current?.querySelectorAll('.fc-timegrid-col[data-date]') || [])]
+        const col = cols.find((c) => { const r = c.getBoundingClientRect(); return e.clientX >= r.left && e.clientX < r.right })
+        if (!lane || !col || !wrapRef.current) return setHov(null)
+        const l = lane.getBoundingClientRect(), c = (col.querySelector('.fc-timegrid-col-frame') || col).getBoundingClientRect(), w = wrapRef.current.getBoundingClientRect()
+        setHov({ day: col.getAttribute('data-date'), time: lane.getAttribute('data-time').slice(0, 5), style: { left: c.left - w.left + 1, top: l.top - w.top + 1, width: c.width - 2, height: l.height - 2 } })
     }
     const openNew = (day, time) => {
         const base = time ? dayjs(`${day} ${time}`) : dayjs(day || selectedDay).hour(9).minute(0)
@@ -378,10 +377,10 @@ const Calendar = () => {
                     {hov && viewName !== 'dayGridMonth' && (
                         <div className="sch-hover" style={hov.style}>
                             <span>{dayjs(`${hov.day} ${hov.time}`).format(hour12 ? 'h:mm A' : 'HH:mm')}</span>
-                            <button type="button" className="sch-hover__add" aria-label={tr("Add an event or a task")} title={tr("Add an event or a task")} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAddMenu({ day: hov.day, time: hov.time, el: e.currentTarget }) }}><TbPlus /></button>
+                            <button type="button" className="sch-hover__add" aria-label={tr("Add an event or a task")} title={tr("Add an event or a task")} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const r = e.currentTarget.getBoundingClientRect(); setAddMenu({ day: hov.day, time: hov.time, el: { getBoundingClientRect: () => r } }) }}><TbPlus /></button>
                         </div>
                     )}
-                    <CalendarView ref={calRef} nowIndicator headerToolbar={false} eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={2} moreLinkContent={(a) => `+${a.num}`} dayCellContent={(a) => <span className="sch-daytop"><span className="sch-daynum">{a.dayNumberText}</span><Faces ids={[...(peopleByDay[dayOf(a.date)] || [])]} max={3} /><button type="button" className="sch-add" aria-label={tr("Add an event or a task")} title={tr("Add an event or a task")} onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAddMenu({ day: dayOf(a.date), el: e.currentTarget }) }}><TbPlus /></button></span>} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} dayCellClassNames={selectedDayClass} height="auto" />
+                    <CalendarView ref={calRef} nowIndicator nowIndicatorContent={(a) => (a.isAxis ? <span className="sch-now-pill">{hour12 ? `${dayjs(a.date).format('h:mm')}${dayjs(a.date).hour() < 12 ? 'a' : 'p'}` : dayjs(a.date).format('HH:mm')}</span> : null)} headerToolbar={false} eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={2} moreLinkContent={(a) => `+${a.num}`} dayCellContent={(a) => <span className="sch-daytop"><span className="sch-daynum">{a.dayNumberText}</span><Faces ids={[...(peopleByDay[dayOf(a.date)] || [])]} max={3} /><button type="button" className="sch-add" aria-label={tr("Add an event or a task")} title={tr("Add an event or a task")} onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAddMenu({ day: dayOf(a.date), el: e.currentTarget }) }}><TbPlus /></button></span>} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} dayCellClassNames={selectedDayClass} height="auto" />
                     </div>
                 </section>
                 <aside className="sch-side">

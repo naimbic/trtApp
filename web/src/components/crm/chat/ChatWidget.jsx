@@ -74,7 +74,7 @@ const ChatWidget = () => {
                 const { id } = await api('/rooms', { method: 'POST', body: JSON.stringify({ staffId: e.detail.staffId }) })
                 refresh()
                 if (window.location.pathname.startsWith('/crm/chat')) return navigate('/crm/chat')
-                setTheirStatus(null); setRoom({ id, kind: 'direct', title: e.detail.name, image: null, status: null }); setTab('chats'); setOpen(true)
+                setTheirStatus(null); setRoom({ id, kind: 'direct', title: e.detail.name, image: null, status: 'offline' }); setTab('chats'); setOpen(true)
             } catch { /* chat not available for this person */ }
         }
         window.addEventListener('trt-chat-open', h)
@@ -92,7 +92,7 @@ const ChatWidget = () => {
     const badge = { chats: chatUnread, clients: clientUnread, people: 0 }
 
     return (
-        <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
+        <div className="fixed bottom-5 right-5 flex flex-col items-end gap-3" style={{ zIndex: open ? 100001 : 40 }}>
             <CallOverlay c={phone} />
             {open && !onPage && (
                 <div className="flex h-[min(560px,calc(100vh-110px))] w-[min(380px,calc(100vw-40px))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800">

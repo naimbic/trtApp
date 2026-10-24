@@ -4204,5 +4204,7 @@ export default {
     "edited": "編集済み",
     "{n} comments": "{n}件のコメント",
     "You can only edit your own comments": "自分のコメントのみ編集できます",
-    "You can only edit your own notes": "自分のメモのみ編集できます"
+    "You can only edit your own notes": "自分のメモのみ編集できます",
+    "comment": "コメント",
+    "comments": "コメント"
 }

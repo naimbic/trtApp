@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.105.1',
+        date: '2026-10-24',
+        title: 'Fix: sign-in loop, mention opens the chat, calendar lines and hover',
+        items: ['Fixed (important, from 0.104.0): signing in could bounce back to the sign-in page. The mention check ran during sign-in and was answered "not signed in", which cleared the session. It no longer runs on sign-in, and its answer can no longer sign you out.', 'Fixed: clicking a @mention opens the chat session with that person right away, on top of the open popup (it crashed before, and the chat could hide behind the popup).', 'Calendar, week and day views, redesigned like the reference: every day is a soft block with a gap between the days, light dashed lines mark each hour, today is tinted blue with a thin border, and the current time is a red pill with the time on the hour axis plus a dot and a red line across today.', 'Calendar: the hour under the pointer shows a clearly visible dashed frame with its time and a + that opens "New event at that hour / New task", at the right place.'],
+    },
+    {
         version: '0.105.0',
         date: '2026-10-24',
         title: 'Comments: reply, edit, delete; notifications; counts; calendar hours',

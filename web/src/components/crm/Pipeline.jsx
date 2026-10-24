@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { TbCalendar, TbMessageCircle, TbInbox, TbDots, TbChevronRight, TbCheck, TbArrowUpRight, TbPlus, TbArrowLeft } from 'react-icons/tb'
 import cn from '@/utils/classNames'
-import { tr } from '@/utils/t'
+import { tr, trn } from '@/utils/t'
 
 /** Stage tones of the Rapport palette (they follow the colour picked in the dock); a column may also bring its own hex. */
 const TONES = {
@@ -38,7 +38,7 @@ const Tile = ({ item, onOpen, onMenu, dragging, index }) => (
         {item.todo && <div className="rp-face-do" title={item.todo}><i className="rp-face-do-dot" /><span>{item.todo}</span></div>}
         <div className="rp-face-foot">
             <span className={cn('rp-face-label', item.labelColor && 'has-dot')} style={item.labelColor ? { '--lc': item.labelColor } : undefined}>{item.labelColor && <i className="rp-face-dot" />}{item.label}</span>
-            <span className="rp-face-end">{item.comments > 0 && <span className="rp-face-cc" title={tr('{n} comments', { n: item.comments })}><TbMessageCircle />{item.comments}</span>}{item.people}</span>
+            <span className="rp-face-end">{item.comments > 0 && <span className="rp-face-cc" title={trn(item.comments, 'comment')}><TbMessageCircle />{item.comments}</span>}{item.people}</span>
         </div>
     </div>
 )

@@ -4191,5 +4191,10 @@ export default {
     "in {n} d": "あと{n}日",
     "late": "遅延",
     "without a milestone": "マイルストーンなし",
-    "{a} of {b} milestones done": "{b}件中{a}件のマイルストーンが完了"
+    "{a} of {b} milestones done": "{b}件中{a}件のマイルストーンが完了",
+    "DO:": "やること:",
+    "The next thing to do, shown on the card": "次にやること(カードに表示されます)",
+    "This task is waiting for your feedback.": "このタスクはあなたのフィードバックを待っています。",
+    "Task setup": "タスク設定",
+    "Names, colours and order of the task statuses": "タスクステータスの名前・色・順序"
 }

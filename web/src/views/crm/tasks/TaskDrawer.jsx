@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import StaffRing from '@/components/crm/StaffRing'
-import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus } from 'react-icons/tb'
+import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks } from 'react-icons/tb'
 import Drawer from '@/components/crm/PopupFrame'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -60,10 +60,20 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             const r = await api(edit ? `/api/crm/work/tasks/${id}` : '/api/crm/work/tasks', { method: edit ? 'PUT' : 'POST', body })
             notify('success', edit ? tr("Task saved") : tr("Task created"))
             onChanged()
-            if (edit) await load(); else onClose()
+            onClose()
             void r
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
+    // someone set the task to "Awaiting feedback" and it is mine: one click completes it
+    const complete = async () => {
+        setSaving(true)
+        try {
+            const body = { ...v, status: 5, startDate: v.startDate ? dayjs(v.startDate).format('YYYY-MM-DD') : null, dueDate: v.dueDate ? dayjs(v.dueDate).format('YYYY-MM-DD') : null }
+            await api(`/api/crm/work/tasks/${id}`, { method: 'PUT', body })
+            notify('success', tr("Task completed")); onChanged(); onClose()
+        } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
+    }
+    const awaitingMe = edit && !!detail?.task.assignedToMe && detail.task.status === 2 && detail.task.canFinish !== false
     const post = (path, body) => api(`/api/crm/work/tasks/${id}/${path}`, { method: 'POST', body })
     const running = detail?.running
     const runningSecs = running ? Math.max(0, Math.round((Date.now() - +new Date(running.startTime)) / 1000)) : 0
@@ -172,6 +182,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     {edit && detail?.can.delete && <Button variant="plain" className="text-red-500" onClick={() => setConfirmDel(true)}>{tr("Delete")}</Button>}
                     <div className="ml-auto flex gap-2">
                         <Button onClick={onClose}>{canEdit ? tr("Cancel") : tr("Close")}</Button>
+                        {awaitingMe && <Button className="!bg-emerald-500 !text-white hover:!bg-emerald-600" icon={<TbChecks />} loading={saving} onClick={complete}>{tr("Mark as complete")}</Button>}
                         {canEdit && <Button variant="solid" loading={saving} onClick={save}>{edit ? tr("Save changes") : tr("Create task")}</Button>}
                     </div>
                 </div>
@@ -179,6 +190,12 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         >
             {edit && !detail ? <div className="py-10 text-center text-gray-500">{tr("Loading…")}</div> : edit ? (
                 <>
+                    {awaitingMe && (
+                        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-amber-50 px-3 py-2.5 text-sm dark:bg-amber-500/10">
+                            <span className="min-w-0 flex-1 font-semibold text-amber-800 dark:text-amber-200">{tr("This task is waiting for your feedback.")}</span>
+                            <Button size="sm" variant="solid" icon={<TbChecks />} loading={saving} onClick={complete}>{tr("Mark as complete")}</Button>
+                        </div>
+                    )}
                     {detail.task.assignees.length > 0 && <div className="mb-3 flex items-center gap-2 text-sm text-gray-500"><People list={detail.task.assignees} max={5} size={28} />{detail.task.rel?.label && <span>· {detail.task.rel.label}</span>}</div>}
                     <Tabs defaultValue="details">
                         <Tabs.TabList>

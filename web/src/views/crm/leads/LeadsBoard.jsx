@@ -81,7 +81,7 @@ const LeadsBoard = () => {
     const patch = async (item, change, ok) => {
         try {
             const l = (await api(`/api/crm/pipeline/leads/${item.id}`)).lead
-            const keys = ['name', 'title', 'company', 'email', 'phone', 'website', 'description', 'address', 'city', 'state', 'zip', 'sourceId', 'statusId', 'assignedIds', 'isPublic', 'lastContact']
+            const keys = ['name', 'doText', 'title', 'company', 'email', 'phone', 'website', 'description', 'address', 'city', 'state', 'zip', 'sourceId', 'statusId', 'assignedIds', 'isPublic', 'lastContact']
             await api(`/api/crm/pipeline/leads/${item.id}`, { method: 'PUT', body: { ...Object.fromEntries(keys.map((k) => [k, l[k] ?? null])), ...(typeof change === 'function' ? change(l) : change) } })
             notify('success', ok); load()
         } catch (e) { notify('danger', e.message) }
@@ -149,7 +149,7 @@ const LeadsBoard = () => {
                     }}
                     columns={data.statuses.map((c) => ({
                         id: c.id, name: c.name, color: c.color, count: c.count,
-                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
+                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), todo: l.doText || '', label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
                             fields: [{ label: tr("Email"), value: l.email }, { label: tr("Phone"), value: l.phone }, { label: tr("Source"), value: l.source }, { label: tr("Owner"), value: l.assigned?.name }],
                             team: l.assignees || [],
                             people: l.assignees?.length ? <People list={l.assignees} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),

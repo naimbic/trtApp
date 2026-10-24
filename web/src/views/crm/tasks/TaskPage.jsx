@@ -14,11 +14,10 @@ import Tag from '@/components/ui/Tag'
 import Timeline from '@/components/ui/Timeline'
 import classNames from '@/utils/classNames'
 import { api, notify } from '../kit/api'
-import { STATUS, PRIORITY, statusOf, prioOf, initials, duration, useTaskStatuses } from './shared'
+import { STATUS, PRIORITY, statusOf, statusPillStyle, prioOf, initials, duration, useTaskStatuses } from './shared'
 import { tr } from '@/utils/t'
 
 const portal = { menuPortalTarget: document.body, menuPosition: 'fixed', styles: { menuPortal: (b) => ({ ...b, zIndex: 10000 }) } }
-const STATUS_PILL = { 1: 'bg-amber-200 dark:bg-amber-200', 4: 'bg-sky-200 dark:bg-sky-200', 3: 'bg-purple-200 dark:bg-purple-200', 2: 'bg-orange-200 dark:bg-orange-200', 5: 'bg-emerald-200 dark:bg-emerald-200' }
 const PRIO_TEXT = { 1: 'text-purple-500', 2: 'text-orange-500', 3: 'text-red-500', 4: 'text-red-600' }
 const day = (d) => (d ? dayjs(d).format('YYYY-MM-DD') : null)
 
@@ -124,7 +123,7 @@ const TaskPage = () => {
                                 : <div className="flex -space-x-1.5">{t.assignees.map((p) => <StaffRing key={p.id} id={p.id} name={p.name} size={28}><Avatar size={28} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{initials(p.name)}</Avatar></StaffRing>)}{!t.assignees.length && '-'}</div>}
                         </Prop>
                         <Prop icon={<TbCircleDashed />} label={tr('Status')}>
-                            {e && t.canFinish !== false ? <Select size="sm" isSearchable={false} {...portal} options={STATUS.filter((s) => s.active || s.value === t.status).map((s) => ({ value: s.value, label: s.label }))} value={{ value: t.status, label: statusOf(t.status).label }} onChange={(o) => save({ status: o.value })} /> : <Tag className={classNames(STATUS_PILL[t.status], 'dark:text-gray-900')}>{statusOf(t.status).label}</Tag>}
+                            {e && t.canFinish !== false ? <Select size="sm" isSearchable={false} {...portal} options={STATUS.filter((s) => s.active || s.value === t.status).map((s) => ({ value: s.value, label: s.label }))} value={{ value: t.status, label: statusOf(t.status).label }} onChange={(o) => save({ status: o.value })} /> : <Tag className="tpill" style={statusPillStyle(t.status)}>{statusOf(t.status).label}</Tag>}
                         </Prop>
                         <Prop icon={<TbCalendarDue />} label={tr('Due date')}>
                             {e ? <Input size="sm" type="date" value={day(t.dueDate) || ''} onChange={(ev) => save({ dueDate: ev.target.value || null })} /> : <span className="font-semibold">{t.dueDate ? dayjs(t.dueDate).format('MMMM DD') : '-'}</span>}

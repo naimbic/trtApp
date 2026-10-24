@@ -240,6 +240,8 @@ model CrmLead {
   title                          String?
   company                        String?
   description                    String?
+  /// "DO:" the next thing to do for this lead (free text, shown on the lead's card)
+  doText                         String?
   country                        Int?           // legacy tblcountries.country_id
   zip                            String?
   city                           String?

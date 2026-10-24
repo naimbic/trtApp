@@ -23,7 +23,7 @@ export default {
     'nav.projects': <PiKanbanDuotone />, 'nav.milestones': <PiFlagBannerDuotone />,
     'nav.notes': <PiNotePencilDuotone />, 'nav.tasks-board': <PiKanbanDuotone />, 'nav.my-tasks': <PiUserCheckDuotone />, 'nav.scrum-board': <PiKanbanDuotone />, 'nav.team-tasks': <PiUsersThreeDuotone />, 'nav.issues': <PiBugBeetleDuotone />, 'nav.tasks': <PiCheckSquareDuotone />, 'nav.task-timers': <PiTimerDuotone />,
     'nav.timesheets': <PiCalendarCheckDuotone />, 'nav.leave-requests': <PiAirplaneTiltDuotone />, 'nav.days-off': <PiCalendarXDuotone />,
-    'nav.checklist-templates': <PiListChecksDuotone />,
+    'nav.checklist-templates': <PiListChecksDuotone />, 'nav.task-statuses': <PiListChecksDuotone />,
     'nav.invoices': <PiReceiptDuotone />, 'nav.payments': <PiMoneyDuotone />, 'nav.estimates': <PiFileTextDuotone />,
     'nav.proposals': <PiFilePlusDuotone />, 'nav.purchase-orders': <PiShoppingBagDuotone />, 'nav.contracts': <PiSignatureDuotone />,
     'nav.contract-types': <PiFileMagnifyingGlassDuotone />, 'nav.credit-notes': <PiNoteDuotone />, 'nav.subscriptions': <PiRepeatDuotone />,

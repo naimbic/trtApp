@@ -29,7 +29,8 @@ export const loadTaskStatuses = () => fetch('/api/crm/work/task-statuses', { cre
 export const useTaskStatuses = () => { useStatusVersion((s) => s.v); useEffect(() => { loadTaskStatuses() }, []) }
 export const taskColorByName = (name) => STATUS.find((s) => s.label === name)?.color
 /** A soft tint of a status colour (pills, chips). */
-export const statusPillStyle = (v) => { const c = statusOf(v).color; return { background: `${c}26`, color: c } }
+// the colour comes from Tasks > Statuses; the .tpill class (index.css) makes a readable tint of it in light and dark mode
+export const statusPillStyle = (v) => ({ '--c': statusOf(v).color })
 export const PRIORITY = [
     { value: 1, label: tr("Low"), bar: 'bg-gray-300', text: "text-gray-500" },
     { value: 2, label: tr("Medium"), bar: 'bg-blue-400', text: "text-blue-600" },

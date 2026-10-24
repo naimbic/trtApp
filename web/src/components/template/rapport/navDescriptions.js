@@ -33,6 +33,7 @@ export const NAV_DESC = {
     'leave-requests': 'Time off to approve',
     'days-off': 'Holidays and closures',
     'checklist-templates': 'Reusable task checklists',
+    'task-statuses': 'Names, colours and order of the task statuses',
     invoices: 'Bill clients and track payment',
     payments: 'Money received',
     estimates: 'Quotes sent to clients',

@@ -140,7 +140,7 @@ export async function listTasks(p = {}) {
     const counts = {}
     for (const t of tasks) counts[t.status] = (counts[t.status] || 0) + 1
     const ex = await extras(tasks)
-    return { list: tasks.map((t) => card(t, people, rels, { ...ex(t), canFinish: mayAct(a, t) })), counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
+    return { list: tasks.map((t) => card(t, people, rels, { ...ex(t), canFinish: mayAct(a, t), assignedToMe: !!a.staffId && (t.assignees || []).some((x) => x.staffId === a.staffId) })), counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
 }
 
 async function loadOne(id, a) {
@@ -162,7 +162,7 @@ export async function getTask(id) {
     const running = timers.find((x) => !x.endTime && x.staff?.id === a.staffId) || null
     return {
         task: {
-            ...card({ ...t, checklistItems: t.checklistItems, _count: { comments: t.comments.length } }, people, rels, { ...(await extras([t]))(t), canFinish: mayAct(a, t) }),
+            ...card({ ...t, checklistItems: t.checklistItems, _count: { comments: t.comments.length } }, people, rels, { ...(await extras([t]))(t), canFinish: mayAct(a, t), assignedToMe: !!a.staffId && (t.assignees || []).some((x) => x.staffId === a.staffId) }),
             description: t.description || '', hourlyRate: t.hourlyRate, isPublic: t.isPublic, visibleToClient: t.visibleToClient, billed: t.billed,
             recurringType: t.recurringType, repeatEvery: t.repeatEvery, totalCycles: t.totalCycles, addedBy: people[t.addedFrom] || null,
             followers: t.followers.map((x) => people[x.staffId]).filter(Boolean),

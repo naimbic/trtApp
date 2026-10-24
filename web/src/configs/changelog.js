@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.103.0',
+        date: '2026-10-24',
+        title: 'Task status colours, Awaiting feedback button, lead DO line',
+        items: ['Fixed: the Not started status (and the other built-in ones) ignored the colour set in the statuses list: the pills and the board columns now always use it, readable in light and dark mode.', 'New menu page Tasks > Task setup > Task statuses to edit names, colours, order, default and Active without going to Settings.', 'When a task assigned to you is set to Awaiting feedback, the task popup shows a "Mark as complete" button (also in a yellow banner at the top) that completes it in one click.', 'Saving changes in the task popup now closes it.', 'Leads have a new "DO:" field in the popup (the next thing to do). It shows on the lead card, above the source, as a small vivid line with a glowing dot.'],
+    },
+    {
         version: '0.102.0',
         date: '2026-10-21',
         title: 'Mobile-ready emails and signature, and a new Milestones page',

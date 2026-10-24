@@ -26,7 +26,7 @@ async function staffMap(ids) {
 }
 
 const card = (l, people, status, source) => ({
-    id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title,
+    id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title, doText: l.doText || '',
     statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null, sourceColor: source?.color || null,
     assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId,
 })
@@ -121,7 +121,7 @@ export async function saveLead(body, id) {
     if (!name) throw fail('Give the lead a name')
     const email = nz(body.email)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fail('That email address does not look right')
-    const data = { name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: nz(body.website), description: nz(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
+    const data = { ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: nz(body.website), description: nz(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
     if (id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)

@@ -137,5 +137,7 @@
   "days",
   "tasks",
   "Done",
-  "Overdue"
+  "Overdue",
+  "Task setup",
+  "Names, colours and order of the task statuses"
 ]

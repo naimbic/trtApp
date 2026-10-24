@@ -4191,5 +4191,10 @@ export default {
     "in {n} d": "بعد {n} ي",
     "late": "تأخر",
     "without a milestone": "بدون مرحلة",
-    "{a} of {b} milestones done": "اكتملت {a} من {b} مراحل"
+    "{a} of {b} milestones done": "اكتملت {a} من {b} مراحل",
+    "DO:": "المطلوب:",
+    "The next thing to do, shown on the card": "الخطوة التالية المطلوبة، تظهر على البطاقة",
+    "This task is waiting for your feedback.": "هذه المهمة بانتظار ردك.",
+    "Task setup": "إعداد المهام",
+    "Names, colours and order of the task statuses": "أسماء وألوان وترتيب حالات المهام"
 }

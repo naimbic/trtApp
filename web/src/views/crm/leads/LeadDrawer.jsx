@@ -15,7 +15,7 @@ import { STATUS as TASK_STATUS } from '../tasks/shared'
 import { People } from '../tasks/shared'
 import { tr } from '@/utils/t'
 
-const EMPTY = { name: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], isPublic: false }
+const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], isPublic: false }
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("Sent"), 5: tr("Revised"), 6: tr("Draft") }
 
@@ -40,7 +40,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             const d = await api(`/api/crm/pipeline/leads/${id}`)
             setDetail(d)
             const l = d.lead
-            setV({ ...EMPTY, name: l.name || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], isPublic: !!l.isPublic })
+            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], isPublic: !!l.isPublic })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (!open) return; setDetail(null); setNote(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
@@ -65,6 +65,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             <div><L>{tr("Assigned to")}</L><Select isMulti isDisabled={!canEdit} options={staff.map((s) => ({ value: s.id, label: s.name }))} value={staff.filter((s) => (v.assignedIds || []).includes(s.id)).map((s) => ({ value: s.id, label: s.name }))} onChange={(o) => set({ assignedIds: (o || []).map((x) => x.value) })} placeholder={tr("Me")} /></div>
             <div className="grid grid-cols-2 gap-4">
                 <div><L>{tr("Name")}</L><Input disabled={!canEdit} value={v.name} onChange={(e) => set({ name: e.target.value })} /></div>
+                <div className="col-span-2"><L>{tr("DO:")}</L><Input disabled={!canEdit} value={v.doText} maxLength={160} placeholder={tr("The next thing to do, shown on the card")} onChange={(e) => set({ doText: e.target.value })} /></div>
                 <div><L>{tr("Position")}</L><Input disabled={!canEdit} value={v.title} onChange={(e) => set({ title: e.target.value })} /></div>
                 <div><L>{tr("Email")}</L><Input disabled={!canEdit} value={v.email} onChange={(e) => set({ email: e.target.value })} /></div>
                 <div><L>{tr("Phone")}</L><Input disabled={!canEdit} value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></div>

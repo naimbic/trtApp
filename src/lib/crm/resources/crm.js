@@ -241,6 +241,7 @@ const resources = [
         fields: [
             { key: 'name', label: 'Name', type: 'text', required: true, section: 'General' },
             { key: 'title', label: 'Position', type: 'text', section: 'General' },
+            { key: 'doText', label: 'DO:', type: 'text', section: 'General' },
             { key: 'email', label: 'Email', type: 'email', section: 'General' },
             { key: 'website', label: 'Website', type: 'url', section: 'General' },
             { key: 'phoneNumber', label: 'Phone', type: 'text', section: 'General' },

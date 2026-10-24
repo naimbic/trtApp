@@ -1,1 +1,5 @@
 @import './assets/styles/app.css';
+
+/* task status pill: the status colour (Tasks > Statuses) as a tint that stays readable in light and dark mode */
+.tpill { background: color-mix(in srgb, var(--c) 18%, transparent) !important; color: color-mix(in srgb, var(--c) 62%, #000) !important; }
+.dark .tpill { color: color-mix(in srgb, var(--c) 72%, #fff) !important; }

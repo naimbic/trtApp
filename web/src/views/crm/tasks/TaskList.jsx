@@ -27,7 +27,6 @@ const { TBody, Tr, Td } = Table
 const Shell = ({ embedded, children }) => (embedded ? <div>{children}</div> : <AdaptiveCard>{children}</AdaptiveCard>)
 // same pastel pills as the template's task list
 const PILL = 'dark:text-gray-900'
-const STATUS_PILL = { 1: 'bg-amber-200 dark:bg-amber-200', 4: 'bg-sky-200 dark:bg-sky-200', 3: 'bg-purple-200 dark:bg-purple-200', 2: 'bg-orange-200 dark:bg-orange-200', 5: 'bg-emerald-200 dark:bg-emerald-200' }
 const PRIO_PILL = { 1: 'bg-purple-200 dark:bg-purple-200', 2: 'bg-orange-200 dark:bg-orange-200', 3: 'bg-red-200 dark:bg-red-200', 4: 'bg-red-300 dark:bg-red-300' }
 const ORDER_KEY = 'tasks.groupOrder'
 
@@ -54,7 +53,7 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }
                     </div>
                 )}
             </Td>
-            <Td className="w-[150px]"><Pill cls={statusOf(t.status).custom ? undefined : STATUS_PILL[t.status]} style={statusOf(t.status).custom ? statusPillStyle(t.status) : undefined}>{statusOf(t.status).label}</Pill></Td>
+            <Td className="w-[150px]"><Pill cls="tpill" style={statusPillStyle(t.status)}>{statusOf(t.status).label}</Pill></Td>
             <Td className="w-[130px]"><Pill cls={PRIO_PILL[t.priority]}>{prioOf(t.priority).label}</Pill></Td>
             <Td className="w-[140px]"><span className={classNames('font-semibold', t.dueDate && !done && dayjs(t.dueDate).endOf('day').isBefore(dayjs()) && 'text-red-500')}>{t.dueDate ? dayjs(t.dueDate).format('MMMM DD') : '-'}</span></Td>
             <Td className="w-[200px]">

@@ -26,6 +26,10 @@ export async function notificationFeed() {
         const rows = await prisma.crmTicket.findMany({ where: { AND: [scope, { adminRead: 0 }] }, orderBy: { createdAt: 'desc' }, take: 8 })
         for (const t of rows) add('ticket', t.lastReply ? `Client replied on ticket #${t.legacyId}` : `New ticket #${t.legacyId}`, t.subject, t.lastReply || t.createdAt, `/crm/tickets/${t.id}`, 'purple')
     }
+    if (staffId) { // colleagues who mentioned me (@name in a comment, note or message)
+        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, additionalData: 'mention', createdAt: { gte: since(14) } }, orderBy: { createdAt: 'desc' }, take: 10 })
+        for (const m of ms) add('mention', `${m.fromFullName || 'A colleague'} mentioned you`, m.description, m.createdAt, m.link, 'amber')
+    }
     if (can('tasks') && staffId) {
         const mine = await prisma.crmTaskAssigned.findMany({ where: { staffId }, select: { taskId: true, createdAt: true } })
         const ids = mine.map((m) => m.taskId)

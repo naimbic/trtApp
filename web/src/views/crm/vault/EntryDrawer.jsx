@@ -55,7 +55,8 @@ const EntryDrawer = ({ open, id, categories, staff, onClose, onChanged, onCatego
             if (edit && !replacePw) delete body.password
             await api(edit ? `/api/crm/vault/entries/${id}` : '/api/crm/vault/entries', { method: edit ? 'PUT' : 'POST', body })
             notify('success', edit ? tr("Entry saved") : tr("Entry added")); onChanged()
-            if (edit) { setV((x) => ({ ...x, password: '', totpSecret: '' })); await load() } else onClose()
+            if (edit) setV((x) => ({ ...x, password: '', totpSecret: '' }))
+            onClose()
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
     const remove = async () => { setConfirm(false); try { await api(`/api/crm/vault/entries/${id}`, { method: 'DELETE' }); notify('success', tr("Entry deleted")); onChanged(); onClose() } catch (e) { notify('danger', e.message) } }

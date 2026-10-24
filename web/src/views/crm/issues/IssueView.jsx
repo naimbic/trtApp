@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import Mentioned from '@/components/crm/Mentioned'
 import { useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
 import { TbArrowLeft, TbTrash, TbExternalLink, TbPencil, TbCheck, TbX, TbHistory, TbWorld } from 'react-icons/tb'
@@ -91,7 +92,7 @@ const IssueView = () => {
                                     ) : (
                                         <div className="my-1">
                                             <p className="text-sm"><span className="font-semibold text-gray-900 dark:text-gray-100">{f.staff?.name || tr('Someone')}</span> <span className="ml-1 text-xs text-gray-400">{dayjs(f.createdAt).format('DD MMM, HH:mm')}</span>{(f.mine || can.delete) && <button type="button" className="ml-2 text-xs text-gray-300 hover:text-red-500" onClick={() => delComment(f)} title={tr('Delete')}><TbTrash /></button>}</p>
-                                            <div className="mt-1 whitespace-pre-line rounded-xl bg-gray-50 px-3 py-2 text-sm dark:bg-gray-700/40">{f.body}</div>
+                                            <div className="mt-1 whitespace-pre-line rounded-xl bg-gray-50 px-3 py-2 text-sm dark:bg-gray-700/40"><Mentioned text={f.body} /></div>
                                         </div>
                                     )}
                                 </Timeline.Item>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import Mentioned from '@/components/crm/Mentioned'
 import StaffRing from '@/components/crm/StaffRing'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
@@ -164,7 +165,7 @@ const TaskPage = () => {
                                             <StaffRing id={c.staff?.id} name={c.staff?.name} size={36}><Avatar size={36} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr('Client') : '?'))}</Avatar></StaffRing>
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2 text-sm"><span className="font-bold heading-text">{c.staff?.name || (c.fromClient ? tr('Client') : tr('Unknown'))}</span><span className="text-gray-400">|</span><span className="text-gray-400">{dayjs(c.createdAt).format('DD MMM YYYY')}</span>{(c.mine || can.delete) && <button type="button" className="ml-auto text-gray-300 hover:text-red-500" onClick={() => delComment(c)}><TbTrash /></button>}</div>
-                                                <div className="mt-1 whitespace-pre-line text-sm">{c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')}</div>
+                                                <div className="mt-1 whitespace-pre-line text-sm"><Mentioned text={c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')} /></div>
                                             </div>
                                         </div>
                                     ))}

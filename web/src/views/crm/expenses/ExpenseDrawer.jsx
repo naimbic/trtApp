@@ -58,7 +58,8 @@ const ExpenseDrawer = ({ open, id, lookups, onClose, onChanged, onLookups }) => 
         try {
             const r = await api(edit ? `/api/crm/sales/expenses/${id}` : '/api/crm/sales/expenses', { method: edit ? 'PUT' : 'POST', body: { ...v, date: dayjs(v.date).format('YYYY-MM-DD') } })
             notify('success', edit ? tr("Expense saved") : tr("Expense added")); onChanged()
-            if (edit) await load(); else { nav(`/crm/expenses?open=${r.id}`, { replace: true }); onClose() }
+            if (!edit) nav(`/crm/expenses?open=${r.id}`, { replace: true })
+            onClose()
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
     const newCategory = async (name) => {

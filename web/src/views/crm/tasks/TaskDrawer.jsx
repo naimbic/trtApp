@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Mentioned from '@/components/crm/Mentioned'
 import StaffRing from '@/components/crm/StaffRing'
 import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks } from 'react-icons/tb'
 import Drawer from '@/components/crm/PopupFrame'
@@ -137,7 +138,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <StaffRing id={c.staff?.id} name={c.staff?.name} size={30}><Avatar size={30} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr("Client") : '?'))}</Avatar></StaffRing>
                     <div className="flex-1 rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
                         <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{c.staff?.name || (c.fromClient ? tr("Client") : tr("Unknown"))}</span><span>{dayjs(c.createdAt).format('DD MMM, HH:mm')}{(c.mine || detail.can.delete) && <button className="ml-2 text-red-500" onClick={() => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' }))}>{tr("delete")}</button>}</span></div>
-                        <div className="whitespace-pre-line">{c.content}</div>
+                        <div className="whitespace-pre-line"><Mentioned text={c.content} /></div>
                     </div>
                 </div>
             ))}

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.104.0',
+        date: '2026-10-24',
+        title: 'Mentions and tags everywhere, popups close after Save',
+        items: ['Type @ in any comment, note, reply or chat box to pick a colleague, and # to pick a tag. It works in every multi-line text box of the app, with the arrow keys, Enter or a click. Mentioned colleagues get a "mentioned you" entry in their notification bell (and the Notifications page) that opens the page where it was written; saying the same thing twice in ten minutes tells them once.', 'Mentions and tags are picked out in colour in task comments, lead notes, project notes, issue comments and chat messages.', 'Popups now close after Save: the lead, expense and password-vault popups stayed open after saving a change; all the others already closed.'],
+    },
+    {
         version: '0.103.0',
         date: '2026-10-24',
         title: 'Task status colours, Awaiting feedback button, lead DO line',

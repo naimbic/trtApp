@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import Mentioned from '@/components/crm/Mentioned'
 import { Link, useNavigate, useParams } from 'react-router'
 import { TbLayoutKanban, TbFileInfo, TbChecklist, TbPaperclip, TbMessages, TbNotes, TbCalendarStats, TbSettings, TbTrash, TbClock, TbFlag } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
@@ -178,7 +179,7 @@ const ProjectDetails = () => {
                             {data.notes.map((n) => (
                                 <div key={n.id} className="rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
                                     <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{fmt(n.date, 'DD MMM YYYY, HH:mm')}{(n.mine || data.can.delete) && <button className="ml-2 text-red-500" onClick={() => delNote(n.id)}>{tr("delete")}</button>}</span></div>
-                                    <div className="whitespace-pre-line">{n.content}</div>
+                                    <div className="whitespace-pre-line"><Mentioned text={n.content} /></div>
                                 </div>
                             ))}
                             {!data.notes.length && <p className="text-gray-500">{tr("No notes yet.")}</p>}

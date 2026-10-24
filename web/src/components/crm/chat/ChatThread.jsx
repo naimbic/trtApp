@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Mentioned from '@/components/crm/Mentioned'
 import dayjs from 'dayjs'
 import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone } from 'react-icons/pi'
 import classNames from '@/utils/classNames'
@@ -114,7 +115,7 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                             {firstOfRun && !m.mine && showSender && <span className="mb-0.5 px-1 text-xs font-semibold text-gray-500">{m.senderName}</span>}
                             <div title={time(m.at)} className={classNames('max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm', m.mine ? 'rounded-br-md bg-primary text-white' : 'rounded-bl-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100')}>
                                 {m.attachment && <Attachment a={m.attachment} mine={m.mine} />}
-                                {m.body}
+                                <Mentioned text={m.body} onDark={m.mine} />
                             </div>
                             {(!msgs[i + 1] || msgs[i + 1].mine !== m.mine || +new Date(msgs[i + 1].at) - +new Date(m.at) > 5 * 60000) && <span className="px-1 pt-0.5 text-[11px] text-gray-400">{time(m.at)}</span>}
                         </div>

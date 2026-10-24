@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import Mentioned from '@/components/crm/Mentioned'
 import { Link, useNavigate } from 'react-router'
 import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText } from 'react-icons/tb'
 import dayjs from 'dayjs'
@@ -50,7 +51,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         setSaving(true)
         try {
             await api(edit ? `/api/crm/pipeline/leads/${id}` : '/api/crm/pipeline/leads', { method: edit ? 'PUT' : 'POST', body: v })
-            notify('success', edit ? tr("Lead saved") : tr("Lead created")); onChanged(); if (edit) await load(); else onClose()
+            notify('success', edit ? tr("Lead saved") : tr("Lead created")); onChanged(); onClose()
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
     const flag = (action, ok) => run(() => api(`/api/crm/pipeline/leads/${id}/flag`, { method: 'POST', body: { action } }), ok)
@@ -89,7 +90,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             {detail.notes.map((n) => (
                 <div key={n.id} className="rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
                     <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{dayjs(n.date).format('DD MMM YYYY, HH:mm')}{(n.mine || detail.can.delete) && <button className="ml-2 text-red-500" onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' }))}>{tr("delete")}</button>}</span></div>
-                    <div className="whitespace-pre-line">{n.content}</div>
+                    <div className="whitespace-pre-line"><Mentioned text={n.content} /></div>
                 </div>
             ))}
             {!detail.notes.length && <p className="text-sm text-gray-500">{tr("No notes yet.")}</p>}

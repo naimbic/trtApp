@@ -4196,5 +4196,7 @@ export default {
     "The next thing to do, shown on the card": "Lo siguiente por hacer, se muestra en la tarjeta",
     "This task is waiting for your feedback.": "Esta tarea espera tu respuesta.",
     "Task setup": "Configuración de tareas",
-    "Names, colours and order of the task statuses": "Nombres, colores y orden de los estados de tarea"
+    "Names, colours and order of the task statuses": "Nombres, colores y orden de los estados de tarea",
+    "Mention a colleague": "Mencionar a un compañero",
+    "Mentions": "Menciones"
 }

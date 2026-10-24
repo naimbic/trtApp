@@ -4,6 +4,7 @@ import './index.css'
 import { loadStaffLang } from '@/utils/t'
 import { useThemeStore } from '@/store/themeStore'
 import { dropCache } from '@/utils/offlineCache'
+import { mentionDirectory, mentionedIds, textsOf } from '@/utils/mentions'
 import { clearUserData } from '@/utils/clearUserData'
 import { localizeShared } from '@/utils/localizeShared'
 
@@ -18,6 +19,18 @@ window.fetch = async (...args) => {
     const res = await nativeFetch(...args)
     // anything saved through the API may change the cached lookup lists
     if (url.startsWith('/api/crm/') && !['GET', 'HEAD', undefined].includes(args[1]?.method?.toUpperCase?.())) dropCache()
+    // a new comment, note, reply or message that names a colleague with @: tell them (once the save worked)
+    if (res.ok && url.startsWith('/api/crm/') && !url.startsWith('/api/crm/mentions') && args[1]?.method?.toUpperCase?.() === 'POST' && typeof args[1].body === 'string' && args[1].body.includes('@')) {
+        try {
+            const texts = textsOf(JSON.parse(args[1].body))
+            if (texts.some((t) => t.includes('@'))) {
+                mentionDirectory().then((d) => {
+                    const ids = [...new Set(texts.flatMap((t) => mentionedIds(t, d.staff)))]
+                    if (ids.length) nativeFetch('/api/crm/mentions', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ staffIds: ids, text: texts.find((t) => t.includes('@')), url: window.location.pathname + window.location.search }) }).catch(() => {})
+                })
+            }
+        } catch { /* not JSON: a file upload or a form */ }
+    }
     if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/portal') && !url.startsWith('/api/crm/auth/') && !redirecting) {
         redirecting = true
         try {

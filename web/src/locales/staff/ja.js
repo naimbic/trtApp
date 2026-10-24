@@ -4196,5 +4196,7 @@ export default {
     "The next thing to do, shown on the card": "次にやること(カードに表示されます)",
     "This task is waiting for your feedback.": "このタスクはあなたのフィードバックを待っています。",
     "Task setup": "タスク設定",
-    "Names, colours and order of the task statuses": "タスクステータスの名前・色・順序"
+    "Names, colours and order of the task statuses": "タスクステータスの名前・色・順序",
+    "Mention a colleague": "同僚にメンション",
+    "Mentions": "メンション"
 }

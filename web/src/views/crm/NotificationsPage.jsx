@@ -14,7 +14,7 @@ import { api } from './kit/api'
 import { tr } from '@/utils/t'
 
 dayjs.extend(relativeTime)
-const KIND_LABEL = () => ({ ticket: tr('Tickets'), task: tr('Tasks'), reminder: tr('Reminders'), payment: tr('Payments'), invoice: tr('Invoices'), estimate: tr('Estimates'), proposal: tr('Proposals'), lead: tr('Leads'), view: tr('Views') })
+const KIND_LABEL = () => ({ ticket: tr('Tickets'), task: tr('Tasks'), reminder: tr('Reminders'), mention: tr('Mentions'), payment: tr('Payments'), invoice: tr('Invoices'), estimate: tr('Estimates'), proposal: tr('Proposals'), lead: tr('Leads'), view: tr('Views') })
 
 /** Everything that needs the signed-in person's attention, the full list behind the bell. */
 const NotificationsPage = () => {

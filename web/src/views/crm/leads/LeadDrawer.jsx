@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { CommentTools, CommentEdit } from '@/components/crm/CommentParts'
 import Mentioned from '@/components/crm/Mentioned'
 import { Link, useNavigate } from 'react-router'
 import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText } from 'react-icons/tb'
@@ -23,6 +24,7 @@ const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("S
 const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onChanged }) => {
     const nav = useNavigate()
     const [v, setV] = useState(EMPTY)
+    const [editingNote, setEditingNote] = useState(null)
     const [detail, setDetail] = useState(null)
     const [lk, setLk] = useState({ statuses: [], sources: [] })
     const [saving, setSaving] = useState(false)
@@ -88,9 +90,12 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         <div className="space-y-4">
             <div className="space-y-2"><Input textArea rows={3} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={(e) => setNote(e.target.value)} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note } }).then(() => setNote('')), tr("Note added"))}>{tr("Add note")}</Button></div>
             {detail.notes.map((n) => (
-                <div key={n.id} className="rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
-                    <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{dayjs(n.date).format('DD MMM YYYY, HH:mm')}{(n.mine || detail.can.delete) && <button className="ml-2 text-red-500" onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' }))}>{tr("delete")}</button>}</span></div>
-                    <div className="whitespace-pre-line"><Mentioned text={n.content} /></div>
+                <div key={n.id} className="group relative rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
+                    <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{dayjs(n.date).format('DD MMM YYYY, HH:mm')}{n.edited ? ` · ${tr('edited')}` : ''}</span></div>
+                    {editingNote === n.id
+                        ? <CommentEdit initial={n.content} onCancel={() => setEditingNote(null)} onSave={async (text) => { await api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'PUT', body: { noteId: n.id, content: text } }); setEditingNote(null); await load() }} />
+                        : <div className="whitespace-pre-line"><Mentioned text={n.content} /></div>}
+                    {editingNote !== n.id && <CommentTools onReply={() => setNote((x) => x || (n.by?.name ? `@${n.by.name} ` : ''))} onEdit={n.mine ? () => setEditingNote(n.id) : null} onDelete={n.canDelete ? () => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' })) : null} />}
                 </div>
             ))}
             {!detail.notes.length && <p className="text-sm text-gray-500">{tr("No notes yet.")}</p>}

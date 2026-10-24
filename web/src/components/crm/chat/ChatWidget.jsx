@@ -67,6 +67,20 @@ const ChatWidget = () => {
     const setCalls = async (calls) => { try { await api('/settings', { method: 'POST', body: JSON.stringify({ calls }) }); refresh() } catch { /* not allowed */ } }
     const onData = useCallback((x) => setTheirStatus(x.status ?? null), [])
 
+    // a click on a @mention anywhere in the app opens the chat with that person
+    useEffect(() => {
+        const h = async (e) => {
+            try {
+                const { id } = await api('/rooms', { method: 'POST', body: JSON.stringify({ staffId: e.detail.staffId }) })
+                refresh()
+                if (window.location.pathname.startsWith('/crm/chat')) return navigate('/crm/chat')
+                setTheirStatus(null); setRoom({ id, kind: 'direct', title: e.detail.name, image: null, status: null }); setTab('chats'); setOpen(true)
+            } catch { /* chat not available for this person */ }
+        }
+        window.addEventListener('trt-chat-open', h)
+        return () => window.removeEventListener('trt-chat-open', h)
+    }, [refresh, navigate])
+
     if (!data) return null
     const rooms = data.rooms
     const shown = tab === 'clients' ? rooms.filter((r) => r.kind === 'client') : rooms.filter((r) => r.kind !== 'client')

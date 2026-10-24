@@ -4198,5 +4198,11 @@ export default {
     "Task setup": "タスク設定",
     "Names, colours and order of the task statuses": "タスクステータスの名前・色・順序",
     "Mention a colleague": "同僚にメンション",
-    "Mentions": "メンション"
+    "Mentions": "メンション",
+    "Chat with {name}": "{name}とチャット",
+    "Replying to {name}": "{name}に返信中",
+    "edited": "編集済み",
+    "{n} comments": "{n}件のコメント",
+    "You can only edit your own comments": "自分のコメントのみ編集できます",
+    "You can only edit your own notes": "自分のメモのみ編集できます"
 }

@@ -123,7 +123,9 @@ const Calendar = () => {
     const [staff, setStaff] = useState([])
     const [selectedDay, setSelectedDay] = useState(dayOf(new Date()))
     const [menu, setMenu] = useState(null) // { it, el }
-    const [addMenu, setAddMenu] = useState(null) // { day, el }: the + on a day box
+    const [addMenu, setAddMenu] = useState(null) // { day, time?, el }: the + on a day box or on the hovered hour
+    const [hov, setHov] = useState(null) // the hour under the pointer in the week and day views: { day, time, style }
+    const wrapRef = useRef(null)
     const [title, setTitle] = useState('')
     const [viewName, setViewName] = useState('dayGridMonth')
     const calRef = useRef(null)
@@ -180,8 +182,22 @@ const Calendar = () => {
     const goto = (what) => { const a = calRef.current?.getApi(); if (!a) return; what === 'today' ? a.today() : what === 'prev' ? a.prev() : a.next(); if (what === 'today') setSelectedDay(today) }
     const changeView = (v) => { calRef.current?.getApi().changeView(v); setViewName(v) }
 
-    const openNew = (day) => {
-        const base = dayjs(day || selectedDay).hour(9).minute(0)
+    // week and day views: a dashed frame with the hour follows the pointer, with a + to add something at that hour
+    const onHover = (e) => {
+        if (viewName === 'dayGridMonth') return setHov(null)
+        const col = e.target.closest?.('.fc-timegrid-col')
+        if (!col || e.target.closest('.fc-event') || e.target.closest('.sch-hover__add')) return setHov((h) => (e.target.closest?.('.sch-hover__add') ? h : null))
+        const wrap = wrapRef.current, frame = col.querySelector('.fc-timegrid-col-frame'), lane = wrap?.querySelector('.fc-timegrid-slot-lane')
+        if (!wrap || !frame || !lane) return
+        const fr = frame.getBoundingClientRect(), w = wrap.getBoundingClientRect(), h = lane.getBoundingClientRect().height
+        if (!h) return
+        const idx = Math.max(0, Math.floor((e.clientY - fr.top) / h))
+        const mins = idx * 30
+        const time = `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`
+        setHov({ day: col.getAttribute('data-date'), time, style: { left: fr.left - w.left + 2, top: fr.top - w.top + idx * h + 1, width: fr.width - 4, height: h - 2 } })
+    }
+    const openNew = (day, time) => {
+        const base = time ? dayjs(`${day} ${time}`) : dayjs(day || selectedDay).hour(9).minute(0)
         setDialog({ open: true, selected: { type: 'NEW', start: base.format(), end: base.add(1, 'hour').format() } })
     }
     const onSelect = ({ start, end, allDay }) => {
@@ -358,7 +374,15 @@ const Calendar = () => {
                             {[['dayGridMonth', tr("Month")], ['timeGridWeek', tr("Week")], ['timeGridDay', tr("Day")]].map(([v, l]) => <button key={v} type="button" aria-pressed={viewName === v} onClick={() => changeView(v)}>{l}</button>)}
                         </div>
                     </header>
-                    <CalendarView ref={calRef} headerToolbar={false} eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={2} moreLinkContent={(a) => `+${a.num}`} dayCellContent={(a) => <span className="sch-daytop"><span className="sch-daynum">{a.dayNumberText}</span><Faces ids={[...(peopleByDay[dayOf(a.date)] || [])]} max={3} /><button type="button" className="sch-add" aria-label={tr("Add an event or a task")} title={tr("Add an event or a task")} onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAddMenu({ day: dayOf(a.date), el: e.currentTarget }) }}><TbPlus /></button></span>} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} dayCellClassNames={selectedDayClass} height="auto" />
+                    <div ref={wrapRef} className="sch-hoverwrap" onMouseMove={onHover} onMouseLeave={() => setHov(null)}>
+                    {hov && viewName !== 'dayGridMonth' && (
+                        <div className="sch-hover" style={hov.style}>
+                            <span>{dayjs(`${hov.day} ${hov.time}`).format(hour12 ? 'h:mm A' : 'HH:mm')}</span>
+                            <button type="button" className="sch-hover__add" aria-label={tr("Add an event or a task")} title={tr("Add an event or a task")} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAddMenu({ day: hov.day, time: hov.time, el: e.currentTarget }) }}><TbPlus /></button>
+                        </div>
+                    )}
+                    <CalendarView ref={calRef} nowIndicator headerToolbar={false} eventContent={renderEvent} key={`${app.default_view_calendar}-${firstDay}`} initialView={app.default_view_calendar || 'dayGridMonth'} dayMaxEvents={2} moreLinkContent={(a) => `+${a.num}`} dayCellContent={(a) => <span className="sch-daytop"><span className="sch-daynum">{a.dayNumberText}</span><Faces ids={[...(peopleByDay[dayOf(a.date)] || [])]} max={3} /><button type="button" className="sch-add" aria-label={tr("Add an event or a task")} title={tr("Add an event or a task")} onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAddMenu({ day: dayOf(a.date), el: e.currentTarget }) }}><TbPlus /></button></span>} firstDay={firstDay} eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12 }} editable selectable events={visible} datesSet={onDatesSet} select={onSelect} eventClick={onEventClick} eventDrop={onMove} eventResize={onMove} dayCellClassNames={selectedDayClass} height="auto" />
+                    </div>
                 </section>
                 <aside className="sch-side">
                     <section className="card sch-agenda">
@@ -373,7 +397,7 @@ const Calendar = () => {
                     </section>
                 </aside>
             </div>
-            {addMenu && <RowMenu anchor={addMenu.el} items={[{ label: tr("New event"), icon: <TbCalendarEvent />, onClick: () => openNew(addMenu.day) }, { label: tr("New task"), icon: <TbChecklist />, onClick: () => navigate(`/crm/tasks?new=1&due=${addMenu.day}`) }]} onClose={() => setAddMenu(null)} />}
+            {addMenu && <RowMenu anchor={addMenu.el} items={[{ label: addMenu.time ? `${tr("New event")} · ${dayjs(`${addMenu.day} ${addMenu.time}`).format(hour12 ? 'h:mm A' : 'HH:mm')}` : tr("New event"), icon: <TbCalendarEvent />, onClick: () => openNew(addMenu.day, addMenu.time) }, { label: addMenu.time ? `${tr("New task")} · ${dayjs(addMenu.day).format('DD MMM')}` : tr("New task"), icon: <TbChecklist />, onClick: () => navigate(`/crm/tasks?new=1&due=${addMenu.day}`) }]} onClose={() => setAddMenu(null)} />}
             {menu && <RowMenu anchor={menu.el} items={menuItems(menu.it)} onClose={() => setMenu(null)} />}
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete this event?")} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>

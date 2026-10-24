@@ -4198,5 +4198,11 @@ export default {
     "Task setup": "إعداد المهام",
     "Names, colours and order of the task statuses": "أسماء وألوان وترتيب حالات المهام",
     "Mention a colleague": "ذكر زميل",
-    "Mentions": "الإشارات"
+    "Mentions": "الإشارات",
+    "Chat with {name}": "الدردشة مع {name}",
+    "Replying to {name}": "الرد على {name}",
+    "edited": "تم التعديل",
+    "{n} comments": "{n} تعليقات",
+    "You can only edit your own comments": "يمكنك تعديل تعليقاتك فقط",
+    "You can only edit your own notes": "يمكنك تعديل ملاحظاتك فقط"
 }

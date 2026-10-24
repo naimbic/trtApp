@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.105.0',
+        date: '2026-10-24',
+        title: 'Comments: reply, edit, delete; notifications; counts; calendar hours',
+        items: ['The Tasks pill in the top menu now opens the task board.', 'A @mention in a comment, note or message is now clickable: it opens the chat with that person.', 'Comments (task comments and lead notes) show Reply, Edit and Delete icons when you hover them. Reply quotes the comment above yours and starts it with the person\'s @name; Edit changes your own comment in place and marks it edited.', 'Notifications: the people you @mention are told they were mentioned, and everyone following a task or lead (assigned people, followers, whoever created it, whoever you answer) is told that someone commented. They appear in the bell and on the Notifications page and open the page.', 'Cards on the task board and the lead board show a small speech bubble with the number of comments or notes.', 'Calendar, week and day views: the hour under the pointer gets a light dashed frame with its time and a + to add an event at that hour or a task for that day.', 'Calendar: the current time is a light red line across the day with a glowing dot, like Apple Calendar, and today in the header is red.'],
+    },
+    {
         version: '0.104.0',
         date: '2026-10-24',
         title: 'Mentions and tags everywhere, popups close after Save',

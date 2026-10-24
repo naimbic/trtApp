@@ -1,4 +1,5 @@
 import { realPicture } from '@/lib/crm/pictures'
+import { notifyComment } from '@/lib/crm/mentionsApi'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { readSettings } from '@/lib/crm/appSettings'
@@ -26,10 +27,20 @@ async function staffMap(ids) {
 }
 
 const card = (l, people, status, source) => ({
-    id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title, doText: l.doText || '',
+    id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title, doText: l.doText || '', notes: l._notes || 0,
     statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null, sourceColor: source?.color || null,
     assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId,
 })
+
+/** Adds the number of notes to each lead (the small comment count on the cards). */
+async function attachNotes(rows) {
+    const ids = rows.map((r) => r.id)
+    if (!ids.length) return rows
+    const g = await prisma.crmNote.groupBy({ by: ['relId'], where: { relType: 'lead', relId: { in: ids } }, _count: { _all: true } }).catch(() => [])
+    const m = Object.fromEntries(g.map((x) => [x.relId, x._count._all]))
+    for (const r of rows) r._notes = m[r.id] || 0
+    return rows
+}
 
 const readable = (d) => String(d || '').replace(/^not_lead_activity_/, '').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
 
@@ -59,12 +70,14 @@ export async function listLeads(p = {}) {
     const can = { create: true, edit: a.can('edit'), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') }
     if (p.view === 'list') {
         const rows = await prisma.crmLead.findMany({ where, orderBy: [{ createdAt: 'desc' }], take: 300 })
+        await attachNotes(rows)
         const people = await staffMap(rows.flatMap(teamOf))
         return { list: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])), total: await prisma.crmLead.count({ where }), can, statuses: statuses.map((s) => ({ id: s.id, name: s.name, color: s.color })), sources: sources.map((s) => ({ id: s.id, name: s.name, color: s.color || null })) }
     }
     // "load more" for one column
     if (oid(p.statusId) && p.offset) {
         const rows = await prisma.crmLead.findMany({ where: { AND: [...and, { statusId: p.statusId }] }, orderBy, skip: parseInt(p.offset, 10) || 0, take: limit })
+        await attachNotes(rows)
         const people = await staffMap(rows.flatMap(teamOf))
         return { leads: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])) }
     }
@@ -77,6 +90,7 @@ export async function listLeads(p = {}) {
     }
     const orphan = { AND: [...and, { OR: [{ statusId: null }, { statusId: { notIn: statuses.map((s) => s.id) } }] }] }
     const orphans = await prisma.crmLead.findMany({ where: orphan, take: limit, orderBy })
+    await attachNotes([...cols.flatMap((c) => c.rows), ...orphans])
     const people = await staffMap([...cols.flatMap((c) => c.rows), ...orphans].flatMap(teamOf))
     const out = cols.map((c) => ({ id: c.id, name: c.name, color: c.color, count: c.count, leads: c.rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])) }))
     if (orphans.length) out.unshift({ id: 'none', name: 'No status', color: '#94a3b8', count: orphans.length, leads: orphans.map((l) => card(l, people, null, srcMap[l.sourceId])) })
@@ -107,7 +121,7 @@ export async function getLead(id) {
     const people = await staffMap([...teamOf(l), l.addedFrom, ...notes.map((n) => n.addedFrom)])
     return {
         lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
-        notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId })),
+        notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canDelete: (!!a.staffId && n.addedFrom === a.staffId) || a.can('delete'), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000 })),
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
@@ -198,11 +212,25 @@ export async function convertLead(id, opts = {}) {
 export async function addNote(id, { content, date }) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    await loadOne(id, a)
+    const lead = await loadOne(id, a)
     const text = String(content || '').trim().slice(0, 5000)
     if (!text) throw fail('Write the note first')
     await prisma.crmNote.create({ data: { relType: 'lead', relId: id, description: text, dateContacted: date ? new Date(date) : new Date(), addedFrom: a.staffId } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: date ? new Date(date) : new Date() } })
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), lead.addedFrom] }) } catch (e) { console.error('[note notify]', e.message) }
+    return { success: true }
+}
+
+export async function editNote(id, noteId, content) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    await loadOne(id, a)
+    const n = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'lead', relId: id } }))
+    if (!n) throw fail('Note not found', 404)
+    if (!a.staffId || n.addedFrom !== a.staffId) throw fail('You can only edit your own notes', 403)
+    const text = String(content || '').trim().slice(0, 5000)
+    if (!text) throw fail('Write the note first')
+    await prisma.crmNote.update({ where: { id: noteId }, data: { description: text } })
     return { success: true }
 }
 

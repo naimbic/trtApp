@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import Mentioned from '@/components/crm/Mentioned'
 import StaffRing from '@/components/crm/StaffRing'
 import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks } from 'react-icons/tb'
@@ -30,6 +31,8 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const [confirmDel, setConfirmDel] = useState(false)
     const [item, setItem] = useState('')
     const [comment, setComment] = useState('')
+    const [replyTo, setReplyTo] = useState(null)
+    const [editingId, setEditingId] = useState(null)
     const [tick, setTick] = useState(0)
     const edit = !!id
     const canEdit = edit ? detail?.can.edit : true
@@ -47,7 +50,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    useEffect(() => { if (!open) return; setDetail(null); setItem(''); setComment(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { if (!open) return; setDetail(null); setItem(''); setComment(''); setReplyTo(null); setEditingId(null); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
     // live clock while a timer is running
     useEffect(() => { if (!detail?.running) return; const t = setInterval(() => setTick((n) => n + 1), 1000); return () => clearInterval(t) }, [detail?.running])
     const mounted = useRef(true)
@@ -134,21 +137,27 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const comments = detail && (
         <div className="space-y-4">
             {detail.comments.map((c) => (
-                <div key={c.id} className="flex gap-3">
+                <div key={c.id} className="group relative flex gap-3">
                     <StaffRing id={c.staff?.id} name={c.staff?.name} size={30}><Avatar size={30} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr("Client") : '?'))}</Avatar></StaffRing>
-                    <div className="flex-1 rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
-                        <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{c.staff?.name || (c.fromClient ? tr("Client") : tr("Unknown"))}</span><span>{dayjs(c.createdAt).format('DD MMM, HH:mm')}{(c.mine || detail.can.delete) && <button className="ml-2 text-red-500" onClick={() => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' }))}>{tr("delete")}</button>}</span></div>
-                        <div className="whitespace-pre-line"><Mentioned text={c.content} /></div>
+                    <div className="min-w-0 flex-1 rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
+                        <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{c.staff?.name || (c.fromClient ? tr("Client") : tr("Unknown"))}</span><span>{dayjs(c.createdAt).format('DD MMM, HH:mm')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
+                        <ReplyQuote r={c.replyTo} />
+                        {editingId === c.id
+                            ? <CommentEdit initial={c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
+                            : <div className="whitespace-pre-line"><Mentioned text={c.content} /></div>}
                     </div>
+                    {editingId !== c.id && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' })) : null} />}
                 </div>
             ))}
             {!detail.comments.length && <p className="text-sm text-gray-500">{tr("No comments yet.")}</p>}
             <div className="space-y-2">
+                <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
                 <Input textArea rows={3} placeholder={tr("Write a comment")} value={comment} onChange={(e) => setComment(e.target.value)} />
-                <Button size="sm" variant="solid" disabled={!comment.trim()} onClick={() => act(() => post('comments', { content: comment }).then(() => setComment('')))}>{tr("Comment")}</Button>
+                <Button size="sm" variant="solid" disabled={!comment.trim()} onClick={() => act(() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) }))}>{tr("Comment")}</Button>
             </div>
         </div>
     )
+
 
     const time = detail && (
         <div className="space-y-4">

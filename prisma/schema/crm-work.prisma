@@ -286,6 +286,8 @@ model CrmTaskComment {
   staffId   String?  @db.ObjectId
   contactId String?  @db.ObjectId
   fileId    String?  @db.ObjectId
+  /// the comment this one answers
+  replyToId String?  @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   task      CrmTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)

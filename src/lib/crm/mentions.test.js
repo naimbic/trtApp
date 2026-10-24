@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mentionedIds, textsOf } from '../../../web/src/utils/mentions.js'
+import { mentionedIds } from './mentionsCalc.js'
 
 const staff = [{ id: 'a', name: 'Sarah Alami' }, { id: 'b', name: 'Omar' }, { id: 'c', name: 'Zoé Martin' }]
 test('a colleague is mentioned by @ and the full name', () => {
@@ -12,7 +12,4 @@ test('an email address or a half name is not a mention', () => {
     assert.deepEqual(mentionedIds('write to omar@acme.com', staff), [])
     assert.deepEqual(mentionedIds('hello @Sarah', staff), [])
     assert.deepEqual(mentionedIds('no mention here', staff), [])
-})
-test('every text of a body is read', () => {
-    assert.deepEqual(textsOf({ a: 'x', b: { c: ['y', 3] } }), ['x', 'y'])
 })

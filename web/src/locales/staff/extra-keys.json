@@ -1459,5 +1459,7 @@
   "The IMAP server name was not found",
   "Could not reach the mail server: check the server name, the port and the encryption",
   "That folder does not exist in the mailbox",
-  "Mailbox not found"
+  "Mailbox not found",
+  "You can only edit your own comments",
+  "You can only edit your own notes"
 ]

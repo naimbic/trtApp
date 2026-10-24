@@ -4198,5 +4198,11 @@ export default {
     "Task setup": "Configuración de tareas",
     "Names, colours and order of the task statuses": "Nombres, colores y orden de los estados de tarea",
     "Mention a colleague": "Mencionar a un compañero",
-    "Mentions": "Menciones"
+    "Mentions": "Menciones",
+    "Chat with {name}": "Chatear con {name}",
+    "Replying to {name}": "Respondiendo a {name}",
+    "edited": "editado",
+    "{n} comments": "{n} comentarios",
+    "You can only edit your own comments": "Solo puedes editar tus propios comentarios",
+    "You can only edit your own notes": "Solo puedes editar tus propias notas"
 }

@@ -149,7 +149,7 @@ const LeadsBoard = () => {
                     }}
                     columns={data.statuses.map((c) => ({
                         id: c.id, name: c.name, color: c.color, count: c.count,
-                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), todo: l.doText || '', label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
+                        items: c.leads.map((l) => ({ id: l.id, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), todo: l.doText || '', comments: l.notes || 0, label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
                             fields: [{ label: tr("Email"), value: l.email }, { label: tr("Phone"), value: l.phone }, { label: tr("Source"), value: l.source }, { label: tr("Owner"), value: l.assigned?.name }],
                             team: l.assignees || [],
                             people: l.assignees?.length ? <People list={l.assignees} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),

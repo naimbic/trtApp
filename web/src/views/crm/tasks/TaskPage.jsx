@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import Mentioned from '@/components/crm/Mentioned'
 import StaffRing from '@/components/crm/StaffRing'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -46,6 +47,8 @@ const TaskPage = () => {
     const [comment, setComment] = useState('')
     const [item, setItem] = useState('')
     const [subName, setSubName] = useState('')
+    const [replyTo, setReplyTo] = useState(null)
+    const [editingId, setEditingId] = useState(null)
     const [tag, setTag] = useState('')
     const [confirmDel, setConfirmDel] = useState(false)
     const [, setTick] = useState(0)
@@ -161,16 +164,20 @@ const TaskPage = () => {
                             {tab === 'comments' && (
                                 <div className="space-y-5">
                                     {d.comments.map((c) => (
-                                        <div key={c.id} className="flex gap-3">
+                                        <div key={c.id} className="group relative flex gap-3">
                                             <StaffRing id={c.staff?.id} name={c.staff?.name} size={36}><Avatar size={36} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr('Client') : '?'))}</Avatar></StaffRing>
                                             <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2 text-sm"><span className="font-bold heading-text">{c.staff?.name || (c.fromClient ? tr('Client') : tr('Unknown'))}</span><span className="text-gray-400">|</span><span className="text-gray-400">{dayjs(c.createdAt).format('DD MMM YYYY')}</span>{(c.mine || can.delete) && <button type="button" className="ml-auto text-gray-300 hover:text-red-500" onClick={() => delComment(c)}><TbTrash /></button>}</div>
-                                                <div className="mt-1 whitespace-pre-line text-sm"><Mentioned text={c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')} /></div>
+                                                <div className="flex items-center gap-2 text-sm"><span className="font-bold heading-text">{c.staff?.name || (c.fromClient ? tr('Client') : tr('Unknown'))}</span><span className="text-gray-400">|</span><span className="text-gray-400">{dayjs(c.createdAt).format('DD MMM YYYY')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
+                                                <ReplyQuote r={c.replyTo} />
+                                                {editingId === c.id
+                                                    ? <CommentEdit initial={c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
+                                                    : <div className="mt-1 whitespace-pre-line text-sm"><Mentioned text={c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')} /></div>}
                                             </div>
+                                            {editingId !== c.id && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => delComment(c) : null} />}
                                         </div>
                                     ))}
                                     {!d.comments.length && <p className="text-sm text-gray-400">{tr('No comments yet.')}</p>}
-                                    <div className="flex flex-col gap-2"><Input textArea rows={3} value={comment} placeholder={tr('Write a comment')} onChange={(ev) => setComment(ev.target.value)} /><div className="flex justify-end"><Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment }).then(() => setComment(''))}>{tr('Comment')}</Button></div></div>
+                                    <div className="flex flex-col gap-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><Input textArea rows={3} value={comment} placeholder={tr('Write a comment')} onChange={(ev) => setComment(ev.target.value)} /><div className="flex justify-end"><Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) })}>{tr('Comment')}</Button></div></div>
                                 </div>
                             )}
                             {tab === 'subtasks' && (

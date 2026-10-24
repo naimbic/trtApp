@@ -8,12 +8,14 @@ const nameOf = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || s.e
 
 /** The colleagues and tags to suggest. */
 export async function mentionDirectory() {
-    await requirePermission(null)
-    const [staff, tags] = await Promise.all([
+    const session = await requirePermission(null)
+    const [me, staff, tags] = await Promise.all([
+        getStaffId(session),
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true }, take: 500 }),
         prisma.crmTag.findMany({ orderBy: { name: 'asc' }, select: { name: true }, take: 500 }),
     ])
     return {
+        me,
         staff: staff.map((s) => ({ id: s.id, name: nameOf(s), email: s.email || '' })).sort((a, b) => a.name.localeCompare(b.name)),
         tags: [...new Set(tags.map((t) => t.name).filter(Boolean))],
     }
@@ -36,4 +38,25 @@ export async function notifyMentions({ staffIds, text, url }) {
         n++
     }
     return { notified: n }
+}
+
+/**
+ * A new comment or note on a record: the people it names with @ are told they were mentioned, and the people who follow the record
+ * (assignees, followers, whoever created it) that someone commented. Nobody is told about their own words; nobody twice.
+ * `by` = { staffId, name }, `recipients` = staff ids following the record, `link` = the page, `subject` = what it was written on.
+ */
+export async function notifyComment({ by, text, link, subject, recipients = [] }) {
+    const { mentionedIds } = await import('@/lib/crm/mentionsCalc')
+    const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true } })
+    const named = mentionedIds(text, staff.map((s) => ({ id: s.id, name: nameOf(s) }))).filter((i) => i !== by.staffId)
+    const follow = [...new Set(recipients.filter(Boolean))].filter((i) => i !== by.staffId && !named.includes(i) && staff.some((s) => s.id === i))
+    const excerpt = String(text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160)
+    const since = new Date(Date.now() - 600000)
+    const make = async (to, tag) => {
+        const dup = await prisma.crmNotification.findFirst({ where: { toUserId: to, additionalData: tag, link, description: excerpt, createdAt: { gte: since } }, select: { id: true } })
+        if (!dup) await prisma.crmNotification.create({ data: { toUserId: to, fromUserId: by.staffId, fromFullName: by.name || null, description: excerpt, link, additionalData: tag, isRead: false } })
+    }
+    for (const to of named) await make(to, 'mention')
+    for (const to of follow) await make(to, `comment|${String(subject || '').slice(0, 120)}`)
+    return { mentioned: named.length, followers: follow.length }
 }

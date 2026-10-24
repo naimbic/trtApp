@@ -134,3 +134,12 @@
 .sch-add { z-index: 60 !important; pointer-events: auto; }
 .sch-cal .fc-daygrid-day-frame { isolation: isolate; }
 .sch-cal .fc-daygrid-day-frame > .fc-daygrid-day-events, .sch-cal .fc-daygrid-event-harness { z-index: 1; }
+
+/* week and day views: the hour under the pointer gets a light dashed frame with its time and a + to add something there */
+.sch-hoverwrap { position: relative; }
+.sch-hover { position: absolute; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 6px; border: 1.5px dashed color-mix(in srgb, var(--rp-accent, #d8532d) 55%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--rp-accent, #d8532d) 7%, transparent); color: var(--rp-accent, #d8532d); font-size: 11px; font-weight: 800; pointer-events: none; }
+.sch-hover__add { pointer-events: auto; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--rp-accent, #d8532d); color: var(--rp-on-accent, #fff); font-size: 13px; }
+/* the current time: a light red line across the day with a glowing dot, like Apple Calendar */
+.sch-cal .fc-timegrid-now-indicator-line { border: 0; border-top: 1.5px solid rgba(255, 82, 82, .75); z-index: 5; }
+.sch-cal .fc-timegrid-now-indicator-arrow { border: 0; width: 10px; height: 10px; margin: -5px 0 0 -3px; border-radius: 50%; background: #ff4d4f; box-shadow: 0 0 8px 3px rgba(255, 77, 79, .55); z-index: 6; }
+.sch-cal .fc-day-today .fc-col-header-cell-cushion { color: #ff4d4f; }

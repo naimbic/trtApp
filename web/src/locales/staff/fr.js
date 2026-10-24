@@ -4198,5 +4198,11 @@ export default {
     "Task setup": "Configuration des tâches",
     "Names, colours and order of the task statuses": "Noms, couleurs et ordre des statuts de tâche",
     "Mention a colleague": "Mentionner un collègue",
-    "Mentions": "Mentions"
+    "Mentions": "Mentions",
+    "Chat with {name}": "Discuter avec {name}",
+    "Replying to {name}": "Réponse à {name}",
+    "edited": "modifié",
+    "{n} comments": "{n} commentaires",
+    "You can only edit your own comments": "Vous ne pouvez modifier que vos propres commentaires",
+    "You can only edit your own notes": "Vous ne pouvez modifier que vos propres notes"
 }

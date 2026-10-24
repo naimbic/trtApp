@@ -2,6 +2,7 @@ import { realPicture } from '@/lib/crm/pictures'
 import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
+import { notifyComment } from '@/lib/crm/mentionsApi'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 
 export const STATUS = { 1: 'Not started', 4: 'In progress', 3: 'Testing', 2: 'Awaiting feedback', 5: 'Complete' }
@@ -169,7 +170,11 @@ export async function getTask(id) {
             assigneeIds: t.assignees.map((x) => x.staffId), followerIds: t.followers.map((x) => x.staffId),
         },
         checklist: t.checklistItems.map((c) => ({ id: c.id, description: c.description || '', finished: c.finished })),
-        comments: t.comments.map((c) => ({ id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, createdAt: c.createdAt, mine: !!a.staffId && c.staffId === a.staffId })),
+        comments: t.comments.map((c) => {
+            const to = c.replyToId ? t.comments.find((x) => x.id === c.replyToId) : null
+            return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
+                replyTo: to ? { id: to.id, name: people[to.staffId]?.name || (to.contactId ? 'Client' : ''), text: String(to.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90) } : null }
+        }),
         timers, running, totalSeconds: timers.reduce((s, x) => s + x.seconds, 0),
         // what happened on the task, newest first (for the activity panel)
         activity: [
@@ -328,13 +333,32 @@ export async function deleteTask(id) {
     return { success: true }
 }
 
-export async function addComment(id, content) {
+export async function addComment(id, content, replyToId) {
+    const session = await requirePermission('tasks', 'view')
+    const a = await access(session)
+    const task = await loadOne(id, a)
+    const text = String(content || '').trim().slice(0, 5000)
+    if (!text) throw fail('Write a comment first')
+    const reply = oid(replyToId) && (await prisma.crmTaskComment.findFirst({ where: { id: replyToId, taskId: id }, select: { id: true, staffId: true } }))
+    await prisma.crmTaskComment.create({ data: { taskId: id, content: text, staffId: a.staffId, replyToId: reply ? reply.id : null } })
+    // told: the people named with @, and everyone who follows the task (assigned, following, who created it, who is answered)
+    try {
+        const [asg, fol] = await Promise.all([prisma.crmTaskAssigned.findMany({ where: { taskId: id }, select: { staffId: true } }), prisma.crmTaskFollower.findMany({ where: { taskId: id }, select: { staffId: true } })])
+        await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/tasks/${id}`, subject: task.name, recipients: [...asg.map((x) => x.staffId), ...fol.map((x) => x.staffId), task.addedFrom, reply?.staffId] })
+    } catch (e) { console.error('[comment notify]', e.message) }
+    return { success: true }
+}
+
+export async function editComment(id, commentId, content) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     await loadOne(id, a)
+    const c = oid(commentId) && (await prisma.crmTaskComment.findFirst({ where: { id: commentId, taskId: id } }))
+    if (!c) throw fail('Comment not found', 404)
+    if (!a.staffId || c.staffId !== a.staffId) throw fail('You can only edit your own comments', 403)
     const text = String(content || '').trim().slice(0, 5000)
     if (!text) throw fail('Write a comment first')
-    await prisma.crmTaskComment.create({ data: { taskId: id, content: text, staffId: a.staffId } })
+    await prisma.crmTaskComment.update({ where: { id: commentId }, data: { content: text } })
     return { success: true }
 }
 

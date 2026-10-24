@@ -27,8 +27,11 @@ export async function notificationFeed() {
         for (const t of rows) add('ticket', t.lastReply ? `Client replied on ticket #${t.legacyId}` : `New ticket #${t.legacyId}`, t.subject, t.lastReply || t.createdAt, `/crm/tickets/${t.id}`, 'purple')
     }
     if (staffId) { // colleagues who mentioned me (@name in a comment, note or message)
-        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, additionalData: 'mention', createdAt: { gte: since(14) } }, orderBy: { createdAt: 'desc' }, take: 10 })
-        for (const m of ms) add('mention', `${m.fromFullName || 'A colleague'} mentioned you`, m.description, m.createdAt, m.link, 'amber')
+        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, OR: [{ additionalData: 'mention' }, { additionalData: { startsWith: 'comment|' } }], createdAt: { gte: since(14) } }, orderBy: { createdAt: 'desc' }, take: 15 })
+        for (const m of ms) {
+            if (m.additionalData === 'mention') add('mention', `${m.fromFullName || 'A colleague'} mentioned you`, m.description, m.createdAt, m.link, 'amber')
+            else add('comment', `${m.fromFullName || 'A colleague'} commented on “${m.additionalData.slice(8)}”`, m.description, m.createdAt, m.link, 'blue')
+        }
     }
     if (can('tasks') && staffId) {
         const mine = await prisma.crmTaskAssigned.findMany({ where: { staffId }, select: { taskId: true, createdAt: true } })

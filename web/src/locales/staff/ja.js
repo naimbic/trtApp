@@ -4206,5 +4206,12 @@ export default {
     "You can only edit your own comments": "自分のコメントのみ編集できます",
     "You can only edit your own notes": "自分のメモのみ編集できます",
     "comment": "コメント",
-    "comments": "コメント"
+    "comments": "コメント",
+    "Link address": "リンク先",
+    "Picture": "画像",
+    "Quote": "引用",
+    "Redo": "やり直し",
+    "Undo": "元に戻す",
+    "Uploading the picture…": "画像をアップロード中…",
+    "Choose a picture": "画像を選んでください"
 }

@@ -4206,5 +4206,12 @@ export default {
     "You can only edit your own comments": "يمكنك تعديل تعليقاتك فقط",
     "You can only edit your own notes": "يمكنك تعديل ملاحظاتك فقط",
     "comment": "تعليق",
-    "comments": "تعليقات"
+    "comments": "تعليقات",
+    "Link address": "عنوان الرابط",
+    "Picture": "صورة",
+    "Quote": "اقتباس",
+    "Redo": "إعادة",
+    "Undo": "تراجع",
+    "Uploading the picture…": "جارٍ رفع الصورة…",
+    "Choose a picture": "اختر صورة"
 }

@@ -1,5 +1,6 @@
 import { realPicture } from '@/lib/crm/pictures'
 import { notifyComment } from '@/lib/crm/mentionsApi'
+import { storeRich } from '@/lib/crm/richText'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { readSettings } from '@/lib/crm/appSettings'
@@ -135,7 +136,7 @@ export async function saveLead(body, id) {
     if (!name) throw fail('Give the lead a name')
     const email = nz(body.email)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fail('That email address does not look right')
-    const data = { ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: nz(body.website), description: nz(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
+    const data = { ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: nz(body.website), description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
     if (id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)
@@ -213,7 +214,7 @@ export async function addNote(id, { content, date }) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     const lead = await loadOne(id, a)
-    const text = String(content || '').trim().slice(0, 5000)
+    const text = storeRich(content)
     if (!text) throw fail('Write the note first')
     await prisma.crmNote.create({ data: { relType: 'lead', relId: id, description: text, dateContacted: date ? new Date(date) : new Date(), addedFrom: a.staffId } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: date ? new Date(date) : new Date() } })
@@ -228,7 +229,7 @@ export async function editNote(id, noteId, content) {
     const n = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'lead', relId: id } }))
     if (!n) throw fail('Note not found', 404)
     if (!a.staffId || n.addedFrom !== a.staffId) throw fail('You can only edit your own notes', 403)
-    const text = String(content || '').trim().slice(0, 5000)
+    const text = storeRich(content)
     if (!text) throw fail('Write the note first')
     await prisma.crmNote.update({ where: { id: noteId }, data: { description: text } })
     return { success: true }

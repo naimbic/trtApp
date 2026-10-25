@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.106.0',
+        date: '2026-10-25',
+        title: 'Rich text editor and file upload in tasks, leads and projects',
+        items: ['A rich text editor replaces the plain text boxes of task descriptions and comments, lead descriptions and notes, and project descriptions and notes: bold, italic, underline, strikethrough, heading, bulleted and numbered lists, quote, code, links and pictures, with undo and redo. Pictures are pasted, dropped or chosen with the picture button, optimised and kept in the Space. @ and # suggestions work inside it too.', 'Comments, notes and descriptions show their formatting and pictures, and a @mention in them still opens the chat. Texts written before stay as they were. Everything is cleaned when it is saved and when it is shown, so scripts and unsafe links never run.', 'The task popup has a new Files tab: drop or choose PDF, images, Office files, CSV, ZIP and more (up to 50 MB), attach files from the Space, and delete them. Available once the task exists.', 'Editing a comment or a note uses the same editor.'],
+    },
+    {
         version: '0.105.1',
         date: '2026-10-24',
         title: 'Fix: sign-in loop, mention opens the chat, calendar lines and hover',

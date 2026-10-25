@@ -87,3 +87,30 @@ const MentionLayer = () => {
 }
 
 export default MentionLayer
+
+/** The suggestions for "@query" (colleagues) or "#query" (tags): [{ key, label, insert }]. Shared with the rich text editor. */
+export async function mentionItems(kind, q) {
+    const d = await mentionDirectory()
+    const n = norm(q)
+    const pool = kind === '@' ? d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` })) : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
+    const starts = pool.filter((p) => norm(p.label).startsWith(n)), has = pool.filter((p) => !norm(p.label).startsWith(n) && norm(p.label).includes(n))
+    return [...starts, ...has].slice(0, 6)
+}
+export const MENTION_TRIGGER = TRIGGER
+
+/** The small list under the caret. `rect` = where to show it (below its bottom edge, or above its top edge when there is no room). */
+export const MentionBox = ({ kind, items, active, setActive, onPick, rect }) => {
+    const below = rect.bottom + 4 + items.length * 36 + 8 < window.innerHeight
+    const style = { position: 'fixed', left: Math.max(8, Math.min(rect.left, window.innerWidth - 288)), width: 280, zIndex: 100000, ...(below ? { top: rect.bottom + 4 } : { bottom: window.innerHeight - rect.top + 4 }) }
+    return createPortal(
+        <div style={style} role="listbox" className="overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-600 dark:bg-gray-800" onMouseDown={(e) => e.preventDefault()}>
+            <div className="px-3 pb-1 pt-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{kind === '@' ? tr('Mention a colleague') : tr('Tags')}</div>
+            {items.map((it, i) => (
+                <button key={it.key} type="button" role="option" aria-selected={i === active} onMouseEnter={() => setActive(i)} onClick={() => onPick(it)} className={`flex h-9 w-full items-center gap-2 px-3 text-left text-sm ${i === active ? 'bg-primary/10 text-primary' : ''}`}>
+                    <span className="text-gray-400">{kind === '@' ? <TbAt /> : <TbHash />}</span><span className="truncate font-semibold">{it.label}</span>
+                </button>
+            ))}
+        </div>,
+        document.body,
+    )
+}

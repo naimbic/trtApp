@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
+import RichView from '@/components/crm/RichView'
+import RichEditor from '@/components/crm/RichEditor'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
-import Mentioned from '@/components/crm/Mentioned'
 import StaffRing from '@/components/crm/StaffRing'
 import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks } from 'react-icons/tb'
 import Drawer from '@/components/crm/PopupFrame'
@@ -99,7 +101,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                 <div><L>{tr("Related to")}</L><Select isClearable isDisabled={!canEdit} options={REL_TYPES.map((r) => ({ value: r.value, label: r.label }))} value={REL_TYPES.filter((r) => r.value === v.relType).map((r) => ({ value: r.value, label: r.label }))[0] || null} onChange={(o) => set({ relType: o?.value || null, relId: null })} /></div>
                 <div><L>{REL_TYPES.find((r) => r.value === v.relType)?.label || tr("Record")}</L>{relResource ? <RelationSelect key={v.relType} resource={relResource} value={v.relId} disabled={!canEdit} onChange={(x) => set({ relId: x || null })} /> : <Input disabled placeholder={tr("Pick a type first")} />}</div>
             </div>
-            <div><L>{tr("Description")}</L><Input textArea rows={5} disabled={!canEdit} value={v.description} onChange={(e) => set({ description: e.target.value })} /></div>
+            <div><L>{tr("Description")}</L><RichEditor minHeight={130} disabled={!canEdit} value={v.description} onChange={(html) => set({ description: html })} /></div>
             <div className="space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                 <div className="flex items-center justify-between text-sm"><span>{tr("Billable")}</span><Switcher disabled={!canEdit} checked={!!v.billable} onChange={(c) => set({ billable: c })} /></div>
                 {v.billable && <div><L>{tr("Hourly rate")}</L><Input type="number" disabled={!canEdit} value={v.hourlyRate} onChange={(e) => set({ hourlyRate: e.target.value })} /></div>}
@@ -143,8 +145,8 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                         <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{c.staff?.name || (c.fromClient ? tr("Client") : tr("Unknown"))}</span><span>{dayjs(c.createdAt).format('DD MMM, HH:mm')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
                         <ReplyQuote r={c.replyTo} />
                         {editingId === c.id
-                            ? <CommentEdit initial={c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
-                            : <div className="whitespace-pre-line"><Mentioned text={c.content} /></div>}
+                            ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
+                            : <RichView html={c.content} />}
                     </div>
                     {editingId !== c.id && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' })) : null} />}
                 </div>
@@ -152,7 +154,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             {!detail.comments.length && <p className="text-sm text-gray-500">{tr("No comments yet.")}</p>}
             <div className="space-y-2">
                 <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
-                <Input textArea rows={3} placeholder={tr("Write a comment")} value={comment} onChange={(e) => setComment(e.target.value)} />
+                <RichEditor minHeight={90} placeholder={tr("Write a comment")} value={comment} onChange={setComment} />
                 <Button size="sm" variant="solid" disabled={!comment.trim()} onClick={() => act(() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) }))}>{tr("Comment")}</Button>
             </div>
         </div>
@@ -212,12 +214,14 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             <Tabs.TabNav value="details">{tr("Details")}</Tabs.TabNav>
                             <Tabs.TabNav value="checklist">{tr("Checklist")}{detail.checklist.length ? ` (${detail.checklist.filter((c) => c.finished).length}/${detail.checklist.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="comments">{tr("Comments")}{detail.comments.length ? ` (${detail.comments.length})` : ''}</Tabs.TabNav>
+                            <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
                             <Tabs.TabNav value="time">{tr("Time")}{detail.totalSeconds ? ` · ${duration(detail.totalSeconds)}` : ''}</Tabs.TabNav>
                         </Tabs.TabList>
                         <div className="pt-4">
                             <Tabs.TabContent value="details">{details}</Tabs.TabContent>
                             <Tabs.TabContent value="checklist">{checklist}</Tabs.TabContent>
                             <Tabs.TabContent value="comments">{comments}</Tabs.TabContent>
+                            <Tabs.TabContent value="files"><div className="pt-4"><AttachmentsPanel relType="task" relId={id} canEdit={!!canEdit} /></div></Tabs.TabContent>
                             <Tabs.TabContent value="time">{time}</Tabs.TabContent>
                         </div>
                     </Tabs>

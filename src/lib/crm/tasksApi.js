@@ -3,6 +3,7 @@ import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
 import { notifyComment } from '@/lib/crm/mentionsApi'
+import { storeRich } from '@/lib/crm/richText'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 
 export const STATUS = { 1: 'Not started', 4: 'In progress', 3: 'Testing', 2: 'Awaiting feedback', 5: 'Complete' }
@@ -209,7 +210,7 @@ export async function saveTask(body, id) {
     const status = valid.has(+body.status) ? +body.status : await defaultTaskStatus()
     if (body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date')
     const data = {
-        name, description: body.description ?? null, priority: prio, status,
+        name, description: storeRich(body.description), priority: prio, status,
         startDate: dateOrNull(body.startDate), dueDate: dateOrNull(body.dueDate),
         relType: body.relType || null, relId: oid(body.relId), milestoneId: oid(body.milestoneId),
         isPublic: !!body.isPublic, billable: body.billable === undefined && S ? S.on('task_biillable_checked_on_creation') : !!body.billable, visibleToClient: !!body.visibleToClient, hourlyRate: Number(body.hourlyRate) || 0,
@@ -337,7 +338,7 @@ export async function addComment(id, content, replyToId) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const task = await loadOne(id, a)
-    const text = String(content || '').trim().slice(0, 5000)
+    const text = storeRich(content)
     if (!text) throw fail('Write a comment first')
     const reply = oid(replyToId) && (await prisma.crmTaskComment.findFirst({ where: { id: replyToId, taskId: id }, select: { id: true, staffId: true } }))
     await prisma.crmTaskComment.create({ data: { taskId: id, content: text, staffId: a.staffId, replyToId: reply ? reply.id : null } })
@@ -356,7 +357,7 @@ export async function editComment(id, commentId, content) {
     const c = oid(commentId) && (await prisma.crmTaskComment.findFirst({ where: { id: commentId, taskId: id } }))
     if (!c) throw fail('Comment not found', 404)
     if (!a.staffId || c.staffId !== a.staffId) throw fail('You can only edit your own comments', 403)
-    const text = String(content || '').trim().slice(0, 5000)
+    const text = storeRich(content)
     if (!text) throw fail('Write a comment first')
     await prisma.crmTaskComment.update({ where: { id: commentId }, data: { content: text } })
     return { success: true }

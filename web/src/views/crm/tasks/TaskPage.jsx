@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
+import RichView from '@/components/crm/RichView'
+import RichEditor from '@/components/crm/RichEditor'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
-import Mentioned from '@/components/crm/Mentioned'
 import StaffRing from '@/components/crm/StaffRing'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
@@ -148,8 +149,8 @@ const TaskPage = () => {
                     <div className="mt-8">
                         <div className="mb-3 flex items-center justify-between"><h5>{tr('Description')}</h5>{e && descEdit === null && <Button size="xs" icon={<TbPencil />} onClick={() => setDescEdit(t.description)}>{tr('Edit')}</Button>}</div>
                         {descEdit !== null ? (
-                            <div className="flex flex-col gap-2"><Input textArea rows={8} value={descEdit} onChange={(ev) => setDescEdit(ev.target.value)} /><div className="flex justify-end gap-2"><Button size="sm" onClick={() => setDescEdit(null)}>{tr('Cancel')}</Button><Button size="sm" variant="solid" onClick={() => { save({ description: descEdit }, tr('Saved')); setDescEdit(null) }}>{tr('Save')}</Button></div></div>
-                        ) : t.description ? <div className="whitespace-pre-line text-sm leading-relaxed">{t.description.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')}</div> : <p className="text-sm text-gray-400">{tr('No description yet.')}</p>}
+                            <div className="flex flex-col gap-2"><RichEditor minHeight={160} value={descEdit} onChange={setDescEdit} /><div className="flex justify-end gap-2"><Button size="sm" onClick={() => setDescEdit(null)}>{tr('Cancel')}</Button><Button size="sm" variant="solid" onClick={() => { save({ description: descEdit }, tr('Saved')); setDescEdit(null) }}>{tr('Save')}</Button></div></div>
+                        ) : t.description ? <RichView className="text-sm leading-relaxed" html={t.description} /> : <p className="text-sm text-gray-400">{tr('No description yet.')}</p>}
                     </div>
 
                     <div className="mt-8">
@@ -170,14 +171,14 @@ const TaskPage = () => {
                                                 <div className="flex items-center gap-2 text-sm"><span className="font-bold heading-text">{c.staff?.name || (c.fromClient ? tr('Client') : tr('Unknown'))}</span><span className="text-gray-400">|</span><span className="text-gray-400">{dayjs(c.createdAt).format('DD MMM YYYY')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
                                                 <ReplyQuote r={c.replyTo} />
                                                 {editingId === c.id
-                                                    ? <CommentEdit initial={c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
-                                                    : <div className="mt-1 whitespace-pre-line text-sm"><Mentioned text={c.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')} /></div>}
+                                                    ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
+                                                    : <RichView className="mt-1 text-sm" html={c.content} />}
                                             </div>
                                             {editingId !== c.id && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => delComment(c) : null} />}
                                         </div>
                                     ))}
                                     {!d.comments.length && <p className="text-sm text-gray-400">{tr('No comments yet.')}</p>}
-                                    <div className="flex flex-col gap-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><Input textArea rows={3} value={comment} placeholder={tr('Write a comment')} onChange={(ev) => setComment(ev.target.value)} /><div className="flex justify-end"><Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) })}>{tr('Comment')}</Button></div></div>
+                                    <div className="flex flex-col gap-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><RichEditor minHeight={90} value={comment} placeholder={tr('Write a comment')} onChange={setComment} /><div className="flex justify-end"><Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) })}>{tr('Comment')}</Button></div></div>
                                 </div>
                             )}
                             {tab === 'subtasks' && (

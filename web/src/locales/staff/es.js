@@ -4206,5 +4206,12 @@ export default {
     "You can only edit your own comments": "Solo puedes editar tus propios comentarios",
     "You can only edit your own notes": "Solo puedes editar tus propias notas",
     "comment": "comentario",
-    "comments": "comentarios"
+    "comments": "comentarios",
+    "Link address": "Dirección del enlace",
+    "Picture": "Imagen",
+    "Quote": "Cita",
+    "Redo": "Rehacer",
+    "Undo": "Deshacer",
+    "Uploading the picture…": "Subiendo la imagen…",
+    "Choose a picture": "Elige una imagen"
 }

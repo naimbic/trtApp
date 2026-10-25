@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
+import RichView from '@/components/crm/RichView'
+import RichEditor from '@/components/crm/RichEditor'
 import { CommentTools, CommentEdit } from '@/components/crm/CommentParts'
-import Mentioned from '@/components/crm/Mentioned'
 import { Link, useNavigate } from 'react-router'
 import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText } from 'react-icons/tb'
 import dayjs from 'dayjs'
@@ -81,20 +82,20 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                 <div><L>{tr("State")}</L><Input disabled={!canEdit} value={v.state} onChange={(e) => set({ state: e.target.value })} /></div>
                 <div><L>{tr("ZIP")}</L><Input disabled={!canEdit} value={v.zip} onChange={(e) => set({ zip: e.target.value })} /></div>
             </div>
-            <div><L>{tr("Description")}</L><Input textArea rows={4} disabled={!canEdit} value={v.description} onChange={(e) => set({ description: e.target.value })} /></div>
+            <div><L>{tr("Description")}</L><RichEditor minHeight={110} disabled={!canEdit} value={v.description} onChange={(html) => set({ description: html })} /></div>
             <div className="flex items-center justify-between text-sm"><span>{tr("Visible to the whole team")}</span><Switcher disabled={!canEdit} checked={v.isPublic} onChange={(c) => set({ isPublic: c })} /></div>
         </div>
     )
 
     const notes = detail && (
         <div className="space-y-4">
-            <div className="space-y-2"><Input textArea rows={3} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={(e) => setNote(e.target.value)} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note } }).then(() => setNote('')), tr("Note added"))}>{tr("Add note")}</Button></div>
+            <div className="space-y-2"><RichEditor minHeight={90} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={setNote} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note } }).then(() => setNote('')), tr("Note added"))}>{tr("Add note")}</Button></div>
             {detail.notes.map((n) => (
                 <div key={n.id} className="group relative rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
                     <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{dayjs(n.date).format('DD MMM YYYY, HH:mm')}{n.edited ? ` · ${tr('edited')}` : ''}</span></div>
                     {editingNote === n.id
                         ? <CommentEdit initial={n.content} onCancel={() => setEditingNote(null)} onSave={async (text) => { await api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'PUT', body: { noteId: n.id, content: text } }); setEditingNote(null); await load() }} />
-                        : <div className="whitespace-pre-line"><Mentioned text={n.content} /></div>}
+                        : <RichView html={n.content} />}
                     {editingNote !== n.id && <CommentTools onReply={() => setNote((x) => x || (n.by?.name ? `@${n.by.name} ` : ''))} onEdit={n.mine ? () => setEditingNote(n.id) : null} onDelete={n.canDelete ? () => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' })) : null} />}
                 </div>
             ))}

@@ -2,6 +2,7 @@
 // person gets. Any signed-in team member may mention a colleague.
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
+import { plainText } from '@/lib/crm/richText'
 
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const nameOf = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || 'Staff'
@@ -48,9 +49,10 @@ export async function notifyMentions({ staffIds, text, url }) {
 export async function notifyComment({ by, text, link, subject, recipients = [] }) {
     const { mentionedIds } = await import('@/lib/crm/mentionsCalc')
     const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true } })
-    const named = mentionedIds(text, staff.map((s) => ({ id: s.id, name: nameOf(s) }))).filter((i) => i !== by.staffId)
+    const plain = plainText(text)
+    const named = mentionedIds(plain, staff.map((s) => ({ id: s.id, name: nameOf(s) }))).filter((i) => i !== by.staffId)
     const follow = [...new Set(recipients.filter(Boolean))].filter((i) => i !== by.staffId && !named.includes(i) && staff.some((s) => s.id === i))
-    const excerpt = String(text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160)
+    const excerpt = plain.replace(/\s+/g, ' ').slice(0, 160) || (/<img\b/i.test(String(text)) ? '🖼' : '')
     const since = new Date(Date.now() - 600000)
     const make = async (to, tag) => {
         const dup = await prisma.crmNotification.findFirst({ where: { toUserId: to, additionalData: tag, link, description: excerpt, createdAt: { gte: since } }, select: { id: true } })

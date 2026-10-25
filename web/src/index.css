@@ -3,3 +3,15 @@
 /* task status pill: the status colour (Tasks > Statuses) as a tint that stays readable in light and dark mode */
 .tpill { background: color-mix(in srgb, var(--c) 18%, transparent) !important; color: color-mix(in srgb, var(--c) 62%, #000) !important; }
 .dark .tpill { color: color-mix(in srgb, var(--c) 72%, #fff) !important; }
+
+/* the rich text box: the typing area fills the box, a placeholder shows while it is empty */
+.rich-editor .ProseMirror { min-height: inherit; outline: none; }
+.rich-editor .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; height: 0; color: #9ca3af; pointer-events: none; }
+.rich-editor .ProseMirror img { max-width: 100%; border-radius: 8px; }
+.rich-editor .ProseMirror img.ProseMirror-selectednode { outline: 2px solid var(--rp-accent, #2563eb); }
+.rich-editor .ProseMirror code { background: rgba(127,127,127,.15); border-radius: 4px; padding: 0 4px; }
+.rich-editor .ProseMirror h2 { font-size: 1.15em; margin: .4em 0 .2em; }
+.rich-view code { background: rgba(127,127,127,.15); border-radius: 4px; padding: 0 4px; }
+.rich-view h2, .rich-view h3 { font-size: 1.1em; margin: .4em 0 .2em; }
+.rich-view .mention { border-radius: 4px; padding: 0 4px; font-weight: 600; background: color-mix(in srgb, var(--rp-accent, #2563eb) 14%, transparent); color: var(--rp-accent, #2563eb); cursor: pointer; }
+.rich-view .hashtag { font-weight: 600; color: #d97706; }

@@ -1,6 +1,7 @@
 import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
+import { storeRich } from '@/lib/crm/richText'
 
 // Perfex project statuses: 4 = finished, 5 = cancelled (dateFinished is only set on finished ones)
 export const STATUS = { 1: 'Not started', 2: 'In progress', 3: 'On hold', 4: 'Finished', 5: 'Cancelled' }
@@ -143,7 +144,7 @@ export async function saveProject(body, id) {
     if (start && deadline && deadline < start) throw fail('The deadline cannot be before the start date')
     const status = [1, 2, 3, 4, 5].includes(+body.status) ? +body.status : 1
     const data = {
-        name, description: body.description ?? null, status, clientId: oid(body.clientId), billingType: [1, 2, 3].includes(+body.billingType) ? +body.billingType : 1,
+        name, description: storeRich(body.description), status, clientId: oid(body.clientId), billingType: [1, 2, 3].includes(+body.billingType) ? +body.billingType : 1,
         startDate: start, deadline, progressFromTasks: body.progressFromTasks !== false, progress: Math.min(Math.max(parseInt(body.progress, 10) || 0, 0), 100),
         projectCost: body.projectCost === '' || body.projectCost == null ? null : Number(body.projectCost) || 0, projectRatePerHour: body.projectRatePerHour === '' || body.projectRatePerHour == null ? null : Number(body.projectRatePerHour) || 0,
         estimatedHours: body.estimatedHours === '' || body.estimatedHours == null ? null : Number(body.estimatedHours) || 0,
@@ -185,7 +186,7 @@ export async function addProjectNote(id, content) {
     const session = await requirePermission('projects', 'view')
     const a = await access(session)
     await loadOne(id, a)
-    const text = String(content || '').trim().slice(0, 5000)
+    const text = storeRich(content)
     if (!text) throw fail('Write the note first')
     await prisma.crmProjectNote.create({ data: { projectId: id, content: text, staffId: a.staffId } })
     return { success: true }

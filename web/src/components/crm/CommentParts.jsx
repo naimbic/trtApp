@@ -1,4 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. */
+import RichEditor from '@/components/crm/RichEditor'
 import { useState } from 'react'
 import { TbArrowBackUp, TbPencil, TbTrash, TbX } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
@@ -20,7 +21,7 @@ export const CommentEdit = ({ initial, onSave, onCancel }) => {
     const [busy, setBusy] = useState(false)
     return (
         <div className="mt-1 space-y-2">
-            <Input textArea rows={3} autoFocus value={text} onChange={(e) => setText(e.target.value)} />
+            <RichEditor autoFocus minHeight={80} value={text} onChange={setText} />
             <div className="flex justify-end gap-2">
                 <Button size="xs" onClick={onCancel}>{tr('Cancel')}</Button>
                 <Button size="xs" variant="solid" loading={busy} disabled={!text.trim() || text.trim() === initial.trim()} onClick={async () => { setBusy(true); try { await onSave(text) } finally { setBusy(false) } }}>{tr('Save')}</Button>

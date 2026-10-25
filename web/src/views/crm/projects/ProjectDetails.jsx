@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import Mentioned from '@/components/crm/Mentioned'
+import RichView from '@/components/crm/RichView'
+import RichEditor from '@/components/crm/RichEditor'
 import { Link, useNavigate, useParams } from 'react-router'
 import { TbLayoutKanban, TbFileInfo, TbChecklist, TbPaperclip, TbMessages, TbNotes, TbCalendarStats, TbSettings, TbTrash, TbClock, TbFlag } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
@@ -112,7 +113,7 @@ const ProjectDetails = () => {
                                     <Stat icon={<TbPaperclip />} label={tr("Files")} value={stats.files} />
                                     <Stat icon={<TbFlag />} label={tr("Milestones")} value={data.milestones.length} />
                                 </div>
-                                {p.description ? <div className="prose max-w-full whitespace-pre-line dark:prose-invert" dangerouslySetInnerHTML={{ __html: /<[a-z][\s\S]*>/i.test(p.description) ? p.description.replace(/<script[\s\S]*?<\/script>/gi, '') : p.description.replace(/&/g, '&amp;').replace(/</g, '&lt;') }} /> : <p className="text-gray-500">{tr("No description yet.")}{data.can.edit && <button className="ml-1 text-primary" onClick={() => setTab('settings')}>{tr("Add one")}</button>}</p>}
+                                {p.description ? <RichView html={p.description} /> : <p className="text-gray-500">{tr("No description yet.")}{data.can.edit && <button className="ml-1 text-primary" onClick={() => setTab('settings')}>{tr("Add one")}</button>}</p>}
                                 {data.milestones.length > 0 && (
                                     <div className="mt-8"><h5 className="mb-3">{tr("Milestones")}</h5>
                                         <div className="grid gap-3 sm:grid-cols-2">{data.milestones.map((m) => <div key={m.id} className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700"><span className="h-8 w-1.5 rounded-full" style={{ background: m.color || '#64748b' }} /><div className="flex-1"><div className="font-semibold">{m.name}</div><div className="text-xs text-gray-500">{m.dueDate ? tr("Due {v1}", { v1: fmt(m.dueDate) }) : tr("No due date")}</div></div><span className="text-xs text-gray-500">{trn(m.tasks, "task")}</span></div>)}</div>
@@ -175,11 +176,11 @@ const ProjectDetails = () => {
                     {tab === 'notes' && (
                         <div className="max-w-2xl space-y-4">
                             <h5>{tr("Notes")}</h5>
-                            <div className="space-y-2"><Input textArea rows={3} placeholder={tr("Write a private note for the team")} value={note} onChange={(e) => setNote(e.target.value)} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={addNote}>{tr("Add note")}</Button></div>
+                            <div className="space-y-2"><RichEditor minHeight={90} placeholder={tr("Write a private note for the team")} value={note} onChange={setNote} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={addNote}>{tr("Add note")}</Button></div>
                             {data.notes.map((n) => (
                                 <div key={n.id} className="rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
                                     <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{fmt(n.date, 'DD MMM YYYY, HH:mm')}{(n.mine || data.can.delete) && <button className="ml-2 text-red-500" onClick={() => delNote(n.id)}>{tr("delete")}</button>}</span></div>
-                                    <div className="whitespace-pre-line"><Mentioned text={n.content} /></div>
+                                    <RichView html={n.content} />
                                 </div>
                             ))}
                             {!data.notes.length && <p className="text-gray-500">{tr("No notes yet.")}</p>}
@@ -215,7 +216,7 @@ const ProjectDetails = () => {
                             </div>
                             <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700"><span>{tr("Calculate progress from the tasks")}</span><Switcher disabled={!data.can.edit} checked={form.progressFromTasks} onChange={(c) => set({ progressFromTasks: c })} /></div>
                             {!form.progressFromTasks && <div><L>{tr("Progress (%)")}</L><Input type="number" min={0} max={100} disabled={!data.can.edit} value={form.progress} onChange={(e) => set({ progress: e.target.value })} /></div>}
-                            <div><L>{tr("Description")}</L><Input textArea rows={6} disabled={!data.can.edit} value={form.description} onChange={(e) => set({ description: e.target.value })} /></div>
+                            <div><L>{tr("Description")}</L><RichEditor minHeight={140} disabled={!data.can.edit} value={form.description} onChange={(html) => set({ description: html })} /></div>
                             <div className="flex items-center gap-2 pt-2">
                                 {data.can.delete && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDel(true)}>{tr("Delete project")}</Button>}
                                 {data.can.edit && <div className="ml-auto flex gap-2"><Button onClick={() => { setTab('overview'); load() }}>{tr("Cancel")}</Button><Button variant="solid" loading={saving} onClick={save}>{tr("Save changes")}</Button></div>}

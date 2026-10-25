@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.6',
+        date: '2026-10-25',
+        title: 'Checklist dates: they can be set and changed',
+        items: ['Fixed: the date of a checklist step could not be added or changed in some browsers (the date field was invisible and the browser did not open its calendar). Pressing the date now opens a real date field with the calendar, and a cross removes the date.'],
+    },
+    {
         version: '0.107.5',
         date: '2026-10-25',
         title: 'Dashboard filters: This year and All currencies by default, and they stay',

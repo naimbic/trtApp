@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import dayjs from 'dayjs'
-import { TbGripVertical, TbTrash, TbPencil, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
+import { TbGripVertical, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
@@ -27,14 +27,24 @@ export function dueLook(due, done) {
 
 const day = (d) => (d ? dayjs(d).format('YYYY-MM-DD') : '')
 
-/** A date chip: the visible chip is a label, a transparent date field over it opens the browser's date picker. */
+/** A date chip: press it and a real date field opens (with the browser's calendar) next to a button to clear the date. */
 const DateChip = ({ value, done, onChange, disabled, empty }) => {
     const look = dueLook(value, done)
+    const [edit, setEdit] = useState(false)
+    const input = useRef(null)
+    useEffect(() => { if (edit) { try { input.current?.focus(); input.current?.showPicker?.() } catch { /* the field is still usable by hand */ } } }, [edit])
+    if (edit) {
+        return (
+            <span className="inline-flex shrink-0 items-center gap-1" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setEdit(false) }}>
+                <input ref={input} type="date" value={day(value)} onChange={(e) => { onChange(e.target.value || null); if (e.target.value) setEdit(false) }} onKeyDown={(e) => { if (e.key === 'Escape') setEdit(false) }} aria-label={tr('Due date')} className="h-7 rounded-lg border border-primary bg-white px-1.5 text-xs outline-none dark:bg-gray-800" />
+                {value && <button type="button" aria-label={tr('Remove')} title={tr('Remove')} onClick={() => { onChange(null); setEdit(false) }} className="grid size-6 place-items-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500"><TbX /></button>}
+            </span>
+        )
+    }
     return (
-        <label className={classNames('relative inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-full px-2.5 text-xs font-bold', look ? look.cls : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700', disabled && 'pointer-events-none opacity-60')}>
+        <button type="button" disabled={disabled} onClick={() => setEdit(true)} title={tr('Due date')} className={classNames('inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-bold', look ? look.cls : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700', disabled && 'pointer-events-none opacity-60')}>
             <TbCalendar className="text-sm" />{look ? look.label : empty}
-            <input type="date" value={day(value)} disabled={disabled} onChange={(e) => onChange(e.target.value || null)} className="absolute inset-0 cursor-pointer opacity-0" aria-label={tr('Due date')} />
-        </label>
+        </button>
     )
 }
 

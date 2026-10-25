@@ -156,7 +156,7 @@ export async function getTask(id) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const t = await loadOne(id, a)
-    const ids = [...t.assignees.map((x) => x.staffId), ...t.followers.map((x) => x.staffId), ...t.comments.map((c) => c.staffId).filter(Boolean), ...t.timers.map((x) => x.staffId).filter(Boolean), ...t.checklistItems.map((c) => c.assigned).filter(Boolean), t.addedFrom].filter(Boolean)
+    const ids = [...t.assignees.map((x) => x.staffId), ...t.followers.map((x) => x.staffId), ...t.comments.map((c) => c.staffId).filter(Boolean), ...t.timers.map((x) => x.staffId).filter(Boolean), ...t.checklistItems.flatMap(stepPeople), t.addedFrom].filter(Boolean)
     const people = await staffMap(ids)
     const rels = await relLabels([t])
     const now = Date.now()
@@ -170,7 +170,7 @@ export async function getTask(id) {
             followers: t.followers.map((x) => people[x.staffId]).filter(Boolean),
             assigneeIds: t.assignees.map((x) => x.staffId), followerIds: t.followers.map((x) => x.staffId),
         },
-        checklist: [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, person: people[c.assigned] || null, dueDate: c.dueDate || null, reminder: c.reminder ?? null, order: c.listOrder || 0 })),
+        checklist: [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, assignedIds: stepPeople(c), people: stepPeople(c).map((i) => people[i]).filter(Boolean), person: people[c.assigned] || null, dueDate: c.dueDate || null, reminder: c.reminder ?? null, order: c.listOrder || 0 })),
         comments: t.comments.map((c) => {
             const to = c.replyToId ? t.comments.find((x) => x.id === c.replyToId) : null
             return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
@@ -378,6 +378,9 @@ export async function deleteComment(id, commentId) {
 }
 
 const REMINDERS = [0, 60, 1440, 2880]
+/** Everyone a checklist step is given to (the old single person included). */
+const stepPeople = (c) => [...new Set([...(c.assignedIds || []), c.assigned].filter(Boolean))]
+const pickPeople = (v) => [...new Set((Array.isArray(v) ? v : v ? [v] : []).map(oid).filter(Boolean))].slice(0, 12)
 const dayOrNull = (v) => (v ? new Date(`${String(v).slice(0, 10)}T12:00:00.000Z`) : null)
 
 /** The checklist of a task: add, tick, edit (text, person, date, reminder), reorder, delete. A person a step is assigned to may tick it. */
@@ -385,10 +388,10 @@ export async function checklist(id, op) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const task = await loadOne(id, a)
-    const mine = (item) => !!a.staffId && item?.assigned === a.staffId
-    const notify = async (assigned, text) => {
-        // the assigned person is told (bell), and anyone named with @ in the text
-        if (assigned && assigned !== a.staffId) await prisma.crmNotification.create({ data: { toUserId: assigned, fromUserId: a.staffId, fromFullName: session.user.name || null, description: String(text || '').slice(0, 160), link: `/crm/tasks/${id}`, additionalData: `assign|${String(task.name || '').slice(0, 100)}`, isRead: false } })
+    const mine = (item) => !!a.staffId && stepPeople(item || {}).includes(a.staffId)
+    const notify = async (people, text) => {
+        // each person the step is given to is told (bell), and anyone named with @ in the text
+        for (const assigned of people.filter((x) => x !== a.staffId)) await prisma.crmNotification.create({ data: { toUserId: assigned, fromUserId: a.staffId, fromFullName: session.user.name || null, description: String(text || '').slice(0, 160), link: `/crm/tasks/${id}`, additionalData: `assign|${String(task.name || '').slice(0, 100)}`, isRead: false } })
         await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text, prev: '', link: `/crm/tasks/${id}`, subject: task.name })
     }
     if (op.action === 'toggle') {
@@ -403,9 +406,9 @@ export async function checklist(id, op) {
         const description = String(op.description || '').trim().slice(0, 500)
         if (!description) throw fail('Write the item first')
         const last = await prisma.crmTaskChecklistItem.findFirst({ where: { taskId: id }, orderBy: { listOrder: 'desc' }, select: { listOrder: true } })
-        const assigned = oid(op.assigned)
-        await prisma.crmTaskChecklistItem.create({ data: { taskId: id, description, listOrder: (last?.listOrder ?? 0) + 1, addedFrom: a.staffId, finished: false, assigned, dueDate: dayOrNull(op.dueDate), reminder: REMINDERS.includes(+op.reminder) && op.reminder !== null && op.reminder !== '' ? +op.reminder : null } })
-        await notify(assigned, description)
+        const people = pickPeople(op.assignedIds ?? op.assigned)
+        await prisma.crmTaskChecklistItem.create({ data: { taskId: id, description, listOrder: (last?.listOrder ?? 0) + 1, addedFrom: a.staffId, finished: false, assigned: people[0] || null, assignedIds: people, dueDate: dayOrNull(op.dueDate), reminder: REMINDERS.includes(+op.reminder) && op.reminder !== null && op.reminder !== '' ? +op.reminder : null } })
+        await notify(people, description)
         return { success: true }
     }
     if (op.action === 'reorder') {
@@ -419,11 +422,16 @@ export async function checklist(id, op) {
     else if (op.action === 'update') {
         const data = {}
         if (op.description !== undefined) { const d = String(op.description || '').trim().slice(0, 500); if (!d) throw fail('Write the item first'); data.description = d }
-        if (op.assigned !== undefined) data.assigned = oid(op.assigned)
+        let added = []
+        if (oid(op.toggleAssignee)) { // one person added or removed, worked out from what is stored (two quick clicks never overwrite each other)
+            const cur = stepPeople(item)
+            const now = cur.includes(op.toggleAssignee) ? cur.filter((x) => x !== op.toggleAssignee) : [...cur, op.toggleAssignee]
+            added = now.filter((x) => !cur.includes(x)); data.assignedIds = now; data.assigned = now[0] || null
+        } else if (op.assignedIds !== undefined || op.assigned !== undefined) { const now = pickPeople(op.assignedIds ?? op.assigned); added = now.filter((x) => !stepPeople(item).includes(x)); data.assignedIds = now; data.assigned = now[0] || null }
         if (op.dueDate !== undefined) data.dueDate = dayOrNull(op.dueDate)
         if (op.reminder !== undefined) data.reminder = op.reminder === null || op.reminder === '' ? null : REMINDERS.includes(+op.reminder) ? +op.reminder : null
         await prisma.crmTaskChecklistItem.update({ where: { id: item.id }, data })
-        if (data.assigned && data.assigned !== item.assigned) await notify(data.assigned, data.description ?? item.description)
+        if (added.length) await notify(added, data.description ?? item.description)
         else if (data.description) await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text: data.description, prev: item.description, link: `/crm/tasks/${id}`, subject: task.name })
     } else throw fail('Unknown action')
     return { success: true }

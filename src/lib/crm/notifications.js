@@ -35,7 +35,7 @@ export async function notificationFeed() {
         }
     }
     if (staffId) { // my checklist steps: overdue, due today, or a reminder that has come
-        const steps = await prisma.crmTaskChecklistItem.findMany({ where: { assigned: staffId, finished: false, dueDate: { not: null } }, orderBy: { dueDate: 'asc' }, take: 20 })
+        const steps = await prisma.crmTaskChecklistItem.findMany({ where: { OR: [{ assigned: staffId }, { assignedIds: { has: staffId } }], finished: false, dueDate: { not: null } }, orderBy: { dueDate: 'asc' }, take: 20 })
         const taskNames = Object.fromEntries((await prisma.crmTask.findMany({ where: { id: { in: [...new Set(steps.map((s) => s.taskId))] } }, select: { id: true, name: true } })).map((t) => [t.id, t.name]))
         for (const st of steps) {
             const due = new Date(st.dueDate), dueEnd = +new Date(due.toDateString()) + DAY

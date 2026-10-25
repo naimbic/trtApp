@@ -309,6 +309,8 @@ model CrmTaskChecklistItem {
   listOrder    Int       @default(0)
   /// staff id the item is assigned to
   assigned     String?   @db.ObjectId
+  /// everyone the step is given to (the first one is also in `assigned`)
+  assignedIds  String[]  @db.ObjectId
   dueDate      DateTime?
   /// minutes before the due date to remind the person (0 = at the due time), empty = no reminder
   reminder     Int?

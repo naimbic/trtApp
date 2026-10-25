@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.4',
+        date: '2026-10-25',
+        title: 'Checklist: give a step to several people',
+        items: ['A checklist step can now be given to several team members: the Assign button opens a list with a tick for each person, which stays open while you tick, and the step shows their faces side by side. Each person added is told in their bell, and each one gets the due-today / overdue / reminder entries. Any of them can tick the step.', 'Two quick clicks in the list can no longer overwrite each other: every click adds or removes just that person.'],
+    },
+    {
         version: '0.107.3',
         date: '2026-10-25',
         title: 'Mentions in the editor: after a line break, and an @ button',

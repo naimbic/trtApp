@@ -1,5 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import dayjs from 'dayjs'
 import { TbGripVertical, TbTrash, TbPencil, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
 import Avatar from '@/components/ui/Avatar'
@@ -37,15 +38,43 @@ const DateChip = ({ value, done, onChange, disabled, empty }) => {
     )
 }
 
-const Person = ({ p, size = 24 }) => (p ? <Avatar size={size} shape="circle" src={p.image || undefined} title={p.name}>{ini(p.name)}</Avatar> : <span className="grid size-6 place-items-center rounded-full border border-dashed border-gray-300 text-sm text-gray-400"><TbUserPlus /></span>)
+const Person = ({ p, size = 24 }) => <Avatar size={size} shape="circle" src={p.image || undefined} title={p.name} className="ring-2 ring-white dark:ring-gray-800">{ini(p.name)}</Avatar>
 
-/** Pick a team member (or nobody) from a small menu. */
-const AssignMenu = ({ staff, current, onPick, disabled }) => (
-    <Dropdown placement="bottom-end" disabled={disabled} renderTitle={<button type="button" disabled={disabled} className="grid shrink-0 place-items-center rounded-full hover:ring-2 hover:ring-primary/30" title={tr('Assign')} aria-label={tr('Assign')}><Person p={current} /></button>}>
-        <Dropdown.Item eventKey="none" onClick={() => onPick(null)}><span className="text-gray-500">{tr('Nobody')}</span></Dropdown.Item>
-        {staff.map((s) => <Dropdown.Item key={s.id} eventKey={s.id} onClick={() => onPick(s.id)}><span className="flex items-center gap-2"><Avatar size={20} shape="circle" src={s.image || undefined}>{ini(s.name)}</Avatar>{s.name}{current?.id === s.id && <TbCheck className="ml-auto" />}</span></Dropdown.Item>)}
-    </Dropdown>
-)
+/** Give a step to one or several team members: a button with their faces opens a list that stays open while you tick people. */
+const PeoplePicker = ({ staff, value = [], onChange, onToggle, disabled }) => {
+    const [open, setOpen] = useState(null)
+    const btn = useRef(null)
+    useEffect(() => {
+        if (!open) return undefined
+        const away = (e) => { if (!btn.current?.contains(e.target) && !e.target.closest?.('[data-people-picker]')) setOpen(null) }
+        document.addEventListener('pointerdown', away, true)
+        return () => document.removeEventListener('pointerdown', away, true)
+    }, [open])
+    const chosen = value.map((id) => staff.find((s) => s.id === id)).filter(Boolean)
+    const toggle = (id) => (onToggle ? onToggle(id) : onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]))
+    const show = () => { const r = btn.current.getBoundingClientRect(); setOpen({ left: Math.max(8, Math.min(r.right - 240, window.innerWidth - 248)), top: r.bottom + 4 }) }
+    return (
+        <>
+            <button ref={btn} type="button" disabled={disabled} onClick={() => (open ? setOpen(null) : show())} title={chosen.length ? chosen.map((p) => p.name).join(', ') : tr('Assign')} aria-label={tr('Assign')} className="flex shrink-0 items-center rounded-full hover:ring-2 hover:ring-primary/30">
+                {chosen.length ? (
+                    <span className="flex -space-x-2">{chosen.slice(0, 3).map((p) => <Person key={p.id} p={p} />)}{chosen.length > 3 && <span className="grid size-6 place-items-center rounded-full bg-gray-200 text-[10px] font-bold ring-2 ring-white dark:bg-gray-600 dark:ring-gray-800">+{chosen.length - 3}</span>}</span>
+                ) : <span className="grid size-6 place-items-center rounded-full border border-dashed border-gray-300 text-sm text-gray-400"><TbUserPlus /></span>}
+            </button>
+            {open && createPortal(
+                <div data-people-picker style={{ position: 'fixed', left: open.left, top: open.top, zIndex: 100000, width: 240 }} className="max-h-72 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-xl dark:border-gray-600 dark:bg-gray-800">
+                    <div className="px-2.5 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{tr('Assign')}</div>
+                    {staff.map((s) => (
+                        <button key={s.id} type="button" onClick={() => toggle(s.id)} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <Avatar size={22} shape="circle" src={s.image || undefined}>{ini(s.name)}</Avatar>
+                            <span className="min-w-0 flex-1 truncate">{s.name}</span>
+                            <span className={classNames('grid size-4 place-items-center rounded border text-[11px]', value.includes(s.id) ? 'border-primary bg-primary text-white' : 'border-gray-300')}>{value.includes(s.id) && <TbCheck />}</span>
+                        </button>
+                    ))}
+                    {value.length > 0 && <button type="button" onClick={() => onChange([])} className="mt-1 w-full rounded-lg px-2.5 py-1.5 text-left text-xs font-semibold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{tr('Nobody')}</button>}
+                </div>, document.body)}
+        </>
+    )
+}
 
 const ReminderMenu = ({ value, due, onPick, disabled }) => (
     <Dropdown placement="bottom-end" disabled={disabled || !due} renderTitle={<button type="button" disabled={disabled || !due} className={classNames('grid size-7 shrink-0 place-items-center rounded-full text-base', value != null ? 'bg-primary/10 text-primary' : 'text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700', !due && 'opacity-40')} title={due ? tr('Reminder') : tr('Set a due date first')} aria-label={tr('Reminder')}>{value != null ? <TbBell /> : <TbBellOff />}</button>}>
@@ -60,21 +89,20 @@ const ReminderMenu = ({ value, due, onPick, disabled }) => (
 const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
     const [list, setList] = useState(items)
     const [text, setText] = useState('')
-    const [who, setWho] = useState(null)
+    const [who, setWho] = useState([])
     const [due, setDue] = useState(null)
     const [editing, setEditing] = useState(null) // { id, text }
     const [hideDone, setHideDone] = useState(false)
     const [over, setOver] = useState(null)
     const drag = useRef(null)
     useEffect(() => setList(items), [items])
-    const person = (id) => staff.find((s) => s.id === id) || null
     const done = list.filter((c) => c.finished).length
     const shown = useMemo(() => list.filter((c) => !(hideDone && c.finished)), [list, hideDone])
     const add = async () => {
         const description = text.trim()
         if (!description) return
-        await act({ action: 'add', description, assigned: who, dueDate: due })
-        setText(''); setWho(null); setDue(null)
+        await act({ action: 'add', description, assignedIds: who, dueDate: due })
+        setText(''); setWho([]); setDue(null)
     }
     const drop = async (to) => {
         const from = drag.current; drag.current = null; setOver(null)
@@ -107,7 +135,6 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
             <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
                 {shown.map((c) => {
                     const i = list.indexOf(c)
-                    const p = c.person || person(c.assigned)
                     return (
                         <div key={c.id} className={classNames('group flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-2', over === i && 'bg-primary/5')}
                             onDragOver={(e) => { if (drag.current !== null) { e.preventDefault(); setOver(i) } }} onDrop={(e) => { e.preventDefault(); drop(i) }}>
@@ -122,7 +149,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
                             <div className="ml-auto flex items-center gap-1">
                                 <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />
                                 <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />
-                                <AssignMenu staff={staff} current={p} disabled={!canEdit} onPick={(id) => upd(c, { assigned: id })} />
+                                <PeoplePicker staff={staff} value={c.assignedIds || (c.assigned ? [c.assigned] : [])} disabled={!canEdit} onToggle={(id) => { const cur = c.assignedIds || []; setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: cur.includes(id) ? cur.filter((y) => y !== id) : [...cur, id] } : x))); upd(c, { toggleAssignee: id }) }} onChange={(ids) => { setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: ids } : x))); upd(c, { assignedIds: ids }) }} />
                                 {canEdit && <button type="button" aria-label={tr('Edit')} title={tr('Edit')} onClick={() => setEditing({ id: c.id, text: c.description })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-gray-100 hover:text-primary group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbPencil /></button>}
                                 {canEdit && <button type="button" aria-label={tr('Delete')} title={tr('Delete')} onClick={() => act({ action: 'delete', itemId: c.id })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbTrash /></button>}
                             </div>
@@ -135,7 +162,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
                         <TbPlus className="shrink-0 text-lg text-gray-400" />
                         <input data-mention value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder={tr('Add a step (@ to mention, # for a tag)')} className="h-8 min-w-[140px] flex-1 rounded-lg border border-transparent bg-transparent px-1 text-sm outline-none focus:border-gray-200 dark:focus:border-gray-600" />
                         <DateChip value={due} onChange={setDue} empty={tr('Date')} />
-                        <AssignMenu staff={staff} current={person(who)} onPick={setWho} />
+                        <PeoplePicker staff={staff} value={who} onChange={setWho} />
                         <Button size="xs" variant="solid" type="submit" disabled={!text.trim()}>{tr('Add')}</Button>
                     </form>
                 )}

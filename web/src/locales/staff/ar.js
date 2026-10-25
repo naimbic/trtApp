@@ -4217,5 +4217,20 @@ export default {
     "Align centre": "محاذاة للوسط",
     "Align right": "محاذاة لليمين",
     "Highlight": "تمييز",
-    "Text colour": "لون النص"
+    "Text colour": "لون النص",
+    "Add a step (@ to mention, # for a tag)": "أضف خطوة (@ للإشارة، # لوسم)",
+    "Assign": "تعيين",
+    "Everything is done.": "تم إنجاز كل شيء.",
+    "Hide done": "إخفاء المنتهية",
+    "Set a due date first": "حدد تاريخ الاستحقاق أولاً",
+    "Sort by date": "ترتيب حسب التاريخ",
+    "{a} of {b} done": "اكتمل {a} من {b}",
+    "{n} d late": "متأخر {n} ي",
+    "No reminder": "بدون تذكير",
+    "At the due time": "عند موعد الاستحقاق",
+    "1 hour before": "قبل ساعة",
+    "1 day before": "قبل يوم",
+    "2 days before": "قبل يومين",
+    "done step shown": "خطوة منتهية معروضة",
+    "done steps shown": "خطوات منتهية معروضة"
 }

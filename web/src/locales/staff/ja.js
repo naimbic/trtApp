@@ -4217,5 +4217,20 @@ export default {
     "Align centre": "中央揃え",
     "Align right": "右揃え",
     "Highlight": "ハイライト",
-    "Text colour": "文字色"
+    "Text colour": "文字色",
+    "Add a step (@ to mention, # for a tag)": "ステップを追加(@でメンション、#でタグ)",
+    "Assign": "割り当て",
+    "Everything is done.": "すべて完了しました。",
+    "Hide done": "完了を隠す",
+    "Set a due date first": "先に期限を設定してください",
+    "Sort by date": "日付順に並べ替え",
+    "{a} of {b} done": "{b}件中{a}件完了",
+    "{n} d late": "{n}日遅れ",
+    "No reminder": "リマインダーなし",
+    "At the due time": "期限の時刻に",
+    "1 hour before": "1時間前",
+    "1 day before": "1日前",
+    "2 days before": "2日前",
+    "done step shown": "完了ステップを表示",
+    "done steps shown": "完了ステップを表示"
 }

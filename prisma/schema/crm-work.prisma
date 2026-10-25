@@ -309,6 +309,9 @@ model CrmTaskChecklistItem {
   listOrder    Int       @default(0)
   /// staff id the item is assigned to
   assigned     String?   @db.ObjectId
+  dueDate      DateTime?
+  /// minutes before the due date to remind the person (0 = at the due time), empty = no reminder
+  reminder     Int?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   task         CrmTask   @relation(fields: [taskId], references: [id], onDelete: Cascade)

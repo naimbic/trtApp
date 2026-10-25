@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
@@ -196,19 +197,7 @@ const TaskPage = () => {
                                     {e && <form className="flex gap-2 pt-2" onSubmit={(ev) => { ev.preventDefault(); addSub() }}><Input size="sm" value={subName} placeholder={tr('Add a subtask')} onChange={(ev) => setSubName(ev.target.value)} /><Button size="sm" type="submit" icon={<TbPlus />}>{tr('Add')}</Button></form>}
                                 </div>
                             )}
-                            {tab === 'checklist' && (
-                                <div className="space-y-2">
-                                    {d.checklist.map((c) => (
-                                        <label key={c.id} className="group flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                                            <input type="checkbox" checked={c.finished} disabled={!e} onChange={(ev) => post('checklist', { action: 'toggle', itemId: c.id, finished: ev.target.checked })} className="h-4 w-4 accent-[var(--primary)]" />
-                                            <span className={classNames('flex-1 text-sm', c.finished && 'text-gray-400 line-through')}>{c.description}</span>
-                                            {e && <button type="button" className="text-gray-300 opacity-0 hover:text-red-500 group-hover:opacity-100" onClick={(ev) => { ev.preventDefault(); post('checklist', { action: 'delete', itemId: c.id }) }}><TbTrash /></button>}
-                                        </label>
-                                    ))}
-                                    {!d.checklist.length && <p className="text-sm text-gray-400">{tr('No checklist items yet.')}</p>}
-                                    {e && <form className="flex gap-2 pt-2" onSubmit={(ev) => { ev.preventDefault(); if (item.trim()) post('checklist', { action: 'add', description: item }).then(() => setItem('')) }}><Input size="sm" value={item} placeholder={tr('Add an item')} onChange={(ev) => setItem(ev.target.value)} /><Button size="sm" variant="solid" type="submit" disabled={!item.trim()}>{tr('Add')}</Button></form>}
-                                </div>
-                            )}
+                            {tab === 'checklist' && <ChecklistPanel items={d.checklist} staff={staff} canEdit={e} act={(op) => post('checklist', op)} />}
                             {tab === 'files' && <AttachmentsPanel relType="task" relId={id} canEdit={e} />}
                             {tab === 'time' && (
                                 <div className="space-y-4">

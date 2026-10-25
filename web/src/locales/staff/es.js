@@ -4217,5 +4217,20 @@ export default {
     "Align centre": "Centrar",
     "Align right": "Alinear a la derecha",
     "Highlight": "Resaltar",
-    "Text colour": "Color del texto"
+    "Text colour": "Color del texto",
+    "Add a step (@ to mention, # for a tag)": "Añadir un paso (@ para mencionar, # para una etiqueta)",
+    "Assign": "Asignar",
+    "Everything is done.": "Todo está hecho.",
+    "Hide done": "Ocultar hechos",
+    "Set a due date first": "Pon primero una fecha límite",
+    "Sort by date": "Ordenar por fecha",
+    "{a} of {b} done": "{a} de {b} hechos",
+    "{n} d late": "{n} d de retraso",
+    "No reminder": "Sin recordatorio",
+    "At the due time": "A la hora límite",
+    "1 hour before": "1 hora antes",
+    "1 day before": "1 día antes",
+    "2 days before": "2 días antes",
+    "done step shown": "paso hecho mostrado",
+    "done steps shown": "pasos hechos mostrados"
 }

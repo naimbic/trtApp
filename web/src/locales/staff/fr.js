@@ -4217,5 +4217,20 @@ export default {
     "Align centre": "Centrer",
     "Align right": "Aligner à droite",
     "Highlight": "Surligner",
-    "Text colour": "Couleur du texte"
+    "Text colour": "Couleur du texte",
+    "Add a step (@ to mention, # for a tag)": "Ajouter une étape (@ pour mentionner, # pour un tag)",
+    "Assign": "Assigner",
+    "Everything is done.": "Tout est terminé.",
+    "Hide done": "Masquer les terminées",
+    "Set a due date first": "Définissez d'abord une échéance",
+    "Sort by date": "Trier par date",
+    "{a} of {b} done": "{a} sur {b} terminées",
+    "{n} d late": "{n} j de retard",
+    "No reminder": "Aucun rappel",
+    "At the due time": "À l'échéance",
+    "1 hour before": "1 heure avant",
+    "1 day before": "1 jour avant",
+    "2 days before": "2 jours avant",
+    "done step shown": "étape terminée affichée",
+    "done steps shown": "étapes terminées affichées"
 }

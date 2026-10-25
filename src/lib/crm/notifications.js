@@ -27,10 +27,23 @@ export async function notificationFeed() {
         for (const t of rows) add('ticket', t.lastReply ? `Client replied on ticket #${t.legacyId}` : `New ticket #${t.legacyId}`, t.subject, t.lastReply || t.createdAt, `/crm/tickets/${t.id}`, 'purple')
     }
     if (staffId) { // colleagues who mentioned me (@name in a comment, note or message)
-        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, OR: [{ additionalData: 'mention' }, { additionalData: { startsWith: 'comment|' } }], createdAt: { gte: since(14) } }, orderBy: { createdAt: 'desc' }, take: 15 })
+        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, OR: [{ additionalData: 'mention' }, { additionalData: { startsWith: 'comment|' } }, { additionalData: { startsWith: 'assign|' } }], createdAt: { gte: since(14) } }, orderBy: { createdAt: 'desc' }, take: 15 })
         for (const m of ms) {
             if (m.additionalData === 'mention') add('mention', `${m.fromFullName || 'A colleague'} mentioned you`, m.description, m.createdAt, m.link, 'amber')
+            else if (m.additionalData.startsWith('assign|')) add('task', `${m.fromFullName || 'A colleague'} gave you a checklist step on “${m.additionalData.slice(7)}”`, m.description, m.createdAt, m.link, 'blue')
             else add('comment', `${m.fromFullName || 'A colleague'} commented on “${m.additionalData.slice(8)}”`, m.description, m.createdAt, m.link, 'blue')
+        }
+    }
+    if (staffId) { // my checklist steps: overdue, due today, or a reminder that has come
+        const steps = await prisma.crmTaskChecklistItem.findMany({ where: { assigned: staffId, finished: false, dueDate: { not: null } }, orderBy: { dueDate: 'asc' }, take: 20 })
+        const taskNames = Object.fromEntries((await prisma.crmTask.findMany({ where: { id: { in: [...new Set(steps.map((s) => s.taskId))] } }, select: { id: true, name: true } })).map((t) => [t.id, t.name]))
+        for (const st of steps) {
+            const due = new Date(st.dueDate), dueEnd = +new Date(due.toDateString()) + DAY
+            const remindAt = st.reminder == null ? null : +due - st.reminder * 60000
+            const late = +now >= dueEnd, soon = +now >= +today && +now < dueEnd
+            if (late) add('task', 'Checklist step overdue', `${st.description} · ${taskNames[st.taskId] || ''}`, today, `/crm/tasks/${st.taskId}`, 'red')
+            else if (soon) add('task', 'Checklist step due today', `${st.description} · ${taskNames[st.taskId] || ''}`, today, `/crm/tasks/${st.taskId}`, 'amber')
+            else if (remindAt !== null && +now >= remindAt) add('reminder', 'Reminder: checklist step', `${st.description} · ${taskNames[st.taskId] || ''}`, new Date(remindAt), `/crm/tasks/${st.taskId}`, 'amber')
         }
     }
     if (can('tasks') && staffId) {

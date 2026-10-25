@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -120,21 +121,9 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     )
 
     const checklist = detail && (
-        <div className="space-y-3">
-            {detail.checklist.map((c) => (
-                <div key={c.id} className="group flex items-center gap-2">
-                    <Checkbox checked={c.finished} onChange={(f) => act(() => post('checklist', { action: 'toggle', itemId: c.id, finished: f }))} />
-                    <span className={c.finished ? 'flex-1 text-gray-400 line-through' : 'flex-1'}>{c.description}</span>
-                    <Button size="xs" variant="plain" className="opacity-0 group-hover:opacity-100" icon={<TbTrash />} onClick={() => act(() => post('checklist', { action: 'delete', itemId: c.id }))} />
-                </div>
-            ))}
-            {!detail.checklist.length && <p className="text-sm text-gray-500">{tr("No checklist yet. Break the task into small steps.")}</p>}
-            <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (item.trim()) act(() => post('checklist', { action: 'add', description: item }).then(() => setItem(''))) }}>
-                <Input size="sm" placeholder={tr("Add an item")} value={item} onChange={(e) => setItem(e.target.value)} />
-                <Button size="sm" type="submit" icon={<TbPlus />}>{tr("Add")}</Button>
-            </form>
-        </div>
+        <ChecklistPanel items={detail.checklist} staff={staff} canEdit={!!canEdit} act={(op) => act(() => post('checklist', op))} />
     )
+
 
     const comments = detail && (
         <div className="space-y-4">

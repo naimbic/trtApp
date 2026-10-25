@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.0',
+        date: '2026-10-25',
+        title: 'A better task checklist: people, dates, reminders, drag and drop',
+        items: ['The checklist of a task has a new layout: a progress bar, a round tick for each step, the text editable in place, and for every step a due date chip (red when late, amber today, yellow tomorrow or soon, grey later), a reminder bell and the person it is given to.', 'Give a step to a team member: they are told in their bell, and the step shows on their notifications when it is late, due today or when its reminder time comes (at the due time, 1 hour, 1 day or 2 days before). The person a step is given to can tick it.', 'Drag a step by its handle to reorder, sort everything by date with one button, hide the done steps.', '@ mentions and # tags work in the step text (the colleague is told) and a mention in a step opens the chat when clicked.'],
+    },
+    {
         version: '0.106.2',
         date: '2026-10-25',
         title: 'Mentions in descriptions: highlight and notification',

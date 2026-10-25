@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.8',
+        date: '2026-10-25',
+        title: 'Settings: WhatsApp & Telegram is now in the menu',
+        items: ['Fixed: the Settings → WhatsApp & Telegram page (bot token, WhatsApp account, test sender) existed but was missing from the Settings menu, so it could not be found. It is now under Integrations.'],
+    },
+    {
         version: '0.107.7',
         date: '2026-10-25',
         title: 'Dashboard currency, HTML signature, Telegram, real mouse tracking',

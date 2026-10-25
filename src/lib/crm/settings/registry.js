@@ -35,7 +35,7 @@ export const SECTIONS = [
     { section: 'General', groups: ['general', 'company', 'localization', 'email'] },
     { section: 'Billing', groups: ['sales_general', 'invoices', 'estimates', 'proposals', 'purchase_orders', 'credit_notes', 'subscriptions', 'banks'] },
     { section: 'Configure features', groups: ['clients', 'tasks', 'tickets', 'leads'] },
-    { section: 'Integrations', groups: ['google', 'pusher'] },
+    { section: 'Integrations', groups: ['google', 'pusher', 'messaging'] },
     { section: 'More', groups: ['calendar', 'ai', 'pdf', 'e_sign', 'tags'] },
     { section: 'Automation', groups: ['cronjob'] },
 ]

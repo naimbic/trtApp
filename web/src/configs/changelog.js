@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.2',
+        date: '2026-10-25',
+        title: 'Checklist: an Edit button on each step',
+        items: ['Each checklist step now shows an Edit (pencil) button next to Delete when you hover it: it opens the text for editing in place (Enter saves, Escape cancels). Clicking the text still works too.'],
+    },
+    {
         version: '0.107.1',
         date: '2026-10-25',
         title: 'Tasks list as an agenda',

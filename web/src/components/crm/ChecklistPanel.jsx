@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbGripVertical, TbTrash, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
+import { TbGripVertical, TbTrash, TbPencil, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
@@ -123,6 +123,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
                                 <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />
                                 <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />
                                 <AssignMenu staff={staff} current={p} disabled={!canEdit} onPick={(id) => upd(c, { assigned: id })} />
+                                {canEdit && <button type="button" aria-label={tr('Edit')} title={tr('Edit')} onClick={() => setEditing({ id: c.id, text: c.description })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-gray-100 hover:text-primary group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbPencil /></button>}
                                 {canEdit && <button type="button" aria-label={tr('Delete')} title={tr('Delete')} onClick={() => act({ action: 'delete', itemId: c.id })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbTrash /></button>}
                             </div>
                         </div>

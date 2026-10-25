@@ -219,7 +219,8 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
     if (badOne) fail(`"${badOne}" is not a valid email address`)
 
     const finalSubject = String(subject || '').trim() || mergeFields(template.subject, ctx.data)
-    const html = await buildHtml(template.message, ctx.data)
+    const mine = staffId ? (await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { emailSignature: true } }))?.emailSignature : null
+    const html = await buildHtml(template.message, mine ? { ...ctx.data, email_signature: mine } : ctx.data, undefined, mine)
     if (kind === 'purchase_order' && attachPdf === undefined) attachPdf = true
     if (kind === 'invoice' && attachPdf === undefined && slug === 'invoice-payment-recorded') attachPdf = (await getOptions(['attach_invoice_to_payment_receipt_email']))('attach_invoice_to_payment_receipt_email') === '1'
     let attachments

@@ -22,7 +22,37 @@ export async function sendTelegram(chatId, text, s) {
     const c = s || (await settings())
     if (!c.telegram) return { sent: false, error: 'Telegram is not set up (Settings → WhatsApp & Telegram)' }
     const r = await post(`https://api.telegram.org/bot${c.token}/sendMessage`, { chat_id: String(chatId).trim(), text: String(text).slice(0, 3900), disable_web_page_preview: false })
-    return r.ok && r.json.ok ? { sent: true } : { sent: false, error: r.json.description || 'Telegram refused the message' }
+    if (r.ok && r.json.ok) return { sent: true }
+    const d = String(r.json.description || '')
+    // Telegram's own wording is short: say what to do
+    const error = /chat not found/i.test(d) ? 'Telegram does not know this chat id. Open the company bot in Telegram, press Start, and use your own number (ask @userinfobot for it)'
+        : /can't initiate|cannot initiate|bot was blocked|user is deactivated/i.test(d) ? 'The bot cannot write to you yet: open the company bot in Telegram and press Start (or unblock it)'
+        : /unauthorized|not found/i.test(d) || r.json.error_code === 401 || r.json.error_code === 404 ? 'The bot token in Settings is not right: copy it again from @BotFather'
+        : d || 'Telegram refused the message'
+    return { sent: false, error }
+}
+
+/** A notification of the bell (a mention, a comment, a checklist step given to you) also goes to the person's Telegram / WhatsApp when switched on in their profile. */
+export async function notifyStaffChannels(staffId, text) {
+    try {
+        if (!staffId || !text) return
+        const c = await settings()
+        if (!c.telegram && !c.whatsapp) return
+        const who = await prisma.crmStaff.findUnique({ where: { id: staffId } })
+        if (!who) return
+        const log = (to, r) => prisma.crmMailLog.create({ data: { to, subject: String(text).slice(0, 200), template: 'channel', status: r.sent ? 'sent' : 'failed', error: r.error || null } }).catch(() => {})
+        if (c.telegram && who.notifyTelegram && who.telegramChatId) log(`telegram:${who.telegramChatId}`, await sendTelegram(who.telegramChatId, text, c))
+        if (c.whatsapp && who.notifyWhatsapp && who.whatsapp) log(`whatsapp:${who.whatsapp}`, await sendWhatsapp(who.whatsapp, text, c))
+    } catch { /* never breaks the action behind it */ }
+}
+
+/** "Send me a test": a message to the channel saved in the person's own profile. */
+export async function testOwnChannel(staffId, channel) {
+    const who = await prisma.crmStaff.findUnique({ where: { id: staffId } })
+    if (!who) return { sent: false, error: 'No staff profile' }
+    const text = 'trtCRM: test message. Your notifications arrive here.'
+    if (channel === 'whatsapp') return who.whatsapp ? sendWhatsapp(who.whatsapp, text) : { sent: false, error: 'Add your WhatsApp number in the Profile tab first' }
+    return who.telegramChatId ? sendTelegram(who.telegramChatId, text) : { sent: false, error: 'Enter your Telegram chat id first' }
 }
 
 /** WhatsApp Cloud API: a template message when a template name is set (needed outside the 24 hour window), else a plain text. */

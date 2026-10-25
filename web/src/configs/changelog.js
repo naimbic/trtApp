@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.7',
+        date: '2026-10-25',
+        title: 'Dashboard currency, HTML signature, Telegram, real mouse tracking',
+        items: [
+            'Fixed: the dashboard went back to MAD only because other pages (invoices, payments...) overwrote your currency choice when you opened them. Pages now only set a currency when you have not picked one, so All currencies stays.',
+            'Profile: the email signature can be written in the editor or pasted as HTML code (tables, inline styles, links, https pictures), with a live preview. Scripts and unsafe code are removed on save. Emails you send now use your own signature.',
+            'Telegram: mentions, comments and checklist steps given to you now also arrive on Telegram (before, only emails did). A "Send me a test" button in your profile tells you exactly what is missing (bot not set up in Settings, chat id, or Start not pressed on the bot).',
+            'Team hours: a new Mouse / keyboard column shows the time the mouse or keyboard really moved, and its share of the active time. Only movement inside the CRM tab is counted, per second, never what is typed.',
+        ],
+    },
+    {
         version: '0.107.6',
         date: '2026-10-25',
         title: 'Checklist dates: they can be set and changed',

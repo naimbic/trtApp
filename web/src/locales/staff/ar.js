@@ -4232,5 +4232,16 @@ export default {
     "1 day before": "قبل يوم",
     "2 days before": "قبل يومين",
     "done step shown": "خطوة منتهية معروضة",
-    "done steps shown": "خطوات منتهية معروضة"
+    "done steps shown": "خطوات منتهية معروضة",
+    "Editor": "المحرر",
+    "HTML code": "كود HTML",
+    "Mouse / keyboard": "الماوس / لوحة المفاتيح",
+    "Paste the HTML of your signature. Tables, inline styles, links and pictures (https) are kept; scripts and unsafe code are removed when you save.": "الصق كود HTML للتوقيع. تُحفظ الجداول والأنماط المضمنة والروابط والصور (https)، وتُحذف السكربتات والأكواد غير الآمنة عند الحفظ.",
+    "Send me a test": "أرسل لي رسالة اختبار",
+    "Test message sent: check Telegram": "تم إرسال رسالة الاختبار: تحقق من تيليغرام",
+    "Time the mouse or keyboard really moved, and its share of the active time": "الوقت الذي تحرك فيه الماوس أو لوحة المفاتيح فعليًا ونسبته من الوقت النشط",
+    "moving": "نشاط فعلي",
+    "Telegram is not set up (Settings → WhatsApp & Telegram)": "لم يتم إعداد تيليغرام (الإعدادات ← واتساب وتيليغرام)",
+    "Enter your Telegram chat id first": "أدخل معرّف دردشة تيليغرام أولاً",
+    "Telegram does not know this chat id. Open the company bot in Telegram, press Start, and use your own number (ask @userinfobot for it)": "لا يعرف تيليغرام معرّف الدردشة هذا. افتح بوت الشركة في تيليغرام واضغط Start واستخدم رقمك الخاص (اطلبه من @userinfobot)"
 }

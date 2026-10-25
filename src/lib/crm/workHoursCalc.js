@@ -40,24 +40,26 @@ export function summarize(days, schedule, from, to, tz, today = to) {
     const byDay = Object.fromEntries(days.map((d) => [d.day, d]))
     const start = toMinutes(schedule.start)
     const rows = []
-    let active = 0, expected = 0, overtime = 0, worked = 0, late = 0, firstSum = 0, lastSum = 0
+    let input = 0, active = 0, expected = 0, overtime = 0, worked = 0, late = 0, firstSum = 0, lastSum = 0
     for (const key of dayKeys(from, to)) {
         const d = byDay[key]
         const exp = expectedHours(key, schedule)
         const hours = d ? d.activeSeconds / 3600 : 0
+        const moved = d ? (d.inputSeconds || 0) / 3600 : 0
         const first = d ? localParts(d.firstSeen, tz).minutes : null
         const last = d ? localParts(d.lastSeen, tz).minutes : null
         const counted = d && d.activeSeconds >= MIN_WORK_SECONDS
         const isLate = !!counted && exp > 0 && first > start + (schedule.lateAfterMin ?? 15)
         if (key <= today) expected += exp
         active += hours
+        input += moved
         overtime += Math.max(0, hours - exp)
         if (counted) { worked++; firstSum += first; lastSum += last; if (isLate) late++ }
-        rows.push({ day: key, expected: exp, hours: Math.round(hours * 100) / 100, firstSeen: d?.firstSeen || null, lastSeen: d?.lastSeen || null, first, last, late: isLate })
+        rows.push({ day: key, expected: exp, hours: Math.round(hours * 100) / 100, input: Math.round(moved * 100) / 100, firstSeen: d?.firstSeen || null, lastSeen: d?.lastSeen || null, first, last, late: isLate })
     }
     const r2 = (n) => Math.round(n * 100) / 100
     return {
         rows,
-        totals: { active: r2(active), expected: r2(expected), ratio: expected > 0 ? Math.round((active / expected) * 100) : null, overtime: r2(overtime), worked, late, avgFirst: worked ? Math.round(firstSum / worked) : null, avgLast: worked ? Math.round(lastSum / worked) : null },
+        totals: { active: r2(active), input: r2(input), moving: active > 0 ? Math.min(100, Math.round((input / active) * 100)) : null, expected: r2(expected), ratio: expected > 0 ? Math.round((active / expected) * 100) : null, overtime: r2(overtime), worked, late, avgFirst: worked ? Math.round(firstSum / worked) : null, avgLast: worked ? Math.round(lastSum / worked) : null },
     }
 }

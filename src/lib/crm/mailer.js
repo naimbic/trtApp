@@ -60,9 +60,9 @@ const escapeHtml = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&am
 export const stripHtml = (h) => String(h || '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<br\s*\/?>|<\/p>|<\/div>|<\/tr>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n\s*\n+/g, '\n\n').trim()
 
 /** Perfex layout: header + message + signature + footer. */
-export async function buildHtml(message, data, fallback) {
+export async function buildHtml(message, data, fallback, personalSignature = null) {
     const o = await getOptions(['email_header', 'email_footer', 'email_signature'])
-    const sig = o('email_signature')
+    const sig = personalSignature || o('email_signature') // the sender's own signature (Profile) wins over the company one
     // the signature is tidied for phones whatever it contains: a capped logo, stacked on a small screen
     const wrapped = sig ? `<style>${SIGNATURE_CSS}</style><div class="sig">${sig}</div>` : ''
     return mergeFields(`${o('email_header')}${message}${wrapped}${o('email_footer')}`, data, fallback)

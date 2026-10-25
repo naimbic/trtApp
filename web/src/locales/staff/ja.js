@@ -4232,5 +4232,16 @@ export default {
     "1 day before": "1日前",
     "2 days before": "2日前",
     "done step shown": "完了ステップを表示",
-    "done steps shown": "完了ステップを表示"
+    "done steps shown": "完了ステップを表示",
+    "Editor": "エディタ",
+    "HTML code": "HTMLコード",
+    "Mouse / keyboard": "マウス／キーボード",
+    "Paste the HTML of your signature. Tables, inline styles, links and pictures (https) are kept; scripts and unsafe code are removed when you save.": "署名のHTMLを貼り付けてください。表、インラインスタイル、リンク、画像（https）は保持され、スクリプトや安全でないコードは保存時に削除されます。",
+    "Send me a test": "テストを送信",
+    "Test message sent: check Telegram": "テストメッセージを送信しました。Telegramを確認してください",
+    "Time the mouse or keyboard really moved, and its share of the active time": "マウスまたはキーボードが実際に動いた時間と、アクティブ時間に占める割合",
+    "moving": "操作中",
+    "Telegram is not set up (Settings → WhatsApp & Telegram)": "Telegramが設定されていません（設定 → WhatsAppとTelegram）",
+    "Enter your Telegram chat id first": "先にTelegramのチャットIDを入力してください",
+    "Telegram does not know this chat id. Open the company bot in Telegram, press Start, and use your own number (ask @userinfobot for it)": "このチャットIDはTelegramに認識されていません。Telegramで会社のボットを開いてStartを押し、ご自身の番号（@userinfobotで確認）を使ってください"
 }

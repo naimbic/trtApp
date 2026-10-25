@@ -18,20 +18,21 @@ export async function getSchedule() {
 }
 
 /** Heartbeat from the open CRM of a signed-in team member who is really using it: moves "last seen" and adds the active time. */
-export async function recordPing() {
+export async function recordPing({ input = 0 } = {}) {
     const session = await auth()
     const staffId = await getStaffId(session)
     if (!staffId) return { ok: false }
     const { tz } = await getSchedule()
     const now = new Date()
+    const moved = Math.max(0, Math.min(60, Math.round(Number(input) || 0))) // seconds of real mouse / keyboard movement since the last ping
     const day = localParts(now, tz).key
     const row = await prisma.crmWorkDay.findUnique({ where: { staffId_day: { staffId, day } } })
     if (!row) {
-        await prisma.crmWorkDay.create({ data: { staffId, day, firstSeen: now, lastSeen: now, activeSeconds: 0, pings: 1 } }).catch(() => {})
+        await prisma.crmWorkDay.create({ data: { staffId, day, firstSeen: now, lastSeen: now, activeSeconds: 0, pings: 1, inputSeconds: moved } }).catch(() => {})
         return { ok: true }
     }
     const add = pingSeconds(+now - +row.lastSeen)
-    await prisma.crmWorkDay.update({ where: { id: row.id }, data: { lastSeen: now, activeSeconds: { increment: add }, pings: { increment: 1 } } })
+    await prisma.crmWorkDay.update({ where: { id: row.id }, data: { lastSeen: now, activeSeconds: { increment: add }, pings: { increment: 1 }, inputSeconds: { increment: moved } } })
     return { ok: true }
 }
 

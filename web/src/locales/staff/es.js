@@ -4232,5 +4232,16 @@ export default {
     "1 day before": "1 día antes",
     "2 days before": "2 días antes",
     "done step shown": "paso hecho mostrado",
-    "done steps shown": "pasos hechos mostrados"
+    "done steps shown": "pasos hechos mostrados",
+    "Editor": "Editor",
+    "HTML code": "Código HTML",
+    "Mouse / keyboard": "Ratón / teclado",
+    "Paste the HTML of your signature. Tables, inline styles, links and pictures (https) are kept; scripts and unsafe code are removed when you save.": "Pegue el HTML de su firma. Se conservan tablas, estilos en línea, enlaces e imágenes (https); los scripts y el código inseguro se eliminan al guardar.",
+    "Send me a test": "Enviarme una prueba",
+    "Test message sent: check Telegram": "Mensaje de prueba enviado: revise Telegram",
+    "Time the mouse or keyboard really moved, and its share of the active time": "Tiempo real de movimiento del ratón o teclado y su parte del tiempo activo",
+    "moving": "en movimiento",
+    "Telegram is not set up (Settings → WhatsApp & Telegram)": "Telegram no está configurado (Ajustes → WhatsApp y Telegram)",
+    "Enter your Telegram chat id first": "Introduzca primero su ID de chat de Telegram",
+    "Telegram does not know this chat id. Open the company bot in Telegram, press Start, and use your own number (ask @userinfobot for it)": "Telegram no conoce este ID. Abra el bot de la empresa en Telegram, pulse Start y use su propio número (pídalo a @userinfobot)"
 }

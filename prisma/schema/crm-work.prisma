@@ -510,6 +510,8 @@ model CrmWorkDay {
   lastSeen      DateTime
   activeSeconds Int      @default(0)
   pings         Int      @default(0)
+  /// seconds in which the mouse or keyboard really moved (counted by the open CRM tab, never what is typed)
+  inputSeconds  Int      @default(0)
 
   @@unique([staffId, day])
   @@index([day])

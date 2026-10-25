@@ -49,3 +49,16 @@ test('colour, highlight and alignment survive, anything else in a style does not
     const bad = cleanHtml('<span style="color: red; background: url(javascript:alert(1))">x</span><span style="color:expression(alert(1))">y</span>')
     assert.doesNotMatch(bad, /url|expression|javascript/)
 })
+
+test('cleanEmailHtml keeps a signature table with styles and pictures, drops anything active', async () => {
+    const { cleanEmailHtml } = await import('./richText.js')
+    const sig = '<table cellpadding="0" width="480"><tr><td width="90" valign="top"><img src="https://x.com/logo.png" width="80" alt="logo" onerror="x()"></td><td style="font-family:Arial;font-size:13px;color:#4b5563;background:url(javascript:alert(1))"><b>Naim</b><br><a href="https://trt.ma" onclick="x()">trt.ma</a><script>alert(1)</script></td></tr></table>'
+    const out = cleanEmailHtml(sig)
+    assert.match(out, /<table width="480" cellpadding="0">/)
+    assert.match(out, /<img src="https:\/\/x\.com\/logo\.png" alt="logo" width="80">/)
+    assert.match(out, /font-family:Arial;font-size:13px;color:#4b5563/)
+    assert.match(out, /<a href="https:\/\/trt\.ma" target="_blank"/)
+    assert.doesNotMatch(out, /script|onclick|onerror|javascript|url\(/)
+    assert.equal(cleanEmailHtml('Best regards,\nNaim'), 'Best regards,<br>Naim')
+    assert.doesNotMatch(cleanEmailHtml('<img src="javascript:alert(1)"><a href="javascript:x()">y</a>'), /javascript/)
+})

@@ -16,6 +16,8 @@ import PasswordInput from '@/components/shared/PasswordInput'
 import { useAuth } from '@/auth'
 import Alert from '@/components/ui/Alert'
 import ImageUpload from '@/components/crm/ImageUpload'
+import RichEditor from '@/components/crm/RichEditor'
+import { cleanEmailHtml } from '@/lib/crm/richText'
 import ScoreRing from '@/components/crm/ScoreRing'
 import { countryList } from '@/constants/countries.constant'
 import { useSessionUser } from '@/store/authStore'
@@ -63,6 +65,28 @@ const Section = ({ title, desc, children }) => (
 const completion = (u, s) => {
     const checks = [u.image, u.firstName, u.lastName, u.title, u.phone, u.country, u.city, s?.bio, s?.timezone, s?.linkedin || s?.website]
     return Math.round((checks.filter(Boolean).length / checks.length) * 100)
+}
+
+/** The personal email signature: a visual editor or the HTML code (tables, inline styles and https pictures are kept, scripts are not), with a preview. */
+const SignatureField = ({ value, onChange, fullName }) => {
+    const richOnly = !/<table|style\s*=/i.test(value || '')
+    const [mode, setMode] = useState(richOnly ? 'editor' : 'code')
+    const html = cleanEmailHtml(value || '')
+    return (
+        <div>
+            <div className="mb-2 flex items-center justify-between gap-3">
+                <label className="form-label">{tr("Signature")}</label>
+                <Segment size="sm" value={mode} onChange={(v) => v && setMode(Array.isArray(v) ? v[0] : v)}>
+                    <Segment.Item value="editor">{tr("Editor")}</Segment.Item><Segment.Item value="code">{tr("HTML code")}</Segment.Item>
+                </Segment>
+            </div>
+            {mode === 'editor'
+                ? <RichEditor minHeight={110} value={value} placeholder={`${tr('Best regards,')}\n${fullName}`} onChange={onChange} />
+                : <textarea spellCheck={false} rows={9} maxLength={20000} value={value || ''} onChange={(e) => onChange(e.target.value)} placeholder={'<table>\n  <tr><td><img src="https://…/logo.png" width="80"></td><td><b>' + fullName + '</b><br>…</td></tr>\n</table>'} className="w-full rounded-lg border border-gray-300 bg-white p-3 font-mono text-xs leading-relaxed outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800" />}
+            <p className="mt-1 text-xs text-gray-400">{mode === 'code' ? tr("Paste the HTML of your signature. Tables, inline styles, links and pictures (https) are kept; scripts and unsafe code are removed when you save.") : tr("Added at the end of emails you send from the CRM.")}</p>
+            {html && <div className="mt-3"><div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">{tr("Preview")}</div><iframe title={tr("Preview")} sandbox="" srcDoc={`<body style="margin:12px;font-family:Arial,sans-serif;font-size:13px;color:#374151">${html}</body>`} className="h-40 w-full rounded-xl border border-dashed border-gray-300 bg-white dark:border-gray-600" /></div>}
+        </div>
+    )
 }
 
 const Profile = () => {
@@ -202,8 +226,7 @@ const Profile = () => {
                             <Field label={tr("Text direction")}><Segment value={s.direction || 'ltr'} onChange={(v) => v && setS({ direction: v })}><Segment.Item value="ltr">{tr("Left to right")}</Segment.Item><Segment.Item value="rtl">{tr("Right to left")}</Segment.Item></Segment></Field>
                         </Section>
                         <Section title={tr("Email signature")} desc={tr("Added at the end of emails you send from the CRM.")}>
-                            <Field label={tr("Signature")} className="md:col-span-2"><Input textArea rows={4} maxLength={2000} placeholder={'Best regards,\n' + fullName} value={s.emailSignature} onChange={(e) => setS({ emailSignature: e.target.value })} /></Field>
-                            {s.emailSignature && <div className="md:col-span-2"><div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">{tr("Preview")}</div><div className="whitespace-pre-line rounded-xl border border-dashed border-gray-300 p-4 text-sm dark:border-gray-600">{s.emailSignature}</div></div>}
+                            <div className="md:col-span-2"><SignatureField value={s.emailSignature} onChange={(v) => setS({ emailSignature: v })} fullName={fullName} /></div>
                         </Section>
                     </TabContent>
                     <TabContent value="security"><Security embedded /></TabContent>
@@ -223,7 +246,7 @@ const Profile = () => {
                             <div className="divide-y divide-gray-100 dark:divide-gray-700">
                                 <div className="flex items-center justify-between gap-4 py-3.5"><div><div className="font-semibold">{tr("Email")}</div><div className="text-sm text-gray-500">{u.email}</div></div><Switcher checked={s.notifyEmail !== false} onChange={(v) => setS({ notifyEmail: v })} /></div>
                                 <div className="flex items-center justify-between gap-4 py-3.5"><div><div className="font-semibold">{tr("WhatsApp")}</div><div className="text-sm text-gray-500">{s.whatsapp ? s.whatsapp : tr("Add your WhatsApp number in the Profile tab first.")}</div></div><Switcher checked={!!s.notifyWhatsapp} disabled={!s.whatsapp} onChange={(v) => setS({ notifyWhatsapp: v })} /></div>
-                                <div className="flex flex-wrap items-center justify-between gap-4 py-3.5"><div><div className="font-semibold">{tr("Telegram")}</div><div className="text-sm text-gray-500">{tr("Send /start to the company bot, then enter your chat id (for example from @userinfobot).")}</div></div><div className="flex items-center gap-3"><div className="w-44"><Input size="sm" placeholder="123456789" value={s.telegramChatId || ''} onChange={(e) => setS({ telegramChatId: e.target.value })} /></div><Switcher checked={!!s.notifyTelegram} disabled={!String(s.telegramChatId || '').trim()} onChange={(v) => setS({ notifyTelegram: v })} /></div></div>
+                                <div className="flex flex-wrap items-center justify-between gap-4 py-3.5"><div><div className="font-semibold">{tr("Telegram")}</div><div className="text-sm text-gray-500">{tr("Send /start to the company bot, then enter your chat id (for example from @userinfobot).")}</div></div><div className="flex items-center gap-3"><div className="w-44"><Input size="sm" placeholder="123456789" value={s.telegramChatId || ''} onChange={(e) => setS({ telegramChatId: e.target.value })} /></div><Button size="xs" disabled={!String(s.telegramChatId || '').trim()} onClick={async () => { try { await api('/api/crm/profile/test-channel', { method: 'POST', body: { channel: 'telegram' } }); notify('success', tr("Test message sent: check Telegram")) } catch (e) { notify('danger', e.message) } }}>{tr("Send me a test")}</Button><Switcher checked={!!s.notifyTelegram} disabled={!String(s.telegramChatId || '').trim()} onChange={(v) => setS({ notifyTelegram: v })} /></div></div>
                             </div>
                         </Card>
                     </TabContent>

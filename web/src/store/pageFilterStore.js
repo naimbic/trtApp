@@ -44,6 +44,7 @@ export function useRegisterCurrency(rawOptions, value, onChange) {
     const picked = useDashFilters((s) => s.currencyId)
     useEffect(() => { useDashFilters.setState({ currencies: options }) }, [sig]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (picked && options.some((o) => o.id === picked) && picked !== value) onChange(picked) }, [picked, sig]) // eslint-disable-line react-hooks/exhaustive-deps
-    useEffect(() => { if (value && value !== picked && !options.some((o) => o.id === picked)) useDashFilters.setState({ currencyId: value }) }, [sig, value]) // eslint-disable-line react-hooks/exhaustive-deps
+    // a page never overwrites what the person chose in the bar (ALL included); it only fills it when nothing was chosen yet
+    useEffect(() => { if (value && !picked) useDashFilters.setState({ currencyId: value }) }, [sig, value]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => () => useDashFilters.setState({ currencies: [] }), [])
 }

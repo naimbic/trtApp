@@ -3,6 +3,8 @@ import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
 import { notifyComment, notifyNewMentions } from '@/lib/crm/mentionsApi'
+import { notifyStaffChannels } from '@/lib/crm/channels'
+import { publicBase } from '@/lib/crm/shortLinks'
 import { storeRich } from '@/lib/crm/richText'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 
@@ -391,7 +393,10 @@ export async function checklist(id, op) {
     const mine = (item) => !!a.staffId && stepPeople(item || {}).includes(a.staffId)
     const notify = async (people, text) => {
         // each person the step is given to is told (bell), and anyone named with @ in the text
-        for (const assigned of people.filter((x) => x !== a.staffId)) await prisma.crmNotification.create({ data: { toUserId: assigned, fromUserId: a.staffId, fromFullName: session.user.name || null, description: String(text || '').slice(0, 160), link: `/crm/tasks/${id}`, additionalData: `assign|${String(task.name || '').slice(0, 100)}`, isRead: false } })
+        for (const assigned of people.filter((x) => x !== a.staffId)) {
+            await prisma.crmNotification.create({ data: { toUserId: assigned, fromUserId: a.staffId, fromFullName: session.user.name || null, description: String(text || '').slice(0, 160), link: `/crm/tasks/${id}`, additionalData: `assign|${String(task.name || '').slice(0, 100)}`, isRead: false } })
+            notifyStaffChannels(assigned, `${session.user.name || 'A colleague'} gave you a checklist step on “${String(task.name || '')}”: ${String(text || '').slice(0, 160)}\n${publicBase()}/crm/tasks/${id}`)
+        }
         await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text, prev: '', link: `/crm/tasks/${id}`, subject: task.name })
     }
     if (op.action === 'toggle') {

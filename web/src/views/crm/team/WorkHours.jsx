@@ -46,7 +46,7 @@ export const WorkChart = ({ wh, title }) => {
                     {rows.map((r) => {
                         const used = Math.min(r.hours, r.expected)
                         const over = Math.max(0, r.hours - r.expected)
-                        const tip = `${dayjs(r.day).format('ddd DD MMM')} · ${r.hours ? hm(r.hours) : tr('No activity')}${r.expected ? ` / ${hm(r.expected)}` : ''}${r.first !== null ? ` · ${tr('Opened')} ${clock(r.first)}, ${tr('Last active')} ${clock(r.last)}` : ''}`
+                        const tip = `${dayjs(r.day).format('ddd DD MMM')} · ${r.hours ? hm(r.hours) : tr('No activity')}${r.input ? ` (${tr('moving')} ${hm(r.input)})` : ''}${r.expected ? ` / ${hm(r.expected)}` : ''}${r.first !== null ? ` · ${tr('Opened')} ${clock(r.first)}, ${tr('Last active')} ${clock(r.last)}` : ''}`
                         return (
                             <div key={r.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end" title={tip}>
                                 <div className="relative flex w-full flex-1 flex-col justify-end">
@@ -132,7 +132,7 @@ const WorkHours = () => {
                 <Table hoverable>
                     <THead>
                         <Tr>
-                            <Th className="w-10">#</Th><Th>{tr('Member')}</Th><Th>{tr('Days worked')}</Th><Th>{tr('Active hours')}</Th><Th className="min-w-[180px]">{tr('Against the working week')}</Th>
+                            <Th className="w-10">#</Th><Th>{tr('Member')}</Th><Th>{tr('Days worked')}</Th><Th>{tr('Active hours')}</Th><Th>{tr('Mouse / keyboard')}</Th><Th className="min-w-[180px]">{tr('Against the working week')}</Th>
                             <Th>{tr('Overtime')}</Th><Th>{tr('Usually opens at')}</Th><Th>{tr('Usually leaves at')}</Th><Th>{tr('Late')}</Th>
                         </Tr>
                     </THead>
@@ -150,6 +150,7 @@ const WorkHours = () => {
                                     </Td>
                                     <Td>{t.worked}</Td>
                                     <Td className="font-semibold">{hm(t.active)}</Td>
+                                    <Td title={tr('Time the mouse or keyboard really moved, and its share of the active time')} className="whitespace-nowrap">{t.moving === null || t.moving === undefined ? '–' : <><span className="font-semibold">{hm(t.input)}</span> <span className="text-xs text-gray-400">{t.moving}%</span></>}</Td>
                                     <Td>
                                         <div className="flex items-center gap-2">
                                             <div className="h-2 w-28 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className={`h-full rounded-full ${t.ratio > 100 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(100, t.ratio || 0)}%` }} /></div>

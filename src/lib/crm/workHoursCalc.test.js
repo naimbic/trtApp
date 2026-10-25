@@ -37,3 +37,12 @@ test('summary: hours, overtime, late days and averages', () => {
     assert.equal(toMinutes('09:30'), 570)
     assert.equal(fmtMinutes(570), '09:30')
 })
+
+test('summarize adds the time the mouse or keyboard really moved, and its share of the active time', async () => {
+    const { summarize, DEFAULT_SCHEDULE } = await import('./workHoursCalc.js')
+    const d = { day: '2026-10-19', firstSeen: new Date('2026-10-19T09:00:00Z'), lastSeen: new Date('2026-10-19T17:00:00Z'), activeSeconds: 8 * 3600, inputSeconds: 4 * 3600 }
+    const s = summarize([d], DEFAULT_SCHEDULE, '2026-10-19', '2026-10-19', 'UTC', '2026-10-19')
+    assert.equal(s.rows[0].input, 4)
+    assert.equal(s.totals.input, 4)
+    assert.equal(s.totals.moving, 50)
+})

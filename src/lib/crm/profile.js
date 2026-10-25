@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { cleanEmailHtml } from '@/lib/crm/richText'
 import { auth } from '@/auth'
 import bcrypt from 'bcryptjs'
 import { PermissionError, requirePermission, isCrmAdmin, getStaffId, hasCap } from '@/lib/crm/permissions'
@@ -90,7 +91,7 @@ export async function updateProfile(body) {
     if ('timezone' in s) { const v = clean(s.timezone, 60); if (v && TIMEZONES.size && !TIMEZONES.has(v)) fail('Unknown time zone'); staffData.timezone = v || null }
     if ('defaultLanguage' in s) staffData.defaultLanguage = clean(s.defaultLanguage, 30) || null
     if ('direction' in s) staffData.direction = s.direction === 'rtl' ? 'rtl' : 'ltr'
-    if ('emailSignature' in s) staffData.emailSignature = clean(s.emailSignature, 2000) || null
+    if ('emailSignature' in s) staffData.emailSignature = cleanEmailHtml(s.emailSignature).slice(0, 20000) || null
 
     if (body.preferences) {
         const cur = mergePrefs(staff?.preferences), n = body.preferences.notify || {}, d = body.preferences.display || {}

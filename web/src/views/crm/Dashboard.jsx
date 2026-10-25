@@ -225,12 +225,14 @@ const BusinessDashboard = () => {
                 setError(null)
                 const used = Object.keys(d.invoices?.byCurrency || {})
                 const realCur = d.currencies.filter((c) => used.includes(c.id))
-                setCurrencies(realCur.length > 1 ? [...realCur, { id: 'all', name: 'ALL' }] : realCur)
-                // keep the person's choice (ALL included); fall back to ALL with several currencies, else the only one
+                const several = d.currencies.length > 1 // the company has more than one currency: ALL (everything in the base currency) is always offered
+                const shown = realCur.length ? realCur : d.currencies.slice(0, 1)
+                setCurrencies(several ? [...(realCur.length > 1 ? realCur : d.currencies), { id: 'all', name: 'ALL' }] : shown)
+                // keep the person's choice (ALL included); otherwise ALL with several currencies, else the only one
                 const picked = useDashFilters.getState().currencyId
-                const valid = used.includes(picked) || (picked === 'all' && realCur.length > 1)
+                const valid = (picked === 'all' && several) || d.currencies.some((c) => c.id === picked)
                 if (!valid) {
-                    if (realCur.length > 1) setCurrency('all')
+                    if (several) setCurrency('all')
                     else { const def = d.currencies.find((c) => c.isDefault && used.includes(c.id)) || d.currencies.find((c) => used.includes(c.id)); setCurrency(def?.id || used[0] || null) }
                 }
             })

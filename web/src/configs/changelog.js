@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.106.1',
+        date: '2026-10-25',
+        title: 'Text colours and highlight in the editor; dialogs above popups',
+        items: ['The rich text editor has more options: text colour and highlight (a palette of colours, or any colour), left / centre / right alignment, and Clear formatting. Colours are kept when saved and shown in comments, notes and descriptions; only plain colour values are accepted, nothing else from a style.', 'Fixed: a dialog opened from the task or lead popup (for example Files > From files, or a delete confirmation) opened behind the blurred popup; dialogs, tooltips and menus now show above the popup.'],
+    },
+    {
         version: '0.106.0',
         date: '2026-10-25',
         title: 'Rich text editor and file upload in tasks, leads and projects',

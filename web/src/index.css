@@ -15,3 +15,8 @@
 .rich-view h2, .rich-view h3 { font-size: 1.1em; margin: .4em 0 .2em; }
 .rich-view .mention { border-radius: 4px; padding: 0 4px; font-weight: 600; background: color-mix(in srgb, var(--rp-accent, #2563eb) 14%, transparent); color: var(--rp-accent, #2563eb); cursor: pointer; }
 .rich-view .hashtag { font-weight: 600; color: #d97706; }
+
+/* layers over the Rapport popups (task, lead...: z-index 110): a dialog opened from a popup (Files from the Space, delete confirmations...), tooltips and floating menus must show on top, not under */
+.dialog-portal .dialog-overlay { z-index: 130 !important; }
+[data-floating-ui-portal] > * { z-index: 135 !important; }
+.tooltip { z-index: 140 !important; }

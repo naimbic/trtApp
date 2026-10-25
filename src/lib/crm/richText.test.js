@@ -40,3 +40,12 @@ test('storeRich: safe HTML or plain text, nothing for an empty box', async () =>
     assert.equal(storeRich('<p>Hi <script>x()</script><b>there</b></p>'), '<p>Hi <b>there</b></p>')
     assert.match(storeRich('<img src="/api/x.webp" alt="a">'), /<img src="\/api\/x\.webp"/)
 })
+
+test('colour, highlight and alignment survive, anything else in a style does not', async () => {
+    const { cleanHtml } = await import('./richText.js')
+    assert.match(cleanHtml('<p><span style="color: #dc2626">red</span></p>'), /<span style="color:#dc2626">red<\/span>/)
+    assert.match(cleanHtml('<mark data-color="#fde047" style="background-color: #fde047; color: inherit">y</mark>'), /<mark style="background-color:#fde047">y<\/mark>/)
+    assert.match(cleanHtml('<p style="text-align: center">c</p>'), /<p style="text-align:center">c<\/p>/)
+    const bad = cleanHtml('<span style="color: red; background: url(javascript:alert(1))">x</span><span style="color:expression(alert(1))">y</span>')
+    assert.doesNotMatch(bad, /url|expression|javascript/)
+})

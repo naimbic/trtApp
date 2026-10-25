@@ -6,7 +6,12 @@ import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
-import { TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPhoto, TbArrowBackUp, TbArrowForwardUp } from 'react-icons/tb'
+import TextStyle from '@tiptap/extension-text-style'
+import Color from '@tiptap/extension-color'
+import Highlight from '@tiptap/extension-highlight'
+import TextAlign from '@tiptap/extension-text-align'
+import { createPortal } from 'react-dom'
+import { TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPhoto, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
 import { notify } from '@/views/crm/kit/api'
@@ -21,6 +26,41 @@ const uploadImage = async (file) => {
     const j = await r.json().catch(() => ({}))
     if (!r.ok) throw new Error(j.error || tr('Upload failed, try again'))
     return j.url
+}
+
+const TEXT_COLORS = ['#111827', '#6b7280', '#dc2626', '#ea580c', '#d97706', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777']
+const MARK_COLORS = ['#fef08a', '#fed7aa', '#fecaca', '#bbf7d0', '#a5f3fc', '#bfdbfe', '#ddd6fe', '#fbcfe8']
+
+/** A toolbar button that opens a small palette of colours (and a free colour) under it. */
+const SwatchMenu = ({ title, icon, colors, current, onPick, onClear, indicator }) => {
+    const [open, setOpen] = useState(null)
+    const btn = useRef(null)
+    useEffect(() => {
+        if (!open) return
+        const away = (e) => { if (!btn.current?.contains(e.target) && !e.target.closest?.('[data-swatches]')) setOpen(null) }
+        document.addEventListener('pointerdown', away, true)
+        return () => document.removeEventListener('pointerdown', away, true)
+    }, [open])
+    const show = () => { const r = btn.current.getBoundingClientRect(); setOpen({ left: Math.min(r.left, window.innerWidth - 200), top: r.bottom + 4 }) }
+    return (
+        <>
+            <button ref={btn} type="button" title={title} aria-label={title} onMouseDown={(e) => e.preventDefault()} onClick={() => (open ? setOpen(null) : show())}
+                className={classNames('relative grid size-7 place-items-center rounded-md text-[17px] transition', open || current ? 'bg-primary/15 text-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700')}>
+                {icon}
+                <i className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-full" style={{ background: indicator || current || 'transparent' }} />
+            </button>
+            {open && createPortal(
+                <div data-swatches style={{ position: 'fixed', left: open.left, top: open.top, zIndex: 100000, width: 188 }} onMouseDown={(e) => e.preventDefault()} className="rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-600 dark:bg-gray-800">
+                    <div className="grid grid-cols-5 gap-1.5">
+                        {colors.map((c) => <button key={c} type="button" aria-label={c} onClick={() => { onPick(c); setOpen(null) }} className="size-6 rounded-full border border-black/10" style={{ background: c }} />)}
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 border-t border-gray-100 pt-2 dark:border-gray-700">
+                        <input type="color" aria-label={title} value={/^#[0-9a-f]{6}$/i.test(current || '') ? current : '#2563eb'} onChange={(e) => onPick(e.target.value)} className="h-6 w-8 cursor-pointer rounded border border-gray-200 bg-transparent p-0.5" />
+                        <button type="button" className="ml-auto text-xs font-semibold text-gray-500 hover:text-primary" onClick={() => { onClear(); setOpen(null) }}>{tr('Remove')}</button>
+                    </div>
+                </div>, document.body)}
+        </>
+    )
 }
 
 const Btn = ({ on, active, title, children, disabled }) => (
@@ -54,6 +94,10 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
         extensions: [
             StarterKit.configure({ heading: { levels: [2, 3] } }),
             Underline,
+            TextStyle,
+            Color,
+            Highlight.configure({ multicolor: true }),
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
             Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
             Image.configure({ inline: false }),
             Placeholder.configure({ placeholder: placeholder || '' }),
@@ -122,6 +166,8 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <Btn title={tr('Italic')} active={editor.isActive('italic')} on={() => editor.chain().focus().toggleItalic().run()}><TbItalic /></Btn>
                     <Btn title={tr('Underline')} active={editor.isActive('underline')} on={() => editor.chain().focus().toggleUnderline().run()}><TbUnderline /></Btn>
                     <Btn title={tr('Strikethrough')} active={editor.isActive('strike')} on={() => editor.chain().focus().toggleStrike().run()}><TbStrikethrough /></Btn>
+                    <SwatchMenu title={tr('Text colour')} icon={<TbTextColor />} colors={TEXT_COLORS} current={editor.getAttributes('textStyle').color} onPick={(c) => editor.chain().focus().setColor(c).run()} onClear={() => editor.chain().focus().unsetColor().run()} indicator={editor.getAttributes('textStyle').color || '#dc2626'} />
+                    <SwatchMenu title={tr('Highlight')} icon={<TbHighlight />} colors={MARK_COLORS} current={editor.getAttributes('highlight').color} onPick={(c) => editor.chain().focus().setHighlight({ color: c }).run()} onClear={() => editor.chain().focus().unsetHighlight().run()} indicator={editor.getAttributes('highlight').color || '#fef08a'} />
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
                     <Btn title={tr('Heading')} active={editor.isActive('heading', { level: 2 })} on={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><TbH2 /></Btn>
                     <Btn title={tr('Bulleted list')} active={editor.isActive('bulletList')} on={() => editor.chain().focus().toggleBulletList().run()}><TbList /></Btn>
@@ -129,7 +175,12 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <Btn title={tr('Quote')} active={editor.isActive('blockquote')} on={() => editor.chain().focus().toggleBlockquote().run()}><TbQuote /></Btn>
                     <Btn title={tr('Code')} active={editor.isActive('code')} on={() => editor.chain().focus().toggleCode().run()}><TbCode /></Btn>
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
+                    <Btn title={tr('Align left')} active={editor.isActive({ textAlign: 'left' })} on={() => editor.chain().focus().setTextAlign('left').run()}><TbAlignLeft /></Btn>
+                    <Btn title={tr('Align centre')} active={editor.isActive({ textAlign: 'center' })} on={() => editor.chain().focus().setTextAlign('center').run()}><TbAlignCenter /></Btn>
+                    <Btn title={tr('Align right')} active={editor.isActive({ textAlign: 'right' })} on={() => editor.chain().focus().setTextAlign('right').run()}><TbAlignRight /></Btn>
+                    <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
                     <Btn title={tr('Link')} active={editor.isActive('link')} on={link}><TbLink /></Btn>
+                    <Btn title={tr('Clear formatting')} on={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><TbClearFormatting /></Btn>
                     <Btn title={tr('Picture')} disabled={busy} on={() => fileRef.current?.click()}><TbPhoto /></Btn>
                     <span className="ml-auto flex gap-0.5">
                         <Btn title={tr('Undo')} disabled={!editor.can().undo()} on={() => editor.chain().focus().undo().run()}><TbArrowBackUp /></Btn>

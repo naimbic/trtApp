@@ -10,7 +10,7 @@ export const unescapeHtml = (s) => (/&lt;\/?[a-z][^&]*&gt;/i.test(String(s ?? ''
 
 export const looksLikeHtml = (s) => /<\/?[a-z][a-z0-9]*\b[^>]*>/i.test(unescapeHtml(s))
 
-const ALLOWED = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'sub', 'sup', 'code', 'pre', 'a', 'img'])
+const ALLOWED = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'sub', 'sup', 'code', 'pre', 'a', 'img', 'mark'])
 const VOID = new Set(['br', 'hr', 'img'])
 
 /** HTML made safe to show: only the tags above, no attributes (links keep an http, https or mailto address), no scripts or styles. Plain text becomes paragraphs with line breaks. */
@@ -24,6 +24,13 @@ export function cleanHtml(input) {
         const name = tag.toLowerCase()
         if (!ALLOWED.has(name)) return ''
         if (slash) return VOID.has(name) ? '' : `</${name}>`
+        // colour, highlight and alignment: only a plain colour value or a keyword, never anything else from a style
+        const style = (/style\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrs) || [])
+        const css = (style[1] ?? style[2] ?? '').toLowerCase()
+        const colorOf = (prop) => { const c = new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*(#[0-9a-f]{3,8}|rgba?\\(\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*(?:,\\s*[\\d.]+\\s*)?\\))\\s*(?:;|$)`).exec(css); return c ? c[1] : '' }
+        if (name === 'span') { const parts = [colorOf('color') && `color:${colorOf('color')}`, colorOf('background-color') && `background-color:${colorOf('background-color')}`].filter(Boolean); return parts.length ? `<span style="${parts.join(';')}">` : '<span>' }
+        if (name === 'mark') { const dc = /data-color\s*=\s*"(#[0-9a-f]{3,8})"/i.exec(attrs); const bg = colorOf('background-color') || (dc ? dc[1] : ''); return bg ? `<mark style="background-color:${bg}">` : '<mark>' }
+        if (['p', 'h1', 'h2', 'h3', 'blockquote', 'li'].includes(name)) { const al = /(?:^|;)\s*text-align\s*:\s*(left|center|right|justify)\s*(?:;|$)/.exec(css); if (al) return `<${name} style="text-align:${al[1]}">` }
         if (name === 'img') { // a picture: only from this site or over https, with its description
             if (slash) return ''
             const sm = /src\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrs)

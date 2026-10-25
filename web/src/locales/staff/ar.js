@@ -4213,5 +4213,9 @@ export default {
     "Redo": "إعادة",
     "Undo": "تراجع",
     "Uploading the picture…": "جارٍ رفع الصورة…",
-    "Choose a picture": "اختر صورة"
+    "Choose a picture": "اختر صورة",
+    "Align centre": "محاذاة للوسط",
+    "Align right": "محاذاة لليمين",
+    "Highlight": "تمييز",
+    "Text colour": "لون النص"
 }

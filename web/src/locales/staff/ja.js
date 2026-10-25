@@ -4213,5 +4213,9 @@ export default {
     "Redo": "やり直し",
     "Undo": "元に戻す",
     "Uploading the picture…": "画像をアップロード中…",
-    "Choose a picture": "画像を選んでください"
+    "Choose a picture": "画像を選んでください",
+    "Align centre": "中央揃え",
+    "Align right": "右揃え",
+    "Highlight": "ハイライト",
+    "Text colour": "文字色"
 }

@@ -4213,5 +4213,9 @@ export default {
     "Redo": "Rehacer",
     "Undo": "Deshacer",
     "Uploading the picture…": "Subiendo la imagen…",
-    "Choose a picture": "Elige una imagen"
+    "Choose a picture": "Elige una imagen",
+    "Align centre": "Centrar",
+    "Align right": "Alinear a la derecha",
+    "Highlight": "Resaltar",
+    "Text colour": "Color del texto"
 }

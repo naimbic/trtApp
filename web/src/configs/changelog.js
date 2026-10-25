@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.106.2',
+        date: '2026-10-25',
+        title: 'Mentions in descriptions: highlight and notification',
+        items: ['In the rich text editor a @mention is now picked out in colour while you type it, and when you save a task, lead or project description the people newly named in it are told (bell and Notifications page), once per mention and not again when you edit the text later.', 'Fixed: mentions written inside formatted text (a description or a comment with bold, lists...) were not recognised.'],
+    },
+    {
         version: '0.106.1',
         date: '2026-10-25',
         title: 'Text colours and highlight in the editor; dialogs above popups',

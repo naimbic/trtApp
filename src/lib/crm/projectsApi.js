@@ -2,6 +2,7 @@ import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { storeRich } from '@/lib/crm/richText'
+import { notifyNewMentions } from '@/lib/crm/mentionsApi'
 
 // Perfex project statuses: 4 = finished, 5 = cancelled (dateFinished is only set on finished ones)
 export const STATUS = { 1: 'Not started', 2: 'In progress', 3: 'On hold', 4: 'Finished', 5: 'Cancelled' }
@@ -153,6 +154,7 @@ export async function saveProject(body, id) {
     if (id) { prev = await loadOne(id, a); data.dateFinished = status === 4 ? prev.dateFinished || new Date() : null }
     else data.dateFinished = status === 4 ? new Date() : null
     const project = id ? await prisma.crmProject.update({ where: { id }, data }) : await prisma.crmProject.create({ data: { ...data, addedFrom: a.staffId, startDate: start || new Date() } })
+    await notifyNewMentions({ by: { staffId: a.staffId, name: a.session.user.name }, text: data.description, prev: prev?.description, link: `/crm/projects/${project.id}`, subject: data.name })
     if (Array.isArray(body.memberIds)) {
         const want = [...new Set(body.memberIds.map(oid).filter(Boolean))]
         const have = await prisma.crmProjectMember.findMany({ where: { projectId: project.id } })

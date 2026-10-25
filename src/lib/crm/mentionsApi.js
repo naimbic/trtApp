@@ -62,3 +62,19 @@ export async function notifyComment({ by, text, link, subject, recipients = [] }
     for (const to of follow) await make(to, `comment|${String(subject || '').slice(0, 120)}`)
     return { mentioned: named.length, followers: follow.length }
 }
+
+/** A description saved with new @mentions: the people named now and not before are told. `prev` = the text as it was. */
+export async function notifyNewMentions({ by, text, prev, link, subject }) {
+    try {
+        const { mentionedIds } = await import('@/lib/crm/mentionsCalc')
+        const staff = (await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true } })).map((s) => ({ id: s.id, name: nameOf(s) }))
+        const before = new Set(mentionedIds(plainText(prev), staff))
+        const fresh = mentionedIds(plainText(text), staff).filter((i) => !before.has(i) && i !== by.staffId)
+        const excerpt = plainText(text).replace(/\s+/g, ' ').slice(0, 160)
+        for (const to of fresh) {
+            const dup = await prisma.crmNotification.findFirst({ where: { toUserId: to, additionalData: 'mention', link, description: excerpt, createdAt: { gte: new Date(Date.now() - 600000) } }, select: { id: true } })
+            if (!dup) await prisma.crmNotification.create({ data: { toUserId: to, fromUserId: by.staffId, fromFullName: by.name || null, description: `${subject ? `${subject}: ` : ''}${excerpt}`.slice(0, 200), link, additionalData: 'mention', isRead: false } })
+        }
+        return fresh.length
+    } catch (e) { console.error('[mention notify]', e.message); return 0 }
+}

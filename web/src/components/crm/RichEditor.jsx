@@ -11,6 +11,10 @@ import Color from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
 import TextAlign from '@tiptap/extension-text-align'
 import { createPortal } from 'react-dom'
+import { Extension } from '@tiptap/core'
+import { Plugin } from '@tiptap/pm/state'
+import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import { mentionDirectory } from '@/utils/mentions'
 import { TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPhoto, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
@@ -63,6 +67,31 @@ const SwatchMenu = ({ title, icon, colors, current, onPick, onClear, indicator }
     )
 }
 
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+/** Picks out "@Full Name" of colleagues while typing (a decoration only: the text itself is not changed). */
+const mentionMarks = (getNames) => Extension.create({
+    name: 'mentionMarks',
+    addProseMirrorPlugins() {
+        return [new Plugin({
+            props: {
+                decorations(state) {
+                    const names = getNames()
+                    if (!names.length) return null
+                    const re = new RegExp(`(^|[\\s(])(@(?:${names.map(esc).join('|')}))(?=$|[\\s.,;:!?)])`, 'gi')
+                    const out = []
+                    state.doc.descendants((node, pos) => {
+                        if (!node.isText) return
+                        re.lastIndex = 0
+                        let m
+                        while ((m = re.exec(node.text))) { const from = pos + m.index + m[1].length; out.push(Decoration.inline(from, from + m[2].length, { class: 'mention' })) }
+                    })
+                    return DecorationSet.create(state.doc, out)
+                },
+            },
+        })]
+    },
+})
+
 const Btn = ({ on, active, title, children, disabled }) => (
     <button type="button" title={title} aria-label={title} disabled={disabled} onMouseDown={(e) => e.preventDefault()} onClick={on}
         className={classNames('grid size-7 place-items-center rounded-md text-[17px] transition', active ? 'bg-primary/15 text-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700', disabled && 'opacity-40')}>{children}</button>
@@ -80,6 +109,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     const [mention, setMention] = useState(null) // { kind, from, to, items, rect }
     const [active, setActive] = useState(0)
     const mref = useRef(null)
+    const namesRef = useRef([])
     mref.current = { mention, active }
 
     const insertImages = useCallback(async (files, editor) => {
@@ -98,6 +128,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
             Color,
             Highlight.configure({ multicolor: true }),
             TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            mentionMarks(() => namesRef.current),
             Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
             Image.configure({ inline: false }),
             Placeholder.configure({ placeholder: placeholder || '' }),
@@ -140,6 +171,8 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     })
     const editorRef = useRef(null)
     editorRef.current = editor
+    // the colleagues' names are known a moment after the editor opens: draw the mentions again then
+    useEffect(() => { let on = true; mentionDirectory().then((d) => { if (!on) return; namesRef.current = d.staff.map((s) => s.name).filter(Boolean).sort((a, b) => b.length - a.length); editorRef.current?.view?.dispatch(editorRef.current.state.tr) }); return () => { on = false } }, [editor])
 
     const pick = (m, item) => { editor.chain().focus().deleteRange({ from: m.from, to: m.to }).insertContent(item.insert).run(); setMention(null) }
 

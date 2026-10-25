@@ -22,7 +22,7 @@ window.fetch = async (...args) => {
     // a new comment, note, reply or message that names a colleague with @: tell them (once the save worked)
     if (res.ok && url.startsWith('/api/crm/') && !url.startsWith('/api/crm/mentions') && !url.startsWith('/api/crm/auth/') && !/\/(comments|notes)(\?|$)/.test(url) && args[1]?.method?.toUpperCase?.() === 'POST' && typeof args[1].body === 'string' && args[1].body.includes('@')) {
         try {
-            const texts = textsOf(JSON.parse(args[1].body))
+            const texts = textsOf(JSON.parse(args[1].body)).map((t) => t.replace(/<[^>]+>/g, ' ')).map((t) => t.replace(/<[^>]+>/g, ' '))
             if (texts.some((t) => t.includes('@'))) {
                 mentionDirectory().then((d) => {
                     const ids = [...new Set(texts.flatMap((t) => mentionedIds(t, d.staff)))]

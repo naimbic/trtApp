@@ -20,3 +20,5 @@
 .dialog-portal .dialog-overlay { z-index: 130 !important; }
 [data-floating-ui-portal] > * { z-index: 135 !important; }
 .tooltip { z-index: 140 !important; }
+
+.rich-editor .mention { border-radius: 4px; padding: 0 2px; font-weight: 600; background: color-mix(in srgb, var(--rp-accent, #2563eb) 14%, transparent); color: var(--rp-accent, #2563eb); }

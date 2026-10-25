@@ -2,7 +2,7 @@ import { realPicture } from '@/lib/crm/pictures'
 import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
-import { notifyComment } from '@/lib/crm/mentionsApi'
+import { notifyComment, notifyNewMentions } from '@/lib/crm/mentionsApi'
 import { storeRich } from '@/lib/crm/richText'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 
@@ -234,6 +234,7 @@ export async function saveTask(body, id) {
     const task = id
         ? await prisma.crmTask.update({ where: { id }, data })
         : await prisma.crmTask.create({ data: { ...data, addedFrom: a.staffId, startDate: data.startDate || new Date() } })
+    await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text: data.description, prev: prev?.description, link: `/crm/tasks/${task.id}`, subject: data.name })
     const sync = async (model, ids, extra = {}) => {
         const want = [...new Set((ids || []).map(oid).filter(Boolean))]
         const have = await prisma[model].findMany({ where: { taskId: task.id }, select: { id: true, staffId: true } })

@@ -1,5 +1,5 @@
 import { realPicture } from '@/lib/crm/pictures'
-import { notifyComment } from '@/lib/crm/mentionsApi'
+import { notifyComment, notifyNewMentions } from '@/lib/crm/mentionsApi'
 import { storeRich } from '@/lib/crm/richText'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
@@ -146,6 +146,7 @@ export async function saveLead(body, id) {
         const st = oid(body.statusId)
         if (st && st !== prev.statusId) { data.statusId = st; data.lastStatusChange = new Date() }
         await prisma.crmLead.update({ where: { id }, data })
+        if (data.description !== undefined) await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text: data.description, prev: prev.description, link: `/crm/leads/${id}`, subject: data.name })
         if (st && st !== prev.statusId) await logStatus(id, a, prev.statusId, st)
         return { success: true, id }
     }
@@ -157,6 +158,7 @@ export async function saveLead(body, id) {
     const assigned = team[0] || null
     const lead = await prisma.crmLead.create({ data: { ...data, statusId, assigned, assignedIds: team, dateAssigned: assigned ? new Date() : null, addedFrom: a.staffId, leadOrder: 0, lost: false, junk: false, lastStatusChange: new Date() } })
     await logActivity(lead.id, a, 'Lead created')
+    if (data.description) await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text: data.description, prev: '', link: `/crm/leads/${lead.id}`, subject: data.name })
     return { success: true, id: lead.id }
 }
 

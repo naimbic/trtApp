@@ -15,7 +15,7 @@ import { Extension } from '@tiptap/core'
 import { Plugin } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { mentionDirectory } from '@/utils/mentions'
-import { TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPhoto, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
+import { TbAt, TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPhoto, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
 import { notify } from '@/views/crm/kit/api'
@@ -155,7 +155,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
             onChange?.(html)
             // "@" or "#" right before the caret
             const { $from } = ed.state.selection
-            const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '￼')
+            const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '\n')
             const m = MENTION_TRIGGER.exec(before)
             if (!m) return setMention(null)
             const kind = m[2], q = m[3]
@@ -212,6 +212,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <Btn title={tr('Align centre')} active={editor.isActive({ textAlign: 'center' })} on={() => editor.chain().focus().setTextAlign('center').run()}><TbAlignCenter /></Btn>
                     <Btn title={tr('Align right')} active={editor.isActive({ textAlign: 'right' })} on={() => editor.chain().focus().setTextAlign('right').run()}><TbAlignRight /></Btn>
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
+                    <Btn title={tr('Mention a colleague')} on={() => editor.chain().focus().insertContent('@').run()}><TbAt /></Btn>
                     <Btn title={tr('Link')} active={editor.isActive('link')} on={link}><TbLink /></Btn>
                     <Btn title={tr('Clear formatting')} on={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><TbClearFormatting /></Btn>
                     <Btn title={tr('Picture')} disabled={busy} on={() => fileRef.current?.click()}><TbPhoto /></Btn>

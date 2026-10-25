@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.3',
+        date: '2026-10-25',
+        title: 'Mentions in the editor: after a line break, and an @ button',
+        items: ['Fixed: in the rich text editor the colleague list did not appear when you typed @ at the start of a new line made with Shift+Enter, or on a line of an older text (those lines are separated by a line break). It now does.', 'New @ button in the editor toolbar: it types the @ for you and shows the list of colleagues right away, so a mention can always be started with a click.'],
+    },
+    {
         version: '0.107.2',
         date: '2026-10-25',
         title: 'Checklist: an Edit button on each step',

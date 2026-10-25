@@ -226,9 +226,12 @@ const BusinessDashboard = () => {
                 const used = Object.keys(d.invoices?.byCurrency || {})
                 const realCur = d.currencies.filter((c) => used.includes(c.id))
                 setCurrencies(realCur.length > 1 ? [...realCur, { id: 'all', name: 'ALL' }] : realCur)
-                if (!used.includes(useDashFilters.getState().currencyId)) {
-                    const def = d.currencies.find((c) => c.isDefault && used.includes(c.id)) || d.currencies.find((c) => used.includes(c.id))
-                    setCurrency(def?.id || used[0] || null)
+                // keep the person's choice (ALL included); fall back to ALL with several currencies, else the only one
+                const picked = useDashFilters.getState().currencyId
+                const valid = used.includes(picked) || (picked === 'all' && realCur.length > 1)
+                if (!valid) {
+                    if (realCur.length > 1) setCurrency('all')
+                    else { const def = d.currencies.find((c) => c.isDefault && used.includes(c.id)) || d.currencies.find((c) => used.includes(c.id)); setCurrency(def?.id || used[0] || null) }
                 }
             })
             .catch((e) => alive && setError(e.message))

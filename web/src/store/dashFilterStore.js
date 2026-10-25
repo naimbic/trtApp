@@ -38,10 +38,10 @@ export const RANGES = [
 export const useDashFilters = create()(
     persist(
         (set) => ({
-            range: '12m',
+            range: 'year', // this year
             from: '',
             to: '',
-            currencyId: null,
+            currencyId: 'all', // every currency, converted into the base one (a single-currency company gets its only currency)
             accent: 'blue',
             customHex: '#7c3aed',
             currencies: [], // filled by the dashboard once data is loaded (not persisted)
@@ -54,6 +54,9 @@ export const useDashFilters = create()(
         }),
         {
             name: 'dashboardFilters',
+            version: 2,
+            // the first time after this change: this year and all currencies (the old default was the last 12 months and the main currency)
+            migrate: (state) => ({ ...state, range: state?.range === '12m' || !state?.range ? 'year' : state.range, currencyId: 'all' }),
             partialize: (s) => ({ range: s.range, from: s.from, to: s.to, currencyId: s.currencyId, accent: s.accent, customHex: s.customHex }),
         },
     ),

@@ -2,7 +2,7 @@
 // drafts, caches. Language and theme are kept (the next sign-in applies the account's own choice anyway).
 import { wipeCache } from '@/utils/offlineCache'
 
-const KEEP = ['locale', 'theme', 'themeModeChosen']
+const KEEP = ['locale', 'theme', 'themeModeChosen', 'dashboardFilters']
 
 export function clearUserData() {
     for (const store of [() => localStorage, () => sessionStorage]) {

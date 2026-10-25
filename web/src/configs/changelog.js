@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.5',
+        date: '2026-10-25',
+        title: 'Dashboard filters: This year and All currencies by default, and they stay',
+        items: ['The dashboard (and the pages that share its filters: reports, invoices, estimates, payments...) now starts with This year and All currencies (everything converted into the base currency; a company with one currency gets that currency).', 'Fixed: the All currencies choice was reset to the main currency every time the dashboard loaded. Your period and currency now stay as you set them, also after signing out and in.', 'Saved filters from before are moved once to This year and All currencies.'],
+    },
+    {
         version: '0.107.4',
         date: '2026-10-25',
         title: 'Checklist: give a step to several people',

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import TaskAgenda from './TaskAgenda'
 import { useNavigate, useSearchParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbPencil, TbFlag, TbUserPlus, TbCalendarDue, TbLoader, TbNote, TbArrowRight } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbFlag, TbUserPlus, TbCalendarDue, TbLoader, TbNote, TbArrowRight } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Container from '@/components/shared/Container'
@@ -9,17 +10,13 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Segment from '@/components/ui/Segment'
 import Switcher from '@/components/ui/Switcher'
-import Table from '@/components/ui/Table'
-import cn from '@/utils/classNames'
 import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
-import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, statusOf, useTaskStatuses } from './shared'
+import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, useTaskStatuses } from './shared'
 import TaskDrawer from './TaskDrawer'
 import NoteDialog, { NOTES_EVENT } from './NoteDialog'
 import { tr, trn } from '@/utils/t'
 import { onCreate } from '@/utils/createIntent'
-
-const { Tr, Th, Td, THead, TBody } = Table
 
 const Plain = ({ children }) => <div>{children}</div>
 
@@ -196,31 +193,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                     })]}
                 />
             ) : (
-                <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-                    <Table>
-                        <THead><Tr><Th>{tr("Task")}</Th><Th>{tr("Related to")}</Th><Th>{tr("Status")}</Th><Th>{tr("Priority")}</Th><Th>{tr("Assigned")}</Th><Th>{tr("Due")}</Th></Tr></THead>
-                        <TBody>
-                            {shownNotes.map((n) => (
-                                <Tr key={`n:${n.id}`} className="cursor-pointer bg-amber-50/40 dark:bg-amber-500/5" onClick={() => setNoteDialog({ open: true, note: n })}>
-                                    <Td className="font-semibold"><span className="inline-flex items-center gap-2"><TbNote className="text-amber-500" />{n.title}</span></Td>
-                                    <Td colSpan={4} className="max-w-[420px] truncate text-gray-500">{n.description || '—'}</Td>
-                                    <Td className="text-gray-400">{fmtDate(n.createdAt)}</Td>
-                                </Tr>
-                            ))}
-                            {data.list.map((t) => (
-                                <Tr key={t.id} className="cursor-pointer" onClick={() => open(t.id)}>
-                                    <Td className="font-semibold">{t.name}</Td>
-                                    <Td className="text-gray-500">{t.rel?.label || '—'}</Td>
-                                    <Td><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: statusOf(t.status).color }} />{statusOf(t.status).label}</span></Td>
-                                    <Td className={prioOf(t.priority).text}>{prioOf(t.priority).label}</Td>
-                                    <Td><People list={t.assignees} /></Td>
-                                    <Td className={isOverdue(t) ? 'font-semibold text-red-500' : ''}>{fmtDate(t.dueDate) || '—'}</Td>
-                                </Tr>
-                            ))}
-                            {!loading && !data.list.length && <Tr><Td colSpan={6} className="py-10 text-center text-gray-500">{tr("No tasks match")}</Td></Tr>}
-                        </TBody>
-                    </Table>
-                </div>
+                <TaskAgenda tasks={data.list} notes={shownNotes} onOpen={open} onOpenNote={(n) => setNoteDialog({ open: true, note: n })} />
             )}
 
             <NoteDialog open={noteDialog.open} note={noteDialog.note} onClose={() => setNoteDialog((d) => ({ ...d, open: false }))} onSaved={loadNotes} />

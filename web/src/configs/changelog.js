@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.1',
+        date: '2026-10-25',
+        title: 'Tasks list as an agenda',
+        items: ['The List view of Tasks is now an agenda: tasks grouped by due day (Overdue first with how many days late, then Today, Tomorrow, each weekday, and No date), each as a soft rounded row with its status colour on the left, the date and priority, the title with its project, checklist and comment counts, the status and the people. Notes come first, and the status colours are listed at the top.'],
+    },
+    {
         version: '0.107.0',
         date: '2026-10-25',
         title: 'A better task checklist: people, dates, reminders, drag and drop',

@@ -110,6 +110,13 @@ try {
     check('anonymous: lead mailboxes refused', (await fetch(`${BASE}/api/crm/lead-mail`)).status === 401)
     check('milestones: a person without Projects rights cannot create one', (await plain('POST', '/api/crm/milestones-board', { name: 'x', projectId: '000000000000000000000001' })).status === 403)
     check('milestones: anonymous refused', (await fetch(`${BASE}/api/crm/milestones-board`)).status === 401)
+    const lm = await login(await makeUser('leadmail', { lead_mail: ['view'] }))
+    check('Lead email integration view: can list mailboxes', (await lm('GET', '/api/crm/lead-mail')).status === 200)
+    check('Lead email integration view only: cannot save a mailbox', (await lm('POST', '/api/crm/lead-mail', { action: 'save', data: { email: 'a@b.com' } })).status === 403)
+    const wh = await login(await makeUser('hours', { work_hours: ['view'] }))
+    check('Team hours view: can open the hours report', (await wh('GET', '/api/crm/work-hours')).status === 200)
+    check('no Team hours permission: hours report refused', (await plain('GET', '/api/crm/work-hours')).status === 403)
+    check('Team hours view alone does not open Team members', (await wh('GET', '/api/crm/staff')).status === 403)
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) await prisma[model].delete({ where: { id } }).catch(() => {})

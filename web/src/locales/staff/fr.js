@@ -4243,5 +4243,8 @@ export default {
     "moving": "en mouvement",
     "Telegram is not set up (Settings → WhatsApp & Telegram)": "Telegram n'est pas configuré (Paramètres → WhatsApp et Telegram)",
     "Enter your Telegram chat id first": "Saisissez d'abord votre identifiant de chat Telegram",
-    "Telegram does not know this chat id. Open the company bot in Telegram, press Start, and use your own number (ask @userinfobot for it)": "Telegram ne connaît pas cet identifiant. Ouvrez le bot de l'entreprise dans Telegram, appuyez sur Start et utilisez votre propre numéro (demandez-le à @userinfobot)"
+    "Telegram does not know this chat id. Open the company bot in Telegram, press Start, and use your own number (ask @userinfobot for it)": "Telegram ne connaît pas cet identifiant. Ouvrez le bot de l'entreprise dans Telegram, appuyez sur Start et utilisez votre propre numéro (demandez-le à @userinfobot)",
+    "Team hours": "Heures de l'équipe",
+    "The Team hours page: everybody's active hours, mouse / keyboard time and days worked. People with Team members view also keep access. Everyone always sees their own hours.": "La page Heures de l'équipe : heures actives de chacun, temps souris / clavier et jours travaillés. Les personnes pouvant voir les membres de l'équipe gardent aussi l'accès. Chacun voit toujours ses propres heures.",
+    "Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.": "Intégration des e-mails de leads : les boîtes mail qui transforment les e-mails de formulaires du site en leads (voir la liste et le journal d'import ; modifier pour ajouter, changer, tester et vérifier les boîtes). Les personnes ayant accès aux Paramètres le gardent aussi."
 }

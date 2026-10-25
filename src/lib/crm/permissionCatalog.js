@@ -40,6 +40,8 @@ export const FEATURE_HINTS = {
     activity_log: 'See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.',
     finance: 'Without this, every income, total, balance and money chart shows *** (cards, lists, reports, client profiles).',
     departments: 'The Departments list (ticket departments and the people in them): see, add, edit and delete departments. Setup items such as currencies, taxes and ticket statuses stay under Settings.',
+    work_hours: 'The Team hours page: everybody\'s active hours, mouse / keyboard time and days worked. People with Team members view also keep access. Everyone always sees their own hours.',
+    lead_mail: 'Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.',
     announcements: 'Post, edit and delete the announcements the whole team sees.',
     leave: 'Leave requests and days off (Attendance & leave in the menu). View own lets someone see their own; View lets a manager see everybody\'s.',
     calendar: 'The Calendar page: tasks, deadlines, meetings and events. Without it the page and its menu entry are hidden.',
@@ -55,6 +57,7 @@ export const PERMISSION_GROUPS = [
             { key: 'customers', label: 'Customers', caps: CRUD, auto: { view_own: 'Staff always see the customers they are an admin of' } },
             { key: 'leads', label: 'Leads', caps: ['view', 'delete'], auto: { view_own: 'Staff always see leads assigned to or added by them, and can add and edit those', create: 'Any staff member can add leads', edit: 'Any staff member can edit their own leads' } },
             { key: 'estimate_request', label: 'Estimate requests', caps: STD },
+            { key: 'lead_mail', label: 'Lead email integration', caps: ['view', 'edit'] },
         ],
     },
     {
@@ -117,6 +120,7 @@ export const PERMISSION_GROUPS = [
         group: 'Administration',
         features: [
             { key: 'staff', label: 'Team members', caps: CRUD },
+            { key: 'work_hours', label: 'Team hours', caps: ['view'] },
             { key: 'roles', label: 'Roles & permissions', caps: CRUD },
             { key: 'departments', label: 'Departments', caps: CRUD },
             { key: 'announcements', label: 'Announcements', caps: CRUD },

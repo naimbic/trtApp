@@ -51,6 +51,15 @@ export async function requirePermission(feature, cap) {
     return session
 }
 
+/** Allowed when ANY of the [feature, cap] pairs is granted (a newer, narrower permission next to the older broad one). */
+export async function requireAnyPermission(pairs) {
+    let last
+    for (const [feature, cap] of pairs) {
+        try { return await requirePermission(feature, cap) } catch (e) { last = e; if (e?.status === 401) throw e }
+    }
+    throw last
+}
+
 /** CrmStaff id for the signed-in User (null if the user is not linked to a staff row). */
 export async function getStaffId(session) {
     const userId = session?.user?.id

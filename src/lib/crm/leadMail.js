@@ -4,7 +4,7 @@
 import { ImapFlow } from 'imapflow'
 import { simpleParser } from 'mailparser'
 import prisma from '@/lib/prisma'
-import { requirePermission } from '@/lib/crm/permissions'
+import { requireAnyPermission } from '@/lib/crm/permissions'
 import { seal, unseal } from '@/lib/crm/twoFactor'
 import { emailText, parseForm, judge, buildLead, customLabels, digits } from '@/lib/crm/leadMailCalc'
 
@@ -27,10 +27,11 @@ const PUBLIC = (r) => ({
 })
 
 /** Mailbox settings belong to administrators (they hold a mail password). */
-async function admin() { return requirePermission('settings', 'edit') }
+async function admin() { return requireAnyPermission([['lead_mail', 'edit'], ['settings', 'edit']]) }
+const viewer = () => requireAnyPermission([['lead_mail', 'view'], ['settings', 'view']])
 
 export async function listMailboxes() {
-    await requirePermission('settings', 'view')
+    await viewer()
     const rows = await prisma.crmLeadEmailIntegration.findMany({ orderBy: { createdAt: 'asc' } })
     const [sources, statuses, staff] = await Promise.all([
         prisma.crmLeadSource.findMany({ orderBy: [{ sourceOrder: 'asc' }, { name: 'asc' }], select: { id: true, name: true, isActive: true } }),
@@ -80,7 +81,7 @@ export async function deleteMailbox(id) {
 }
 
 export async function importLog(id) {
-    await requirePermission('settings', 'view')
+    await viewer()
     const rows = await prisma.crmLeadEmailImport.findMany({ where: { integrationId: id }, orderBy: { createdAt: 'desc' }, take: 60 })
     return rows.map((r) => ({ id: r.id, date: r.receivedAt || r.createdAt, subject: r.subject, from: r.fromAddress, result: r.result, reason: r.reason, leadId: r.leadId }))
 }

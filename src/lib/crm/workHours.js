@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
-import { requirePermission, getStaffId } from '@/lib/crm/permissions'
+import { requireAnyPermission, getStaffId } from '@/lib/crm/permissions'
 import { getOptions } from '@/lib/crm/mailer'
 import { DEFAULT_SCHEDULE, localParts, pingSeconds, summarize } from '@/lib/crm/workHoursCalc'
 
@@ -49,7 +49,7 @@ export async function hoursReport({ from, to, staffId = null } = {}) {
     const session = await auth()
     const mine = await getStaffId(session)
     if (staffId === 'me') { if (!mine) throw Object.assign(new Error('Unauthorized'), { status: 401 }); staffId = mine }
-    if (!staffId || staffId !== mine) await requirePermission('staff', 'view')
+    if (!staffId || staffId !== mine) await requireAnyPermission([['work_hours', 'view'], ['staff', 'view']])
     const { tz, schedule } = await getSchedule()
     const r = rangeOf(from, to, tz)
     const staff = await prisma.crmStaff.findMany({ where: { active: true, ...(staffId ? { id: staffId } : {}) }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true, jobTitle: true } })

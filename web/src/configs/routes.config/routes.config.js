@@ -17,7 +17,9 @@ const ROUTE_FEATURE = [
 ]
 // who may open a screen: the people with the view (or view own) permission of its feature, and administrators
 const featureOf = (path) => ROUTE_FEATURE.find(([p]) => path === p || path.startsWith(`${p}/`))?.[1]
-const gate = (routes) => routes.map((r) => { const f = featureOf(r.path); return f && (!r.authority || !r.authority.length) ? { ...r, authority: ['admin', 'crm.admin', `crm.${f}.view`, `crm.${f}.view_own`] } : r })
+// screens that also open with a newer, narrower permission (kept next to the older one so nobody loses access)
+const ALSO = { '/crm/work-hours': ['work_hours'], '/crm/lead-email-integration': ['lead_mail'] }
+const gate = (routes) => routes.map((r) => { const f = featureOf(r.path); return f && (!r.authority || !r.authority.length) ? { ...r, authority: ['admin', 'crm.admin', `crm.${f}.view`, `crm.${f}.view_own`, ...(ALSO[r.path] || []).map((x) => `crm.${x}.view`)] } : r })
 
 const crmRoutes = [
     {

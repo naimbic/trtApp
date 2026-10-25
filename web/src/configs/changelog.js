@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.9',
+        date: '2026-10-25',
+        title: 'Roles & permissions: Team hours and Lead email integration',
+        items: ['Two new switches in the role editor: Team hours (see everybody\'s hours, with the new mouse / keyboard time) and Lead email integration (view, and edit to manage the mailboxes). Before, they were only reachable through Team members and Settings. People who already had those two keep their access.', 'Everyone still always sees their own hours.'],
+    },
+    {
         version: '0.107.8',
         date: '2026-10-25',
         title: 'Settings: WhatsApp & Telegram is now in the menu',

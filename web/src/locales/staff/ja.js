@@ -4247,5 +4247,9 @@ export default {
     "Team hours": "チームの勤務時間",
     "The Team hours page: everybody's active hours, mouse / keyboard time and days worked. People with Team members view also keep access. Everyone always sees their own hours.": "チームの勤務時間ページ：全員のアクティブ時間、マウス／キーボード時間、勤務日数。チームメンバーの閲覧権限がある人も引き続きアクセスできます。自分の時間は常に見られます。",
     "Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.": "リードメール連携：サイトのフォームメールをリードに変えるメールボックス（表示は一覧とインポートログ、編集は追加・変更・テスト・確認）。設定へのアクセス権がある人も引き続き利用できます。",
-    "Pages": "ページ"
+    "Pages": "ページ",
+    "Freelance": "フリーランス",
+    "Freelance / personal client": "フリーランス／個人のクライアント",
+    "Active, but not company income: no invoices, estimates, proposals or purchase orders (so no company numbers are used), and nothing from this client in the dashboard, reports or goals.": "有効ですが、会社の収入には含まれません。請求書・見積書・提案書・発注書は作成できず（会社の番号は使われません）、ダッシュボード、レポート、目標にもこのクライアントは反映されません。",
+    "This client is a freelance / personal client: it is excluded from invoices, estimates, proposals and purchase orders (untick it on the client page to bill them)": "このクライアントはフリーランス／個人のため、請求書・見積書・提案書・発注書の対象外です（請求するにはクライアントページでチェックを外してください）"
 }

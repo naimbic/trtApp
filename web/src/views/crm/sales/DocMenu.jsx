@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbDots, TbExternalLink, TbPencil, TbDownload, TbMail, TbArrowsExchange, TbTrash, TbFileInvoice } from 'react-icons/tb'
+import { TbDots, TbExternalLink, TbPencil, TbDownload, TbMail, TbArrowsExchange, TbTrash, TbFileInvoice, TbCopy } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import RowMenu from '@/components/crm/RowMenu'
 import SendMailDialog from '../mail/SendMailDialog'
@@ -41,6 +41,7 @@ export const useDocMenu = (cfg, reload) => {
             { label: tr("Open"), icon: <TbExternalLink />, onClick: () => navigate(`${cfg.path}/${r.id}`) },
             ...(editable ? [{ label: tr("Edit"), icon: <TbPencil />, onClick: guard(r, () => navigate(`${cfg.path}/${r.id}/edit`)) }] : []),
             { label: tr("Download"), icon: <TbDownload />, onClick: () => { window.location.href = `${cfg.apiBase}/${r.id}/pdf?download=1` } },
+            ...(cfg.duplicate !== false && can(cfg.perm, 'create') ? [{ label: tr("Duplicate"), icon: <TbCopy />, onClick: () => navigate(`${cfg.path}/new?from=${r.id}`) }] : []),
             ...(cfg.mail && editable ? [{ label: tr("Send"), icon: <TbMail />, onClick: () => setMail({ id: r.id }) }] : []),
             ...(cfg.statuses && editable ? [{ label: tr("Change status"), icon: <TbArrowsExchange />, sub: cfg.statuses.map((s) => ({ label: s.label, icon: s.icon, checked: s.current(r), onClick: guard(r, (force) => !s.current(r) && state(r, s.action, tr("Status changed"), force)) })) }] : []),
             ...(cfg.convert && can(cfg.convert.perm, 'create') && cfg.convert.when(r) ? [{ label: cfg.convert.label, icon: <TbFileInvoice />, onClick: () => setConfirm({ row: r, kind: 'convert' }) }] : []),

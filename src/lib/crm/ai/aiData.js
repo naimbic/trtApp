@@ -1,3 +1,4 @@
+import { notExcluded, notExcludedPayments } from '@/lib/crm/excludedClients'
 import prisma from '@/lib/prisma'
 
 // The figures the AI is given (and the screen draws): computed here from the database, never invented by the model.
@@ -50,8 +51,8 @@ export async function leadsData() {
 /** Invoices (without drafts and cancelled), payments and the currencies, shared by the client and income figures. */
 async function money() {
     const [invoices, payments, currencies] = await Promise.all([
-        prisma.crmInvoice.findMany({ where: { status: { notIn: [5, 6] }, date: { not: null } }, select: { id: true, clientId: true, total: true, status: true, date: true, dueDate: true, currencyId: true }, take: 200000 }),
-        prisma.crmPayment.findMany({ select: { invoiceId: true, amount: true, paymentDate: true, invoice: { select: { currencyId: true } } }, take: 200000 }),
+        prisma.crmInvoice.findMany({ where: { status: { notIn: [5, 6] }, date: { not: null }, ...(await notExcluded()) }, select: { id: true, clientId: true, total: true, status: true, date: true, dueDate: true, currencyId: true }, take: 200000 }),
+        prisma.crmPayment.findMany({ where: await notExcludedPayments(), select: { invoiceId: true, amount: true, paymentDate: true, invoice: { select: { currencyId: true } } }, take: 200000 }),
         prisma.crmCurrency.findMany({ select: { id: true, name: true, symbol: true, isDefault: true } }),
     ])
     const cur = Object.fromEntries(currencies.map((c) => [c.id, c.name || c.symbol]))

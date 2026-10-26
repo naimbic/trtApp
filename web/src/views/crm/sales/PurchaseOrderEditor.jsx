@@ -29,20 +29,22 @@ const PurchaseOrderEditor = () => {
     const [saving, setSaving] = useState(false)
     const [v, setV] = useState(null)
 
+    const fromId = params.get('from')
     useEffect(() => {
-        Promise.all([api('/api/crm/sales/lookups').then(async (l) => ({ ...l, defaults: { ...(l.defaults || {}), ...(await api('/api/crm/sales/purchase-orders/defaults')) } })), id ? api(`/api/crm/sales/purchase-orders/${id}`) : null])
+        Promise.all([api('/api/crm/sales/lookups').then(async (l) => ({ ...l, defaults: { ...(l.defaults || {}), ...(await api('/api/crm/sales/purchase-orders/defaults')) } })), id || fromId ? api(`/api/crm/sales/purchase-orders/${id || fromId}`) : null])
             .then(([l, d]) => {
                 setLookups(l)
                 setDoc(d)
                 const inv = d?.order
+                const cloned = !id && !!inv // a duplicate: the content of another document, as a new draft with a new number and today's dates
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
                 const dd = l.defaults || {}
                 const dueAfter = dd.deliveryIn !== '' && dd.deliveryIn != null ? Number(dd.deliveryIn) : 14
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
-                setV({ number: inv?.number ?? '',
+                setV({ number: cloned ? '' : inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,
-                    date: day(inv?.date) || day(new Date()),
-                    deliveryDate: day(inv?.deliveryDate) || day(dayjs().add(dueAfter, 'day')), referenceNo: inv?.referenceNo || '',
+                    date: (!cloned && day(inv?.date)) || day(new Date()),
+                    deliveryDate: (!cloned && day(inv?.deliveryDate)) || day(dayjs().add(dueAfter, 'day')), referenceNo: inv?.referenceNo || '',
                     currencyId: inv?.currencyId || def?.id || null,
                     bankAccountId: inv?.bankAccountId || null,
                     discountPercent: inv?.discountPercent || 0,
@@ -50,11 +52,11 @@ const PurchaseOrderEditor = () => {
                     discountType: inv?.discountType || 'before_tax',
                     adjustment: inv?.adjustment || 0,
                     clientNote: inv ? inv.clientNote || '' : dd.clientNote || '', adminNote: inv?.adminNote || '', terms: inv ? inv.terms || '' : dd.terms || '',
-                    items: d?.items?.length ? d.items : [baseLine()],
+                    items: d?.items?.length ? d.items.map(({ id: _i, ...line }) => line) : [baseLine()],
                 })
             })
             .catch((e) => setError(e.message))
-    }, [id, params])
+    }, [id, fromId, params])
 
     const taxOptions = useMemo(() => (lookups?.taxes || []).map((t) => ({ value: `${t.name}|${t.rate}`, label: `${t.name} (${t.rate}%)`, tax: t })), [lookups])
     const totals = useMemo(() => (v ? calcDocument({ items: v.items, discountPercent: v.discountPercent, discountFixed: v.discountFixed, discountType: v.discountType, adjustment: v.adjustment }) : null), [v])

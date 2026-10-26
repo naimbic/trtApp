@@ -71,6 +71,7 @@ const EstimateView = () => {
                 {invoice && <Link className="text-sm text-emerald-600 hover:underline" to={`/crm/invoices/${invoice.id}`}>{tr("→ invoice")} {invoice.displayNumber}</Link>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/estimates/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
+                    {can('estimates', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/estimates/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/estimates/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('estimates', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/estimates/${id}/pdf`, '_blank')}>{tr("Print")}</Button>

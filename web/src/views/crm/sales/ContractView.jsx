@@ -74,6 +74,7 @@ const ContractView = () => {
                 <Tag className={signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{signed ? tr("Signed") : tr("Not signed")}</Tag>{locked && <span className="text-xs text-gray-400">{tr("Signed contracts cannot be edited")}</span>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/contracts/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
+                    {can('contracts', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/contracts/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     {c.hash && !c.trash && !c.hidden && <Button size="sm" icon={<TbCopy />} onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/api/crm/public/contract/${id}/${c.hash}`); notify('success', tr("Client link copied")) } catch { notify('danger', tr("Could not copy")) } }}>{tr("Client link")}</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbMail />} onClick={() => setMailOpen(true)}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/contracts/${id}/html?print=1`)}>{tr("Print")}</Button>

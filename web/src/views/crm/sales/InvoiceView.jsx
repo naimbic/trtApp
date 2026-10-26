@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging, TbFileTypePdf, TbDownload, TbPrinter, TbRepeat } from 'react-icons/tb'
+import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging, TbFileTypePdf, TbDownload, TbPrinter, TbRepeat, TbCopy } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -121,6 +121,7 @@ const InvoiceView = () => {
                     {canEdit && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>{tr("Send")}</Button>}
                     {st !== 6 && <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/invoices/${id}/html?print=1`)}>{tr("Print")}</Button>}
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
+                    {can('invoices', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/invoices/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     {canEdit && <Button size="sm" icon={<TbPencil />} onClick={guard(() => navigate(`/crm/invoices/${id}/edit`))}>{tr("Edit")}</Button>}
                     <Dropdown placement="bottom-end" renderTitle={<EllipsisButton size="sm" />}>
                         <Dropdown.Item eventKey="dl" onClick={() => { window.location.href = `/api/crm/sales/invoices/${id}/pdf?download=1` }}><TbDownload className="text-lg" /><span>{tr("Download PDF")}</span></Dropdown.Item>

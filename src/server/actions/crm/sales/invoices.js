@@ -1,5 +1,6 @@
 'use server'
 
+import { isIncomeExcluded, EXCLUDED_MESSAGE } from '@/lib/crm/excludedClients'
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -146,6 +147,7 @@ export async function saveInvoice(input) {
     }
 
     if (!input.clientId) return fail('Client is required')
+    if (isNew && (await isIncomeExcluded(input.clientId))) return fail(EXCLUDED_MESSAGE)
     const items = (input.items || []).filter((i) => String(i.description || '').trim())
     if (!items.length) return fail('Add at least one line item')
 

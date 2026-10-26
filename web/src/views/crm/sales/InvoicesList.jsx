@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { usePageRange } from '@/store/pageFilterStore'
 import { StatTile, TileGrid, StatusPills } from '@/components/crm/ListHeader'
 import { useRegisterCurrency } from '@/store/pageFilterStore'
-import { TbReceipt2, TbCash, TbHourglass, TbAlertTriangle, TbCircleCheck, TbFileText } from 'react-icons/tb'
+import { TbReceipt2, TbCash, TbHourglass, TbAlertTriangle, TbCircleCheck, TbFileText, TbCopy } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
 import { TbPlus, TbSearch, TbDots, TbPercentage, TbExternalLink, TbPencil, TbDownload, TbMail, TbArrowsExchange, TbTrash, TbBan, TbSend, TbFileText as TbDraft } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -95,6 +95,7 @@ const InvoicesList = () => {
         return [
             ...(can('payments', 'create') && !cancelled && !draft && r.due > 0 ? [{ label: tr("Record payment"), icon: <TbCash />, onClick: () => openPay(r) }] : []),
             { label: tr("Open"), icon: <TbExternalLink />, onClick: () => navigate(`/crm/invoices/${r.id}`) },
+            ...(can('invoices', 'create') ? [{ label: tr("Duplicate"), icon: <TbCopy />, onClick: () => navigate(`/crm/invoices/new?from=${r.id}`) }] : []),
             ...(can('invoices', 'edit') && !cancelled && mayChange ? [{ label: tr("Edit"), icon: <TbPencil />, onClick: guard(r, () => navigate(`/crm/invoices/${r.id}/edit`)) }] : []),
             { label: tr("Download"), icon: <TbDownload />, onClick: () => { window.location.href = `/api/crm/sales/invoices/${r.id}/pdf?download=1` } },
             ...(can('invoices', 'edit') && !draft && !cancelled ? [{ label: tr("Send"), icon: <TbMail />, onClick: () => setMail({ id: r.id, template: 'invoice-send-to-client' }) }] : []),

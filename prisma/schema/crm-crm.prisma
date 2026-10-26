@@ -23,6 +23,8 @@ model CrmClient {
   logoUrl               String?
   industry              String?
   active                Boolean  @default(true)
+  /// a freelance / personal client: active, but not company income and no company-numbered documents
+  incomeExcluded        Boolean  @default(false)
   /// tblleads.id this client was converted from (plain FK, see CrmLead.clientId for the relation)
   leadId                String?  @db.ObjectId
   billingStreet         String?

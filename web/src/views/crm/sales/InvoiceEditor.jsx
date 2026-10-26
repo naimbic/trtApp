@@ -36,22 +36,24 @@ const InvoiceEditor = () => {
     const authority = useSessionUser((x) => x.user.authority) || []
     const superAdmin = authority.includes('admin') || authority.includes('crm.admin')
 
+    const fromId = params.get('from')
     useEffect(() => {
-        Promise.all([api('/api/crm/sales/lookups'), id ? api(`/api/crm/sales/invoices/${id}`) : null])
+        Promise.all([api('/api/crm/sales/lookups'), id || fromId ? api(`/api/crm/sales/invoices/${id || fromId}`) : null])
             .then(([l, d]) => {
                 setLookups(l)
                 setDoc(d)
                 const inv = d?.invoice
+                const cloned = !id && !!inv // a duplicate: the content of another invoice, as a new draft with a new number and today's dates
                 // a paid invoice is final: only a super admin edits it (the caution was shown when they pressed Edit)
-                if (inv?.status === 2 && !superAdmin) { notify('warning', tr("A paid invoice cannot be changed. Only a super admin can do that.")); navigate(`/crm/invoices/${id}`); return }
+                if (id && inv?.status === 2 && !superAdmin) { notify('warning', tr("A paid invoice cannot be changed. Only a super admin can do that.")); navigate(`/crm/invoices/${id}`); return }
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
                 const dd = l.defaults || {}
                 const dueAfter = dd.dueAfter !== '' && dd.dueAfter != null ? Number(dd.dueAfter) : 30
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
-                setV({ number: inv?.number ?? '',
+                setV({ number: cloned ? '' : inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,
-                    date: day(inv?.date) || day(new Date()),
-                    dueDate: day(inv?.dueDate) || day(dayjs().add(dueAfter, 'day')),
+                    date: (!cloned && day(inv?.date)) || day(new Date()),
+                    dueDate: (!cloned && day(inv?.dueDate)) || day(dayjs().add(dueAfter, 'day')),
                     currencyId: inv?.currencyId || def?.id || null,
                     bankAccountId: inv?.bankAccountId || null,
                     discountPercent: inv?.discountPercent || 0,
@@ -60,12 +62,12 @@ const InvoiceEditor = () => {
                     adjustment: inv?.adjustment || 0,
                     clientNote: inv ? inv.clientNote || '' : dd.clientNote || '', adminNote: inv?.adminNote || '', terms: inv ? inv.terms || '' : dd.terms || '',
                     remindClient: inv ? !inv.cancelOverdueReminders : true,
-                    recurring: inv?.recurring || 0, recurringType: inv?.recurringType || 'month', cycles: inv?.cycles || 0, isCopy: !!inv?.isRecurringFrom,
-                    items: d?.items?.length ? d.items : [baseLine()],
+                    recurring: cloned ? 0 : inv?.recurring || 0, recurringType: inv?.recurringType || 'month', cycles: cloned ? 0 : inv?.cycles || 0, isCopy: !cloned && !!inv?.isRecurringFrom,
+                    items: d?.items?.length ? d.items.map(({ id: _i, ...line }) => line) : [baseLine()],
                 })
             })
             .catch((e) => setError(e.message))
-    }, [id, params])
+    }, [id, fromId, params])
 
     const taxOptions = useMemo(() => (lookups?.taxes || []).map((t) => ({ value: `${t.name}|${t.rate}`, label: `${t.name} (${t.rate}%)`, tax: t })), [lookups])
     const totals = useMemo(() => (v ? calcDocument({ items: v.items, discountPercent: v.discountPercent, discountFixed: v.discountFixed, discountType: v.discountType, adjustment: v.adjustment }) : null), [v])

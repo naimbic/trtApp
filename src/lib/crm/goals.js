@@ -1,3 +1,4 @@
+import { notExcluded, notExcludedPayments } from '@/lib/crm/excludedClients'
 import prisma from '@/lib/prisma'
 import { requirePermission, hasCap } from '@/lib/crm/permissions'
 import { loadRates } from '@/lib/crm/ratesDb'
@@ -16,14 +17,14 @@ async function measure(goal, { start, end }, rt, flags) {
     switch (goal.kind) {
         case 'income':
         case 'profit': {
-            const pays = await prisma.crmPayment.findMany({ where: { paymentDate: range }, select: { amount: true, invoice: { select: { currencyId: true, addedFrom: true, saleAgentId: true } } } })
+            const pays = await prisma.crmPayment.findMany({ where: { paymentDate: range, ...(await notExcludedPayments()) }, select: { amount: true, invoice: { select: { currencyId: true, addedFrom: true, saleAgentId: true } } } })
             const income = pays.filter((p) => !staffId || p.invoice?.addedFrom === staffId || p.invoice?.saleAgentId === staffId).reduce((n, p) => n + money(p.amount, p.invoice?.currencyId), 0)
             if (goal.kind === 'income') return round2(income)
             const exp = await prisma.crmExpense.findMany({ where: { date: range }, select: { amount: true, currencyId: true } })
             return round2(income - exp.reduce((n, e) => n + money(e.amount, e.currencyId), 0))
         }
         case 'invoiced': {
-            const inv = await prisma.crmInvoice.findMany({ where: { date: range, status: { notIn: [5, 6] }, ...(staffId ? mine('addedFrom', 'saleAgentId') : {}) }, select: { total: true, currencyId: true } })
+            const inv = await prisma.crmInvoice.findMany({ where: { date: range, status: { notIn: [5, 6] }, ...(await notExcluded()), ...(staffId ? mine('addedFrom', 'saleAgentId') : {}) }, select: { total: true, currencyId: true } })
             return round2(inv.reduce((n, i) => n + money(i.total, i.currencyId), 0))
         }
         case 'customers': return prisma.crmClient.count({ where: { createdAt: range } })

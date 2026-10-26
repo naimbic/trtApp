@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.108.0',
+        date: '2026-10-26',
+        title: 'Duplicate documents, and freelance / personal clients',
+        items: [
+            'Duplicate: a Duplicate button (next to PDF on the page, and in the three-dots menu of the lists) on invoices, estimates, proposals, purchase orders and contracts. It opens a new draft with the same client, lines, notes and terms, a new number and today\'s dates; nothing is saved until you press Save. A duplicated contract starts today and is not signed.',
+            'Freelance / personal clients: a switch on the client page. They stay active (projects, tasks, contacts, tickets), but they are not company income: invoices, estimates, proposals and purchase orders cannot be created for them (so no company numbers are used), recurring invoices skip them, conversions are refused, and anything of theirs already in the system is left out of the dashboard, reports, goals and the AI summaries. A "Freelance" tag shows on the client card.',
+        ],
+    },
+    {
         version: '0.107.10',
         date: '2026-10-26',
         title: 'Search finds pages and every settings page',

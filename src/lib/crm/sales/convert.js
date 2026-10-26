@@ -1,3 +1,4 @@
+import { isIncomeExcluded, EXCLUDED_MESSAGE } from '@/lib/crm/excludedClients'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { allocateNumber } from '@/lib/crm/sales/docNumbering'
@@ -17,6 +18,7 @@ const activity = (relType, relId, description, actor, staffId) => prisma.crmSale
 /** Creates an unpaid invoice with the lines of an estimate or purchase order and links the two. Returns the invoice. */
 export async function createInvoiceFromDocument(kind, doc, { label, staffId = null, actor = 'System' } = {}) {
     if (doc.invoiceId) throw Object.assign(new Error('This document was already invoiced'), { status: 400 })
+    if (await isIncomeExcluded(clientOf(kind, doc))) throw Object.assign(new Error(EXCLUDED_MESSAGE), { status: 400 })
     const now = new Date()
     const dueAfter = Number((await prisma.crmOption.findUnique({ where: { name: 'invoice_due_after' } }))?.value) || 0
     const { number, prefix, numberFormat } = await allocateNumber('invoice', now)
@@ -37,6 +39,7 @@ export const createInvoiceFromEstimate = (estimate, opts = {}) => createInvoiceF
 
 /** Creates a purchase order (draft) with the lines of an estimate. */
 export async function createPurchaseOrderFromEstimate(estimate, { label, staffId = null, actor = 'Staff' } = {}) {
+    if (await isIncomeExcluded(estimate.clientId)) throw Object.assign(new Error(EXCLUDED_MESSAGE), { status: 400 })
     const existing = await prisma.crmPurchaseOrder.findFirst({ where: { estimateId: estimate.id } })
     if (existing) throw Object.assign(new Error('A purchase order already exists for this estimate'), { status: 400 })
     const now = new Date()
@@ -59,6 +62,7 @@ export async function createPurchaseOrderFromEstimate(estimate, { label, staffId
 export async function createEstimateFromProposal(proposal, { label, staffId = null, actor = 'Staff' } = {}) {
     const clientId = clientOf('proposal', proposal)
     if (!clientId) throw Object.assign(new Error('This proposal is for a lead. Make the lead a client first.'), { status: 400 })
+    if (await isIncomeExcluded(clientId)) throw Object.assign(new Error(EXCLUDED_MESSAGE), { status: 400 })
     if (proposal.estimateId) throw Object.assign(new Error('An estimate was already created from this proposal'), { status: 400 })
     const now = new Date()
     const days = Number((await prisma.crmOption.findUnique({ where: { name: 'estimate_due_after' } }))?.value) || 0

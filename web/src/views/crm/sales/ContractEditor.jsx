@@ -35,17 +35,19 @@ const ContractEditor = () => {
     const [wasLocked, setWasLocked] = useState(false)
     const set = (p) => setV((x) => ({ ...x, ...p }))
 
+    const fromId = params.get('from')
     useEffect(() => {
-        Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id ? api(`/api/crm/sales/contracts/${id}`) : null]).then(([l, c]) => {
-            if (c?.locked && !superAdmin) { notify('warning', tr("A signed contract cannot be edited")); navigate(`/crm/contracts/${id}`, { replace: true }); return }
-            setWasLocked(!!c?.locked)
+        Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id || fromId ? api(`/api/crm/sales/contracts/${id || fromId}`) : null]).then(([l, c]) => {
+            const cloned = !id && !!c // a duplicate: the wording of another contract as a new, unsigned one that starts today
+            if (id && c?.locked && !superAdmin) { notify('warning', tr("A signed contract cannot be edited")); navigate(`/crm/contracts/${id}`, { replace: true }); return }
+            setWasLocked(!cloned && !!c?.locked)
             const tl = l.stats?.types || []
             setTypes(tl)
             // the type that is the default (and its length) is already chosen on a new contract
             const def = !c ? tl.find((t) => t.isDefault) : null
-            setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: day(c.dateStart), dateEnd: day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: def?.id || null, projectId: null, dateStart: day(new Date()), dateEnd: def?.months ? addMonths(day(new Date()), def.months) : '', value: '', description: '', content: '', hidden: false, remindClient: true, signed: false })
+            setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: cloned ? day(new Date()) : day(c.dateStart), dateEnd: cloned ? (c.dateStart && c.dateEnd ? day(new Date(Date.now() + (new Date(c.dateEnd) - new Date(c.dateStart)))) : '') : day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: cloned ? false : c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: def?.id || null, projectId: null, dateStart: day(new Date()), dateEnd: def?.months ? addMonths(day(new Date()), def.months) : '', value: '', description: '', content: '', hidden: false, remindClient: true, signed: false })
         }).catch((e) => setError(e.message))
-    }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [id, fromId]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const save = async () => {
         setSaving(true); setError('')

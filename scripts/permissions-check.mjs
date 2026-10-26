@@ -110,6 +110,27 @@ try {
     check('anonymous: lead mailboxes refused', (await fetch(`${BASE}/api/crm/lead-mail`)).status === 401)
     check('milestones: a person without Projects rights cannot create one', (await plain('POST', '/api/crm/milestones-board', { name: 'x', projectId: '000000000000000000000001' })).status === 403)
     check('milestones: anonymous refused', (await fetch(`${BASE}/api/crm/milestones-board`)).status === 401)
+    console.log('\n== freelance / personal clients (excluded from income)')
+    const free = await prisma.crmClient.create({ data: { company: 'zz check freelance', incomeExcluded: true } }); made.rows.push(['crmClient', free.id])
+    const biller = await login(await makeUser('biller', { invoices: ['view', 'create', 'edit'], estimates: ['view', 'create', 'edit'], purchase_orders: ['view', 'create', 'edit'], proposals: ['view', 'create', 'edit'] }))
+    const lines = [{ description: 'Work', qty: 1, rate: 10, unit: '', taxes: [] }]
+    for (const [what, url, body] of [
+        ['invoice', '/api/crm/sales/invoices', { clientId: free.id, items: lines }],
+        ['estimate', '/api/crm/sales/estimates', { clientId: free.id, items: lines }],
+        ['purchase order', '/api/crm/sales/purchase-orders', { clientId: free.id, items: lines }],
+        ['proposal', '/api/crm/sales/proposals', { subject: 'x', relType: 'customer', relId: free.id, proposalTo: 'x', items: lines }],
+    ]) { const r = await biller('POST', url, body); check(`freelance client: ${what} refused`, r.status === 400 && /freelance/i.test(JSON.stringify(r.body)), `${r.status} ${JSON.stringify(r.body).slice(0, 80)}`) }
+    const dash = await login(await makeUser('dash', { dashboard: ['view'], finance: ['view_amounts'], invoices: ['view'], payments: ['view'] }))
+    const before = await dash('GET', '/api/crm/dashboard?range=year&currency=all')
+    const cur = (await prisma.crmCurrency.findFirst({ where: { isDefault: true } })) || (await prisma.crmCurrency.findFirst())
+    const bigInv = await prisma.crmInvoice.create({ data: { clientId: free.id, number: 999999, prefix: 'ZZ-', numberFormat: 1, date: new Date(), total: 987654321, subtotal: 987654321, status: 2, hash: crypto.randomUUID(), currencyId: cur?.id } }); made.rows.unshift(['crmInvoice', bigInv.id])
+    const pay = await prisma.crmPayment.create({ data: { invoiceId: bigInv.id, amount: 987654321, paymentDate: new Date() } }); made.rows.unshift(['crmPayment', pay.id])
+    const after = await dash('GET', '/api/crm/dashboard?range=year&currency=all')
+    check('dashboard shows money to this user (so the next check means something)', !after.body.moneyHidden && after.body.sections?.length > 0, `moneyHidden ${after.body.moneyHidden}, sections ${after.body.sections?.length}`)
+    check('freelance client: its invoice and payment do not change the dashboard', !JSON.stringify(after.body).includes('987654321') && !JSON.stringify(after.body).includes('ZZ-999999'), 'amount or number found in dashboard')
+    const norm = await prisma.crmClient.create({ data: { company: 'zz check normal' } }); made.rows.push(['crmClient', norm.id])
+    const okInv = await biller('POST', '/api/crm/sales/invoices', { clientId: norm.id, items: lines })
+    check('normal client: invoice still created', okInv.status === 201, String(okInv.status)); if (okInv.body?.id) made.rows.unshift(['crmInvoice', okInv.body.id])
     const lm = await login(await makeUser('leadmail', { lead_mail: ['view'] }))
     check('Lead email integration view: can list mailboxes', (await lm('GET', '/api/crm/lead-mail')).status === 200)
     check('Lead email integration view only: cannot save a mailbox', (await lm('POST', '/api/crm/lead-mail', { action: 'save', data: { email: 'a@b.com' } })).status === 403)

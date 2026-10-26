@@ -35,32 +35,34 @@ const ProposalEditor = () => {
     const base = useClientLookups()
     const visual = useRef(null)
 
+    const fromId = params.get('from')
     useEffect(() => {
-        Promise.all([api('/api/crm/sales/lookups').then(async (l) => ({ ...l, defaults: { ...(l.defaults || {}), ...(await api('/api/crm/sales/proposals/defaults')) } })), id ? api(`/api/crm/sales/proposals/${id}`) : null])
+        Promise.all([api('/api/crm/sales/lookups').then(async (l) => ({ ...l, defaults: { ...(l.defaults || {}), ...(await api('/api/crm/sales/proposals/defaults')) } })), id || fromId ? api(`/api/crm/sales/proposals/${id || fromId}`) : null])
             .then(([l, d]) => {
                 setLookups(l)
                 setDoc(d)
                 const inv = d?.proposal
+                const cloned = !id && !!inv // a duplicate: the content of another document, as a new draft with a new number and today's dates
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
                 const dd = l.defaults || {}
                 const dueAfter = dd.openFor !== '' && dd.openFor != null ? Number(dd.openFor) : 14
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
-                setV({ number: inv?.number ?? '',
+                setV({ number: cloned ? '' : inv?.number ?? '',
                     subject: inv?.subject || '', relType: inv?.relType || (params.get('leadId') ? 'lead' : 'customer'), relId: inv?.relId || params.get('clientId') || params.get('leadId') || null,
                     proposalTo: inv?.proposalTo || '', email: inv?.email || '', phone: inv?.phone || '', address: inv?.address || '', city: inv?.city || '', state: inv?.state || '', zip: inv?.zip || '', country: inv?.country ?? null,
                     content: inv?.content ?? '<p>Hello,</p><p>Thank you for your interest. Please find our offer below.</p><p>{proposal_items}</p><p>We look forward to working with you.</p>', allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || null,
-                    date: day(inv?.date) || day(new Date()),
-                    openTill: inv ? day(inv.openTill) : (dueAfter > 0 ? day(dayjs().add(dueAfter, 'day')) : ''),
+                    date: (!cloned && day(inv?.date)) || day(new Date()),
+                    openTill: inv && !cloned ? day(inv.openTill) : (dueAfter > 0 ? day(dayjs().add(dueAfter, 'day')) : ''),
                     currencyId: inv?.currencyId || def?.id || null,
                     discountPercent: inv?.discountPercent || 0,
                     discountFixed: inv && !inv.discountPercent ? inv.discountTotal || 0 : 0,
                     discountType: inv?.discountType || 'before_tax',
                     adjustment: inv?.adjustment || 0,
-                                        items: d?.items?.length ? d.items : [baseLine()],
+                                        items: d?.items?.length ? d.items.map(({ id: _i, ...line }) => line) : [baseLine()],
                 })
             })
             .catch((e) => setError(e.message))
-    }, [id, params])
+    }, [id, fromId, params])
 
     const taxOptions = useMemo(() => (lookups?.taxes || []).map((t) => ({ value: `${t.name}|${t.rate}`, label: `${t.name} (${t.rate}%)`, tax: t })), [lookups])
     const totals = useMemo(() => (v ? calcDocument({ items: v.items, discountPercent: v.discountPercent, discountFixed: v.discountFixed, discountType: v.discountType, adjustment: v.adjustment }) : null), [v])

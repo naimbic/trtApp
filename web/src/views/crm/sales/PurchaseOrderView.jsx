@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbDownload, TbFileInvoice, TbFileTypePdf, TbMail, TbPencil, TbTrash, TbPrinter } from 'react-icons/tb'
+import { TbArrowLeft, TbDownload, TbFileInvoice, TbFileTypePdf, TbMail, TbPencil, TbTrash, TbPrinter, TbCopy } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
@@ -63,6 +63,7 @@ const PurchaseOrderView = () => {
                 {invoice && <Link className="text-sm text-emerald-600 hover:underline" to={`/crm/invoices/${invoice.id}`}>{tr("→ invoice")} {invoice.displayNumber}</Link>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/purchase-orders/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
+                    {can('purchase_orders', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/purchase-orders/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/purchase-orders/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('purchase_orders', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/purchase-orders/${id}/pdf`, '_blank')}>{tr("Print")}</Button>

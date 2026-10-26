@@ -72,6 +72,7 @@ const ProposalView = () => {
                 {invoice && <Link className="text-sm text-emerald-600 hover:underline" to={`/crm/invoices/${invoice.id}`}>{tr("→ invoice")} {invoice.displayNumber}</Link>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/proposals/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
+                    {can('proposals', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/proposals/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/proposals/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('proposals', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/proposals/${id}/html?print=1`)}>{tr("Print")}</Button>

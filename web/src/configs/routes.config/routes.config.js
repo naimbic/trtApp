@@ -9,7 +9,7 @@ export const publicRoutes = [...authRoute]
 const ROUTE_FEATURE = [
     ['/crm/settings', 'settings'], ['/crm/company', 'settings'], ['/team', 'staff'], ['/crm/staff', 'staff'], ['/crm/work-hours', 'staff'], ['/crm/goals', 'goals'], ['/crm/surveys', 'surveys'], ['/crm/milestones', 'projects'], ['/crm/lead-email-integration', 'settings'], ['/crm/payroll', 'staff'], ['/crm/roles', 'roles'],
     ['/crm/clients', 'customers'], ['/crm/invoices', 'invoices'], ['/crm/estimates', 'estimates'], ['/crm/purchase-orders', 'purchase_orders'], ['/crm/proposals', 'proposals'], ['/crm/contracts', 'contracts'],
-    ['/crm/payments', 'payments'], ['/crm/expenses', 'expenses'], ['/crm/mails', 'email_templates'], ['/crm/issues', 'issues'],
+    ['/crm/payments', 'payments'], ['/crm/expenses', 'expenses'], ['/crm/freelancers', 'freelancers'], ['/crm/mails', 'email_templates'], ['/crm/issues', 'issues'],
     ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/notes', 'tasks'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'], ['/crm/timeline', 'tasks'],
     ['/crm/leads', 'leads'], ['/crm/projects', 'projects'], ['/crm/tickets', 'tickets'], ['/crm/passwords', 'passwords'],
     ['/crm/knowledge-base', 'knowledge_base'], ['/crm/reports', 'reports'], ['/crm/activity', 'activity_log'],
@@ -142,6 +142,7 @@ const crmRoutes = [
     { key: 'crm.projects.view', path: '/crm/projects/:id', component: lazy(() => import('@/views/crm/projects/ProjectDetails')), authority: [] },
     { key: 'crm.tickets', path: '/crm/tickets', component: lazy(() => import('@/views/crm/tickets/TicketsList')), authority: [] },
     { key: 'crm.tickets.view', path: '/crm/tickets/:id', component: lazy(() => import('@/views/crm/tickets/TicketView')), authority: [] },
+    { key: 'crm.freelancers', path: '/crm/freelancers', component: lazy(() => import('@/views/crm/freelancers/FreelancersPage')), authority: [] },
     { key: 'crm.expenses', path: '/crm/expenses', component: lazy(() => import('@/views/crm/expenses/ExpensesList')), authority: [] },
     { key: 'crm.passwords', path: '/crm/passwords', component: lazy(() => import('@/views/crm/vault/PasswordVault')), authority: [] },
     { key: 'crm.kb', path: '/crm/knowledge-base', component: lazy(() => import('@/views/crm/kb/KbHub')), authority: [] },

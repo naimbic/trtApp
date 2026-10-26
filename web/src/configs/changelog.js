@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.109.0',
+        date: '2026-10-26',
+        title: 'Freelancers: side jobs paid without invoices',
+        items: [
+            'New Freelancers page (Sales menu): jobs that get paid like invoices but have no number. Each job has a name, who pays (a typed name or a client of the CRM), an amount in any currency, the date it is due, a payment mode and a note. Mark paid / Mark unpaid in one click; the cards show what is left to collect, what is overdue and what was collected.',
+            'Repeating jobs (a monthly retainer, hosting...): choose every N days, weeks, months or years and how many times (or no end). The next payment is created automatically when it is due, from Settings → Cron job (new "Freelance jobs" card, with its own hour and switch).',
+            'They are kept completely apart from the company: not in the dashboard, reports, goals or invoice numbering.',
+            'New permission Freelancers (view, view own, create, edit, delete) in the role editor and on the menu.',
+            'Fixed: the Work hours and Lead email integration menu entries were hidden from people who only had the new Team hours / Lead email integration permissions.',
+        ],
+    },
+    {
         version: '0.108.0',
         date: '2026-10-26',
         title: 'Duplicate invoices, estimates, proposals, purchase orders and contracts',

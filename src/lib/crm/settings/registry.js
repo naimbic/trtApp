@@ -530,6 +530,10 @@ export const GROUPS = {
                 yes('cron_job_expenses', 'Run the expense tasks', { default: '1', cardToggle: true }),
                 f('expenses_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
             ] },
+            { title: 'Freelance jobs', desc: 'Repeating freelance jobs: the next one is created when it is due.', fields: [
+                yes('cron_job_freelance', 'Run the freelance tasks', { default: '1', cardToggle: true }),
+                f('freelance_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
+            ] },
             { title: 'Contracts', fields: [
                 yes('cron_job_contracts', 'Run the contract tasks', { default: '1', cardToggle: true }),
                 f('contracts_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),

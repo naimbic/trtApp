@@ -21,9 +21,10 @@ const GROUP_ORDER = [
     ['Utilities', 'crmUtilities'],
 ]
 
-const authorityFor = (feature) =>
+// `also`: newer, narrower permissions that open the same page (next to the older broad one)
+const authorityFor = (feature, also = []) =>
     feature
-        ? ['admin', 'crm.admin', `crm.${feature}.view`, `crm.${feature}.view_own`, ...(feature === 'checklist_templates' ? ['crm.checklist_templates.create'] : [])]
+        ? ['admin', 'crm.admin', `crm.${feature}.view`, `crm.${feature}.view_own`, ...also.map((a) => `crm.${a}.view`), ...(feature === 'checklist_templates' ? ['crm.checklist_templates.create'] : [])]
         : ['admin', 'crm.admin', 'user']
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-')
@@ -36,7 +37,7 @@ const LAYOUT = {
     Projects: ['projects', 'scrum-board', 'milestones'],
     Tasks: ['tasks-board', 'my-tasks', 'notes', 'team-tasks', 'timeline', 'time-report', 'issues', 'tasks', 'task-timers', S('hr', 'Attendance & leave', ['timesheets', 'leave-requests', 'days-off']), S('setup', 'Task setup', ['task-statuses', 'checklist-templates'])],
     Sales: [
-        'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses',
+        'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses', 'freelancers',
         S('catalog', 'Items & catalog', ['items', 'item-groups']),
         S('setup', 'Sales setup', ['expense-categories', 'contract-types']),
     ],
@@ -65,7 +66,7 @@ const groups = GROUP_ORDER.map(([group, icon]) => {
         ...customNavItems.filter((i) => i.group === group),
         ...resources
             .filter((r) => r.group === group && r.nav !== false && !r.hidden)
-            .map((r) => ({ key: r.key, title: r.plural, path: `/crm/${r.key}`, feature: r.feature })),
+            .map((r) => ({ key: r.key, title: r.plural, path: `/crm/${r.key}`, feature: r.feature, also: r.also })),
     ]
     const byKey = Object.fromEntries(flat.map((i) => [i.key, i]))
     const used = new Set()
@@ -93,7 +94,7 @@ const itemNode = (group, i) => ({
     translateKey: `nav.crm.item.${i.key}`,
     icon: `nav.${i.key}`,
     type: NAV_ITEM_TYPE_ITEM,
-    authority: i.superOnly ? ['admin', 'crm.admin'] : authorityFor(i.feature), // AI insights: the super administrator only
+    authority: i.superOnly ? ['admin', 'crm.admin'] : authorityFor(i.feature, i.also), // AI insights: the super administrator only
     meta: { description: { translateKey: `nav.crm.item.${i.key}Desc`, label: i.title } },
     subMenu: [],
 })
@@ -107,7 +108,7 @@ const entryNode = (group, e) =>
               translateKey: `nav.crm.sub.${slug(group)}.${e.sub}`,
               icon: `sub.${e.sub}`,
               type: NAV_ITEM_TYPE_COLLAPSE,
-              authority: ['admin', 'crm.admin', ...e.items.flatMap((i) => authorityFor(i.feature)).filter((a) => a !== 'user')],
+              authority: ['admin', 'crm.admin', ...e.items.flatMap((i) => authorityFor(i.feature, i.also)).filter((a) => a !== 'user')],
               subMenu: e.items.map((i) => itemNode(group, i)),
           }
         : itemNode(group, e)
@@ -130,7 +131,7 @@ const crmNavigationConfig = groups.length
                   translateKey: `nav.crm.${slug(group)}`,
                   icon,
                   type: NAV_ITEM_TYPE_COLLAPSE,
-                  authority: ['admin', 'crm.admin', ...flat.flatMap((i) => authorityFor(i.feature)).filter((a) => a !== 'user')],
+                  authority: ['admin', 'crm.admin', ...flat.flatMap((i) => authorityFor(i.feature, i.also)).filter((a) => a !== 'user')],
                   meta: { description: { translateKey: `nav.crm.${slug(group)}Desc`, label: group } },
                   subMenu: items.map((e) => entryNode(group, e)),
               })),

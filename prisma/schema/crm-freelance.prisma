@@ -1,0 +1,40 @@
+// ============================================================================
+// FREELANCE jobs: work done on the side that gets paid like an invoice but is not company business. No number,
+// not in the company dashboard, reports or goals. Can repeat (monthly retainer...) or be one-off.
+// Cross-domain ids (staff, clients, currencies) are plain ObjectId strings WITHOUT @relation.
+// ============================================================================
+
+model CrmFreelanceJob {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  title             String
+  /// who pays: a name typed freely, and/or a client of the CRM
+  payerName         String?
+  clientId          String?   @db.ObjectId
+  description       String?
+  amount            Float     @default(0)
+  currencyId        String?   @db.ObjectId
+  /// the date the money is due (for a repeating job: the first one)
+  date              DateTime
+  /// unpaid | paid
+  status            String    @default("unpaid")
+  paidDate          DateTime?
+  paymentModeId     String?   @db.ObjectId
+
+  recurring         Boolean   @default(false)
+  recurringType     String?   // day | week | month | year
+  repeatEvery       Int       @default(0)
+  /// number of copies to make (0 = no limit)
+  cycles            Int       @default(0)
+  totalCycles       Int       @default(0)
+  lastRecurringDate DateTime?
+  /// set on the copies: the job they were made from
+  recurringFrom     String?   @db.ObjectId
+
+  addedFrom         String?   @db.ObjectId
+
+  @@index([status, date])
+  @@index([recurringFrom])
+}

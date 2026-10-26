@@ -43,6 +43,7 @@ export const NAV_DESC = {
     'credit-notes': 'Refunds and corrections',
     subscriptions: 'Recurring billing',
     expenses: 'Money going out',
+    freelancers: 'Side jobs paid without invoices',
     items: 'Products and services you sell',
     'item-groups': 'Categories of items',
     'expense-categories': 'Group your expenses',

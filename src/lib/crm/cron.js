@@ -16,10 +16,10 @@ import { leadMailJob } from '@/lib/crm/leadMail'
 const DAY = 86400000
 const num = (v) => Number(v) || 0
 
-const JOB_SWITCH = ['invoices', 'estimates', 'proposals', 'contracts', 'expenses', 'tasks', 'tickets', 'leadmail', 'cleanup'].map((k) => `cron_job_${k}`)
+const JOB_SWITCH = ['invoices', 'estimates', 'proposals', 'contracts', 'expenses', 'freelance', 'tasks', 'tickets', 'leadmail', 'cleanup'].map((k) => `cron_job_${k}`)
 const OPTION_KEYS = [...JOB_SWITCH, 'automatically_stop_task_timer_after_hours', 'default_timezone', 'cron_key', 'cron_enabled', 'invoice_auto_operations_hour', 'invoice_due_notice_before', 'invoice_due_notice_resend_after', 'automatically_send_invoice_overdue_reminder_after', 'automatically_resend_invoice_overdue_reminder_after', 'create_invoice_from_recurring_only_on_paid_invoices', 'new_recurring_invoice_action', 'invoice_due_after',
     'estimates_auto_operations_hour', 'send_estimate_expiry_reminder_before', 'proposals_auto_operations_hour', 'send_proposal_expiry_reminder_before', 'contracts_auto_operations_hour', 'contract_expiration_before', 'tasks_reminder_notification_hour', 'tasks_reminder_notification_before', 'autoclose_tickets_after', 'delete_activity_log_older_then',
-    'cron_last_invoices', 'cron_last_estimates', 'cron_last_proposals', 'cron_last_contracts', 'cron_last_tasks', 'cron_last_expenses', 'expenses_auto_operations_hour', 'cron_last_cleanup', 'last_cron_run']
+    'cron_last_invoices', 'cron_last_estimates', 'cron_last_proposals', 'cron_last_contracts', 'cron_last_tasks', 'cron_last_expenses', 'expenses_auto_operations_hour', 'cron_last_freelance', 'freelance_auto_operations_hour', 'cron_last_cleanup', 'last_cron_run']
 
 /** Today in the platform time zone, as a UTC-midnight Date (how document dates are stored) and the local hour. */
 function clock(tz) {
@@ -208,12 +208,34 @@ async function expensesJob({ today, lines, dry }) {
     }
 }
 
+/* ---------------- repeating freelance jobs ---------------- */
+async function freelanceJob({ today, lines, dry }) {
+    // (filtered here: on MongoDB a field that was never set does not match `null`)
+    const parents = (await prisma.crmFreelanceJob.findMany({ where: { recurring: true } })).filter((p) => !p.recurringFrom)
+    for (const p of parents) {
+        let done = p.totalCycles || 0, last = p.lastRecurringDate || p.date
+        for (let i = 0; i < 12; i++) { // a few missed periods are caught up in one run
+            if (p.cycles > 0 && done >= p.cycles) break
+            const next = addUnits(last, p.repeatEvery || 1, p.recurringType || 'month')
+            if (next > today) break
+            if (dry) { lines.push(`[preview] The freelance job “${p.title}” would be repeated for ${next.toISOString().slice(0, 10)}`); last = next; done += 1; continue }
+            try {
+                await prisma.crmFreelanceJob.create({ data: { title: p.title, payerName: p.payerName, clientId: p.clientId, description: p.description, amount: p.amount, currencyId: p.currencyId, paymentModeId: p.paymentModeId, addedFrom: p.addedFrom, date: next, status: 'unpaid', recurring: false, recurringFrom: p.id } })
+                await prisma.crmFreelanceJob.update({ where: { id: p.id }, data: { totalCycles: done + 1, lastRecurringDate: next } })
+                lines.push(`Repeating freelance job created: ${p.title} (${next.toISOString().slice(0, 10)})`)
+                last = next; done += 1
+            } catch (e) { lines.push(`! Freelance job “${p.title}” failed: ${e.message}`); break }
+        }
+    }
+}
+
 const JOBS = [
     { key: 'invoices', label: 'Invoices', hour: 'invoice_auto_operations_hour', run: invoicesJob },
     { key: 'estimates', label: 'Estimates', hour: 'estimates_auto_operations_hour', run: estimatesJob },
     { key: 'proposals', label: 'Proposals', hour: 'proposals_auto_operations_hour', run: proposalsJob },
     { key: 'contracts', label: 'Contracts', hour: 'contracts_auto_operations_hour', run: contractsJob },
     { key: 'expenses', label: 'Expenses', hour: 'expenses_auto_operations_hour', run: expensesJob },
+    { key: 'freelance', label: 'Freelance jobs', hour: 'freelance_auto_operations_hour', run: freelanceJob },
     { key: 'tasks', label: 'Tasks', hour: 'tasks_reminder_notification_hour', run: tasksJob },
     { key: 'cleanup', label: 'Cleanup', hour: null, daily: true, run: cleanupJob },
     { key: 'tickets', label: 'Tickets', hour: null, run: ticketsJob },

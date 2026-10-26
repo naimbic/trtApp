@@ -398,6 +398,7 @@ const resources = [
         group: 'Leads',
         icon: 'TbMailForward',
         feature: 'settings',
+        also: ['lead_mail'], // the Lead email integration permission opens this page too
         titleField: 'email',
         search: ['email'],
         defaultSort: { createdAt: 'desc' },

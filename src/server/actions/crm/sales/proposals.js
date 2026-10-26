@@ -1,6 +1,5 @@
 'use server'
 
-import { isIncomeExcluded, EXCLUDED_MESSAGE } from '@/lib/crm/excludedClients'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -66,7 +65,6 @@ export async function saveProposal(input) {
     if (!String(input.subject || '').trim()) return fail('Subject is required')
     if (!['customer', 'lead'].includes(input.relType) || !/^[0-9a-f]{24}$/i.test(input.relId || '')) return fail('Choose the client or lead this proposal is for')
     if (!String(input.proposalTo || '').trim()) return fail('Who is the proposal for?')
-    if (isNew && input.relType === 'customer' && (await isIncomeExcluded(input.relId))) return fail(EXCLUDED_MESSAGE)
     const items = (input.items || []).filter((i) => String(i.description || '').trim())
     const discountType = input.discountType || 'before_tax'
     const totals = calcDocument({ items, discountPercent: input.discountPercent, discountFixed: input.discountFixed, discountType, adjustment: input.adjustment })

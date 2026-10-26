@@ -4247,9 +4247,5 @@ export default {
     "Team hours": "ساعات الفريق",
     "The Team hours page: everybody's active hours, mouse / keyboard time and days worked. People with Team members view also keep access. Everyone always sees their own hours.": "صفحة ساعات الفريق: ساعات النشاط لكل شخص ووقت الماوس / لوحة المفاتيح وأيام العمل. من لديهم صلاحية عرض أعضاء الفريق يحتفظون بالوصول أيضًا. يرى كل شخص ساعاته دائمًا.",
     "Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.": "تكامل بريد العملاء المحتملين: صناديق البريد التي تحوّل رسائل نماذج الموقع إلى عملاء محتملين (العرض للقائمة وسجل الاستيراد؛ التعديل للإضافة والتغيير والاختبار والفحص). من لديهم صلاحية الإعدادات يحتفظون بها أيضًا.",
-    "Pages": "الصفحات",
-    "Freelance": "عمل حر",
-    "Freelance / personal client": "عميل مستقل / شخصي",
-    "Active, but not company income: no invoices, estimates, proposals or purchase orders (so no company numbers are used), and nothing from this client in the dashboard, reports or goals.": "نشط، لكنه خارج دخل الشركة: لا فواتير ولا عروض أسعار ولا مقترحات ولا أوامر شراء (فلا تُستخدم أرقام الشركة)، ولا يظهر شيء من هذا العميل في لوحة المعلومات أو التقارير أو الأهداف.",
-    "This client is a freelance / personal client: it is excluded from invoices, estimates, proposals and purchase orders (untick it on the client page to bill them)": "هذا العميل مستقل / شخصي: مستبعد من الفواتير وعروض الأسعار والمقترحات وأوامر الشراء (ألغِ تحديد الخيار في صفحة العميل لإصدار فواتير له)"
+    "Pages": "الصفحات"
 }

@@ -1,4 +1,3 @@
-import { notExcluded, notExcludedPayments } from '@/lib/crm/excludedClients'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { resolveRange } from '@/lib/crm/dashboard'
@@ -53,14 +52,12 @@ export async function runReport(kind, params = {}, opts = {}) {
     const inRange = { gte: R.from, lt: R.until }
     const out = { kind, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso, granularity: R.granularity }, labels: R.keys, currency: cur ? { id: cur.id, name: cur.name, symbol: cur.symbol, placement: cur.placement } : null, all: isAll, ratesMissing: isAll ? rt.missing : [] }
     const cw = curId ? { currencyId: curId } : {}
-    const nx = await notExcluded() // freelance / personal clients are not company income
-    const px = await notExcludedPayments()
 
     if (kind === 'sales') {
         const [invoices, payments, allOpen, clients, modes] = await Promise.all([
-            prisma.crmInvoice.findMany({ where: { ...cw, date: inRange, ...nx } }),
-            prisma.crmPayment.findMany({ where: { paymentDate: inRange, ...px } }),
-            prisma.crmInvoice.findMany({ where: { ...cw, status: { in: [1, 3, 4] }, ...nx }, select: { id: true, total: true, dueDate: true, clientId: true, currencyId: true } }),
+            prisma.crmInvoice.findMany({ where: { ...cw, date: inRange } }),
+            prisma.crmPayment.findMany({ where: { paymentDate: inRange } }),
+            prisma.crmInvoice.findMany({ where: { ...cw, status: { in: [1, 3, 4] } }, select: { id: true, total: true, dueDate: true, clientId: true, currencyId: true } }),
             prisma.crmClient.findMany({ select: { id: true, company: true } }),
             prisma.crmPaymentMode.findMany(),
         ])
@@ -112,7 +109,7 @@ export async function runReport(kind, params = {}, opts = {}) {
         })
     } else if (kind === 'profit') {
         const [payments, expenses0, cats, taxes] = await Promise.all([
-            prisma.crmPayment.findMany({ where: { paymentDate: inRange, ...px } }),
+            prisma.crmPayment.findMany({ where: { paymentDate: inRange } }),
             prisma.crmExpense.findMany({ where: { ...cw, date: inRange } }),
             prisma.crmExpenseCategory.findMany(), prisma.crmTax.findMany(),
         ])

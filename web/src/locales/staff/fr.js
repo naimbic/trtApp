@@ -4247,9 +4247,5 @@ export default {
     "Team hours": "Heures de l'équipe",
     "The Team hours page: everybody's active hours, mouse / keyboard time and days worked. People with Team members view also keep access. Everyone always sees their own hours.": "La page Heures de l'équipe : heures actives de chacun, temps souris / clavier et jours travaillés. Les personnes pouvant voir les membres de l'équipe gardent aussi l'accès. Chacun voit toujours ses propres heures.",
     "Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.": "Intégration des e-mails de leads : les boîtes mail qui transforment les e-mails de formulaires du site en leads (voir la liste et le journal d'import ; modifier pour ajouter, changer, tester et vérifier les boîtes). Les personnes ayant accès aux Paramètres le gardent aussi.",
-    "Pages": "Pages",
-    "Freelance": "Freelance",
-    "Freelance / personal client": "Client freelance / personnel",
-    "Active, but not company income: no invoices, estimates, proposals or purchase orders (so no company numbers are used), and nothing from this client in the dashboard, reports or goals.": "Actif, mais hors revenus de l'entreprise : pas de factures, devis, propositions ni bons de commande (donc aucun numéro de l'entreprise utilisé), et rien de ce client dans le tableau de bord, les rapports ou les objectifs.",
-    "This client is a freelance / personal client: it is excluded from invoices, estimates, proposals and purchase orders (untick it on the client page to bill them)": "Ce client est un client freelance / personnel : il est exclu des factures, devis, propositions et bons de commande (décochez l'option sur la fiche client pour le facturer)"
+    "Pages": "Pages"
 }

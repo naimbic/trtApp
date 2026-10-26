@@ -17,7 +17,7 @@ import { tr } from '@/utils/t'
 import BankAccountSelect from '../kit/BankAccountSelect'
 
 const addr = { street: '', city: '', state: '', zip: '', country: null }
-const blank = { incomeExcluded: false, diffBilling: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, portalHidden: [], active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
+const blank = { diffBilling: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, portalHidden: [], active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
 
 const norm = (x) => String(x ?? '').trim().toLowerCase()
 const sameAddress = (a, b) => ['street', 'city', 'state', 'zip'].every((k) => norm(a?.[k]) === norm(b?.[k])) && String(a?.country ?? '') === String(b?.country ?? '')
@@ -56,7 +56,7 @@ const ClientForm = () => {
             const bil = { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }
             // a billing address that is empty or the same as the address above is just "the same": its fields stay hidden
             const differs = (x, ref) => !sameAddress(x, ref) && !isBlankAddress(x)
-            setV({ ...blank, diffBilling: differs(bil, main), logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], currencyId: c.currencyId || null, active: c.active, incomeExcluded: !!c.incomeExcluded, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
+            setV({ ...blank, diffBilling: differs(bil, main), logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
         }).catch((e) => setError(e.message)).finally(() => setLoading(false))
     }, [id])
 
@@ -175,10 +175,6 @@ const ClientForm = () => {
                             <div className="mt-6 flex items-center justify-between gap-8">
                                 <div><h6>{tr("Active")}</h6><p>{tr("Inactive clients stay in your records but are hidden from new documents.")}</p></div>
                                 <Switcher checked={v.active} onChange={(a) => set({ active: a })} />
-                            </div>
-                            <div className="mt-6 flex items-center justify-between gap-8">
-                                <div><h6>{tr("Freelance / personal client")}</h6><p>{tr("Active, but not company income: no invoices, estimates, proposals or purchase orders (so no company numbers are used), and nothing from this client in the dashboard, reports or goals.")}</p></div>
-                                <Switcher checked={!!v.incomeExcluded} onChange={(a) => set({ incomeExcluded: a })} />
                             </div>
                         </Card>
                     </div>

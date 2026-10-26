@@ -115,7 +115,7 @@ const ClientsList = () => {
             <article key={c.id} className="cx-card" style={{ '--i': Math.min(i, 12) }} onClick={() => navigate(`/crm/clients/${c.id}`)} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/crm/clients/${c.id}`) }}>
                 <header className="cx-card__top">
                     {c.logoUrl ? <img className="cx-logo" src={c.logoUrl} alt="" loading="lazy" /> : <span className={`cx-logo cx-logo--${toneOf(c.company)}`}>{initials(c.company)}</span>}
-                    <span className="cx-card__tools" onClick={(e) => e.stopPropagation()}>{c.incomeExcluded && <span className="cx-off">{tr("Freelance")}</span>}{!c.active && <span className="cx-off">{tr("Inactive")}</span>}{dots(c)}</span>
+                    <span className="cx-card__tools" onClick={(e) => e.stopPropagation()}>{!c.active && <span className="cx-off">{tr("Inactive")}</span>}{dots(c)}</span>
                 </header>
                 <h3 className="cx-card__name" title={c.company}>{c.company}</h3>
                 <p className="cx-card__role">{primary?.name || tr("No contact yet")}{c.city ? <><span> · </span><TbMapPin className="cx-pin" />{c.city}</> : null}</p>

@@ -1,6 +1,5 @@
 'use server'
 
-import { isIncomeExcluded, EXCLUDED_MESSAGE } from '@/lib/crm/excludedClients'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -52,7 +51,6 @@ export async function savePurchaseOrder(input) {
     if (!isNew) await assertDocVisible(session, 'purchase_order', input.id)
     const staffId = await getStaffId(session)
     if (!input.clientId) return fail('Client is required')
-    if (isNew && (await isIncomeExcluded(input.clientId))) return fail(EXCLUDED_MESSAGE)
     const items = (input.items || []).filter((i) => String(i.description || '').trim())
     if (!items.length) return fail('Add at least one line item')
     const discountType = input.discountType || 'before_tax'

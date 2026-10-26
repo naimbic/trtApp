@@ -1,4 +1,3 @@
-import { isIncomeExcluded } from '@/lib/crm/excludedClients'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { getOptions, setOptions, sendTemplate } from '@/lib/crm/mailer'
@@ -80,7 +79,6 @@ async function invoicesJob({ o, today, lines, dry }) {
         const unit = p.customRecurring ? p.recurringType || 'month' : 'month'
         const next = addUnits(p.lastRecurringDate || p.date || p.createdAt, p.recurring, unit)
         if (next > today) continue
-        if (await isIncomeExcluded(p.clientId)) { lines.push(`Recurring invoice ${p.prefix || ''}${p.number} skipped: the client is a freelance / personal client`); continue }
         if (onlyPaid) {
             const last = await prisma.crmInvoice.findFirst({ where: { isRecurringFrom: p.id }, orderBy: { createdAt: 'desc' } })
             if ((last || p).status !== 2) { lines.push(`Recurring invoice ${p.prefix || ''}${p.number} skipped: the last one is not paid`); ref(lines, 'invoice', p.id, `${p.prefix || ''}${p.number}`); continue }

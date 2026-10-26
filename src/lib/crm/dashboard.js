@@ -1,4 +1,3 @@
-import { notExcluded, notExcludedPayments } from '@/lib/crm/excludedClients'
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
 import { viewScope, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
@@ -93,10 +92,9 @@ export async function getDashboardMetrics(params = {}) {
 
     await section('invoices', 'invoices', async () => {
         const invoices = await prisma.crmInvoice.findMany({
-            where: await notExcluded(),
             select: { id: true, clientId: true, number: true, prefix: true, currencyId: true, total: true, status: true, date: true, dueDate: true },
         })
-        const payments = await prisma.crmPayment.findMany({ where: await notExcludedPayments(), select: { invoiceId: true, amount: true, paymentDate: true } })
+        const payments = await prisma.crmPayment.findMany({ select: { invoiceId: true, amount: true, paymentDate: true } })
         const invById = Object.fromEntries(invoices.map((i) => [i.id, i]))
         const paidByInvoice = {}
         for (const p of payments) paidByInvoice[p.invoiceId] = round2((paidByInvoice[p.invoiceId] || 0) + (p.amount || 0))
@@ -275,7 +273,7 @@ export async function getDashboardMetrics(params = {}) {
 
     await section('recent', 'payments', async () => {
         const [payments, activity] = await Promise.all([
-            prisma.crmPayment.findMany({ where: { paymentDate: { gte: since, lt: until }, ...(await notExcludedPayments()) }, orderBy: { paymentDate: 'desc' }, take: 8, include: { invoice: { select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, currencyId: true } } } }),
+            prisma.crmPayment.findMany({ where: { paymentDate: { gte: since, lt: until } }, orderBy: { paymentDate: 'desc' }, take: 8, include: { invoice: { select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, currencyId: true } } } }),
             prisma.crmSalesActivity.findMany({ orderBy: { date: 'desc' }, take: 8 }),
         ])
         return {
@@ -296,7 +294,7 @@ export async function getDashboardMetrics(params = {}) {
         try {
             const items = []
             if (can('invoices')) {
-                const inv = await prisma.crmInvoice.findMany({ where: { status: { in: [1, 3, 4] }, ...(await notExcluded()) }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, dueDate: true, total: true, currencyId: true, status: true }, orderBy: { total: 'desc' }, take: 400 })
+                const inv = await prisma.crmInvoice.findMany({ where: { status: { in: [1, 3, 4] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, dueDate: true, total: true, currencyId: true, status: true }, orderBy: { total: 'desc' }, take: 400 })
                 const pays = await prisma.crmPayment.findMany({ where: { invoiceId: { in: inv.map((i) => i.id) } }, select: { invoiceId: true, amount: true } })
                 const paid = {}
                 for (const p of pays) paid[p.invoiceId] = (paid[p.invoiceId] || 0) + (p.amount || 0)

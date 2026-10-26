@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.107.10',
+        date: '2026-10-26',
+        title: 'Search finds pages and every settings page',
+        items: ['Fixed: the search box (Ctrl K) found nothing when you typed. It now finds menu pages and every Settings page, including words inside them (for example "telegram", "RIB", "numbering", "signature").', 'Lead email integration: when the mailbox folder does not exist, the test now lists the folders that do exist in that mailbox (type one of those names exactly, or create the folder in your webmail first).'],
+    },
+    {
         version: '0.107.9',
         date: '2026-10-25',
         title: 'Roles & permissions: Team hours and Lead email integration',

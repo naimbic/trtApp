@@ -4246,5 +4246,6 @@ export default {
     "Telegram does not know this chat id. Open the company bot in Telegram, press Start, and use your own number (ask @userinfobot for it)": "このチャットIDはTelegramに認識されていません。Telegramで会社のボットを開いてStartを押し、ご自身の番号（@userinfobotで確認）を使ってください",
     "Team hours": "チームの勤務時間",
     "The Team hours page: everybody's active hours, mouse / keyboard time and days worked. People with Team members view also keep access. Everyone always sees their own hours.": "チームの勤務時間ページ：全員のアクティブ時間、マウス／キーボード時間、勤務日数。チームメンバーの閲覧権限がある人も引き続きアクセスできます。自分の時間は常に見られます。",
-    "Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.": "リードメール連携：サイトのフォームメールをリードに変えるメールボックス（表示は一覧とインポートログ、編集は追加・変更・テスト・確認）。設定へのアクセス権がある人も引き続き利用できます。"
+    "Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.": "リードメール連携：サイトのフォームメールをリードに変えるメールボックス（表示は一覧とインポートログ、編集は追加・変更・テスト・確認）。設定へのアクセス権がある人も引き続き利用できます。",
+    "Pages": "ページ"
 }

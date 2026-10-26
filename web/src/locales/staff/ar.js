@@ -4246,5 +4246,6 @@ export default {
     "Telegram does not know this chat id. Open the company bot in Telegram, press Start, and use your own number (ask @userinfobot for it)": "لا يعرف تيليغرام معرّف الدردشة هذا. افتح بوت الشركة في تيليغرام واضغط Start واستخدم رقمك الخاص (اطلبه من @userinfobot)",
     "Team hours": "ساعات الفريق",
     "The Team hours page: everybody's active hours, mouse / keyboard time and days worked. People with Team members view also keep access. Everyone always sees their own hours.": "صفحة ساعات الفريق: ساعات النشاط لكل شخص ووقت الماوس / لوحة المفاتيح وأيام العمل. من لديهم صلاحية عرض أعضاء الفريق يحتفظون بالوصول أيضًا. يرى كل شخص ساعاته دائمًا.",
-    "Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.": "تكامل بريد العملاء المحتملين: صناديق البريد التي تحوّل رسائل نماذج الموقع إلى عملاء محتملين (العرض للقائمة وسجل الاستيراد؛ التعديل للإضافة والتغيير والاختبار والفحص). من لديهم صلاحية الإعدادات يحتفظون بها أيضًا."
+    "Lead email integration: the mailboxes that turn website form emails into leads (view the list and import log; edit to add, change, test and check mailboxes). People with Settings access keep it too.": "تكامل بريد العملاء المحتملين: صناديق البريد التي تحوّل رسائل نماذج الموقع إلى عملاء محتملين (العرض للقائمة وسجل الاستيراد؛ التعديل للإضافة والتغيير والاختبار والفحص). من لديهم صلاحية الإعدادات يحتفظون بها أيضًا.",
+    "Pages": "الصفحات"
 }

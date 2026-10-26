@@ -124,7 +124,14 @@ export async function testMailbox(b) {
             const unseen = (await client.search({ seen: false }, { uid: true }))?.length || 0
             return { ok: true, message: `Connected. ${total} email${total === 1 ? '' : 's'} in ${cfg.folder || 'INBOX'}, ${unseen} unread.` }
         } finally { lock.release() }
-    } catch (e) { throw fail(why(e)) } finally { await client.logout().catch(() => {}) }
+    } catch (e) {
+        let msg = why(e)
+        if (/folder does not exist/.test(msg) && client.usable) {
+            const names = (await client.list().catch(() => [])).map((m) => m.path).filter(Boolean)
+            if (names.length) msg = `Folder "${cfg.folder}" does not exist in this mailbox. Folders found: ${names.join(', ')}. Create the folder in your webmail first, or type one of these names exactly`
+        }
+        throw fail(msg)
+    } finally { await client.logout().catch(() => {}) }
 }
 
 /** Reads one email into { msg, parsed } (the judgement is made by the caller). */

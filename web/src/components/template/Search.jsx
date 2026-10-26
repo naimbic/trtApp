@@ -5,7 +5,6 @@ import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import ScrollBar from '@/components/ui/ScrollBar'
 import navigationIcon from '@/configs/navigation-icon.config'
-import { apiGetSearchResult } from '@/services/CommonService'
 import debounce from 'lodash/debounce'
 import { HiOutlineSearch, HiChevronRight } from 'react-icons/hi'
 import { PiMagnifyingGlassDuotone } from 'react-icons/pi'
@@ -15,6 +14,7 @@ import useTranslation from '@/utils/hooks/useTranslation'
 import appConfig from '@/configs/app.config'
 import { useSessionUser } from '@/store/authStore'
 import { NAV_DESC } from './rapport/navDescriptions'
+import { GROUPS } from '@/lib/crm/settings/registry'
 import Highlighter from 'react-highlight-words'
 import { tr } from '@/utils/t'
 
@@ -33,6 +33,15 @@ const flatMenu = (authority, t) => {
     })
     walk(navigationConfig)
     return out
+}
+
+/** Every settings page with the words found inside it (card titles, field labels), so "telegram" or "RIB" finds the right page. */
+const settingsIndex = (authority, icon) => {
+    if (authority.length && !authority.some((a) => ['admin', 'crm.admin', 'crm.settings.view'].includes(a))) return []
+    return Object.entries(GROUPS).map(([k, g]) => {
+        const words = [g.label, g.desc, ...(g.cards || []).flatMap((c) => [c.title, c.desc, ...(c.fields || []).flatMap((f) => [f.label, f.hint])])].filter(Boolean)
+        return { title: `${tr('Settings')} → ${tr(g.label)}`, desc: g.desc ? tr(g.desc) : null, path: `/crm/settings?group=${k}`, icon, hay: words.flatMap((w) => [w, tr(w)]).join(' ').toLowerCase() }
+    })
 }
 
 const ListItem = (props) => {
@@ -125,14 +134,16 @@ const _Search = ({ className }) => {
             setNoResult(false)
         }
 
-        const respond = await apiGetSearchResult({ query })
-
-        if (respond) {
-            if (respond.length === 0) {
-                setNoResult(true)
-            }
-            setSearchResult(respond)
-        }
+        const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+        const hit = (hay) => words.every((w) => hay.includes(w))
+        const pages = flat.filter((f) => hit(`${f.title} ${f.key} ${NAV_DESC[f.key] ? tr(NAV_DESC[f.key]) : ''}`.toLowerCase())).slice(0, 8).map(withDesc)
+        const sets = settingsIndex(authority, flat.find((f) => f.key === 'platform-settings')?.icon).filter((x) => hit(x.hay)).slice(0, 8)
+        const respond = [
+            ...(pages.length ? [{ title: tr('Pages'), data: pages }] : []),
+            ...(sets.length ? [{ title: tr('Settings'), data: sets }] : []),
+        ]
+        setNoResult(respond.length === 0)
+        setSearchResult(respond)
     }
 
     const handleSearch = (e) => {

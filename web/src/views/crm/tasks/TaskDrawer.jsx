@@ -174,7 +174,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             kicker={edit ? `${tr("Task")}${detail?.task.rel?.label ? ` · ${detail.task.rel.label}` : ''}` : tr("New task")}
             date={detail?.task.dueDate ? `${tr("Due")} ${dayjs(detail.task.dueDate).format('DD MMM')}` : ''}
             team={detail?.task.assignees?.length ? <People list={detail.task.assignees} max={5} size={30} /> : null}
-            stage={stage}
+            stage={stage ? { ...stage, currentId: detail?.task?.status ?? stage.currentId } : stage}
             isOpen={open}
             onClose={onClose}
             width={640}

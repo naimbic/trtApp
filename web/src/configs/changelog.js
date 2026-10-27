@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.111.1',
+        date: '2026-10-27',
+        title: 'Tasks: Show completed now really hides completed tasks',
+        items: ['Fixed: with "Show completed" off, tasks finished in the last 14 days were still listed (a rule from the first version of the board that nothing explained), and switching it on showed the older ones. Now off hides every completed task and on shows them all; filtering on the Complete status or on a date range still shows them.', 'The task popup keeps showing the right status (for example Complete) even when that task is hidden from the board.'],
+    },
+    {
         version: '0.111.0',
         date: '2026-10-27',
         title: 'Lead popup: Tasks, Mails, Meetings and followers; Freelance payment lines',

@@ -130,10 +130,10 @@ export async function listTasks(p = {}) {
     if (statuses.length) and.push({ status: { in: statuses } })
     if (p.unassigned === '1') and.push({ assignees: { none: {} }, status: { not: COMPLETE } })
     if (p.overdue === '1') and.push({ AND: [{ dueDate: { not: null } }, { dueDate: { lt: day(p.today) || day(new Date().toISOString().slice(0, 10)) } }], status: { not: COMPLETE } })
-    // finished tasks are hidden on the board unless asked for, like Perfex; a date range shows them too (a day's work includes what is done)
+    // finished tasks are hidden unless asked for (the Show completed switch), like Perfex; a date range or a status filter on Complete shows them too (a day's work includes what is done)
     const showDone = p.done === '1' || p.status === '5' || !!(from || to) || statuses.includes(5)
     if (p.status) and.push({ status: parseInt(p.status, 10) })
-    else if (!showDone) and.push({ OR: [{ status: { not: COMPLETE } }, { dateFinished: { gte: new Date(Date.now() - 14 * 86400000) } }] })
+    else if (!showDone) and.push({ status: { not: COMPLETE } })
     const limit = Math.min(parseInt(p.limit, 10) || 400, 1000)
     const tasks = await prisma.crmTask.findMany({
         where: { AND: and }, take: limit, orderBy: [{ kanbanOrder: 'asc' }, { createdAt: 'desc' }],

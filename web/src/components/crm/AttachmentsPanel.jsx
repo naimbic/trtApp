@@ -7,6 +7,7 @@ import Switcher from '@/components/ui/Switcher'
 import Spinner from '@/components/ui/Spinner'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FileIcon from '@/components/crm/FileIcon'
+import ShareButton from '@/components/crm/ShareButton'
 import { api, notify, upload, formatBytes, qs } from '@/views/crm/kit/api'
 import { tr, trn } from '@/utils/t'
 
@@ -74,6 +75,7 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
                                 <div className="text-xs text-gray-400">{formatBytes(f.size)} · {f.uploaderName || '—'} · {dayjs(f.createdAt).format('DD MMM YYYY')}</div>
                             </div>
                             {showClientToggle && canEdit && <label className="hidden items-center gap-1.5 text-xs text-gray-500 sm:flex"><Switcher checked={f.visibleToClient} onChange={(v) => toggle(f, v)} />{tr("Client can see")}</label>}
+                            <ShareButton url={f.url} title={f.name} text={f.name} file={{ url: f.url, name: f.name, type: f.mime || f.mimeType }} className="text-lg text-gray-400 transition hover:text-primary" />
                             <a href={f.url} target="_blank" rel="noreferrer" className="text-lg text-gray-400 hover:text-primary" title={tr("Open")}><TbExternalLink /></a>
                             {canEdit && <button type="button" onClick={() => setDel(f)} className="text-lg text-gray-400 hover:text-red-500" title={tr("Delete")}><TbTrash /></button>}
                         </div>

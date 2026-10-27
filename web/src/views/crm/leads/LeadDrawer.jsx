@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
+import { plainOf } from '@/components/crm/ShareButton'
 import { CommentTools, CommentEdit } from '@/components/crm/CommentParts'
 import { Link, useNavigate } from 'react-router'
 import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText } from 'react-icons/tb'
@@ -99,7 +100,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     {editingNote === n.id
                         ? <CommentEdit initial={n.content} onCancel={() => setEditingNote(null)} onSave={async (text) => { await api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'PUT', body: { noteId: n.id, content: text } }); setEditingNote(null); await load() }} />
                         : <RichView html={n.content} />}
-                    {editingNote !== n.id && <CommentTools onReply={() => setNote((x) => x || (n.by?.name ? `@${n.by.name} ` : ''))} onEdit={n.mine ? () => setEditingNote(n.id) : null} onDelete={n.canDelete ? () => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' })) : null} />}
+                    {editingNote !== n.id && <CommentTools share={{ url: `/crm/leads/${id}`, title: l?.name, text: `${n.by?.name ? `${n.by.name}: ` : ''}${plainOf(n.content)}` }} onReply={() => setNote((x) => x || (n.by?.name ? `@${n.by.name} ` : ''))} onEdit={n.mine ? () => setEditingNote(n.id) : null} onDelete={n.canDelete ? () => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' })) : null} />}
                 </div>
             ))}
             {!detail.notes.length && <p className="text-sm text-gray-500">{tr("No notes yet.")}</p>}
@@ -133,6 +134,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     return (
         <Drawer
+            share={edit ? { url: `/crm/leads/${id}`, title: l?.name, text: l?.name } : undefined}
             title={edit ? l?.name || tr("Lead") : tr("New lead")} kicker={edit ? `${tr("Lead")}${l?.company ? ` · ${l.company}` : ''}` : tr("New lead")} sub={l?.company} date={l?.lastContact ? `${tr("Last contact")} ${dayjs(l.lastContact).format('DD MMM')}` : ''} team={l?.assignees?.length ? <People list={l.assignees} max={5} size={30} /> : null} stage={stage} isOpen={open} onClose={onClose} width={640}
             footer={
                 <div className="flex w-full items-center gap-2">

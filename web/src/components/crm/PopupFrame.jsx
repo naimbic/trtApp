@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { TbX } from 'react-icons/tb'
 import { colourOf } from './Pipeline'
+import ShareButton from './ShareButton'
 import { tr } from '@/utils/t'
 
 const SPRING = { type: 'spring', stiffness: 460, damping: 32 }
@@ -13,7 +14,7 @@ const SPRING = { type: 'spring', stiffness: 460, damping: 32 }
  * (press a step to move) and holds a page's own form. It replaces the plain side drawer for tasks and leads.
  *   stage  { columns:[{ id, name, color | tone }], currentId, onPick(id) }   optional: colours the head and draws the bar
  */
-const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, team, stage, footer, children }) => {
+const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, team, stage, footer, share, children }) => {
     const reduce = useReducedMotion()
     const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl'
     const cols = stage?.columns || []
@@ -33,6 +34,7 @@ const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, te
                 <div className="rp-portal rp-qv-wrap" key="wrap">
                     <motion.div className="rp-qv-veil" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} />
                     <motion.aside className="rp-qv" role="dialog" aria-label={title} style={{ '--t': t, '--on': on, width: `min(${width}px, calc(100vw - 24px))` }} initial={reduce ? false : { x, opacity: 0, scale: 0.97 }} animate={{ x: 0, opacity: 1, scale: 1 }} exit={{ x, opacity: 0, scale: 0.97 }} transition={SPRING}>
+                        {share && <ShareButton url={share.url} title={share.title || title} text={share.text} className="rp-qv-x rp-qv-share" />}
                         <button type="button" className="rp-qv-x" aria-label={tr('Close')} onClick={onClose}><TbX /></button>
                         <p className="rp-qv-kicker">{kicker}</p>
                         <motion.div className="rp-qv-head" initial={reduce ? false : { clipPath: 'inset(0 0 100% 0 round 24px)' }} animate={{ clipPath: 'inset(0 0 0% 0 round 24px)' }} transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}>

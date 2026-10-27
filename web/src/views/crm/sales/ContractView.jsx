@@ -18,6 +18,7 @@ import { fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import { useSessionUser } from '@/store/authStore'
+import ShareButton from '@/components/crm/ShareButton'
 import { tr } from '@/utils/t'
 import ReminderCard from '../kit/ReminderCard'
 
@@ -75,6 +76,7 @@ const ContractView = () => {
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/contracts/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     {can('contracts', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/contracts/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    <ShareButton asButton url={c.hash && !c.trash && !c.hidden ? `/api/crm/public/contract/${id}/${c.hash}` : `/crm/contracts/${id}`} title={c.subject || tr("Contract")} text={c.subject || tr("Contract")} file={{ url: `/api/crm/sales/contracts/${id}/pdf`, name: `Contract-${id}.pdf`, type: 'application/pdf' }} />
                     {c.hash && !c.trash && !c.hidden && <Button size="sm" icon={<TbCopy />} onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/api/crm/public/contract/${id}/${c.hash}`); notify('success', tr("Client link copied")) } catch { notify('danger', tr("Could not copy")) } }}>{tr("Client link")}</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbMail />} onClick={() => setMailOpen(true)}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/contracts/${id}/html?print=1`)}>{tr("Print")}</Button>

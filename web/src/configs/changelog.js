@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.112.0',
+        date: '2026-10-27',
+        title: 'Share from anywhere; a status turned off no longer shows in the task popup',
+        items: [
+            'New Share icon: it opens a menu with this device\'s own share sheet (when the device has one), Copy link, WhatsApp, Telegram, Email, LinkedIn, X and Facebook. It is in the top bar of the task and lead popups, on every comment and note (it sends the text and the link to the record), next to each attached file (the file itself can be shared where the device allows, or downloaded), on invoices, estimates, proposals, purchase orders and contracts (the client link when there is one, and the PDF), and over any link or image inside a text when you rest the pointer on it.',
+            'Fixed: a task status turned off in Tasks → Statuses (for example Testing) was still shown as a step in the task popup. Now only the active statuses are steps (the task\'s own status stays when it is a turned-off one).',
+        ],
+    },
+    {
         version: '0.111.2',
         date: '2026-10-27',
         title: 'Lead popup Tasks tab: the same panel as a checklist',

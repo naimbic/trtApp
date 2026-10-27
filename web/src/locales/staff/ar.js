@@ -4350,5 +4350,7 @@ export default {
     "You can only delete the meetings you added": "يمكنك حذف الاجتماعات التي أضفتها فقط",
     "UN": "الكمية",
     "Add a task for this lead (@ to mention, # for a tag)": "أضف مهمة لهذا العميل المحتمل (@ للإشارة، # لوسم)",
-    "New task with all its details": "مهمة جديدة بكل تفاصيلها"
+    "New task with all its details": "مهمة جديدة بكل تفاصيلها",
+    "Share…": "مشاركة…",
+    "Could not share": "تعذرت المشاركة"
 }

@@ -4350,5 +4350,7 @@ export default {
     "You can only delete the meetings you added": "自分が追加した会議のみ削除できます",
     "UN": "数量",
     "Add a task for this lead (@ to mention, # for a tag)": "このリードのタスクを追加（@でメンション、#でタグ）",
-    "New task with all its details": "詳細付きの新しいタスク"
+    "New task with all its details": "詳細付きの新しいタスク",
+    "Share…": "共有…",
+    "Could not share": "共有できませんでした"
 }

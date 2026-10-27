@@ -3,6 +3,7 @@ import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
+import { plainOf } from '@/components/crm/ShareButton'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import StaffRing from '@/components/crm/StaffRing'
 import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks } from 'react-icons/tb'
@@ -137,7 +138,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
                             : <RichView html={c.content} />}
                     </div>
-                    {editingId !== c.id && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' })) : null} />}
+                    {editingId !== c.id && <CommentTools share={{ url: `/crm/tasks/${id}`, title: detail?.task.name, text: `${c.staff?.name ? `${c.staff.name}: ` : ''}${plainOf(c.content)}` }} onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' })) : null} />}
                 </div>
             ))}
             {!detail.comments.length && <p className="text-sm text-gray-500">{tr("No comments yet.")}</p>}
@@ -170,6 +171,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     return (
         <Drawer
+            share={edit ? { url: `/crm/tasks/${id}`, title: detail?.task.name, text: detail?.task.name } : undefined}
             title={edit ? (detail?.task.name || tr("Task")) : tr("New task")}
             kicker={edit ? `${tr("Task")}${detail?.task.rel?.label ? ` · ${detail.task.rel.label}` : ''}` : tr("New task")}
             date={detail?.task.dueDate ? `${tr("Due")} ${dayjs(detail.task.dueDate).format('DD MMM')}` : ''}

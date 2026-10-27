@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
+import { plainOf } from '@/components/crm/ShareButton'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import StaffRing from '@/components/crm/StaffRing'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -175,7 +176,7 @@ const TaskPage = () => {
                                                     ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
                                                     : <RichView className="mt-1 text-sm" html={c.content} />}
                                             </div>
-                                            {editingId !== c.id && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => delComment(c) : null} />}
+                                            {editingId !== c.id && <CommentTools share={{ url: `/crm/tasks/${id}`, title: t.name, text: `${c.staff?.name ? `${c.staff.name}: ` : ''}${plainOf(c.content)}` }} onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => delComment(c) : null} />}
                                         </div>
                                     ))}
                                     {!d.comments.length && <p className="text-sm text-gray-400">{tr('No comments yet.')}</p>}

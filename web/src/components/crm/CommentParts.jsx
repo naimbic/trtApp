@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { TbArrowBackUp, TbPencil, TbTrash, TbX } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import ShareButton from '@/components/crm/ShareButton'
 import { tr } from '@/utils/t'
 
 /** Reply, edit and delete icons that appear when the pointer is over a comment (the parent needs the classes "group relative"). */
-export const CommentTools = ({ onReply, onEdit, onDelete }) => (
+export const CommentTools = ({ onReply, onEdit, onDelete, share }) => (
     <div className="absolute right-1.5 top-1.5 flex gap-0.5 rounded-lg bg-white/90 p-0.5 opacity-0 shadow-sm transition focus-within:opacity-100 group-hover:opacity-100 dark:bg-gray-800/90">
+        {share && <ShareButton url={share.url} title={share.title} text={share.text} />}
         {onReply && <button type="button" title={tr('Reply')} aria-label={tr('Reply')} onClick={onReply} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbArrowBackUp /></button>}
         {onEdit && <button type="button" title={tr('Edit')} aria-label={tr('Edit')} onClick={onEdit} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbPencil /></button>}
         {onDelete && <button type="button" title={tr('Delete')} aria-label={tr('Delete')} onClick={onDelete} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-gray-700"><TbTrash /></button>}

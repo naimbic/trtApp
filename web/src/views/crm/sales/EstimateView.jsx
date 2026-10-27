@@ -14,6 +14,7 @@ import { api, notify, useCan, printPage } from '../kit/api'
 import { makeMoney, useClientLookups } from '../clients/shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import { EstimateStatusTag, fmtDate } from './shared'
+import ShareButton from '@/components/crm/ShareButton'
 import { tr } from '@/utils/t'
 import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
@@ -72,6 +73,7 @@ const EstimateView = () => {
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/estimates/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     {can('estimates', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/estimates/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    <ShareButton asButton url={clientLink} title={`${tr("Estimate")} ${e.displayNumber}`} text={`${tr("Estimate")} ${e.displayNumber}`} file={{ url: `/api/crm/sales/estimates/${id}/pdf`, name: `Estimate-${e.displayNumber}.pdf`, type: 'application/pdf' }} />
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/estimates/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('estimates', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/estimates/${id}/pdf`, '_blank')}>{tr("Print")}</Button>

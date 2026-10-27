@@ -4350,5 +4350,7 @@ export default {
     "You can only delete the meetings you added": "Vous ne pouvez supprimer que les réunions que vous avez ajoutées",
     "UN": "UN",
     "Add a task for this lead (@ to mention, # for a tag)": "Ajoutez une tâche pour ce lead (@ pour mentionner, # pour une étiquette)",
-    "New task with all its details": "Nouvelle tâche avec tous ses détails"
+    "New task with all its details": "Nouvelle tâche avec tous ses détails",
+    "Share…": "Partager…",
+    "Could not share": "Impossible de partager"
 }

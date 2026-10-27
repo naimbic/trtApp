@@ -1,5 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import ShareButton from '@/components/crm/ShareButton'
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
 import { mentionDirectory } from '@/utils/mentions'
@@ -32,6 +34,22 @@ const RichView = ({ html, className }) => {
     const needs = clean.includes('@') || clean.includes('#')
     useEffect(() => { if (needs) mentionDirectory().then(setDir) }, [needs])
     const out = useMemo(() => (dir && needs ? decorate(clean, dir) : clean), [clean, dir, needs])
+    // a share icon appears over a link or an image when the pointer rests on it (and stays while its menu is open)
+    const wrap = useRef(null), timer = useRef(null)
+    const [hov, setHov] = useState(null)
+    const pinned = useRef(false)
+    useEffect(() => () => clearTimeout(timer.current), [])
+    const over = (e) => {
+        const el = e.target.closest?.('a[href], img')
+        if (!el || !wrap.current?.contains(el)) return
+        const img = el.tagName === 'IMG'
+        const url = img ? el.currentSrc || el.src : el.href
+        if (!/^(https?:|mailto:|tel:)/i.test(url || '')) return
+        clearTimeout(timer.current)
+        const r = el.getBoundingClientRect()
+        setHov({ top: Math.max(r.top - 28, 4), left: Math.min(r.right + 22, window.innerWidth - 36), url, img, title: img ? el.alt || '' : el.textContent.trim().slice(0, 120), name: img ? (url.split('?')[0].split('/').pop() || 'image') : '' })
+    }
+    const leave = () => { clearTimeout(timer.current); timer.current = setTimeout(() => { if (!pinned.current) setHov(null) }, 350) }
     if (!clean) return null
     const onClick = (e) => {
         const el = e.target.closest?.('[data-staff]')
@@ -41,7 +59,15 @@ const RichView = ({ html, className }) => {
         if (id === dir.me) return
         window.dispatchEvent(new CustomEvent('trt-chat-open', { detail: { staffId: id, name: el.textContent.replace(/^@/, '') } }))
     }
-    return <div className={classNames('rich-view break-words', STYLE, className)} onClick={onClick} dangerouslySetInnerHTML={{ __html: out }} />
+    return (
+        <>
+            <div ref={wrap} className={classNames('rich-view break-words', STYLE, className)} onClick={onClick} onMouseOver={over} onMouseLeave={leave} dangerouslySetInnerHTML={{ __html: out }} />
+            {hov && createPortal(
+                <div className="fixed z-[125] rounded-lg bg-white/95 p-0.5 shadow-md dark:bg-gray-800/95" style={{ top: hov.top, left: hov.left - 30 }} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={leave}>
+                    <ShareButton url={hov.url} title={hov.title} text={hov.title} file={hov.img ? { url: hov.url, name: hov.name } : undefined} onToggle={(o) => { pinned.current = o; if (!o) leave() }} />
+                </div>, document.body)}
+        </>
+    )
 }
 
 export default RichView

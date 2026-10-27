@@ -13,6 +13,7 @@ import { api, notify, useCan, printPage } from '../kit/api'
 import { makeMoney, useClientLookups } from '../clients/shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import { PoStatusTag, fmtDate } from './shared'
+import ShareButton from '@/components/crm/ShareButton'
 import { tr } from '@/utils/t'
 import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
@@ -64,6 +65,7 @@ const PurchaseOrderView = () => {
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/purchase-orders/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     {can('purchase_orders', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/purchase-orders/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    <ShareButton asButton url={`/crm/purchase-orders/${id}`} title={`${tr("Purchase order")} ${e.displayNumber}`} text={`${tr("Purchase order")} ${e.displayNumber}`} file={{ url: `/api/crm/sales/purchase-orders/${id}/pdf`, name: `Purchase-order-${e.displayNumber}.pdf`, type: 'application/pdf' }} />
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/purchase-orders/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('purchase_orders', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbPrinter />} onClick={() => window.open(`/api/crm/sales/purchase-orders/${id}/pdf`, '_blank')}>{tr("Print")}</Button>

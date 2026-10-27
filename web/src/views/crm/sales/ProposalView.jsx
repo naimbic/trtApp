@@ -14,6 +14,7 @@ import { api, notify, useCan, printPage } from '../kit/api'
 import { makeMoney, useClientLookups } from '../clients/shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import { ProposalStatusTag, fmtDate } from './shared'
+import ShareButton from '@/components/crm/ShareButton'
 import { tr } from '@/utils/t'
 import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
@@ -73,6 +74,7 @@ const ProposalView = () => {
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/proposals/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     {can('proposals', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/proposals/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    <ShareButton asButton url={clientLink} title={`${tr("Proposal")} ${e.displayNumber}`} text={`${tr("Proposal")} ${e.displayNumber}`} file={{ url: `/api/crm/sales/proposals/${id}/pdf`, name: `Proposal-${e.displayNumber}.pdf`, type: 'application/pdf' }} />
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/proposals/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('proposals', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
                     <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/proposals/${id}/html?print=1`)}>{tr("Print")}</Button>

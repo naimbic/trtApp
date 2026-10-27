@@ -19,6 +19,7 @@ import { StatusTag, fmtDate } from './shared'
 import SendMailDialog from '../mail/SendMailDialog'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import { useSessionUser } from '@/store/authStore'
+import ShareButton from '@/components/crm/ShareButton'
 import { tr, trn } from '@/utils/t'
 import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
@@ -122,6 +123,7 @@ const InvoiceView = () => {
                     {st !== 6 && <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/invoices/${id}/html?print=1`)}>{tr("Print")}</Button>}
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
                     {can('invoices', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/invoices/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    <ShareButton asButton url={invoice.hash ? `/api/crm/public/invoice/${id}/${invoice.hash}` : `/crm/invoices/${id}`} title={`${tr("Invoice")} ${invoice.displayNumber}`} text={`${tr("Invoice")} ${invoice.displayNumber}`} file={{ url: `/api/crm/sales/invoices/${id}/pdf`, name: `Invoice-${invoice.displayNumber}.pdf`, type: 'application/pdf' }} />
                     {canEdit && <Button size="sm" icon={<TbPencil />} onClick={guard(() => navigate(`/crm/invoices/${id}/edit`))}>{tr("Edit")}</Button>}
                     <Dropdown placement="bottom-end" renderTitle={<EllipsisButton size="sm" />}>
                         <Dropdown.Item eventKey="dl" onClick={() => { window.location.href = `/api/crm/sales/invoices/${id}/pdf?download=1` }}><TbDownload className="text-lg" /><span>{tr("Download PDF")}</span></Dropdown.Item>

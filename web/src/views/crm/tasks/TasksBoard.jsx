@@ -123,7 +123,9 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     // the colours and steps of the popup: the stages of the board, the task's own one highlighted
     const stageOf = (id) => {
         const t = data.list.find((x) => x.id === id)
-        return { columns: STATUS.map((s) => ({ id: s.value, name: s.label, color: s.color })), currentId: t ? t.status : (drawer.preset?.status || 1), onPick: id && data.can.edit ? async (to) => { await moveTo({ id }, to); setDrawer((d) => ({ ...d, k: (d.k || 0) + 1 })) } : undefined }
+        const currentId = t ? t.status : (drawer.preset?.status || 1)
+        // a status turned off in Tasks → Statuses is not offered as a step (the task's own one stays, so its bar still makes sense)
+        return { columns: STATUS.filter((s) => s.active || s.value === currentId).map((s) => ({ id: s.value, name: s.label, color: s.color })), currentId, onPick: id && data.can.edit ? async (to) => { await moveTo({ id }, to); setDrawer((d) => ({ ...d, k: (d.k || 0) + 1 })) } : undefined }
     }
     const remove = async (item) => { try { await api(`/api/crm/work/tasks/${item.id}`, { method: 'DELETE' }); notify('success', tr("Task deleted")); load() } catch (e) { notify('danger', e.message) } }
     const open = (id) => setDrawer((d) => ({ open: true, id: id || null, preset: null, k: d.k }))

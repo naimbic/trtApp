@@ -4348,5 +4348,7 @@ export default {
     "Meeting not found": "会議が見つかりません",
     "You can only edit the meetings you added": "自分が追加した会議のみ編集できます",
     "You can only delete the meetings you added": "自分が追加した会議のみ削除できます",
-    "UN": "数量"
+    "UN": "数量",
+    "Add a task for this lead (@ to mention, # for a tag)": "このリードのタスクを追加（@でメンション、#でタグ）",
+    "New task with all its details": "詳細付きの新しいタスク"
 }

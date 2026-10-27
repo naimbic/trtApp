@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.111.2',
+        date: '2026-10-27',
+        title: 'Lead popup Tasks tab: the same panel as a checklist',
+        items: ['The Tasks tab of a lead now works like a task\'s checklist: tick a task, rename it in place, set or clear its date (red when late), give it to one or several people (two quick clicks never overwrite each other), delete it, and "@" and "#" work in the name. An arrow on each row opens the full task popup, and "New task with all its details" opens the full form. Tasks stay linked to the lead.'],
+    },
+    {
         version: '0.111.1',
         date: '2026-10-27',
         title: 'Tasks: Show completed now really hides completed tasks',

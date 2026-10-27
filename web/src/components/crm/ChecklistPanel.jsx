@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import dayjs from 'dayjs'
-import { TbGripVertical, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
+import { TbGripVertical, TbExternalLink, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
@@ -96,7 +96,7 @@ const ReminderMenu = ({ value, due, onPick, disabled }) => (
  * The checklist of a task: tick, edit in place, give a step to someone, a due date (red when late, amber today) and a reminder,
  * drag to reorder, sort by date, hide what is done. "@" and "#" work in the text. `act(op)` sends one change to the server.
  */
-const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
+const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, empty, title, placeholder, reminders = true, sortable = true, onOpen }) => {
     const [list, setList] = useState(items)
     const [text, setText] = useState('')
     const [who, setWho] = useState([])
@@ -136,10 +136,10 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
         <div>
             <div className="mb-3 flex flex-wrap items-center gap-3">
                 <div className="min-w-[140px] flex-1">
-                    <div className="mb-1 flex items-baseline justify-between text-xs font-semibold text-gray-500"><span>{list.length ? tr('{a} of {b} done', { a: done, b: list.length }) : tr('Checklist')}</span><span>{pct}%</span></div>
+                    <div className="mb-1 flex items-baseline justify-between text-xs font-semibold text-gray-500"><span>{list.length ? tr('{a} of {b} done', { a: done, b: list.length }) : title || tr('Checklist')}</span><span>{pct}%</span></div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} /></div>
                 </div>
-                {list.length > 1 && canEdit && <Button size="xs" icon={<TbSortAscending />} onClick={sortByDate}>{tr('Sort by date')}</Button>}
+                {sortable && list.length > 1 && canEdit && <Button size="xs" icon={<TbSortAscending />} onClick={sortByDate}>{tr('Sort by date')}</Button>}
                 {done > 0 && <Button size="xs" icon={hideDone ? <TbEye /> : <TbEyeOff />} onClick={() => setHideDone((v) => !v)}>{hideDone ? trn(done, 'done step shown') : tr('Hide done')}</Button>}
             </div>
             <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
@@ -148,7 +148,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
                     return (
                         <div key={c.id} className={classNames('group flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-2', over === i && 'bg-primary/5')}
                             onDragOver={(e) => { if (drag.current !== null) { e.preventDefault(); setOver(i) } }} onDrop={(e) => { e.preventDefault(); drop(i) }}>
-                            <TbGripVertical className={classNames('shrink-0 text-lg text-gray-300', canEdit && !hideDone ? 'cursor-grab' : 'opacity-0')} draggable={canEdit && !hideDone} onDragStart={() => { drag.current = i }} onDragEnd={() => { drag.current = null; setOver(null) }} aria-hidden="true" />
+                            {sortable && <TbGripVertical className={classNames('shrink-0 text-lg text-gray-300', canEdit && !hideDone ? 'cursor-grab' : 'opacity-0')} draggable={canEdit && !hideDone} onDragStart={() => { drag.current = i }} onDragEnd={() => { drag.current = null; setOver(null) }} aria-hidden="true" />}
                             <button type="button" role="checkbox" aria-checked={c.finished} aria-label={tr('Done')} onClick={() => act({ action: 'toggle', itemId: c.id, finished: !c.finished })}
                                 className={classNames('grid size-5 shrink-0 place-items-center rounded-full border-2 text-xs transition', c.finished ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 hover:border-primary')}>{c.finished && <TbCheck />}</button>
                             <div className="min-w-[120px] flex-1 text-sm">
@@ -158,10 +158,11 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
                             </div>
                             <div className="ml-auto flex items-center gap-1">
                                 <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />
-                                <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />
+                                {reminders && <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />}
                                 <PeoplePicker staff={staff} value={c.assignedIds || (c.assigned ? [c.assigned] : [])} disabled={!canEdit} onToggle={(id) => { const cur = c.assignedIds || []; setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: cur.includes(id) ? cur.filter((y) => y !== id) : [...cur, id] } : x))); upd(c, { toggleAssignee: id }) }} onChange={(ids) => { setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: ids } : x))); upd(c, { assignedIds: ids }) }} />
+                                {onOpen && <button type="button" aria-label={tr('Open')} title={tr('Open')} onClick={() => onOpen(c)} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 transition hover:bg-gray-100 hover:text-primary focus:opacity-100 group-hover:opacity-100 dark:hover:bg-gray-700"><TbExternalLink /></button>}
                                 {canEdit && <button type="button" aria-label={tr('Edit')} title={tr('Edit')} onClick={() => setEditing({ id: c.id, text: c.description })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-gray-100 hover:text-primary group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbPencil /></button>}
-                                {canEdit && <button type="button" aria-label={tr('Delete')} title={tr('Delete')} onClick={() => act({ action: 'delete', itemId: c.id })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbTrash /></button>}
+                                {(canDelete ?? canEdit) && <button type="button" aria-label={tr('Delete')} title={tr('Delete')} onClick={() => act({ action: 'delete', itemId: c.id })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbTrash /></button>}
                             </div>
                         </div>
                     )
@@ -170,7 +171,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, act, empty }) => {
                 {canEdit && (
                     <form className="flex flex-wrap items-center gap-2 bg-gray-50/60 px-2.5 py-2 dark:bg-gray-700/20" onSubmit={(e) => { e.preventDefault(); add() }}>
                         <TbPlus className="shrink-0 text-lg text-gray-400" />
-                        <input data-mention value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder={tr('Add a step (@ to mention, # for a tag)')} className="h-8 min-w-[140px] flex-1 rounded-lg border border-transparent bg-transparent px-1 text-sm outline-none focus:border-gray-200 dark:focus:border-gray-600" />
+                        <input data-mention value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder={placeholder || tr('Add a step (@ to mention, # for a tag)')} className="h-8 min-w-[140px] flex-1 rounded-lg border border-transparent bg-transparent px-1 text-sm outline-none focus:border-gray-200 dark:focus:border-gray-600" />
                         <DateChip value={due} onChange={setDue} empty={tr('Date')} />
                         <PeoplePicker staff={staff} value={who} onChange={setWho} />
                         <Button size="xs" variant="solid" type="submit" disabled={!text.trim()}>{tr('Add')}</Button>

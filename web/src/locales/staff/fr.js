@@ -4348,5 +4348,7 @@ export default {
     "Meeting not found": "Réunion introuvable",
     "You can only edit the meetings you added": "Vous ne pouvez modifier que les réunions que vous avez ajoutées",
     "You can only delete the meetings you added": "Vous ne pouvez supprimer que les réunions que vous avez ajoutées",
-    "UN": "UN"
+    "UN": "UN",
+    "Add a task for this lead (@ to mention, # for a tag)": "Ajoutez une tâche pour ce lead (@ pour mentionner, # pour une étiquette)",
+    "New task with all its details": "Nouvelle tâche avec tous ses détails"
 }

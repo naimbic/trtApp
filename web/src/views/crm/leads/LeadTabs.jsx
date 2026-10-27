@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbCheck, TbCircle } from 'react-icons/tb'
+import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -13,60 +13,64 @@ import Select from '@/components/ui/Select'
 import Tag from '@/components/ui/Tag'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify, qs, useCan } from '../kit/api'
+import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import TaskDrawer from '../tasks/TaskDrawer'
-import { People, statusOf, statusPillStyle, fmtDate, isOverdue, useTaskStatuses } from '../tasks/shared'
+import { People, useTaskStatuses } from '../tasks/shared'
 import { tr } from '@/utils/t'
 
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const card = 'group relative rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50'
 const when = (d) => dayjs(d).format('DD MMM YYYY, HH:mm')
 
-/** The tasks of the lead, right in its popup: tick them off, add one by typing, open one for all its details. New tasks are linked to the lead. */
+/**
+ * The tasks of the lead, right in its popup, with the same panel as a task's checklist: tick, rename in place, a date, one or several
+ * people, delete; "@" and "#" work in the name. The arrow opens the full task popup. Every task created here is linked to the lead.
+ */
 export const LeadTasks = ({ leadId, staff, onChanged }) => {
     useTaskStatuses()
     const can = useCan()
     const [list, setList] = useState(null)
-    const [name, setName] = useState('')
     const [popup, setPopup] = useState({ open: false, id: null, k: 0 })
+    const live = useRef({}) // the people of each task as the person sees them now, so two quick clicks never overwrite each other
+    const queue = useRef(Promise.resolve())
     const load = useCallback(async () => {
         try { setList((await api(`/api/crm/work/tasks?${qs({ relType: 'lead', relId: leadId, done: '1' })}`)).list || []) } catch (e) { notify('danger', e.message); setList([]) }
     }, [leadId])
     useEffect(() => { load() }, [load])
-    const changed = () => { load(); onChanged?.() }
-    const quick = async () => {
-        const n = name.trim()
-        if (!n) return
-        try { await api('/api/crm/work/tasks', { method: 'POST', body: { name: n, relType: 'lead', relId: leadId } }); setName(''); changed() } catch (e) { notify('danger', e.message) }
+    const items = useMemo(() => (list || []).map((t) => ({ id: t.id, description: t.name, finished: t.status === 5, dueDate: t.dueDate, assignedIds: (t.assignees || []).map((x) => x.id), canFinish: t.canFinish })), [list])
+    useEffect(() => { live.current = Object.fromEntries(items.map((i) => [i.id, i.assignedIds])) }, [items])
+    const changed = async () => { await load(); onChanged?.() }
+    // read the task, change one thing, save it back (the same way the board menu does)
+    const patch = (id, change) => {
+        queue.current = queue.current.then(async () => {
+            const d = await api(`/api/crm/work/tasks/${id}`), t = d.task
+            await api(`/api/crm/work/tasks/${id}`, { method: 'PUT', body: { ...t, startDate: t.startDate ? dayjs(t.startDate).format('YYYY-MM-DD') : null, dueDate: t.dueDate ? dayjs(t.dueDate).format('YYYY-MM-DD') : null, assigneeIds: t.assigneeIds, followerIds: t.followerIds, ...change } })
+        })
+        return queue.current
     }
-    const tick = async (t) => { try { await api(`/api/crm/work/tasks/${t.id}/move`, { method: 'POST', body: { status: t.status === 5 ? 1 : 5 } }); changed() } catch (e) { notify('danger', e.message) } }
-    const open = list?.filter((t) => t.status !== 5) || [], done = list?.filter((t) => t.status === 5) || []
-    const row = (t) => (
-        <div key={t.id} className="flex items-center gap-3 border-b border-gray-100 py-2 text-sm last:border-0 dark:border-gray-700">
-            <button type="button" aria-label={t.status === 5 ? tr("Reopen") : tr("Mark as complete")} disabled={t.canFinish === false || !can('tasks', 'edit')} className={`text-xl transition ${t.status === 5 ? 'text-emerald-500' : 'text-gray-300 hover:text-emerald-500'}`} onClick={() => tick(t)}>{t.status === 5 ? <TbCheck /> : <TbCircle />}</button>
-            <button type="button" className="min-w-0 flex-1 text-start" onClick={() => setPopup({ open: true, id: t.id, k: popup.k + 1 })}>
-                <div className={`truncate font-semibold ${t.status === 5 ? 'text-gray-400 line-through' : 'heading-text'}`}>{t.name}</div>
-                <div className={`text-xs ${isOverdue(t) ? 'text-red-500' : 'text-gray-500'}`}>{t.dueDate ? `${tr("Due")} ${fmtDate(t.dueDate)}` : tr("No due date")}</div>
-            </button>
-            <span className="tpill hidden shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold sm:inline-flex" style={statusPillStyle(t.status)}><i className="size-1.5 rounded-full" style={{ background: 'var(--c)' }} />{statusOf(t.status).label}</span>
-            <People list={t.assignees || []} max={3} size={24} />
-        </div>
-    )
+    const act = async (op) => {
+        try {
+            if (op.action === 'add') await api('/api/crm/work/tasks', { method: 'POST', body: { name: op.description, relType: 'lead', relId: leadId, dueDate: op.dueDate || null, assigneeIds: op.assignedIds || [] } })
+            else if (op.action === 'toggle') await api(`/api/crm/work/tasks/${op.itemId}/move`, { method: 'POST', body: { status: op.finished ? 5 : 1 } })
+            else if (op.action === 'delete') await api(`/api/crm/work/tasks/${op.itemId}`, { method: 'DELETE' })
+            else if (op.action === 'update') {
+                const change = {}
+                if (op.description !== undefined) change.name = op.description
+                if (op.dueDate !== undefined) change.dueDate = op.dueDate ? dayjs(op.dueDate).format('YYYY-MM-DD') : null
+                if (op.assignedIds) { live.current[op.itemId] = op.assignedIds; change.assigneeIds = op.assignedIds }
+                if (op.toggleAssignee) { const cur = live.current[op.itemId] || []; const next = cur.includes(op.toggleAssignee) ? cur.filter((x) => x !== op.toggleAssignee) : [...cur, op.toggleAssignee]; live.current[op.itemId] = next; change.assigneeIds = next }
+                await patch(op.itemId, change)
+            } else return
+            await changed()
+        } catch (e) { notify('danger', e.message); await load() }
+    }
     return (
-        <div className="space-y-4">
-            {can('tasks', 'create') && (
-                <div className="flex gap-2">
-                    <Input size="sm" value={name} placeholder={tr("Add a task for this lead, then press Enter")} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); quick() } }} />
-                    <Button size="sm" variant="solid" icon={<TbPlus />} disabled={!name.trim()} onClick={quick}>{tr("Add")}</Button>
-                    <Button size="sm" onClick={() => setPopup({ open: true, id: null, k: popup.k + 1 })}>{tr("Details")}</Button>
-                </div>
-            )}
+        <div className="space-y-3">
             {list === null ? <p className="text-sm text-gray-500">{tr("Loading…")}</p> : (
-                <>
-                    <div>{open.map(row)}</div>
-                    {done.length > 0 && <div><h6 className="mb-1 text-gray-400">{tr("Completed")} ({done.length})</h6>{done.map(row)}</div>}
-                    {!list.length && <p className="text-sm text-gray-500">{tr("No tasks for this lead yet.")}</p>}
-                </>
+                <ChecklistPanel title={tr("Tasks")} items={items} staff={staff} canEdit={can('tasks', 'edit') && can('tasks', 'create')} canDelete={can('tasks', 'delete')} reminders={false} sortable={false}
+                    placeholder={tr("Add a task for this lead (@ to mention, # for a tag)")} empty={tr("No tasks for this lead yet.")} act={act} onOpen={(i) => setPopup({ open: true, id: i.id, k: popup.k + 1 })} />
             )}
+            {can('tasks', 'create') && <Button size="sm" icon={<TbPlus />} onClick={() => setPopup({ open: true, id: null, k: popup.k + 1 })}>{tr("New task with all its details")}</Button>}
             <TaskDrawer open={popup.open} id={popup.id} staff={staff} refreshKey={popup.k} presets={{ relType: 'lead', relId: leadId }} onClose={() => setPopup((p) => ({ ...p, open: false }))} onChanged={changed} />
         </div>
     )

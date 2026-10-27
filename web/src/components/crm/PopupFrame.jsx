@@ -1,5 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { TbX } from 'react-icons/tb'
@@ -8,6 +8,8 @@ import ShareButton from './ShareButton'
 import { tr } from '@/utils/t'
 
 const SPRING = { type: 'spring', stiffness: 460, damping: 32 }
+// the popups that are open, oldest first: Escape closes only the one on top (a task opened from a lead closes alone)
+const OPEN = []
 
 /**
  * The popup of the Rapport look: it slides in with a spring, wears the colour of the stage it belongs to, shows the stage bar
@@ -21,12 +23,17 @@ const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, te
     const cur = cols.find((c) => String(c.id) === String(stage?.currentId))
     const [t, on] = colourOf(cur || { tone: 'ink' })
     const idx = cols.findIndex((c) => String(c.id) === String(stage?.currentId))
+    const closeRef = useRef(onClose)
+    closeRef.current = onClose
     useEffect(() => {
         if (!isOpen) return undefined
-        const esc = (e) => { if (e.key === 'Escape') onClose?.() }
+        const me = {}
+        OPEN.push(me)
+        // a dialog or a menu opened above it takes the Escape first
+        const esc = (e) => { if (e.key === 'Escape' && !e.defaultPrevented && OPEN[OPEN.length - 1] === me && !document.querySelector('.dialog-after-open, .rp-tmenu')) closeRef.current?.() }
         document.addEventListener('keydown', esc)
-        return () => document.removeEventListener('keydown', esc)
-    }, [isOpen, onClose])
+        return () => { const i = OPEN.indexOf(me); if (i >= 0) OPEN.splice(i, 1); document.removeEventListener('keydown', esc) }
+    }, [isOpen])
     const x = rtl ? -40 : 40
     return createPortal(
         <AnimatePresence>

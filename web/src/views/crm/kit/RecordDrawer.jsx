@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
-import Drawer from '@/components/ui/Drawer'
+import Drawer from '@/components/crm/PopupFrame'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
@@ -12,7 +12,8 @@ import RelationSelect from './RelationSelect'
 import { api, notify } from './api'
 import { tr } from '@/utils/t'
 
-const empty = (f) => (f.type === 'boolean' ? false : ['multiselect', 'tags', 'sections'].includes(f.type) ? [] : '')
+// a new record starts active (switches named active / isActive, or marked defaultOn), every other switch off
+const empty = (f) => (f.type === 'boolean' ? !!f.defaultOn || f.key === 'active' || f.key === 'isActive' : ['multiselect', 'tags', 'sections'].includes(f.type) ? [] : '')
 const initValue = (f, v) => {
     if (v === undefined || v === null) return empty(f)
     if (['date', 'datetime'].includes(f.type)) return v ? new Date(v) : null
@@ -103,7 +104,7 @@ const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = t
         try {
             const body = Object.fromEntries(fields.map((f) => [f.key, ['date', 'datetime'].includes(f.type) ? (v[f.key] ? dayjs(v[f.key]).toISOString() : null) : v[f.key]]))
             const rec = edit ? await api(`/api/crm/${resource.key}/${id}`, { method: 'PATCH', body }) : await api(`/api/crm/${resource.key}`, { method: 'POST', body })
-            notify('success', `${resource.label} ${edit ? 'saved' : 'created'}`)
+            notify('success', edit ? tr("{label} saved", { label: tr(resource.label) }) : tr("{label} created", { label: tr(resource.label) }))
             onSaved?.(rec)
             onClose()
         } catch (e) {
@@ -128,6 +129,7 @@ const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = t
 
     return (
         <Drawer
+            kicker={tr(resource.label)}
             title={edit ? tr("Edit {v1}", { v1: resource.label.toLowerCase() }) : tr("New {v1}", { v1: resource.label.toLowerCase() })}
             isOpen={open}
             onClose={onClose}
@@ -150,11 +152,12 @@ const RecordDrawer = ({ resource, open, id, initial = {}, hide = [], canEdit = t
                 <Form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6">
                     {sections.map(([title, list]) => (
                         <div key={title}>
-                            {sections.length > 1 && <h6 className="mb-3 text-gray-500">{title}</h6>}
+                            {sections.length > 1 && <h6 className="mb-3 text-gray-500">{tr(title)}</h6>}
                             <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
                                 {list.map((f) => (
-                                    <FormItem key={f.key} label={f.label} asterisk={f.required} className={['textarea', 'richtext', 'json', 'sections'].includes(f.type) ? 'sm:col-span-2' : ''}>
+                                    <FormItem key={f.key} label={tr(f.label)} asterisk={f.required} className={['textarea', 'richtext', 'json', 'sections'].includes(f.type) ? 'sm:col-span-2' : ''}>
                                         <Control f={f} value={v[f.key]} disabled={!canEdit} onChange={(val) => setV((s) => ({ ...s, [f.key]: val }))} />
+                                        {f.hint && <p className="mt-1 text-xs text-gray-500">{tr(f.hint)}</p>}
                                     </FormItem>
                                 ))}
                             </div>

@@ -4352,5 +4352,11 @@ export default {
     "Add a task for this lead (@ to mention, # for a tag)": "このリードのタスクを追加（@でメンション、#でタグ）",
     "New task with all its details": "詳細付きの新しいタスク",
     "Share…": "共有…",
-    "Could not share": "共有できませんでした"
+    "Could not share": "共有できませんでした",
+    "Team member": "チームメンバー",
+    "{label} created": "{label}を作成しました",
+    "{label} saved": "{label}を保存しました",
+    "Kept in the currency (%)": "通貨のまま保持する割合（%）",
+    "Printed when neither the client nor the document names a bank account": "クライアントにも書類にも銀行口座の指定がないときに印刷されます",
+    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "銀行はこの割合を外貨のまま保持し、残りをMADに両替します"
 }

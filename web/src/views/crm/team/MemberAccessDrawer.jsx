@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { TbShieldLock, TbRestore } from 'react-icons/tb'
-import Drawer from '@/components/ui/Drawer'
+import Drawer from '@/components/crm/PopupFrame'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
@@ -50,6 +50,7 @@ const MemberAccessDrawer = ({ open, memberId, onClose, onSaved }) => {
 
     return (
         <Drawer
+            kicker={tr("Team member")}
             title={info ? tr("Permissions · {name}", { name: info.name }) : tr("Permissions")}
             isOpen={open}
             onClose={onClose}

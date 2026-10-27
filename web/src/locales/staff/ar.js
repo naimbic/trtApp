@@ -4352,5 +4352,11 @@ export default {
     "Add a task for this lead (@ to mention, # for a tag)": "أضف مهمة لهذا العميل المحتمل (@ للإشارة، # لوسم)",
     "New task with all its details": "مهمة جديدة بكل تفاصيلها",
     "Share…": "مشاركة…",
-    "Could not share": "تعذرت المشاركة"
+    "Could not share": "تعذرت المشاركة",
+    "Team member": "عضو الفريق",
+    "{label} created": "تم إنشاء {label}",
+    "{label} saved": "تم حفظ {label}",
+    "Kept in the currency (%)": "المحتفظ به بالعملة (%)",
+    "Printed when neither the client nor the document names a bank account": "يُطبع عندما لا يحدد العميل ولا المستند حسابًا بنكيًا",
+    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "يحتفظ البنك بهذه النسبة بالعملة الأجنبية ويحوّل الباقي إلى الدرهم"
 }

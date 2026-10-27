@@ -4352,5 +4352,11 @@ export default {
     "Add a task for this lead (@ to mention, # for a tag)": "Ajoutez une tâche pour ce lead (@ pour mentionner, # pour une étiquette)",
     "New task with all its details": "Nouvelle tâche avec tous ses détails",
     "Share…": "Partager…",
-    "Could not share": "Impossible de partager"
+    "Could not share": "Impossible de partager",
+    "Team member": "Membre de l'équipe",
+    "{label} created": "{label} créé",
+    "{label} saved": "{label} enregistré",
+    "Kept in the currency (%)": "Conservé en devise (%)",
+    "Printed when neither the client nor the document names a bank account": "Imprimé quand ni le client ni le document n'indiquent de compte bancaire",
+    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "La banque conserve cette part en devise étrangère et change le reste en MAD"
 }

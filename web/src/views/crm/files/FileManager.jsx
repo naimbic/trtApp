@@ -3,8 +3,7 @@ import dayjs from 'dayjs'
 import { TbRefresh, TbCopy, TbDotsVertical, TbFolderPlus, TbLayoutGrid, TbList, TbPencil, TbSearch, TbTrash, TbUpload, TbExternalLink, TbFolderSymlink, TbChevronRight } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Upload from '@/components/ui/Upload'
-import Drawer from '@/components/ui/Drawer'
-import CloseButton from '@/components/ui/CloseButton'
+import Drawer from '@/components/crm/PopupFrame'
 import Table from '@/components/ui/Table'
 import UploadMedia from '@/assets/svg/UploadMedia'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -178,12 +177,10 @@ const FileManager = () => {
                 ) : (<><Section title={tr("Folders")} list={folderList} /><Section title={atRoot ? tr("Recent files") : tr("Files")} list={fileList} /></>)}
             </div>
 
-            <Drawer title={null} closable={false} isOpen={!!current} showBackdrop={false} width={350} onClose={() => setSelected(null)} onRequestClose={() => setSelected(null)}>
+            <Drawer kicker={tr("File")} title={current?.name || ''} sub={current ? `${formatBytes(current.size)} · ${KIND_LABEL[current.kind] || tr("File")}` : ''} share={current ? { url: current.url, title: current.name } : undefined} isOpen={!!current} width={420} onClose={() => setSelected(null)}>
                 {current && (
                     <div>
-                        <div className="flex justify-end"><CloseButton onClick={() => setSelected(null)} /></div>
                         <div className="mt-6 flex justify-center">{current.kind === 'image' ? <button type="button" onClick={() => setPreview(current)}><Thumb f={current} className="max-h-[170px] rounded-xl" iconClass="text-[110px]" /></button> : <FileIcon kind={current.kind} className="text-[110px]" />}</div>
-                        <div className="mt-8 text-center"><h4 className="break-words">{current.name}</h4></div>
                         <div className="mt-8"><h6>{tr("Info")}</h6>
                             <div className="mt-4 flex flex-col gap-4">
                                 <Info label={tr("Size")} value={formatBytes(current.size)} />

@@ -2,6 +2,20 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.113.0',
+        date: '2026-10-27',
+        title: 'All popups in the Rapport style, and popup fixes',
+        items: [
+            'The side sheets that were still in the old flat style now use the Rapport popup (rounded sheet, dark head with its title, spring entry): every list popup (payment methods, sources, departments, statuses... the generic editor), expenses, password vault entries, a team member\'s permissions, and the file details. The centered forms (project, note, meeting, payment...) keep the Rapport dialog look.',
+            'Fixed: Escape and a click outside now close every dialog (many ignored both and only closed with the cross).',
+            'Fixed: Escape closes only the popup on top (a task opened from a lead used to close both).',
+            'Fixed: the lists of settings (sources, departments, payment methods...) had two parts with the same internal key, which could confuse the popup\'s opening and closing.',
+            'Fixed: a new record made in a list popup started switched off (Active off); it now starts active.',
+            'Fixed: the saved / created messages and the section titles of those popups were not translated; field hints now show under the field. The "Default bank" column header is no longer a sentence.',
+            'Fixed: a popup without a stage bar had a head the same colour as its title (unreadable in light mode).',
+        ],
+    },
+    {
         version: '0.112.0',
         date: '2026-10-27',
         title: 'Share from anywhere; a status turned off no longer shows in the task popup',

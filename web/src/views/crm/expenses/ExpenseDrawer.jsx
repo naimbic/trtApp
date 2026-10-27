@@ -7,7 +7,7 @@ import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
-import Drawer from '@/components/ui/Drawer'
+import Drawer from '@/components/crm/PopupFrame'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
@@ -116,6 +116,7 @@ const ExpenseDrawer = ({ open, id, lookups, onClose, onChanged, onLookups }) => 
 
     return (
         <Drawer
+            kicker={tr("Expense")} date={v.date ? dayjs(v.date).format('DD MMM YYYY') : ''}
             title={edit ? (detail?.expense.name || tr("Expense")) : tr("New expense")} isOpen={open} onClose={onClose} onRequestClose={onClose} width={560}
             footer={
                 <div className="flex w-full items-center gap-2">

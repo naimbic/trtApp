@@ -17,6 +17,7 @@ const Dialog = (props) => {
         height,
         isOpen,
         onClose,
+        onRequestClose,
         overlayClassName,
         portalClassName,
         style,
@@ -81,6 +82,8 @@ const Dialog = (props) => {
             isOpen={isOpen}
             style={{ ...contentStyle }}
             closeTimeoutMS={closeTimeoutMS}
+            // Escape and a click outside close it, as the cross does (a dialog that only gave onClose used to ignore both)
+            onRequestClose={onRequestClose ?? onClose}
             {...rest}
         >
             <motion.div

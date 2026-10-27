@@ -12,7 +12,7 @@ const TONES = {
     butter: ['var(--rp-butter)', 'var(--rp-on-butter)'],
     pine: ['var(--rp-pine)', 'var(--rp-on-pine)'],
     tomato: ['var(--rp-tomato)', 'var(--rp-on-tomato)'],
-    ink: ['var(--rp-solid)', '#fbf8f2'],
+    ink: ['var(--rp-ink)', 'var(--rp-on-ink)'], // the dark (light mode) / light (dark mode) ink with its own readable text colour
     good: ['#3f8f6b', '#fbf8f2'],
 }
 export const TONE_CYCLE = ['butter', 'pine', 'tomato', 'ink', 'good']

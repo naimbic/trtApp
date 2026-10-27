@@ -5,7 +5,7 @@ import CreatableSelect from 'react-select/creatable'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
-import Drawer from '@/components/ui/Drawer'
+import Drawer from '@/components/crm/PopupFrame'
 import Input from '@/components/ui/Input'
 import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
@@ -129,6 +129,7 @@ const EntryDrawer = ({ open, id, categories, staff, onClose, onChanged, onCatego
 
     return (
         <Drawer
+            kicker={tr("Password vault")}
             title={edit ? (detail?.entry.title || tr("Entry")) : tr("New entry")} isOpen={open} onClose={onClose} onRequestClose={onClose} width={560}
             footer={
                 <div className="flex w-full items-center gap-2">

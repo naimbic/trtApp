@@ -48,7 +48,7 @@ const ResourcePage = () => {
                 {canCreate && <Button variant="solid" icon={<TbPlus />} onClick={() => setDrawer({ open: true, id: null })}>{tr("New")} {resource.label.toLowerCase()}</Button>}
             </div>
             {resource.lookup ? (
-                <LookupManager key={resource.key} resource={resource} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} reloadKey={reload} onOpen={(id) => setDrawer({ open: true, id })} />
+                <LookupManager key={`${resource.key}-list`} resource={resource} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} reloadKey={reload} onOpen={(id) => setDrawer({ open: true, id })} />
             ) : (
                 <AdaptiveCard>
                     <ResourceTable
@@ -61,7 +61,7 @@ const ResourcePage = () => {
                 </AdaptiveCard>
             )}
             <RecordDrawer
-                key={resource.key}
+                key={`${resource.key}-popup`}
                 resource={resource}
                 open={drawer.open}
                 id={drawer.id}

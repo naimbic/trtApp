@@ -6,9 +6,10 @@ import Button from '@/components/ui/Button'
 import Switcher from '@/components/ui/Switcher'
 import Tooltip from '@/components/ui/Tooltip'
 import { api, notify, qs } from './api'
+import RelationSelect from './RelationSelect'
 import { tr } from '@/utils/t'
 
-const INLINE = ['text', 'email', 'url', 'number', 'money', 'date', 'boolean', 'color', 'select']
+const INLINE = ['text', 'email', 'url', 'number', 'money', 'date', 'boolean', 'color', 'select', 'relation']
 const ctl = 'h-8 w-full rounded-lg border border-transparent bg-transparent px-2 text-sm hover:border-gray-200 focus:border-primary focus:bg-white focus:outline-none dark:hover:border-gray-600 dark:focus:bg-gray-800'
 
 /** One editable cell: text-like fields save on Enter / leaving the field, switches and selects save at once, colours after a short pause. */
@@ -28,6 +29,7 @@ const Cell = ({ field, value, disabled, onCommit, draft }) => {
             </span>
         )
     }
+    if (field.type === 'relation') return <RelationSelect size="sm" resource={field.resource} value={value || null} disabled={disabled} onChange={(x) => onCommit(x || '')} />
     if (field.type === 'select') {
         return (
             <select disabled={disabled} aria-label={label} className={ctl} value={v ?? ''} onChange={(e) => { setV(e.target.value); onCommit(e.target.value) }}>
@@ -120,7 +122,7 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
                     <div className="grid items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-3 py-2 dark:border-gray-700 dark:bg-gray-700/20" style={grid} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); setTimeout(add, 0) } }}>
                         {orderField && <span />}
                         <input className={`${ctl} border-gray-200 bg-white dark:border-gray-600`} placeholder={tr("New {what}", { what: tr(resource.label).toLowerCase() })} aria-label={tr(main.label)} value={draft[main.key] || ''} onChange={(e) => setDraft((d) => ({ ...d, [main.key]: e.target.value }))} />
-                        {cols.map((f) => <div key={f.key}>{f.required || ['color', 'boolean', 'select'].includes(f.type) || f.type === 'number' ? <Cell draft field={f} value={draft[f.key]} onCommit={(val) => setDraft((d) => ({ ...d, [f.key]: val }))} /> : <span />}</div>)}
+                        {cols.map((f) => <div key={f.key}>{f.required || ['color', 'boolean', 'select', 'relation'].includes(f.type) || f.type === 'number' ? <Cell draft field={f} value={draft[f.key]} onCommit={(val) => setDraft((d) => ({ ...d, [f.key]: val }))} /> : <span />}</div>)}
                         {uses && <span />}
                         <Button size="xs" variant="solid" icon={<TbPlus />} onClick={add}>{tr("Add")}</Button>
                     </div>

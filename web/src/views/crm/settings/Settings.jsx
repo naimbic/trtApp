@@ -25,7 +25,7 @@ const LISTS = { taskStatuses: ['task-statuses', tr("The columns of the Tasks boa
 
 const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'ai') return <AiSettingsPanel />
-    if (name === 'bankAccounts') return <ResourceManager resourceKey="bank-accounts" />
+    if (name === 'bankAccounts') return <ResourceManager resourceKey="payment-modes" />
     if (name === 'smtp') return <MailServerSettings />
     if (name === 'channelsTest') return <ChannelsTestPanel />
     if (name === 'invoiceFormatApply') return <InvoiceFormatPanel />

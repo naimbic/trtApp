@@ -64,7 +64,7 @@ async function documentHtmlRaw(d, lang, S) {
     const signature = S.showSignature ? await companyImageDataUri('signature', '') : ''
     const bill = await customerInfo(d.client, e, L)
     const info = `<div class="info"><div class="lbl">${L.billTo}</div>${bill}<div class="dates"><div>${L.date}: <strong>${D(e.date)}</strong></div>${e.expiryDate ? `<div>${T.valid}: <strong>${D(e.expiryDate)}</strong></div>` : ''}${e.referenceNo ? `<div>${T.reference}: <strong>${esc(e.referenceNo)}</strong></div>` : ''}</div></div>`
-    const org = `<div class="info org">${await organizationInfo(og, await bankTokensFor({ docAccountId: e.bankAccountId, clientId: e.clientId }))}</div>`
+    const org = `<div class="info org">${await organizationInfo(og, await bankTokensFor({ docAccountId: e.bankAccountId, clientId: e.clientId, currencyId: e.currencyId }))}</div>`
     const rows = d.items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${safeHtml(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(e.subtotal)}</td></tr>`]
     if (e.discountTotal > 0) tr.push(`<tr><td>${L.discount}${e.discountPercent > 0 ? ` (${e.discountPercent}%)` : ''}</td><td>-${M(e.discountTotal)}</td></tr>`)

@@ -1478,5 +1478,16 @@
  "Name the job",
  "Choose the date the money is due",
  "Job not found",
- "Freelancers"
+ "Freelancers",
+ "No bank account yet: add them in Setup → Finance → Payment methods.",
+ "On documents",
+ "Default bank",
+ "Currency received",
+ "Text printed on the PDF",
+ "Kept in the currency (%): the bank exchanges the rest to MAD",
+ "Default bank account (printed when the client and the document name none)",
+ "Payment methods and bank accounts",
+ "How clients pay you, and the bank accounts printed on invoices, estimates and purchase orders",
+ "How clients pay you, and your bank accounts",
+ "One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here."
 ]

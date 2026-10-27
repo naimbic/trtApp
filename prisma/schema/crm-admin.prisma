@@ -230,6 +230,19 @@ model CrmPaymentMode {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  /// a payment method that is a bank account (the former Bank accounts page: their ids were kept, so clients and documents still point at them)
+  bank              String?
+  holder            String?
+  rib               String?  // RIB or IBAN
+  swift             String?
+  /// the currency this account receives (a document in this currency prints this account when nothing more specific is chosen)
+  currencyId        String?  @db.ObjectId
+  /// share (%) the bank keeps in the foreign currency; the rest is exchanged to the local currency (information)
+  keepPercent       Float?
+  /// the bank account printed when the client and the document name none
+  isDefault         Boolean  @default(false)
+  sortOrder         Int      @default(0)
+
   @@index([legacyId])
   @@index([active])
   @@map("crm_payment_modes")

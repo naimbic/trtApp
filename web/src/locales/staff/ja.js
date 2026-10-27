@@ -4291,5 +4291,16 @@ export default {
     "Job saved": "仕事を保存しました",
     "Job added": "仕事を追加しました",
     "Job deleted": "仕事を削除しました",
-    "No numbers, not company income": "番号なし・会社の収入ではありません"
+    "No numbers, not company income": "番号なし・会社の収入ではありません",
+    "No bank account yet: add them in Setup → Finance → Payment methods.": "銀行口座がありません。設定 → 財務 → 支払い方法で追加してください。",
+    "On documents": "書類上",
+    "Default bank": "既定の銀行",
+    "Currency received": "受け取る通貨",
+    "Text printed on the PDF": "PDFに印刷されるテキスト",
+    "Kept in the currency (%): the bank exchanges the rest to MAD": "通貨のまま保持する割合（%）：残りは銀行がMADに両替します",
+    "Default bank account (printed when the client and the document name none)": "既定の銀行口座（クライアントにも書類にも指定がないときに印刷されます）",
+    "Payment methods and bank accounts": "支払い方法と銀行口座",
+    "How clients pay you, and the bank accounts printed on invoices, estimates and purchase orders": "クライアントの支払い方法と、請求書・見積書・発注書に印刷される銀行口座",
+    "How clients pay you, and your bank accounts": "クライアントの支払い方法と銀行口座",
+    "One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.": "1つのリスト：銀行情報のある支払い方法は銀行口座です（名前、銀行、名義人、RIB / IBAN、SWIFT、受け取る通貨）。クライアントや書類に指定がなければ既定の口座が印刷されます。クライアントページまたは書類で選べます。通貨のある書類は、その通貨を受け取る口座を印刷します。"
 }

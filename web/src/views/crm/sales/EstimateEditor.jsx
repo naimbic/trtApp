@@ -33,20 +33,21 @@ const EstimateEditor = () => {
     const fromId = params.get('from')
     useEffect(() => {
         Promise.all([api('/api/crm/sales/lookups').then(async (l) => ({ ...l, defaults: { ...(l.defaults || {}), ...(await api('/api/crm/sales/estimates/defaults')) } })), id || fromId ? api(`/api/crm/sales/estimates/${id || fromId}`) : null])
-            .then(([l, d]) => {
+            .then(async ([l, d]) => {
                 setLookups(l)
                 setDoc(d)
                 const inv = d?.estimate
                 const cloned = !id && !!inv // a duplicate: the content of another document, as a new draft with a new number and today's dates
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
                 const dd = l.defaults || {}
+                const pc = !inv && params.get('clientId') ? await api(`/api/crm/customers/${params.get('clientId')}`).catch(() => null) : null // a new one for a client: its currency
                 const dueAfter = dd.validFor !== '' && dd.validFor != null ? Number(dd.validFor) : 14
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,
                     date: (!cloned && day(inv?.date)) || day(new Date()),
                     expiryDate: (!cloned && day(inv?.expiryDate)) || day(dayjs().add(dueAfter, 'day')), referenceNo: inv?.referenceNo || '',
-                    currencyId: inv?.currencyId || def?.id || null,
+                    currencyId: inv?.currencyId || pc?.currencyId || def?.id || null,
                     bankAccountId: inv?.bankAccountId || null,
                     discountPercent: inv?.discountPercent || 0,
                     discountFixed: inv && !inv.discountPercent ? inv.discountTotal || 0 : 0,
@@ -106,7 +107,7 @@ const EstimateEditor = () => {
             <div className="flex flex-col gap-4">
                 <Card>
                     <div className="grid gap-4 md:grid-cols-4">
-                        <div className="md:col-span-2"><label className="form-label mb-2 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={(cid) => set({ clientId: cid })} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-2 block">{tr("Client *")}</label><RelationSelect resource="clients" value={v.clientId} onChange={async (cid) => { set({ clientId: cid }); if (cid && !id) { try { const c = await api(`/api/crm/customers/${cid}`); setV((s) => (s.clientId === cid && c.currencyId ? { ...s, currencyId: c.currencyId } : s)) } catch { /* the document keeps the default currency */ } } }} /></div>
                         <div><label className="form-label mb-2 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
                         <div><label className="form-label mb-2 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
                         <div><label className="form-label mb-2 block">{tr("Reference")}</label><Input value={v.referenceNo} placeholder={tr("Optional")} onChange={(e) => set({ referenceNo: e.target.value })} /></div>

@@ -4291,5 +4291,16 @@ export default {
     "Job saved": "تم حفظ العمل",
     "Job added": "تمت إضافة العمل",
     "Job deleted": "تم حذف العمل",
-    "No numbers, not company income": "بدون أرقام وخارج دخل الشركة"
+    "No numbers, not company income": "بدون أرقام وخارج دخل الشركة",
+    "No bank account yet: add them in Setup → Finance → Payment methods.": "لا يوجد حساب بنكي بعد: أضفه في الإعداد ← المالية ← طرق الدفع.",
+    "On documents": "على المستندات",
+    "Default bank": "البنك الافتراضي",
+    "Currency received": "العملة المستلمة",
+    "Text printed on the PDF": "النص المطبوع في ملف PDF",
+    "Kept in the currency (%): the bank exchanges the rest to MAD": "المحتفظ به بالعملة (%): يحوّل البنك الباقي إلى الدرهم",
+    "Default bank account (printed when the client and the document name none)": "الحساب البنكي الافتراضي (يُطبع عندما لا يحدد العميل ولا المستند حسابًا)",
+    "Payment methods and bank accounts": "طرق الدفع والحسابات البنكية",
+    "How clients pay you, and the bank accounts printed on invoices, estimates and purchase orders": "كيف يدفع لك العملاء، والحسابات البنكية المطبوعة على الفواتير وعروض الأسعار وأوامر الشراء",
+    "How clients pay you, and your bank accounts": "كيف يدفع لك العملاء وحساباتك البنكية",
+    "One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.": "قائمة واحدة: طريقة الدفع التي لها بيانات بنكية هي حساب بنكي (الاسم، البنك، صاحب الحساب، RIB / IBAN، SWIFT، العملة المستلمة). يُطبع الحساب الافتراضي ما لم يكن للعميل أو للمستند حساب خاص: اختره في صفحة العميل أو في المستند؛ والمستند بعملة معينة يطبع الحساب الذي يستلم تلك العملة."
 }

@@ -100,6 +100,30 @@ export async function seedBankAccount() {
     await prisma.crmOption.create({ data: { name: MARK5, value: new Date().toISOString() } })
 }
 
+/**
+ * The Bank accounts page is merged into Payment methods: every bank account becomes a payment method with the SAME id, so the
+ * accounts chosen on clients, invoices, estimates and purchase orders keep pointing at the right account without touching them.
+ * The currency is guessed from the name ("BMCE EUR" -> EUR) when it names one; nothing is deleted (the old rows stay as a backup).
+ * Runs once, marker-guarded; an account that already exists as a payment method (same id) is left as it is.
+ */
+export async function mergeBankAccounts() {
+    const MARK6 = 'bank_into_payment_methods_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK6 } })) return
+    const [banks, currencies, last] = await Promise.all([
+        prisma.crmBankAccount.findMany({ orderBy: { createdAt: 'asc' } }), prisma.crmCurrency.findMany({ select: { id: true, name: true } }),
+        prisma.crmPaymentMode.findFirst({ orderBy: { sortOrder: 'desc' }, select: { sortOrder: true } }),
+    ])
+    let order = last?.sortOrder || 0
+    for (const b of banks) {
+        if (await prisma.crmPaymentMode.findUnique({ where: { id: b.id } })) continue
+        const words = String(b.name || '').toUpperCase().split(/[^A-Z0-9]+/)
+        const cur = currencies.find((c) => words.includes(String(c.name || '').toUpperCase()))
+        order += 1
+        await prisma.crmPaymentMode.create({ data: { id: b.id, name: b.name, bank: b.bank, holder: b.holder, rib: b.rib, swift: b.swift, isDefault: !!b.isDefault, active: b.active !== false, currencyId: cur?.id || null, sortOrder: order, showOnPdf: false, invoicesOnly: false, expensesOnly: false, selectedByDefault: false } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK6, value: new Date().toISOString() } })
+}
+
 /** Creates the standard roles that do not exist yet (never changes an existing role). Runs once, marker-guarded. */
 export async function ensureStandardRoles() {
     const MARK2 = 'standard_roles_v1'

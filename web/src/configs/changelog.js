@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.110.0',
+        date: '2026-10-27',
+        title: 'Payment methods and bank accounts in one list; the client\'s currency on new documents',
+        items: [
+            'Bank accounts are now part of Payment methods (Setup → Finance): one list like Lead sources, with drag to reorder, switches, the bank, RIB / IBAN, the currency each account receives and a Default bank switch; the popup has the holder, SWIFT, the share the bank keeps in the currency (for example 70%, the rest being exchanged to MAD), and the text printed on the PDF. The Bank accounts page is gone.',
+            'Nothing was broken by the move: every bank account became a payment method with the same id, so the account chosen on each client, invoice, estimate and purchase order still points at it.',
+            'A document in a currency now prints the account that receives that currency (a EUR invoice prints the EUR account), unless the document or the client names an account.',
+            'Fixed: a new invoice always started in MAD. Now the client\'s currency is used when you pick the client (or open New invoice from its page), on invoices, estimates, purchase orders and proposals; a currency you choose yourself still wins. Documents created without a currency (by an import or an integration) also take the client\'s currency.',
+        ],
+    },
+    {
         version: '0.109.2',
         date: '2026-10-27',
         title: 'Freelancers: now in the Rapport look',

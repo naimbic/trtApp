@@ -69,7 +69,7 @@ export const NAV_DESC = {
     mails: 'Mail server and templates',
     currencies: 'Rates and base currency',
     taxes: 'VAT and other taxes',
-    'payment-modes': 'How clients pay you',
+    'payment-modes': 'How clients pay you, and your bank accounts',
     'bank-accounts': 'Where documents say to pay',
     'custom-fields': 'Extra fields on records',
     tags: 'Labels for anything',

@@ -148,7 +148,7 @@ async function loadContext(kind, id) {
     } else fail('Unknown document type')
 
     const client = clientId ? await prisma.crmClient.findUnique({ where: { id: clientId } }) : null
-    const bank = ['invoice', 'estimate', 'purchase_order'].includes(kind) ? await bankTokensFor({ docAccountId: doc.bankAccountId, clientId }) : null // the account of this document, else of its client
+    const bank = ['invoice', 'estimate', 'purchase_order'].includes(kind) ? await bankTokensFor({ docAccountId: doc.bankAccountId, clientId, currencyId: doc.currencyId }) : null // the account of this document, else of its client
     const contacts = clientId ? await prisma.crmContact.findMany({ where: { clientId, active: true }, orderBy: { isPrimary: 'desc' } }) : []
     const flag = KINDS[kind].contactFlag
     const recipients = contacts.filter((c) => c.email).map((c) => ({

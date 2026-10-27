@@ -132,6 +132,31 @@ try {
     check('mark paid / unpaid works', (await own('POST', `/api/crm/freelance/${mine.body?.id}/state`, { action: 'markPaid' })).status === 200 && (await own('GET', `/api/crm/freelance/${mine.body?.id}`)).body?.job?.status === 'paid' && (await own('POST', `/api/crm/freelance/${mine.body?.id}/state`, { action: 'markUnpaid' })).status === 200)
     const hrs = await login(await makeUser('fr-hours', { work_hours: ['view'] }))
     check('freelancers are not reachable with Work hours / Team permissions', (await hrs('GET', '/api/crm/freelance')).status === 403)
+    console.log('\n== payment methods = bank accounts, and the client currency on new documents')
+    const eur = await prisma.crmCurrency.findFirst({ where: { isDefault: false } }) || await prisma.crmCurrency.findFirst()
+    const cur0 = await prisma.crmClient.create({ data: { company: 'zz check eur client', defaultCurrencyId: eur?.id } }); made.rows.push(['crmClient', cur0.id])
+    const bil = await login(await makeUser('curbiller', { invoices: ['view', 'create', 'edit'], estimates: ['view', 'create'], purchase_orders: ['view', 'create'], proposals: ['view', 'create'] }))
+    const L1 = [{ description: 'Work', qty: 1, rate: 10, unit: '', taxes: [] }]
+    for (const [what, url, body, get] of [
+        ['invoice', '/api/crm/sales/invoices', { clientId: cur0.id, items: L1 }, (id) => prisma.crmInvoice.findUnique({ where: { id }, select: { currencyId: true } })],
+        ['estimate', '/api/crm/sales/estimates', { clientId: cur0.id, items: L1 }, (id) => prisma.crmEstimate.findUnique({ where: { id }, select: { currencyId: true } })],
+        ['purchase order', '/api/crm/sales/purchase-orders', { clientId: cur0.id, items: L1 }, (id) => prisma.crmPurchaseOrder.findUnique({ where: { id }, select: { currencyId: true } })],
+        ['proposal', '/api/crm/sales/proposals', { subject: 'x', relType: 'customer', relId: cur0.id, proposalTo: 'x', items: L1 }, (id) => prisma.crmProposal.findUnique({ where: { id }, select: { currencyId: true } })],
+    ]) {
+        const r = await bil('POST', url, body); const row = r.body?.id ? await get(r.body.id) : null
+        check(`new ${what} with no currency chosen takes the client's currency`, !!row && row.currencyId === eur?.id, `${r.status} ${row?.currencyId} vs ${eur?.id}`)
+        const model = { invoice: 'crmInvoice', estimate: 'crmEstimate', 'purchase order': 'crmPurchaseOrder', proposal: 'crmProposal' }[what]
+        if (r.body?.id) made.rows.unshift([model, r.body.id])
+    }
+    const ownCur = await bil('POST', '/api/crm/sales/invoices', { clientId: cur0.id, currencyId: (await prisma.crmCurrency.findFirst({ where: { id: { not: eur?.id } } }))?.id, items: L1 }); if (ownCur.body?.id) made.rows.unshift(['crmInvoice', ownCur.body.id])
+    check('a currency chosen on the invoice wins over the client\'s', ownCur.status === 201 && (await prisma.crmInvoice.findUnique({ where: { id: ownCur.body.id }, select: { currencyId: true } })).currencyId !== eur?.id)
+    const pmAdmin = await login(await makeUser('pmadmin', { settings: ['view', 'edit'] }))
+    check('the old Bank accounts list is gone (it is part of Payment methods)', (await pmAdmin('GET', '/api/crm/bank-accounts')).status === 404)
+    const pm = await pmAdmin('POST', '/api/crm/payment-modes', { name: 'zz check bank', bank: 'Test Bank', rib: 'MA00 TEST', swift: 'TESTMAMC', currencyId: eur?.id, keepPercent: 70, isDefault: false, sortOrder: 99 })
+    check('a payment method can carry bank details, a currency and the kept share', pm.status === 201 && pm.body?.id)
+    if (pm.body?.id) { made.rows.unshift(['crmPaymentMode', pm.body.id]); const got = await pmAdmin('GET', `/api/crm/payment-modes/${pm.body.id}`); check('...and they are saved', got.body?.rib === 'MA00 TEST' && got.body?.currencyId === eur?.id && got.body?.keepPercent === 70, JSON.stringify(got.body).slice(0, 120)) }
+    const plain2 = await login(await makeUser('pm-plain', {}))
+    check('without Settings, payment methods (bank details) are refused', (await plain2('GET', '/api/crm/payment-modes')).status === 403)
     const lm = await login(await makeUser('leadmail', { lead_mail: ['view'] }))
     check('Lead email integration view: can list mailboxes', (await lm('GET', '/api/crm/lead-mail')).status === 200)
     check('Lead email integration view only: cannot save a mailbox', (await lm('POST', '/api/crm/lead-mail', { action: 'save', data: { email: 'a@b.com' } })).status === 403)

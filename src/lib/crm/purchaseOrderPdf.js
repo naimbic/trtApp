@@ -40,7 +40,7 @@ async function renderPurchaseOrderHtmlRaw(id) {
     const logo = await companyImageDataUri('logo', logoDataUri(og('company_logo')), S.logoKeys)
     const signature = S.showSignature ? await companyImageDataUri('signature', '') : ''
     const info = `<div class="info"><div class="lbl">${L.billTo}</div>${await customerInfo(client, p, L)}<div class="dates"><div>${L.date}: <strong>${D(p.date)}</strong></div>${p.deliveryDate ? `<div>${T.delivery}: <strong>${D(p.deliveryDate)}</strong></div>` : ''}${p.referenceNo ? `<div>${T.reference}: <strong>${esc(p.referenceNo)}</strong></div>` : ''}</div></div>`
-    const org = `<div class="info org">${await organizationInfo(og, await bankTokensFor({ docAccountId: p.bankAccountId, clientId: p.clientId }))}</div>`
+    const org = `<div class="info org">${await organizationInfo(og, await bankTokensFor({ docAccountId: p.bankAccountId, clientId: p.clientId, currencyId: p.currencyId }))}</div>`
     const rows = items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${safeHtml(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(p.subtotal)}</td></tr>`]
     if (p.discountTotal > 0) tr.push(`<tr><td>${L.discount}${p.discountPercent > 0 ? ` (${p.discountPercent}%)` : ''}</td><td>-${M(p.discountTotal)}</td></tr>`)

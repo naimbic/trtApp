@@ -123,7 +123,7 @@ async function renderInvoiceHtmlRaw(id, { hash, pdfHref } = {}) {
     const showModes = unpaid ? modes.filter((m) => m.showOnPdf && m.active !== false && m.description) : []
     const logo = await companyImageDataUri('logo', logoDataUri(og('company_logo')), S.logoKeys)
     const signature = S.showSignature && invoice.status === 2 ? await companyImageDataUri('signature', '') : ''
-    const org = await organizationInfo(og, await bankTokensFor({ docAccountId: invoice.bankAccountId, clientId: invoice.clientId }))
+    const org = await organizationInfo(og, await bankTokensFor({ docAccountId: invoice.bankAccountId, clientId: invoice.clientId, currencyId: invoice.currencyId }))
     const bill = await customerInfo(client, invoice, L)
 
     const extra = []

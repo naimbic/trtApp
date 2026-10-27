@@ -39,7 +39,7 @@ const InvoiceEditor = () => {
     const fromId = params.get('from')
     useEffect(() => {
         Promise.all([api('/api/crm/sales/lookups'), id || fromId ? api(`/api/crm/sales/invoices/${id || fromId}`) : null])
-            .then(([l, d]) => {
+            .then(async ([l, d]) => {
                 setLookups(l)
                 setDoc(d)
                 const inv = d?.invoice
@@ -48,14 +48,16 @@ const InvoiceEditor = () => {
                 if (id && inv?.status === 2 && !superAdmin) { notify('warning', tr("A paid invoice cannot be changed. Only a super admin can do that.")); navigate(`/crm/invoices/${id}`); return }
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
                 const dd = l.defaults || {}
+                // a new invoice for a client (the + on its page): the client's currency and bank account, not the company default
+                const pc = !inv && params.get('clientId') ? await api(`/api/crm/customers/${params.get('clientId')}`).catch(() => null) : null
                 const dueAfter = dd.dueAfter !== '' && dd.dueAfter != null ? Number(dd.dueAfter) : 30
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,
                     date: (!cloned && day(inv?.date)) || day(new Date()),
                     dueDate: (!cloned && day(inv?.dueDate)) || day(dayjs().add(dueAfter, 'day')),
-                    currencyId: inv?.currencyId || def?.id || null,
-                    bankAccountId: inv?.bankAccountId || null,
+                    currencyId: inv?.currencyId || pc?.currencyId || def?.id || null,
+                    bankAccountId: inv?.bankAccountId || pc?.bankAccountId || null,
                     discountPercent: inv?.discountPercent || 0,
                     discountFixed: inv && !inv.discountPercent ? inv.discountTotal || 0 : 0,
                     discountType: inv?.discountType || 'before_tax',
@@ -83,7 +85,7 @@ const InvoiceEditor = () => {
     const changeClient = async (cid) => {
         set({ clientId: cid })
         if (!cid) return
-        try { const c = await api(`/api/crm/customers/${cid}`); setV((s) => (s.clientId === cid ? { ...s, bankAccountId: c.bankAccountId || null } : s)) } catch { /* the document still falls back to the client's account */ }
+        try { const c = await api(`/api/crm/customers/${cid}`); setV((s) => (s.clientId === cid ? { ...s, bankAccountId: c.bankAccountId || null, ...(!id && c.currencyId ? { currencyId: c.currencyId } : {}) } : s)) } catch { /* the document still falls back to the client's account and the default currency */ }
     }
     const num = (key) => (e) => set({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
 

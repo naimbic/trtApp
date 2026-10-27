@@ -60,6 +60,7 @@ const ProposalEditor = () => {
                     adjustment: inv?.adjustment || 0,
                                         items: d?.items?.length ? d.items.map(({ id: _i, ...line }) => line) : [baseLine()],
                 })
+                if (!inv && params.get('clientId')) fill('customer', params.get('clientId')) // a new proposal from a client's page: its currency too
             })
             .catch((e) => setError(e.message))
     }, [id, fromId, params])
@@ -77,7 +78,7 @@ const ProposalEditor = () => {
     const num = (key) => (e) => set({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
 
     const fill = async (relType, relId) => {
-        try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); setV((s) => ({ ...s, proposalTo: f.proposalTo || s.proposalTo, email: f.email || s.email, phone: f.phone || s.phone, address: f.address || s.address, city: f.city || s.city, state: f.state || s.state, zip: f.zip || s.zip, country: f.country ?? s.country })) } catch { /* optional */ }
+        try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); setV((s) => ({ ...s, ...(!id && f.currencyId ? { currencyId: f.currencyId } : {}), proposalTo: f.proposalTo || s.proposalTo, email: f.email || s.email, phone: f.phone || s.phone, address: f.address || s.address, city: f.city || s.city, state: f.state || s.state, zip: f.zip || s.zip, country: f.country ?? s.country })) } catch { /* optional */ }
     }
 
     const addFromCatalog = async (itemId) => {

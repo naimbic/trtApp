@@ -4291,5 +4291,16 @@ export default {
     "Job saved": "Travail enregistré",
     "Job added": "Travail ajouté",
     "Job deleted": "Travail supprimé",
-    "No numbers, not company income": "Sans numéros, hors revenus de l'entreprise"
+    "No numbers, not company income": "Sans numéros, hors revenus de l'entreprise",
+    "No bank account yet: add them in Setup → Finance → Payment methods.": "Aucun compte bancaire : ajoutez-les dans Configuration → Finance → Moyens de paiement.",
+    "On documents": "Sur les documents",
+    "Default bank": "Banque par défaut",
+    "Currency received": "Devise reçue",
+    "Text printed on the PDF": "Texte imprimé sur le PDF",
+    "Kept in the currency (%): the bank exchanges the rest to MAD": "Conservé en devise (%) : la banque change le reste en MAD",
+    "Default bank account (printed when the client and the document name none)": "Compte bancaire par défaut (imprimé quand ni le client ni le document n'en indiquent)",
+    "Payment methods and bank accounts": "Moyens de paiement et comptes bancaires",
+    "How clients pay you, and the bank accounts printed on invoices, estimates and purchase orders": "Comment les clients vous paient, et les comptes bancaires imprimés sur les factures, devis et bons de commande",
+    "How clients pay you, and your bank accounts": "Comment les clients vous paient, et vos comptes bancaires",
+    "One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.": "Une seule liste : un moyen de paiement avec des coordonnées bancaires est un compte bancaire (nom, banque, titulaire, RIB / IBAN, SWIFT, devise reçue). Le compte par défaut est imprimé sauf si le client ou le document a le sien : choisissez-le sur la fiche client ou sur le document ; un document dans une devise imprime le compte qui reçoit cette devise."
 }

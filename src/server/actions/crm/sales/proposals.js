@@ -1,5 +1,6 @@
 'use server'
 
+import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -30,7 +31,7 @@ export async function proposalPrefill(relType, relId) {
         const c = await prisma.crmClient.findUnique({ where: { id: relId } })
         if (!c) return {}
         const ct = await prisma.crmContact.findFirst({ where: { clientId: c.id, active: true }, orderBy: { isPrimary: 'desc' } })
-        return { proposalTo: c.company || '', address: c.billingStreet || c.address || '', city: c.billingCity || c.city || '', state: c.billingState || c.state || '', zip: c.billingZip || c.zip || '', country: c.billingCountry ?? c.country ?? null, email: ct?.email || '', phone: ct?.phoneNumber || c.phoneNumber || '' }
+        return { currencyId: c.defaultCurrencyId || null, proposalTo: c.company || '', address: c.billingStreet || c.address || '', city: c.billingCity || c.city || '', state: c.billingState || c.state || '', zip: c.billingZip || c.zip || '', country: c.billingCountry ?? c.country ?? null, email: ct?.email || '', phone: ct?.phoneNumber || c.phoneNumber || '' }
     }
     const l = await prisma.crmLead.findUnique({ where: { id: relId } })
     if (!l) return {}
@@ -71,7 +72,7 @@ export async function saveProposal(input) {
     const t = (v, n = 200) => String(v ?? '').trim().slice(0, n) || null
     const data = {
         subject: t(input.subject), content: String(input.content ?? '').slice(0, 200000) || null, relType: input.relType, relId: input.relId, proposalTo: t(input.proposalTo), address: t(input.address, 300), city: t(input.city, 80), state: t(input.state, 80), zip: t(input.zip, 20),
-        country: input.country != null && input.country !== '' ? Number(input.country) : null, email: t(input.email), phone: t(input.phone, 40), date: input.date ? new Date(input.date) : new Date(), openTill: input.openTill ? new Date(input.openTill) : null, currencyId: input.currencyId || null,
+        country: input.country != null && input.country !== '' ? Number(input.country) : null, email: t(input.email), phone: t(input.phone, 40), date: input.date ? new Date(input.date) : new Date(), openTill: input.openTill ? new Date(input.openTill) : null, currencyId: input.currencyId || (isNew && input.relType === 'customer' ? await clientCurrency(input.relId) : null) || null,
         subtotal: totals.subtotal, totalTax: totals.totalTax, total: totals.total, discountPercent: Number(input.discountPercent) || 0, discountTotal: totals.discountTotal, discountType, adjustment: Number(input.adjustment) || 0,
         allowComments: input.allowComments !== false, assignedId: input.assignedId || null,
         ...(input.remindClient !== undefined ? { remindClient: input.remindClient !== false } : {}),

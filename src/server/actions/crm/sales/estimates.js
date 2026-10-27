@@ -1,5 +1,6 @@
 'use server'
 
+import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
@@ -59,7 +60,7 @@ export async function saveEstimate(input) {
     const discountType = input.discountType || 'before_tax'
     const totals = calcDocument({ items, discountPercent: input.discountPercent, discountFixed: input.discountFixed, discountType, adjustment: input.adjustment })
     const data = {
-        clientId: input.clientId, date: input.date ? new Date(input.date) : new Date(), expiryDate: input.expiryDate ? new Date(input.expiryDate) : null, currencyId: input.currencyId || null,
+        clientId: input.clientId, date: input.date ? new Date(input.date) : new Date(), expiryDate: input.expiryDate ? new Date(input.expiryDate) : null, currencyId: input.currencyId || (isNew ? await clientCurrency(input.clientId) : null) || null,
         ...(input.bankAccountId !== undefined ? { bankAccountId: input.bankAccountId || (input.clientId ? (await prisma.crmClient.findUnique({ where: { id: input.clientId }, select: { bankAccountId: true } }))?.bankAccountId || null : null) } : {}),
         subtotal: totals.subtotal, totalTax: totals.totalTax, total: totals.total, discountPercent: Number(input.discountPercent) || 0, discountTotal: totals.discountTotal, discountType,
         adjustment: Number(input.adjustment) || 0, clientNote: input.clientNote || null, adminNote: input.adminNote || null, terms: input.terms || null, referenceNo: input.referenceNo || null,

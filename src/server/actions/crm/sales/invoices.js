@@ -1,5 +1,6 @@
 'use server'
 
+import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -163,7 +164,7 @@ export async function saveInvoice(input) {
         clientId: input.clientId,
         date: input.date ? new Date(input.date) : new Date(),
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
-        currencyId: input.currencyId || null,
+        currencyId: input.currencyId || (isNew ? await clientCurrency(input.clientId) : null) || null,
         ...(input.bankAccountId !== undefined ? { bankAccountId: input.bankAccountId || (await clientBank(input.clientId)) } : {}), // none chosen: the bank assigned to the client
         subtotal: totals.subtotal,
         totalTax: totals.totalTax,

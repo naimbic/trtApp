@@ -4291,5 +4291,16 @@ export default {
     "Job saved": "Trabajo guardado",
     "Job added": "Trabajo añadido",
     "Job deleted": "Trabajo eliminado",
-    "No numbers, not company income": "Sin números, fuera de los ingresos de la empresa"
+    "No numbers, not company income": "Sin números, fuera de los ingresos de la empresa",
+    "No bank account yet: add them in Setup → Finance → Payment methods.": "Ninguna cuenta bancaria: añádalas en Configuración → Finanzas → Métodos de pago.",
+    "On documents": "En los documentos",
+    "Default bank": "Banco predeterminado",
+    "Currency received": "Moneda recibida",
+    "Text printed on the PDF": "Texto impreso en el PDF",
+    "Kept in the currency (%): the bank exchanges the rest to MAD": "Conservado en la divisa (%): el banco cambia el resto a MAD",
+    "Default bank account (printed when the client and the document name none)": "Cuenta bancaria predeterminada (se imprime cuando ni el cliente ni el documento indican otra)",
+    "Payment methods and bank accounts": "Métodos de pago y cuentas bancarias",
+    "How clients pay you, and the bank accounts printed on invoices, estimates and purchase orders": "Cómo le pagan los clientes y las cuentas bancarias impresas en facturas, presupuestos y órdenes de compra",
+    "How clients pay you, and your bank accounts": "Cómo le pagan los clientes y sus cuentas bancarias",
+    "One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.": "Una sola lista: un método de pago con datos bancarios es una cuenta bancaria (nombre, banco, titular, RIB / IBAN, SWIFT, moneda recibida). Se imprime la cuenta predeterminada salvo que el cliente o el documento tenga la suya: elíjala en la ficha del cliente o en el documento; un documento en una moneda imprime la cuenta que recibe esa moneda."
 }

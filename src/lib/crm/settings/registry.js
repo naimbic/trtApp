@@ -105,9 +105,9 @@ export const GROUPS = {
         ],
     },
     banks: {
-        label: 'Banks', icon: 'TbBuildingBank', desc: 'The bank accounts printed on invoices, estimates and purchase orders',
+        label: 'Payment methods', icon: 'TbBuildingBank', desc: 'How clients pay you, and the bank accounts printed on invoices, estimates and purchase orders',
         cards: [
-            { title: 'Bank accounts', desc: 'Add every account you use (name, bank, holder, RIB / IBAN, SWIFT). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.', panel: 'bankAccounts' },
+            { title: 'Payment methods and bank accounts', desc: 'One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.', panel: 'bankAccounts' },
         ],
     },
     localization: {

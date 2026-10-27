@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.114.0',
+        date: '2026-10-27',
+        title: 'Lead popup: choose who may edit the notes, mails and meetings of others',
+        items: [
+            'New permissions on Leads (Team > Roles): "Edit notes added by others", "Edit mails logged by others" and "Edit meetings added by others". Switch them on only for the roles you choose; the author can always edit their own.',
+            'In the lead popup the pencil shows on a note, mail or meeting only when you may change it, even if you only follow the lead. Deleting still follows the Leads "Delete" permission (the author can always delete their own).',
+            'Change: having the general Leads "Edit" permission no longer lets someone edit mails and meetings of other people; give the new permission instead.',
+        ],
+    },
+    {
         version: '0.113.2',
         date: '2026-10-27',
         title: 'The bank assigned to a client now shows, and prints, on its documents',

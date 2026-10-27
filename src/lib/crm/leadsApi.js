@@ -20,6 +20,9 @@ async function access(session) {
 const visible = (a) => (a.scope === 'all' ? {} : a.staffId ? { OR: [{ assigned: a.staffId }, { assignedIds: { has: a.staffId } }, { followerIds: { has: a.staffId } }, { addedFrom: a.staffId }, { isPublic: true }] } : { id: NONE })
 const isOwn = (a, lead) => !!a.staffId && (lead.assigned === a.staffId || (lead.assignedIds || []).includes(a.staffId) || lead.addedFrom === a.staffId)
 // a follower sees the lead and is told what happens on it, but only the team (and people who see all leads) change it
+/** Items (notes, mails, meetings) added by someone else can be changed only with the matching permission; the author always can. */
+const mayChangeItem = (a, by, kind) => (!!a.staffId && by === a.staffId) || a.can(`edit_others_${kind}`)
+const mayDropItem = (a, by) => (!!a.staffId && by === a.staffId) || a.can('delete')
 const mayEdit = (a, lead) => isOwn(a, lead) || (a.can('edit') && !((lead.followerIds || []).includes(a.staffId) && a.scope !== 'all'))
 
 /** Everyone a lead is assigned to: the team list, or the single old owner. */
@@ -127,12 +130,12 @@ export async function getLead(id) {
     const people = await staffMap([...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
     return {
         lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
-        notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canDelete: (!!a.staffId && n.addedFrom === a.staffId) || a.can('delete'), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000 })),
+        notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canEdit: mayChangeItem(a, n.addedFrom, 'notes'), canDelete: mayDropItem(a, n.addedFrom), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000 })),
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
-        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.fromAddress || '', to: m.toAddress || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId })),
-        meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId })),
+        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.fromAddress || '', to: m.toAddress || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
+        meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
 }
@@ -240,7 +243,7 @@ export async function editNote(id, noteId, content) {
     await loadOne(id, a)
     const n = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'lead', relId: id } }))
     if (!n) throw fail('Note not found', 404)
-    if (!a.staffId || n.addedFrom !== a.staffId) throw fail('You can only edit your own notes', 403)
+    if (!mayChangeItem(a, n.addedFrom, 'notes')) throw fail('You can only edit your own notes', 403)
     const text = storeRich(content)
     if (!text) throw fail('Write the note first')
     await prisma.crmNote.update({ where: { id: noteId }, data: { description: text } })
@@ -273,12 +276,12 @@ export async function saveMail(id, body, mailId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     const lead = await loadOne(id, a)
-    if (!mayEdit(a, lead)) throw fail('You can only edit your own leads', 403)
+    if (!mayEdit(a, lead) && !(mailId && a.can('edit_others_mails'))) throw fail('You can only edit your own leads', 403)
     const data = mailData(body)
     if (mailId) {
         const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
         if (!m) throw fail('Mail not found', 404)
-        if (m.addedFrom !== a.staffId && !a.can('edit')) throw fail('You can only edit the mails you logged', 403)
+        if (!mayChangeItem(a, m.addedFrom, 'mails')) throw fail('You can only edit the mails you logged', 403)
         await prisma.crmLeadMail.update({ where: { id: mailId }, data })
         return { success: true, id: mailId }
     }
@@ -306,12 +309,12 @@ export async function saveMeeting(id, body, eventId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     const lead = await loadOne(id, a)
-    if (!mayEdit(a, lead)) throw fail('You can only edit your own leads', 403)
+    if (!mayEdit(a, lead) && !(eventId && a.can('edit_others_meetings'))) throw fail('You can only edit your own leads', 403)
     const report = body.report !== undefined ? storeRich(body.report) : undefined
     if (eventId) {
         const ev = oid(eventId) && (await prisma.crmEvent.findFirst({ where: { id: eventId, leadId: id } }))
         if (!ev) throw fail('Meeting not found', 404)
-        if (ev.userId && ev.userId !== a.staffId && !a.can('edit')) throw fail('You can only edit the meetings you added', 403)
+        if (ev.userId && !mayChangeItem(a, ev.userId, 'meetings')) throw fail('You can only edit the meetings you added', 403)
         const data = cleanEvent({ title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, category: ev.category, projectId: ev.projectId, clientId: null, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, report: ev.report, ...body, leadId: id })
         if (report !== undefined) data.report = report || null
         await prisma.crmEvent.update({ where: { id: eventId }, data: { ...data, isStartNotified: false } })

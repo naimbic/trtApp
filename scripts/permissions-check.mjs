@@ -197,6 +197,24 @@ try {
     check('the follower now sees the lead (and its mails and meetings)', (await lb('GET', `/api/crm/pipeline/leads/${LID}`)).body?.mails?.length === 1)
     { const m1 = await lb('POST', `/api/crm/pipeline/leads/${LID}/mails`, { subject: 'x' }), m2 = await lb('POST', `/api/crm/pipeline/leads/${LID}/meetings`, { title: 'x', start: start.toISOString() }); check('...but a follower cannot log mails or add meetings (only the team can)', m1.status === 403 && m2.status === 403, `${m1.status} ${JSON.stringify(m1.body).slice(0, 70)} / ${m2.status} ${JSON.stringify(m2.body).slice(0, 70)}`) }
     check('...and a third person still sees nothing', (await lc('GET', `/api/crm/pipeline/leads/${LID}`)).status === 404)
+    {
+        const lD = await makeUser('lead-d', {}), lE = await makeUser('lead-e', { leads: ['edit_others_notes', 'edit_others_mails', 'edit_others_meetings'] })
+        const ld = await login(lD), le = await login(lE)
+        await la('PUT', `/api/crm/pipeline/leads/${LID}`, { name: 'zz check lead', followerIds: [lB.staffId, lD.staffId, lE.staffId] })
+        const note = await la('POST', `/api/crm/pipeline/leads/${LID}/notes`, { content: '<p>first</p>' })
+        const nid = (await la('GET', `/api/crm/pipeline/leads/${LID}`)).body?.notes?.[0]?.id
+        check('a note is added by its author', note.status === 200 && !!nid, String(note.status))
+        check("without the permission, others' notes, mails and meetings cannot be edited", (await ld('PUT', `/api/crm/pipeline/leads/${LID}/notes`, { noteId: nid, content: 'x' })).status === 403 && (await ld('PUT', `/api/crm/pipeline/leads/${LID}/mails`, { mailId: mail.body?.id, subject: 'x' })).status === 403 && (await ld('PUT', `/api/crm/pipeline/leads/${LID}/meetings`, { eventId: meet.body?.id, title: 'x' })).status === 403)
+        const dv = (await ld('GET', `/api/crm/pipeline/leads/${LID}`)).body
+        check('...and the popup data says so (no edit flag on the items)', dv?.notes?.[0]?.canEdit === false && dv?.mails?.[0]?.canEdit === false && dv?.meetings?.[0]?.canEdit === false, JSON.stringify([dv?.notes?.[0]?.canEdit, dv?.mails?.[0]?.canEdit, dv?.meetings?.[0]?.canEdit]))
+        const e1 = await le('PUT', `/api/crm/pipeline/leads/${LID}/notes`, { noteId: nid, content: '<p>changed by E</p>' }), e2 = await le('PUT', `/api/crm/pipeline/leads/${LID}/mails`, { mailId: mail.body?.id, subject: 'Edited by E', body: '<p>b</p>' }), e3 = await le('PUT', `/api/crm/pipeline/leads/${LID}/meetings`, { eventId: meet.body?.id, title: 'Edited by E' })
+        check("with the permissions, even a read-only follower edits others' notes, mails and meetings", e1.status === 200 && e2.status === 200 && e3.status === 200, `${e1.status}/${e2.status}/${e3.status}`)
+        const ev2 = await prisma.crmEvent.findUnique({ where: { id: meet.body.id } }), mm = await prisma.crmLeadMail.findUnique({ where: { id: mail.body.id } })
+        check('...and the changes are saved (the author stays the same)', ev2?.title === 'Edited by E' && ev2.userId === lA.staffId && mm?.subject === 'Edited by E' && mm.addedFrom === lA.staffId)
+        check('the edit permission does not give the right to delete', (await le('DELETE', `/api/crm/pipeline/leads/${LID}/notes?noteId=${nid}`)).status === 403 && (await le('DELETE', `/api/crm/pipeline/leads/${LID}/mails?mailId=${mail.body?.id}`)).status === 403)
+        const lf = await login(await makeUser('lead-f', { leads: ['edit_others_notes', 'edit_others_mails', 'edit_others_meetings'] }))
+        check('the edit permission does not open a lead the person cannot see', (await lf('PUT', `/api/crm/pipeline/leads/${LID}/notes`, { noteId: nid, content: 'x' })).status === 404 && (await lf('PUT', `/api/crm/pipeline/leads/${LID}/mails`, { mailId: mail.body?.id, subject: 'x' })).status === 404)
+    }
     check('only the author (or someone with delete rights) deletes a mail', (await lb('DELETE', `/api/crm/pipeline/leads/${LID}/mails?mailId=${mail.body?.id}`)).status === 403 && (await la('DELETE', `/api/crm/pipeline/leads/${LID}/mails?mailId=${mail.body?.id}`)).status === 200)
     check('deleting a meeting removes the calendar event', (await la('DELETE', `/api/crm/pipeline/leads/${LID}/meetings?eventId=${meet.body?.id}`)).status === 200 && !(await prisma.crmEvent.findUnique({ where: { id: meet.body.id } })))
     const fz = await login(await makeUser('fr-lines', { freelancers: ['view_own', 'create', 'edit', 'delete'] }))

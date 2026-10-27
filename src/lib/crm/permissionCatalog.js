@@ -18,6 +18,9 @@ export const CAPABILITIES = [
 export const EXTRA_LABELS = {
     change_email: 'Change own sign-in email',
     view_all_templates: 'View all templates',
+    edit_others_notes: "Edit notes added by others",
+    edit_others_mails: "Edit mails logged by others",
+    edit_others_meetings: "Edit meetings added by others",
     create_milestones: 'Create milestones',
     edit_milestones: 'Edit milestones',
     delete_milestones: 'Delete milestones',
@@ -56,7 +59,7 @@ export const PERMISSION_GROUPS = [
         group: 'Customers & leads',
         features: [
             { key: 'customers', label: 'Customers', caps: CRUD, auto: { view_own: 'Staff always see the customers they are an admin of' } },
-            { key: 'leads', label: 'Leads', caps: ['view', 'delete'], auto: { view_own: 'Staff always see leads assigned to or added by them, and can add and edit those', create: 'Any staff member can add leads', edit: 'Any staff member can edit their own leads' } },
+            { key: 'leads', label: 'Leads', caps: ['view', 'delete', 'edit_others_notes', 'edit_others_mails', 'edit_others_meetings'], auto: { view_own: 'Staff always see leads assigned to or added by them, and can add and edit those', create: 'Any staff member can add leads', edit: 'Any staff member can edit their own leads' } },
             { key: 'estimate_request', label: 'Estimate requests', caps: STD },
             { key: 'lead_mail', label: 'Lead email integration', caps: ['view', 'edit'] },
         ],

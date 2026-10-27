@@ -110,10 +110,10 @@ export const LeadMails = ({ leadId, mails, canEdit, run }) => {
                         <div className="shrink-0 text-end text-xs text-gray-500"><div>{when(m.date)}</div>{m.source === 'mailbox' && <div className="text-[11px]">{tr("from the mailbox")}</div>}</div>
                     </div>
                     {m.body && <div className="max-h-56 overflow-auto"><RichView html={m.body} /></div>}
-                    {canEdit && (
+                    {(m.canEdit || m.canDelete) && (
                         <div className="absolute end-2 bottom-2 flex gap-0.5 opacity-0 transition group-hover:opacity-100">
-                            <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, subject: m.subject, body: m.body })} />
-                            <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} />
+                            {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, subject: m.subject, body: m.body })} />}
+                            {m.canDelete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} />}
                         </div>
                     )}
                 </div>
@@ -163,7 +163,7 @@ export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run }
                 {m.report && <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-600"><div className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-400">{tr("Meeting report")}</div><RichView html={m.report} /></div>}
                 <div className="mt-2 flex items-center gap-1">
                     <Button size="xs" variant="plain" icon={<TbCalendarEvent />} onClick={() => nav('/calendar')}>{tr("Calendar")}</Button>
-                    {canEdit && <><Button size="xs" variant="plain" icon={<TbPencil />} onClick={() => edit(m)}>{m.report ? tr("Edit") : tr("Write the report")}</Button><Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} /></>}
+                    {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} onClick={() => edit(m)}>{m.report ? tr("Edit") : tr("Write the report")}</Button>}{m.canDelete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} />}
                 </div>
             </div>
         )

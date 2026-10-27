@@ -4358,5 +4358,9 @@ export default {
     "{label} saved": "تم حفظ {label}",
     "Kept in the currency (%)": "المحتفظ به بالعملة (%)",
     "Printed when neither the client nor the document names a bank account": "يُطبع عندما لا يحدد العميل ولا المستند حسابًا بنكيًا",
-    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "يحتفظ البنك بهذه النسبة بالعملة الأجنبية ويحوّل الباقي إلى الدرهم"
+    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "يحتفظ البنك بهذه النسبة بالعملة الأجنبية ويحوّل الباقي إلى الدرهم",
+    "account for this currency": "حساب هذه العملة",
+    "client's account": "حساب العميل",
+    "default account": "الحساب الافتراضي",
+    "{n} ({why})": "{n} ({why})"
 }

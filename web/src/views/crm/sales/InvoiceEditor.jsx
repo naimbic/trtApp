@@ -136,7 +136,7 @@ const InvoiceEditor = () => {
                                 onChange={(vals) => { if (Array.isArray(vals) && vals[0] && vals[1]) set({ date: dayjs(vals[0]).format('YYYY-MM-DD'), dueDate: dayjs(vals[1]).format('YYYY-MM-DD') }) }}
                             />
                         </div>
-                        <div className="md:col-span-6"><label className="form-label mb-1 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
+                        <div className="md:col-span-6"><label className="form-label mb-1 block">{tr("Bank account on the document")}</label><BankAccountSelect value={v.bankAccountId} clientId={v.clientId || null} currencyId={v.currencyId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The client's account, else the company's default")} /></div>
                     </div>
                     {!v.isCopy && (
                         <div className="mt-3 grid items-end gap-3 border-t border-gray-100 pt-3 md:grid-cols-12 dark:border-gray-700">

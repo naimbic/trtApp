@@ -32,8 +32,8 @@ async function login(u) {
     if (!s?.user) throw new Error(`sign-in failed for ${u.email}`)
     return async (method, path, body) => {
         const res = await fetch(BASE + path, { method, headers: { cookie: hdr(), 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
-        let j = null; try { j = await res.clone().json() } catch { /* pdf / html */ }
-        return { status: res.status, body: j }
+        let j = null, text = ''; try { text = await res.clone().text(); j = JSON.parse(text) } catch { /* pdf / html */ }
+        return { status: res.status, body: j, text }
     }
 }
 
@@ -160,6 +160,16 @@ try {
         const back = await pmAdmin('GET', `/api/crm/payment-modes/${pm.body.id}`)
         check('reordering a payment method is saved (its position survives a reload)', mv.status === 200 && back.body?.sortOrder === 7, `${mv.status} sortOrder=${back.body?.sortOrder}`)
     }
+    // the bank account assigned to a client is printed on its documents (PDF source), even when the invoice itself names none
+    const bankMode = await prisma.crmPaymentMode.create({ data: { name: 'zz check bank print', bank: 'Print Bank', holder: 'Print Holder', rib: 'MA99 PRINT 1234', swift: 'PRNTMAMC', active: true, sortOrder: 98 } }); made.rows.unshift(['crmPaymentMode', bankMode.id])
+    const bankClient = await prisma.crmClient.create({ data: { company: 'zz check bank client', bankAccountId: bankMode.id } }); made.rows.push(['crmClient', bankClient.id])
+    const bankInv = await prisma.crmInvoice.create({ data: { clientId: bankClient.id, number: 888888, prefix: 'ZZ-', numberFormat: 1, date: new Date(), total: 10, subtotal: 10, status: 1, hash: crypto.randomUUID() } }); made.rows.unshift(['crmInvoice', bankInv.id])
+    const viewer = await login(await makeUser('inv-viewer', { invoices: ['view'] }))
+    const pdfSrc = await viewer('GET', `/api/crm/sales/invoices/${bankInv.id}/html`)
+    check('the invoice of a client with a bank account prints its bank details (bank, holder, RIB, SWIFT)', pdfSrc.status === 200 && /Bank details/.test(pdfSrc.text) && /MA99 PRINT 1234/.test(pdfSrc.text) && /Print Holder/.test(pdfSrc.text) && /PRNTMAMC/.test(pdfSrc.text), `${pdfSrc.status} ${pdfSrc.text.length}`)
+    await prisma.crmClient.update({ where: { id: bankClient.id }, data: { bankAccountId: null } })
+    const noBank = await viewer('GET', `/api/crm/sales/invoices/${bankInv.id}/html`)
+    check('...and without a client account it falls back to the default account (or nothing), never to a wrong one', noBank.status === 200 && !/MA99 PRINT 1234/.test(noBank.text), String(noBank.status))
     const plain2 = await login(await makeUser('pm-plain', {}))
     check('without Settings, payment methods (bank details) are refused', (await plain2('GET', '/api/crm/payment-modes')).status === 403)
     console.log('\n== Lead popup: mails, meetings (calendar events), followers; freelance lines')

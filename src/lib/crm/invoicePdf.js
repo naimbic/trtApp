@@ -12,7 +12,7 @@ import { numberPadding } from '@/lib/crm/numbering'
 import { companyImageDataUri } from '@/lib/crm/company'
 import { pdfSettings, formatMoney, paperCss, attachTotals } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
-import { companyTokenData, renderInfoFormat, clientTokenData, phpDate, COMPANY_KEYS } from '@/lib/crm/docTokens'
+import { companyTokenData, renderInfoFormat, clientTokenData, phpDate, COMPANY_KEYS, bankBlockHtml } from '@/lib/crm/docTokens'
 import { bankTokensFor } from '@/lib/crm/bankDb'
 
 const run = promisify(execFile)
@@ -123,7 +123,9 @@ async function renderInvoiceHtmlRaw(id, { hash, pdfHref } = {}) {
     const showModes = unpaid ? modes.filter((m) => m.showOnPdf && m.active !== false && m.description) : []
     const logo = await companyImageDataUri('logo', logoDataUri(og('company_logo')), S.logoKeys)
     const signature = S.showSignature && invoice.status === 2 ? await companyImageDataUri('signature', '') : ''
-    const org = await organizationInfo(og, await bankTokensFor({ docAccountId: invoice.bankAccountId, clientId: invoice.clientId, currencyId: invoice.currencyId }))
+    const bank = await bankTokensFor({ docAccountId: invoice.bankAccountId, clientId: invoice.clientId, currencyId: invoice.currencyId })
+    const org = await organizationInfo(og, bank)
+    const bankBlock = bankBlockHtml(bank, S.lang === 'french', og('company_info_format'))
     const bill = await customerInfo(client, invoice, L)
 
     const extra = []
@@ -190,7 +192,7 @@ ${paperCss()}
 ${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}${stampHtml(invoice.status, fr)}${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: L.invoice, num: `#${esc(invoice.displayNumber)}`, status, org: orgBlock, info: infoBlock, swap: S.swap })}
 <div class="sc"><table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table></div>
 <table class="tot">${totalRows.join('')}</table>
-${words}${payTable}${modesBlock}
+${words}${payTable}${modesBlock}${bankBlock}
 ${invoice.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(invoice.clientNote)}</div>` : ''}
 ${invoice.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(invoice.terms)}</div>` : ''}
 ${sig}

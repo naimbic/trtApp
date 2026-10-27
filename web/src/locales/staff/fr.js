@@ -4358,5 +4358,9 @@ export default {
     "{label} saved": "{label} enregistré",
     "Kept in the currency (%)": "Conservé en devise (%)",
     "Printed when neither the client nor the document names a bank account": "Imprimé quand ni le client ni le document n'indiquent de compte bancaire",
-    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "La banque conserve cette part en devise étrangère et change le reste en MAD"
+    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "La banque conserve cette part en devise étrangère et change le reste en MAD",
+    "account for this currency": "compte pour cette devise",
+    "client's account": "compte du client",
+    "default account": "compte par défaut",
+    "{n} ({why})": "{n} ({why})"
 }

@@ -24,6 +24,17 @@ export function companyTokenData(o, vatLabel = 'VAT Number', bank = null) {
     }
 }
 
+/**
+ * "Bank details" for the foot of a document: the account chosen for it (the document's, its client's, the one for its currency, the default).
+ * Left out when the company block of the template already prints the bank terms ({company_rib}...), so nothing shows twice.
+ */
+export function bankBlockHtml(bank, fr = false, format = '') {
+    if (!bank || /\{company_(bank|rib|swift|bank_holder)\}/i.test(format || '')) return ''
+    const rows = [[fr ? 'Banque' : 'Bank', bank.company_bank], [fr ? 'Titulaire' : 'Account holder', bank.company_bank_holder], ['RIB / IBAN', bank.company_rib], ['SWIFT / BIC', bank.company_swift]].filter(([, v]) => v)
+    if (!rows.length) return ''
+    return `<h4>${fr ? 'Coordonnées bancaires' : 'Bank details'}</h4><table class="plain">${rows.map(([k, v]) => `<tr><td><strong>${esc(k)}</strong></td><td>${esc(v)}</td></tr>`).join('')}</table>`
+}
+
 /** Fills the terms (values are escaped), drops lines left empty and keeps basic formatting tags. */
 export function renderInfoFormat(format, data) {
     const filled = String(format || '').replace(/\{([a-z0-9_]+)\}/gi, (_, k) => esc(data[k] ?? ''))

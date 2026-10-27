@@ -7,6 +7,7 @@ import { pdfSettings, formatMoney, paperCss, attachTotals } from '@/lib/crm/docS
 import { amountInWords } from '@/lib/crm/numberWords'
 import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
 import { bankTokensFor } from '@/lib/crm/bankDb'
+import { bankBlockHtml } from '@/lib/crm/docTokens'
 
 const TXT = {
     french: { title: 'BON DE COMMANDE', delivery: 'Livraison prévue', reference: 'Réf. client', words: 'Arrêté le présent bon de commande à la somme de' },
@@ -40,7 +41,9 @@ async function renderPurchaseOrderHtmlRaw(id) {
     const logo = await companyImageDataUri('logo', logoDataUri(og('company_logo')), S.logoKeys)
     const signature = S.showSignature ? await companyImageDataUri('signature', '') : ''
     const info = `<div class="info"><div class="lbl">${L.billTo}</div>${await customerInfo(client, p, L)}<div class="dates"><div>${L.date}: <strong>${D(p.date)}</strong></div>${p.deliveryDate ? `<div>${T.delivery}: <strong>${D(p.deliveryDate)}</strong></div>` : ''}${p.referenceNo ? `<div>${T.reference}: <strong>${esc(p.referenceNo)}</strong></div>` : ''}</div></div>`
-    const org = `<div class="info org">${await organizationInfo(og, await bankTokensFor({ docAccountId: p.bankAccountId, clientId: p.clientId, currencyId: p.currencyId }))}</div>`
+    const bank = await bankTokensFor({ docAccountId: p.bankAccountId, clientId: p.clientId, currencyId: p.currencyId })
+    const org = `<div class="info org">${await organizationInfo(og, bank)}</div>`
+    const bankBlock = bankBlockHtml(bank, S.lang === 'french', og('company_info_format'))
     const rows = items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${safeHtml(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(p.subtotal)}</td></tr>`]
     if (p.discountTotal > 0) tr.push(`<tr><td>${L.discount}${p.discountPercent > 0 ? ` (${p.discountPercent}%)` : ''}</td><td>-${M(p.discountTotal)}</td></tr>`)
@@ -51,7 +54,7 @@ async function renderPurchaseOrderHtmlRaw(id) {
     const body = `${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: T.title, num: `#${esc(number)}`, org, info, swap: S.swap })}
 <table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>
-${words}${p.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(p.clientNote)}</div>` : ''}${p.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(p.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
+${words}${bankBlock}${p.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(p.clientNote)}</div>` : ''}${p.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(p.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
     return { number, html: `<!doctype html><html><head><meta charset="utf-8"><title>${esc(number)}</title><style>${S.pageCss()}${S.baseCss()}${CSS}${paperCss()}</style></head><body>${body}</body></html>` }
 }
 

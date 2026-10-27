@@ -9,6 +9,7 @@ import { pdfSettings, formatMoney, paperCss, attachTotals } from '@/lib/crm/docS
 import { amountInWords } from '@/lib/crm/numberWords'
 import { createInvoiceFromEstimate } from '@/lib/crm/sales/convert'
 import { bankTokensFor } from '@/lib/crm/bankDb'
+import { bankBlockHtml } from '@/lib/crm/docTokens'
 
 export const ESTIMATE = { DRAFT: 1, SENT: 2, DECLINED: 3, ACCEPTED: 4, EXPIRED: 5 }
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }) }
@@ -64,7 +65,9 @@ async function documentHtmlRaw(d, lang, S) {
     const signature = S.showSignature ? await companyImageDataUri('signature', '') : ''
     const bill = await customerInfo(d.client, e, L)
     const info = `<div class="info"><div class="lbl">${L.billTo}</div>${bill}<div class="dates"><div>${L.date}: <strong>${D(e.date)}</strong></div>${e.expiryDate ? `<div>${T.valid}: <strong>${D(e.expiryDate)}</strong></div>` : ''}${e.referenceNo ? `<div>${T.reference}: <strong>${esc(e.referenceNo)}</strong></div>` : ''}</div></div>`
-    const org = `<div class="info org">${await organizationInfo(og, await bankTokensFor({ docAccountId: e.bankAccountId, clientId: e.clientId, currencyId: e.currencyId }))}</div>`
+    const bank = await bankTokensFor({ docAccountId: e.bankAccountId, clientId: e.clientId, currencyId: e.currencyId })
+    const org = `<div class="info org">${await organizationInfo(og, bank)}</div>`
+    const bankBlock = bankBlockHtml(bank, lang === 'french', og('company_info_format'))
     const rows = d.items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${safeHtml(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(e.subtotal)}</td></tr>`]
     if (e.discountTotal > 0) tr.push(`<tr><td>${L.discount}${e.discountPercent > 0 ? ` (${e.discountPercent}%)` : ''}</td><td>-${M(e.discountTotal)}</td></tr>`)
@@ -75,7 +78,7 @@ async function documentHtmlRaw(d, lang, S) {
     return `${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: T.estimate, num: `#${esc(d.number)}`, org, info, swap: S.swap })}
 <table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>
-${words}${e.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNote)}</div>` : ''}${e.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(e.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
+${words}${bankBlock}${e.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNote)}</div>` : ''}${e.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(e.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }
 
 const langOf = async () => ((await getOptions(['active_language']))('active_language') === 'french' ? 'french' : 'english')

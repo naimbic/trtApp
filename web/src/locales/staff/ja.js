@@ -4358,5 +4358,9 @@ export default {
     "{label} saved": "{label}を保存しました",
     "Kept in the currency (%)": "通貨のまま保持する割合（%）",
     "Printed when neither the client nor the document names a bank account": "クライアントにも書類にも銀行口座の指定がないときに印刷されます",
-    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "銀行はこの割合を外貨のまま保持し、残りをMADに両替します"
+    "The bank keeps this share in the foreign currency and exchanges the rest to MAD": "銀行はこの割合を外貨のまま保持し、残りをMADに両替します",
+    "account for this currency": "この通貨用の口座",
+    "client's account": "クライアントの口座",
+    "default account": "既定の口座",
+    "{n} ({why})": "{n}（{why}）"
 }

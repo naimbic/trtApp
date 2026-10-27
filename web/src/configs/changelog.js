@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.113.2',
+        date: '2026-10-27',
+        title: 'The bank assigned to a client now shows, and prints, on its documents',
+        items: [
+            'Fixed: an invoice (estimate, purchase order) of a client that has a bank account showed an empty "Bank account on the document" field. The field now shows the account that will really be printed and why: the client\'s account, the account for the invoice currency, or the default one. Choosing one yourself still wins.',
+            'Fixed: the printed invoice, estimate and purchase order had no bank details at all unless your company header template used the bank terms. They now end with a "Bank details" block (bank, holder, RIB / IBAN, SWIFT) of that account; it is left out when your template already prints them.',
+            'Safety: the merge of Bank accounts into Payment methods now also repairs itself when documents are printed, and one startup migration failing can no longer skip the others.',
+        ],
+    },
+    {
         version: '0.113.1',
         date: '2026-10-27',
         title: 'Payment methods: the order you drag is now saved',

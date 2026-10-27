@@ -9,7 +9,13 @@ export async function register() {
     } catch (e) {
         console.warn('[warmup] database not reachable yet:', e.message?.slice(0, 120))
     }
-    try { await (async (m) => { await m.migratePermissions(); await m.migrateToolPermissions(); await m.splitPermissions(); await m.seedBankAccount(); await m.mergeBankAccounts(); await m.ensureStandardRoles(); await m.splitAdmins(); await m.seedTaskStatuses() })(await import('@/lib/crm/migrations')) } catch (e) { console.warn('[migrate] permissions:', e.message?.slice(0, 120)) }
+    // each startup migration on its own: one that fails must not stop the ones after it (the bank accounts merge used to be skipped that way)
+    try {
+        const m = await import('@/lib/crm/migrations')
+        for (const name of ['migratePermissions', 'migrateToolPermissions', 'splitPermissions', 'seedBankAccount', 'mergeBankAccounts', 'ensureStandardRoles', 'splitAdmins', 'seedTaskStatuses']) {
+            try { await m[name]() } catch (e) { console.warn(`[migrate] ${name}:`, e.message?.slice(0, 120)) }
+        }
+    } catch (e) { console.warn('[migrate] could not start:', e.message?.slice(0, 120)) }
     try { (await import('@/lib/crm/cronScheduler')).startCronScheduler() } catch (e) { console.warn('[cron-scheduler] not started:', e.message?.slice(0, 120)) }
     // Idle Mongo connections go cold (slow reconnect through Docker/Colima); a light ping keeps them warm.
     const keepAlive = setInterval(() => prisma.crmOption.count().catch(() => {}), 20000)

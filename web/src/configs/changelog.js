@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.109.2',
+        date: '2026-10-27',
+        title: 'Freelancers: now in the Rapport look',
+        items: ['The Freelancers page is redone in the same design as Leads and Tasks: the big title with its figures, a board with two stages (To collect, Paid) of animated tiles that show the amount, the due date and a "Repeats" tag, and the Rapport popup with its coloured head and stage bar. Drag a tile to Paid (or press a step in the popup) to mark it paid; the stage totals show on top of each column.'],
+    },
+    {
         version: '0.109.1',
         date: '2026-10-27',
         title: 'Task popup: clicking Complete in the step bar and pressing Save no longer undoes it',

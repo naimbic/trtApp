@@ -4287,5 +4287,9 @@ export default {
     "The Freelancers page: side jobs that get paid like invoices but have no number and stay out of the company dashboard, reports and goals. View own shows only the jobs this person added.": "صفحة العمل الحر: أعمال جانبية تُدفع مثل الفواتير بدون رقم وخارج لوحة معلومات الشركة وتقاريرها وأهدافها. «عرض الخاص بي» يعرض الأعمال التي أضافها الشخص فقط.",
     "Name the job": "سمِّ العمل",
     "Choose the date the money is due": "اختر تاريخ استحقاق المبلغ",
-    "Job not found": "العمل غير موجود"
+    "Job not found": "العمل غير موجود",
+    "Job saved": "تم حفظ العمل",
+    "Job added": "تمت إضافة العمل",
+    "Job deleted": "تم حذف العمل",
+    "No numbers, not company income": "بدون أرقام وخارج دخل الشركة"
 }

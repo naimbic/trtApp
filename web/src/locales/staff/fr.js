@@ -4287,5 +4287,9 @@ export default {
     "The Freelancers page: side jobs that get paid like invoices but have no number and stay out of the company dashboard, reports and goals. View own shows only the jobs this person added.": "La page Freelances : travaux annexes payés comme des factures mais sans numéro, hors du tableau de bord, des rapports et des objectifs de l'entreprise. « Voir les siens » ne montre que les travaux ajoutés par la personne.",
     "Name the job": "Donnez un nom au travail",
     "Choose the date the money is due": "Choisissez la date d'échéance du paiement",
-    "Job not found": "Travail introuvable"
+    "Job not found": "Travail introuvable",
+    "Job saved": "Travail enregistré",
+    "Job added": "Travail ajouté",
+    "Job deleted": "Travail supprimé",
+    "No numbers, not company income": "Sans numéros, hors revenus de l'entreprise"
 }

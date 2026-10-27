@@ -4287,5 +4287,9 @@ export default {
     "The Freelancers page: side jobs that get paid like invoices but have no number and stay out of the company dashboard, reports and goals. View own shows only the jobs this person added.": "フリーランスのページ：請求書のように支払われるが番号がなく、会社のダッシュボード・レポート・目標に含まれない副業の仕事。「自分のみ表示」は本人が追加した仕事だけを表示します。",
     "Name the job": "仕事に名前を付けてください",
     "Choose the date the money is due": "支払期日を選んでください",
-    "Job not found": "仕事が見つかりません"
+    "Job not found": "仕事が見つかりません",
+    "Job saved": "仕事を保存しました",
+    "Job added": "仕事を追加しました",
+    "Job deleted": "仕事を削除しました",
+    "No numbers, not company income": "番号なし・会社の収入ではありません"
 }

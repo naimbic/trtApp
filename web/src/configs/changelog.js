@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.109.1',
+        date: '2026-10-27',
+        title: 'Task popup: clicking Complete in the step bar and pressing Save no longer undoes it',
+        items: ['Fixed: in the task popup, clicking a step of the bar at the top (for example Complete) saved the new status, but the popup reloaded before the save had finished and kept showing the old status in the form. Pressing Save changes then wrote the old status back, so the task list still showed it as not complete. The popup now waits for the save and shows the new status.'],
+    },
+    {
         version: '0.109.0',
         date: '2026-10-26',
         title: 'Freelancers: side jobs paid without invoices',

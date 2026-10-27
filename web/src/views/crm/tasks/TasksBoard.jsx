@@ -106,10 +106,11 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
         void draggableId
     }
 
-    const moveTo = (item, toId) => {
+    // returns when the move is saved: the popup reloads right after the step is picked, and must read the new status (not the old one)
+    const moveTo = async (item, toId) => {
         if (isNote(item)) return promote(item, toId)
         const to = +toId, from = Object.keys(columns).find((k) => columns[k].some((t) => t.id === item.id))
-        if (from && +from !== to) onDragEnd({ source: { droppableId: String(from), index: columns[from].findIndex((t) => t.id === item.id) }, destination: { droppableId: String(to), index: (columns[to] || []).length } })
+        if (from && +from !== to) await onDragEnd({ source: { droppableId: String(from), index: columns[from].findIndex((t) => t.id === item.id) }, destination: { droppableId: String(to), index: (columns[to] || []).length } })
     }
     // change one thing of a task from the menu: read it, then save it back with that thing changed
     const patch = async (item, change, ok) => {

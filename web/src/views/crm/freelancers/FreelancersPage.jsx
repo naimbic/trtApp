@@ -1,6 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { TbPlus, TbSearch, TbRepeat, TbCircleCheck, TbClockHour4, TbCoins, TbTrash, TbArrowBackUp, TbPencil } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbRepeat, TbCircleCheck, TbClockHour4, TbCoins, TbTrash, TbArrowBackUp, TbPencil, TbX } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -18,9 +18,14 @@ import { InvoiceHead } from '../sales/InvoiceInsights'
 import { makeMoney } from '../clients/shared'
 import { tr, trn } from '@/utils/t'
 
-const EMPTY = { title: '', payerName: '', clientId: null, description: '', amount: '', currencyId: null, date: new Date(), paymentModeId: null, recurring: false, repeatEvery: 1, recurringType: 'month', cyclesLimit: 0 }
+const LINE = () => ({ name: '', qty: 1, cost: '', tva: 0 })
+const EMPTY = { title: '', payerName: '', clientId: null, description: '', amount: '', lines: [LINE()], currencyId: null, date: new Date(), paymentModeId: null, recurring: false, repeatEvery: 1, recurringType: 'month', cyclesLimit: 0 }
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const UNIT_LABEL = () => ({ day: tr("day(s)"), week: tr("week(s)"), month: tr("month(s)"), year: tr("year(s)") })
+const lineTotal = (l) => (Number(l.qty) || 0) * (Number(l.cost) || 0)
+const totalsOf = (lines) => { let sub = 0, vat = 0; for (const l of lines) { const t = lineTotal(l); sub += t; vat += (t * (Number(l.tva) || 0)) / 100 } return { sub, vat, total: sub + vat } }
+const num = (n) => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const cell = '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none h-8 w-full rounded-lg border border-transparent bg-gray-100 px-2 text-sm hover:border-gray-300 focus:border-primary focus:bg-white focus:outline-none dark:bg-gray-700/60 dark:focus:bg-gray-800'
 const COLUMNS = () => [{ id: 'unpaid', name: tr("To collect"), tone: 'butter' }, { id: 'paid', name: tr("Paid"), tone: 'good' }]
 
 /** The popup of a freelance job: the Rapport popup (stage bar To collect → Paid), the form of the job inside. */
@@ -40,7 +45,7 @@ const JobPopup = ({ open, id, lookups, preset, onClose, onChanged }) => {
         if (!id) return
         try {
             const d = await api(`/api/crm/freelance/${id}`)
-            setDetail(d); setV({ ...EMPTY, ...d.job, date: d.job.date ? new Date(d.job.date) : new Date() })
+            setDetail(d); setV({ ...EMPTY, ...d.job, lines: d.job.lines?.length ? d.job.lines : [{ name: d.job.title, qty: 1, cost: d.job.amount, tva: 0 }], date: d.job.date ? new Date(d.job.date) : new Date() })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => {
@@ -52,7 +57,7 @@ const JobPopup = ({ open, id, lookups, preset, onClose, onChanged }) => {
     const save = async () => {
         setSaving(true)
         try {
-            await api(edit ? `/api/crm/freelance/${id}` : '/api/crm/freelance', { method: edit ? 'PUT' : 'POST', body: { ...v, date: dayjs(v.date).format('YYYY-MM-DD') } })
+            await api(edit ? `/api/crm/freelance/${id}` : '/api/crm/freelance', { method: edit ? 'PUT' : 'POST', body: { ...v, lines: v.lines.filter((l) => String(l.name).trim() || Number(l.cost) > 0), date: dayjs(v.date).format('YYYY-MM-DD') } })
             notify('success', edit ? tr("Job saved") : tr("Job added")); onChanged(); onClose()
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
@@ -86,10 +91,34 @@ const JobPopup = ({ open, id, lookups, preset, onClose, onChanged }) => {
                         <div><L>{tr("Or a client of the CRM")}</L><RelationSelect resource="clients" value={v.clientId} disabled={!canEdit} onChange={(x) => set({ clientId: x || null })} /></div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div><L>{tr("Amount")}</L><Input type="number" min={0} step="0.01" disabled={!canEdit} value={v.amount} onChange={(e) => set({ amount: e.target.value })} /></div>
                         <div><L>{tr("Currency")}</L><Select isDisabled={!canEdit} options={opt(lk.currencies)} value={opt(lk.currencies).find((o) => o.value === v.currencyId) || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
                         <div><L>{v.recurring ? tr("First payment due") : tr("Payment due")}</L><DatePicker disabled={!canEdit} value={v.date} onChange={(d) => set({ date: d })} /></div>
                         <div><L>{tr("Payment mode")}</L><Select isClearable isDisabled={!canEdit} options={opt(lk.paymentModes)} value={opt(lk.paymentModes).find((o) => o.value === v.paymentModeId) || null} onChange={(o) => set({ paymentModeId: o?.value || null })} /></div>
+                    </div>
+                    <div>
+                        <L>{tr("Items")}</L>
+                        <div className="grid grid-cols-[1fr_54px_84px_58px_88px_26px] items-center gap-1.5 px-0.5 pb-1 text-[11px] font-bold uppercase tracking-wide text-gray-400"><span>{tr("Name")}</span><span>{tr("UN")}</span><span>{tr("Cost")}</span><span>{tr("TVA %")}</span><span className="text-end">{tr("Total")}</span><span /></div>
+                        <div className="space-y-1.5">
+                            {v.lines.map((l, i) => (
+                                <div key={i} className="grid grid-cols-[1fr_54px_84px_58px_88px_26px] items-center gap-1.5">
+                                    <input className={cell} disabled={!canEdit} value={l.name} placeholder={tr("What was done")} onChange={(e) => set({ lines: v.lines.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)) })} />
+                                    <input className={cell} type="number" min={0} step="any" disabled={!canEdit} value={l.qty} onChange={(e) => set({ lines: v.lines.map((x, j) => (j === i ? { ...x, qty: e.target.value } : x)) })} />
+                                    <input className={cell} type="number" min={0} step="0.01" disabled={!canEdit} value={l.cost} onChange={(e) => set({ lines: v.lines.map((x, j) => (j === i ? { ...x, cost: e.target.value } : x)) })} />
+                                    <input className={cell} type="number" min={0} max={100} step="any" list="fr-tva" disabled={!canEdit} value={l.tva} onChange={(e) => set({ lines: v.lines.map((x, j) => (j === i ? { ...x, tva: e.target.value } : x)) })} />
+                                    <span className="text-end text-sm font-semibold tabular-nums">{num(lineTotal(l))}</span>
+                                    {canEdit && v.lines.length > 1 ? <button type="button" aria-label={tr("Remove")} className="text-gray-400 transition hover:text-red-500" onClick={() => set({ lines: v.lines.filter((_, j) => j !== i) })}><TbX /></button> : <span />}
+                                </div>
+                            ))}
+                        </div>
+                        <datalist id="fr-tva"><option value="0" /><option value="7" /><option value="10" /><option value="14" /><option value="20" /></datalist>
+                        <div className="mt-2 flex items-start justify-between gap-3">
+                            {canEdit ? <Button size="xs" variant="plain" icon={<TbPlus />} onClick={() => set({ lines: [...v.lines, LINE()] })}>{tr("Add line")}</Button> : <span />}
+                            <dl className="min-w-[190px] space-y-0.5 text-sm">
+                                <div className="flex justify-between text-gray-500"><dt>{tr("Sub total")}</dt><dd className="tabular-nums">{num(totalsOf(v.lines).sub)}</dd></div>
+                                <div className="flex justify-between text-gray-500"><dt>{tr("TVA")}</dt><dd className="tabular-nums">{num(totalsOf(v.lines).vat)}</dd></div>
+                                <div className="flex justify-between border-t border-gray-200 pt-1 text-base font-extrabold dark:border-gray-600"><dt>{tr("Total")}</dt><dd className="tabular-nums">{num(totalsOf(v.lines).total)} {(lk.currencies || []).find((c) => c.id === v.currencyId)?.name || ''}</dd></div>
+                            </dl>
+                        </div>
                     </div>
                     <div className="space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                         <div className="flex items-center justify-between text-sm"><div><div className="font-semibold">{tr("Repeating job")}</div><div className="text-xs text-gray-500">{tr("The next payment is created automatically when it is due (a monthly retainer, hosting...)")}</div></div><Switcher disabled={!canEdit} checked={v.recurring} onChange={(c) => set({ recurring: c })} /></div>

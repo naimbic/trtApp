@@ -1,6 +1,7 @@
 import { realPicture } from '@/lib/crm/pictures'
 import { notifyComment, notifyNewMentions } from '@/lib/crm/mentionsApi'
 import { storeRich } from '@/lib/crm/richText'
+import { cleanEvent } from '@/lib/crm/calendar'
 import prisma from '@/lib/prisma'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { readSettings } from '@/lib/crm/appSettings'
@@ -16,8 +17,10 @@ async function access(session) {
     return { authority, scope: viewScope(authority, 'leads'), staffId: await getStaffId(session), admin: isCrmAdmin(authority), session, can: (cap) => hasCap(authority, 'leads', cap) }
 }
 // "view own" staff always see leads assigned to or added by them; Perfex also lets any staff add and edit their own
-const visible = (a) => (a.scope === 'all' ? {} : a.staffId ? { OR: [{ assigned: a.staffId }, { assignedIds: { has: a.staffId } }, { addedFrom: a.staffId }, { isPublic: true }] } : { id: NONE })
-const mayEdit = (a, lead) => a.can('edit') || (!!a.staffId && (lead.assigned === a.staffId || (lead.assignedIds || []).includes(a.staffId) || lead.addedFrom === a.staffId))
+const visible = (a) => (a.scope === 'all' ? {} : a.staffId ? { OR: [{ assigned: a.staffId }, { assignedIds: { has: a.staffId } }, { followerIds: { has: a.staffId } }, { addedFrom: a.staffId }, { isPublic: true }] } : { id: NONE })
+const isOwn = (a, lead) => !!a.staffId && (lead.assigned === a.staffId || (lead.assignedIds || []).includes(a.staffId) || lead.addedFrom === a.staffId)
+// a follower sees the lead and is told what happens on it, but only the team (and people who see all leads) change it
+const mayEdit = (a, lead) => isOwn(a, lead) || (a.can('edit') && !((lead.followerIds || []).includes(a.staffId) && a.scope !== 'all'))
 
 /** Everyone a lead is assigned to: the team list, or the single old owner. */
 const teamOf = (l) => (l.assignedIds?.length ? l.assignedIds : l.assigned ? [l.assigned] : [])
@@ -110,7 +113,7 @@ export async function getLead(id) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     const l = await loadOne(id, a)
-    const [status, source, notes, activity, tasks, proposals, client] = await Promise.all([
+    const [status, source, notes, activity, tasks, proposals, client, mails, meetings] = await Promise.all([
         l.statusId ? prisma.crmLeadStatus.findUnique({ where: { id: l.statusId } }) : null,
         l.sourceId ? prisma.crmLeadSource.findUnique({ where: { id: l.sourceId } }) : null,
         prisma.crmNote.findMany({ where: { relType: 'lead', relId: id }, orderBy: { createdAt: 'desc' } }),
@@ -118,13 +121,18 @@ export async function getLead(id) {
         prisma.crmTask.findMany({ where: { relType: 'lead', relId: id }, orderBy: { createdAt: 'desc' }, select: { id: true, name: true, status: true, dueDate: true } }),
         prisma.crmProposal.findMany({ where: { relType: 'lead', relId: id }, orderBy: { createdAt: 'desc' }, select: { id: true, number: true, legacyId: true, subject: true, status: true, total: true } }),
         l.clientId ? prisma.crmClient.findUnique({ where: { id: l.clientId }, select: { id: true, company: true } }) : null,
+        prisma.crmLeadMail.findMany({ where: { leadId: id }, orderBy: { date: 'desc' }, take: 200 }),
+        prisma.crmEvent.findMany({ where: { leadId: id }, orderBy: { start: 'desc' }, take: 200 }),
     ])
-    const people = await staffMap([...teamOf(l), l.addedFrom, ...notes.map((n) => n.addedFrom)])
+    const people = await staffMap([...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
     return {
         lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
         notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canDelete: (!!a.staffId && n.addedFrom === a.staffId) || a.can('delete'), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000 })),
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
+        followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
+        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.fromAddress || '', to: m.toAddress || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId })),
+        meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId })),
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
 }
@@ -143,6 +151,7 @@ export async function saveLead(body, id) {
         if (prev.clientId && (await readSettings(['lead_lock_after_convert_to_customer'])).on('lead_lock_after_convert_to_customer') && !a.admin) throw fail('This lead is locked because it became a client')
         const team = body.assignedIds !== undefined ? [...new Set((body.assignedIds || []).map(oid).filter(Boolean))] : body.assignedId !== undefined ? [oid(body.assignedId)].filter(Boolean) : null
         if (team && JSON.stringify(team) !== JSON.stringify(teamOf(prev))) { data.assignedIds = team; data.assigned = team[0] || null; data.dateAssigned = team.length ? new Date() : null }
+        if (body.followerIds !== undefined) data.followerIds = [...new Set((body.followerIds || []).map(oid).filter(Boolean))]
         const st = oid(body.statusId)
         if (st && st !== prev.statusId) { data.statusId = st; data.lastStatusChange = new Date() }
         await prisma.crmLead.update({ where: { id }, data })
@@ -156,7 +165,8 @@ export async function saveLead(body, id) {
     const team0 = body.assignedIds !== undefined ? [...new Set((body.assignedIds || []).map(oid).filter(Boolean))] : [oid(body.assignedId)].filter(Boolean)
     const team = team0.length ? team0 : a.staffId ? [a.staffId] : []
     const assigned = team[0] || null
-    const lead = await prisma.crmLead.create({ data: { ...data, statusId, assigned, assignedIds: team, dateAssigned: assigned ? new Date() : null, addedFrom: a.staffId, leadOrder: 0, lost: false, junk: false, lastStatusChange: new Date() } })
+    const followers = body.followerIds !== undefined ? [...new Set((body.followerIds || []).map(oid).filter(Boolean))] : []
+    const lead = await prisma.crmLead.create({ data: { ...data, statusId, assigned, assignedIds: team, followerIds: followers, dateAssigned: assigned ? new Date() : null, addedFrom: a.staffId, leadOrder: 0, lost: false, junk: false, lastStatusChange: new Date() } })
     await logActivity(lead.id, a, 'Lead created')
     if (data.description) await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text: data.description, prev: '', link: `/crm/leads/${lead.id}`, subject: data.name })
     return { success: true, id: lead.id }
@@ -220,7 +230,7 @@ export async function addNote(id, { content, date }) {
     if (!text) throw fail('Write the note first')
     await prisma.crmNote.create({ data: { relType: 'lead', relId: id, description: text, dateContacted: date ? new Date(date) : new Date(), addedFrom: a.staffId } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: date ? new Date(date) : new Date() } })
-    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), lead.addedFrom] }) } catch (e) { console.error('[note notify]', e.message) }
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), lead.addedFrom] }) } catch (e) { console.error('[note notify]', e.message) }
     return { success: true }
 }
 
@@ -248,6 +258,85 @@ export async function deleteNote(id, noteId) {
     return { success: true }
 }
 
+/* ------------------------------------------------ mails logged on a lead ------------------------------------------------ */
+const mailData = (b) => {
+    const subject = nz(b.subject)
+    const body = storeRich(b.body)
+    if (!subject && !body) throw fail('Give the mail a subject or write its text')
+    const date = b.date ? new Date(b.date) : new Date()
+    if (Number.isNaN(+date)) throw fail('The date of the mail is not valid')
+    return { direction: b.direction === 'out' ? 'out' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), body: body || null, date }
+}
+
+/** Logs an email sent to / received from the lead (written in the editor): date and time, from, to, subject, text. */
+export async function saveMail(id, body, mailId) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    const lead = await loadOne(id, a)
+    if (!mayEdit(a, lead)) throw fail('You can only edit your own leads', 403)
+    const data = mailData(body)
+    if (mailId) {
+        const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
+        if (!m) throw fail('Mail not found', 404)
+        if (m.addedFrom !== a.staffId && !a.can('edit')) throw fail('You can only edit the mails you logged', 403)
+        await prisma.crmLeadMail.update({ where: { id: mailId }, data })
+        return { success: true, id: mailId }
+    }
+    const m = await prisma.crmLeadMail.create({ data: { ...data, leadId: id, addedFrom: a.staffId, source: 'manual' } })
+    await prisma.crmLead.update({ where: { id }, data: { lastContact: data.date > new Date() ? new Date() : data.date } })
+    await logActivity(id, a, `${data.direction === 'out' ? 'Mail sent' : 'Mail received'} logged${data.subject ? `: ${data.subject}` : ''}`)
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `✉ ${data.subject || ''}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
+    return { success: true, id: m.id }
+}
+
+export async function deleteMail(id, mailId) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    await loadOne(id, a)
+    const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
+    if (!m) throw fail('Mail not found', 404)
+    if (m.addedFrom !== a.staffId && !a.can('delete')) throw fail('You can only delete the mails you logged', 403)
+    await prisma.crmLeadMail.delete({ where: { id: mailId } })
+    return { success: true }
+}
+
+/* ------------------------------------- meetings of a lead = calendar events with the lead ------------------------------------- */
+/** A meeting is a calendar event about this lead (title, date and time, link, reminder, guests) plus its report, so it shows in the Calendar. */
+export async function saveMeeting(id, body, eventId) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    const lead = await loadOne(id, a)
+    if (!mayEdit(a, lead)) throw fail('You can only edit your own leads', 403)
+    const report = body.report !== undefined ? storeRich(body.report) : undefined
+    if (eventId) {
+        const ev = oid(eventId) && (await prisma.crmEvent.findFirst({ where: { id: eventId, leadId: id } }))
+        if (!ev) throw fail('Meeting not found', 404)
+        if (ev.userId && ev.userId !== a.staffId && !a.can('edit')) throw fail('You can only edit the meetings you added', 403)
+        const data = cleanEvent({ title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, category: ev.category, projectId: ev.projectId, clientId: null, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, report: ev.report, ...body, leadId: id })
+        if (report !== undefined) data.report = report || null
+        await prisma.crmEvent.update({ where: { id: eventId }, data: { ...data, isStartNotified: false } })
+        return { success: true, id: eventId }
+    }
+    const data = cleanEvent({ category: 'meeting', ...body, leadId: id, attendeeIds: (body.attendeeIds || []).length ? body.attendeeIds : a.staffId ? [a.staffId] : [] })
+    if (report !== undefined) data.report = report || null
+    const ev = await prisma.crmEvent.create({ data: { ...data, userId: a.staffId || undefined } })
+    await prisma.crmLead.update({ where: { id }, data: { lastContact: new Date() } })
+    await logActivity(id, a, `Meeting added: ${data.title}`)
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `📅 ${data.title}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), ...(data.attendeeIds || [])] }) } catch (e) { console.error('[meeting notify]', e.message) }
+    return { success: true, id: ev.id }
+}
+
+export async function deleteMeeting(id, eventId) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    await loadOne(id, a)
+    const ev = oid(eventId) && (await prisma.crmEvent.findFirst({ where: { id: eventId, leadId: id } }))
+    if (!ev) throw fail('Meeting not found', 404)
+    if (ev.userId !== a.staffId && !a.can('delete')) throw fail('You can only delete the meetings you added', 403)
+    await prisma.crmEvent.delete({ where: { id: eventId } })
+    return { success: true }
+}
+
 export async function deleteLead(id) {
     const session = await requirePermission('leads', 'delete')
     const a = await access(session)
@@ -255,6 +344,8 @@ export async function deleteLead(id) {
     if (l.clientId) throw fail('This lead was converted to a client and cannot be deleted')
     await prisma.crmLeadActivityLog.deleteMany({ where: { leadId: id } })
     await prisma.crmNote.deleteMany({ where: { relType: 'lead', relId: id } })
+    await prisma.crmLeadMail.deleteMany({ where: { leadId: id } })
+    await prisma.crmEvent.deleteMany({ where: { leadId: id } })
     await prisma.crmLead.delete({ where: { id } })
     return { success: true }
 }

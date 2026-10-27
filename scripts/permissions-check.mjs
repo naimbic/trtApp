@@ -157,6 +157,38 @@ try {
     if (pm.body?.id) { made.rows.unshift(['crmPaymentMode', pm.body.id]); const got = await pmAdmin('GET', `/api/crm/payment-modes/${pm.body.id}`); check('...and they are saved', got.body?.rib === 'MA00 TEST' && got.body?.currencyId === eur?.id && got.body?.keepPercent === 70, JSON.stringify(got.body).slice(0, 120)) }
     const plain2 = await login(await makeUser('pm-plain', {}))
     check('without Settings, payment methods (bank details) are refused', (await plain2('GET', '/api/crm/payment-modes')).status === 403)
+    console.log('\n== Lead popup: mails, meetings (calendar events), followers; freelance lines')
+    const lA = await makeUser('lead-a', {}), lB = await makeUser('lead-b', {}), lC = await makeUser('lead-c', {})
+    const la = await login(lA), lb = await login(lB), lc = await login(lC)
+    const lead = await la('POST', '/api/crm/pipeline/leads', { name: 'zz check lead' })
+    check('a member can add a lead', lead.status < 300 && !!lead.body?.id, String(lead.status))
+    const LID = lead.body?.id
+    if (LID) made.rows.unshift(['crmLead', LID])
+    const mail = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { direction: 'in', subject: 'Hello', from: 'x@y.com', to: 'me@co.com', body: '<p>Hi <script>alert(1)</script></p>', date: new Date().toISOString() })
+    check('log a mail on the lead (editor text, date and time)', mail.status === 201 && !!mail.body?.id, String(mail.status))
+    if (mail.body?.id) made.rows.unshift(['crmLeadMail', mail.body.id])
+    check('a mail needs a subject or text', (await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { subject: ' ', body: '' })).status === 400)
+    const start = new Date(Date.now() + 86400000)
+    const meet = await la('POST', `/api/crm/pipeline/leads/${LID}/meetings`, { title: 'Intro call', start: start.toISOString(), end: new Date(+start + 3600000).toISOString(), meetingUrl: 'https://meet.google.com/abc', reminderBefore: 30, reminderBeforeType: 'minutes', attendeeIds: [lA.staffId], report: '<p>Agreed on a quote <script>x</script></p>' })
+    check('add a meeting with link, reminder and report', meet.status === 201 && !!meet.body?.id, String(meet.status))
+    if (meet.body?.id) made.rows.unshift(['crmEvent', meet.body.id])
+    const ev = meet.body?.id ? await prisma.crmEvent.findUnique({ where: { id: meet.body.id } }) : null
+    check('the meeting is a calendar event of the lead (link, reminder, report kept, scripts removed)', ev?.leadId === LID && ev.meetingUrl === 'https://meet.google.com/abc' && ev.reminderBefore === 30 && /Agreed/.test(ev.report || '') && !/script/i.test(ev.report || ''), JSON.stringify(ev).slice(0, 120))
+    const got = await la('GET', `/api/crm/pipeline/leads/${LID}`)
+    check('the lead popup data carries the mails, the meetings and the followers list', got.body?.mails?.length === 1 && got.body?.meetings?.length === 1 && Array.isArray(got.body?.followers), `${got.body?.mails?.length}/${got.body?.meetings?.length}`)
+    check('a stranger cannot see the lead, its mails or meetings', (await lb('GET', `/api/crm/pipeline/leads/${LID}`)).status === 404 && (await lb('POST', `/api/crm/pipeline/leads/${LID}/mails`, { subject: 'x' })).status === 404 && (await lb('POST', `/api/crm/pipeline/leads/${LID}/meetings`, { title: 'x', start: start.toISOString() })).status === 404)
+    const fol = await la('PUT', `/api/crm/pipeline/leads/${LID}`, { name: 'zz check lead', followerIds: [lB.staffId] })
+    check('a follower can be added to the lead', fol.status === 200, String(fol.status))
+    check('the follower now sees the lead (and its mails and meetings)', (await lb('GET', `/api/crm/pipeline/leads/${LID}`)).body?.mails?.length === 1)
+    { const m1 = await lb('POST', `/api/crm/pipeline/leads/${LID}/mails`, { subject: 'x' }), m2 = await lb('POST', `/api/crm/pipeline/leads/${LID}/meetings`, { title: 'x', start: start.toISOString() }); check('...but a follower cannot log mails or add meetings (only the team can)', m1.status === 403 && m2.status === 403, `${m1.status} ${JSON.stringify(m1.body).slice(0, 70)} / ${m2.status} ${JSON.stringify(m2.body).slice(0, 70)}`) }
+    check('...and a third person still sees nothing', (await lc('GET', `/api/crm/pipeline/leads/${LID}`)).status === 404)
+    check('only the author (or someone with delete rights) deletes a mail', (await lb('DELETE', `/api/crm/pipeline/leads/${LID}/mails?mailId=${mail.body?.id}`)).status === 403 && (await la('DELETE', `/api/crm/pipeline/leads/${LID}/mails?mailId=${mail.body?.id}`)).status === 200)
+    check('deleting a meeting removes the calendar event', (await la('DELETE', `/api/crm/pipeline/leads/${LID}/meetings?eventId=${meet.body?.id}`)).status === 200 && !(await prisma.crmEvent.findUnique({ where: { id: meet.body.id } })))
+    const fz = await login(await makeUser('fr-lines', { freelancers: ['view_own', 'create', 'edit', 'delete'] }))
+    const job = await fz('POST', '/api/crm/freelance', { title: 'zz lines', date: '2026-02-01', lines: [{ name: 'Design', qty: 2, cost: 100, tva: 20 }, { name: 'Hosting', qty: 1, cost: 50, tva: 0 }, { name: '', qty: 1, cost: '' }] })
+    if (job.body?.id) made.rows.unshift(['crmFreelanceJob', job.body.id])
+    const jg = job.body?.id ? await fz('GET', `/api/crm/freelance/${job.body.id}`) : null
+    check('a freelance payment with lines: total = sum of UN x cost + TVA, empty rows dropped', jg?.body?.job?.amount === 290 && jg.body.job.lines.length === 2, JSON.stringify(jg?.body?.job?.lines || []).slice(0, 100) + ' ' + jg?.body?.job?.amount)
     const lm = await login(await makeUser('leadmail', { lead_mail: ['view'] }))
     check('Lead email integration view: can list mailboxes', (await lm('GET', '/api/crm/lead-mail')).status === 200)
     check('Lead email integration view only: cannot save a mailbox', (await lm('POST', '/api/crm/lead-mail', { action: 'save', data: { email: 'a@b.com' } })).status === 403)
@@ -166,7 +198,10 @@ try {
     check('Team hours view alone does not open Team members', (await wh('GET', '/api/crm/staff')).status === 403)
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
-    for (const [model, id] of [...made.rows, ...made.extraRows]) await prisma[model].delete({ where: { id } }).catch(() => {})
+    for (const [model, id] of [...made.rows, ...made.extraRows]) {
+        if (model === 'crmLead') { await prisma.crmLeadActivityLog.deleteMany({ where: { leadId: id } }).catch(() => {}); await prisma.crmLeadMail.deleteMany({ where: { leadId: id } }).catch(() => {}); await prisma.crmEvent.deleteMany({ where: { leadId: id } }).catch(() => {}) }
+        await prisma[model].delete({ where: { id } }).catch(() => {})
+    }
     await prisma.crmStaffPermission.deleteMany({ where: { staffId: { in: made.staff } } }).catch(() => {})
     await prisma.crmStaff.deleteMany({ where: { id: { in: made.staff } } }).catch(() => {})
     await prisma.user.deleteMany({ where: { id: { in: made.users } } }).catch(() => {})

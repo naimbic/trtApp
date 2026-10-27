@@ -502,6 +502,8 @@ model CrmEvent {
   allDay             Boolean   @default(false)
   location           String?
   meetingUrl         String?
+  /// the meeting report (minutes), written after a meeting held with a lead
+  report             String?
   category           String?   // meeting | call | visit | deadline | reminder | other
   projectId          String?   @db.ObjectId
   clientId           String?   @db.ObjectId

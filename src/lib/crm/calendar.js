@@ -179,6 +179,7 @@ export async function getCalendarItems({ from, to }) {
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
 const validUrl = (u) => /^https?:\/\/[^\s]+$/i.test(u)
 const OID = /^[0-9a-f]{24}$/i
+export const cleanEvent = (b) => clean(b)
 const clean = (b) => {
     const title = String(b.title || '').trim()
     if (!title) throw Object.assign(new Error('Title is required'), { status: 400 })
@@ -197,6 +198,7 @@ const clean = (b) => {
         allDay: !!b.allDay,
         location: String(b.location || '').trim() || null,
         meetingUrl: meetingUrl || null,
+        report: b.report ? String(b.report) : null,
         category: ['meeting', 'call', 'visit', 'deadline', 'reminder', 'other'].includes(b.category) ? b.category : 'meeting',
         projectId: OID.test(b.projectId || '') ? b.projectId : null,
         clientId: OID.test(b.clientId || '') && !OID.test(b.leadId || '') ? b.clientId : null, // a client or a lead, not both
@@ -247,7 +249,7 @@ async function ownEvent(id) {
 
 export async function updateCalendarEvent(id, body) {
     const ev = await ownEvent(id)
-    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType }
+    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType }
     const data = clean({ ...current, ...body })
     const updated = await prisma.crmEvent.update({ where: { id }, data })
     const out = { ...JSON.parse(JSON.stringify(updated)) }

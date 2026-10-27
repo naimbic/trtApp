@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.111.0',
+        date: '2026-10-27',
+        title: 'Lead popup: Tasks, Mails, Meetings and followers; Freelance payment lines',
+        items: [
+            'Lead popup, new Tasks tab: the tasks of the lead are listed right there; tick them off, add one by typing and pressing Enter, or press Details for the full task popup. Every task created here is linked to the lead (no need to go to Tasks and pick the lead).',
+            'Lead popup, new Mails tab: log any email sent to or received from the lead with the editor, with its date and time, from, to and subject. Emails read by the lead mailbox integration are added to it automatically.',
+            'Lead popup, new Meetings tab: a meeting has a title, date and time, a link, a place, who joins, a reminder and the meeting report. Each meeting is a calendar event, so it shows in the Calendar with its reminder; deleting it removes it from there.',
+            'Followers on leads, like in Tasks: followers see the lead and are told when a note, a mail or a meeting is added; only the team of the lead (and people who see all leads) can change it. Related now holds the proposals; Notes and Activity stay.',
+            'Freelancers: each payment now has lines like an invoice (Name, UN, Cost, TVA %, Total) with a compact table, a button to add lines, and the sub total, TVA and total at the bottom. The amount is that total; repeating payments repeat their lines.',
+        ],
+    },
+    {
         version: '0.110.0',
         date: '2026-10-27',
         title: 'Payment methods and bank accounts in one list; the client\'s currency on new documents',

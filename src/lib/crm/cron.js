@@ -220,7 +220,7 @@ async function freelanceJob({ today, lines, dry }) {
             if (next > today) break
             if (dry) { lines.push(`[preview] The freelance job “${p.title}” would be repeated for ${next.toISOString().slice(0, 10)}`); last = next; done += 1; continue }
             try {
-                await prisma.crmFreelanceJob.create({ data: { title: p.title, payerName: p.payerName, clientId: p.clientId, description: p.description, amount: p.amount, currencyId: p.currencyId, paymentModeId: p.paymentModeId, addedFrom: p.addedFrom, date: next, status: 'unpaid', recurring: false, recurringFrom: p.id } })
+                await prisma.crmFreelanceJob.create({ data: { title: p.title, payerName: p.payerName, clientId: p.clientId, description: p.description, amount: p.amount, lines: Array.isArray(p.lines) ? p.lines : [], currencyId: p.currencyId, paymentModeId: p.paymentModeId, addedFrom: p.addedFrom, date: next, status: 'unpaid', recurring: false, recurringFrom: p.id } })
                 await prisma.crmFreelanceJob.update({ where: { id: p.id }, data: { totalCycles: done + 1, lastRecurringDate: next } })
                 lines.push(`Repeating freelance job created: ${p.title} (${next.toISOString().slice(0, 10)})`)
                 last = next; done += 1

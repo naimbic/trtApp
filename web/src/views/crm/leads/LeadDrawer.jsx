@@ -14,16 +14,18 @@ import Tabs from '@/components/ui/Tabs'
 import Tag from '@/components/ui/Tag'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify } from '../kit/api'
-import { STATUS as TASK_STATUS } from '../tasks/shared'
 import { People } from '../tasks/shared'
+import { LeadTasks, LeadMails, LeadMeetings } from './LeadTabs'
+import { useCan } from '../kit/api'
 import { tr } from '@/utils/t'
 
-const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], isPublic: false }
+const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false }
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("Sent"), 5: tr("Revised"), 6: tr("Draft") }
 
 const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onChanged }) => {
     const nav = useNavigate()
+    const can = useCan()
     const [v, setV] = useState(EMPTY)
     const [editingNote, setEditingNote] = useState(null)
     const [detail, setDetail] = useState(null)
@@ -44,7 +46,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             const d = await api(`/api/crm/pipeline/leads/${id}`)
             setDetail(d)
             const l = d.lead
-            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], isPublic: !!l.isPublic })
+            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: l.followerIds || [], isPublic: !!l.isPublic })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (!open) return; setDetail(null); setNote(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
@@ -67,6 +69,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                 <div><L>{tr("Source")}</L><Select isClearable isDisabled={!canEdit} formatOptionLabel={(o) => <span className="inline-flex items-center gap-2">{o.color && <i className="h-2.5 w-2.5 rounded-full" style={{ background: o.color }} />}{o.label}</span>} options={lk.sources.filter((s) => s.isActive !== false || s.id === v.sourceId).map((s) => ({ value: s.id, label: s.name, color: s.color }))} value={opt(lk.sources, v.sourceId)} onChange={(o) => set({ sourceId: o?.value || null })} /></div>
             </div>
             <div><L>{tr("Assigned to")}</L><Select isMulti isDisabled={!canEdit} options={staff.map((s) => ({ value: s.id, label: s.name }))} value={staff.filter((s) => (v.assignedIds || []).includes(s.id)).map((s) => ({ value: s.id, label: s.name }))} onChange={(o) => set({ assignedIds: (o || []).map((x) => x.value) })} placeholder={tr("Me")} /></div>
+            <div><L>{tr("Followers")}</L><Select isMulti isDisabled={!canEdit} options={staff.map((s) => ({ value: s.id, label: s.name }))} value={staff.filter((s) => (v.followerIds || []).includes(s.id)).map((s) => ({ value: s.id, label: s.name }))} onChange={(o) => set({ followerIds: (o || []).map((x) => x.value) })} placeholder={tr("Who should follow this lead")} /></div>
             <div className="grid grid-cols-2 gap-4">
                 <div><L>{tr("Name")}</L><Input disabled={!canEdit} value={v.name} onChange={(e) => set({ name: e.target.value })} /></div>
                 <div className="col-span-2"><L>{tr("DO:")}</L><Input disabled={!canEdit} value={v.doText} maxLength={160} placeholder={tr("The next thing to do, shown on the card")} onChange={(e) => set({ doText: e.target.value })} /></div>
@@ -110,11 +113,6 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                 {detail.proposals.map((p) => <Link key={p.id} to={`/crm/proposals/${p.id}`} className="flex items-center justify-between border-b border-gray-100 py-2 text-sm hover:text-primary dark:border-gray-700"><span>{p.subject || tr("Proposal {number}", { number: p.number })}</span><Tag>{PROPOSAL[p.status] || p.status}</Tag></Link>)}
                 {!detail.proposals.length && <p className="text-sm text-gray-500">{tr("No proposals yet.")}</p>}
             </div>
-            <div>
-                <h6 className="mb-2">{tr("Tasks")}</h6>
-                {detail.tasks.map((t) => <Link key={t.id} to={`/crm/tasks-board?task=${t.id}`} className="flex items-center justify-between border-b border-gray-100 py-2 text-sm hover:text-primary dark:border-gray-700"><span>{t.name}</span><span className="text-xs text-gray-500">{TASK_STATUS.find((s) => s.value === t.status)?.label}</span></Link>)}
-                {!detail.tasks.length && <p className="text-sm text-gray-500">{tr("No tasks linked to this lead.")}</p>}
-            </div>
         </div>
     )
 
@@ -157,12 +155,18 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <Tabs defaultValue="profile">
                         <Tabs.TabList>
                             <Tabs.TabNav value="profile">{tr("Profile")}</Tabs.TabNav>
+                            {can('tasks', 'view') && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
+                            <Tabs.TabNav value="mails">{tr("Mails")}{detail.mails.length ? ` (${detail.mails.length})` : ''}</Tabs.TabNav>
+                            <Tabs.TabNav value="meetings">{tr("Meetings")}{detail.meetings.length ? ` (${detail.meetings.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="notes">{tr("Notes")}{detail.notes.length ? ` (${detail.notes.length})` : ''}</Tabs.TabNav>
-                            <Tabs.TabNav value="related">{tr("Related")}{detail.proposals.length + detail.tasks.length ? ` (${detail.proposals.length + detail.tasks.length})` : ''}</Tabs.TabNav>
+                            <Tabs.TabNav value="related">{tr("Related")}{detail.proposals.length ? ` (${detail.proposals.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
                         </Tabs.TabList>
                         <div className="pt-4">
                             <Tabs.TabContent value="profile">{profile}</Tabs.TabContent>
+                            {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} /></Tabs.TabContent>}
+                            <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
+                            <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
                             <Tabs.TabContent value="notes">{notes}</Tabs.TabContent>
                             <Tabs.TabContent value="related">{related}</Tabs.TabContent>
                             <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>

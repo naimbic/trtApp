@@ -1489,5 +1489,13 @@
  "Payment methods and bank accounts",
  "How clients pay you, and the bank accounts printed on invoices, estimates and purchase orders",
  "How clients pay you, and your bank accounts",
- "One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here."
+ "One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.",
+ "Give the mail a subject or write its text",
+ "The date of the mail is not valid",
+ "Mail not found",
+ "You can only edit the mails you logged",
+ "You can only delete the mails you logged",
+ "Meeting not found",
+ "You can only edit the meetings you added",
+ "You can only delete the meetings you added"
 ]

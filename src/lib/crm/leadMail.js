@@ -204,6 +204,10 @@ async function known(lead) {
     return { existing, contact }
 }
 
+const escHtml = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])
+/** The email itself goes to the lead's Mails tab (received, from the mailbox), so the whole conversation is on the lead. */
+const logMail = (leadId, cfg, msg) => prisma.crmLeadMail.create({ data: { leadId, direction: 'in', subject: msg.subject || null, fromAddress: msg.fromAddress || null, toAddress: cfg.email || null, body: `<p>${escHtml(String(msg.text || '').slice(0, 20000)).replace(/\n/g, '<br>')}</p>`, date: msg.date || new Date(), source: 'mailbox' } }).catch((e) => console.error('[lead mail log]', e.message))
+
 async function importOne(cfg, r, dry) {
     const { msg, parsed } = r
     const lead = buildLead(msg, parsed)
@@ -219,6 +223,7 @@ async function importOne(cfg, r, dry) {
     if (existing) {
         await prisma.crmNote.create({ data: { relType: 'lead', relId: existing.id, description: `New enquiry by email${msg.subject ? ` — ${msg.subject}` : ''}\n\n${lead.description || ''}`.slice(0, 5000), dateContacted: msg.date, addedFrom: null } })
         await prisma.crmLead.update({ where: { id: existing.id }, data: { lastContact: msg.date } })
+        await logMail(existing.id, cfg, msg)
         await activity(existing.id, 'Wrote again by email (added as a note)')
         if (!existing.clientId) await followUp(cfg, existing, `Follow up: ${existing.name} wrote again`, lead.description || '')
         return { result: 'duplicate', reason: 'Already a lead: the message was added to it as a note', leadId: existing.id, lead }
@@ -232,6 +237,7 @@ async function importOne(cfg, r, dry) {
         },
     })
     await prisma.crmLeadIntegrationEmail.create({ data: { leadId: created.id, subject: msg.subject, body } })
+    await logMail(created.id, cfg, msg)
     await activity(created.id, `Lead imported from the mailbox ${cfg.email}`)
     await followUp(cfg, created, `Follow up: ${created.name}`, [lead.email, lead.phone, lead.company].filter(Boolean).join(' · ') + (lead.description ? `\n\n${lead.description}` : ''))
     return { result: 'imported', leadId: created.id, lead }

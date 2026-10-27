@@ -14,6 +14,18 @@ const NONE = '000000000000000000000000'
 const nz = (v) => (v === undefined || v === null || String(v).trim() === '' ? null : String(v).trim())
 export const UNITS = ['day', 'week', 'month', 'year']
 
+/** The lines of a payment: [{ name, qty (UN), cost, tva (%) }]; empty rows are dropped, numbers are kept sane. */
+export function cleanLines(input) {
+    const num = (v, d = 0) => (Number.isFinite(Number(v)) && v !== '' && v !== null ? Number(v) : d)
+    return (Array.isArray(input) ? input : []).map((l) => ({ name: String(l?.name || '').trim().slice(0, 200), qty: Math.max(num(l?.qty, 1), 0), cost: Math.max(num(l?.cost), 0), tva: Math.min(Math.max(num(l?.tva), 0), 100) })).filter((l) => l.name || l.cost > 0).slice(0, 60)
+}
+/** Sub total, VAT and total of the lines. */
+export function linesTotal(lines) {
+    let sub = 0, vat = 0
+    for (const l of lines) { const t = l.qty * l.cost; sub += t; vat += (t * l.tva) / 100 }
+    return { subtotal: round2(sub), vat: round2(vat), total: round2(sub + vat) }
+}
+
 async function access(session) {
     const authority = session.user.authority || []
     return { scope: viewScope(authority, 'freelancers'), staffId: await getStaffId(session), can: (cap) => hasCap(authority, 'freelancers', cap) }
@@ -83,7 +95,7 @@ export async function getFreelance(id) {
     const a = await access(session)
     const j = await loadOne(id, a)
     return {
-        job: { id: j.id, title: j.title, payerName: j.payerName || '', clientId: j.clientId, description: j.description || '', amount: j.amount, currencyId: j.currencyId, date: j.date, status: j.status, paidDate: j.paidDate, paymentModeId: j.paymentModeId, recurring: j.recurring, repeatEvery: j.repeatEvery || 1, recurringType: j.recurringType || 'month', cyclesLimit: j.cycles || 0, cyclesDone: j.totalCycles || 0, lastRecurringDate: j.lastRecurringDate, repeated: !!j.recurringFrom },
+        job: { id: j.id, title: j.title, payerName: j.payerName || '', clientId: j.clientId, description: j.description || '', amount: j.amount, lines: Array.isArray(j.lines) ? j.lines : [], currencyId: j.currencyId, date: j.date, status: j.status, paidDate: j.paidDate, paymentModeId: j.paymentModeId, recurring: j.recurring, repeatEvery: j.repeatEvery || 1, recurringType: j.recurringType || 'month', cyclesLimit: j.cycles || 0, cyclesDone: j.totalCycles || 0, lastRecurringDate: j.lastRecurringDate, repeated: !!j.recurringFrom },
         lookups: await lookups(), can: { edit: a.can('edit'), delete: a.can('delete') },
     }
 }
@@ -93,12 +105,14 @@ export async function saveFreelance(body, id) {
     const a = await access(session)
     const title = nz(body.title)
     if (!title) throw fail('Name the job')
-    const amount = Number(body.amount)
+    // the payment has lines (name, UN, cost, TVA): its amount is their total with VAT; without lines the amount is typed
+    const lines = cleanLines(body.lines)
+    const amount = lines.length ? linesTotal(lines).total : Number(body.amount)
     if (!(amount > 0)) throw fail('Enter the amount')
     if (!body.date) throw fail('Choose the date the money is due')
     const recurring = !!body.recurring
     const data = {
-        title, payerName: nz(body.payerName), clientId: oid(body.clientId), description: nz(body.description), amount: round2(amount), currencyId: oid(body.currencyId), date: new Date(body.date), paymentModeId: oid(body.paymentModeId),
+        title, payerName: nz(body.payerName), clientId: oid(body.clientId), description: nz(body.description), amount: round2(amount), lines, currencyId: oid(body.currencyId), date: new Date(body.date), paymentModeId: oid(body.paymentModeId),
         recurring, recurringType: recurring ? (UNITS.includes(body.recurringType) ? body.recurringType : 'month') : null, repeatEvery: recurring ? Math.max(parseInt(body.repeatEvery, 10) || 1, 1) : 0, cycles: recurring ? Math.max(parseInt(body.cyclesLimit, 10) || 0, 0) : 0,
     }
     if (id) {

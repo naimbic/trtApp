@@ -250,6 +250,8 @@ model CrmLead {
   /// tblstaff.id (admin domain)
   assigned                       String?        @db.ObjectId // the first of the team (kept for filters and old data)
   assignedIds                    String[]       @db.ObjectId // everyone the lead is assigned to
+  /// staff who follow the lead: they see it and are told when something happens on it
+  followerIds                    String[]       @db.ObjectId
   /// tblleads_web_to_lead.id (plain FK)
   fromFormId                     String?        @db.ObjectId
   statusId                       String?        @db.ObjectId // status
@@ -648,4 +650,25 @@ model CrmLeadEmailImport {
   @@unique([integrationId, messageId])
   @@index([integrationId, createdAt])
   @@map("crm_lead_email_imports")
+}
+
+/// An email sent to or received from a lead, logged on the lead by hand or by the lead mailbox import.
+model CrmLeadMail {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  leadId      String   @db.ObjectId
+  /// in = received from the lead, out = sent to the lead
+  direction   String   @default("in")
+  subject     String?
+  fromAddress String?
+  toAddress   String?
+  body        String?
+  /// when the email was sent or received (date and time)
+  date        DateTime
+  addedFrom   String?  @db.ObjectId
+  /// manual | mailbox
+  source      String   @default("manual")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([leadId, date])
 }

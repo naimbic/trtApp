@@ -290,6 +290,7 @@ const resources = [
         ],
         fields: [
             { key: 'name', label: 'Name (what people pick)', type: 'text', required: true, section: 'General' },
+            { key: 'sortOrder', label: 'Order', type: 'number', section: 'General' }, // the position in the list (drag the rows to change it); it must be a field or the new order is not saved
             { key: 'active', label: 'Active', type: 'boolean', section: 'General' },
             { key: 'bank', label: 'Bank', type: 'text', section: 'Bank account' },
             { key: 'holder', label: 'Account holder', type: 'text', section: 'Bank account', inline: false },

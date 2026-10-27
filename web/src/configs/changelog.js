@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.113.1',
+        date: '2026-10-27',
+        title: 'Payment methods: the order you drag is now saved',
+        items: ['Fixed: after dragging the rows of Payment methods into a new order, a refresh brought back the old order. The position was not a known field of the list, so the server ignored it. It is saved now. I checked every other draggable list (sources, statuses, departments, contract types, groups...): they were fine.'],
+    },
+    {
         version: '0.113.0',
         date: '2026-10-27',
         title: 'All popups in the Rapport style, and popup fixes',

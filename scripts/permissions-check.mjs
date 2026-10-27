@@ -155,6 +155,11 @@ try {
     const pm = await pmAdmin('POST', '/api/crm/payment-modes', { name: 'zz check bank', bank: 'Test Bank', rib: 'MA00 TEST', swift: 'TESTMAMC', currencyId: eur?.id, keepPercent: 70, isDefault: false, sortOrder: 99 })
     check('a payment method can carry bank details, a currency and the kept share', pm.status === 201 && pm.body?.id)
     if (pm.body?.id) { made.rows.unshift(['crmPaymentMode', pm.body.id]); const got = await pmAdmin('GET', `/api/crm/payment-modes/${pm.body.id}`); check('...and they are saved', got.body?.rib === 'MA00 TEST' && got.body?.currencyId === eur?.id && got.body?.keepPercent === 70, JSON.stringify(got.body).slice(0, 120)) }
+    if (pm.body?.id) {
+        const mv = await pmAdmin('PATCH', `/api/crm/payment-modes/${pm.body.id}`, { sortOrder: 7 })
+        const back = await pmAdmin('GET', `/api/crm/payment-modes/${pm.body.id}`)
+        check('reordering a payment method is saved (its position survives a reload)', mv.status === 200 && back.body?.sortOrder === 7, `${mv.status} sortOrder=${back.body?.sortOrder}`)
+    }
     const plain2 = await login(await makeUser('pm-plain', {}))
     check('without Settings, payment methods (bank details) are refused', (await plain2('GET', '/api/crm/payment-modes')).status === 403)
     console.log('\n== Lead popup: mails, meetings (calendar events), followers; freelance lines')

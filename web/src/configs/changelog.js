@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.115.3',
+        date: '2026-10-28',
+        title: 'Login as: your language no longer stays on the other member\'s',
+        items: [
+            'Fixed: after logging in as a member who uses another language and going back, your own account stayed in that language (French) even though your setting is English. Switching account (in or out of Login as) now forgets the previous language, so your own choice, or English, applies.',
+        ],
+    },
+    {
         version: '0.115.2',
         date: '2026-10-28',
         title: 'Top bar: menu-style glass bar, full width, animated',

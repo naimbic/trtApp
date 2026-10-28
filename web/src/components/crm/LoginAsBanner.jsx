@@ -4,6 +4,9 @@ import { TbUserShare, TbArrowBackUp } from 'react-icons/tb'
 import { tr } from '@/utils/t'
 import { clearUserData } from '@/utils/clearUserData'
 
+/** The language belongs to the account, not to the browser: forget the previous person's, so the next account's own choice (or English) applies. */
+const forgetLanguage = () => { try { localStorage.removeItem('locale') } catch { /* storage blocked */ } }
+
 const call = async (method, body) => {
     const res = await fetch('/api/crm/auth/login-as', { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
     const json = await res.json().catch(() => ({}))
@@ -15,6 +18,7 @@ const call = async (method, body) => {
 export async function loginAs(staffId) {
     await call('POST', { staffId })
     clearUserData()
+    forgetLanguage()
     window.location.assign('/')
 }
 
@@ -29,7 +33,7 @@ const LoginAsBanner = () => {
     }, [])
     const back = async () => {
         setBusy(true)
-        try { await call('DELETE'); clearUserData(); window.location.assign('/crm/staff') } catch { setBusy(false) }
+        try { await call('DELETE'); clearUserData(); forgetLanguage(); window.location.assign('/crm/staff') } catch { setBusy(false) }
     }
     return (
         <AnimatePresence>

@@ -29,7 +29,7 @@ const LoginAsBanner = () => {
     }, [])
     const back = async () => {
         setBusy(true)
-        try { await call('DELETE'); clearUserData(); window.location.assign('/crm/team') } catch { setBusy(false) }
+        try { await call('DELETE'); clearUserData(); window.location.assign('/crm/staff') } catch { setBusy(false) }
     }
     return (
         <AnimatePresence>

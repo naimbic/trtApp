@@ -32,6 +32,7 @@ async function login(u) {
     if (!s?.user) throw new Error(`sign-in failed for ${u.email}`)
     return async (method, path, body) => {
         const res = await fetch(BASE + path, { method, headers: { cookie: hdr(), 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+        take(res) // a new session cookie (login as / back) replaces the old one
         let j = null, text = ''; try { text = await res.clone().text(); j = JSON.parse(text) } catch { /* pdf / html */ }
         return { status: res.status, body: j, text }
     }
@@ -222,6 +223,33 @@ try {
     if (job.body?.id) made.rows.unshift(['crmFreelanceJob', job.body.id])
     const jg = job.body?.id ? await fz('GET', `/api/crm/freelance/${job.body.id}`) : null
     check('a freelance payment with lines: total = sum of UN x cost + TVA, empty rows dropped', jg?.body?.job?.amount === 290 && jg.body.job.lines.length === 2, JSON.stringify(jg?.body?.job?.lines || []).slice(0, 100) + ' ' + jg?.body?.job?.amount)
+    console.log('\n== Login as (a member)')
+    {
+        const lgA = await makeUser('loginas-a', { staff: ['login_as'] }), lgPlain = await makeUser('loginas-plain', {}), lgT = await makeUser('loginas-target', {}), lgBoss = await makeUser('loginas-boss', {}), lgOff = await makeUser('loginas-off', {})
+        await prisma.crmStaff.update({ where: { id: lgBoss.staffId }, data: { admin: true } })
+        await prisma.crmStaff.update({ where: { id: lgOff.staffId }, data: { active: false } })
+        const ga = await login(lgA), gp = await login(lgPlain)
+        check('without the permission, "login as" is refused', (await gp('POST', '/api/crm/auth/login-as', { staffId: lgT.staffId })).status === 403)
+        check('...even for yourself', (await ga('POST', '/api/crm/auth/login-as', { staffId: lgA.staffId })).status === 400)
+        check('a Super Admin cannot be entered by someone who is not one', (await ga('POST', '/api/crm/auth/login-as', { staffId: lgBoss.staffId })).status === 403)
+        check('an inactive member cannot be entered', (await ga('POST', '/api/crm/auth/login-as', { staffId: lgOff.staffId })).status === 400)
+        check('a bad member id is refused', (await ga('POST', '/api/crm/auth/login-as', { staffId: 'nope' })).status === 404)
+        const go = await ga('POST', '/api/crm/auth/login-as', { staffId: lgT.staffId })
+        check('with the permission, the CRM opens as the member', go.status === 200 && go.body?.success === true, `${go.status} ${go.text.slice(0, 80)}`)
+        const me = await ga('GET', '/api/crm/me')
+        check('...the session is now the member (name, banner info naming who is behind it)', me.body?.email === lgT.email && !!me.body?.loginAs, JSON.stringify([me.body?.email, me.body?.loginAs]))
+        check("...and it has the member's rights, not the admin's (no login-as right)", (await ga('POST', '/api/crm/auth/login-as', { staffId: lgPlain.staffId })).status === 403)
+        check('...password / sign-out-everywhere are blocked while logged in as someone', (await ga('POST', '/api/crm/auth/sign-out-everywhere')).status === 403)
+        const log = await prisma.crmActivityLog.findFirst({ where: { staffId: lgA.staffId, description: { contains: 'login as' } } })
+        check('the switch is written in the activity log under the real person', !!log && /Logged in as/.test(log.description), log?.description)
+        const bk = await ga('DELETE', '/api/crm/auth/login-as')
+        const me2 = await ga('GET', '/api/crm/me')
+        check('back to my account: the session is the real person again, no banner', bk.status === 200 && me2.body?.email === lgA.email && !me2.body?.loginAs, `${bk.status} ${me2.body?.email}`)
+        check('...and "back" does nothing when not logged in as someone', (await ga('DELETE', '/api/crm/auth/login-as')).status === 400)
+        check('a login-as ticket cannot be reused', (await fetch(`${BASE}/api/auth/callback/credentials`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ csrfToken: 'x', loginAsTicket: 'made-up' }) })).status !== 200)
+        const sa = await login(await makeUser('loginas-super', {}).then(async (u) => { await prisma.crmStaff.update({ where: { id: u.staffId }, data: { admin: true } }); return u }))
+        check('a Super Admin may open a Super Admin (or any member)', (await sa('POST', '/api/crm/auth/login-as', { staffId: lgBoss.staffId })).status === 200 && (await sa('DELETE', '/api/crm/auth/login-as')).status === 200)
+    }
     console.log('\n== Tasks: completed tasks follow the Show completed switch')
     const tk = await makeUser('task-list', { tasks: ['view', 'create', 'edit'] }); const tkc = await login(tk)
     const mkTask = async (name) => { const r = await tkc('POST', '/api/crm/work/tasks', { name, status: 1 }); if (r.body?.id) made.rows.unshift(['crmTask', r.body.id]); return r.body?.id }
@@ -248,6 +276,7 @@ try {
         if (model === 'crmLead') { await prisma.crmLeadActivityLog.deleteMany({ where: { leadId: id } }).catch(() => {}); await prisma.crmLeadMail.deleteMany({ where: { leadId: id } }).catch(() => {}); await prisma.crmEvent.deleteMany({ where: { leadId: id } }).catch(() => {}) }
         await prisma[model].delete({ where: { id } }).catch(() => {})
     }
+    await prisma.crmActivityLog.deleteMany({ where: { staffId: { in: made.staff }, description: { contains: 'login as' } } }).catch(() => {})
     await prisma.crmStaffPermission.deleteMany({ where: { staffId: { in: made.staff } } }).catch(() => {})
     await prisma.crmStaff.deleteMany({ where: { id: { in: made.staff } } }).catch(() => {})
     await prisma.user.deleteMany({ where: { id: { in: made.users } } }).catch(() => {})

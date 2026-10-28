@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.115.0',
+        date: '2026-10-28',
+        title: 'Login as: open the CRM as a team member',
+        items: [
+            'New "Log in as this member" button on Team (row) and on the member profile. You work inside that person\'s account, with exactly their permissions, to see what they see or help them.',
+            'A bar at the bottom of every page says who you are logged in as, with "Back to my account".',
+            'New permission Team members > "Log in as another member" (Super Admins always have it). Only a Super Admin can enter a Super Admin; you cannot enter yourself, an inactive member, or log in as someone from inside another "login as". Password and sign-out-everywhere are blocked while logged in as someone.',
+            'Every switch (and every client-area preview from a client page) is written in the Activity log under the real person.',
+            'Clients: the "Open client area as" preview on a client page (read-only) (opened from the contact, read-only) is the way to log in as a client contact.',
+        ],
+    },
+    {
         version: '0.114.1',
         date: '2026-10-28',
         title: 'Share menu: copy the text',

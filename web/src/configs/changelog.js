@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.116.1',
+        date: '2026-10-28',
+        title: 'Roles: rename applies at once; language no longer follows another account',
+        items: [
+            'Fixed: renaming a role did nothing until you also pressed "Save role" at the bottom, and Enter in the rename box did nothing. Rename (button or Enter) now saves the new name immediately.',
+            'Fixed: the interface language is remembered by the browser and could stay in French after working as another member. The browser now remembers which account set the language: when another account opens, it starts from that account\'s own language, or English.',
+        ],
+    },
+    {
         version: '0.116.0',
         date: '2026-10-28',
         title: 'Task cards, clickable links and expense receipts',

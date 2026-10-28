@@ -2863,6 +2863,7 @@ export default {
     "Video meeting · click to open and join": "Videorreunión · clic para abrir y unirse",
     "View": "Ver",
     "View all templates": "Ver todas las plantillas",
+    "Role renamed": "Rol renombrado",
     "Choose files": "Elegir archivos",
     "Drop the receipt or invoice here or choose it. PDF or image, up to {mb} MB each.": "Suelta aquí el recibo o la factura, o elígelo. PDF o imagen, hasta {mb} MB cada uno.",
     "PDF or image, up to {mb} MB each. They are attached when you save.": "PDF o imagen, hasta {mb} MB cada uno. Se adjuntan al guardar.",

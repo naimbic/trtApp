@@ -1513,5 +1513,6 @@
  "PDF or image, up to {mb} MB each. They are attached when you save.",
  "Receipts and invoices",
  "larger than {mb} MB",
- "this type of file is not allowed here"
+ "this type of file is not allowed here",
+ "Role renamed"
 ]

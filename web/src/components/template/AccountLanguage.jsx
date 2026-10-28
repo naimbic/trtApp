@@ -19,7 +19,11 @@ export function saveAccountLanguage(code) {
 const AccountLanguage = () => {
     const me = useMe()
     useEffect(() => {
-        const code = me?.language
+        if (!me?.email) return
+        // the browser's language belongs to the account that set it: another account (Login as, a new sign-in) starts from its own choice, or English
+        let owner = null
+        try { owner = localStorage.getItem('locale-owner'); localStorage.setItem('locale-owner', me.email) } catch { /* storage blocked */ }
+        const code = me.language || (owner && owner !== me.email ? 'en' : null)
         if (!code || code === savedLang()) return
         const key = `account-lang:${code}`
         try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1') } catch { /* storage blocked */ }

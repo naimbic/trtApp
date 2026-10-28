@@ -86,6 +86,23 @@ const RolesPanel = () => {
         }
     }
 
+    // a rename is saved at once (only the name: permissions edited but not yet saved stay as they are)
+    const renameRole = async (name) => {
+        try {
+            await api(`/api/crm/access/roles/${selected}`, { method: 'PATCH', body: JSON.stringify({ name }) })
+            notify('success', tr("Role renamed"))
+            await load()
+            setDraft((d) => ({ ...d, name }))
+        } catch (e) { notify('danger', e.message) }
+    }
+
+    const confirmName = () => {
+        const v = String(nameDlg?.value || '').trim()
+        if (!v) return
+        if (nameDlg.mode === 'new') { startNew(); setDraft({ name: v, permissions: structuredClone(roles.find((r) => r.id === nameDlg.copyFrom)?.permissions || {}) }) } else renameRole(v)
+        setNameDlg(null)
+    }
+
     const remove = async () => {
         try {
             await api(`/api/crm/access/roles/${selected}`, { method: 'DELETE' })
@@ -158,7 +175,7 @@ const RolesPanel = () => {
 
             <Dialog isOpen={!!nameDlg} width={380} onClose={() => setNameDlg(null)} onRequestClose={() => setNameDlg(null)}>
                 <h5 className="mb-3">{nameDlg?.mode === 'new' ? tr("New role") : tr("Rename role")}</h5>
-                <Input autoFocus placeholder={tr("Role name, e.g. Sales manager")} value={nameDlg?.value || ''} onChange={(e) => setNameDlg({ ...nameDlg, value: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.form?.requestSubmit?.() }} />
+                <Input autoFocus placeholder={tr("Role name, e.g. Sales manager")} value={nameDlg?.value || ''} onChange={(e) => setNameDlg({ ...nameDlg, value: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); confirmName() } }} />
                 {nameDlg?.mode === 'new' && roles.length > 0 && (
                     <div className="mt-3">
                         <div className="mb-1 text-xs font-semibold text-gray-500">{tr("Start from an existing role (optional)")}</div>
@@ -167,7 +184,7 @@ const RolesPanel = () => {
                 )}
                 <div className="mt-4 flex justify-end gap-2">
                     <Button onClick={() => setNameDlg(null)}>{tr("Cancel")}</Button>
-                    <Button variant="solid" disabled={!nameDlg?.value?.trim()} onClick={() => { const v = nameDlg.value.trim(); if (nameDlg.mode === 'new') { startNew(); setDraft({ name: v, permissions: structuredClone(roles.find((r) => r.id === nameDlg.copyFrom)?.permissions || {}) }) } else setDraft((d) => ({ ...d, name: v })); setNameDlg(null) }}>{nameDlg?.mode === 'new' ? tr("Continue") : tr("Rename")}</Button>
+                    <Button variant="solid" disabled={!nameDlg?.value?.trim()} onClick={confirmName}>{nameDlg?.mode === 'new' ? tr("Continue") : tr("Rename")}</Button>
                 </div>
             </Dialog>
 

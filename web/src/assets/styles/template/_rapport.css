@@ -81,7 +81,8 @@
 .rp-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
 /* ── top bar ───────────────────────────────────────────────────────────── */
-.rp-top { display: flex; align-items: center; gap: 14px; padding-block: 18px 6px; }
+.rp-top { position: sticky; inset-block-start: 0; z-index: 40; display: flex; align-items: center; gap: 14px; padding-block: 18px 10px; margin-inline: calc(var(--rp-gutter) * -1); padding-inline: var(--rp-gutter); background: color-mix(in srgb, var(--rp-bg) 72%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+@media (min-width: 1024px) { .rp-top { margin-inline-start: 0; padding-inline-start: 0; } }
 .rp-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; font-weight: 800; font-size: 20px; letter-spacing: -.02em; color: var(--rp-text); }
 .rp-brand img { height: 34px; width: auto; }
 .rp-pills { flex: 1; display: flex; justify-content: center; min-width: 0; }

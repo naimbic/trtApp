@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.115.1',
+        date: '2026-10-28',
+        title: 'The top bar stays visible while you scroll',
+        items: [
+            'The header (logo, menu pills, search, Create, notifications, profile) is now sticky: it stays at the top of the page while you scroll, over a soft blurred background.',
+        ],
+    },
+    {
         version: '0.115.0',
         date: '2026-10-28',
         title: 'Login as: open the CRM as a team member',

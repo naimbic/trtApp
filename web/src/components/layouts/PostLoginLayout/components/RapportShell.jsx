@@ -1,5 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import Dropdown from '@/components/ui/Dropdown'
 import { requestCreate } from '@/utils/createIntent'
@@ -38,6 +38,7 @@ const PresenceKeeper = () => { usePresence(() => {}); return null }
  * page filters (period, currency, colour) in a toolbar underneath. On a phone the dock and pills fold into the usual menu drawer.
  */
 const RapportShell = ({ children }) => {
+    const [stuck, setStuck] = useState(false)
     const { larger, smaller } = useResponsive()
     const { pathname } = useLocation()
     const mode = useThemeStore((s) => s.mode)
@@ -59,6 +60,12 @@ const RapportShell = ({ children }) => {
         mo.observe(document.body, { childList: true, subtree: true })
         return () => { mo.disconnect(); clearTimeout(t) }
     }, [])
+    useEffect(() => {
+        const on = () => setStuck(window.scrollY > 6)
+        on()
+        window.addEventListener('scroll', on, { passive: true })
+        return () => window.removeEventListener('scroll', on)
+    }, [])
     // on a phone or tablet the period / currency / colour pickers are at the top of the left menu
     const toolbar = hasTabs ? <PageTabs /> : null
 
@@ -69,7 +76,7 @@ const RapportShell = ({ children }) => {
             <div className="rp-mesh" aria-hidden="true"><i /></div>
             {larger.lg && <RapportDock />}
             <div className="rp-frame">
-                <header className="rp-top">
+                <header className="rp-top" data-stuck={stuck}>
                     {smaller.lg && <MobileNav filters={filters} />}
                     <Link to={appConfig.authenticatedEntryPath} className="rp-brand"><LottieLogo height={36} /></Link>
                     <div className="rp-pills">{larger.lg && <RapportPills />}</div>

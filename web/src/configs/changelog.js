@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.115.2',
+        date: '2026-10-28',
+        title: 'Top bar: menu-style glass bar, full width, animated',
+        items: [
+            'Changed: the sticky header no longer has its own tinted background. At the top of the page nothing changes; once you scroll, a full-width bar in the same glass as the menu fades and slides in behind the header, and slides out again at the top.',
+        ],
+    },
+    {
         version: '0.115.1',
         date: '2026-10-28',
         title: 'The top bar stays visible while you scroll',

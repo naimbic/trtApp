@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.114.1',
+        date: '2026-10-28',
+        title: 'Share menu: copy the text',
+        items: [
+            'The Share icon menu now has "Copy text" and "Copy text with link" wherever there is a text to share (comments, notes, lead and task popups), next to Copy link.',
+        ],
+    },
+    {
         version: '0.114.0',
         date: '2026-10-27',
         title: 'Lead popup: choose who may edit the notes, mails and meetings of others',

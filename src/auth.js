@@ -49,6 +49,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (user) {
                 token.authority = user.authority
                 token.picture = user.image
+                token.imp = user.imp || null // set only by "Login as": { id, name } of the person really signed in
                 token.sv = user.sv || 0
                 token.chk = Date.now()
                 return token
@@ -75,6 +76,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 ...session,
                 user: {
                     ...session.user,
+                    imp: token.imp || null,
                     id: token.sub,
                     authority: token.authority,
                     image: token.picture || null,
@@ -98,6 +100,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     image: user.avatar,
                     authority: user.authority,
                     sv: user.sv,
+                    imp: user.imp,
                 }
             },
         }),

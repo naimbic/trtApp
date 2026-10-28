@@ -13,6 +13,7 @@ export const webBaseUrl = (request) => process.env.APP_WEB_URL || request?.heade
 async function currentUserId() {
     const session = await auth()
     if (!session?.user?.id) throw httpError('Unauthorized', 401)
+    if (session.user.imp) throw httpError('Not available while you are logged in as someone else', 403)
     return session.user.id
 }
 

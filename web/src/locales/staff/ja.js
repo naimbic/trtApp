@@ -2863,6 +2863,8 @@ export default {
     "Video meeting · click to open and join": "ビデオ会議 · クリックして開き、参加",
     "View": "表示",
     "View all templates": "すべてのテンプレートを表示",
+    "Copy text with link": "リンク付きでテキストをコピー",
+    "Text copied": "テキストをコピーしました",
     "Edit notes added by others": "他のメンバーが追加したメモを編集",
     "Edit mails logged by others": "他のメンバーが記録したメールを編集",
     "Edit meetings added by others": "他のメンバーが追加したミーティングを編集",

@@ -27,12 +27,16 @@ export const loginStore = recordStore('oidc_login_')
 const tickets = recordStore('oidc_ticket_')
 
 /** A one-time ticket (valid for a minute) that lets the sign-in step create the normal session for a user. */
-export async function issueTicket(userId) {
+export async function issueTicket(userId, extra = {}) {
     const id = crypto.randomBytes(32).toString('base64url')
-    await tickets.put(id, { userId, at: Date.now() })
+    await tickets.put(id, { userId, at: Date.now(), ...extra })
     return id
 }
-export async function redeemTicket(id) {
+/** { userId, ...extra } of a valid ticket (used once, within a minute), or null. */
+export async function redeemTicketFull(id) {
     const t = await tickets.take(String(id || ''))
-    return t && Date.now() - t.at < 60 * 1000 ? t.userId : null
+    return t && Date.now() - t.at < 60 * 1000 ? t : null
+}
+export async function redeemTicket(id) {
+    return (await redeemTicketFull(id))?.userId || null
 }

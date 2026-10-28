@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbChecklist, TbAlertTriangle, TbCircleCheck, TbClock, TbMail, TbPhone, TbBrandWhatsapp, TbPencil, TbHistory, TbShieldLock, TbLockPassword, TbLink, TbKey, TbLogout, TbDeviceMobileOff, TbDots } from 'react-icons/tb'
+import { TbUserShare, TbArrowLeft, TbChecklist, TbAlertTriangle, TbCircleCheck, TbClock, TbMail, TbPhone, TbBrandWhatsapp, TbPencil, TbHistory, TbShieldLock, TbLockPassword, TbLink, TbKey, TbLogout, TbDeviceMobileOff, TbDots } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Avatar from '@/components/ui/Avatar'
 import Switcher from '@/components/ui/Switcher'
@@ -13,6 +13,7 @@ import SalaryCard from './SalaryCard'
 import MemberDrawer from './MemberDrawer'
 import MemberAccessDrawer from './MemberAccessDrawer'
 import { useMemberActions, api as teamApi, notify as teamNotify } from './MemberActions'
+import { loginAs } from '@/components/crm/LoginAsBanner'
 import ScoreRing from '@/components/crm/ScoreRing'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import { api, useCan } from '../kit/api'
@@ -51,6 +52,7 @@ const StaffProfile = () => {
     const authority = useSessionUser((s) => s.user.authority) || []
     const canAdmin = authority.includes('admin') || authority.includes('crm.admin')
     const canEdit = can('staff', 'edit')
+    const canLoginAs = canAdmin || authority.includes('crm.staff.login_as')
     const canActivity = canAdmin || authority.includes('crm.activity_log.view')
     const [lookups, setLookups] = useState({ roles: [], departments: [] })
     const [drawer, setDrawer] = useState(false)
@@ -121,6 +123,7 @@ const StaffProfile = () => {
                             <div className={`mt-2.5 flex flex-wrap justify-center gap-1.5 ${m.active ? '' : 'pointer-events-none'}`} aria-disabled={!m.active}>
                                 {canEdit && <Act icon={<TbPencil />} label={tr('Edit')} onClick={() => { setFormError(''); setDrawer(true) }} />}
                                 {canActivity && <Act icon={<TbHistory />} label={tr('Activity log')} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} />}
+                                {canLoginAs && m.hasLogin && <Act icon={<TbUserShare />} label={tr('Log in as this member')} onClick={() => loginAs(m.id).catch((e) => teamNotify('danger', e.message))} />}
                                 {canEdit && <Act icon={<TbShieldLock />} label={tr('Permissions')} onClick={() => setAccess(true)} />}
                                 {canEdit && m.hasLogin && <Act icon={<TbLockPassword />} label={tr('Set a password')} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} />}
                                 {(canEdit && m.hasLogin) || (canAdmin && m.twoFactor) ? (

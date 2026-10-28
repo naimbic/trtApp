@@ -5,7 +5,7 @@ import { lockState, recordFailure, clearFailures, rateLimited } from '@/lib/crm/
 import { checkPassword } from '@/lib/crm/authTokens'
 import { sendTemplate } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
-import { requirePermission } from '@/lib/crm/permissions'
+import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { requestIp } from '@/lib/crm/viewTracking'
 import { sign } from '@/lib/portal/session'
 
@@ -94,7 +94,7 @@ export async function inviteContact(clientId, contactId) {
 
 /** Staff set a contact's client-area password directly (no email). Signs the contact out everywhere. */
 export async function setContactPassword(clientId, contactId, password) {
-    await requirePermission('customers', 'edit')
+    const session = await requirePermission('customers', 'edit')
     if (!/^[a-f0-9]{24}$/i.test(String(contactId || '')) || !/^[a-f0-9]{24}$/i.test(String(clientId || ''))) throw httpError('Contact not found', 404)
     const c = await prisma.crmContact.findFirst({ where: { id: contactId, clientId } })
     if (!c) throw httpError('Contact not found', 404)
@@ -111,5 +111,6 @@ export async function previewAsContact(clientId, contactId) {
     const c = await prisma.crmContact.findFirst({ where: { id: contactId, clientId } })
     if (!c) throw httpError('Contact not found', 404)
     if (!c.active) throw httpError('This contact is inactive')
+    try { await prisma.crmActivityLog.create({ data: { description: `Opened the client area as ${[c.firstName, c.lastName].filter(Boolean).join(' ') || c.email} (login as)`, staffId: await getStaffId(session) } }) } catch { /* auditing must never break the preview */ }
     return { value: sign(c, { preview: true }), name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email }
 }

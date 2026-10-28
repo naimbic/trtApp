@@ -1,6 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useState } from 'react'
-import { TbShare3, TbLink, TbMail, TbDownload, TbBrandWhatsapp, TbBrandTelegram, TbBrandLinkedin, TbBrandX, TbBrandFacebook } from 'react-icons/tb'
+import { TbShare3, TbLink, TbCopy, TbMail, TbDownload, TbBrandWhatsapp, TbBrandTelegram, TbBrandLinkedin, TbBrandX, TbBrandFacebook } from 'react-icons/tb'
 import RowMenu from '@/components/crm/RowMenu'
 import Button from '@/components/ui/Button'
 import { notify } from '@/views/crm/kit/api'
@@ -11,7 +11,7 @@ export const absUrl = (u) => { try { return new URL(u, window.location.origin).h
 /** The text of some rich HTML, on one line, for a message. */
 export const plainOf = (html, max = 280) => { try { return (new DOMParser().parseFromString(String(html || ''), 'text/html').body.textContent || '').replace(/\s+/g, ' ').trim().slice(0, max) } catch { return '' } }
 
-const copy = async (text) => { try { await navigator.clipboard.writeText(text); notify('success', tr('Link copied')) } catch { notify('danger', tr('Could not copy')) } }
+const copy = async (text, done = 'Link copied') => { try { await navigator.clipboard.writeText(text); notify('success', tr(done)) } catch { notify('danger', tr('Could not copy')) } }
 const open = (href) => window.open(href, '_blank', 'noopener,noreferrer')
 
 /** Every way to hand something over: this device's own share sheet (mail, messages, AirDrop, apps...), copy, the common messengers, mail and social networks. */
@@ -31,6 +31,10 @@ export const shareItems = ({ url, title, text, file }) => {
         } })
     }
     items.push({ label: tr('Copy link'), icon: <TbLink />, onClick: () => copy(link) })
+    if (text) {
+        items.push({ label: tr('Copy text'), icon: <TbCopy />, onClick: () => copy(text, 'Text copied') })
+        items.push({ label: tr('Copy text with link'), icon: <TbCopy />, onClick: () => copy(msg, 'Text copied') })
+    }
     items.push({ label: 'WhatsApp', icon: <TbBrandWhatsapp />, onClick: () => open(`https://wa.me/?text=${enc(msg)}`) })
     items.push({ label: 'Telegram', icon: <TbBrandTelegram />, onClick: () => open(`https://t.me/share/url?url=${enc(link)}&text=${enc(text || t)}`) })
     items.push({ label: tr('Email'), icon: <TbMail />, onClick: () => { window.location.href = `mailto:?subject=${enc(t)}&body=${enc(msg)}` } })

@@ -3,7 +3,7 @@ import { StatTile } from '@/components/crm/ListHeader'
 import { TbUsers, TbCircleCheck, TbCircleOff, TbLogin } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { TbPlus, TbSearch, TbPencil, TbHistory, TbKey, TbLockPassword, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
+import { TbUserShare, TbPlus, TbSearch, TbPencil, TbHistory, TbKey, TbLockPassword, TbShieldLock, TbLink, TbLogout, TbDeviceMobileOff } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Card from '@/components/ui/Card'
@@ -22,6 +22,7 @@ import Tooltip from '@/components/ui/Tooltip'
 import { useSessionUser } from '@/store/authStore'
 import MemberDrawer from './MemberDrawer'
 import { useMemberActions, api, notify } from './MemberActions'
+import { loginAs } from '@/components/crm/LoginAsBanner'
 import MemberAccessDrawer from './MemberAccessDrawer'
 import RolesPanel from './RolesPanel'
 import { usePageTabs } from '@/store/pageTabsStore'
@@ -43,6 +44,7 @@ const Team = () => {
     const navigate = useNavigate()
     const authority = useSessionUser((s) => s.user.authority) || []
     const canAdmin = authority.includes('admin') || authority.includes('crm.admin')
+    const canLoginAs = canAdmin || authority.includes('crm.staff.login_as')
     const canActivity = canAdmin || authority.includes('crm.activity_log.view')
     const [data, setData] = useState({ members: [], stats: {} })
     const [lookups, setLookups] = useState({ roles: [], departments: [] })
@@ -225,6 +227,7 @@ const Team = () => {
                                         <div className={`flex items-center justify-end gap-0.5 ${m.active ? '' : 'pointer-events-none'}`}>
                                             <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
                                             {canActivity && <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>}
+                                            {canLoginAs && m.hasLogin && <Tooltip title={tr("Log in as this member")}><Button size="sm" variant="plain" icon={<TbUserShare />} onClick={() => loginAs(m.id).catch((e) => notify('danger', e.message))} /></Tooltip>}
                                             <Tooltip title={tr("Permissions")}><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
                                             {m.hasLogin && <Tooltip title={tr("Set a password")}><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
                                             {m.hasLogin && (

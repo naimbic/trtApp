@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 import { buildUserAuthority } from '@/lib/crm/authBuild'
 import { lockState, recordFailure, clearFailures } from '@/lib/crm/loginGuard'
 import { hasTwoFactor, verifySecondStep } from '@/lib/crm/twoFactor'
-import { redeemTicket } from '@/lib/crm/trtagency/store'
+import { redeemTicket, redeemTicketFull } from '@/lib/crm/trtagency/store'
 
 // Compared against when the email is unknown so response time does not reveal which emails exist.
 const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8.4Q0n5y7Q5xk9bP7r6bUQ8g8m3m5W'
@@ -33,6 +33,15 @@ const validateCredential = async (values) => {
         if (blocked) return null
         prisma.crmStaff.updateMany({ where: { userId: user.id }, data: { lastLogin: new Date(), lastActivity: new Date() } }).catch(() => {})
         return { id: user.id, userName: user.name, email: user.email, avatar: user.image, authority, sv: user.sessionVersion || 0 }
+    }
+    // "Login as": a one-time ticket made by the login-as route after it checked the permission; `imp` remembers who is really behind it
+    if (values?.loginAsTicket) {
+        const t = await redeemTicketFull(values.loginAsTicket)
+        const user = t?.loginAs ? await prisma.user.findUnique({ where: { id: t.userId } }) : null
+        if (!user) return null
+        const { authority, blocked } = await buildUserAuthority(user)
+        if (blocked) return null
+        return { id: user.id, userName: user.name, email: user.email, avatar: user.image, authority, sv: user.sessionVersion || 0, imp: t.imp || null }
     }
     const email = String(values?.email || '').trim().toLowerCase()
     const password = String(values?.password || '')

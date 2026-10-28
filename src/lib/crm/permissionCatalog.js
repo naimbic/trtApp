@@ -18,6 +18,7 @@ export const CAPABILITIES = [
 export const EXTRA_LABELS = {
     change_email: 'Change own sign-in email',
     view_all_templates: 'View all templates',
+    login_as: 'Log in as another member',
     edit_others_notes: "Edit notes added by others",
     edit_others_mails: "Edit mails logged by others",
     edit_others_meetings: "Edit meetings added by others",
@@ -124,7 +125,7 @@ export const PERMISSION_GROUPS = [
     {
         group: 'Administration',
         features: [
-            { key: 'staff', label: 'Team members', caps: CRUD },
+            { key: 'staff', label: 'Team members', caps: [...CRUD, 'login_as'] },
             { key: 'work_hours', label: 'Team hours', caps: ['view'] },
             { key: 'roles', label: 'Roles & permissions', caps: CRUD },
             { key: 'departments', label: 'Departments', caps: CRUD },

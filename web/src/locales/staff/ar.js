@@ -2863,6 +2863,8 @@ export default {
     "Video meeting · click to open and join": "اجتماع فيديو · انقر للفتح والانضمام",
     "View": "عرض",
     "View all templates": "عرض كل القوالب",
+    "Copy text with link": "نسخ النص مع الرابط",
+    "Text copied": "تم نسخ النص",
     "Edit notes added by others": "تعديل الملاحظات التي أضافها الآخرون",
     "Edit mails logged by others": "تعديل الرسائل التي سجّلها الآخرون",
     "Edit meetings added by others": "تعديل الاجتماعات التي أضافها الآخرون",

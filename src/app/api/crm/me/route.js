@@ -18,6 +18,7 @@ export async function GET() {
         image: realPicture(dbUser?.image) || realPicture(staff?.profileImage),
         role: admin ? 'Super admin' : staff?.role?.name || 'Staff',
         admin,
+        loginAs: session.user.imp ? { by: session.user.imp.name || '' } : null,
         language: codeOfLanguage(staff?.defaultLanguage), // the language the person chose in the profile or the menu: it follows them on every browser
         display: (() => { try { return { ...DEFAULT_PREFS.display, ...(JSON.parse(staff?.preferences || '{}').display || {}) } } catch { return DEFAULT_PREFS.display } })(),
     })

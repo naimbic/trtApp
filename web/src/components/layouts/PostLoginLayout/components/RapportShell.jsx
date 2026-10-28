@@ -16,6 +16,7 @@ import LanguageSelector from '@/components/template/LanguageSelector'
 import Notification from '@/components/template/Notification'
 import ChatWidget from '@/components/crm/chat/ChatWidget'
 import MentionLayer from '@/components/crm/MentionLayer'
+import LoginAsBanner from '@/components/crm/LoginAsBanner'
 import AccentApplier from '@/components/template/AccentApplier'
 import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components/template/LayoutBase'
@@ -87,6 +88,7 @@ const RapportShell = ({ children }) => {
                 <main className="rp-main">{children}</main>
             </div>
             <MentionLayer />
+            <LoginAsBanner />
             {canChat ? <ChatWidget /> : <PresenceKeeper />}
         </LayoutBase>
     )

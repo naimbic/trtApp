@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.116.0',
+        date: '2026-10-28',
+        title: 'Task cards, clickable links and expense receipts',
+        items: [
+            'Task cards: the related client / project / lead is now a light tag you can click to open it. The priority is a light pill whose text takes the priority colour (grey, blue, orange, red).',
+            'Task cards: the comment count moved to the top right, just above the people\'s pictures.',
+            'Any web address written in a comment, a checklist item, a note or a description is now a link that opens in a new browser tab.',
+            'Expenses: attach receipts and invoices (PDF or image, up to 5 MB each) while adding the expense, not only after saving it. The limits are also enforced on the server.',
+        ],
+    },
+    {
         version: '0.115.3',
         date: '2026-10-28',
         title: 'Login as: your language no longer stays on the other member\'s',

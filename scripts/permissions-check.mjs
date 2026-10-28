@@ -31,7 +31,8 @@ async function login(u) {
     const s = await (await fetch(`${BASE}/api/auth/session`, { headers: { cookie: hdr() } })).json()
     if (!s?.user) throw new Error(`sign-in failed for ${u.email}`)
     return async (method, path, body) => {
-        const res = await fetch(BASE + path, { method, headers: { cookie: hdr(), 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+        const form = typeof FormData !== 'undefined' && body instanceof FormData
+        const res = await fetch(BASE + path, { method, headers: form ? { cookie: hdr() } : { cookie: hdr(), 'content-type': 'application/json' }, body: body ? (form ? body : JSON.stringify(body)) : undefined })
         take(res) // a new session cookie (login as / back) replaces the old one
         let j = null, text = ''; try { text = await res.clone().text(); j = JSON.parse(text) } catch { /* pdf / html */ }
         return { status: res.status, body: j, text }
@@ -249,6 +250,21 @@ try {
         check('a login-as ticket cannot be reused', (await fetch(`${BASE}/api/auth/callback/credentials`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ csrfToken: 'x', loginAsTicket: 'made-up' }) })).status !== 200)
         const sa = await login(await makeUser('loginas-super', {}).then(async (u) => { await prisma.crmStaff.update({ where: { id: u.staffId }, data: { admin: true } }); return u }))
         check('a Super Admin may open a Super Admin (or any member)', (await sa('POST', '/api/crm/auth/login-as', { staffId: lgBoss.staffId })).status === 200 && (await sa('DELETE', '/api/crm/auth/login-as')).status === 200)
+    }
+    console.log('\n== Expenses: receipts (PDF or image, up to 5 MB)')
+    {
+        const cat = (await prisma.crmExpenseCategory.findFirst()) || (await prisma.crmExpenseCategory.create({ data: { name: 'zz check category' } }).then((c) => { made.rows.push(['crmExpenseCategory', c.id]); return c }))
+        const ex = await login(await makeUser('exp-files', { expenses: ['view_own', 'create', 'edit'] }))
+        const e1 = await ex('POST', '/api/crm/sales/expenses', { name: 'zz receipt check', categoryId: cat.id, amount: 10, date: '2026-02-01' })
+        if (e1.body?.id) { made.rows.unshift(['crmExpense', e1.body.id]); made.mediaRel = e1.body.id }
+        const send = async (name, type, bytes) => { const fd = new FormData(); fd.append('files', new Blob([bytes], { type }), name); fd.append('relType', 'expense'); fd.append('relId', e1.body.id); return ex('POST', '/api/crm/media/upload', fd) }
+        const big = await send('big.pdf', 'application/pdf', Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(5 * 1024 * 1024 + 10)]))
+        check('a receipt over 5 MB is refused', big.body?.errors?.length === 1 && /larger than 5 MB/.test(big.body.errors[0].error), JSON.stringify(big.body).slice(0, 120))
+        const zip = await send('x.zip', 'application/zip', Buffer.from('PK'))
+        check('a type that is not PDF or image (zip) is refused for an expense', zip.body?.errors?.length === 1 && /PDF or image/.test(zip.body.errors[0].error), JSON.stringify(zip.body).slice(0, 120))
+        const ok = await send('receipt.pdf', 'application/pdf', Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(2000)]))
+        check('a small PDF passes the receipt rules (stored, or refused only by storage)', (ok.body?.saved?.length === 1) || (ok.body?.errors?.length === 1 && !/PDF or image|larger than 5 MB/.test(ok.body.errors[0].error)), JSON.stringify(ok.body).slice(0, 120))
+        for (const m of ok.body?.saved || []) made.rows.push(['crmMedia', m.id])
     }
     console.log('\n== Tasks: completed tasks follow the Show completed switch')
     const tk = await makeUser('task-list', { tasks: ['view', 'create', 'edit'] }); const tkc = await login(tk)

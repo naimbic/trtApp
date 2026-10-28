@@ -1,9 +1,9 @@
 import { moneyHidden, MASK } from '@/utils/money'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { TbFileInvoice, TbTrash, TbRepeat } from 'react-icons/tb'
+import { TbFileInvoice, TbTrash, TbRepeat, TbUpload, TbX } from 'react-icons/tb'
 import dayjs from 'dayjs'
-import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
+import AttachmentsPanel, { fileOk } from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
@@ -13,11 +13,12 @@ import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import Tabs from '@/components/ui/Tabs'
 import CreatableSelect from 'react-select/creatable'
-import { api, notify } from '../kit/api'
+import { api, notify, upload, formatBytes } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { tr, trn } from '@/utils/t'
 
 const EMPTY = { name: '', categoryId: null, amount: '', taxId: null, tax2Id: null, currencyId: null, date: new Date(), reference: '', paymentModeId: null, clientId: null, projectId: null, billable: false, note: '', recurring: false, repeatEvery: 1, recurringType: 'month', cyclesLimit: 0, createInvoiceBillable: false, sendInvoiceToCustomer: false }
+const ACCEPT = '.pdf,image/*', MAX_MB = 5
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const money = (n, cur) => moneyHidden() ? MASK : `${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur?.symbol || cur?.name || ''}`.trim()
 
@@ -26,6 +27,8 @@ const ExpenseDrawer = ({ open, id, lookups, onClose, onChanged, onLookups }) => 
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
     const [saving, setSaving] = useState(false)
+    const [pending, setPending] = useState([]) // receipts chosen before the expense exists: sent right after it is saved
+    const [over, setOver] = useState(false)
     const [confirm, setConfirm] = useState(null)
     const edit = !!id
     const canEdit = edit ? detail?.can.edit : true
@@ -47,16 +50,27 @@ const ExpenseDrawer = ({ open, id, lookups, onClose, onChanged, onLookups }) => 
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (!open) return
-        setDetail(null)
+        setDetail(null); setPending([])
         if (id) load()
         else setV({ ...EMPTY, currencyId: (lookups.currencies || []).find((c) => c.isDefault)?.id || null })
     }, [open, id, load]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    const pick_ = useRef(null)
+    const addPending = (files) => {
+        const ok = [...(files || [])].filter((f) => { const good = fileOk(f, ACCEPT, MAX_MB); if (!good) notify('danger', `${f.name}: ${f.size > MAX_MB * 1048576 ? tr("larger than {mb} MB", { mb: MAX_MB }) : tr("this type of file is not allowed here")}`); return good })
+        setPending((l) => [...l, ...ok].slice(0, 10))
+    }
     const total = (() => { const r = (t) => (lk.taxes || []).find((x) => x.id === t)?.rate || 0; return (Number(v.amount) || 0) * (1 + (r(v.taxId) + r(v.tax2Id)) / 100) })()
     const save = async () => {
         setSaving(true)
         try {
             const r = await api(edit ? `/api/crm/sales/expenses/${id}` : '/api/crm/sales/expenses', { method: edit ? 'PUT' : 'POST', body: { ...v, date: dayjs(v.date).format('YYYY-MM-DD') } })
+            if (!edit && pending.length) {
+                const fd = new FormData()
+                pending.forEach((f) => fd.append('files', f))
+                fd.append('relType', 'expense'); fd.append('relId', r.id)
+                try { const u = await upload('/api/crm/media/upload', fd); u.errors.forEach((e) => notify('danger', `${e.name}: ${e.error}`)) } catch (e) { notify('danger', e.message) }
+            }
             notify('success', edit ? tr("Expense saved") : tr("Expense added")); onChanged()
             if (!edit) nav(`/crm/expenses?open=${r.id}`, { replace: true })
             onClose()
@@ -131,10 +145,22 @@ const ExpenseDrawer = ({ open, id, lookups, onClose, onChanged, onLookups }) => 
                     <Tabs.TabList><Tabs.TabNav value="details">{tr("Details")}</Tabs.TabNav><Tabs.TabNav value="receipts">{tr("Receipts")}</Tabs.TabNav></Tabs.TabList>
                     <div className="pt-4">
                         <Tabs.TabContent value="details">{form}</Tabs.TabContent>
-                        <Tabs.TabContent value="receipts"><AttachmentsPanel relType="expense" relId={id} canEdit={canEdit} /></Tabs.TabContent>
+                        <Tabs.TabContent value="receipts"><AttachmentsPanel relType="expense" relId={id} canEdit={canEdit} accept={ACCEPT} maxMb={MAX_MB} hint={tr("Drop the receipt or invoice here or choose it. PDF or image, up to {mb} MB each.", { mb: MAX_MB })} /></Tabs.TabContent>
                     </div>
                 </Tabs>
-            ) : <>{form}<p className="mt-4 text-xs text-gray-500">{tr("Save the expense first, then attach the receipt.")}</p></>}
+            ) : <>{form}
+                <div className="mt-5">
+                    <L>{tr("Receipts and invoices")}</L>
+                    <div onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); addPending(e.dataTransfer.files) }}
+                        className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-dashed px-4 py-3 transition ${over ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-600'}`}>
+                        <div className="text-sm text-gray-500">{tr("PDF or image, up to {mb} MB each. They are attached when you save.", { mb: MAX_MB })}</div>
+                        <Button size="sm" icon={<TbUpload />} onClick={() => pick_.current?.click()}>{tr("Choose files")}</Button>
+                        <input ref={pick_} type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => { addPending(e.target.files); e.target.value = '' }} />
+                    </div>
+                    {pending.length > 0 && <ul className="mt-2 divide-y divide-gray-100 dark:divide-gray-700">
+                        {pending.map((f, i) => <li key={`${f.name}${i}`} className="flex items-center gap-2 py-1.5 text-sm"><span className="min-w-0 flex-1 truncate font-medium">{f.name}</span><span className="text-xs text-gray-400">{formatBytes(f.size)}</span><button type="button" className="text-lg text-gray-400 hover:text-red-500" aria-label={tr("Remove")} onClick={() => setPending((l) => l.filter((_, j) => j !== i))}><TbX /></button></li>)}
+                    </ul>}
+                </div></>}
             <ConfirmDialog isOpen={!!confirm} type={confirm === 'delete' ? 'danger' : 'info'} title={confirm === 'delete' ? tr("Delete this expense?") : tr("Create an invoice?")} confirmText={confirm === 'delete' ? tr("Delete") : tr("Create invoice")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={run}>
                 <p>{confirm === 'delete' ? tr("The expense and its receipts are removed for good.") : tr("An unpaid invoice with this expense and its taxes is created for the client. The expense is then locked.")}</p>
             </ConfirmDialog>

@@ -154,7 +154,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
                             <div className="min-w-[120px] flex-1 text-sm">
                                 {editing?.id === c.id
                                     ? <input data-mention autoFocus value={editing.text} maxLength={500} onChange={(e) => setEditing({ id: c.id, text: e.target.value })} onBlur={saveText} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setEditing(null) }} className="h-8 w-full rounded-lg border border-primary bg-white px-2 text-sm outline-none dark:bg-gray-800" />
-                                    : <button type="button" disabled={!canEdit} onClick={() => setEditing({ id: c.id, text: c.description })} className={classNames('w-full text-left', c.finished && 'text-gray-400 line-through')}><Mentioned text={c.description} /></button>}
+                                    : <div role={canEdit ? 'button' : undefined} tabIndex={canEdit ? 0 : undefined} onClick={canEdit ? () => setEditing({ id: c.id, text: c.description }) : undefined} onKeyDown={canEdit ? (e) => { if (e.key === 'Enter') setEditing({ id: c.id, text: c.description }) } : undefined} className={classNames('w-full break-words text-left', canEdit && 'cursor-text', c.finished && 'text-gray-400 line-through')}><Mentioned text={c.description} /></div>}
                             </div>
                             <div className="ml-auto flex items-center gap-1">
                                 <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />

@@ -11,8 +11,16 @@ import ShareButton from '@/components/crm/ShareButton'
 import { api, notify, upload, formatBytes, qs } from '@/views/crm/kit/api'
 import { tr, trn } from '@/utils/t'
 
+/** Is this file allowed by the accept list (".pdf,image/*") and the size limit (MB)? */
+export const fileOk = (f, accept, maxMb) => {
+    if (maxMb && f.size > maxMb * 1048576) return false
+    if (!accept) return true
+    const ext = `.${(f.name.split('.').pop() || '').toLowerCase()}`
+    return accept.split(',').map((x) => x.trim().toLowerCase()).some((a) => (a.endsWith('/*') ? (f.type || '').startsWith(a.slice(0, -1)) : a.startsWith('.') ? a === ext : a === (f.type || '').toLowerCase()))
+}
+
 /** Files attached to one record (client, invoice, contract…), stored in the Space. */
-const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = false }) => {
+const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = false, accept, maxMb, hint }) => {
     const [list, setList] = useState([])
     const [loading, setLoading] = useState(true)
     const [busy, setBusy] = useState(false)
@@ -26,8 +34,13 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
     }, [relType, relId])
     useEffect(() => { load() }, [load])
 
-    const send = async (files) => {
-        if (!files?.length) return
+    const send = async (all) => {
+        const files = [...(all || [])].filter((f) => {
+            const bad = !fileOk(f, accept, maxMb)
+            if (bad) notify('danger', `${f.name}: ${maxMb && f.size > maxMb * 1048576 ? tr("larger than {mb} MB", { mb: maxMb }) : tr("this type of file is not allowed here")}`)
+            return !bad
+        })
+        if (!files.length) { if (input.current) input.current.value = ''; return }
         const fd = new FormData()
         ;[...files].forEach((f) => fd.append('files', f))
         fd.append('relType', relType); fd.append('relId', relId)
@@ -58,10 +71,10 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
                     onDragOver={(e) => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); send(e.dataTransfer.files) }}
                     className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-dashed px-4 py-4 transition ${drag ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-600'}`}
                 >
-                    <div className="text-sm text-gray-500">{tr("Drop files here or choose them. Images are optimised to WebP automatically. PDF, Office, CSV, ZIP… up to 50 MB.")}</div>
+                    <div className="text-sm text-gray-500">{hint || tr("Drop files here or choose them. Images are optimised to WebP automatically. PDF, Office, CSV, ZIP… up to 50 MB.")}</div>
                     <Button size="sm" icon={busy ? <Spinner size={16} /> : <TbUpload />} disabled={busy} onClick={() => input.current?.click()}>{busy ? tr("Uploading…") : tr("Upload files")}</Button>
                     <Button size="sm" icon={<TbPhotoSearch />} disabled={busy} onClick={() => setPicker(true)}>{tr("From files")}</Button>
-                    <input ref={input} type="file" multiple className="hidden" onChange={(e) => send(e.target.files)} />
+                    <input ref={input} type="file" multiple accept={accept} className="hidden" onChange={(e) => send(e.target.files)} />
                     <MediaPicker open={picker} kind="" onClose={() => setPicker(false)} onPick={attach} />
                 </div>
             )}

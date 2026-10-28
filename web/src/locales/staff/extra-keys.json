@@ -1507,5 +1507,11 @@
  "Copy text",
  "Copy text with link",
  "Text copied",
- "Log in as another member"
+ "Log in as another member",
+ "Choose files",
+ "Drop the receipt or invoice here or choose it. PDF or image, up to {mb} MB each.",
+ "PDF or image, up to {mb} MB each. They are attached when you save.",
+ "Receipts and invoices",
+ "larger than {mb} MB",
+ "this type of file is not allowed here"
 ]

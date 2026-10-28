@@ -10,6 +10,20 @@ import classNames from '@/utils/classNames'
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
+/** Turns a bare web address in the text parts of safe HTML into a link that opens in a new tab (links already there are left alone). */
+function linkify(html) {
+    let inLink = 0
+    return html.split(/(<[^>]+>)/g).map((part) => {
+        if (part.startsWith('<')) { if (/^<a\b/i.test(part)) inLink++; else if (/^<\/a>/i.test(part)) inLink = Math.max(0, inLink - 1); return part }
+        if (inLink || !part) return part
+        return part.replace(/\b(?:https?:\/\/|www\.)(?:(?!&(?:lt|gt|quot|#39);)[^\s<>"'])+/gi, (u) => {
+            const tail = /[.,;:!?)\]]+$/.exec(u)?.[0] || ''
+            const url = tail ? u.slice(0, -tail.length) : u
+            return `<a href="${/^www\./i.test(url) ? `https://${url}` : url}" target="_blank" rel="noopener noreferrer">${url}</a>${tail}`
+        })
+    }).join('')
+}
+
 /** Wraps "@Full Name" of colleagues and known "#tags" found in the text parts of safe HTML. */
 function decorate(html, dir) {
     const names = dir.staff.filter((s) => s.name).sort((a, b) => b.name.length - a.name.length)
@@ -29,7 +43,7 @@ function decorate(html, dir) {
 
 /** A saved comment, note or description: rich text (or old plain text) shown safely, mentions and tags picked out; a mention opens the chat. */
 const RichView = ({ html, className }) => {
-    const clean = useMemo(() => cleanHtml(html), [html])
+    const clean = useMemo(() => linkify(cleanHtml(html)), [html])
     const [dir, setDir] = useState(null)
     const needs = clean.includes('@') || clean.includes('#')
     useEffect(() => { if (needs) mentionDirectory().then(setDir) }, [needs])

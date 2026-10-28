@@ -29,6 +29,10 @@
 .rp-face-title { font-size: 16.5px; line-height: 1.16; font-weight: 700; letter-spacing: -.015em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .rp-face-sub { font-size: 12.5px; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rp-face-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; align-self: end; margin-top: 10px; }
+.rp-face-sub:has(.rp-face-tag) { opacity: 1; overflow: visible; }
+.rp-face-tag { display: inline-block; max-width: 100%; vertical-align: top; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: inherit; text-decoration: none; background: color-mix(in srgb, var(--on) 16%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .15s ease, transform .15s ease; }
+.rp-face-tag:hover { background: color-mix(in srgb, var(--on) 28%, transparent); transform: translateY(-1px); }
+.rp-face-label.is-pill { opacity: 1; padding: 2px 10px; border-radius: 999px; font-size: 12px; background: rgba(255, 255, 255, .86); color: var(--pc); box-shadow: 0 1px 0 rgba(0, 0, 0, .04); }
 .rp-face-label { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .9; }
 .rp-face .ring-white { --tw-ring-color: var(--t); }
 @media (max-width: 760px) { .rp-pl-cols { grid-auto-columns: calc(100% - 40px); height: clamp(440px, 64dvh, 640px); } }
@@ -176,6 +180,6 @@
 @media (prefers-reduced-motion: reduce) { .rp-face-do-dot { animation: none; } }
 
 /* the small comment count on a card: speech bubble and number */
-.rp-face-end { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.rp-face-end { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 .rp-face-cc { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 700; opacity: .75; }
 .rp-face-cc svg { font-size: 14px; }

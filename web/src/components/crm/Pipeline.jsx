@@ -1,6 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { TbCalendar, TbMessageCircle, TbInbox, TbDots, TbChevronRight, TbCheck, TbArrowUpRight, TbPlus, TbArrowLeft } from 'react-icons/tb'
@@ -34,10 +35,12 @@ const Tile = ({ item, onOpen, onMenu, dragging, index }) => (
             </span>
         </div>
         <div className="rp-face-title">{item.title}</div>
-        {item.sub && <div className="rp-face-sub">{item.sub}</div>}
+        {item.sub && (item.subHref
+            ? <div className="rp-face-sub"><Link to={item.subHref} className="rp-face-tag" title={item.sub} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>{item.sub}</Link></div>
+            : <div className="rp-face-sub">{item.sub}</div>)}
         {item.todo && <div className="rp-face-do" title={item.todo}><i className="rp-face-do-dot" /><span>{item.todo}</span></div>}
         <div className="rp-face-foot">
-            <span className={cn('rp-face-label', item.labelColor && 'has-dot')} style={item.labelColor ? { '--lc': item.labelColor } : undefined}>{item.labelColor && <i className="rp-face-dot" />}{item.label}</span>
+            <span className={cn('rp-face-label', item.labelColor && 'has-dot', item.labelPill && 'is-pill')} style={item.labelColor ? { '--lc': item.labelColor } : item.labelPill ? { '--pc': item.labelPill } : undefined}>{item.labelColor && <i className="rp-face-dot" />}{item.label}</span>
             <span className="rp-face-end">{item.comments > 0 && <span className="rp-face-cc" title={trn(item.comments, 'comment')}><TbMessageCircle />{item.comments}</span>}{item.people}</span>
         </div>
     </div>

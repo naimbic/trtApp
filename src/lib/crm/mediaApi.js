@@ -69,6 +69,9 @@ export async function mediaStats() {
     return { files: rows.length, size, saved: Math.max(0, original - size), byKind }
 }
 
+/** Extra limits for the files of some records: an expense takes receipts and invoices (PDF or image), up to 5 MB each. */
+const REL_RULES = { expense: { maxMb: 5, ext: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'], what: 'PDF or image files' } }
+
 /** Upload one or more files from a multipart form: files[], parentId, relType, relId, visibleToClient. */
 export async function uploadMedia(formData) {
     const ctx = await who()
@@ -85,6 +88,12 @@ export async function uploadMedia(formData) {
     const saved = [], errors = []
     for (const file of files) {
         try {
+            const rule = REL_RULES[relType]
+            if (rule) {
+                const ext = (file.name.split('.').pop() || '').toLowerCase()
+                if (!rule.ext.includes(ext)) throw new MediaError(`"${file.name}" is not allowed here: ${rule.what} only`)
+                if (file.size > rule.maxMb * 1024 * 1024) throw new MediaError(`"${file.name}" is larger than ${rule.maxMb} MB`)
+            }
             const p = await processUpload(file, { purpose })
             const { key, url } = await putMedia(p, relType ? `attachments/${relType}` : 'library')
             const row = await prisma.crmMedia.create({ data: { name: p.name, key, url, mime: p.contentType, kind: p.kind, size: p.size, originalSize: p.originalSize, width: p.width, height: p.height, purpose, parentId: relType ? null : parentId, relType, relId: relType ? relId : null, visibleToClient, uploadedBy: ctx.staffId || undefined, uploaderName: ctx.name } })

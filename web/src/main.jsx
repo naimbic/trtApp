@@ -31,7 +31,7 @@ window.fetch = async (...args) => {
             }
         } catch { /* not JSON: a file upload or a form */ }
     }
-    if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/portal') && !url.startsWith('/api/crm/auth/') && !url.startsWith('/api/crm/mentions') && !redirecting) {
+    if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth') && !url.startsWith('/api/portal') && !url.startsWith('/api/crm/auth/') && !url.startsWith('/api/crm/mentions') && !onPublicPage() && !redirecting) {
         redirecting = true
         try {
             clearUserData()
@@ -43,6 +43,9 @@ window.fetch = async (...args) => {
     }
     return res
 }
+
+// pages a signed-out person is meant to see (the client area and the staff sign-in): a 401 from a staff call there is normal, never a reason to send them to the staff sign-in
+function onPublicPage() { return /^\/(portal(\/|$)|sign-in|forgot-password|reset-password|sign-up)/.test(window.location.pathname) }
 
 // The dictionary of the saved language (and right-to-left for Arabic) must be ready before the app's modules run:
 // many labels are defined at module level, so the app is imported only after the dictionary has loaded.

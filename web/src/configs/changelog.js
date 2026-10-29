@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.117.1',
+        date: '2026-10-29',
+        title: 'Client area: sign-in works again',
+        items: [
+            'Fixed: opening the client area (/portal) sent a signed-out client straight to the staff sign-in page, so no client could reach the client sign-in at all, whatever their password. The staff sign-in redirect no longer applies to the client area or to the sign-in pages themselves.',
+            'New: scripts/portal-check.mjs tells the owner why a contact cannot sign in (inactive client or contact, no password, lock after too many attempts, duplicate emails) and can unlock or set a password. Run it in the Coolify terminal: node scripts/portal-check.mjs name@email',
+        ],
+    },
+    {
         version: '0.117.0',
         date: '2026-10-29',
         title: 'New tasks: assigned to their creator, followed by the Super Admin',

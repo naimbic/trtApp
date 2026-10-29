@@ -7,6 +7,8 @@ export const useAppSettingsStore = create((set, get) => ({
     load: async () => {
         if (get().app || get().loading) return
         set({ loading: true })
+        // the client area (/portal) has no staff session: it works with the defaults
+        if (window.location.pathname.startsWith('/portal')) { set({ app: {}, loading: false }); return }
         try {
             const r = await fetch('/api/crm/settings/app', { credentials: 'include' })
             set({ app: r.ok ? await r.json() : {}, loading: false })

@@ -203,7 +203,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this task?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const it = del; setDel(null); remove(it) }}>
                 <p>{del?.title}</p>
             </ConfirmDialog>
-            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} refreshKey={drawer.k} stage={stageOf(drawer.id)} presets={{ ...(drawer.preset || {}), ...(lookups.defaults ? { status: lookups.defaults.status, priority: lookups.defaults.priority, billable: lookups.defaults.billable, assigneeIds: lookups.defaults.assignMe && lookups.me ? [lookups.me] : [], followerIds: lookups.defaults.followMe && lookups.me ? [lookups.me] : [] } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={close} onChanged={load} />
+            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} refreshKey={drawer.k} stage={stageOf(drawer.id)} presets={{ ...(drawer.preset || {}), ...(lookups.defaults ? { status: lookups.defaults.status, priority: lookups.defaults.priority, billable: lookups.defaults.billable, assigneeIds: lookups.defaults.assignMe && lookups.me ? [lookups.me] : [], followerIds: [...new Set([...(lookups.defaults.followMe && lookups.me ? [lookups.me] : []), ...(lookups.defaults.followAdminIds || [])])] } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={close} onChanged={load} />
         </Wrap>
     )
 }

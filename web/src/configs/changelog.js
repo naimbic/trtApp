@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.117.0',
+        date: '2026-10-29',
+        title: 'New tasks: assigned to their creator, followed by the Super Admin',
+        items: [
+            'Every new task is now assigned to the person who creates it, and the Super Admin(s) follow it, by default. The New task form shows them already chosen, and the same applies to tasks created from the lead popup and from templates.',
+            'Settings → Tasks → New tasks: "Assign the creator automatically" is on by default (it had been saved as off) and there is a new switch "Add the Super Admin(s) as followers", also on. Turn either off there if you prefer.',
+        ],
+    },
+    {
         version: '0.116.1',
         date: '2026-10-28',
         title: 'Roles: rename applies at once; language no longer follows another account',

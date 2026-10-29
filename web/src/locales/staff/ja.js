@@ -2863,6 +2863,7 @@ export default {
     "Video meeting · click to open and join": "ビデオ会議 · クリックして開き、参加",
     "View": "表示",
     "View all templates": "すべてのテンプレートを表示",
+    "Add the Super Admin(s) as followers": "スーパー管理者をフォロワーに追加",
     "Role renamed": "ロール名を変更しました",
     "Choose files": "ファイルを選択",
     "Drop the receipt or invoice here or choose it. PDF or image, up to {mb} MB each.": "領収書や請求書をここにドロップするか選択してください。PDFまたは画像、各{mb}MBまで。",

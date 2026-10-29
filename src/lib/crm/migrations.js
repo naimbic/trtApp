@@ -166,3 +166,11 @@ export async function splitAdmins() {
 export async function seedTaskStatuses() {
     await (await import('@/lib/crm/taskStatuses')).ensureTaskStatuses()
 }
+
+/** Once: new tasks are assigned to the person who creates them by default (the switch had been saved as off without anyone choosing it). It can still be turned off in Settings → Tasks. */
+export async function taskAssignCreatorDefault() {
+    const MARK = 'migrated_task_assign_creator_default'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    await prisma.crmOption.updateMany({ where: { name: 'new_task_auto_assign_current_member', value: { not: '1' } }, data: { value: '1' } })
+    await prisma.crmOption.create({ data: { name: MARK, value: '1', autoload: false } })
+}

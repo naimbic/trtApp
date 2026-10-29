@@ -2863,6 +2863,7 @@ export default {
     "Video meeting · click to open and join": "اجتماع فيديو · انقر للفتح والانضمام",
     "View": "عرض",
     "View all templates": "عرض كل القوالب",
+    "Add the Super Admin(s) as followers": "إضافة المشرف العام (المشرفين العامين) كمتابعين",
     "Role renamed": "تمت إعادة تسمية الدور",
     "Choose files": "اختيار الملفات",
     "Drop the receipt or invoice here or choose it. PDF or image, up to {mb} MB each.": "أفلت الإيصال أو الفاتورة هنا أو اخترها. PDF أو صورة، حتى {mb} ميغابايت لكل ملف.",

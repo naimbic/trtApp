@@ -247,7 +247,8 @@ export async function saveTask(body, id) {
     }
     const withCreator = (list, on) => (on && a.staffId && !(list || []).includes(a.staffId) ? [...(list || []), a.staffId] : list)
     const assignees = id ? body.assigneeIds : withCreator(Array.isArray(body.assigneeIds) ? body.assigneeIds : [], S?.on('new_task_auto_assign_current_member'))
-    const followers = id ? body.followerIds : withCreator(Array.isArray(body.followerIds) ? body.followerIds : [], S?.on('new_task_auto_follower_current_member'))
+    const withAdmins = async (list) => (S?.on('new_task_follow_super_admin') ? [...new Set([...(list || []), ...(await superAdminIds())])] : list)
+    const followers = id ? body.followerIds : await withAdmins(withCreator(Array.isArray(body.followerIds) ? body.followerIds : [], S?.on('new_task_auto_follower_current_member')))
     if (Array.isArray(assignees)) await sync('crmTaskAssigned', assignees, { assignedFrom: a.staffId })
     if (Array.isArray(followers)) await sync('crmTaskFollower', followers)
     if (Array.isArray(body.tags)) {
@@ -262,7 +263,7 @@ export async function saveTask(body, id) {
 }
 
 const openChildren = (id) => prisma.crmTask.count({ where: { parentId: id, status: { not: COMPLETE } } })
-const NEW_TASK_KEYS = ['default_task_priority', 'default_task_status', 'task_biillable_checked_on_creation', 'new_task_auto_assign_current_member', 'new_task_auto_follower_current_member']
+const NEW_TASK_KEYS = ['default_task_priority', 'default_task_status', 'task_biillable_checked_on_creation', 'new_task_auto_assign_current_member', 'new_task_auto_follower_current_member', 'new_task_follow_super_admin']
 const FINISH_SUBTASKS = (n) => `Finish the subtasks first (${n} still open)`
 /** The task and everything under it (subtasks, their subtasks...). */
 async function descendants(id) {
@@ -475,6 +476,9 @@ export async function timer(id, op) {
     return { success: true }
 }
 
+/** The active Super Admin members: they follow every new task by default (Settings → Tasks). */
+const superAdminIds = async () => (await prisma.crmStaff.findMany({ where: { admin: true, active: true }, select: { id: true } })).map((x) => x.id)
+
 export async function taskLookups() {
     const session = await requirePermission('tasks', 'view')
     const [staff, milestones] = await Promise.all([
@@ -484,7 +488,7 @@ export async function taskLookups() {
     const S = await readSettings([...NEW_TASK_KEYS, 'tasks_kanban_limit'])
     return {
         staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), milestones, me: await getStaffId(session),
-        defaults: { priority: S.num('default_task_priority', 2), status: await defaultTaskStatus(), billable: S.on('task_biillable_checked_on_creation'), assignMe: S.on('new_task_auto_assign_current_member'), followMe: S.on('new_task_auto_follower_current_member'), kanbanLimit: S.num('tasks_kanban_limit', 0) },
+        defaults: { priority: S.num('default_task_priority', 2), status: await defaultTaskStatus(), billable: S.on('task_biillable_checked_on_creation'), assignMe: S.on('new_task_auto_assign_current_member'), followMe: S.on('new_task_auto_follower_current_member'), followAdminIds: S.on('new_task_follow_super_admin') ? await superAdminIds() : [], kanbanLimit: S.num('tasks_kanban_limit', 0) },
     }
 }
 
@@ -556,10 +560,12 @@ export async function taskFromTemplate(templateId, body = {}) {
     const start = body.startDate ? new Date(body.startDate) : new Date(new Date().toISOString().slice(0, 10))
     const due = (n) => (n > 0 ? new Date(+start + n * 86400000) : null)
     const who = (Array.isArray(body.assigneeIds) && body.assigneeIds.length ? body.assigneeIds : a.staffId ? [a.staffId] : []).map(oid).filter(Boolean)
+    const watchers = (await readSettings(['new_task_follow_super_admin'])).on('new_task_follow_super_admin') ? await superAdminIds() : []
     const base = { relType: body.relType || null, relId: oid(body.relId), milestoneId: oid(body.milestoneId), isPublic: false, addedFrom: a.staffId, startDate: start }
     const make = async (data, checklist = []) => {
         const t = await prisma.crmTask.create({ data: { ...base, ...data } })
         for (const staffId of who) await prisma.crmTaskAssigned.create({ data: { taskId: t.id, staffId, assignedFrom: a.staffId } })
+        for (const staffId of watchers) if (!who.includes(staffId)) await prisma.crmTaskFollower.create({ data: { taskId: t.id, staffId } })
         for (const [i, d] of checklist.entries()) await prisma.crmTaskChecklistItem.create({ data: { taskId: t.id, description: d, listOrder: i + 1, addedFrom: a.staffId, finished: false } })
         return t
     }

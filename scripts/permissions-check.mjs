@@ -279,6 +279,18 @@ try {
     check('switch ON: every completed task is listed too', on.length === 3, JSON.stringify(on))
     const only5 = names(await tkc('GET', '/api/crm/work/tasks?status=5'))
     check('filtering on the Complete status shows the completed ones', only5.length === 2 && !only5.includes('zz open task'), JSON.stringify(only5))
+    {
+        const cr = await makeUser('task-defaults', { tasks: ['view_own', 'create', 'edit'] }); const crc = await login(cr)
+        const mk = await crc('POST', '/api/crm/work/tasks', { name: 'zz defaults task', status: 1 })
+        if (mk.body?.id) made.rows.unshift(['crmTask', mk.body.id])
+        const dt = mk.body?.id ? await crc('GET', `/api/crm/work/tasks/${mk.body.id}`) : null
+        const admins = (await prisma.crmStaff.findMany({ where: { admin: true, active: true }, select: { id: true } })).map((x) => x.id)
+        check('a new task is assigned to the person who creates it by default', dt?.body?.task?.assigneeIds?.includes(cr.staffId) ?? dt?.body?.assigneeIds?.includes(cr.staffId), JSON.stringify(dt?.body?.task?.assigneeIds || dt?.body?.assigneeIds))
+        const fl = dt?.body?.task?.followerIds || dt?.body?.followerIds || []
+        check('...and the Super Admin(s) follow it by default', admins.length > 0 && admins.every((i) => fl.includes(i)), `${admins.length} admin(s), followers ${fl.length}`)
+        const tl = await crc('GET', '/api/crm/work/tasks/lookups')
+        check('the New task form is pre-filled the same way (lookups give the Super Admin ids)', admins.every((i) => (tl.body?.defaults?.followAdminIds || []).includes(i)))
+    }
     const lm = await login(await makeUser('leadmail', { lead_mail: ['view'] }))
     check('Lead email integration view: can list mailboxes', (await lm('GET', '/api/crm/lead-mail')).status === 200)
     check('Lead email integration view only: cannot save a mailbox', (await lm('POST', '/api/crm/lead-mail', { action: 'save', data: { email: 'a@b.com' } })).status === 403)

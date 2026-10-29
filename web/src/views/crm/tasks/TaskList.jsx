@@ -124,7 +124,7 @@ const Mini = ({ icon, label, value, sub, tone, active, onClick }) => (
 const MINI_TONE = { blue: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20', red: 'bg-red-100 text-red-600 dark:bg-red-500/20', amber: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20', green: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20', violet: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20', teal: 'bg-teal-100 text-teal-600 dark:bg-teal-500/20', slate: 'bg-slate-100 text-slate-600 dark:bg-slate-500/20' }
 
 /** What a new task starts with, from Settings → Tasks. */
-const taskDefaults = (l) => (l.defaults ? { status: l.defaults.status, priority: l.defaults.priority, billable: l.defaults.billable, assigneeIds: l.defaults.assignMe && l.me ? [l.me] : [], followerIds: l.defaults.followMe && l.me ? [l.me] : [] } : {})
+const taskDefaults = (l) => (l.defaults ? { status: l.defaults.status, priority: l.defaults.priority, billable: l.defaults.billable, assigneeIds: l.defaults.assignMe && l.me ? [l.me] : [], followerIds: [...new Set([...(l.defaults.followMe && l.me ? [l.me] : []), ...(l.defaults.followAdminIds || [])])] } : {})
 
 /** "My tasks" and "Team tasks": the template's grouped task list, one group per project. */
 const TaskList = ({ projectId = null }) => {

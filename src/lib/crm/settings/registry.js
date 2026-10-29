@@ -332,8 +332,9 @@ export const GROUPS = {
         label: 'Tasks', icon: 'TbChecklist', desc: 'Defaults and timers',
         cards: [
             { title: 'New tasks', fields: [
-                yes('new_task_auto_assign_current_member', 'Assign the creator automatically'),
+                yes('new_task_auto_assign_current_member', 'Assign the creator automatically', { default: '1' }),
                 yes('new_task_auto_follower_current_member', 'Add the creator as a follower'),
+                yes('new_task_follow_super_admin', 'Add the Super Admin(s) as followers', { default: '1' }),
                 yes('task_biillable_checked_on_creation', 'Billable by default'),
                 sel('default_task_priority', 'Default priority', [['1', 'Low'], ['2', 'Medium'], ['3', 'High'], ['4', 'Urgent']], { default: '2' }),
             ] },

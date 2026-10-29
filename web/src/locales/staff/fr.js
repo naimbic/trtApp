@@ -2863,6 +2863,7 @@ export default {
     "Video meeting · click to open and join": "Réunion vidéo · cliquer pour ouvrir et rejoindre",
     "View": "Voir",
     "View all templates": "Voir tous les modèles",
+    "Add the Super Admin(s) as followers": "Ajouter le ou les Super Admin comme abonnés",
     "Role renamed": "Rôle renommé",
     "Choose files": "Choisir des fichiers",
     "Drop the receipt or invoice here or choose it. PDF or image, up to {mb} MB each.": "Déposez le reçu ou la facture ici, ou choisissez-le. PDF ou image, {mb} Mo maximum chacun.",

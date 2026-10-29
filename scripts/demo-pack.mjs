@@ -3,7 +3,9 @@
 //   node scripts/demo-pack.mjs
 // The same files can be downloaded from the "Demo tour" panel on dev.trtcrm.com (with the real timings of a recorded tour).
 import fs from 'node:fs'
-import { SCENES, plannedSeconds, WORDS_PER_SECOND } from '../web/src/demo/scenes.js'
+import { SCENES as TOUR, HOWTO, plannedSeconds, WORDS_PER_SECOND } from '../web/src/demo/scenes.js'
+
+const SCENES = [...TOUR, ...HOWTO]
 import { voiceoverText, promptText } from '../web/src/demo/exportPack.js'
 
 let t = 0

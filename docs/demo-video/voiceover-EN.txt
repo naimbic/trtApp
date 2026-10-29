@@ -91,5 +91,32 @@ A full activity log tells the administrator who did what and when, and notificat
 [06:47 - 07:06]  SCENE 30: Thank you  (19s, 39 words)
 That was trtCRM: one place to manage clients, sell, deliver and get paid, with a client area for your customers and full control for you. Ask for a live demo, and let us set it up for your agency.
 
+[07:06 - 07:29]  SCENE 31: How to add a client  (23s, 50 words)
+To add a client, open the new client form. Type the company name, the tax number, the industry and choose the currency this client pays in. Add the main contact with an email, and save. The client file is ready, with its own currency and bank account for every document.
+
+[07:29 - 08:02]  SCENE 32: How to create an invoice  (33s, 72 words)
+To create an invoice, start from a document you already have: open it and press Duplicate. The lines come with it. Choose the client, and the currency, the bank account and the language follow what you set on the client file, so nothing is typed twice. Change the lines if you need to, the totals are calculated for you, and save. You can also start from an empty form with New invoice.
+
+[08:02 - 08:24]  SCENE 33: How to add a lead  (22s, 47 words)
+To add a lead, press New lead. Give the name, the company and a way to reach them, say where the lead came from, and who is in charge. Add a line for what to do next, and the lead appears at the start of your pipeline.
+
+[08:24 - 08:44]  SCENE 34: How to move a lead  (20s, 42 words)
+To move a lead to the next stage, open the menu on its card and choose Move to, then the stage. You can also drag the card from one column to another. The history of the lead keeps track of every change.
+
+[08:44 - 09:04]  SCENE 35: How to follow a client  (20s, 41 words)
+To follow a client, open the client file and press Follow up. Write what you must remember, pick the date, and you get a reminder, by email too if you wish. Reminders show on the client file and on your dashboard.
+
+[09:04 - 09:24]  SCENE 36: How to record a payment  (20s, 41 words)
+To record a payment, open the invoice and press Record payment. The amount is already the balance due, so you only choose the payment method, add the transaction reference, and save. The invoice turns paid, and the client balance updates everywhere.
+
+[09:24 - 09:47]  SCENE 37: How to create a task  (23s, 50 words)
+To create a task, press New task. Say what needs to be done, choose the priority and the dates, link it to a client, a lead or a project, and create it. It is assigned to you by default and the administrator follows it, and you can add more people.
+
+[09:47 - 10:05]  SCENE 38: How to move a task  (18s, 38 words)
+To move a task, drag the card to another column, or open its menu and choose Move to. The status changes at once and everyone who follows the task is informed. A task marked complete leaves the board.
+
+[10:05 - 10:26]  SCENE 39: How to record an expense  (21s, 44 words)
+To record an expense, press New expense. Say what it was for, choose the category and the amount before tax, and add the client if you will bill it. Attach the receipt or the supplier invoice, as a PDF or an image, and save.
+
 [to add by hand at the end]  The client area (recorded by hand)  (about 16s)
 Your clients get their own space. They sign in, see their invoices and estimates, accept proposals, sign contracts, follow their projects and open support requests, all with your logo and in their own language.

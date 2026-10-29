@@ -302,6 +302,96 @@
       "end": 426,
       "seconds": 19,
       "voiceover": "That was trtCRM: one place to manage clients, sell, deliver and get paid, with a client area for your customers and full control for you. Ask for a live demo, and let us set it up for your agency."
+    },
+    {
+      "n": 31,
+      "id": "how-client",
+      "title": "How to add a client",
+      "page": "/crm/clients/new",
+      "start": 426,
+      "end": 449,
+      "seconds": 23,
+      "voiceover": "To add a client, open the new client form. Type the company name, the tax number, the industry and choose the currency this client pays in. Add the main contact with an email, and save. The client file is ready, with its own currency and bank account for every document."
+    },
+    {
+      "n": 32,
+      "id": "how-invoice",
+      "title": "How to create an invoice",
+      "page": "/crm/invoices",
+      "start": 449,
+      "end": 482,
+      "seconds": 33,
+      "voiceover": "To create an invoice, start from a document you already have: open it and press Duplicate. The lines come with it. Choose the client, and the currency, the bank account and the language follow what you set on the client file, so nothing is typed twice. Change the lines if you need to, the totals are calculated for you, and save. You can also start from an empty form with New invoice."
+    },
+    {
+      "n": 33,
+      "id": "how-lead",
+      "title": "How to add a lead",
+      "page": "/crm/leads",
+      "start": 482,
+      "end": 504,
+      "seconds": 22,
+      "voiceover": "To add a lead, press New lead. Give the name, the company and a way to reach them, say where the lead came from, and who is in charge. Add a line for what to do next, and the lead appears at the start of your pipeline."
+    },
+    {
+      "n": 34,
+      "id": "how-move",
+      "title": "How to move a lead",
+      "page": "/crm/leads",
+      "start": 504,
+      "end": 524,
+      "seconds": 20,
+      "voiceover": "To move a lead to the next stage, open the menu on its card and choose Move to, then the stage. You can also drag the card from one column to another. The history of the lead keeps track of every change."
+    },
+    {
+      "n": 35,
+      "id": "how-follow",
+      "title": "How to follow a client",
+      "page": "/crm/clients",
+      "start": 524,
+      "end": 544,
+      "seconds": 20,
+      "voiceover": "To follow a client, open the client file and press Follow up. Write what you must remember, pick the date, and you get a reminder, by email too if you wish. Reminders show on the client file and on your dashboard."
+    },
+    {
+      "n": 36,
+      "id": "how-pay",
+      "title": "How to record a payment",
+      "page": "*",
+      "start": 544,
+      "end": 564,
+      "seconds": 20,
+      "voiceover": "To record a payment, open the invoice and press Record payment. The amount is already the balance due, so you only choose the payment method, add the transaction reference, and save. The invoice turns paid, and the client balance updates everywhere."
+    },
+    {
+      "n": 37,
+      "id": "how-task",
+      "title": "How to create a task",
+      "page": "/crm/tasks",
+      "start": 564,
+      "end": 587,
+      "seconds": 23,
+      "voiceover": "To create a task, press New task. Say what needs to be done, choose the priority and the dates, link it to a client, a lead or a project, and create it. It is assigned to you by default and the administrator follows it, and you can add more people."
+    },
+    {
+      "n": 38,
+      "id": "how-task-move",
+      "title": "How to move a task",
+      "page": "/crm/tasks",
+      "start": 587,
+      "end": 605,
+      "seconds": 18,
+      "voiceover": "To move a task, drag the card to another column, or open its menu and choose Move to. The status changes at once and everyone who follows the task is informed. A task marked complete leaves the board."
+    },
+    {
+      "n": 39,
+      "id": "how-expense",
+      "title": "How to record an expense",
+      "page": "/crm/expenses",
+      "start": 605,
+      "end": 626,
+      "seconds": 21,
+      "voiceover": "To record an expense, press New expense. Say what it was for, choose the category and the amount before tax, and add the client if you will bill it. Attach the receipt or the supplier invoice, as a PDF or an image, and save."
     }
   ]
 }

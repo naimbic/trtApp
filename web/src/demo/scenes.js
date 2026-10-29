@@ -162,6 +162,80 @@ export const SCENES = [
     },
 ]
 
+// ---- How-to scenes: the cursor really does the work (creates, moves, follows, pays) with records named "Demo ...".
+// They write data, so they are meant for the demo database of dev.trtcrm.com. The panel can delete everything it created.
+export const HOWTO = [
+    {
+        id: 'how-client', how: true, title: 'How to add a client', path: '/crm/clients/new',
+        say: 'To add a client, open the new client form. Type the company name, the tax number, the industry and choose the currency this client pays in. Add the main contact with an email, and save. The client file is ready, with its own currency and bank account for every document.',
+        steps: [
+            { wait: 1000 }, { fill: ['label:Company name', 'Demo Atlas Studio'] }, { fill: ['label:VAT / ICE', '001234567000089'] }, { fill: ['label:Industry', 'Web agency'] },
+            { choose: ['label:Default currency', 'MAD'] }, { fill: ['label:First name', 'Sara'] }, { fill: ['label:Last name', 'Bennani'] }, { fill: ['label:Email', 'sara@atlas-studio.demo'] },
+            { wait: 600 }, { click: 'text:Create client' }, { wait: 2500 },
+        ],
+    },
+    {
+        id: 'how-invoice', how: true, title: 'How to create an invoice', path: '/crm/invoices',
+        say: 'To create an invoice, start from a document you already have: open it and press Duplicate. The lines come with it. Choose the client, and the currency, the bank account and the language follow what you set on the client file, so nothing is typed twice. Change the lines if you need to, the totals are calculated for you, and save. You can also start from an empty form with New invoice.',
+        steps: [
+            { wait: 1500 }, { click: 'tbody tr' }, { wait: 2600 }, { move: 'text:Print' }, { wait: 600 }, { move: 'text:PDF' }, { wait: 600 }, { click: 'text:Duplicate' }, { wait: 3500 },
+            { choose: ['label:Client', 'Demo Atlas'] }, { wait: 4000 }, { move: 'text:Add line' }, { wait: 800 }, { click: 'text:Save' }, { wait: 3500 },
+        ],
+    },
+    {
+        id: 'how-lead', how: true, title: 'How to add a lead', path: '/crm/leads',
+        say: 'To add a lead, press New lead. Give the name, the company and a way to reach them, say where the lead came from, and who is in charge. Add a line for what to do next, and the lead appears at the start of your pipeline.',
+        steps: [
+            { wait: 1200 }, { click: 'text:New lead' }, { wait: 1800 }, { choose: ['label:Source', ''] }, { choose: ['label:Assigned to', ''] },
+            { fill: ['label:Name', 'Demo Karim Alaoui'] }, { fill: ['label:DO:', 'Send the quote tomorrow'] }, { fill: ['label:Email', 'karim@alaoui-demo.ma'] }, { fill: ['label:Phone', '+212 600 000 000'] }, { fill: ['label:Company', 'Demo Alaoui Studio'] },
+            { wait: 600 }, { click: 'text:Create lead' }, { wait: 2200 },
+        ],
+    },
+    {
+        id: 'how-move', how: true, title: 'How to move a lead', path: '/crm/leads',
+        say: 'To move a lead to the next stage, open the menu on its card and choose Move to, then the stage. You can also drag the card from one column to another. The history of the lead keeps track of every change.',
+        steps: [
+            { wait: 1500 }, { click: 'Demo Karim Alaoui => .rp-face-more' }, { wait: 700 }, { click: 'text:Move to…' }, { wait: 700 }, { click: 'text:Qualified' }, { wait: 2000 }, { move: 'Demo Karim Alaoui => .rp-face-title' }, { wait: 800 },
+        ],
+    },
+    {
+        id: 'how-follow', how: true, title: 'How to follow a client', path: '/crm/clients',
+        say: 'To follow a client, open the client file and press Follow up. Write what you must remember, pick the date, and you get a reminder, by email too if you wish. Reminders show on the client file and on your dashboard.',
+        steps: [
+            { wait: 1000 }, { fill: ['ph:Search', 'Demo Atlas'] }, { wait: 2200 }, { click: '.cx-card' }, { wait: 2600 }, { click: 'text:Follow up' }, { wait: 1200 },
+            { fill: ['ph:What should you remember', 'Call Sara about the new website brief'] }, { wait: 800 }, { click: 'text:Set reminder' }, { wait: 2000 },
+        ],
+    },
+    {
+        id: 'how-pay', how: true, title: 'How to record a payment', path: '*',
+        say: 'To record a payment, open the invoice and press Record payment. The amount is already the balance due, so you only choose the payment method, add the transaction reference, and save. The invoice turns paid, and the client balance updates everywhere.',
+        steps: [{ wait: 1200 }, { click: 'text:Record payment' }, { wait: 1500 }, { choose: ['label:Payment mode', ''] }, { fill: ['label:Transaction id', 'VIR-2026-0042'] }, { wait: 700 }, { click: 'text:Save' }, { wait: 2800 }],
+    },
+    {
+        id: 'how-task', how: true, title: 'How to create a task', path: '/crm/tasks',
+        say: 'To create a task, press New task. Say what needs to be done, choose the priority and the dates, link it to a client, a lead or a project, and create it. It is assigned to you by default and the administrator follows it, and you can add more people.',
+        steps: [
+            { wait: 1200 }, { click: 'text:New task' }, { wait: 1800 }, { fill: ['ph:What needs to be done', 'Demo Prepare the website brief'] }, { choose: ['label:Priority', 'High'] },
+            { choose: ['label:Related to', 'Client'] }, { wait: 1800 }, { choose: ['label:Record', 'Demo Atlas'] }, { wait: 600 }, { click: 'text:Create task' }, { wait: 2500 },
+        ],
+    },
+    {
+        id: 'how-task-move', how: true, title: 'How to move a task', path: '/crm/tasks',
+        say: 'To move a task, drag the card to another column, or open its menu and choose Move to. The status changes at once and everyone who follows the task is informed. A task marked complete leaves the board.',
+        steps: [
+            { wait: 1500 }, { click: 'Demo Prepare => .rp-face-more' }, { wait: 700 }, { click: 'text:Move to…' }, { wait: 700 }, { click: 'text:In progress' }, { wait: 2000 }, { move: 'Demo Prepare => .rp-face-title' }, { wait: 800 },
+        ],
+    },
+    {
+        id: 'how-expense', how: true, title: 'How to record an expense', path: '/crm/expenses',
+        say: 'To record an expense, press New expense. Say what it was for, choose the category and the amount before tax, and add the client if you will bill it. Attach the receipt or the supplier invoice, as a PDF or an image, and save.',
+        steps: [
+            { wait: 1200 }, { click: 'text:New expense' }, { wait: 1800 }, { fill: ['ph:What was it for', 'Demo Hosting renewal'] }, { choose: ['label:Category', ''] }, { fill: ['label:Amount (before tax)', '1200'] },
+            { choose: ['label:Client', 'Demo Atlas'] }, { move: 'text:Choose files' }, { wait: 900 }, { click: 'text:Add expense' }, { wait: 2500 },
+        ],
+    },
+]
+
 /** Words per second of a calm voiceover, used to size every scene so the narration fits. */
 export const WORDS_PER_SECOND = 2.3
 export const wordsOf = (t) => String(t || '').trim().split(/\s+/).filter(Boolean).length

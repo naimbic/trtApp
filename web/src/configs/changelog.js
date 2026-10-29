@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.119.0',
+        date: '2026-10-29',
+        title: 'Demo tour: how-to scenes that really do the work',
+        items: [
+            'New "writes" scenes in the Demo tour (dev only): how to add a client, create an invoice (duplicate, choose the client, save), record a payment, add a lead and move it between stages, follow a client with a reminder, create and move a task, and record an expense. The cursor types, picks from the lists and saves for real, with records named "Demo ...".',
+            'The panel can run only the tour, only the how-to scenes, or both, and has a "Delete demo records" button that removes everything the how-to scenes created (tasks, expenses, invoices with their payments, leads, clients).',
+            'The voiceover pack now includes the how-to scenes.',
+        ],
+    },
+    {
         version: '0.118.0',
         date: '2026-10-29',
         title: 'Demo tour for the presentation video (dev only)',

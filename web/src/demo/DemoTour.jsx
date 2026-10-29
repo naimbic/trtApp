@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { SCENES, plannedSeconds, wordsOf } from './scenes.js'
+import { SCENES as TOUR, HOWTO, plannedSeconds, wordsOf } from './scenes.js'
+
+const SCENES = [...TOUR, ...HOWTO]
 import { downloadPack, saveRun, loadRun } from './exportPack'
 
 /**
@@ -11,28 +13,89 @@ import { downloadPack, saveRun, loadRun } from './exportPack'
 export const demoAllowed = () => /^(dev\.trtcrm\.com|localhost|127\.0\.0\.1)$/.test(window.location.hostname)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
-const visible = (el) => { const r = el.getBoundingClientRect(); return r.width > 4 && r.height > 4 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth }
+// rendered (not hidden); a control below the fold counts, the tour scrolls it into view
+const inView = (el) => { const r = el.getBoundingClientRect(); return r.width > 40 && r.height > 40 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth && getComputedStyle(el).visibility !== 'hidden' }
+const visible = (el) => { const r = el.getBoundingClientRect(); return r.width > 4 && r.height > 4 && getComputedStyle(el).visibility !== 'hidden' }
 
 /** The element a step points at: a CSS selector, or 'text:Label' for the visible control showing that text. */
 function find(target) {
     if (!target) return null
     // while a popup is open the tour works inside it (the "Tasks" tab of a lead, not the "Tasks" entry of the menu)
-    const pops = [...document.querySelectorAll('[role=dialog]')].filter((d) => visible(d))
+    const pops = [...document.querySelectorAll('[role=dialog]')].filter((d) => inView(d))
     const scope = pops[pops.length - 1] || document
     try {
+        if (target.includes(' => ')) { // a record row or card holding some text, then something inside it
+            const [txt, inner] = target.split(' => ')
+            const row = [...document.querySelectorAll('.rp-face, tbody tr, .cx-card, article, li')].filter(visible).find((r) => (r.textContent || '').toLowerCase().includes(txt.trim().toLowerCase()))
+            return row ? ([...row.querySelectorAll(inner)].find(visible) || null) : null
+        }
         if (target.startsWith('text:')) {
             const q = target.slice(5).trim().toLowerCase()
             const list = [...scope.querySelectorAll('a, button, [role=button], [role=tab], [role=menuitem], summary, label, h1, h2, h3, li, span')]
                 .filter((el) => visible(el) && !el.closest('[data-demo-ui]'))
                 .map((el) => ({ el, t: (el.textContent || '').trim().toLowerCase() }))
                 .filter((x) => x.t === q || (x.t.includes(q) && x.t.length < q.length + 14))
-            list.sort((a, b) => (a.t === q ? 0 : 1) - (b.t === q ? 0 : 1) || a.t.length - b.t.length)
+            const menu = (e) => (e.matches('[role=menuitem], [role=option], .rp-tm-row') || e.closest('[role=menu], .rp-tm') ? 0 : 1) // an open menu wins over a heading with the same word
+            list.sort((a, b) => menu(a.el) - menu(b.el) || (a.t === q ? 0 : 1) - (b.t === q ? 0 : 1) || a.t.length - b.t.length)
             return list[0]?.el || null
         }
         return [...scope.querySelectorAll(target)].find((el) => visible(el) && !el.closest('[data-demo-ui]')) || null
     } catch { return null }
 }
+/** A form field by its label ('label:Company name') or placeholder ('ph:Search'): the input, textarea or select beside the label. */
+function field(spec) {
+    const pops = [...document.querySelectorAll('[role=dialog]')].filter((d) => inView(d))
+    const scope = pops[pops.length - 1] || document
+    const strip = (t) => String(t || '').replace(/[*:]/g, '').trim().toLowerCase()
+    if (spec.startsWith('card:')) { // the drop-down list inside the card with this title ('card:Items': the item picker of a document)
+        const t = spec.slice(5).trim().toLowerCase()
+        const head = [...scope.querySelectorAll('h1, h2, h3, h4, h5, h6')].find((e) => visible(e) && (e.textContent || '').trim().toLowerCase() === t)
+        const card = head && (head.closest('.card') || head.parentElement?.parentElement)
+        return (card && [...card.querySelectorAll('.select__input, [class*=select__input]')].find((e) => e.tagName === 'INPUT' && visible(e.closest('[class*=control]') || e))) || null
+    }
+    if (spec === 'row:qty' || spec === 'row:rate') { // the quantity / price on the same line as the description field
+        const d = [...scope.querySelectorAll('textarea')].find((e) => visible(e) && (e.placeholder || '').toLowerCase() === 'description')
+        if (!d) return null
+        const top = d.getBoundingClientRect().top
+        const nums = [...scope.querySelectorAll('input[type=number]')].filter((e) => visible(e) && Math.abs(e.getBoundingClientRect().top - top) < 14).sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)
+        return spec === 'row:qty' ? nums[0] || null : nums[1] || null
+    }
+    if (spec.startsWith('css:')) { const [sel, n] = spec.slice(4).split('|'); return [...scope.querySelectorAll(sel)].filter(visible)[Number(n || 0)] || null }
+    if (spec.startsWith('ph:')) { const q = spec.slice(3).toLowerCase(); return [...scope.querySelectorAll('input, textarea')].find((el) => visible(el) && (el.placeholder || '').toLowerCase().includes(q)) || null }
+    const q = strip(spec.replace(/^label:/, ''))
+    const labels = [...scope.querySelectorAll('label')].filter((l) => strip(l.textContent) === q)
+    const FIELD = 'input:not([type=checkbox]):not([type=radio]):not([type=hidden]), textarea, select'
+    for (const l of labels) {
+        let box = l.parentElement
+        for (let i = 0; i < 4 && box; i++, box = box.parentElement) {
+            // the first field AFTER the label, with no other label in between
+            const all = [...box.querySelectorAll(`label, ${FIELD}`)]
+            const at = all.indexOf(l)
+            const next = all.slice(at + 1).find((n) => !n.matches('label'))
+            const between = all.slice(at + 1, next ? all.indexOf(next) : 0).some((n) => n.matches('label'))
+            if (at >= 0 && next && !between && visible(next.closest('[class*=control]') || next)) return next
+        }
+    }
+    return null
+}
+const setNative = (el, v) => { const set = Object.getOwnPropertyDescriptor(el.constructor.prototype, 'value')?.set; set?.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })) }
+const waitField = async (spec, ms = 14000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const el = field(spec); if (el) return el; await sleep(150) } return null }
+
 const waitFor = async (target, ms = 4000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const el = find(target); if (el) return el; await sleep(150) } return null }
+
+/** Deletes what the how-to scenes created (everything named "Demo ..."). Tasks, expenses, invoices, leads, then clients. */
+async function removeDemoData() {
+    const j = async (url, opt) => { const r = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...opt }); return r.ok ? r.json().catch(() => ({})) : null }
+    const isDemo = (t) => /^demo\b/i.test(String(t || '').trim())
+    let n = 0
+    const del = async (url) => { if (await j(url, { method: 'DELETE' })) n++ }
+    for (const t of (await j('/api/crm/work/tasks?done=1'))?.list || []) if (isDemo(t.name)) await del(`/api/crm/work/tasks/${t.id}`)
+    for (const e of (await j('/api/crm/sales/expenses?pageSize=200'))?.list || []) if (isDemo(e.name)) await del(`/api/crm/sales/expenses/${e.id}`)
+    for (const i of (await j('/api/crm/sales/invoices?pageSize=200'))?.list || []) if (isDemo(i.client)) await del(`/api/crm/sales/invoices/${i.id}?force=1`) // an administrator deletes it together with its payments
+    for (const st of (await j('/api/crm/pipeline/leads'))?.statuses || []) for (const l of st.leads || []) if (isDemo(l.name)) await del(`/api/crm/pipeline/leads/${l.id}`)
+    for (const c of (await j('/api/crm/customers?pageSize=200&query=Demo'))?.list || []) if (isDemo(c.company)) await del(`/api/crm/customers/${c.id}`)
+    return n
+}
 
 const DemoTour = () => {
     const nav = useNavigate()
@@ -77,6 +140,7 @@ const DemoTour = () => {
     }
 
     const runStep = async (st) => {
+        if (st.unless && (field(st.unless) || (!st.unless.startsWith('ph:') && !st.unless.startsWith('label:') && find(st.unless)))) return // already there: nothing to do
         if (st.wait) await sleep(st.wait / pace)
         else if (st.scroll !== undefined) {
             window.scrollTo({ top: st.scroll === 'top' ? 0 : window.scrollY + st.scroll, behavior: 'smooth' })
@@ -84,10 +148,48 @@ const DemoTour = () => {
         } else if (st.key) {
             document.dispatchEvent(new KeyboardEvent('keydown', { key: st.key, bubbles: true }))
             await sleep(500)
+        } else if (st.fill || st.choose || st.press) {
+            if (st.press) { (document.activeElement || document.body).dispatchEvent(new KeyboardEvent('keydown', { key: st.press, code: st.press, bubbles: true })); await sleep(500 / pace); return }
+            const [spec, text] = st.fill || st.choose
+            const el = await waitField(spec)
+            if (!el) { console.info('[demo] field not found:', spec, 'textareas:', [...document.querySelectorAll('textarea')].map((t) => (t.getAttribute('placeholder') || '-') + '/' + (t.getBoundingClientRect().width | 0)).join(','), 'path:', window.location.pathname, 'dialogs in view:', [...document.querySelectorAll('[role=dialog]')].filter(inView).map((d) => d.className.toString().slice(0, 40) + '|' + d.getAttribute('aria-label'))); return }
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+            await sleep(400)
+            const [x, y] = center(el.closest('[class*=control]') || el)
+            await glide(x, y)
+            await clickFx()
+            if (st.fill) {
+                // a form that is still loading may reset a field after it was typed: look again and retype (twice at most)
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    const f = attempt ? field(spec) : el
+                    if (!f) break
+                    f.focus()
+                    setNative(f, '')
+                    for (let i = 1; i <= text.length; i++) { setNative(f, text.slice(0, i)); await sleep(55 / pace) }
+                    await sleep(900)
+                    if (field(spec)?.value === text) break
+                }
+            } else {
+                // a drop-down list: open it, type to narrow it, then click the option
+                const ctl = el.closest('[class*=control]') || el
+                ctl.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); el.focus()
+                await sleep(450 / pace)
+                for (let i = 1; i <= text.length; i++) { setNative(el, text.slice(0, i)); await sleep(60 / pace) }
+                if (!text) el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', code: 'ArrowDown', bubbles: true })) // no text to type: open the list with the keyboard
+                let opt = null
+                for (let w = 0; w < 25 && !opt; w++) { // the list appears with its animation: wait for it
+                    await sleep(160)
+                    const all = [...document.querySelectorAll('[class*=option], [role=option]')].filter(visible)
+                    opt = all.find((o) => (o.textContent || '').trim().toLowerCase().includes(text.toLowerCase())) || (text ? null : all[0]) || null
+                }
+                if (opt) { const [ox, oy] = center(opt); await glide(ox, oy); await clickFx(); opt.click() }
+                await sleep(400 / pace)
+            }
+            await sleep(250 / pace)
         } else if (st.move || st.click || st.type) {
             const target = st.move || st.click || st.type[0]
             const el = await waitFor(target, 3500)
-            if (!el) return
+            if (!el) { console.info('[demo] target not found:', target); return }
             el.scrollIntoView({ block: 'center', behavior: 'smooth' })
             await sleep(450)
             const [x, y] = center(el)
@@ -103,7 +205,7 @@ const DemoTour = () => {
     }
 
     const goTo = async (path) => {
-        if (pathRef.current === path) return
+        if (path === '*' || pathRef.current === path) return // '*' = stay on the page the previous scene ended on
         const link = document.querySelector(`a[href="${path}"]`)
         // the dot visits the menu entry of the page (menu entries open sub-menus, so the page itself is opened by the router)
         if (link && visible(link) && !link.closest('[data-demo-ui]')) { const [x, y] = center(link); await glide(x, y); await clickFx() }
@@ -221,6 +323,8 @@ const DemoTour = () => {
                         <div className="mb-2 flex flex-wrap gap-2 text-xs">
                             <button type="button" className="underline" onClick={() => setPicked(new Set(SCENES.map((s) => s.id)))}>All</button>
                             <button type="button" className="underline" onClick={() => setPicked(new Set())}>None</button>
+                            <button type="button" className="underline" onClick={() => setPicked(new Set(TOUR.map((s) => s.id)))}>Tour only</button>
+                            <button type="button" className="underline" onClick={() => setPicked(new Set(HOWTO.map((s) => s.id)))}>How-to only</button>
                             <label className="ml-auto flex items-center gap-1.5"><input type="checkbox" checked={subs} onChange={(e) => setSubs(e.target.checked)} />Subtitles in the video</label>
                             <label className="flex items-center gap-1.5">Pace
                                 <select value={pace} onChange={(e) => setPace(Number(e.target.value))} className="rounded border border-gray-300 px-1 py-0.5">
@@ -233,7 +337,7 @@ const DemoTour = () => {
                                 <li key={s.id}>
                                     <label className="flex cursor-pointer items-start gap-2 py-1.5 text-sm">
                                         <input type="checkbox" className="mt-1" checked={picked.has(s.id)} onChange={() => toggle(s.id)} />
-                                        <span className="min-w-0 flex-1"><b>{i + 1}. {s.title}</b> <span className="text-xs text-gray-400">{plannedSeconds(s)}s · {wordsOf(s.say)} words</span>
+                                        <span className="min-w-0 flex-1"><b>{i + 1}. {s.title}</b>{s.how && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] font-bold text-amber-700">writes</span>} <span className="text-xs text-gray-400">{plannedSeconds(s)}s · {wordsOf(s.say)} words</span>
                                             <span className="block truncate text-xs text-gray-500">{s.say}</span></span>
                                     </label>
                                 </li>
@@ -247,6 +351,7 @@ const DemoTour = () => {
                             <button type="button" className={`${btn} border border-gray-300 hover:bg-gray-50`} disabled={!picked.size} onClick={() => play(false)}>▶ Rehearse (no recording)</button>
                         </div>
                         <div className="flex flex-wrap gap-2">
+                            <button type="button" className={`${btn} border border-amber-300 text-amber-800 hover:bg-amber-50`} onClick={async () => { setStatus('Removing the demo records…'); const n = await removeDemoData(); setStatus(`${n} demo record(s) removed.`) }}>Delete demo records</button>
                             <button type="button" className={`${btn} bg-gray-900 text-white hover:bg-black`} onClick={() => downloadPack(SCENES.filter((s) => picked.has(s.id)), last)}>Download the voiceover pack</button>
                         </div>
                         <p className="mt-2 text-[11px] leading-snug text-gray-500">Recording: pick "This tab" in the browser dialog, use a full-screen window (F11) and a 16:9 size for the best video. Esc stops the tour. The pack has the English voiceover, the scene list with timings and the prompt for the AI (Arabic first, then French).</p>

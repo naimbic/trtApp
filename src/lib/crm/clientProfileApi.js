@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { scope } from '@/lib/crm/clientsApi'
+import { portalAccess } from '@/lib/portal/auth'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { numberFormatter as proposalNumber } from '@/lib/crm/proposalDoc'
 import { round2 } from '@/lib/crm/sales/calc'
@@ -152,11 +153,12 @@ export async function clientProfile(id, { full = false } = {}) {
         tasks: { open: openTasks.length, done: tasks.length - openTasks.length },
     }
 
+    const access = await portalAccess(c, contacts)
     return {
         lead, journey, attention, engagement, timeline,
         charts: { invoiceStatus, docs },
         lastLogin: lastLogin ? { name: name(lastLogin), ip: lastLogin.lastIp, date: lastLogin.lastLogin } : null,
-        contacts: contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active, portal: !!x.passwordHash })),
+        contacts: contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active, portal: !!x.passwordHash, access: access[x.id] })),
         reminders: reminders.map((r) => ({ id: r.id, description: r.description || '', date: r.date, done: !!r.isNotified, staff: sName[r.staffId] || null })),
         stats: { openTasks: openTasks.length, openTickets: openTickets.length, overdueInvoices: overdue.length, unpaidInvoices: unpaid.length },
         can: { note: can('customers', 'edit'), reminder: can('customers', 'edit') },

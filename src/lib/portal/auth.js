@@ -14,6 +14,8 @@ const sha = (t) => crypto.createHash('sha256').update(t).digest('hex')
 const RESET_TTL = 60 * 60 * 1000
 const INVITE_TTL = 7 * 24 * 3600 * 1000
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '')
+/** Active contacts with this email, whatever the case and even if stray spaces were saved around the address (an exact filter would miss those). */
+const contactsByEmail = async (e) => (await prisma.crmContact.findMany({ where: { email: { contains: e, mode: 'insensitive' }, active: true } })).filter((c) => String(c.email || '').trim().toLowerCase() === e)
 const key = (e) => `portal:${String(e || '').trim().toLowerCase()}`
 
 export async function portalLogin(email, password, request) {
@@ -21,7 +23,7 @@ export async function portalLogin(email, password, request) {
     if (!emailOk(e) || !password) throw httpError('Enter your email and password')
     const lock = await lockState(key(e))
     if (lock.locked) throw httpError(`Too many attempts. Try again in ${Math.ceil(lock.remainingMs / 60000)} minutes.`, 429)
-    const contacts = await prisma.crmContact.findMany({ where: { email: { equals: e, mode: 'insensitive' }, active: true } })
+    const contacts = await contactsByEmail(e)
     let hit = null
     for (const c of contacts) if (c.passwordHash && (await bcrypt.compare(String(password), c.passwordHash))) { hit = c; break }
     const client = hit ? await prisma.crmClient.findUnique({ where: { id: hit.clientId }, select: { active: true } }) : null
@@ -42,10 +44,10 @@ export async function requestReset(email) {
     const e = String(email || '').trim().toLowerCase()
     if (!emailOk(e)) throw httpError('Enter a valid email address')
     if (await rateLimited('portal-reset', e, 3, 60 * 60 * 1000)) return { success: true } // same answer, no hint
-    const c = await prisma.crmContact.findFirst({ where: { email: { equals: e, mode: 'insensitive' }, active: true } })
+    const c = (await contactsByEmail(e))[0]
     if (c) {
         const raw = await issueKey(c)
-        await sendTemplate({ slug: 'contact-forgot-password', to: c.email, data: { reset_password_url: `${publicBase()}/portal/set-password?key=${raw}`, contact_email: c.email, contact_firstname: c.firstName || '', contact_lastname: c.lastName || '' }, relType: 'contact', relId: c.id })
+        await sendTemplate({ slug: 'contact-forgot-password', to: String(c.email).trim(), data: { reset_password_url: `${publicBase()}/portal/set-password?key=${raw}`, contact_email: c.email, contact_firstname: c.firstName || '', contact_lastname: c.lastName || '' }, relType: 'contact', relId: c.id })
     }
     return { success: true }
 }
@@ -84,11 +86,11 @@ export async function inviteContact(clientId, contactId) {
     await requirePermission('customers', 'edit')
     const c = await prisma.crmContact.findFirst({ where: { id: contactId, clientId } })
     if (!c) throw httpError('Contact not found', 404)
-    if (!emailOk(c.email)) throw httpError('This contact has no valid email address')
+    if (!emailOk(String(c.email || '').trim())) throw httpError('This contact has no valid email address')
     if (!c.active) throw httpError('This contact is inactive')
     const raw = await issueKey(c)
     const link = `${publicBase()}/portal/set-password?key=${raw}`
-    const res = await sendTemplate({ slug: 'contact-set-password', to: c.email, data: { set_password_url: link, contact_email: c.email, contact_firstname: c.firstName || '', contact_lastname: c.lastName || '' }, relType: 'contact', relId: c.id })
+    const res = await sendTemplate({ slug: 'contact-set-password', to: String(c.email).trim(), data: { set_password_url: link, contact_email: c.email, contact_firstname: c.firstName || '', contact_lastname: c.lastName || '' }, relType: 'contact', relId: c.id })
     return { success: true, sent: !!res.sent, error: res.error || null, link: res.sent ? null : link, email: c.email, expires: c.passwordHash ? '1 hour' : '7 days' }
 }
 
@@ -113,4 +115,31 @@ export async function previewAsContact(clientId, contactId) {
     if (!c.active) throw httpError('This contact is inactive')
     try { await prisma.crmActivityLog.create({ data: { description: `Opened the client area as ${[c.firstName, c.lastName].filter(Boolean).join(' ') || c.email} (login as)`, staffId: await getStaffId(session) } }) } catch { /* auditing must never break the preview */ }
     return { value: sign(c, { preview: true }), name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email }
+}
+
+/** For the client page: can each contact sign in to the client area right now, and if not, why (the same checks as the sign-in). */
+export async function portalAccess(client, contacts) {
+    const locks = await prisma.loginAttempt.findMany({ where: { key: { in: contacts.map((c) => key(c.email)) } } })
+    const lockOf = Object.fromEntries(locks.map((l) => [l.key, l]))
+    return Object.fromEntries(contacts.map((c) => {
+        const reasons = []
+        if (client?.active !== true) reasons.push('The client is not active')
+        if (c.active !== true) reasons.push('The contact is not active')
+        if (!emailOk(String(c.email || '').trim())) reasons.push('The contact has no valid email address')
+        if (!c.passwordHash) reasons.push('No client area password yet')
+        const l = lockOf[key(c.email)]
+        const locked = !!(l?.lockedUntil && l.lockedUntil > new Date())
+        if (locked) reasons.push('Locked after too many wrong passwords')
+        return [c.id, { ok: !reasons.length, reasons, locked, lockedUntil: locked ? l.lockedUntil : null, failures: l?.count || 0 }]
+    }))
+}
+
+/** Staff: clear the "too many attempts" lock of a contact. */
+export async function unlockContact(clientId, contactId) {
+    await requirePermission('customers', 'edit')
+    if (!/^[a-f0-9]{24}$/i.test(String(contactId || '')) || !/^[a-f0-9]{24}$/i.test(String(clientId || ''))) throw httpError('Contact not found', 404)
+    const c = await prisma.crmContact.findFirst({ where: { id: contactId, clientId } })
+    if (!c) throw httpError('Contact not found', 404)
+    await clearFailures(key(c.email))
+    return { success: true }
 }

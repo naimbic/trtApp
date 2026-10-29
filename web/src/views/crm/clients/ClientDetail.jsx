@@ -168,6 +168,9 @@ const ClientDetail = () => {
             setPwFor(null); setPw(''); loadProfile()
         } catch (e) { notify('danger', e.message) } finally { setPwBusy(false) }
     }
+    const unlock = async (k) => {
+        try { await api(`/api/crm/customers/${id}/portal-unlock`, { method: 'POST', body: { contactId: k.id } }); notify('success', tr("Unlocked: {name} can try again", { name: k.name })); loadProfile() } catch (e) { notify('danger', e.message) }
+    }
     const invite = async (k) => {
         try {
             const r = await api(`/api/crm/customers/${id}/portal-invite`, { method: 'POST', body: { contactId: k.id } })
@@ -203,7 +206,7 @@ const ClientDetail = () => {
         project: () => setProjectDialog(true),
         remove: () => setConfirmDel(true),
         openAsClient, invite,
-        setPassword: (k) => { setPwFor(k); setPw('') },
+        setPassword: (k) => { setPwFor(k); setPw('') }, unlock,
         manageContacts: () => setTab('contacts'),
         logoChanged: (url) => setC((x) => ({ ...x, logoUrl: url })),
     }

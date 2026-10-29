@@ -1515,5 +1515,14 @@
  "larger than {mb} MB",
  "this type of file is not allowed here",
  "Role renamed",
- "Add the Super Admin(s) as followers"
+ "Add the Super Admin(s) as followers",
+ "Can sign in to the client area",
+ "Cannot sign in",
+ "The client is not active",
+ "The contact is not active",
+ "The contact has no valid email address",
+ "No client area password yet",
+ "Locked after too many wrong passwords",
+ "Unlock",
+ "Unlocked: {name} can try again"
 ]

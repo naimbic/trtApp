@@ -115,6 +115,12 @@ export const ClientContactsCard = ({ c, profile, can, a }) => {
                                 <div className="flex items-center gap-2 text-sm font-bold"><span className="truncate">{k.name}</span>{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">{tr("Primary")}</Tag>}{!k.active && <Tag>{tr("Inactive")}</Tag>}</div>
                                 <div className="truncate text-xs" style={{ color: 'var(--rp-muted)' }}>{[k.title, k.email, k.phone].filter(Boolean).join(' · ')}</div>
                                 {pk?.lastLogin && <div className="mt-0.5 flex items-center gap-1 text-[11px]" style={{ color: 'var(--rp-muted)' }}><TbLogin />{tr("Last login")} {dayjs(pk.lastLogin).format('DD MMM YYYY, HH:mm')}</div>}
+                                {pk?.access && (
+                                    <div className={`mt-1.5 flex flex-wrap items-center gap-1.5 text-[11.5px] font-semibold ${pk.access.ok ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                        <span>{pk.access.ok ? `✓ ${tr("Can sign in to the client area")}` : `⚠ ${tr("Cannot sign in")}: ${pk.access.reasons.map((r) => tr(r)).join(' · ')}`}</span>
+                                        {pk.access.locked && canEdit && <Button size="xs" onClick={() => a.unlock(k)}>{tr("Unlock")}</Button>}
+                                    </div>
+                                )}
                                 {k.active && canEdit && (
                                     <div className="mt-2 flex items-center gap-1.5">
                                         <Tooltip title={tr("Open the client area as this contact")}><Button size="xs" variant="solid" onClick={() => a.openAsClient(k)}>{tr("Client area")}</Button></Tooltip>

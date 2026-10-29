@@ -291,6 +291,36 @@ try {
         const tl = await crc('GET', '/api/crm/work/tasks/lookups')
         check('the New task form is pre-filled the same way (lookups give the Super Admin ids)', admins.every((i) => (tl.body?.defaults?.followAdminIds || []).includes(i)))
     }
+    console.log('\n== Client area sign-in')
+    {
+        const st = await makeUser('portal-admin', { customers: ['view', 'create', 'edit'] }); const sc = await login(st)
+        const cl = await sc('POST', '/api/crm/customers', { company: 'zz portal check', active: true })
+        if (cl.body?.id) made.extraRows.push(['crmClient', cl.body.id])
+        const mail = `portal.${Date.now()}@test.local`
+        const ct = await prisma.crmContact.create({ data: { clientId: cl.body.id, firstName: 'Zed', lastName: 'Portal', email: ` ${mail.toUpperCase()} ` } }) // stray spaces and capitals saved around the address
+        made.extraRows.unshift(['crmContact', ct.id])
+        const pwr = await sc('POST', `/api/crm/customers/${cl.body.id}/portal-password`, { contactId: ct.id, password: 'Portal-Test-12345' })
+        check('staff set a contact password', pwr.status === 200, String(pwr.status))
+        const tryLogin = (email, password) => fetch(`${BASE}/api/portal/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) })
+        const ok = await tryLogin(mail, 'Portal-Test-12345')
+        check('the contact signs in even if the saved email has spaces or capitals around it', ok.status === 200, String(ok.status))
+        const ck = (ok.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).join('; ')
+        check('...and the client area opens with that session', (await fetch(`${BASE}/api/portal/me`, { headers: { cookie: ck } })).status === 200)
+        check('a wrong password is refused', (await tryLogin(mail, 'Wrong-pass-0000')).status === 401)
+        const prof = await sc('GET', `/api/crm/customers/${cl.body.id}/profile`)
+        const acc = prof.body?.contacts?.find((x) => x.id === ct.id)?.access
+        check('the client page says the contact can sign in', acc?.ok === true, JSON.stringify(acc))
+        await prisma.crmClient.update({ where: { id: cl.body.id }, data: { active: false } })
+        const acc2 = (await sc('GET', `/api/crm/customers/${cl.body.id}/profile`)).body?.contacts?.find((x) => x.id === ct.id)?.access
+        check('...and says why when the client is inactive', acc2?.ok === false && acc2.reasons.includes('The client is not active') && (await tryLogin(mail, 'Portal-Test-12345')).status === 401, JSON.stringify(acc2))
+        await prisma.crmClient.update({ where: { id: cl.body.id }, data: { active: true } })
+        for (let i = 0; i < 5; i++) await tryLogin(mail, 'Wrong-pass-0000')
+        const acc3 = (await sc('GET', `/api/crm/customers/${cl.body.id}/profile`)).body?.contacts?.find((x) => x.id === ct.id)?.access
+        check('after 5 wrong passwords the contact is locked and the client page shows it', acc3?.locked === true && (await tryLogin(mail, 'Portal-Test-12345')).status === 429, JSON.stringify(acc3))
+        check('staff unlock the contact and it signs in again', (await sc('POST', `/api/crm/customers/${cl.body.id}/portal-unlock`, { contactId: ct.id })).status === 200 && (await tryLogin(mail, 'Portal-Test-12345')).status === 200)
+        check('a stranger without Clients access cannot unlock', (await (await login(await makeUser('portal-none', {})))('POST', `/api/crm/customers/${cl.body.id}/portal-unlock`, { contactId: ct.id })).status === 403)
+        await prisma.loginAttempt.deleteMany({ where: { key: `portal:${mail}` } })
+    }
     const lm = await login(await makeUser('leadmail', { lead_mail: ['view'] }))
     check('Lead email integration view: can list mailboxes', (await lm('GET', '/api/crm/lead-mail')).status === 200)
     check('Lead email integration view only: cannot save a mailbox', (await lm('POST', '/api/crm/lead-mail', { action: 'save', data: { email: 'a@b.com' } })).status === 403)

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.117.2',
+        date: '2026-10-29',
+        title: 'Client area: see why a contact cannot sign in, and unlock',
+        items: [
+            'The Contacts card of a client now says, for each contact, "Can sign in to the client area" or "Cannot sign in" with the reason: the client is not active, the contact is not active, no valid email, no client area password yet, or locked after too many wrong passwords. A locked contact has an Unlock button.',
+            'Fixed: a contact whose saved email had stray spaces around it could never sign in, get an invitation or a reset link. Sign-in, invitations and reset links now ignore those spaces.',
+        ],
+    },
+    {
         version: '0.117.1',
         date: '2026-10-29',
         title: 'Client area: sign-in works again',

@@ -17,6 +17,7 @@ import Notification from '@/components/template/Notification'
 import ChatWidget from '@/components/crm/chat/ChatWidget'
 import MentionLayer from '@/components/crm/MentionLayer'
 import LoginAsBanner from '@/components/crm/LoginAsBanner'
+import DemoTour, { demoAllowed } from '@/demo/DemoTour'
 import AccentApplier from '@/components/template/AccentApplier'
 import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components/template/LayoutBase'
@@ -96,6 +97,7 @@ const RapportShell = ({ children }) => {
             </div>
             <MentionLayer />
             <LoginAsBanner />
+            {demoAllowed() && <DemoTour />}
             {canChat ? <ChatWidget /> : <PresenceKeeper />}
         </LayoutBase>
     )

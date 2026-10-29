@@ -1,0 +1,307 @@
+{
+  "product": "trtCRM",
+  "language": "en",
+  "wordsPerSecond": 2.3,
+  "scenes": [
+    {
+      "n": 1,
+      "id": "welcome",
+      "title": "Welcome",
+      "page": "/dashboard",
+      "start": 0,
+      "end": 17,
+      "seconds": 17,
+      "voiceover": "Welcome to trtCRM, the all-in-one workspace for your agency. Clients, sales, projects, tasks, support and your team, all in one place, in the language and currency you work with. Let us take a quick tour."
+    },
+    {
+      "n": 2,
+      "id": "dashboard",
+      "title": "Dashboard",
+      "page": "/dashboard",
+      "start": 17,
+      "end": 33,
+      "seconds": 16,
+      "voiceover": "The dashboard gives the owner the full picture at a glance: revenue, unpaid and overdue invoices, expenses, new clients and leads. Everything is shown in your main currency, and you choose the period."
+    },
+    {
+      "n": 3,
+      "id": "team-dashboard",
+      "title": "Team dashboard",
+      "page": "/team-dashboard",
+      "start": 33,
+      "end": 46,
+      "seconds": 13,
+      "voiceover": "Every team member lands on a personal dashboard with their own tasks, reminders and what needs attention today. No noise, only what matters to them."
+    },
+    {
+      "n": 4,
+      "id": "clients",
+      "title": "Clients",
+      "page": "/crm/clients",
+      "start": 46,
+      "end": 59,
+      "seconds": 13,
+      "voiceover": "All your clients in one clean grid. Search, filter and open any client in one click. Each client keeps its own currency, bank account, language and contacts."
+    },
+    {
+      "n": 5,
+      "id": "client-page",
+      "title": "A client file",
+      "page": "/crm/clients",
+      "start": 59,
+      "end": 76,
+      "seconds": 17,
+      "voiceover": "A client file brings the whole relationship together: the journey from lead to client, invoices and payments, projects, tickets, contracts and notes. Contacts can be given access to their own client area in one click."
+    },
+    {
+      "n": 6,
+      "id": "leads",
+      "title": "Leads pipeline",
+      "page": "/crm/leads",
+      "start": 76,
+      "end": 94,
+      "seconds": 18,
+      "voiceover": "The leads pipeline is a visual board. Drag a lead from one stage to the next, see its source and its next step on the card, and convert it into a client when the deal is won."
+    },
+    {
+      "n": 7,
+      "id": "lead-popup",
+      "title": "Inside a lead",
+      "page": "/crm/leads",
+      "start": 94,
+      "end": 111,
+      "seconds": 17,
+      "voiceover": "Open a lead and everything is there: tasks with several assignees, the mails you exchanged, meetings with their report and reminders that also show in the calendar, notes, related documents and a full activity history."
+    },
+    {
+      "n": 8,
+      "id": "invoices",
+      "title": "Invoices",
+      "page": "/crm/invoices",
+      "start": 111,
+      "end": 125,
+      "seconds": 14,
+      "voiceover": "Invoicing made simple. Create, send and follow every invoice. Statuses, balances and overdue amounts are always clear, numbers follow your own format, and payments are matched to invoices."
+    },
+    {
+      "n": 9,
+      "id": "invoice-view",
+      "title": "An invoice",
+      "page": "/crm/invoices",
+      "start": 125,
+      "end": 145,
+      "seconds": 20,
+      "voiceover": "An invoice shows the client, the items with their taxes, the amounts in the right currency and the bank account to pay into. Print it as a PDF, email it, or send a public link. You can also clone it in one click."
+    },
+    {
+      "n": 10,
+      "id": "estimates",
+      "title": "Estimates",
+      "page": "/crm/estimates",
+      "start": 145,
+      "end": 157,
+      "seconds": 12,
+      "voiceover": "Estimates and quotes go out professionally, and your client can accept them online. An accepted estimate turns into an invoice without retyping anything."
+    },
+    {
+      "n": 11,
+      "id": "proposals",
+      "title": "Proposals",
+      "page": "/crm/proposals",
+      "start": 157,
+      "end": 170,
+      "seconds": 13,
+      "voiceover": "Proposals let you present your offer with a rich document and send it to a lead or a client, then follow whether it was opened and accepted."
+    },
+    {
+      "n": 12,
+      "id": "contracts",
+      "title": "Contracts",
+      "page": "/crm/contracts",
+      "start": 170,
+      "end": 181,
+      "seconds": 11,
+      "voiceover": "Contracts are written, sent and signed online. You always know which contracts are signed, which are waiting, and when they expire."
+    },
+    {
+      "n": 13,
+      "id": "purchase-orders",
+      "title": "Purchase orders",
+      "page": "/crm/purchase-orders",
+      "start": 181,
+      "end": 189,
+      "seconds": 8,
+      "voiceover": "Purchase orders keep your supplier side organised, with the same clean documents and printing."
+    },
+    {
+      "n": 14,
+      "id": "payments",
+      "title": "Payments",
+      "page": "/crm/payments",
+      "start": 189,
+      "end": 204,
+      "seconds": 15,
+      "voiceover": "Every payment you receive is recorded against its invoice, with the payment method and the bank account. Payment methods carry their own bank details, and you can reorder them by dragging."
+    },
+    {
+      "n": 15,
+      "id": "expenses",
+      "title": "Expenses",
+      "page": "/crm/expenses",
+      "start": 204,
+      "end": 220,
+      "seconds": 16,
+      "voiceover": "Track your expenses by category, attach the receipt or the supplier invoice as a PDF or an image, make an expense billable to a client, or repeat it every month for subscriptions and rent."
+    },
+    {
+      "n": 16,
+      "id": "freelancers",
+      "title": "Freelancers",
+      "page": "/crm/freelancers",
+      "start": 220,
+      "end": 235,
+      "seconds": 15,
+      "voiceover": "Freelance jobs have their own board. Price a job with line items, quantities and taxes, track what is paid, and keep it outside your company income when it is personal work."
+    },
+    {
+      "n": 17,
+      "id": "tasks",
+      "title": "Tasks board",
+      "page": "/crm/tasks",
+      "start": 235,
+      "end": 253,
+      "seconds": 18,
+      "voiceover": "The tasks board shows work by status. Each card shows the client or project as a tag, the priority in colour, the people on it and the number of comments. Drag a card to change its status."
+    },
+    {
+      "n": 18,
+      "id": "task-popup",
+      "title": "Inside a task",
+      "page": "/crm/tasks",
+      "start": 253,
+      "end": 270,
+      "seconds": 17,
+      "voiceover": "Inside a task you plan the dates, assign people and followers, build a checklist where each step can have its own person and date, discuss in comments with mentions, attach files and log the time spent."
+    },
+    {
+      "n": 19,
+      "id": "projects",
+      "title": "Projects",
+      "page": "/crm/projects",
+      "start": 270,
+      "end": 281,
+      "seconds": 11,
+      "voiceover": "Projects bring tasks, milestones, files and billing for a client together, with a scrum board when the team works in sprints."
+    },
+    {
+      "n": 20,
+      "id": "calendar",
+      "title": "Calendar",
+      "page": "/calendar",
+      "start": 281,
+      "end": 295,
+      "seconds": 14,
+      "voiceover": "The calendar shows meetings, task deadlines and reminders in a day, week or month view. Meetings added to a lead appear here automatically, with their link and reminder."
+    },
+    {
+      "n": 21,
+      "id": "support",
+      "title": "Support tickets",
+      "page": "/crm/tickets",
+      "start": 295,
+      "end": 309,
+      "seconds": 14,
+      "voiceover": "Support tickets keep every client request in one thread, with departments, priorities and replies, so nothing is forgotten and your clients can follow their requests from their own area."
+    },
+    {
+      "n": 22,
+      "id": "chat",
+      "title": "Team chat",
+      "page": "/crm/chat",
+      "start": 309,
+      "end": 321,
+      "seconds": 12,
+      "voiceover": "A built-in team chat with direct messages and mentions, so decisions stay next to the work instead of getting lost in other apps."
+    },
+    {
+      "n": 23,
+      "id": "knowledge",
+      "title": "Knowledge base",
+      "page": "/crm/knowledge-base",
+      "start": 321,
+      "end": 329,
+      "seconds": 8,
+      "voiceover": "The knowledge base holds your procedures and answers, for your team and for your clients."
+    },
+    {
+      "n": 24,
+      "id": "reports",
+      "title": "Reports",
+      "page": "/crm/reports",
+      "start": 329,
+      "end": 339,
+      "seconds": 10,
+      "voiceover": "Reports turn your data into decisions: sales, profit and expenses, leads, support and the work done by the team."
+    },
+    {
+      "n": 25,
+      "id": "files",
+      "title": "Files",
+      "page": "/crm/file-manager",
+      "start": 339,
+      "end": 352,
+      "seconds": 13,
+      "voiceover": "All your files live in one place, with folders, previews and sharing. Images are optimised automatically, and files can be attached to any client, task or expense."
+    },
+    {
+      "n": 26,
+      "id": "team",
+      "title": "Team members",
+      "page": "/crm/staff",
+      "start": 352,
+      "end": 368,
+      "seconds": 16,
+      "voiceover": "Manage your team: each member has a profile, a role and their own working hours. The administrator can also open the CRM as any member to give support, and go back in one click."
+    },
+    {
+      "n": 27,
+      "id": "roles",
+      "title": "Roles & permissions",
+      "page": "/crm/roles",
+      "start": 368,
+      "end": 383,
+      "seconds": 15,
+      "voiceover": "You decide who can see and do what. Create roles, switch permissions on or off feature by feature, and even choose who may edit the notes, mails and meetings of others."
+    },
+    {
+      "n": 28,
+      "id": "settings",
+      "title": "Settings",
+      "page": "/crm/settings",
+      "start": 383,
+      "end": 396,
+      "seconds": 13,
+      "voiceover": "Everything can be adjusted to your company: currencies, taxes, numbering, email, payment methods, task statuses, languages and more. trtCRM speaks English, French, Spanish, Japanese and Arabic."
+    },
+    {
+      "n": 29,
+      "id": "activity",
+      "title": "Activity & notifications",
+      "page": "/crm/all-activity",
+      "start": 396,
+      "end": 407,
+      "seconds": 11,
+      "voiceover": "A full activity log tells the administrator who did what and when, and notifications keep each person informed about what concerns them."
+    },
+    {
+      "n": 30,
+      "id": "outro",
+      "title": "Thank you",
+      "page": "/dashboard",
+      "start": 407,
+      "end": 426,
+      "seconds": 19,
+      "voiceover": "That was trtCRM: one place to manage clients, sell, deliver and get paid, with a client area for your customers and full control for you. Ask for a live demo, and let us set it up for your agency."
+    }
+  ]
+}

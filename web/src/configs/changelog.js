@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.118.0',
+        date: '2026-10-29',
+        title: 'Demo tour for the presentation video (dev only)',
+        items: [
+            'On dev.trtcrm.com (and localhost) a "Demo tour" button appears at the bottom left (also Ctrl+Shift+D). A red cursor dot walks through 30 scenes of the CRM (dashboard, clients, leads, invoices, tasks, calendar, roles...) while the browser records the tab; the video downloads at the end.',
+            'The same panel downloads the voiceover pack: the English voiceover with timings, the scene list and a prompt for an AI to translate it to Arabic then French and build the video. It never appears on staging or the live site, and the tour only opens pages: it changes no data.',
+        ],
+    },
+    {
         version: '0.117.2',
         date: '2026-10-29',
         title: 'Client area: see why a contact cannot sign in, and unlock',

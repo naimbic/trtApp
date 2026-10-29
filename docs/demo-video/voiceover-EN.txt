@@ -1,0 +1,95 @@
+trtCRM - product tour - VOICEOVER (English master text)
+Speaking pace used for the timings: about 2.3 words per second.
+
+[00:00 - 00:17]  SCENE 1: Welcome  (17s, 35 words)
+Welcome to trtCRM, the all-in-one workspace for your agency. Clients, sales, projects, tasks, support and your team, all in one place, in the language and currency you work with. Let us take a quick tour.
+
+[00:17 - 00:33]  SCENE 2: Dashboard  (16s, 33 words)
+The dashboard gives the owner the full picture at a glance: revenue, unpaid and overdue invoices, expenses, new clients and leads. Everything is shown in your main currency, and you choose the period.
+
+[00:33 - 00:46]  SCENE 3: Team dashboard  (13s, 25 words)
+Every team member lands on a personal dashboard with their own tasks, reminders and what needs attention today. No noise, only what matters to them.
+
+[00:46 - 00:59]  SCENE 4: Clients  (13s, 27 words)
+All your clients in one clean grid. Search, filter and open any client in one click. Each client keeps its own currency, bank account, language and contacts.
+
+[00:59 - 01:16]  SCENE 5: A client file  (17s, 35 words)
+A client file brings the whole relationship together: the journey from lead to client, invoices and payments, projects, tickets, contracts and notes. Contacts can be given access to their own client area in one click.
+
+[01:16 - 01:34]  SCENE 6: Leads pipeline  (18s, 37 words)
+The leads pipeline is a visual board. Drag a lead from one stage to the next, see its source and its next step on the card, and convert it into a client when the deal is won.
+
+[01:34 - 01:51]  SCENE 7: Inside a lead  (17s, 35 words)
+Open a lead and everything is there: tasks with several assignees, the mails you exchanged, meetings with their report and reminders that also show in the calendar, notes, related documents and a full activity history.
+
+[01:51 - 02:05]  SCENE 8: Invoices  (14s, 28 words)
+Invoicing made simple. Create, send and follow every invoice. Statuses, balances and overdue amounts are always clear, numbers follow your own format, and payments are matched to invoices.
+
+[02:05 - 02:25]  SCENE 9: An invoice  (20s, 43 words)
+An invoice shows the client, the items with their taxes, the amounts in the right currency and the bank account to pay into. Print it as a PDF, email it, or send a public link. You can also clone it in one click.
+
+[02:25 - 02:37]  SCENE 10: Estimates  (12s, 23 words)
+Estimates and quotes go out professionally, and your client can accept them online. An accepted estimate turns into an invoice without retyping anything.
+
+[02:37 - 02:50]  SCENE 11: Proposals  (13s, 27 words)
+Proposals let you present your offer with a rich document and send it to a lead or a client, then follow whether it was opened and accepted.
+
+[02:50 - 03:01]  SCENE 12: Contracts  (11s, 21 words)
+Contracts are written, sent and signed online. You always know which contracts are signed, which are waiting, and when they expire.
+
+[03:01 - 03:09]  SCENE 13: Purchase orders  (8s, 14 words)
+Purchase orders keep your supplier side organised, with the same clean documents and printing.
+
+[03:09 - 03:24]  SCENE 14: Payments  (15s, 31 words)
+Every payment you receive is recorded against its invoice, with the payment method and the bank account. Payment methods carry their own bank details, and you can reorder them by dragging.
+
+[03:24 - 03:40]  SCENE 15: Expenses  (16s, 34 words)
+Track your expenses by category, attach the receipt or the supplier invoice as a PDF or an image, make an expense billable to a client, or repeat it every month for subscriptions and rent.
+
+[03:40 - 03:55]  SCENE 16: Freelancers  (15s, 31 words)
+Freelance jobs have their own board. Price a job with line items, quantities and taxes, track what is paid, and keep it outside your company income when it is personal work.
+
+[03:55 - 04:13]  SCENE 17: Tasks board  (18s, 37 words)
+The tasks board shows work by status. Each card shows the client or project as a tag, the priority in colour, the people on it and the number of comments. Drag a card to change its status.
+
+[04:13 - 04:30]  SCENE 18: Inside a task  (17s, 36 words)
+Inside a task you plan the dates, assign people and followers, build a checklist where each step can have its own person and date, discuss in comments with mentions, attach files and log the time spent.
+
+[04:30 - 04:41]  SCENE 19: Projects  (11s, 21 words)
+Projects bring tasks, milestones, files and billing for a client together, with a scrum board when the team works in sprints.
+
+[04:41 - 04:55]  SCENE 20: Calendar  (14s, 28 words)
+The calendar shows meetings, task deadlines and reminders in a day, week or month view. Meetings added to a lead appear here automatically, with their link and reminder.
+
+[04:55 - 05:09]  SCENE 21: Support tickets  (14s, 29 words)
+Support tickets keep every client request in one thread, with departments, priorities and replies, so nothing is forgotten and your clients can follow their requests from their own area.
+
+[05:09 - 05:21]  SCENE 22: Team chat  (12s, 23 words)
+A built-in team chat with direct messages and mentions, so decisions stay next to the work instead of getting lost in other apps.
+
+[05:21 - 05:29]  SCENE 23: Knowledge base  (8s, 15 words)
+The knowledge base holds your procedures and answers, for your team and for your clients.
+
+[05:29 - 05:39]  SCENE 24: Reports  (10s, 19 words)
+Reports turn your data into decisions: sales, profit and expenses, leads, support and the work done by the team.
+
+[05:39 - 05:52]  SCENE 25: Files  (13s, 27 words)
+All your files live in one place, with folders, previews and sharing. Images are optimised automatically, and files can be attached to any client, task or expense.
+
+[05:52 - 06:08]  SCENE 26: Team members  (16s, 34 words)
+Manage your team: each member has a profile, a role and their own working hours. The administrator can also open the CRM as any member to give support, and go back in one click.
+
+[06:08 - 06:23]  SCENE 27: Roles & permissions  (15s, 31 words)
+You decide who can see and do what. Create roles, switch permissions on or off feature by feature, and even choose who may edit the notes, mails and meetings of others.
+
+[06:23 - 06:36]  SCENE 28: Settings  (13s, 26 words)
+Everything can be adjusted to your company: currencies, taxes, numbering, email, payment methods, task statuses, languages and more. trtCRM speaks English, French, Spanish, Japanese and Arabic.
+
+[06:36 - 06:47]  SCENE 29: Activity & notifications  (11s, 22 words)
+A full activity log tells the administrator who did what and when, and notifications keep each person informed about what concerns them.
+
+[06:47 - 07:06]  SCENE 30: Thank you  (19s, 39 words)
+That was trtCRM: one place to manage clients, sell, deliver and get paid, with a client area for your customers and full control for you. Ask for a live demo, and let us set it up for your agency.
+
+[to add by hand at the end]  The client area (recorded by hand)  (about 16s)
+Your clients get their own space. They sign in, see their invoices and estimates, accept proposals, sign contracts, follow their projects and open support requests, all with your logo and in their own language.

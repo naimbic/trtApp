@@ -1,0 +1,96 @@
+You are a video producer and a professional translator for software product videos.
+
+GOAL
+Turn the screen recording of the CRM "trtCRM" into a polished presentation video with a voiceover, first in ARABIC, then in FRENCH, to send to prospects (agencies and small companies in Morocco and the Arabic- and French-speaking markets).
+
+WHAT I GIVE YOU
+1. The screen recording of the tour (trtcrm-demo-....webm): one continuous take, with a coloured dot showing the cursor. It is made of the scenes below, in this order, each starting at the time given.
+2. This list of scenes with the English master voiceover and the time each scene lasts.
+
+SCENES (start-end, duration, English text)
+1. [00:00-00:17] (17s max 37 words) Welcome
+   EN: Welcome to trtCRM, the all-in-one workspace for your agency. Clients, sales, projects, tasks, support and your team, all in one place, in the language and currency you work with. Let us take a quick tour.
+2. [00:17-00:33] (16s max 35 words) Dashboard
+   EN: The dashboard gives the owner the full picture at a glance: revenue, unpaid and overdue invoices, expenses, new clients and leads. Everything is shown in your main currency, and you choose the period.
+3. [00:33-00:46] (13s max 28 words) Team dashboard
+   EN: Every team member lands on a personal dashboard with their own tasks, reminders and what needs attention today. No noise, only what matters to them.
+4. [00:46-00:59] (13s max 28 words) Clients
+   EN: All your clients in one clean grid. Search, filter and open any client in one click. Each client keeps its own currency, bank account, language and contacts.
+5. [00:59-01:16] (17s max 37 words) A client file
+   EN: A client file brings the whole relationship together: the journey from lead to client, invoices and payments, projects, tickets, contracts and notes. Contacts can be given access to their own client area in one click.
+6. [01:16-01:34] (18s max 39 words) Leads pipeline
+   EN: The leads pipeline is a visual board. Drag a lead from one stage to the next, see its source and its next step on the card, and convert it into a client when the deal is won.
+7. [01:34-01:51] (17s max 37 words) Inside a lead
+   EN: Open a lead and everything is there: tasks with several assignees, the mails you exchanged, meetings with their report and reminders that also show in the calendar, notes, related documents and a full activity history.
+8. [01:51-02:05] (14s max 30 words) Invoices
+   EN: Invoicing made simple. Create, send and follow every invoice. Statuses, balances and overdue amounts are always clear, numbers follow your own format, and payments are matched to invoices.
+9. [02:05-02:25] (20s max 44 words) An invoice
+   EN: An invoice shows the client, the items with their taxes, the amounts in the right currency and the bank account to pay into. Print it as a PDF, email it, or send a public link. You can also clone it in one click.
+10. [02:25-02:37] (12s max 26 words) Estimates
+   EN: Estimates and quotes go out professionally, and your client can accept them online. An accepted estimate turns into an invoice without retyping anything.
+11. [02:37-02:50] (13s max 28 words) Proposals
+   EN: Proposals let you present your offer with a rich document and send it to a lead or a client, then follow whether it was opened and accepted.
+12. [02:50-03:01] (11s max 24 words) Contracts
+   EN: Contracts are written, sent and signed online. You always know which contracts are signed, which are waiting, and when they expire.
+13. [03:01-03:09] (8s max 17 words) Purchase orders
+   EN: Purchase orders keep your supplier side organised, with the same clean documents and printing.
+14. [03:09-03:24] (15s max 33 words) Payments
+   EN: Every payment you receive is recorded against its invoice, with the payment method and the bank account. Payment methods carry their own bank details, and you can reorder them by dragging.
+15. [03:24-03:40] (16s max 35 words) Expenses
+   EN: Track your expenses by category, attach the receipt or the supplier invoice as a PDF or an image, make an expense billable to a client, or repeat it every month for subscriptions and rent.
+16. [03:40-03:55] (15s max 33 words) Freelancers
+   EN: Freelance jobs have their own board. Price a job with line items, quantities and taxes, track what is paid, and keep it outside your company income when it is personal work.
+17. [03:55-04:13] (18s max 39 words) Tasks board
+   EN: The tasks board shows work by status. Each card shows the client or project as a tag, the priority in colour, the people on it and the number of comments. Drag a card to change its status.
+18. [04:13-04:30] (17s max 37 words) Inside a task
+   EN: Inside a task you plan the dates, assign people and followers, build a checklist where each step can have its own person and date, discuss in comments with mentions, attach files and log the time spent.
+19. [04:30-04:41] (11s max 24 words) Projects
+   EN: Projects bring tasks, milestones, files and billing for a client together, with a scrum board when the team works in sprints.
+20. [04:41-04:55] (14s max 30 words) Calendar
+   EN: The calendar shows meetings, task deadlines and reminders in a day, week or month view. Meetings added to a lead appear here automatically, with their link and reminder.
+21. [04:55-05:09] (14s max 30 words) Support tickets
+   EN: Support tickets keep every client request in one thread, with departments, priorities and replies, so nothing is forgotten and your clients can follow their requests from their own area.
+22. [05:09-05:21] (12s max 26 words) Team chat
+   EN: A built-in team chat with direct messages and mentions, so decisions stay next to the work instead of getting lost in other apps.
+23. [05:21-05:29] (8s max 17 words) Knowledge base
+   EN: The knowledge base holds your procedures and answers, for your team and for your clients.
+24. [05:29-05:39] (10s max 22 words) Reports
+   EN: Reports turn your data into decisions: sales, profit and expenses, leads, support and the work done by the team.
+25. [05:39-05:52] (13s max 28 words) Files
+   EN: All your files live in one place, with folders, previews and sharing. Images are optimised automatically, and files can be attached to any client, task or expense.
+26. [05:52-06:08] (16s max 35 words) Team members
+   EN: Manage your team: each member has a profile, a role and their own working hours. The administrator can also open the CRM as any member to give support, and go back in one click.
+27. [06:08-06:23] (15s max 33 words) Roles & permissions
+   EN: You decide who can see and do what. Create roles, switch permissions on or off feature by feature, and even choose who may edit the notes, mails and meetings of others.
+28. [06:23-06:36] (13s max 28 words) Settings
+   EN: Everything can be adjusted to your company: currencies, taxes, numbering, email, payment methods, task statuses, languages and more. trtCRM speaks English, French, Spanish, Japanese and Arabic.
+29. [06:36-06:47] (11s max 24 words) Activity & notifications
+   EN: A full activity log tells the administrator who did what and when, and notifications keep each person informed about what concerns them.
+30. [06:47-07:06] (19s max 41 words) Thank you
+   EN: That was trtCRM: one place to manage clients, sell, deliver and get paid, with a client area for your customers and full control for you. Ask for a live demo, and let us set it up for your agency.
++. [after the tour] (16s) The client area (recorded by hand)
+   EN: Your clients get their own space. They sign in, see their invoices and estimates, accept proposals, sign contracts, follow their projects and open support requests, all with your logo and in their own language.
+   Recording note: Open /portal/sign-in in a private window, sign in as a test contact, and show: Overview, Invoices, Estimates, Projects, Support.
+
+STEP 1 - ARABIC VOICEOVER
+Translate every scene into Modern Standard Arabic that sounds natural when SPOKEN (warm, confident, simple; understandable in Morocco and the Gulf). Rules:
+- Keep "trtCRM" and well-known product words (PDF, WhatsApp...) as they are; translate the rest.
+- Each scene must be speakable within its duration: stay under the word limit shown (about 2.2 words per second). Shorten rather than rush.
+- Write numbers and symbols in words the way a narrator would say them. Add full diacritics only where a word would be ambiguous.
+- Output the result as "voiceover-AR.txt" in the same layout as the English text (time range, scene number, title, then the Arabic text), and as "subtitles-AR.srt" (SubRip, UTF-8, right-to-left text, at most 2 lines of 42 characters, split inside the scene time range).
+
+STEP 2 - FRENCH VOICEOVER
+Do the same in French (natural spoken French, "vous" form, clear and professional): "voiceover-FR.txt" and "subtitles-FR.srt".
+
+STEP 3 - AUDIO
+Create the voice track for each language with the best text-to-speech voice available to you (a calm, warm, professional voice: a woman or a man, your choice, the same voice for the whole video). Export one audio file per scene named scene-01-ar.mp3 ... and a single full track per language where every scene starts exactly at its start time (pad with silence). If you cannot generate audio yourself, give me the exact text per scene ready to paste into a TTS tool (ElevenLabs, Azure, Google), with pause marks.
+
+STEP 4 - VIDEO
+Convert the recording to MP4 (1920x1080, H.264, 30 fps) and produce two final videos: trtcrm-demo-ar.mp4 and trtcrm-demo-fr.mp4, each with its voice track, a soft background music bed at low volume if you have one, the subtitles available as a separate track (and a version with burned-in subtitles). Add a short title card at the start ("trtCRM - the all-in-one CRM for your agency") and an end card ("Ask for a live demo"). If the tour is shorter or longer than the voiceover in a scene, adjust the video speed of that scene slightly (never more than 15 percent) rather than cutting words.
+Useful commands:
+  ffmpeg -i trtcrm-demo.webm -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2 -r 30 -c:v libx264 -pix_fmt yuv420p -crf 18 video.mp4
+  ffmpeg -i video.mp4 -i voice-ar.mp3 -map 0:v -map 1:a -c:v copy -c:a aac -shortest trtcrm-demo-ar.mp4
+  ffmpeg -i trtcrm-demo-ar.mp4 -vf subtitles=subtitles-AR.srt trtcrm-demo-ar-subtitled.mp4
+
+QUALITY CHECK BEFORE YOU ANSWER
+Read the Arabic and French texts once more as if you were the listener: no word-for-word translation, no invented features, every sentence short enough to say in one breath. Tell me the total length and anything you changed.

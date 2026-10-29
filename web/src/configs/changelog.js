@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.119.1',
+        date: '2026-10-29',
+        title: 'Demo tour: the recording no longer stops after the first popup',
+        items: [
+            'Fixed: the tour ended by itself after the first scene that closes a popup (the lead popup), so the video only had the first seven scenes and none of the how-to scenes. The tour\'s own Escape key no longer counts as a stop; only a real key press does.',
+            'A step that fails (a field or button not found) is now skipped and listed in the panel after the run ("Steps the last run could not do") instead of ending the tour.',
+        ],
+    },
+    {
         version: '0.119.0',
         date: '2026-10-29',
         title: 'Demo tour: how-to scenes that really do the work',

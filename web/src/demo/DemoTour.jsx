@@ -107,6 +107,7 @@ const DemoTour = () => {
     const [pace, setPace] = useState(1)
     const [status, setStatus] = useState('')
     const [last, setLast] = useState(() => loadRun())
+    const [report, setReport] = useState([]) // steps that could not be done in the last run
     const dot = useRef(null), ripple = useRef(null), cap = useRef(null)
     const stop = useRef(false), pos = useRef({ x: 80, y: 120 })
     const pathRef = useRef(pathname)
@@ -152,7 +153,7 @@ const DemoTour = () => {
             if (st.press) { (document.activeElement || document.body).dispatchEvent(new KeyboardEvent('keydown', { key: st.press, code: st.press, bubbles: true })); await sleep(500 / pace); return }
             const [spec, text] = st.fill || st.choose
             const el = await waitField(spec)
-            if (!el) { console.info('[demo] field not found:', spec, 'textareas:', [...document.querySelectorAll('textarea')].map((t) => (t.getAttribute('placeholder') || '-') + '/' + (t.getBoundingClientRect().width | 0)).join(','), 'path:', window.location.pathname, 'dialogs in view:', [...document.querySelectorAll('[role=dialog]')].filter(inView).map((d) => d.className.toString().slice(0, 40) + '|' + d.getAttribute('aria-label'))); return }
+            if (!el) return `not found: ${spec}`
             el.scrollIntoView({ block: 'center', behavior: 'smooth' })
             await sleep(400)
             const [x, y] = center(el.closest('[class*=control]') || el)
@@ -189,7 +190,7 @@ const DemoTour = () => {
         } else if (st.move || st.click || st.type) {
             const target = st.move || st.click || st.type[0]
             const el = await waitFor(target, 3500)
-            if (!el) { console.info('[demo] target not found:', target); return }
+            if (!el) return `not found: ${target}`
             el.scrollIntoView({ block: 'center', behavior: 'smooth' })
             await sleep(450)
             const [x, y] = center(el)
@@ -231,7 +232,7 @@ const DemoTour = () => {
         stop.current = false
         setOpen(false); setRunning(true); setStatus('')
         await sleep(record ? 1800 : 600)
-        const timing = []
+        const timing = [], problems = []
         const t0 = Date.now()
         try {
             for (const sc of scenes) {
@@ -242,7 +243,12 @@ const DemoTour = () => {
                 await goTo(sc.path)
                 window.scrollTo({ top: 0 })
                 const sceneStart = Date.now()
-                for (const st of sc.steps) { if (stop.current) break; await runStep(st) }
+                const skipped = []
+                for (const st of sc.steps) {
+                    if (stop.current) break
+                    try { const miss = await runStep(st); if (miss) skipped.push(miss) } catch (err) { skipped.push(`error: ${String(err?.message || err).slice(0, 80)}`) } // one failing step never ends the tour
+                }
+                if (skipped.length) problems.push({ id: sc.id, title: sc.title, skipped })
                 // never shorter than the voiceover needs
                 const need = (plannedSeconds(sc) * 1000) / pace
                 const left = need - (Date.now() - sceneStart)
@@ -253,6 +259,7 @@ const DemoTour = () => {
             setCaption(null)
             setRunning(false)
             if (timing.length) { saveRun(timing); setLast(timing) }
+            setReport(problems)
             if (rec) {
                 await sleep(800)
                 rec.onstop = () => {
@@ -272,7 +279,7 @@ const DemoTour = () => {
 
     useEffect(() => {
         const onKey = (e) => {
-            if (e.key === 'Escape' && running) { stop.current = true; return }
+            if (e.key === 'Escape' && running && e.isTrusted) { stop.current = true; return } // only a real key press stops the tour: the tour's own Escape (closing a popup) must not
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') { e.preventDefault(); setOpen((o) => !o) }
         }
         window.addEventListener('keydown', onKey)
@@ -345,6 +352,7 @@ const DemoTour = () => {
                         </ul>
                     </div>
                     <div className="border-t border-gray-100 px-4 py-3">
+                        {report.length > 0 && <div className="mb-2 max-h-28 overflow-auto rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800"><b>Steps the last run could not do ({report.reduce((n, r) => n + r.skipped.length, 0)}):</b>{report.map((r) => <div key={r.id}>{r.title}: {r.skipped.join('; ')}</div>)}</div>}
                         {status && <div className="mb-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{status}</div>}
                         <div className="mb-2 flex flex-wrap gap-2">
                             <button type="button" className={`${btn} bg-red-600 text-white hover:bg-red-700`} disabled={!picked.size} onClick={() => play(true)}>● Record the tour</button>

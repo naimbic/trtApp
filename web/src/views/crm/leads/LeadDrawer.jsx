@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import RichView from '@/components/crm/RichView'
+import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichEditor from '@/components/crm/RichEditor'
 import { plainOf } from '@/components/crm/ShareButton'
 import { CommentTools, CommentEdit } from '@/components/crm/CommentParts'
@@ -160,6 +161,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             {can('tasks', 'view') && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
                             <Tabs.TabNav value="mails">{tr("Mails")}{detail.mails.length ? ` (${detail.mails.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="meetings">{tr("Meetings")}{detail.meetings.length ? ` (${detail.meetings.length})` : ''}</Tabs.TabNav>
+                            <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
                             <Tabs.TabNav value="notes">{tr("Notes")}{detail.notes.length ? ` (${detail.notes.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="related">{tr("Related")}{detail.proposals.length ? ` (${detail.proposals.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
@@ -169,6 +171,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} /></Tabs.TabContent>}
                             <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
                             <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
+                            <Tabs.TabContent value="files"><div className="pt-1"><AttachmentsPanel relType="lead" relId={id} canEdit={!!detail.can.edit} /></div></Tabs.TabContent>
                             <Tabs.TabContent value="notes">{notes}</Tabs.TabContent>
                             <Tabs.TabContent value="related">{related}</Tabs.TabContent>
                             <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>

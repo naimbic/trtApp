@@ -21,12 +21,25 @@ async function who() {
     return { session, authority, staffId, name, admin: isCrmAdmin(authority) }
 }
 
-function relAccess(ctx, relType, cap) {
+async function relAccess(ctx, relType, cap, relId) {
     if (!relType) return true
     const feature = REL_FEATURE[relType]
     if (!feature) fail('Unknown record type')
-    if (!(hasCap(ctx.authority, feature, cap) || (cap === 'view' && hasCap(ctx.authority, feature, 'view_own')))) throw new PermissionError('You do not have access to these files', 403)
-    return true
+    // a lead's files follow the lead's own rules: the ones who see the lead read them, the ones who work on it (not a mere follower) add and delete them
+    if (relType === 'lead') {
+        if (!OID.test(relId || '')) throw new PermissionError('You do not have access to these files', 403)
+        const l = await prisma.crmLead.findUnique({ where: { id: relId }, select: { assigned: true, assignedIds: true, addedFrom: true, followerIds: true, isPublic: true } })
+        if (!l) throw new PermissionError('You do not have access to these files', 403)
+        const me = ctx.staffId
+        const viewAll = ctx.admin || hasCap(ctx.authority, 'leads', 'view')
+        const mine = !!me && (l.assigned === me || (l.assignedIds || []).includes(me) || l.addedFrom === me)
+        const follows = !!me && (l.followerIds || []).includes(me)
+        const ok = cap === 'view' ? viewAll || mine || follows || l.isPublic : mine || ((ctx.admin || hasCap(ctx.authority, 'leads', 'edit')) && (viewAll || !follows))
+        if (ok) return true
+        throw new PermissionError('You do not have access to these files', 403)
+    }
+    if (hasCap(ctx.authority, feature, cap) || (cap === 'view' && hasCap(ctx.authority, feature, 'view_own'))) return true
+    throw new PermissionError('You do not have access to these files', 403)
 }
 
 const shape = (m) => ({
@@ -41,7 +54,7 @@ export async function listMedia({ parentId, query, relType, relId, kind, flat, f
     if (recent) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: false, relType: null }, orderBy: { createdAt: 'desc' }, take: Math.min(parseInt(recent, 10) || 20, 100) })).map(shape), total: 0, path: [] })
     if (foldersOnly) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: true, relType: null }, orderBy: { name: 'asc' }, take: 500 })).map(shape), total: 0, path: [] })
     if (!relType && !hasCap(ctx.authority, 'file_manager', 'view')) throw new PermissionError('You do not have access to the file manager', 403)
-    relAccess(ctx, relType, 'view')
+    await relAccess(ctx, relType, 'view', relId)
     const where = relType ? { relType, relId } : { relType: null, ...(query || kind || flat ? {} : { parentId: OID.test(parentId || '') ? parentId : null }) }
     if (kind) where.kind = kind
     if (flat && !relType) where.isFolder = false
@@ -81,7 +94,7 @@ export async function uploadMedia(formData) {
     const relType = formData.get('relType') || null
     const relId = formData.get('relId') || null
     const parentId = OID.test(formData.get('parentId') || '') ? formData.get('parentId') : null
-    if (relType) { relAccess(ctx, relType, 'edit'); if (!OID.test(relId || '')) fail('relId is required') }
+    if (relType) { if (!OID.test(relId || '')) fail('relId is required'); await relAccess(ctx, relType, 'edit', relId) }
     if (parentId && !(await prisma.crmMedia.findFirst({ where: { id: parentId, isFolder: true } }))) fail('Folder not found', 404)
     const visibleToClient = formData.get('visibleToClient') === 'true'
     const purpose = relType ? 'attachment' : 'library'
@@ -133,7 +146,7 @@ export async function mediaAction(body) {
         // attach a file that is already in the file manager to a record, without uploading it again
         const relType = body.relType, relId = body.relId
         if (!relType || !OID.test(relId || '')) fail('relType and relId are required')
-        relAccess(ctx, relType, 'edit')
+        await relAccess(ctx, relType, 'edit', relId)
         const src = await prisma.crmMedia.findFirst({ where: { id: String(body.mediaId || ''), isFolder: false, relType: null } })
         if (!src || !src.key) fail('Choose a file from the file manager', 404)
         const row = await prisma.crmMedia.create({ data: { name: src.name, key: src.key, url: src.url, mime: src.mime, kind: src.kind, size: src.size, originalSize: src.originalSize, width: src.width, height: src.height, purpose: 'attachment', parentId: null, relType, relId, visibleToClient: !!body.visibleToClient, uploadedBy: ctx.staffId || undefined, uploaderName: ctx.name } })
@@ -144,7 +157,7 @@ export async function mediaAction(body) {
     const item = await prisma.crmMedia.findUnique({ where: { id } })
     if (!item) fail('Item not found', 404)
     const owns = ctx.admin || (item.uploadedBy && item.uploadedBy === ctx.staffId)
-    if (item.relType) relAccess(ctx, item.relType, 'edit')
+    if (item.relType) await relAccess(ctx, item.relType, 'edit', item.relId)
     else if (!owns) throw new PermissionError('Only the person who uploaded this can change it', 403)
 
     if (action === 'rename') {

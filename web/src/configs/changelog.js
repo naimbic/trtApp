@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.122.0',
+        date: '2026-10-30',
+        title: 'Leads: a Files tab',
+        items: [
+            'The lead popup has a new Files tab: upload documents, images and PDFs to a lead (up to the usual 50 MB, images are optimised), open, share and delete them. Whoever sees the lead can open its files; whoever works on it (assigned, added it, or with the Leads edit permission, but not a mere follower) can add and delete them.',
+        ],
+    },
+    {
         version: '0.121.2',
         date: '2026-10-30',
         title: 'Lead email integration: the site notification is read field by field',

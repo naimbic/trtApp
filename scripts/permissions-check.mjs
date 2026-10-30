@@ -201,6 +201,15 @@ try {
     { const m1 = await lb('POST', `/api/crm/pipeline/leads/${LID}/mails`, { subject: 'x' }), m2 = await lb('POST', `/api/crm/pipeline/leads/${LID}/meetings`, { title: 'x', start: start.toISOString() }); check('...but a follower cannot log mails or add meetings (only the team can)', m1.status === 403 && m2.status === 403, `${m1.status} ${JSON.stringify(m1.body).slice(0, 70)} / ${m2.status} ${JSON.stringify(m2.body).slice(0, 70)}`) }
     check('...and a third person still sees nothing', (await lc('GET', `/api/crm/pipeline/leads/${LID}`)).status === 404)
     {
+        const up = async (who, name) => { const fd = new FormData(); fd.append('files', new Blob([Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(500)])], { type: 'application/pdf' }), name); fd.append('relType', 'lead'); fd.append('relId', LID); return who('POST', '/api/crm/media/upload', fd) }
+        const own = await up(la, 'lead-file.pdf')
+        for (const m of own.body?.saved || []) made.rows.push(['crmMedia', m.id])
+        check('the person who works on a lead can add files to it', own.status === 200 && own.body?.saved?.length === 1, JSON.stringify(own.body).slice(0, 120))
+        const fl = await lb('GET', `/api/crm/media?relType=lead&relId=${LID}`)
+        check('a follower can see the files of the lead but not add any', fl.status === 200 && fl.body?.list?.length === 1 && (await up(lb, 'x.pdf')).status === 403, `${fl.status}/${fl.body?.list?.length}`)
+        check('a person who cannot see the lead cannot read its files', (await lc('GET', `/api/crm/media?relType=lead&relId=${LID}`)).status === 403)
+    }
+    {
         const lD = await makeUser('lead-d', {}), lE = await makeUser('lead-e', { leads: ['edit_others_notes', 'edit_others_mails', 'edit_others_meetings'] })
         const ld = await login(lD), le = await login(lE)
         await la('PUT', `/api/crm/pipeline/leads/${LID}`, { name: 'zz check lead', followerIds: [lB.staffId, lD.staffId, lE.staffId] })

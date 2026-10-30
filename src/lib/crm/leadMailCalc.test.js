@@ -85,3 +85,26 @@ test('an equals-sign form counts as a form (two labelled lines)', () => {
 test('a plain-text email with only equals signs is read as it is', () => {
     assert.equal(emailText('Nom = Ali\nEmail = a@x.ma', ''), 'Nom = Ali\nEmail = a@x.ma')
 })
+
+// the real notification of the trtDigital site form: an HTML table, a "MESSAGE" heading with its text under it, section titles in capitals
+const SITE_HTML = `<div><h1>TRTDIGITAL</h1><h2>Nouvelle demande d’audit SEO</h2><span>audit-seo</span>
+<h3>COORDONNÉES</h3>
+<table><tr><td>Nom</td><td>Harrouchi Ismail</td></tr><tr><td>Email</td><td><a href="mailto:ismail.harrouchi@strasforma.fr">ismail.harrouchi@strasforma.fr</a></td></tr><tr><td>Entreprise</td><td>Strasforma</td></tr><tr><td>Site web</td><td><a href="https://www.strasforma.fr/">https://www.strasforma.fr/</a></td></tr></table>
+<h3>PROJET</h3>
+<table><tr><td>Services</td><td>Social Ads (Meta / TikTok)</td></tr><tr><td>Budget</td><td>5 000 – 15 000 MAD / mois</td></tr><tr><td>Délai</td><td>Dès que possible</td></tr></table>
+<div><div>MESSAGE</div><div>On a actuellement une campagne sur Meta avec une agence en France.</div></div>
+<div><p><b>Page :</b> <a href="https://www.trtdigital.ma/#audit">https://www.trtdigital.ma/#audit</a></p><p><b>IP :</b> 162.158.95.49</p><p><b>Navigateur :</b> Mozilla/5.0</p><p><b>Reçu le :</b> vendredi 30 octobre 2026 à 09:50</p></div></div>`
+
+test('the site notification (HTML table, MESSAGE heading, section titles) fills every field', () => {
+    const p = parseForm(emailText('', SITE_HTML))
+    assert.equal(p.fields.name, 'Harrouchi Ismail')
+    assert.equal(p.fields.email, 'ismail.harrouchi@strasforma.fr')
+    assert.equal(p.fields.company, 'Strasforma')
+    assert.equal(p.fields.website, 'https://www.strasforma.fr/') // the next section title ("PROJET") is not glued to it
+    assert.equal(p.fields.service, 'Social Ads (Meta / TikTok)')
+    assert.match(p.fields.message, /^On a actuellement une campagne/)
+    assert.deepEqual(p.extras.map(([l]) => l), ['Budget', 'Délai', 'Page']) // IP, browser and received-at stay out of the description
+    const lead = buildLead({ subject: 'trtDigital - Social Ads (Meta / TikTok) - Harrouchi Ismail', fromAddress: 'commercial@trtdigital.ma' }, p)
+    assert.equal(lead.name, 'Harrouchi Ismail'); assert.equal(lead.company, 'Strasforma'); assert.equal(lead.website, 'https://www.strasforma.fr/')
+    assert.match(lead.description, /^On a actuellement/); assert.match(lead.description, /Budget: 5 000/); assert.doesNotMatch(lead.description, /162\.158/)
+})

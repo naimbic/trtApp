@@ -52,6 +52,9 @@ export function emailText(text, html) {
 }
 
 // a label is followed by a colon or an equals sign ("Nom: Ali", "Nom = Ali")
+const KNOWN = new Set(LOOKUP.map(([l]) => l))
+// technical lines of a form notification: they stay in the email (the lead's Mails tab) but not in the description
+const IGNORE = new Set(['ip', 'adresse ip', 'ip address', 'navigateur', 'browser', 'user agent', 'recu le', 'received', 'received on', 'date', 'heure'])
 const LABEL_LINE = /^[\s*_•·>\-–—]*([^:：=\n]{2,45}?)\s*[:：=]\s*(.*)$/
 
 /** Splits the text into [label, value] pairs: a label starts a pair, the lines after it (until the next label) belong to its value. */
@@ -63,6 +66,12 @@ export function pairs(text) {
         const m = LABEL_LINE.exec(line)
         // a label is short and starts like a word, so "Note: see https://x" works and "https://x" alone does not
         if (m && !/^https?$/i.test(m[1].trim()) && strip(m[1]).length >= 2 && strip(m[1]).split(' ').length <= 5) { cur = [m[1].trim(), m[2].trim()]; out.push(cur); continue }
+        // a label alone on its line ("MESSAGE"): the text under it is its value; a section title in capitals ("PROJET") only ends the previous value
+        const bare = strip(line)
+        if (!m && bare && line.trim().length <= 40) {
+            if (KNOWN.has(bare)) { cur = [line.trim(), '']; out.push(cur); continue }
+            if (line.trim() === line.trim().toUpperCase() && /[A-ZÀ-Ý]/.test(line) && bare.split(' ').length <= 3) { cur = null; continue }
+        }
         if (cur && line.trim()) cur[1] = cur[1] ? `${cur[1]}\n${line.trim()}` : line.trim()
     }
     return out.filter(([, v]) => v !== '')
@@ -78,6 +87,7 @@ export function parseForm(text, custom = new Map()) {
     for (const [label, value] of ps) {
         const k = strip(label)
         const field = custom.get(k) || LOOKUP.find(([l]) => l === k)?.[1]
+        if (!field && IGNORE.has(k)) continue
         if (field && !fields[field]) fields[field] = value
         else if (field && fields[field] !== value) extras.push([label, value])
         else if (!field) extras.push([label, value])

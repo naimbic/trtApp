@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.121.2',
+        date: '2026-10-30',
+        title: 'Lead email integration: the site notification is read field by field',
+        items: [
+            'Tested on the real layout of the website form notification (a table with Nom, Email, Entreprise, Site web, Services, Budget, Délai, a MESSAGE block and the Page line). Fixed: the section title "PROJET" stuck to the website, and the MESSAGE text was glued to the Délai line. The name, email, company, website and service now fill their lead fields, the message becomes the description, and Budget, Délai and Page follow it.',
+            'The technical lines (IP, browser, received-at) are no longer copied into the description; the full email stays on the lead\'s Mails tab.',
+        ],
+    },
+    {
         version: '0.121.1',
         date: '2026-10-30',
         title: 'Lead email integration: forms written with "Label = value"',

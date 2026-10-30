@@ -201,6 +201,23 @@ try {
     { const m1 = await lb('POST', `/api/crm/pipeline/leads/${LID}/mails`, { subject: 'x' }), m2 = await lb('POST', `/api/crm/pipeline/leads/${LID}/meetings`, { title: 'x', start: start.toISOString() }); check('...but a follower cannot log mails or add meetings (only the team can)', m1.status === 403 && m2.status === 403, `${m1.status} ${JSON.stringify(m1.body).slice(0, 70)} / ${m2.status} ${JSON.stringify(m2.body).slice(0, 70)}`) }
     check('...and a third person still sees nothing', (await lc('GET', `/api/crm/pipeline/leads/${LID}`)).status === 404)
     {
+        const dr = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { direction: 'draft', subject: 'Draft hello', to: 'nobody@test.local', body: '<p>Later</p>', date: new Date(Date.now() + 86400000).toISOString() })
+        check('save a draft mail (planned date allowed)', dr.status === 201 && !!dr.body?.id, String(dr.status))
+        const DID = dr.body?.id
+        if (DID) made.rows.unshift(['crmLeadMail', DID])
+        const noTo = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { direction: 'draft', subject: 'No address', body: '<p>x</p>' })
+        if (noTo.body?.id) made.rows.unshift(['crmLeadMail', noTo.body.id])
+        check('a draft without an address cannot be sent', noTo.body?.id && (await la('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: noTo.body.id })).status === 400)
+        check('a draft appears in the lead mails as a draft', (await la('GET', `/api/crm/pipeline/leads/${LID}`)).body?.mails?.some((m) => m.id === DID && m.direction === 'draft'))
+        check('a follower cannot send the draft', DID && (await lb('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: DID })).status === 403)
+        check('a stranger cannot send the draft', DID && (await lc('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: DID })).status === 404)
+        check('a sent mail cannot go back to a draft', mail.body?.id && (await la('PUT', `/api/crm/pipeline/leads/${LID}/mails`, { mailId: mail.body.id, direction: 'draft', subject: 'Hello' })).status === 400)
+        const sent = DID ? await la('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: DID }) : null
+        const after = DID ? await prisma.crmLeadMail.findUnique({ where: { id: DID } }) : null
+        check('sending: becomes Sent when the mail server accepts it, stays a draft with a clear error when it does not', sent && ((sent.status === 200 && after?.direction === 'out') || (sent.status === 400 && after?.direction === 'draft' && !!sent.body?.error || sent.status === 400 && after?.direction === 'draft')), `${sent?.status} ${after?.direction}`)
+        check('a mail that is not a draft cannot be sent again', mail.body?.id && (await la('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: mail.body.id })).status === 400)
+    }
+    {
         const up = async (who, name) => { const fd = new FormData(); fd.append('files', new Blob([Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(500)])], { type: 'application/pdf' }), name); fd.append('relType', 'lead'); fd.append('relId', LID); return who('POST', '/api/crm/media/upload', fd) }
         const own = await up(la, 'lead-file.pdf')
         for (const m of own.body?.saved || []) made.rows.push(['crmMedia', m.id])

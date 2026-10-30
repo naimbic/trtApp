@@ -268,7 +268,7 @@ const mailData = (b) => {
     if (!subject && !body) throw fail('Give the mail a subject or write its text')
     const date = b.date ? new Date(b.date) : new Date()
     if (Number.isNaN(+date)) throw fail('The date of the mail is not valid')
-    return { direction: b.direction === 'out' ? 'out' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), body: body || null, date }
+    return { direction: b.direction === 'out' ? 'out' : b.direction === 'draft' ? 'draft' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), body: body || null, date }
 }
 
 /** Logs an email sent to / received from the lead (written in the editor): date and time, from, to, subject, text. */
@@ -282,14 +282,46 @@ export async function saveMail(id, body, mailId) {
         const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
         if (!m) throw fail('Mail not found', 404)
         if (!mayChangeItem(a, m.addedFrom, 'mails')) throw fail('You can only edit the mails you logged', 403)
+        if (data.direction === 'draft' && m.direction !== 'draft') throw fail('A mail that is already sent or received cannot go back to a draft')
         await prisma.crmLeadMail.update({ where: { id: mailId }, data })
         return { success: true, id: mailId }
     }
     const m = await prisma.crmLeadMail.create({ data: { ...data, leadId: id, addedFrom: a.staffId, source: 'manual' } })
+    if (data.direction === 'draft') return { success: true, id: m.id } // nothing happened with the lead yet: it is only a draft
     await prisma.crmLead.update({ where: { id }, data: { lastContact: data.date > new Date() ? new Date() : data.date } })
     await logActivity(id, a, `${data.direction === 'out' ? 'Mail sent' : 'Mail received'} logged${data.subject ? `: ${data.subject}` : ''}`)
     try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `✉ ${data.subject || ''}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
     return { success: true, id: m.id }
+}
+
+const MAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/
+
+/** Sends a draft through the CRM mail server (with the staff signature), then turns it into a sent mail dated now. A failed send leaves the draft as it was. */
+export async function sendDraftMail(id, mailId) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    const lead = await loadOne(id, a)
+    const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
+    if (!m) throw fail('Mail not found', 404)
+    if (m.direction !== 'draft') throw fail('This mail is not a draft')
+    if (!mayEdit(a, lead) && !a.can('edit_others_mails')) throw fail('You can only edit your own leads', 403)
+    if (!mayChangeItem(a, m.addedFrom, 'mails')) throw fail('You can only send the drafts you wrote', 403)
+    const to = String(m.toAddress || '').split(/[,;\s]+/).filter(Boolean)
+    if (!to.length) throw fail('Add the email address to send to')
+    const bad = to.find((e) => !MAIL_RE.test(e))
+    if (bad) throw fail(`"${bad}" is not a valid email address`)
+    if (!m.subject) throw fail('Write a subject before sending')
+    const { deliver, escapeHtml } = await import('@/lib/crm/mailer')
+    const me = a.staffId ? await prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { firstName: true, lastName: true, emailSignature: true } }) : null
+    const html = `${m.body || `<p>${escapeHtml(m.subject)}</p>`}${me?.emailSignature ? `<br>${me.emailSignature}` : ''}`
+    const res = await deliver({ to: to.join(', '), subject: m.subject, html, fromName: me ? staffName(me) : undefined })
+    if (!res.sent) throw fail(res.error || 'The email could not be sent')
+    const now = new Date()
+    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { direction: 'out', date: now } })
+    await prisma.crmLead.update({ where: { id }, data: { lastContact: now } })
+    await logActivity(id, a, `Mail sent: ${m.subject}`)
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `✉ ${m.subject}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
+    return { success: true, id: mailId }
 }
 
 export async function deleteMail(id, mailId) {

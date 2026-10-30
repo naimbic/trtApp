@@ -4388,5 +4388,16 @@ export default {
     "account for this currency": "حساب هذه العملة",
     "client's account": "حساب العميل",
     "default account": "الحساب الافتراضي",
-    "{n} ({why})": "{n} ({why})"
+    "{n} ({why})": "{n} ({why})",
+    "New draft": "مسودة جديدة",
+    "Save draft": "حفظ المسودة",
+    "Send now": "إرسال الآن",
+    "Send this draft now?": "هل تريد إرسال هذه المسودة الآن؟",
+    "Mail sent": "تم إرسال البريد",
+    "A mail that is already sent or received cannot go back to a draft": "لا يمكن إعادة بريد مرسل أو مستلم إلى مسودة",
+    "This mail is not a draft": "هذا البريد ليس مسودة",
+    "You can only send the drafts you wrote": "يمكنك إرسال المسودات التي كتبتها فقط",
+    "Add the email address to send to": "أضف عنوان البريد الإلكتروني للمرسل إليه",
+    "Write a subject before sending": "اكتب موضوعًا قبل الإرسال",
+    "The email could not be sent": "تعذر إرسال البريد"
 }

@@ -4388,5 +4388,16 @@ export default {
     "account for this currency": "cuenta para esta moneda",
     "client's account": "cuenta del cliente",
     "default account": "cuenta predeterminada",
-    "{n} ({why})": "{n} ({why})"
+    "{n} ({why})": "{n} ({why})",
+    "New draft": "Nuevo borrador",
+    "Save draft": "Guardar borrador",
+    "Send now": "Enviar ahora",
+    "Send this draft now?": "¿Enviar este borrador ahora?",
+    "Mail sent": "Correo enviado",
+    "A mail that is already sent or received cannot go back to a draft": "Un correo ya enviado o recibido no puede volver a ser borrador",
+    "This mail is not a draft": "Este correo no es un borrador",
+    "You can only send the drafts you wrote": "Solo puede enviar los borradores que escribió",
+    "Add the email address to send to": "Añada la dirección de correo del destinatario",
+    "Write a subject before sending": "Escriba un asunto antes de enviar",
+    "The email could not be sent": "No se pudo enviar el correo"
 }

@@ -1524,5 +1524,11 @@
  "No client area password yet",
  "Locked after too many wrong passwords",
  "Unlock",
- "Unlocked: {name} can try again"
+ "Unlocked: {name} can try again",
+ "A mail that is already sent or received cannot go back to a draft",
+ "This mail is not a draft",
+ "You can only send the drafts you wrote",
+ "Add the email address to send to",
+ "Write a subject before sending",
+ "The email could not be sent"
 ]

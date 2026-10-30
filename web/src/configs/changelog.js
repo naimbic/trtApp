@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.123.0',
+        date: '2026-10-30',
+        title: 'Lead mails: drafts and Send',
+        items: [
+            'In the lead popup, Mails tab: a new kind of mail, Draft. Click New draft, fill the address, the date, the subject and the text, and save it for later. A draft shows with an amber Draft label and does not count as contact with the lead yet.',
+            'A Send now button on each draft sends the email for real through the CRM mail server (with your signature), then the mail becomes Sent with the date and time of the sending, the lead\'s last contact is updated and the history records it. If the mail server refuses it, the draft stays a draft and you see the reason.',
+            'Only the person who wrote the draft (or someone allowed to edit other people\'s mails) can send it; followers cannot. A mail already sent or received cannot go back to a draft.',
+        ],
+    },
+    {
         version: '0.122.1',
         date: '2026-10-30',
         title: 'Lead email integration: forms in any language',

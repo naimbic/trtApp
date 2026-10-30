@@ -4388,5 +4388,16 @@ export default {
     "account for this currency": "compte pour cette devise",
     "client's account": "compte du client",
     "default account": "compte par défaut",
-    "{n} ({why})": "{n} ({why})"
+    "{n} ({why})": "{n} ({why})",
+    "New draft": "Nouveau brouillon",
+    "Save draft": "Enregistrer le brouillon",
+    "Send now": "Envoyer maintenant",
+    "Send this draft now?": "Envoyer ce brouillon maintenant ?",
+    "Mail sent": "E-mail envoyé",
+    "A mail that is already sent or received cannot go back to a draft": "Un e-mail déjà envoyé ou reçu ne peut pas redevenir un brouillon",
+    "This mail is not a draft": "Cet e-mail n'est pas un brouillon",
+    "You can only send the drafts you wrote": "Vous ne pouvez envoyer que les brouillons que vous avez écrits",
+    "Add the email address to send to": "Ajoutez l'adresse e-mail du destinataire",
+    "Write a subject before sending": "Écrivez un objet avant d'envoyer",
+    "The email could not be sent": "L'e-mail n'a pas pu être envoyé"
 }

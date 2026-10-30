@@ -4388,5 +4388,16 @@ export default {
     "account for this currency": "この通貨用の口座",
     "client's account": "クライアントの口座",
     "default account": "既定の口座",
-    "{n} ({why})": "{n}（{why}）"
+    "{n} ({why})": "{n}（{why}）",
+    "New draft": "新しい下書き",
+    "Save draft": "下書きを保存",
+    "Send now": "今すぐ送信",
+    "Send this draft now?": "この下書きを今すぐ送信しますか？",
+    "Mail sent": "メールを送信しました",
+    "A mail that is already sent or received cannot go back to a draft": "送信済みまたは受信済みのメールは下書きに戻せません",
+    "This mail is not a draft": "このメールは下書きではありません",
+    "You can only send the drafts you wrote": "自分が書いた下書きのみ送信できます",
+    "Add the email address to send to": "送信先のメールアドレスを入力してください",
+    "Write a subject before sending": "送信前に件名を入力してください",
+    "The email could not be sent": "メールを送信できませんでした"
 }

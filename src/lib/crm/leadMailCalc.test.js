@@ -108,3 +108,9 @@ test('the site notification (HTML table, MESSAGE heading, section titles) fills 
     assert.equal(lead.name, 'Harrouchi Ismail'); assert.equal(lead.company, 'Strasforma'); assert.equal(lead.website, 'https://www.strasforma.fr/')
     assert.match(lead.description, /^On a actuellement/); assert.match(lead.description, /Budget: 5 000/); assert.doesNotMatch(lead.description, /162\.158/)
 })
+
+test('when the plain part is only the HTML flattened (no separators), the HTML table is read instead', () => {
+    const flat = 'COORDONNÉES\nNom Harrouchi Ismail\nEmail ismail@x.fr\nEntreprise Strasforma\nPage : https://www.trtdigital.ma/#audit'
+    const p = parseForm(emailText(flat, SITE_HTML))
+    assert.equal(p.fields.name, 'Harrouchi Ismail'); assert.equal(p.fields.company, 'Strasforma'); assert.equal(p.fields.email, 'ismail.harrouchi@strasforma.fr')
+})

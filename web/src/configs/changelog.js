@@ -7,6 +7,7 @@ export const CHANGELOG = [
         title: 'Lead email integration: the site notification is read field by field',
         items: [
             'Tested on the real layout of the website form notification (a table with Nom, Email, Entreprise, Site web, Services, Budget, Délai, a MESSAGE block and the Page line). Fixed: the section title "PROJET" stuck to the website, and the MESSAGE text was glued to the Délai line. The name, email, company, website and service now fill their lead fields, the message becomes the description, and Budget, Délai and Page follow it.',
+            'Fixed: when the email had an HTML part and a plain part that was only the HTML flattened (the cells of the table without any separator), the plain part was used and the lead came out with the sender\'s name and no company or email. The reader now keeps whichever part shows more "Label: value" lines.',
             'The technical lines (IP, browser, received-at) are no longer copied into the description; the full email stays on the lead\'s Mails tab.',
         ],
     },

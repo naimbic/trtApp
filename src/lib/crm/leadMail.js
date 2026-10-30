@@ -138,12 +138,17 @@ export async function testMailbox(b) {
 async function readOne(client, uid, cfg, custom) {
     const m = await client.fetchOne(uid, { source: true, internalDate: true }, { uid: true })
     if (!m?.source) return null
-    const p = await simpleParser(m.source)
+    return readRaw(m.source, uid, cfg, custom, m.internalDate)
+}
+
+/** The raw message (MIME) turned into { msg, parsed, verdict }. */
+export async function readRaw(source, uid, cfg, custom, internalDate) {
+    const p = await simpleParser(source)
     const text = emailText(p.text, p.html)
     const msg = {
         uid, messageId: p.messageId || null, fromAddress: p.from?.value?.[0]?.address || '', fromName: p.from?.value?.[0]?.name || '',
         replyTo: p.replyTo?.value?.[0]?.address || '', replyName: p.replyTo?.value?.[0]?.name || '', subject: p.subject || '', text,
-        date: p.date || m.internalDate || new Date(),
+        date: p.date || internalDate || new Date(),
     }
     const parsed = parseForm(text, custom)
     return { msg, parsed, verdict: judge(msg, cfg, parsed) }
@@ -208,7 +213,7 @@ const escHtml = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;',
 /** The email itself goes to the lead's Mails tab (received, from the mailbox), so the whole conversation is on the lead. */
 const logMail = (leadId, cfg, msg) => prisma.crmLeadMail.create({ data: { leadId, direction: 'in', subject: msg.subject || null, fromAddress: msg.fromAddress || null, toAddress: cfg.email || null, body: `<p>${escHtml(String(msg.text || '').slice(0, 20000)).replace(/\n/g, '<br>')}</p>`, date: msg.date || new Date(), source: 'mailbox' } }).catch((e) => console.error('[lead mail log]', e.message))
 
-async function importOne(cfg, r, dry) {
+export async function importOne(cfg, r, dry) {
     const { msg, parsed } = r
     const lead = buildLead(msg, parsed)
     const { existing, contact } = await known(lead)

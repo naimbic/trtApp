@@ -39,16 +39,18 @@ const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'
 /** The readable text of an email: the plain part when there is one, otherwise the HTML with its table cells turned into "Label: value". */
 export function emailText(text, html) {
     const t = String(text || '').trim()
-    if (t && /[:：=]/.test(t)) return t
     const h = String(html || '')
     if (!h) return t
-    return h
+    const fromHtml = h
         .replace(/<(style|script)[\s\S]*?<\/\1>/gi, '')
         .replace(/<\/t[dh]>\s*<t[dh][^>]*>/gi, ': ')
         .replace(/<br\s*\/?>|<\/(p|div|tr|li|h[1-6]|table)>/gi, '\n')
         .replace(/<[^>]+>/g, '')
         .replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (m) => ENT[m])
         .replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim()
+    // a plain part that is only the HTML flattened (table cells without any separator) tells less than the HTML itself: keep the one with more "Label: value" lines
+    if (t && /[:：=]/.test(t) && pairs(t).length >= pairs(fromHtml).length) return t
+    return fromHtml
 }
 
 // a label is followed by a colon or an equals sign ("Nom: Ali", "Nom = Ali")

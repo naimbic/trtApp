@@ -134,8 +134,9 @@ export async function getLead(id) {
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
-        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.fromAddress || '', to: m.toAddress || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
+        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.fromAddress || '', to: m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
+        senders: await senderOptions(a),
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
 }
@@ -268,7 +269,7 @@ const mailData = (b) => {
     if (!subject && !body) throw fail('Give the mail a subject or write its text')
     const date = b.date ? new Date(b.date) : new Date()
     if (Number.isNaN(+date)) throw fail('The date of the mail is not valid')
-    return { direction: b.direction === 'out' ? 'out' : b.direction === 'draft' ? 'draft' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), body: body || null, date }
+    return { direction: b.direction === 'out' ? 'out' : b.direction === 'draft' ? 'draft' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), ccAddress: nz(b.cc), bccAddress: nz(b.bcc), replyTo: nz(b.replyTo), body: body || null, date }
 }
 
 /** Logs an email sent to / received from the lead (written in the editor): date and time, from, to, subject, text. */
@@ -295,8 +296,30 @@ export async function saveMail(id, body, mailId) {
 }
 
 const MAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/
+const addrList = (v) => String(v || '').split(/[,;\s]+/).filter(Boolean)
+const MAX_ATTACH_MB = 20
 
-/** Sends a draft through the CRM mail server (with the staff signature), then turns it into a sent mail dated now. A failed send leaves the draft as it was. */
+/** The addresses a lead mail may be sent from: the mail server address, the staff member's own email and the extra ones set in Settings → Email. */
+async function senderOptions(a) {
+    const { getSmtp } = await import('@/lib/crm/mailer')
+    const [smtp, opt, me] = await Promise.all([getSmtp(), prisma.crmOption.findUnique({ where: { name: 'lead_mail_senders' } }), a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true } }) : null])
+    const seen = new Set(), out = []
+    for (const e of [smtp.email, me?.email, ...addrList(opt?.value)]) { const k = String(e || '').trim().toLowerCase(); if (k && MAIL_RE.test(k) && !seen.has(k)) { seen.add(k); out.push(String(e).trim()) } }
+    return out
+}
+
+/** Removes the files attached to mails (the rows and the stored objects). */
+async function dropMailFiles(mailIds) {
+    if (!mailIds.length) return
+    const rows = await prisma.crmMedia.findMany({ where: { relType: 'leadmail', relId: { in: mailIds } } })
+    if (!rows.length) return
+    await prisma.crmMedia.deleteMany({ where: { id: { in: rows.map((r) => r.id) } } })
+    const keys = rows.map((r) => r.key).filter(Boolean)
+    const shared = new Set((await prisma.crmMedia.findMany({ where: { key: { in: keys } }, select: { key: true } })).map((r) => r.key))
+    try { const { deleteMedia } = await import('@/lib/media'); await deleteMedia(keys.filter((k) => !shared.has(k)), { allowAny: true }) } catch (e) { console.error('[mail files]', e.message) }
+}
+
+/** Sends a draft through the CRM mail server (from the chosen address, with the staff signature and the attached files), then turns it into a sent mail dated now. A failed send leaves the draft as it was. */
 export async function sendDraftMail(id, mailId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
@@ -306,18 +329,28 @@ export async function sendDraftMail(id, mailId) {
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
     if (!mayEdit(a, lead) && !a.can('edit_others_mails')) throw fail('You can only edit your own leads', 403)
     if (!mayChangeItem(a, m.addedFrom, 'mails')) throw fail('You can only send the drafts you wrote', 403)
-    const to = String(m.toAddress || '').split(/[,;\s]+/).filter(Boolean)
+    const to = addrList(m.toAddress), cc = addrList(m.ccAddress), bcc = addrList(m.bccAddress), reply = addrList(m.replyTo)
     if (!to.length) throw fail('Add the email address to send to')
-    const bad = to.find((e) => !MAIL_RE.test(e))
+    const bad = [...to, ...cc, ...bcc, ...reply].find((e) => !MAIL_RE.test(e))
     if (bad) throw fail(`"${bad}" is not a valid email address`)
     if (!m.subject) throw fail('Write a subject before sending')
-    const { deliver, escapeHtml } = await import('@/lib/crm/mailer')
-    const me = a.staffId ? await prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { firstName: true, lastName: true, emailSignature: true } }) : null
+    const senders = await senderOptions(a)
+    const from = (m.fromAddress || '').trim() || senders[0] || ''
+    if (!from || !senders.some((e) => e.toLowerCase() === from.toLowerCase())) throw fail('Choose the address to send from in the list')
+    const files = await prisma.crmMedia.findMany({ where: { relType: 'leadmail', relId: mailId, isFolder: false } })
+    if (files.reduce((n, f) => n + (f.size || 0), 0) > MAX_ATTACH_MB * 1024 * 1024) throw fail(`The attached files are larger than ${MAX_ATTACH_MB} MB together`)
+    const { deliver, escapeHtml, getSmtp } = await import('@/lib/crm/mailer')
+    const [me, smtp] = await Promise.all([a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { firstName: true, lastName: true, email: true, emailSignature: true } }) : null, getSmtp()])
     const html = `${m.body || `<p>${escapeHtml(m.subject)}</p>`}${me?.emailSignature ? `<br>${me.emailSignature}` : ''}`
-    const res = await deliver({ to: to.join(', '), subject: m.subject, html, fromName: me ? staffName(me) : undefined })
+    const own = !!me?.email && me.email.toLowerCase() === from.toLowerCase()
+    const res = await deliver({
+        to: to.join(', '), cc: cc.join(', '), bcc: bcc.join(', '), replyTo: reply.join(', '), subject: m.subject, html,
+        fromEmail: from, fromName: own && me ? staffName(me) : smtp.fromName || (me ? staffName(me) : undefined),
+        attachments: files.filter((f) => f.url).map((f) => ({ filename: f.name, path: f.url })),
+    })
     if (!res.sent) throw fail(res.error || 'The email could not be sent')
     const now = new Date()
-    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { direction: 'out', date: now } })
+    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { direction: 'out', date: now, fromAddress: from } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: now } })
     await logActivity(id, a, `Mail sent: ${m.subject}`)
     try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `✉ ${m.subject}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
@@ -332,6 +365,7 @@ export async function deleteMail(id, mailId) {
     if (!m) throw fail('Mail not found', 404)
     if (m.addedFrom !== a.staffId && !a.can('delete')) throw fail('You can only delete the mails you logged', 403)
     await prisma.crmLeadMail.delete({ where: { id: mailId } })
+    await dropMailFiles([mailId])
     return { success: true }
 }
 
@@ -379,6 +413,7 @@ export async function deleteLead(id) {
     if (l.clientId) throw fail('This lead was converted to a client and cannot be deleted')
     await prisma.crmLeadActivityLog.deleteMany({ where: { leadId: id } })
     await prisma.crmNote.deleteMany({ where: { relType: 'lead', relId: id } })
+    await dropMailFiles((await prisma.crmLeadMail.findMany({ where: { leadId: id }, select: { id: true } })).map((x) => x.id))
     await prisma.crmLeadMail.deleteMany({ where: { leadId: id } })
     await prisma.crmEvent.deleteMany({ where: { leadId: id } })
     await prisma.crmLead.delete({ where: { id } })

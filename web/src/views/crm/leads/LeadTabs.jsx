@@ -10,6 +10,7 @@ import DatePicker from '@/components/ui/DatePicker'
 import Input from '@/components/ui/Input'
 import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
+import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import Tag from '@/components/ui/Tag'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify, qs, useCan } from '../kit/api'
@@ -76,29 +77,43 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
     )
 }
 
-const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', subject: '', body: '' })
+const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', subject: '', body: '' })
 
 /** Emails sent to or received from the lead, written in the editor with their date and time. Mails read by the lead mailbox land here too. */
-export const LeadMails = ({ leadId, mails, canEdit, run }) => {
+export const LeadMails = ({ leadId, mails, senders = [], canEdit, run }) => {
     const [form, setForm] = useState(null) // { id?, ...fields }
     const [del, setDel] = useState(null)
     const [send, setSend] = useState(null)
     const set = (p) => setForm((f) => ({ ...f, ...p }))
-    const save = () => run(() => api(`/api/crm/pipeline/leads/${leadId}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString() } }).then(() => setForm(null)), tr("Mail saved"))
+    const draft = form?.direction === 'draft'
+    const [more, setMore] = useState(false)
+    const save = () => run(() => api(`/api/crm/pipeline/leads/${leadId}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString() } }).then((r) => { if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
+    const newDraft = () => { setMore(false); setForm({ ...MAIL_EMPTY(), direction: 'draft', from: senders[0] || '' }) }
     return (
         <div className="space-y-4">
-            {canEdit && !form && <div className="flex gap-2"><Button size="sm" icon={<TbPlus />} onClick={() => setForm(MAIL_EMPTY())}>{tr("Log a mail")}</Button><Button size="sm" icon={<TbFileText />} onClick={() => setForm({ ...MAIL_EMPTY(), direction: 'draft' })}>{tr("New draft")}</Button></div>}
+            {canEdit && !form && <div className="flex gap-2"><Button size="sm" icon={<TbPlus />} onClick={() => setForm(MAIL_EMPTY())}>{tr("Log a mail")}</Button><Button size="sm" icon={<TbFileText />} onClick={newDraft}>{tr("New draft")}</Button></div>}
             {form && (
                 <div className="space-y-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
                     <div className="grid grid-cols-2 gap-3">
                         <div><L>{tr("Type")}</L><Segment size="sm" value={form.direction} onChange={(v) => set({ direction: Array.isArray(v) ? v[0] : v })}><Segment.Item value="in">{tr("Received")}</Segment.Item><Segment.Item value="out">{tr("Sent")}</Segment.Item><Segment.Item value="draft">{tr("Draft")}</Segment.Item></Segment></div>
                         <div><L>{tr("Date and time")}</L><DatePicker.DateTimepicker value={form.date} onChange={(d) => set({ date: d || new Date() })} /></div>
-                        <div><L>{tr("From")}</L><Input size="sm" value={form.from} placeholder="name@company.com" onChange={(e) => set({ from: e.target.value })} /></div>
+                        <div><L>{tr("From")}</L>{draft && senders.length ? <Select size="sm" isSearchable={false} options={senders.map((e) => ({ value: e, label: e }))} value={form.from ? { value: form.from, label: form.from } : null} onChange={(o) => set({ from: o?.value || '' })} /> : <Input size="sm" value={form.from} placeholder="name@company.com" onChange={(e) => set({ from: e.target.value })} />}</div>
                         <div><L>{tr("To")}</L><Input size="sm" value={form.to} placeholder="name@company.com" onChange={(e) => set({ to: e.target.value })} /></div>
                     </div>
+                    {draft && (more || form.cc || form.bcc || form.replyTo ? (
+                        <div className="grid grid-cols-3 gap-3">
+                            <div><L>{tr("Cc")}</L><Input size="sm" value={form.cc} onChange={(e) => set({ cc: e.target.value })} /></div>
+                            <div><L>{tr("Bcc")}</L><Input size="sm" value={form.bcc} onChange={(e) => set({ bcc: e.target.value })} /></div>
+                            <div><L>{tr("Reply to")}</L><Input size="sm" value={form.replyTo} onChange={(e) => set({ replyTo: e.target.value })} /></div>
+                        </div>
+                    ) : <button type="button" className="text-xs text-primary" onClick={() => setMore(true)}>{tr("Add Cc, Bcc or Reply to")}</button>)}
+                    {draft && <p className="text-xs text-gray-500">{tr("Several addresses can be separated by commas. The date becomes the sending time when you send.")}</p>}
                     <div><L>{tr("Subject")}</L><Input size="sm" value={form.subject} onChange={(e) => set({ subject: e.target.value })} /></div>
                     <div><L>{tr("Mail")}</L><RichEditor minHeight={140} value={form.body} placeholder={tr("Paste or write the mail here")} onChange={(html) => set({ body: html })} /></div>
-                    <div className="flex gap-2"><Button size="sm" variant="solid" onClick={save}>{form.direction === 'draft' ? tr("Save draft") : tr("Save mail")}</Button><Button size="sm" onClick={() => setForm(null)}>{tr("Cancel")}</Button></div>
+                    {draft && (form.id
+                        ? <div><L>{tr("Attachments")}</L><AttachmentsPanel relType="leadmail" relId={form.id} canEdit maxMb={10} hint={tr("Up to 10 MB per file, 20 MB in all.")} /></div>
+                        : <p className="text-xs text-gray-500">{tr("Save the draft first, then you can attach files.")}</p>)}
+                    <div className="flex flex-wrap gap-2"><Button size="sm" variant="solid" onClick={save}>{draft ? tr("Save draft") : tr("Save mail")}</Button>{draft && form.id && <Button size="sm" icon={<TbSend />} onClick={() => setSend({ id: form.id, subject: form.subject, to: form.to })}>{tr("Send now")}</Button>}<Button size="sm" onClick={() => setForm(null)}>{draft && form.id ? tr("Close") : tr("Cancel")}</Button></div>
                 </div>
             )}
             {mails.map((m) => (
@@ -106,7 +121,7 @@ export const LeadMails = ({ leadId, mails, canEdit, run }) => {
                     <div className="mb-1 flex items-start justify-between gap-2">
                         <div className="min-w-0">
                             <div className="flex items-center gap-2"><Tag className={m.direction === 'draft' ? 'bg-amber-100 text-amber-700' : m.direction === 'out' ? 'bg-sky-100 text-sky-700' : 'bg-emerald-100 text-emerald-700'}>{m.direction === 'draft' ? <TbFileText className="inline" /> : m.direction === 'out' ? <TbArrowUpRight className="inline" /> : <TbArrowDownLeft className="inline" />} {m.direction === 'draft' ? tr("Draft") : m.direction === 'out' ? tr("Sent") : tr("Received")}</Tag><span className="truncate font-semibold heading-text">{m.subject || tr("(no subject)")}</span></div>
-                            <div className="mt-0.5 text-xs text-gray-500">{[m.from && `${tr("From")} ${m.from}`, m.to && `${tr("To")} ${m.to}`].filter(Boolean).join(' · ')}</div>
+                            <div className="mt-0.5 text-xs text-gray-500">{[m.from && `${tr("From")} ${m.from}`, m.to && `${tr("To")} ${m.to}`, m.cc && `${tr("Cc")} ${m.cc}`].filter(Boolean).join(' · ')}</div>
                         </div>
                         <div className="shrink-0 text-end text-xs text-gray-500"><div>{when(m.date)}</div>{m.source === 'mailbox' && <div className="text-[11px]">{tr("from the mailbox")}</div>}</div>
                     </div>
@@ -114,14 +129,14 @@ export const LeadMails = ({ leadId, mails, canEdit, run }) => {
                     {m.direction === 'draft' && m.canEdit && (canEdit || !m.mine) && <div className="mt-2"><Button size="sm" variant="solid" icon={<TbSend />} onClick={() => setSend(m)}>{tr("Send now")}</Button></div>}
                     {(m.canEdit || m.canDelete) && (
                         <div className="absolute end-2 bottom-2 flex gap-0.5 opacity-0 transition group-hover:opacity-100">
-                            {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, subject: m.subject, body: m.body })} />}
+                            {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, subject: m.subject, body: m.body })} />}
                             {m.canDelete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} />}
                         </div>
                     )}
                 </div>
             ))}
             {!mails.length && !form && <p className="text-sm text-gray-500">{tr("No mails logged yet.")}</p>}
-            <ConfirmDialog isOpen={!!send} type="info" title={tr("Send this draft now?")} confirmText={tr("Send")} onClose={() => setSend(null)} onCancel={() => setSend(null)} onConfirm={() => { const m = send; setSend(null); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails/send`, { method: 'POST', body: { mailId: m.id } }), tr("Mail sent")) }}>
+            <ConfirmDialog isOpen={!!send} type="info" title={tr("Send this draft now?")} confirmText={tr("Send")} onClose={() => setSend(null)} onCancel={() => setSend(null)} onConfirm={() => { const m = send; setSend(null); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails/send`, { method: 'POST', body: { mailId: m.id } }).then(() => setForm(null)), tr("Mail sent")) }}>
                 <p>{send?.subject}</p><p className="text-sm text-gray-500">{tr("To")} {send?.to}</p>
             </ConfirmDialog>
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this mail?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const m = del; setDel(null); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails?mailId=${m.id}`, { method: 'DELETE' }), tr("Mail deleted")) }}>

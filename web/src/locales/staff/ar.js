@@ -4399,5 +4399,17 @@ export default {
     "You can only send the drafts you wrote": "يمكنك إرسال المسودات التي كتبتها فقط",
     "Add the email address to send to": "أضف عنوان البريد الإلكتروني للمرسل إليه",
     "Write a subject before sending": "اكتب موضوعًا قبل الإرسال",
-    "The email could not be sent": "تعذر إرسال البريد"
+    "The email could not be sent": "تعذر إرسال البريد",
+    "Draft saved": "تم حفظ المسودة",
+    "Cc": "نسخة (Cc)",
+    "Bcc": "نسخة مخفية (Bcc)",
+    "Reply to": "الرد إلى",
+    "Add Cc, Bcc or Reply to": "إضافة Cc أو Bcc أو الرد إلى",
+    "Several addresses can be separated by commas. The date becomes the sending time when you send.": "يمكن فصل عدة عناوين بفواصل. يصبح التاريخ وقت الإرسال عند الإرسال.",
+    "Up to 10 MB per file, 20 MB in all.": "حتى 10 ميغابايت لكل ملف و20 ميغابايت في المجموع.",
+    "Save the draft first, then you can attach files.": "احفظ المسودة أولاً ثم يمكنك إرفاق الملفات.",
+    "Choose the address to send from in the list": "اختر عنوان الإرسال من القائمة",
+    "The attached files are larger than 20 MB together": "المرفقات تتجاوز 20 ميغابايت في المجموع",
+    "Other \"send from\" addresses (lead mails)": "عناوين إرسال أخرى (بريد العملاء المحتملين)",
+    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "العناوين التي يمكن إرسال بريد العميل المحتمل منها، إضافة إلى عنوان خادم البريد وبريد الموظف نفسه. يجب أن يسمح بها خادم البريد. افصل بينها بفواصل."
 }

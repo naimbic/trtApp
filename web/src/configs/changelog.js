@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.124.0',
+        date: '2026-10-30',
+        title: 'Lead mail drafts: sender, Cc/Bcc, attachments',
+        items: [
+            'A lead mail draft now has everything a real email needs: the address it is sent from (a list), To, Cc, Bcc, Reply to, the subject, the text in the editor, and attached files (save the draft first, then attach; up to 10 MB per file and 20 MB in all).',
+            'Send now sends the email through the CRM mail server from the chosen address with the files attached; the mail becomes Sent. The sender can only be an address from the list: the mail server address, the staff member\'s own email, or the extra addresses written in Settings → Email → "Other send from addresses (lead mails)" (put hello@trtmaroc.com there; your mail server must allow it).',
+            'Only the writer of a draft can attach or remove its files, and only while it is a draft. Deleting a mail or a lead removes its attached files.',
+        ],
+    },
+    {
         version: '0.123.0',
         date: '2026-10-30',
         title: 'Lead mails: drafts and Send',

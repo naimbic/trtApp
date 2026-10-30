@@ -4399,5 +4399,17 @@ export default {
     "You can only send the drafts you wrote": "Solo puede enviar los borradores que escribió",
     "Add the email address to send to": "Añada la dirección de correo del destinatario",
     "Write a subject before sending": "Escriba un asunto antes de enviar",
-    "The email could not be sent": "No se pudo enviar el correo"
+    "The email could not be sent": "No se pudo enviar el correo",
+    "Draft saved": "Borrador guardado",
+    "Cc": "Cc",
+    "Bcc": "Cco",
+    "Reply to": "Responder a",
+    "Add Cc, Bcc or Reply to": "Añadir Cc, Cco o Responder a",
+    "Several addresses can be separated by commas. The date becomes the sending time when you send.": "Varias direcciones pueden separarse con comas. La fecha pasa a ser la hora de envío al enviar.",
+    "Up to 10 MB per file, 20 MB in all.": "Hasta 10 MB por archivo, 20 MB en total.",
+    "Save the draft first, then you can attach files.": "Guarde primero el borrador y luego podrá adjuntar archivos.",
+    "Choose the address to send from in the list": "Elija en la lista la dirección desde la que enviar",
+    "The attached files are larger than 20 MB together": "Los archivos adjuntos superan los 20 MB en total",
+    "Other \"send from\" addresses (lead mails)": "Otras direcciones de envío (correos de leads)",
+    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Direcciones desde las que se puede enviar un correo de lead, además de la del servidor de correo y el correo del propio empleado. Su servidor de correo debe permitirlas. Sepárelas con comas."
 }

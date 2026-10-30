@@ -108,14 +108,14 @@ export async function baseData() {
 }
 
 /** Sends one message. Returns { sent, error }. Never throws for SMTP problems; callers log the outcome. */
-export async function deliver({ to, cc, subject, html, fromName, fromEmail, attachments }) {
+export async function deliver({ to, cc, bcc, replyTo, subject, html, fromName, fromEmail, attachments }) {
     const s = await getSmtp()
     if (!smtpReady(s)) return { sent: false, error: 'SMTP is not configured. Add the mail server in Mails → Settings.' }
     try {
         const t = await transportFor(s)
         await t.sendMail({
             from: { name: fromName || s.fromName || '', address: fromEmail || s.email },
-            to, cc: cc || undefined, bcc: s.bcc ? s.bcc.split(/[,;\s]+/).filter(Boolean).join(', ') : undefined, subject, html, text: stripHtml(html), attachments: attachments?.length ? attachments : undefined,
+            to, cc: cc || undefined, replyTo: replyTo || undefined, bcc: [...(s.bcc ? s.bcc.split(/[,;\s]+/) : []), ...(bcc ? String(bcc).split(/[,;\s]+/) : [])].filter(Boolean).join(', ') || undefined, subject, html, text: stripHtml(html), attachments: attachments?.length ? attachments : undefined,
         })
         return { sent: true }
     } catch (e) {

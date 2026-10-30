@@ -656,11 +656,14 @@ model CrmLeadEmailImport {
 model CrmLeadMail {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   leadId      String   @db.ObjectId
-  /// in = received from the lead, out = sent to the lead
+  /// in = received from the lead, out = sent to the lead, draft = written but not sent yet
   direction   String   @default("in")
   subject     String?
   fromAddress String?
   toAddress   String?
+  ccAddress   String?
+  bccAddress  String?
+  replyTo     String?
   body        String?
   /// when the email was sent or received (date and time)
   date        DateTime

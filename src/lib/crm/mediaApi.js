@@ -10,7 +10,7 @@ const OID = /^[0-9a-f]{24}$/i
 const fail = (message, status = 400) => { throw new PermissionError(message, status) }
 
 // Which Perfex feature controls attachments of each record type.
-const REL_FEATURE = { customer: 'customers', client: 'customers', invoice: 'invoices', estimate: 'estimates', proposal: 'proposals', contract: 'contracts', project: 'projects', task: 'tasks', issue: 'issues', ticket: 'tickets', lead: 'leads', expense: 'expenses' }
+const REL_FEATURE = { customer: 'customers', client: 'customers', invoice: 'invoices', estimate: 'estimates', proposal: 'proposals', contract: 'contracts', project: 'projects', task: 'tasks', issue: 'issues', ticket: 'tickets', lead: 'leads', leadmail: 'leads', expense: 'expenses' }
 
 async function who() {
     const session = await auth()
@@ -26,15 +26,25 @@ async function relAccess(ctx, relType, cap, relId) {
     const feature = REL_FEATURE[relType]
     if (!feature) fail('Unknown record type')
     // a lead's files follow the lead's own rules: the ones who see the lead read them, the ones who work on it (not a mere follower) add and delete them
-    if (relType === 'lead') {
+    if (relType === 'lead' || relType === 'leadmail') {
         if (!OID.test(relId || '')) throw new PermissionError('You do not have access to these files', 403)
-        const l = await prisma.crmLead.findUnique({ where: { id: relId }, select: { assigned: true, assignedIds: true, addedFrom: true, followerIds: true, isPublic: true } })
+        let leadId = relId
+        let drafter = null
+        if (relType === 'leadmail') {
+            const mail = await prisma.crmLeadMail.findUnique({ where: { id: relId }, select: { leadId: true, addedFrom: true, direction: true } })
+            if (!mail) throw new PermissionError('You do not have access to these files', 403)
+            leadId = mail.leadId
+            drafter = mail
+        }
+        const l = await prisma.crmLead.findUnique({ where: { id: leadId }, select: { assigned: true, assignedIds: true, addedFrom: true, followerIds: true, isPublic: true } })
         if (!l) throw new PermissionError('You do not have access to these files', 403)
         const me = ctx.staffId
         const viewAll = ctx.admin || hasCap(ctx.authority, 'leads', 'view')
         const mine = !!me && (l.assigned === me || (l.assignedIds || []).includes(me) || l.addedFrom === me)
         const follows = !!me && (l.followerIds || []).includes(me)
-        const ok = cap === 'view' ? viewAll || mine || follows || l.isPublic : mine || ((ctx.admin || hasCap(ctx.authority, 'leads', 'edit')) && (viewAll || !follows))
+        let ok = cap === 'view' ? viewAll || mine || follows || l.isPublic : mine || ((ctx.admin || hasCap(ctx.authority, 'leads', 'edit')) && (viewAll || !follows))
+        // the files of a mail are changed only on a draft, by the one who wrote it or who may edit other people's mails
+        if (ok && drafter && cap !== 'view') ok = drafter.direction === 'draft' && ((!!me && drafter.addedFrom === me) || hasCap(ctx.authority, 'leads', 'edit_others_mails'))
         if (ok) return true
         throw new PermissionError('You do not have access to these files', 403)
     }
@@ -83,7 +93,7 @@ export async function mediaStats() {
 }
 
 /** Extra limits for the files of some records: an expense takes receipts and invoices (PDF or image), up to 5 MB each. */
-const REL_RULES = { expense: { maxMb: 5, ext: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'], what: 'PDF or image files' } }
+const REL_RULES = { leadmail: { maxMb: 10, ext: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'txt', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'zip'], what: 'PDF, Office, text, image or zip files' }, expense: { maxMb: 5, ext: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'], what: 'PDF or image files' } }
 
 /** Upload one or more files from a multipart form: files[], parentId, relType, relId, visibleToClient. */
 export async function uploadMedia(formData) {

@@ -4399,5 +4399,17 @@ export default {
     "You can only send the drafts you wrote": "Vous ne pouvez envoyer que les brouillons que vous avez écrits",
     "Add the email address to send to": "Ajoutez l'adresse e-mail du destinataire",
     "Write a subject before sending": "Écrivez un objet avant d'envoyer",
-    "The email could not be sent": "L'e-mail n'a pas pu être envoyé"
+    "The email could not be sent": "L'e-mail n'a pas pu être envoyé",
+    "Draft saved": "Brouillon enregistré",
+    "Cc": "Cc",
+    "Bcc": "Cci",
+    "Reply to": "Répondre à",
+    "Add Cc, Bcc or Reply to": "Ajouter Cc, Cci ou Répondre à",
+    "Several addresses can be separated by commas. The date becomes the sending time when you send.": "Plusieurs adresses peuvent être séparées par des virgules. La date devient l'heure d'envoi au moment de l'envoi.",
+    "Up to 10 MB per file, 20 MB in all.": "Jusqu'à 10 Mo par fichier, 20 Mo au total.",
+    "Save the draft first, then you can attach files.": "Enregistrez d'abord le brouillon, puis vous pourrez joindre des fichiers.",
+    "Choose the address to send from in the list": "Choisissez dans la liste l'adresse d'envoi",
+    "The attached files are larger than 20 MB together": "Les fichiers joints dépassent 20 Mo au total",
+    "Other \"send from\" addresses (lead mails)": "Autres adresses d'expédition (e-mails des prospects)",
+    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Adresses depuis lesquelles un e-mail de prospect peut être envoyé, en plus de l'adresse du serveur de messagerie et de l'e-mail du membre du personnel. Votre serveur de messagerie doit les autoriser. Séparez-les par des virgules."
 }

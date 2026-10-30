@@ -1530,5 +1530,9 @@
  "You can only send the drafts you wrote",
  "Add the email address to send to",
  "Write a subject before sending",
- "The email could not be sent"
+ "The email could not be sent",
+ "Choose the address to send from in the list",
+ "The attached files are larger than 20 MB together",
+ "Other \"send from\" addresses (lead mails)",
+ "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas."
 ]

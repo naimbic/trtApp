@@ -4399,5 +4399,17 @@ export default {
     "You can only send the drafts you wrote": "自分が書いた下書きのみ送信できます",
     "Add the email address to send to": "送信先のメールアドレスを入力してください",
     "Write a subject before sending": "送信前に件名を入力してください",
-    "The email could not be sent": "メールを送信できませんでした"
+    "The email could not be sent": "メールを送信できませんでした",
+    "Draft saved": "下書きを保存しました",
+    "Cc": "Cc",
+    "Bcc": "Bcc",
+    "Reply to": "返信先",
+    "Add Cc, Bcc or Reply to": "Cc、Bcc、返信先を追加",
+    "Several addresses can be separated by commas. The date becomes the sending time when you send.": "複数のアドレスはカンマで区切れます。送信時に日付は送信時刻になります。",
+    "Up to 10 MB per file, 20 MB in all.": "1ファイル10MBまで、合計20MBまで。",
+    "Save the draft first, then you can attach files.": "先に下書きを保存すると、ファイルを添付できます。",
+    "Choose the address to send from in the list": "リストから送信元アドレスを選んでください",
+    "The attached files are larger than 20 MB together": "添付ファイルの合計が20MBを超えています",
+    "Other \"send from\" addresses (lead mails)": "その他の送信元アドレス（リードのメール）",
+    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "メールサーバーのアドレスとスタッフ本人のメールに加えて、リードのメールの送信元にできるアドレス。メールサーバーが許可している必要があります。複数はカンマで区切ります。"
 }

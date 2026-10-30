@@ -216,6 +216,28 @@ try {
         const after = DID ? await prisma.crmLeadMail.findUnique({ where: { id: DID } }) : null
         check('sending: becomes Sent when the mail server accepts it, stays a draft with a clear error when it does not', sent && ((sent.status === 200 && after?.direction === 'out') || (sent.status === 400 && after?.direction === 'draft' && !!sent.body?.error || sent.status === 400 && after?.direction === 'draft')), `${sent?.status} ${after?.direction}`)
         check('a mail that is not a draft cannot be sent again', mail.body?.id && (await la('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: mail.body.id })).status === 400)
+        {
+            const d2 = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { direction: 'draft', subject: 'From check', to: 'a@test.local, b@test.local', cc: 'c@test.local', bcc: 'd@test.local', replyTo: 'r@test.local', from: 'hello@trtmaroc.com', body: '<p>x</p>' })
+            const D2 = d2.body?.id
+            if (D2) made.rows.unshift(['crmLeadMail', D2])
+            const kept = D2 ? await prisma.crmLeadMail.findUnique({ where: { id: D2 } }) : null
+            check('a draft keeps To, Cc, Bcc, Reply-to and the chosen sender', kept?.ccAddress === 'c@test.local' && kept.bccAddress === 'd@test.local' && kept.replyTo === 'r@test.local' && kept.fromAddress === 'hello@trtmaroc.com')
+            check('sending from an address that is not in the allowed list is refused (no spoofing)', D2 && (await la('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: D2 })).status === 400 && (await prisma.crmLeadMail.findUnique({ where: { id: D2 } })).direction === 'draft')
+            const prevOpt = await prisma.crmOption.findUnique({ where: { name: 'lead_mail_senders' } })
+            await prisma.crmOption.upsert({ where: { name: 'lead_mail_senders' }, update: { value: 'hello@trtmaroc.com' }, create: { name: 'lead_mail_senders', value: 'hello@trtmaroc.com' } })
+            check('the lead data lists the allowed senders', (await la('GET', `/api/crm/pipeline/leads/${LID}`)).body?.senders?.includes('hello@trtmaroc.com'))
+            const up = async (who, rel) => { const fd = new FormData(); fd.append('files', new Blob(['hello'], { type: 'text/plain' }), 'note.txt'); fd.append('relType', 'leadmail'); fd.append('relId', rel); return who('POST', '/api/crm/media/upload', fd) }
+            const f1 = D2 ? await up(la, D2) : null
+            for (const m of f1?.body?.saved || []) made.rows.push(['crmMedia', m.id])
+            check('the author attaches a file to the draft', f1?.status === 200 && f1.body?.saved?.length === 1, JSON.stringify(f1?.body).slice(0, 100))
+            check('a follower cannot attach files to the draft', D2 && (await up(lb, D2)).status === 403)
+            check('a stranger cannot attach files to the draft', D2 && (await up(lc, D2)).status === 403)
+            const sent2 = D2 ? await la('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: D2 }) : null
+            const row2 = D2 ? await prisma.crmLeadMail.findUnique({ where: { id: D2 } }) : null
+            check('from the allowed address: sent, or kept as a draft with the mail server error', sent2 && ((sent2.status === 200 && row2.direction === 'out' && row2.fromAddress === 'hello@trtmaroc.com') || (sent2.status === 400 && row2.direction === 'draft')), `${sent2?.status} ${row2?.direction}`)
+            if (row2?.direction === 'out') check('files cannot be added to a mail that was already sent', (await up(la, D2)).status === 403)
+            if (prevOpt) await prisma.crmOption.update({ where: { name: 'lead_mail_senders' }, data: { value: prevOpt.value } }); else await prisma.crmOption.delete({ where: { name: 'lead_mail_senders' } })
+        }
     }
     {
         const up = async (who, name) => { const fd = new FormData(); fd.append('files', new Blob([Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(500)])], { type: 'application/pdf' }), name); fd.append('relType', 'lead'); fd.append('relId', LID); return who('POST', '/api/crm/media/upload', fd) }

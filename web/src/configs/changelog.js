@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.120.1',
+        date: '2026-10-30',
+        title: 'Lead popup: followers are kept',
+        items: [
+            'Fixed: the followers you added to a lead were saved but the Followers box showed empty the next time the lead was opened, and saving the lead again then erased them. The popup now loads the followers of the lead, so they stay.',
+        ],
+    },
+    {
         version: '0.120.0',
         date: '2026-10-30',
         title: 'Demo tour: free recording with your own moves and voice',

@@ -129,7 +129,7 @@ export async function getLead(id) {
     ])
     const people = await staffMap([...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
     return {
-        lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
+        lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), followerIds: l.followerIds || [], addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
         notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canEdit: mayChangeItem(a, n.addedFrom, 'notes'), canDelete: mayDropItem(a, n.addedFrom), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000 })),
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),

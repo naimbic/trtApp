@@ -47,7 +47,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             const d = await api(`/api/crm/pipeline/leads/${id}`)
             setDetail(d)
             const l = d.lead
-            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: l.followerIds || [], isPublic: !!l.isPublic })
+            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: d.followerIds || l.followerIds || [], isPublic: !!l.isPublic })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (!open) return; setDetail(null); setNote(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])

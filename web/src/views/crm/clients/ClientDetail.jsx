@@ -86,7 +86,7 @@ const PaymentsTab = ({ id, money }) => {
                     <THead><Tr><Th>{tr("Date")}</Th><Th>{tr("Invoice")}</Th><Th>{tr("Payment mode")}</Th><Th>{tr("Transaction")}</Th><Th className="text-right">{tr("Amount")}</Th></Tr></THead>
                     <TBody>
                         {d.list.map((p) => (
-                            <Tr key={p.id} className="cursor-pointer" onClick={() => navigate(`/crm/invoices/${p.invoiceId}`)}>
+                            <Tr key={p.id} className="cursor-pointer" data-href={`/crm/invoices/${p.invoiceId}`} onClick={() => navigate(`/crm/invoices/${p.invoiceId}`)}>
                                 <Td>{p.paymentDate ? dayjs(p.paymentDate).format('YYYY-MM-DD') : ''}</Td><Td className="font-semibold heading-text">{p.invoiceNumber}</Td><Td>{p.mode}</Td><Td>{p.transactionId}</Td><Td className="text-right tabular-nums">{money(p.amount, p.currencyId)}</Td>
                             </Tr>
                         ))}
@@ -191,7 +191,7 @@ const ClientDetail = () => {
         }
     }
 
-    if (error) return <Container><Card><div className="text-red-500">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/clients')}>{tr("Back to clients")}</Button></Card></Container>
+    if (error) return <Container><Card><div className="text-red-500">{error}</div><Button className="mt-4" data-href={'/crm/clients'} onClick={() => navigate('/crm/clients')}>{tr("Back to clients")}</Button></Card></Container>
     if (!c) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
 
     const actions = {
@@ -215,7 +215,7 @@ const ClientDetail = () => {
         <Container>
             <InvoiceHead
                 title={tr("Client information")}
-                action={<Button size="sm" icon={<TbArrowLeft className="rtl:rotate-180" />} onClick={() => navigate('/crm/clients')}>{tr("Back to clients")}</Button>}
+                action={<Button size="sm" icon={<TbArrowLeft className="rtl:rotate-180" />} data-href={'/crm/clients'} onClick={() => navigate('/crm/clients')}>{tr("Back to clients")}</Button>}
                 stats={[
                     { icon: <TbCash />, label: tr("Billed, all time"), value: cur && c.money[cur] ? money(c.money[cur].invoiced, cur, { decimals: 0 }) : '—', badge: cur && c.money[cur] ? <span className="badge badge--butter">{money(c.money[cur].paid, cur, { decimals: 0 })} {tr("paid")}</span> : null },
                     { icon: <TbCircleCheck />, label: tr("Still owed"), value: cur && c.money[cur] ? money(c.money[cur].outstanding, cur, { decimals: 0 }) : '—', badge: cur && c.money[cur]?.overdue > 0 ? <span className="badge badge--tomato">{money(c.money[cur].overdue, cur, { decimals: 0 })} {tr("overdue")}</span> : <span className="badge badge--plain">{tr("Nothing overdue")}</span> },

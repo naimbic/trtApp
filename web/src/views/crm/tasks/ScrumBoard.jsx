@@ -90,8 +90,8 @@ const ScrumBoard = () => {
                 <div className="flex flex-wrap items-center gap-2">
                     {people.length > 0 && <UsersAvatarGroup className="flex items-center" avatarProps={{ size: 'sm' }} imgKey="image" users={people} />}
                     <div className="w-56"><Select size="sm" isClearable placeholder={tr('Project')} options={projects.map((p) => ({ value: p.id, label: p.name }))} value={projects.filter((p) => p.id === projectId).map((p) => ({ value: p.id, label: p.name }))[0] || null} onChange={(o) => choose(o?.value || '')} /></div>
-                    {projectId && <Button size="sm" icon={<TbList />} onClick={() => nav(`/crm/projects/${projectId}`)}>{tr('Project')}</Button>}
-                    {projectId && <Button size="sm" icon={<TbExternalLink />} onClick={() => nav('/crm/my-tasks')}>{tr('Tasks')}</Button>}
+                    {projectId && <Button size="sm" icon={<TbList />} data-href={`/crm/projects/${projectId}`} onClick={() => nav(`/crm/projects/${projectId}`)}>{tr('Project')}</Button>}
+                    {projectId && <Button size="sm" icon={<TbExternalLink />} data-href={'/crm/my-tasks'} onClick={() => nav('/crm/my-tasks')}>{tr('Tasks')}</Button>}
                 </div>
             </div>
             {error && <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
@@ -148,7 +148,7 @@ const ScrumBoard = () => {
                                     {m.overdue.length + m.dueSoon.length ? (
                                         <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                                             {[...m.overdue.sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate))), ...m.dueSoon].slice(0, 6).map((t) => (
-                                                <li key={t.id} className="flex items-center gap-2 py-2"><button type="button" className="min-w-0 flex-1 text-start" onClick={() => nav(`/crm/tasks/${t.id}`)}><div className="truncate text-sm font-bold heading-text hover:text-primary">{t.name}</div><div className="truncate text-xs text-gray-500">{t.assignees.map((a) => a.name).join(', ') || tr('Unassigned')}</div></button><span className={`shrink-0 text-xs font-semibold ${utcDay(t.dueDate) < utcDay(Date.now()) ? 'text-red-500' : 'text-gray-500'}`}>{dayjs(t.dueDate).format('DD MMM')}</span></li>
+                                                <li key={t.id} className="flex items-center gap-2 py-2"><button type="button" className="min-w-0 flex-1 text-start" data-href={`/crm/tasks/${t.id}`} onClick={() => nav(`/crm/tasks/${t.id}`)}><div className="truncate text-sm font-bold heading-text hover:text-primary">{t.name}</div><div className="truncate text-xs text-gray-500">{t.assignees.map((a) => a.name).join(', ') || tr('Unassigned')}</div></button><span className={`shrink-0 text-xs font-semibold ${utcDay(t.dueDate) < utcDay(Date.now()) ? 'text-red-500' : 'text-gray-500'}`}>{dayjs(t.dueDate).format('DD MMM')}</span></li>
                                             ))}
                                         </ul>
                                     ) : <p className="py-6 text-center text-sm text-gray-400">{tr('Nothing due in the next days. 🎉')}</p>}

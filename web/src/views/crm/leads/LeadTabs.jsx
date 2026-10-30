@@ -162,7 +162,7 @@ export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run }
                 </div>
                 {m.report && <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-600"><div className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-400">{tr("Meeting report")}</div><RichView html={m.report} /></div>}
                 <div className="mt-2 flex items-center gap-1">
-                    <Button size="xs" variant="plain" icon={<TbCalendarEvent />} onClick={() => nav('/calendar')}>{tr("Calendar")}</Button>
+                    <Button size="xs" variant="plain" icon={<TbCalendarEvent />} data-href={'/calendar'} onClick={() => nav('/calendar')}>{tr("Calendar")}</Button>
                     {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} onClick={() => edit(m)}>{m.report ? tr("Edit") : tr("Write the report")}</Button>}{m.canDelete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} />}
                 </div>
             </div>

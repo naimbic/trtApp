@@ -56,7 +56,7 @@ const InvoiceView = () => {
 
     const totals = useMemo(() => data && calcDocument({ items: data.items, discountPercent: data.invoice.discountPercent, discountFixed: data.invoice.discountPercent ? 0 : data.invoice.discountTotal, discountType: data.invoice.discountType || 'before_tax', adjustment: data.invoice.adjustment }), [data])
 
-    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/invoices')}>{tr("Back to invoices")}</Button></Container>
+    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" data-href={'/crm/invoices'} onClick={() => navigate('/crm/invoices')}>{tr("Back to invoices")}</Button></Container>
     if (!data || !lookups) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
 
     const { invoice, items, payments, client, activity, paid, balance } = data
@@ -101,7 +101,7 @@ const InvoiceView = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/invoices')} />
+                <Button size="sm" variant="plain" icon={<TbArrowLeft />} data-href={'/crm/invoices'} onClick={() => navigate('/crm/invoices')} />
                 <h3 className="mr-1">{tr("Invoice")} {invoice.displayNumber}</h3>
                 <StatusTag status={st} />
                 {!invoice.sent && st === 1 && <span className="text-xs text-gray-400">{tr("not sent")}</span>}
@@ -122,7 +122,7 @@ const InvoiceView = () => {
                     {canEdit && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>{tr("Send")}</Button>}
                     {st !== 6 && <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/invoices/${id}/html?print=1`)}>{tr("Print")}</Button>}
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
-                    {can('invoices', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/invoices/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    {can('invoices', 'create') && <Button size="sm" icon={<TbCopy />} data-href={`/crm/invoices/new?from=${id}`} onClick={() => navigate(`/crm/invoices/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     <ShareButton asButton url={invoice.hash ? `/api/crm/public/invoice/${id}/${invoice.hash}` : `/crm/invoices/${id}`} title={`${tr("Invoice")} ${invoice.displayNumber}`} text={`${tr("Invoice")} ${invoice.displayNumber}`} file={{ url: `/api/crm/sales/invoices/${id}/pdf`, name: `Invoice-${invoice.displayNumber}.pdf`, type: 'application/pdf' }} />
                     {canEdit && <Button size="sm" icon={<TbPencil />} onClick={guard(() => navigate(`/crm/invoices/${id}/edit`))}>{tr("Edit")}</Button>}
                     <Dropdown placement="bottom-end" renderTitle={<EllipsisButton size="sm" />}>

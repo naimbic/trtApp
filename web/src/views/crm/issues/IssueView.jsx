@@ -39,7 +39,7 @@ const IssueView = () => {
     useEffect(() => { load() }, [load])
     useEffect(() => { api('/api/crm/issues/lookups').then(setLookups).catch(() => {}) }, [])
 
-    if (error && !d) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => nav('/crm/issues')}>{tr('Back to issues')}</Button></Container>
+    if (error && !d) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" data-href={'/crm/issues'} onClick={() => nav('/crm/issues')}>{tr('Back to issues')}</Button></Container>
     if (!d) return <Container><div className="py-20 text-center text-gray-400">{tr('Loading…')}</div></Container>
 
     const { issue, feed, can } = d
@@ -59,7 +59,7 @@ const IssueView = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-start gap-3">
-                <Button size="sm" variant="plain" icon={<TbArrowLeft className="rtl:rotate-180" />} onClick={() => nav('/crm/issues')} />
+                <Button size="sm" variant="plain" icon={<TbArrowLeft className="rtl:rotate-180" />} data-href={'/crm/issues'} onClick={() => nav('/crm/issues')} />
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 text-sm text-gray-500"><span className="font-mono">#{issue.number}</span><StatusTag status={issue.status} /><PriorityTag priority={issue.priority} /></div>
                     {titleEdit !== null ? (

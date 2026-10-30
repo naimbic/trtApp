@@ -93,7 +93,7 @@ const Shell = () => {
                             <Dropdown className="flex" toggleClassName="flex items-center" renderTitle={<div className="header-action-item flex cursor-pointer items-center"><Avatar size={32} {...avatar} /></div>} placement="bottom-end">
                                 <Dropdown.Item variant="header"><div className="flex items-center gap-3 px-3 py-2"><Avatar {...avatar} /><div><div className="font-bold text-gray-900 dark:text-gray-100">{me.contact.name}</div><div className="text-xs">{me.contact.email}</div></div></div></Dropdown.Item>
                                 <Dropdown.Item variant="divider" />
-                                <Dropdown.Item eventKey="profile" onClick={() => nav('/portal/profile')}><span className="mx-2 text-xl"><PiUserDuotone /></span>{t('My profile')}</Dropdown.Item>
+                                <Dropdown.Item eventKey="profile" data-href={'/portal/profile'} onClick={() => nav('/portal/profile')}><span className="mx-2 text-xl"><PiUserDuotone /></span>{t('My profile')}</Dropdown.Item>
                                 <Dropdown.Item eventKey="out" onClick={signOut}><span className="mx-2 text-xl"><PiSignOutDuotone /></span>{t('Sign out')}</Dropdown.Item>
                             </Dropdown>
                         </div>

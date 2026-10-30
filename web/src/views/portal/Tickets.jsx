@@ -46,7 +46,7 @@ export const Tickets = () => {
                 {!d ? <div className="p-6"><Skeleton height={120} /></div> : d.list.length ? (
                     <div className="overflow-x-auto"><Table hoverable><THead><Tr><Th>#</Th><Th>{t('Subject')}</Th><Th>{t('Department')}</Th><Th>{t('Status')}</Th><Th>{t('Last reply')}</Th></Tr></THead>
                         <TBody>{d.list.map((k) => (
-                            <Tr key={k.id} className="cursor-pointer" onClick={() => nav(`/portal/tickets/${k.id}`)}>
+                            <Tr key={k.id} className="cursor-pointer" data-href={`/portal/tickets/${k.id}`} onClick={() => nav(`/portal/tickets/${k.id}`)}>
                                 <Td className="text-gray-500">{k.number}</Td><Td className={classNames('max-w-[360px] truncate', k.unread ? 'font-bold' : 'font-semibold')}>{k.subject}{k.unread && <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-[10px] text-white">{t('new reply')}</span>}</Td><Td>{k.department || '—'}</Td>
                                 <Td>{k.status && <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: k.status.color }} />{k.status.name}</span>}</Td><Td className="text-gray-500">{k.lastReply ? ago(k.lastReply) : t('No reply yet')}</Td>
                             </Tr>))}</TBody></Table></div>

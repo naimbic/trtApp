@@ -26,7 +26,7 @@ const CustomerListActionTools = () => {
             <Button
                 variant="solid"
                 icon={<TbUserPlus className="text-xl" />}
-                onClick={() => navigate('/concepts/customers/customer-create')}
+                data-href={'/concepts/customers/customer-create'} onClick={() => navigate('/concepts/customers/customer-create')}
             >
                 Add new
             </Button>

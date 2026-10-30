@@ -111,7 +111,7 @@ const RecentOrder = ({ data = [] }) => {
                 <h4>Recent Orders</h4>
                 <Button
                     size="sm"
-                    onClick={() => navigate('/concepts/orders/order-list')}
+                    data-href={'/concepts/orders/order-list'} onClick={() => navigate('/concepts/orders/order-list')}
                 >
                     View Orders
                 </Button>

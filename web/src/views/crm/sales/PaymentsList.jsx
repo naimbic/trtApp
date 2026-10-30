@@ -117,7 +117,7 @@ const PaymentsList = () => {
                         <THead><Tr>{th('paymentDate', tr("Date"))}{th('invoiceNumber', tr("Invoice"))}{th('client', tr("Client"))}{th('mode', tr("Payment mode"))}<Th>{tr("Transaction")}</Th>{th('amount', tr("Amount"), true)}{can('payments', 'delete') && <Th />}{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((p) => (
-                                <Tr key={p.id} className="cursor-pointer" onClick={() => navigate(`/crm/invoices/${p.invoiceId}`)}>
+                                <Tr key={p.id} className="cursor-pointer" data-href={`/crm/invoices/${p.invoiceId}`} onClick={() => navigate(`/crm/invoices/${p.invoiceId}`)}>
                                     <Td className="whitespace-nowrap">{fmtDate(p.paymentDate)}</Td>
                                     <Td className="whitespace-nowrap font-semibold heading-text">{p.invoiceNumber}</Td>
                                     <Td className="max-w-[240px] truncate">{p.client}</Td>

@@ -47,6 +47,21 @@ window.fetch = async (...args) => {
 // pages a signed-out person is meant to see (the client area and the staff sign-in): a 401 from a staff call there is normal, never a reason to send them to the staff sign-in
 function onPublicPage() { return /^\/(portal(\/|$)|sign-in|forgot-password|reset-password|sign-up)/.test(window.location.pathname) }
 
+// Ctrl/Cmd + click or a middle click on a record (a card, a row, a button that opens a page) opens that page in a new browser tab
+// (such elements carry data-href next to their normal click). Ordinary clicks are untouched.
+function openInNewTab(e) {
+    // a link written in an editor (comment, description, note) is edited, not followed: Ctrl/Cmd + click opens it
+    const link = e.target.closest?.('a[href]')
+    if (link && link.closest('[contenteditable=true]')) { e.preventDefault(); window.open(link.href, '_blank', 'noopener'); return }
+    const el = e.target.closest?.('[data-href]')
+    if (!el || e.target.closest?.('a[href]') || /^\/portal(\/|$)/.test(window.location.pathname)) return
+    e.preventDefault(); e.stopPropagation()
+    window.open(el.getAttribute('data-href'), '_blank', 'noopener')
+}
+document.addEventListener('click', (e) => { if (e.ctrlKey || e.metaKey) openInNewTab(e) }, true)
+document.addEventListener('auxclick', (e) => { if (e.button === 1) openInNewTab(e) }, true)
+document.addEventListener('mousedown', (e) => { if (e.button === 1 && e.target.closest?.('[data-href]')) e.preventDefault() }, true) // no auto-scroll cursor on a middle click
+
 // The dictionary of the saved language (and right-to-left for Arabic) must be ready before the app's modules run:
 // many labels are defined at module level, so the app is imported only after the dictionary has loaded.
 loadStaffLang().then(async (lang) => {

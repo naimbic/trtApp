@@ -140,7 +140,7 @@ const WorkHours = () => {
                         {people.map((p, i) => {
                             const t = p.totals
                             return (
-                                <Tr key={p.id} className="cursor-pointer" onClick={() => navigate(`/crm/staff/${p.id}`)}>
+                                <Tr key={p.id} className="cursor-pointer" data-href={`/crm/staff/${p.id}`} onClick={() => navigate(`/crm/staff/${p.id}`)}>
                                     <Td className="text-gray-400">{i + 1}</Td>
                                     <Td>
                                         <div className="flex items-center gap-3">

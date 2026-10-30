@@ -34,7 +34,7 @@ const PurchaseOrderView = () => {
     useEffect(() => { load() }, [load])
     const totals = useMemo(() => data && calcDocument({ items: data.items, discountPercent: data.order.discountPercent, discountFixed: data.order.discountPercent ? 0 : data.order.discountTotal, discountType: data.order.discountType || 'before_tax', adjustment: data.order.adjustment }), [data])
 
-    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/purchase-orders')}>{tr("Back to purchase orders")}</Button></Container>
+    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" data-href={'/crm/purchase-orders'} onClick={() => navigate('/crm/purchase-orders')}>{tr("Back to purchase orders")}</Button></Container>
     if (!data) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
 
     const { order: e, items, client, activity, invoice, estimate } = data
@@ -57,14 +57,14 @@ const PurchaseOrderView = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/purchase-orders')} />
+                <Button size="sm" variant="plain" icon={<TbArrowLeft />} data-href={'/crm/purchase-orders'} onClick={() => navigate('/crm/purchase-orders')} />
                 <h3 className="mr-2">{tr("Purchase order")} {e.displayNumber}</h3>
                 <PoStatusTag status={st} />
                 {estimate && <Link className="text-sm text-blue-600 hover:underline" to={`/crm/estimates/${estimate.id}`}>{tr("← estimate")} {estimate.displayNumber}</Link>}
                 {invoice && <Link className="text-sm text-emerald-600 hover:underline" to={`/crm/invoices/${invoice.id}`}>{tr("→ invoice")} {invoice.displayNumber}</Link>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/purchase-orders/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
-                    {can('purchase_orders', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/purchase-orders/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    {can('purchase_orders', 'create') && <Button size="sm" icon={<TbCopy />} data-href={`/crm/purchase-orders/new?from=${id}`} onClick={() => navigate(`/crm/purchase-orders/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     <ShareButton asButton url={`/crm/purchase-orders/${id}`} title={`${tr("Purchase order")} ${e.displayNumber}`} text={`${tr("Purchase order")} ${e.displayNumber}`} file={{ url: `/api/crm/sales/purchase-orders/${id}/pdf`, name: `Purchase-order-${e.displayNumber}.pdf`, type: 'application/pdf' }} />
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/purchase-orders/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('purchase_orders', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
@@ -79,7 +79,7 @@ const PurchaseOrderView = () => {
                             {e.status !== 5 && <Dropdown.Item eventKey="x" onClick={() => state('markCancelled', tr("Marked as cancelled"))}>{tr("Cancelled")}</Dropdown.Item>}
                         </Dropdown>
                     )}
-                    {can('purchase_orders', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/purchase-orders/${id}/edit`)}>{tr("Edit")}</Button>}
+                    {can('purchase_orders', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} data-href={`/crm/purchase-orders/${id}/edit`} onClick={() => navigate(`/crm/purchase-orders/${id}/edit`)}>{tr("Edit")}</Button>}
                     {can('purchase_orders', 'delete') && !locked && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}
                 </div>
             </div>

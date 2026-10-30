@@ -226,7 +226,7 @@ const Team = () => {
                                     <Td className={m.active ? undefined : 'opacity-60 grayscale'}>
                                         <div className={`flex items-center justify-end gap-0.5 ${m.active ? '' : 'pointer-events-none'}`}>
                                             <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
-                                            {canActivity && <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>}
+                                            {canActivity && <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} data-href={`/crm/activity/staff/${m.id}`} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>}
                                             {canLoginAs && m.hasLogin && <Tooltip title={tr("Log in as this member")}><Button size="sm" variant="plain" icon={<TbUserShare />} onClick={() => loginAs(m.id).catch((e) => notify('danger', e.message))} /></Tooltip>}
                                             <Tooltip title={tr("Permissions")}><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
                                             {m.hasLogin && <Tooltip title={tr("Set a password")}><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}

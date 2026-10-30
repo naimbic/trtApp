@@ -85,7 +85,7 @@ const IssuesList = () => {
                     <THead><Tr><Th className="w-16">#</Th><Th>{tr('Issue')}</Th><Th>{tr('Platform')}</Th><Th>{tr('Type')}</Th><Th>{tr('Priority')}</Th><Th>{tr('Status')}</Th><Th>{tr('Assigned to')}</Th><Th>{tr('Updated')}</Th></Tr></THead>
                     <TBody>
                         {data.list.map((i) => (
-                            <Tr key={i.id} className="cursor-pointer" onClick={() => nav(`/crm/issues/${i.id}`)}>
+                            <Tr key={i.id} className="cursor-pointer" data-href={`/crm/issues/${i.id}`} onClick={() => nav(`/crm/issues/${i.id}`)}>
                                 <Td className="font-mono text-gray-500">#{i.number}</Td>
                                 <Td className="max-w-[420px]"><div className="truncate font-semibold heading-text">{i.title}</div><div className="mt-0.5 flex items-center gap-2"><Labels list={i.labels} />{i.comments > 0 && <span className="inline-flex items-center gap-1 text-xs text-gray-400"><TbMessage />{i.comments}</span>}</div></Td>
                                 <Td>{i.platform ? <span className="whitespace-nowrap">{i.platform.name}</span> : <span className="text-gray-300">—</span>}</Td>

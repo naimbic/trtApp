@@ -95,7 +95,7 @@ export const SetPassword = () => {
         try { await portal('/auth/set-password', { method: 'POST', body: { key, password }, quiet: true }); nav('/portal', { replace: true }) } catch (e) { setError(e.message) } finally { setBusy(false) }
     }
     if (!info) return <Head title={t('One moment…')} text="" />
-    if (!info.valid) return (<><Head title={t('Link expired')} text={t('This link is no longer valid.')} /><Alert showIcon type="warning" className="mb-6">{t('Links work once and expire after a while. Ask for a new one.')}</Alert><Button block variant="solid" onClick={() => nav('/portal/forgot-password')}>{t('Get a new link')}</Button></>)
+    if (!info.valid) return (<><Head title={t('Link expired')} text={t('This link is no longer valid.')} /><Alert showIcon type="warning" className="mb-6">{t('Links work once and expire after a while. Ask for a new one.')}</Alert><Button block variant="solid" data-href={'/portal/forgot-password'} onClick={() => nav('/portal/forgot-password')}>{t('Get a new link')}</Button></>)
     return (
         <>
             <Head title={info.first ? t('Choose your password') : t('Choose a new password')} text={`${info.name || info.email} · ${info.email}`} />

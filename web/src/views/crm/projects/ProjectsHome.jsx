@@ -97,7 +97,7 @@ const Upcoming = () => {
                                 {sorted.map((e) => {
                                     const [icon, color, label] = EVENT_ICON[e.type] || EVENT_ICON.events
                                     return (
-                                        <div key={e.id} className="flex cursor-pointer items-center justify-between gap-4 py-1" onClick={() => nav('/calendar')}>
+                                        <div key={e.id} className="flex cursor-pointer items-center justify-between gap-4 py-1" data-href={'/calendar'} onClick={() => nav('/calendar')}>
                                             <div className="flex min-w-0 items-center gap-3"><Avatar className={classNames('text-gray-900', color)} icon={icon} shape="round" /><div className="min-w-0"><div className="heading-text truncate font-bold">{localTitle(e.title)}</div><div className="font-normal">{label}</div></div></div>
                                             <div className="shrink-0 text-right">{!e.allDay && String(e.start).length > 10 ? <><span className="heading-text font-semibold">{dayjs(e.start).format('hh:mm')} </span><small>{dayjs(e.start).format('A')}</small></> : <small>{tr("All day")}</small>}</div>
                                         </div>
@@ -109,7 +109,7 @@ const Upcoming = () => {
                     </ScrollBar>
                 </div>
             </div>
-            <div className="mt-4"><Button block variant="solid" onClick={() => nav('/calendar')}>{tr("Open the calendar")}</Button></div>
+            <div className="mt-4"><Button block variant="solid" data-href={'/calendar'} onClick={() => nav('/calendar')}>{tr("Open the calendar")}</Button></div>
         </Card>
     )
 }

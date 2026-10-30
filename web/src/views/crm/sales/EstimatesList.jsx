@@ -83,7 +83,7 @@ const EstimatesList = () => {
         <Container>
             <InvoiceHead
                 title={tr("Estimates")}
-                action={can('estimates', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/estimates/new')}>{tr("New estimate")}</Button>}
+                action={can('estimates', 'create') && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/estimates/new'} onClick={() => navigate('/crm/estimates/new')}>{tr("New estimate")}</Button>}
                 stats={[
                     { icon: <TbFileText />, label: tr("Estimates"), value: String(Object.values(data.stats.counts).reduce((a, b) => a + b, 0)) },
                     { icon: <TbHourglass />, label: tr("Waiting for an answer"), value: m ? money(m.open, cur) : '—' },
@@ -114,7 +114,7 @@ const EstimatesList = () => {
                         <THead><Tr>{th('number', tr("Estimate"))}{th('client', tr("Client"))}<Th>{tr("Reference")}</Th>{th('date', tr("Date"))}{th('expiryDate', tr("Valid until"))}{th('total', tr("Amount"), true)}{th('status', tr("Status"))}{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
-                                <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/estimates/${r.id}`)}>
+                                <Tr key={r.id} className="cursor-pointer" data-href={`/crm/estimates/${r.id}`} onClick={() => navigate(`/crm/estimates/${r.id}`)}>
                                     <Td className="whitespace-nowrap font-semibold heading-text">{r.number}</Td>
                                     <Td className="max-w-[240px] truncate">{r.client}</Td>
                                     <Td className="max-w-[140px] truncate text-gray-500">{r.referenceNo || '—'}</Td>

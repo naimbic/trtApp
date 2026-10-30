@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.121.0',
+        date: '2026-10-30',
+        title: 'Leads shown with their company; open any record in a new tab',
+        items: [
+            'Choosing a lead (on a task, and wherever a lead is picked) now shows "Natura Volt (Fousenou Saouanera)": the company first, then the person; a lead without a company shows "(nan) Fousenou Saouanera". You can also search a lead by its company. The related lead on task cards uses the same name.',
+            'Ctrl / Cmd + click, or a middle click, on a card, a task or lead tile, or a table row now opens that record in a new browser tab; a normal click works as before. In the editors, Ctrl / Cmd + click on a link opens it. Web addresses written in comments, checklists, notes and descriptions already open in a new tab.',
+        ],
+    },
+    {
         version: '0.120.1',
         date: '2026-10-30',
         title: 'Lead popup: followers are kept',

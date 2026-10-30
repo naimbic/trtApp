@@ -17,7 +17,7 @@ const KbArticle = () => {
     const [error, setError] = useState('')
     const [del, setDel] = useState(false)
     useEffect(() => { setD(null); api(`/api/crm/kb/articles/${id}`).then(setD).catch((e) => setError(e.message)) }, [id])
-    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => nav('/crm/knowledge-base')}>{tr("Back to the knowledge base")}</Button></Container>
+    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" data-href={'/crm/knowledge-base'} onClick={() => nav('/crm/knowledge-base')}>{tr("Back to the knowledge base")}</Button></Container>
     if (!d) return <Container><Skeleton height={300} /></Container>
     const a = d.article
     return (
@@ -25,7 +25,7 @@ const KbArticle = () => {
             <ArticleLayout
                 article={a} toc={d.toc} related={d.related} onRelated={(rid) => nav(`/crm/knowledge-base/article/${rid}`)}
                 backTo={<div className="mb-4 flex flex-wrap items-center justify-between gap-2"><Link to="/crm/knowledge-base" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary"><TbArrowLeft />{tr("Knowledge base")}</Link>
-                    <div className="flex gap-2">{d.can.edit && <Button size="sm" icon={<TbPencil />} onClick={() => nav(`/crm/knowledge-base/edit/${id}`)}>{tr("Edit")}</Button>}{d.can.delete && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setDel(true)}>{tr("Delete")}</Button>}</div></div>}
+                    <div className="flex gap-2">{d.can.edit && <Button size="sm" icon={<TbPencil />} data-href={`/crm/knowledge-base/edit/${id}`} onClick={() => nav(`/crm/knowledge-base/edit/${id}`)}>{tr("Edit")}</Button>}{d.can.delete && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setDel(true)}>{tr("Delete")}</Button>}</div></div>}
                 headExtra={<>{a.staffOnly && <Tag className="bg-amber-100 text-amber-700">{tr("Staff only")}</Tag>}{!a.active && <Tag className="bg-gray-200 text-gray-600">{tr("Draft")}</Tag>}</>}
                 footer={<div className="mt-10 flex flex-wrap items-center gap-5 rounded-xl bg-gray-100 p-4 text-sm dark:bg-gray-700/50"><span className="inline-flex items-center gap-1 font-semibold"><TbEye className="text-lg" />{a.views} {tr("views")}</span><span className="inline-flex items-center gap-1 font-semibold text-emerald-600"><TbThumbUp className="text-lg" />{a.helpful} {tr("found it helpful")}</span><span className="inline-flex items-center gap-1 font-semibold text-red-500"><TbThumbDown className="text-lg" />{a.notHelpful} {tr("did not")}</span><span className="text-gray-500">{a.staffOnly ? tr("Visible to staff only.") : tr("Visible to clients in their client area.")}</span></div>}
             />

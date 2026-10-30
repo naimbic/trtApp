@@ -82,7 +82,7 @@ const TicketsList = () => {
                     <THead><Tr><Th>#</Th><Th>{tr("Subject")}</Th><Th>{tr("Client")}</Th><Th>{tr("Department")}</Th><Th>{tr("Status")}</Th><Th>{tr("Priority")}</Th><Th>{tr("Assigned")}</Th><Th>{tr("Last reply")}</Th></Tr></THead>
                     <TBody>
                         {data.list.map((t) => (
-                            <Tr key={t.id} className="cursor-pointer" onClick={() => nav(`/crm/tickets/${t.id}`)}>
+                            <Tr key={t.id} className="cursor-pointer" data-href={`/crm/tickets/${t.id}`} onClick={() => nav(`/crm/tickets/${t.id}`)}>
                                 <Td className="text-gray-500">{t.number}</Td>
                                 <Td className="max-w-[360px]"><div className={cn('flex items-center gap-1.5 truncate', t.unread ? 'font-bold' : 'font-semibold')}>{t.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" title={tr("New")} />}<span className="truncate">{t.subject}</span>{t.files > 0 && <TbPaperclip className="shrink-0 text-gray-400" title={trn(t.files, 'file')} />}</div>{t.replies > 0 && <div className="text-xs text-gray-400">{trn(t.replies, 'reply', 'replies')}</div>}</Td>
                                 <Td><div className="max-w-[200px] truncate">{t.client?.name || t.contact || '—'}</div>{t.client && t.contact && <div className="text-xs text-gray-400">{t.contact}</div>}</Td>

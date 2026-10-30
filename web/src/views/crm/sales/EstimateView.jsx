@@ -38,7 +38,7 @@ const EstimateView = () => {
     useEffect(() => { load() }, [load])
     const totals = useMemo(() => data && calcDocument({ items: data.items, discountPercent: data.estimate.discountPercent, discountFixed: data.estimate.discountPercent ? 0 : data.estimate.discountTotal, discountType: data.estimate.discountType || 'before_tax', adjustment: data.estimate.adjustment }), [data])
 
-    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/estimates')}>{tr("Back to estimates")}</Button></Container>
+    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" data-href={'/crm/estimates'} onClick={() => navigate('/crm/estimates')}>{tr("Back to estimates")}</Button></Container>
     if (!data) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
 
     const { estimate: e, items, client, comments, activity, invoice } = data
@@ -66,13 +66,13 @@ const EstimateView = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/estimates')} />
+                <Button size="sm" variant="plain" icon={<TbArrowLeft />} data-href={'/crm/estimates'} onClick={() => navigate('/crm/estimates')} />
                 <h3 className="mr-2">{tr("Estimate")} {e.displayNumber}</h3>
                 <EstimateStatusTag status={st} />
                 {invoice && <Link className="text-sm text-emerald-600 hover:underline" to={`/crm/invoices/${invoice.id}`}>{tr("→ invoice")} {invoice.displayNumber}</Link>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/estimates/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
-                    {can('estimates', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/estimates/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    {can('estimates', 'create') && <Button size="sm" icon={<TbCopy />} data-href={`/crm/estimates/new?from=${id}`} onClick={() => navigate(`/crm/estimates/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     <ShareButton asButton url={clientLink} title={`${tr("Estimate")} ${e.displayNumber}`} text={`${tr("Estimate")} ${e.displayNumber}`} file={{ url: `/api/crm/sales/estimates/${id}/pdf`, name: `Estimate-${e.displayNumber}.pdf`, type: 'application/pdf' }} />
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/estimates/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('estimates', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
@@ -88,7 +88,7 @@ const EstimateView = () => {
                             {e.status !== 3 && <Dropdown.Item eventKey="x" onClick={() => state('markDeclined', tr("Marked as declined"))}>{tr("Declined")}</Dropdown.Item>}
                         </Dropdown>
                     )}
-                    {can('estimates', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/estimates/${id}/edit`)}>{tr("Edit")}</Button>}
+                    {can('estimates', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} data-href={`/crm/estimates/${id}/edit`} onClick={() => navigate(`/crm/estimates/${id}/edit`)}>{tr("Edit")}</Button>}
                     {can('estimates', 'delete') && !locked && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}
                 </div>
             </div>

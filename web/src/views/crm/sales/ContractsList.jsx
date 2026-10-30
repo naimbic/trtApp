@@ -75,7 +75,7 @@ const ContractsList = () => {
         <Container>
             <InvoiceHead
                 title={tr("Contracts")}
-                action={can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/contracts/new')}>{tr("New contract")}</Button>}
+                action={can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/contracts/new'} onClick={() => navigate('/crm/contracts/new')}>{tr("New contract")}</Button>}
                 stats={[
                     { icon: <TbFileCertificate />, label: tr("Active"), value: String(data.stats.counts?.active ?? 0), badge: (data.stats.counts?.expiring ?? 0) ? <span className="badge badge--butter">{tr("{n} expiring", { n: data.stats.counts.expiring })}</span> : null },
                     { icon: <TbCoins />, label: tr("Value of live contracts"), value: money(data.stats.activeValue, baseCur, { decimals: 0 }) },
@@ -103,7 +103,7 @@ const ContractsList = () => {
                         <THead><Tr>{th('subject', tr("Subject"))}{th('client', tr("Client"))}{th('type', tr("Type"))}{th('value', tr("Value"), true)}{th('dateStart', tr("Start"))}{th('dateEnd', tr("End"))}<Th>{tr("Signed")}</Th><Th>{tr("Status")}</Th>{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((c) => (
-                                <Tr key={c.id} className="cursor-pointer" onClick={() => navigate(`/crm/contracts/${c.id}`)}>
+                                <Tr key={c.id} className="cursor-pointer" data-href={`/crm/contracts/${c.id}`} onClick={() => navigate(`/crm/contracts/${c.id}`)}>
                                     <Td className="max-w-[300px] truncate font-semibold heading-text">{c.subject}</Td>
                                     <Td className="max-w-[200px] truncate">{c.client}</Td>
                                     <Td className="max-w-[160px] truncate text-gray-500">{c.type || '—'}</Td>

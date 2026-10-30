@@ -26,7 +26,7 @@ const OrderListActionTools = () => {
             <Button
                 variant="solid"
                 icon={<TbPlus className="text-xl" />}
-                onClick={() => navigate('/concepts/orders/order-create')}
+                data-href={'/concepts/orders/order-create'} onClick={() => navigate('/concepts/orders/order-create')}
             >
                 Add new
             </Button>

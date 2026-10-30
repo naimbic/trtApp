@@ -110,7 +110,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const related = detail && (
         <div className="space-y-6">
             <div>
-                <div className="mb-2 flex items-center justify-between"><h6>{tr("Proposals")}</h6><Button size="xs" icon={<TbFileText />} onClick={() => nav(`/crm/proposals/new?leadId=${id}`)}>{tr("New proposal")}</Button></div>
+                <div className="mb-2 flex items-center justify-between"><h6>{tr("Proposals")}</h6><Button size="xs" icon={<TbFileText />} data-href={`/crm/proposals/new?leadId=${id}`} onClick={() => nav(`/crm/proposals/new?leadId=${id}`)}>{tr("New proposal")}</Button></div>
                 {detail.proposals.map((p) => <Link key={p.id} to={`/crm/proposals/${p.id}`} className="flex items-center justify-between border-b border-gray-100 py-2 text-sm hover:text-primary dark:border-gray-700"><span>{p.subject || tr("Proposal {number}", { number: p.number })}</span><Tag>{PROPOSAL[p.status] || p.status}</Tag></Link>)}
                 {!detail.proposals.length && <p className="text-sm text-gray-500">{tr("No proposals yet.")}</p>}
             </div>

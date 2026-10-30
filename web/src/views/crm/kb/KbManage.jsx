@@ -64,8 +64,8 @@ const KbManage = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><div className="mb-1 cursor-pointer text-sm text-gray-500 hover:text-primary" onClick={() => nav('/crm/knowledge-base')}><TbArrowLeft className="mr-1 inline" />{tr("Knowledge base")}</div><h3>{tr("Manage articles")}</h3></div>
-                <div className="flex gap-2">{d.can.edit && <Button icon={<TbFolderPlus />} onClick={() => setDialog(true)}>{tr("Groups")}</Button>}{d.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => nav('/crm/knowledge-base/new')}>{tr("New article")}</Button>}</div>
+                <div><div className="mb-1 cursor-pointer text-sm text-gray-500 hover:text-primary" data-href={'/crm/knowledge-base'} onClick={() => nav('/crm/knowledge-base')}><TbArrowLeft className="mr-1 inline" />{tr("Knowledge base")}</div><h3>{tr("Manage articles")}</h3></div>
+                <div className="flex gap-2">{d.can.edit && <Button icon={<TbFolderPlus />} onClick={() => setDialog(true)}>{tr("Groups")}</Button>}{d.can.create && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/knowledge-base/new'} onClick={() => nav('/crm/knowledge-base/new')}>{tr("New article")}</Button>}</div>
             </div>
             <div className="mb-4 flex flex-wrap items-center gap-3">
                 <div className="w-64"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search articles")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
@@ -79,7 +79,7 @@ const KbManage = () => {
                     <THead><Tr><Th>{tr("Article")}</Th><Th>{tr("Group")}</Th><Th>{tr("For")}</Th><Th>{tr("Status")}</Th><Th className="text-right">{tr("Views")}</Th><Th className="text-right">{tr("Helpful")}</Th><Th>{tr("Updated")}</Th></Tr></THead>
                     <TBody>
                         {rows.map((a) => (
-                            <Tr key={a.id} className="cursor-pointer" onClick={() => nav(`/crm/knowledge-base/edit/${a.id}`)}>
+                            <Tr key={a.id} className="cursor-pointer" data-href={`/crm/knowledge-base/edit/${a.id}`} onClick={() => nav(`/crm/knowledge-base/edit/${a.id}`)}>
                                 <Td className="max-w-[360px]"><div className="truncate font-semibold heading-text">{a.subject}</div><div className="truncate text-xs text-gray-500">{a.excerpt}</div></Td>
                                 <Td>{a.group ? <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: a.group.color || '#64748b' }} />{a.group.name}</span> : '—'}</Td>
                                 <Td>{a.staffOnly ? <Tag className="bg-amber-100 text-amber-700">{tr("Staff")}</Tag> : <Tag className="bg-sky-100 text-sky-700">{tr("Clients")}</Tag>}</Td>

@@ -26,7 +26,7 @@ export const colourOf = (col) => (TONES[col.tone] ? TONES[col.tone] : col.color 
 
 /** One tile: the date on top, the title, the line under it, and a foot (a label on the left, people on the right). */
 const Tile = ({ item, onOpen, onMenu, dragging, index }) => (
-    <div className={cn('rp-face', dragging && 'is-drag')} style={{ '--i': Math.min(index, 10) }} onClick={() => onOpen?.(item)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') onOpen?.(item) }}>
+    <div className={cn('rp-face', dragging && 'is-drag')} style={{ '--i': Math.min(index, 10) }} data-href={item.href} onClick={() => onOpen?.(item)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') onOpen?.(item) }}>
         <div className="rp-face-top">
             {item.date ? <span className={cn('rp-face-date', item.overdue && 'is-over')}><TbCalendar />{item.date}</span> : <span />}
             <span className="rp-face-tools">

@@ -16,7 +16,7 @@ const AccessDenied = () => {
                         {tr("You have no permission to visit this page")}
                     </p>
                     <p className="mt-1 text-sm text-gray-500">{tr("Ask an administrator if you need access.")}</p>
-                    <Button className="mt-6" variant="solid" onClick={() => nav('/team-dashboard')}>{tr("Back to my dashboard")}</Button>
+                    <Button className="mt-6" variant="solid" data-href={'/team-dashboard'} onClick={() => nav('/team-dashboard')}>{tr("Back to my dashboard")}</Button>
                 </div>
             </div>
         </Container>

@@ -96,7 +96,7 @@ const ProjectsList = () => {
     const stateChip = (p) => <span className={`pj-st pj-st--${STATUS_TONE[p.status]}`}>{statusLabel(p.status)}</span>
 
     const card = (p, i) => (
-        <article key={p.id} className="cx-card" style={{ '--i': Math.min(i, 12) }} onClick={() => navigate(`/crm/projects/${p.id}`)} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/crm/projects/${p.id}`) }}>
+        <article key={p.id} className="cx-card" style={{ '--i': Math.min(i, 12) }} data-href={`/crm/projects/${p.id}`} onClick={() => navigate(`/crm/projects/${p.id}`)} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/crm/projects/${p.id}`) }}>
             <header className="cx-card__top">
                 <span className={`cx-logo cx-logo--${toneOf(p.name)}`}>{initials(p.name)}</span>
                 <span className="cx-card__tools" onClick={(e) => e.stopPropagation()}>
@@ -167,7 +167,7 @@ const ProjectsList = () => {
                             <THead><Tr><Th>{tr("Project")}</Th><Th>{tr("Client")}</Th><Th>{tr("Status")}</Th><Th>{tr("Start date")}</Th><Th>{tr("Deadline")}</Th><Th>{tr("Progress")}</Th><Th>{tr("Tasks")}</Th><Th>{tr("Time logged")}</Th><Th>{tr("Members")}</Th><Th className="w-12" /></Tr></THead>
                             <TBody>
                                 {rows.map((p) => (
-                                    <Tr key={p.id} className="cursor-pointer" onClick={() => navigate(`/crm/projects/${p.id}`)}>
+                                    <Tr key={p.id} className="cursor-pointer" data-href={`/crm/projects/${p.id}`} onClick={() => navigate(`/crm/projects/${p.id}`)}>
                                         <Td><div className="flex items-center gap-3"><span className={`cx-logo cx-logo--${toneOf(p.name)} cx-logo--sm`}>{initials(p.name)}</span><span className="font-semibold">{p.name}</span></div></Td>
                                         <Td>{p.client?.name || <span className="text-gray-400">—</span>}</Td>
                                         <Td>{stateChip(p)}</Td>

@@ -61,7 +61,7 @@ const TaskPage = () => {
     useEffect(() => { api('/api/crm/work/tasks/lookups').then((l) => setStaff(l.staff)).catch(() => {}) }, [])
     useEffect(() => { if (!d?.running) return; const t = setInterval(() => setTick((n) => n + 1), 1000); return () => clearInterval(t) }, [d?.running])
 
-    if (error && !d) return <AdaptiveCard><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => nav('/crm/my-tasks')}>{tr('Back to tasks')}</Button></AdaptiveCard>
+    if (error && !d) return <AdaptiveCard><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" data-href={'/crm/my-tasks'} onClick={() => nav('/crm/my-tasks')}>{tr('Back to tasks')}</Button></AdaptiveCard>
     if (!d) return <AdaptiveCard><div className="py-20 text-center text-gray-400">{tr('Loading…')}</div></AdaptiveCard>
 
     const { task: t, can } = d
@@ -106,7 +106,7 @@ const TaskPage = () => {
                         {t.milestone?.name && <span className="text-sm text-gray-400">· {t.milestone.name}</span>}
                         <div className="ml-auto flex gap-2">
                             {e && <Button size="xs" variant="plain" icon={<TbBookmark />} onClick={keepAsTemplate}>{tr('Save as template')}</Button>}
-                            {t.rel?.type === 'project' && <Button size="xs" onClick={() => nav(`/crm/projects/${t.relId}/board`)}>{tr('Scrum board')}</Button>}
+                            {t.rel?.type === 'project' && <Button size="xs" data-href={`/crm/projects/${t.relId}/board`} onClick={() => nav(`/crm/projects/${t.relId}/board`)}>{tr('Scrum board')}</Button>}
                             {can.delete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDel(true)} />}
                         </div>
                     </div>

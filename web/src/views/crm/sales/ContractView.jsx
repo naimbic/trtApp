@@ -60,7 +60,7 @@ const ContractView = () => {
         try { await api(`/api/crm/sales/contracts/${id}${locked ? '?force=1' : ''}`, { method: 'DELETE' }); notify('success', tr("Contract deleted")); navigate('/crm/contracts') } catch (e) { notify('danger', e.message); setConfirm(null) }
     }
 
-    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/contracts')}>{tr("Back to contracts")}</Button></Container>
+    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" data-href={'/crm/contracts'} onClick={() => navigate('/crm/contracts')}>{tr("Back to contracts")}</Button></Container>
     if (!c) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
     const signed = c.signed || c.markedAsSigned
     const locked = !!c.locked // a signed contract is final: no edit, no delete; only a super admin, after confirming
@@ -69,13 +69,13 @@ const ContractView = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/contracts')} />
+                <Button size="sm" variant="plain" icon={<TbArrowLeft />} data-href={'/crm/contracts'} onClick={() => navigate('/crm/contracts')} />
                 <h3 className="mr-1 max-w-[60%] truncate">{c.subject}</h3>
                 <StateTag state={c.state} />
                 <Tag className={signed ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{signed ? tr("Signed") : tr("Not signed")}</Tag>{locked && <span className="text-xs text-gray-400">{tr("Signed contracts cannot be edited")}</span>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/contracts/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
-                    {can('contracts', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/contracts/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    {can('contracts', 'create') && <Button size="sm" icon={<TbCopy />} data-href={`/crm/contracts/new?from=${id}`} onClick={() => navigate(`/crm/contracts/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     <ShareButton asButton url={c.hash && !c.trash && !c.hidden ? `/api/crm/public/contract/${id}/${c.hash}` : `/crm/contracts/${id}`} title={c.subject || tr("Contract")} text={c.subject || tr("Contract")} file={{ url: `/api/crm/sales/contracts/${id}/pdf`, name: `Contract-${id}.pdf`, type: 'application/pdf' }} />
                     {c.hash && !c.trash && !c.hidden && <Button size="sm" icon={<TbCopy />} onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/api/crm/public/contract/${id}/${c.hash}`); notify('success', tr("Client link copied")) } catch { notify('danger', tr("Could not copy")) } }}>{tr("Client link")}</Button>}
                     {can('contracts', 'edit') && !c.trash && <Button size="sm" icon={<TbMail />} onClick={() => setMailOpen(true)}>{tr("Send")}</Button>}
@@ -113,7 +113,7 @@ const ContractView = () => {
                     </TabList>
                     <div className="pt-5">
                         {tab === 'files' && <AttachmentsPanel relType="contract" relId={id} canEdit={can('contracts', 'edit')} showClientToggle />}
-                        {tab === 'content' && (c.content ? <iframe title={tr("Contract")} src={`/api/crm/sales/contracts/${id}/html?v=${c.updatedAt || ''}`} className="block h-[860px] w-full border-0" /> : <p className="text-gray-400">{tr("This contract has no text yet.")}{can('contracts', 'edit') && <button className="ml-1 text-primary" onClick={() => navigate(`/crm/contracts/${id}/edit`)}>{tr("Write it")}</button>}</p>)}
+                        {tab === 'content' && (c.content ? <iframe title={tr("Contract")} src={`/api/crm/sales/contracts/${id}/html?v=${c.updatedAt || ''}`} className="block h-[860px] w-full border-0" /> : <p className="text-gray-400">{tr("This contract has no text yet.")}{can('contracts', 'edit') && <button className="ml-1 text-primary" data-href={`/crm/contracts/${id}/edit`} onClick={() => navigate(`/crm/contracts/${id}/edit`)}>{tr("Write it")}</button>}</p>)}
                         {tab === 'comments' && (
                             <div className="flex flex-col gap-4">
                                 <div className="flex gap-2"><Input textArea rows={2} placeholder={tr("Write a comment…")} value={comment} onChange={(e) => setComment(e.target.value)} /><Button variant="solid" onClick={addComment}>{tr("Add")}</Button></div>

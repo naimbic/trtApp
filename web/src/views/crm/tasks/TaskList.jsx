@@ -253,7 +253,7 @@ const TaskList = ({ projectId = null }) => {
                         : <Mini icon={<TbDone />} tone="green" label={tr('Done today')} value={sum.doneToday} active={period === 'done' && !statusFilter} onClick={() => { setPeriod('done'); setStatusFilter(''); setUnassignedOnly(false) }} />}
                     {sum.running
                         ? <Mini icon={<TbPlayerPlay />} tone="green" label={tr('Timer running')} value={dayjs(sum.running.since).fromNow(true)} sub={sum.running.name} onClick={() => open(sum.running.id)} />
-                        : <Mini icon={<TbClock />} tone="slate" label={tr('Time today')} value={`${sum.hoursToday} h`} onClick={() => nav('/crm/time-report')} />}
+                        : <Mini icon={<TbClock />} tone="slate" label={tr('Time today')} value={`${sum.hoursToday} h`} data-href={'/crm/time-report'} onClick={() => nav('/crm/time-report')} />}
                 </div>
             )}
             <div className="mt-4 flex flex-wrap items-center gap-4">

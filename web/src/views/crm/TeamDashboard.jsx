@@ -59,9 +59,9 @@ const TeamDashboard = () => {
                     <div><h3>{greet().replace('{name}', first)}</h3><p className="text-gray-500">{dayjs().format('dddd, DD MMMM YYYY')}{online?.length > 0 && <span> · {tr('{n} colleagues online', { n: online.length })}</span>}</p></div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {can.tasks && <Button size="sm" icon={<TbPlus />} onClick={() => nav('/crm/my-tasks')}>{tr('New task')}</Button>}
-                    {can.leads && <Button size="sm" icon={<TbPlus />} onClick={() => nav('/crm/leads')}>{tr('New lead')}</Button>}
-                    {can.issues && <Button size="sm" icon={<TbPlus />} onClick={() => nav('/crm/issues')}>{tr('New issue')}</Button>}
+                    {can.tasks && <Button size="sm" icon={<TbPlus />} data-href={'/crm/my-tasks'} onClick={() => nav('/crm/my-tasks')}>{tr('New task')}</Button>}
+                    {can.leads && <Button size="sm" icon={<TbPlus />} data-href={'/crm/leads'} onClick={() => nav('/crm/leads')}>{tr('New lead')}</Button>}
+                    {can.issues && <Button size="sm" icon={<TbPlus />} data-href={'/crm/issues'} onClick={() => nav('/crm/issues')}>{tr('New issue')}</Button>}
                 </div>
             </div>
 

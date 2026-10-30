@@ -1,3 +1,4 @@
+import { leadLabel } from '@/lib/crm/leadLabel'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import { rateLimit } from '@/lib/rateLimit'
@@ -357,10 +358,11 @@ export async function listOptions(key, { query = '', ids } = {}) {
                 : await ownWhere(resource, session, {})
         } catch { return [] }
     }
+    const isLead = resource.key === 'leads'
     const base = ids?.length
         ? { id: { in: ids } }
         : query
-          ? { [resource.titleField]: { contains: query, mode: 'insensitive' } }
+          ? (isLead ? { OR: [{ name: { contains: query, mode: 'insensitive' } }, { company: { contains: query, mode: 'insensitive' } }] } : { [resource.titleField]: { contains: query, mode: 'insensitive' } })
           : {}
     const where = own ? { AND: [base, own] } : base
     // lists with an Active switch: the ones turned off are not offered (a selection already made is still labelled)
@@ -369,9 +371,10 @@ export async function listOptions(key, { query = '', ids } = {}) {
         where,
         take: hasActive && !ids?.length ? 200 : 25,
         orderBy: resource.lookup?.orderField && !query ? { [resource.lookup.orderField]: 'asc' } : { [resource.titleField]: 'asc' },
-        select: { id: true, [resource.titleField]: true, ...(hasActive ? { isActive: true } : {}) },
+        select: { id: true, [resource.titleField]: true, ...(isLead ? { company: true } : {}), ...(hasActive ? { isActive: true } : {}) },
     })).filter((r) => ids?.length || r.isActive !== false).slice(0, 25)
-    return rows.map((r) => ({ value: r.id, label: String(r[resource.titleField] ?? r.id) }))
+    // a lead is shown as "Company (Person)", or "(nan) Person" when it has no company
+    return rows.map((r) => ({ value: r.id, label: isLead ? leadLabel(r) : String(r[resource.titleField] ?? r.id) }))
 }
 
 /** A request body that is not what the route expects (bad JSON, a form that is not multipart) is the caller's mistake, not a server error. */

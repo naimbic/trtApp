@@ -74,7 +74,7 @@ const Payroll = () => {
                     <THead><Tr><Th>{tr('Member')}</Th><Th className="text-right">{tr('Monthly salary')}</Th><Th>{tr('Paid on day')}</Th><Th>{tr('Due: {month}', { month: dueName })}</Th><Th className="text-right">{tr('Paid in {year}', { year })}</Th><Th /></Tr></THead>
                     <TBody>
                         {(d?.members || []).map((m) => (
-                            <Tr key={m.id} className="cursor-pointer" onClick={() => navigate(`/crm/staff/${m.id}`)}>
+                            <Tr key={m.id} className="cursor-pointer" data-href={`/crm/staff/${m.id}`} onClick={() => navigate(`/crm/staff/${m.id}`)}>
                                 <Td>
                                     <div className="flex items-center gap-3">
                                         <StaffRing id={m.id} size={30}><Avatar size={30} shape="circle" src={m.image || undefined}>{initials(m.name)}</Avatar></StaffRing>

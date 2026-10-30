@@ -83,7 +83,7 @@ const Timeline = () => {
                             {model.rows.map((r, i) => r.head ? (
                                 <div key={i} className="flex h-9 items-center justify-between bg-gray-50 px-3 text-sm font-bold dark:bg-gray-900"><span className="truncate">{r.head}</span><span className="text-xs font-normal text-gray-400">{r.count}</span></div>
                             ) : (
-                                <button key={i} type="button" onClick={() => nav(`/crm/tasks/${r.t.id}`)} className="flex h-9 w-full items-center gap-2 px-3 text-start text-sm hover:bg-gray-50 dark:hover:bg-gray-800" style={{ paddingInlineStart: 12 + r.depth * 16 }}>
+                                <button key={i} type="button" data-href={`/crm/tasks/${r.t.id}`} onClick={() => nav(`/crm/tasks/${r.t.id}`)} className="flex h-9 w-full items-center gap-2 px-3 text-start text-sm hover:bg-gray-50 dark:hover:bg-gray-800" style={{ paddingInlineStart: 12 + r.depth * 16 }}>
                                     {r.t.assignees[0] ? <StaffRing id={r.t.assignees[0].id} name={r.t.assignees[0].name} size={20}><Avatar size={20} shape="circle" src={r.t.assignees[0].image || undefined}>{initials(r.t.assignees[0].name)}</Avatar></StaffRing> : <span className="h-5 w-5 rounded-full bg-gray-100 dark:bg-gray-700" />}
                                     <span className={classNames('truncate', r.t.status === 5 && 'text-gray-400 line-through')}>{r.t.name}</span>
                                 </button>
@@ -103,7 +103,7 @@ const Timeline = () => {
                                     const late = r.t.status !== 5 && r.t.dueDate && e < model.today
                                     return (
                                         <div key={i} className="relative h-9 border-b border-gray-100 dark:border-gray-800" style={{ backgroundImage: 'linear-gradient(to right, rgba(148,163,184,0.12) 1px, transparent 1px)', backgroundSize: `${w}px 100%` }}>
-                                            <button type="button" title={`${r.t.name} · ${dayjs(s).format('D MMM')} → ${dayjs(e).format('D MMM')}`} onClick={() => nav(`/crm/tasks/${r.t.id}`)} className={classNames('absolute top-2 h-5 overflow-hidden rounded-md px-1.5 text-start text-[11px] font-semibold leading-5 text-white shadow-sm hover:brightness-110', late && 'bg-red-500')} style={{ left, width: wd, ...(late ? {} : { background: statusOf(r.t.status).color }) }}>{wd > 70 ? r.t.name : ''}</button>
+                                            <button type="button" title={`${r.t.name} · ${dayjs(s).format('D MMM')} → ${dayjs(e).format('D MMM')}`} data-href={`/crm/tasks/${r.t.id}`} onClick={() => nav(`/crm/tasks/${r.t.id}`)} className={classNames('absolute top-2 h-5 overflow-hidden rounded-md px-1.5 text-start text-[11px] font-semibold leading-5 text-white shadow-sm hover:brightness-110', late && 'bg-red-500')} style={{ left, width: wd, ...(late ? {} : { background: statusOf(r.t.status).color }) }}>{wd > 70 ? r.t.name : ''}</button>
                                         </div>
                                     )
                                 })}

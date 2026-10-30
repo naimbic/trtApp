@@ -87,7 +87,7 @@ const ProjectDetails = () => {
                     <div><div className="mb-1 text-sm text-gray-500"><Link to="/crm/projects/list" className="hover:text-primary">{tr("Projects")}</Link></div><h3>{p.name}</h3></div>
                     <StatusTag status={p.status} />
                 </div>
-                <div className="flex gap-2"><Button icon={<TbLayoutKanban />} onClick={() => nav(`/crm/projects/${id}/board`)}>{tr("Scrum board")}</Button>{data.can.edit && <Button variant="solid" onClick={() => setTab('settings')}>{tr("Edit")}</Button>}</div>
+                <div className="flex gap-2"><Button icon={<TbLayoutKanban />} data-href={`/crm/projects/${id}/board`} onClick={() => nav(`/crm/projects/${id}/board`)}>{tr("Scrum board")}</Button>{data.can.edit && <Button variant="solid" onClick={() => setTab('settings')}>{tr("Edit")}</Button>}</div>
             </div>
 
             <div className="flex flex-col gap-6 xl:flex-row xl:gap-12">

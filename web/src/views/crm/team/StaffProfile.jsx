@@ -98,7 +98,7 @@ const StaffProfile = () => {
                     { icon: <TbClock />, label: tr('Hours tracked (30 days)'), value: String(c.hours ?? '–') },
                 ]}
             />
-            <button type="button" className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary" onClick={() => navigate('/crm/staff')}><TbArrowLeft />{tr('Team')}</button>
+            <button type="button" className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary" data-href={'/crm/staff'} onClick={() => navigate('/crm/staff')}><TbArrowLeft />{tr('Team')}</button>
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[340px_1fr]">
                 <div className="pt-col pt-col--sticky">
                     <section className="pt-card pt-prof relative">
@@ -122,7 +122,7 @@ const StaffProfile = () => {
                             </div>
                             <div className={`mt-2.5 flex flex-wrap justify-center gap-1.5 ${m.active ? '' : 'pointer-events-none'}`} aria-disabled={!m.active}>
                                 {canEdit && <Act icon={<TbPencil />} label={tr('Edit')} onClick={() => { setFormError(''); setDrawer(true) }} />}
-                                {canActivity && <Act icon={<TbHistory />} label={tr('Activity log')} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} />}
+                                {canActivity && <Act icon={<TbHistory />} label={tr('Activity log')} data-href={`/crm/activity/staff/${m.id}`} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} />}
                                 {canLoginAs && m.hasLogin && <Act icon={<TbUserShare />} label={tr('Log in as this member')} onClick={() => loginAs(m.id).catch((e) => teamNotify('danger', e.message))} />}
                                 {canEdit && <Act icon={<TbShieldLock />} label={tr('Permissions')} onClick={() => setAccess(true)} />}
                                 {canEdit && m.hasLogin && <Act icon={<TbLockPassword />} label={tr('Set a password')} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} />}

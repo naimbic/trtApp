@@ -38,7 +38,7 @@ const ProposalView = () => {
     useEffect(() => { load() }, [load])
     const totals = useMemo(() => data && calcDocument({ items: data.items, discountPercent: data.proposal.discountPercent, discountFixed: data.proposal.discountPercent ? 0 : data.proposal.discountTotal, discountType: data.proposal.discountType || 'before_tax', adjustment: data.proposal.adjustment }), [data])
 
-    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" onClick={() => navigate('/crm/proposals')}>{tr("Back to proposals")}</Button></Container>
+    if (error) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div><Button className="mt-4" data-href={'/crm/proposals'} onClick={() => navigate('/crm/proposals')}>{tr("Back to proposals")}</Button></Container>
     if (!data) return <Container><div className="py-20 text-center text-gray-400">{tr("Loading…")}</div></Container>
 
     const { proposal: e, items, client, lead, comments, activity, invoice, estimate } = data
@@ -66,14 +66,14 @@ const ProposalView = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => navigate('/crm/proposals')} />
+                <Button size="sm" variant="plain" icon={<TbArrowLeft />} data-href={'/crm/proposals'} onClick={() => navigate('/crm/proposals')} />
                 <h3 className="mr-2">{tr("Proposal")} {e.displayNumber}</h3>
                 <ProposalStatusTag status={st} />
                 {estimate && <Link className="text-sm text-blue-600 hover:underline" to={`/crm/estimates/${estimate.id}`}>{tr("→ estimate")} {estimate.displayNumber}</Link>}
                 {invoice && <Link className="text-sm text-emerald-600 hover:underline" to={`/crm/invoices/${invoice.id}`}>{tr("→ invoice")} {invoice.displayNumber}</Link>}
                 <div className="ml-auto flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/proposals/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
-                    {can('proposals', 'create') && <Button size="sm" icon={<TbCopy />} onClick={() => navigate(`/crm/proposals/new?from=${id}`)}>{tr("Duplicate")}</Button>}
+                    {can('proposals', 'create') && <Button size="sm" icon={<TbCopy />} data-href={`/crm/proposals/new?from=${id}`} onClick={() => navigate(`/crm/proposals/new?from=${id}`)}>{tr("Duplicate")}</Button>}
                     <ShareButton asButton url={clientLink} title={`${tr("Proposal")} ${e.displayNumber}`} text={`${tr("Proposal")} ${e.displayNumber}`} file={{ url: `/api/crm/sales/proposals/${id}/pdf`, name: `Proposal-${e.displayNumber}.pdf`, type: 'application/pdf' }} />
                     <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/sales/proposals/${id}/pdf?download=1` }}>{tr("Download")}</Button>
                     {can('proposals', 'edit') && !locked && <Button size="sm" icon={<TbMail />} onClick={() => setMail(true)}>{tr("Send")}</Button>}
@@ -91,7 +91,7 @@ const ProposalView = () => {
                             {e.status !== 2 && <Dropdown.Item eventKey="x" onClick={() => state('markDeclined', tr("Marked as declined"))}>{tr("Declined")}</Dropdown.Item>}
                         </Dropdown>
                     )}
-                    {can('proposals', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} onClick={() => navigate(`/crm/proposals/${id}/edit`)}>{tr("Edit")}</Button>}
+                    {can('proposals', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} data-href={`/crm/proposals/${id}/edit`} onClick={() => navigate(`/crm/proposals/${id}/edit`)}>{tr("Edit")}</Button>}
                     {can('proposals', 'delete') && !locked && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}
                 </div>
             </div>

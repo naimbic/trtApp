@@ -1,3 +1,4 @@
+import { leadLabel } from '@/lib/crm/leadLabel'
 import { realPicture } from '@/lib/crm/pictures'
 import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
@@ -60,7 +61,7 @@ async function relLabels(tasks) {
     const get = async (type, ids) => {
         const where = { id: { in: [...ids] } }
         if (type === 'customer') return (await prisma.crmClient.findMany({ where, select: { id: true, company: true } })).map((x) => [x.id, x.company, `/crm/clients/${x.id}`])
-        if (type === 'lead') return (await prisma.crmLead.findMany({ where, select: { id: true, name: true, company: true } })).map((x) => [x.id, x.name || x.company, `/crm/leads/${x.id}`])
+        if (type === 'lead') return (await prisma.crmLead.findMany({ where, select: { id: true, name: true, company: true } })).map((x) => [x.id, leadLabel(x), `/crm/leads/${x.id}`])
         if (type === 'project') return (await prisma.crmProject.findMany({ where, select: { id: true, name: true } })).map((x) => [x.id, x.name, `/crm/projects/${x.id}`])
         if (type === 'ticket') return (await prisma.crmTicket.findMany({ where, select: { id: true, subject: true } })).map((x) => [x.id, x.subject, `/crm/tickets/${x.id}`])
         return []

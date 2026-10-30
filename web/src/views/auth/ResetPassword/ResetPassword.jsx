@@ -54,7 +54,7 @@ export const ResetPasswordBase = ({ signInUrl = '/sign-in' }) => {
                 </Alert>
             )}
             {!resetComplete && !link.checking && !link.valid ? (
-                <Button block variant="solid" type="button" onClick={() => navigate('/forgot-password')}>
+                <Button block variant="solid" type="button" data-href={'/forgot-password'} onClick={() => navigate('/forgot-password')}>
                     {tr("Request a new link")}
                 </Button>
             ) : (

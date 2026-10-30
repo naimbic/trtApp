@@ -29,8 +29,8 @@ const KbHub = () => {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div><h3>{tr("Knowledge base")}</h3><p className="text-sm text-gray-500">{tr("Procedures and answers for the team and for clients.")}</p></div>
                 <div className="flex gap-2">
-                    {d?.can.edit && <Button icon={<TbSettings />} onClick={() => nav('/crm/knowledge-base/manage')}>{tr("Manage articles")}</Button>}
-                    {d?.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => nav('/crm/knowledge-base/new')}>{tr("New article")}</Button>}
+                    {d?.can.edit && <Button icon={<TbSettings />} data-href={'/crm/knowledge-base/manage'} onClick={() => nav('/crm/knowledge-base/manage')}>{tr("Manage articles")}</Button>}
+                    {d?.can.create && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/knowledge-base/new'} onClick={() => nav('/crm/knowledge-base/new')}>{tr("New article")}</Button>}
                 </div>
             </div>
             <Hero title={tr("How can we help?")} text={tr("Search for answers, browse by topic, or open the most read articles.")} value={text} onChange={setText} onSearch={search} />

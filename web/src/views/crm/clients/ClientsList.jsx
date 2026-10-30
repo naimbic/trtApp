@@ -112,7 +112,7 @@ const ClientsList = () => {
         const m = moneyOf(c)
         const primary = c.primaryContact
         return (
-            <article key={c.id} className="cx-card" style={{ '--i': Math.min(i, 12) }} onClick={() => navigate(`/crm/clients/${c.id}`)} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/crm/clients/${c.id}`) }}>
+            <article key={c.id} className="cx-card" style={{ '--i': Math.min(i, 12) }} data-href={`/crm/clients/${c.id}`} onClick={() => navigate(`/crm/clients/${c.id}`)} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/crm/clients/${c.id}`) }}>
                 <header className="cx-card__top">
                     {c.logoUrl ? <img className="cx-logo" src={c.logoUrl} alt="" loading="lazy" /> : <span className={`cx-logo cx-logo--${toneOf(c.company)}`}>{initials(c.company)}</span>}
                     <span className="cx-card__tools" onClick={(e) => e.stopPropagation()}>{!c.active && <span className="cx-off">{tr("Inactive")}</span>}{dots(c)}</span>
@@ -141,7 +141,7 @@ const ClientsList = () => {
         <Container>
             <InvoiceHead
                 title={tr("Clients")}
-                action={can('customers', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/clients/new')}>{tr("New client")}</Button>}
+                action={can('customers', 'create') && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/clients/new'} onClick={() => navigate('/crm/clients/new')}>{tr("New client")}</Button>}
                 stats={[
                     { icon: <TbBuilding />, label: tr("Clients in your book"), value: String(s.total ?? '–'), badge: s.newThisWeek ? <span className="badge badge--butter">{tr("+{n} this week", { n: s.newThisWeek })}</span> : null },
                     { icon: <TbCircleCheck />, label: tr("Active clients"), value: String(s.active ?? '–'), badge: s.total ? <span className="badge badge--plain">{pct}%</span> : null },
@@ -177,7 +177,7 @@ const ClientsList = () => {
                             <THead><Tr><Th>{tr("Company")}</Th><Th>{tr("Primary contact")}</Th><Th>{tr("Phone")}</Th><Th>{tr("Groups")}</Th><Th className="text-right">{tr("Outstanding")}</Th><Th>{tr("Active")}</Th><Th>{tr("Created")}</Th><Th className="w-12" /></Tr></THead>
                             <TBody>
                                 {data.list.map((c) => (
-                                    <Tr key={c.id} className="cursor-pointer" onClick={() => navigate(`/crm/clients/${c.id}`)}>
+                                    <Tr key={c.id} className="cursor-pointer" data-href={`/crm/clients/${c.id}`} onClick={() => navigate(`/crm/clients/${c.id}`)}>
                                         <Td><div className="flex items-center gap-3">{c.logoUrl ? <img src={c.logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" loading="lazy" /> : <span className={`cx-logo cx-logo--${toneOf(c.company)} cx-logo--sm`}>{initials(c.company)}</span>}<div className="min-w-0"><div className="truncate font-semibold heading-text">{c.company}</div>{c.city && <div className="truncate text-xs text-gray-500">{c.city}</div>}</div></div></Td>
                                         <Td>{c.primaryContact ? <><div>{c.primaryContact.name}</div><div className="text-xs text-gray-500">{c.primaryContact.email}</div></> : <span className="text-gray-400">—</span>}</Td>
                                         <Td className="whitespace-nowrap">{c.phone || c.primaryContact?.phone || <span className="text-gray-400">—</span>}</Td>

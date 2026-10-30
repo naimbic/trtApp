@@ -124,7 +124,7 @@ const InvoicesList = () => {
         <Container>
             <InvoiceHead
                 title={tr("Invoices")}
-                action={can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} onClick={() => navigate('/crm/invoices/new')}>{tr("New invoice")}</Button>}
+                action={can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/invoices/new'} onClick={() => navigate('/crm/invoices/new')}>{tr("New invoice")}</Button>}
                 stats={[
                     { icon: <TbCash />, label: tr("Revenue"), value: m ? money(m.paid, cur) : '—' },
                     { icon: <TbReceipt2 />, label: tr("Invoices"), value: String(Object.entries(data.stats.counts).filter(([k]) => ![5, 6].includes(+k)).reduce((n, [, v]) => n + v, 0)), badge: data.stats.counts[4] ? <span className="badge badge--tomato">{tr("{n} overdue", { n: data.stats.counts[4] })}</span> : null },
@@ -155,7 +155,7 @@ const InvoicesList = () => {
                         <THead><Tr>{th('number', tr("Invoice"))}{th('client', tr("Client"))}{th('date', tr("Date"))}{th('dueDate', tr("Due date"))}{th('total', tr("Amount"), true)}<Th className="text-right">{tr("Paid")}</Th>{th('due', tr("Balance"), true)}{th('status', tr("Status"))}<Th className="w-12" /></Tr></THead>
                         <TBody>
                             {data.list.map((r) => (
-                                <Tr key={r.id} className="cursor-pointer" onClick={() => navigate(`/crm/invoices/${r.id}`)}>
+                                <Tr key={r.id} className="cursor-pointer" data-href={`/crm/invoices/${r.id}`} onClick={() => navigate(`/crm/invoices/${r.id}`)}>
                                     <Td className="whitespace-nowrap font-semibold heading-text">{r.number}</Td>
                                     <Td className="max-w-[240px] truncate">{r.client}</Td>
                                     <Td className="whitespace-nowrap">{fmtDate(r.date)}</Td>

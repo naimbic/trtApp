@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.122.1',
+        date: '2026-10-30',
+        title: 'Lead email integration: forms in any language',
+        items: [
+            'Fixed: notifications written in Japanese, Arabic, Spanish, English and other languages were not read. Labels in any alphabet were thrown away (a Japanese label became empty), so the lead came out with the sender\'s name and no company, email or website. Labels are now compared in any script, and the word lists cover English, French, Spanish, Japanese, Arabic, Chinese, Korean, German, Italian, Portuguese, Turkish, Russian and Dutch.',
+            'A form in a language that has no word list yet is still understood by the shape of the values: the email address, the web address, the phone number and the name (the first line). Anything else is kept in the lead\'s description.',
+            'Section titles and a label alone above its text (for example the message block) are recognised in any language, so they no longer glue onto the line before.',
+        ],
+    },
+    {
         version: '0.122.0',
         date: '2026-10-30',
         title: 'Leads: a Files tab',

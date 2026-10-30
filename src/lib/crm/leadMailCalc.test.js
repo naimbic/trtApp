@@ -114,3 +114,44 @@ test('when the plain part is only the HTML flattened (no separators), the HTML t
     const p = parseForm(emailText(flat, SITE_HTML))
     assert.equal(p.fields.name, 'Harrouchi Ismail'); assert.equal(p.fields.company, 'Strasforma'); assert.equal(p.fields.email, 'ismail.harrouchi@strasforma.fr')
 })
+
+// ---- the same site form in other languages (the site sends English, Japanese, Arabic, Spanish... notifications)
+const table = (rows) => `<table>${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>`
+const html = (h1, h2, rows1, rows2, msgLabel, msg, pageLabel) => `<div><h1>TRTDIGITAL</h1><h2>${h1}</h2><span>audit-seo</span><h3>${h2[0]}</h3>${table(rows1)}<h3>${h2[1]}</h3>${table(rows2)}<div><div>${msgLabel}</div><div>${msg}</div></div><div><p><b>${pageLabel}:</b> <a href="https://www.trtdigital.ma/#audit">https://www.trtdigital.ma/#audit</a></p><p><b>IP :</b> 162.158.95.49</p></div></div>`
+const CASES = {
+  EN: html('New SEO audit request', ['CONTACT DETAILS', 'PROJECT'], [['Name', 'John Smith'], ['Email', '<a href="mailto:john@acme.com">john@acme.com</a>'], ['Company', 'Acme Ltd'], ['Website', '<a href="https://acme.com">https://acme.com</a>']], [['Services', 'Social Ads (Meta / TikTok)'], ['Budget', '$5,000 - 15,000 / month']], 'MESSAGE', 'We run Meta ads with another agency.', 'Page'),
+  JA: html('SEO監査のお問い合わせ', ['連絡先', 'プロジェクト'], [['お名前', '山田 太郎'], ['メールアドレス', 'taro@example.jp'], ['会社名', '株式会社サンプル'], ['ウェブサイト', 'https://example.jp']], [['サービス', 'SNS広告（Meta / TikTok）'], ['ご予算', '月5万〜15万円']], 'メッセージ', '現在、他社でMeta広告を運用していますが成果が出ていません。', 'ページ'),
+  AR: html('طلب جديد لتدقيق السيو', ['بيانات الاتصال', 'المشروع'], [['الاسم', 'إسماعيل حروشي'], ['البريد الإلكتروني', 'ismail@example.ma'], ['الشركة', 'ستراسفورما'], ['الموقع الإلكتروني', 'https://www.strasforma.fr']], [['الخدمات', 'إعلانات التواصل الاجتماعي (ميتا / تيك توك)'], ['الميزانية', '5000 - 15000 درهم / شهر']], 'الرسالة', 'لدينا حملة على ميتا مع وكالة أخرى ونريد نتائج أفضل.', 'الصفحة'),
+  ES: html('Nueva solicitud de auditoría SEO', ['DATOS DE CONTACTO', 'PROYECTO'], [['Nombre', 'Carlos Pérez'], ['Correo electrónico', 'carlos@empresa.es'], ['Empresa', 'Empresa SL'], ['Sitio web', 'https://empresa.es']], [['Servicios', 'Anuncios en redes (Meta / TikTok)'], ['Presupuesto', '5.000 - 15.000 € / mes']], 'MENSAJE', 'Tenemos una campaña en Meta con otra agencia.', 'Página'),
+  KO: html('SEO 감사 요청', ['연락처', '프로젝트'], [['이름', '김민준'], ['이메일', 'minjun@example.kr'], ['회사', '샘플 주식회사'], ['웹사이트', 'https://example.kr']], [['서비스', 'SNS 광고']], '메시지', '현재 다른 대행사와 광고를 운영 중입니다.', '페이지'),
+}
+const PLAIN = {
+  JA: 'SEO監査のお問い合わせ\nカテゴリ：audit-seo\n\nお名前：山田 太郎\nメールアドレス：taro@example.jp\n会社名：株式会社サンプル\nウェブサイト：https://example.jp\nサービス：SNS広告（Meta / TikTok）\nメッセージ：現在、他社でMeta広告を運用しています。\nページ：https://www.trtdigital.ma/#audit',
+  AR: 'طلب جديد\nالاسم = إسماعيل حروشي\nالبريد الإلكتروني = ismail@example.ma\nالشركة = ستراسفورما\nالموقع الإلكتروني = https://www.strasforma.fr\nالخدمات = إعلانات\nالرسالة = نريد نتائج أفضل.\nالصفحة = https://www.trtdigital.ma/#audit',
+}
+
+const leadOf = (text) => buildLead({ subject: 'trtDigital - x', fromAddress: 'commercial@trtdigital.ma', fromName: 'trtDigital Agency Commercial' }, parseForm(text))
+const EXPECT = {
+    EN: ['John Smith', 'john@acme.com', 'Acme Ltd', 'https://acme.com'],
+    JA: ['山田 太郎', 'taro@example.jp', '株式会社サンプル', 'https://example.jp'],
+    AR: ['إسماعيل حروشي', 'ismail@example.ma', 'ستراسفورما', 'https://www.strasforma.fr'],
+    ES: ['Carlos Pérez', 'carlos@empresa.es', 'Empresa SL', 'https://empresa.es'],
+    KO: ['김민준', 'minjun@example.kr', '샘플 주식회사', 'https://example.kr'], // no word list for Korean in the beginning: the shapes carry it
+}
+for (const [lang, want] of Object.entries(EXPECT)) {
+    test(`a ${lang} notification (HTML table) fills name, email, company and website`, () => {
+        const l = leadOf(emailText('', CASES[lang]))
+        assert.deepEqual([l.name, l.email, l.company, l.website], want)
+        assert.ok(l.description && !/162\.158/.test(l.description))
+    })
+}
+for (const lang of ['JA', 'AR']) {
+    test(`a ${lang} plain-text notification fills the same fields`, () => {
+        const l = leadOf(emailText(PLAIN[lang], ''))
+        assert.deepEqual([l.name, l.email, l.company, l.website], EXPECT[lang])
+    })
+}
+test('an unknown-language form still gets its phone number from the shape of the value', () => {
+    const l = leadOf('이름: 김민준\n이메일: a@b.kr\n연락 번호: +82 10 1234 5678\n문의: 안녕하세요, 광고 문의드립니다.')
+    assert.equal(l.phone, '+82 10 1234 5678')
+})

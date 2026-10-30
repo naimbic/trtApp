@@ -15,3 +15,6 @@ Give the three files and the `.webm` to Claude (or another AI). The prompt asks 
 The client area (/portal) is outside the tour: record it by hand and append it (its narration is in the pack).
 
 `node scripts/demo-pack.mjs` writes the planned version of the same files to this folder without opening the app.
+
+## Free recording (your own moves and voice)
+In the same panel, **Free recording** records the tab while you work yourself and talk into the microphone: choose "This tab", allow the microphone, and after the 3-2-1 do what you want to show. A dot follows your mouse (the browser does not record the system cursor) and a faint control at the bottom left shows the time, Pause and Stop; Ctrl+Shift+E stops, Ctrl+Shift+P pauses. The video (`trtcrm-free-....webm`, with your voice) downloads when you stop. Do not reload the page while recording.

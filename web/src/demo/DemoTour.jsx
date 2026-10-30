@@ -113,6 +113,65 @@ const DemoTour = () => {
     const pathRef = useRef(pathname)
     useEffect(() => { pathRef.current = pathname }, [pathname])
     const [caption, setCaption] = useState(null)
+    // free recording: the screen of this tab and the microphone, with the person's own moves and voice
+    const [freeRec, setFreeRec] = useState(false), [paused, setPaused] = useState(false), [secs, setSecs] = useState(0), [countdown, setCountdown] = useState(0)
+    const [voice, setVoice] = useState(true), [dotOn, setDotOn] = useState(true)
+    const free = useRef({ rec: null, stream: null, mic: null, chunks: [], timer: null })
+    const mdot = useRef(null), mring = useRef(null)
+
+    const stopFree = useCallback(() => {
+        const f = free.current
+        clearInterval(f.timer)
+        if (!f.rec || f.rec.state === 'inactive') return
+        f.rec.onstop = () => {
+            f.stream?.getTracks().forEach((t) => t.stop()); f.mic?.getTracks().forEach((t) => t.stop())
+            const blob = new Blob(f.chunks, { type: 'video/webm' })
+            const a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = `trtcrm-free-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}.webm`
+            document.body.appendChild(a); a.click(); a.remove()
+            setStatus(`Video saved (${(blob.size / 1048576).toFixed(1)} MB${f.mic ? ', with your voice' : ', no voice'}).`)
+            setFreeRec(false); setPaused(false); setOpen(true)
+        }
+        f.rec.stop()
+    }, [])
+
+    const startFree = async () => {
+        const f = free.current
+        let mic = null
+        if (voice) {
+            try { mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }) } catch { setStatus('The microphone is blocked: allow it (the lock icon in the address bar) or untick "Record my voice".'); return }
+        }
+        let screen
+        try { screen = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false, preferCurrentTab: true, selfBrowserSurface: 'include' }) } catch { mic?.getTracks().forEach((t) => t.stop()); setStatus('Recording was cancelled: choose "This tab" in the browser dialog.'); return }
+        const stream = new MediaStream([...screen.getVideoTracks(), ...(mic ? mic.getAudioTracks() : [])])
+        const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find((m) => window.MediaRecorder?.isTypeSupported?.(m))
+        const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000, audioBitsPerSecond: 128_000 })
+        Object.assign(f, { rec, stream: screen, mic, chunks: [] })
+        rec.ondataavailable = (e) => { if (e.data.size) f.chunks.push(e.data) }
+        screen.getVideoTracks()[0].addEventListener('ended', () => stopFree()) // the browser's own "Stop sharing" button
+        setOpen(false); setStatus('')
+        for (let n = 3; n > 0; n--) { setCountdown(n); await sleep(900) } // 3, 2, 1: not part of the video
+        setCountdown(0)
+        rec.start(1000)
+        setSecs(0); setPaused(false); setFreeRec(true)
+        f.timer = setInterval(() => { if (f.rec?.state === 'recording') setSecs((x) => x + 1) }, 1000)
+    }
+    const pauseFree = () => { const r = free.current.rec; if (!r) return; if (r.state === 'recording') { r.pause(); setPaused(true) } else if (r.state === 'paused') { r.resume(); setPaused(false) } }
+
+    // the dot that follows the real mouse (the tab capture does not show the system cursor)
+    useEffect(() => {
+        if (!freeRec || !dotOn) return undefined
+        const move = (e) => { if (mdot.current) mdot.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`; mdot.current && (mdot.current.style.opacity = 1) }
+        const down = (e) => {
+            const r = mring.current
+            if (!r) return
+            r.style.transition = 'none'; r.style.opacity = '.9'; r.style.transform = `translate(${e.clientX}px, ${e.clientY}px) scale(.2)`
+            requestAnimationFrame(() => requestAnimationFrame(() => { r.style.transition = 'transform .5s ease-out, opacity .5s ease-out'; r.style.transform = `translate(${e.clientX}px, ${e.clientY}px) scale(1.5)`; r.style.opacity = '0' }))
+        }
+        window.addEventListener('mousemove', move, true); window.addEventListener('mousedown', down, true)
+        return () => { window.removeEventListener('mousemove', move, true); window.removeEventListener('mousedown', down, true) }
+    }, [freeRec, dotOn])
 
     const total = useMemo(() => SCENES.filter((s) => picked.has(s.id)).reduce((n, s) => n + plannedSeconds(s), 0), [picked])
     const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s % 60)).padStart(2, '0')}`
@@ -281,10 +340,12 @@ const DemoTour = () => {
         const onKey = (e) => {
             if (e.key === 'Escape' && running && e.isTrusted) { stop.current = true; return } // only a real key press stops the tour: the tour's own Escape (closing a popup) must not
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') { e.preventDefault(); setOpen((o) => !o) }
+            if (freeRec && e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'e') { e.preventDefault(); stopFree() }
+            if (freeRec && e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); pauseFree() }
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
-    }, [running])
+    }, [running, freeRec, stopFree]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const toggle = (id) => setPicked((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n })
     const btn = 'rounded-lg px-3 py-1.5 text-sm font-semibold transition disabled:opacity-40'
@@ -312,14 +373,31 @@ const DemoTour = () => {
                 </>
             )}
 
-            {!running && (
+            {countdown > 0 && <div style={{ position: 'fixed', inset: 0, zIndex: 2147483002, display: 'grid', placeItems: 'center', pointerEvents: 'none', background: 'rgba(0,0,0,.25)' }}><div style={{ fontSize: 120, fontWeight: 800, color: '#fff', textShadow: '0 4px 30px rgba(0,0,0,.5)' }}>{countdown}</div></div>}
+            {freeRec && dotOn && (
+                <>
+                    <div ref={mdot} style={{ position: 'fixed', left: 0, top: 0, zIndex: 2147483000, pointerEvents: 'none', opacity: 0 }}><div style={{ width: 26, height: 26, margin: '-13px 0 0 -13px', borderRadius: '50%', background: 'rgba(255, 90, 60, .92)', boxShadow: '0 0 0 4px rgba(255,255,255,.9), 0 6px 18px rgba(0,0,0,.35)' }} /></div>
+                    <div ref={mring} style={{ position: 'fixed', left: 0, top: 0, zIndex: 2147482999, pointerEvents: 'none', opacity: 0 }}><div style={{ width: 70, height: 70, margin: '-35px 0 0 -35px', borderRadius: '50%', border: '3px solid rgba(255, 90, 60, .9)' }} /></div>
+                </>
+            )}
+            {freeRec && (
+                <div style={{ position: 'fixed', left: 12, bottom: 12, zIndex: 2147483001, opacity: 0.18, transition: 'opacity .2s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = 1 }} onMouseLeave={(e) => { e.currentTarget.style.opacity = 0.18 }}
+                    className="flex items-center gap-2 rounded-full bg-gray-900 px-3 py-1.5 text-xs font-bold text-white shadow-xl">
+                    <span className={`inline-block h-2.5 w-2.5 rounded-full ${paused ? 'bg-amber-400' : 'animate-pulse bg-red-500'}`} />
+                    <span className="tabular-nums">{String(Math.floor(secs / 60)).padStart(2, '0')}:{String(secs % 60).padStart(2, '0')}</span>
+                    <button type="button" onClick={pauseFree} className="rounded bg-white/15 px-2 py-0.5 hover:bg-white/30" title="Pause / resume (Ctrl+Shift+P)">{paused ? '▶ Resume' : '❚❚ Pause'}</button>
+                    <button type="button" onClick={stopFree} className="rounded bg-red-600 px-2 py-0.5 hover:bg-red-700" title="Stop and save (Ctrl+Shift+E)">■ Stop</button>
+                </div>
+            )}
+
+            {!running && !freeRec && !countdown && (
                 <button type="button" onClick={() => setOpen((o) => !o)} style={{ position: 'fixed', left: 14, bottom: 14, zIndex: 2147482000 }}
                     className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-sm font-bold text-white shadow-xl hover:bg-black" title="Demo tour (Ctrl+Shift+D)">
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" /> Demo tour
                 </button>
             )}
 
-            {open && !running && (
+            {open && !running && !freeRec && !countdown && (
                 <div style={{ position: 'fixed', left: 14, bottom: 60, zIndex: 2147482001, width: 440, maxWidth: 'calc(100vw - 28px)', maxHeight: '78vh' }}
                     className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-800 shadow-2xl">
                     <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
@@ -354,6 +432,14 @@ const DemoTour = () => {
                     <div className="border-t border-gray-100 px-4 py-3">
                         {report.length > 0 && <div className="mb-2 max-h-28 overflow-auto rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800"><b>Steps the last run could not do ({report.reduce((n, r) => n + r.skipped.length, 0)}):</b>{report.map((r) => <div key={r.id}>{r.title}: {r.skipped.join('; ')}</div>)}</div>}
                         {status && <div className="mb-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{status}</div>}
+                        <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3">
+                            <button type="button" className={`${btn} w-full bg-red-600 text-white hover:bg-red-700`} onClick={startFree}>● Free recording: my moves and my voice</button>
+                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-700">
+                                <label className="flex items-center gap-1.5"><input type="checkbox" checked={voice} onChange={(e) => setVoice(e.target.checked)} />Record my voice (microphone)</label>
+                                <label className="flex items-center gap-1.5"><input type="checkbox" checked={dotOn} onChange={(e) => setDotOn(e.target.checked)} />Show a dot where my mouse is</label>
+                            </div>
+                            <p className="mt-1.5 text-[11px] leading-snug text-gray-600">Choose "This tab", then work as usual after the 3-2-1. A faint control (bottom left) shows the time, Pause and Stop; or press Ctrl+Shift+E to stop, Ctrl+Shift+P to pause. The video downloads when you stop. Do not reload the page while recording.</p>
+                        </div>
                         <div className="mb-2 flex flex-wrap gap-2">
                             <button type="button" className={`${btn} bg-red-600 text-white hover:bg-red-700`} disabled={!picked.size} onClick={() => play(true)}>● Record the tour</button>
                             <button type="button" className={`${btn} border border-gray-300 hover:bg-gray-50`} disabled={!picked.size} onClick={() => play(false)}>▶ Rehearse (no recording)</button>

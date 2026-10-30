@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.120.0',
+        date: '2026-10-30',
+        title: 'Demo tour: free recording with your own moves and voice',
+        items: [
+            'New button "Free recording" in the Demo tour panel (dev only): it records the tab while you work yourself, with your voice from the microphone. After a 3-2-1 a faint control shows the time, Pause and Stop (Ctrl+Shift+E stops, Ctrl+Shift+P pauses); the video downloads when you stop.',
+            'Options: record your voice or not, and show a dot (with a ring on every click) where your mouse is, since the browser does not record the system cursor.',
+        ],
+    },
+    {
         version: '0.119.1',
         date: '2026-10-29',
         title: 'Demo tour: the recording no longer stops after the first popup',

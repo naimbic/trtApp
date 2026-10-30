@@ -17,7 +17,7 @@ export const SYNONYMS = {
     city: ['city', 'ville', 'ciudad', 'المدينة'],
     country: ['country', 'pays', 'pais', 'البلد'],
     message: ['message', 'your message', 'votre message', 'comments', 'comment', 'commentaire', 'commentaires', 'details', 'description', 'project', 'votre projet', 'your project', 'besoin', 'votre besoin', 'demande', 'request', 'inquiry', 'enquiry', 'mensaje', 'notes', 'note', 'الرسالة', 'التفاصيل'],
-    service: ['service', 'subject', 'objet', 'sujet', 'asunto', 'interested in', 'interesse par', 'type de service', 'service requested'],
+    service: ['service', 'services', 'service s', 'service souhaite', 'services souhaites', 'subject', 'objet', 'sujet', 'asunto', 'interested in', 'interesse par', 'type de service', 'service requested'],
 }
 const LOOKUP = Object.entries(SYNONYMS).flatMap(([field, labels]) => labels.map((l) => [l, field]))
 
@@ -39,7 +39,7 @@ const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'
 /** The readable text of an email: the plain part when there is one, otherwise the HTML with its table cells turned into "Label: value". */
 export function emailText(text, html) {
     const t = String(text || '').trim()
-    if (t && /[:：]/.test(t)) return t
+    if (t && /[:：=]/.test(t)) return t
     const h = String(html || '')
     if (!h) return t
     return h
@@ -51,7 +51,8 @@ export function emailText(text, html) {
         .replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim()
 }
 
-const LABEL_LINE = /^[\s*_•·>\-–—]*([^:：=\n]{2,45}?)\s*[:：]\s*(.*)$/
+// a label is followed by a colon or an equals sign ("Nom: Ali", "Nom = Ali")
+const LABEL_LINE = /^[\s*_•·>\-–—]*([^:：=\n]{2,45}?)\s*[:：=]\s*(.*)$/
 
 /** Splits the text into [label, value] pairs: a label starts a pair, the lines after it (until the next label) belong to its value. */
 export function pairs(text) {

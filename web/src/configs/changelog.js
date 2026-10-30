@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.121.1',
+        date: '2026-10-30',
+        title: 'Lead email integration: forms written with "Label = value"',
+        items: [
+            'Fixed: website emails whose lines are written "Nom = ...", "Email = ...", "Entreprise = ...", "Site web = ...", "Services = ...", "MESSAGE = ..." were not read as a form, so the lead came out with the wrong name and no company, email or website. A label can now be followed by a colon or an equals sign, and "Services" fills the service.',
+            'The other lines of the email (for example "cat : audit-seo" and "Page = ...") are kept in the lead\'s description, and the email itself is on the lead\'s Mails tab.',
+        ],
+    },
+    {
         version: '0.121.0',
         date: '2026-10-30',
         title: 'Leads shown with their company; open any record in a new tab',

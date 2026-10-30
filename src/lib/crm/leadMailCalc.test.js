@@ -49,3 +49,39 @@ test('the owner can name the labels of a template', () => {
     const p = parseForm('Prénom et nom: Zaid\nMobile client: 0611\nEmail: z@z.com', map)
     assert.equal(p.fields.name, 'Zaid'); assert.equal(p.fields.phone, '0611')
 })
+
+const EQUALS_FORM = `Nouvelle demande d’audit SEO
+cat : audit-seo
+
+Nom = Ismail Harrouchi
+Email = ismail@natura-volt.ma
+Entreprise = Natura Volt
+Site web = https://natura-volt.ma
+Services = Audit SEO, Meta Ads
+MESSAGE = Bonjour,
+nous voulons auditer notre site.
+
+Page = https://trtdigital.ma/audit-seo`
+
+test('a form written with "Label = value" lines fills the lead fields', () => {
+    const p = parseForm(EQUALS_FORM)
+    assert.equal(p.fields.name, 'Ismail Harrouchi')
+    assert.equal(p.fields.email, 'ismail@natura-volt.ma')
+    assert.equal(p.fields.company, 'Natura Volt')
+    assert.equal(p.fields.website, 'https://natura-volt.ma')
+    assert.equal(p.fields.service, 'Audit SEO, Meta Ads')
+    assert.match(p.fields.message, /nous voulons auditer/)
+    assert.deepEqual(p.extras.map(([l]) => l), ['cat', 'Page']) // nothing is lost: the category and the page go to the description
+    const lead = buildLead({ subject: 'trtDigital - Social Ads (Meta / TikTok) - Harrouchi Ismail', fromAddress: 'noreply@trtdigital.ma' }, p)
+    assert.equal(lead.name, 'Ismail Harrouchi'); assert.equal(lead.company, 'Natura Volt'); assert.equal(lead.email, 'ismail@natura-volt.ma')
+    assert.match(lead.description, /Service: Audit SEO/); assert.match(lead.description, /Page: https:\/\/trtdigital\.ma\/audit-seo/); assert.match(lead.description, /cat: audit-seo/)
+})
+
+test('an equals-sign form counts as a form (two labelled lines)', () => {
+    const p = parseForm('Nom = Ali\nEmail = ali@x.ma')
+    assert.equal(judge({ subject: 's', text: 'Nom = Ali\nEmail = ali@x.ma' }, {}, p).ok, true)
+})
+
+test('a plain-text email with only equals signs is read as it is', () => {
+    assert.equal(emailText('Nom = Ali\nEmail = a@x.ma', ''), 'Nom = Ali\nEmail = a@x.ma')
+})

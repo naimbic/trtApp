@@ -71,6 +71,11 @@
 .rp-qv-head p { margin: 0; font-size: 13.5px; opacity: .75; }
 .rp-qv-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 14px; }
 .rp-qv-foot b { font-size: 15px; }
+.rp-qv-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.rp-qv-act { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.2; background: color-mix(in srgb, var(--on) 14%, transparent); color: var(--on); transition: background .15s; }
+.rp-qv-act:hover { background: color-mix(in srgb, var(--on) 26%, transparent); }
+.rp-qv-act.is-solid { background: var(--on); color: var(--t); }
+.rp-qv-act.is-solid:hover { opacity: .88; }
 .rp-qv .ring-white { --tw-ring-color: var(--t); }
 .rp-qv-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
 .rp-qv-steps button { width: 100%; display: grid; gap: 7px; padding: 6px 2px 4px; border-radius: 10px; background: none; border: 0; text-align: start; color: inherit; cursor: pointer; }

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.126.1',
+        date: '2026-10-31',
+        title: 'Lead popup: Convert, Lost and Junk in the top card',
+        items: [
+            'The Convert to client, Lost, Junk and Restore buttons moved into the top card of the lead popup, bottom left under the lead name and company (the team avatars stay on the right). They are small chips in the card\'s own colours, and the row they used to take below the card is gone.',
+        ],
+    },
+    {
         version: '0.126.0',
         date: '2026-10-31',
         title: 'Lead popup: compact profile in foldable sections',

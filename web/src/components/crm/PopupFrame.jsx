@@ -16,7 +16,7 @@ const OPEN = []
  * (press a step to move) and holds a page's own form. It replaces the plain side drawer for tasks and leads.
  *   stage  { columns:[{ id, name, color | tone }], currentId, onPick(id) }   optional: colours the head and draws the bar
  */
-const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, team, stage, footer, share, children }) => {
+const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, team, actions, stage, footer, share, children }) => {
     const reduce = useReducedMotion()
     const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl'
     const cols = stage?.columns || []
@@ -48,7 +48,7 @@ const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, te
                             <div className="rp-qv-row"><span>{date}</span>{cur && <span className="rp-qv-pill"><i />{cur.name}</span>}</div>
                             <h2>{title}</h2>
                             {sub && <p>{sub}</p>}
-                            {team && <div className="rp-qv-foot"><span />{team}</div>}
+                            {(team || actions) && <div className="rp-qv-foot"><div className="rp-qv-acts">{actions}</div>{team}</div>}
                         </motion.div>
                         {cols.length > 0 && (
                             <ol className="rp-qv-steps">

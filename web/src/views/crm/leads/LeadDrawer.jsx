@@ -154,6 +154,15 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         </div>
     )
 
+    const headActions = l && (
+        <>
+            {detail.can.convert && <button type="button" className="rp-qv-act is-solid" onClick={() => setConfirm('convert')}><TbUserCheck />{tr("Convert to client")}</button>}
+            {!l.lost && !l.junk && <button type="button" className="rp-qv-act" onClick={() => flag('lost', tr("Marked as lost"))}><TbBan />{tr("Lost")}</button>}
+            {!l.lost && !l.junk && <button type="button" className="rp-qv-act" onClick={() => flag('junk', tr("Marked as junk"))}><TbBan />{tr("Junk")}</button>}
+            {(l.lost || l.junk) && <button type="button" className="rp-qv-act" onClick={() => flag('restore', tr("Lead restored"))}><TbArrowBackUp />{tr("Restore")}</button>}
+        </>
+    )
+
     const headerBadges = l && (
         <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
             {l.status && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: l.statusColor || '#94a3b8' }} />{l.status}</span>}
@@ -165,7 +174,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     return (
         <Drawer
             share={edit ? { url: `/crm/leads/${id}`, title: l?.name, text: l?.name } : undefined}
-            title={edit ? l?.name || tr("Lead") : tr("New lead")} kicker={edit ? `${tr("Lead")}${l?.company ? ` · ${l.company}` : ''}` : tr("New lead")} sub={l?.company} date={l?.lastContact ? `${tr("Last contact")} ${dayjs(l.lastContact).format('DD MMM')}` : ''} team={l?.assignees?.length ? <People list={l.assignees} max={5} size={30} /> : null} stage={stage} isOpen={open} onClose={onClose} width={640}
+            title={edit ? l?.name || tr("Lead") : tr("New lead")} kicker={edit ? `${tr("Lead")}${l?.company ? ` · ${l.company}` : ''}` : tr("New lead")} sub={l?.company} date={l?.lastContact ? `${tr("Last contact")} ${dayjs(l.lastContact).format('DD MMM')}` : ''} team={l?.assignees?.length ? <People list={l.assignees} max={5} size={30} /> : null} actions={edit && detail?.can.edit && l ? headActions : null} stage={stage} isOpen={open} onClose={onClose} width={640}
             footer={
                 <div className="flex w-full items-center gap-2">
                     {edit && detail?.can.delete && !l?.converted && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}
@@ -176,14 +185,6 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             {edit && !detail ? <div className="py-10 text-center text-gray-500">{tr("Loading…")}</div> : edit ? (
                 <>
                     {headerBadges}
-                    {detail.can.edit && (
-                        <div className="mb-4 flex flex-wrap gap-2">
-                            {detail.can.convert && <Button size="sm" variant="solid" icon={<TbUserCheck />} onClick={() => setConfirm('convert')}>{tr("Convert to client")}</Button>}
-                            {!l.lost && !l.junk && <Button size="sm" icon={<TbBan />} onClick={() => flag('lost', tr("Marked as lost"))}>{tr("Lost")}</Button>}
-                            {!l.lost && !l.junk && <Button size="sm" icon={<TbBan />} onClick={() => flag('junk', tr("Marked as junk"))}>{tr("Junk")}</Button>}
-                            {(l.lost || l.junk) && <Button size="sm" icon={<TbArrowBackUp />} onClick={() => flag('restore', tr("Lead restored"))}>{tr("Restore")}</Button>}
-                        </div>
-                    )}
                     <Tabs defaultValue="profile">
                         <Tabs.TabList>
                             <Tabs.TabNav value="profile">{tr("Profile")}</Tabs.TabNav>

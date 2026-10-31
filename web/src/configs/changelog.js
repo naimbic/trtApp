@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.127.1',
+        date: '2026-10-31',
+        title: 'Dropdowns open on top of everything',
+        items: [
+            'Fixed: in the foldable sections of the task and lead popups, a dropdown list was cut by its section or by the bottom of the popup, so some items could not be reached. Every dropdown list (status, priority, people, record...) now opens on top of the page and shows all its items.',
+        ],
+    },
+    {
         version: '0.127.0',
         date: '2026-10-31',
         title: 'Task popup: compact fields in coloured foldable sections',

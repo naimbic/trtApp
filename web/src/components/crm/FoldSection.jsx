@@ -13,8 +13,8 @@ const TONES = {
 const FoldSection = ({ icon, tone = 'blue', title, summary, open, onToggle, children }) => {
     const c = TONES[tone]
     return (
-        <div className={`overflow-hidden rounded-xl border ${c.box}`}>
-            <button type="button" aria-expanded={open} onClick={onToggle} className={`flex w-full items-center gap-2.5 px-3 py-2 text-start transition ${c.head}`}>
+        <div className={`rounded-xl border ${c.box}`}>
+            <button type="button" aria-expanded={open} onClick={onToggle} className={`flex w-full items-center gap-2.5 px-3 py-2 text-start transition ${open ? 'rounded-t-[11px]' : 'rounded-[11px]'} ${c.head}`}>
                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-base ${c.badge}`}>{icon}</span>
                 <span className="shrink-0 text-sm font-semibold heading-text">{title}</span>
                 {!open && summary && <span className="min-w-0 flex-1 truncate text-xs text-gray-500">{summary}</span>}

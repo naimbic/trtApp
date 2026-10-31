@@ -134,6 +134,7 @@ function Select(props) {
                 multiValue: () => ({}),
                 multiValueLabel: () => ({}),
                 multiValueRemove: () => ({}),
+                menuPortal: (provided) => ({ ...provided, zIndex: 100000 }),
                 menu: ({
                     backgroundColor,
                     marginTop,
@@ -153,6 +154,8 @@ function Select(props) {
                 ClearIndicator: DefaultClearIndicator,
                 ...components,
             }}
+            menuPortalTarget={typeof document !== 'undefined' ? document.body : undefined}
+            menuPosition="fixed"
             {...field}
             {...rest}
         />

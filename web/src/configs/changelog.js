@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.129.0',
+        date: '2026-10-31',
+        title: 'Send-from accounts: each sender address with its own mail login',
+        items: [
+            'Fixed: sending a lead mail from hello@trtmaroc.com was refused by the mail server ("Sender is not same as SMTP authenticate username"), because the CRM always logged in with the one main mailbox. You can now give each send-from address its own login: Mails → Mail server → "Send-from accounts" (sender email, username, password, optional sender name, and optionally another mail server for that address).',
+            'When a draft is sent from an address that has an account, the CRM logs in with that account; other addresses keep using the main mail server. Each account has its own Test connection / Send test email button. Passwords are stored on the server and never shown again; only administrators can see or change the accounts.',
+            'Every configured account also appears in the "From" list of a draft.',
+        ],
+    },
+    {
         version: '0.128.3',
         date: '2026-10-31',
         title: 'Share menu: Open in new tab',

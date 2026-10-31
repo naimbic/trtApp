@@ -308,9 +308,10 @@ const draftFrom = (from, senders) => { const f = String(from || '').trim(); retu
 
 /** The addresses a lead mail may be sent from: hello@trtmaroc.com always first (the default), the extra ones set in Settings → Email, and the staff member's own email. The mail server's own address is never offered unless it is added to that list. */
 async function senderOptions(a) {
-    const [opt, me] = await Promise.all([prisma.crmOption.findUnique({ where: { name: 'lead_mail_senders' } }), a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true } }) : null])
+    const { getAccounts } = await import('@/lib/crm/mailer')
+    const [opt, me, accounts] = await Promise.all([prisma.crmOption.findUnique({ where: { name: 'lead_mail_senders' } }), a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true } }) : null, getAccounts()])
     const seen = new Set(), out = []
-    for (const e of [DEFAULT_SENDER, ...addrList(opt?.value), me?.email]) { const k = String(e || '').trim().toLowerCase(); if (k && MAIL_RE.test(k) && !seen.has(k)) { seen.add(k); out.push(String(e).trim()) } }
+    for (const e of [DEFAULT_SENDER, ...addrList(opt?.value), ...accounts.map((x) => x.email), me?.email]) { const k = String(e || '').trim().toLowerCase(); if (k && MAIL_RE.test(k) && !seen.has(k)) { seen.add(k); out.push(String(e).trim()) } }
     return out
 }
 
@@ -363,13 +364,13 @@ export async function sendDraftMail(id, mailId) {
     if (!from) throw fail('Choose the address to send from in the list')
     const files = await prisma.crmMedia.findMany({ where: { relType: 'leadmail', relId: mailId, isFolder: false } })
     if (files.reduce((n, f) => n + (f.size || 0), 0) > MAX_ATTACH_MB * 1024 * 1024) throw fail(`The attached files are larger than ${MAX_ATTACH_MB} MB together`)
-    const { deliver, escapeHtml, getSmtp } = await import('@/lib/crm/mailer')
-    const [me, smtp] = await Promise.all([a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { firstName: true, lastName: true, email: true, emailSignature: true } }) : null, getSmtp()])
+    const { deliver, escapeHtml } = await import('@/lib/crm/mailer')
+    const me = a.staffId ? await prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { firstName: true, lastName: true, email: true, emailSignature: true } }) : null
     const html = `${m.body || `<p>${escapeHtml(m.subject)}</p>`}${me?.emailSignature ? `<br>${me.emailSignature}` : ''}`
     const own = !!me?.email && me.email.toLowerCase() === from.toLowerCase()
     const res = await deliver({
         to: to.join(', '), cc: cc.join(', '), bcc: bcc.join(', '), replyTo: reply.join(', '), subject: m.subject, html,
-        fromEmail: from, fromName: own && me ? staffName(me) : smtp.fromName || (me ? staffName(me) : undefined),
+        fromEmail: from, fromName: own && me ? staffName(me) : undefined,
         attachments: files.filter((f) => f.url).map((f) => ({ filename: f.name, path: f.url })),
     })
     if (!res.sent) throw fail(res.error || 'The email could not be sent')

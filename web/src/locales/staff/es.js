@@ -4427,5 +4427,14 @@ export default {
     "Replying to": "Respondiendo a",
     "You": "Usted",
     "Voice message": "Mensaje de voz",
-    "Open in new tab": "Abrir en una pestaña nueva"
+    "Open in new tab": "Abrir en una pestaña nueva",
+    "Send-from accounts": "Cuentas de envío",
+    "Some mail servers only accept a sender that is the account used to log in. Give each address you send from (for example hello@trtmaroc.com) its own login here; the CRM uses it when that address is chosen as the sender of a lead mail. Leave the server empty to use the one above.": "Algunos servidores de correo solo aceptan un remitente igual a la cuenta de acceso. Dé aquí a cada dirección de envío (por ejemplo hello@trtmaroc.com) su propio acceso; el CRM lo usa cuando esa dirección se elige como remitente de un correo de lead. Deje el servidor vacío para usar el de arriba.",
+    "Same as the sender email": "Igual que el correo del remitente",
+    "Use another mail server for this address": "Usar otro servidor de correo para esta dirección",
+    "No send-from account yet.": "Aún no hay cuentas de envío.",
+    "Add an account": "Añadir una cuenta",
+    "Save accounts": "Guardar cuentas",
+    "Send-from accounts saved": "Cuentas de envío guardadas",
+    "Save first, then test. The passwords are stored on the server and never shown again.": "Guarde primero y luego pruebe. Las contraseñas se guardan en el servidor y no se vuelven a mostrar."
 }

@@ -178,6 +178,64 @@ const Templates = () => {
     )
 }
 
+/* ---------------- Send-from accounts: a mailbox of its own for each From address ---------------- */
+const BLANK_ACCOUNT = { email: '', username: '', password: '', host: '', port: 465, encryption: 'ssl', fromName: '', hasPassword: false, other: false }
+const SenderAccounts = ({ editable }) => {
+    const [list, setList] = useState(null)
+    const [busy, setBusy] = useState('')
+    const [testTo, setTestTo] = useState('')
+    const load = useCallback(() => api('/api/crm/mail/accounts').then((r) => setList(r.map((a) => ({ ...a, password: '', other: !!a.host })))).catch((e) => notify('danger', e.message)), [])
+    useEffect(() => { load() }, [load])
+    if (!list) return null
+    const enc = [{ value: 'ssl', label: tr("SSL (port 465)") }, { value: 'tls', label: tr("TLS / STARTTLS (port 587)") }, { value: 'none', label: tr("None") }]
+    const edit = (i, p) => setList((l) => l.map((a, j) => (j === i ? { ...a, ...p } : a)))
+    const save = async () => {
+        setBusy('save')
+        try { await api('/api/crm/mail/accounts', { method: 'PUT', body: { accounts: list.map((a) => ({ ...a, host: a.other ? a.host : '' })) } }); await load(); notify('success', tr("Send-from accounts saved")) } catch (e) { notify('danger', e.message) } finally { setBusy('') }
+    }
+    const test = async (a) => {
+        setBusy(`test-${a.email}`)
+        try { await api('/api/crm/mail/test', { method: 'POST', body: { account: a.email, to: testTo.trim() || undefined } }); notify('success', testTo.trim() ? tr("Test email sent to {testTo}", { testTo }) : tr("Connection works")) } catch (e) { notify('danger', e.message) } finally { setBusy('') }
+    }
+    return (
+        <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
+            <h5 className="mb-1">{tr("Send-from accounts")}</h5>
+            <p className="mb-4 text-sm text-gray-500">{tr("Some mail servers only accept a sender that is the account used to log in. Give each address you send from (for example hello@trtmaroc.com) its own login here; the CRM uses it when that address is chosen as the sender of a lead mail. Leave the server empty to use the one above.")}</p>
+            <div className="space-y-3">
+                {list.map((a, i) => (
+                    <div key={i} className="rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div><Label>{tr("Sender email")}</Label><Input size="sm" disabled={!editable} value={a.email} placeholder="hello@company.com" onChange={(e) => edit(i, { email: e.target.value })} /></div>
+                            <div><Label>{tr("Username")}</Label><Input size="sm" disabled={!editable} value={a.username} placeholder={a.email || tr("Same as the sender email")} onChange={(e) => edit(i, { username: e.target.value })} /></div>
+                            <div><Label>{tr("Password")}</Label><Input size="sm" type="password" autoComplete="new-password" disabled={!editable} value={a.password} placeholder={a.hasPassword ? tr("Leave empty to keep the current one") : ''} onChange={(e) => edit(i, { password: e.target.value })} /></div>
+                            <div><Label>{tr("Sender name")}</Label><Input size="sm" disabled={!editable} value={a.fromName} onChange={(e) => edit(i, { fromName: e.target.value })} /></div>
+                            {a.other && <>
+                                <div><Label>{tr("SMTP host")}</Label><Input size="sm" disabled={!editable} value={a.host} placeholder={tr("mail.example.com")} onChange={(e) => edit(i, { host: e.target.value })} /></div>
+                                <div className="grid grid-cols-2 gap-3"><div><Label>{tr("Port")}</Label><Input size="sm" type="number" disabled={!editable} value={a.port} onChange={(e) => edit(i, { port: e.target.value })} /></div><div><Label>{tr("Encryption")}</Label><Select size="sm" isSearchable={false} isDisabled={!editable} options={enc} value={enc.find((o) => o.value === a.encryption) || enc[0]} onChange={(o) => edit(i, { encryption: o.value })} /></div></div>
+                            </>}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                            {!a.other && editable && <button type="button" className="text-primary hover:underline" onClick={() => edit(i, { other: true })}>{tr("Use another mail server for this address")}</button>}
+                            <span className="flex-1" />
+                            {a.hasPassword && <Button size="xs" loading={busy === `test-${a.email}`} onClick={() => test(a)}>{testTo.trim() ? tr("Send test email") : tr("Test connection")}</Button>}
+                            {editable && <Button size="xs" variant="plain" className="text-red-500" onClick={() => setList((l) => l.filter((_, j) => j !== i))}>{tr("Remove")}</Button>}
+                        </div>
+                    </div>
+                ))}
+                {!list.length && <p className="text-sm text-gray-400">{tr("No send-from account yet.")}</p>}
+            </div>
+            {editable && (
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <Button size="sm" onClick={() => setList((l) => [...l, { ...BLANK_ACCOUNT }])}>{tr("Add an account")}</Button>
+                    <Button size="sm" variant="solid" loading={busy === 'save'} onClick={save}>{tr("Save accounts")}</Button>
+                    <div className="ml-auto w-56"><Input size="sm" placeholder={tr("Test address (optional)")} value={testTo} onChange={(e) => setTestTo(e.target.value)} /></div>
+                </div>
+            )}
+            <p className="mt-3 text-xs text-gray-400">{tr("Save first, then test. The passwords are stored on the server and never shown again.")}</p>
+        </div>
+    )
+}
+
 /* ---------------- Settings ---------------- */
 const Settings = () => {
     const can = useCan()
@@ -219,6 +277,7 @@ const Settings = () => {
                 </div>
             )}
             <p className="mt-3 text-xs text-gray-400">{tr("Save first, then test. The password is stored on the server and never shown again.")}</p>
+            <SenderAccounts editable={editable} />
         </div>
     )
 }

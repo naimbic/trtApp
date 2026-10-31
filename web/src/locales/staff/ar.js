@@ -4427,5 +4427,14 @@ export default {
     "Replying to": "الرد على",
     "You": "أنت",
     "Voice message": "رسالة صوتية",
-    "Open in new tab": "فتح في علامة تبويب جديدة"
+    "Open in new tab": "فتح في علامة تبويب جديدة",
+    "Send-from accounts": "حسابات الإرسال",
+    "Some mail servers only accept a sender that is the account used to log in. Give each address you send from (for example hello@trtmaroc.com) its own login here; the CRM uses it when that address is chosen as the sender of a lead mail. Leave the server empty to use the one above.": "بعض خوادم البريد لا تقبل إلا مرسلاً مطابقًا للحساب المستخدم لتسجيل الدخول. أعطِ كل عنوان إرسال (مثل hello@trtmaroc.com) بيانات دخول خاصة به هنا؛ يستخدمها النظام عند اختيار هذا العنوان مرسلاً لبريد عميل محتمل. اترك الخادم فارغًا لاستخدام الخادم أعلاه.",
+    "Same as the sender email": "نفس بريد المرسل",
+    "Use another mail server for this address": "استخدام خادم بريد آخر لهذا العنوان",
+    "No send-from account yet.": "لا يوجد حساب إرسال بعد.",
+    "Add an account": "إضافة حساب",
+    "Save accounts": "حفظ الحسابات",
+    "Send-from accounts saved": "تم حفظ حسابات الإرسال",
+    "Save first, then test. The passwords are stored on the server and never shown again.": "احفظ أولاً ثم اختبر. تُخزَّن كلمات المرور على الخادم ولا تُعرض مرة أخرى."
 }

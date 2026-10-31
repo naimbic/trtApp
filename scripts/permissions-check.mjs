@@ -266,6 +266,21 @@ try {
             const row2 = D2 ? await prisma.crmLeadMail.findUnique({ where: { id: D2 } }) : null
             check('from the allowed address: sent, or kept as a draft with the mail server error', sent2 && ((sent2.status === 200 && row2.direction === 'out' && row2.fromAddress === 'hello@trtmaroc.com') || (sent2.status === 400 && row2.direction === 'draft')), `${sent2?.status} ${row2?.direction}`)
             if (row2?.direction === 'out') check('files cannot be added to a mail that was already sent', (await up(la, D2)).status === 403)
+            {
+                const prevAcc = await prisma.crmOption.findUnique({ where: { name: 'mail_sender_accounts' } })
+                const smtpPort = Number((await prisma.crmOption.findUnique({ where: { name: 'smtp_port' } }))?.value) || 1125
+                const setAcc = (port) => prisma.crmOption.upsert({ where: { name: 'mail_sender_accounts' }, update: { value: JSON.stringify([{ email: 'hello@trtmaroc.com', username: 'hello@trtmaroc.com', password: 'x', host: '127.0.0.1', port, encryption: 'none' }]) }, create: { name: 'mail_sender_accounts', value: JSON.stringify([{ email: 'hello@trtmaroc.com', username: 'hello@trtmaroc.com', password: 'x', host: '127.0.0.1', port, encryption: 'none' }]) } })
+                const dd = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { direction: 'draft', subject: 'Account check', to: 'a@test.local', from: 'hello@trtmaroc.com', body: '<p>x</p>' })
+                if (dd.body?.id) made.rows.unshift(['crmLeadMail', dd.body.id])
+                await setAcc(1)
+                const bad = await la('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: dd.body?.id })
+                check('sending as an address that has its own account uses that account\'s server (a wrong port fails and the draft stays a draft)', bad.status === 400 && (await prisma.crmLeadMail.findUnique({ where: { id: dd.body?.id } })).direction === 'draft', `${bad.status} ${JSON.stringify(bad.body).slice(0, 120)}`)
+                await setAcc(smtpPort)
+                const good = await la('POST', `/api/crm/pipeline/leads/${LID}/mails/send`, { mailId: dd.body?.id })
+                check('...and with the right server and login the draft is sent', good.status === 200 && (await prisma.crmLeadMail.findUnique({ where: { id: dd.body?.id } })).direction === 'out', `${good.status}`)
+                check('the sender accounts are not readable or editable by a non-administrator', (await la('GET', '/api/crm/mail/accounts')).status === 403 && (await la('PUT', '/api/crm/mail/accounts', { accounts: [] })).status === 403)
+                if (prevAcc) await prisma.crmOption.update({ where: { name: 'mail_sender_accounts' }, data: { value: prevAcc.value } }); else await prisma.crmOption.deleteMany({ where: { name: 'mail_sender_accounts' } })
+            }
             if (prevOpt) await prisma.crmOption.update({ where: { name: 'lead_mail_senders' }, data: { value: prevOpt.value } }); else await prisma.crmOption.delete({ where: { name: 'lead_mail_senders' } })
         }
     }

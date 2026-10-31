@@ -38,6 +38,20 @@ export async function getSmtp() {
     }
 }
 
+/** Extra "send from" mailboxes, each with its own login (some mail servers only accept a sender equal to the login). Stored as JSON in the options. */
+export async function getAccounts() {
+    try { const raw = (await getOptions(['mail_sender_accounts']))('mail_sender_accounts', '[]'); const list = JSON.parse(raw); return Array.isArray(list) ? list.filter((a) => a?.email) : [] } catch { return [] }
+}
+/** The server settings to use when sending as this address: its own account when one is set, otherwise the main server. */
+export async function smtpFor(fromEmail) {
+    const s = await getSmtp()
+    const key = String(fromEmail || '').trim().toLowerCase()
+    const a = key && (await getAccounts()).find((x) => String(x.email).toLowerCase() === key)
+    if (!a) return s
+    const own = !!String(a.host || '').trim()
+    return { ...s, host: own ? String(a.host).trim() : s.host, port: own ? Number(a.port) || 465 : s.port, encryption: own ? (a.encryption === 'tls' ? 'tls' : a.encryption === 'none' ? '' : 'ssl') : s.encryption, user: String(a.username || a.email).trim(), pass: a.password || '', email: String(a.email).trim(), fromName: a.fromName || s.fromName, protocol: 'smtp' }
+}
+
 export const smtpReady = (s) => !!(s.email && (s.host || s.protocol === 'sendmail'))
 
 async function transportFor(s) {
@@ -109,7 +123,7 @@ export async function baseData() {
 
 /** Sends one message. Returns { sent, error }. Never throws for SMTP problems; callers log the outcome. */
 export async function deliver({ to, cc, bcc, replyTo, subject, html, fromName, fromEmail, attachments }) {
-    const s = await getSmtp()
+    const s = await smtpFor(fromEmail)
     if (!smtpReady(s)) return { sent: false, error: 'SMTP is not configured. Add the mail server in Mails → Settings.' }
     try {
         const t = await transportFor(s)
@@ -123,8 +137,8 @@ export async function deliver({ to, cc, bcc, replyTo, subject, html, fromName, f
     }
 }
 
-export async function testConnection() {
-    const s = await getSmtp()
+export async function testConnection(fromEmail) {
+    const s = await smtpFor(fromEmail)
     if (!smtpReady(s)) return { ok: false, error: 'SMTP host and email are required' }
     try { await (await transportFor(s)).verify(); return { ok: true } } catch (e) { return { ok: false, error: e?.message || 'Connection failed' } }
 }

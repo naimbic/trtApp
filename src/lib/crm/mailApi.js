@@ -7,7 +7,7 @@ import path from 'node:path'
 import { buildMessage, SHELL, DESIGN_LANGUAGES } from '@/lib/crm/mailDesign/build'
 import { shortLink } from '@/lib/crm/shortLinks'
 import { activeLanguages, syncTemplateLanguages } from '@/lib/crm/templateLanguages'
-import { baseData, buildHtml, companyLanguage, deliver, findTemplate, getOptions, getSmtp, setOptions, smtpReady, testConnection, mergeFields, escapeHtml } from '@/lib/crm/mailer'
+import { baseData, buildHtml, companyLanguage, deliver, findTemplate, getAccounts, getOptions, getSmtp, setOptions, smtpReady, testConnection, mergeFields, escapeHtml } from '@/lib/crm/mailer'
 import { bankTokensFor } from '@/lib/crm/bankDb'
 
 const plain = (v) => JSON.parse(JSON.stringify(v))
@@ -277,14 +277,14 @@ export async function saveMailSettings(b) {
     return { success: true }
 }
 
-export async function testMailSettings({ to }) {
+export async function testMailSettings({ to, account }) {
     await requireMailAdmin()
-    const conn = await testConnection()
+    const conn = await testConnection(account)
     if (!conn.ok) fail(conn.error)
     if (to) {
         if (!validEmail(to)) fail('Enter a valid test address')
         const base = await baseData()
-        const res = await deliver({ to, subject: `Test email from ${base.companyname || 'your CRM'}`, html: `<p>This is a test email. Your mail settings work.</p>` })
+        const res = await deliver({ to, fromEmail: account || undefined, subject: `Test email from ${base.companyname || 'your CRM'}`, html: `<p>This is a test email. Your mail settings work.</p>` })
         if (!res.sent) fail(res.error)
     }
     return { success: true }
@@ -374,4 +374,32 @@ export async function applyDesigns({ language, slug, shell } = {}) {
         shellApplied = true
     }
     return { success: true, updated, skipped, shellApplied, backup: file }
+}
+
+
+/* ---------- send-from accounts (a mailbox of its own for each From address) ---------- */
+export async function getSenderAccounts() {
+    await requireMailAdmin()
+    return (await getAccounts()).map((a) => ({ email: a.email, username: a.username || '', host: a.host || '', port: a.port || '', encryption: a.encryption || 'ssl', fromName: a.fromName || '', hasPassword: !!a.password }))
+}
+
+export async function saveSenderAccounts(b) {
+    await requireMailAdmin()
+    const before = await getAccounts()
+    const out = [], seen = new Set()
+    for (const a of Array.isArray(b?.accounts) ? b.accounts : []) {
+        const email = String(a.email || '').trim()
+        if (!email && !a.username && !a.password) continue
+        if (!validEmail(email)) fail(`"${email}" is not a valid sender email`)
+        if (seen.has(email.toLowerCase())) fail(`${email} is listed twice`)
+        seen.add(email.toLowerCase())
+        const old = before.find((x) => String(x.email).toLowerCase() === email.toLowerCase())
+        const password = a.password ? String(a.password) : old?.password || ''
+        if (!password) fail(`Add the password of ${email}`)
+        const host = String(a.host || '').trim()
+        if (host && !(Number(a.port) > 0 && Number(a.port) < 65536)) fail(`Port of ${email} must be a number between 1 and 65535`)
+        out.push({ email, username: String(a.username || '').trim(), password, host, port: host ? Number(a.port) : '', encryption: a.encryption === 'tls' ? 'tls' : a.encryption === 'none' ? 'none' : 'ssl', fromName: String(a.fromName || '').trim().slice(0, 120) })
+    }
+    await setOptions({ mail_sender_accounts: JSON.stringify(out) })
+    return { success: true }
 }

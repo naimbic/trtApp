@@ -4427,5 +4427,14 @@ export default {
     "Replying to": "返信先:",
     "You": "あなた",
     "Voice message": "音声メッセージ",
-    "Open in new tab": "新しいタブで開く"
+    "Open in new tab": "新しいタブで開く",
+    "Send-from accounts": "送信元アカウント",
+    "Some mail servers only accept a sender that is the account used to log in. Give each address you send from (for example hello@trtmaroc.com) its own login here; the CRM uses it when that address is chosen as the sender of a lead mail. Leave the server empty to use the one above.": "メールサーバーによっては、ログインに使うアカウントと同じ送信者しか受け付けません。送信元アドレス（例: hello@trtmaroc.com）ごとに専用のログイン情報をここに入力してください。リードのメールの送信元にそのアドレスが選ばれたとき、CRMはそれを使います。サーバーを空にすると上のサーバーを使います。",
+    "Same as the sender email": "送信者メールと同じ",
+    "Use another mail server for this address": "このアドレスに別のメールサーバーを使う",
+    "No send-from account yet.": "送信元アカウントはまだありません。",
+    "Add an account": "アカウントを追加",
+    "Save accounts": "アカウントを保存",
+    "Send-from accounts saved": "送信元アカウントを保存しました",
+    "Save first, then test. The passwords are stored on the server and never shown again.": "先に保存してからテストしてください。パスワードはサーバーに保存され、再表示されません。"
 }

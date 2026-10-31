@@ -4421,5 +4421,6 @@ export default {
     "Check not found": "الفحص غير موجود",
     "Pipeline and team": "المسار والفريق",
     "Expand all": "توسيع الكل",
-    "Collapse all": "طي الكل"
+    "Collapse all": "طي الكل",
+    "Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member's own email. Your mail server must allow them. Separate several with commas.": "العناوين التي يمكن إرسال بريد العميل المحتمل منها، إضافة إلى hello@trtmaroc.com (الأول دائمًا والافتراضي) وبريد الموظف نفسه. يجب أن يسمح بها خادم البريد. افصل بينها بفواصل."
 }

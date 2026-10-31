@@ -145,7 +145,7 @@ export const GROUPS = {
                 sel('email_protocol', 'Send with', [['smtp', 'SMTP server'], ['sendmail', 'Sendmail on the server']], { default: 'smtp' }),
                 f('smtp_email_charset', 'Charset', 'text', { default: 'utf-8' }),
                 f('bcc_emails', 'Copy every email to (BCC)', 'text', { hint: 'One address, or several separated by commas.', emails: true }),
-                f('lead_mail_senders', 'Other "send from" addresses (lead mails)', 'text', { hint: 'Addresses a lead mail can be sent from, besides the mail server address and the staff member\'s own email. Your mail server must allow them. Separate several with commas.', emails: true }),
+                f('lead_mail_senders', 'Other "send from" addresses (lead mails)', 'text', { hint: 'Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member\'s own email. Your mail server must allow them. Separate several with commas.', emails: true }),
                 yes('email_queue_enabled', 'Send through a queue', { soon: true }),
                 yes('email_queue_skip_with_attachments', 'Do not queue emails with attachments', { soon: true }),
             ] },

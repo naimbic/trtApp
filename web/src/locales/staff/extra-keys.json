@@ -1536,5 +1536,6 @@
  "Other \"send from\" addresses (lead mails)",
  "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.",
  "Confirm every check before sending",
- "Check not found"
+ "Check not found",
+ "Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member's own email. Your mail server must allow them. Separate several with commas."
 ]

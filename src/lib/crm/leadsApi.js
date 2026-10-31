@@ -306,12 +306,11 @@ const DEFAULT_SENDER = 'hello@trtmaroc.com' // the first and default "send from"
 /** A draft goes out from an allowed address: its own when that is still allowed, otherwise the default one. */
 const draftFrom = (from, senders) => { const f = String(from || '').trim(); return senders.find((e) => e.toLowerCase() === f.toLowerCase()) || senders[0] || f }
 
-/** The addresses a lead mail may be sent from: the mail server address, the staff member's own email and the extra ones set in Settings → Email. */
+/** The addresses a lead mail may be sent from: hello@trtmaroc.com always first (the default), the extra ones set in Settings → Email, and the staff member's own email. The mail server's own address is never offered unless it is added to that list. */
 async function senderOptions(a) {
-    const { getSmtp } = await import('@/lib/crm/mailer')
-    const [smtp, opt, me] = await Promise.all([getSmtp(), prisma.crmOption.findUnique({ where: { name: 'lead_mail_senders' } }), a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true } }) : null])
+    const [opt, me] = await Promise.all([prisma.crmOption.findUnique({ where: { name: 'lead_mail_senders' } }), a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true } }) : null])
     const seen = new Set(), out = []
-    for (const e of [...addrList(opt?.value || DEFAULT_SENDER), smtp.email, me?.email]) { const k = String(e || '').trim().toLowerCase(); if (k && MAIL_RE.test(k) && !seen.has(k)) { seen.add(k); out.push(String(e).trim()) } }
+    for (const e of [DEFAULT_SENDER, ...addrList(opt?.value), me?.email]) { const k = String(e || '').trim().toLowerCase(); if (k && MAIL_RE.test(k) && !seen.has(k)) { seen.add(k); out.push(String(e).trim()) } }
     return out
 }
 

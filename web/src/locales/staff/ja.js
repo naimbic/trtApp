@@ -4421,5 +4421,6 @@ export default {
     "Check not found": "項目が見つかりません",
     "Pipeline and team": "パイプラインとチーム",
     "Expand all": "すべて開く",
-    "Collapse all": "すべて閉じる"
+    "Collapse all": "すべて閉じる",
+    "Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member's own email. Your mail server must allow them. Separate several with commas.": "hello@trtmaroc.com（常に先頭・既定）とスタッフ本人のメールに加えて、リードのメールの送信元にできるアドレス。メールサーバーが許可している必要があります。複数はカンマで区切ります。"
 }

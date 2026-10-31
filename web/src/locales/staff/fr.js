@@ -4421,5 +4421,6 @@ export default {
     "Check not found": "Vérification introuvable",
     "Pipeline and team": "Pipeline et équipe",
     "Expand all": "Tout déplier",
-    "Collapse all": "Tout replier"
+    "Collapse all": "Tout replier",
+    "Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Adresses depuis lesquelles un e-mail de prospect peut être envoyé, en plus de hello@trtmaroc.com (toujours en premier, par défaut) et de l'e-mail du membre du personnel. Votre serveur de messagerie doit les autoriser. Séparez-les par des virgules."
 }

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.126.2',
+        date: '2026-10-31',
+        title: 'Lead mails: hello@trtmaroc.com is always the default sender; coloured sections',
+        items: [
+            'Fixed: the From of a draft was not hello@trtmaroc.com. The list of senders now always starts with hello@trtmaroc.com (the default); the mail server\'s own address (noreply@, ask@...) is no longer offered unless it is added to the list in Settings → Email. A draft saved earlier with another address now shows and sends from hello@trtmaroc.com.',
+            'Lead popup profile: each section header has its own colour (blue, green, amber, violet) and a coloured icon badge, so the groups are easier to tell apart.',
+        ],
+    },
+    {
         version: '0.126.1',
         date: '2026-10-31',
         title: 'Lead popup: Convert, Lost and Junk in the top card',

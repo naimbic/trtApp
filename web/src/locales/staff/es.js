@@ -4422,5 +4422,6 @@ export default {
     "Pipeline and team": "Pipeline y equipo",
     "Expand all": "Expandir todo",
     "Collapse all": "Contraer todo",
-    "Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Direcciones desde las que se puede enviar un correo de lead, además de hello@trtmaroc.com (siempre la primera, por defecto) y el correo del propio empleado. Su servidor de correo debe permitirlas. Sepárelas con comas."
+    "Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Direcciones desde las que se puede enviar un correo de lead, además de hello@trtmaroc.com (siempre la primera, por defecto) y el correo del propio empleado. Su servidor de correo debe permitirlas. Sepárelas con comas.",
+    "Billing and options": "Facturación y opciones"
 }

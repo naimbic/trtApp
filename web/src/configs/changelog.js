@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.127.0',
+        date: '2026-10-31',
+        title: 'Task popup: compact fields in coloured foldable sections',
+        items: [
+            'The Details tab of the task popup is now grouped in five coloured foldable sections with icons: Task (subject, status, priority, dates), People (assigned to, followers), Related to, Description, and Billing and options (billable, hourly rate, visibility, repeat). Task and People are open, the others closed; a closed section shows a one-line summary. Expand all / Collapse all at the top.',
+            'Fields and labels are tighter, and the visibility and billing switches sit side by side, so the popup needs much less scrolling.',
+            'The foldable section is now one shared component, used by the lead popup and the task popup.',
+        ],
+    },
+    {
         version: '0.126.2',
         date: '2026-10-31',
         title: 'Lead mails: hello@trtmaroc.com is always the default sender; coloured sections',

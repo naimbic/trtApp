@@ -5,9 +5,10 @@ import RichEditor from '@/components/crm/RichEditor'
 import { plainOf } from '@/components/crm/ShareButton'
 import { CommentTools, CommentEdit } from '@/components/crm/CommentParts'
 import { Link, useNavigate } from 'react-router'
-import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText, TbChevronDown, TbUsers, TbAddressBook, TbMapPin, TbTarget } from 'react-icons/tb'
+import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText, TbUsers, TbAddressBook, TbMapPin, TbTarget } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Drawer from '@/components/crm/PopupFrame'
+import FoldSection from '@/components/crm/FoldSection'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -24,30 +25,6 @@ import { tr } from '@/utils/t'
 const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false }
 const L = ({ children }) => <label className="mb-1 block text-xs font-semibold text-gray-500 dark:text-gray-400">{children}</label>
 
-/** Each section has its own colour (header tint, border and icon badge) so the groups are told apart at a glance. */
-const TONES = {
-    blue: { box: 'border-blue-200 dark:border-blue-500/30', head: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20', badge: 'bg-blue-500 text-white' },
-    emerald: { box: 'border-emerald-200 dark:border-emerald-500/30', head: 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20', badge: 'bg-emerald-500 text-white' },
-    amber: { box: 'border-amber-200 dark:border-amber-500/30', head: 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20', badge: 'bg-amber-500 text-white' },
-    violet: { box: 'border-violet-200 dark:border-violet-500/30', head: 'bg-violet-50 hover:bg-violet-100 dark:bg-violet-500/10 dark:hover:bg-violet-500/20', badge: 'bg-violet-500 text-white' },
-}
-
-/** One foldable group of fields of the profile: coloured icon, title, a one-line summary while closed, and the fields when open. */
-const Section = ({ icon, tone = 'blue', title, summary, open, onToggle, children }) => {
-    const c = TONES[tone]
-    return (
-        <div className={`overflow-hidden rounded-xl border ${c.box}`}>
-            <button type="button" aria-expanded={open} onClick={onToggle} className={`flex w-full items-center gap-2.5 px-3 py-2 text-start transition ${c.head}`}>
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-base ${c.badge}`}>{icon}</span>
-                <span className="shrink-0 text-sm font-semibold heading-text">{title}</span>
-                {!open && summary && <span className="min-w-0 flex-1 truncate text-xs text-gray-500">{summary}</span>}
-                <span className="flex-1" />
-                <TbChevronDown className={`shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
-            </button>
-            {open && <div className="p-3">{children}</div>}
-        </div>
-    )
-}
 const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("Sent"), 5: tr("Revised"), 6: tr("Draft") }
 
 const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onChanged }) => {
@@ -97,7 +74,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const profile = (
         <div className="space-y-2.5">
             <div className="flex justify-end text-xs"><button type="button" className="text-primary hover:underline" onClick={() => setOpenSec(openSec.length === ALL_SEC.length ? [] : ALL_SEC)}>{openSec.length === ALL_SEC.length ? tr("Collapse all") : tr("Expand all")}</button></div>
-            <Section icon={<TbUsers />} tone="blue" title={tr("Pipeline and team")} open={openSec.includes('team')} onToggle={() => toggleSec('team')} summary={[opt(lk.statuses, v.statusId)?.label, opt(lk.sources, v.sourceId)?.label, names(v.assignedIds).join(', ')].filter(Boolean).join(' · ')}>
+            <FoldSection icon={<TbUsers />} tone="blue" title={tr("Pipeline and team")} open={openSec.includes('team')} onToggle={() => toggleSec('team')} summary={[opt(lk.statuses, v.statusId)?.label, opt(lk.sources, v.sourceId)?.label, names(v.assignedIds).join(', ')].filter(Boolean).join(' · ')}>
                 <div className="grid grid-cols-2 gap-3">
                     <div><L>{tr("Status")}</L><Select size={sz} isDisabled={!canEdit} options={lk.statuses.filter((s) => s.isActive !== false || s.id === v.statusId).map((s) => ({ value: s.id, label: s.name }))} value={opt(lk.statuses, v.statusId)} onChange={(o) => set({ statusId: o?.value || null })} placeholder={tr("Default status")} /></div>
                     <div><L>{tr("Source")}</L><Select size={sz} isClearable isDisabled={!canEdit} formatOptionLabel={(o) => <span className="inline-flex items-center gap-2">{o.color && <i className="h-2.5 w-2.5 rounded-full" style={{ background: o.color }} />}{o.label}</span>} options={lk.sources.filter((s) => s.isActive !== false || s.id === v.sourceId).map((s) => ({ value: s.id, label: s.name, color: s.color }))} value={opt(lk.sources, v.sourceId)} onChange={(o) => set({ sourceId: o?.value || null })} /></div>
@@ -106,8 +83,8 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div className="col-span-2"><L>{tr("DO:")}</L><Input size={sz} prefix={<TbTarget />} disabled={!canEdit} value={v.doText} maxLength={160} placeholder={tr("The next thing to do, shown on the card")} onChange={(e) => set({ doText: e.target.value })} /></div>
                     <div className="col-span-2 flex items-center justify-between text-sm"><span>{tr("Visible to the whole team")}</span><Switcher disabled={!canEdit} checked={v.isPublic} onChange={(c) => set({ isPublic: c })} /></div>
                 </div>
-            </Section>
-            <Section icon={<TbAddressBook />} tone="emerald" title={tr("Contact")} open={openSec.includes('contact')} onToggle={() => toggleSec('contact')} summary={[v.name, v.company, v.email, v.phone].filter(Boolean).join(' · ')}>
+            </FoldSection>
+            <FoldSection icon={<TbAddressBook />} tone="emerald" title={tr("Contact")} open={openSec.includes('contact')} onToggle={() => toggleSec('contact')} summary={[v.name, v.company, v.email, v.phone].filter(Boolean).join(' · ')}>
                 <div className="grid grid-cols-2 gap-3">
                     <div><L>{tr("Name")}</L><Input size={sz} disabled={!canEdit} value={v.name} onChange={(e) => set({ name: e.target.value })} /></div>
                     <div><L>{tr("Company")}</L><Input size={sz} disabled={!canEdit} value={v.company} onChange={(e) => set({ company: e.target.value })} /></div>
@@ -116,18 +93,18 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div><L>{tr("Position")}</L><Input size={sz} disabled={!canEdit} value={v.title} onChange={(e) => set({ title: e.target.value })} /></div>
                     <div><L>{tr("Website")}</L><Input size={sz} disabled={!canEdit} value={v.website} onChange={(e) => set({ website: e.target.value })} /></div>
                 </div>
-            </Section>
-            <Section icon={<TbMapPin />} tone="amber" title={tr("Address")} open={openSec.includes('address')} onToggle={() => toggleSec('address')} summary={[v.address, v.city, v.state, v.zip].filter(Boolean).join(', ')}>
+            </FoldSection>
+            <FoldSection icon={<TbMapPin />} tone="amber" title={tr("Address")} open={openSec.includes('address')} onToggle={() => toggleSec('address')} summary={[v.address, v.city, v.state, v.zip].filter(Boolean).join(', ')}>
                 <div className="grid grid-cols-6 gap-3">
                     <div className="col-span-6"><L>{tr("Address")}</L><Input size={sz} disabled={!canEdit} value={v.address} onChange={(e) => set({ address: e.target.value })} /></div>
                     <div className="col-span-3"><L>{tr("City")}</L><Input size={sz} disabled={!canEdit} value={v.city} onChange={(e) => set({ city: e.target.value })} /></div>
                     <div className="col-span-2"><L>{tr("State")}</L><Input size={sz} disabled={!canEdit} value={v.state} onChange={(e) => set({ state: e.target.value })} /></div>
                     <div className="col-span-1"><L>{tr("ZIP")}</L><Input size={sz} disabled={!canEdit} value={v.zip} onChange={(e) => set({ zip: e.target.value })} /></div>
                 </div>
-            </Section>
-            <Section icon={<TbFileText />} tone="violet" title={tr("Description")} open={openSec.includes('about')} onToggle={() => toggleSec('about')} summary={plainOf(v.description || '').replace(/\s+/g, ' ').slice(0, 140)}>
+            </FoldSection>
+            <FoldSection icon={<TbFileText />} tone="violet" title={tr("Description")} open={openSec.includes('about')} onToggle={() => toggleSec('about')} summary={plainOf(v.description || '').replace(/\s+/g, ' ').slice(0, 140)}>
                 <RichEditor minHeight={110} disabled={!canEdit} value={v.description} onChange={(html) => set({ description: html })} />
-            </Section>
+            </FoldSection>
         </div>
     )
 

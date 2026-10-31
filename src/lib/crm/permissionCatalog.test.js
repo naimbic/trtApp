@@ -7,7 +7,11 @@ test('roles: Calendar, Team chat and File manager are permissions every standard
     for (const k of ['calendar', 'chat', 'file_manager']) {
         assert.ok(FEATURES.some((f) => f.key === k), `${k} is in the catalog`)
         assert.ok(FEATURE_HINTS[k], `${k} has an explanation`)
-        for (const [name, perms] of Object.entries(ROLES)) assert.deepEqual(perms[k], ['view'], `${name} has ${k}`)
+        for (const [name, perms] of Object.entries(ROLES)) {
+            // the administrator roles also carry every extra switch of the tool (the calendar's "see every event" and "edit events of others")
+            if (k === 'calendar' && ['Super Admin', 'Admin'].includes(name)) assert.deepEqual(perms[k], ['view', 'view_all_events', 'edit_others_events'], `${name} has every calendar switch`)
+            else assert.deepEqual(perms[k], ['view'], `${name} has ${k}`)
+        }
     }
 })
 test('roles: a role keeps the tools it was given and drops what does not exist', () => {

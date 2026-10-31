@@ -57,7 +57,7 @@ const ChatWidget = () => {
     usePingOnIncrease(data?.unread ?? 0)
 
     const loadMsgs = useCallback((after) => api(`/rooms/${room.id}${after ? `?after=${encodeURIComponent(after)}` : ''}`), [room?.id])
-    const sendMsg = useCallback((body, attachment) => api(`/rooms/${room.id}`, { method: 'POST', body: JSON.stringify({ body, attachment }) }).then((m) => { refresh(); return m }), [room?.id, refresh])
+    const sendMsg = useCallback((body, attachment, replyTo) => api(`/rooms/${room.id}`, { method: 'POST', body: JSON.stringify({ body, attachment, replyTo }) }).then((m) => { refresh(); return m }), [room?.id, refresh])
     const uploadMsg = useCallback((file, voice) => { const fd = new FormData(); fd.append('file', file); if (voice) fd.append('voice', '1'); return uploadFile('/api/crm/chat/upload', fd) }, [])
     const fetchSignals = useCallback(() => api('/signals'), [])
     const sendSignal = useCallback((b) => api('/signals', { method: 'POST', body: JSON.stringify(b) }), [])

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Mentioned from '@/components/crm/Mentioned'
 import dayjs from 'dayjs'
-import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone } from 'react-icons/pi'
+import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone, PiArrowBendUpLeftBold } from 'react-icons/pi'
 import classNames from '@/utils/classNames'
 import { ping } from './chatKit'
 import { tr } from '@/utils/t'
@@ -19,6 +19,7 @@ const Attachment = ({ a, mine }) => {
         </a>
     )
 }
+const preview = (m) => (m.body ? m.body.replace(/\s+/g, ' ').slice(0, 100) : m.attachment?.kind === 'audio' ? `🎤 ${tr("Voice message")}` : m.attachment?.kind === 'image' ? `🖼 ${tr("Picture")}` : m.attachment ? `📎 ${m.attachment.name}` : '')
 const time = (d) => (dayjs(d).isSame(dayjs(), 'day') ? dayjs(d).format('HH:mm') : dayjs(d).format('MMM D, HH:mm'))
 
 /**
@@ -30,6 +31,8 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
     const [text, setText] = useState('')
     const [busy, setBusy] = useState(false)
     const [err, setErr] = useState('')
+    const [replyTo, setReplyTo] = useState(null) // { id, name, text }: the message being answered
+    const input = useRef(null)
     const box = useRef(null)
     const fileInput = useRef(null)
     const rec = useRef(null)
@@ -62,8 +65,9 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
         if ((!body && !attachment) || busy) return
         setBusy(true); setErr('')
         try {
-            const m = await send(body, attachment)
+            const m = await send(body, attachment, replyTo?.id)
             if (!attachment) setText('')
+            setReplyTo(null)
             stick.current = true
             setMsgs((cur) => [...(cur || []).filter((x) => x.id !== m.id), m])
         } catch (e) { setErr(e.message || tr("Could not send")) } finally { setBusy(false) }
@@ -113,9 +117,18 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                     return (
                         <div key={m.id} className={classNames('flex flex-col', m.mine ? 'items-end' : 'items-start', firstOfRun && i > 0 && 'pt-2')}>
                             {firstOfRun && !m.mine && showSender && <span className="mb-0.5 px-1 text-xs font-semibold text-gray-500">{m.senderName}</span>}
-                            <div title={time(m.at)} className={classNames('max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm', m.mine ? 'rounded-br-md bg-primary text-white' : 'rounded-bl-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100')}>
-                                {m.attachment && <Attachment a={m.attachment} mine={m.mine} />}
-                                <Mentioned text={m.body} onDark={m.mine} />
+                            <div className={classNames('group/msg flex max-w-[92%] items-center gap-1', m.mine && 'flex-row-reverse')}>
+                                <div data-mid={m.id} title={time(m.at)} className={classNames('min-w-0 whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm', m.mine ? 'rounded-br-md bg-primary text-white' : 'rounded-bl-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100')}>
+                                    {m.replyTo && (
+                                        <button type="button" onClick={() => { const el = box.current?.querySelector(`[data-mid="${m.replyTo.id}"]`); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('ring-2', 'ring-amber-400'); setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400'), 1400) } }} className={classNames('mb-1 block w-full rounded-lg border-s-4 px-2 py-1 text-start text-xs', m.mine ? 'border-white/70 bg-white/15' : 'border-primary bg-white/70 dark:bg-gray-600')}>
+                                            <span className="block font-semibold">{m.replyTo.name}</span>
+                                            <span className="line-clamp-2 opacity-80">{m.replyTo.text}</span>
+                                        </button>
+                                    )}
+                                    {m.attachment && <Attachment a={m.attachment} mine={m.mine} />}
+                                    <Mentioned text={m.body} onDark={m.mine} />
+                                </div>
+                                <button type="button" title={tr("Reply")} aria-label={tr("Reply")} onClick={() => { setReplyTo({ id: m.id, name: m.mine ? tr("You") : m.senderName, text: preview(m) }); input.current?.focus() }} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base text-gray-400 opacity-0 transition hover:bg-gray-100 hover:text-primary focus:opacity-100 group-hover/msg:opacity-100 dark:hover:bg-gray-700"><PiArrowBendUpLeftBold /></button>
                             </div>
                             {(!msgs[i + 1] || msgs[i + 1].mine !== m.mine || +new Date(msgs[i + 1].at) - +new Date(m.at) > 5 * 60000) && <span className="px-1 pt-0.5 text-[11px] text-gray-400">{time(m.at)}</span>}
                         </div>
@@ -131,21 +144,30 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                     <button type="button" onClick={() => stopRec(false)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-lg text-white" title={tr("Send voice message")}><PiPaperPlaneTiltFill /></button>
                 </div>
             ) : (
-                <div className="flex items-end gap-2 border-t border-gray-200 p-3 dark:border-gray-700">
+                <div className="border-t border-gray-200 dark:border-gray-700">
+                {replyTo && (
+                    <div className="flex items-center gap-2 px-3 pt-2">
+                        <div className="min-w-0 flex-1 rounded-lg border-s-4 border-primary bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700"><span className="block font-semibold">{tr("Replying to")} {replyTo.name}</span><span className="block truncate text-gray-500">{replyTo.text}</span></div>
+                        <button type="button" aria-label={tr("Cancel")} onClick={() => setReplyTo(null)} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><PiXBold /></button>
+                    </div>
+                )}
+                <div className="flex items-end gap-2 p-3">
                     {upload && <button type="button" onClick={() => fileInput.current?.click()} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title={tr("Attach a file or picture")}><PiPaperclipDuotone /></button>}
                     <textarea
+                        ref={input}
                         rows={1}
                         value={text}
                         maxLength={2000}
                         placeholder={placeholder}
                         onChange={(e) => setText(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } else if (e.key === 'Escape' && replyTo) { e.stopPropagation(); setReplyTo(null) } }}
                         className="max-h-28 min-h-9 flex-1 resize-none rounded-xl bg-gray-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40 dark:bg-gray-700"
                     />
                     {text.trim() || !upload
                         ? <button type="button" onClick={() => submit()} disabled={busy || !text.trim()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-lg text-white disabled:opacity-40"><PiPaperPlaneTiltFill /></button>
                         : <button type="button" onClick={startRec} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-xl text-white disabled:opacity-40" title={tr("Record a voice message")}><PiMicrophoneDuotone /></button>}
                     <input ref={fileInput} type="file" className="hidden" onChange={(e) => sendFile(e.target.files?.[0])} />
+                </div>
                 </div>
             )}
         </div>

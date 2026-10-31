@@ -36,6 +36,14 @@ export function cleanAttachment(a) {
     if (!String(a.url).startsWith(`${CDN_URL}/${PREFIX}/chat/`)) throw fail('Invalid attachment')
     return { attUrl: String(a.url), attName: String(a.name || 'file').slice(0, 120), attMime: String(a.mime || '').slice(0, 80) || null, attSize: Number(a.size) || null, attKind: ['image', 'audio', 'video', 'pdf', 'doc', 'sheet', 'slides', 'archive', 'text'].includes(a.kind) ? a.kind : 'file' }
 }
+/** The message a new message answers: it must be in the same room; we keep who wrote it and the start of its text. */
+export async function replySnapshot(roomId, replyToId) {
+    if (!/^[a-f0-9]{24}$/i.test(String(replyToId || ''))) return {}
+    const o = await prisma.crmChatMessage.findFirst({ where: { id: String(replyToId), roomId } })
+    if (!o || o.senderType === 'system') return {}
+    return { replyToId: o.id, replyName: o.senderName, replyText: previewOf(o.body, o.attUrl ? { attKind: o.attKind, attName: o.attName } : null).slice(0, 140) }
+}
+export const replyOf = (m) => (m.replyToId ? { id: m.replyToId, name: m.replyName || '', text: m.replyText || '' } : null)
 export const attachmentOf = (m) => (m.attUrl ? { url: m.attUrl, name: m.attName, mime: m.attMime, size: m.attSize, kind: m.attKind } : null)
 export const previewOf = (text, att) => (text ? text.slice(0, 120) : att?.attKind === 'audio' ? '🎤 Voice message' : att?.attKind === 'image' ? '🖼 Picture' : att ? `📎 ${att.attName}` : '')
 
@@ -132,7 +140,7 @@ async function roomFor(c, id) {
     return room
 }
 
-const shape = (m, c) => ({ id: m.id, body: m.body, attachment: attachmentOf(m), at: m.createdAt, senderType: m.senderType, senderId: m.senderId, senderName: m.senderName, mine: m.senderType === 'staff' && m.senderId === c.staffId, system: m.senderType === 'system' })
+const shape = (m, c) => ({ id: m.id, body: m.body, attachment: attachmentOf(m), replyTo: replyOf(m), at: m.createdAt, senderType: m.senderType, senderId: m.senderId, senderName: m.senderName, mine: m.senderType === 'staff' && m.senderId === c.staffId, system: m.senderType === 'system' })
 
 export async function listRooms() {
     const c = await ctx()
@@ -193,13 +201,13 @@ export async function roomMessages(id, after) {
     return { messages: rows.map((m) => shape(m, c)), status }
 }
 
-export async function sendMessage(id, body, attachment) {
+export async function sendMessage(id, body, attachment, replyTo) {
     const c = await ctx()
     const room = await roomFor(c, id)
     const att = cleanAttachment(attachment)
     const text = cleanBody(body, !!att)
     if (!text && !att) throw fail('Write a message first')
-    const m = await prisma.crmChatMessage.create({ data: { roomId: room.id, senderType: 'staff', senderId: c.staffId, senderName: c.name, body: text, ...(att || {}) } })
+    const m = await prisma.crmChatMessage.create({ data: { roomId: room.id, senderType: 'staff', senderId: c.staffId, senderName: c.name, body: text, ...(att || {}), ...(await replySnapshot(room.id, replyTo)) } })
     await prisma.crmChatRoom.update({ where: { id: room.id }, data: { lastMessageAt: m.createdAt, lastMessage: previewOf(text, att) } })
     await prisma.crmChatRead.upsert({ where: { roomId_memberKey: { roomId: room.id, memberKey: c.key } }, update: { readAt: m.createdAt }, create: { roomId: room.id, memberKey: c.key, readAt: m.createdAt } }).catch(() => {})
     return shape(m, c)

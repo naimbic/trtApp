@@ -174,6 +174,25 @@ try {
     check('...and without a client account it falls back to the default account (or nothing), never to a wrong one', noBank.status === 200 && !/MA99 PRINT 1234/.test(noBank.text), String(noBank.status))
     const plain2 = await login(await makeUser('pm-plain', {}))
     check('without Settings, payment methods (bank details) are refused', (await plain2('GET', '/api/crm/payment-modes')).status === 403)
+    console.log('\n== Chat: reply to a message')
+    {
+        const cA = await makeUser('chat-a', { chat: ['view'] }), cB = await makeUser('chat-b', { chat: ['view'] }), cC = await makeUser('chat-c', { chat: ['view'] })
+        const ca = await login(cA), cb = await login(cB), cc = await login(cC)
+        const room = await ca('POST', '/api/crm/chat/rooms', { staffId: cB.staffId })
+        const RID = room.body?.id
+        const first = await cb('POST', `/api/crm/chat/rooms/${RID}`, { body: 'Can you send the quote?' })
+        const rep = await ca('POST', `/api/crm/chat/rooms/${RID}`, { body: 'Yes, today', replyTo: first.body?.id })
+        check('a message can answer another one (quoted name and text kept)', rep.status === 201 && rep.body?.replyTo?.id === first.body?.id && /Can you send/.test(rep.body?.replyTo?.text || '') && !!rep.body?.replyTo?.name, rep.status + ' ' + JSON.stringify(rep.body).slice(0, 200))
+        const list = await cb('GET', `/api/crm/chat/rooms/${RID}`)
+        check('the reply comes back with its quote when the room is loaded', list.body?.messages?.some((m) => m.id === rep.body?.id && m.replyTo?.id === first.body?.id))
+        const room2 = await ca('POST', '/api/crm/chat/rooms', { staffId: cC.staffId })
+        const foreign = await ca('POST', `/api/crm/chat/rooms/${room2.body?.id}`, { body: 'Different room', replyTo: first.body?.id })
+        check('answering a message of another room is ignored (no quote leaks)', foreign.status === 201 && !foreign.body?.replyTo)
+        check('a message without a reply has no quote', first.body && !first.body.replyTo)
+        for (const id of [RID, room2.body?.id].filter(Boolean)) { await prisma.crmChatMessage.deleteMany({ where: { roomId: id } }); made.extraRows.push(['crmChatRoom', id]) }
+        void cc
+    }
+
     console.log('\n== Lead popup: mails, meetings (calendar events), followers; freelance lines')
     const lA = await makeUser('lead-a', {}), lB = await makeUser('lead-b', {}), lC = await makeUser('lead-c', {})
     const la = await login(lA), lb = await login(lB), lc = await login(lC)

@@ -587,6 +587,10 @@ model CrmChatMessage {
   attMime    String?
   attSize    Int?
   attKind    String?
+  /// the message this one answers (a snapshot of who and what, so it still shows if that message is gone)
+  replyToId  String?  @db.ObjectId
+  replyName  String?
+  replyText  String?
   createdAt  DateTime @default(now())
 
   @@index([roomId, createdAt])

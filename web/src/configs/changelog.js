@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.128.0',
+        date: '2026-10-31',
+        title: 'Chat: reply to a message; draft Edit scrolls to the form',
+        items: [
+            'Chat: hover a message and click the reply arrow to answer it. The reply shows the quoted message (name and text) inside its bubble, a click on the quote jumps to the original, and a bar above the box shows what you are answering (X or Escape cancels). Works in the staff chat, the chat bubble and the client chat.',
+            'Lead mails: clicking Edit on a draft (or New draft, or Log a mail) now scrolls the popup to the form, so you no longer have to scroll up to find it.',
+        ],
+    },
+    {
         version: '0.127.1',
         date: '2026-10-31',
         title: 'Dropdowns open on top of everything',

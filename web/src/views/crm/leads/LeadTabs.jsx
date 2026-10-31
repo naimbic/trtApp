@@ -87,6 +87,9 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
     const set = (p) => setForm((f) => ({ ...f, ...p }))
     const draft = form?.direction === 'draft'
     const [more, setMore] = useState(false)
+    const formRef = useRef(null)
+    // opening the form (new draft, log a mail, edit) brings it into view, whatever the scroll position of the list
+    useEffect(() => { if (form && formRef.current) formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [!!form, form?.id]) // eslint-disable-line react-hooks/exhaustive-deps
     const [newCheck, setNewCheck] = useState('')
     const addCheck = () => { const t = newCheck.trim(); if (t) { set({ checks: [...(form.checks || []), { text: t, done: false }] }); setNewCheck('') } }
     const [toggling, setToggling] = useState(false) // one click at a time: each one rewrites the list of checks
@@ -104,7 +107,7 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
         <div className="space-y-4">
             {canEdit && !form && <div className="flex gap-2"><Button size="sm" icon={<TbPlus />} onClick={() => setForm(aim(MAIL_EMPTY(), 'in'))}>{tr("Log a mail")}</Button><Button size="sm" icon={<TbFileText />} onClick={newDraft}>{tr("New draft")}</Button></div>}
             {form && (
-                <div className="space-y-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                <div ref={formRef} className="scroll-mt-2 space-y-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
                     <div className="grid grid-cols-2 gap-3">
                         <div><L>{tr("Type")}</L><Segment size="sm" value={form.direction} onChange={(v) => setForm((f) => (f.id ? { ...f, direction: Array.isArray(v) ? v[0] : v } : aim(f, Array.isArray(v) ? v[0] : v)))}><Segment.Item value="in">{tr("Received")}</Segment.Item><Segment.Item value="out">{tr("Sent")}</Segment.Item><Segment.Item value="draft">{tr("Draft")}</Segment.Item></Segment></div>
                         <div><L>{tr("Date and time")}</L><DatePicker.DateTimepicker value={form.date} onChange={(d) => set({ date: d || new Date() })} /></div>

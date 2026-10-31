@@ -165,7 +165,7 @@ const ChatPage = () => {
     useEffect(() => { if (data && roomId && !room) setParams({}, { replace: true }) }, [data, roomId, room, setParams])
 
     const loadMsgs = useCallback((after) => api(`/rooms/${roomId}${after ? `?after=${encodeURIComponent(after)}` : ''}`), [roomId])
-    const sendMsg = useCallback((body, attachment) => post(`/rooms/${roomId}`, { body, attachment }).then((m) => { refresh(); return m }), [roomId, refresh])
+    const sendMsg = useCallback((body, attachment, replyTo) => post(`/rooms/${roomId}`, { body, attachment, replyTo }).then((m) => { refresh(); return m }), [roomId, refresh])
     const uploadMsg = useCallback((file, voice) => { const fd = new FormData(); fd.append('file', file); if (voice) fd.append('voice', '1'); return uploadFile('/api/crm/chat/upload', fd) }, [])
     const onData = useCallback((x) => setTheirStatus(x.status ?? null), [])
 

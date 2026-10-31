@@ -21,7 +21,7 @@ const ChatWidget = () => {
     openRef.current = open
 
     const load = useCallback((after) => portal(`/chat${after ? `?after=${encodeURIComponent(after)}` : ''}`, { quiet: true }), [])
-    const send = useCallback((body, attachment) => portal('/chat', { method: 'POST', body: { body, attachment } }), [])
+    const send = useCallback((body, attachment, replyTo) => portal('/chat', { method: 'POST', body: { body, attachment, replyTo } }), [])
     const uploadMsg = useCallback(async (file, voice) => {
         const fd = new FormData(); fd.append('file', file); if (voice) fd.append('voice', '1')
         const res = await fetch('/api/portal/chat/upload', { method: 'POST', credentials: 'include', body: fd })

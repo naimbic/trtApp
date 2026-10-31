@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { requirePortal } from '@/lib/portal/session'
-import { touch, onlineStaff, cleanBody, cleanAttachment, attachmentOf, previewOf, uploadChatFile, callsEnabled, iceServers, takeSignals, relaySignal } from '@/lib/crm/chatApi'
+import { touch, onlineStaff, cleanBody, cleanAttachment, attachmentOf, replyOf, replySnapshot, previewOf, uploadChatFile, callsEnabled, iceServers, takeSignals, relaySignal } from '@/lib/crm/chatApi'
 
 const nameOf = (c) => [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email
 
@@ -9,7 +9,7 @@ async function room(s) {
     return found || prisma.crmChatRoom.create({ data: { kind: 'client', clientId: s.client.id, contactId: s.contact.id } })
 }
 
-const shape = (m, s) => ({ id: m.id, body: m.body, attachment: attachmentOf(m), at: m.createdAt, senderType: m.senderType, senderName: m.senderName, mine: m.senderType === 'contact' && m.senderId === s.contact.id })
+const shape = (m, s) => ({ id: m.id, body: m.body, attachment: attachmentOf(m), replyTo: replyOf(m), at: m.createdAt, senderType: m.senderType, senderName: m.senderName, mine: m.senderType === 'contact' && m.senderId === s.contact.id })
 
 /** Messages of the signed-in contact, who in the team is available, and the unread count (for the badge). */
 export async function portalChat(after) {
@@ -40,13 +40,13 @@ export async function portalRead() {
     return { ok: true }
 }
 
-export async function portalSend(body, attachment) {
+export async function portalSend(body, attachment, replyTo) {
     const s = await requirePortal()
     const att = cleanAttachment(attachment)
     const text = cleanBody(body, !!att)
     if (!text && !att) throw Object.assign(new Error('Write a message first'), { status: 400 })
     const r = await room(s)
-    const m = await prisma.crmChatMessage.create({ data: { roomId: r.id, senderType: 'contact', senderId: s.contact.id, senderName: nameOf(s.contact), body: text, ...(att || {}) } })
+    const m = await prisma.crmChatMessage.create({ data: { roomId: r.id, senderType: 'contact', senderId: s.contact.id, senderName: nameOf(s.contact), body: text, ...(att || {}), ...(await replySnapshot(r.id, replyTo)) } })
     await prisma.crmChatRoom.update({ where: { id: r.id }, data: { lastMessageAt: m.createdAt, lastMessage: previewOf(text, att) } })
     await touch(`contact:${s.contact.id}`)
     return shape(m, s)

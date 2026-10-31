@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.134.2',
+        date: '2026-11-01',
+        title: 'A proposal sent to a lead opens without signing in',
+        items: [
+            'The CRM address of a proposal (/crm/proposals/...) used to ask for a sign-in even when it was shared with a lead. Now, when the proposal is for a LEAD and its status is Sent (or Open, or Revised), a visitor who is not signed in is taken straight to its public page, where they can read it, comment and accept or refuse. A draft, a proposal of a client, or one already accepted or declined still asks for the sign-in. Team members signed in see the normal CRM page as before.',
+        ],
+    },
+    {
         version: '0.134.1',
         date: '2026-11-01',
         title: 'Client area: the same width on every page',

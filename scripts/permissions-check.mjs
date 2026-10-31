@@ -174,6 +174,29 @@ try {
     check('...and without a client account it falls back to the default account (or nothing), never to a wrong one', noBank.status === 200 && !/MA99 PRINT 1234/.test(noBank.text), String(noBank.status))
     const plain2 = await login(await makeUser('pm-plain', {}))
     check('without Settings, payment methods (bank details) are refused', (await plain2('GET', '/api/crm/payment-modes')).status === 403)
+    console.log('\n== Calendar: see every event, edit events of others')
+    {
+        const kA = await makeUser('cal-a', { calendar: ['view'] }), kB = await makeUser('cal-b', { calendar: ['view'] }), kC = await makeUser('cal-c', { calendar: ['view', 'view_all_events'] }), kD = await makeUser('cal-d', { calendar: ['view', 'edit_others_events'] })
+        const ka = await login(kA), kb = await login(kB), kc = await login(kC), kd = await login(kD)
+        const start = new Date(Date.now() + 5 * 86400000), end = new Date(+start + 3600000)
+        const ev = await ka('POST', '/api/crm/calendar', { title: 'zz private event', start: start.toISOString(), end: end.toISOString(), isPublic: false })
+        const EID = ev.body?.id
+        if (EID) made.rows.unshift(['crmEvent', EID])
+        const range = `from=${new Date(+start - 86400000).toISOString()}&to=${new Date(+end + 86400000).toISOString()}`
+        const has = async (who) => ((await who('GET', `/api/crm/calendar?${range}`)).body?.items || []).some((i) => i.rawId === EID)
+        check('a member adds an event to the calendar', ev.status < 300 && !!EID, String(ev.status))
+        check('the author sees it', EID && (await has(ka)))
+        check('another member does not see a private event of someone else', EID && !(await has(kb)))
+        check('with "see every event" the private event of someone else shows', EID && (await has(kc)))
+        check('another member cannot edit or delete it', EID && (await kb('PATCH', `/api/crm/calendar/${EID}`, { title: 'hijack' })).status === 403 && (await kb('DELETE', `/api/crm/calendar/${EID}`)).status === 403)
+        check('"see every event" alone does not allow editing', EID && (await kc('PATCH', `/api/crm/calendar/${EID}`, { title: 'hijack' })).status === 403)
+        const seen = EID ? ((await kc('GET', `/api/crm/calendar?${range}`)).body?.items || []).find((i) => i.rawId === EID) : null
+        check('...and the calendar marks it as not editable for that person', seen && seen.canEdit === false)
+        const edited = EID ? await kd('PATCH', `/api/crm/calendar/${EID}`, { title: 'zz edited by a colleague' }) : null
+        check('with "edit and delete events of others" a colleague can edit it', edited?.status === 200 && (await prisma.crmEvent.findUnique({ where: { id: EID } })).title === 'zz edited by a colleague', String(edited?.status))
+        check('a member without calendar access is refused', (await (await login(await makeUser('cal-e', {})))('GET', `/api/crm/calendar?${range}`)).status === 403)
+    }
+
     console.log('\n== Chat: reply to a message')
     {
         const cA = await makeUser('chat-a', { chat: ['view'] }), cB = await makeUser('chat-b', { chat: ['view'] }), cC = await makeUser('chat-c', { chat: ['view'] })

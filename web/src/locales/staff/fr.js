@@ -4436,5 +4436,10 @@ export default {
     "Add an account": "Ajouter un compte",
     "Save accounts": "Enregistrer les comptes",
     "Send-from accounts saved": "Comptes d'expédition enregistrés",
-    "Save first, then test. The passwords are stored on the server and never shown again.": "Enregistrez d'abord, puis testez. Les mots de passe sont stockés sur le serveur et jamais réaffichés."
+    "Save first, then test. The passwords are stored on the server and never shown again.": "Enregistrez d'abord, puis testez. Les mots de passe sont stockés sur le serveur et jamais réaffichés.",
+    "See every event, private ones included": "Voir tous les événements, même privés",
+    "Edit and delete events of others": "Modifier et supprimer les événements des autres",
+    "Anyone who can open the Calendar adds events": "Toute personne qui ouvre le calendrier peut ajouter des événements",
+    "Everyone edits their own events": "Chacun modifie ses propres événements",
+    "Everyone deletes their own events": "Chacun supprime ses propres événements"
 }

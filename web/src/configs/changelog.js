@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.130.0',
+        date: '2026-10-31',
+        title: 'Calendar permissions',
+        items: [
+            'The Calendar now has its own switches in the role editor and in a member\'s access: "See every event, private ones included" and "Edit and delete events of others", next to View. Adding events and editing or deleting your own stay open to everyone who can open the Calendar (shown as automatic).',
+            'Without "See every event", a member still sees only their own events, the ones they are invited to and the public ones. Without "Edit and delete events of others", someone else\'s event opens read-only ("Click to view"), and the server refuses any change. Administrators keep full access.',
+            'Roles that already have Calendar access are unchanged: nobody loses anything, and the two new switches start off.',
+        ],
+    },
+    {
         version: '0.129.0',
         date: '2026-10-31',
         title: 'Send-from accounts: each sender address with its own mail login',

@@ -4436,5 +4436,10 @@ export default {
     "Add an account": "إضافة حساب",
     "Save accounts": "حفظ الحسابات",
     "Send-from accounts saved": "تم حفظ حسابات الإرسال",
-    "Save first, then test. The passwords are stored on the server and never shown again.": "احفظ أولاً ثم اختبر. تُخزَّن كلمات المرور على الخادم ولا تُعرض مرة أخرى."
+    "Save first, then test. The passwords are stored on the server and never shown again.": "احفظ أولاً ثم اختبر. تُخزَّن كلمات المرور على الخادم ولا تُعرض مرة أخرى.",
+    "See every event, private ones included": "رؤية كل الأحداث بما فيها الخاصة",
+    "Edit and delete events of others": "تعديل وحذف أحداث الآخرين",
+    "Anyone who can open the Calendar adds events": "كل من يستطيع فتح التقويم يضيف أحداثًا",
+    "Everyone edits their own events": "يعدّل كل شخص أحداثه",
+    "Everyone deletes their own events": "يحذف كل شخص أحداثه"
 }

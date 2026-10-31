@@ -4436,5 +4436,10 @@ export default {
     "Add an account": "アカウントを追加",
     "Save accounts": "アカウントを保存",
     "Send-from accounts saved": "送信元アカウントを保存しました",
-    "Save first, then test. The passwords are stored on the server and never shown again.": "先に保存してからテストしてください。パスワードはサーバーに保存され、再表示されません。"
+    "Save first, then test. The passwords are stored on the server and never shown again.": "先に保存してからテストしてください。パスワードはサーバーに保存され、再表示されません。",
+    "See every event, private ones included": "すべてのイベントを表示（非公開を含む）",
+    "Edit and delete events of others": "他の人のイベントを編集・削除",
+    "Anyone who can open the Calendar adds events": "カレンダーを開ける人は誰でもイベントを追加できます",
+    "Everyone edits their own events": "自分のイベントは誰でも編集できます",
+    "Everyone deletes their own events": "自分のイベントは誰でも削除できます"
 }

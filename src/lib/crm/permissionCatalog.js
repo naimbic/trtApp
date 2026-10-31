@@ -22,6 +22,8 @@ export const EXTRA_LABELS = {
     edit_others_notes: "Edit notes added by others",
     edit_others_mails: "Edit mails logged by others",
     edit_others_meetings: "Edit meetings added by others",
+    view_all_events: "See every event, private ones included",
+    edit_others_events: "Edit and delete events of others",
     create_milestones: 'Create milestones',
     edit_milestones: 'Edit milestones',
     delete_milestones: 'Delete milestones',
@@ -111,7 +113,7 @@ export const PERMISSION_GROUPS = [
     {
         group: 'Tools',
         features: [
-            { key: 'calendar', label: 'Calendar', caps: ['view'], auto: {} },
+            { key: 'calendar', label: 'Calendar', caps: ['view', 'view_all_events', 'edit_others_events'], auto: { create: 'Anyone who can open the Calendar adds events', edit: 'Everyone edits their own events', delete: 'Everyone deletes their own events' } },
             { key: 'chat', label: 'Team chat', caps: ['view'], auto: {} },
             { key: 'file_manager', label: 'File manager', caps: ['view'], auto: {} },
         ],

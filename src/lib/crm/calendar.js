@@ -32,7 +32,7 @@ async function context() {
     if (!session?.user?.id) return null
     const authority = session.user.authority || []
     if (!hasCap(authority, 'calendar', 'view')) throw Object.assign(new Error('You do not have access to the calendar'), { status: 403 })
-    return { session, authority, staffId: await getStaffId(session), admin: isCrmAdmin(authority), can: (f) => viewScope(authority, f) === 'all' }
+    return { session, authority, staffId: await getStaffId(session), admin: isCrmAdmin(authority), seeAll: hasCap(authority, 'calendar', 'view_all_events'), editOthers: hasCap(authority, 'calendar', 'edit_others_events'), can: (f) => viewScope(authority, f) === 'all' }
 }
 
 /** Everything that belongs on the calendar between `from` and `to` (ISO dates). */
@@ -63,7 +63,7 @@ export async function getCalendarItems({ from, to }) {
     for (const e of events) {
         const mine = !e.userId || e.userId === ctx.staffId
         const invited = (e.attendeeIds || []).includes(ctx.staffId)
-        if (!mine && !invited && !e.isPublic && !ctx.admin) continue
+        if (!mine && !invited && !e.isPublic && !ctx.admin && !ctx.seeAll) continue
         items.push({
             id: `event:${e.id}`,
             title: e.title,
@@ -72,8 +72,8 @@ export async function getCalendarItems({ from, to }) {
             allDay: !!e.allDay,
             eventColor: colorName(e.color),
             type: 'events',
-            editable: mine || ctx.admin,
-            canEdit: mine || ctx.admin,
+            editable: mine || ctx.admin || ctx.editOthers,
+            canEdit: mine || ctx.admin || ctx.editOthers,
             description: e.description || '',
             isPublic: e.isPublic,
             rawId: e.id,
@@ -243,7 +243,7 @@ async function ownEvent(id) {
     if (!ctx) throw Object.assign(new Error('Unauthorized'), { status: 401 })
     const ev = await prisma.crmEvent.findUnique({ where: { id } })
     if (!ev) throw Object.assign(new Error('Not found'), { status: 404 })
-    if (ev.userId && ev.userId !== ctx.staffId && !ctx.admin) throw Object.assign(new Error('Forbidden'), { status: 403 })
+    if (ev.userId && ev.userId !== ctx.staffId && !ctx.admin && !ctx.editOthers) throw Object.assign(new Error('Forbidden'), { status: 403 })
     return ev
 }
 
@@ -277,7 +277,7 @@ export async function eventIcs(id) {
     if (!ctx) throw Object.assign(new Error('Unauthorized'), { status: 401 })
     const ev = await prisma.crmEvent.findUnique({ where: { id } })
     if (!ev) throw Object.assign(new Error('Not found'), { status: 404 })
-    const allowed = ctx.admin || ev.isPublic || !ev.userId || ev.userId === ctx.staffId || (ev.attendeeIds || []).includes(ctx.staffId)
+    const allowed = ctx.admin || ctx.seeAll || ev.isPublic || !ev.userId || ev.userId === ctx.staffId || (ev.attendeeIds || []).includes(ctx.staffId)
     if (!allowed) throw Object.assign(new Error('Forbidden'), { status: 403 })
     return { ics: buildIcs([ev]), name: `${ev.title.replace(/[^a-z0-9]+/gi, '-').slice(0, 40) || 'event'}.ics` }
 }

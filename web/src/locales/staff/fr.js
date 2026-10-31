@@ -4418,5 +4418,8 @@ export default {
     "Add a check, then press Enter": "Ajoutez une vérification, puis appuyez sur Entrée",
     "Confirm the red checks first": "Confirmez d'abord les vérifications en rouge",
     "Confirm every check before sending": "Confirmez chaque vérification avant d'envoyer",
-    "Check not found": "Vérification introuvable"
+    "Check not found": "Vérification introuvable",
+    "Pipeline and team": "Pipeline et équipe",
+    "Expand all": "Tout déplier",
+    "Collapse all": "Tout replier"
 }

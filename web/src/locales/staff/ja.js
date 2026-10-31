@@ -4418,5 +4418,8 @@ export default {
     "Add a check, then press Enter": "項目を追加してEnterを押してください",
     "Confirm the red checks first": "先に赤い項目を確認してください",
     "Confirm every check before sending": "送信前にすべての項目を確認してください",
-    "Check not found": "項目が見つかりません"
+    "Check not found": "項目が見つかりません",
+    "Pipeline and team": "パイプラインとチーム",
+    "Expand all": "すべて開く",
+    "Collapse all": "すべて閉じる"
 }

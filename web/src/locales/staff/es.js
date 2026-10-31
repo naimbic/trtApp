@@ -4418,5 +4418,8 @@ export default {
     "Add a check, then press Enter": "Añada una comprobación y pulse Enter",
     "Confirm the red checks first": "Confirme primero las comprobaciones en rojo",
     "Confirm every check before sending": "Confirme cada comprobación antes de enviar",
-    "Check not found": "Comprobación no encontrada"
+    "Check not found": "Comprobación no encontrada",
+    "Pipeline and team": "Pipeline y equipo",
+    "Expand all": "Expandir todo",
+    "Collapse all": "Contraer todo"
 }

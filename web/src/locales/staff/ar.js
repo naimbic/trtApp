@@ -4418,5 +4418,8 @@ export default {
     "Add a check, then press Enter": "أضف فحصًا ثم اضغط Enter",
     "Confirm the red checks first": "أكّد الفحوصات الحمراء أولاً",
     "Confirm every check before sending": "أكّد كل فحص قبل الإرسال",
-    "Check not found": "الفحص غير موجود"
+    "Check not found": "الفحص غير موجود",
+    "Pipeline and team": "المسار والفريق",
+    "Expand all": "توسيع الكل",
+    "Collapse all": "طي الكل"
 }

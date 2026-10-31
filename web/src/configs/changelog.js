@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.126.0',
+        date: '2026-10-31',
+        title: 'Lead popup: compact profile in foldable sections',
+        items: [
+            'The Profile tab of the lead popup is now grouped in four foldable sections: Pipeline and team (status, source, assigned to, followers, DO:, visibility), Contact (name, company, email, phone, position, website), Address and Description. Pipeline and Contact are open, the others are closed.',
+            'A closed section shows a one-line summary of what is inside (for example the email and phone, or the city), so nothing is hidden. Expand all / Collapse all at the top.',
+            'Labels and spacing are tighter, so the whole profile fits with much less scrolling.',
+        ],
+    },
+    {
         version: '0.125.2',
         date: '2026-10-31',
         title: 'Lead mail drafts: old drafts show and send with the right From and To',

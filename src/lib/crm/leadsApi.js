@@ -127,6 +127,7 @@ export async function getLead(id) {
         prisma.crmLeadMail.findMany({ where: { leadId: id }, orderBy: { date: 'desc' }, take: 200 }),
         prisma.crmEvent.findMany({ where: { leadId: id }, orderBy: { start: 'desc' }, take: 200 }),
     ])
+    const senders = await senderOptions(a)
     const people = await staffMap([...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
     return {
         lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), followerIds: l.followerIds || [], addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
@@ -134,9 +135,9 @@ export async function getLead(id) {
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
-        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.fromAddress || '', to: m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
+        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
-        senders: await senderOptions(a),
+        senders,
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
 }
@@ -302,6 +303,9 @@ const addrList = (v) => String(v || '').split(/[,;\s]+/).filter(Boolean)
 const MAX_ATTACH_MB = 20
 const DEFAULT_SENDER = 'hello@trtmaroc.com' // the first and default "send from" address until Settings → Email says otherwise
 
+/** A draft goes out from an allowed address: its own when that is still allowed, otherwise the default one. */
+const draftFrom = (from, senders) => { const f = String(from || '').trim(); return senders.find((e) => e.toLowerCase() === f.toLowerCase()) || senders[0] || f }
+
 /** The addresses a lead mail may be sent from: the mail server address, the staff member's own email and the extra ones set in Settings → Email. */
 async function senderOptions(a) {
     const { getSmtp } = await import('@/lib/crm/mailer')
@@ -348,7 +352,7 @@ export async function sendDraftMail(id, mailId) {
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
     if (!mayEdit(a, lead) && !a.can('edit_others_mails')) throw fail('You can only edit your own leads', 403)
     if (!mayChangeItem(a, m.addedFrom, 'mails')) throw fail('You can only send the drafts you wrote', 403)
-    const to = addrList(m.toAddress), cc = addrList(m.ccAddress), bcc = addrList(m.bccAddress), reply = addrList(m.replyTo)
+    const to = addrList(m.toAddress || lead.email), cc = addrList(m.ccAddress), bcc = addrList(m.bccAddress), reply = addrList(m.replyTo)
     if (!to.length) throw fail('Add the email address to send to')
     const bad = [...to, ...cc, ...bcc, ...reply].find((e) => !MAIL_RE.test(e))
     if (bad) throw fail(`"${bad}" is not a valid email address`)
@@ -356,8 +360,8 @@ export async function sendDraftMail(id, mailId) {
     const pending = (Array.isArray(m.checks) ? m.checks : []).filter((c) => !c.done).length
     if (pending) throw fail('Confirm every check before sending')
     const senders = await senderOptions(a)
-    const from = (m.fromAddress || '').trim() || senders[0] || ''
-    if (!from || !senders.some((e) => e.toLowerCase() === from.toLowerCase())) throw fail('Choose the address to send from in the list')
+    const from = draftFrom(m.fromAddress, senders)
+    if (!from) throw fail('Choose the address to send from in the list')
     const files = await prisma.crmMedia.findMany({ where: { relType: 'leadmail', relId: mailId, isFolder: false } })
     if (files.reduce((n, f) => n + (f.size || 0), 0) > MAX_ATTACH_MB * 1024 * 1024) throw fail(`The attached files are larger than ${MAX_ATTACH_MB} MB together`)
     const { deliver, escapeHtml, getSmtp } = await import('@/lib/crm/mailer')

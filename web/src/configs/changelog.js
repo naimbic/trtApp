@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.125.2',
+        date: '2026-10-31',
+        title: 'Lead mail drafts: old drafts show and send with the right From and To',
+        items: [
+            'Fixed: a draft saved before (or saved without them) kept an empty To and a From that is not in the allowed list (for example noreply@). The draft now shows, edits and sends with the lead\'s email as To when To is empty, and with hello@trtmaroc.com (the default sender) as From when its own From is not an allowed address.',
+        ],
+    },
+    {
         version: '0.125.1',
         date: '2026-10-31',
         title: 'Lead mails: the lead\'s email is filled in whichever way you start',

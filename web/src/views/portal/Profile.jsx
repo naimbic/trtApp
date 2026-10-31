@@ -37,7 +37,7 @@ const Profile = () => {
         setBusy('w'); try { await portal('/auth/password', { method: 'POST', body: { current: pw.current, password: pw.password } }); setPw({ current: '', password: '', again: '' }); note('success', t('Your password was changed')) } catch (e) { note('danger', e.message) } finally { setBusy('') }
     }
     return (
-        <div className="mx-auto max-w-5xl">
+        <div className="w-full">
             <div className="mb-4"><h3>{t('My profile')}</h3><p className="text-sm text-gray-500">{me.client.company}</p></div>
             {msg && <Alert showIcon className="mb-4" type={msg.type}>{msg.text}</Alert>}
             <Card className="mb-4">

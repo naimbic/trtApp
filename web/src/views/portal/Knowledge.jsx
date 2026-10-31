@@ -23,7 +23,7 @@ export const Knowledge = () => {
     return (
         <div>
             <Hero placeholder={t('Type to search an article')} title={t('How can we help?')} text={t('Find answers to common questions, guides and procedures.')} value={text} onChange={setText} onSearch={search} />
-            <div className="mx-auto mt-10 max-w-[1100px] px-2">
+            <div className="mt-10 w-full">
                 {!d ? <div className="grid gap-4 lg:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} height={170} />)}</div> : d.results ? (
                     <div>
                         <div className="mb-4 flex items-center gap-3"><Button size="sm" variant="plain" icon={<TbArrowLeft />} onClick={() => setSp({})}>{t('All topics')}</Button><h4>{d.group ? d.group.name : t('Results for “{q}”', { q })}</h4></div>

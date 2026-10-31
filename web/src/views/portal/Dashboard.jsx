@@ -4,7 +4,6 @@ import { Link } from 'react-router'
 import { TbCash, TbCircleCheck, TbBriefcase, TbLifebuoy, TbMail, TbPhone, TbAlertTriangle, TbMessage } from 'react-icons/tb'
 import Segment from '@/components/ui/Segment'
 import Skeleton from '@/components/ui/Skeleton'
-import Container from '@/components/shared/Container'
 import { InvoiceHead } from '../crm/sales/InvoiceInsights'
 import { portal, money } from './api'
 import { usePortal } from './PortalApp'
@@ -34,8 +33,8 @@ const Overview = () => {
         return list.filter((x) => filter === 'all' || (filter === 'wait' ? !DONE.includes(x.tone) : DONE.includes(x.tone)))
     }, [d, filter, t])
 
-    if (error) return <Container><div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div></Container>
-    if (!d) return <Container><div className="flex flex-col gap-4"><Skeleton height={90} /><div className="grid gap-4 lg:grid-cols-3"><Skeleton height={320} /><div className="lg:col-span-2"><Skeleton height={320} /></div></div></div></Container>
+    if (error) return <div className="w-full"><div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div></div>
+    if (!d) return <div className="w-full"><div className="flex flex-col gap-4"><Skeleton height={90} /><div className="grid gap-4 lg:grid-cols-3"><Skeleton height={320} /><div className="lg:col-span-2"><Skeleton height={320} /></div></div></div></div>
 
     const can = (x) => d.can.includes(x)
     const m = d.money[0]
@@ -53,7 +52,7 @@ const Overview = () => {
     ]
 
     return (
-        <Container>
+        <div className="w-full">
             <InvoiceHead title={t('Hello {name} 👋', { name: me.contact.firstName || me.contact.name })} stats={stats} />
             <div className="rp-ov">
                 {d.actions.length > 0 && (
@@ -154,7 +153,7 @@ const Overview = () => {
                     </div>
                 </div>
             </div>
-        </Container>
+        </div>
     )
 }
 

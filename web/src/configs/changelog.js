@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.134.1',
+        date: '2026-11-01',
+        title: 'Client area: the same width on every page',
+        items: [
+            'Fixed: the pages of the client area did not share one width. The Overview was held to the browser\'s standard steps, the Profile to a narrow column, the Help center to 1100 px and the request page to 1150 px, while the other pages were fluid. Every page (Overview, Invoices, Estimates, Proposals, Contracts, Projects, Support, a request, Help center, Profile) now uses exactly the same width as the top bar. Measured on a wide screen: 1549 px for all eight.',
+        ],
+    },
+    {
         version: '0.134.0',
         date: '2026-11-01',
         title: 'Ticket automatic messages: ready-made templates; wider client-area pages',

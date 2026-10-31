@@ -58,3 +58,11 @@ export const People = ({ list = [], max = 3, size = 24 }) => {
         </div>
     )
 }
+
+/** How far a reminder is: "-12D" 12 days ago, "+3H" in 3 hours. Past is red, within a day amber, later grey. */
+export const remindIn = (when) => {
+    const ms = new Date(when) - Date.now(), a = Math.abs(ms), sign = ms < 0 ? '-' : '+'
+    const text = a < 3600000 ? `${sign}${Math.max(1, Math.round(a / 60000))}M` : a < 86400000 ? `${sign}${Math.round(a / 3600000)}H` : `${sign}${Math.round(a / 86400000)}D`
+    return { text, tone: ms < 0 ? 'bg-red-100 text-red-700' : a < 86400000 ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600' }
+}
+export const RemindTag = ({ when }) => { const r = remindIn(when); return <span className={`ms-1 rounded-full px-1.5 py-px text-[10px] font-bold leading-4 ${r.tone}`}>{r.text}</span> }

@@ -12,7 +12,7 @@ import Segment from '@/components/ui/Segment'
 import Switcher from '@/components/ui/Switcher'
 import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
-import { STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, useTaskStatuses } from './shared'
+import { RemindTag, STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, useTaskStatuses } from './shared'
 import TaskDrawer from './TaskDrawer'
 import NoteDialog, { NOTES_EVENT } from './NoteDialog'
 import { tr, trn } from '@/utils/t'
@@ -183,7 +183,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         if (String(to).startsWith('end:')) return String(to) === 'end:won' ? moveTo(item, 5) : String(to) === 'end:progress' ? moveTo(item, 4) : setDel(item)
                         onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
                     }}
-                    columns={[...(notesOn ? [{ id: 'notes', name: tr("Notes"), tone: 'butter', count: shownNotes.length, items: shownNotes.map((n) => ({ id: `n:${n.id}`, title: n.title, sub: String(n.description || '').slice(0, 90), date: n.remindAt ? `🔔 ${dayjs(n.remindAt).format('DD MMM HH:mm')}` : fmtDate(n.createdAt), label: '', fields: [{ label: tr("Description"), value: n.description }], team: [], people: <span className="text-[11px] opacity-70">{tr("Drag to a column to make it a task")}</span> })) }] : []), ...shownStatuses.map((s) => {
+                    columns={[...(notesOn ? [{ id: 'notes', name: tr("Notes"), tone: 'butter', count: shownNotes.length, items: shownNotes.map((n) => ({ id: `n:${n.id}`, title: n.title, sub: String(n.description || '').slice(0, 90), date: n.remindAt ? <>{`🔔 ${dayjs(n.remindAt).format('DD MMM HH:mm')}`}<RemindTag when={n.remindAt} /></> : fmtDate(n.createdAt), label: '', fields: [{ label: tr("Description"), value: n.description }], team: [], people: <span className="text-[11px] opacity-70">{tr("Drag to a column to make it a task")}</span> })) }] : []), ...shownStatuses.map((s) => {
                         const all = columns[s.value] || []
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {

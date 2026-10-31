@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.132.2',
+        date: '2026-10-31',
+        title: 'Notes: a tag shows how far the reminder is',
+        items: [
+            'A note with a reminder now shows a small tag next to its date and time, on the board and on the Notes page: -12D (12 days ago, red), +5H (in 5 hours, amber), +3D (in 3 days, grey). M is minutes, H hours, D days.',
+        ],
+    },
+    {
         version: '0.132.1',
         date: '2026-10-31',
         title: 'Date and time pickers open on top of everything',

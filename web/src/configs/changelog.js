@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.125.1',
+        date: '2026-10-31',
+        title: 'Lead mails: the lead\'s email is filled in whichever way you start',
+        items: [
+            'Fixed: the To field was empty when a draft was started with Log a mail and then switched to Draft or Sent. The lead\'s email is now filled in as soon as the type is Draft or Sent (To), and as the From address for Received. A draft always starts from hello@trtmaroc.com.',
+        ],
+    },
+    {
         version: '0.125.0',
         date: '2026-10-31',
         title: 'Lead mail drafts: default sender, lead address, red checks',

@@ -92,14 +92,21 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
     const [toggling, setToggling] = useState(false) // one click at a time: each one rewrites the list of checks
     const toggle = (m, i) => { if (toggling) return; setToggling(true); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails/send`, { method: 'POST', body: { action: 'check', mailId: m.id, index: i, done: !m.checks[i].done } }), null).finally(() => setToggling(false)) }
     const save = () => run(() => api(`/api/crm/pipeline/leads/${leadId}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString() } }).then((r) => { if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
-    const newDraft = () => { setMore(false); setForm({ ...MAIL_EMPTY(), direction: 'draft', from: senders[0] || '', to: leadEmail }) }
+    // the lead is the other side of every mail: received = from the lead, sent or draft = to the lead (and a draft goes out from our own sender)
+    const aim = (f, dir) => {
+        const lead = leadEmail.trim()
+        const ours = (e) => !e || senders.includes(e)
+        if (dir === 'in') return { ...f, direction: dir, from: !f.from || ours(f.from) ? lead : f.from, to: f.to === lead ? '' : f.to }
+        return { ...f, direction: dir, to: !f.to || f.to === lead ? lead : f.to, from: f.from === lead || (dir === 'draft' && !f.from) ? (dir === 'draft' ? senders[0] || '' : '') : f.from }
+    }
+    const newDraft = () => { setMore(false); setForm(aim(MAIL_EMPTY(), 'draft')) }
     return (
         <div className="space-y-4">
-            {canEdit && !form && <div className="flex gap-2"><Button size="sm" icon={<TbPlus />} onClick={() => setForm(MAIL_EMPTY())}>{tr("Log a mail")}</Button><Button size="sm" icon={<TbFileText />} onClick={newDraft}>{tr("New draft")}</Button></div>}
+            {canEdit && !form && <div className="flex gap-2"><Button size="sm" icon={<TbPlus />} onClick={() => setForm(aim(MAIL_EMPTY(), 'in'))}>{tr("Log a mail")}</Button><Button size="sm" icon={<TbFileText />} onClick={newDraft}>{tr("New draft")}</Button></div>}
             {form && (
                 <div className="space-y-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
                     <div className="grid grid-cols-2 gap-3">
-                        <div><L>{tr("Type")}</L><Segment size="sm" value={form.direction} onChange={(v) => set({ direction: Array.isArray(v) ? v[0] : v })}><Segment.Item value="in">{tr("Received")}</Segment.Item><Segment.Item value="out">{tr("Sent")}</Segment.Item><Segment.Item value="draft">{tr("Draft")}</Segment.Item></Segment></div>
+                        <div><L>{tr("Type")}</L><Segment size="sm" value={form.direction} onChange={(v) => setForm((f) => (f.id ? { ...f, direction: Array.isArray(v) ? v[0] : v } : aim(f, Array.isArray(v) ? v[0] : v)))}><Segment.Item value="in">{tr("Received")}</Segment.Item><Segment.Item value="out">{tr("Sent")}</Segment.Item><Segment.Item value="draft">{tr("Draft")}</Segment.Item></Segment></div>
                         <div><L>{tr("Date and time")}</L><DatePicker.DateTimepicker value={form.date} onChange={(d) => set({ date: d || new Date() })} /></div>
                         <div><L>{tr("From")}</L>{draft && senders.length ? <Select size="sm" isSearchable={false} options={senders.map((e) => ({ value: e, label: e }))} value={form.from ? { value: form.from, label: form.from } : null} onChange={(o) => set({ from: o?.value || '' })} /> : <Input size="sm" value={form.from} placeholder="name@company.com" onChange={(e) => set({ from: e.target.value })} />}</div>
                         <div><L>{tr("To")}</L><Input size="sm" value={form.to} placeholder="name@company.com" onChange={(e) => set({ to: e.target.value })} /></div>

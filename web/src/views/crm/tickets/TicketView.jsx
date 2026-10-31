@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { TbTrash, TbSend, TbMail, TbPhone, TbArrowBackUp, TbLock, TbCircleCheck, TbRefresh } from 'react-icons/tb'
+import { TbTrash, TbSend, TbMail, TbPhone, TbArrowBackUp, TbLock, TbCircleCheck, TbRefresh, TbChecklist, TbBellPlus, TbRobot, TbStarFilled, TbX, TbBell } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -11,6 +11,10 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Spinner from '@/components/ui/Spinner'
 import Switcher from '@/components/ui/Switcher'
+import Dialog from '@/components/ui/Dialog'
+import DatePicker from '@/components/ui/DatePicker'
+import TaskDrawer from '../tasks/TaskDrawer'
+import { remindIn } from '../tasks/shared'
 import cn from '@/utils/classNames'
 import { api, notify, upload } from '../kit/api'
 import { useTicketFiles, AttachButtons, FileTray, DropHint, AttachmentList, messageForm } from '@/components/crm/TicketFiles'
@@ -32,6 +36,8 @@ const TicketView = () => {
     const tf = useTicketFiles({ notify })
     const [sending, setSending] = useState(false)
     const [confirm, setConfirm] = useState(null)
+    const [taskPopup, setTaskPopup] = useState({ open: false, k: 0 })
+    const [remind, setRemind] = useState(null) // { date, note }
     const end = useRef(null)
 
     const load = useCallback(async () => {
@@ -66,6 +72,12 @@ const TicketView = () => {
         } catch (e) { notify('danger', e.message) }
     }
 
+    const addReminder = async () => {
+        try { await api(`/api/crm/support/tickets/${id}/reminder`, { method: 'POST', body: { date: new Date(remind.date).toISOString(), note: remind.note } }); setRemind(null); notify('success', tr("Reminder set")); await load() } catch (e) { notify('danger', e.message) }
+    }
+    const dropReminder = async (rid) => { try { await api(`/api/crm/support/tickets/${id}/reminder?reminderId=${rid}`, { method: 'DELETE' }); await load() } catch (e) { notify('danger', e.message) } }
+    const taskPreset = { name: `${tr("Ticket")} #${t.number}: ${t.subject}`, description: `${tr("From the ticket")} #${t.number}: ${window.location.origin}/crm/tickets/${t.id}`, relType: 'ticket', relId: t.id, assigneeIds: t.assignedId ? [t.assignedId] : [] }
+
     return (
         <Container>
             <div className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
@@ -77,7 +89,9 @@ const TicketView = () => {
                         <span>{tr("Opened")} {dayjs(t.createdAt).format('DD MMM YYYY, HH:mm')}</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    {d.can.createTask && <Button size="sm" icon={<TbChecklist />} onClick={() => setTaskPopup((p) => ({ open: true, k: p.k + 1 }))}>{tr("Create a task")}</Button>}
+                    <Button size="sm" icon={<TbBellPlus />} onClick={() => setRemind({ date: dayjs().add(1, 'day').hour(9).minute(0).second(0).toDate(), note: '' })}>{tr("Remind me")}</Button>
                     {d.can.edit && (isClosed ? d.openStatusId && <Button size="sm" icon={<TbRefresh />} onClick={() => patch({ statusId: d.openStatusId }, tr("Ticket reopened"))}>{tr("Reopen")}</Button> : d.closedStatusId && <Button size="sm" icon={<TbCircleCheck />} onClick={() => patch({ statusId: d.closedStatusId }, tr("Ticket closed"))}>{tr("Close ticket")}</Button>)}
                     {d.can.delete && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm({ type: 'ticket' })}>{tr("Delete")}</Button>}
                 </div>
@@ -89,7 +103,7 @@ const TicketView = () => {
                         <div key={m.id} className={cn('flex gap-3', m.staff && 'flex-row-reverse')}>
                             <Avatar size={36} shape="circle" src={m.staff?.image || undefined} className={m.staff ? 'bg-primary text-white' : ''}>{initials(m.name)}</Avatar>
                             <div className={cn('group max-w-[88%] rounded-2xl p-4', m.internal ? 'rounded-tr-sm border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : m.staff ? 'rounded-tr-sm bg-primary/10 dark:bg-primary/20' : 'rounded-tl-sm bg-gray-100 dark:bg-gray-700/50')}>
-                                <div className="mb-2 flex items-center justify-between gap-4 text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}{m.staff ? tr(" · team") : ''}{m.first ? tr(" · opened the ticket") : ''}{m.internal && <span className="ml-2 inline-flex items-center gap-1 text-amber-700 dark:text-amber-300"><TbLock />{tr("internal note, only your team sees this")}</span>}</span><span className="flex items-center gap-2">{dayjs(m.date).format('DD MMM YYYY, HH:mm')}{!m.first && d.can.delete && <button className="hidden text-red-500 group-hover:inline" title={tr("Delete reply")} onClick={() => setConfirm({ type: 'reply', id: m.id })}><TbTrash /></button>}</span></div>
+                                <div className="mb-2 flex items-center justify-between gap-4 text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}{m.staff ? tr(" · team") : ''}{m.first ? tr(" · opened the ticket") : ''}{m.auto && <span className="ms-2 inline-flex items-center gap-1 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-gray-600"><TbRobot />{tr("automatic message")}</span>}{m.internal && <span className="ml-2 inline-flex items-center gap-1 text-amber-700 dark:text-amber-300"><TbLock />{tr("internal note, only your team sees this")}</span>}</span><span className="flex items-center gap-2">{dayjs(m.date).format('DD MMM YYYY, HH:mm')}{!m.first && d.can.delete && <button className="hidden text-red-500 group-hover:inline" title={tr("Delete reply")} onClick={() => setConfirm({ type: 'reply', id: m.id })}><TbTrash /></button>}</span></div>
                                 <div className="prose prose-sm max-w-none break-words dark:prose-invert [&_img]:max-w-full" dangerouslySetInnerHTML={{ __html: clean(m.html) }} />
                                 <AttachmentList items={m.attachments} />
                             </div>
@@ -134,6 +148,21 @@ const TicketView = () => {
                         </div>
                     </Card>
                     <Card>
+                        <h5 className="mb-3 flex items-center justify-between"><span className="flex items-center gap-2"><TbChecklist />{tr("Tasks")}</span>{d.can.createTask && <button type="button" className="text-xs font-normal text-primary hover:underline" onClick={() => setTaskPopup((p) => ({ open: true, k: p.k + 1 }))}>{tr("Create a task")}</button>}</h5>
+                        {d.tasks.length ? <div className="space-y-1.5">{d.tasks.map((k) => <Link key={k.id} to={`/crm/tasks/${k.id}`} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-sm hover:text-primary dark:bg-gray-700/40"><span className="truncate">{k.name}</span><span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold', k.status === 5 ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700')}>{k.status === 5 ? tr("Complete") : tr("Open")}</span></Link>)}</div> : <p className="text-sm text-gray-400">{tr("No task for this ticket yet.")}</p>}
+                    </Card>
+                    <Card>
+                        <h5 className="mb-3 flex items-center gap-2"><TbBell />{tr("My reminders")}</h5>
+                        {d.reminders.length ? <div className="space-y-1.5">{d.reminders.map((r) => { const g = remindIn(r.date); return <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-sm dark:bg-gray-700/40"><span className="min-w-0"><span className="block truncate font-semibold">{dayjs(r.date).format('DD MMM YYYY, HH:mm')}{!r.done && <span className={`ms-1 rounded-full px-1.5 py-px text-[10px] font-bold ${g.tone}`}>{g.text}</span>}</span>{r.note && <span className="block truncate text-xs text-gray-500">{r.note}</span>}{r.done && <span className="text-xs text-emerald-600">{tr("Sent")}</span>}</span><button type="button" aria-label={tr("Remove")} className="shrink-0 text-gray-400 hover:text-red-500" onClick={() => dropReminder(r.id)}><TbX /></button></div> })}</div> : <p className="text-sm text-gray-400">{tr("No reminder on this ticket.")}</p>}
+                    </Card>
+                    {t.rating && (
+                        <Card>
+                            <h5 className="mb-2">{tr("Client satisfaction")}</h5>
+                            <div className="flex items-center gap-1 text-xl text-amber-400">{[1, 2, 3, 4, 5].map((n) => <TbStarFilled key={n} className={n <= t.rating ? '' : 'text-gray-300'} />)}<span className="ms-2 text-sm font-semibold text-gray-600">{t.rating}/5</span></div>
+                            {t.ratingComment && <p className="mt-2 text-sm italic text-gray-500">“{t.ratingComment}”</p>}
+                        </Card>
+                    )}
+                    <Card>
                         <h5 className="mb-4">{tr("Client")}</h5>
                         <div className="space-y-2 text-sm">
                             {t.client ? <Link className="font-semibold hover:text-primary" to={`/crm/clients/${t.client.id}`}>{t.client.company}</Link> : <span className="text-gray-500">{tr("No client record")}</span>}
@@ -147,6 +176,18 @@ const TicketView = () => {
                 </div>
             </div>
 
+            <TaskDrawer open={taskPopup.open} id={null} staff={lk.staff} refreshKey={taskPopup.k} presets={taskPreset} onClose={() => setTaskPopup((p) => ({ ...p, open: false }))} onChanged={load} />
+            <Dialog isOpen={!!remind} width={460} onClose={() => setRemind(null)} onRequestClose={() => setRemind(null)}>
+                <h5 className="mb-1">{tr("Remind me about this ticket")}</h5>
+                <p className="mb-4 text-sm text-gray-500">{tr("Only you are told: on the bell, by email and on Telegram or WhatsApp (if set in your profile) at the first run of the automatic tasks after that time.")}</p>
+                {remind && (
+                    <div className="space-y-3">
+                        <div><L>{tr("Date and time")}</L><DatePicker.DateTimepicker value={remind.date} onChange={(x) => setRemind({ ...remind, date: x || remind.date })} /></div>
+                        <div><L>{tr("Note (optional)")}</L><Input textArea rows={2} value={remind.note} onChange={(e) => setRemind({ ...remind, note: e.target.value })} /></div>
+                    </div>
+                )}
+                <div className="mt-5 flex justify-end gap-2"><Button onClick={() => setRemind(null)}>{tr("Cancel")}</Button><Button variant="solid" onClick={addReminder}>{tr("Set the reminder")}</Button></div>
+            </Dialog>
             <ConfirmDialog isOpen={!!confirm} type="danger" title={confirm?.type === 'ticket' ? tr("Delete this ticket?") : tr("Delete this reply?")} confirmText={tr("Delete")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={confirmRun}>
                 <p>{confirm?.type === 'ticket' ? tr("The ticket, all its replies and attachments are removed for good.") : tr("This reply is removed from the conversation for good.")}</p>
             </ConfirmDialog>

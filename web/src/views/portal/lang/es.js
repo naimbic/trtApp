@@ -225,4 +225,17 @@ export default {
     "WhatsApp and Telegram": "WhatsApp y Telegram",
     "How do you want to be notified?": "¿Cómo quiere recibir las notificaciones?",
     "Pick one or several: the same notification arrives on each channel you switch on.": "Elija uno o varios: la misma notificación llega por cada canal que active.",
+    "Closed": "Cerradas",
+    "Search a request": "Buscar una solicitud",
+    "No request matches.": "Ninguna solicitud coincide.",
+    "Close this request": "Cerrar esta solicitud",
+    "Reopen this request": "Reabrir esta solicitud",
+    "automatic message": "mensaje automático",
+    "Details": "Detalles",
+    "Opened": "Abierta el",
+    "Handled by": "Atendida por",
+    "Project": "Proyecto",
+    "How did we do?": "¿Cómo lo hicimos?",
+    "Add a comment (optional)": "Añadir un comentario (opcional)",
+    "Send my rating": "Enviar mi valoración"
 }

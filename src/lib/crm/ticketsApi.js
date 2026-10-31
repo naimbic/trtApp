@@ -6,6 +6,7 @@ import { sendTemplate } from '@/lib/crm/mailer'
 import { readSettings } from '@/lib/crm/appSettings'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFiles'
+import { autoMessage } from '@/lib/crm/ticketAuto'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -115,13 +116,15 @@ export async function getTicket(id) {
     const session = await requirePermission('tickets', 'view')
     const a = await access(session)
     const t = await loadOne(id, a)
-    const [replies, attachments, lk, client, contact, project] = await Promise.all([
+    const [replies, attachments, lk, client, contact, project, tasks, reminders] = await Promise.all([
         prisma.crmTicketReply.findMany({ where: { ticketId: id }, orderBy: { createdAt: 'asc' } }),
         prisma.crmTicketAttachment.findMany({ where: { ticketId: id } }),
         lookups(),
         t.clientId ? prisma.crmClient.findUnique({ where: { id: t.clientId }, select: { id: true, company: true } }) : null,
         t.contactId ? prisma.crmContact.findUnique({ where: { id: t.contactId }, select: { id: true, firstName: true, lastName: true, email: true, phoneNumber: true } }) : null,
         t.projectId ? prisma.crmProject.findUnique({ where: { id: t.projectId }, select: { id: true, name: true } }) : null,
+        prisma.crmTask.findMany({ where: { relType: 'ticket', relId: id }, orderBy: { createdAt: 'desc' }, select: { id: true, name: true, status: true, dueDate: true } }),
+        a.staffId ? prisma.crmReminder.findMany({ where: { relType: 'ticket', relId: id, staffId: a.staffId }, orderBy: { date: 'asc' } }) : [],
     ])
     if (!t.adminRead) await prisma.crmTicket.update({ where: { id }, data: { adminRead: 1 } })
     const people = await staffMap([t.assignedId, t.adminId, ...replies.map((r) => r.adminId)])
@@ -130,15 +133,16 @@ export async function getTicket(id) {
     const att = (rid) => attachments.filter((x) => (x.replyId || null) === rid).map(attachmentOut)
     const thread = [
         { id: 'first', staff: people[t.adminId] || null, name: people[t.adminId]?.name || contactName(contact) || t.name || t.email || 'Client', html: toHtml(t.message || ''), date: t.createdAt, attachments: att(null), first: true },
-        ...(a.S.on('ticket_replies_order') ? [...replies].reverse() : replies).map((r) => ({ id: r.id, staff: people[r.adminId] || null, name: people[r.adminId]?.name || r.name || contactName(rcMap[r.contactId]) || contactName(contact) || r.email || 'Client', html: toHtml(r.message || ''), date: r.createdAt, attachments: att(r.id), first: false, internal: !!r.internal })),
+        ...(a.S.on('ticket_replies_order') ? [...replies].reverse() : replies).map((r) => ({ id: r.id, staff: people[r.adminId] || null, name: people[r.adminId]?.name || r.name || contactName(rcMap[r.contactId]) || contactName(contact) || r.email || 'Client', html: toHtml(r.message || ''), date: r.createdAt, attachments: att(r.id), first: false, internal: !!r.internal, auto: !!r.isAuto })),
     ]
     return {
         ticket: {
             id: t.id, number: t.legacyId, subject: t.subject || '', statusId: t.statusId, priorityId: t.priorityId, departmentId: t.departmentId, serviceId: t.serviceId, assignedId: t.assignedId, projectId: t.projectId, cc: t.cc || '',
             createdAt: t.createdAt, lastReply: t.lastReply, email: t.email, client, contact: contact ? { id: contact.id, name: contactName(contact), email: contact.email, phone: contact.phoneNumber } : t.email ? { name: t.name || t.email, email: t.email } : null, project,
-            assigned: people[t.assignedId] || null,
+            assigned: people[t.assignedId] || null, rating: t.rating || null, ratingComment: t.ratingComment || '', ratedAt: t.ratedAt || null,
         },
-        thread, lookups: lk, can: { reply: a.can('edit'), edit: a.can('edit'), delete: mayDelete(a) }, closedStatusId: lk.statuses.find((s) => s.legacyId === 5)?.id || null, openStatusId: lk.statuses.find((s) => s.legacyId === 1)?.id || null,
+        tasks, reminders: reminders.map((r) => ({ id: r.id, date: r.date, note: r.description || '', done: !!r.isNotified })),
+        thread, lookups: lk, can: { reply: a.can('edit'), edit: a.can('edit'), delete: mayDelete(a), createTask: hasCap(a.authority, 'tasks', 'create') }, closedStatusId: lk.statuses.find((s) => s.legacyId === 5)?.id || null, openStatusId: lk.statuses.find((s) => s.legacyId === 1)?.id || null,
     }
 }
 
@@ -196,6 +200,7 @@ export async function updateTicket(id, body) {
     if ('subject' in body) { const s = nz(body.subject); if (!s) throw fail('The subject cannot be empty'); data.subject = s }
     if ('cc' in body) data.cc = nz(body.cc)
     await prisma.crmTicket.update({ where: { id }, data })
+    if (data.statusId && data.statusId !== t.statusId) await autoMessage({ ...t, ...data }, data.statusId)
     if (data.assignedId && data.assignedId !== t.assignedId && data.assignedId !== a.staffId) {
         const s = await prisma.crmStaff.findUnique({ where: { id: data.assignedId }, select: { email: true } })
         if (s?.email) await sendTemplate({ slug: 'ticket-assigned-to-admin', to: s.email, data: await mailVars({ ...t, ...data }, { message: stripHtml(t.message), staffUrl: true }), relType: 'ticket', relId: id })
@@ -222,6 +227,7 @@ export async function replyTicket(id, { message, statusId, notify = true, intern
     await prisma.crmTicket.update({ where: { id }, data: { statusId: nextStatus, lastReply: new Date(), clientRead: 0, adminRead: 1, ...(t.assignedId || !a.S.on('automatically_assign_ticket_to_first_staff_responding') ? {} : { assignedId: a.staffId }) } })
     let mail = null
     if (notify) { const to = await clientEmail(t); if (to) mail = await sendTemplate({ slug: 'ticket-reply', to, data: await mailVars({ ...t, statusId: nextStatus }, { message: withFiles(text || '', saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: id }) }
+    if (nextStatus && nextStatus !== t.statusId) await autoMessage({ ...t, statusId: nextStatus }, nextStatus)
     return { success: true, id: r.id, mail, files: saved.length }
 }
 
@@ -251,4 +257,28 @@ export async function clientContacts(clientId) {
     if (!oid(clientId)) return { list: [] }
     const c = await prisma.crmContact.findMany({ where: { clientId }, select: { id: true, firstName: true, lastName: true, email: true, isPrimary: true } })
     return { list: c.map((x) => ({ id: x.id, name: contactName(x), email: x.email, primary: !!x.isPrimary })) }
+}
+
+
+/* ---------- reminders on a ticket (private to the person who sets them; the automatic tasks send them) ---------- */
+export async function addTicketReminder(id, body) {
+    const session = await requirePermission('tickets', 'view')
+    const a = await access(session)
+    const t = await loadOne(id, a)
+    if (!a.staffId) throw fail('Only a team member can set a reminder')
+    const date = new Date(body?.date)
+    if (Number.isNaN(+date)) throw fail('Choose the date and time of the reminder')
+    if (+date < Date.now() - 60000) throw fail('Choose a date and time in the future')
+    const r = await prisma.crmReminder.create({ data: { relType: 'ticket', relId: t.id, staffId: a.staffId, creatorId: a.staffId, date, description: nz(body?.note) ? String(body.note).trim().slice(0, 500) : null, notifyByEmail: true, isNotified: false } })
+    return { success: true, id: r.id }
+}
+
+export async function deleteTicketReminder(id, reminderId) {
+    const session = await requirePermission('tickets', 'view')
+    const a = await access(session)
+    await loadOne(id, a)
+    const r = oid(reminderId) && (await prisma.crmReminder.findFirst({ where: { id: reminderId, relType: 'ticket', relId: id, staffId: a.staffId || NONE } }))
+    if (!r) throw fail('Reminder not found', 404)
+    await prisma.crmReminder.delete({ where: { id: reminderId } })
+    return { success: true }
 }

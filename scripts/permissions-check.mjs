@@ -443,6 +443,72 @@ try {
         const tl = await crc('GET', '/api/crm/work/tasks/lookups')
         check('the New task form is pre-filled the same way (lookups give the Super Admin ids)', admins.every((i) => (tl.body?.defaults?.followAdminIds || []).includes(i)))
     }
+    console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')
+    {
+        const sA = await makeUser('tk-staff', { customers: ['view', 'create', 'edit'], tickets: ['view', 'create', 'edit'], tasks: ['view', 'create', 'edit'] }); const sa = await login(sA)
+        const sB = await makeUser('tk-other', { tickets: ['view', 'edit'] }); const sb = await login(sB)
+        const cl = await sa('POST', '/api/crm/customers', { company: 'zz ticket check', active: true })
+        if (cl.body?.id) made.extraRows.push(['crmClient', cl.body.id])
+        const cl2 = await sa('POST', '/api/crm/customers', { company: 'zz ticket other client', active: true })
+        if (cl2.body?.id) made.extraRows.push(['crmClient', cl2.body.id])
+        const mk = async (clientId, tag) => {
+            const email = `tk.${tag}.${Date.now()}@test.local`
+            const ct = await prisma.crmContact.create({ data: { clientId, firstName: 'Tess', lastName: tag, email } })
+            made.extraRows.unshift(['crmContact', ct.id])
+            await sa('POST', `/api/crm/customers/${clientId}/portal-password`, { contactId: ct.id, password: 'Portal-Test-12345' })
+            const r = await fetch(`${BASE}/api/portal/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password: 'Portal-Test-12345' }) })
+            const ck = (r.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).join('; ')
+            return async (method, path, body) => { const x = await fetch(`${BASE}/api/portal${path}`, { method, headers: { cookie: ck, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); return { status: x.status, body: await x.json().catch(() => null) } }
+        }
+        const pc = await mk(cl.body?.id, 'one'), pc2 = await mk(cl2.body?.id, 'two')
+        // a database that was not imported from Perfex (demo data) has no legacy status numbers: give them for the check, then take them away
+        const givenIds = []
+        for (const [name, n] of [['Open', 1], ['In progress', 2], ['Answered', 3], ['On hold', 4], ['Closed', 5]]) { const all = await prisma.crmTicketStatus.findMany(); const row = all.find((x) => x.name === name && x.legacyId == null); if (row && !all.some((x) => x.legacyId === n)) { await prisma.crmTicketStatus.update({ where: { id: row.id }, data: { legacyId: n } }); givenIds.push(row.id) } }
+        const closedSt = await prisma.crmTicketStatus.findFirst({ where: { legacyId: 5 } }), openSt = await prisma.crmTicketStatus.findFirst({ where: { legacyId: 1 } })
+        const prevRules = await prisma.crmOption.findUnique({ where: { name: 'ticket_auto_messages' } })
+        const rules = [{ on: 'created', enabled: true, message: 'Hello {contact_firstname}, we received your request #{ticket_id}: {ticket_subject}.', email: false, thread: true }, { on: closedSt?.id, enabled: true, message: 'Your request #{ticket_id} is now {ticket_status}. Thank you!', email: false, thread: true }]
+        await prisma.crmOption.upsert({ where: { name: 'ticket_auto_messages' }, update: { value: JSON.stringify(rules) }, create: { name: 'ticket_auto_messages', value: JSON.stringify(rules) } })
+        const staffForAuto = await prisma.crmStaff.findFirst({ where: { active: true } })
+        const tk = await pc('POST', '/tickets', { subject: 'zz ticket check', message: 'Please help' })
+        const TID = tk.body?.id
+        if (TID) made.rows.unshift(['crmTicket', TID])
+        check('a client opens a request in the client area', tk.status < 300 && !!TID, `${tk.status} ${JSON.stringify(tk.body).slice(0, 100)}`)
+        let det = TID ? await pc('GET', `/tickets/${TID}`) : null
+        check('the automatic "request received" message is in the conversation, marked automatic, with the fields filled', det?.body?.thread?.some((m) => m.auto && m.staff && /Hello Tess, we received your request #\d+: zz ticket check/.test(m.html)), JSON.stringify(det?.body?.thread?.map((m) => m.html)).slice(0, 200))
+        check('the list tells the client which requests wait for them and carries the counters', ((await pc('GET', '/tickets')).body?.list || []).some((k) => k.id === TID && k.answered !== undefined))
+        check('another client cannot read, close or rate this request', TID && (await pc2('GET', `/tickets/${TID}`)).status === 404 && (await pc2('POST', `/tickets/${TID}/close`, { action: 'close' })).status === 404)
+        check('a request cannot be rated before it is closed', TID && (await pc('POST', `/tickets/${TID}/close`, { action: 'rate', rating: 5 })).status === 400)
+        const cls = TID ? await pc('POST', `/tickets/${TID}/close`, { action: 'close' }) : null
+        det = TID ? await pc('GET', `/tickets/${TID}`) : null
+        check('the client closes their own request', cls?.status === 200 && det?.body?.ticket?.closed === true, JSON.stringify(cls?.body) + ' given ' + givenIds.length)
+        check('...and the automatic message of the Closed status is sent', det?.body?.thread?.some((m) => m.auto && /is now Closed/.test(m.html)), JSON.stringify(det?.body?.thread?.map((m) => m.html)).slice(0, 200))
+        check('a rating needs 1 to 5 stars', TID && (await pc('POST', `/tickets/${TID}/close`, { action: 'rate', rating: 9 })).status === 400)
+        const rate = TID ? await pc('POST', `/tickets/${TID}/close`, { action: 'rate', rating: 4, comment: 'Quick and clear' }) : null
+        check('the client rates the closed request', rate?.status === 200 && (await prisma.crmTicket.findUnique({ where: { id: TID } })).rating === 4, String(rate?.status))
+        const sd = TID ? await sa('GET', `/api/crm/support/tickets/${TID}`) : null
+        check('the team sees the rating and the automatic messages tagged in the ticket', sd?.body?.ticket?.rating === 4 && sd.body.thread.some((m) => m.auto), JSON.stringify(sd?.body?.ticket?.rating))
+        const reo = TID ? await pc('POST', `/tickets/${TID}/close`, { action: 'reopen' }) : null
+        check('the client reopens it', reo?.status === 200 && (await prisma.crmTicket.findUnique({ where: { id: TID } })).statusId === openSt?.id, String(reo?.status))
+        // reminders and tasks (team side)
+        const soon = new Date(Date.now() + 3600000).toISOString()
+        const rem = TID ? await sa('POST', `/api/crm/support/tickets/${TID}/reminder`, { date: soon, note: 'Call the client' }) : null
+        if (rem?.body?.id) made.extraRows.push(['crmReminder', rem.body.id])
+        check('a team member sets a reminder on a ticket', rem?.status === 201 && !!rem.body?.id, String(rem?.status))
+        check('a reminder cannot be set in the past', TID && (await sa('POST', `/api/crm/support/tickets/${TID}/reminder`, { date: new Date(Date.now() - 3600000).toISOString() })).status === 400)
+        const sd2 = TID ? await sa('GET', `/api/crm/support/tickets/${TID}`) : null
+        check('the reminder is listed on the ticket for its owner only', sd2?.body?.reminders?.some((r) => r.id === rem?.body?.id) && !((await sb('GET', `/api/crm/support/tickets/${TID}`)).body?.reminders || []).length)
+        check('someone else cannot delete it', rem?.body?.id && (await sb('DELETE', `/api/crm/support/tickets/${TID}/reminder?reminderId=${rem.body.id}`)).status === 404)
+        const task = TID ? await sa('POST', '/api/crm/work/tasks', { name: 'zz task from ticket', relType: 'ticket', relId: TID, assigneeIds: [sA.staffId] }) : null
+        if (task?.body?.id) made.rows.unshift(['crmTask', task.body.id])
+        check('a task is created from the ticket', task?.status < 300 && !!task.body?.id, String(task?.status))
+        check('...and it is listed on the ticket', ((await sa('GET', `/api/crm/support/tickets/${TID}`)).body?.tasks || []).some((k) => k.id === task?.body?.id))
+        // the automatic messages settings: administrators only
+        check('the automatic messages rules are for administrators only', (await sa('GET', '/api/crm/support/auto-messages')).status === 403 && (await sa('PUT', '/api/crm/support/auto-messages', { rules: [] })).status === 403)
+        if (prevRules) await prisma.crmOption.update({ where: { name: 'ticket_auto_messages' }, data: { value: prevRules.value } }); else await prisma.crmOption.deleteMany({ where: { name: 'ticket_auto_messages' } })
+        for (const gid of givenIds) await prisma.crmTicketStatus.update({ where: { id: gid }, data: { legacyId: null } })
+        void staffForAuto
+    }
+
     console.log('\n== Client area sign-in')
     {
         const st = await makeUser('portal-admin', { customers: ['view', 'create', 'edit'] }); const sc = await login(st)

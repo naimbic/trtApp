@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbSearch, TbPaperclip } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbPaperclip, TbRobot } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import Container from '@/components/shared/Container'
@@ -14,6 +14,8 @@ import cn from '@/utils/classNames'
 import { api, qs } from '../kit/api'
 import { usePageRange } from '@/store/pageFilterStore'
 import NewTicketDialog from './NewTicketDialog'
+import AutoMessages from './AutoMessages'
+import { useSessionUser } from '@/store/authStore'
 import { tr, trn } from '@/utils/t'
 
 dayjs.extend(relativeTime)
@@ -37,6 +39,9 @@ const TicketsList = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [dialog, setDialog] = useState(false)
+    const [autoOpen, setAutoOpen] = useState(false)
+    const authority = useSessionUser((x) => x.user.authority) || []
+    const isAdmin = authority.includes('admin') || authority.includes('crm.admin') // the automatic messages are for administrators
     const pageSize = 20
     const [range] = usePageRange('tickets')
 
@@ -54,7 +59,7 @@ const TicketsList = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div><h3>{tr("Tickets")}</h3><p className="text-sm text-gray-500">{trn(data.total, "ticket")}</p></div>
-                {data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => setDialog(true)}>{tr("New ticket")}</Button>}
+                <div className="flex flex-wrap items-center gap-2">{isAdmin && <Button icon={<TbRobot />} onClick={() => setAutoOpen(true)}>{tr("Automatic messages")}</Button>}{data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => setDialog(true)}>{tr("New ticket")}</Button>}</div>
             </div>
 
             <div className="mb-4 flex flex-wrap gap-3">
@@ -98,6 +103,7 @@ const TicketsList = () => {
                 </Table>
             </div>
             {data.total > pageSize && <div className="mt-4 flex justify-end"><Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} /></div>}
+            <AutoMessages open={autoOpen} onClose={() => setAutoOpen(false)} />
             <NewTicketDialog open={dialog} onClose={() => setDialog(false)} lookups={data} onCreated={(id) => nav(`/crm/tickets/${id}`)} />
         </Container>
     )

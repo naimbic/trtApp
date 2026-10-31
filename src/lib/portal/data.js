@@ -9,6 +9,7 @@ import { publicBase } from '@/lib/crm/shortLinks'
 import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFiles'
 import { codeOfLanguage } from '@/lib/crm/langCodes'
 import { notifyStaffOfClient } from '@/lib/crm/ticketNotify'
+import { autoMessage } from '@/lib/crm/ticketAuto'
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -139,7 +140,7 @@ export async function listTickets() {
     const s = await requirePortal('support')
     const [rows, statuses, prios, depts] = await Promise.all([prisma.crmTicket.findMany({ where: { clientId: s.client.id }, orderBy: [{ lastReply: 'desc' }, { createdAt: 'desc' }] }), prisma.crmTicketStatus.findMany(), prisma.crmTicketPriority.findMany(), prisma.crmDepartment.findMany({ select: { id: true, name: true } })])
     const st = Object.fromEntries(statuses.map((x) => [x.id, x])), pr = Object.fromEntries(prios.map((x) => [x.id, x.name])), dp = Object.fromEntries(depts.map((x) => [x.id, x.name]))
-    return { list: rows.map((t) => ({ id: t.id, number: t.legacyId, subject: t.subject || '(no subject)', status: st[t.statusId] ? { name: st[t.statusId].name, color: st[t.statusId].statusColor || '#64748b', closed: st[t.statusId].legacyId === 5 } : null, priority: pr[t.priorityId] || '', department: dp[t.departmentId] || '', lastReply: t.lastReply, createdAt: t.createdAt, unread: t.clientRead === 0 && !!t.lastReply })), departments: depts.map((d) => ({ id: d.id, name: d.name })), priorities: prios.slice(0, 3).map((p) => ({ id: p.id, name: p.name })) }
+    return { list: rows.map((t) => ({ id: t.id, number: t.legacyId, subject: t.subject || '(no subject)', status: st[t.statusId] ? { name: st[t.statusId].name, color: st[t.statusId].statusColor || '#64748b', closed: st[t.statusId].legacyId === 5 } : null, priority: pr[t.priorityId] || '', department: dp[t.departmentId] || '', lastReply: t.lastReply, createdAt: t.createdAt, unread: t.clientRead === 0 && !!t.lastReply, answered: st[t.statusId]?.legacyId === 3, rating: t.rating || null })), departments: depts.map((d) => ({ id: d.id, name: d.name })), priorities: prios.slice(0, 3).map((p) => ({ id: p.id, name: p.name })) }
 }
 
 export async function getTicket(id) {
@@ -152,9 +153,18 @@ export async function getTicket(id) {
     const sf = Object.fromEntries(staff.map((x) => [x.id, x.firstName]))
     const att = (rid) => atts.filter((a) => (a.replyId || null) === rid).map(attachmentOut)
     const who = (r) => (r.adminId ? `${sf[r.adminId] || 'Support'} · support team` : r.name || [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || 'You')
+    const [prio, dept, project, agent] = await Promise.all([
+        t.priorityId ? prisma.crmTicketPriority.findUnique({ where: { id: t.priorityId }, select: { name: true } }) : null,
+        t.departmentId ? prisma.crmDepartment.findUnique({ where: { id: t.departmentId }, select: { name: true } }) : null,
+        t.projectId ? prisma.crmProject.findFirst({ where: { id: t.projectId, clientId: s.client.id }, select: { name: true } }) : null,
+        t.assignedId ? prisma.crmStaff.findUnique({ where: { id: t.assignedId }, select: { firstName: true } }) : null,
+    ])
+    const closed = status?.legacyId === 5
+    const mine = (r) => (r.isAuto ? 'Support team' : who(r))
     return {
-        ticket: { id: t.id, number: t.legacyId, subject: t.subject, createdAt: t.createdAt, closed: status?.legacyId === 5, status: status ? { name: status.name, color: status.statusColor || '#64748b' } : null },
-        thread: [{ id: 'first', staff: !!t.adminId, name: t.adminId ? `${sf[t.adminId] || 'Support'} · support team` : [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || 'You', html: /<[a-z][\s\S]*>/i.test(t.message || '') ? t.message : toHtml(t.message), date: t.createdAt, attachments: att(null) }, ...replies.map((r) => ({ id: r.id, staff: !!r.adminId, name: who(r), html: /<[a-z][\s\S]*>/i.test(r.message || '') ? r.message : toHtml(r.message), date: r.createdAt, attachments: att(r.id) }))],
+        ticket: { id: t.id, number: t.legacyId, subject: t.subject, createdAt: t.createdAt, lastReply: t.lastReply, closed, answered: status?.legacyId === 3, status: status ? { name: status.name, color: status.statusColor || '#64748b' } : null, priority: prio?.name || '', department: dept?.name || '', project: project?.name || '', agent: agent?.firstName || '', rating: t.rating || null, ratingComment: t.ratingComment || '' },
+        thread: [{ id: 'first', staff: !!t.adminId, name: t.adminId ? `${sf[t.adminId] || 'Support'} · support team` : [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || 'You', html: /<[a-z][\s\S]*>/i.test(t.message || '') ? t.message : toHtml(t.message), date: t.createdAt, attachments: att(null) }, ...replies.map((r) => ({ id: r.id, staff: !!r.adminId, auto: !!r.isAuto, name: mine(r), html: /<[a-z][\s\S]*>/i.test(r.message || '') ? r.message : toHtml(r.message), date: r.createdAt, attachments: att(r.id) }))],
+        files: atts.map(attachmentOut),
     }
 }
 
@@ -172,6 +182,7 @@ export async function createTicket(body, files = []) {
     const t = await prisma.crmTicket.create({ data: { legacyId: (last?.legacyId || 0) + 1, clientId: s.client.id, contactId: s.contact.id, name, email: s.contact.email, departmentId: oid(body.departmentId), priorityId: prio?.id || null, statusId: open?.id || null, subject, message: toHtml(message), ticketKey: (await import('node:crypto')).randomBytes(16).toString('hex'), adminRead: 0, clientRead: 1, lastReply: null } })
     const saved = await saveTicketFiles({ ticketId: t.id, prepared, uploaderName: name || s.contact.email })
     void notifyStaffOfClient(t, { text: message, files: saved })
+    await autoMessage(t, 'created')
     return { success: true, id: t.id, number: t.legacyId, files: saved.length }
 }
 
@@ -189,6 +200,7 @@ export async function replyTicket(id, message, files = []) {
     const saved = await saveTicketFiles({ ticketId: id, replyId: r.id, prepared, uploaderName: name || s.contact.email })
     const updated = await prisma.crmTicket.update({ where: { id }, data: { statusId: open?.id || t.statusId, lastReply: new Date(), adminRead: 0, clientRead: 1 } })
     void notifyStaffOfClient(updated, { reply: true, text, files: saved })
+    if (updated.statusId && updated.statusId !== t.statusId) await autoMessage(updated, updated.statusId)
     return { success: true, files: saved.length }
 }
 
@@ -211,3 +223,44 @@ export async function updateProfile(body) {
     return { success: true }
 }
 void publicBase
+
+
+/** The client closes their own request (it can be reopened by a reply, or with the Reopen button). */
+export async function closeTicket(id) {
+    const s = await requirePortal('support')
+    const t = oid(id) && (await prisma.crmTicket.findFirst({ where: { id, clientId: s.client.id } }))
+    if (!t) throw httpError('Ticket not found', 404)
+    const closed = await prisma.crmTicketStatus.findFirst({ where: { legacyId: 5 } })
+    if (!closed) throw httpError('This request cannot be closed here')
+    if (t.statusId === closed.id) return { success: true }
+    const updated = await prisma.crmTicket.update({ where: { id }, data: { statusId: closed.id, adminRead: 0, clientRead: 1 } })
+    void notifyStaffOfClient(updated, { reply: true, text: 'The client closed this request.' })
+    await autoMessage(updated, closed.id)
+    return { success: true }
+}
+
+export async function reopenTicket(id) {
+    const s = await requirePortal('support')
+    const t = oid(id) && (await prisma.crmTicket.findFirst({ where: { id, clientId: s.client.id } }))
+    if (!t) throw httpError('Ticket not found', 404)
+    const open = await prisma.crmTicketStatus.findFirst({ where: { legacyId: 1 } })
+    if (!open) throw httpError('This request cannot be reopened here')
+    if (t.statusId === open.id) return { success: true }
+    const updated = await prisma.crmTicket.update({ where: { id }, data: { statusId: open.id, adminRead: 0, clientRead: 1 } })
+    void notifyStaffOfClient(updated, { reply: true, text: 'The client reopened this request.' })
+    await autoMessage(updated, open.id)
+    return { success: true }
+}
+
+/** The client's satisfaction once the request is closed: 1 to 5 stars and an optional comment. */
+export async function rateTicket(id, rating, comment) {
+    const s = await requirePortal('support')
+    const t = oid(id) && (await prisma.crmTicket.findFirst({ where: { id, clientId: s.client.id } }))
+    if (!t) throw httpError('Ticket not found', 404)
+    const status = t.statusId ? await prisma.crmTicketStatus.findUnique({ where: { id: t.statusId } }) : null
+    if (status?.legacyId !== 5) throw httpError('You can rate a request once it is closed')
+    const n = Math.round(Number(rating))
+    if (!(n >= 1 && n <= 5)) throw httpError('Choose from 1 to 5 stars')
+    await prisma.crmTicket.update({ where: { id }, data: { rating: n, ratingComment: String(comment || '').trim().slice(0, 500) || null, ratedAt: new Date() } })
+    return { success: true }
+}

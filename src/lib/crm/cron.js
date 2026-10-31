@@ -241,7 +241,7 @@ const JOBS = [
     { key: 'cleanup', label: 'Cleanup', hour: null, daily: true, run: cleanupJob },
     { key: 'tickets', label: 'Tickets', hour: null, run: ticketsJob },
     { key: 'leadmail', label: 'Lead emails', hour: null, run: leadMailJob },
-    { key: 'notereminders', label: 'Note reminders', hour: null, run: noteRemindersJob },
+    { key: 'notereminders', label: 'Note and ticket reminders', hour: null, run: noteRemindersJob },
     { key: 'leadmailsend', label: 'Scheduled lead mails', hour: null, run: async ({ lines, dry }) => { const { sendScheduledMails } = await import('@/lib/crm/leadsApi'); lines.push(...(await sendScheduledMails({ dry }))) } },
 ]
 

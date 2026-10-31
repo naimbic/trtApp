@@ -84,6 +84,10 @@ model CrmTicket {
   cc              String?
   /// tickets.merged_ticket_id -> CrmTicket (same table, kept as plain FK)
   mergedTicketId  String?             @db.ObjectId
+  /// the client's satisfaction after the ticket is closed: 1 to 5 and an optional comment
+  rating          Int?
+  ratingComment   String?
+  ratedAt         DateTime?
   replies         CrmTicketReply[]
   attachments     CrmTicketAttachment[]
   createdAt       DateTime            @default(now())
@@ -120,6 +124,8 @@ model CrmTicketReply {
   attachment  Int?
   /// internal note: only the team sees it (never shown to the client, never emailed)
   internal    Boolean               @default(false)
+  /// written by an automatic message rule (status change, ticket created), not by a person
+  isAuto      Boolean               @default(false)
   /// ticket_replies.admin -> CrmStaff (cross-domain); null = customer reply
   adminId     String?               @db.ObjectId
   ip          String?

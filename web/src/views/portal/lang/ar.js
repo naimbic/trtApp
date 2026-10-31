@@ -225,4 +225,17 @@ export default {
     "WhatsApp and Telegram": "واتساب وتيليغرام",
     "How do you want to be notified?": "كيف تريد أن تتلقى الإشعارات؟",
     "Pick one or several: the same notification arrives on each channel you switch on.": "اختر قناة أو أكثر: يصل الإشعار نفسه عبر كل قناة تُفعّلها.",
+    "Closed": "مغلقة",
+    "Search a request": "ابحث عن طلب",
+    "No request matches.": "لا يوجد طلب مطابق.",
+    "Close this request": "إغلاق هذا الطلب",
+    "Reopen this request": "إعادة فتح هذا الطلب",
+    "automatic message": "رسالة تلقائية",
+    "Details": "التفاصيل",
+    "Opened": "فُتح",
+    "Handled by": "يتولاها",
+    "Project": "المشروع",
+    "How did we do?": "كيف كان أداؤنا؟",
+    "Add a comment (optional)": "أضف تعليقًا (اختياري)",
+    "Send my rating": "إرسال تقييمي"
 }

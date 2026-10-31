@@ -1552,8 +1552,15 @@
  "Write a subject before scheduling",
  "Confirm every check before scheduling",
  "The date to send the mail is not valid",
- "Note reminders",
+ "Note and ticket reminders",
  "A note with \"Remind me at\" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).",
  "Send the note reminders",
- "Remind me at"
+ "Remind me at",
+ "Email it to the client",
+ "Automatic messages saved",
+ "Only an administrator can change the automatic messages",
+ "Write the message of every rule that is switched on",
+ "A rule must send the message by email or in the conversation (or both)",
+ "Only a team member can set a reminder",
+ "Choose the date and time of the reminder"
 ]

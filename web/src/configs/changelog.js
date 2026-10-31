@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.133.0',
+        date: '2026-11-01',
+        title: 'Tickets: a new client-area Support page, tasks, reminders and automatic messages',
+        items: [
+            'Client area, Support list: three counters (Open, Waiting for you, Closed) that filter the list, a search, filter tabs, and one card per request with its status colour, priority, department, "waiting for you" / "new reply" labels, the last reply time and the rating. The cards are real links.',
+            'Client area, one request: the conversation with automatic messages tagged, a Details panel (opened, last reply, handled by, department, priority, project), all the files of the request, and buttons to Close or Reopen the request. When it is closed the client can rate it from 1 to 5 stars with a comment. The new request form has priority chips.',
+            'Team side, a ticket: Create a task (a task opens already filled with the ticket, its assignee and a link; the tasks of a ticket are listed on it), Remind me (a private reminder on the bell, by email and on Telegram / WhatsApp at the chosen time, in the automatic tasks "Note and ticket reminders"), automatic messages tagged in the conversation, and the client\'s rating.',
+            'Tickets list, Automatic messages (administrators): for each status and for "request received", a message sent to the client when a ticket gets that status, in the conversation and/or by email, with fields like {contact_firstname}, {ticket_id}, {ticket_status}, {agent_name}, {ticket_url}. It fires whoever changes the status: a team member, a reply, or the client closing or reopening.',
+        ],
+    },
+    {
         version: '0.132.2',
         date: '2026-10-31',
         title: 'Notes: a tag shows how far the reminder is',

@@ -41,6 +41,7 @@ export const REL_TYPES = [
     { value: 'customer', label: tr("Client"), resource: 'clients' },
     { value: 'lead', label: tr("Lead"), resource: 'leads' },
     { value: 'project', label: tr("Project"), resource: 'projects' },
+    { value: 'ticket', label: tr("Ticket"), resource: 'tickets' },
 ]
 export const statusOf = (v) => STATUS.find((s) => s.value === +v) || STATUS[0]
 export const prioOf = (v) => PRIORITY.find((p) => p.value === +v) || PRIORITY[1]

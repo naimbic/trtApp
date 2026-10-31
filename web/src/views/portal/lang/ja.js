@@ -225,4 +225,17 @@ export default {
     "WhatsApp and Telegram": "WhatsAppとTelegram",
     "How do you want to be notified?": "通知の受け取り方を選択してください",
     "Pick one or several: the same notification arrives on each channel you switch on.": "1つまたは複数を選択してください。オンにしたすべてのチャネルに同じ通知が届きます。",
+    "Closed": "完了",
+    "Search a request": "依頼を検索",
+    "No request matches.": "一致する依頼はありません。",
+    "Close this request": "この依頼を完了にする",
+    "Reopen this request": "この依頼を再開する",
+    "automatic message": "自動メッセージ",
+    "Details": "詳細",
+    "Opened": "開始",
+    "Handled by": "担当",
+    "Project": "プロジェクト",
+    "How did we do?": "いかがでしたか？",
+    "Add a comment (optional)": "コメントを追加（任意）",
+    "Send my rating": "評価を送信"
 }

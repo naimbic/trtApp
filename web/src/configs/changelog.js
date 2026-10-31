@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.132.1',
+        date: '2026-10-31',
+        title: 'Date and time pickers open on top of everything',
+        items: [
+            'Fixed: the calendar of a date or time field was cut by the dialog or the section it sat in (the note reminder, the draft schedule...). Every date and time picker in the app (single date, date and time, and date range) now opens on top of the page and is fully visible.',
+        ],
+    },
+    {
         version: '0.132.0',
         date: '2026-10-31',
         title: 'Notes: reminder with a date and time',

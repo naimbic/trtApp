@@ -16,6 +16,7 @@ import {
     offset,
     flip,
     shift,
+    FloatingPortal,
 } from '@floating-ui/react'
 
 dayjs.extend(localizedFormat)
@@ -102,6 +103,7 @@ const BasePicker = (props) => {
         open: dropdownOpened,
         onOpenChange: toggleDropdown,
         placement: 'bottom-start',
+        strategy: 'fixed', // opens on top of the page, never cut by a section, a dialog or a popup
         middleware: [
             offset(10),
             flip({
@@ -150,15 +152,17 @@ const BasePicker = (props) => {
                 })}
             />
             {dropdownOpened && (
-                <div
-                    ref={refs.setFloating}
-                    className="picker"
-                    style={floatingStyles}
-                    aria-labelledby={headingId}
-                    {...getFloatingProps()}
-                >
-                    <div className="picker-panel">{children}</div>
-                </div>
+                <FloatingPortal>
+                    <div
+                        ref={refs.setFloating}
+                        className="picker"
+                        style={{ ...floatingStyles, zIndex: 100000 }}
+                        aria-labelledby={headingId}
+                        {...getFloatingProps()}
+                    >
+                        <div className="picker-panel">{children}</div>
+                    </div>
+                </FloatingPortal>
             )}
         </>
     )

@@ -127,13 +127,14 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
                     <div><L>{tr("Mail")}</L><RichEditor minHeight={140} value={form.body} placeholder={tr("Paste or write the mail here")} onChange={(html) => set({ body: html })} /></div>
                     {draft && (
                         <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-2.5 dark:border-sky-500/30 dark:bg-sky-500/5">
-                            <div className="flex items-center justify-between gap-2 text-sm"><span className="inline-flex items-center gap-1.5 font-semibold"><TbClockPlay />{tr("Send it automatically at a chosen date and time")}</span><Switcher checked={!!form.scheduledAt} onChange={(c) => set({ scheduledAt: c ? dayjs().add(1, 'day').hour(9).minute(0).second(0).toDate() : null })} /></div>
-                            {form.scheduledAt && (
-                                <div className="mt-2">
-                                    <DatePicker.DateTimepicker value={form.scheduledAt} onChange={(d) => set({ scheduledAt: d || null })} />
-                                    <p className="mt-1.5 text-xs text-gray-500">{tr("It is sent at the first run of the automatic tasks after that time, from the address chosen above. Every check must be confirmed first.")}</p>
-                                </div>
-                            )}
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-sm font-semibold">
+                                    <Switcher checked={!!form.scheduledAt} onChange={(c) => set({ scheduledAt: c ? dayjs().add(1, 'day').hour(9).minute(0).second(0).toDate() : null })} />
+                                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><TbClockPlay className="shrink-0" />{tr("Send automatically")}</span>
+                                </label>
+                                {form.scheduledAt && <div className="w-full sm:w-56"><DatePicker.DateTimepicker size="sm" value={form.scheduledAt} onChange={(d) => set({ scheduledAt: d || null })} /></div>}
+                            </div>
+                            {form.scheduledAt && <p className="mt-1.5 text-xs text-gray-500">{tr("It is sent at the first run of the automatic tasks after that time, from the address chosen above. Every check must be confirmed first.")}</p>}
                         </div>
                     )}
                     {draft && (

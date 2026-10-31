@@ -4454,5 +4454,6 @@ export default {
     "Add the email address to send to before scheduling": "Añada la dirección del destinatario antes de programar",
     "Write a subject before scheduling": "Escriba un asunto antes de programar",
     "Confirm every check before scheduling": "Confirme cada comprobación antes de programar",
-    "The date to send the mail is not valid": "La fecha de envío no es válida"
+    "The date to send the mail is not valid": "La fecha de envío no es válida",
+    "Send automatically": "Envío automático"
 }

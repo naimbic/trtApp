@@ -4454,5 +4454,6 @@ export default {
     "Add the email address to send to before scheduling": "予約する前に送信先のメールアドレスを入力してください",
     "Write a subject before scheduling": "予約する前に件名を入力してください",
     "Confirm every check before scheduling": "予約する前にすべての項目を確認してください",
-    "The date to send the mail is not valid": "送信日時が正しくありません"
+    "The date to send the mail is not valid": "送信日時が正しくありません",
+    "Send automatically": "自動送信"
 }

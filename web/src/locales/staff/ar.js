@@ -4454,5 +4454,6 @@ export default {
     "Add the email address to send to before scheduling": "أضف عنوان المستلم قبل الجدولة",
     "Write a subject before scheduling": "اكتب موضوعًا قبل الجدولة",
     "Confirm every check before scheduling": "أكّد كل فحص قبل الجدولة",
-    "The date to send the mail is not valid": "تاريخ الإرسال غير صالح"
+    "The date to send the mail is not valid": "تاريخ الإرسال غير صالح",
+    "Send automatically": "إرسال تلقائي"
 }

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.131.1',
+        date: '2026-10-31',
+        title: 'Draft mail schedule: compact row',
+        items: [
+            'The automatic-send switch of a draft is now one compact row: the switch and "Send automatically" on the left, the date and time picker on the right when it is on, with the explanation underneath. Clicking the text also turns it on or off.',
+        ],
+    },
+    {
         version: '0.131.0',
         date: '2026-10-31',
         title: 'Lead mail drafts: send automatically at a chosen date and time',

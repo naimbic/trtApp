@@ -3,7 +3,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useSessionUser } from '@/store/authStore'
 import { Link } from 'react-router'
-import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiCalendarCheckDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone } from 'react-icons/pi'
+import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiRocketLaunchDuotone, PiChartLineUpDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone } from 'react-icons/pi'
 import { useThemeStore } from '@/store/themeStore'
 import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
@@ -16,7 +16,8 @@ const dropdownItemList = [
     { label: tr("Password & security"), path: '/account/profile?tab=security', icon: <PiShieldCheckDuotone /> },
     { label: tr("Team & roles"), path: '/team', icon: <PiUsersThreeDuotone />, any: ['staff', 'roles'] },
     { label: tr("Mail settings"), path: '/crm/mails?tab=settings', icon: <PiEnvelopeSimpleDuotone />, adminOnly: true },
-    { label: tr("Calendar sync"), path: '/calendar?sync=1', icon: <PiCalendarCheckDuotone />, need: 'calendar' },
+    { label: tr("My growth"), path: '/crm/my-growth', icon: <PiRocketLaunchDuotone />, need: 'growth' },
+    { label: tr("Grow"), path: '/crm/grow', icon: <PiChartLineUpDuotone />, need: 'grow' },
 ]
 
 const _UserDropdown = ({ className }) => {

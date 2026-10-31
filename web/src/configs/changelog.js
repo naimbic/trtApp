@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.137.1',
+        date: '2026-11-01',
+        title: 'Profile menu: Grow and My growth added, Calendar sync removed',
+        items: [
+            'The menu under your picture now has My growth (everyone) and Grow (the company dashboard, ideas and routine, for those with the Grow permission). The Calendar sync entry is gone.',
+        ],
+    },
+    {
         version: '0.137.0',
         date: '2026-11-01',
         title: 'My growth: learning goals, certifications, primes and a playbook for the team',

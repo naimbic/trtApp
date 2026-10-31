@@ -1542,5 +1542,14 @@
  "Edit and delete events of others",
  "Anyone who can open the Calendar adds events",
  "Everyone edits their own events",
- "Everyone deletes their own events"
+ "Everyone deletes their own events",
+ "The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.",
+ "Scheduled lead mails",
+ "Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).",
+ "Send the scheduled lead mails",
+ "Choose a date and time in the future to send the mail",
+ "Add the email address to send to before scheduling",
+ "Write a subject before scheduling",
+ "Confirm every check before scheduling",
+ "The date to send the mail is not valid"
 ]

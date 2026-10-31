@@ -4441,5 +4441,18 @@ export default {
     "Edit and delete events of others": "Editar y eliminar eventos de otros",
     "Anyone who can open the Calendar adds events": "Quien pueda abrir el calendario añade eventos",
     "Everyone edits their own events": "Cada uno edita sus propios eventos",
-    "Everyone deletes their own events": "Cada uno elimina sus propios eventos"
+    "Everyone deletes their own events": "Cada uno elimina sus propios eventos",
+    "Send it automatically at a chosen date and time": "Enviarlo automáticamente en la fecha y hora elegidas",
+    "It is sent at the first run of the automatic tasks after that time, from the address chosen above. Every check must be confirmed first.": "Se envía en la primera ejecución de las tareas automáticas tras esa hora, desde la dirección elegida arriba. Primero hay que confirmar todas las comprobaciones.",
+    "Scheduled for": "Programado para",
+    "Not sent automatically": "No enviado automáticamente",
+    "The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.": "El texto cambió, así que se cancelaron las comprobaciones y la programación. Confirme las comprobaciones y vuelva a programarlo.",
+    "Scheduled lead mails": "Correos de leads programados",
+    "Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).": "Envía los borradores de correo de leads que tienen fecha y hora de envío automático (ventana del lead → Correos). Un borrador sale en la primera ejecución tras su hora, así que las tareas automáticas deben ejecutarse a menudo (por ejemplo cada 5 minutos).",
+    "Send the scheduled lead mails": "Enviar los correos de leads programados",
+    "Choose a date and time in the future to send the mail": "Elija una fecha y hora futuras para el envío",
+    "Add the email address to send to before scheduling": "Añada la dirección del destinatario antes de programar",
+    "Write a subject before scheduling": "Escriba un asunto antes de programar",
+    "Confirm every check before scheduling": "Confirme cada comprobación antes de programar",
+    "The date to send the mail is not valid": "La fecha de envío no es válida"
 }

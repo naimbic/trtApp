@@ -304,6 +304,24 @@ try {
                 check('the sender accounts are not readable or editable by a non-administrator', (await la('GET', '/api/crm/mail/accounts')).status === 403 && (await la('PUT', '/api/crm/mail/accounts', { accounts: [] })).status === 403)
                 if (prevAcc) await prisma.crmOption.update({ where: { name: 'mail_sender_accounts' }, data: { value: prevAcc.value } }); else await prisma.crmOption.deleteMany({ where: { name: 'mail_sender_accounts' } })
             }
+            {
+                const soon = new Date(Date.now() + 3600000).toISOString()
+                const base = { direction: 'draft', subject: 'Scheduled check', to: 'a@test.local', from: 'hello@trtmaroc.com', body: '<p>x</p>' }
+                const past = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { ...base, scheduledAt: new Date(Date.now() - 3600000).toISOString() })
+                check('a mail cannot be scheduled in the past', past.status === 400, String(past.status))
+                const pend = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { ...base, scheduledAt: soon, checks: [{ text: 'Price', done: false }] })
+                check('a mail with an unconfirmed check cannot be scheduled', pend.status === 400, String(pend.status))
+                const nosub = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { ...base, subject: '', scheduledAt: soon })
+                check('a scheduled mail needs a subject', nosub.status === 400, String(nosub.status))
+                const ok = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { ...base, scheduledAt: soon, checks: [{ text: 'Price', done: true }] })
+                if (ok.body?.id) made.rows.unshift(['crmLeadMail', ok.body.id])
+                const row = ok.body?.id ? await prisma.crmLeadMail.findUnique({ where: { id: ok.body.id } }) : null
+                check('a confirmed draft can be scheduled for later', ok.status === 201 && +new Date(row?.scheduledAt) === +new Date(soon) && row.direction === 'draft', String(ok.status))
+                check('the lead data shows the schedule', (await la('GET', `/api/crm/pipeline/leads/${LID}`)).body?.mails?.some((m) => m.id === ok.body?.id && m.scheduledAt))
+                const edit = ok.body?.id ? await la('PUT', `/api/crm/pipeline/leads/${LID}/mails`, { ...base, mailId: ok.body.id, subject: 'Scheduled check CHANGED', scheduledAt: soon, checks: [{ text: 'Price', done: true }] }) : null
+                check('changing a scheduled draft cancels its schedule (the checks are reset)', edit?.status === 200 && edit.body?.scheduleCancelled === true && !(await prisma.crmLeadMail.findUnique({ where: { id: ok.body.id } })).scheduledAt, JSON.stringify(edit?.body))
+                check('a follower cannot schedule or send a draft of someone else', ok.body?.id && (await lb('PUT', `/api/crm/pipeline/leads/${LID}/mails`, { ...base, mailId: ok.body.id, scheduledAt: soon })).status === 403)
+            }
             if (prevOpt) await prisma.crmOption.update({ where: { name: 'lead_mail_senders' }, data: { value: prevOpt.value } }); else await prisma.crmOption.delete({ where: { name: 'lead_mail_senders' } })
         }
     }

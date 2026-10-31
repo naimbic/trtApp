@@ -135,7 +135,7 @@ export async function getLead(id) {
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
-        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
+        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
         senders,
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
@@ -270,7 +270,22 @@ const mailData = (b) => {
     if (!subject && !body) throw fail('Give the mail a subject or write its text')
     const date = b.date ? new Date(b.date) : new Date()
     if (Number.isNaN(+date)) throw fail('The date of the mail is not valid')
-    return { direction: b.direction === 'out' ? 'out' : b.direction === 'draft' ? 'draft' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), ccAddress: nz(b.cc), bccAddress: nz(b.bcc), replyTo: nz(b.replyTo), note: nz(b.note) ? String(b.note).trim().slice(0, 1000) : null, checks: (Array.isArray(b.checks) ? b.checks : []).map((c) => ({ text: String(c?.text || '').trim().slice(0, 200), done: !!c?.done })).filter((c) => c.text).slice(0, 10), body: body || null, date }
+    return { direction: b.direction === 'out' ? 'out' : b.direction === 'draft' ? 'draft' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), ccAddress: nz(b.cc), bccAddress: nz(b.bcc), replyTo: nz(b.replyTo), note: nz(b.note) ? String(b.note).trim().slice(0, 1000) : null, scheduledAt: b.direction === 'draft' && b.scheduledAt ? new Date(b.scheduledAt) : null, sendError: null, checks: (Array.isArray(b.checks) ? b.checks : []).map((c) => ({ text: String(c?.text || '').trim().slice(0, 200), done: !!c?.done })).filter((c) => c.text).slice(0, 10), body: body || null, date }
+}
+
+/** A draft can be scheduled: it needs a future date, an address, a subject and every check confirmed. Returns whether the schedule had to be dropped. */
+function checkSchedule(data, lead, prev, contentChanged) {
+    if (!data.scheduledAt) return false
+    if (Number.isNaN(+data.scheduledAt)) throw fail('The date to send the mail is not valid')
+    const same = prev?.scheduledAt && +new Date(prev.scheduledAt) === +data.scheduledAt
+    if (!same && +data.scheduledAt < Date.now()) throw fail('Choose a date and time in the future to send the mail')
+    if (!addrList(data.toAddress || lead.email).length) throw fail('Add the email address to send to before scheduling')
+    if (!data.subject) throw fail('Write a subject before scheduling')
+    if ((data.checks || []).some((c) => !c.done)) {
+        if (contentChanged) { data.scheduledAt = null; return true } // the text changed, so the confirmations were cancelled and so was the schedule
+        throw fail('Confirm every check before scheduling')
+    }
+    return false
 }
 
 /** Logs an email sent to / received from the lead (written in the editor): date and time, from, to, subject, text. */
@@ -287,9 +302,12 @@ export async function saveMail(id, body, mailId) {
         if (data.direction === 'draft' && m.direction !== 'draft') throw fail('A mail that is already sent or received cannot go back to a draft')
         // changing what will be sent cancels the confirmations: the checks must be confirmed again on the new text
         if (m.direction === 'draft' && ['subject', 'fromAddress', 'toAddress', 'ccAddress', 'bccAddress', 'replyTo', 'body'].some((k) => (m[k] || null) !== (data[k] || null))) data.checks = data.checks.map((c) => ({ ...c, done: false }))
+        const changed = m.direction === 'draft' && ['subject', 'fromAddress', 'toAddress', 'ccAddress', 'bccAddress', 'replyTo', 'body'].some((k) => (m[k] || null) !== (data[k] || null))
+        const cancelled = data.direction === 'draft' ? checkSchedule(data, lead, m, changed) : false
         await prisma.crmLeadMail.update({ where: { id: mailId }, data })
-        return { success: true, id: mailId }
+        return { success: true, id: mailId, scheduleCancelled: cancelled }
     }
+    if (data.direction === 'draft') checkSchedule(data, lead, null, false)
     const m = await prisma.crmLeadMail.create({ data: { ...data, leadId: id, addedFrom: a.staffId, source: 'manual' } })
     if (data.direction === 'draft') return { success: true, id: m.id } // nothing happened with the lead yet: it is only a draft
     await prisma.crmLead.update({ where: { id }, data: { lastContact: data.date > new Date() ? new Date() : data.date } })
@@ -352,6 +370,12 @@ export async function sendDraftMail(id, mailId) {
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
     if (!mayEdit(a, lead) && !a.can('edit_others_mails')) throw fail('You can only edit your own leads', 403)
     if (!mayChangeItem(a, m.addedFrom, 'mails')) throw fail('You can only send the drafts you wrote', 403)
+    return deliverDraft({ id, lead, m, a, how: '' })
+}
+
+/** Sends a draft (the permission checks are done by the caller: the person clicking Send now, or the scheduled run for the author). */
+async function deliverDraft({ id, lead, m, a, how }) {
+    const mailId = m.id
     const to = addrList(m.toAddress || lead.email), cc = addrList(m.ccAddress), bcc = addrList(m.bccAddress), reply = addrList(m.replyTo)
     if (!to.length) throw fail('Add the email address to send to')
     const bad = [...to, ...cc, ...bcc, ...reply].find((e) => !MAIL_RE.test(e))
@@ -377,9 +401,37 @@ export async function sendDraftMail(id, mailId) {
     const now = new Date()
     await prisma.crmLeadMail.update({ where: { id: mailId }, data: { direction: 'out', date: now, fromAddress: from } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: now } })
-    await logActivity(id, a, `Mail sent: ${m.subject}`)
-    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `✉ ${m.subject}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
+    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { scheduledAt: null, sendError: null } })
+    await logActivity(id, a, `Mail sent${how}: ${m.subject}`)
+    try { await notifyComment({ by: { staffId: a.staffId, name: a.session.user.name }, text: `✉ ${m.subject}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
     return { success: true, id: mailId }
+}
+
+/** The scheduled drafts whose time has come are sent (called by the automatic tasks). A send that fails is not retried: the draft keeps the reason and the author is told. */
+export async function sendScheduledMails({ dry = false } = {}) {
+    const lines = []
+    const due = await prisma.crmLeadMail.findMany({ where: { direction: 'draft', scheduledAt: { lte: new Date() } }, orderBy: { scheduledAt: 'asc' }, take: 50 })
+    for (const m of due) {
+        const lead = await prisma.crmLead.findUnique({ where: { id: m.leadId } })
+        const label = `"${m.subject || '(no subject)'}"${lead ? ` (${lead.name})` : ''}`
+        if (dry) { lines.push(`[preview] The scheduled mail ${label} would be sent`); continue }
+        // claim it first, so two runs at the same time never send it twice
+        const claimed = await prisma.crmLeadMail.updateMany({ where: { id: m.id, direction: 'draft', scheduledAt: m.scheduledAt }, data: { scheduledAt: null } })
+        if (!claimed.count) continue
+        const author = m.addedFrom ? await prisma.crmStaff.findUnique({ where: { id: m.addedFrom }, select: { firstName: true, lastName: true, email: true } }) : null
+        const a = { staffId: m.addedFrom || undefined, session: { user: { name: author ? staffName(author) : 'Scheduled mail' } } }
+        try {
+            if (!lead) throw new Error('The lead no longer exists')
+            await deliverDraft({ id: m.leadId, lead, m, a, how: ' (scheduled)' })
+            lines.push(`Scheduled mail sent: ${label}`)
+        } catch (e) {
+            const why = String(e.message || e).slice(0, 300)
+            await prisma.crmLeadMail.update({ where: { id: m.id }, data: { sendError: why } }).catch(() => {})
+            lines.push(`! Scheduled mail ${label} was not sent: ${why}`)
+            try { if (lead && m.addedFrom) await notifyComment({ by: { staffId: undefined, name: 'CRM' }, text: `✉ Scheduled mail not sent: ${m.subject || ''} (${why})`, link: `/crm/leads/${m.leadId}`, subject: lead.name, recipients: [m.addedFrom] }) } catch (err) { console.error('[scheduled mail notify]', err.message) }
+        }
+    }
+    return lines
 }
 
 export async function deleteMail(id, mailId) {

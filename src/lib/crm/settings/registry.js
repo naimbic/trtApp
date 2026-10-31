@@ -556,6 +556,9 @@ export const GROUPS = {
             { title: 'Lead emails', desc: 'Reads the mailboxes set up in Leads → Lead email integration and turns contact-form emails into leads (each mailbox has its own check interval).', fields: [
                 yes('cron_job_leadmail', 'Read the lead mailboxes', { default: '1', cardToggle: true }),
             ] },
+            { title: 'Scheduled lead mails', desc: 'Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
+                yes('cron_job_leadmailsend', 'Send the scheduled lead mails', { default: '1', cardToggle: true }),
+            ] },
             { title: 'Cleanup', desc: 'Deletes old activity log entries once a day (how old is set in Settings → General).', fields: [
                 yes('cron_job_cleanup', 'Run the cleanup', { default: '1', cardToggle: true }),
             ] },

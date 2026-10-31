@@ -4441,5 +4441,18 @@ export default {
     "Edit and delete events of others": "Modifier et supprimer les événements des autres",
     "Anyone who can open the Calendar adds events": "Toute personne qui ouvre le calendrier peut ajouter des événements",
     "Everyone edits their own events": "Chacun modifie ses propres événements",
-    "Everyone deletes their own events": "Chacun supprime ses propres événements"
+    "Everyone deletes their own events": "Chacun supprime ses propres événements",
+    "Send it automatically at a chosen date and time": "L'envoyer automatiquement à une date et une heure choisies",
+    "It is sent at the first run of the automatic tasks after that time, from the address chosen above. Every check must be confirmed first.": "Il part au premier passage des tâches automatiques après cette heure, depuis l'adresse choisie ci-dessus. Toutes les vérifications doivent d'abord être confirmées.",
+    "Scheduled for": "Prévu pour",
+    "Not sent automatically": "Non envoyé automatiquement",
+    "The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.": "Le texte a changé : les vérifications et la planification ont été annulées. Confirmez les vérifications, puis planifiez à nouveau.",
+    "Scheduled lead mails": "E-mails de prospects planifiés",
+    "Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).": "Envoie les brouillons d'e-mails de prospects qui ont une date et une heure d'envoi automatique (fenêtre du prospect → E-mails). Un brouillon part au premier passage après son heure : les tâches automatiques doivent donc tourner souvent (par exemple toutes les 5 minutes).",
+    "Send the scheduled lead mails": "Envoyer les e-mails de prospects planifiés",
+    "Choose a date and time in the future to send the mail": "Choisissez une date et une heure futures pour l'envoi",
+    "Add the email address to send to before scheduling": "Ajoutez l'adresse du destinataire avant de planifier",
+    "Write a subject before scheduling": "Écrivez un objet avant de planifier",
+    "Confirm every check before scheduling": "Confirmez chaque vérification avant de planifier",
+    "The date to send the mail is not valid": "La date d'envoi n'est pas valide"
 }

@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.131.0',
+        date: '2026-10-31',
+        title: 'Lead mail drafts: send automatically at a chosen date and time',
+        items: [
+            'A draft now has a switch "Send it automatically at a chosen date and time" with a date and time picker. A scheduled draft shows a blue "Scheduled for ..." label. Send now still works whenever you want.',
+            'The mail goes out at the first run of the automatic tasks after that time (new task "Scheduled lead mails" in Settings → Cron job, on by default; run the automatic tasks often, for example every 5 minutes), from the chosen address, with the signature and attachments, and becomes Sent with the real sending time.',
+            'Safety: a mail can only be scheduled for a future time, with an address and a subject, and with every red check confirmed. If you change the text, the checks reset and the schedule is cancelled (you are told), so a mail never leaves with a text nobody confirmed. If the send fails, it is not retried: the draft shows the reason in red and its author gets a notification.',
+        ],
+    },
+    {
         version: '0.130.0',
         date: '2026-10-31',
         title: 'Calendar permissions',

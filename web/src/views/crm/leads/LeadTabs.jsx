@@ -1,12 +1,13 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX } from 'react-icons/tb'
+import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
 import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
+import Switcher from '@/components/ui/Switcher'
 import Input from '@/components/ui/Input'
 import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
@@ -77,7 +78,7 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
     )
 }
 
-const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', note: '', checks: [], subject: '', body: '' })
+const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', note: '', checks: [], scheduledAt: null, subject: '', body: '' })
 
 /** Emails sent to or received from the lead, written in the editor with their date and time. Mails read by the lead mailbox land here too. */
 export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit, run }) => {
@@ -94,7 +95,7 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
     const addCheck = () => { const t = newCheck.trim(); if (t) { set({ checks: [...(form.checks || []), { text: t, done: false }] }); setNewCheck('') } }
     const [toggling, setToggling] = useState(false) // one click at a time: each one rewrites the list of checks
     const toggle = (m, i) => { if (toggling) return; setToggling(true); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails/send`, { method: 'POST', body: { action: 'check', mailId: m.id, index: i, done: !m.checks[i].done } }), null).finally(() => setToggling(false)) }
-    const save = () => run(() => api(`/api/crm/pipeline/leads/${leadId}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString() } }).then((r) => { if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
+    const save = () => run(() => api(`/api/crm/pipeline/leads/${leadId}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString(), scheduledAt: draft && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null } }).then((r) => { if (r?.scheduleCancelled) notify('warning', tr("The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.")); if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
     // the lead is the other side of every mail: received = from the lead, sent or draft = to the lead (and a draft goes out from our own sender)
     const aim = (f, dir) => {
         const lead = leadEmail.trim()
@@ -125,6 +126,17 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
                     <div><L>{tr("Subject")}</L><Input size="sm" value={form.subject} onChange={(e) => set({ subject: e.target.value })} /></div>
                     <div><L>{tr("Mail")}</L><RichEditor minHeight={140} value={form.body} placeholder={tr("Paste or write the mail here")} onChange={(html) => set({ body: html })} /></div>
                     {draft && (
+                        <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-2.5 dark:border-sky-500/30 dark:bg-sky-500/5">
+                            <div className="flex items-center justify-between gap-2 text-sm"><span className="inline-flex items-center gap-1.5 font-semibold"><TbClockPlay />{tr("Send it automatically at a chosen date and time")}</span><Switcher checked={!!form.scheduledAt} onChange={(c) => set({ scheduledAt: c ? dayjs().add(1, 'day').hour(9).minute(0).second(0).toDate() : null })} /></div>
+                            {form.scheduledAt && (
+                                <div className="mt-2">
+                                    <DatePicker.DateTimepicker value={form.scheduledAt} onChange={(d) => set({ scheduledAt: d || null })} />
+                                    <p className="mt-1.5 text-xs text-gray-500">{tr("It is sent at the first run of the automatic tasks after that time, from the address chosen above. Every check must be confirmed first.")}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {draft && (
                         <div className="space-y-2 rounded-lg border border-red-200 bg-red-50/60 p-2.5 dark:border-red-500/30 dark:bg-red-500/5">
                             <div><L>{tr("Note for whoever sends it")}</L><Input size="sm" textArea rows={2} value={form.note || ''} placeholder={tr("What to do, change or check before sending (not sent to the lead)")} onChange={(e) => set({ note: e.target.value })} /></div>
                             <div>
@@ -152,6 +164,8 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
                         <div className="shrink-0 text-end text-xs text-gray-500"><div>{when(m.date)}</div>{m.source === 'mailbox' && <div className="text-[11px]">{tr("from the mailbox")}</div>}</div>
                     </div>
                     {m.body && <div className="max-h-56 overflow-auto"><RichView html={m.body} /></div>}
+                    {m.direction === 'draft' && m.scheduledAt && <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700"><TbClockPlay />{tr("Scheduled for")} {when(m.scheduledAt)}</div>}
+                    {m.direction === 'draft' && m.sendError && <div className="mt-2 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700">{tr("Not sent automatically")}: {m.sendError}</div>}
                     {m.direction === 'draft' && (m.note || m.checks.length > 0) && (
                         <div className="mt-2 space-y-1.5 rounded-lg border border-red-200 bg-red-50/60 p-2 dark:border-red-500/30 dark:bg-red-500/5">
                             {m.note && <p className="text-xs font-medium text-red-700 dark:text-red-300">{m.note}</p>}
@@ -163,7 +177,7 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
                     {m.direction === 'draft' && m.canEdit && (canEdit || !m.mine) && (() => { const left = m.checks.filter((c) => !c.done).length; return <div className="mt-2 flex items-center gap-2"><Button size="sm" variant="solid" icon={<TbSend />} disabled={left > 0} onClick={() => setSend(m)}>{tr("Send now")}</Button>{left > 0 && <span className="text-xs text-red-600">{tr("Confirm the red checks first")} ({left})</span>}</div> })()}
                     {(m.canEdit || m.canDelete) && (
                         <div className="absolute end-2 bottom-2 flex gap-0.5 opacity-0 transition group-hover:opacity-100">
-                            {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, note: m.note, checks: m.checks, subject: m.subject, body: m.body })} />}
+                            {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, note: m.note, checks: m.checks, scheduledAt: m.scheduledAt ? new Date(m.scheduledAt) : null, subject: m.subject, body: m.body })} />}
                             {m.canDelete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} />}
                         </div>
                     )}

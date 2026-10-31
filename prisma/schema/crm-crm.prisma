@@ -671,6 +671,10 @@ model CrmLeadMail {
   /// a draft's note for whoever sends it, and the checks to confirm first: [{ text, done }]
   note        String?
   checks      Json?
+  /// a draft with a date here is sent by itself when the automatic tasks (cron) run after that moment
+  scheduledAt DateTime?
+  /// why the last automatic send did not happen
+  sendError   String?
   body        String?
   /// when the email was sent or received (date and time)
   date        DateTime

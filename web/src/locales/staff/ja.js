@@ -4441,5 +4441,18 @@ export default {
     "Edit and delete events of others": "他の人のイベントを編集・削除",
     "Anyone who can open the Calendar adds events": "カレンダーを開ける人は誰でもイベントを追加できます",
     "Everyone edits their own events": "自分のイベントは誰でも編集できます",
-    "Everyone deletes their own events": "自分のイベントは誰でも削除できます"
+    "Everyone deletes their own events": "自分のイベントは誰でも削除できます",
+    "Send it automatically at a chosen date and time": "指定した日時に自動で送信する",
+    "It is sent at the first run of the automatic tasks after that time, from the address chosen above. Every check must be confirmed first.": "その時刻以降、最初の自動タスク実行時に、上で選んだアドレスから送信されます。先にすべての項目を確認する必要があります。",
+    "Scheduled for": "送信予定",
+    "Not sent automatically": "自動送信されませんでした",
+    "The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.": "本文が変更されたため、確認項目と送信予約が取り消されました。項目を確認してから、もう一度予約してください。",
+    "Scheduled lead mails": "予約されたリードメール",
+    "Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).": "自動送信の日時が設定されたリードのメール下書きを送信します（リードのポップアップ → メール）。下書きは予定時刻後の最初の実行で送信されるため、自動タスクは頻繁に（例: 5分ごと）実行する必要があります。",
+    "Send the scheduled lead mails": "予約されたリードメールを送信する",
+    "Choose a date and time in the future to send the mail": "送信する日時は未来にしてください",
+    "Add the email address to send to before scheduling": "予約する前に送信先のメールアドレスを入力してください",
+    "Write a subject before scheduling": "予約する前に件名を入力してください",
+    "Confirm every check before scheduling": "予約する前にすべての項目を確認してください",
+    "The date to send the mail is not valid": "送信日時が正しくありません"
 }

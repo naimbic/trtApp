@@ -4441,5 +4441,18 @@ export default {
     "Edit and delete events of others": "تعديل وحذف أحداث الآخرين",
     "Anyone who can open the Calendar adds events": "كل من يستطيع فتح التقويم يضيف أحداثًا",
     "Everyone edits their own events": "يعدّل كل شخص أحداثه",
-    "Everyone deletes their own events": "يحذف كل شخص أحداثه"
+    "Everyone deletes their own events": "يحذف كل شخص أحداثه",
+    "Send it automatically at a chosen date and time": "إرساله تلقائيًا في التاريخ والوقت المحددين",
+    "It is sent at the first run of the automatic tasks after that time, from the address chosen above. Every check must be confirmed first.": "يُرسل عند أول تشغيل للمهام التلقائية بعد ذلك الوقت، من العنوان المختار أعلاه. يجب تأكيد كل الفحوصات أولاً.",
+    "Scheduled for": "مجدول في",
+    "Not sent automatically": "لم يُرسل تلقائيًا",
+    "The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.": "تغيّر النص، فأُلغيت الفحوصات والجدولة. أكّد الفحوصات ثم جدوِله مرة أخرى.",
+    "Scheduled lead mails": "رسائل العملاء المحتملين المجدولة",
+    "Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).": "يرسل مسودات بريد العملاء المحتملين التي لها تاريخ ووقت إرسال تلقائي (نافذة العميل المحتمل ← البريد). تخرج المسودة عند أول تشغيل بعد موعدها، لذا يجب تشغيل المهام التلقائية كثيرًا (مثلاً كل 5 دقائق).",
+    "Send the scheduled lead mails": "إرسال رسائل العملاء المحتملين المجدولة",
+    "Choose a date and time in the future to send the mail": "اختر تاريخًا ووقتًا مستقبليين للإرسال",
+    "Add the email address to send to before scheduling": "أضف عنوان المستلم قبل الجدولة",
+    "Write a subject before scheduling": "اكتب موضوعًا قبل الجدولة",
+    "Confirm every check before scheduling": "أكّد كل فحص قبل الجدولة",
+    "The date to send the mail is not valid": "تاريخ الإرسال غير صالح"
 }

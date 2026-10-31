@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.128.1',
+        date: '2026-10-31',
+        title: 'Open in a new browser tab from the menus',
+        items: [
+            'The three-dots menu of every card on the boards (tasks, leads, projects...) now has "Open in new tab" under "Open".',
+            'Right-click on any card, row or button that opens a record now shows a small menu with "Open in new tab" and "Copy link" (the browser\'s own menu has no such entry on those, because they are not real links). Ctrl/Cmd + click and middle click keep working.',
+        ],
+    },
+    {
         version: '0.128.0',
         date: '2026-10-31',
         title: 'Chat: reply to a message; draft Edit scrolls to the form',

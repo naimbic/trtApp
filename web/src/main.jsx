@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
-import { loadStaffLang } from '@/utils/t'
+import { loadStaffLang, tr } from '@/utils/t'
 import { useThemeStore } from '@/store/themeStore'
 import { dropCache } from '@/utils/offlineCache'
 import { mentionDirectory, mentionedIds, textsOf } from '@/utils/mentions'
@@ -60,6 +60,29 @@ function openInNewTab(e) {
 }
 document.addEventListener('click', (e) => { if (e.ctrlKey || e.metaKey) openInNewTab(e) }, true)
 document.addEventListener('auxclick', (e) => { if (e.button === 1) openInNewTab(e) }, true)
+// Right-click on a record (card, row, button that opens a page) offers Open in new tab and Copy link, like a real link would
+let ctxMenu = null
+const closeCtx = () => { ctxMenu?.remove(); ctxMenu = null }
+document.addEventListener('contextmenu', (e) => {
+    closeCtx()
+    const el = e.target.closest?.('[data-href]')
+    if (!el || e.target.closest?.('a[href], input, textarea, [contenteditable=true]') || /^\/portal(\/|$)/.test(window.location.pathname)) return
+    e.preventDefault()
+    const url = new URL(el.getAttribute('data-href'), window.location.origin).href
+    const menu = document.createElement('div')
+    menu.className = 'rp-portal rp-tmenu'
+    menu.setAttribute('role', 'menu')
+    menu.style.cssText = `position:fixed;z-index:100001;top:${Math.min(e.clientY, window.innerHeight - 100)}px;left:${Math.min(e.clientX, window.innerWidth - 200)}px`
+    const row = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem'); b.className = 'rp-tm-row'; b.innerHTML = '<span></span>'; b.firstChild.textContent = label; b.onclick = () => { closeCtx(); fn() }; menu.appendChild(b) }
+    row(tr('Open in new tab'), () => window.open(url, '_blank', 'noopener'))
+    row(tr('Copy link'), () => { navigator.clipboard?.writeText(url).catch(() => {}) })
+    document.body.appendChild(menu)
+    ctxMenu = menu
+}, true)
+document.addEventListener('mousedown', (e) => { if (ctxMenu && !ctxMenu.contains(e.target)) closeCtx() }, true)
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCtx() }, true)
+window.addEventListener('scroll', closeCtx, true)
+window.addEventListener('blur', closeCtx)
 document.addEventListener('mousedown', (e) => { if (e.button === 1 && e.target.closest?.('[data-href]')) e.preventDefault() }, true) // no auto-scroll cursor on a middle click
 
 // The dictionary of the saved language (and right-to-left for Arabic) must be ready before the app's modules run:

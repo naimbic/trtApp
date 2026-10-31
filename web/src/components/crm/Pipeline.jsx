@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { TbCalendar, TbMessageCircle, TbInbox, TbDots, TbChevronRight, TbCheck, TbArrowUpRight, TbPlus, TbArrowLeft } from 'react-icons/tb'
+import { TbCalendar, TbMessageCircle, TbInbox, TbDots, TbChevronRight, TbCheck, TbArrowUpRight, TbExternalLink, TbPlus, TbArrowLeft } from 'react-icons/tb'
 import cn from '@/utils/classNames'
 import { tr, trn } from '@/utils/t'
 
@@ -170,7 +170,7 @@ const Pipeline = ({ columns, ends = [], onMove, onOpen, onAdd, onMoveTo, actions
                 )}
             </DragDropContext>
             <AnimatePresence>
-                {menu && menuCol && <TileMenu key="menu" anchor={menu.el} item={menu.item} col={menuCol} columns={columns} actions={[{ label: tr('Open'), icon: <TbArrowUpRight />, onClick: () => onOpen?.(menu.item) }, ...(actions?.(menu.item, menuCol) || [])]} onMoveTo={onMoveTo} onClose={() => setMenu(null)} />}
+                {menu && menuCol && <TileMenu key="menu" anchor={menu.el} item={menu.item} col={menuCol} columns={columns} actions={[{ label: tr('Open'), icon: <TbArrowUpRight />, onClick: () => onOpen?.(menu.item) }, ...(menu.item.href ? [{ label: tr('Open in new tab'), icon: <TbExternalLink />, onClick: () => window.open(menu.item.href, '_blank', 'noopener') }] : []), ...(actions?.(menu.item, menuCol) || [])]} onMoveTo={onMoveTo} onClose={() => setMenu(null)} />}
             </AnimatePresence>
         </div>
     )

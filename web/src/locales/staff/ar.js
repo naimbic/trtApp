@@ -4426,5 +4426,6 @@ export default {
     "Billing and options": "الفوترة والخيارات",
     "Replying to": "الرد على",
     "You": "أنت",
-    "Voice message": "رسالة صوتية"
+    "Voice message": "رسالة صوتية",
+    "Open in new tab": "فتح في علامة تبويب جديدة"
 }

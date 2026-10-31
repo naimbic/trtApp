@@ -4426,5 +4426,6 @@ export default {
     "Billing and options": "Facturation et options",
     "Replying to": "Réponse à",
     "You": "Vous",
-    "Voice message": "Message vocal"
+    "Voice message": "Message vocal",
+    "Open in new tab": "Ouvrir dans un nouvel onglet"
 }

@@ -4426,5 +4426,6 @@ export default {
     "Billing and options": "請求とオプション",
     "Replying to": "返信先:",
     "You": "あなた",
-    "Voice message": "音声メッセージ"
+    "Voice message": "音声メッセージ",
+    "Open in new tab": "新しいタブで開く"
 }

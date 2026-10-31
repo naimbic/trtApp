@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText } from 'react-icons/tb'
+import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -77,18 +77,22 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
     )
 }
 
-const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', subject: '', body: '' })
+const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', note: '', checks: [], subject: '', body: '' })
 
 /** Emails sent to or received from the lead, written in the editor with their date and time. Mails read by the lead mailbox land here too. */
-export const LeadMails = ({ leadId, mails, senders = [], canEdit, run }) => {
+export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit, run }) => {
     const [form, setForm] = useState(null) // { id?, ...fields }
     const [del, setDel] = useState(null)
     const [send, setSend] = useState(null)
     const set = (p) => setForm((f) => ({ ...f, ...p }))
     const draft = form?.direction === 'draft'
     const [more, setMore] = useState(false)
+    const [newCheck, setNewCheck] = useState('')
+    const addCheck = () => { const t = newCheck.trim(); if (t) { set({ checks: [...(form.checks || []), { text: t, done: false }] }); setNewCheck('') } }
+    const [toggling, setToggling] = useState(false) // one click at a time: each one rewrites the list of checks
+    const toggle = (m, i) => { if (toggling) return; setToggling(true); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails/send`, { method: 'POST', body: { action: 'check', mailId: m.id, index: i, done: !m.checks[i].done } }), null).finally(() => setToggling(false)) }
     const save = () => run(() => api(`/api/crm/pipeline/leads/${leadId}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString() } }).then((r) => { if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
-    const newDraft = () => { setMore(false); setForm({ ...MAIL_EMPTY(), direction: 'draft', from: senders[0] || '' }) }
+    const newDraft = () => { setMore(false); setForm({ ...MAIL_EMPTY(), direction: 'draft', from: senders[0] || '', to: leadEmail }) }
     return (
         <div className="space-y-4">
             {canEdit && !form && <div className="flex gap-2"><Button size="sm" icon={<TbPlus />} onClick={() => setForm(MAIL_EMPTY())}>{tr("Log a mail")}</Button><Button size="sm" icon={<TbFileText />} onClick={newDraft}>{tr("New draft")}</Button></div>}
@@ -110,10 +114,22 @@ export const LeadMails = ({ leadId, mails, senders = [], canEdit, run }) => {
                     {draft && <p className="text-xs text-gray-500">{tr("Several addresses can be separated by commas. The date becomes the sending time when you send.")}</p>}
                     <div><L>{tr("Subject")}</L><Input size="sm" value={form.subject} onChange={(e) => set({ subject: e.target.value })} /></div>
                     <div><L>{tr("Mail")}</L><RichEditor minHeight={140} value={form.body} placeholder={tr("Paste or write the mail here")} onChange={(html) => set({ body: html })} /></div>
+                    {draft && (
+                        <div className="space-y-2 rounded-lg border border-red-200 bg-red-50/60 p-2.5 dark:border-red-500/30 dark:bg-red-500/5">
+                            <div><L>{tr("Note for whoever sends it")}</L><Input size="sm" textArea rows={2} value={form.note || ''} placeholder={tr("What to do, change or check before sending (not sent to the lead)")} onChange={(e) => set({ note: e.target.value })} /></div>
+                            <div>
+                                <L>{tr("Checks to confirm before sending")}</L>
+                                <div className="mb-1.5 flex flex-wrap gap-1.5">
+                                    {(form.checks || []).map((c, i) => <span key={i} className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">{c.text}<button type="button" aria-label={tr("Remove")} onClick={() => set({ checks: form.checks.filter((_, j) => j !== i) })}><TbX /></button></span>)}
+                                </div>
+                                <div className="flex gap-2"><Input size="sm" value={newCheck} placeholder={tr("Add a check, then press Enter")} onChange={(e) => setNewCheck(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCheck() } }} /><Button size="sm" onClick={addCheck}>{tr("Add")}</Button></div>
+                            </div>
+                        </div>
+                    )}
                     {draft && (form.id
                         ? <div><L>{tr("Attachments")}</L><AttachmentsPanel relType="leadmail" relId={form.id} canEdit maxMb={10} hint={tr("Up to 10 MB per file, 20 MB in all.")} /></div>
                         : <p className="text-xs text-gray-500">{tr("Save the draft first, then you can attach files.")}</p>)}
-                    <div className="flex flex-wrap gap-2"><Button size="sm" variant="solid" onClick={save}>{draft ? tr("Save draft") : tr("Save mail")}</Button>{draft && form.id && <Button size="sm" icon={<TbSend />} onClick={() => setSend({ id: form.id, subject: form.subject, to: form.to })}>{tr("Send now")}</Button>}<Button size="sm" onClick={() => setForm(null)}>{draft && form.id ? tr("Close") : tr("Cancel")}</Button></div>
+                    <div className="flex flex-wrap gap-2"><Button size="sm" variant="solid" onClick={save}>{draft ? tr("Save draft") : tr("Save mail")}</Button><Button size="sm" onClick={() => setForm(null)}>{draft && form.id ? tr("Close") : tr("Cancel")}</Button></div>
                 </div>
             )}
             {mails.map((m) => (
@@ -126,10 +142,18 @@ export const LeadMails = ({ leadId, mails, senders = [], canEdit, run }) => {
                         <div className="shrink-0 text-end text-xs text-gray-500"><div>{when(m.date)}</div>{m.source === 'mailbox' && <div className="text-[11px]">{tr("from the mailbox")}</div>}</div>
                     </div>
                     {m.body && <div className="max-h-56 overflow-auto"><RichView html={m.body} /></div>}
-                    {m.direction === 'draft' && m.canEdit && (canEdit || !m.mine) && <div className="mt-2"><Button size="sm" variant="solid" icon={<TbSend />} onClick={() => setSend(m)}>{tr("Send now")}</Button></div>}
+                    {m.direction === 'draft' && (m.note || m.checks.length > 0) && (
+                        <div className="mt-2 space-y-1.5 rounded-lg border border-red-200 bg-red-50/60 p-2 dark:border-red-500/30 dark:bg-red-500/5">
+                            {m.note && <p className="text-xs font-medium text-red-700 dark:text-red-300">{m.note}</p>}
+                            {m.checks.length > 0 && <div className="flex flex-wrap gap-1.5">{m.checks.map((c, i) => (
+                                <button key={i} type="button" disabled={!m.canEdit || toggling} onClick={() => toggle(m, i)} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold transition ${c.done ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>{c.done ? <TbSquareCheck /> : <TbSquare />}{c.text}</button>
+                            ))}</div>}
+                        </div>
+                    )}
+                    {m.direction === 'draft' && m.canEdit && (canEdit || !m.mine) && (() => { const left = m.checks.filter((c) => !c.done).length; return <div className="mt-2 flex items-center gap-2"><Button size="sm" variant="solid" icon={<TbSend />} disabled={left > 0} onClick={() => setSend(m)}>{tr("Send now")}</Button>{left > 0 && <span className="text-xs text-red-600">{tr("Confirm the red checks first")} ({left})</span>}</div> })()}
                     {(m.canEdit || m.canDelete) && (
                         <div className="absolute end-2 bottom-2 flex gap-0.5 opacity-0 transition group-hover:opacity-100">
-                            {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, subject: m.subject, body: m.body })} />}
+                            {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, note: m.note, checks: m.checks, subject: m.subject, body: m.body })} />}
                             {m.canDelete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} />}
                         </div>
                     )}

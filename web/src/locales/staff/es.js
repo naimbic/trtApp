@@ -4411,5 +4411,12 @@ export default {
     "Choose the address to send from in the list": "Elija en la lista la dirección desde la que enviar",
     "The attached files are larger than 20 MB together": "Los archivos adjuntos superan los 20 MB en total",
     "Other \"send from\" addresses (lead mails)": "Otras direcciones de envío (correos de leads)",
-    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Direcciones desde las que se puede enviar un correo de lead, además de la del servidor de correo y el correo del propio empleado. Su servidor de correo debe permitirlas. Sepárelas con comas."
+    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Direcciones desde las que se puede enviar un correo de lead, además de la del servidor de correo y el correo del propio empleado. Su servidor de correo debe permitirlas. Sepárelas con comas.",
+    "Note for whoever sends it": "Nota para quien lo envía",
+    "What to do, change or check before sending (not sent to the lead)": "Qué hacer, cambiar o comprobar antes de enviar (no se envía al lead)",
+    "Checks to confirm before sending": "Comprobaciones a confirmar antes de enviar",
+    "Add a check, then press Enter": "Añada una comprobación y pulse Enter",
+    "Confirm the red checks first": "Confirme primero las comprobaciones en rojo",
+    "Confirm every check before sending": "Confirme cada comprobación antes de enviar",
+    "Check not found": "Comprobación no encontrada"
 }

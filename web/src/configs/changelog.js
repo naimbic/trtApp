@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.125.0',
+        date: '2026-10-31',
+        title: 'Lead mail drafts: default sender, lead address, red checks',
+        items: [
+            'The default "send from" address of a draft is now hello@trtmaroc.com (first in the list; change the list in Settings → Email), and a new draft already has the lead\'s email in To.',
+            'A draft can carry a note and a list of checks (what to do, change or check before sending). They show in red on the draft; each one must be confirmed (click it, it turns green) before the Send now button becomes active. The note is never sent to the lead.',
+            'Changing the subject, the text, the addresses or the sender of a draft cancels the confirmations, so the checks are confirmed again on the final text. The server refuses to send while a check is not confirmed.',
+        ],
+    },
+    {
         version: '0.124.0',
         date: '2026-10-30',
         title: 'Lead mail drafts: sender, Cc/Bcc, attachments',

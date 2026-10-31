@@ -134,7 +134,7 @@ export async function getLead(id) {
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
-        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.fromAddress || '', to: m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
+        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.fromAddress || '', to: m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
         senders: await senderOptions(a),
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
@@ -269,7 +269,7 @@ const mailData = (b) => {
     if (!subject && !body) throw fail('Give the mail a subject or write its text')
     const date = b.date ? new Date(b.date) : new Date()
     if (Number.isNaN(+date)) throw fail('The date of the mail is not valid')
-    return { direction: b.direction === 'out' ? 'out' : b.direction === 'draft' ? 'draft' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), ccAddress: nz(b.cc), bccAddress: nz(b.bcc), replyTo: nz(b.replyTo), body: body || null, date }
+    return { direction: b.direction === 'out' ? 'out' : b.direction === 'draft' ? 'draft' : 'in', subject, fromAddress: nz(b.from), toAddress: nz(b.to), ccAddress: nz(b.cc), bccAddress: nz(b.bcc), replyTo: nz(b.replyTo), note: nz(b.note) ? String(b.note).trim().slice(0, 1000) : null, checks: (Array.isArray(b.checks) ? b.checks : []).map((c) => ({ text: String(c?.text || '').trim().slice(0, 200), done: !!c?.done })).filter((c) => c.text).slice(0, 10), body: body || null, date }
 }
 
 /** Logs an email sent to / received from the lead (written in the editor): date and time, from, to, subject, text. */
@@ -284,6 +284,8 @@ export async function saveMail(id, body, mailId) {
         if (!m) throw fail('Mail not found', 404)
         if (!mayChangeItem(a, m.addedFrom, 'mails')) throw fail('You can only edit the mails you logged', 403)
         if (data.direction === 'draft' && m.direction !== 'draft') throw fail('A mail that is already sent or received cannot go back to a draft')
+        // changing what will be sent cancels the confirmations: the checks must be confirmed again on the new text
+        if (m.direction === 'draft' && ['subject', 'fromAddress', 'toAddress', 'ccAddress', 'bccAddress', 'replyTo', 'body'].some((k) => (m[k] || null) !== (data[k] || null))) data.checks = data.checks.map((c) => ({ ...c, done: false }))
         await prisma.crmLeadMail.update({ where: { id: mailId }, data })
         return { success: true, id: mailId }
     }
@@ -298,14 +300,31 @@ export async function saveMail(id, body, mailId) {
 const MAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/
 const addrList = (v) => String(v || '').split(/[,;\s]+/).filter(Boolean)
 const MAX_ATTACH_MB = 20
+const DEFAULT_SENDER = 'hello@trtmaroc.com' // the first and default "send from" address until Settings → Email says otherwise
 
 /** The addresses a lead mail may be sent from: the mail server address, the staff member's own email and the extra ones set in Settings → Email. */
 async function senderOptions(a) {
     const { getSmtp } = await import('@/lib/crm/mailer')
     const [smtp, opt, me] = await Promise.all([getSmtp(), prisma.crmOption.findUnique({ where: { name: 'lead_mail_senders' } }), a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true } }) : null])
     const seen = new Set(), out = []
-    for (const e of [smtp.email, me?.email, ...addrList(opt?.value)]) { const k = String(e || '').trim().toLowerCase(); if (k && MAIL_RE.test(k) && !seen.has(k)) { seen.add(k); out.push(String(e).trim()) } }
+    for (const e of [...addrList(opt?.value || DEFAULT_SENDER), smtp.email, me?.email]) { const k = String(e || '').trim().toLowerCase(); if (k && MAIL_RE.test(k) && !seen.has(k)) { seen.add(k); out.push(String(e).trim()) } }
     return out
+}
+
+/** Confirms (or un-confirms) one check of a draft. */
+export async function checkDraftMail(id, mailId, index, done) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    const lead = await loadOne(id, a)
+    const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
+    if (!m) throw fail('Mail not found', 404)
+    if (m.direction !== 'draft') throw fail('This mail is not a draft')
+    if (!mayEdit(a, lead) && !a.can('edit_others_mails')) throw fail('You can only edit your own leads', 403)
+    const checks = Array.isArray(m.checks) ? m.checks.map((c) => ({ ...c })) : []
+    if (!checks[index]) throw fail('Check not found', 404)
+    checks[index].done = !!done
+    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { checks } })
+    return { success: true }
 }
 
 /** Removes the files attached to mails (the rows and the stored objects). */
@@ -334,6 +353,8 @@ export async function sendDraftMail(id, mailId) {
     const bad = [...to, ...cc, ...bcc, ...reply].find((e) => !MAIL_RE.test(e))
     if (bad) throw fail(`"${bad}" is not a valid email address`)
     if (!m.subject) throw fail('Write a subject before sending')
+    const pending = (Array.isArray(m.checks) ? m.checks : []).filter((c) => !c.done).length
+    if (pending) throw fail('Confirm every check before sending')
     const senders = await senderOptions(a)
     const from = (m.fromAddress || '').trim() || senders[0] || ''
     if (!from || !senders.some((e) => e.toLowerCase() === from.toLowerCase())) throw fail('Choose the address to send from in the list')

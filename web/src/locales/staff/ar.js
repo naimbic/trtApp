@@ -4411,5 +4411,12 @@ export default {
     "Choose the address to send from in the list": "اختر عنوان الإرسال من القائمة",
     "The attached files are larger than 20 MB together": "المرفقات تتجاوز 20 ميغابايت في المجموع",
     "Other \"send from\" addresses (lead mails)": "عناوين إرسال أخرى (بريد العملاء المحتملين)",
-    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "العناوين التي يمكن إرسال بريد العميل المحتمل منها، إضافة إلى عنوان خادم البريد وبريد الموظف نفسه. يجب أن يسمح بها خادم البريد. افصل بينها بفواصل."
+    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "العناوين التي يمكن إرسال بريد العميل المحتمل منها، إضافة إلى عنوان خادم البريد وبريد الموظف نفسه. يجب أن يسمح بها خادم البريد. افصل بينها بفواصل.",
+    "Note for whoever sends it": "ملاحظة لمن سيرسل",
+    "What to do, change or check before sending (not sent to the lead)": "ما يجب فعله أو تعديله أو التحقق منه قبل الإرسال (لا يُرسل إلى العميل المحتمل)",
+    "Checks to confirm before sending": "فحوصات يجب تأكيدها قبل الإرسال",
+    "Add a check, then press Enter": "أضف فحصًا ثم اضغط Enter",
+    "Confirm the red checks first": "أكّد الفحوصات الحمراء أولاً",
+    "Confirm every check before sending": "أكّد كل فحص قبل الإرسال",
+    "Check not found": "الفحص غير موجود"
 }

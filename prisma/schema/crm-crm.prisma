@@ -664,6 +664,9 @@ model CrmLeadMail {
   ccAddress   String?
   bccAddress  String?
   replyTo     String?
+  /// a draft's note for whoever sends it, and the checks to confirm first: [{ text, done }]
+  note        String?
+  checks      Json?
   body        String?
   /// when the email was sent or received (date and time)
   date        DateTime

@@ -169,7 +169,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                         <div className="pt-4">
                             <Tabs.TabContent value="profile">{profile}</Tabs.TabContent>
                             {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} /></Tabs.TabContent>}
-                            <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} senders={detail.senders || []} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
+                            <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} senders={detail.senders || []} leadEmail={detail.lead?.email || ''} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
                             <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
                             <Tabs.TabContent value="files"><div className="pt-1"><AttachmentsPanel relType="lead" relId={id} canEdit={!!detail.can.edit} /></div></Tabs.TabContent>
                             <Tabs.TabContent value="notes">{notes}</Tabs.TabContent>

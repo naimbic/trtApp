@@ -4411,5 +4411,12 @@ export default {
     "Choose the address to send from in the list": "リストから送信元アドレスを選んでください",
     "The attached files are larger than 20 MB together": "添付ファイルの合計が20MBを超えています",
     "Other \"send from\" addresses (lead mails)": "その他の送信元アドレス（リードのメール）",
-    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "メールサーバーのアドレスとスタッフ本人のメールに加えて、リードのメールの送信元にできるアドレス。メールサーバーが許可している必要があります。複数はカンマで区切ります。"
+    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "メールサーバーのアドレスとスタッフ本人のメールに加えて、リードのメールの送信元にできるアドレス。メールサーバーが許可している必要があります。複数はカンマで区切ります。",
+    "Note for whoever sends it": "送信する人へのメモ",
+    "What to do, change or check before sending (not sent to the lead)": "送信前にすること・変更・確認すること（リードには送信されません）",
+    "Checks to confirm before sending": "送信前に確認する項目",
+    "Add a check, then press Enter": "項目を追加してEnterを押してください",
+    "Confirm the red checks first": "先に赤い項目を確認してください",
+    "Confirm every check before sending": "送信前にすべての項目を確認してください",
+    "Check not found": "項目が見つかりません"
 }

@@ -1534,5 +1534,7 @@
  "Choose the address to send from in the list",
  "The attached files are larger than 20 MB together",
  "Other \"send from\" addresses (lead mails)",
- "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas."
+ "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.",
+ "Confirm every check before sending",
+ "Check not found"
 ]

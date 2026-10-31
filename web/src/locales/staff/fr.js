@@ -4411,5 +4411,12 @@ export default {
     "Choose the address to send from in the list": "Choisissez dans la liste l'adresse d'envoi",
     "The attached files are larger than 20 MB together": "Les fichiers joints dépassent 20 Mo au total",
     "Other \"send from\" addresses (lead mails)": "Autres adresses d'expédition (e-mails des prospects)",
-    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Adresses depuis lesquelles un e-mail de prospect peut être envoyé, en plus de l'adresse du serveur de messagerie et de l'e-mail du membre du personnel. Votre serveur de messagerie doit les autoriser. Séparez-les par des virgules."
+    "Addresses a lead mail can be sent from, besides the mail server address and the staff member's own email. Your mail server must allow them. Separate several with commas.": "Adresses depuis lesquelles un e-mail de prospect peut être envoyé, en plus de l'adresse du serveur de messagerie et de l'e-mail du membre du personnel. Votre serveur de messagerie doit les autoriser. Séparez-les par des virgules.",
+    "Note for whoever sends it": "Note pour la personne qui envoie",
+    "What to do, change or check before sending (not sent to the lead)": "Quoi faire, modifier ou vérifier avant l'envoi (non envoyé au prospect)",
+    "Checks to confirm before sending": "Vérifications à confirmer avant l'envoi",
+    "Add a check, then press Enter": "Ajoutez une vérification, puis appuyez sur Entrée",
+    "Confirm the red checks first": "Confirmez d'abord les vérifications en rouge",
+    "Confirm every check before sending": "Confirmez chaque vérification avant d'envoyer",
+    "Check not found": "Vérification introuvable"
 }

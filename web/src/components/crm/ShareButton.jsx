@@ -1,6 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useState } from 'react'
-import { TbShare3, TbLink, TbCopy, TbMail, TbDownload, TbBrandWhatsapp, TbBrandTelegram, TbBrandLinkedin, TbBrandX, TbBrandFacebook } from 'react-icons/tb'
+import { TbShare3, TbExternalLink, TbLink, TbCopy, TbMail, TbDownload, TbBrandWhatsapp, TbBrandTelegram, TbBrandLinkedin, TbBrandX, TbBrandFacebook } from 'react-icons/tb'
 import RowMenu from '@/components/crm/RowMenu'
 import Button from '@/components/ui/Button'
 import { notify } from '@/views/crm/kit/api'
@@ -17,7 +17,7 @@ const open = (href) => window.open(href, '_blank', 'noopener,noreferrer')
 /** Every way to hand something over: this device's own share sheet (mail, messages, AirDrop, apps...), copy, the common messengers, mail and social networks. */
 export const shareItems = ({ url, title, text, file }) => {
     const link = absUrl(url || window.location.href), t = title || '', msg = [text, link].filter(Boolean).join('\n'), enc = encodeURIComponent
-    const items = []
+    const items = [{ label: tr('Open in new tab'), icon: <TbExternalLink />, onClick: () => open(link) }]
     if (typeof navigator !== 'undefined' && navigator.share) {
         items.push({ label: tr('Share…'), icon: <TbShare3 />, onClick: async () => {
             try {

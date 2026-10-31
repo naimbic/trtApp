@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.128.3',
+        date: '2026-10-31',
+        title: 'Share menu: Open in new tab',
+        items: [
+            'The share icon that appears on a link (and on records, files and images) now has "Open in new tab" as its first item, above Copy link, WhatsApp, Email and the others.',
+        ],
+    },
+    {
         version: '0.128.2',
         date: '2026-10-31',
         title: 'Links in comments and texts: Open in new tab in the right-click menu',

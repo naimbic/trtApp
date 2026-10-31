@@ -4455,5 +4455,11 @@ export default {
     "Write a subject before scheduling": "اكتب موضوعًا قبل الجدولة",
     "Confirm every check before scheduling": "أكّد كل فحص قبل الجدولة",
     "The date to send the mail is not valid": "تاريخ الإرسال غير صالح",
-    "Send automatically": "إرسال تلقائي"
+    "Send automatically": "إرسال تلقائي",
+    "Remind me": "ذكّرني",
+    "You are told on the bell, by email and on Telegram or WhatsApp (if set in your profile) at the first run of the automatic tasks after that time. Only you see this note.": "سيتم إعلامك عبر الجرس والبريد وتيليجرام أو واتساب (إن كان مضبوطًا في ملفك) عند أول تشغيل للمهام التلقائية بعد ذلك الوقت. أنت وحدك ترى هذه الملاحظة.",
+    "Note reminders": "تذكيرات الملاحظات",
+    "A note with \"Remind me at\" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).": "الملاحظة التي لها «ذكّرني» تُعلم صاحبها عبر الجرس والبريد وتيليجرام / واتساب (إن كان مضبوطًا في ملفه) عند أول تشغيل بعد ذلك الوقت، لذا يجب تشغيل المهام التلقائية كثيرًا (مثلاً كل 5 دقائق).",
+    "Send the note reminders": "إرسال تذكيرات الملاحظات",
+    "Remind me at": "ذكّرني في"
 }

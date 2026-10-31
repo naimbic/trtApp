@@ -8,6 +8,7 @@ import { runRecurringTasks, stopForgottenTimers } from '@/lib/crm/recurringTasks
 import { normalizeSchedule, crontabExpr, nextRun } from '@/lib/crm/cronSchedule'
 import { docInfo } from '@/lib/crm/cronPreview'
 import { leadMailJob } from '@/lib/crm/leadMail'
+import { noteRemindersJob } from '@/lib/crm/noteReminders'
 
 /**
  * The cron job. Call it often (every 5–15 minutes); each task does its work once a day at the hour set in
@@ -16,7 +17,7 @@ import { leadMailJob } from '@/lib/crm/leadMail'
 const DAY = 86400000
 const num = (v) => Number(v) || 0
 
-const JOB_SWITCH = ['invoices', 'estimates', 'proposals', 'contracts', 'expenses', 'freelance', 'tasks', 'tickets', 'leadmail', 'leadmailsend', 'cleanup'].map((k) => `cron_job_${k}`)
+const JOB_SWITCH = ['invoices', 'estimates', 'proposals', 'contracts', 'expenses', 'freelance', 'tasks', 'tickets', 'leadmail', 'leadmailsend', 'notereminders', 'cleanup'].map((k) => `cron_job_${k}`)
 const OPTION_KEYS = [...JOB_SWITCH, 'automatically_stop_task_timer_after_hours', 'default_timezone', 'cron_key', 'cron_enabled', 'invoice_auto_operations_hour', 'invoice_due_notice_before', 'invoice_due_notice_resend_after', 'automatically_send_invoice_overdue_reminder_after', 'automatically_resend_invoice_overdue_reminder_after', 'create_invoice_from_recurring_only_on_paid_invoices', 'new_recurring_invoice_action', 'invoice_due_after',
     'estimates_auto_operations_hour', 'send_estimate_expiry_reminder_before', 'proposals_auto_operations_hour', 'send_proposal_expiry_reminder_before', 'contracts_auto_operations_hour', 'contract_expiration_before', 'tasks_reminder_notification_hour', 'tasks_reminder_notification_before', 'autoclose_tickets_after', 'delete_activity_log_older_then',
     'cron_last_invoices', 'cron_last_estimates', 'cron_last_proposals', 'cron_last_contracts', 'cron_last_tasks', 'cron_last_expenses', 'expenses_auto_operations_hour', 'cron_last_freelance', 'freelance_auto_operations_hour', 'cron_last_cleanup', 'last_cron_run']
@@ -240,6 +241,7 @@ const JOBS = [
     { key: 'cleanup', label: 'Cleanup', hour: null, daily: true, run: cleanupJob },
     { key: 'tickets', label: 'Tickets', hour: null, run: ticketsJob },
     { key: 'leadmail', label: 'Lead emails', hour: null, run: leadMailJob },
+    { key: 'notereminders', label: 'Note reminders', hour: null, run: noteRemindersJob },
     { key: 'leadmailsend', label: 'Scheduled lead mails', hour: null, run: async ({ lines, dry }) => { const { sendScheduledMails } = await import('@/lib/crm/leadsApi'); lines.push(...(await sendScheduledMails({ dry }))) } },
 ]
 

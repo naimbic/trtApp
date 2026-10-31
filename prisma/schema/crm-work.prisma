@@ -493,6 +493,10 @@ model CrmQuickNote {
   title       String
   description String?
   addedFrom   String?  @db.ObjectId // staff
+  /// the note reminds its owner at this moment (bell, email, Telegram/WhatsApp)
+  remindAt    DateTime?
+  /// the remindAt value already notified (a new date notifies again)
+  remindedFor DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -4455,5 +4455,11 @@ export default {
     "Write a subject before scheduling": "予約する前に件名を入力してください",
     "Confirm every check before scheduling": "予約する前にすべての項目を確認してください",
     "The date to send the mail is not valid": "送信日時が正しくありません",
-    "Send automatically": "自動送信"
+    "Send automatically": "自動送信",
+    "Remind me": "リマインドする",
+    "You are told on the bell, by email and on Telegram or WhatsApp (if set in your profile) at the first run of the automatic tasks after that time. Only you see this note.": "その時刻以降の最初の自動タスク実行時に、ベル、メール、Telegram または WhatsApp（プロフィールで設定している場合）でお知らせします。このメモはあなただけに表示されます。",
+    "Note reminders": "メモのリマインダー",
+    "A note with \"Remind me at\" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).": "「リマインドする」を設定したメモは、その時刻以降の最初の実行時に、持ち主へベル、メール、Telegram / WhatsApp（プロフィールで設定している場合）で通知します。自動タスクは頻繁に（例: 5分ごと）実行する必要があります。",
+    "Send the note reminders": "メモのリマインダーを送信する",
+    "Remind me at": "リマインド日時"
 }

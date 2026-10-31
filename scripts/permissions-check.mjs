@@ -174,6 +174,23 @@ try {
     check('...and without a client account it falls back to the default account (or nothing), never to a wrong one', noBank.status === 200 && !/MA99 PRINT 1234/.test(noBank.text), String(noBank.status))
     const plain2 = await login(await makeUser('pm-plain', {}))
     check('without Settings, payment methods (bank details) are refused', (await plain2('GET', '/api/crm/payment-modes')).status === 403)
+    console.log('\n== Notes: a private reminder')
+    {
+        const nA = await makeUser('note-a', { tasks: ['view', 'create', 'edit'] }), nB = await makeUser('note-b', { tasks: ['view', 'create', 'edit'] })
+        const na = await login(nA), nb = await login(nB)
+        const when = new Date(Date.now() + 7200000).toISOString()
+        const note = await na('POST', '/api/crm/quick-notes', { title: 'zz note with reminder', description: 'call back', remindAt: when })
+        const NID = note.body?.id
+        if (NID) made.rows.unshift(['crmQuickNote', NID])
+        const row = NID ? await prisma.crmQuickNote.findUnique({ where: { id: NID } }) : null
+        check('a note can carry a reminder date and time', note.status < 300 && +new Date(row?.remindAt) === +new Date(when), String(note.status))
+        check('the reminder comes back with the note', NID && ((await na('GET', '/api/crm/quick-notes?pageSize=100')).body?.list || []).some((n) => n.id === NID && n.remindAt))
+        check('another member does not see the note (nor its reminder)', NID && !((await nb('GET', '/api/crm/quick-notes?pageSize=100')).body?.list || []).some((n) => n.id === NID))
+        check('another member cannot change its reminder', NID && (await nb('PATCH', `/api/crm/quick-notes/${NID}`, { remindAt: null })).status >= 400 && !!(await prisma.crmQuickNote.findUnique({ where: { id: NID } })).remindAt)
+        const off = NID ? await na('PATCH', `/api/crm/quick-notes/${NID}`, { remindAt: null }) : null
+        check('the reminder can be switched off', off?.status < 300 && !(await prisma.crmQuickNote.findUnique({ where: { id: NID } })).remindAt, String(off?.status))
+    }
+
     console.log('\n== Calendar: see every event, edit events of others')
     {
         const kA = await makeUser('cal-a', { calendar: ['view'] }), kB = await makeUser('cal-b', { calendar: ['view'] }), kC = await makeUser('cal-c', { calendar: ['view', 'view_all_events'] }), kD = await makeUser('cal-d', { calendar: ['view', 'edit_others_events'] })

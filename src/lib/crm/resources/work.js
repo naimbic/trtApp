@@ -555,6 +555,7 @@ const resources = [
         fields: [
             { key: 'title', label: 'Title', type: 'text', required: true, section: 'General' },
             { key: 'description', label: 'Description', type: 'textarea', section: 'General' },
+            { key: 'remindAt', label: 'Remind me at', type: 'datetime', section: 'General' },
         ],
         filters: [], children: [], actions: [],
     },

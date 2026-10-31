@@ -43,7 +43,7 @@ const NotesPage = () => {
                     <div key={n.id} role="button" tabIndex={0} onClick={() => setDlg({ open: true, note: n })} onKeyDown={(e) => { if (e.key === 'Enter') setDlg({ open: true, note: n }) }} className="group relative flex h-40 cursor-pointer flex-col rounded-2xl border border-gray-200 bg-white p-4 text-left transition hover:border-primary dark:border-gray-700 dark:bg-gray-800">
                         <span className="truncate pr-8 font-semibold text-gray-900 dark:text-gray-100">{n.title}</span>
                         <span className="mt-1 line-clamp-4 flex-1 whitespace-pre-line text-sm text-gray-500">{n.description}</span>
-                        <span className="mt-2 text-xs text-gray-400">{dayjs(n.createdAt).format('DD MMM YYYY, HH:mm')}</span>
+                        <span className="mt-2 text-xs text-gray-400">{dayjs(n.createdAt).format('DD MMM YYYY, HH:mm')}{n.remindAt ? <span className="ms-2 font-semibold text-amber-600">🔔 {dayjs(n.remindAt).format('DD MMM, HH:mm')}</span> : null}</span>
                         <div className="absolute right-2 top-2 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
                             <Dropdown placement="bottom-end" renderTitle={<button type="button" aria-label={tr('Options')} className="flex size-7 items-center justify-center rounded-full text-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><TbDots /></button>}>
                                 <Dropdown.Item eventKey="edit" onClick={() => setDlg({ open: true, note: n })}><span className="flex items-center"><TbPencil className="mr-2 text-lg" />{tr('Edit')}</span></Dropdown.Item>

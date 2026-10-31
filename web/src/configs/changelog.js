@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.132.0',
+        date: '2026-10-31',
+        title: 'Notes: reminder with a date and time',
+        items: [
+            'A note (your own private note, not shared) now has a "Remind me" switch. Turn it on and a date and time field appears on its right. At that time you are told on the bell, by email, and on Telegram or WhatsApp if you set them in your profile.',
+            'The reminder is sent at the first run of the automatic tasks after the chosen time (new task "Note reminders" in Settings → Cron job, on by default), once. Changing the date sets a new reminder. A note with a reminder shows a bell and its date on the board and on the Notes page.',
+        ],
+    },
+    {
         version: '0.131.1',
         date: '2026-10-31',
         title: 'Draft mail schedule: compact row',

@@ -4455,5 +4455,11 @@ export default {
     "Write a subject before scheduling": "Écrivez un objet avant de planifier",
     "Confirm every check before scheduling": "Confirmez chaque vérification avant de planifier",
     "The date to send the mail is not valid": "La date d'envoi n'est pas valide",
-    "Send automatically": "Envoi automatique"
+    "Send automatically": "Envoi automatique",
+    "Remind me": "Me le rappeler",
+    "You are told on the bell, by email and on Telegram or WhatsApp (if set in your profile) at the first run of the automatic tasks after that time. Only you see this note.": "Vous êtes prévenu par la cloche, par e-mail et sur Telegram ou WhatsApp (si configuré dans votre profil) au premier passage des tâches automatiques après cette heure. Vous seul voyez cette note.",
+    "Note reminders": "Rappels de notes",
+    "A note with \"Remind me at\" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).": "Une note avec « Me le rappeler » prévient son propriétaire par la cloche, par e-mail et sur Telegram / WhatsApp (si configuré dans son profil) au premier passage après l'heure : les tâches automatiques doivent donc tourner souvent (par exemple toutes les 5 minutes).",
+    "Send the note reminders": "Envoyer les rappels de notes",
+    "Remind me at": "Me le rappeler à"
 }

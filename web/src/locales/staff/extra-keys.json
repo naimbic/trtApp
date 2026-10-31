@@ -1551,5 +1551,9 @@
  "Add the email address to send to before scheduling",
  "Write a subject before scheduling",
  "Confirm every check before scheduling",
- "The date to send the mail is not valid"
+ "The date to send the mail is not valid",
+ "Note reminders",
+ "A note with \"Remind me at\" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).",
+ "Send the note reminders",
+ "Remind me at"
 ]

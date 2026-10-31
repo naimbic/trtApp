@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.135.0',
+        date: '2026-11-01',
+        title: 'API and webhooks: read and push data, and be told when something happens',
+        items: [
+            'New page for the super administrator: Setup → API and webhooks. API keys: create a key per program (n8n, a website form, your own code), choose exactly what it may do (read or create and change leads, clients, tasks, Grow ideas; read tickets, invoices, proposals, projects, team names), see when it was last used and its last calls, set an expiry date, revoke it at once. Only a hash of the key is stored; the key is shown once.',
+            'Public API at /api/v1: GET lists (search, paging, updated_since), GET one, POST to create, PATCH to change leads, clients, tasks and ideas; read-only for tickets, invoices, proposals, projects and staff. Nothing can be deleted, and passwords, bank details and private notes are never available. 120 calls a minute per key, one clear error format, every call logged for 30 days.',
+            'Webhooks (the other direction): the CRM calls your address when a lead is created or converted, a client or a task is created or completed, a support request is opened or answered by the client, or a Grow idea is created. Each call is signed (HMAC SHA-256 with a secret shown once), has an 8-second limit, is logged, can be tested with one click, and a webhook that fails 20 times in a row switches itself off. Addresses on a private network are refused.',
+            'A "How to use" tab explains it all with examples you can copy (curl, and how to check the signature in Node.js and PHP).',
+        ],
+    },
+    {
         version: '0.134.2',
         date: '2026-11-01',
         title: 'A proposal sent to a lead opens without signing in',

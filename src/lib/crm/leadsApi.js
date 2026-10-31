@@ -3,6 +3,7 @@ import { notifyComment, notifyNewMentions } from '@/lib/crm/mentionsApi'
 import { storeRich } from '@/lib/crm/richText'
 import { cleanEvent } from '@/lib/crm/calendar'
 import prisma from '@/lib/prisma'
+import { emit } from '@/lib/crm/webhooks'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { readSettings } from '@/lib/crm/appSettings'
 import { convertLeadToClient } from '@/server/actions/crm/crm/convertLead'
@@ -172,6 +173,7 @@ export async function saveLead(body, id) {
     const assigned = team[0] || null
     const followers = body.followerIds !== undefined ? [...new Set((body.followerIds || []).map(oid).filter(Boolean))] : []
     const lead = await prisma.crmLead.create({ data: { ...data, statusId, assigned, assignedIds: team, followerIds: followers, dateAssigned: assigned ? new Date() : null, addedFrom: a.staffId, leadOrder: 0, lost: false, junk: false, lastStatusChange: new Date() } })
+    emit('lead.created', { id: lead.id, name: lead.name, email: lead.email, phone: lead.phoneNumber, company: lead.company })
     await logActivity(lead.id, a, 'Lead created')
     if (data.description) await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text: data.description, prev: '', link: `/crm/leads/${lead.id}`, subject: data.name })
     return { success: true, id: lead.id }

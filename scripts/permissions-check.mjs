@@ -9,11 +9,11 @@ const prisma = new PrismaClient()
 const BASE = process.env.BASE_URL || 'http://localhost:3000'
 const made = { users: [], staff: [], rows: [], extraRows: [] } // rows: [model, id]
 
-async function makeUser(label, perms) {
+async function makeUser(label, perms, admin = false) {
     const email = `permcheck.${label}.${crypto.randomBytes(3).toString('hex')}@test.local`
     const password = crypto.randomBytes(12).toString('base64url')
-    const user = await prisma.user.create({ data: { name: `Check ${label}`, email, password: await bcrypt.hash(password, 10), authority: ['user'], role: 'user', status: 'active', image: '/img/avatars/thumb-1.jpg' } })
-    const staff = await prisma.crmStaff.create({ data: { userId: user.id, email, firstName: `Check${label}`, active: true, admin: false } })
+    const user = await prisma.user.create({ data: { name: `Check ${label}`, email, password: await bcrypt.hash(password, 10), authority: admin ? ['admin'] : ['user'], role: admin ? 'admin' : 'user', status: 'active', image: '/img/avatars/thumb-1.jpg' } })
+    const staff = await prisma.crmStaff.create({ data: { userId: user.id, email, firstName: `Check${label}`, active: true, admin } })
     const rows = Object.entries(perms).flatMap(([feature, caps]) => caps.map((capability) => ({ staffId: staff.id, feature, capability })))
     if (rows.length) await prisma.crmStaffPermission.createMany({ data: rows })
     made.users.push(user.id); made.staff.push(staff.id)
@@ -443,6 +443,78 @@ try {
         const tl = await crc('GET', '/api/crm/work/tasks/lookups')
         check('the New task form is pre-filled the same way (lookups give the Super Admin ids)', admins.every((i) => (tl.body?.defaults?.followAdminIds || []).includes(i)))
     }
+    console.log('\n== API: keys, scopes, read and push, webhooks')
+    {
+        const adm = await makeUser('api-admin', {}, true), usr = await makeUser('api-user', { leads: ['view'] })
+        const aa = await login(adm), au = await login(usr)
+        check('a member who is not the super administrator cannot see, create or revoke API keys', (await au('GET', '/api/crm/api-keys')).status === 403 && (await au('POST', '/api/crm/api-keys', { name: 'x', scopes: ['leads:read'] })).status === 403)
+        check('...nor webhooks', (await au('GET', '/api/crm/webhooks')).status === 403)
+        check('a key needs a name and at least one scope', (await aa('POST', '/api/crm/api-keys', { name: '', scopes: ['leads:read'] })).status === 400 && (await aa('POST', '/api/crm/api-keys', { name: 'x', scopes: ['everything'] })).status === 400)
+        const mkKey = await aa('POST', '/api/crm/api-keys', { name: 'zz check key', scopes: ['leads:read', 'leads:write', 'tasks:write', 'ideas:write', 'ideas:read'] })
+        const KEY = mkKey.body?.key
+        if (mkKey.body?.id) made.extraRows.push(['crmApiKey', mkKey.body.id])
+        check('the super administrator creates a key (shown once, starts with trt_)', mkKey.status === 201 && /^trt_/.test(KEY || ''), String(mkKey.status))
+        const stored = mkKey.body?.id ? await prisma.crmApiKey.findUnique({ where: { id: mkKey.body.id } }) : null
+        check('only the hash of the key is stored, never the key', stored && !JSON.stringify(stored).includes(KEY) && stored.hash.length === 64)
+        const listed = await aa('GET', '/api/crm/api-keys')
+        check('the list shows the name and the beginning of the key, never the key', listed.body?.keys?.some((k) => k.name === 'zz check key' && k.prefix === KEY.slice(0, 11)) && !JSON.stringify(listed.body).includes(KEY))
+        const call = async (method, path, body, key = KEY) => { const r = await fetch(`${BASE}/api/v1${path}`, { method, headers: { ...(key ? { authorization: `Bearer ${key}` } : {}), 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); return { status: r.status, body: await r.json().catch(() => null) } }
+        check('no key: 401', (await call('GET', '/leads', null, null)).status === 401)
+        check('a wrong key: 401', (await call('GET', '/leads', null, 'trt_wrong')).status === 401)
+        const me = await call('GET', '/me')
+        check('"me" tells the name and the scopes of the key', me.status === 200 && me.body?.data?.name === 'zz check key' && me.body.data.scopes.includes('leads:write'))
+        check('a resource outside the scopes of the key: 403', (await call('GET', '/clients')).status === 403 && (await call('GET', '/tickets')).status === 403)
+        check('an unknown resource: 404', (await call('GET', '/passwords')).status === 404)
+        check('invoices and others are read-only: writing is refused', (await call('POST', '/invoices', { total: 1 })).status === 405)
+        check('missing name: 400', (await call('POST', '/leads', { email: 'a@b.com' })).status === 400)
+        check('a wrong email: 400', (await call('POST', '/leads', { name: 'zz api lead', email: 'nope' })).status === 400)
+        check('an unknown status: 400', (await call('POST', '/leads', { name: 'zz api lead', status: 'No such status' })).status === 400)
+        // a receiver for the webhook
+        const got = []
+        const http = await import('node:http')
+        const srv = http.createServer((rq, rs) => { let b = ''; rq.on('data', (c) => { b += c }); rq.on('end', () => { got.push({ headers: rq.headers, body: b }); rs.statusCode = 200; rs.end('ok') }) })
+        await new Promise((r) => srv.listen(0, '127.0.0.1', r))
+        const port = srv.address().port
+        const wh = await aa('POST', '/api/crm/webhooks', { name: 'zz receiver', url: `http://127.0.0.1:${port}/hook`, events: ['lead.created', 'task.created', 'idea.created'] })
+        if (wh.body?.id) made.extraRows.push(['crmWebhook', wh.body.id])
+        check('a webhook is created and its secret shown once', wh.status === 201 && /^whsec_/.test(wh.body?.secret || ''), String(wh.status))
+        check('a webhook needs a valid address and at least one event', (await aa('POST', '/api/crm/webhooks', { name: 'x', url: 'ftp://x', events: ['lead.created'] })).status === 400 && (await aa('POST', '/api/crm/webhooks', { name: 'x', url: 'https://example.com', events: [] })).status === 400)
+        const lead = await call('POST', '/leads', { name: 'zz api lead', email: 'zz.api@test.local', phone: '+212600000000', company: 'Zed Co', source: 'Website', description: 'From the API' })
+        if (lead.body?.data?.id) made.rows.unshift(['crmLead', lead.body.data.id])
+        check('a lead is created through the API (201, with the default status)', lead.status === 201 && lead.body?.data?.name === 'zz api lead' && !!lead.body.data.status_id, `${lead.status} ${JSON.stringify(lead.body).slice(0, 120)}`)
+        const LID2 = lead.body?.data?.id
+        check('...and read back', LID2 && (await call('GET', `/leads/${LID2}`)).body?.data?.email === 'zz.api@test.local')
+        const upd = LID2 ? await call('PATCH', `/leads/${LID2}`, { city: 'Casablanca', company: 'Zed Holding' }) : null
+        check('...and changed with PATCH', upd?.status === 200 && upd.body?.data?.city === 'Casablanca' && upd.body.data.company === 'Zed Holding')
+        check('a PATCH with nothing to change is refused, an unknown id is 404', LID2 && (await call('PATCH', `/leads/${LID2}`, {})).status === 400 && (await call('PATCH', '/leads/000000000000000000000000', { city: 'x' })).status === 404)
+        const lst = await call('GET', '/leads?limit=5&q=zz api')
+        check('the list searches and pages', lst.status === 200 && lst.body?.data?.some((l) => l.id === LID2) && lst.body.limit === 5 && lst.body.total >= 1)
+        check('"updated_since" filters', (await call('GET', `/leads?updated_since=${encodeURIComponent(new Date(Date.now() + 86400000).toISOString())}`)).body?.data?.length === 0)
+        const task = await call('POST', '/tasks', { name: 'zz api task', priority: 3, due_date: new Date(Date.now() + 86400000).toISOString(), rel_type: 'lead', rel_id: LID2, assignee_ids: [adm.staffId] })
+        if (task.body?.data?.id) made.rows.unshift(['crmTask', task.body.data.id])
+        check('a task is created through the API with its assignee', task.status === 201 && task.body?.data?.priority === 3 && (await prisma.crmTaskAssigned.count({ where: { taskId: task.body.data.id, staffId: adm.staffId } })) === 1, `${task.status} ${JSON.stringify(task.body).slice(0, 100)}`)
+        check('a wrong priority is refused', (await call('POST', '/tasks', { name: 'x', priority: 9 })).status === 400)
+        const idea = await call('POST', '/ideas', { title: 'zz idea from outside', body: 'Call the lead back', category: 'leads', period: 'weekly', priority: 3, tags: ['n8n'] })
+        if (idea.body?.data?.id) made.rows.unshift(['crmGrowIdea', idea.body.data.id])
+        check('an idea is pushed through the API (source api)', idea.status === 201 && idea.body?.data?.source === 'api' && idea.body.data.tags.includes('n8n'), `${idea.status} ${JSON.stringify(idea.body).slice(0, 100)}`)
+        await new Promise((r) => setTimeout(r, 2500))
+        const hit = got.find((g) => g.headers['x-trt-event'] === 'lead.created')
+        check('the webhook received lead.created with the lead', hit && JSON.parse(hit.body).data?.name === 'zz api lead', `${got.length} calls`)
+        const sig = /t=(\d+),v1=([0-9a-f]+)/.exec(hit?.headers['x-trt-signature'] || '')
+        const crypto2 = await import('node:crypto')
+        check('...with a signature the receiver can check with the secret (HMAC SHA-256 of "t.body")', !!sig && crypto2.createHmac('sha256', wh.body.secret).update(`${sig[1]}.${hit.body}`).digest('hex') === sig[2])
+        check('...and task.created and idea.created too', got.some((g) => g.headers['x-trt-event'] === 'task.created') && got.some((g) => g.headers['x-trt-event'] === 'idea.created'))
+        const ping = wh.body?.id ? await aa('POST', `/api/crm/webhooks/${wh.body.id}`) : null
+        check('"Send a test" delivers a ping', ping?.body?.ok === true && got.some((g) => g.headers['x-trt-event'] === 'ping'))
+        check('the deliveries are listed', ((await aa('GET', `/api/crm/webhooks/${wh.body?.id}`)).body?.deliveries || []).length >= 3)
+        srv.close()
+        const logs = mkKey.body?.id ? await aa('GET', `/api/crm/api-keys/${mkKey.body.id}`) : null
+        check('every call is in the log of the key, with its status', (logs?.body?.log || []).some((l) => l.path.includes('/leads') && l.status === 201))
+        const rev = mkKey.body?.id ? await aa('DELETE', `/api/crm/api-keys/${mkKey.body.id}`) : null
+        check('a revoked key stops working at once', rev?.status === 200 && (await call('GET', '/leads')).status === 401)
+        await prisma.crmApiLog.deleteMany({ where: { keyId: mkKey.body?.id } }); await prisma.crmWebhookDelivery.deleteMany({ where: { webhookId: wh.body?.id } })
+    }
+
     console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')
     {
         const sA = await makeUser('tk-staff', { customers: ['view', 'create', 'edit'], tickets: ['view', 'create', 'edit'], tasks: ['view', 'create', 'edit'] }); const sa = await login(sA)

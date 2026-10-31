@@ -7,6 +7,7 @@ import { readSettings } from '@/lib/crm/appSettings'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFiles'
 import { autoMessage } from '@/lib/crm/ticketAuto'
+import { emit } from '@/lib/crm/webhooks'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -185,6 +186,7 @@ export async function createTicket(body, files = []) {
         },
     })
     const saved = await saveTicketFiles({ ticketId: t.id, prepared, uploaderId: a.staffId, uploaderName: a.session.user.name || a.session.user.email })
+    emit('ticket.created', { id: t.id, number: t.legacyId, subject: t.subject, client_id: t.clientId })
     const sent = { client: null, staff: null }
     if (body.notifyClient) { const to = await clientEmail(t); if (to) sent.client = await sendTemplate({ slug: 'ticket-autoresponse', to, data: await mailVars(t, { message: withFiles(stripHtml(t.message), saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: t.id }) }
     if (t.assignedId && t.assignedId !== a.staffId) { const s = await prisma.crmStaff.findUnique({ where: { id: t.assignedId }, select: { email: true } }); if (s?.email) sent.staff = await sendTemplate({ slug: 'ticket-assigned-to-admin', to: s.email, data: await mailVars(t, { message: stripHtml(t.message), staffUrl: true }), relType: 'ticket', relId: t.id }) }

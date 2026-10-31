@@ -1,0 +1,148 @@
+/// API access and Grow (ideas, routine, skills). All cross-domain references are plain ids, like the rest of the CRM.
+
+/// A key that lets another program read or push data (Authorization: Bearer ...). Only the SHA-256 of the key is kept.
+model CrmApiKey {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  /// the first characters of the key, to recognise it in the list
+  prefix     String
+  hash       String    @unique
+  /// what the key may do, e.g. leads:read, leads:write, tasks:write
+  scopes     String[]
+  createdBy  String?   @db.ObjectId
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  lastIp     String?
+  calls      Int       @default(0)
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+
+  @@index([createdAt])
+  @@map("crm_api_keys")
+}
+
+/// One call made with a key (kept for a few weeks).
+model CrmApiLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  keyId     String   @db.ObjectId
+  method    String
+  path      String
+  status    Int
+  ip        String?
+  ms        Int?
+  createdAt DateTime @default(now())
+
+  @@index([keyId, createdAt])
+  @@index([createdAt])
+  @@map("crm_api_log")
+}
+
+/// Where the CRM tells another program that something happened (signed with the secret, HMAC SHA-256).
+model CrmWebhook {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  url       String
+  /// sealed at rest
+  secret    String
+  events    String[]
+  active    Boolean   @default(true)
+  createdBy String?   @db.ObjectId
+  createdAt DateTime  @default(now())
+  lastAt    DateTime?
+  lastOk    Boolean?
+  lastError String?
+  failures  Int       @default(0)
+
+  @@map("crm_webhooks")
+}
+
+model CrmWebhookDelivery {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  webhookId String   @db.ObjectId
+  event     String
+  ok        Boolean
+  status    Int?
+  ms        Int?
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([webhookId, createdAt])
+  @@map("crm_webhook_deliveries")
+}
+
+/// An idea or a piece of advice for the company or the team: written by the routine (rules or AI), by someone, or pushed through the API.
+model CrmGrowIdea {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  body        String?
+  /// leads | sales | income | team | skills | tech | marketing | ops | other
+  category    String    @default("other")
+  /// daily | weekly | monthly | once
+  period      String    @default("once")
+  /// rule | ai | manual | api
+  source      String    @default("manual")
+  /// new | accepted | doing | done | dismissed
+  status      String    @default("new")
+  /// 1 low, 2 medium, 3 high
+  priority    Int       @default(2)
+  tags        String[]
+  assigneeIds String[]  @db.ObjectId
+  dueDate     DateTime?
+  /// the task made from this idea
+  taskId      String?   @db.ObjectId
+  sourceUrl   String?
+  /// stops the routine from writing the same advice twice
+  fingerprint String?
+  addedFrom   String?   @db.ObjectId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  resolvedAt  DateTime?
+
+  @@index([status, createdAt])
+  @@index([fingerprint])
+  @@map("crm_grow_ideas")
+}
+
+model CrmGrowComment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  ideaId     String   @db.ObjectId
+  staffId    String?  @db.ObjectId
+  authorName String?
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([ideaId, createdAt])
+  @@map("crm_grow_comments")
+}
+
+/// What a team member wants to learn or certify: a certification, a language level, a course. The company can support it and pay a bonus (prime) when it is passed.
+model CrmSkillGoal {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  staffId     String    @db.ObjectId
+  /// certification | language | course | skill
+  kind        String    @default("certification")
+  title       String
+  provider    String?
+  /// the key in the catalog it comes from, if any
+  catalogKey  String?
+  url         String?
+  /// planned | learning | passed | failed | dropped
+  status      String    @default("planned")
+  targetDate  DateTime?
+  doneDate    DateTime?
+  note        String?
+  /// what the company pays for the exam or the course
+  supportAmount Float?
+  /// the bonus promised when it is passed
+  primeAmount   Float?
+  primePaid     Boolean   @default(false)
+  primePaidAt   DateTime?
+  approved      Boolean   @default(false)
+  approvedBy    String?   @db.ObjectId
+  createdBy     String?   @db.ObjectId
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([staffId, status])
+  @@map("crm_skill_goals")
+}

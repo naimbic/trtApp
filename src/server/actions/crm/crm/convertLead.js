@@ -1,5 +1,6 @@
 'use server'
 
+import { emit } from '@/lib/crm/webhooks'
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 
@@ -99,6 +100,8 @@ export async function convertLeadToClient(leadId, { contactData = {}, includeLea
         }
     }
 
+    emit('lead.converted', { lead_id: leadId, client_id: client.id, company: client.company })
+    emit('client.created', { id: client.id, company: client.company })
     return { success: true, clientId: client.id, contactId: contact.id }
 }
 

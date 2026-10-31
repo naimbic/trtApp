@@ -10,6 +10,7 @@ import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFi
 import { codeOfLanguage } from '@/lib/crm/langCodes'
 import { notifyStaffOfClient } from '@/lib/crm/ticketNotify'
 import { autoMessage } from '@/lib/crm/ticketAuto'
+import { emit } from '@/lib/crm/webhooks'
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -182,6 +183,7 @@ export async function createTicket(body, files = []) {
     const t = await prisma.crmTicket.create({ data: { legacyId: (last?.legacyId || 0) + 1, clientId: s.client.id, contactId: s.contact.id, name, email: s.contact.email, departmentId: oid(body.departmentId), priorityId: prio?.id || null, statusId: open?.id || null, subject, message: toHtml(message), ticketKey: (await import('node:crypto')).randomBytes(16).toString('hex'), adminRead: 0, clientRead: 1, lastReply: null } })
     const saved = await saveTicketFiles({ ticketId: t.id, prepared, uploaderName: name || s.contact.email })
     void notifyStaffOfClient(t, { text: message, files: saved })
+    emit('ticket.created', { id: t.id, number: t.legacyId, subject: t.subject, client_id: t.clientId })
     await autoMessage(t, 'created')
     return { success: true, id: t.id, number: t.legacyId, files: saved.length }
 }
@@ -200,6 +202,7 @@ export async function replyTicket(id, message, files = []) {
     const saved = await saveTicketFiles({ ticketId: id, replyId: r.id, prepared, uploaderName: name || s.contact.email })
     const updated = await prisma.crmTicket.update({ where: { id }, data: { statusId: open?.id || t.statusId, lastReply: new Date(), adminRead: 0, clientRead: 1 } })
     void notifyStaffOfClient(updated, { reply: true, text, files: saved })
+    emit('ticket.replied', { id: updated.id, number: updated.legacyId, subject: updated.subject, client_id: updated.clientId })
     if (updated.statusId && updated.statusId !== t.statusId) await autoMessage(updated, updated.statusId)
     return { success: true, files: saved.length }
 }

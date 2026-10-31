@@ -180,6 +180,8 @@ async function ticketsJob({ o, lines, dry }) {
 }
 
 async function cleanupJob({ o, lines, dry }) {
+    // the log of the API and of the webhooks keeps 30 days
+    if (!dry) { const old = { createdAt: { lt: new Date(Date.now() - 30 * DAY) } }; await prisma.crmApiLog.deleteMany({ where: old }).catch(() => {}); await prisma.crmWebhookDelivery.deleteMany({ where: old }).catch(() => {}) }
     const months = num(o('delete_activity_log_older_then'))
     if (months <= 0) return
     const cutoff = new Date(); cutoff.setUTCMonth(cutoff.getUTCMonth() - months)

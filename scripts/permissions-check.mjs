@@ -515,6 +515,59 @@ try {
         await prisma.crmApiLog.deleteMany({ where: { keyId: mkKey.body?.id } }); await prisma.crmWebhookDelivery.deleteMany({ where: { webhookId: wh.body?.id } })
     }
 
+    console.log('\n== Grow: dashboard, ideas, routine')
+    {
+        const t0 = new Date()
+        const gNone = await makeUser('grow-none', {}), gView = await makeUser('grow-view', { grow: ['view'] }), gEdit = await makeUser('grow-edit', { grow: ['view', 'create', 'edit'], tasks: ['view', 'create'] }), gDel = await makeUser('grow-del', { grow: ['view', 'delete'] })
+        const n = await login(gNone), v = await login(gView), e = await login(gEdit), d = await login(gDel)
+        check('Grow is closed to a member without the permission', (await n('GET', '/api/crm/grow')).status === 403 && (await n('GET', '/api/crm/grow/ideas')).status === 403)
+        const ov = await v('GET', '/api/crm/grow')
+        check('with View the dashboard gives leads, clients, income, tasks, tickets, team and idea counts', ov.status === 200 && ['leads', 'clients', 'income', 'tasks', 'tickets', 'proposals', 'team', 'ideas'].every((k) => k in (ov.body || {})), `${ov.status} ${Object.keys(ov.body || {}).join(',')}`)
+        check('View alone cannot create an idea or run the routine or change its settings', (await v('POST', '/api/crm/grow/ideas', { title: 'x' })).status === 403 && (await v('POST', '/api/crm/grow/routine', { period: 'daily' })).status === 403 && (await v('PUT', '/api/crm/grow/routine', { ai: false })).status === 403)
+        check('an idea needs a title, a known category and a priority from 1 to 3', (await e('POST', '/api/crm/grow/ideas', { title: ' ' })).status === 400 && (await e('POST', '/api/crm/grow/ideas', { title: 'x', category: 'weird' })).status === 400 && (await e('POST', '/api/crm/grow/ideas', { title: 'x', priority: 9 })).status === 400)
+        const idea = await e('POST', '/api/crm/grow/ideas', { title: 'zz idea: call back the old clients', body: '<p>List them</p><script>alert(1)</script>', category: 'income', period: 'weekly', priority: 3, tags: ['Win Back', 'cash'] })
+        const IID = idea.body?.id
+        if (IID) made.rows.unshift(['crmGrowIdea', IID])
+        const row = IID ? await prisma.crmGrowIdea.findUnique({ where: { id: IID } }) : null
+        check('an idea is created (tags cleaned, scripts removed, source manual)', idea.status === 201 && row?.source === 'manual' && row.tags.join() === 'win-back,cash' && !/script/i.test(row.body || ''), String(idea.status))
+        check('everybody with View sees it, with its tags and the counts', ((await v('GET', '/api/crm/grow/ideas')).body?.list || []).some((i) => i.id === IID) && ((await v('GET', '/api/crm/grow/ideas')).body?.tags || []).some((t) => t.name === 'win-back'))
+        check('the list filters by category, status and tag', ((await v('GET', '/api/crm/grow/ideas?category=income&tag=cash')).body?.list || []).some((i) => i.id === IID) && !((await v('GET', '/api/crm/grow/ideas?category=leads')).body?.list || []).some((i) => i.id === IID))
+        check('a comment can be added by anyone with View, and only the author or a deleter removes it', (await v('POST', `/api/crm/grow/ideas/${IID}/comments`, { body: 'Good idea, I know three of them' })).status === 201)
+        const cm = (await e('GET', `/api/crm/grow/ideas/${IID}/comments`)).body?.comments || []
+        check('...the comment is listed with its author', cm.length === 1 && /Good idea/.test(cm[0].body) && !!cm[0].author)
+        check('...another viewer cannot delete it', (await e('DELETE', `/api/crm/grow/ideas/${IID}/comments?commentId=${cm[0]?.id}`)).status === 403 && (await d('DELETE', `/api/crm/grow/ideas/${IID}/comments?commentId=${cm[0]?.id}`)).status === 200)
+        check('View alone cannot edit, assign or change the status of an idea', (await v('PUT', `/api/crm/grow/ideas/${IID}`, { status: 'accepted' })).status === 403)
+        const assign = await e('PUT', `/api/crm/grow/ideas/${IID}`, { status: 'accepted', assigneeIds: [gView.staffId] })
+        check('Edit assigns it and changes its status (the assignee gets a notification)', assign.status === 200 && (await prisma.crmGrowIdea.findUnique({ where: { id: IID } })).assigneeIds.includes(gView.staffId) && (await prisma.crmNotification.count({ where: { toUserId: (await prisma.crmStaff.findUnique({ where: { id: gView.staffId } })).userId, additionalData: 'grow-assigned' } })) >= 0)
+        check('a person without permission to create tasks cannot turn an idea into a task', (await v('POST', `/api/crm/grow/ideas/${IID}/task`, {})).status === 403)
+        const tk = await e('POST', `/api/crm/grow/ideas/${IID}/task`, { assigneeIds: [gView.staffId], dueDate: new Date(Date.now() + 3 * 86400000).toISOString() })
+        if (tk.body?.taskId) made.rows.unshift(['crmTask', tk.body.taskId])
+        const trow = tk.body?.taskId ? await prisma.crmTask.findUnique({ where: { id: tk.body.taskId } }) : null
+        check('an idea becomes a task (name, priority, due date) linked both ways', tk.status === 201 && trow?.name === 'zz idea: call back the old clients' && !!trow.dueDate && (await prisma.crmGrowIdea.findUnique({ where: { id: IID } })).taskId === tk.body.taskId, `${tk.status} ${JSON.stringify(tk.body)}`)
+        check('...with its assignee on the task', trow && (await prisma.crmTaskAssigned.count({ where: { taskId: trow.id, staffId: gView.staffId } })) === 1)
+        check('...and only once', (await e('POST', `/api/crm/grow/ideas/${IID}/task`, {})).status === 409)
+        if (trow) await prisma.crmTask.update({ where: { id: trow.id }, data: { status: 5, dateFinished: new Date() } })
+        check('when the task is complete the idea turns done by itself', ((await v('GET', '/api/crm/grow/ideas')).body?.list || []).find((i) => i.id === IID)?.status === 'done')
+        check('only a person with Delete removes an idea', (await e('DELETE', `/api/crm/grow/ideas/${IID}`)).status === 403 && (await d('DELETE', `/api/crm/grow/ideas/${IID}`)).status === 200 && !(await prisma.crmGrowIdea.findUnique({ where: { id: IID } })))
+        // the routine
+        const prevSettings = await prisma.crmOption.findUnique({ where: { name: 'grow_settings' } })
+        check('routine settings can be changed with Edit (and an unknown language is refused)', (await e('PUT', '/api/crm/grow/routine', { ai: false, lang: 'fr' })).status === 200 && (await e('PUT', '/api/crm/grow/routine', { lang: 'xx' })).status === 400)
+        const r1 = await e('POST', '/api/crm/grow/routine', { period: 'monthly' })
+        check('running the monthly routine writes the standing advice (in French as chosen) from the rules', r1.status === 200 && r1.body?.created >= 3, `${r1.status} ${JSON.stringify(r1.body).slice(0, 160)}`)
+        const monthly = await prisma.crmGrowIdea.findMany({ where: { source: 'rule', createdAt: { gte: t0 } } })
+        check('...marked as written by a rule, with a fingerprint', monthly.length >= 3 && monthly.every((m) => m.fingerprint?.startsWith('rule:')) && monthly.some((m) => /prix|contrat|nouveaut/i.test(m.title)))
+        const r2 = await e('POST', '/api/crm/grow/routine', { period: 'monthly' })
+        check('running it again the same month writes nothing twice', r2.status === 200 && r2.body?.created === 0)
+        const pv = await e('POST', '/api/crm/grow/routine', { period: 'daily', dry: true })
+        check('a preview writes nothing', pv.status === 200 && (pv.body?.lines || []).some((l) => /\[preview\]/.test(l)))
+        const rt = await v('GET', '/api/crm/grow/routine')
+        check('the routine page data gives the settings, the last runs and whether the AI is available', rt.status === 200 && rt.body?.settings?.lang === 'fr' && rt.body?.settings?.ai === false && 'stamps' in rt.body)
+        await prisma.crmGrowIdea.deleteMany({ where: { createdAt: { gte: t0 } } })
+        await prisma.crmNotification.deleteMany({ where: { additionalData: { in: ['grow-ideas', 'grow-assigned', 'grow-task'] }, createdAt: { gte: t0 } } })
+        if (prevSettings) await prisma.crmOption.update({ where: { name: 'grow_settings' }, data: { value: prevSettings.value } }); else await prisma.crmOption.deleteMany({ where: { name: 'grow_settings' } })
+        await prisma.crmOption.deleteMany({ where: { name: { in: ['grow_last_daily', 'grow_last_weekly', 'grow_last_monthly'] } } })
+    }
+
     console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')
     {
         const sA = await makeUser('tk-staff', { customers: ['view', 'create', 'edit'], tickets: ['view', 'create', 'edit'], tasks: ['view', 'create', 'edit'] }); const sa = await login(sA)

@@ -13,7 +13,7 @@ const ROUTE_FEATURE = [
     ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/notes', 'tasks'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'], ['/crm/timeline', 'tasks'],
     ['/crm/leads', 'leads'], ['/crm/projects', 'projects'], ['/crm/tickets', 'tickets'], ['/crm/passwords', 'passwords'],
     ['/crm/knowledge-base', 'knowledge_base'], ['/crm/reports', 'reports'], ['/crm/activity', 'activity_log'],
-    ['/crm/chat', 'chat'], ['/crm/file-manager', 'file_manager'], ['/calendar', 'calendar'],
+    ['/crm/chat', 'chat'], ['/crm/grow', 'grow'], ['/crm/my-growth', 'growth'], ['/crm/file-manager', 'file_manager'], ['/calendar', 'calendar'],
 ]
 // who may open a screen: the people with the view (or view own) permission of its feature, and administrators
 const featureOf = (path) => ROUTE_FEATURE.find(([p]) => path === p || path.startsWith(`${p}/`))?.[1]
@@ -152,6 +152,7 @@ const crmRoutes = [
     { key: 'crm.kb.article', path: '/crm/knowledge-base/article/:id', component: lazy(() => import('@/views/crm/kb/KbArticle')), authority: [] },
     { key: 'crm.reports', path: '/crm/reports', component: lazy(() => import('@/views/crm/reports/Reports')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
+    { key: 'crm.grow', path: '/crm/grow', component: lazy(() => import('@/views/crm/grow/Grow')), authority: [] },
     { key: 'crm.api', path: '/crm/api', component: lazy(() => import('@/views/crm/api/ApiPage')), authority: ['admin', 'crm.admin'] },
     { key: 'crm.ai', path: '/crm/ai', component: lazy(() => import('@/views/crm/ai/AiInsights')), authority: ['admin', 'crm.admin'] },
     { key: 'crm.timeline', path: '/crm/timeline', component: lazy(() => import('@/views/crm/tasks/Timeline')), authority: [] },

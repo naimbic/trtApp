@@ -7,7 +7,7 @@ const without = (base, drop) => Object.fromEntries(Object.entries(base).filter((
 const pick = (spec) => Object.fromEntries(Object.entries(spec).map(([f, caps]) => [f, caps === 'all' ? std(f) : caps === 'edit' ? ['view', 'create', 'edit'].filter((c) => std(f).includes(c)) : caps === 'read' ? ['view'].filter((c) => std(f).includes(c)) : caps]))
 const REPORT = (...kinds) => ['view', ...kinds.map((k) => `report_${k}`)]
 
-const TOOLS = { calendar: ['view'], chat: ['view'], file_manager: ['view'] }
+const TOOLS = { calendar: ['view'], chat: ['view'], file_manager: ['view'], growth: ['view'] }
 const withTools = (roles) => Object.fromEntries(Object.entries(roles).map(([n, p]) => [n, { ...TOOLS, ...p }]))
 
 export const ROLES = withTools({

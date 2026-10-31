@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.136.0',
+        date: '2026-11-01',
+        title: 'Grow: the company dashboard, ideas and advice board, and the daily routine',
+        items: [
+            'New page Utilities → Grow (for administrators; the permission "Grow" controls who sees it and who can edit). Overview: open leads and conversion, invoiced this year against last year, what is left to collect, open and overdue tasks, support requests and their rating, how much the 5 biggest clients weigh, charts of leads and income per month, where the leads come from, and a "Needs attention" list that links to the right page.',
+            'Ideas and advice board with the columns New, Accepted, In progress and Done. Every idea has a category, a repeat (daily, weekly, monthly, one time), a priority, tags, people assigned, a due date and comments. One click turns an idea into a real task (assigned people are notified); when the task is completed the idea is marked done by itself. Filters by search, category, repeat, tag and "mine".',
+            'The routine: every day, week and month it reads the figures of the CRM and writes ideas by itself (leads never contacted, overdue tasks, tickets waiting, overdue invoices, silent leads, proposals without an answer, best source, dormant clients, client concentration, income against last year, recurring revenue, prices, team skills). An idea is never written twice for the same period. If an AI key is set in Settings → AI, the AI adds its own ideas, and with Claude it can search the web for what is new in ads, SEO, AI tools and ways to bring more income. Administrators get a notification when new ideas arrive. Switches, language, "Preview" and "Run" per period are in the Routine tab; the automatic task is "Run the Grow routine" in Settings → Cron job.',
+            'Everything is also available through the API (ideas read and write) and the webhooks.',
+        ],
+    },
+    {
         version: '0.135.0',
         date: '2026-11-01',
         title: 'API and webhooks: read and push data, and be told when something happens',

@@ -52,6 +52,8 @@ export const FEATURE_HINTS = {
     announcements: 'Post, edit and delete the announcements the whole team sees.',
     leave: 'Leave requests and days off (Attendance & leave in the menu). View own lets someone see their own; View lets a manager see everybody\'s.',
     calendar: 'The Calendar page: tasks, deadlines, meetings and events. Without it the page and its menu entry are hidden.',
+    growth: 'The My growth page: my skills and certification goals, learning ideas and the team playbook (work fast, avoid mistakes, never miss a follow-up). Everyone can have it.',
+    grow: 'Grow for the company: the dashboard of leads, clients, tasks and income, the ideas and advice board, and the routine that writes them. Administrators only by default. View = see; Create / Edit = add, assign and turn ideas into tasks, set up the routine and the team skills and bonuses; Delete = remove ideas.',
     chat: 'The chat bubble and the Chat page: team room, direct messages and calls. Without it they are hidden and the chat refuses this person.',
     file_manager: 'The File manager page (every upload in one place). Files attached to a record stay visible to people who may see that record.',
     reports: 'Choose which reports this person may open. Money reports also need "See money amounts".',
@@ -115,6 +117,8 @@ export const PERMISSION_GROUPS = [
         features: [
             { key: 'calendar', label: 'Calendar', caps: ['view', 'view_all_events', 'edit_others_events'], auto: { create: 'Anyone who can open the Calendar adds events', edit: 'Everyone edits their own events', delete: 'Everyone deletes their own events' } },
             { key: 'chat', label: 'Team chat', caps: ['view'], auto: {} },
+            { key: 'growth', label: 'My growth (skills, certifications, playbook)', caps: ['view'], auto: {} },
+            { key: 'grow', label: 'Grow (company dashboard, ideas, routine)', caps: ['view', 'create', 'edit', 'delete'] },
             { key: 'file_manager', label: 'File manager', caps: ['view'], auto: {} },
         ],
     },

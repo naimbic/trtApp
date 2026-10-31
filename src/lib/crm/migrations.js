@@ -53,6 +53,22 @@ export async function migrateToolPermissions() {
     await prisma.crmOption.create({ data: { name: MARK3, value: new Date().toISOString() } })
 }
 
+/** "My growth" is a tool everybody has at first, like the calendar and the chat. Runs once, marker-guarded. */
+export async function migrateGrowthPermission() {
+    const MARK = 'perm_migration_growth_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        if (!(await prisma.crmStaffPermission.findFirst({ where: { staffId: s.id, feature: 'growth', capability: 'view' }, select: { id: true } }))) await prisma.crmStaffPermission.create({ data: { staffId: s.id, feature: 'growth', capability: 'view' } })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms)) continue
+        if (!perms.growth) { perms.growth = ['view']; await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } }) }
+    }
+    await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
 /**
  * A function that used to hide under another permission gets its own row in Roles: whoever could do something with the old
  * feature keeps the same power over the new one ({ oldCapability: [newCapabilities] }). Runs once per split, marker-guarded.

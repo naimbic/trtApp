@@ -79,3 +79,15 @@ export async function resolveAi({ provider, model } = {}) {
     const chosen = String(model || (id === s.provider ? s.model : '') || s.providers.find((p) => p.id === id)?.model || '').trim()
     return { provider: id, model: chosen, apiKey, workspaceId: s.providers.find((p) => p.id === id)?.workspaceId || '', systemPrompt: s.systemPrompt }
 }
+
+
+/** The key and model for a job that runs by itself (the Grow routine): no session, so no check of who asks. Returns null when no key is set. */
+export async function resolveAiForJob() {
+    const o = await read(['ai_provider', 'ai_model', 'ai_system_prompt', ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])])
+    const opened = Object.fromEntries(providerIds.map((id) => [id, o[KEY(id)] ? open(o[KEY(id)]) : null]))
+    const id = providerIds.includes(o.ai_provider) && opened[o.ai_provider] ? o.ai_provider : providerIds.find((p) => opened[p])
+    if (!id) return null
+    const model = String((id === o.ai_provider ? o.ai_model : '') || o[MODEL(id)] || '').trim()
+    if (!model) return null
+    return { provider: id, model, apiKey: opened[id], workspaceId: o[WORKSPACE(id)] || '', systemPrompt: o.ai_system_prompt || '' }
+}

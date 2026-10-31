@@ -71,7 +71,7 @@ const Overview = ({ goIdeas }) => {
         tickets?.waitingOver24h > 0 && [tr("support requests waiting over 24 h"), tickets.waitingOver24h, '/crm/tickets', 'text-red-600'],
         d.proposals?.sentNoAnswerOver7d > 0 && [tr("proposals without an answer for 7 days"), d.proposals.sentNoAnswerOver7d, '/crm/proposals', 'text-amber-600'],
         clients?.clientsWithOverdue?.count > 0 && [tr("clients with overdue invoices"), clients.clientsWithOverdue.count, '/crm/invoices', 'text-red-600'],
-        team?.withoutGoal > 0 && [tr("team members without a learning goal"), team.withoutGoal, '/crm/grow?tab=team', 'text-violet-600'],
+        team?.withoutGoal > 0 && [tr("team members without a learning goal"), team.withoutGoal, '/crm/my-growth?tab=team', 'text-violet-600'],
     ].filter(Boolean)
     return (
         <div className="space-y-5">

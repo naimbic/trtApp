@@ -10,7 +10,7 @@ const OID = /^[0-9a-f]{24}$/i
 const fail = (message, status = 400) => { throw new PermissionError(message, status) }
 
 // Which Perfex feature controls attachments of each record type.
-const REL_FEATURE = { customer: 'customers', client: 'customers', invoice: 'invoices', estimate: 'estimates', proposal: 'proposals', contract: 'contracts', project: 'projects', task: 'tasks', issue: 'issues', ticket: 'tickets', lead: 'leads', leadmail: 'leads', expense: 'expenses' }
+const REL_FEATURE = { customer: 'customers', client: 'customers', invoice: 'invoices', estimate: 'estimates', proposal: 'proposals', contract: 'contracts', project: 'projects', task: 'tasks', issue: 'issues', ticket: 'tickets', lead: 'leads', leadmail: 'leads', expense: 'expenses', skillgoal: 'growth' }
 
 async function who() {
     const session = await auth()
@@ -25,6 +25,12 @@ async function relAccess(ctx, relType, cap, relId) {
     if (!relType) return true
     const feature = REL_FEATURE[relType]
     if (!feature) fail('Unknown record type')
+    // the certificate of a learning goal: its owner, and who sees (or edits) Grow
+    if (relType === 'skillgoal') {
+        const goal = OID.test(relId || '') && (await prisma.crmSkillGoal.findUnique({ where: { id: relId }, select: { staffId: true } }))
+        if (goal && ((!!ctx.staffId && goal.staffId === ctx.staffId) || ctx.admin || hasCap(ctx.authority, 'grow', cap === 'view' ? 'view' : 'edit'))) return true
+        throw new PermissionError('You do not have access to these files', 403)
+    }
     // a lead's files follow the lead's own rules: the ones who see the lead read them, the ones who work on it (not a mere follower) add and delete them
     if (relType === 'lead' || relType === 'leadmail') {
         if (!OID.test(relId || '')) throw new PermissionError('You do not have access to these files', 403)
@@ -93,7 +99,7 @@ export async function mediaStats() {
 }
 
 /** Extra limits for the files of some records: an expense takes receipts and invoices (PDF or image), up to 5 MB each. */
-const REL_RULES = { leadmail: { maxMb: 10, ext: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'txt', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'zip'], what: 'PDF, Office, text, image or zip files' }, expense: { maxMb: 5, ext: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'], what: 'PDF or image files' } }
+const REL_RULES = { leadmail: { maxMb: 10, ext: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'txt', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'zip'], what: 'PDF, Office, text, image or zip files' }, skillgoal: { maxMb: 10, ext: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'], what: 'PDF or image files' }, expense: { maxMb: 5, ext: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'], what: 'PDF or image files' } }
 
 /** Upload one or more files from a multipart form: files[], parentId, relType, relId, visibleToClient. */
 export async function uploadMedia(formData) {

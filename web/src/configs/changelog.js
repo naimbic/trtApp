@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.137.0',
+        date: '2026-11-01',
+        title: 'My growth: learning goals, certifications, primes and a playbook for the team',
+        items: [
+            'New page Utilities → My growth, for every team member (the permission "My growth", on by default). My goals: add a certification, a language exam, a course or a skill, with provider, link, target date (with the days left) and notes; move it from Planned to Learning to Passed; attach the certificate or the receipt (PDF or photo, up to 10 MB).',
+            'Support and primes: a manager (permission Grow, Edit) approves a goal, sets how much the company pays for the exam or the course and the prime promised when it is passed, and marks the prime as paid. The member sees their amounts but cannot change them. The administrators are notified when a goal is added or passed; the member is notified when it is approved or when the prime is paid.',
+            'Catalog: 35 certifications (Google Ads and Analytics, Meta, HubSpot, SEO, Microsoft, Shopify, AI, design, project management, automation…) with level, cost, validity, why it is worth it and a suggested prime, five language exams (English, French, Spanish, Arabic, Japanese) with free resources, and 12 sources to follow what is new in digital. One click adds an item to your goals. Costs and links are indicative.',
+            'Playbook: daily, weekly and monthly checklists (ticked per day, week or month on your own device), and tips to work fast, avoid mistakes, follow up without missing anything and upgrade your skills. Administrators (Grow) also get a playbook to convert leads into clients, find opportunities, bring more income and run the weekly and monthly routines.',
+            'Team tab (Grow viewers): who is learning, who passed this year, goals waiting for approval, primes to pay and paid, what the company spent, and who has no goal. The Grow dashboard now counts the members without a goal and the Grow routine suggests it every month.',
+        ],
+    },
+    {
         version: '0.136.0',
         date: '2026-11-01',
         title: 'Grow: the company dashboard, ideas and advice board, and the daily routine',

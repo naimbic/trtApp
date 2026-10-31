@@ -568,6 +568,46 @@ try {
         await prisma.crmOption.deleteMany({ where: { name: { in: ['grow_last_daily', 'grow_last_weekly', 'grow_last_monthly'] } } })
     }
 
+    console.log('\n== My growth: goals, catalog, primes, team overview')
+    {
+        const t0 = new Date()
+        const gNone = await makeUser('gw-none', {}), gA = await makeUser('gw-a', { growth: ['view'] }), gB = await makeUser('gw-b', { growth: ['view'] }), gV = await makeUser('gw-viewer', { growth: ['view'], grow: ['view'] }), gM = await makeUser('gw-manager', { growth: ['view'], grow: ['view', 'edit'] }), gD = await makeUser('gw-deleter', { growth: ['view'], grow: ['view', 'edit', 'delete'] })
+        const n = await login(gNone), a = await login(gA), b = await login(gB), v = await login(gV), m = await login(gM), d = await login(gD)
+        check('without the My growth permission everything is closed', (await n('GET', '/api/crm/growth')).status === 403 && (await n('GET', '/api/crm/growth/goals')).status === 403)
+        const cat = await a('GET', '/api/crm/growth')
+        check('a member gets the catalog and the team playbook, but not the admin playbook', cat.status === 200 && cat.body?.catalog?.certifications?.length >= 20 && cat.body?.catalog?.languages?.length >= 3 && cat.body?.playbook?.team?.work_fast?.length >= 5 && !cat.body?.playbook?.admin && cat.body?.can?.all === false, String(cat.status))
+        const catV = await v('GET', '/api/crm/growth')
+        check('a Grow viewer also gets the admin playbook', catV.status === 200 && catV.body?.playbook?.admin?.convert_leads?.length >= 5 && catV.body?.can?.all === true)
+        check('a goal needs a title, a known kind and a real link', (await a('POST', '/api/crm/growth/goals', { title: ' ' })).status === 400 && (await a('POST', '/api/crm/growth/goals', { title: 'x', kind: 'weird' })).status === 400 && (await a('POST', '/api/crm/growth/goals', { title: 'x', url: 'javascript:alert(1)' })).status === 400)
+        const mk = await a('POST', '/api/crm/growth/goals', { title: 'zz goal: Google Ads Search', kind: 'certification', provider: 'Google Skillshop', catalogKey: 'google-ads-search', targetDate: new Date(Date.now() + 30 * 86400000).toISOString(), primeAmount: 9999, supportAmount: 9999, approved: true, primePaid: true })
+        const GID = mk.body?.id
+        if (GID) made.rows.unshift(['crmSkillGoal', GID])
+        const row = GID ? await prisma.crmSkillGoal.findUnique({ where: { id: GID } }) : null
+        check('a member adds a goal for themselves, and cannot set prime, support, approval or payment', mk.status === 201 && row?.staffId === gA.staffId && row.status === 'planned' && !row.primeAmount && !row.supportAmount && row.approved === false && row.primePaid === false, String(mk.status))
+        check('the administrators are told about the new goal', (await prisma.crmNotification.count({ where: { additionalData: 'growth', createdAt: { gte: t0 } } })) >= 1)
+        check('a member sees only their own goals', ((await a('GET', '/api/crm/growth/goals')).body?.list || []).some((g) => g.id === GID) && !((await b('GET', '/api/crm/growth/goals')).body?.list || []).some((g) => g.id === GID))
+        check('a member cannot ask for the goals of everybody, a Grow viewer can', (await b('GET', '/api/crm/growth/goals?all=1')).status === 403 && ((await v('GET', '/api/crm/growth/goals?all=1')).body?.list || []).some((g) => g.id === GID))
+        check('another member cannot change or delete it', (await b('PUT', `/api/crm/growth/goals/${GID}`, { status: 'learning' })).status === 403 && (await b('DELETE', `/api/crm/growth/goals/${GID}`)).status === 403)
+        check('a member cannot add a goal for somebody else', (await b('POST', '/api/crm/growth/goals', { title: 'x', staffId: gA.staffId })).status === 201 && (await prisma.crmSkillGoal.findFirst({ where: { title: 'x', staffId: gA.staffId } })) === null)
+        const bx = await prisma.crmSkillGoal.findFirst({ where: { title: 'x', staffId: gB.staffId } }); if (bx) made.rows.unshift(['crmSkillGoal', bx.id])
+        check('the owner moves it to learning', (await a('PUT', `/api/crm/growth/goals/${GID}`, { status: 'learning' })).status === 200 && (await prisma.crmSkillGoal.findUnique({ where: { id: GID } })).status === 'learning')
+        check('a Grow viewer (no Edit) cannot set a prime, a manager can', (await v('PUT', `/api/crm/growth/goals/${GID}`, { primeAmount: 800 })).status === 403 && (await m('PUT', `/api/crm/growth/goals/${GID}`, { primeAmount: 800, supportAmount: 300, approved: true })).status === 200)
+        const ap = await prisma.crmSkillGoal.findUnique({ where: { id: GID } })
+        check('...prime, support and approval are saved (with who approved) and the member is told', ap.primeAmount === 800 && ap.supportAmount === 300 && ap.approved && ap.approvedBy === gM.staffId && (await prisma.crmNotification.count({ where: { toUserId: gA.staffId, additionalData: 'growth', createdAt: { gte: t0 } } })) === 1)
+        check('the member sees their amounts but cannot change them', ((await a('GET', '/api/crm/growth/goals')).body?.list || []).find((g) => g.id === GID)?.primeAmount === 800 && (await a('PUT', `/api/crm/growth/goals/${GID}`, { primeAmount: 99999 })).status === 200 && (await prisma.crmSkillGoal.findUnique({ where: { id: GID } })).primeAmount === 800)
+        check('a prime cannot be paid before the goal is passed', (await m('PUT', `/api/crm/growth/goals/${GID}`, { primePaid: true })).status === 400)
+        check('the member marks it passed: the date is set', (await a('PUT', `/api/crm/growth/goals/${GID}`, { status: 'passed' })).status === 200 && !!(await prisma.crmSkillGoal.findUnique({ where: { id: GID } })).doneDate)
+        const tm = await v('GET', '/api/crm/growth/team')
+        check('the team overview shows the prime owed (Grow viewers only)', (await a('GET', '/api/crm/growth/team')).status === 403 && tm.status === 200 && tm.body?.list?.find((r) => r.id === gA.staffId)?.primeOwed === 800 && tm.body?.totals?.primeOwed >= 800)
+        check('the manager pays it: date set, owed goes to paid', (await m('PUT', `/api/crm/growth/goals/${GID}`, { primePaid: true })).status === 200 && !!(await prisma.crmSkillGoal.findUnique({ where: { id: GID } })).primePaidAt && (await v('GET', '/api/crm/growth/team')).body?.list?.find((r) => r.id === gA.staffId)?.primePaid === 800)
+        check('certificate files: the owner and Grow viewers see them, another member does not', (await a('GET', `/api/crm/media?relType=skillgoal&relId=${GID}`)).status === 200 && (await v('GET', `/api/crm/media?relType=skillgoal&relId=${GID}`)).status === 200 && (await b('GET', `/api/crm/media?relType=skillgoal&relId=${GID}`)).status === 403)
+        check('an approved or passed goal cannot be deleted by its owner; only Delete removes it', (await a('DELETE', `/api/crm/growth/goals/${GID}`)).status === 403 && (await m('DELETE', `/api/crm/growth/goals/${GID}`)).status === 403 && (await d('DELETE', `/api/crm/growth/goals/${GID}`)).status === 200 && !(await prisma.crmSkillGoal.findUnique({ where: { id: GID } })))
+        const own = await a('POST', '/api/crm/growth/goals', { title: 'zz goal: own draft', kind: 'skill' })
+        if (own.body?.id) made.rows.unshift(['crmSkillGoal', own.body.id])
+        check('the owner deletes their own goal while it is only planned', own.status === 201 && (await a('DELETE', `/api/crm/growth/goals/${own.body?.id}`)).status === 200)
+        await prisma.crmNotification.deleteMany({ where: { additionalData: 'growth', createdAt: { gte: t0 } } })
+    }
+
     console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')
     {
         const sA = await makeUser('tk-staff', { customers: ['view', 'create', 'edit'], tickets: ['view', 'create', 'edit'], tasks: ['view', 'create', 'edit'] }); const sa = await login(sA)

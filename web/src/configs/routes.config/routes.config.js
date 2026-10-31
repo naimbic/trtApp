@@ -153,6 +153,7 @@ const crmRoutes = [
     { key: 'crm.reports', path: '/crm/reports', component: lazy(() => import('@/views/crm/reports/Reports')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
     { key: 'crm.grow', path: '/crm/grow', component: lazy(() => import('@/views/crm/grow/Grow')), authority: [] },
+    { key: 'crm.my-growth', path: '/crm/my-growth', component: lazy(() => import('@/views/crm/grow/MyGrowth')), authority: [] },
     { key: 'crm.api', path: '/crm/api', component: lazy(() => import('@/views/crm/api/ApiPage')), authority: ['admin', 'crm.admin'] },
     { key: 'crm.ai', path: '/crm/ai', component: lazy(() => import('@/views/crm/ai/AiInsights')), authority: ['admin', 'crm.admin'] },
     { key: 'crm.timeline', path: '/crm/timeline', component: lazy(() => import('@/views/crm/tasks/Timeline')), authority: [] },

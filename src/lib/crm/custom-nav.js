@@ -17,6 +17,7 @@ export const customNavItems = [
     { group: 'Sales', key: 'purchase-orders', title: 'Purchase orders', path: '/crm/purchase-orders', feature: 'purchase_orders' },
     { group: 'Knowledge Base', key: 'help-center', title: 'Help center', path: '/crm/knowledge-base', feature: 'knowledge_base' },
     { group: 'Knowledge Base', key: 'kb-manage', title: 'Manage articles', path: '/crm/knowledge-base/manage', feature: 'knowledge_base' },
+    { group: 'Utilities', key: 'my-growth', title: 'My growth', path: '/crm/my-growth', feature: 'growth' },
     { group: 'Utilities', key: 'grow', title: 'Grow', path: '/crm/grow', feature: 'grow' },
     { group: 'Setup', key: 'api', title: 'API and webhooks', path: '/crm/api', feature: null, superOnly: true },
     { group: 'Utilities', key: 'ai', title: 'AI insights', path: '/crm/ai', feature: null, superOnly: true },

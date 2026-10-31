@@ -4484,5 +4484,15 @@ export default {
     "Write the message of every rule that is switched on": "اكتب رسالة كل قاعدة مفعّلة",
     "A rule must send the message by email or in the conversation (or both)": "يجب أن ترسل القاعدة الرسالة بالبريد أو في المحادثة (أو كليهما)",
     "Only a team member can set a reminder": "يمكن لعضو الفريق فقط ضبط تذكير",
-    "Choose the date and time of the reminder": "اختر تاريخ ووقت التذكير"
+    "Choose the date and time of the reminder": "اختر تاريخ ووقت التذكير",
+    "Ready-made templates": "قوالب جاهزة",
+    "Fill every status with its template": "ملء كل حالة بقالبها",
+    "Then adjust the texts you want, and save.": "ثم عدّل النصوص التي تريدها واحفظ.",
+    "Use a template…": "استخدم قالبًا…",
+    "Request received": "تم استلام الطلب",
+    "Request reopened": "أُعيد فتح الطلب",
+    "We are working on it": "نعمل عليه",
+    "We replied to you": "رددنا عليك",
+    "On hold, we need something": "قيد الانتظار، نحتاج إلى شيء",
+    "Request closed": "أُغلق الطلب"
 }

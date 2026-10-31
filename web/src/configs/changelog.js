@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.134.0',
+        date: '2026-11-01',
+        title: 'Ticket automatic messages: ready-made templates; wider client-area pages',
+        items: [
+            'Tickets → Automatic messages now come with ready-made templates in English, French, Spanish, Japanese and Arabic: request received, request reopened, we are working on it, we replied to you, on hold, request closed. Pick the language, then use one template for a rule, or click "Fill every status with its template" to fill and switch on all the statuses at once; adjust the texts and save.',
+            'Client area: the request page used the middle of the screen only. It now uses the full width, with larger conversation text, bigger counters and cards on the Support list, and a wider side panel. The profile page is wider too.',
+        ],
+    },
+    {
         version: '0.133.0',
         date: '2026-11-01',
         title: 'Tickets: a new client-area Support page, tasks, reminders and automatic messages',

@@ -4484,5 +4484,15 @@ export default {
     "Write the message of every rule that is switched on": "オンにした各ルールのメッセージを入力してください",
     "A rule must send the message by email or in the conversation (or both)": "ルールはメールまたは会話（または両方）でメッセージを送る必要があります",
     "Only a team member can set a reminder": "リマインダーを設定できるのはチームメンバーのみです",
-    "Choose the date and time of the reminder": "リマインダーの日時を選んでください"
+    "Choose the date and time of the reminder": "リマインダーの日時を選んでください",
+    "Ready-made templates": "すぐ使えるテンプレート",
+    "Fill every status with its template": "各ステータスにテンプレートを入力",
+    "Then adjust the texts you want, and save.": "必要に応じて文面を調整し、保存してください。",
+    "Use a template…": "テンプレートを使う…",
+    "Request received": "依頼を受信",
+    "Request reopened": "依頼を再開",
+    "We are working on it": "対応中です",
+    "We replied to you": "返信しました",
+    "On hold, we need something": "保留中（確認が必要）",
+    "Request closed": "依頼を完了"
 }

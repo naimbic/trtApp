@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { TbRobot } from 'react-icons/tb'
+import { TbRobot, TbWand } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import Checkbox from '@/components/ui/Checkbox'
 import { api, notify } from '../kit/api'
@@ -12,8 +13,13 @@ import { tr } from '@/utils/t'
 const AutoMessages = ({ open, onClose }) => {
     const [d, setD] = useState(null)
     const [busy, setBusy] = useState(false)
+    const [lang, setLang] = useState('en')
     useEffect(() => { if (open) { setD(null); api('/api/crm/support/auto-messages').then(setD).catch((e) => { notify('danger', e.message); onClose() }) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
     const set = (on, p) => setD((x) => ({ ...x, rules: x.rules.map((r) => (r.on === on ? { ...r, ...p } : r)) }))
+    const LANGS = [['en', 'English'], ['fr', 'Français'], ['es', 'Español'], ['ja', '日本語'], ['ar', 'العربية']]
+    // the template that suits a rule: "received" for a new request, otherwise the one whose words match the status name
+    const suited = (r) => (r.on === 'created' ? d.templates.find((x) => x.on === 'created') : d.templates.find((x) => x.match && new RegExp(x.match, 'i').test(r.title)))
+    const fillAll = () => setD((x) => ({ ...x, rules: x.rules.map((r) => { const t = suited({ ...r }); return t ? { ...r, enabled: true, message: t.text[lang] } : r }) }))
     const save = async () => {
         setBusy(true)
         try { await api('/api/crm/support/auto-messages', { method: 'PUT', body: { rules: d.rules } }); notify('success', tr("Automatic messages saved")); onClose() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
@@ -22,6 +28,14 @@ const AutoMessages = ({ open, onClose }) => {
         <Dialog isOpen={open} width={760} onClose={onClose} onRequestClose={onClose}>
             <h5 className="mb-1 flex items-center gap-2"><TbRobot />{tr("Automatic messages")}</h5>
             <p className="mb-4 text-sm text-gray-500">{tr("When a ticket gets a status, the client receives the message you write here, in the conversation and/or by email. Use the fields to personalise it.")}</p>
+            {d && (
+                <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-gray-50 p-2.5 dark:bg-gray-700/30">
+                    <span className="text-sm font-semibold">{tr("Ready-made templates")}</span>
+                    <div className="w-40"><Select size="sm" isSearchable={false} options={LANGS.map(([value, label]) => ({ value, label }))} value={LANGS.map(([value, label]) => ({ value, label })).find((o) => o.value === lang)} onChange={(o) => setLang(o.value)} /></div>
+                    <Button size="sm" icon={<TbWand />} onClick={fillAll}>{tr("Fill every status with its template")}</Button>
+                    <span className="text-xs text-gray-500">{tr("Then adjust the texts you want, and save.")}</span>
+                </div>
+            )}
             {!d ? <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div> : (
                 <div className="max-h-[60vh] space-y-3 overflow-y-auto pe-1">
                     {d.rules.map((r) => (
@@ -29,7 +43,8 @@ const AutoMessages = ({ open, onClose }) => {
                             <label className="flex cursor-pointer items-center gap-3"><Switcher checked={r.enabled} onChange={(c) => set(r.on, { enabled: c })} />{r.color && <span className="h-2.5 w-2.5 rounded-full" style={{ background: r.color }} />}<span className="font-semibold">{r.on === 'created' ? tr("When a request is received (created by the client)") : r.title}</span></label>
                             {r.enabled && (
                                 <div className="mt-3 space-y-2">
-                                    <Input textArea rows={4} value={r.message} placeholder={tr("Hello {contact_firstname}, your request #{ticket_id} is now {ticket_status}.")} onChange={(e) => set(r.on, { message: e.target.value })} />
+                                    <div className="w-full sm:w-72"><Select size="sm" isSearchable={false} placeholder={tr("Use a template…")} options={d.templates.map((t) => ({ value: t.key, label: tr(t.name) }))} value={null} onChange={(o) => { const t = d.templates.find((x) => x.key === o?.value); if (t) set(r.on, { message: t.text[lang] }) }} /></div>
+                                    <Input textArea rows={6} value={r.message} placeholder={tr("Hello {contact_firstname}, your request #{ticket_id} is now {ticket_status}.")} onChange={(e) => set(r.on, { message: e.target.value })} />
                                     <div className="flex flex-wrap gap-1.5">{d.fields.map((f) => <button key={f} type="button" className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 hover:bg-primary/10 hover:text-primary dark:bg-gray-700 dark:text-gray-300" onClick={() => set(r.on, { message: `${r.message}{${f}}` })}>{`{${f}}`}</button>)}</div>
                                     <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm"><Checkbox checked={r.thread} onChange={(c) => set(r.on, { thread: c })}>{tr("Write it in the conversation")}</Checkbox><Checkbox checked={r.email} onChange={(c) => set(r.on, { email: c })}>{tr("Email it to the client")}</Checkbox></div>
                                 </div>

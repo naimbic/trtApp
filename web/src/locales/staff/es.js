@@ -4484,5 +4484,15 @@ export default {
     "Write the message of every rule that is switched on": "Escriba el mensaje de cada regla activada",
     "A rule must send the message by email or in the conversation (or both)": "Una regla debe enviar el mensaje por correo o en la conversación (o ambos)",
     "Only a team member can set a reminder": "Solo un miembro del equipo puede crear un recordatorio",
-    "Choose the date and time of the reminder": "Elija la fecha y hora del recordatorio"
+    "Choose the date and time of the reminder": "Elija la fecha y hora del recordatorio",
+    "Ready-made templates": "Plantillas listas para usar",
+    "Fill every status with its template": "Rellenar cada estado con su plantilla",
+    "Then adjust the texts you want, and save.": "Luego ajuste los textos que quiera y guarde.",
+    "Use a template…": "Usar una plantilla…",
+    "Request received": "Solicitud recibida",
+    "Request reopened": "Solicitud reabierta",
+    "We are working on it": "Estamos trabajando en ello",
+    "We replied to you": "Le hemos respondido",
+    "On hold, we need something": "En espera, necesitamos algo",
+    "Request closed": "Solicitud cerrada"
 }

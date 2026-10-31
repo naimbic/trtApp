@@ -7,7 +7,7 @@ export const STYLE = '[&_img]:my-2 [&_img]:max-w-full [&_img]:rounded-lg [&_a]:t
 const RichText = ({ html, className }) => {
     const clean = cleanHtml(html)
     if (!clean) return null
-    return <div className={classNames('break-words', STYLE, className)} dangerouslySetInnerHTML={{ __html: clean }} />
+    return <div className={classNames('rich-view break-words', STYLE, className)} dangerouslySetInnerHTML={{ __html: clean }} />
 }
 
 export default RichText

@@ -65,10 +65,14 @@ let ctxMenu = null
 const closeCtx = () => { ctxMenu?.remove(); ctxMenu = null }
 document.addEventListener('contextmenu', (e) => {
     closeCtx()
-    const el = e.target.closest?.('[data-href]')
-    if (!el || e.target.closest?.('a[href], input, textarea, [contenteditable=true]') || /^\/portal(\/|$)/.test(window.location.pathname)) return
+    if (/^\/portal(\/|$)/.test(window.location.pathname)) return
+    // a link in a comment, note or description (being written or read): the browser menu has no "open in a new tab" while editing, so ours always does
+    const link = e.target.closest?.('a[href]')
+    const rich = link && link.closest('[contenteditable=true], .rich-view, .rich-text, .ProseMirror')
+    const el = link && rich ? link : link ? null : e.target.closest?.('[data-href]')
+    if (!el || (!link && e.target.closest?.('input, textarea, [contenteditable=true]'))) return
     e.preventDefault()
-    const url = new URL(el.getAttribute('data-href'), window.location.origin).href
+    const url = new URL(link && rich ? link.getAttribute('href') : el.getAttribute('data-href'), window.location.origin).href
     const menu = document.createElement('div')
     menu.className = 'rp-portal rp-tmenu'
     menu.setAttribute('role', 'menu')

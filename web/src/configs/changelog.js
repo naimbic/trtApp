@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.128.2',
+        date: '2026-10-31',
+        title: 'Links in comments and texts: Open in new tab in the right-click menu',
+        items: [
+            'Right-click on a link inside a comment, note, description or any text (while writing it or reading it) now shows a small menu with "Open in new tab" and "Copy link". While writing, the browser\'s own menu has no such entry, which is why a link could not be opened directly. Ctrl/Cmd + click keeps working, and a link in a saved text still opens in a new tab with a normal click.',
+        ],
+    },
+    {
         version: '0.128.1',
         date: '2026-10-31',
         title: 'Open in a new browser tab from the menus',

@@ -16,19 +16,24 @@ const MESSAGES = () => ({
     conflict: tr('This email address already belongs to another account. Ask an administrator.'),
     blocked: tr('Your account is disabled. Ask an administrator.'),
     unverified: tr('Your email address is not verified by your provider.'),
+    request_sent: tr('Thank you! Your request was sent to the administrators. You will get an email when your account is approved.'),
+    request_pending: tr('Your request is waiting for an administrator to approve it.'),
+    request_rejected: tr('Your request was declined. Ask an administrator.'),
 })
+const INFO = ['request_sent', 'request_pending']
 
 /** Google and GitHub sign-in: each button shows only when the server has its keys; also tells what went wrong when the provider sent the person back. */
 const SocialSignIn = () => {
     const [ways, setWays] = useState({})
     const [error, setError] = useState('')
+    const [info, setInfo] = useState(false)
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
         // our own codes, or the ones Google / GitHub sign-in raise (?error=AccessDenied, OAuthCallbackError...)
         const code = params.get('oidc_error') || (params.get('error') ? (params.get('error') === 'AccessDenied' ? 'access_denied' : 'provider_error') : '')
         if (code) {
-            setError(MESSAGES()[code] || MESSAGES().provider_error)
+            setError(MESSAGES()[code] || MESSAGES().provider_error); setInfo(INFO.includes(code))
             params.delete('oidc_error'); params.delete('error')
             const q = params.toString()
             window.history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : ''))
@@ -52,7 +57,7 @@ const SocialSignIn = () => {
     if (!any && !error) return null
     return (
         <div className="mt-6">
-            {error && <Alert showIcon className="mb-4" type="danger" closable onClose={() => setError('')}><span>{error}</span></Alert>}
+            {error && <Alert showIcon className="mb-4" type={info ? 'success' : 'danger'} closable onClose={() => setError('')}><span>{error}</span></Alert>}
             {any && (
                 <>
                     <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wide text-gray-400"><span className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />{tr('or')}<span className="h-px flex-1 bg-gray-200 dark:bg-gray-700" /></div>

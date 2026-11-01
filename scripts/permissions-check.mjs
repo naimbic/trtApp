@@ -49,6 +49,7 @@ const MODULES = [
     { feature: 'contracts', model: 'crmContract', base: '/api/crm/sales/contracts', extra: { subject: 'Permission check' }, sub: ['pdf', 'html'] },
 ]
 
+const made_users_cleanup = (userId, staffId) => { made.users.push(userId); if (staffId) made.staff.push(staffId) }
 const results = []
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`) }
 const listCount = (r) => r.body?.total ?? r.body?.list?.length ?? (Array.isArray(r.body) ? r.body.length : null)
@@ -1173,6 +1174,31 @@ try {
         await prisma.crmClientIdea.deleteMany({ where: { clientId: { in: [X, cy.body.id] } } })
         await prisma.crmClientResearch.deleteMany({ where: { clientId: { in: [X, cy.body.id] } } })
         await prisma.crmMailLog.deleteMany({ where: { relType: 'client_idea' } })
+    }
+    // people who sign in with Google / GitHub without an account ask for one; the administrators decide
+    console.log('\n== Account requests')
+    {
+        const rA = await login(await makeUser('req-admin', {}, true)), rN = await login(await makeUser('req-none', { customers: ['view'] })), rM = await login(await makeUser('req-manager', { staff: ['view', 'create'] }))
+        const mail = (t) => `zz.req.${t}.${Date.now()}@test.local`
+        const e1 = mail('one'), e2 = mail('two'), e3 = mail('three')
+        for (const [email, name] of [[e1, 'Zz Sara Benali'], [e2, 'Zz Omar'], [e3, 'Zz Third']]) await prisma.crmSignupRequest.create({ data: { email, name, provider: 'google', picture: 'https://example.com/p.png' } })
+        const rows = await prisma.crmSignupRequest.findMany({ where: { email: { in: [e1, e2, e3] } } }); const idOf = (e) => rows.find((r) => r.email === e).id
+        check('Requests: without the right to add members the list is closed, and so are approve and decline', (await rN('GET', '/api/crm/team/signup-requests')).status === 403 && (await rN('POST', `/api/crm/team/signup-requests/${idOf(e1)}/approve`, {})).status === 403 && (await rN('POST', `/api/crm/team/signup-requests/${idOf(e1)}/reject`, {})).status === 403)
+        const lst = await rM('GET', '/api/crm/team/signup-requests')
+        check('Requests: a member who may add members sees the waiting requests', lst.status === 200 && [e1, e2, e3].every((e) => lst.body.list.some((r) => r.email === e)) && lst.body.list.every((r) => r.status === 'pending'))
+        const role = await prisma.crmRole.findFirst({ select: { id: true } })
+        const ap = await rA('POST', `/api/crm/team/signup-requests/${idOf(e1)}/approve`, { roleId: role?.id || null })
+        const made = await prisma.user.findFirst({ where: { email: e1 } }), mstaff = await prisma.crmStaff.findFirst({ where: { email: e1 } })
+        if (made) made_users_cleanup(made.id, mstaff?.id)
+        check('Requests: approving creates the account (name from Google, the chosen role, no admin, picture kept)', ap.status === 200 && !!made && mstaff?.firstName === 'Zz' && mstaff?.lastName === 'Sara Benali' && mstaff?.admin === false && (!role || mstaff?.roleId === role.id) && made.image === 'https://example.com/p.png')
+        check('Requests: it can only be answered once', (await rA('POST', `/api/crm/team/signup-requests/${idOf(e1)}/approve`, {})).status === 409 && (await rA('POST', `/api/crm/team/signup-requests/${idOf(e1)}/reject`, {})).status === 409)
+        check('Requests: declining keeps it on record and creates no account', (await rA('POST', `/api/crm/team/signup-requests/${idOf(e2)}/reject`, { note: 'zz not a customer' })).status === 200 && !(await prisma.user.findFirst({ where: { email: e2 } })) && (await prisma.crmSignupRequest.findUnique({ where: { id: idOf(e2) } })).status === 'rejected')
+        const left = await rM('GET', '/api/crm/team/signup-requests')
+        check('Requests: answered ones leave the waiting list', left.body.list.every((r) => r.email !== e1 && r.email !== e2) && left.body.list.some((r) => r.email === e3))
+        await prisma.user.create({ data: { name: 'zz taken', email: e3, password: 'x', authority: ['user'], role: 'user' } }).then((u) => { made_users_cleanup(u.id) })
+        check('Requests: an email that already has an account is refused', (await rA('POST', `/api/crm/team/signup-requests/${idOf(e3)}/approve`, {})).status === 409)
+        await prisma.crmSignupRequest.deleteMany({ where: { email: { in: [e1, e2, e3] } } })
+        await prisma.crmMailLog.deleteMany({ where: { relType: 'signup_request' } })
     }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {

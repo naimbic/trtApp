@@ -25,6 +25,7 @@ import { useMemberActions, api, notify } from './MemberActions'
 import { loginAs } from '@/components/crm/LoginAsBanner'
 import MemberAccessDrawer from './MemberAccessDrawer'
 import RolesPanel from './RolesPanel'
+import SignupRequests from './SignupRequests'
 import { usePageTabs } from '@/store/pageTabsStore'
 import { tr } from '@/utils/t'
 
@@ -155,6 +156,7 @@ const Team = () => {
             ) : (
                 <>
 
+            {(canAdmin || authority.includes('crm.staff.create')) && <SignupRequests roles={lookups.roles.filter((r) => !/^super admin$/i.test(r.name))} onApproved={() => { api('/api/crm/team/lookups').then(setLookups).catch(() => {}); load() }} />}
             <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <StatTile title={tr("Team members")} className="bg-sky-100" value={s.total ?? '–'} icon={<TbUsers />} />
                 <StatTile title={tr("Active")} className="bg-emerald-100" value={s.active ?? '–'} icon={<TbCircleCheck />} />

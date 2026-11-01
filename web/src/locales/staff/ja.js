@@ -5146,5 +5146,15 @@ export default {
     "The categories of the ideas proposed to clients": "クライアントに提案するアイデアのカテゴリ",
     "The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.": "クライアントに提案するアイデアのカテゴリ(事業を伸ばす、コスト削減など)はメニューの「顧客」から管理します。",
     "Other is the category ideas fall back to: it stays (you can switch it off)": "「その他」はアイデアの既定のカテゴリなので削除できません(無効にはできます)",
-    "Ideas use this category: change their category first, or switch it off": "このカテゴリを使っているアイデアがあります。先にカテゴリを変えるか、無効にしてください"
+    "Ideas use this category: change their category first, or switch it off": "このカテゴリを使っているアイデアがあります。先にカテゴリを変えるか、無効にしてください",
+    "Account created for {name}. They were told by email.": "{name} のアカウントを作成しました。メールで通知済みです。",
+    "Account requests": "アカウントのリクエスト",
+    "Request declined": "リクエストを却下しました",
+    "Thank you! Your request was sent to the administrators. You will get an email when your account is approved.": "ありがとうございます。リクエストを管理者に送信しました。アカウントが承認されるとメールが届きます。",
+    "These people signed in with Google or GitHub and have no account. Nobody gets access before you approve.": "Google または GitHub でサインインしたものの、アカウントのない方々です。承認するまで誰もアクセスできません。",
+    "Your request is waiting for an administrator to approve it.": "リクエストは管理者の承認待ちです。",
+    "Your request was declined. Ask an administrator.": "リクエストは却下されました。管理者にご相談ください。",
+    "{n} tries": "{n} 回の試行",
+    "Let people ask for an account with Google or GitHub": "Google または GitHub でのアカウントリクエストを許可する",
+    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "Google または GitHub でサインインしてもアカウントがない場合、アカウントをリクエストできます。管理者に通知され、「チーム」で承認または却下します。承認前は誰もアクセスできません。"
 }

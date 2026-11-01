@@ -6,6 +6,7 @@ import validateCredential from '@/server/actions/user/validateCredential'
 import prisma from '@/lib/prisma'
 import { buildUserAuthority } from '@/lib/crm/authBuild'
 import { resolveSocialUser } from '@/lib/crm/socialLogin'
+import { requestFromSocial } from '@/lib/crm/signupRequests'
 
 // Google / GitHub: the account is the CRM user with the same verified email (see socialLogin.js)
 const socialDeps = {
@@ -28,7 +29,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (!account || account.provider === 'credentials') return true
             const r = await resolveSocialUser({ account, profile, user }, socialDeps)
             // a text is a place to send the person: the sign-in page explains what went wrong
-            return r.ok ? true : `${appConfig.unAuthenticatedEntryPath}?oidc_error=${r.code}`
+            if (r.ok) return true
+            // no account yet: the person asks for one and the administrators decide (Settings → Sign-in & API can switch this off)
+            const code = r.code === 'no_account' ? await requestFromSocial({ account, profile, user }).catch(() => 'no_account') : r.code
+            return `${appConfig.unAuthenticatedEntryPath}?oidc_error=${code}`
         },
         async jwt({ token, user, trigger, account, profile }) {
             // first step of a Google / GitHub sign-in: the session belongs to the CRM user, not to the provider's id

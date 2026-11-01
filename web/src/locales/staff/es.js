@@ -5146,5 +5146,15 @@ export default {
     "The categories of the ideas proposed to clients": "Las categorías de las ideas propuestas a los clientes",
     "The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.": "Las categorías de las ideas propuestas a los clientes (Hacer crecer el negocio, Ahorrar dinero…) se gestionan desde el menú, Clientes.",
     "Other is the category ideas fall back to: it stays (you can switch it off)": "Otro es la categoría de respaldo de las ideas: se queda (puede desactivarla)",
-    "Ideas use this category: change their category first, or switch it off": "Hay ideas que usan esta categoría: cambie antes su categoría, o desactívela"
+    "Ideas use this category: change their category first, or switch it off": "Hay ideas que usan esta categoría: cambie antes su categoría, o desactívela",
+    "Account created for {name}. They were told by email.": "Cuenta creada para {name}. Se le avisó por correo.",
+    "Account requests": "Solicitudes de cuenta",
+    "Request declined": "Solicitud rechazada",
+    "Thank you! Your request was sent to the administrators. You will get an email when your account is approved.": "¡Gracias! Su solicitud se envió a los administradores. Recibirá un correo cuando se apruebe su cuenta.",
+    "These people signed in with Google or GitHub and have no account. Nobody gets access before you approve.": "Estas personas iniciaron sesión con Google o GitHub y no tienen cuenta. Nadie tiene acceso antes de que usted apruebe.",
+    "Your request is waiting for an administrator to approve it.": "Su solicitud espera la aprobación de un administrador.",
+    "Your request was declined. Ask an administrator.": "Su solicitud fue rechazada. Consulte a un administrador.",
+    "{n} tries": "{n} intentos",
+    "Let people ask for an account with Google or GitHub": "Permitir que las personas soliciten una cuenta con Google o GitHub",
+    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "Cuando alguien inicia sesión con Google o GitHub y no tiene cuenta, puede solicitar una. Los administradores reciben un aviso y aprueban o rechazan cada solicitud en Equipo. Nadie tiene acceso antes de la aprobación."
 }

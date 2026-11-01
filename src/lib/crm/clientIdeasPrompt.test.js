@@ -55,3 +55,23 @@ test('client ideas AI: a custom category is accepted, an unknown one falls back 
     assert.deepEqual(r.ideas.map((i) => i.category), ['customer-care', 'other'])
     assert.ok(buildSystem({ categories: ['grow', 'customer-care'] }).includes('grow|customer-care'))
 })
+
+import { signupOutcome, splitName } from './signupCalc.js'
+test('account requests: a person with no account asks once, the administrators are told once', () => {
+    assert.deepEqual(signupOutcome({ enabled: true, existing: null }), { code: 'request_sent', create: true, notify: true })
+    assert.equal(signupOutcome({ enabled: true, existing: { status: 'pending' } }).notify, false)
+    assert.equal(signupOutcome({ enabled: true, existing: { status: 'pending' } }).code, 'request_pending')
+    assert.equal(signupOutcome({ enabled: true, existing: { status: 'rejected' } }).code, 'request_rejected')
+    assert.equal(signupOutcome({ enabled: true, existing: { status: 'rejected' } }).create, false)
+})
+test('account requests: switched off, nothing is written and the old message stays', () => {
+    assert.deepEqual(signupOutcome({ enabled: false, existing: null }), { code: 'no_account', create: false, notify: false })
+})
+test('account requests: an approved person whose account was deleted can ask again', () => {
+    const o = signupOutcome({ enabled: true, existing: { status: 'approved' } })
+    assert.equal(o.create, true); assert.equal(o.notify, true)
+})
+test('account requests: the name from the provider becomes first and last name', () => {
+    assert.deepEqual(splitName('Sara Ben Ali', 'x@y.z'), { firstName: 'Sara', lastName: 'Ben Ali' })
+    assert.deepEqual(splitName('', 'omar@gmail.com'), { firstName: 'omar', lastName: '' })
+})

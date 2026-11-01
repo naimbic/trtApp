@@ -335,3 +335,11 @@ D('client-idea-proposed', 'c', 'info', 'idea_link', [['Idea', 'Idée', 'idea_tit
 D('client-idea-message', 'c', 'info', 'idea_link', [['Idea', 'Idée', 'idea_title']], { quote: 'idea_message' },
   ['New message about: {idea_title}', 'We answered about your idea', '{staff_name} wrote to you about the idea {idea_title}:', 'Open the conversation'],
   ['Nouveau message : {idea_title}', 'Nous avons répondu à propos de votre idée', '{staff_name} vous a écrit à propos de l\'idée {idea_title} :', 'Ouvrir la conversation'])
+
+/* ---------- Account requests (Google / GitHub sign-in) ---------- */
+D('signup-request-to-admin', 's', 'info', 'request_link', [['Name', 'Nom', 'request_name'], ['Email', 'E-mail', 'request_email'], ['Sign-in', 'Connexion', 'request_provider']], null,
+  ['Account request: {request_email}', 'Someone asks for an account', 'A person signed in with {request_provider} and has no account yet.\nOpen the Team page to approve or refuse the request. Nobody gets access before you approve.', 'Review the request'],
+  ['Demande de compte : {request_email}', 'Une personne demande un compte', "Une personne s'est connectée avec {request_provider} et n'a pas encore de compte.\nOuvrez la page Équipe pour approuver ou refuser la demande. Personne n'a accès avant votre approbation.", 'Voir la demande'])
+D('signup-request-approved', 'c', 'success', 'login_link', [], null,
+  ['Your account is ready', 'Your account was approved', 'Your request was approved. You can now sign in with the same account you used.', 'Sign in'],
+  ['Votre compte est prêt', 'Votre compte a été approuvé', 'Votre demande a été approuvée. Vous pouvez maintenant vous connecter avec le même compte que celui utilisé.', 'Se connecter'])

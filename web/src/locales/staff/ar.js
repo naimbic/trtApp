@@ -5146,5 +5146,15 @@ export default {
     "The categories of the ideas proposed to clients": "فئات الأفكار المقترحة على العملاء",
     "The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.": "تُدار فئات الأفكار المقترحة على العملاء (تنمية النشاط، توفير المال…) من القائمة، العملاء.",
     "Other is the category ideas fall back to: it stays (you can switch it off)": "«أخرى» هي الفئة الاحتياطية للأفكار: تبقى (يمكنك تعطيلها)",
-    "Ideas use this category: change their category first, or switch it off": "توجد أفكار تستخدم هذه الفئة: غيّر فئتها أولًا أو عطّلها"
+    "Ideas use this category: change their category first, or switch it off": "توجد أفكار تستخدم هذه الفئة: غيّر فئتها أولًا أو عطّلها",
+    "Account created for {name}. They were told by email.": "أُنشئ حساب لـ {name} وتم إبلاغه بالبريد.",
+    "Account requests": "طلبات الحسابات",
+    "Request declined": "تم رفض الطلب",
+    "Thank you! Your request was sent to the administrators. You will get an email when your account is approved.": "شكرًا! أُرسل طلبك إلى المسؤولين. ستصلك رسالة بريد عند الموافقة على حسابك.",
+    "These people signed in with Google or GitHub and have no account. Nobody gets access before you approve.": "هؤلاء سجّلوا الدخول عبر Google أو GitHub وليس لديهم حساب. لا أحد يحصل على وصول قبل موافقتك.",
+    "Your request is waiting for an administrator to approve it.": "طلبك بانتظار موافقة أحد المسؤولين.",
+    "Your request was declined. Ask an administrator.": "تم رفض طلبك. اسأل أحد المسؤولين.",
+    "{n} tries": "{n} محاولات",
+    "Let people ask for an account with Google or GitHub": "السماح للأشخاص بطلب حساب عبر Google أو GitHub",
+    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "عندما يسجّل شخص الدخول عبر Google أو GitHub وليس لديه حساب يمكنه طلب واحد. يُبلَّغ المسؤولون ويوافقون على كل طلب أو يرفضونه في الفريق. لا أحد يحصل على وصول قبل الموافقة."
 }

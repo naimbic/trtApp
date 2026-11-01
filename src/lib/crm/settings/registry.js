@@ -151,6 +151,9 @@ export const GROUPS = {
         label: 'Sign-in & API', icon: 'TbPlugConnected', desc: 'Google and GitHub sign-in, API keys and the apps that sign in with this CRM',
         cards: [
             { title: 'Sign in with Google or GitHub', desc: 'Team members who already have an account here can sign in with the Google or GitHub account that uses the same email. The keys are server settings, not saved here.', panel: 'signInProviders' },
+            { title: 'Account requests', desc: 'When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.', fields: [
+                yes('social_signup_requests', 'Let people ask for an account with Google or GitHub', { default: '1' }),
+            ] },
             { title: 'API, webhooks and sign-in apps', desc: 'Keys for other apps (Meet, forms, automations), webhooks, and the apps that sign in with this CRM.', links: [['API and webhooks', '/crm/api']] },
         ],
     },

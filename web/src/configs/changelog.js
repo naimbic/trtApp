@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.158.0',
+        date: '2026-11-02',
+        title: 'Sign in with Google or GitHub without an account: the person asks, the administrators approve',
+        items: ['Someone who signs in with Google or GitHub (with a verified email) and has no account is no longer just refused: a request is written, they see "Your request was sent to the administrators", and the administrators and the members allowed to add team members are told on the bell, by email and on Telegram / WhatsApp. One request per email: signing in again only shows "waiting for approval".',
+            'Team page: a blue block "Account requests" lists who is waiting (name, email, Google or GitHub, date). Choose a role and Approve: the account is created with the name and photo from Google, no password, no admin rights, and the person gets an email telling them they can sign in. Decline keeps the request on record; they see that it was declined. Nobody gets any access before approval.',
+            'Settings → Sign-in & API has a switch "Let people ask for an account with Google or GitHub" (on). Off brings back the old message "There is no account for you here yet".'],
+    },
+    {
         version: '0.157.1',
         date: '2026-11-02',
         title: 'Ideas: editable categories, a plain tab with an AI icon, and the page no longer overflows',

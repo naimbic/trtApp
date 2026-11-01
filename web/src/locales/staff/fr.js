@@ -5146,5 +5146,15 @@ export default {
     "The categories of the ideas proposed to clients": "Les catégories des idées proposées aux clients",
     "The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.": "Les catégories des idées proposées aux clients (Développer l'activité, Économiser…) se gèrent depuis le menu, Clients.",
     "Other is the category ideas fall back to: it stays (you can switch it off)": "Autre est la catégorie de repli des idées : elle reste (vous pouvez la désactiver)",
-    "Ideas use this category: change their category first, or switch it off": "Des idées utilisent cette catégorie : changez d'abord leur catégorie, ou désactivez-la"
+    "Ideas use this category: change their category first, or switch it off": "Des idées utilisent cette catégorie : changez d'abord leur catégorie, ou désactivez-la",
+    "Account created for {name}. They were told by email.": "Compte créé pour {name}. La personne a été prévenue par e-mail.",
+    "Account requests": "Demandes de compte",
+    "Request declined": "Demande refusée",
+    "Thank you! Your request was sent to the administrators. You will get an email when your account is approved.": "Merci ! Votre demande a été envoyée aux administrateurs. Vous recevrez un e-mail quand votre compte sera approuvé.",
+    "These people signed in with Google or GitHub and have no account. Nobody gets access before you approve.": "Ces personnes se sont connectées avec Google ou GitHub et n'ont pas de compte. Personne n'a accès avant votre approbation.",
+    "Your request is waiting for an administrator to approve it.": "Votre demande attend l'approbation d'un administrateur.",
+    "Your request was declined. Ask an administrator.": "Votre demande a été refusée. Contactez un administrateur.",
+    "{n} tries": "{n} tentatives",
+    "Let people ask for an account with Google or GitHub": "Laisser les personnes demander un compte avec Google ou GitHub",
+    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "Quand une personne se connecte avec Google ou GitHub sans avoir de compte, elle peut en demander un. Les administrateurs sont prévenus et approuvent ou refusent chaque demande dans Équipe. Personne n'a accès avant l'approbation."
 }

@@ -3,6 +3,8 @@
 export const TRANSLATIONS = {
  "spanish": {
   "templates": {
+   "signup-request-to-admin": ["Solicitud de cuenta: {request_email}", "Alguien solicita una cuenta", "Una persona inició sesión con {request_provider} y aún no tiene cuenta.\nAbra la página Equipo para aprobar o rechazar la solicitud. Nadie tiene acceso antes de que usted apruebe.", "Revisar la solicitud"],
+   "signup-request-approved": ["Su cuenta está lista", "Su cuenta fue aprobada", "Su solicitud fue aprobada. Ya puede iniciar sesión con la misma cuenta que utilizó.", "Iniciar sesión"],
    "client-idea-proposed": ["Una nueva idea para {client_company}: {idea_title}", "Tenemos una idea para usted", "Hemos analizado su actividad y preparado una idea que podría ayudar a {client_company}.\nÁbrala para ver el detalle, hacer una pregunta o decirnos si le interesa.", "Ver la idea"],
    "client-idea-message": ["Nuevo mensaje: {idea_title}", "Hemos respondido sobre su idea", "{staff_name} le ha escrito sobre la idea {idea_title}:", "Abrir la conversación"],
    "event-reminder": ["Recordatorio: {event_title}", "Su reunión se acerca", "Le recordamos amablemente nuestra reunión {event_title} el {event_date} a las {event_time}.\\nSi necesita cambiarla, responda a este correo.", "Unirse a la reunión"],
@@ -636,6 +638,8 @@ export const TRANSLATIONS = {
  },
  "japanese": {
   "templates": {
+   "signup-request-to-admin": ["アカウントのリクエスト:{request_email}", "アカウントのリクエストがあります", "{request_provider} でサインインした方がまだアカウントを持っていません。\n「チーム」ページでリクエストを承認または却下してください。承認するまで誰もアクセスできません。", "リクエストを確認"],
+   "signup-request-approved": ["アカウントの準備ができました", "アカウントが承認されました", "リクエストが承認されました。利用したアカウントでサインインできます。", "サインイン"],
    "client-idea-proposed": ["{client_company} への新しいご提案:{idea_title}", "ご提案があります", "貴社の状況を分析し、{client_company} のお役に立てそうなアイデアをまとめました。\n詳細の確認、ご質問、ご興味の有無のご連絡は、こちらからどうぞ。", "アイデアを見る"],
    "client-idea-message": ["新着メッセージ:{idea_title}", "アイデアについて返信しました", "{staff_name} がアイデア「{idea_title}」についてメッセージを送りました:", "会話を開く"],
    "event-reminder": ["リマインダー:{event_title}", "まもなく会議です", "会議「{event_title}」は {event_date} {event_time} です。\\n変更が必要な場合は、このメールに返信してください。", "会議に参加"],
@@ -1269,6 +1273,8 @@ export const TRANSLATIONS = {
  },
  "arabic": {
   "templates": {
+   "signup-request-to-admin": ["طلب حساب: {request_email}", "شخص يطلب حسابًا", "سجّل شخص الدخول عبر {request_provider} وليس لديه حساب بعد.\nافتح صفحة الفريق للموافقة على الطلب أو رفضه. لا أحد يحصل على وصول قبل موافقتك.", "مراجعة الطلب"],
+   "signup-request-approved": ["حسابك جاهز", "تمت الموافقة على حسابك", "تمت الموافقة على طلبك. يمكنك الآن تسجيل الدخول بالحساب نفسه الذي استخدمته.", "تسجيل الدخول"],
    "client-idea-proposed": ["فكرة جديدة لـ {client_company}: {idea_title}", "لدينا فكرة لك", "حللنا نشاطك وأعددنا فكرة قد تفيد {client_company}.\nافتحها لتطّلع على التفاصيل أو لتطرح سؤالًا أو لتخبرنا إن كانت تهمك.", "عرض الفكرة"],
    "client-idea-message": ["رسالة جديدة: {idea_title}", "ردّنا بخصوص فكرتك", "كتب لك {staff_name} بخصوص الفكرة {idea_title}:", "فتح المحادثة"],
    "event-reminder": ["تذكير: {event_title}", "اجتماعك يقترب", "تذكير ودّي باجتماعنا {event_title} بتاريخ {event_date} الساعة {event_time}.\\nإذا احتجت إلى تغييره فما عليك سوى الرد على هذه الرسالة.", "انضم إلى الاجتماع"],

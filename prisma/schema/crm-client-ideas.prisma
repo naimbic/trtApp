@@ -94,3 +94,25 @@ model CrmIdeaCategory {
 
   @@map("crm_idea_categories")
 }
+
+/// Someone who tried to sign in with Google / GitHub and has no account: the administrators approve or refuse.
+model CrmSignupRequest {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  email       String
+  name        String?
+  picture     String?
+  /// google | github
+  provider    String
+  /// pending | approved | rejected
+  status      String    @default("pending")
+  tries       Int       @default(1)
+  note        String?
+  decidedBy   String?   @db.ObjectId
+  decidedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@map("crm_signup_requests")
+}

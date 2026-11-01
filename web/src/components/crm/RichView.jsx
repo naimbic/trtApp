@@ -42,10 +42,10 @@ function decorate(html, dir) {
 }
 
 /** A saved comment, note or description: rich text (or old plain text) shown safely, mentions and tags picked out; a mention opens the chat. */
-const RichView = ({ html, className }) => {
+const RichView = ({ html, className, mentions = true }) => {
     const clean = useMemo(() => linkify(cleanHtml(html)), [html])
     const [dir, setDir] = useState(null)
-    const needs = clean.includes('@') || clean.includes('#')
+    const needs = mentions && (clean.includes('@') || clean.includes('#'))
     useEffect(() => { if (needs) mentionDirectory().then(setDir) }, [needs])
     const out = useMemo(() => (dir && needs ? decorate(clean, dir) : clean), [clean, dir, needs])
     // a share icon appears over a link or an image when the pointer rests on it (and stays while its menu is open)

@@ -18,12 +18,12 @@ export const CommentTools = ({ onReply, onEdit, onDelete, share }) => (
 )
 
 /** The text of a comment being edited in place. */
-export const CommentEdit = ({ initial, onSave, onCancel }) => {
+export const CommentEdit = ({ initial, onSave, onCancel, plain = false }) => {
     const [text, setText] = useState(initial)
     const [busy, setBusy] = useState(false)
     return (
         <div className="mt-1 space-y-2">
-            <RichEditor autoFocus minHeight={80} value={text} onChange={setText} />
+            <RichEditor autoFocus minHeight={80} value={text} onChange={setText} mentions={!plain} images={!plain} />
             <div className="flex justify-end gap-2">
                 <Button size="xs" onClick={onCancel}>{tr('Cancel')}</Button>
                 <Button size="xs" variant="solid" loading={busy} disabled={!text.trim() || text.trim() === initial.trim()} onClick={async () => { setBusy(true); try { await onSave(text) } finally { setBusy(false) } }}>{tr('Save')}</Button>

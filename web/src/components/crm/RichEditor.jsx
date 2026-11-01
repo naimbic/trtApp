@@ -102,7 +102,7 @@ const Btn = ({ on, active, title, children, disabled }) => (
  * an empty box gives ''. Old plain text is shown as paragraphs. Pictures are pasted, dropped or chosen and kept in the Space.
  * "@" suggests colleagues and "#" tags, like in every other text box.
  */
-const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = false, autoFocus = false, className, toolbar = true, onSubmit, onReady, bare = false }) => {
+const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = false, autoFocus = false, className, toolbar = true, onSubmit, onReady, bare = false, mentions = true, images = true }) => {
     const submitRef = useRef(null)
     submitRef.current = onSubmit
     const last = useRef(null)
@@ -139,8 +139,8 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
         editable: !disabled,
         autofocus: autoFocus ? 'end' : false,
         editorProps: {
-            handlePaste: (view, e) => { const f = e.clipboardData?.files; if (f?.length && [...f].some((x) => x.type.startsWith('image/'))) { insertImages(f, editorRef.current); return true } return false },
-            handleDrop: (view, e) => { const f = e.dataTransfer?.files; if (f?.length && [...f].some((x) => x.type.startsWith('image/'))) { e.preventDefault(); insertImages(f, editorRef.current); return true } return false },
+            handlePaste: (view, e) => { const f = images ? e.clipboardData?.files : null; if (f?.length && [...f].some((x) => x.type.startsWith('image/'))) { insertImages(f, editorRef.current); return true } return false },
+            handleDrop: (view, e) => { const f = images ? e.dataTransfer?.files : null; if (f?.length && [...f].some((x) => x.type.startsWith('image/'))) { e.preventDefault(); insertImages(f, editorRef.current); return true } return false },
             handleKeyDown: (view, e) => {
                 const { mention: m, active: a } = mref.current
                 // Enter sends (Shift+Enter is a new line) when the parent asks for it, as in a chat
@@ -160,7 +160,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
             // "@" or "#" right before the caret
             const { $from } = ed.state.selection
             const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '\n')
-            const m = MENTION_TRIGGER.exec(before)
+            const m = mentions ? MENTION_TRIGGER.exec(before) : null
             if (!m) return setMention(null)
             const kind = m[2], q = m[3]
             const to = $from.pos, from = to - (kind.length + q.length)
@@ -177,7 +177,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     editorRef.current = editor
     useEffect(() => { if (editor) onReady?.(editor) }, [editor]) // eslint-disable-line react-hooks/exhaustive-deps
     // the colleagues' names are known a moment after the editor opens: draw the mentions again then
-    useEffect(() => { let on = true; mentionDirectory().then((d) => { if (!on) return; namesRef.current = d.staff.map((s) => s.name).filter(Boolean).sort((a, b) => b.length - a.length); editorRef.current?.view?.dispatch(editorRef.current.state.tr) }); return () => { on = false } }, [editor])
+    useEffect(() => { if (!mentions) return undefined; let on = true; mentionDirectory().then((d) => { if (!on) return; namesRef.current = d.staff.map((s) => s.name).filter(Boolean).sort((a, b) => b.length - a.length); editorRef.current?.view?.dispatch(editorRef.current.state.tr) }); return () => { on = false } }, [editor])
 
     const pick = (m, item) => { editor.chain().focus().deleteRange({ from: m.from, to: m.to }).insertContent(item.insert).run(); setMention(null) }
 
@@ -217,10 +217,10 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <Btn title={tr('Align centre')} active={editor.isActive({ textAlign: 'center' })} on={() => editor.chain().focus().setTextAlign('center').run()}><TbAlignCenter /></Btn>
                     <Btn title={tr('Align right')} active={editor.isActive({ textAlign: 'right' })} on={() => editor.chain().focus().setTextAlign('right').run()}><TbAlignRight /></Btn>
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
-                    <Btn title={tr('Mention a colleague')} on={() => editor.chain().focus().insertContent('@').run()}><TbAt /></Btn>
+                    {mentions && <Btn title={tr('Mention a colleague')} on={() => editor.chain().focus().insertContent('@').run()}><TbAt /></Btn>}
                     <Btn title={tr('Link')} active={editor.isActive('link')} on={link}><TbLink /></Btn>
                     <Btn title={tr('Clear formatting')} on={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><TbClearFormatting /></Btn>
-                    <Btn title={tr('Picture')} disabled={busy} on={() => fileRef.current?.click()}><TbPhoto /></Btn>
+                    {images && <Btn title={tr('Picture')} disabled={busy} on={() => fileRef.current?.click()}><TbPhoto /></Btn>}
                     <span className="ml-auto flex gap-0.5">
                         <Btn title={tr('Undo')} disabled={!editor.can().undo()} on={() => editor.chain().focus().undo().run()}><TbArrowBackUp /></Btn>
                         <Btn title={tr('Redo')} disabled={!editor.can().redo()} on={() => editor.chain().focus().redo().run()}><TbArrowForwardUp /></Btn>

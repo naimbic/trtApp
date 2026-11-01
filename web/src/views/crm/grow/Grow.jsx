@@ -106,7 +106,7 @@ const Overview = ({ goIdeas }) => {
 const IdeaCard = ({ i, onOpen }) => (
     <button type="button" onClick={() => onOpen(i)} className="w-full rounded-xl border border-gray-200 bg-white p-3 text-start transition hover:border-primary/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
         <div className="mb-1.5 flex flex-wrap items-center gap-1.5"><span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', CATS[i.category]?.[1])}>{tr(CATS[i.category]?.[0])}</span><span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">{tr(PERIOD[i.period])}</span>{i.source !== 'manual' && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">{i.source === 'ai' && <TbRobot />}{tr(SRC[i.source])}</span>}</div>
-        <div className="text-sm font-semibold leading-snug">{i.title}</div>
+        <div className="text-sm font-semibold leading-snug [overflow-wrap:anywhere]">{i.title}</div>
         <div className="mt-2 flex items-center justify-between gap-2 text-xs"><span className={cn('font-semibold', PRIO[i.priority]?.[1])}>{tr(PRIO[i.priority]?.[0])}</span><span className="flex items-center gap-2 text-gray-400">{i.taskId && <TbChecklist title={tr("Has a task")} />}{i.assignees.slice(0, 3).map((a) => <span key={a.id} className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">{a.name.split(' ')[0]}</span>)}</span></div>
         {i.tags.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{i.tags.slice(0, 4).map((t) => <span key={t} className="text-[10px] text-gray-400">#{t}</span>)}</div>}
     </button>

@@ -7,6 +7,7 @@ import { notifyStaffChannels } from '@/lib/crm/channels'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { realPicture } from '@/lib/crm/pictures'
 import { emit } from '@/lib/crm/webhooks'
+import { notifyComment } from '@/lib/crm/mentionsApi'
 import { getIdeaCategories } from '@/lib/crm/ideaCategories'
 import { FALLBACK_CATEGORY } from '@/lib/crm/ideaCategoriesCalc'
 
@@ -159,25 +160,65 @@ export async function deleteIdea(clientId, id) {
     return { success: true }
 }
 
+/** A message as the screens show it. `replyTo` is the message it answers (name and first words). */
+export const commentOut = (c, all, { me = null, canDelete = false, forClient = false } = {}) => {
+    const r = c.replyToId ? all.find((x) => x.id === c.replyToId && (!forClient || !x.internal)) : null
+    const own = forClient ? c.authorKind === 'client' : c.authorKind === 'staff' && !!me && c.authorId === me
+    return {
+        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own,
+        replyTo: r ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,
+        ...(forClient ? {} : { internal: !!c.internal, canDelete: own || canDelete }),
+    }
+}
+
 /** The conversation of an idea (internal notes included, for the team). */
 export async function listComments(clientId, id) {
     const g = await gate('view')
     await clientOf(g, clientId)
     const rows = await prisma.crmClientIdeaComment.findMany({ where: { ideaId: id }, orderBy: { createdAt: 'asc' }, take: 300 })
-    return { list: rows.map((c) => ({ id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: c.body, internal: !!c.internal, createdAt: c.createdAt })) }
+    return { list: rows.map((c) => commentOut(c, rows, { me: g.staffId, canDelete: hasCap(g.authority, 'client_ideas', 'delete') })) }
 }
 
+/** Write to the client (or leave a note for the team): rich text, @mentions and #tags, and an answer to an earlier message. */
 export async function addComment(clientId, id, body = {}) {
     const g = await gate('edit')
     const client = await clientOf(g, clientId)
     const idea = await prisma.crmClientIdea.findFirst({ where: { id, clientId } })
     if (!idea) throw fail('Idea not found', 404)
-    const text = String(body.body || '').trim().slice(0, 4000)
+    const text = storeRich(String(body.body || ''), 12000)
     if (!text) throw fail('Write a message first')
     const internal = !!body.internal || !idea.visible
-    const row = await prisma.crmClientIdeaComment.create({ data: { ideaId: id, authorKind: 'staff', authorId: g.staffId || undefined, authorName: g.name, body: text, internal } })
-    if (!internal) await tellClientOfComment(idea, client, g.name, text)
-    return { comment: { id: row.id, authorKind: 'staff', authorName: row.authorName, body: row.body, internal: row.internal, createdAt: row.createdAt } }
+    const reply = oid(body.replyToId) && (await prisma.crmClientIdeaComment.findFirst({ where: { id: body.replyToId, ideaId: id } }))
+    const row = await prisma.crmClientIdeaComment.create({ data: { ideaId: id, authorKind: 'staff', authorId: g.staffId || undefined, authorName: g.name, body: text, internal, replyToId: reply ? reply.id : null } })
+    // the people named with @, the team of the idea, and the colleague who is answered
+    try { await notifyComment({ by: { staffId: g.staffId, name: g.name }, text, link: `/crm/clients/${clientId}?tab=ideas&idea=${id}`, subject: idea.title, recipients: [...(await teamOf(idea, clientId)), reply?.authorKind === 'staff' ? reply.authorId : null] }) } catch (e) { console.error('[idea notify]', e.message) }
+    if (!internal) await tellClientOfComment(idea, client, g.name, plainText(text))
+    const all = await prisma.crmClientIdeaComment.findMany({ where: { ideaId: id } })
+    return { comment: commentOut(row, all, { me: g.staffId, canDelete: hasCap(g.authority, 'client_ideas', 'delete') }) }
+}
+
+export async function editComment(clientId, id, body = {}) {
+    const g = await gate('edit')
+    await clientOf(g, clientId)
+    const c = oid(body.commentId) && (await prisma.crmClientIdeaComment.findFirst({ where: { id: body.commentId, ideaId: id } }))
+    if (!c) throw fail('Message not found', 404)
+    if (c.authorKind !== 'staff' || !g.staffId || c.authorId !== g.staffId) throw fail('You can only edit your own messages', 403)
+    const text = storeRich(String(body.body || ''), 12000)
+    if (!text) throw fail('Write a message first')
+    await prisma.crmClientIdeaComment.update({ where: { id: c.id }, data: { body: text, editedAt: new Date() } })
+    return { success: true }
+}
+
+export async function deleteComment(clientId, id, commentId) {
+    const g = await gate('edit')
+    await clientOf(g, clientId)
+    const c = oid(commentId) && (await prisma.crmClientIdeaComment.findFirst({ where: { id: commentId, ideaId: id } }))
+    if (!c) throw fail('Message not found', 404)
+    const own = c.authorKind === 'staff' && !!g.staffId && c.authorId === g.staffId
+    if (!own && !hasCap(g.authority, 'client_ideas', 'delete')) throw fail('You can only delete your own messages', 403)
+    await prisma.crmClientIdeaComment.updateMany({ where: { replyToId: c.id }, data: { replyToId: null } })
+    await prisma.crmClientIdeaComment.delete({ where: { id: c.id } })
+    return { success: true }
 }
 
 /** A reply from the team shows in the client area; the contacts get a short email too. */

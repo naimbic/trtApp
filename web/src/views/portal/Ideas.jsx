@@ -3,7 +3,9 @@ import { Link, useParams } from 'react-router'
 import { TbBulb, TbCheck, TbThumbUp, TbThumbDown, TbMessageCircle, TbCalendar, TbExternalLink, TbFlame, TbBolt } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import Input from '@/components/ui/Input'
+import RichEditor from '@/components/crm/RichEditor'
+import RichView from '@/components/crm/RichView'
+import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import Skeleton from '@/components/ui/Skeleton'
 import Tag from '@/components/ui/Tag'
 import { portal, money } from './api'
@@ -54,6 +56,8 @@ export const IdeaDetail = () => {
     const [error, setError] = useState('')
     const [text, setText] = useState('')
     const [busy, setBusy] = useState('')
+    const [replyTo, setReplyTo] = useState(null)
+    const [editingId, setEditingId] = useState(null)
     const load = () => portal(`/ideas/${id}`).then(setD).catch((e) => setError(e.message))
     useEffect(() => { load() }, [id])
     if (error) return <Card><div className="text-red-500">{error}</div><Link to="/portal/ideas" className="mt-3 inline-block text-primary">{t('Back to ideas')}</Link></Card>
@@ -61,7 +65,9 @@ export const IdeaDetail = () => {
     const { idea: i } = d
     const ro = !!me.preview
     const answer = async (a) => { setBusy(a); try { await portal(`/ideas/${id}`, { method: 'POST', body: { action: 'answer', answer: a, comment: text } }); setText(''); await load() } catch (e) { setError(e.message) } finally { setBusy('') } }
-    const send = async () => { if (!text.trim()) return; setBusy('say'); try { await portal(`/ideas/${id}`, { method: 'POST', body: { action: 'comment', body: text } }); setText(''); await load() } catch (e) { setError(e.message) } finally { setBusy('') } }
+    const edit = async (c, body) => { await portal(`/ideas/${id}`, { method: 'POST', body: { action: 'edit', commentId: c.id, body } }); setEditingId(null); await load() }
+    const remove = async (c) => { try { await portal(`/ideas/${id}`, { method: 'POST', body: { action: 'delete', commentId: c.id } }); await load() } catch (e) { setError(e.message) } }
+    const send = async () => { if (!text.trim()) return; setBusy('say'); try { await portal(`/ideas/${id}`, { method: 'POST', body: { action: 'comment', body: text, replyToId: replyTo?.id } }); setText(''); setReplyTo(null); await load() } catch (e) { setError(e.message) } finally { setBusy('') } }
     return (
         <div className="flex flex-col gap-4">
             <div><div className="mb-1 text-sm text-gray-500"><Link to="/portal/ideas" className="hover:text-primary">{t('Ideas')}</Link></div><div className="flex flex-wrap items-center gap-3"><h3 className="flex items-center gap-2"><TbBulb className="text-blue-500" />{i.title}</h3><Tag className={`whitespace-nowrap ${TONE[i.status] || ''}`}>{t(LABEL[i.status] || i.status)}</Tag></div></div>
@@ -85,20 +91,30 @@ export const IdeaDetail = () => {
             </div>
             <Card>
                 <h5 className="mb-3"><TbMessageCircle className="me-1 inline" />{t('Your answer and questions')}</h5>
-                <div className="space-y-2">
-                    {d.comments.map((c) => <div key={c.id} className={`rounded-xl p-3 text-sm ${c.mine ? 'ms-8 bg-blue-50 dark:bg-blue-500/10' : 'me-8 bg-gray-50 dark:bg-gray-700/40'}`}><div className="mb-0.5 text-xs text-gray-500"><b>{c.mine ? t('You') : c.authorName || t('Our team')}</b> · {date(c.createdAt, 'DD MMM HH:mm')}</div><div className="whitespace-pre-wrap">{c.body}</div></div>)}
+                <div className="space-y-3">
+                    {d.comments.map((c) => (
+                        <div key={c.id} className={`group relative flex gap-2.5 ${c.mine ? 'flex-row-reverse' : ''}`}>
+                            <div className={`min-w-0 max-w-[88%] flex-1 rounded-xl p-3 text-sm ${c.mine ? 'bg-blue-50 dark:bg-blue-500/10' : 'bg-gray-50 dark:bg-gray-700/40'}`}>
+                                <div className="mb-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500"><b className="truncate">{c.mine ? t('You') : c.authorName || t('Our team')}</b><span className="ms-auto shrink-0">{date(c.createdAt, 'DD MMM HH:mm')}{c.edited ? ` · ${t('edited')}` : ''}</span></div>
+                                <ReplyQuote r={c.replyTo} />
+                                {editingId === c.id ? <CommentEdit plain initial={c.body} onCancel={() => setEditingId(null)} onSave={(b) => edit(c, b)} /> : <RichView mentions={false} html={c.body} />}
+                            </div>
+                            {!ro && editingId !== c.id && <CommentTools onReply={() => setReplyTo({ id: c.id, name: c.mine ? t('You') : c.authorName || t('Our team') })} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.mine ? () => remove(c) : null} />}
+                        </div>
+                    ))}
                     {!d.comments.length && <p className="py-2 text-sm text-gray-500">{t('Ask a question or tell us what you think.')}</p>}
                 </div>
                 {!ro ? (
                     <div className="mt-4">
-                        <Input textArea rows={2} placeholder={t('Write to us (optional with your answer)')} value={text} onChange={(e) => setText(e.target.value)} />
+                        <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
+                        <RichEditor mentions={false} images={false} minHeight={90} placeholder={t('Write to us (optional with your answer)')} value={text} onChange={setText} />
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                             {d.canAnswer && <>
                                 <Button variant="solid" icon={<TbThumbUp />} loading={busy === 'approved'} onClick={() => answer('approved')}>{t('Approve')}</Button>
                                 <Button icon={<TbBulb />} loading={busy === 'interested'} onClick={() => answer('interested')}>{t('I am interested')}</Button>
                                 <Button variant="plain" className="text-red-500" icon={<TbThumbDown />} loading={busy === 'declined'} onClick={() => answer('declined')}>{t('Not now')}</Button>
                             </>}
-                            <Button className="ms-auto" size="sm" loading={busy === 'say'} disabled={!text.trim()} onClick={send}>{t('Send a message')}</Button>
+                            <Button className="ms-auto" size="sm" loading={busy === 'say'} disabled={!text.replace(/<[^>]*>/g, '').trim()} onClick={send}>{t('Send a message')}</Button>
                         </div>
                     </div>
                 ) : <p className="mt-3 text-xs text-gray-500">{t('Preview: you cannot answer from here.')}</p>}

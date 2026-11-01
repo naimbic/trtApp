@@ -57,6 +57,9 @@ model CrmClientIdeaComment {
   body       String
   /// a note for the team only
   internal   Boolean  @default(false)
+  /// the message this one answers
+  replyToId  String?  @db.ObjectId
+  editedAt   DateTime?
   createdAt  DateTime @default(now())
 
   @@index([ideaId])

@@ -11,6 +11,8 @@ import Segment from '@/components/ui/Segment'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FoldSection from '@/components/crm/FoldSection'
 import RichEditor from '@/components/crm/RichEditor'
+import RichView from '@/components/crm/RichView'
+import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import cn from '@/utils/classNames'
 import { Link } from 'react-router'
 import { api, notify } from '../kit/api'
@@ -25,7 +27,7 @@ export const STATUS = {
 /** A category as a small coloured label: its colour tints the background, its name is translated when it is one that comes with the app. */
 const Cat = ({ cat, code }) => {
     const c = cat || { name: code || 'Other', color: '#6b7280' }
-    return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: `${c.color}22`, color: c.color }}>{tr(c.name)}</span>
+    return <span className="max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: `${c.color}22`, color: c.color }}>{tr(c.name)}</span>
 }
 const catOf = (cats, code) => (cats || []).find((c) => c.code === code)
 const LEVEL = { 1: 'Low', 2: 'Medium', 3: 'High' }
@@ -47,17 +49,17 @@ const LevelTags = ({ kind, value, onChange }) => (
 const Dots = ({ n, color }) => <span className="inline-flex gap-0.5">{[1, 2, 3].map((k) => <i key={k} className={cn('h-1.5 w-1.5 rounded-full', k <= n ? color : 'bg-gray-200 dark:bg-gray-600')} />)}</span>
 
 const IdeaCard = ({ i, cur, cats, onOpen }) => (
-    <button type="button" onClick={() => onOpen(i)} className="w-full rounded-xl border border-gray-200 bg-white p-3 text-start transition hover:border-primary/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+    <button type="button" onClick={() => onOpen(i)} className="block w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-3 text-start transition hover:border-primary/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
         <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
             <Cat cat={catOf(cats, i.category)} code={i.category} />
             {i.source === 'ai' && <span className="flex items-center gap-0.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700"><TbSparkles />AI</span>}
             <span className="ms-auto" title={i.visible ? tr("The client can see it") : tr("Only the team can see it")}>{i.visible ? <TbEye className="text-emerald-500" /> : <TbEyeOff className="text-gray-400" />}</span>
         </div>
-        <div className="text-sm font-semibold leading-snug">{i.title}</div>
-        {i.gain && <div className="mt-1 line-clamp-2 text-xs text-gray-500">{i.gain}</div>}
-        <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-400">
+        <div className="line-clamp-3 text-sm font-semibold leading-snug [overflow-wrap:anywhere]">{i.title}</div>
+        {i.gain && <div className="mt-1 line-clamp-2 text-xs text-gray-500 [overflow-wrap:anywhere]">{i.gain}</div>}
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs text-gray-400">
             <span className="flex items-center gap-2" title={`${tr("Impact")}: ${tr(LEVEL[i.impact])} · ${tr("Effort")}: ${tr(LEVEL[i.effort])}`}><span className="flex items-center gap-1"><TbFlame className="text-emerald-500" /><Dots n={i.impact} color="bg-emerald-500" /></span><span className="flex items-center gap-1"><TbBolt className="text-amber-500" /><Dots n={i.effort} color="bg-amber-500" /></span></span>
-            <span className="flex items-center gap-2">{i.price != null && <b className="text-gray-600 dark:text-gray-300">{money(i.price, cur)}</b>}{i.taskId && <TbChecklist title={tr("A task was made from it")} />}{i.comments > 0 && <span className="flex items-center gap-0.5"><TbMessageCircle />{i.comments}</span>}</span>
+            <span className="flex items-center gap-2">{i.price != null && <b className="max-w-[120px] truncate text-gray-600 dark:text-gray-300" title={money(i.price, cur)}>{money(i.price, cur)}</b>}{i.taskId && <TbChecklist title={tr("A task was made from it")} />}{i.comments > 0 && <span className="flex items-center gap-0.5"><TbMessageCircle />{i.comments}</span>}</span>
         </div>
         {(i.answer || i.dueDate) && <div className="mt-1.5 flex flex-wrap gap-1.5 text-[10px]">{i.answer && <span className="rounded bg-blue-50 px-1.5 py-0.5 font-semibold text-blue-700 dark:bg-blue-500/10">{tr("Client")}: {tr(STATUS[i.answer]?.[0] || i.answer)}</span>}{i.dueDate && <span className="text-gray-400">{tr("Answer by")} {dayjs(i.dueDate).format('DD MMM')}</span>}</div>}
     </button>
@@ -72,6 +74,8 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
     const [comments, setComments] = useState([])
     const [text, setText] = useState('')
     const [internal, setInternal] = useState(false)
+    const [replyTo, setReplyTo] = useState(null)
+    const [editingId, setEditingId] = useState(null)
     const [busy, setBusy] = useState('')
     const [del, setDel] = useState(false)
     const isNew = !!idea && !idea.id
@@ -80,7 +84,7 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
     useEffect(() => {
         if (!idea) return
         setV({ ...blank, ...idea, price: idea.price ?? '', currencyId: idea.currencyId || '', dueDate: idea.dueDate ? dayjs(idea.dueDate).format('YYYY-MM-DD') : '', tags: (idea.tags || []).join(', '), assigneeIds: idea.assigneeIds || [], body: idea.body || '', gain: idea.gain || '' })
-        setSec('idea'); setComments([]); setText(''); setInternal(false)
+        setSec('idea'); setComments([]); setText(''); setInternal(false); setReplyTo(null); setEditingId(null)
         if (idea.id) api(`/api/crm/client-ideas/${idea.id}/comments?clientId=${clientId}`).then((r) => setComments(r.list)).catch(() => {})
     }, [idea, clientId])
     if (!idea || !v) return null
@@ -103,8 +107,10 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
     const say = async () => {
         if (!text.trim()) return
         setBusy('say')
-        try { const r = await api(`/api/crm/client-ideas/${idea.id}/comments`, { method: 'POST', body: { clientId, body: text, internal } }); setComments((c) => [...c, r.comment]); setText(''); onChanged() } catch (e) { notify('danger', e.message) } finally { setBusy('') }
+        try { const r = await api(`/api/crm/client-ideas/${idea.id}/comments`, { method: 'POST', body: { clientId, body: text, internal, replyToId: replyTo?.id } }); setComments((c) => [...c, r.comment]); setText(''); setReplyTo(null); onChanged() } catch (e) { notify('danger', e.message) } finally { setBusy('') }
     }
+    const reloadComments = () => api(`/api/crm/client-ideas/${idea.id}/comments?clientId=${clientId}`).then((r) => setComments(r.list)).catch(() => {})
+    const removeComment = async (c) => { try { await api(`/api/crm/client-ideas/${idea.id}/comments?clientId=${clientId}&commentId=${c.id}`, { method: 'DELETE' }); await reloadComments(); onChanged() } catch (e) { notify('danger', e.message) } }
     const task = async () => { setBusy('task'); try { const r = await api(`/api/crm/client-ideas/${idea.id}/task`, { method: 'POST', body: { clientId } }); notify('success', r.existing ? tr("The task already exists") : tr("Task created")); onChanged(); window.open(`/crm/tasks/${r.taskId}`, '_blank') } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
     const proposing = v.status === 'proposed' && !idea.proposedAt
     return (
@@ -156,19 +162,27 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
                         </FoldSection>
                         {!isNew && (
                             <FoldSection icon={<TbMessageCircle />} tone="rose" title={tr("Discussion")} summary={comments.length ? tr("{n} message(s)", { n: comments.length }) : tr("No message yet")} open={sec === 'talk'} onToggle={() => toggle('talk')}>
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {comments.map((c) => (
-                                        <div key={c.id} className={cn('rounded-xl p-2.5 text-sm', c.authorKind === 'client' ? 'bg-blue-50 dark:bg-blue-500/10' : c.internal ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-gray-50 dark:bg-gray-700/40')}>
-                                            <div className="mb-0.5 flex items-center gap-2 text-xs text-gray-500"><b>{c.authorName || (c.authorKind === 'client' ? tr("Client") : tr("Team"))}</b>{c.authorKind === 'client' && <span className="rounded bg-blue-100 px-1.5 text-blue-700">{tr("Client")}</span>}{c.internal && <span className="rounded bg-amber-100 px-1.5 text-amber-700">{tr("Team only")}</span>}<span className="ms-auto">{dayjs(c.createdAt).format('DD MMM HH:mm')}</span></div>
-                                            <div className="whitespace-pre-wrap">{c.body}</div>
+                                        <div key={c.id} className="group relative flex gap-2.5">
+                                            <span className={cn('mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white', c.authorKind === 'client' ? 'bg-blue-500' : c.internal ? 'bg-amber-500' : 'bg-gray-500')}>{(c.authorName || '?')[0]?.toUpperCase()}</span>
+                                            <div className={cn('min-w-0 flex-1 rounded-xl p-2.5 text-sm', c.authorKind === 'client' ? 'bg-blue-50 dark:bg-blue-500/10' : c.internal ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-gray-50 dark:bg-gray-700/40')}>
+                                                <div className="mb-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500"><b className="truncate text-gray-700 dark:text-gray-200">{c.authorName || (c.authorKind === 'client' ? tr("Client") : tr("Team"))}</b>{c.authorKind === 'client' && <span className="rounded bg-blue-100 px-1.5 text-blue-700">{tr("Client")}</span>}{c.internal && <span className="rounded bg-amber-100 px-1.5 text-amber-700">{tr("Team only")}</span>}<span className="ms-auto shrink-0">{dayjs(c.createdAt).format('DD MMM HH:mm')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
+                                                <ReplyQuote r={c.replyTo} />
+                                                {editingId === c.id
+                                                    ? <CommentEdit initial={c.body} onCancel={() => setEditingId(null)} onSave={async (t) => { await api(`/api/crm/client-ideas/${idea.id}/comments`, { method: 'PUT', body: { clientId, commentId: c.id, body: t } }); setEditingId(null); await reloadComments() }} />
+                                                    : <RichView html={c.body} />}
+                                            </div>
+                                            {editingId !== c.id && can.edit && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.authorName || tr('Client') }); setText((x) => x || (c.authorKind === 'staff' && c.authorName ? `@${c.authorName} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => removeComment(c) : null} />}
                                         </div>
                                     ))}
                                     {!comments.length && <p className="py-2 text-center text-xs text-gray-400">{tr("Questions and answers between you and the client appear here.")}</p>}
                                 </div>
                                 {can.edit && (
-                                    <div className="mt-3">
-                                        <Input textArea rows={2} placeholder={internal || !v.visible ? tr("A note for the team only…") : tr("Write to the client…")} value={text} onChange={(e) => setText(e.target.value)} />
-                                        <div className="mt-2 flex items-center justify-between gap-2"><label className="flex items-center gap-2 text-xs text-gray-500"><Switcher checked={internal || !v.visible} disabled={!v.visible} onChange={setInternal} />{tr("Team only")}</label><Button size="sm" variant="solid" loading={busy === 'say'} disabled={!text.trim()} onClick={say}>{tr("Send")}</Button></div>
+                                    <div className="mt-3 space-y-2">
+                                        <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
+                                        <RichEditor minHeight={80} placeholder={internal || !v.visible ? tr("A note for the team only…") : tr("Write to the client…")} value={text} onChange={setText} />
+                                        <div className="flex items-center justify-between gap-2"><label className="flex items-center gap-2 text-xs text-gray-500"><Switcher checked={internal || !v.visible} disabled={!v.visible} onChange={setInternal} />{tr("Team only")}</label><Button size="sm" variant="solid" loading={busy === 'say'} disabled={!text.trim()} onClick={say}>{tr("Send")}</Button></div>
                                     </div>
                                 )}
                             </FoldSection>

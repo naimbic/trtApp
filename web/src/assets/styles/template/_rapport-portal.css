@@ -65,3 +65,7 @@
 
 /* the left column of the client page stays in view while the tabs scroll */
 @media (min-width: 1024px) { .pt-col--sticky { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow-y: auto; scrollbar-width: thin; padding-bottom: 2px; } }
+
+/* long words and web addresses wrap inside the cards of the client area instead of running out of them */
+.rp-frame--portal .card :is(h1, h2, h3, h4, h5, h6, p, li, dd, dt, a, div) { overflow-wrap: anywhere; }
+.rp-frame--portal .card { min-width: 0; }

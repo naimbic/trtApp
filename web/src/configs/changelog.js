@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.159.0',
+        date: '2026-11-02',
+        title: 'Client ideas: real conversations (editor, mentions, replies, edit, delete); long text no longer leaves its card',
+        items: [
+            'The conversation of an idea now works like the one of a task. Team: a rich text box (bold, lists, links, colours, pictures), @mentions of colleagues (they are notified on the bell and on Telegram / WhatsApp) and #tags, reply to a message (the quote shows above the answer), edit your own messages (marked "edited") and delete your own (or any, with the Delete permission). Team-only notes stay hidden from the client, and so do the quotes of them.',
+            'Client area: the client also writes with a rich text box (bold, italic, lists, links), can answer a message, edit and delete its own messages, and the answer to an idea (Approve, I am interested, Not now) takes the same box. Clients cannot mention the team or add pictures. Every message is cleaned of scripts on the server.',
+            'Cards: long words, web addresses and titles no longer run out of their card. Fixed on the idea cards (team and client area: the title wraps in 3 lines at most, the price is shortened) and on the cards of the client area, and checked on the task board and the lead and project boards, which already clip long text with "…".',
+        ],
+    },
+    {
         version: '0.158.2',
         date: '2026-11-02',
         title: 'Smaller coloured tags for impact, effort and priority; help when a client cannot sign in',

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.148.0',
+        date: '2026-11-01',
+        title: 'Meet shows the same meetings as the CRM calendar',
+        items: [
+            'With a member\'s own token, GET /api/v1/calendar/events now answers what that member sees in the CRM calendar: their own events and the ones they are invited to, the events nobody owns, the public events, and every event for administrators and for who may see all events. Events with a Google Meet, Zoom or any other link (include_unlinked=1 adds the ones with no link) are all returned. A member without access to the calendar gets an empty list. An API key still answers only for the member named by staff_id (their own and invited events).',
+            'Fixed: an event saved without an end time came back with end null, which a program could not show. It now ends one hour after its start (a day for an all-day event).',
+        ],
+    },
+    {
         version: '0.147.0',
         date: '2026-11-01',
         title: 'Meet can see all of a member\'s events, and the team busy times',

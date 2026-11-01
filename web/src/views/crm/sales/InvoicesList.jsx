@@ -4,12 +4,13 @@ import { StatTile, TileGrid, StatusPills } from '@/components/crm/ListHeader'
 import { useRegisterCurrency } from '@/store/pageFilterStore'
 import { TbReceipt2, TbCash, TbHourglass, TbAlertTriangle, TbCircleCheck, TbFileText, TbCopy } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbSearch, TbDots, TbPercentage, TbExternalLink, TbPencil, TbDownload, TbMail, TbArrowsExchange, TbTrash, TbBan, TbSend, TbFileText as TbDraft } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbDots, TbPercentage, TbExternalLink, TbPencil, TbDownload, TbMail, TbArrowsExchange, TbTrash, TbBan, TbSend, TbFileText as TbDraft, TbMoodSad, TbArrowBackUp, TbHistoryToggle } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Dialog from '@/components/ui/Dialog'
 import RowMenu from '@/components/crm/RowMenu'
 import SendMailDialog from '../mail/SendMailDialog'
 import { InvoiceHead, InvoiceCash } from './InvoiceInsights'
+import OldUnpaidDialog from './OldUnpaidDialog'
 import { compact } from '../kit/charts'
 import { api as apiCall, notify } from '../kit/api'
 import { useSessionUser } from '@/store/authStore'
@@ -33,7 +34,7 @@ import { tr } from '@/utils/t'
 import { moneyChange } from '../kit/widgets'
 
 const { Tr, Th, Td, THead, TBody } = Table
-const ORDER = [6, 1, 3, 4, 2, 5]
+const ORDER = [6, 1, 3, 4, 2, 5, 7]
 
 const InvoicesList = () => {
     const navigate = useNavigate()
@@ -57,6 +58,7 @@ const InvoicesList = () => {
     const [modes, setModes] = useState([])
     const [mail, setMail] = useState(null) // { id, template }
     const [confirm, setConfirm] = useState(null) // { row, kind }
+    const [oldOpen, setOldOpen] = useState(false)
     const [busy, setBusy] = useState(false)
     const [caution, setCaution] = useState(null) // a paid invoice a super admin is about to change: { row, fn }
     const authority = useSessionUser((st) => st.user.authority) || []
@@ -90,11 +92,13 @@ const InvoicesList = () => {
         setPayFor(row)
     }
     const menuItems = (r) => {
-        const cancelled = r.status === 5, draft = r.status === 6, paidFinal = r.status === 2
+        const cancelled = r.status === 5, draft = r.status === 6, paidFinal = r.status === 2, lost = r.status === 7
         const mayChange = !paidFinal || superAdmin
         return [
             ...(can('payments', 'create') && !cancelled && !draft && r.due > 0 ? [{ label: tr("Record payment"), icon: <TbCash />, onClick: () => openPay(r) }] : []),
             { label: tr("Open"), icon: <TbExternalLink />, onClick: () => navigate(`/crm/invoices/${r.id}`) },
+            ...(can('invoices', 'edit') && [1, 3, 4].includes(r.status) ? [{ label: tr("Mark as lost"), icon: <TbMoodSad />, danger: true, onClick: () => setConfirm({ row: r, kind: 'lose' }) }] : []),
+            ...(can('invoices', 'edit') && lost ? [{ label: tr("Restore (not lost)"), icon: <TbArrowBackUp />, onClick: () => state(r, 'unlose', tr("Invoice restored")) }] : []),
             ...(can('invoices', 'create') ? [{ label: tr("Duplicate"), icon: <TbCopy />, onClick: () => navigate(`/crm/invoices/new?from=${r.id}`) }] : []),
             ...(can('invoices', 'edit') && !cancelled && mayChange ? [{ label: tr("Edit"), icon: <TbPencil />, onClick: guard(r, () => navigate(`/crm/invoices/${r.id}/edit`)) }] : []),
             { label: tr("Download"), icon: <TbDownload />, onClick: () => { window.location.href = `/api/crm/sales/invoices/${r.id}/pdf?download=1` } },
@@ -124,10 +128,10 @@ const InvoicesList = () => {
         <Container>
             <InvoiceHead
                 title={tr("Invoices")}
-                action={can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/invoices/new'} onClick={() => navigate('/crm/invoices/new')}>{tr("New invoice")}</Button>}
+                action={<div className="flex items-center gap-2">{can('invoices', 'edit') && <Button icon={<TbHistoryToggle />} onClick={() => setOldOpen(true)}>{tr("Old unpaid")}</Button>}{can('invoices', 'create') && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/invoices/new'} onClick={() => navigate('/crm/invoices/new')}>{tr("New invoice")}</Button>}</div>}
                 stats={[
                     { icon: <TbCash />, label: tr("Revenue"), value: m ? money(m.paid, cur) : '—' },
-                    { icon: <TbReceipt2 />, label: tr("Invoices"), value: String(Object.entries(data.stats.counts).filter(([k]) => ![5, 6].includes(+k)).reduce((n, [, v]) => n + v, 0)), badge: data.stats.counts[4] ? <span className="badge badge--tomato">{tr("{n} overdue", { n: data.stats.counts[4] })}</span> : null },
+                    { icon: <TbReceipt2 />, label: tr("Invoices"), value: String(Object.entries(data.stats.counts).filter(([k]) => ![5, 6, 7].includes(+k)).reduce((n, [, v]) => n + v, 0)), badge: data.stats.counts[4] ? <span className="badge badge--tomato">{tr("{n} overdue", { n: data.stats.counts[4] })}</span> : null },
                     { icon: <TbPercentage />, label: tr("Cash flow"), value: m ? money(m.outstanding, cur) : '—' },
                 ]}
             />
@@ -196,10 +200,12 @@ const InvoicesList = () => {
                 <p>{caution?.row?.number} · {caution?.row?.client}</p>
                 <p className="mt-2 text-sm text-red-600">{tr("A paid invoice is final. Changing it can upset your accounts and reports. Only a super admin can do it, and only if you know why.")}</p>
             </ConfirmDialog>
-            <ConfirmDialog isOpen={!!confirm} type={confirm?.kind === 'delete' ? 'danger' : 'warning'} title={confirm?.kind === 'delete' ? tr("Delete this invoice?") : tr("Cancel this invoice?")} confirmText={confirm?.kind === 'delete' ? tr("Delete") : tr("Cancel invoice")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)}
-                onConfirm={() => { const c = confirm; setConfirm(null); if (c.kind === 'delete') act(() => apiCall(`/api/crm/sales/invoices/${c.row.id}${superAdmin ? '?force=1' : ''}`, { method: 'DELETE' }), tr("Invoice deleted")); else state(c.row, 'cancel', tr("Invoice cancelled"), c.force) }}>
+            <ConfirmDialog isOpen={!!confirm} type={confirm?.kind === 'delete' || confirm?.kind === 'lose' ? 'danger' : 'warning'} title={confirm?.kind === 'delete' ? tr("Delete this invoice?") : confirm?.kind === 'lose' ? tr("Mark this invoice as lost?") : tr("Cancel this invoice?")} confirmText={confirm?.kind === 'delete' ? tr("Delete") : confirm?.kind === 'lose' ? tr("Mark as lost") : tr("Cancel invoice")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)}
+                onConfirm={() => { const c = confirm; setConfirm(null); if (c.kind === 'lose') state(c.row, 'lose', tr("Invoice marked as lost")); else if (c.kind === 'delete') act(() => apiCall(`/api/crm/sales/invoices/${c.row.id}${superAdmin ? '?force=1' : ''}`, { method: 'DELETE' }), tr("Invoice deleted")); else state(c.row, 'cancel', tr("Invoice cancelled"), c.force) }}>
                 <p>{confirm?.row?.number} · {confirm?.row?.client}</p>
+                {confirm?.kind === 'lose' && <p className="mt-2 text-sm text-gray-500">{tr("A lost invoice leaves the balances, the overdue list, the reminders and the client area. It stays under the Lost filter and can be restored.")}</p>}
             </ConfirmDialog>
+            <OldUnpaidDialog open={oldOpen} money={money} onClose={() => setOldOpen(false)} onDone={load} />
         </Container>
     )
 }

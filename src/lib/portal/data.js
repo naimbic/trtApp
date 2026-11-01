@@ -38,7 +38,7 @@ export async function me() {
 }
 
 async function invoicesOf(clientId) {
-    const [rows, cur, padding] = await Promise.all([prisma.crmInvoice.findMany({ where: { clientId, status: { not: 6 } }, orderBy: { date: 'desc' } }), currencies(), numberPadding()])
+    const [rows, cur, padding] = await Promise.all([prisma.crmInvoice.findMany({ where: { clientId, status: { notIn: [6, 7] } }, orderBy: { date: 'desc' } }), currencies(), numberPadding()])
     const pays = rows.length ? await prisma.crmPayment.findMany({ where: { invoiceId: { in: rows.map((r) => r.id) } }, select: { invoiceId: true, amount: true } }) : []
     const paid = {}
     for (const p of pays) paid[p.invoiceId] = round2((paid[p.invoiceId] || 0) + (p.amount || 0))

@@ -9,6 +9,7 @@ export const STATUS = {
     4: { label: tr("Overdue"), cls: 'bg-red-100 text-red-700' },
     5: { label: tr("Cancelled"), cls: 'bg-gray-200 text-gray-600' },
     6: { label: tr("Draft"), cls: 'bg-gray-200 text-gray-600' },
+    7: { label: tr("Lost"), cls: 'bg-rose-100 text-rose-700' },
 }
 export const StatusTag = ({ status }) => <Tag className={STATUS[status]?.cls}>{STATUS[status]?.label || status}</Tag>
 export const fmtDate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '')

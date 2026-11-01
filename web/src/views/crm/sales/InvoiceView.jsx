@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging, TbFileTypePdf, TbDownload, TbPrinter, TbRepeat, TbCopy } from 'react-icons/tb'
+import { TbArrowLeft, TbPencil, TbCash, TbSend, TbBan, TbTrash, TbMail, TbBellRinging, TbFileTypePdf, TbDownload, TbPrinter, TbRepeat, TbCopy, TbMoodSad, TbArrowBackUp } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -28,6 +28,7 @@ import ReminderCard from '../kit/ReminderCard'
 /** Effective status for display (overdue derives from the due date, like the list). */
 const effective = (inv, paid) => {
     if (inv.status === 5 || inv.status === 6) return inv.status
+    if (inv.status === 7) return paid >= inv.total ? 2 : 7
     const due = Math.round((inv.total - paid) * 100) / 100
     if (due <= 0) return 2
     if (inv.dueDate && fmtDate(inv.dueDate) < fmtDate(new Date())) return 4
@@ -131,6 +132,8 @@ const InvoiceView = () => {
                         {canEdit && payments.length > 0 && <Dropdown.Item eventKey="rec" onClick={() => setMail('invoice-payment-recorded')}><TbMail className="text-lg" /><span>{tr("Send receipt")}</span></Dropdown.Item>}
                         {canEdit && !invoice.sent && <Dropdown.Item eventKey="sent" onClick={guard((force) => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'markSent', force } }), tr("Marked as sent")))}><TbSend className="text-lg" /><span>{tr("Mark as sent")}</span></Dropdown.Item>}
                         {can('invoices', 'edit') && (cancelled ? <Dropdown.Item eventKey="un" onClick={guard((force) => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'uncancel', force } }), tr("Invoice restored")))}><TbBan className="text-lg" /><span>{tr("Mark as not cancelled")}</span></Dropdown.Item> : <Dropdown.Item eventKey="cx" onClick={guard(() => setConfirm('cancel'))}><TbBan className="text-lg" /><span>{tr("Cancel invoice")}</span></Dropdown.Item>)}
+                        {can('invoices', 'edit') && [1, 3, 4].includes(st) && <Dropdown.Item eventKey="lose" onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'lose' } }), tr("Invoice marked as lost"))}><TbMoodSad className="text-lg" /><span>{tr("Mark as lost")}</span></Dropdown.Item>}
+                        {can('invoices', 'edit') && st === 7 && <Dropdown.Item eventKey="unlose" onClick={() => run(() => api(`/api/crm/sales/invoices/${id}/state`, { method: 'POST', body: { action: 'unlose' } }), tr("Invoice restored"))}><TbArrowBackUp className="text-lg" /><span>{tr("Restore (not lost)")}</span></Dropdown.Item>}
                         {can('invoices', 'delete') && (!paidFinal || superAdmin) && <Dropdown.Item eventKey="del" onClick={() => setConfirm('delete')}><TbTrash className="text-lg text-red-500" /><span className="text-red-500">{tr("Delete")}</span></Dropdown.Item>}
                     </Dropdown>
                 </div>

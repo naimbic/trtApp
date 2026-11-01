@@ -682,6 +682,37 @@ try {
         await prisma.crmOauthCode.deleteMany({ where: { userId: { in: [sMem.staffId] } } })
     }
 
+    console.log('\n== Invoices: lost (written off) old balances')
+    {
+        const lEdit = await makeUser('lost-edit', { invoices: ['view', 'edit'] }), lView = await makeUser('lost-view', { invoices: ['view'] })
+        const e = await login(lEdit), v = await login(lView)
+        const cl = await prisma.crmClient.create({ data: { company: 'zz lost check', active: true } }); made.rows.unshift(['crmClient', cl.id])
+        const yAgo = (n) => { const d = new Date(); d.setFullYear(d.getFullYear() - n); return d }
+        const old = await prisma.crmInvoice.create({ data: { clientId: cl.id, number: 9101, prefix: 'ZZ-', date: yAgo(3), dueDate: yAgo(3), total: 100, status: 3, sent: true, addedFrom: lEdit.staffId } }); made.rows.unshift(['crmInvoice', old.id])
+        const fresh = await prisma.crmInvoice.create({ data: { clientId: cl.id, number: 9102, prefix: 'ZZ-', date: new Date(), dueDate: new Date(Date.now() + 86400000 * 30), total: 50, status: 1, sent: true, addedFrom: lEdit.staffId } }); made.rows.unshift(['crmInvoice', fresh.id])
+        const pay = await prisma.crmPayment.create({ data: { invoiceId: old.id, amount: 30, paymentDate: yAgo(3) } }); made.rows.unshift(['crmPayment', pay.id])
+        check('the old-unpaid review needs Edit and lists only old unpaid or partly paid invoices', (await v('GET', '/api/crm/sales/invoices/old')).status === 403)
+        const rv = await e('GET', '/api/crm/sales/invoices/old?years=2')
+        check('...the 3-year-old partly paid invoice is listed with what is still due; the recent one is not', rv.status === 200 && rv.body?.list?.find((x) => x.id === old.id)?.due === 70 && !rv.body.list.some((x) => x.id === fresh.id))
+        check('...a 5-year limit does not list it', !((await e('GET', '/api/crm/sales/invoices/old?years=5')).body?.list || []).some((x) => x.id === old.id))
+        check('an invoice cannot be marked lost without Edit', (await v('POST', `/api/crm/sales/invoices/${old.id}/state`, { action: 'lose' })).status === 403)
+        const lose = await e('POST', `/api/crm/sales/invoices/${old.id}/state`, { action: 'lose' })
+        check('Edit marks it as lost (status 7)', lose.status === 200 && (await prisma.crmInvoice.findUnique({ where: { id: old.id } })).status === 7)
+        const list = await e('GET', `/api/crm/sales/invoices?clientId=${cl.id}`)
+        check('a lost invoice is hidden from the default list and out of the outstanding/overdue figures, but counted under Lost', !(list.body?.list || list.body?.data || []).some((x) => x.id === old.id) && (list.body?.stats?.counts?.[7] || 0) === 1)
+        check('...and shown with the Lost filter', ((await e('GET', `/api/crm/sales/invoices?clientId=${cl.id}&status=7`)).body?.list || []).some((x) => x.id === old.id))
+        check('a draft, paid or cancelled invoice cannot be marked lost; only a lost one can be restored', (await e('POST', `/api/crm/sales/invoices/${fresh.id}/state`, { action: 'unlose' })).status === 400)
+        const back = await e('POST', `/api/crm/sales/invoices/${old.id}/state`, { action: 'unlose' })
+        check('restoring brings back its real status (overdue, with the payment kept)', back.status === 200 && [3, 4].includes((await prisma.crmInvoice.findUnique({ where: { id: old.id } })).status))
+        const bulk = await e('POST', '/api/crm/sales/invoices/bulk-lost', { ids: [old.id, fresh.id], lost: true })
+        check('the bulk action marks every selected unpaid invoice lost', bulk.status === 200 && bulk.body?.changed === 2 && (await prisma.crmInvoice.findUnique({ where: { id: fresh.id } })).status === 7)
+        check('...and the bulk restore brings them back', (await e('POST', '/api/crm/sales/invoices/bulk-lost', { ids: [old.id, fresh.id], lost: false })).body?.changed === 2)
+        await prisma.crmInvoice.update({ where: { id: old.id }, data: { status: 7 } })
+        await prisma.crmPayment.create({ data: { invoiceId: old.id, amount: 70, paymentDate: new Date() } }).then((p) => made.rows.unshift(['crmPayment', p.id]))
+        const { effective2 } = { effective2: null }
+        check('a lost invoice that ends up paid in full shows as paid', ((await e('GET', `/api/crm/sales/invoices?clientId=${cl.id}`)).body?.list || []).find((x) => x.id === old.id)?.status === 2)
+    }
+
     console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')
     {
         const sA = await makeUser('tk-staff', { customers: ['view', 'create', 'edit'], tickets: ['view', 'create', 'edit'], tasks: ['view', 'create', 'edit'] }); const sa = await login(sA)

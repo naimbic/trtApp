@@ -8,7 +8,7 @@ export const round2 = (n) => {
     return Math.round((x + Math.sign(x) * Number.EPSILON) * 100) / 100
 }
 
-export const INVOICE_STATUS = { UNPAID: 1, PAID: 2, PARTIALLY: 3, OVERDUE: 4, CANCELLED: 5, DRAFT: 6 }
+export const INVOICE_STATUS = { UNPAID: 1, PAID: 2, PARTIALLY: 3, OVERDUE: 4, CANCELLED: 5, DRAFT: 6, LOST: 7 }
 
 /**
  * Compute document totals (invoice / estimate / proposal / credit note).
@@ -99,6 +99,7 @@ export function invoiceStatusFromPayments(invoice, payments = [], now = new Date
 
     const left = round2(total - paid - credits)
     if (left <= 0) return INVOICE_STATUS.PAID
+    if (invoice.status === INVOICE_STATUS.LOST) return INVOICE_STATUS.LOST // written off: stays lost until paid in full or restored
     const partially = left < total
     const overdue = invoice.dueDate && dateOnly(invoice.dueDate) < dateOnly(now)
     if (overdue) return INVOICE_STATUS.OVERDUE

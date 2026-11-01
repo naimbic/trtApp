@@ -8,12 +8,13 @@ import { buildSeries } from '@/lib/crm/series'
 import { tallyWithAll, toBase } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
 
-const STATUS_LABEL = { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft' }
+const STATUS_LABEL = { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft', 7: 'Lost' }
 const day = (d) => new Date(d).toISOString().slice(0, 10)
 
 /** Effective Perfex status: overdue is derived from the due date, paid/partial from the payments. */
 const effective = (i, paid, today) => {
     if (i.status === 5 || i.status === 6) return i.status
+    if (i.status === 7) return paid >= i.total ? 2 : 7 // written off (lost): out of every balance, unless it ends up paid in full
     const due = round2(i.total - paid)
     if (due <= 0) return 2
     if (i.dueDate && day(i.dueDate) < today) return 4
@@ -59,7 +60,7 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     const tally = (list) => {
         const money = {}
         for (const r of list) {
-            if (r.status === 5 || r.status === 6) continue
+            if (r.status === 5 || r.status === 6 || r.status === 7) continue
             const m = (money[r.currencyId || 'none'] ||= { invoiced: 0, paid: 0, outstanding: 0, overdue: 0 })
             m.invoiced = round2(m.invoiced + r.total)
             m.paid = round2(m.paid + r.paid)
@@ -95,7 +96,8 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     const series = Object.fromEntries(Object.keys(money).map((k) => [k, seriesFor(k)]))
 
     const q = query.trim().toLowerCase()
-    if (status) rows = rows.filter((r) => String(r.status) === String(status))
+    // lost invoices are hidden unless asked for (the Lost filter)
+    rows = status ? rows.filter((r) => String(r.status) === String(status)) : rows.filter((r) => r.status !== 7)
     if (q) rows = rows.filter((r) => r.number.toLowerCase().includes(q) || r.client.toLowerCase().includes(q) || String(r.numberRaw) === q)
     const dir = order === 'asc' ? 1 : -1
     const keyFn = { number: (r) => r.numberRaw, client: (r) => r.client.toLowerCase(), date: (r) => +new Date(r.date || 0), dueDate: (r) => +new Date(r.dueDate || 0), total: (r) => r.total, due: (r) => r.due, status: (r) => r.status }[sortKey] || ((r) => +new Date(r.date || 0))

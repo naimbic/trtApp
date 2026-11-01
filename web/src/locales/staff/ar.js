@@ -4790,5 +4790,20 @@ export default {
     "Client check-in": "متابعة العميل",
     "Internal": "داخلي",
     "Interview": "مقابلة",
-    "Read the meetings of a team member (with their staff id)": "قراءة اجتماعات أحد أعضاء الفريق (مع معرّفه)"
+    "Read the meetings of a team member (with their staff id)": "قراءة اجتماعات أحد أعضاء الفريق (مع معرّفه)",
+    "A lost invoice leaves the balances, the overdue list, the reminders and the client area. It stays under the Lost filter and can be restored.": "تخرج الفاتورة الضائعة من الأرصدة وقائمة المتأخرات والتذكيرات ومنطقة العميل. تبقى تحت فلتر «ضائعة» ويمكن استعادتها.",
+    "Invoice marked as lost": "تم تعليم الفاتورة كضائعة",
+    "Invoices still unpaid or partly paid after a long time. Mark them as lost to take them out of the balances, the overdue list, the reminders and the client area. They stay in the Lost filter and can be restored at any time.": "فواتير ما زالت غير مدفوعة أو مدفوعة جزئيًا بعد وقت طويل. علّمها كضائعة لإخراجها من الأرصدة وقائمة المتأخرات والتذكيرات ومنطقة العميل. تبقى تحت فلتر «ضائعة» ويمكن استعادتها في أي وقت.",
+    "Mark as lost": "تعليم كضائعة",
+    "Mark selected as lost": "تعليم المحدد كضائع",
+    "Mark this invoice as lost?": "تعليم هذه الفاتورة كضائعة؟",
+    "No old unpaid invoice. Everything is clean.": "لا توجد فواتير قديمة غير مدفوعة. كل شيء نظيف.",
+    "Old unpaid": "متأخرات قديمة",
+    "Old unpaid invoices": "فواتير قديمة غير مدفوعة",
+    "Restore (not lost)": "استعادة (غير ضائعة)",
+    "Still due": "المتبقي",
+    "older than {n} year(s)": "أقدم من {n} سنة",
+    "{n} invoice(s) marked as lost": "تم تعليم {n} فاتورة كضائعة",
+    "Only an unpaid, partially paid or overdue invoice can be marked as lost": "يمكن تعليم الفاتورة غير المدفوعة أو المدفوعة جزئيًا أو المتأخرة فقط كضائعة",
+    "This invoice is not marked as lost": "هذه الفاتورة غير معلّمة كضائعة"
 }

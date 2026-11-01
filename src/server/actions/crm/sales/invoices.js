@@ -4,9 +4,9 @@ import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
-import { requirePermission, getStaffId } from '@/lib/crm/permissions'
+import { requirePermission, getStaffId, viewScope } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
-import { numberPadding } from '@/lib/crm/numbering'
+import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { allocateNumber, checkDeletable, afterDelete, ensureRealNumber, manualNumber, applyManualNumber } from '@/lib/crm/sales/docNumbering'
 import { lockProblem } from '@/lib/crm/docLock'
 
@@ -292,7 +292,7 @@ export async function deletePayment(paymentId, force = false) {
     return { success: true }
 }
 
-/** action: 'cancel' | 'uncancel' | 'markSent' | 'markUnpaid' (draft -> unpaid). */
+/** action: 'cancel' | 'uncancel' | 'lose' | 'unlose' | 'markSent' | 'markUnpaid' (draft -> unpaid). */
 export async function setInvoiceState(invoiceId, action, force = false) {
     const session = await requirePermission('invoices', 'edit')
     await assertDocVisible(session, 'invoice', invoiceId)
@@ -310,6 +310,15 @@ export async function setInvoiceState(invoiceId, action, force = false) {
         await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status: INVOICE_STATUS.UNPAID } })
         await refreshStatus(invoiceId)
         await logActivity(invoiceId, 'Invoice marked as not cancelled', staffId)
+    } else if (action === 'lose') {
+        if (![INVOICE_STATUS.UNPAID, INVOICE_STATUS.PARTIALLY, INVOICE_STATUS.OVERDUE].includes(invoice.status)) return fail('Only an unpaid, partially paid or overdue invoice can be marked as lost')
+        await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status: INVOICE_STATUS.LOST } })
+        await logActivity(invoiceId, 'Invoice marked as lost (written off): no longer in the balances or reminders', staffId)
+    } else if (action === 'unlose') {
+        if (invoice.status !== INVOICE_STATUS.LOST) return fail('This invoice is not marked as lost')
+        await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status: INVOICE_STATUS.UNPAID } })
+        await refreshStatus(invoiceId)
+        await logActivity(invoiceId, 'Invoice restored (no longer lost)', staffId)
     } else if (action === 'draft') {
         if ((await paidSum(invoiceId)) > 0) return fail('Cannot send an invoice that has payments back to draft')
         await prisma.crmInvoice.update({ where: { id: invoiceId }, data: { status: INVOICE_STATUS.DRAFT, sent: false, dateSend: null } })
@@ -371,4 +380,35 @@ export async function applyInvoiceFormat() {
     const numberFormat = Number(await o('invoice_number_format', '4')) || 4
     const r = await prisma.crmInvoice.updateMany({ where: { number: { lt: 1_000_000_000 } }, data: { prefix, numberFormat } })
     return { success: true, updated: r.count, prefix, numberFormat }
+}
+
+/** Old invoices that are still unpaid or partly paid (older than N years), for a clean-up: mark them lost so they stop showing in the balances. */
+export async function oldUnpaidInvoices(years = 2) {
+    const session = await requirePermission('invoices', 'edit')
+    const y = Math.min(Math.max(Number(years) || 2, 1), 20)
+    const cutoff = new Date(); cutoff.setFullYear(cutoff.getFullYear() - y)
+    const own = viewScope(session.user.authority || [], 'invoices') === 'all' ? {} : { addedFrom: await getStaffId(session) }
+    const rows = await prisma.crmInvoice.findMany({ where: { ...own, status: { in: [1, 3, 4] }, date: { lt: cutoff } }, orderBy: { date: 'asc' }, take: 500 })
+    const pays = rows.length ? await prisma.crmPayment.findMany({ where: { invoiceId: { in: rows.map((r) => r.id) } }, select: { invoiceId: true, amount: true } }) : []
+    const paid = {}; for (const p of pays) paid[p.invoiceId] = round2((paid[p.invoiceId] || 0) + (p.amount || 0))
+    const clients = await prisma.crmClient.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.clientId).filter(Boolean))] } }, select: { id: true, company: true } })
+    const name = Object.fromEntries(clients.map((c) => [c.id, c.company]))
+    const padding = await numberPadding()
+    return { years: y, list: rows.map((r) => ({ id: r.id, number: docNumberOf(r, padding), client: name[r.clientId] || '', date: r.date, dueDate: r.dueDate, total: r.total, paid: paid[r.id] || 0, due: round2(Math.max(r.total - (paid[r.id] || 0), 0)), currencyId: r.currencyId, status: r.status })) }
+}
+
+/** Marks many invoices lost (or restores them), each checked for visibility; returns how many changed. */
+export async function markInvoicesLost(ids = [], lost = true) {
+    const session = await requirePermission('invoices', 'edit')
+    const staffId = await getStaffId(session)
+    let changed = 0
+    for (const id of [...new Set(ids)].slice(0, 500)) {
+        if (!/^[a-f0-9]{24}$/i.test(String(id))) continue
+        try { await assertDocVisible(session, 'invoice', id) } catch { continue }
+        const inv = await prisma.crmInvoice.findUnique({ where: { id } })
+        if (!inv) continue
+        if (lost && [1, 3, 4].includes(inv.status)) { await prisma.crmInvoice.update({ where: { id }, data: { status: INVOICE_STATUS.LOST } }); await logActivity(id, 'Invoice marked as lost (written off): no longer in the balances or reminders', staffId); changed++ }
+        if (!lost && inv.status === INVOICE_STATUS.LOST) { await prisma.crmInvoice.update({ where: { id }, data: { status: INVOICE_STATUS.UNPAID } }); await refreshStatus(id); await logActivity(id, 'Invoice restored (no longer lost)', staffId); changed++ }
+    }
+    return { success: true, changed }
 }

@@ -4790,5 +4790,20 @@ export default {
     "Client check-in": "Point client",
     "Internal": "Interne",
     "Interview": "Entretien",
-    "Read the meetings of a team member (with their staff id)": "Lire les réunions d'un membre de l'équipe (avec son identifiant)"
+    "Read the meetings of a team member (with their staff id)": "Lire les réunions d'un membre de l'équipe (avec son identifiant)",
+    "A lost invoice leaves the balances, the overdue list, the reminders and the client area. It stays under the Lost filter and can be restored.": "Une facture perdue sort des soldes, de la liste des retards, des relances et de l'espace client. Elle reste sous le filtre Perdue et peut être rétablie.",
+    "Invoice marked as lost": "Facture marquée comme perdue",
+    "Invoices still unpaid or partly paid after a long time. Mark them as lost to take them out of the balances, the overdue list, the reminders and the client area. They stay in the Lost filter and can be restored at any time.": "Factures encore impayées ou partiellement payées après longtemps. Marquez-les comme perdues pour les sortir des soldes, de la liste des retards, des relances et de l'espace client. Elles restent sous le filtre Perdue et peuvent être rétablies à tout moment.",
+    "Mark as lost": "Marquer comme perdue",
+    "Mark selected as lost": "Marquer la sélection comme perdue",
+    "Mark this invoice as lost?": "Marquer cette facture comme perdue ?",
+    "No old unpaid invoice. Everything is clean.": "Aucune ancienne facture impayée. Tout est propre.",
+    "Old unpaid": "Anciens impayés",
+    "Old unpaid invoices": "Anciennes factures impayées",
+    "Restore (not lost)": "Rétablir (non perdue)",
+    "Still due": "Reste dû",
+    "older than {n} year(s)": "de plus de {n} an(s)",
+    "{n} invoice(s) marked as lost": "{n} facture(s) marquée(s) comme perdue(s)",
+    "Only an unpaid, partially paid or overdue invoice can be marked as lost": "Seule une facture impayée, partiellement payée ou en retard peut être marquée comme perdue",
+    "This invoice is not marked as lost": "Cette facture n'est pas marquée comme perdue"
 }

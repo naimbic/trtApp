@@ -4790,5 +4790,20 @@ export default {
     "Client check-in": "顧客フォロー",
     "Internal": "社内",
     "Interview": "面接",
-    "Read the meetings of a team member (with their staff id)": "チームメンバーの会議を読み取る(スタッフID付き)"
+    "Read the meetings of a team member (with their staff id)": "チームメンバーの会議を読み取る(スタッフID付き)",
+    "A lost invoice leaves the balances, the overdue list, the reminders and the client area. It stays under the Lost filter and can be restored.": "失効(貸倒)にした請求書は、残高・期限超過リスト・督促・顧客ポータルから外れます。「失効」フィルターには残り、いつでも元に戻せます。",
+    "Invoice marked as lost": "請求書を失効にしました",
+    "Invoices still unpaid or partly paid after a long time. Mark them as lost to take them out of the balances, the overdue list, the reminders and the client area. They stay in the Lost filter and can be restored at any time.": "長期間未払い・一部払いのままの請求書です。失効にすると、残高・期限超過リスト・督促・顧客ポータルから外れます。「失効」フィルターに残り、いつでも元に戻せます。",
+    "Mark as lost": "失効にする",
+    "Mark selected as lost": "選択を失効にする",
+    "Mark this invoice as lost?": "この請求書を失効にしますか?",
+    "No old unpaid invoice. Everything is clean.": "古い未払い請求書はありません。すべてきれいです。",
+    "Old unpaid": "古い未払い",
+    "Old unpaid invoices": "古い未払い請求書",
+    "Restore (not lost)": "元に戻す(失効解除)",
+    "Still due": "未払い残高",
+    "older than {n} year(s)": "{n}年以上前",
+    "{n} invoice(s) marked as lost": "{n}件の請求書を失効にしました",
+    "Only an unpaid, partially paid or overdue invoice can be marked as lost": "失効にできるのは未払い・一部払い・期限超過の請求書だけです",
+    "This invoice is not marked as lost": "この請求書は失効になっていません"
 }

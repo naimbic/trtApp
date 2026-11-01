@@ -28,7 +28,7 @@ async function moneyFor(clientIds, withAll = false) {
     if (!clientIds.length) return out
     const rt = withAll ? await loadRates() : null
     const invoices = await prisma.crmInvoice.findMany({
-        where: { clientId: { in: clientIds }, status: { notIn: [5, 6] } },
+        where: { clientId: { in: clientIds }, status: { notIn: [5, 6, 7] } },
         select: { id: true, clientId: true, currencyId: true, total: true, dueDate: true },
     })
     const payments = await prisma.crmPayment.findMany({ where: { invoiceId: { in: invoices.map((i) => i.id) } }, select: { invoiceId: true, amount: true } })

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.139.0',
+        date: '2026-11-01',
+        title: 'Invoices: mark old unpaid balances as Lost, so they stop showing',
+        items: [
+            'New invoice status Lost (written off). Mark any unpaid, partly paid or overdue invoice as lost, from the row menu or the invoice page, and restore it any time. A lost invoice leaves the outstanding and overdue figures, the overdue calendar, the automatic reminders (it is never turned back to overdue) and the client area. It is hidden from the default list and found under the new Lost filter; if it is finally paid in full it shows as Paid.',
+            'New button "Old unpaid" on the Invoices page: lists the invoices older than 1, 2, 3 or 5 years that are still unpaid or partly paid (what is still due on each), and marks the ones you tick as lost in one go. Every change is written in the invoice history.',
+        ],
+    },
+    {
         version: '0.138.2',
         date: '2026-11-01',
         title: 'The Meet app can show each member their own meetings',

@@ -131,7 +131,7 @@ export async function getCalendarItems({ from, to }) {
     }
     if (ctx.can('invoices') && on('show_invoices_on_calendar')) {
         layers.push('invoices')
-        const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, status: true, dueDate: true, total: true, addedFrom: true, saleAgentId: true } })
+        const rows = await prisma.crmInvoice.findMany({ where: { dueDate: range, status: { notIn: [2, 5, 6, 7] } }, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, status: true, dueDate: true, total: true, addedFrom: true, saleAgentId: true } })
         const pad = await numberPadding()
         rows.forEach((i) => add('invoices', i.id, `Invoice ${docNumberOf(i, pad)} due · ${round2(i.total).toLocaleString('en-US')}`, i.dueDate, 'red', `/crm/invoices/${i.id}`, `Invoice due · ${round2(i.total).toLocaleString('en-US')}`, i.clientId, [i.saleAgentId || i.addedFrom].filter(Boolean)))
     }
@@ -168,7 +168,7 @@ export async function getCalendarItems({ from, to }) {
         late.forEach((t) => overdue.push({ ...mk('tasks', t.id, t.name, t.dueDate, 'orange', `/crm/tasks/${t.id}`, 'Task overdue', null, asg.filter((x) => x.taskId === t.id).map((x) => x.staffId)), status: t.status, done: false, rawTaskId: t.id, rawName: t.name }))
     }
     if (ctx.can('invoices') && on('show_invoices_on_calendar')) {
-        const late = await prisma.crmInvoice.findMany({ where: { dueDate: { lt: today0 }, status: { notIn: [2, 5, 6] } }, orderBy: { dueDate: 'asc' }, take: 40, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, dueDate: true, total: true, addedFrom: true, saleAgentId: true } })
+        const late = await prisma.crmInvoice.findMany({ where: { dueDate: { lt: today0 }, status: { notIn: [2, 5, 6, 7] } }, orderBy: { dueDate: 'asc' }, take: 40, select: { id: true, clientId: true, number: true, prefix: true, numberFormat: true, date: true, dueDate: true, total: true, addedFrom: true, saleAgentId: true } })
         const lpad = await numberPadding()
         late.forEach((i) => overdue.push(mk('invoices', i.id, `Invoice ${docNumberOf(i, lpad)}`, i.dueDate, 'red', `/crm/invoices/${i.id}`, `Unpaid · ${round2(i.total).toLocaleString('en-US')}`, i.clientId, [i.saleAgentId || i.addedFrom].filter(Boolean))))
     }

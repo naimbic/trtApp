@@ -14,6 +14,7 @@ export const SCOPES = [
     ['invoices:read', 'Read invoices'], ['proposals:read', 'Read proposals'], ['projects:read', 'Read projects'],
     ['ideas:read', 'Read Grow ideas'], ['ideas:write', 'Push and change Grow ideas'],
     ['staff:read', 'Read the team (names only)'],
+    ['calendar:read', 'Read the meetings of a team member (with their staff id)'],
 ]
 const SCOPE_IDS = SCOPES.map(([id]) => id)
 const sha = (s) => crypto.createHash('sha256').update(String(s)).digest('hex')

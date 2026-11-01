@@ -16,7 +16,7 @@ const b64url = (b) => Buffer.from(b).toString('base64url')
 const safeEq = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y) }
 const ACCESS_TTL = 3600, ID_TTL = 600, CODE_TTL_MS = 60000
 export const issuer = () => publicBase()
-const SCOPES = ['openid', 'profile', 'email']
+const SCOPES = ['openid', 'profile', 'email', 'calendar.read'] // calendar.read: the Meet app may read that member's own meetings
 
 /* ------------------------------------------------------------ signing keys */
 let cached = null
@@ -170,16 +170,21 @@ export async function token(form, authHeader, request) {
 }
 
 /* ------------------------------------------------------------ userinfo */
-export async function userinfo(authHeader) {
-    const t = /^bearer /i.test(authHeader || '') ? authHeader.slice(7).trim() : ''
-    if (!t) throw oerr('invalid_token', 'Send the access token as a Bearer header', 401)
+/** Checks an access token given by this CRM (signature, issuer, expiry, the app still on, the person still allowed). Returns the claims and the app. */
+export async function verifyAccessToken(t) {
     let payload
     try { payload = (await jwtVerify(t, (await keys()).publicKey, { issuer: issuer(), algorithms: ['RS256'] })).payload } catch { throw oerr('invalid_token', 'The token is not valid or expired', 401) }
     const client = await prisma.crmOauthClient.findUnique({ where: { clientId: String(payload.client_id || '') } })
     if (!client || !client.active) throw oerr('invalid_token', 'The app is disabled', 401)
     const claims = await claimsFor(payload.sub)
     if (!claims) throw oerr('invalid_token', 'This person can no longer sign in', 401)
-    return claims
+    return { claims, client, scope: String(payload.scope || '') }
+}
+
+export async function userinfo(authHeader) {
+    const t = /^bearer /i.test(authHeader || '') ? authHeader.slice(7).trim() : ''
+    if (!t) throw oerr('invalid_token', 'Send the access token as a Bearer header', 401)
+    return (await verifyAccessToken(t)).claims
 }
 
 /** Where a sign-out may send the person back: only an address registered for the app. */

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.138.2',
+        date: '2026-11-01',
+        title: 'The Meet app can show each member their own meetings',
+        items: [
+            'New call GET /api/v1/calendar/events?from=&to= : with the access token of the member who signed in to Meet (scope calendar.read) it answers only with that member\'s meetings, the ones they created or are invited to, that have a meeting link on meet.trtcrm.com (all=1 for any link). Per event: id, title, start, end, meeting link and room, organizer, guests and their number. Another member\'s calendar cannot be read with it.',
+            'An API key with the new scope "Read the meetings of a team member" can do the same by adding ?staff_id=…, for a server-to-server use; a leaked key would expose every calendar, so the member token is the recommended way.',
+        ],
+    },
+    {
         version: '0.138.1',
         date: '2026-11-01',
         title: 'Calendar: ready-made meeting rooms and your own room name; SSO shares more of the profile',

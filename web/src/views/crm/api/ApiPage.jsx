@@ -186,7 +186,7 @@ const config = await client.discovery(new URL('${iss}'), process.env.CRM_CLIENT_
 const verifier = client.randomPKCECodeVerifier()
 const url = client.buildAuthorizationUrl(config, {
   redirect_uri: 'https://meet.trtcrm.com/auth/callback',
-  scope: 'openid profile email',
+  scope: 'openid profile email calendar.read',
   code_challenge: await client.calculatePKCECodeChallenge(verifier),
   code_challenge_method: 'S256',
   state: client.randomState(),            // keep it (and the verifier) in a cookie
@@ -196,6 +196,10 @@ const url = client.buildAuthorizationUrl(config, {
 const tokens = await client.authorizationCodeGrant(config, new URL(req.url), { pkceCodeVerifier: verifier, expectedState: savedState })
 const me = tokens.claims()   // { sub, name, email, picture, staff_id, admin, role }
 // me.admin === true: this person may admit guests from the waiting room. Guests who only have a meeting link never sign in.
+
+// 2b) the member's own meetings (only meetings with a link on meet.trtcrm.com):
+//    GET ${iss}/api/v1/calendar/events?from=<ISO>&to=<ISO>   with  Authorization: Bearer <tokens.access_token>
+//    → { data: [{ id, title, start, end, meeting_url, room, attendees, attendees_count, organizer }] }
 
 // 3) stay signed in only while the CRM session lives: from time to time ask silently.
 //    The authorize URL with prompt=none answers with an error=login_required when the CRM session is over.

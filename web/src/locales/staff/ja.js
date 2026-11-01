@@ -4789,5 +4789,6 @@ export default {
     "Contract signing": "契約締結",
     "Client check-in": "顧客フォロー",
     "Internal": "社内",
-    "Interview": "面接"
+    "Interview": "面接",
+    "Read the meetings of a team member (with their staff id)": "チームメンバーの会議を読み取る(スタッフID付き)"
 }

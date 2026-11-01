@@ -4789,5 +4789,6 @@ export default {
     "Contract signing": "Signature de contrat",
     "Client check-in": "Point client",
     "Internal": "Interne",
-    "Interview": "Entretien"
+    "Interview": "Entretien",
+    "Read the meetings of a team member (with their staff id)": "Lire les réunions d'un membre de l'équipe (avec son identifiant)"
 }

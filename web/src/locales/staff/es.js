@@ -4920,5 +4920,18 @@ export default {
     "team": "equipo",
     "A message for the person who asked (optional): why, another time, what to prepare…": "Un mensaje para la persona que lo pidió (opcional): por qué, otra hora, qué preparar…",
     "A message for them (optional): why it moved, what to prepare…": "Un mensaje para ella (opcional): por qué cambió, qué preparar…",
-    "Tell the person who asked about this change": "Avisar a la persona que lo pidió de este cambio"
+    "Tell the person who asked about this change": "Avisar a la persona que lo pidió de este cambio",
+    "Amounts and rules change often and the sources disagree: always confirm on the official page before applying. Many startup programs refuse agencies and consultancies, so apply as the maker of our own products (trtCRM, trtMeet), never for the client work.": "Los importes y las reglas cambian a menudo y las fuentes no coinciden: confirme siempre en la página oficial antes de solicitar. Muchos programas para startups rechazan agencias y consultoras: solicite como creador de nuestros propios productos (trtCRM, trtMeet), nunca por el trabajo de clientes.",
+    "Cloud and AI companies give startups credits worth thousands, sometimes a million, and agencies can earn partner badges. Put a program on the ideas board to assign it, comment and turn the steps into tasks.": "Las empresas de nube e IA dan a las startups créditos de miles, a veces un millón, y las agencias pueden obtener insignias de partner. Ponga un programa en el tablero de ideas para asignarlo, comentarlo y convertir los pasos en tareas.",
+    "For us": "Para nosotros",
+    "Free credits, grants and partner programs": "Créditos gratuitos, subvenciones y programas de partners",
+    "Official page": "Página oficial",
+    "On the board": "En el tablero",
+    "Programs": "Programas",
+    "Put on the board": "Poner en el tablero",
+    "Put on the ideas board": "Puesto en el tablero de ideas",
+    "Who can apply": "Quién puede solicitar",
+    "Who can apply and how": "Quién puede solicitar y cómo",
+    "AI learning": "Aprender IA",
+    "Program not found": "Programa no encontrado"
 }

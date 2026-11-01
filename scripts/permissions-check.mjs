@@ -594,6 +594,13 @@ try {
         check('running it again the same month writes nothing twice', r2.status === 200 && r2.body?.created === 0)
         const pv = await e('POST', '/api/crm/grow/routine', { period: 'daily', dry: true })
         check('a preview writes nothing', pv.status === 200 && (pv.body?.lines || []).some((l) => /\[preview\]/.test(l)))
+        const pg = await v('GET', '/api/crm/grow/programs')
+        check('the programs (credits, grants, partner badges) are listed for Grow viewers with how to apply and an official link; not for others', pg.status === 200 && pg.body?.programs?.length >= 8 && pg.body.programs.every((x) => x.url?.startsWith('https://') && x.how?.length && x.eligibility) && (await n('GET', '/api/crm/grow/programs')).status === 403)
+        check('putting a program on the board needs Create', (await v('POST', '/api/crm/grow/programs/aws-activate/track')).status === 403 && (await e('POST', '/api/crm/grow/programs/nope/track')).status === 404)
+        const tr1 = await e('POST', '/api/crm/grow/programs/aws-activate/track'); const tr2 = await e('POST', '/api/crm/grow/programs/aws-activate/track')
+        const pidea = tr1.body?.id ? await prisma.crmGrowIdea.findUnique({ where: { id: tr1.body.id } }) : null
+        check('a program becomes an idea (steps in it, tags, link) once only', tr1.status === 201 && pidea?.fingerprint === 'program:aws-activate' && /Apply: AWS Activate/.test(pidea.title) && /<ol>/.test(pidea.body || '') && pidea.sourceUrl?.startsWith('https://') && tr2.body?.id === tr1.body.id && tr2.body.existing === true)
+        check('...and the list then says it is on the board', (await v('GET', '/api/crm/grow/programs')).body?.tracked?.['aws-activate']?.ideaId === tr1.body?.id)
         const rt = await v('GET', '/api/crm/grow/routine')
         check('the routine page data gives the settings, the last runs and whether the AI is available', rt.status === 200 && rt.body?.settings?.lang === 'fr' && rt.body?.settings?.ai === false && 'stamps' in rt.body)
         await prisma.crmGrowIdea.deleteMany({ where: { createdAt: { gte: t0 } } })

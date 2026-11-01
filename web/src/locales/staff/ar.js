@@ -4920,5 +4920,18 @@ export default {
     "team": "الفريق",
     "A message for the person who asked (optional): why, another time, what to prepare…": "رسالة لصاحب الطلب (اختياري): السبب، وقت آخر، ما يجب تحضيره…",
     "A message for them (optional): why it moved, what to prepare…": "رسالة لها (اختياري): سبب التغيير، ما يجب تحضيره…",
-    "Tell the person who asked about this change": "إبلاغ صاحب الطلب بهذا التغيير"
+    "Tell the person who asked about this change": "إبلاغ صاحب الطلب بهذا التغيير",
+    "Amounts and rules change often and the sources disagree: always confirm on the official page before applying. Many startup programs refuse agencies and consultancies, so apply as the maker of our own products (trtCRM, trtMeet), never for the client work.": "تتغير المبالغ والشروط كثيرًا وتتضارب المصادر: تأكد دائمًا من الصفحة الرسمية قبل التقديم. ترفض كثير من برامج الشركات الناشئة الوكالات وشركات الاستشارات، لذا قدّم بصفتنا صانعي منتجاتنا (trtCRM وtrtMeet) وليس لأعمال العملاء.",
+    "Cloud and AI companies give startups credits worth thousands, sometimes a million, and agencies can earn partner badges. Put a program on the ideas board to assign it, comment and turn the steps into tasks.": "تمنح شركات السحابة والذكاء الاصطناعي الشركات الناشئة أرصدة بآلاف الدولارات وأحيانًا بمليون، ويمكن للوكالات الحصول على شارات الشركاء. ضع البرنامج على لوحة الأفكار لإسناده والتعليق عليه وتحويل خطواته إلى مهام.",
+    "For us": "بالنسبة لنا",
+    "Free credits, grants and partner programs": "أرصدة مجانية ومنح وبرامج شركاء",
+    "Official page": "الصفحة الرسمية",
+    "On the board": "على اللوحة",
+    "Programs": "البرامج",
+    "Put on the board": "ضعه على اللوحة",
+    "Put on the ideas board": "تم وضعه على لوحة الأفكار",
+    "Who can apply": "من يمكنه التقديم",
+    "Who can apply and how": "من يمكنه التقديم وكيف",
+    "AI learning": "تعلّم الذكاء الاصطناعي",
+    "Program not found": "البرنامج غير موجود"
 }

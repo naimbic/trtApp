@@ -421,6 +421,42 @@ export const CATALOG = {
    "validity": "no expiry",
    "why": "Better discovery calls and proposals directly raise closing rate.",
    "primeSuggestion": "500-1500 MAD"
+  },
+  {
+   "key": "deeplearning-ai-short-courses",
+   "title": "DeepLearning.AI short courses",
+   "provider": "DeepLearning.AI",
+   "category": "ai",
+   "level": "beginner",
+   "url": "https://www.deeplearning.ai/short-courses/",
+   "cost": "free to take (a certificate may need a Coursera plan)",
+   "validity": "no expiry",
+   "why": "One-hour practical courses on LLM apps, agents, RAG and prompting, taught with the tool makers: the fastest way to learn what clients will ask for.",
+   "primeSuggestion": "200-500 MAD per course"
+  },
+  {
+   "key": "aws-certified-ai-practitioner",
+   "title": "AWS Certified AI Practitioner",
+   "provider": "Amazon Web Services",
+   "category": "ai",
+   "level": "beginner",
+   "url": "https://aws.amazon.com/certification/certified-ai-practitioner/",
+   "cost": "exam about 100 USD; free preparation on AWS Skill Builder",
+   "validity": "3 years",
+   "why": "A recognised proof of AI and generative AI basics on the cloud most clients use; it also helps when applying to AWS programs.",
+   "primeSuggestion": "800-1500 MAD"
+  },
+  {
+   "key": "microsoft-azure-ai-fundamentals",
+   "title": "Microsoft Azure AI Fundamentals",
+   "provider": "Microsoft",
+   "category": "ai",
+   "level": "beginner",
+   "url": "https://learn.microsoft.com/credentials/certifications/azure-ai-fundamentals/",
+   "cost": "free learning path on Microsoft Learn; exam about 165 USD (the exam code may have changed: check the page)",
+   "validity": "does not expire (check the page)",
+   "why": "Covers AI workloads, machine learning, vision, language and generative AI with Azure; useful for the Microsoft partner and startup programs.",
+   "primeSuggestion": "800-1500 MAD"
   }
  ],
  "languages": [
@@ -550,6 +586,169 @@ export const CATALOG = {
    "name": "HubSpot Marketing Blog",
    "url": "https://blog.hubspot.com/marketing",
    "topic": "business"
+  }
+ ],
+ "programs": [
+  {
+   "key": "aws-activate",
+   "title": "AWS Activate credits",
+   "provider": "Amazon Web Services",
+   "kind": "credits",
+   "amount": "up to 100,000 USD in AWS credits (AWS page); some sources say more for AI startups",
+   "what": "Credits for AWS services, including AI models on Amazon Bedrock (Anthropic, Meta, Mistral and others).",
+   "eligibility": "A startup building a product, with a company website and email; the amount depends on stage, funding and who refers you. Not for people who only resell or consult.",
+   "how": [
+    "Create or sign in to an AWS account.",
+    "Open the Activate page and apply as a Founder (no funding needed for the first tier).",
+    "Describe the product (trtCRM and trtMeet are software products) and your use of AWS.",
+    "Ask your investor or an accelerator for a referral code if you have one: it unlocks the bigger tier."
+   ],
+   "url": "https://aws.amazon.com/activate/",
+   "fit": "Possible if we present trtCRM / trtMeet as our own products, not the agency work."
+  },
+  {
+   "key": "aws-genai-accelerator",
+   "title": "AWS Generative AI Accelerator",
+   "provider": "Amazon Web Services",
+   "kind": "accelerator",
+   "amount": "up to 1,000,000 USD in AWS credits, equity-free, 8 weeks",
+   "what": "A cohort programme for generative and agentic AI startups: credits, mentors, technical support.",
+   "eligibility": "Generative AI startups with a working product; sources differ on the exact rules (founder ownership, a technical lead, company age). The 2026 window (10 June to 10 July) is closed.",
+   "how": [
+    "Watch the AWS Startups site for the next call (usually mid year).",
+    "Prepare a short deck, a demo of the product and the AI model use.",
+    "Apply on the AWS Startups site when it opens."
+   ],
+   "url": "https://aws.amazon.com/startups",
+   "fit": "Only if we build an AI product (for example an AI assistant inside trtMeet or trtCRM)."
+  },
+  {
+   "key": "google-cloud-startups",
+   "title": "Google for Startups Cloud Program (AI tier)",
+   "provider": "Google Cloud",
+   "kind": "credits",
+   "amount": "up to 350,000 USD over two years (year 1 up to 250,000 USD, year 2 20% up to 100,000 USD) plus 10,000 USD for partner models",
+   "what": "Credits for Google Cloud, Gemini and Vertex AI, with technical support and training.",
+   "eligibility": "AI-first startups; the larger tiers need verifiable funding (pre-seed to Series A); a business email domain and a company website. The programme is renewed every year.",
+   "how": [
+    "Open the Google for Startups Cloud Program page and choose the AI tier.",
+    "Sign in with the company Google account and fill in the company and product.",
+    "Give funding details or an investor or partner referral if you have them.",
+    "Wait for approval, then activate the credits in the billing account."
+   ],
+   "url": "https://cloud.google.com/startup/ai",
+   "fit": "Good if the product uses Gemini or Vertex AI; the lowest tier is for early stage with no funding."
+  },
+  {
+   "key": "microsoft-founders-hub",
+   "title": "Microsoft for Startups Founders Hub",
+   "provider": "Microsoft",
+   "kind": "credits",
+   "amount": "from about 1,000 USD up to 150,000 USD of Azure credits (and other benefits)",
+   "what": "Azure and Azure OpenAI credits, tools, mentoring and partner offers.",
+   "eligibility": "A private for-profit company building a software product; agencies and consultancies are often refused; use a new Microsoft account with no earlier Azure subscription; the top tier usually needs an investor or accelerator referral.",
+   "how": [
+    "Apply on the Founders Hub site with the company details and the product.",
+    "Explain how Azure and AI are used in the product.",
+    "Redeem the credits from the Founders Hub dashboard when approved."
+   ],
+   "url": "https://foundershub.startups.microsoft.com",
+   "fit": "Apply as a software product company (trtCRM / trtMeet), not as an agency."
+  },
+  {
+   "key": "anthropic-claude-startups",
+   "title": "Claude for Startups (Anthropic)",
+   "provider": "Anthropic",
+   "kind": "credits",
+   "amount": "credits and priority limits; the amount depends on stage and investors (reports range from about 1,000 to 100,000 USD)",
+   "what": "Claude API credits, higher rate limits and partner discounts for startups building with Claude.",
+   "eligibility": "Early-stage startups with or without investors; credits work only on Anthropic's own API (not on Bedrock or Vertex).",
+   "how": [
+    "Create a Claude Console account with the company email.",
+    "Open the Claude for Startups page and apply: company website, what you are building, and your investor if any.",
+    "Wait for the answer and add the credits to the organisation."
+   ],
+   "url": "https://claude.com/programs/startups",
+   "fit": "Direct fit: the CRM already uses Claude for its Grow routine and AI insights."
+  },
+  {
+   "key": "openai-startups",
+   "title": "OpenAI for Startups",
+   "provider": "OpenAI",
+   "kind": "credits",
+   "amount": "not published: reports say from a few thousand USD, more with an investor",
+   "what": "API credits and support for startups; terms change often.",
+   "eligibility": "Check the official page: some programmes need venture backing or a partner.",
+   "how": [
+    "Open the OpenAI startups page and read the current terms.",
+    "Apply with the company email and a short description of the product.",
+    "Ask the investor or accelerator if they have a partner route."
+   ],
+   "url": "https://openai.com/startups/",
+   "fit": "Optional: only if we use OpenAI models."
+  },
+  {
+   "key": "nvidia-inception",
+   "title": "NVIDIA Inception",
+   "provider": "NVIDIA",
+   "kind": "programme",
+   "amount": "free, no equity; GPU and software benefits, free NIM endpoints; can unlock cloud credits",
+   "what": "Discounts, training, technical help and access to NVIDIA tools for AI startups.",
+   "eligibility": "Startups building with AI or accelerated computing, with a website and a business email.",
+   "how": [
+    "Apply on the NVIDIA Inception page with the company and product.",
+    "Use the membership to unlock cloud partner credits (for example AWS Activate)."
+   ],
+   "url": "https://www.nvidia.com/en-us/startups/",
+   "fit": "Free to join: a good first step that helps the other applications."
+  },
+  {
+   "key": "meta-llama-grants",
+   "title": "Meta Llama Impact Grants",
+   "provider": "Meta",
+   "kind": "grant",
+   "amount": "past rounds: up to 500,000 USD each from a 2 million pool; regional awards 20,000 to 100,000 USD",
+   "what": "Grants for organisations using Llama to create economic or social benefit.",
+   "eligibility": "Legal entities (not individuals) created before the call; priority to economic development, science and public service. No round is open now.",
+   "how": [
+    "Follow the Llama and Meta AI grants pages for the next call.",
+    "Prepare a one-page project: the problem, how Llama is used, the people it helps, a budget.",
+    "Apply during the window; regional mentorship events may add smaller awards."
+   ],
+   "url": "https://www.llama.com/",
+   "fit": "Only for a project that uses Llama with a clear public benefit (for example for Moroccan SMEs)."
+  },
+  {
+   "key": "meta-business-partner",
+   "title": "Meta Business Partner (agency badge)",
+   "provider": "Meta",
+   "kind": "partner",
+   "amount": "no credits: priority support, training, a directory listing, early features",
+   "what": "The official badge for agencies and tech providers, with a listing in the Meta Partner Directory.",
+   "eligibility": "A verified Business Manager, steady managed ad spend (the threshold changes by region), Blueprint certifications in the team and documented client results.",
+   "how": [
+    "Verify the business in Business Manager and get the team Blueprint-certified.",
+    "Keep ad spend and results documented across the client accounts.",
+    "Apply for the partner badge when the thresholds are met."
+   ],
+   "url": "https://www.facebook.com/business/partners",
+   "fit": "This is the one built for an agency like trtDigital."
+  },
+  {
+   "key": "google-partners",
+   "title": "Google Partner badge (agency)",
+   "provider": "Google",
+   "kind": "partner",
+   "amount": "no credits: badge, training, support, partner events",
+   "what": "The badge for agencies that manage Google Ads, shown in the Partners directory.",
+   "eligibility": "Google Ads certifications in the team, a minimum managed spend over 90 days and good account performance (check the current thresholds).",
+   "how": [
+    "Link the agency to a Manager (MCC) account.",
+    "Get Google Ads certifications for the team.",
+    "Keep the spend and optimisation score up and check the badge status in the Partners section."
+   ],
+   "url": "https://marketingplatform.google.com/about/partners/",
+   "fit": "Built for the agency work trtDigital already does."
   }
  ]
 }
@@ -762,6 +961,48 @@ export const PLAYBOOKS = {
     "title": "Side experiments",
     "tip": "Test ideas on our own channels.",
     "how": "Run small ad or SEO tests on the agency account and write down the results."
+   }
+  ],
+  "ai_learning": [
+   {
+    "title": "One hour of AI a week",
+    "tip": "Put it in the calendar, like a meeting.",
+    "how": "Pick one course from the AI catalog (Anthropic Academy, DeepLearning.AI, Google AI Essentials) and finish it module by module."
+   },
+   {
+    "title": "Use AI on a real task",
+    "tip": "Learning sticks when it is used on client work.",
+    "how": "Choose one repeated task (report summary, ad variants, email draft) and do it with AI this week; write down what saved time."
+   },
+   {
+    "title": "Write good prompts",
+    "tip": "Context, goal, format, example.",
+    "how": "Give the role, the audience, the facts, the format wanted and one good example; keep the prompts that work in the shared folder."
+   },
+   {
+    "title": "Always check the answer",
+    "tip": "AI sounds sure even when it is wrong.",
+    "how": "Check names, numbers, links and claims against the source before anything goes to a client."
+   },
+   {
+    "title": "Protect client data",
+    "tip": "Never paste passwords, bank details or private files.",
+    "how": "Remove names and numbers you do not need, use the company accounts, and follow what the client agreed to."
+   },
+   {
+    "title": "Share one trick a week",
+    "tip": "A short note teaches the whole team.",
+    "how": "Post one prompt or tool that worked in the team chat with the result; the best ones go to the playbook."
+   },
+   {
+    "title": "Build one small automation",
+    "tip": "If you repeat it three times, automate it.",
+    "how": "Use n8n or the CRM API with an AI step (classify a lead, draft a reply) and test it on a few cases first."
+   },
+   {
+    "title": "Get one AI certificate",
+    "tip": "A goal with a date is done.",
+    "how": "Add an AI certification to My goals this quarter; the company can pay the exam and a prime when it is passed."
    }
   ]
  },

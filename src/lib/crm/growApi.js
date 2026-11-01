@@ -7,6 +7,7 @@ import { chat } from '@/lib/crm/ai/providers'
 import { resolveAiForJob } from '@/lib/crm/ai/aiSettings'
 import { ruleIdeas, stamp } from '@/lib/crm/growRules'
 import { emit } from '@/lib/crm/webhooks'
+import { CATALOG } from '@/lib/crm/growthCatalog'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -57,9 +58,16 @@ async function teamFigures() {
 }
 
 /** Everything the routine and the dashboard know about the company, in one object. Totals and rates only: nothing personal. */
+/** Credit and grant programs not yet on the ideas board. */
+async function programFigures() {
+    const done = new Set((await prisma.crmGrowIdea.findMany({ where: { fingerprint: { startsWith: 'program:' } }, select: { fingerprint: true } })).map((i) => i.fingerprint))
+    const open = CATALOG.programs.filter((p) => !done.has(`program:${p.key}`))
+    return { total: CATALOG.programs.length, untracked: open.length, names: open.slice(0, 4).map((p) => p.title) }
+}
+
 export async function gatherFigures() {
-    const [leads, clients, income, tasks, tickets, proposals, team] = await Promise.all([leadsData(), clientsData(), incomeData(), taskFigures(), ticketFigures(), proposalFigures(), teamFigures()])
-    return { leads, clients, income, tasks, tickets, proposals, team }
+    const [leads, clients, income, tasks, tickets, proposals, team, programs] = await Promise.all([leadsData(), clientsData(), incomeData(), taskFigures(), ticketFigures(), proposalFigures(), teamFigures(), programFigures()])
+    return { leads, clients, income, tasks, tickets, proposals, team, programs }
 }
 
 export async function growOverview() {
@@ -263,4 +271,29 @@ export async function runNow(body = {}) {
     const out = await runPeriod(period, { dry: !!body.dry })
     if (!body.dry) await setOptions({ [`grow_last_${period}`]: stamp(period) })
     return out
+}
+
+/* ============================================================ credits, grants and partner programs */
+/** The curated programs, and which of them are already on the ideas board (with the state of that idea). */
+export async function listPrograms() {
+    const g = await gate('view')
+    const rows = await prisma.crmGrowIdea.findMany({ where: { fingerprint: { startsWith: 'program:' } }, select: { id: true, fingerprint: true, status: true, assigneeIds: true, taskId: true } })
+    const tracked = Object.fromEntries(rows.map((r) => [r.fingerprint.slice('program:'.length), { ideaId: r.id, status: r.status, assigned: (r.assigneeIds || []).length, taskId: r.taskId || null }]))
+    return { programs: CATALOG.programs, tracked, can: { create: hasCap(g.authority, 'grow', 'create') || isCrmAdmin(g.authority) } }
+}
+
+const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+/** Puts a program on the ideas board (once): the steps to apply, to assign, comment and turn into tasks. */
+export async function trackProgram(key) {
+    const g = await gate('create')
+    const prog = CATALOG.programs.find((p) => p.key === key)
+    if (!prog) throw fail('Program not found', 404)
+    const fingerprint = `program:${prog.key}`
+    const have = await prisma.crmGrowIdea.findFirst({ where: { fingerprint }, select: { id: true } })
+    if (have) return { success: true, id: have.id, existing: true }
+    const html = `<p><strong>${esc(prog.provider)}</strong>: ${esc(prog.amount)}</p><p>${esc(prog.what)}</p><p><strong>Who can apply:</strong> ${esc(prog.eligibility)}</p><p><strong>For us:</strong> ${esc(prog.fit)}</p><p><strong>Steps:</strong></p><ol>${prog.how.map((h) => `<li>${esc(h)}</li>`).join('')}</ol><p>Terms change often: always confirm on the official page before applying.</p>`
+    const row = await prisma.crmGrowIdea.create({ data: { title: `Apply: ${prog.title}`.slice(0, 200), body: storeRich(html, 10000), category: 'income', period: 'once', priority: ['credits', 'accelerator', 'partner'].includes(prog.kind) ? 3 : 2, tags: cleanTags(['programs', prog.kind, prog.provider]), assigneeIds: [], source: 'manual', sourceUrl: prog.url, fingerprint, addedFrom: g.staffId } })
+    emit('idea.created', { id: row.id, title: row.title, category: row.category })
+    return { success: true, id: row.id, existing: false }
 }

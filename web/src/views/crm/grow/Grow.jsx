@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { TbSparkles, TbChartBar, TbBulb, TbRepeat, TbPlus, TbSearch, TbChecklist, TbTrash, TbRobot, TbPlayerPlay, TbEye, TbFlame, TbUsers, TbCash, TbInbox, TbTargetArrow, TbMessageCircle } from 'react-icons/tb'
+import { TbSparkles, TbChartBar, TbBulb, TbRepeat, TbPlus, TbSearch, TbChecklist, TbTrash, TbRobot, TbPlayerPlay, TbEye, TbFlame, TbUsers, TbCash, TbInbox, TbTargetArrow, TbMessageCircle, TbGift, TbExternalLink, TbCheck } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
@@ -285,6 +285,50 @@ const Routine = () => {
     )
 }
 
+/* ------------------------------------------------------------ credits, grants and partner programs */
+const KINDS = { credits: ['Credits', 'bg-emerald-100 text-emerald-700'], grant: ['Grant', 'bg-amber-100 text-amber-700'], accelerator: ['Accelerator', 'bg-violet-100 text-violet-700'], partner: ['Partner badge', 'bg-sky-100 text-sky-700'], programme: ['Free programme', 'bg-indigo-100 text-indigo-700'] }
+
+const Programs = ({ goIdeas }) => {
+    const [d, setD] = useState(null)
+    const [busy, setBusy] = useState('')
+    const load = useCallback(() => api('/api/crm/grow/programs').then(setD).catch((e) => notify('danger', e.message)), [])
+    useEffect(() => { load() }, [load])
+    if (!d) return <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>
+    const track = async (key) => { setBusy(key); try { await api(`/api/crm/grow/programs/${key}/track`, { method: 'POST' }); notify('success', tr("Put on the ideas board")); load() } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
+    return (
+        <div className="space-y-4">
+            <Card>
+                <h5 className="mb-1 flex items-center gap-2"><TbGift />{tr("Free credits, grants and partner programs")}</h5>
+                <p className="text-sm text-gray-500">{tr("Cloud and AI companies give startups credits worth thousands, sometimes a million, and agencies can earn partner badges. Put a program on the ideas board to assign it, comment and turn the steps into tasks.")}</p>
+                <p className="mt-2 rounded-xl bg-amber-50 p-2.5 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">{tr("Amounts and rules change often and the sources disagree: always confirm on the official page before applying. Many startup programs refuse agencies and consultancies, so apply as the maker of our own products (trtCRM, trtMeet), never for the client work.")}</p>
+            </Card>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {d.programs.map((p) => {
+                    const t = d.tracked[p.key]
+                    return (
+                        <Card key={p.key} className="flex flex-col">
+                            <div className="mb-1 flex flex-wrap items-center gap-1.5 text-xs"><span className={cn('rounded-full px-2 py-0.5 font-semibold', KINDS[p.kind]?.[1])}>{tr(KINDS[p.kind]?.[0] || p.kind)}</span><span className="text-gray-500">{p.provider}</span></div>
+                            <div className="font-semibold leading-snug">{p.title}</div>
+                            <div className="mt-1 text-sm font-semibold text-emerald-600">{p.amount}</div>
+                            <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300">{p.what}</p>
+                            <details className="mt-2 text-sm"><summary className="cursor-pointer font-medium text-primary">{tr("Who can apply and how")}</summary>
+                                <p className="mt-1.5 text-gray-600 dark:text-gray-300"><b>{tr("Who can apply")}:</b> {p.eligibility}</p>
+                                <p className="mt-1.5 text-gray-600 dark:text-gray-300"><b>{tr("For us")}:</b> {p.fit}</p>
+                                <ol className="mt-1.5 list-decimal space-y-0.5 ps-5 text-gray-600 dark:text-gray-300">{p.how.map((h) => <li key={h}>{h}</li>)}</ol>
+                            </details>
+                            <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+                                <a href={p.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline"><TbExternalLink />{tr("Official page")}</a>
+                                {t ? <button type="button" onClick={goIdeas} className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700"><TbCheck />{tr("On the board")} · {tr(STATUS[t.status]?.[0])}</button>
+                                    : d.can.create && <Button size="xs" variant="solid" loading={busy === p.key} icon={<TbBulb />} onClick={() => track(p.key)}>{tr("Put on the board")}</Button>}
+                            </div>
+                        </Card>
+                    )
+                })}
+            </div>
+        </div>
+    )
+}
+
 const Grow = () => {
     const [sp, setSp] = useSearchParams()
     const tab = sp.get('tab') || 'overview'
@@ -293,10 +337,11 @@ const Grow = () => {
         <Container>
             <div className="mb-5"><h3 className="flex items-center gap-2"><TbSparkles className="text-primary" />{tr("Grow")}</h3><p className="text-sm text-gray-500">{tr("How the company is doing, what to do next and the ideas to grow: for the administrators.")}</p></div>
             <Tabs value={tab} onChange={setTab}>
-                <TabList><TabNav value="overview" icon={<TbChartBar />}>{tr("Overview")}</TabNav><TabNav value="ideas" icon={<TbBulb />}>{tr("Ideas and advice")}</TabNav><TabNav value="routine" icon={<TbRepeat />}>{tr("Routine")}</TabNav></TabList>
+                <TabList><TabNav value="overview" icon={<TbChartBar />}>{tr("Overview")}</TabNav><TabNav value="ideas" icon={<TbBulb />}>{tr("Ideas and advice")}</TabNav><TabNav value="programs" icon={<TbGift />}>{tr("Programs")}</TabNav><TabNav value="routine" icon={<TbRepeat />}>{tr("Routine")}</TabNav></TabList>
                 <div className="pt-5">
                     <TabContent value="overview"><Overview goIdeas={() => setTab('ideas')} /></TabContent>
                     <TabContent value="ideas"><Ideas openId={sp.get('idea')} /></TabContent>
+                    <TabContent value="programs"><Programs goIdeas={() => setTab('ideas')} /></TabContent>
                     <TabContent value="routine"><Routine /></TabContent>
                 </div>
             </Tabs>

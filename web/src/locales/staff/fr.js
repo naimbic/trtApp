@@ -4920,5 +4920,18 @@ export default {
     "team": "équipe",
     "A message for the person who asked (optional): why, another time, what to prepare…": "Un message pour la personne qui a demandé (facultatif) : pourquoi, un autre horaire, quoi préparer…",
     "A message for them (optional): why it moved, what to prepare…": "Un message pour elle (facultatif) : pourquoi le changement, quoi préparer…",
-    "Tell the person who asked about this change": "Prévenir la personne qui a demandé de ce changement"
+    "Tell the person who asked about this change": "Prévenir la personne qui a demandé de ce changement",
+    "Amounts and rules change often and the sources disagree: always confirm on the official page before applying. Many startup programs refuse agencies and consultancies, so apply as the maker of our own products (trtCRM, trtMeet), never for the client work.": "Les montants et les règles changent souvent et les sources divergent : confirmez toujours sur la page officielle avant de candidater. Beaucoup de programmes pour startups refusent les agences et les cabinets de conseil : candidatez comme éditeur de nos propres produits (trtCRM, trtMeet), jamais pour le travail client.",
+    "Cloud and AI companies give startups credits worth thousands, sometimes a million, and agencies can earn partner badges. Put a program on the ideas board to assign it, comment and turn the steps into tasks.": "Les entreprises du cloud et de l'IA offrent aux startups des crédits de plusieurs milliers, parfois un million, et les agences peuvent obtenir des badges partenaire. Mettez un programme sur le tableau d'idées pour l'assigner, le commenter et transformer les étapes en tâches.",
+    "For us": "Pour nous",
+    "Free credits, grants and partner programs": "Crédits gratuits, subventions et programmes partenaires",
+    "Official page": "Page officielle",
+    "On the board": "Sur le tableau",
+    "Programs": "Programmes",
+    "Put on the board": "Mettre sur le tableau",
+    "Put on the ideas board": "Mis sur le tableau d'idées",
+    "Who can apply": "Qui peut candidater",
+    "Who can apply and how": "Qui peut candidater et comment",
+    "AI learning": "Apprendre l'IA",
+    "Program not found": "Programme introuvable"
 }

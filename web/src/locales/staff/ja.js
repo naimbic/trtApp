@@ -4920,5 +4920,18 @@ export default {
     "team": "チーム",
     "A message for the person who asked (optional): why, another time, what to prepare…": "依頼した人へのメッセージ(任意):理由、別の日時、準備するもの など",
     "A message for them (optional): why it moved, what to prepare…": "その方へのメッセージ(任意):変更の理由、準備するもの など",
-    "Tell the person who asked about this change": "この変更を依頼した人に知らせる"
+    "Tell the person who asked about this change": "この変更を依頼した人に知らせる",
+    "Amounts and rules change often and the sources disagree: always confirm on the official page before applying. Many startup programs refuse agencies and consultancies, so apply as the maker of our own products (trtCRM, trtMeet), never for the client work.": "金額や条件は頻繁に変わり、情報源も食い違います。申請前に必ず公式ページで確認してください。スタートアップ向けプログラムの多くは代理店やコンサルを対象外としています。顧客案件ではなく、自社製品(trtCRM、trtMeet)の開発元として申請してください。",
+    "Cloud and AI companies give startups credits worth thousands, sometimes a million, and agencies can earn partner badges. Put a program on the ideas board to assign it, comment and turn the steps into tasks.": "クラウド・AI企業はスタートアップに数千ドル、時には100万ドル相当のクレジットを提供し、代理店はパートナーバッジを取得できます。プログラムをアイデアボードに載せて、割り当て・コメントし、手順をタスクにしましょう。",
+    "For us": "当社の場合",
+    "Free credits, grants and partner programs": "無料クレジット、助成金、パートナープログラム",
+    "Official page": "公式ページ",
+    "On the board": "ボード上",
+    "Programs": "プログラム",
+    "Put on the board": "ボードに載せる",
+    "Put on the ideas board": "アイデアボードに載せました",
+    "Who can apply": "申請できる人",
+    "Who can apply and how": "申請できる人と方法",
+    "AI learning": "AI学習",
+    "Program not found": "プログラムが見つかりません"
 }

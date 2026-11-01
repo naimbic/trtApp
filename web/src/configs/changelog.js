@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.150.0',
+        date: '2026-11-01',
+        title: 'Grow: free AI and cloud credits, grants and partner programs; AI learning',
+        items: [
+            'New tab Grow → Programs: 10 programs researched this month that give credits, grants or badges: AWS Activate (up to 100,000 USD), AWS Generative AI Accelerator (up to 1 million USD, cohort calls), Google for Startups Cloud Program AI tier (up to 350,000 USD), Microsoft for Startups Founders Hub (up to 150,000 USD), Claude for Startups, OpenAI for Startups, NVIDIA Inception (free), Meta Llama Impact Grants (no round open now), and the agency badges Meta Business Partner and Google Partner. Each card gives the amount, who can apply, what it means for us, the steps and the official link.',
+            'One click puts a program on the ideas board (once) with its steps, so it can be assigned, commented, tagged and turned into tasks, and the card shows where it stands. The monthly routine reminds the administrators of the programs not started yet.',
+            'Amounts and rules change often and the sources disagree, so each card says to confirm on the official page. Many startup programs refuse agencies and consultancies: apply as the maker of trtCRM and trtMeet, not for client work.',
+            'AI learning in My growth: three more AI certifications in the catalog (DeepLearning.AI short courses, AWS Certified AI Practitioner, Microsoft Azure AI Fundamentals) next to Anthropic Academy, Google AI Essentials and OpenAI Academy, and a new "AI learning" section in the team playbook (one hour a week, use it on a real task, check every answer, protect client data, share one trick a week, one small automation, one AI certificate a quarter). Add any of them to your goals; the company can pay the exam and a prime.',
+        ],
+    },
+    {
         version: '0.149.1',
         date: '2026-11-01',
         title: 'Fixed: after signing in for Meet, the browser went to the CRM instead of back to Meet',

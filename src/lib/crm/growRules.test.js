@@ -48,3 +48,10 @@ test('grow: French texts exist, and an unknown language falls back to English', 
     assert.match(ruleIdeas('daily', figures, { lang: 'fr', now: NOW }).find((x) => x.key === 'tasks-overdue').title, /en retard/)
     assert.match(ruleIdeas('daily', figures, { lang: 'ja', now: NOW }).find((x) => x.key === 'tasks-overdue').title, /overdue/)
 })
+
+test('grow: programs not yet on the board bring a monthly idea naming them', () => {
+    const m = ruleIdeas('monthly', { programs: { untracked: 3, names: ['AWS Activate credits', 'NVIDIA Inception'] } }, { now: NOW })
+    const r = m.find((x) => x.key === 'credits-programs')
+    assert.ok(r && /3 program/.test(r.title) && /AWS Activate credits/.test(r.body))
+    assert.ok(!ruleIdeas('monthly', { programs: { untracked: 0, names: [] } }, { now: NOW }).some((x) => x.key === 'credits-programs'))
+})

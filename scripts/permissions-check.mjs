@@ -713,6 +713,48 @@ try {
         check('a lost invoice that ends up paid in full shows as paid', ((await e('GET', `/api/crm/sales/invoices?clientId=${cl.id}`)).body?.list || []).find((x) => x.id === old.id)?.status === 2)
     }
 
+    console.log('\n== Scheduled chat messages')
+    {
+        const t0 = new Date()
+        const sNone = await makeUser('sm-none', {}), sView = await makeUser('sm-view', { scheduled_messages: ['view'] }), sMan = await makeUser('sm-manager', { scheduled_messages: ['view', 'create', 'edit'] }), sDel = await makeUser('sm-deleter', { scheduled_messages: ['view', 'create', 'edit', 'delete'] }), sAdm = await makeUser('sm-admin', {}, true)
+        const n = await login(sNone), v = await login(sView), m = await login(sMan), d = await login(sDel)
+        const soon = new Date(Date.now() + 3600000).toISOString()
+        check('without the permission the page is closed', (await n('GET', '/api/crm/scheduled-messages')).status === 403)
+        check('View alone lists but cannot create, send or change', (await v('GET', '/api/crm/scheduled-messages')).status === 200 && (await v('POST', '/api/crm/scheduled-messages', { title: 'x', body: 'y', sendAt: soon })).status === 403)
+        const bad = (b) => m('POST', '/api/crm/scheduled-messages', { title: 'zz sched', body: 'zz hello', audience: 'team', repeat: 'none', sendAt: soon, ...b }).then((r) => r.status)
+        check('a message needs a title, text, a known audience and repeat, people when selected, and a future date', (await bad({ title: ' ' })) === 400 && (await bad({ body: ' ' })) === 400 && (await bad({ audience: 'x' })) === 400 && (await bad({ repeat: 'hourly' })) === 400 && (await bad({ audience: 'selected', staffIds: [] })) === 400 && (await bad({ sendAt: 'nope' })) === 400 && (await bad({ sendAt: new Date(Date.now() - 86400000).toISOString() })) === 400)
+        const mk = await m('POST', '/api/crm/scheduled-messages', { title: 'zz sched team', body: 'zz hello team', audience: 'team', repeat: 'weekly', sendAt: soon })
+        const MID = mk.body?.id
+        if (MID) made.rows.unshift(['crmScheduledMessage', MID])
+        const row = MID ? await prisma.crmScheduledMessage.findUnique({ where: { id: MID } }) : null
+        check('a message is created, active, with its next time and its author', mk.status === 201 && row?.active && row.audience === 'team' && Math.abs(+row.nextAt - +new Date(soon)) < 1000 && row.createdBy === sMan.staffId)
+        check('it is in the list with its repeat label', ((await v('GET', '/api/crm/scheduled-messages')).body?.list || []).some((x) => x.id === MID && x.repeatLabel === 'Every week'))
+        check('the automatic-task preview lists it only when it is due', !(((await prisma.crmScheduledMessage.findUnique({ where: { id: MID } })) || {}).nextAt <= new Date()))
+        check('Send now needs Edit; with Edit it posts in the Team room as the author', (await v('POST', `/api/crm/scheduled-messages/${MID}`)).status === 403 && (await m('POST', `/api/crm/scheduled-messages/${MID}`)).body?.sent === 1)
+        const posted = await prisma.crmChatMessage.findFirst({ where: { body: 'zz hello team', createdAt: { gte: t0 } } })
+        if (posted) made.rows.unshift(['crmChatMessage', posted.id])
+        check('...the chat shows it, signed by the author', posted?.senderId === sMan.staffId && /Check/.test(posted?.senderName || ''))
+        const adm = await m('POST', '/api/crm/scheduled-messages', { title: 'zz sched admins', body: 'zz hello admins', audience: 'admins', repeat: 'none', sendAt: soon })
+        if (adm.body?.id) made.rows.unshift(['crmScheduledMessage', adm.body.id])
+        const admins = await prisma.crmStaff.count({ where: { active: true, admin: true, id: { not: sMan.staffId } } })
+        const sent = await m('POST', `/api/crm/scheduled-messages/${adm.body?.id}`)
+        const dms = await prisma.crmChatMessage.findMany({ where: { body: 'zz hello admins', createdAt: { gte: t0 } } })
+        for (const x of dms) made.rows.unshift(['crmChatMessage', x.id])
+        check('to the administrators: a private message to each active admin (not the author)', sent.body?.sent === admins && dms.length === admins && admins >= 1, `${sent.body?.sent}/${dms.length}/${admins}`)
+        const rooms = await prisma.crmChatRoom.findMany({ where: { id: { in: dms.map((x) => x.roomId) } } })
+        for (const r of rooms) if (r.kind === 'direct' && r.staffIds.includes(sMan.staffId)) made.rows.unshift(['crmChatRoom', r.id])
+        check('...in a direct conversation between the author and that person', rooms.every((r) => r.kind === 'direct' && r.staffIds.includes(sMan.staffId)))
+        const sel = await m('POST', '/api/crm/scheduled-messages', { title: 'zz sched selected', body: 'zz hello selected', audience: 'selected', staffIds: [sAdm.staffId, sNone.staffId], repeat: 'none', sendAt: soon })
+        if (sel.body?.id) made.rows.unshift(['crmScheduledMessage', sel.body.id])
+        check('to chosen people: one private message each', (await m('POST', `/api/crm/scheduled-messages/${sel.body?.id}`)).body?.sent === 2)
+        for (const x of await prisma.crmChatMessage.findMany({ where: { body: 'zz hello selected', createdAt: { gte: t0 } } })) { made.rows.unshift(['crmChatMessage', x.id]); const r = await prisma.crmChatRoom.findUnique({ where: { id: x.roomId } }); if (r) made.rows.unshift(['crmChatRoom', r.id]) }
+        check('it can be switched off and on again, and changed', (await m('PUT', `/api/crm/scheduled-messages/${MID}`, { active: false })).status === 200 && (await prisma.crmScheduledMessage.findUnique({ where: { id: MID } })).active === false && (await m('PUT', `/api/crm/scheduled-messages/${MID}`, { active: true })).status === 200 && (await m('PUT', `/api/crm/scheduled-messages/${MID}`, { body: 'zz hello team v2' })).status === 200)
+        await prisma.crmScheduledMessage.update({ where: { id: MID }, data: { nextAt: new Date(Date.now() - 60000), active: true } })
+        const pv = await (await login(sAdm))('POST', '/api/crm/cron/run', { dry: true })
+        check('a due message shows in the dry run of the automatic tasks (nothing is sent)', pv.status === 200 && JSON.stringify(pv.body).includes('zz sched team') && !(await prisma.crmChatMessage.findFirst({ where: { body: 'zz hello team v2' } })))
+        check('only Delete removes it', (await m('DELETE', `/api/crm/scheduled-messages/${MID}`)).status === 403 && (await d('DELETE', `/api/crm/scheduled-messages/${MID}`)).status === 200 && !(await prisma.crmScheduledMessage.findUnique({ where: { id: MID } })))
+    }
+
     console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')
     {
         const sA = await makeUser('tk-staff', { customers: ['view', 'create', 'edit'], tickets: ['view', 'create', 'edit'], tasks: ['view', 'create', 'edit'] }); const sa = await login(sA)

@@ -181,3 +181,27 @@ model CrmOauthCode {
   @@index([expiresAt])
   @@map("crm_oauth_codes")
 }
+
+/// A message the CRM posts in the team chat by itself, once or repeating (announcements, reminders, rules, the weekly meeting).
+model CrmScheduledMessage {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  body       String
+  /// team (the Team room) | admins | all | selected: the last three are a private message to each person
+  audience   String    @default("team")
+  staffIds   String[]  @db.ObjectId
+  /// none | daily | weekdays | weekly | monthly
+  repeat     String    @default("none")
+  /// the first moment, then the next one
+  nextAt     DateTime?
+  active     Boolean   @default(true)
+  lastSentAt DateTime?
+  lastCount  Int       @default(0)
+  sentCount  Int       @default(0)
+  createdBy  String?   @db.ObjectId
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([active, nextAt])
+  @@map("crm_scheduled_messages")
+}

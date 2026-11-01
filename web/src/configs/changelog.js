@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.140.0',
+        date: '2026-11-01',
+        title: 'Scheduled messages: the CRM posts in the team chat by itself',
+        items: [
+            'New page Utilities → Scheduled messages (permission "Scheduled messages (chat)": View, Create, Edit, Delete; administrators have it). Write a message, choose who gets it: the Team room (everybody sees it), a private message to each administrator, to each team member, or to chosen people. Choose the date and time and whether it repeats: once, every day, every weekday (Mon to Fri), every week or every month.',
+            'The message appears in the chat as sent by you, at the first run of the automatic tasks after its time (the new task "Scheduled chat messages" in Settings → Cron job; the tasks should run every few minutes). It is sent only once even if two runs overlap, and a server that was off sends it once and moves on to the next time. Each message can be switched off, sent now, edited or deleted, and shows its next time, its last send and how many times it went out.',
+        ],
+    },
+    {
         version: '0.139.0',
         date: '2026-11-01',
         title: 'Invoices: mark old unpaid balances as Lost, so they stop showing',

@@ -559,6 +559,9 @@ export const GROUPS = {
             { title: 'Note and ticket reminders', desc: 'A note with "Remind me at" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
                 yes('cron_job_notereminders', 'Send the note reminders', { default: '1', cardToggle: true }),
             ] },
+            { title: 'Scheduled chat messages', desc: 'Posts the messages written in Scheduled messages (once or repeating) in the team chat or as private messages, at the first run after their time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
+                yes('cron_job_chatschedule', 'Send the scheduled chat messages', { default: '1', cardToggle: true }),
+            ] },
             { title: 'Grow routine', desc: 'Once a day (and once a week, once a month) writes the ideas and advice of Grow: from the figures of the CRM, and from the AI with a search of what is new when an AI key is set. Choose what it does in Grow → Routine.', fields: [
                 yes('cron_job_grow', 'Run the Grow routine', { default: '1', cardToggle: true }),
             ] },

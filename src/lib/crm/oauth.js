@@ -187,8 +187,16 @@ export async function userinfo(authHeader) {
     return (await verifyAccessToken(t)).claims
 }
 
-/** Where a sign-out may send the person back: only an address registered for the app. */
+/** Where a sign-out may send the person back: an address registered for the app, or any page of the same site as one of its registered addresses
+ *  (the app's own origin cannot be used to bounce people elsewhere). */
 export async function logoutTarget(clientId, uri) {
     const c = clientId && (await prisma.crmOauthClient.findUnique({ where: { clientId: String(clientId) } }))
-    return c && uri && (c.logoutUris.includes(uri) || c.redirectUris.includes(uri)) ? uri : null
+    if (!c || !uri) return null
+    if (c.logoutUris.includes(uri) || c.redirectUris.includes(uri)) return uri
+    try {
+        const u = new URL(uri)
+        if (!['https:', 'http:'].includes(u.protocol) || u.username || u.password) return null
+        const origins = new Set([...c.logoutUris, ...c.redirectUris].map((x) => { try { return new URL(x).origin } catch { return '' } }))
+        return origins.has(u.origin) ? u.href : null
+    } catch { return null }
 }

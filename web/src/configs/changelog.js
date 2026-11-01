@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.151.1',
+        date: '2026-11-01',
+        title: 'Sign-out address of an app (Meet): any page of the same site is accepted',
+        items: [
+            'The CRM sends a person back to an app after signing out only when the address is registered. An app whose sign-out address was not listed, or differed by a path, ended on the CRM sign-in page. Any page of the same site as one of the app\'s registered addresses is now accepted (never another site). Meet itself now signs out of Meet only and keeps the CRM session.',
+        ],
+    },
+    {
         version: '0.151.0',
         date: '2026-11-01',
         title: 'Grow ideas can be dragged between columns; scheduled messages repeat as you choose',

@@ -4902,5 +4902,13 @@ export default {
     "When": "متى",
     "Choose a client or a lead": "اختر عميلًا أو عميلًا محتملًا",
     "This lead has no email address": "ليس لهذا العميل المحتمل بريد إلكتروني",
-    "Choose the client or lead to email": "اختر العميل أو العميل المحتمل لمراسلته"
+    "Choose the client or lead to email": "اختر العميل أو العميل المحتمل لمراسلته",
+    "The same key can accept, refuse, edit and delete the requests it sent (nothing else): staff_id is the CRM team member who decides in your screen. A request can be refused after it was accepted (cancelled). The CRM calls your webhooks appointment.updated and appointment.deleted when a team member changes or deletes one in the CRM.": "يمكن للمفتاح نفسه قبول الطلبات التي أرسلها ورفضها وتعديلها وحذفها (لا شيء آخر): staff_id هو عضو فريق CRM الذي يقرر في شاشتك. يمكن رفض الطلب بعد قبوله (إلغاؤه). يستدعي CRM الـ webhooks الخاصة بك appointment.updated وappointment.deleted عندما يعدّل عضو في الفريق موعدًا أو يحذفه في CRM.",
+    "decision must be \"accept\" or \"refuse\"": "يجب أن يكون decision \"accept\" أو \"refuse\"",
+    "end must be a date (ISO 8601)": "يجب أن تكون النهاية تاريخًا (ISO 8601)",
+    "staff_id (the team member who accepts) is required to accept": "staff_id (عضو الفريق الذي يقبل) مطلوب للقبول",
+    "staff_id is not an active team member": "staff_id ليس عضوًا نشطًا في الفريق",
+    "title cannot be empty": "لا يمكن أن يكون العنوان فارغًا",
+    "An appointment from a program is changed": "تم تعديل موعد من برنامج",
+    "An appointment from a program is deleted": "تم حذف موعد من برنامج"
 }

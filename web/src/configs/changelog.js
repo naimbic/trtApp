@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.145.0',
+        date: '2026-11-01',
+        title: 'Appointment requests: the Meet app can accept, refuse, edit and delete them',
+        items: [
+            'With the same API key (scope "Send appointment requests"), a program can now act on the requests it sent: POST /api/v1/calendar/events/<id>/decision {decision: accept | refuse, staff_id, notify?, message?} (staff_id is the team member who decided in the program; accepting makes them the owner and emails the person who asked), PATCH /api/v1/calendar/events/<id> to change title, dates, meeting link, description and guests, and DELETE to remove it. Only the requests that key created can be touched; the same answer twice changes nothing; a request can be refused after it was accepted (cancelled).',
+            'The other direction: when a team member changes or deletes such an event in the CRM calendar, the CRM now calls the webhooks appointment.updated and appointment.deleted (next to appointment.requested, accepted and declined), so the program stays in step. Examples are in the "How to use" tab of API and webhooks.',
+        ],
+    },
+    {
         version: '0.144.0',
         date: '2026-11-01',
         title: 'Scheduled messages: compact accordion form, and a lead can be linked like a client',

@@ -75,28 +75,101 @@ export async function getAppointment(request, id) {
     return { data: shape(e) }
 }
 
-/** A team member accepts or declines a request. Accepting makes it a normal event of theirs (they are the owner) and can tell the person who asked. */
-export async function decideAppointment(id, body = {}) {
-    const session = await requirePermission('calendar', 'edit')
-    const staffId = await getStaffId(session)
-    const e = oid(id) && (await prisma.crmEvent.findUnique({ where: { id } }))
-    if (!e) throw fail('Event not found', 404)
-    if (e.status !== 'draft') throw fail(`This request is already ${e.status}`, 409)
-    const accept = body.decision === 'accept'
-    if (!accept && body.decision !== 'decline') throw fail('Unknown decision')
-    const row = await prisma.crmEvent.update({ where: { id }, data: { status: accept ? 'confirmed' : 'declined', decidedBy: staffId, decidedAt: new Date(), ...(accept ? { userId: staffId || e.userId, color: 'blue' } : {}) } })
+/** Accepting or refusing, for a person (staffId) or for a program acting on behalf of a team member. Accepting makes it a normal confirmed event owned by that
+ *  person; both tell the person who asked (unless notify is false). The same answer twice is not an error. */
+async function decideCore(e, { accept, staffId, notify, message }) {
+    const status = accept ? 'confirmed' : 'declined'
+    if (e.status === status) return { row: e, emailed: [], same: true }
+    const row = await prisma.crmEvent.update({ where: { id: e.id }, data: { status, decidedBy: staffId || null, decidedAt: new Date(), ...(accept ? { userId: staffId || e.userId, color: 'blue' } : {}) } })
     emit(accept ? 'appointment.accepted' : 'appointment.declined', shape(row))
-    let mailed = []
-    if (body.notify !== false) {
-        const note = clip(body.message, 600)
+    const emailed = []
+    if (notify !== false) {
+        const note = clip(message, 600)
         const when = new Date(e.start).toUTCString().replace(' GMT', ' UTC')
         for (const g of Array.isArray(e.guests) ? e.guests : []) {
             if (!g.email) continue
             const subject = accept ? `Appointment confirmed: ${e.title}` : `Appointment request: ${e.title}`
             const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${accept ? `Your appointment is <strong>confirmed</strong> for ${escapeHtml(when)}.` : 'We are sorry, we cannot take this appointment at that time.'}</p>${accept && e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}${note ? `<p>${escapeHtml(note).replace(/\n/g, '<br>')}</p>` : ''}`
             const r = await deliver({ to: g.email, subject, html })
-            if (r.sent) mailed.push(g.email)
+            if (r.sent) emailed.push(g.email)
         }
     }
-    return { success: true, status: row.status, emailed: mailed }
+    return { row, emailed, same: false }
+}
+
+const decisionOf = (d) => (['accept', 'accepted'].includes(d) ? true : ['decline', 'refuse', 'declined', 'refused'].includes(d) ? false : null)
+
+/** A team member accepts or declines a request in the CRM. */
+export async function decideAppointment(id, body = {}) {
+    const session = await requirePermission('calendar', 'edit')
+    const staffId = await getStaffId(session)
+    const e = oid(id) && (await prisma.crmEvent.findUnique({ where: { id } }))
+    if (!e) throw fail('Event not found', 404)
+    const accept = decisionOf(body.decision)
+    if (accept === null) throw fail('Unknown decision')
+    if (e.status !== 'draft') throw fail(`This request is already ${e.status}`, 409)
+    const r = await decideCore(e, { accept, staffId, notify: body.notify, message: body.message })
+    return { success: true, status: r.row.status, emailed: r.emailed }
+}
+
+/* ---- the program that sent a request can also accept, refuse, edit and delete its own requests (a team member does it in its screen) ---- */
+async function ownRequest(request, id) {
+    const { key, log } = await authenticate(request, 'calendar:write')
+    const e = oid(id) && (await prisma.crmEvent.findUnique({ where: { id } }))
+    if (!e || e.apiKeyId !== key.id) { log(404); throw fail('Appointment not found', 404) }
+    return { key, log, e }
+}
+
+/** POST /calendar/events/<id>/decision { decision: accept | refuse, staff_id, notify?, message? }: staff_id is the CRM team member who decided in the program. */
+export async function decideByKey(request, id) {
+    const { log, e } = await ownRequest(request, id)
+    try {
+        const b = await request.json().catch(() => ({}))
+        const accept = decisionOf(b.decision ?? b.action)
+        if (accept === null) throw fail('decision must be "accept" or "refuse"')
+        const staffId = oid(b.staff_id)
+        if (accept && !staffId) throw fail('staff_id (the team member who accepts) is required to accept')
+        if (staffId && !(await prisma.crmStaff.findFirst({ where: { id: staffId, active: true }, select: { id: true } }))) throw fail('staff_id is not an active team member', 400)
+        const r = await decideCore(e, { accept, staffId, notify: b.notify, message: b.message })
+        log(200)
+        return { data: shape(r.row), emailed: r.emailed, changed: !r.same }
+    } catch (x) { log(x.status || 500); throw x }
+}
+
+/** PATCH /calendar/events/<id>: title, start, end, meeting_url, description, attendees (same rules as the request). */
+export async function editByKey(request, id) {
+    const { log, e } = await ownRequest(request, id)
+    try {
+        const b = await request.json().catch(() => null)
+        if (!b || typeof b !== 'object') throw fail('Send a JSON body')
+        const data = {}
+        if (b.title !== undefined) { const t = clip(b.title, 200); if (!t) throw fail('title cannot be empty'); data.title = t }
+        const start = b.start !== undefined ? new Date(b.start) : e.start
+        const end = b.end !== undefined ? new Date(b.end) : e.end
+        if (b.start !== undefined) { if (Number.isNaN(+start)) throw fail('start must be a date (ISO 8601)'); data.start = start }
+        if (b.end !== undefined) { if (Number.isNaN(+end)) throw fail('end must be a date (ISO 8601)'); data.end = end }
+        if (end && start && end <= start) throw fail('end must be after start')
+        if (end && start && end - start > 12 * 3600000) throw fail('An appointment lasts 12 hours at most')
+        if (b.meeting_url !== undefined) { const u = clip(b.meeting_url, 500); if (u && !/^https:\/\/[^\s]+$/i.test(u)) throw fail('meeting_url must be an https address'); data.meetingUrl = u || null }
+        if (b.description !== undefined) data.description = storeRich(String(b.description ?? '').replace(/\n/g, '<br>'), 5000) || null
+        if (b.attendees !== undefined) {
+            const guests = (Array.isArray(b.attendees) ? b.attendees.slice(0, 10) : []).map((a) => ({ name: clip(a?.name, 120), email: clip(a?.email, 160).toLowerCase(), phone: clip(a?.phone, 40) })).filter((g) => g.name || g.email || g.phone)
+            for (const g of guests) if (g.email && !EMAIL.test(g.email)) throw fail(`"${g.email}" is not a valid email address`)
+            data.guests = guests; data.attendeeEmails = [...new Set(guests.map((g) => g.email).filter(Boolean))]
+        }
+        if (!Object.keys(data).length) throw fail('Nothing to change')
+        const row = await prisma.crmEvent.update({ where: { id: e.id }, data })
+        emit('appointment.updated', shape(row))
+        log(200)
+        return { data: shape(row) }
+    } catch (x) { log(x.status || 500); throw x }
+}
+
+/** DELETE /calendar/events/<id>: removes a request this key created (nothing else can be deleted through the API). */
+export async function deleteByKey(request, id) {
+    const { log, e } = await ownRequest(request, id)
+    await prisma.crmEvent.delete({ where: { id: e.id } })
+    emit('appointment.deleted', shape(e))
+    log(200)
+    return { success: true, deleted: e.id }
 }

@@ -11,7 +11,7 @@ export const EVENTS = [
     ['task.created', 'A task is created'], ['task.completed', 'A task is completed'],
     ['ticket.created', 'A support request is opened'], ['ticket.replied', 'A client replies to a request'],
     ['idea.created', 'A Grow idea is created'],
-    ['appointment.requested', 'An appointment is requested (waiting for acceptance)'], ['appointment.accepted', 'An appointment request is accepted'], ['appointment.declined', 'An appointment request is declined'], ['ping', 'Test event'],
+    ['appointment.requested', 'An appointment is requested (waiting for acceptance)'], ['appointment.accepted', 'An appointment request is accepted'], ['appointment.declined', 'An appointment request is declined'], ['appointment.updated', 'An appointment from a program is changed'], ['appointment.deleted', 'An appointment from a program is deleted'], ['ping', 'Test event'],
 ]
 const EVENT_IDS = EVENTS.map(([id]) => id)
 

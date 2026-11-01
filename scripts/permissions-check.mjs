@@ -854,6 +854,21 @@ try {
         const r3 = await call(kW, { ...good, room: 'rdv-zz456', meeting_url: 'https://meet.trtcrm.com/rdv-zz456' }); const E3 = (await r3.json()).data?.id
         if (E3) made.rows.unshift(['crmEvent', E3])
         check('declining hides it from the calendar', (await adm('POST', `/api/crm/calendar/${E3}/decision`, { decision: 'decline', notify: false })).status === 200 && !((await mem('GET', `/api/crm/calendar?from=${from}&to=${to}`)).body?.items || []).some((x) => x.rawId === E3) && (await (await call(kW, null, 'GET', `/api/v1/calendar/events/${E3}`)).json()).data?.status === 'declined')
+        // the program accepts, refuses, edits and deletes its own requests (a team member does it in its screen)
+        const r4 = await call(kW, { ...good, room: 'rdv-zz789', meeting_url: 'https://meet.trtcrm.com/rdv-zz789' }); const E4 = (await r4.json()).data?.id
+        if (E4) made.rows.unshift(['crmEvent', E4])
+        const dec = (key, id, body) => call(key, body, 'POST', `/api/v1/calendar/events/${id}/decision`)
+        check('another key cannot decide, edit or delete this request', (await dec(kW2, E4, { decision: 'accept', staff_id: aAdm.staffId })).status === 404 && (await call(kW2, { title: 'x' }, 'PATCH', `/api/v1/calendar/events/${E4}`)).status === 404 && (await call(kW2, null, 'DELETE', `/api/v1/calendar/events/${E4}`)).status === 404)
+        check('accepting through the API needs a known active team member (staff_id) and a clear decision', (await dec(kW, E4, { decision: 'accept' })).status === 400 && (await dec(kW, E4, { decision: 'accept', staff_id: '000000000000000000000000' })).status === 400 && (await dec(kW, E4, { decision: 'maybe', staff_id: aAdm.staffId })).status === 400)
+        const okd = await dec(kW, E4, { decision: 'accept', staff_id: aAdm.staffId, notify: false }); const jd = await okd.json()
+        const e4 = await prisma.crmEvent.findUnique({ where: { id: E4 } })
+        check('the program accepts on behalf of a team member: confirmed, owned by them', okd.status === 200 && jd.data?.status === 'confirmed' && jd.changed === true && e4.userId === aAdm.staffId && e4.decidedBy === aAdm.staffId)
+        check('the same answer twice changes nothing and is not an error', (await (await dec(kW, E4, { decision: 'accept', staff_id: aAdm.staffId, notify: false })).json()).changed === false)
+        check('it can edit title, dates, link and guests (same rules as a request)', (await call(kW, { title: 'Appointment: Ada (moved)', start: new Date(Date.now() + 5 * 86400000).toISOString(), end: new Date(Date.now() + 5 * 86400000 + 3600000).toISOString(), attendees: [{ name: 'Ada', email: 'ada2@example.test' }] }, 'PATCH', `/api/v1/calendar/events/${E4}`)).status === 200 && (await prisma.crmEvent.findUnique({ where: { id: E4 } })).attendeeEmails.join() === 'ada2@example.test')
+        check('...and refuses a bad edit', (await call(kW, { end: '2020-01-01T00:00:00Z' }, 'PATCH', `/api/v1/calendar/events/${E4}`)).status === 400 && (await call(kW, {}, 'PATCH', `/api/v1/calendar/events/${E4}`)).status === 400 && (await call(kW, { meeting_url: 'http://x.test' }, 'PATCH', `/api/v1/calendar/events/${E4}`)).status === 400)
+        check('it can refuse a request it accepted (cancel); the CRM calendar then hides it', (await dec(kW, E4, { decision: 'refuse', notify: false })).status === 200 && (await prisma.crmEvent.findUnique({ where: { id: E4 } })).status === 'declined')
+        check('it can delete a request it created', (await call(kW, null, 'DELETE', `/api/v1/calendar/events/${E4}`)).status === 200 && !(await prisma.crmEvent.findUnique({ where: { id: E4 } })) && (await call(kW, null, 'GET', `/api/v1/calendar/events/${E4}`)).status === 404)
+        check('the webhook list offers the update and delete events', (await adm('GET', '/api/crm/webhooks')).body?.events?.some(([id]) => id === 'appointment.updated') && (await adm('GET', '/api/crm/webhooks')).body?.events?.some(([id]) => id === 'appointment.deleted'))
         await prisma.crmNotification.deleteMany({ where: { additionalData: 'appointment', createdAt: { gte: t0 } } })
     }
 

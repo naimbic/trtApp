@@ -4902,5 +4902,13 @@ export default {
     "When": "Cuándo",
     "Choose a client or a lead": "Elija un cliente o un lead",
     "This lead has no email address": "Este lead no tiene correo electrónico",
-    "Choose the client or lead to email": "Elija el cliente o lead al que escribir"
+    "Choose the client or lead to email": "Elija el cliente o lead al que escribir",
+    "The same key can accept, refuse, edit and delete the requests it sent (nothing else): staff_id is the CRM team member who decides in your screen. A request can be refused after it was accepted (cancelled). The CRM calls your webhooks appointment.updated and appointment.deleted when a team member changes or deletes one in the CRM.": "La misma clave puede aceptar, rechazar, editar y eliminar las solicitudes que envió (nada más): staff_id es el miembro del equipo del CRM que decide en su pantalla. Una solicitud puede rechazarse tras aceptarse (cancelarse). El CRM llama a sus webhooks appointment.updated y appointment.deleted cuando un miembro del equipo cambia o elimina una en el CRM.",
+    "decision must be \"accept\" or \"refuse\"": "decision debe ser \"accept\" o \"refuse\"",
+    "end must be a date (ISO 8601)": "el fin debe ser una fecha (ISO 8601)",
+    "staff_id (the team member who accepts) is required to accept": "staff_id (el miembro del equipo que acepta) es obligatorio para aceptar",
+    "staff_id is not an active team member": "staff_id no es un miembro activo del equipo",
+    "title cannot be empty": "el título no puede estar vacío",
+    "An appointment from a program is changed": "Se modifica una cita de un programa",
+    "An appointment from a program is deleted": "Se elimina una cita de un programa"
 }

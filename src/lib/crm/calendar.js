@@ -7,6 +7,7 @@ import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { buildIcs } from '@/lib/crm/ics'
 import { deliver, getOptions, setOptions } from '@/lib/crm/mailer'
 import crypto from 'node:crypto'
+import { emit } from '@/lib/crm/webhooks'
 
 // Calendar layers shown next to the user's own events (each gated by the matching Perfex feature).
 export const LAYERS = ['events', 'reminders', 'tasks', 'invoices', 'projects', 'estimates', 'proposals', 'contracts']
@@ -257,13 +258,15 @@ export async function updateCalendarEvent(id, body) {
     const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType }
     const data = clean({ ...current, ...body })
     const updated = await prisma.crmEvent.update({ where: { id }, data })
+    if (updated.source) emit('appointment.updated', { id: updated.id, status: updated.status || 'confirmed', title: updated.title, start: updated.start, end: updated.end, meeting_url: updated.meetingUrl || null, room: updated.externalRef || null, source: updated.source })
     const out = { ...JSON.parse(JSON.stringify(updated)) }
     if (body.sendInvites) out.invited = (await invite(updated, { inviteClient: !!body.inviteClient, update: true })).sent
     return out
 }
 
 export async function deleteCalendarEvent(id) {
-    await ownEvent(id)
+    const ev = await ownEvent(id)
+    if (ev.source) emit('appointment.deleted', { id: ev.id, status: ev.status || 'confirmed', title: ev.title, start: ev.start, end: ev.end, meeting_url: ev.meetingUrl || null, room: ev.externalRef || null, source: ev.source })
     await prisma.crmEvent.delete({ where: { id } })
     return { success: true }
 }

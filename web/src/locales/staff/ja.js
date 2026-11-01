@@ -4902,5 +4902,13 @@ export default {
     "When": "いつ",
     "Choose a client or a lead": "クライアントまたはリードを選択",
     "This lead has no email address": "このリードにはメールアドレスがありません",
-    "Choose the client or lead to email": "メールするクライアントまたはリードを選んでください"
+    "Choose the client or lead to email": "メールするクライアントまたはリードを選んでください",
+    "The same key can accept, refuse, edit and delete the requests it sent (nothing else): staff_id is the CRM team member who decides in your screen. A request can be refused after it was accepted (cancelled). The CRM calls your webhooks appointment.updated and appointment.deleted when a team member changes or deletes one in the CRM.": "同じキーで、自分が送ったリクエスト(それ以外は不可)の承認・辞退・編集・削除ができます。staff_id は画面上で決定するCRMのチームメンバーです。承認後でも辞退(キャンセル)できます。チームメンバーがCRM内で変更・削除すると、CRMは Webhook の appointment.updated と appointment.deleted を呼び出します。",
+    "decision must be \"accept\" or \"refuse\"": "decision は \"accept\" か \"refuse\" にしてください",
+    "end must be a date (ISO 8601)": "終了は日付(ISO 8601)にしてください",
+    "staff_id (the team member who accepts) is required to accept": "承認には staff_id(承認するチームメンバー)が必要です",
+    "staff_id is not an active team member": "staff_id は有効なチームメンバーではありません",
+    "title cannot be empty": "タイトルを空にできません",
+    "An appointment from a program is changed": "プログラムからの予約が変更された",
+    "An appointment from a program is deleted": "プログラムからの予約が削除された"
 }

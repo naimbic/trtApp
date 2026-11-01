@@ -1,11 +1,12 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { TbGripVertical, TbPencil, TbTrash, TbPlus } from 'react-icons/tb'
+import { TbPencil, TbTrash, TbPlus } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Button from '@/components/ui/Button'
 import Switcher from '@/components/ui/Switcher'
 import Tooltip from '@/components/ui/Tooltip'
 import { api, notify, qs } from './api'
+import { useRowDrag, DragHandle } from '@/components/crm/RowDrag'
 import RelationSelect from './RelationSelect'
 import { tr } from '@/utils/t'
 
@@ -64,10 +65,8 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
     const [loading, setLoading] = useState(true)
     const [draft, setDraft] = useState({})
     const [del, setDel] = useState(null)
-    const [over, setOver] = useState(null)
     const [q, setQ] = useState('')
     const uses = !!resource.usage // how many records use each item
-    const drag = useRef(null)
     const grid = { gridTemplateColumns: `${orderField ? '22px ' : ''}minmax(180px, 1.8fr) ${cols.map(() => 'minmax(96px, 1fr)').join(' ')} ${uses ? '64px ' : ''}76px` }
 
     const load = useCallback(async () => {
@@ -94,11 +93,7 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
     const remove = async (r) => {
         try { await api(`/api/crm/${resource.key}/${r.id}`, { method: 'DELETE' }); notify('success', tr("Deleted")); load() } catch (e) { notify('danger', e.message) }
     }
-    const drop = async (toIndex) => {
-        const from = drag.current
-        drag.current = null
-        setOver(null)
-        if (from === null || from === toIndex) return
+    const move = async (from, toIndex) => {
         const next = [...rows]
         const [moved] = next.splice(from, 1)
         next.splice(toIndex, 0, moved)
@@ -106,6 +101,7 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
         setRows(next.map((r, i) => ({ ...r, [orderField]: i + 1 })))
         try { await Promise.all(changed.map(({ r, order }) => patch(r.id, { [orderField]: order }))) } catch (e) { notify('danger', e.message); load() }
     }
+    const rd = useRowDrag(move)
 
     return (
         <div className="overflow-x-auto">
@@ -131,10 +127,9 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
                     {rows.map((r, i) => (!q.trim() || String(r[main.key] || '').toLowerCase().includes(q.trim().toLowerCase())) && (
                         <div
                             key={r.id}
-                            className={`grid items-center gap-3 px-3 py-1.5 ${over === i ? 'bg-primary/5' : ''}`} style={grid}
-                            onDragOver={(e) => { if (drag.current !== null) { e.preventDefault(); setOver(i) } }} onDrop={(e) => { e.preventDefault(); drop(i) }}
+                            className={`grid items-center gap-3 px-3 py-1.5 ${rd.over === i ? 'bg-primary/5' : ''}`} style={grid} {...rd.row(i)}
                         >
-                            {orderField && <span className={`text-lg text-gray-400 ${canEdit ? 'cursor-grab' : ''}`} draggable={canEdit} onDragStart={() => { drag.current = i }} onDragEnd={() => { drag.current = null; setOver(null) }} aria-hidden="true"><TbGripVertical /></span>}
+                            {orderField && <DragHandle enabled={canEdit} {...rd.handle(i, canEdit)} />}
                             <div className={r.isActive === false ? 'opacity-50' : undefined}><Cell field={main} value={r[main.key]} disabled={!canEdit} onCommit={(val) => (val === '' ? load() : save(r, main.key, val))} /></div>
                             {cols.map((f) => <div key={f.key} className={r.isActive === false && f.key !== 'isActive' ? 'opacity-50' : undefined}><Cell field={f} value={r[f.key]} disabled={!canEdit} onCommit={(val) => save(r, f.key, val)} /></div>)}
                             {uses && <span className={`text-sm tabular-nums ${r._uses ? 'font-semibold text-gray-700 dark:text-gray-200' : 'text-gray-300'}`} title={r._uses ? tr("Records using it") : tr("Not used")}>{r._uses || 0}</span>}

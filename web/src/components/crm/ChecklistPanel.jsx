@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import dayjs from 'dayjs'
-import { TbGripVertical, TbExternalLink, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
+import { TbExternalLink, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
 import Mentioned from '@/components/crm/Mentioned'
+import { useRowDrag, DragHandle } from '@/components/crm/RowDrag'
 import classNames from '@/utils/classNames'
 import { tr, trn } from '@/utils/t'
 
@@ -103,8 +104,6 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
     const [due, setDue] = useState(null)
     const [editing, setEditing] = useState(null) // { id, text }
     const [hideDone, setHideDone] = useState(false)
-    const [over, setOver] = useState(null)
-    const drag = useRef(null)
     useEffect(() => setList(items), [items])
     const done = list.filter((c) => c.finished).length
     const shown = useMemo(() => list.filter((c) => !(hideDone && c.finished)), [list, hideDone])
@@ -114,13 +113,12 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
         await act({ action: 'add', description, assignedIds: who, dueDate: due })
         setText(''); setWho([]); setDue(null)
     }
-    const drop = async (to) => {
-        const from = drag.current; drag.current = null; setOver(null)
-        if (from === null || from === to) return
+    const move = async (from, to) => {
         const next = [...list]; const [m] = next.splice(from, 1); next.splice(to, 0, m)
         setList(next)
         await act({ action: 'reorder', ids: next.map((x) => x.id) })
     }
+    const rd = useRowDrag(move)
     const sortByDate = async () => {
         const next = [...list].sort((a, b) => (+!!a.finished - +!!b.finished) || ((a.dueDate ? +new Date(a.dueDate) : Infinity) - (b.dueDate ? +new Date(b.dueDate) : Infinity)))
         setList(next)
@@ -146,9 +144,8 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
                 {shown.map((c) => {
                     const i = list.indexOf(c)
                     return (
-                        <div key={c.id} className={classNames('group flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-2', over === i && 'bg-primary/5')}
-                            onDragOver={(e) => { if (drag.current !== null) { e.preventDefault(); setOver(i) } }} onDrop={(e) => { e.preventDefault(); drop(i) }}>
-                            {sortable && <TbGripVertical className={classNames('shrink-0 text-lg text-gray-300', canEdit && !hideDone ? 'cursor-grab' : 'opacity-0')} draggable={canEdit && !hideDone} onDragStart={() => { drag.current = i }} onDragEnd={() => { drag.current = null; setOver(null) }} aria-hidden="true" />}
+                        <div key={c.id} {...rd.row(i)} className={classNames('group flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-2', rd.over === i && 'bg-primary/5')}>
+                            {sortable && <DragHandle enabled={canEdit && !hideDone} {...rd.handle(i, canEdit && !hideDone)} />}
                             <button type="button" role="checkbox" aria-checked={c.finished} aria-label={tr('Done')} onClick={() => act({ action: 'toggle', itemId: c.id, finished: !c.finished })}
                                 className={classNames('grid size-5 shrink-0 place-items-center rounded-full border-2 text-xs transition', c.finished ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 hover:border-primary')}>{c.finished && <TbCheck />}</button>
                             <div className="min-w-[120px] flex-1 text-sm">

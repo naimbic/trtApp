@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { Link } from 'react-router'
-import { TbFlag, TbCircleCheck, TbAlertTriangle, TbPlus, TbGripVertical, TbDots, TbPencil, TbTrash, TbChecks, TbListCheck, TbSearch, TbCalendarEvent } from 'react-icons/tb'
+import { TbFlag, TbCircleCheck, TbAlertTriangle, TbPlus, TbDots, TbPencil, TbTrash, TbChecks, TbListCheck, TbSearch, TbCalendarEvent } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
@@ -14,6 +14,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import { api, notify, qs } from '../kit/api'
+import { useRowDrag, DragHandle } from '@/components/crm/RowDrag'
 import { tr, trn } from '@/utils/t'
 
 const COLORS = ['#2563eb', '#7c3aed', '#db2777', '#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#6b7280']
@@ -121,21 +122,18 @@ const ProjectBlock = ({ p, can, filter, onOpen, onChanged, onComplete, onDelete 
     const [name, setName] = useState('')
     const [date, setDate] = useState('')
     const [list, setList] = useState(p.milestones)
-    const [over, setOver] = useState(null)
-    const drag = useRef(null)
     useEffect(() => setList(p.milestones), [p.milestones])
     const shown = list.filter((m) => filter === 'all' || (filter === 'open' ? m.state !== 'done' : m.state === filter))
     const add = async () => {
         if (!name.trim()) return
         try { await api('/api/crm/milestones-board', { method: 'POST', body: { name, dueDate: date || null, projectId: p.id } }); setName(''); setDate(''); onChanged() } catch (e) { notify('danger', e.message) }
     }
-    const drop = async (to) => {
-        const from = drag.current; drag.current = null; setOver(null)
-        if (from === null || from === to) return
+    const move = async (from, to) => {
         const next = [...list]; const [m] = next.splice(from, 1); next.splice(to, 0, m)
         setList(next)
         try { await api('/api/crm/milestones-board/reorder', { method: 'POST', body: { projectId: p.id, ids: next.map((x) => x.id) } }) } catch (e) { notify('danger', e.message); onChanged() }
     }
+    const rd = useRowDrag(move)
     const done = p.milestones.filter((m) => m.state === 'done').length
     return (
         <section className="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -157,9 +155,8 @@ const ProjectBlock = ({ p, can, filter, onOpen, onChanged, onComplete, onDelete 
                     const i = list.indexOf(m)
                     const [cls, label] = STATE[m.state]
                     return (
-                        <div key={m.id} className={`group grid grid-cols-[18px_1fr_auto] items-center gap-3 px-3 py-2.5 md:grid-cols-[18px_minmax(160px,1.4fr)_minmax(150px,1fr)_minmax(140px,1fr)_auto] ${over === i ? 'bg-primary/5' : ''}`}
-                            onDragOver={(e) => { if (drag.current !== null) { e.preventDefault(); setOver(i) } }} onDrop={(e) => { e.preventDefault(); drop(i) }}>
-                            <TbGripVertical className={`text-lg text-gray-300 ${can.edit && filter === 'all' ? 'cursor-grab' : 'opacity-0'}`} draggable={can.edit && filter === 'all'} onDragStart={() => { drag.current = i }} onDragEnd={() => { drag.current = null; setOver(null) }} aria-hidden="true" />
+                        <div key={m.id} className={`group grid grid-cols-[18px_1fr_auto] items-center gap-3 px-3 py-2.5 md:grid-cols-[18px_minmax(160px,1.4fr)_minmax(150px,1fr)_minmax(140px,1fr)_auto] ${rd.over === i ? 'bg-primary/5' : ''}`} {...rd.row(i)}>
+                            <DragHandle enabled={can.edit && filter === 'all'} {...rd.handle(i, can.edit && filter === 'all')} />
                             <button type="button" onClick={() => onOpen({ open: true, id: m.id })} className="flex min-w-0 items-center gap-2 text-left">
                                 <span className="size-3 shrink-0 rounded-full" style={{ background: m.color || '#9ca3af' }} />
                                 <span className={`truncate font-bold hover:underline ${m.state === 'done' ? 'text-gray-400 line-through' : ''}`}>{m.name}</span>

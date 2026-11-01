@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Spinner from '@/components/ui/Spinner'
 import Tag from '@/components/ui/Tag'
+import { useRowDrag, DragHandle } from '@/components/crm/RowDrag'
 import { getResource } from '@/lib/crm/resources'
 import { SHELL } from '@/lib/crm/mailDesign/build'
 import { buildSignature, SIGNATURE_CSS } from '@/lib/crm/mailDesign/signature'
@@ -128,6 +129,13 @@ export const CustomFieldsPanel = () => {
     const [rows, setRows] = useState(null)
     const load = useCallback(() => api('/api/crm/custom-fields?where.fieldTo=customers&pageSize=100&sortKey=fieldOrder').then((d) => setRows(d.list)).catch((e) => notify('danger', e.message)), [])
     useEffect(() => { load() }, [load])
+    const move = async (from, to) => {
+        const next = [...rows]; const [m] = next.splice(from, 1); next.splice(to, 0, m)
+        const changed = next.map((r, i) => ({ r, order: i + 1 })).filter(({ r, order }) => r.fieldOrder !== order)
+        setRows(next.map((r, i) => ({ ...r, fieldOrder: i + 1 })))
+        try { await Promise.all(changed.map(({ r, order }) => api(`/api/crm/custom-fields/${r.id}`, { method: 'PATCH', body: { fieldOrder: order } }))) } catch (e) { notify('danger', e.message); load() }
+    }
+    const rd = useRowDrag(move)
     const copy = async (t) => { try { await navigator.clipboard.writeText(t); notify('success', tr("{t} copied", { t: t })) } catch { notify('danger', tr("Could not copy")) } }
     return (
         <div>
@@ -137,8 +145,9 @@ export const CustomFieldsPanel = () => {
             </div>
             {!rows ? <div className="flex h-24 items-center justify-center"><Spinner size={24} /></div> : (
                 <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
-                    {rows.map((r) => (
-                        <div key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
+                    {rows.map((r, i) => (
+                        <div key={r.id} {...rd.row(i)} className={`flex flex-wrap items-center gap-3 px-4 py-2.5 ${rd.over === i ? 'bg-primary/5' : ''}`}>
+                            <DragHandle enabled={can('settings', 'edit')} {...rd.handle(i, can('settings', 'edit'))} className="-ml-2" />
                             <button type="button" onClick={() => setDrawer({ open: true, id: r.id })} className="min-w-[160px] flex-1 text-left font-semibold hover:underline">{r.name}</button>
                             <span className="text-xs text-gray-500">{r.type}</span>
                             {r.required && <Tag className="bg-red-100 text-red-700">{tr("Required")}</Tag>}

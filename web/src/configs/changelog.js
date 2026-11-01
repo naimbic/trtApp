@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.156.1',
+        date: '2026-11-02',
+        title: 'Drag to reorder works again (task checklists, milestones, lists)',
+        items: ['Fixed: the checklist of a task (and of a lead\'s tasks) and the milestones of a project could not be reordered by dragging: the grip was a bare icon, which browsers do not let you drag. Every list with a position now uses one shared grip that works in Chrome, Safari and Firefox, shows the whole row while you move it and saves the new order at once: task checklists, project milestones, and all the lists managed in Setup (statuses, priorities, sources, departments, payment methods, groups...). The client custom fields in Settings can be dragged too.'],
+    },
+    {
         version: '0.156.0',
         date: '2026-11-02',
         title: 'Settings and menu tidied: unbuilt options, duplicated lists and old Perfex pages removed',

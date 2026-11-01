@@ -66,11 +66,15 @@ export async function createAppointment(request) {
     } catch (e) { log(e.status || 500); throw e }
 }
 
-/** The state of a request, for the program that sent it: only the one that created it can ask. */
+/** A request a key with calendar:write may act on: any event that came in through the API (it has a source), also when it was sent with an earlier key
+ *  (a key is replaced from time to time). An event nobody asked for through the API (no source) is never touched. */
+const mayAct = async (key, e) => !!e && !!e.source
+
+/** The state of a request, for the program that sent it. */
 export async function getAppointment(request, id) {
     const { key, log } = await authenticate(request, 'calendar:write')
     const e = oid(id) && (await prisma.crmEvent.findUnique({ where: { id } }))
-    if (!e || e.apiKeyId !== key.id) { log(404); throw fail('Appointment not found', 404) }
+    if (!(await mayAct(key, e))) { log(404); throw fail('Appointment not found', 404) }
     log(200)
     return { data: shape(e) }
 }
@@ -131,7 +135,7 @@ export async function decideAppointment(id, body = {}) {
 async function ownRequest(request, id) {
     const { key, log } = await authenticate(request, 'calendar:write')
     const e = oid(id) && (await prisma.crmEvent.findUnique({ where: { id } }))
-    if (!e || e.apiKeyId !== key.id) { log(404); throw fail('Appointment not found', 404) }
+    if (!(await mayAct(key, e))) { log(404); throw fail('Appointment not found', 404) }
     return { key, log, e }
 }
 

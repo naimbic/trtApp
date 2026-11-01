@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.152.1',
+        date: '2026-11-01',
+        title: 'Meet can delete, edit and answer its requests even after its API key was replaced',
+        items: [
+            'A program key used to act only on the requests created with that very key, so after a key was replaced (for example to add the read scope) the earlier bookings could no longer be deleted, edited, accepted or refused from Meet: the CRM answered 404 and the event stayed on the calendar. A key with calendar:write now acts on every event that came in through the API (the ones that carry a source such as trtmeet-booking), whichever key sent it. An event nobody requested through the API (a meeting you created in the CRM) can never be deleted, edited or answered by a key.',
+        ],
+    },
+    {
         version: '0.152.0',
         date: '2026-11-01',
         title: 'Learning now earns points, levels and trophies with prizes from 200 to 1000 MAD',

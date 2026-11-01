@@ -891,7 +891,7 @@ try {
         const cal = await mem('GET', `/api/crm/calendar?from=${from}&to=${to}`)
         const item = (cal.body?.items || cal.body?.data || []).find((x) => x.rawId === EID)
         check('on the calendar it shows as a pending request (⏳) with who asked', cal.status === 200 && item?.status === 'draft' && /^⏳/.test(item.title) && item.guests?.[0]?.email === 'ada@example.test', JSON.stringify(item || cal.body).slice(0, 140))
-        check('only the program that sent it can ask its state', (await (await call(kW, null, 'GET', `/api/v1/calendar/events/${EID}`)).json()).data?.status === 'draft' && (await call(kW2, null, 'GET', `/api/v1/calendar/events/${EID}`)).status === 404)
+        check('a program key can ask the state of a request that came in through the API (also one sent with an earlier key)', (await (await call(kW, null, 'GET', `/api/v1/calendar/events/${EID}`)).json()).data?.status === 'draft' && (await call(kW2, null, 'GET', `/api/v1/calendar/events/${EID}`)).status === 200)
         check('a draft is not in the member meetings feed', !((await (await fetch(`${BASE}/api/v1/calendar/events?staff_id=${aAdm.staffId}&all=1`, { headers: { authorization: `Bearer ${kR}` } })).json()).data || []).some((x) => x.id === EID))
         check('accepting needs permission to edit the calendar', (await mem('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'accept' })).status === 403)
         check('an unknown decision is refused', (await adm('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'maybe' })).status === 400)
@@ -908,7 +908,8 @@ try {
         const r4 = await call(kW, { ...good, room: 'rdv-zz789', meeting_url: 'https://meet.trtcrm.com/rdv-zz789' }); const E4 = (await r4.json()).data?.id
         if (E4) made.rows.unshift(['crmEvent', E4])
         const dec = (key, id, body) => call(key, body, 'POST', `/api/v1/calendar/events/${id}/decision`)
-        check('another key cannot decide, edit or delete this request', (await dec(kW2, E4, { decision: 'accept', staff_id: aAdm.staffId })).status === 404 && (await call(kW2, { title: 'x' }, 'PATCH', `/api/v1/calendar/events/${E4}`)).status === 404 && (await call(kW2, null, 'DELETE', `/api/v1/calendar/events/${E4}`)).status === 404)
+        const plainEv = await prisma.crmEvent.create({ data: { title: 'zz plain crm event', start: new Date(Date.now() + 3 * 86400000), end: new Date(Date.now() + 3 * 86400000 + 3600000), userId: aAdm.staffId } }); made.rows.unshift(['crmEvent', plainEv.id])
+        check('an event nobody requested through the API can never be answered, edited or deleted by a key, and it stays', (await dec(kW2, plainEv.id, { decision: 'accept', staff_id: aAdm.staffId })).status === 404 && (await call(kW2, { title: 'x' }, 'PATCH', `/api/v1/calendar/events/${plainEv.id}`)).status === 404 && (await call(kW2, null, 'DELETE', `/api/v1/calendar/events/${plainEv.id}`)).status === 404 && !!(await prisma.crmEvent.findUnique({ where: { id: plainEv.id } })))
         check('accepting through the API needs a known active team member (staff_id) and a clear decision', (await dec(kW, E4, { decision: 'accept' })).status === 400 && (await dec(kW, E4, { decision: 'accept', staff_id: '000000000000000000000000' })).status === 400 && (await dec(kW, E4, { decision: 'maybe', staff_id: aAdm.staffId })).status === 400)
         const okd = await dec(kW, E4, { decision: 'accept', staff_id: aAdm.staffId, notify: false }); const jd = await okd.json()
         const e4 = await prisma.crmEvent.findUnique({ where: { id: E4 } })

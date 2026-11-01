@@ -5012,5 +5012,16 @@ export default {
     "Send the meeting recap": "会議の要約を送信",
     "The key needs the scope calendar:write. The minutes are written on the event of that room and every action item becomes a task, assigned to the named team member or else to staff_id. Saving twice adds the minutes and never duplicates a task.": "キーには calendar:write スコープが必要です。議事録はそのルームのイベントに書き込まれ、各アクションは、名前の挙がったチームメンバー(いなければ staff_id)に割り当てられるタスクになります。2回保存すると議事録が追記され、タスクは重複しません。",
     "What was said, decided and who does what": "話した内容、決定事項、担当者",
-    "Written: open to read or change": "作成済み:開いて読む・編集する"
+    "Written: open to read or change": "作成済み:開いて読む・編集する",
+    "API, webhooks and sign-in apps": "API、Webhook、サインインアプリ",
+    "See everybody's growth, goals and trophies": "全員の成長・目標・トロフィーを見る",
+    "Approve goals, set and pay primes, award trophies": "目標の承認、ボーナスの設定と支払い、トロフィーの付与",
+    "You are not allowed to manage API keys": "API キーを管理する権限がありません",
+    "You are not allowed to manage the sign-in apps": "サインインアプリを管理する権限がありません",
+    "You are not allowed to see payroll": "給与を見る権限がありません",
+    "You are not allowed to use the AI tools": "AI ツールを使う権限がありません",
+    "The My growth page: my skills and certification goals, learning ideas, points, levels and trophies, and the team playbook. Everyone can have it. \"See everybody's growth\" shows the team page; \"Approve goals, set and pay primes\" lets a manager approve a goal, fix the company support and prime, mark a prime paid and award trophies.": "「自分の成長」ページ:スキルと資格の目標、学習アイデア、ポイント、レベル、トロフィー、チームのプレイブック。誰でも使えます。「全員の成長を見る」でチームページを表示し、「目標の承認、ボーナスの設定と支払い」で、管理者が目標を承認し、会社の支援とボーナスを決め、ボーナスを支払済みにし、トロフィーを付与できます。",
+    "AI insights: the analyses, the assistant and the routine that read your own CRM data. View = use them; Edit = change the AI keys, models and instructions in Settings. The super administrator always has both.": "AI インサイト:自社の CRM データを読む分析、アシスタント、ルーチン。表示=使う、編集=設定で AI のキー・モデル・指示を変更。スーパー管理者は常に両方を持ちます。",
+    "The Payroll page: salaries, payments and the expenses they create. View = read; Edit = change salaries and payments. The super administrator always has both. Give it with great care.": "給与ページ:給与、支払い、それが作る経費。表示=閲覧、編集=給与と支払いの変更。スーパー管理者は常に両方を持ちます。慎重に付与してください。",
+    "API and webhooks: the keys other apps (Meet, forms, automations) use, their activity, the webhooks, and the sign-in apps of the single sign-on. View = read; Edit = create, change and revoke. The super administrator always has both. Give it with great care.": "API と Webhook:他のアプリ(Meet、フォーム、自動化)が使うキー、その利用状況、Webhook、シングルサインオンのサインインアプリ。表示=閲覧、編集=作成・変更・失効。スーパー管理者は常に両方を持ちます。慎重に付与してください。"
 }

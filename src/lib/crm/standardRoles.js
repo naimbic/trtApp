@@ -5,6 +5,8 @@ const std = (f) => FEATURES.find((x) => x.key === f)?.caps.filter((c) => c !== '
 const FULL = Object.fromEntries(FEATURES.map((f) => [f.key, f.caps.filter((c) => c !== 'view_own')]))
 const without = (base, drop) => Object.fromEntries(Object.entries(base).filter(([k]) => !drop.includes(k)))
 const pick = (spec) => Object.fromEntries(Object.entries(spec).map(([f, caps]) => [f, caps === 'all' ? std(f) : caps === 'edit' ? ['view', 'create', 'edit'].filter((c) => std(f).includes(c)) : caps === 'read' ? ['view'].filter((c) => std(f).includes(c)) : caps]))
+// salaries, API keys and AI keys stay with the Super Admin unless a role is given them on purpose
+const SENSITIVE = ['payroll', 'api', 'ai']
 const REPORT = (...kinds) => ['view', ...kinds.map((k) => `report_${k}`)]
 
 const TOOLS = { calendar: ['view'], chat: ['view'], file_manager: ['view'], growth: ['view'] }
@@ -12,7 +14,7 @@ const withTools = (roles) => Object.fromEntries(Object.entries(roles).map(([n, p
 
 export const ROLES = withTools({
     'Super Admin': FULL,
-    Admin: { ...FULL, roles: ['view', 'create', 'edit'], staff: ['view', 'create', 'edit'] },
+    Admin: { ...without(FULL, SENSITIVE), roles: ['view', 'create', 'edit'], staff: ['view', 'create', 'edit'] },
     'Account Manager': pick({
         customers: 'edit', leads: 'edit', estimates: 'edit', proposals: 'edit', contracts: 'edit', invoices: 'edit', payments: ['view', 'create'], expenses: 'read',
         projects: 'edit', tasks: 'edit', issues: 'edit', tickets: 'edit', knowledge_base: 'read', items: 'read', finance: ['view_amounts'], reports: REPORT('sales', 'leads', 'support', 'work'),
@@ -32,7 +34,7 @@ export const ROLES = withTools({
     'Project Manager': pick({
         customers: 'read', projects: 'all', tasks: 'all', issues: 'all', checklist_templates: ['create', 'delete'], tickets: 'read', goals: 'read', reports: REPORT('work', 'support'),
     }),
-    Viewer: pick(Object.fromEntries(FEATURES.filter((f) => !['staff', 'roles', 'settings', 'email_templates', 'passwords', 'activity_log', 'dashboard', 'finance', 'bulk_pdf_exporter', 'profile'].includes(f.key)).map((f) => [f.key, 'read']))),
+    Viewer: pick(Object.fromEntries(FEATURES.filter((f) => !['staff', 'roles', 'settings', 'email_templates', 'passwords', 'activity_log', 'dashboard', 'finance', 'bulk_pdf_exporter', 'profile', ...SENSITIVE].includes(f.key)).map((f) => [f.key, 'read']))),
 })
 
 export const standardRolePermissions = (name) => cleanPermissions(ROLES[name])

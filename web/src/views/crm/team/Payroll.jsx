@@ -6,6 +6,7 @@ import { TbCash, TbCalendarDollar, TbReportMoney, TbAlertTriangle, TbChevronLeft
 import Container from '@/components/shared/Container'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
+import { useSessionUser } from '@/store/authStore'
 import Table from '@/components/ui/Table'
 import StaffRing from '@/components/crm/StaffRing'
 import { InvoiceHead } from '../sales/InvoiceInsights'
@@ -39,6 +40,8 @@ const CostChart = ({ months, money, base, current }) => {
 
 /** What the team costs: salaries due, what was paid, who is still to pay this month. Super administrators only. */
 const Payroll = () => {
+    const authority = useSessionUser((s) => s.user.authority) || []
+    const canEdit = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.payroll.edit')
     const navigate = useNavigate()
     const { money } = usePayMoney()
     const [year, setYear] = useState(dayjs().year())
@@ -86,7 +89,7 @@ const Payroll = () => {
                                 <Td><div className="flex items-center gap-2"><StatusTag s={m.thisMonth.status} />{m.thisMonth.due > 0 && <span className="text-xs text-gray-400">{money(m.thisMonth.paid, m.currencyId || base)} / {money(m.thisMonth.due, m.currencyId || base)}</span>}</div></Td>
                                 <Td className="text-right">{money(m.yearPaid, base)}</Td>
                                 <Td className="text-right" onClick={(e) => e.stopPropagation()}>
-                                    {['late', 'partial', 'due'].includes(m.thisMonth.status) && <Button size="xs" onClick={() => setPay({ open: true, member: m, preset: { month: d.dueMonth, kind: 'salary', amount: Math.max(0, m.thisMonth.due - m.thisMonth.paid), currencyId: m.currencyId } })}>{tr('Pay')}</Button>}
+                                    {canEdit && ['late', 'partial', 'due'].includes(m.thisMonth.status) && <Button size="xs" onClick={() => setPay({ open: true, member: m, preset: { month: d.dueMonth, kind: 'salary', amount: Math.max(0, m.thisMonth.due - m.thisMonth.paid), currencyId: m.currencyId } })}>{tr('Pay')}</Button>}
                                 </Td>
                             </Tr>
                         ))}

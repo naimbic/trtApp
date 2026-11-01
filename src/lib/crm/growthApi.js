@@ -14,7 +14,7 @@ async function gate() {
     const authority = session.user.authority || []
     const staffId = await getStaffId(session)
     if (!staffId) throw fail('Only team members have a growth plan', 403)
-    return { authority, staffId, name: session.user.name || session.user.email, seeAll: isCrmAdmin(authority) || hasCap(authority, 'grow', 'view'), manage: isCrmAdmin(authority) || hasCap(authority, 'grow', 'edit'), remove: isCrmAdmin(authority) || hasCap(authority, 'grow', 'delete') }
+    return { authority, staffId, name: session.user.name || session.user.email, seeAll: isCrmAdmin(authority) || hasCap(authority, 'grow', 'view') || hasCap(authority, 'growth', 'view_team') || hasCap(authority, 'growth', 'manage'), manage: isCrmAdmin(authority) || hasCap(authority, 'grow', 'edit') || hasCap(authority, 'growth', 'manage'), remove: isCrmAdmin(authority) || hasCap(authority, 'grow', 'delete') }
 }
 
 const notify = (toIds, description, link, byName, byId) => Promise.all([...new Set(toIds.filter(Boolean))].map((to) => prisma.crmNotification.create({ data: { toUserId: to, fromUserId: byId || undefined, fromFullName: byName || null, description: description.slice(0, 200), link, additionalData: 'growth', isRead: false } }).catch(() => {})))

@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { requirePermission, isCrmAdmin, getStaffId } from '@/lib/crm/permissions'
+import { requirePermission, hasCap, getStaffId } from '@/lib/crm/permissions'
 import { seal, open } from './secret'
 import { PROVIDERS, providerIds } from './providers'
 
@@ -9,9 +9,9 @@ const WORKSPACE = (p) => `ai_workspace_${p}` // Anthropic keys that belong to no
 const bad = (message, status = 400) => Object.assign(new Error(message), { status })
 
 /** Only the super administrator may see or use anything about AI (keys, models, analyses). */
-export async function requireSuper() {
+export async function requireSuper(cap = 'view') {
     const session = await requirePermission(null)
-    if (!isCrmAdmin(session.user.authority || [])) throw bad('Only the super administrator can use the AI tools', 403)
+    if (!hasCap(session.user.authority || [], 'ai', cap)) throw bad('You are not allowed to use the AI tools', 403)
     return session
 }
 
@@ -36,7 +36,7 @@ export async function getAiSettings() {
 
 /** body: { keys: { id: 'new key' | null (remove) }, models: { id: 'model' }, provider, model, systemPrompt } */
 export async function saveAiSettings(body = {}) {
-    const session = await requireSuper()
+    const session = await requireSuper('edit')
     const changed = []
     for (const [id, value] of Object.entries(body.keys || {})) {
         if (!providerIds.includes(id)) throw bad('Unknown AI provider')

@@ -20,14 +20,18 @@ export const SCOPES = [
 const SCOPE_IDS = SCOPES.map(([id]) => id)
 const sha = (s) => crypto.createHash('sha256').update(String(s)).digest('hex')
 
-async function requireAdmin() {
-    const session = await requirePermission(null)
-    if (!isCrmAdmin(session.user.authority || [])) throw fail('Only the super administrator can manage API keys', 403)
-    return session
+/** The super administrator, or a member the role "API, webhooks and sign-in apps" allows (view = read, edit = create / change / revoke). */
+async function requireAdmin(cap = 'edit') {
+    try {
+        return await requirePermission('api', cap)
+    } catch (e) {
+        if (e.status === 403) throw fail('You are not allowed to manage API keys', 403)
+        throw e
+    }
 }
 
 export async function listKeys() {
-    await requireAdmin()
+    await requireAdmin('view')
     const rows = await prisma.crmApiKey.findMany({ orderBy: { createdAt: 'desc' } })
     return { keys: rows.map((k) => ({ id: k.id, name: k.name, prefix: k.prefix, scopes: k.scopes, createdAt: k.createdAt, lastUsedAt: k.lastUsedAt, lastIp: k.lastIp, calls: k.calls, expiresAt: k.expiresAt, revokedAt: k.revokedAt })), scopes: SCOPES }
 }
@@ -54,7 +58,7 @@ export async function revokeKey(id) {
 }
 
 export async function keyLog(id) {
-    await requireAdmin()
+    await requireAdmin('view')
     if (!/^[a-f0-9]{24}$/i.test(String(id || ''))) throw fail('Key not found', 404)
     return { log: await prisma.crmApiLog.findMany({ where: { keyId: id }, orderBy: { createdAt: 'desc' }, take: 50 }) }
 }

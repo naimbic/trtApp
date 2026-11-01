@@ -65,10 +65,13 @@ async function claimsFor(userId) {
 }
 
 /* ------------------------------------------------------------ the apps (clients), for the super administrator */
-async function requireAdmin() {
-    const session = await requirePermission(null)
-    if (!isCrmAdmin(session.user.authority || [])) throw fail('Only the super administrator can manage the sign-in apps', 403)
-    return session
+async function requireAdmin(cap = 'edit') {
+    try {
+        return await requirePermission('api', cap)
+    } catch (e) {
+        if (e.status === 403) throw fail('You are not allowed to manage the sign-in apps', 403)
+        throw e
+    }
 }
 const uris = (list, what) => {
     const out = [...new Set((Array.isArray(list) ? list : String(list || '').split(/[\n,]+/)).map((x) => String(x).trim()).filter(Boolean))]
@@ -83,7 +86,7 @@ const uris = (list, what) => {
 const shapeClient = (c) => ({ id: c.id, name: c.name, clientId: c.clientId, redirectUris: c.redirectUris, logoutUris: c.logoutUris, active: c.active, lastUsedAt: c.lastUsedAt, logins: c.logins, createdAt: c.createdAt })
 
 export async function listClients() {
-    await requireAdmin()
+    await requireAdmin('view')
     return { clients: (await prisma.crmOauthClient.findMany({ orderBy: { createdAt: 'desc' } })).map(shapeClient), endpoints: discovery() }
 }
 

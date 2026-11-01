@@ -16,7 +16,9 @@ const isStd = (c) => STD_CAPS.includes(c)
 const listOnly = (f) => f.caps.filter(isStd).length < 2 && !Object.keys(f.auto || {}).some(isStd)
 const labelFor = (f, c) => (f.key === 'reports' && c === 'view' ? tr("Open Reports") : capLabel(c))
 const GRID = 'grid grid-cols-[minmax(0,1fr)_repeat(5,3.75rem)] items-center gap-x-1 sm:grid-cols-[minmax(0,1fr)_repeat(5,4.5rem)]'
-const READ_ONLY = (f) => f.caps.filter((c) => c === 'view' || c === 'view-timesheets')
+// the "Read only" preset never opens the sensitive pages (salaries, API keys, AI keys)
+const SENSITIVE = ['payroll', 'api', 'ai']
+const READ_ONLY = (f) => (SENSITIVE.includes(f.key) ? [] : f.caps.filter((c) => c === 'view' || c === 'view-timesheets'))
 
 /** One labelled switch. */
 const Option = ({ label, checked, onChange, disabled, hint }) => (

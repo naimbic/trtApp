@@ -1084,6 +1084,20 @@ try {
     check('Team hours view: can open the hours report', (await wh('GET', '/api/crm/work-hours')).status === 200)
     check('no Team hours permission: hours report refused', (await plain('GET', '/api/crm/work-hours')).status === 403)
     check('Team hours view alone does not open Team members', (await wh('GET', '/api/crm/staff')).status === 403)
+    // the sensitive pages that used to be Super Admin only now have their own permission rows
+    console.log('\n== API / AI / Payroll / team growth permissions')
+    const pNone = await login(await makeUser('sens-none', {})), pApiV = await login(await makeUser('sens-api-view', { api: ['view'] })), pApiE = await login(await makeUser('sens-api-edit', { api: ['view', 'edit'] }))
+    const pAiV = await login(await makeUser('sens-ai-view', { ai: ['view'] })), pPayV = await login(await makeUser('sens-pay-view', { payroll: ['view'] })), pPayE = await login(await makeUser('sens-pay-edit', { payroll: ['view', 'edit'] }))
+    const pGrT = await login(await makeUser('sens-growth-team', { growth: ['view', 'view_team'] })), pGrM = await login(await makeUser('sens-growth-manage', { growth: ['view', 'manage'] })), pGr = await login(await makeUser('sens-growth', { growth: ['view'] }))
+    check('API keys: refused without the permission', (await pNone('GET', '/api/crm/api-keys')).status === 403 && (await pNone('GET', '/api/crm/oauth-clients')).status === 403)
+    check('API keys: View lists keys and sign-in apps but cannot create, revoke or add an app', (await pApiV('GET', '/api/crm/api-keys')).status === 200 && (await pApiV('GET', '/api/crm/oauth-clients')).status === 200 && (await pApiV('POST', '/api/crm/api-keys', { name: 'zz perm', scopes: ['calendar:read'] })).status === 403 && (await pApiV('POST', '/api/crm/oauth-clients', { name: 'zz perm', redirectUris: ['https://x.test/cb'] })).status === 403)
+    const kk = await pApiE('POST', '/api/crm/api-keys', { name: 'zz perm key', scopes: ['calendar:read'] })
+    check('API keys: Edit creates a key, and revokes it', kk.status === 200 || kk.status === 201)
+    if (kk.body?.id || kk.body?.key?.id) { const kid = kk.body.id || kk.body.key.id; check('...and revokes it', [200, 204].includes((await pApiE('DELETE', `/api/crm/api-keys/${kid}`)).status)); await prisma.crmApiKey?.deleteMany?.({ where: { id: kid } }).catch(() => {}) }
+    check('AI: refused without the permission; View uses it but cannot change the settings', (await pNone('GET', '/api/crm/ai/settings')).status === 403 && (await pAiV('GET', '/api/crm/ai/settings')).status === 200 && (await pAiV('PUT', '/api/crm/ai/settings', { systemPrompt: 'x' })).status === 403)
+    check('Payroll: refused without the permission; View reads; only Edit saves a salary or a payment', (await pNone('GET', '/api/crm/payroll')).status === 403 && (await pPayV('GET', '/api/crm/payroll')).status === 200 && (await pPayV('POST', '/api/crm/payroll/payments', { staffId: pPayV.staffId || 'x', amount: 1 })).status === 403 && (await pPayE('GET', '/api/crm/payroll')).status === 200)
+    check('Team growth: a member without "See everybody\'s growth" gets only their own page', (await pGr('GET', '/api/crm/growth/team')).status === 403 && (await pGrT('GET', '/api/crm/growth/team')).status === 200)
+    check('Team growth: "Approve goals, set and pay primes" opens the team page and manages', (await pGrM('GET', '/api/crm/growth/team')).status === 200)
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

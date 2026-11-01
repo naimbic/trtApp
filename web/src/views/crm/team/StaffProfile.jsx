@@ -168,7 +168,7 @@ const StaffProfile = () => {
                         <p className="mt-3 text-xs text-gray-400">{tr('The score is the average of the measures that have data.')}</p>
                     </section>
                     <GrowthCard staffId={id} />
-                    {canAdmin && <SalaryCard staffId={id} name={m.name} />}
+                    {(canAdmin || authority.includes('crm.payroll.view')) && <SalaryCard staffId={id} name={m.name} readOnly={!(canAdmin || authority.includes('crm.payroll.edit'))} />}
                     {wh && (
                         <section className="pt-card">
                             <h3>{tr('Work hours, last 14 days')}<span className="text-sm font-semibold text-gray-500">{hm(wh.totals.active)} / {hm(wh.totals.expected)}{wh.totals.overtime > 0 ? ` · +${hm(wh.totals.overtime)}` : ''}</span></h3>

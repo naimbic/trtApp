@@ -48,3 +48,17 @@ test('roles: a resource that is written under another permission names one that 
     for (const f of readdirSync(dir)) for (const m of readFileSync(new URL(f, dir), 'utf8').matchAll(/writeFeature: '([a-z_]+)'/g)) { seen.push(m[1]); assert.ok(FEATURES.some((x) => x.key === m[1]), `writeFeature ${m[1]} is not in the catalog`) }
     assert.ok(seen.length >= 4, 'the lead setup items (sources, statuses, web-to-lead, email integration) are written under Settings')
 })
+
+test('roles: payroll, API keys and AI keys have their own rows and stay off the Admin role', () => {
+    for (const k of ['payroll', 'api', 'ai']) {
+        assert.ok(FEATURES.some((f) => f.key === k), `${k} is in the catalog`)
+        assert.ok(FEATURE_HINTS[k], `${k} has an explanation`)
+        assert.equal(ROLES['Super Admin'][k]?.includes('view'), true)
+        assert.equal(ROLES.Admin[k], undefined, `Admin does not get ${k} by default`)
+        assert.equal(ROLES.Viewer[k], undefined)
+    }
+})
+test('roles: growth can be given team view and approval', () => {
+    assert.deepEqual(FEATURES.find((f) => f.key === 'growth').caps, ['view', 'view_team', 'manage'])
+    assert.deepEqual(ROLES['Sales Rep'].growth, ['view'])
+})

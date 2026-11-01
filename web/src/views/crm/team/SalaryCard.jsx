@@ -17,7 +17,7 @@ const Tile = ({ label, value, sub }) => (
 )
 
 /** Salary and payments of one member (super administrators only): what is due each month and what was paid. */
-const SalaryCard = ({ staffId, name }) => {
+const SalaryCard = ({ staffId, name, readOnly = false }) => {
     const { money, defaultId } = usePayMoney()
     const [d, setD] = useState(null)
     const [salaryDlg, setSalaryDlg] = useState(false)
@@ -40,11 +40,11 @@ const SalaryCard = ({ staffId, name }) => {
         <section className="pt-card">
             <h3>
                 {tr('Salary & payments')}
-                <span className="flex gap-1.5">
+                {!readOnly && <span className="flex gap-1.5">
                     <Button size="xs" icon={<TbPencil />} onClick={() => setSalaryDlg(true)}>{tr('Salary')}</Button>
                     <Button size="xs" icon={<TbPlus />} onClick={() => setPay({ open: true, preset: d.salary.amount ? { month: d.dueMonth, amount: d.salary.amount, currencyId: cur } : { month: d.dueMonth }, edit: null })}>{tr('Payment')}</Button>
                     {d.salary.amount > 0 && thisMonth && thisMonth.status !== 'paid' && thisMonth.status !== 'none' && <Button size="xs" variant="solid" icon={<TbCash />} onClick={() => setPay({ open: true, edit: null, preset: { month: d.dueMonth, kind: 'salary', amount: Math.max(0, thisMonth.due - thisMonth.paid), currencyId: cur } })}>{tr('Pay {month}', { month: dueName })}</Button>}
-                </span>
+                </span>}
             </h3>
             <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
                 <Tile label={tr('Monthly salary')} value={d.salary.amount ? money(d.salary.amount, cur) : '–'} sub={[d.salary.payDay ? (d.arrears ? tr('Paid on day {n} of the next month', { n: d.salary.payDay }) : tr('Paid on day {n}', { n: d.salary.payDay })) : null, d.salary.cnss ? tr('CNSS') : null].filter(Boolean).join(' · ') || null} />
@@ -63,7 +63,7 @@ const SalaryCard = ({ staffId, name }) => {
                                 <td className="text-right font-semibold">{m.paid ? money(m.paid, cur) : '–'}</td>
                                 <td className="text-right text-gray-500">{m.extra ? money(m.extra, cur) : '–'}</td>
                                 <td className="pl-3"><StatusTag s={m.status} /></td>
-                                <td className="text-right">{(m.status === 'late' || m.status === 'partial' || m.status === 'due') && <Button size="xs" variant="plain" onClick={() => setPay({ open: true, edit: null, preset: { month: m.month, kind: 'salary', amount: Math.max(0, m.due - m.paid), currencyId: cur } })}>{tr('Pay')}</Button>}</td>
+                                <td className="text-right">{!readOnly && (m.status === 'late' || m.status === 'partial' || m.status === 'due') && <Button size="xs" variant="plain" onClick={() => setPay({ open: true, edit: null, preset: { month: m.month, kind: 'salary', amount: Math.max(0, m.due - m.paid), currencyId: cur } })}>{tr('Pay')}</Button>}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -77,8 +77,8 @@ const SalaryCard = ({ staffId, name }) => {
                             <span className="w-20 shrink-0 text-xs text-gray-400">{dayjs(p.paidDate).format('DD MMM YYYY')}</span>
                             <span className="min-w-0 flex-1 truncate"><b>{KIND_LABEL[p.kind]()}</b> · {dayjs(`${p.month}-01`).format('MMM YYYY')}{p.method ? ` · ${p.method}` : ''}{p.note ? ` · ${p.note}` : ''}</span>
                             <span className="font-semibold">{money(p.amount, p.currencyId || cur)}</span>
-                            <button type="button" className="text-gray-400 hover:text-primary" aria-label={tr('Edit')} onClick={() => setPay({ open: true, preset: null, edit: p })}><TbPencil /></button>
-                            <button type="button" className="text-gray-400 hover:text-red-500" aria-label={tr('Delete')} onClick={() => setDel(p)}><TbTrash /></button>
+                            {!readOnly && <button type="button" className="text-gray-400 hover:text-primary" aria-label={tr('Edit')} onClick={() => setPay({ open: true, preset: null, edit: p })}><TbPencil /></button>}
+                            {!readOnly && <button type="button" className="text-gray-400 hover:text-red-500" aria-label={tr('Delete')} onClick={() => setDel(p)}><TbTrash /></button>}
                         </div>
                     ))}
                 </>

@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { auth } from '@/auth'
-import { isCrmAdmin } from '@/lib/crm/permissions'
+import { hasCap } from '@/lib/crm/permissions'
 import { syncPaymentExpense, removePaymentExpense, createMissingExpenses } from '@/lib/crm/payrollExpenses'
 import { KINDS, monthOf, lastMonths, monthsOfYear, dueFor, monthStatus, toBase, dueMonthOf, lateBefore } from '@/lib/crm/payrollCalc'
 
@@ -12,11 +12,11 @@ const startOf = (s) => (s.hireDate ? monthOf(new Date(s.hireDate)) : s.salarySta
 const endOf = (s) => (s.fireDate ? monthOf(new Date(s.fireDate)) : null)
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 
-/** Payroll is for super administrators only. */
-async function requireAdmin() {
+/** Payroll: the super administrator, or a member the role "Payroll" allows (view = read, edit = change salaries and payments). */
+async function requireAdmin(cap = 'edit') {
     const session = await auth()
     if (!session?.user?.id) throw httpError('Unauthorized', 401)
-    if (!isCrmAdmin(session.user.authority || [])) throw httpError('Only a super administrator can see payroll', 403)
+    if (!hasCap(session.user.authority || [], 'payroll', cap)) throw httpError('You are not allowed to see payroll', 403)
     return session
 }
 
@@ -32,7 +32,7 @@ const paysSalary = (p) => p.kind === 'salary' || p.kind === 'advance'
 
 /** One member: their salary, the last 12 months (due / paid / status) and every payment. */
 export async function getPayroll(staffId) {
-    await requireAdmin()
+    await requireAdmin('view')
     const staff = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { id: true, salary: true, salaryCurrencyId: true, payDay: true, salaryStart: true, rib: true, cnss: true, hireDate: true, fireDate: true } })
     if (!staff) throw httpError('Member not found', 404)
     const payments = await prisma.crmStaffPayment.findMany({ where: { staffId }, orderBy: [{ paidDate: 'desc' }, { createdAt: 'desc' }], take: 500 })
@@ -106,7 +106,7 @@ export async function deletePayment(id) {
 
 /** The whole team's payroll for a year, in the base currency: cost per month, and each member's current month. */
 export async function payrollOverview(yearParam) {
-    await requireAdmin()
+    await requireAdmin('view')
     const now = new Date()
     const year = /^\d{4}$/.test(String(yearParam || '')) ? Number(yearParam) : now.getFullYear()
     const current = monthOf(now)

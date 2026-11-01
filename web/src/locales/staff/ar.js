@@ -5012,5 +5012,16 @@ export default {
     "Send the meeting recap": "إرسال ملخص الاجتماع",
     "The key needs the scope calendar:write. The minutes are written on the event of that room and every action item becomes a task, assigned to the named team member or else to staff_id. Saving twice adds the minutes and never duplicates a task.": "يحتاج المفتاح إلى النطاق calendar:write. يُكتب المحضر على حدث تلك الغرفة ويتحول كل إجراء إلى مهمة تُسند إلى عضو الفريق المذكور أو إلى staff_id. الحفظ مرتين يضيف المحضر ولا يكرر أي مهمة.",
     "What was said, decided and who does what": "ما قيل وما تقرر ومن يفعل ماذا",
-    "Written: open to read or change": "مكتوب: افتحه للقراءة أو التعديل"
+    "Written: open to read or change": "مكتوب: افتحه للقراءة أو التعديل",
+    "API, webhooks and sign-in apps": "واجهة API والـ Webhooks وتطبيقات تسجيل الدخول",
+    "See everybody's growth, goals and trophies": "عرض نمو الجميع وأهدافهم وكؤوسهم",
+    "Approve goals, set and pay primes, award trophies": "اعتماد الأهداف وتحديد المكافآت ودفعها ومنح الكؤوس",
+    "You are not allowed to manage API keys": "غير مسموح لك بإدارة مفاتيح API",
+    "You are not allowed to manage the sign-in apps": "غير مسموح لك بإدارة تطبيقات تسجيل الدخول",
+    "You are not allowed to see payroll": "غير مسموح لك برؤية الرواتب",
+    "You are not allowed to use the AI tools": "غير مسموح لك باستخدام أدوات الذكاء الاصطناعي",
+    "The My growth page: my skills and certification goals, learning ideas, points, levels and trophies, and the team playbook. Everyone can have it. \"See everybody's growth\" shows the team page; \"Approve goals, set and pay primes\" lets a manager approve a goal, fix the company support and prime, mark a prime paid and award trophies.": "صفحة نموي: مهاراتي وأهداف الشهادات وأفكار التعلّم والنقاط والمستويات والكؤوس ودليل الفريق العملي. يمكن للجميع الحصول عليها. «عرض نمو الجميع» يعرض صفحة الفريق؛ و«اعتماد الأهداف وتحديد المكافآت ودفعها» يتيح للمسؤول اعتماد هدف وتحديد دعم الشركة والمكافأة وتسجيل دفعها ومنح الكؤوس.",
+    "AI insights: the analyses, the assistant and the routine that read your own CRM data. View = use them; Edit = change the AI keys, models and instructions in Settings. The super administrator always has both.": "رؤى الذكاء الاصطناعي: التحليلات والمساعد والروتين الذي يقرأ بيانات CRM الخاصة بك. العرض = استخدامها؛ التعديل = تغيير مفاتيح الذكاء الاصطناعي والنماذج والتعليمات في الإعدادات. المشرف العام يملك الاثنين دائمًا.",
+    "The Payroll page: salaries, payments and the expenses they create. View = read; Edit = change salaries and payments. The super administrator always has both. Give it with great care.": "صفحة الرواتب: الرواتب والمدفوعات والمصروفات التي تنشئها. العرض = القراءة؛ التعديل = تغيير الرواتب والمدفوعات. المشرف العام يملك الاثنين دائمًا. امنحها بعناية كبيرة.",
+    "API and webhooks: the keys other apps (Meet, forms, automations) use, their activity, the webhooks, and the sign-in apps of the single sign-on. View = read; Edit = create, change and revoke. The super administrator always has both. Give it with great care.": "واجهة API والـ Webhooks: المفاتيح التي تستخدمها التطبيقات الأخرى (Meet والنماذج والأتمتة) ونشاطها والـ Webhooks وتطبيقات تسجيل الدخول الموحّد. العرض = القراءة؛ التعديل = الإنشاء والتغيير والإلغاء. المشرف العام يملك الاثنين دائمًا. امنحها بعناية كبيرة."
 }

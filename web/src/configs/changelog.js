@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.155.0',
+        date: '2026-11-02',
+        title: 'Roles & permissions: API, AI insights, Payroll and team growth have their own rows; Meet drops requests deleted in the CRM',
+        items: [
+            'Roles & permissions (and each member\'s access): four new rows. "API, webhooks and sign-in apps" (View / Edit), "AI insights" (View = use, Edit = change the AI keys and models), "Payroll" (View / Edit) and, on "My growth", two new switches: "See everybody\'s growth, goals and trophies" and "Approve goals, set and pay primes, award trophies". These pages and actions used to be for the super administrator only; the super administrator keeps them, nobody else has them until a role is given them. The standard Admin and Viewer roles do not get them, and the "Read only" button never switches them on. Their menu entries now show for whoever has the permission.',
+            'Meet: a meeting request deleted in the CRM now leaves the requested list of Meet (and one declined or accepted in the CRM is refused or confirmed there). Meet asks the CRM each time the list is opened, so it needs no webhook.',
+        ],
+    },
+    {
         version: '0.154.0',
         date: '2026-11-01',
         title: 'Meet sends the meeting recap to the CRM: minutes on the event, action items as tasks',

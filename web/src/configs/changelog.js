@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.138.0',
+        date: '2026-11-01',
+        title: 'Sign in with the CRM (SSO) for the Meet app, and meeting links on meet.trtcrm.com',
+        items: [
+            'The CRM is now an OpenID Connect provider: your Meet app (or any app of yours) can let the team sign in with their CRM account. New tab Setup → API and webhooks → "Sign in with CRM": add an app with its redirect addresses, get a client id and a secret (shown once, only its hash is kept), switch it off, renew its secret or delete it, and see its last sign-in and how many sign-ins it had. The addresses to give the app (discovery, authorize, token, user info, keys, sign-out) and a Node.js example are on the same tab.',
+            'Only active team members can sign in; clients and former members are refused, and an app that is switched off stops at once (even for tokens already given). The app learns the id, name, email, photo, staff id, whether the person is an administrator, and their role: Meet can use "administrator" to decide who admits guests from the waiting room. Standard code flow with PKCE, RS256 signed tokens, single-use codes valid 60 seconds, exact redirect addresses only, and silent re-checks (prompt=none) so Meet can stay signed in only while the CRM session lives. Signing out of Meet can end the CRM session too.',
+            'The "Create" button of a calendar event now makes the video room on https://meet.trtcrm.com/… instead of meet.3a.ma.',
+        ],
+    },
+    {
         version: '0.137.2',
         date: '2026-11-01',
         title: 'Grow routine: uses the AI key even when no model was saved',

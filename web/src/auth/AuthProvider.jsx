@@ -68,6 +68,8 @@ function AuthProvider({ children }) {
     const redirect = () => {
         const params = new URLSearchParams(window.location.search)
         const redirectUrl = params.get(REDIRECT_URL_KEY)
+        // a sign-in coming from another app (/api/oauth/authorize) is a full page load, not a screen of this app
+        if (redirectUrl && redirectUrl.startsWith('/api/oauth/')) { window.location.assign(redirectUrl); return }
         navigatorRef.current?.navigate(redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath)
     }
 

@@ -146,3 +146,38 @@ model CrmSkillGoal {
   @@index([staffId, status])
   @@map("crm_skill_goals")
 }
+
+/// An app that signs its team in with the CRM account (OpenID Connect): the Meet app, for instance.
+model CrmOauthClient {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  clientId     String    @unique
+  /// SHA-256 of the secret; the secret itself is shown once
+  secretHash   String
+  redirectUris String[]
+  logoutUris   String[]
+  active       Boolean   @default(true)
+  createdBy    String?   @db.ObjectId
+  lastUsedAt   DateTime?
+  logins       Int       @default(0)
+  createdAt    DateTime  @default(now())
+
+  @@map("crm_oauth_clients")
+}
+
+/// A one-time authorization code (60 seconds), stored as a hash.
+model CrmOauthCode {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  codeHash    String   @unique
+  clientId    String
+  userId      String   @db.ObjectId
+  redirectUri String
+  challenge   String?
+  nonce       String?
+  scope       String
+  authTime    DateTime
+  expiresAt   DateTime
+
+  @@index([expiresAt])
+  @@map("crm_oauth_codes")
+}

@@ -30,13 +30,15 @@ async function login(u) {
     take(r)
     const s = await (await fetch(`${BASE}/api/auth/session`, { headers: { cookie: hdr() } })).json()
     if (!s?.user) throw new Error(`sign-in failed for ${u.email}`)
-    return async (method, path, body) => {
+    const fn = async (method, path, body) => {
         const form = typeof FormData !== 'undefined' && body instanceof FormData
         const res = await fetch(BASE + path, { method, headers: form ? { cookie: hdr() } : { cookie: hdr(), 'content-type': 'application/json' }, body: body ? (form ? body : JSON.stringify(body)) : undefined })
         take(res) // a new session cookie (login as / back) replaces the old one
         let j = null, text = ''; try { text = await res.clone().text(); j = JSON.parse(text) } catch { /* pdf / html */ }
         return { status: res.status, body: j, text }
     }
+    fn.raw = (path, init = {}) => fetch(BASE + path, { redirect: 'manual', ...init, headers: { ...(init.headers || {}), cookie: hdr() } })
+    return fn
 }
 
 const MODULES = [
@@ -606,6 +608,60 @@ try {
         if (own.body?.id) made.rows.unshift(['crmSkillGoal', own.body.id])
         check('the owner deletes their own goal while it is only planned', own.status === 201 && (await a('DELETE', `/api/crm/growth/goals/${own.body?.id}`)).status === 200)
         await prisma.crmNotification.deleteMany({ where: { additionalData: 'growth', createdAt: { gte: t0 } } })
+    }
+
+    console.log('\n== Single sign-on: the CRM as an OpenID Connect provider')
+    {
+        const crypto2 = await import('node:crypto')
+        const sMem = await makeUser('sso-member', {}), sAdmin = await makeUser('sso-admin', {}, true)
+        const m = await login(sMem), a = await login(sAdmin)
+        const REDIR = 'https://meet.example.test/auth/callback'
+        check('only the super administrator manages the sign-in apps', (await m('GET', '/api/crm/oauth-clients')).status === 403 && (await m('POST', '/api/crm/oauth-clients', { name: 'x', redirectUris: [REDIR] })).status === 403 && (await a('GET', '/api/crm/oauth-clients')).status === 200)
+        check('an app needs a name and a valid redirect address', (await a('POST', '/api/crm/oauth-clients', { name: ' ', redirectUris: [REDIR] })).status === 400 && (await a('POST', '/api/crm/oauth-clients', { name: 'x', redirectUris: [] })).status === 400 && (await a('POST', '/api/crm/oauth-clients', { name: 'x', redirectUris: ['not a url'] })).status === 400)
+        const mk = await a('POST', '/api/crm/oauth-clients', { name: 'zz Meet', redirectUris: [REDIR], logoutUris: ['https://meet.example.test/'] })
+        const C = mk.body?.client, SECRET = mk.body?.secret
+        if (C?.id) made.rows.unshift(['crmOauthClient', C.id])
+        check('an app is registered; the secret is shown once and only its hash is stored', mk.status === 201 && /^trtapp_/.test(C?.clientId) && /^trts_/.test(SECRET) && (await prisma.crmOauthClient.findUnique({ where: { id: C.id } })).secretHash !== SECRET && !JSON.stringify((await a('GET', '/api/crm/oauth-clients')).body).includes(SECRET))
+        const disc = await (await fetch(`${BASE}/api/oauth/discovery`)).json()
+        check('discovery and the signing keys are public', disc.authorization_endpoint?.endsWith('/api/oauth/authorize') && disc.code_challenge_methods_supported?.includes('S256') && (await (await fetch(`${BASE}/api/oauth/jwks`)).json()).keys?.[0]?.kty === 'RSA')
+        const verifier = crypto2.randomBytes(32).toString('base64url'), challenge = crypto2.createHash('sha256').update(verifier).digest('base64url')
+        const q = (extra = {}) => new URLSearchParams({ client_id: C?.clientId || 'x', redirect_uri: REDIR, response_type: 'code', scope: 'openid profile email', state: 'st1', nonce: 'n1', code_challenge: challenge, code_challenge_method: 'S256', ...extra })
+        check('a wrong client or a redirect address that is not registered is refused (never redirected)', (await fetch(`${BASE}/api/oauth/authorize?${q({ client_id: 'nope' })}`, { redirect: 'manual' })).status === 400 && (await fetch(`${BASE}/api/oauth/authorize?${q({ redirect_uri: 'https://evil.test/cb' })}`, { redirect: 'manual' })).status === 400)
+        const anon = await fetch(`${BASE}/api/oauth/authorize?${q()}`, { redirect: 'manual' })
+        check('without a CRM session the person is sent to sign in, and then back to the same request', anon.status === 302 && /\/sign-in\?redirectUrl=/.test(anon.headers.get('location')) && decodeURIComponent(anon.headers.get('location')).includes('/api/oauth/authorize?client_id='))
+        const none = await fetch(`${BASE}/api/oauth/authorize?${q({ prompt: 'none' })}`, { redirect: 'manual' })
+        check('prompt=none answers login_required instead of showing a page', none.status === 302 && new URL(none.headers.get('location')).searchParams.get('error') === 'login_required' && none.headers.get('location').startsWith(REDIR))
+        const ok = await a.raw(`/api/oauth/authorize?${q()}`)
+        const loc = ok.headers.get('location') ? new URL(ok.headers.get('location')) : null
+        const CODE = loc?.searchParams.get('code')
+        check('a signed-in team member gets a code back at the registered address, with the state', ok.status === 302 && loc?.origin + loc?.pathname === REDIR && !!CODE && loc.searchParams.get('state') === 'st1', `${ok.status} ${ok.headers.get('location')}`)
+        const tokenReq = (extra = {}, headers = {}) => fetch(`${BASE}/api/oauth/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers }, body: new URLSearchParams({ grant_type: 'authorization_code', code: CODE || '', redirect_uri: REDIR, code_verifier: verifier, client_id: C?.clientId || '', client_secret: SECRET || '', ...extra }) })
+        check('the code is refused with a wrong secret, a wrong verifier or a wrong redirect address', (await tokenReq({ client_secret: 'trts_wrong' })).status === 401 && (await tokenReq({ code_verifier: 'x'.repeat(43) })).status === 400 && (await tokenReq({ redirect_uri: 'https://evil.test/cb' })).status === 400)
+        const ok2 = await a.raw(`/api/oauth/authorize?${q()}`)
+        const CODE2 = new URL(ok2.headers.get('location')).searchParams.get('code')
+        const tk = await tokenReq({ code: CODE2 }); const tj = await tk.json()
+        check('the code is exchanged for an id token and an access token', tk.status === 200 && tj.token_type === 'Bearer' && !!tj.id_token && !!tj.access_token, JSON.stringify(tj).slice(0, 120))
+        const { jwtVerify, createLocalJWKSet } = await import('jose')
+        const idt = await jwtVerify(tj.id_token, createLocalJWKSet(await (await fetch(`${BASE}/api/oauth/jwks`)).json()), { audience: C.clientId })
+        check('the id token is signed (RS256), for this app, with the nonce and who signed in (name, email, admin)', idt.payload.nonce === 'n1' && idt.payload.sub && idt.payload.admin === true && idt.payload.email === sAdmin.email && !!idt.payload.staff_id && idt.protectedHeader.alg === 'RS256')
+        check('a code works once only', (await tokenReq({ code: CODE2 })).status === 400)
+        const ui = await fetch(`${BASE}/api/oauth/userinfo`, { headers: { authorization: `Bearer ${tj.access_token}` } })
+        check('userinfo answers with the access token and refuses without it', ui.status === 200 && (await ui.json()).email === sAdmin.email && (await fetch(`${BASE}/api/oauth/userinfo`)).status === 401 && (await fetch(`${BASE}/api/oauth/userinfo`, { headers: { authorization: 'Bearer abc.def.ghi' } })).status === 401)
+        const mem = await m.raw(`/api/oauth/authorize?${q()}`)
+        check('an active member signs in too', mem.status === 302 && !!new URL(mem.headers.get('location')).searchParams.get('code'))
+        await prisma.crmStaff.update({ where: { id: sMem.staffId }, data: { active: false } })
+        const gone = await m.raw(`/api/oauth/authorize?${q()}`)
+        check('a member who is no longer active is refused (access_denied)', gone.status === 302 && (new URL(gone.headers.get('location')).searchParams.get('error') || '') !== '' )
+        await prisma.crmStaff.update({ where: { id: sMem.staffId }, data: { active: true } })
+        const cl = await prisma.crmOauthClient.findUnique({ where: { id: C.id } })
+        check('the app shows its last use and number of sign-ins', !!cl.lastUsedAt && cl.logins >= 1)
+        check('rotating the secret disables the old one', (await a('PUT', `/api/crm/oauth-clients/${C.id}`, { rotateSecret: true })).body?.secret?.startsWith('trts_') && (await tokenReq({ code: 'x' })).status === 401)
+        await a('PUT', `/api/crm/oauth-clients/${C.id}`, { active: false })
+        check('a disabled app cannot start a sign-in', (await a.raw(`/api/oauth/authorize?${q()}`)).status === 400 && (await ui.status) === 200 && (await fetch(`${BASE}/api/oauth/userinfo`, { headers: { authorization: `Bearer ${tj.access_token}` } })).status === 401)
+        const lo = await fetch(`${BASE}/api/oauth/logout?client_id=${C.clientId}&post_logout_redirect_uri=${encodeURIComponent('https://meet.example.test/')}`, { redirect: 'manual' })
+        check('sign-out goes back only to an address registered for the app', lo.status === 302 && lo.headers.get('location').startsWith('https://meet.example.test/') && !(await fetch(`${BASE}/api/oauth/logout?client_id=${C.clientId}&post_logout_redirect_uri=${encodeURIComponent('https://evil.test/')}`, { redirect: 'manual' })).headers.get('location').startsWith('https://evil.test'))
+        check('the app can be deleted by the super administrator', (await m('DELETE', `/api/crm/oauth-clients/${C.id}`)).status === 403 && (await a('DELETE', `/api/crm/oauth-clients/${C.id}`)).status === 200 && !(await prisma.crmOauthClient.findUnique({ where: { id: C.id } })))
+        await prisma.crmOauthCode.deleteMany({ where: { userId: { in: [sMem.staffId] } } })
     }
 
     console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')

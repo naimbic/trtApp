@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { TbKey, TbWebhook, TbBook2, TbPlus, TbCopy, TbTrash, TbPlayerPlay, TbCircleCheck, TbAlertTriangle, TbHistory } from 'react-icons/tb'
+import { TbKey, TbWebhook, TbBook2, TbPlus, TbCopy, TbTrash, TbPlayerPlay, TbCircleCheck, TbAlertTriangle, TbHistory, TbLogin2, TbRefresh } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
@@ -176,12 +176,93 @@ const Docs = () => {
     )
 }
 
+/* ------------------------------------------------------------ sign in with the CRM (OpenID Connect) */
+const NODE = (iss) => `// Node.js, with the "openid-client" library: the Meet app signs its team in with the CRM
+import * as client from 'openid-client'
+
+const config = await client.discovery(new URL('${iss}'), process.env.CRM_CLIENT_ID, process.env.CRM_CLIENT_SECRET)
+
+// 1) /login: send the person to the CRM (PKCE protects the code)
+const verifier = client.randomPKCECodeVerifier()
+const url = client.buildAuthorizationUrl(config, {
+  redirect_uri: 'https://meet.trtcrm.com/auth/callback',
+  scope: 'openid profile email',
+  code_challenge: await client.calculatePKCECodeChallenge(verifier),
+  code_challenge_method: 'S256',
+  state: client.randomState(),            // keep it (and the verifier) in a cookie
+})
+
+// 2) /auth/callback: swap the code for the person
+const tokens = await client.authorizationCodeGrant(config, new URL(req.url), { pkceCodeVerifier: verifier, expectedState: savedState })
+const me = tokens.claims()   // { sub, name, email, picture, staff_id, admin, role }
+// me.admin === true: this person may admit guests from the waiting room. Guests who only have a meeting link never sign in.
+
+// 3) stay signed in only while the CRM session lives: from time to time ask silently.
+//    The authorize URL with prompt=none answers with an error=login_required when the CRM session is over.
+// 4) sign out: send the browser to  ${iss}/api/oauth/logout?client_id=…&post_logout_redirect_uri=https://meet.trtcrm.com/`
+
+const Sso = () => {
+    const [d, setD] = useState(null)
+    const [dlg, setDlg] = useState(null)
+    const [shown, setShown] = useState(null)
+    const [del, setDel] = useState(null)
+    const load = useCallback(() => api('/api/crm/oauth-clients').then(setD).catch((e) => notify('danger', e.message)), [])
+    useEffect(() => { load() }, [load])
+    const save = async () => {
+        try { const r = await api('/api/crm/oauth-clients', { method: 'POST', body: dlg }); setDlg(null); setShown(r); load() } catch (e) { notify('danger', e.message) }
+    }
+    const patch = (c, body) => api(`/api/crm/oauth-clients/${c.id}`, { method: 'PUT', body }).then((r) => { if (r.secret) setShown({ client: r.client, secret: r.secret }); load() }).catch((e) => notify('danger', e.message))
+    const ep = d?.endpoints
+    return (
+        <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3"><p className="max-w-3xl text-sm text-gray-500">{tr("Let another app of yours (the Meet app) sign the team in with their CRM account. Only active team members can sign in: clients never. Guests of a meeting use the meeting link and are admitted by a team member.")}</p><Button variant="solid" icon={<TbPlus />} onClick={() => setDlg({ name: '', redirectUris: '', logoutUris: '' })}>{tr("Add an app")}</Button></div>
+            {!d ? <p className="py-8 text-center text-gray-400">{tr("Loading…")}</p> : !d.clients.length ? <Card><p className="py-6 text-center text-gray-400">{tr("No app yet.")}</p></Card> : (
+                <div className="grid gap-3">{d.clients.map((c) => (
+                    <Card key={c.id} className={c.active ? '' : 'opacity-60'}>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-lg text-primary"><TbLogin2 /></span><b className="text-base">{c.name}</b><code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-700">{c.clientId}</code><button type="button" className="text-gray-400 hover:text-primary" aria-label={tr("Copy")} onClick={() => copy(c.clientId)}><TbCopy /></button></div>
+                                <div className="mt-2 space-y-0.5 text-xs text-gray-500">{c.redirectUris.map((u) => <div key={u} className="truncate">↪ {u}</div>)}</div>
+                                <p className="mt-2 text-xs text-gray-500">{tr("Created")} {dayjs(c.createdAt).format('DD MMM YYYY')} · {c.lastUsedAt ? `${tr("last sign-in")} ${dayjs(c.lastUsedAt).format('DD MMM YYYY, HH:mm')}` : tr("never used")} · {c.logins} {tr("sign-ins")}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2"><label className="flex items-center gap-2 text-sm"><Switcher checked={c.active} onChange={(v) => patch(c, { active: v })} />{tr("On")}</label><Button size="sm" icon={<TbRefresh />} onClick={() => patch(c, { rotateSecret: true })}>{tr("New secret")}</Button><Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setDel(c)}>{tr("Delete")}</Button></div>
+                        </div>
+                    </Card>
+                ))}</div>
+            )}
+            {ep && (
+                <Card><h5 className="mb-2">{tr("Addresses for the app")}</h5>
+                    <div className="grid gap-1.5 text-sm">{[['Issuer', ep.issuer], ['Discovery', `${ep.issuer}/.well-known/openid-configuration`], ['Authorize', ep.authorization_endpoint], ['Token', ep.token_endpoint], ['User info', ep.userinfo_endpoint], ['Keys (JWKS)', ep.jwks_uri], ['Sign out', ep.end_session_endpoint]].map(([k, v]) => <div key={k} className="flex items-center gap-2"><span className="w-24 shrink-0 text-xs font-semibold text-gray-500">{tr(k)}</span><code className="min-w-0 flex-1 truncate text-xs">{v}</code><button type="button" className="text-gray-400 hover:text-primary" aria-label={tr("Copy")} onClick={() => copy(v)}><TbCopy /></button></div>)}</div>
+                    <p className="mt-3 text-xs text-gray-500">{tr("What the app learns about the person: id, name, email, photo, staff id, whether they are an administrator and their role. Any OpenID Connect library works with the discovery address.")}</p>
+                    <div className="mt-3"><Code>{NODE(ep.issuer)}</Code></div>
+                </Card>
+            )}
+            <Dialog isOpen={!!dlg} width={620} onClose={() => setDlg(null)} onRequestClose={() => setDlg(null)}>
+                <h5 className="mb-4">{tr("Add an app")}</h5>
+                {dlg && <div className="space-y-4">
+                    <div><L>{tr("Name")}</L><Input autoFocus value={dlg.name} placeholder="Meet" onChange={(e) => setDlg({ ...dlg, name: e.target.value })} /></div>
+                    <div><L>{tr("Redirect addresses (one per line): where the app receives the sign-in")}</L><Input textArea rows={3} value={dlg.redirectUris} placeholder="https://meet.trtcrm.com/auth/callback" onChange={(e) => setDlg({ ...dlg, redirectUris: e.target.value })} /></div>
+                    <div><L>{tr("Sign-out addresses (optional, one per line)")}</L><Input textArea rows={2} value={dlg.logoutUris} placeholder="https://meet.trtcrm.com/" onChange={(e) => setDlg({ ...dlg, logoutUris: e.target.value })} /></div>
+                </div>}
+                <div className="mt-5 flex justify-end gap-2"><Button onClick={() => setDlg(null)}>{tr("Cancel")}</Button><Button variant="solid" onClick={save}>{tr("Add the app")}</Button></div>
+            </Dialog>
+            <Dialog isOpen={!!shown} width={560} onClose={() => setShown(null)} onRequestClose={() => setShown(null)}>
+                <h5 className="mb-1">{tr("Client id and secret")}</h5>
+                <p className="mb-3 text-sm text-amber-700">{tr("Copy the secret now. It is shown only once: if you lose it, create a new one.")}</p>
+                {shown && <div className="space-y-2">{[[tr("Client id"), shown.client.clientId], [tr("Client secret"), shown.secret]].map(([k, v]) => <div key={k}><L>{k}</L><div className="flex items-center gap-2 rounded-xl bg-gray-900 p-3"><code className="min-w-0 flex-1 break-all text-sm text-emerald-300">{v}</code><Button size="sm" icon={<TbCopy />} onClick={() => copy(v)}>{tr("Copy")}</Button></div></div>)}</div>}
+                <div className="mt-5 flex justify-end"><Button variant="solid" onClick={() => setShown(null)}>{tr("I have copied it")}</Button></div>
+            </Dialog>
+            <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this app?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const c = del; setDel(null); api(`/api/crm/oauth-clients/${c.id}`, { method: 'DELETE' }).then(() => { notify('success', tr("App deleted")); load() }).catch((e) => notify('danger', e.message)) }}><p>{tr("\"{name}\" can no longer sign anyone in. This cannot be undone.", { name: del?.name })}</p></ConfirmDialog>
+        </div>
+    )
+}
+
 const ApiPage = () => (
     <Container>
-        <div className="mb-5"><h3>{tr("API and webhooks")}</h3><p className="text-sm text-gray-500">{tr("Two ways to talk to the CRM from outside, both secure: keys to read and push data, webhooks to be told when something happens.")}</p></div>
+        <div className="mb-5"><h3>{tr("API and webhooks")}</h3><p className="text-sm text-gray-500">{tr("Ways to talk to the CRM from outside, all secure: keys to read and push data, webhooks to be told when something happens, and sign-in for your other apps.")}</p></div>
         <Tabs defaultValue="keys">
-            <TabList><TabNav value="keys" icon={<TbKey />}>{tr("API keys")}</TabNav><TabNav value="hooks" icon={<TbWebhook />}>{tr("Webhooks")}</TabNav><TabNav value="docs" icon={<TbBook2 />}>{tr("How to use")}</TabNav></TabList>
-            <div className="pt-5"><TabContent value="keys"><Keys /></TabContent><TabContent value="hooks"><Hooks /></TabContent><TabContent value="docs"><Docs /></TabContent></div>
+            <TabList><TabNav value="keys" icon={<TbKey />}>{tr("API keys")}</TabNav><TabNav value="hooks" icon={<TbWebhook />}>{tr("Webhooks")}</TabNav><TabNav value="sso" icon={<TbLogin2 />}>{tr("Sign in with CRM")}</TabNav><TabNav value="docs" icon={<TbBook2 />}>{tr("How to use")}</TabNav></TabList>
+            <div className="pt-5"><TabContent value="keys"><Keys /></TabContent><TabContent value="hooks"><Hooks /></TabContent><TabContent value="sso"><Sso /></TabContent><TabContent value="docs"><Docs /></TabContent></div>
         </Tabs>
     </Container>
 )

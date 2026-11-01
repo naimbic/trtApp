@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.142.0',
+        date: '2026-11-01',
+        title: 'Appointment requests from the Meet booking page land on the calendar as drafts',
+        items: [
+            'New API call POST /api/v1/calendar/events (API key with the new scope "Send appointment requests to the calendar"): title, start, end, meeting_url, room, attendees (name, email, phone), description, source. The request is recorded as a DRAFT: it shows on the calendar in yellow with ⏳, nobody is invited, no reminder goes out and it is not in anyone\'s meetings feed until a team member accepts it. The same room is never recorded twice (a second call updates the draft). If an attendee\'s email is a known lead or client contact, the event is linked to them. The administrators are told on the bell and on Telegram / WhatsApp.',
+            'Open the event: a banner shows who asked (name, email, phone) with Accept and Decline. Accept makes it a normal confirmed event owned by you and emails the person with the meeting link; Decline hides it and tells them. The program that sent it can ask its state with GET /api/v1/calendar/events/<id>, or listen to the new webhooks appointment.requested, appointment.accepted and appointment.declined. The "How to use" tab of API and webhooks has an example.',
+        ],
+    },
+    {
         version: '0.141.0',
         date: '2026-11-01',
         title: 'Chat: rich messages with screenshots, tags and mentions; make a task, assign the team, email a client',

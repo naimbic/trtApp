@@ -12,6 +12,7 @@ import { Form, FormItem } from '@/components/ui/Form'
 import RelationSelect from '../kit/RelationSelect'
 import DateTimeRange from './DateTimeRange'
 import Segment from '@/components/ui/Segment'
+import { api as callApi, notify } from '../kit/api'
 import { tr } from '@/utils/t'
 
 const { Control } = components
@@ -64,7 +65,12 @@ const roomUrl = (name) => `${MEET_HOST}/${String(name || '').trim().toLowerCase(
 const EMPTY = { category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
-const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, onClose }) => {
+const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, onClose, onDecided }) => {
+    const [deciding, setDeciding] = useState('')
+    const decide = async (decision) => {
+        setDeciding(decision)
+        try { const r = await callApi(`/api/crm/calendar/${selected.id}/decision`, { method: 'POST', body: { decision } }); notify('success', decision === 'accept' ? `${tr("Appointment accepted")}${r.emailed?.length ? ` · ${tr("confirmation sent")}` : ''}` : tr("Appointment declined")); onDecided?.() } catch (e) { notify('danger', e.message) } finally { setDeciding('') }
+    }
     const [v, setV] = useState(EMPTY)
     const [room, setRoom] = useState('')
     const [error, setError] = useState('')
@@ -126,6 +132,14 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                 {edit && v.start && <Button size="sm" icon={<TbBrandGoogle />} onClick={() => window.open(googleLink(v), '_blank', 'noopener')}>{tr("Google Calendar")}</Button>}
                 {edit && <Button size="sm" icon={<TbDownload />} onClick={() => { window.location.href = `/api/crm/calendar/ics?id=${selected.id}` }}>{tr(".ics")}</Button>}
             </div>
+            {selected.status === 'draft' && (
+                <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-900/20">
+                    <div className="mb-1 font-semibold text-amber-800 dark:text-amber-300">⏳ {tr("Appointment request: waiting for you")}{selected.source ? <span className="ms-2 text-xs font-normal opacity-70">{selected.source}</span> : null}</div>
+                    {(selected.guests || []).map((g, i) => <div key={i} className="text-gray-700 dark:text-gray-200">{[g.name, g.email, g.phone].filter(Boolean).join(' · ')}</div>)}
+                    <p className="mt-1 text-xs text-gray-500">{tr("Nobody is invited and no reminder goes out until you accept. The person who asked is told by email.")}</p>
+                    <div className="mt-2 flex gap-2"><Button size="sm" variant="solid" loading={deciding === 'accept'} onClick={() => decide('accept')}>{tr("Accept")}</Button><Button size="sm" loading={deciding === 'decline'} onClick={() => decide('decline')}>{tr("Decline")}</Button></div>
+                </div>
+            )}
             {readOnly && <p className="mb-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:bg-gray-700">{tr("You were invited to this event")}{selected.owner ? tr(" by {owner}", { owner: selected.owner }) : ''}{tr(". Only the organiser can change it.")}</p>}
             <Form className="flex min-h-0 flex-1 flex-col" containerClassName="flex min-h-0 flex-1 flex-col" onSubmit={submit}>
                 <div className="min-h-0 flex-1 overflow-y-auto pr-1">

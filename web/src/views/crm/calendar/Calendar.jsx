@@ -213,7 +213,7 @@ const Calendar = () => {
                 type: 'EDIT', id: p.rawId, title: p.rawTitle, description: p.description, start: p.rawStart, end: p.rawEnd, allDay: p.allDay,
                 eventColor: p.eventColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, clientId: p.clientId, leadId: p.leadId,
                 category: p.category, projectId: p.projectId, attendeeIds: p.attendeeIds, attendeeEmails: p.attendeeEmails, reminderBefore: p.reminderBefore, reminderBeforeType: p.reminderBeforeType,
-                editable: p.canEdit, owner: p.owner,
+                editable: p.canEdit, owner: p.owner, status: p.status, source: p.source, guests: p.guests,
             },
         })
     }
@@ -408,6 +408,7 @@ const Calendar = () => {
                 saving={saving}
                 onSubmit={submit}
                 onDelete={() => setConfirmDel(true)} staff={staff}
+                onDecided={() => { setDialog((d) => ({ ...d, open: false })); load() }}
                 onClose={() => setDialog((d) => ({ ...d, open: false }))}
             />
         </Container>

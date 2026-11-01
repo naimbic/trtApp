@@ -787,6 +787,46 @@ try {
         check('only Delete removes it', (await m('DELETE', `/api/crm/scheduled-messages/${MID}`)).status === 403 && (await d('DELETE', `/api/crm/scheduled-messages/${MID}`)).status === 200 && !(await prisma.crmScheduledMessage.findUnique({ where: { id: MID } })))
     }
 
+    console.log('\n== Appointment requests from another program (draft until accepted)')
+    {
+        const t0 = new Date()
+        const aAdm = await makeUser('ap-admin', {}, true), aMem = await makeUser('ap-member', { calendar: ['view'] })
+        const adm = await login(aAdm), mem = await login(aMem)
+        const mkKey = async (name, scopes) => { const r = await adm('POST', '/api/crm/api-keys', { name, scopes }); if (r.body?.id) made.rows.unshift(['crmApiKey', r.body.id]); return r.body?.key }
+        const kW = await mkKey('zz appt write', ['calendar:write']), kW2 = await mkKey('zz appt other', ['calendar:write']), kR = await mkKey('zz appt read', ['calendar:read'])
+        const call = (key, body, method = 'POST', path = '/api/v1/calendar/events') => fetch(`${BASE}${path}`, { method, headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+        const start = new Date(Date.now() + 2 * 86400000).toISOString(), end = new Date(Date.now() + 2 * 86400000 + 1800000).toISOString()
+        const good = { title: 'Appointment: Ada', start, end, meeting_url: 'https://meet.trtcrm.com/rdv-zz123', room: 'rdv-zz123', attendees: [{ name: 'Ada Lovelace', email: 'ada@example.test', phone: '+212600000000' }], description: 'Wants a quote\nfor a website', source: 'trtmeet-booking' }
+        check('without a key it is refused; a key without calendar:write too', (await fetch(`${BASE}/api/v1/calendar/events`, { method: 'POST' })).status === 401 && (await call(kR, good)).status === 403)
+        const bad = async (b) => (await call(kW, { ...good, room: undefined, ...b })).status
+        check('a request needs a title, real dates (end after start, not in the past), an https link and valid emails', (await bad({ title: ' ' })) === 400 && (await bad({ start: 'nope' })) === 400 && (await bad({ end: start })) === 400 && (await bad({ start: '2020-01-01T10:00:00Z', end: '2020-01-01T11:00:00Z' })) === 400 && (await bad({ meeting_url: 'http://meet.example.test/x' })) === 400 && (await bad({ attendees: [{ email: 'not-an-email' }] })) === 400)
+        const r1 = await call(kW, good); const j1 = await r1.json(); const EID = j1.data?.id
+        if (EID) made.rows.unshift(['crmEvent', EID])
+        const row = EID ? await prisma.crmEvent.findUnique({ where: { id: EID } }) : null
+        check('the request is recorded as a DRAFT with its guests, link, room and source', r1.status === 201 && j1.data?.status === 'draft' && row?.status === 'draft' && row.externalRef === 'rdv-zz123' && row.source === 'trtmeet-booking' && row.guests?.[0]?.phone === '+212600000000' && row.attendeeEmails.includes('ada@example.test') && row.attendeeIds.length === 0 && row.meetingUrl === good.meeting_url)
+        check('the administrators are told (bell)', (await prisma.crmNotification.count({ where: { additionalData: 'appointment', createdAt: { gte: t0 } } })) >= 1)
+        const r2 = await call(kW, { ...good, title: 'Appointment: Ada (updated)' }); const j2 = await r2.json()
+        check('the same room is not recorded twice: the draft is updated', r2.status === 200 && j2.created === false && j2.data?.id === EID && (await prisma.crmEvent.count({ where: { source: 'trtmeet-booking', externalRef: 'rdv-zz123' } })) === 1 && (await prisma.crmEvent.findUnique({ where: { id: EID } })).title === 'Appointment: Ada (updated)')
+        const from = new Date(Date.now() + 86400000).toISOString(), to = new Date(Date.now() + 4 * 86400000).toISOString()
+        const cal = await mem('GET', `/api/crm/calendar?from=${from}&to=${to}`)
+        const item = (cal.body?.items || cal.body?.data || []).find((x) => x.rawId === EID)
+        check('on the calendar it shows as a pending request (⏳) with who asked', cal.status === 200 && item?.status === 'draft' && /^⏳/.test(item.title) && item.guests?.[0]?.email === 'ada@example.test', JSON.stringify(item || cal.body).slice(0, 140))
+        check('only the program that sent it can ask its state', (await (await call(kW, null, 'GET', `/api/v1/calendar/events/${EID}`)).json()).data?.status === 'draft' && (await call(kW2, null, 'GET', `/api/v1/calendar/events/${EID}`)).status === 404)
+        check('a draft is not in the member meetings feed', !((await (await fetch(`${BASE}/api/v1/calendar/events?staff_id=${aAdm.staffId}&all=1`, { headers: { authorization: `Bearer ${kR}` } })).json()).data || []).some((x) => x.id === EID))
+        check('accepting needs permission to edit the calendar', (await mem('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'accept' })).status === 403)
+        check('an unknown decision is refused', (await adm('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'maybe' })).status === 400)
+        const ok = await adm('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'accept', notify: false })
+        const acc = await prisma.crmEvent.findUnique({ where: { id: EID } })
+        check('accepting makes it a confirmed event owned by who accepted', ok.status === 200 && acc.status === 'confirmed' && acc.userId === aAdm.staffId && !!acc.decidedAt && acc.decidedBy === aAdm.staffId)
+        check('...and it can be decided only once', (await adm('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'decline' })).status === 409)
+        check('...the program sees it confirmed, and it is now in the member meetings feed', (await (await call(kW, null, 'GET', `/api/v1/calendar/events/${EID}`)).json()).data?.status === 'confirmed' && ((await (await fetch(`${BASE}/api/v1/calendar/events?staff_id=${aAdm.staffId}`, { headers: { authorization: `Bearer ${kR}` } })).json()).data || []).some((x) => x.id === EID))
+        check('a request for a confirmed room is not touched again', (await (await call(kW, { ...good, title: 'again' })).json()).created === false && (await prisma.crmEvent.findUnique({ where: { id: EID } })).title !== 'again')
+        const r3 = await call(kW, { ...good, room: 'rdv-zz456', meeting_url: 'https://meet.trtcrm.com/rdv-zz456' }); const E3 = (await r3.json()).data?.id
+        if (E3) made.rows.unshift(['crmEvent', E3])
+        check('declining hides it from the calendar', (await adm('POST', `/api/crm/calendar/${E3}/decision`, { decision: 'decline', notify: false })).status === 200 && !((await mem('GET', `/api/crm/calendar?from=${from}&to=${to}`)).body?.items || []).some((x) => x.rawId === E3) && (await (await call(kW, null, 'GET', `/api/v1/calendar/events/${E3}`)).json()).data?.status === 'declined')
+        await prisma.crmNotification.deleteMany({ where: { additionalData: 'appointment', createdAt: { gte: t0 } } })
+    }
+
     console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')
     {
         const sA = await makeUser('tk-staff', { customers: ['view', 'create', 'edit'], tickets: ['view', 'create', 'edit'], tasks: ['view', 'create', 'edit'] }); const sa = await login(sA)

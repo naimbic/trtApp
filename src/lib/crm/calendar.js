@@ -61,16 +61,21 @@ export async function getCalendarItems({ from, to }) {
     const projectRows = projectIds.length ? await prisma.crmProject.findMany({ where: { id: { in: projectIds } }, select: { id: true, name: true } }) : []
     const projectName = Object.fromEntries(projectRows.map((x) => [x.id, x.name]))
     for (const e of events) {
+        if (e.status === 'declined') continue
+        const draft = e.status === 'draft'
         const mine = !e.userId || e.userId === ctx.staffId
         const invited = (e.attendeeIds || []).includes(ctx.staffId)
         if (!mine && !invited && !e.isPublic && !ctx.admin && !ctx.seeAll) continue
         items.push({
             id: `event:${e.id}`,
-            title: e.title,
+            title: draft ? `⏳ ${e.title}` : e.title,
+            status: e.status || 'confirmed',
+            source: e.source || null,
+            guests: Array.isArray(e.guests) ? e.guests : [],
             start: e.allDay ? iso(e.start).slice(0, 10) : iso(e.start),
             end: e.allDay ? (e.end ? iso(new Date(new Date(e.end).getTime() + 86400000)).slice(0, 10) : undefined) : iso(e.end),
             allDay: !!e.allDay,
-            eventColor: colorName(e.color),
+            eventColor: draft ? 'yellow' : colorName(e.color),
             type: 'events',
             editable: mine || ctx.admin || ctx.editOthers,
             canEdit: mine || ctx.admin || ctx.editOthers,

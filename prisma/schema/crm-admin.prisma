@@ -510,6 +510,16 @@ model CrmEvent {
   leadId             String?   @db.ObjectId // the event can be about a lead instead of a client
   attendeeIds        String[]  @db.ObjectId // staff invited to the event
   attendeeEmails     String[]  // external guests
+  /// confirmed | draft (a request waiting for a team member to accept) | declined
+  status             String    @default("confirmed")
+  /// where a request came from (trtmeet-booking...) and its id there (the room), so a request is never recorded twice
+  source             String?
+  externalRef        String?
+  /// who asked: [{ name, email, phone }]
+  guests             Json?
+  apiKeyId           String?   @db.ObjectId
+  decidedBy          String?   @db.ObjectId
+  decidedAt          DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -517,6 +527,7 @@ model CrmEvent {
   @@index([userId])
   @@index([start])
   @@index([clientId])
+  @@index([source, externalRef])
   @@map("crm_events")
 }
 

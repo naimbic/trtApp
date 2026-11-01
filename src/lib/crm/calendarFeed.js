@@ -37,7 +37,7 @@ export async function meetingsFeed(request) {
         if (to <= from) throw fail('to must be after from')
         if (to - from > 366 * DAY) throw fail('Ask for at most one year at a time')
         const rows = await prisma.crmEvent.findMany({
-            where: { meetingUrl: { not: null }, start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }], AND: [{ OR: [{ userId: staffId }, { attendeeIds: { has: staffId } }] }] },
+            where: { meetingUrl: { not: null }, NOT: { status: { in: ['draft', 'declined'] } }, start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }], AND: [{ OR: [{ userId: staffId }, { attendeeIds: { has: staffId } }] }] },
             orderBy: { start: 'asc' }, take: 300,
         })
         const all = url.searchParams.get('all') === '1'

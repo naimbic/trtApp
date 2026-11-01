@@ -46,7 +46,7 @@ export function discovery() {
         issuer: base, authorization_endpoint: `${base}/api/oauth/authorize`, token_endpoint: `${base}/api/oauth/token`, userinfo_endpoint: `${base}/api/oauth/userinfo`,
         jwks_uri: `${base}/api/oauth/jwks`, end_session_endpoint: `${base}/api/oauth/logout`, response_types_supported: ['code'], grant_types_supported: ['authorization_code'],
         subject_types_supported: ['public'], id_token_signing_alg_values_supported: ['RS256'], scopes_supported: SCOPES, code_challenge_methods_supported: ['S256'],
-        token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'], claims_supported: ['sub', 'name', 'email', 'email_verified', 'picture', 'staff_id', 'admin', 'role'],
+        token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'], claims_supported: ['sub', 'name', 'given_name', 'family_name', 'email', 'email_verified', 'picture', 'phone_number', 'locale', 'linkedin', 'staff_id', 'admin', 'role'],
     }
 }
 
@@ -54,12 +54,14 @@ export function discovery() {
 async function claimsFor(userId) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user || user.status === 'inactive' || user.status === 'blocked') return null
-    const staff = await prisma.crmStaff.findFirst({ where: { userId: user.id, active: true }, select: { id: true } })
+    const staff = await prisma.crmStaff.findFirst({ where: { userId: user.id, active: true }, select: { id: true, firstName: true, lastName: true, phoneNumber: true, defaultLanguage: true, profileImage: true, linkedin: true } })
     if (!staff) return null // clients and former members are refused
     const { authority, blocked } = await buildUserAuthority(user)
     if (blocked) return null
-    const img = user.image ? (/^https?:/i.test(user.image) ? user.image : `${issuer()}${user.image}`) : undefined
-    return { sub: user.id, name: user.name || user.email, email: user.email, email_verified: true, picture: img, staff_id: staff.id, admin: isCrmAdmin(authority), role: user.role || undefined }
+    const raw = user.image || staff.profileImage
+    const img = raw ? (/^https?:/i.test(raw) ? raw : `${issuer()}${raw.startsWith('/') ? '' : '/'}${raw}`) : undefined
+    const clean = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== ''))
+    return clean({ sub: user.id, name: user.name || [staff.firstName, staff.lastName].filter(Boolean).join(' ') || user.email, given_name: staff.firstName || user.firstName, family_name: staff.lastName || user.lastName, email: user.email, email_verified: true, picture: img, phone_number: staff.phoneNumber || user.phone, locale: staff.defaultLanguage, linkedin: staff.linkedin, staff_id: staff.id, admin: isCrmAdmin(authority), role: user.role })
 }
 
 /* ------------------------------------------------------------ the apps (clients), for the super administrator */

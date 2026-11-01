@@ -4781,5 +4781,13 @@ export default {
     "Add at least one redirect address (where the app receives the sign-in)": "أضف عنوان إعادة توجيه واحدًا على الأقل (حيث يستقبل التطبيق تسجيل الدخول)",
     "App not found": "التطبيق غير موجود",
     "Give the app a name": "أعطِ التطبيق اسمًا",
-    "Only the super administrator can manage the sign-in apps": "يمكن للمسؤول الأعلى فقط إدارة تطبيقات تسجيل الدخول"
+    "Only the super administrator can manage the sign-in apps": "يمكن للمسؤول الأعلى فقط إدارة تطبيقات تسجيل الدخول",
+    "Your own room name": "اسم غرفة خاص بك",
+    "Use this name": "استخدم هذا الاسم",
+    "Discovery call": "مكالمة استكشافية",
+    "Proposal review": "مراجعة العرض",
+    "Contract signing": "توقيع العقد",
+    "Client check-in": "متابعة العميل",
+    "Internal": "داخلي",
+    "Interview": "مقابلة"
 }

@@ -4781,5 +4781,13 @@ export default {
     "Add at least one redirect address (where the app receives the sign-in)": "Ajoutez au moins une adresse de redirection (où l'application reçoit la connexion)",
     "App not found": "Application introuvable",
     "Give the app a name": "Donnez un nom à l'application",
-    "Only the super administrator can manage the sign-in apps": "Seul le super administrateur peut gérer les applications de connexion"
+    "Only the super administrator can manage the sign-in apps": "Seul le super administrateur peut gérer les applications de connexion",
+    "Your own room name": "Nom de salle libre",
+    "Use this name": "Utiliser ce nom",
+    "Discovery call": "Appel de découverte",
+    "Proposal review": "Revue de proposition",
+    "Contract signing": "Signature de contrat",
+    "Client check-in": "Point client",
+    "Internal": "Interne",
+    "Interview": "Entretien"
 }

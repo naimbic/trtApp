@@ -4781,5 +4781,13 @@ export default {
     "Add at least one redirect address (where the app receives the sign-in)": "リダイレクト先アドレスを1つ以上追加してください(アプリがサインインを受け取る場所)",
     "App not found": "アプリが見つかりません",
     "Give the app a name": "アプリに名前を付けてください",
-    "Only the super administrator can manage the sign-in apps": "サインイン用アプリを管理できるのはスーパー管理者のみです"
+    "Only the super administrator can manage the sign-in apps": "サインイン用アプリを管理できるのはスーパー管理者のみです",
+    "Your own room name": "自分で決める部屋名",
+    "Use this name": "この名前を使う",
+    "Discovery call": "ヒアリング通話",
+    "Proposal review": "提案レビュー",
+    "Contract signing": "契約締結",
+    "Client check-in": "顧客フォロー",
+    "Internal": "社内",
+    "Interview": "面接"
 }

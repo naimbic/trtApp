@@ -57,11 +57,16 @@ const googleLink = (v) => {
 const MEET_HOST = 'https://meet.trtcrm.com'
 const jitsi = () => `${MEET_HOST}/TRT-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`
 
+// ready-made rooms of the team, and a name of your own: https://meet.trtcrm.com/<name>
+const ROOMS = [['discovery_call', 'Discovery call'], ['proposal_review', 'Proposal review'], ['contract_signing', 'Contract signing'], ['client_checkin', 'Client check-in'], ['internal', 'Internal'], ['interview', 'Interview']]
+const roomUrl = (name) => `${MEET_HOST}/${String(name || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60)}`
+
 const EMPTY = { category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
 const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, onClose }) => {
     const [v, setV] = useState(EMPTY)
+    const [room, setRoom] = useState('')
     const [error, setError] = useState('')
 
     useEffect(() => {
@@ -159,6 +164,12 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                             <Input placeholder={tr("https://meet.google.com/… or Zoom, Teams")} value={v.meetingUrl} onChange={(e) => set({ meetingUrl: e.target.value })} />
                             {!readOnly && <Button type="button" icon={<TbWand />} onClick={() => set({ meetingUrl: jitsi() })}>{tr("Create")}</Button>}
                         </div>
+                        {!readOnly && (
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                {ROOMS.map(([id, label]) => <button key={id} type="button" onClick={() => set({ meetingUrl: roomUrl(id) })} className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${v.meetingUrl === roomUrl(id) ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'}`}>{tr(label)}</button>)}
+                                <span className="flex items-center gap-1"><input className="h-7 w-36 rounded-full border border-gray-200 bg-transparent px-2.5 text-xs outline-none focus:border-primary dark:border-gray-600" placeholder={tr("Your own room name")} value={room} onChange={(e) => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && roomUrl(room) !== `${MEET_HOST}/`) { e.preventDefault(); set({ meetingUrl: roomUrl(room) }); setRoom('') } }} /><button type="button" disabled={roomUrl(room) === `${MEET_HOST}/`} onClick={() => { set({ meetingUrl: roomUrl(room) }); setRoom('') }} className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 enabled:hover:bg-gray-200 disabled:opacity-40 dark:bg-gray-700 dark:text-gray-300">{tr("Use this name")}</button></span>
+                            </div>
+                        )}
                         {!readOnly && <p className="mt-1 text-xs text-gray-400"><b>{tr("Create")}</b> {tr("makes a video room on meet.trtcrm.com. For Google Meet use")} <a className="text-primary underline" href="https://meet.new" target="_blank" rel="noreferrer">{tr("meet.new")}</a> {tr("and paste the link.")}</p>}
                     </FormItem>
                     <FormItem label={tr("Location")}><Input placeholder={tr("Office, address…")} value={v.location} onChange={(e) => set({ location: e.target.value })} /></FormItem>

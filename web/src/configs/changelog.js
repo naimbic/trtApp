@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.138.1',
+        date: '2026-11-01',
+        title: 'Calendar: ready-made meeting rooms and your own room name; SSO shares more of the profile',
+        items: [
+            'Calendar event, field Meeting link: one click puts a ready-made room on meet.trtcrm.com (Discovery call, Proposal review, Contract signing, Client check-in, Internal, Interview), or type your own room name and press "Use this name" to get https://meet.trtcrm.com/your_name. "Create" still makes a random room.',
+            'Sign in with CRM now also tells the app the first and last name, phone, language and LinkedIn of the team member, and uses their profile photo (the account photo, else the team profile photo).',
+        ],
+    },
+    {
         version: '0.138.0',
         date: '2026-11-01',
         title: 'Sign in with the CRM (SSO) for the Meet app, and meeting links on meet.trtcrm.com',

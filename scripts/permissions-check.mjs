@@ -643,7 +643,7 @@ try {
         check('the code is exchanged for an id token and an access token', tk.status === 200 && tj.token_type === 'Bearer' && !!tj.id_token && !!tj.access_token, JSON.stringify(tj).slice(0, 120))
         const { jwtVerify, createLocalJWKSet } = await import('jose')
         const idt = await jwtVerify(tj.id_token, createLocalJWKSet(await (await fetch(`${BASE}/api/oauth/jwks`)).json()), { audience: C.clientId })
-        check('the id token is signed (RS256), for this app, with the nonce and who signed in (name, email, admin)', idt.payload.nonce === 'n1' && idt.payload.sub && idt.payload.admin === true && idt.payload.email === sAdmin.email && !!idt.payload.staff_id && idt.protectedHeader.alg === 'RS256')
+        check('the id token is signed (RS256), for this app, with the nonce and who signed in (name, email, admin)', idt.payload.nonce === 'n1' && idt.payload.sub && idt.payload.admin === true && idt.payload.email === sAdmin.email && !!idt.payload.staff_id && idt.protectedHeader.alg === 'RS256' && idt.payload.given_name === `Check${'sso-admin'}` && idt.payload.picture?.endsWith('/img/avatars/thumb-1.jpg') && !('phone_number' in idt.payload && idt.payload.phone_number === undefined))
         check('a code works once only', (await tokenReq({ code: CODE2 })).status === 400)
         const ui = await fetch(`${BASE}/api/oauth/userinfo`, { headers: { authorization: `Bearer ${tj.access_token}` } })
         check('userinfo answers with the access token and refuses without it', ui.status === 200 && (await ui.json()).email === sAdmin.email && (await fetch(`${BASE}/api/oauth/userinfo`)).status === 401 && (await fetch(`${BASE}/api/oauth/userinfo`, { headers: { authorization: 'Bearer abc.def.ghi' } })).status === 401)

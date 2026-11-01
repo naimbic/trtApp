@@ -694,6 +694,9 @@ try {
         check('...without a link, on another site, or of somebody else: not listed', !titles.includes('zz sso no link') && !titles.includes('zz sso meet other google') && !titles.includes('zz sso not mine'))
         const all1 = (await (await fetch(`${BASE}/api/v1/calendar/events?all=1`, { headers: { authorization: `Bearer ${tj.access_token}` } })).json())
         check('...all=1 also lists other links, and from/to limit the dates', (all1.data || []).some((e) => e.title === 'zz sso meet other google') && !((await (await fetch(`${BASE}/api/v1/calendar/events?from=${new Date(Date.now() + 5 * 86400000).toISOString()}&to=${new Date(Date.now() + 9 * 86400000).toISOString()}`, { headers: { authorization: `Bearer ${tj.access_token}` } })).json()).data || []).length)
+        const unl = await (await fetch(`${BASE}/api/v1/calendar/events?include_unlinked=1`, { headers: { authorization: `Bearer ${tj.access_token}` } })).json()
+        const unlRow = (unl.data || []).find((e) => e.title === 'zz sso no link')
+        check('include_unlinked=1 returns all of the member events too: no link gives meeting_url null and no room, all_day is there; others stay as before', !!unlRow && unlRow.meeting_url === null && unlRow.room === null && 'all_day' in unlRow && (unl.data || []).some((e) => e.title === 'zz sso meet mine') && (unl.data || []).some((e) => e.title === 'zz sso meet other google') && !(unl.data || []).some((e) => e.title === 'zz sso not mine') && !titles.includes('zz sso no link'))
         check('...no token, a wrong token or a wrong date range is refused', (await fetch(`${BASE}/api/v1/calendar/events`)).status === 401 && (await fetch(`${BASE}/api/v1/calendar/events`, { headers: { authorization: 'Bearer a.b.c' } })).status === 401 && (await fetch(`${BASE}/api/v1/calendar/events?from=2026-01-01&to=2020-01-01`, { headers: { authorization: `Bearer ${tj.access_token}` } })).status === 400)
         const kk = await a('POST', '/api/crm/api-keys', { name: 'zz cal key', scopes: ['calendar:read'] }); const kl = await a('POST', '/api/crm/api-keys', { name: 'zz cal wrong key', scopes: ['leads:read'] })
         for (const k of [kk, kl]) if (k.body?.id) made.rows.unshift(['crmApiKey', k.body.id])
@@ -869,6 +872,17 @@ try {
         check('it can refuse a request it accepted (cancel); the CRM calendar then hides it', (await dec(kW, E4, { decision: 'refuse', notify: false })).status === 200 && (await prisma.crmEvent.findUnique({ where: { id: E4 } })).status === 'declined')
         check('it can delete a request it created', (await call(kW, null, 'DELETE', `/api/v1/calendar/events/${E4}`)).status === 200 && !(await prisma.crmEvent.findUnique({ where: { id: E4 } })) && (await call(kW, null, 'GET', `/api/v1/calendar/events/${E4}`)).status === 404)
         check('the webhook list offers the update and delete events', (await adm('GET', '/api/crm/webhooks')).body?.events?.some(([id]) => id === 'appointment.updated') && (await adm('GET', '/api/crm/webhooks')).body?.events?.some(([id]) => id === 'appointment.deleted'))
+        // busy times for a booking page
+        const bz = (key, q = '') => fetch(`${BASE}/api/v1/calendar/busy${q}`, { headers: { authorization: `Bearer ${key}` } })
+        const evBusy = await prisma.crmEvent.create({ data: { title: 'zz private title', start: new Date(Date.now() + 3 * 86400000), end: new Date(Date.now() + 3 * 86400000 + 3600000), userId: aAdm.staffId, meetingUrl: null } }); made.rows.unshift(['crmEvent', evBusy.id])
+        const evDraft = await prisma.crmEvent.create({ data: { title: 'zz draft busy', start: new Date(Date.now() + 3 * 86400000 + 7200000), end: new Date(Date.now() + 3 * 86400000 + 9000000), status: 'draft' } }); made.rows.unshift(['crmEvent', evDraft.id])
+        const evDecl = await prisma.crmEvent.create({ data: { title: 'zz declined busy', start: new Date(Date.now() + 3 * 86400000), end: new Date(Date.now() + 3 * 86400000 + 1800000), status: 'declined' } }); made.rows.unshift(['crmEvent', evDecl.id])
+        check('busy times need a key with calendar:read', (await fetch(`${BASE}/api/v1/calendar/busy`)).status === 401 && (await bz(kW)).status === 403)
+        const bj = await (await bz(kR)).json()
+        const bi = (id) => (bj.data || []).find((x) => x.id === id)
+        check('every confirmed event of the team is busy (with or without a link), and so is a waiting request; a declined one is not', !!bi(evBusy.id) && bi(evBusy.id).status === 'confirmed' && bi(evBusy.id).staff_ids.includes(aAdm.staffId) && bi(evDraft.id)?.status === 'draft' && !bi(evDecl.id))
+        check('...and nothing private leaves: no title, no name, no description', !JSON.stringify(bj).includes('zz private title') && !JSON.stringify(bj).includes('zz draft busy') && Object.keys(bi(evBusy.id)).sort().join() === 'all_day,end,id,staff_ids,start,status')
+        check('...staff_id limits it to one member, a range of more than 62 days is refused', !(((await (await bz(kR, `?staff_id=${aMem.staffId}`)).json()).data || []).some((x) => x.id === evBusy.id)) && (await bz(kR, '?from=2026-01-01&to=2026-12-31')).status === 400)
         await prisma.crmNotification.deleteMany({ where: { additionalData: 'appointment', createdAt: { gte: t0 } } })
     }
 

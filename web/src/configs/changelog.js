@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.147.0',
+        date: '2026-11-01',
+        title: 'Meet can see all of a member\'s events, and the team busy times',
+        items: [
+            'GET /api/v1/calendar/events (member token, scope calendar.read) now honours include_unlinked=1: it returns every event of the member in the range, including those without a meeting link (meeting_url and room are null) and those on other sites, each with all_day. Without the parameter it still returns only the events with a meeting link on meet.trtcrm.com.',
+            'New GET /api/v1/calendar/busy?from=&to= (API key with calendar:read, or a member token with calendar.read): when the team is busy, for a booking page that offers free slots. Every confirmed event of the team (with or without a link) and every request still waiting (draft) gives only its start, end, state and the staff ids in it: no titles, no names. ?staff_id= limits it to one member; at most 62 days at a time.',
+        ],
+    },
+    {
         version: '0.146.0',
         date: '2026-11-01',
         title: 'Calendar event form: compact accordion with icons and light coloured headers',

@@ -205,7 +205,9 @@ const me = tokens.claims()   // { sub, name, email, picture, staff_id, admin, ro
 // me.admin === true: this person may admit guests from the waiting room. Guests who only have a meeting link never sign in.
 
 // 2b) the member's own meetings (only meetings with a link on meet.trtcrm.com):
-//    GET ${iss}/api/v1/calendar/events?from=<ISO>&to=<ISO>   with  Authorization: Bearer <tokens.access_token>
+//    GET ${iss}/api/v1/calendar/events?from=<ISO>&to=<ISO>[&include_unlinked=1]   with  Authorization: Bearer <tokens.access_token>
+//    (include_unlinked=1: every event of the member, meeting_url null when there is no link)
+//    Team busy times for free slots (no titles):  GET ${iss}/api/v1/calendar/busy?from=&to=   with a key that has calendar:read
 //    → { data: [{ id, title, start, end, meeting_url, room, attendees, attendees_count, organizer }] }
 
 // 3) stay signed in only while the CRM session lives: from time to time ask silently.

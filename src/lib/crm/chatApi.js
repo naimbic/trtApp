@@ -143,7 +143,7 @@ async function roomFor(c, id) {
     return room
 }
 
-const shape = (m, c) => ({ id: m.id, body: m.body, rich: m.rich || null, tags: m.tags || [], assigneeIds: m.assigneeIds || [], taskId: m.taskId || null, clientId: m.clientId || null, clientMailed: !!m.clientMailedAt, attachment: attachmentOf(m), replyTo: replyOf(m), at: m.createdAt, senderType: m.senderType, senderId: m.senderId, senderName: m.senderName, mine: m.senderType === 'staff' && m.senderId === c.staffId, system: m.senderType === 'system' })
+const shape = (m, c) => ({ id: m.id, body: m.body, rich: m.rich || null, tags: m.tags || [], assigneeIds: m.assigneeIds || [], taskId: m.taskId || null, clientId: m.clientId || null, leadId: m.leadId || null, clientMailed: !!m.clientMailedAt, attachment: attachmentOf(m), replyTo: replyOf(m), at: m.createdAt, senderType: m.senderType, senderId: m.senderId, senderName: m.senderName, mine: m.senderType === 'staff' && m.senderId === c.staffId, system: m.senderType === 'system' })
 
 export async function listRooms() {
     const c = await ctx()
@@ -247,7 +247,7 @@ export async function messageAction(mid, body = {}) {
     const c = await ctx()
     const m = await messageFor(c, mid)
     if (body.action === 'task') await requirePermission('tasks', 'create')
-    if (body.action === 'client') await requirePermission('customers', 'view')
+    if (body.action === 'client') await requirePermission(oid(body.leadId) && !oid(body.clientId) ? 'leads' : 'customers', 'view')
     return applyAction(c, m, body)
 }
 
@@ -265,33 +265,40 @@ export async function applyAction(c, m, body = {}) {
         const ids = await validStaff(body.assigneeIds?.length ? body.assigneeIds : m.assigneeIds)
         const due = body.dueDate ? new Date(body.dueDate) : null
         if (due && Number.isNaN(+due)) throw fail('The date is not valid')
-        const clientId = oid(body.clientId) || m.clientId || null
+        const clientId = oid(body.clientId) || (oid(body.leadId) ? null : m.clientId) || null
+        const leadId = !clientId ? oid(body.leadId) || m.leadId || null : null
         if (clientId && !(await prisma.crmClient.findUnique({ where: { id: clientId }, select: { id: true } }))) throw fail('Client not found', 404)
+        if (leadId && !(await prisma.crmLead.findUnique({ where: { id: leadId }, select: { id: true } }))) throw fail('Lead not found', 404)
         const html = m.rich || `<p>${escapeHtml(m.body).replace(/\n/g, '<br>')}</p>`
-        const task = await prisma.crmTask.create({ data: { name: firstLine(m).slice(0, 250), description: storeRich(`${html}<p>From the team chat: ${publicBase()}${link}</p>`, 20000), priority: 2, status: 1, startDate: new Date(), dueDate: due, addedFrom: c.staffId, ...(clientId ? { relType: 'customer', relId: clientId } : {}) } })
+        const task = await prisma.crmTask.create({ data: { name: firstLine(m).slice(0, 250), description: storeRich(`${html}<p>From the team chat: ${publicBase()}${link}</p>`, 20000), priority: 2, status: 1, startDate: new Date(), dueDate: due, addedFrom: c.staffId, ...(clientId ? { relType: 'customer', relId: clientId } : leadId ? { relType: 'lead', relId: leadId } : {}) } })
         for (const staffId of ids) await prisma.crmTaskAssigned.create({ data: { taskId: task.id, staffId, assignedFrom: c.staffId } })
-        await prisma.crmChatMessage.update({ where: { id: m.id }, data: { taskId: task.id, assigneeIds: ids.length ? ids : m.assigneeIds, ...(clientId ? { clientId } : {}) } })
+        await prisma.crmChatMessage.update({ where: { id: m.id }, data: { taskId: task.id, assigneeIds: ids.length ? ids : m.assigneeIds, ...(clientId ? { clientId } : {}), ...(leadId ? { leadId } : {}) } })
         await notifyStaff(ids, c, `New task: ${firstLine(m)}`, `/crm/tasks/${task.id}`, 'chat-task')
         return { success: true, taskId: task.id }
     }
     if (body.action === 'client') {
-        const clientId = oid(body.clientId)
+        const clientId = oid(body.clientId), leadId = !clientId ? oid(body.leadId) : null
         const client = clientId && (await prisma.crmClient.findUnique({ where: { id: clientId }, select: { id: true, company: true } }))
-        if (!client) throw fail('Choose a client', 404)
-        await prisma.crmChatMessage.update({ where: { id: m.id }, data: { clientId: client.id } })
+        const lead = leadId && (await prisma.crmLead.findUnique({ where: { id: leadId }, select: { id: true, name: true, company: true, email: true } }))
+        if (!client && !lead) throw fail('Choose a client or a lead', 404)
+        const label = client ? client.company : lead.company || lead.name
+        await prisma.crmChatMessage.update({ where: { id: m.id }, data: client ? { clientId: client.id, leadId: null } : { leadId: lead.id, clientId: null } })
         let sentTo = []
         if (body.email) {
-            const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, email: { not: null } }, orderBy: { isPrimary: 'desc' }, select: { email: true, isPrimary: true } })
-            const list = [...new Set((contacts.some((x) => x.isPrimary) ? contacts.filter((x) => x.isPrimary) : contacts.slice(0, 2)).map((x) => String(x.email).trim()).filter(Boolean))]
-            if (!list.length) throw fail('This client has no contact with an email address')
+            let list = []
+            if (client) {
+                const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, email: { not: null } }, orderBy: { isPrimary: 'desc' }, select: { email: true, isPrimary: true } })
+                list = [...new Set((contacts.some((x) => x.isPrimary) ? contacts.filter((x) => x.isPrimary) : contacts.slice(0, 2)).map((x) => String(x.email).trim()).filter(Boolean))]
+            } else if (lead.email) list = [String(lead.email).trim()]
+            if (!list.length) throw fail(client ? 'This client has no contact with an email address' : 'This lead has no email address')
             const subject = String(body.subject || '').trim().slice(0, 150) || firstLine(m).slice(0, 100)
             const abs = (h) => String(h).replace(/(src|href)="\/(?!\/)/g, `$1="${publicBase()}/`)
             const html = `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5">${abs(m.rich || `<p>${escapeHtml(m.body).replace(/\n/g, '<br>')}</p>`)}${m.attUrl && m.attKind === 'image' ? `<p><img src="${escapeHtml(m.attUrl)}" style="max-width:100%"></p>` : m.attUrl ? `<p><a href="${escapeHtml(m.attUrl)}">${escapeHtml(m.attName || 'File')}</a></p>` : ''}<p style="color:#888;font-size:12px">${escapeHtml(c.name)}</p></div>`
             for (const to of list) { const r = await deliver({ to, subject, html }); if (r.sent) sentTo.push(to); else throw fail(`Could not email ${to}: ${r.error}`) }
             await prisma.crmChatMessage.update({ where: { id: m.id }, data: { clientMailedAt: new Date() } })
-            await prisma.crmActivityLog.create({ data: { description: `Chat message emailed to ${client.company} (${sentTo.join(', ')}): ${subject}`.slice(0, 400), staffId: c.staffId } }).catch(() => {})
+            await prisma.crmActivityLog.create({ data: { description: `Chat message emailed to ${client ? 'client' : 'lead'} ${label} (${sentTo.join(', ')}): ${subject}`.slice(0, 400), staffId: c.staffId } }).catch(() => {})
         }
-        return { success: true, client: client.company, emailed: sentTo }
+        return { success: true, client: label, emailed: sentTo }
     }
     throw fail('Unknown action')
 }

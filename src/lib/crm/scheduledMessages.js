@@ -53,13 +53,13 @@ export async function deliverScheduled(m) {
         const team = (m.assigneeIds || [])
         try {
             if (m.makeTask) {
-                const r = await applyAction(c, first, { action: 'task', assigneeIds: team, clientId: m.clientId })
+                const r = await applyAction(c, first, { action: 'task', assigneeIds: team, clientId: m.clientId, leadId: m.leadId })
                 await prisma.crmChatMessage.updateMany({ where: { id: { in: ids } }, data: { taskId: r.taskId } })
             }
             if (team.length) { await applyAction(c, first, { action: 'assign', assigneeIds: team }); await prisma.crmChatMessage.updateMany({ where: { id: { in: ids } }, data: { assigneeIds: team } }) }
-            if (m.clientId) {
-                await applyAction(c, first, { action: 'client', clientId: m.clientId, email: !!m.emailClient, subject: m.title })
-                await prisma.crmChatMessage.updateMany({ where: { id: { in: ids } }, data: { clientId: m.clientId } })
+            if (m.clientId || m.leadId) {
+                await applyAction(c, first, { action: 'client', clientId: m.clientId, leadId: m.leadId, email: !!m.emailClient, subject: m.title })
+                await prisma.crmChatMessage.updateMany({ where: { id: { in: ids } }, data: m.clientId ? { clientId: m.clientId } : { leadId: m.leadId } })
             }
         } catch (e) { notes.push(e.message) }
     }
@@ -83,7 +83,7 @@ export async function scheduledMessagesJob({ lines, dry }) {
     }
 }
 
-const shape = (m, names) => ({ id: m.id, title: m.title, body: m.body, rich: m.rich || null, assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, repeatLabel: describe(m.repeat), nextAt: m.nextAt, active: m.active, lastSentAt: m.lastSentAt, lastCount: m.lastCount, sentCount: m.sentCount, createdBy: names[m.createdBy] || '', createdAt: m.createdAt })
+const shape = (m, names) => ({ id: m.id, title: m.title, body: m.body, rich: m.rich || null, assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, leadId: m.leadId || null, emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, repeatLabel: describe(m.repeat), nextAt: m.nextAt, active: m.active, lastSentAt: m.lastSentAt, lastCount: m.lastCount, sentCount: m.sentCount, createdBy: names[m.createdBy] || '', createdAt: m.createdAt })
 
 export async function listScheduled() {
     await gate('view')
@@ -110,14 +110,15 @@ export async function saveScheduled(id, body = {}) {
     if (body.staffIds !== undefined) data.staffIds = [...new Set((Array.isArray(body.staffIds) ? body.staffIds : []).map(oid).filter(Boolean))]
     if ((data.audience || cur?.audience) === 'selected' && !(data.staffIds ?? cur?.staffIds ?? []).length) throw fail('Choose at least one person')
     if (body.assigneeIds !== undefined) data.assigneeIds = [...new Set((Array.isArray(body.assigneeIds) ? body.assigneeIds : []).map(oid).filter(Boolean))]
-    if (body.clientId !== undefined) {
-        const cid = oid(body.clientId)
+    if (body.clientId !== undefined || body.leadId !== undefined) {
+        const cid = oid(body.clientId), lid = !cid ? oid(body.leadId) : null
         if (cid) { await requirePermission('customers', 'view'); if (!(await prisma.crmClient.findUnique({ where: { id: cid }, select: { id: true } }))) throw fail('Client not found', 404) }
-        data.clientId = cid
+        if (lid) { await requirePermission('leads', 'view'); if (!(await prisma.crmLead.findUnique({ where: { id: lid }, select: { id: true } }))) throw fail('Lead not found', 404) }
+        data.clientId = cid; data.leadId = lid
     }
     if (body.emailClient !== undefined) data.emailClient = !!body.emailClient
     if (body.makeTask !== undefined) { data.makeTask = !!body.makeTask; if (data.makeTask) await requirePermission('tasks', 'create') }
-    if ((data.emailClient ?? cur?.emailClient) && !(data.clientId ?? cur?.clientId)) throw fail('Choose the client to email')
+    if ((data.emailClient ?? cur?.emailClient) && !(data.clientId ?? cur?.clientId) && !(data.leadId ?? cur?.leadId)) throw fail('Choose the client or lead to email')
     if (!cur || body.repeat !== undefined) { if (!REPEATS.includes(body.repeat || 'none')) throw fail('Unknown repeat'); data.repeat = body.repeat || 'none' }
     if (!cur || body.sendAt !== undefined) {
         const at = new Date(body.sendAt)

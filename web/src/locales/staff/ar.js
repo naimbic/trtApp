@@ -4891,5 +4891,16 @@ export default {
     "@ mentions a colleague, # adds a tag, and you can paste or drop screenshots.": "@ للإشارة إلى زميل، # لإضافة وسم، ويمكنك لصق لقطات الشاشة أو إفلاتها.",
     "Also email it to the client (with the screenshots)": "أرسلها أيضًا بالبريد إلى العميل (مع لقطات الشاشة)",
     "Make a task of it (for the people above)": "حوّلها إلى مهمة (للأشخاص أعلاه)",
-    "When it goes out": "عند الإرسال"
+    "When it goes out": "عند الإرسال",
+    "Also email it now (with the screenshots)": "أرسلها أيضًا بالبريد الآن (مع لقطات الشاشة)",
+    "Also email it to the lead (with the screenshots)": "أرسلها أيضًا بالبريد إلى العميل المحتمل (مع لقطات الشاشة)",
+    "Client or lead": "عميل أو عميل محتمل",
+    "Client or lead (optional)": "عميل أو عميل محتمل (اختياري)",
+    "Lead (optional)": "عميل محتمل (اختياري)",
+    "Lead emailed": "تم إبلاغ العميل المحتمل بالبريد",
+    "Nothing more": "لا شيء إضافي",
+    "When": "متى",
+    "Choose a client or a lead": "اختر عميلًا أو عميلًا محتملًا",
+    "This lead has no email address": "ليس لهذا العميل المحتمل بريد إلكتروني",
+    "Choose the client or lead to email": "اختر العميل أو العميل المحتمل لمراسلته"
 }

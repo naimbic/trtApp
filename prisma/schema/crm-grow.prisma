@@ -204,6 +204,7 @@ model CrmScheduledMessage {
   /// team assigned (told when it goes out), a client linked to it (and emailed), a task made at each send
   assigneeIds String[] @db.ObjectId
   clientId   String?   @db.ObjectId
+  leadId     String?   @db.ObjectId
   emailClient Boolean  @default(false)
   makeTask   Boolean   @default(false)
   createdAt  DateTime  @default(now())

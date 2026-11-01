@@ -4891,5 +4891,16 @@ export default {
     "@ mentions a colleague, # adds a tag, and you can paste or drop screenshots.": "@ menciona a un compañero, # añade una etiqueta y puede pegar o soltar capturas de pantalla.",
     "Also email it to the client (with the screenshots)": "Enviarlo también por correo al cliente (con las capturas)",
     "Make a task of it (for the people above)": "Convertirlo en tarea (para las personas anteriores)",
-    "When it goes out": "Cuando se envía"
+    "When it goes out": "Cuando se envía",
+    "Also email it now (with the screenshots)": "Enviarlo también por correo ahora (con las capturas)",
+    "Also email it to the lead (with the screenshots)": "Enviarlo también por correo al lead (con las capturas)",
+    "Client or lead": "Cliente o lead",
+    "Client or lead (optional)": "Cliente o lead (opcional)",
+    "Lead (optional)": "Lead (opcional)",
+    "Lead emailed": "Lead avisado por correo",
+    "Nothing more": "Nada más",
+    "When": "Cuándo",
+    "Choose a client or a lead": "Elija un cliente o un lead",
+    "This lead has no email address": "Este lead no tiene correo electrónico",
+    "Choose the client or lead to email": "Elija el cliente o lead al que escribir"
 }

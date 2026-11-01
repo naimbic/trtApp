@@ -598,6 +598,7 @@ model CrmChatMessage {
   assigneeIds String[] @db.ObjectId
   taskId     String?  @db.ObjectId
   clientId   String?  @db.ObjectId
+  leadId     String?  @db.ObjectId
   clientMailedAt DateTime?
   createdAt  DateTime @default(now())
 

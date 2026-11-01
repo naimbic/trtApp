@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.144.0',
+        date: '2026-11-01',
+        title: 'Scheduled messages: compact accordion form, and a lead can be linked like a client',
+        items: [
+            'The scheduled message form is now four folding sections (Message, Send to, When, When it goes out), one open at a time, each with a one-line summary while closed: much shorter, nothing hidden.',
+            'Client or Lead (same switch as in the calendar event): the message, its task and its optional email can now be linked to a lead as well as to a client. The same choice is in the chat menu "Link a client and email them", and a message linked to a lead shows a Lead tag in the chat.',
+        ],
+    },
+    {
         version: '0.143.0',
         date: '2026-11-01',
         title: 'Scheduled messages: rich editor with screenshots, mentions and tags; team, task and client',

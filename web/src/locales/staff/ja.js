@@ -4891,5 +4891,16 @@ export default {
     "@ mentions a colleague, # adds a tag, and you can paste or drop screenshots.": "@ で同僚にメンション、# でタグを追加、スクリーンショットは貼り付けやドロップができます。",
     "Also email it to the client (with the screenshots)": "クライアントにもメールで送る(スクリーンショット付き)",
     "Make a task of it (for the people above)": "タスクにする(上のメンバー向け)",
-    "When it goes out": "送信されるとき"
+    "When it goes out": "送信されるとき",
+    "Also email it now (with the screenshots)": "今すぐメールでも送る(スクリーンショット付き)",
+    "Also email it to the lead (with the screenshots)": "リードにもメールで送る(スクリーンショット付き)",
+    "Client or lead": "クライアントまたはリード",
+    "Client or lead (optional)": "クライアントまたはリード(任意)",
+    "Lead (optional)": "リード(任意)",
+    "Lead emailed": "リードにメール済み",
+    "Nothing more": "特になし",
+    "When": "いつ",
+    "Choose a client or a lead": "クライアントまたはリードを選択",
+    "This lead has no email address": "このリードにはメールアドレスがありません",
+    "Choose the client or lead to email": "メールするクライアントまたはリードを選んでください"
 }

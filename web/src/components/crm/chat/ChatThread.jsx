@@ -154,12 +154,13 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                                     )}
                                     {m.attachment && <Attachment a={m.attachment} mine={m.mine} />}
                                     {m.rich ? <div className={classNames('-mx-1 rounded-xl px-2 py-1', m.mine ? 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100' : 'bg-white dark:bg-gray-800')}><RichView html={m.rich} /></div> : <Mentioned text={m.body} onDark={m.mine} />}
-                                    {(m.tags?.length > 0 || m.assigneeIds?.length > 0 || m.taskId || m.clientId) && (
+                                    {(m.tags?.length > 0 || m.assigneeIds?.length > 0 || m.taskId || m.clientId || m.leadId) && (
                                         <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
                                             {(m.tags || []).map((t) => <span key={t} className={classNames('rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-primary/10 text-primary')}>#{t}</span>)}
                                             {m.assigneeIds?.length > 0 && <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-600')}><PiUsersDuotone />{m.assigneeIds.map((id) => people.find((p) => p.id === id)?.name?.split(' ')[0]).filter(Boolean).join(', ') || m.assigneeIds.length}</span>}
                                             {m.taskId && <a href={`/crm/tasks/${m.taskId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold', m.mine ? 'bg-white/20 underline' : 'bg-emerald-100 text-emerald-700')}><PiCheckSquareDuotone />{tr("Task")}</a>}
                                             {m.clientId && <a href={`/crm/clients/${m.clientId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-sky-100 text-sky-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Client emailed") : tr("Client")}</a>}
+                                            {m.leadId && <a href={`/crm/leads/${m.leadId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-violet-100 text-violet-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Lead emailed") : tr("Lead")}</a>}
                                         </div>
                                     )}
                                 </div>

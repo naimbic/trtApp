@@ -64,11 +64,12 @@ export async function meetingsFeed(request) {
             view = who ? 'own, invited, shared and public' : 'everything'
         }
         const rows = await prisma.crmEvent.findMany({
-            where: { ...(unlinked ? {} : { meetingUrl: { not: null } }), NOT: { status: { in: ['draft', 'declined'] } }, start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }], AND: who ? [{ OR: who }] : [] },
+            where: { ...(unlinked ? {} : { meetingUrl: { not: null } }), start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }], AND: who ? [{ OR: who }] : [] },
             orderBy: { start: 'asc' }, take: 300,
         })
         const all = url.searchParams.get('all') === '1'
-        const keep = rows.filter((e) => { const u = String(e.meetingUrl || '').trim(); if (!u) return unlinked; if (all || unlinked) return true; try { return new URL(u).hostname === MEET_HOST } catch { return false } })
+        // Events saved before the status field existed have none stored (a database filter on it would drop them all): read as confirmed
+        const keep = rows.filter((e) => { if (['draft', 'declined'].includes(e.status || 'confirmed')) return false; const u = String(e.meetingUrl || '').trim(); if (!u) return unlinked; if (all || unlinked) return true; try { return new URL(u).hostname === MEET_HOST } catch { return false } })
         const ids = [...new Set(keep.flatMap((e) => [e.userId, ...(e.attendeeIds || [])]).filter(Boolean))]
         const people = ids.length ? await prisma.crmStaff.findMany({ where: { id: { in: ids } }, select: { id: true, firstName: true, lastName: true, email: true } }) : []
         const name = Object.fromEntries(people.map((p) => [p.id, [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email]))
@@ -79,7 +80,7 @@ export async function meetingsFeed(request) {
                 return { id: e.id, title: e.title, start: e.start, end: e.end || new Date(+e.start + (e.allDay ? 86400000 : 3600000)), all_day: e.allDay, category: e.category, location: e.location || null, meeting_url: e.meetingUrl || null, room, organizer: name[e.userId] || null, attendees: staffGuests, external_guests: (e.attendeeEmails || []).length, attendees_count: staffGuests.length + (e.attendeeEmails || []).length }
             }),
             from, to,
-            meta: { view, in_range: rows.length, returned: keep.length, include_unlinked: unlinked, not_shown: await notShown(from, to) },
+            meta: { view, in_range: rows.filter((e) => !['draft', 'declined'].includes(e.status || 'confirmed')).length, returned: keep.length, include_unlinked: unlinked, not_shown: await notShown(from, to) },
         }
         log(200)
         return out
@@ -109,10 +110,10 @@ export async function busyFeed(request) {
         if (to <= from) throw fail('to must be after from')
         if (to - from > 62 * DAY) throw fail('Ask for at most 62 days at a time')
         const rows = await prisma.crmEvent.findMany({
-            where: { NOT: { status: 'declined' }, start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }], ...(only ? { AND: [{ OR: [{ userId: only }, { attendeeIds: { has: only } }] }] } : {}) },
+            where: { start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }], ...(only ? { AND: [{ OR: [{ userId: only }, { attendeeIds: { has: only } }] }] } : {}) },
             orderBy: { start: 'asc' }, take: 1000, select: { id: true, start: true, end: true, allDay: true, status: true, userId: true, attendeeIds: true },
         })
-        const out = { data: rows.map((e) => ({ id: e.id, start: e.start, end: e.end || new Date(+e.start + 3600000), all_day: !!e.allDay, status: e.status || 'confirmed', staff_ids: [...new Set([e.userId, ...(e.attendeeIds || [])].filter(Boolean))] })), from, to }
+        const out = { data: rows.filter((e) => (e.status || 'confirmed') !== 'declined').map((e) => ({ id: e.id, start: e.start, end: e.end || new Date(+e.start + 3600000), all_day: !!e.allDay, status: e.status || 'confirmed', staff_ids: [...new Set([e.userId, ...(e.attendeeIds || [])].filter(Boolean))] })), from, to }
         log(200)
         return out
     } catch (e) { log(e.status || 500); throw e }

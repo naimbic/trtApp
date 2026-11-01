@@ -4917,5 +4917,8 @@ export default {
     "No title yet": "Aún sin título",
     "Visible to all": "Visible para todos",
     "guests": "invitados",
-    "team": "equipo"
+    "team": "equipo",
+    "A message for the person who asked (optional): why, another time, what to prepare…": "Un mensaje para la persona que lo pidió (opcional): por qué, otra hora, qué preparar…",
+    "A message for them (optional): why it moved, what to prepare…": "Un mensaje para ella (opcional): por qué cambió, qué preparar…",
+    "Tell the person who asked about this change": "Avisar a la persona que lo pidió de este cambio"
 }

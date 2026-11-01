@@ -4917,5 +4917,8 @@ export default {
     "No title yet": "لا عنوان بعد",
     "Visible to all": "مرئي للجميع",
     "guests": "ضيوف",
-    "team": "الفريق"
+    "team": "الفريق",
+    "A message for the person who asked (optional): why, another time, what to prepare…": "رسالة لصاحب الطلب (اختياري): السبب، وقت آخر، ما يجب تحضيره…",
+    "A message for them (optional): why it moved, what to prepare…": "رسالة لها (اختياري): سبب التغيير، ما يجب تحضيره…",
+    "Tell the person who asked about this change": "إبلاغ صاحب الطلب بهذا التغيير"
 }

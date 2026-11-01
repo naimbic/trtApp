@@ -97,6 +97,21 @@ async function decideCore(e, { accept, staffId, notify, message }) {
     return { row, emailed, same: false }
 }
 
+/** An email to the people who asked for an appointment (its guests): what changed, the time, the link, and a note from the team. Returns who was emailed. */
+export async function tellRequester(e, { kind = 'updated', message = '' } = {}) {
+    const note = clip(message, 1000)
+    const when = new Date(e.start).toUTCString().replace(' GMT', ' UTC')
+    const lines = { updated: `Your appointment <strong>${escapeHtml(e.title)}</strong> has been changed. New time: <strong>${escapeHtml(when)}</strong>.`, note: `A message about your appointment <strong>${escapeHtml(e.title)}</strong> (${escapeHtml(when)}).` }
+    const sent = []
+    for (const g of Array.isArray(e.guests) ? e.guests : []) {
+        if (!g.email) continue
+        const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${lines[kind] || lines.note}</p>${note ? `<blockquote style="margin:8px 0;padding:6px 12px;border-left:3px solid #ccc">${escapeHtml(note).replace(/\n/g, '<br>')}</blockquote>` : ''}${e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}`
+        const r = await deliver({ to: g.email, subject: kind === 'updated' ? `Appointment changed: ${e.title}` : `About your appointment: ${e.title}`, html })
+        if (r.sent) sent.push(g.email)
+    }
+    return sent
+}
+
 const decisionOf = (d) => (['accept', 'accepted'].includes(d) ? true : ['decline', 'refuse', 'declined', 'refused'].includes(d) ? false : null)
 
 /** A team member accepts or declines a request in the CRM. */
@@ -157,11 +172,14 @@ export async function editByKey(request, id) {
             for (const g of guests) if (g.email && !EMAIL.test(g.email)) throw fail(`"${g.email}" is not a valid email address`)
             data.guests = guests; data.attendeeEmails = [...new Set(guests.map((g) => g.email).filter(Boolean))]
         }
-        if (!Object.keys(data).length) throw fail('Nothing to change')
-        const row = await prisma.crmEvent.update({ where: { id: e.id }, data })
-        emit('appointment.updated', shape(row))
+        const note = clip(b.message, 10) || b.notify === true
+        if (!Object.keys(data).length && !note) throw fail('Nothing to change')
+        const row = Object.keys(data).length ? await prisma.crmEvent.update({ where: { id: e.id }, data }) : e
+        if (Object.keys(data).length) emit('appointment.updated', shape(row))
+        // a note for the person who asked (message), or the new time (notify: true)
+        const emailed = note ? await tellRequester(row, { kind: data.start || data.end || data.meetingUrl ? 'updated' : 'note', message: b.message }) : []
         log(200)
-        return { data: shape(row) }
+        return { data: shape(row), emailed }
     } catch (x) { log(x.status || 500); throw x }
 }
 

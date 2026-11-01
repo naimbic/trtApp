@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.149.0',
+        date: '2026-11-01',
+        title: 'Fixed: older meetings were missing for Meet; a message for the person who asked',
+        items: [
+            'Fixed: meetings saved before the status field existed (the existing ones in your calendar) were left out of the list that Meet reads and out of the busy times, because the filter dropped every event with no status stored. They now count as confirmed, so Meet shows the same meetings as the CRM calendar and no longer offers a slot that is taken.',
+            'A booking request now has a text box on its banner: "A message for the person who asked" (why, another time, what to prepare) goes in the email with Accept or Decline. When you change an accepted appointment that came from Meet, a switch "Tell the person who asked about this change" emails the new time with your note. The same note can be sent from Meet with PATCH /api/v1/calendar/events/<id> {message, notify}.',
+        ],
+    },
+    {
         version: '0.148.2',
         date: '2026-11-01',
         title: 'Calendar feed also says what it did not list',

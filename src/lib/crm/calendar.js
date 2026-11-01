@@ -258,8 +258,10 @@ export async function updateCalendarEvent(id, body) {
     const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType }
     const data = clean({ ...current, ...body })
     const updated = await prisma.crmEvent.update({ where: { id }, data })
+    let told = []
+    if (updated.source && body.notifyRequester) told = await (await import('@/lib/crm/appointments')).tellRequester(updated, { kind: 'updated', message: body.requesterMessage })
     if (updated.source) emit('appointment.updated', { id: updated.id, status: updated.status || 'confirmed', title: updated.title, start: updated.start, end: updated.end, meeting_url: updated.meetingUrl || null, room: updated.externalRef || null, source: updated.source })
-    const out = { ...JSON.parse(JSON.stringify(updated)) }
+    const out = { ...JSON.parse(JSON.stringify(updated)), requesterEmailed: told }
     if (body.sendInvites) out.invited = (await invite(updated, { inviteClient: !!body.inviteClient, update: true })).sent
     return out
 }

@@ -4917,5 +4917,8 @@ export default {
     "No title yet": "タイトル未設定",
     "Visible to all": "全員に表示",
     "guests": "ゲスト",
-    "team": "チーム"
+    "team": "チーム",
+    "A message for the person who asked (optional): why, another time, what to prepare…": "依頼した人へのメッセージ(任意):理由、別の日時、準備するもの など",
+    "A message for them (optional): why it moved, what to prepare…": "その方へのメッセージ(任意):変更の理由、準備するもの など",
+    "Tell the person who asked about this change": "この変更を依頼した人に知らせる"
 }

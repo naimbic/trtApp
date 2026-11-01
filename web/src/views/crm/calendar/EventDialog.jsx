@@ -68,9 +68,11 @@ const EMPTY = { category: 'meeting', projectId: null, title: '', description: ''
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
 const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, onClose, onDecided }) => {
     const [deciding, setDeciding] = useState('')
+    const [note, setNote] = useState('') // a message for the person who asked
+    const [tell, setTell] = useState(false)
     const decide = async (decision) => {
         setDeciding(decision)
-        try { const r = await callApi(`/api/crm/calendar/${selected.id}/decision`, { method: 'POST', body: { decision } }); notify('success', decision === 'accept' ? `${tr("Appointment accepted")}${r.emailed?.length ? ` · ${tr("confirmation sent")}` : ''}` : tr("Appointment declined")); onDecided?.() } catch (e) { notify('danger', e.message) } finally { setDeciding('') }
+        try { const r = await callApi(`/api/crm/calendar/${selected.id}/decision`, { method: 'POST', body: { decision, message: note.trim() || undefined } }); notify('success', decision === 'accept' ? `${tr("Appointment accepted")}${r.emailed?.length ? ` · ${tr("confirmation sent")}` : ''}` : tr("Appointment declined")); onDecided?.() } catch (e) { notify('danger', e.message) } finally { setDeciding('') }
     }
     const [v, setV] = useState(EMPTY)
     const [sec, setSec] = useState('event') // the open section: one at a time
@@ -80,7 +82,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
 
     useEffect(() => {
         if (!selected) return
-        setError(''); setSec('event')
+        setError(''); setSec('event'); setNote(''); setTell(false)
         setV({
             ...EMPTY,
             title: selected.title || '',
@@ -127,6 +129,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
             title: v.title.trim(), description: v.description, start: start.toISOString(), end: end ? end.toISOString() : null, color: v.color, isPublic: v.isPublic,
             allDay: v.allDay, category: v.category, projectId: v.projectId, location: v.location, meetingUrl: v.meetingUrl.trim(), clientId: v.aboutType === 'client' ? v.clientId : null, leadId: v.aboutType === 'lead' ? v.leadId : null, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
             reminderBefore: v.reminderBefore === '' ? null : Number(v.reminderBefore), reminderBeforeType: v.reminderBeforeType,
+            notifyRequester: tell && selected.status !== 'draft', requesterMessage: tell ? note.trim() : undefined,
             sendInvites: v.sendInvites && !!hasGuests, inviteClient: v.sendInvites && v.inviteClient && v.aboutType === 'client' && !!v.clientId,
         })
     }
@@ -144,7 +147,14 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                     <div className="mb-1 font-semibold text-amber-800 dark:text-amber-300">⏳ {tr("Appointment request: waiting for you")}{selected.source ? <span className="ms-2 text-xs font-normal opacity-70">{selected.source}</span> : null}</div>
                     {(selected.guests || []).map((g, i) => <div key={i} className="text-gray-700 dark:text-gray-200">{[g.name, g.email, g.phone].filter(Boolean).join(' · ')}</div>)}
                     <p className="mt-1 text-xs text-gray-500">{tr("Nobody is invited and no reminder goes out until you accept. The person who asked is told by email.")}</p>
+                    <Input className="mt-2" size="sm" textArea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={tr("A message for the person who asked (optional): why, another time, what to prepare…")} />
                     <div className="mt-2 flex gap-2"><Button size="sm" variant="solid" loading={deciding === 'accept'} onClick={() => decide('accept')}>{tr("Accept")}</Button><Button size="sm" loading={deciding === 'decline'} onClick={() => decide('decline')}>{tr("Decline")}</Button></div>
+                </div>
+            )}
+            {edit && selected.source && selected.status !== 'draft' && (selected.guests || []).some((g) => g.email) && !readOnly && (
+                <div className="mb-3 rounded-xl border border-gray-200 p-3 text-sm dark:border-gray-600">
+                    <div className="flex items-center gap-2"><Switcher checked={tell} onChange={setTell} />{tr("Tell the person who asked about this change")}<span className="text-xs text-gray-400">{(selected.guests || []).map((g) => g.email).filter(Boolean).join(', ')}</span></div>
+                    {tell && <Input className="mt-2" size="sm" textArea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={tr("A message for them (optional): why it moved, what to prepare…")} />}
                 </div>
             )}
             {readOnly && <p className="mb-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:bg-gray-700">{tr("You were invited to this event")}{selected.owner ? tr(" by {owner}", { owner: selected.owner }) : ''}{tr(". Only the organiser can change it.")}</p>}

@@ -10,6 +10,18 @@ const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const MEET_HOST = 'meet.trtcrm.com'
 const DAY = 86400000
 
+/** What the calendar holds in the range that is NOT in the list, and why: requests still waiting (drafts), refused ones, and tasks, reminders, invoices (other layers of the CRM calendar, never events). */
+async function notShown(from, to) {
+    const inRange = { start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }] }
+    const [drafts, declined, tasks, invoices] = await Promise.all([
+        prisma.crmEvent.count({ where: { ...inRange, status: 'draft' } }),
+        prisma.crmEvent.count({ where: { ...inRange, status: 'declined' } }),
+        prisma.crmTask.count({ where: { dueDate: { gte: from, lt: to }, status: { not: 5 } } }).catch(() => 0),
+        prisma.crmInvoice.count({ where: { dueDate: { gte: from, lt: to }, status: { notIn: [2, 5, 6, 7] } } }).catch(() => 0),
+    ])
+    return { waiting_requests: drafts, refused: declined, tasks_due: tasks, invoices_due: invoices }
+}
+
 /** The meetings of ONE team member, for the Meet app: who it answers for is either the member's own access token (given by "Sign in with CRM"),
  *  or an API key with the calendar:read scope plus ?staff_id=. By default only events that have a meeting link on meet.trtcrm.com; all=1 adds any link; include_unlinked=1 returns every event of the member, with meeting_url null when there is no link. */
 export async function meetingsFeed(request) {
@@ -67,7 +79,7 @@ export async function meetingsFeed(request) {
                 return { id: e.id, title: e.title, start: e.start, end: e.end || new Date(+e.start + (e.allDay ? 86400000 : 3600000)), all_day: e.allDay, category: e.category, location: e.location || null, meeting_url: e.meetingUrl || null, room, organizer: name[e.userId] || null, attendees: staffGuests, external_guests: (e.attendeeEmails || []).length, attendees_count: staffGuests.length + (e.attendeeEmails || []).length }
             }),
             from, to,
-            meta: { view, in_range: rows.length, returned: keep.length, include_unlinked: unlinked },
+            meta: { view, in_range: rows.length, returned: keep.length, include_unlinked: unlinked, not_shown: await notShown(from, to) },
         }
         log(200)
         return out

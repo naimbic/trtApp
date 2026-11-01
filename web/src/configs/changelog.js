@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.148.2',
+        date: '2026-11-01',
+        title: 'Calendar feed also says what it did not list',
+        items: [
+            'The "meta" block of GET /api/v1/calendar/events now has not_shown: the requests still waiting for acceptance, the refused ones, and the tasks and invoices due in the same dates (other layers of the CRM calendar, never events), so a program can tell why its list is shorter than the calendar screen.',
+        ],
+    },
+    {
         version: '0.148.1',
         date: '2026-11-01',
         title: 'Calendar feed says what it let the member see',

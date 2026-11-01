@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.155.1',
+        date: '2026-11-02',
+        title: 'Sign in with trtAgency removed; Google and GitHub stay',
+        items: ['The "Sign in with trtAgency" button and its server routes are gone from the sign-in page. Email and password, Google and GitHub (each shown when its keys are set) remain.'],
+    },
+    {
         version: '0.155.0',
         date: '2026-11-02',
         title: 'Roles & permissions: API, AI insights, Payroll and team growth have their own rows; Meet drops requests deleted in the CRM',

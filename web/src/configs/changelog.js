@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.137.2',
+        date: '2026-11-01',
+        title: 'Grow routine: uses the AI key even when no model was saved',
+        items: [
+            'The Grow Routine tab said "No AI key yet" although a key existed in Settings → AI, because no model had been saved for the provider. The routine now uses the same default model as the AI settings screen (the first preset) when none is saved.',
+        ],
+    },
+    {
         version: '0.137.1',
         date: '2026-11-01',
         title: 'Profile menu: Grow and My growth added, Calendar sync removed',

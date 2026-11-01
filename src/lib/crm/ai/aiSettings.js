@@ -87,7 +87,7 @@ export async function resolveAiForJob() {
     const opened = Object.fromEntries(providerIds.map((id) => [id, o[KEY(id)] ? open(o[KEY(id)]) : null]))
     const id = providerIds.includes(o.ai_provider) && opened[o.ai_provider] ? o.ai_provider : providerIds.find((p) => opened[p])
     if (!id) return null
-    const model = String((id === o.ai_provider ? o.ai_model : '') || o[MODEL(id)] || '').trim()
+    const model = String((id === o.ai_provider ? o.ai_model : '') || o[MODEL(id)] || PROVIDERS[id].presets[0] || '').trim()
     if (!model) return null
     return { provider: id, model, apiKey: opened[id], workspaceId: o[WORKSPACE(id)] || '', systemPrompt: o.ai_system_prompt || '' }
 }

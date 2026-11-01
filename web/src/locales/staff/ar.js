@@ -4910,5 +4910,12 @@ export default {
     "staff_id is not an active team member": "staff_id ليس عضوًا نشطًا في الفريق",
     "title cannot be empty": "لا يمكن أن يكون العنوان فارغًا",
     "An appointment from a program is changed": "تم تعديل موعد من برنامج",
-    "An appointment from a program is deleted": "تم حذف موعد من برنامج"
+    "An appointment from a program is deleted": "تم حذف موعد من برنامج",
+    "Colour, reminder, notes": "اللون والتذكير والملاحظات",
+    "No date yet": "لا تاريخ بعد",
+    "No link": "لا رابط",
+    "No title yet": "لا عنوان بعد",
+    "Visible to all": "مرئي للجميع",
+    "guests": "ضيوف",
+    "team": "الفريق"
 }

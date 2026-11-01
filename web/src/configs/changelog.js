@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.146.0',
+        date: '2026-11-01',
+        title: 'Calendar event form: compact accordion with icons and light coloured headers',
+        items: [
+            'The event popup is now four folding sections with an icon and a light coloured header each: Event (type, title, all day, dates), People (client or lead, team members, other guests, invitation), Meeting (link with the ready-made rooms, location) and Details (description, project, colour, reminder, visibility). One section is open at a time and each closed one shows a one-line summary; a missing title or date opens the right section. The popup is shorter and narrower.',
+        ],
+    },
+    {
         version: '0.145.0',
         date: '2026-11-01',
         title: 'Appointment requests: the Meet app can accept, refuse, edit and delete them',

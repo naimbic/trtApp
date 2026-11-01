@@ -4910,5 +4910,12 @@ export default {
     "staff_id is not an active team member": "staff_id no es un miembro activo del equipo",
     "title cannot be empty": "el título no puede estar vacío",
     "An appointment from a program is changed": "Se modifica una cita de un programa",
-    "An appointment from a program is deleted": "Se elimina una cita de un programa"
+    "An appointment from a program is deleted": "Se elimina una cita de un programa",
+    "Colour, reminder, notes": "Color, recordatorio, notas",
+    "No date yet": "Aún sin fecha",
+    "No link": "Sin enlace",
+    "No title yet": "Aún sin título",
+    "Visible to all": "Visible para todos",
+    "guests": "invitados",
+    "team": "equipo"
 }

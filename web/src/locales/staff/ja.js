@@ -4910,5 +4910,12 @@ export default {
     "staff_id is not an active team member": "staff_id は有効なチームメンバーではありません",
     "title cannot be empty": "タイトルを空にできません",
     "An appointment from a program is changed": "プログラムからの予約が変更された",
-    "An appointment from a program is deleted": "プログラムからの予約が削除された"
+    "An appointment from a program is deleted": "プログラムからの予約が削除された",
+    "Colour, reminder, notes": "色、リマインダー、メモ",
+    "No date yet": "日付は未設定",
+    "No link": "リンクなし",
+    "No title yet": "タイトル未設定",
+    "Visible to all": "全員に表示",
+    "guests": "ゲスト",
+    "team": "チーム"
 }

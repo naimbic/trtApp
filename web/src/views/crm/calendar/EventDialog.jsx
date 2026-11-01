@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import { components } from 'react-select'
-import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand } from 'react-icons/tb'
+import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand, TbNotes } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import Switcher from '@/components/ui/Switcher'
 import { Form, FormItem } from '@/components/ui/Form'
+import FoldSection from '@/components/crm/FoldSection'
 import RelationSelect from '../kit/RelationSelect'
 import DateTimeRange from './DateTimeRange'
 import Segment from '@/components/ui/Segment'
@@ -72,12 +73,14 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
         try { const r = await callApi(`/api/crm/calendar/${selected.id}/decision`, { method: 'POST', body: { decision } }); notify('success', decision === 'accept' ? `${tr("Appointment accepted")}${r.emailed?.length ? ` · ${tr("confirmation sent")}` : ''}` : tr("Appointment declined")); onDecided?.() } catch (e) { notify('danger', e.message) } finally { setDeciding('') }
     }
     const [v, setV] = useState(EMPTY)
+    const [sec, setSec] = useState('event') // the open section: one at a time
+    const toggle = (k) => setSec((x) => (x === k ? '' : k))
     const [room, setRoom] = useState('')
     const [error, setError] = useState('')
 
     useEffect(() => {
         if (!selected) return
-        setError('')
+        setError(''); setSec('event')
         setV({
             ...EMPTY,
             title: selected.title || '',
@@ -105,13 +108,17 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
     const readOnly = edit && selected.editable === false
     const set = (patch) => setV((x) => ({ ...x, ...patch }))
     const staffOpts = staff.map((s) => ({ value: s.id, label: s.name }))
+    const dateText = v.start ? `${dayjs(v.start).format(v.allDay ? 'DD MMM' : 'DD MMM, HH:mm')}${v.end && !v.allDay ? ` → ${dayjs(v.end).format('HH:mm')}` : ''}` : tr("No date yet")
+    const peopleText = [v.attendeeIds.length ? `${v.attendeeIds.length} ${tr("team")}` : '', v.attendeeEmails.trim() ? tr("guests") : '', v.clientId ? tr("Client") : v.leadId ? tr("Lead") : ''].filter(Boolean).join(' · ') || tr("Nobody yet")
+    const meetText = v.meetingUrl ? v.meetingUrl.replace(/^https?:\/\//, '') : v.location || tr("No link")
+    const detailsText = [v.reminderBefore !== '' ? `${tr("Reminder")} ${v.reminderBefore} ${tr(v.reminderBeforeType)}` : '', v.isPublic ? tr("Visible to all") : '', v.description ? tr("Notes") : ''].filter(Boolean).join(' · ') || tr("Colour, reminder, notes")
     const hasGuests = v.attendeeIds.length > 0 || v.attendeeEmails.trim() || (v.aboutType === 'client' && v.clientId)
 
     const submit = (e) => {
         e.preventDefault()
-        if (!v.title.trim()) return setError(tr("Event title is required"))
-        if (!v.start) return setError(tr("Please select a start date"))
-        if (v.end && v.end < v.start) return setError(tr("End must be after the start"))
+        if (!v.title.trim()) { setSec('event'); return setError(tr("Event title is required")) }
+        if (!v.start) { setSec('event'); return setError(tr("Please select a start date")) }
+        if (v.end && v.end < v.start) { setSec('event'); return setError(tr("End must be after the start")) }
         setError('')
         const noon = (d) => (d ? dayjs(d).hour(12).minute(0).second(0).millisecond(0).toDate() : null)
         const start = v.allDay ? noon(v.start) : v.start
@@ -125,7 +132,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
     }
 
     return (
-        <Dialog isOpen={open} width={680} height="min(calc(100vh - 48px), 860px)" contentClassName="flex flex-col overflow-hidden" onClose={onClose} onRequestClose={onClose}>
+        <Dialog isOpen={open} width={640} height="min(calc(100vh - 48px), 780px)" contentClassName="flex flex-col overflow-hidden" onClose={onClose} onRequestClose={onClose}>
             <div className="mb-4 flex shrink-0 flex-wrap items-center gap-2 pr-10">
                 <h5 className="mr-auto">{readOnly ? tr("Event") : edit ? tr("Edit event") : tr("New event")}</h5>
                 {edit && v.meetingUrl && <Button size="sm" variant="solid" icon={<TbVideo />} onClick={() => window.open(v.meetingUrl, '_blank', 'noopener')}>{tr("Join meeting")}</Button>}
@@ -144,35 +151,46 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
             <Form className="flex min-h-0 flex-1 flex-col" containerClassName="flex min-h-0 flex-1 flex-col" onSubmit={submit}>
                 <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                 <fieldset disabled={readOnly || saving} className="contents">
+                    <div className="space-y-2">
+                        <FoldSection icon={<TbCalendar />} tone="blue" title={tr("Event")} summary={`${(CATEGORIES.find((c) => c.value === v.category) || {}).label || ''} · ${v.title || tr("No title yet")} · ${dateText}`} open={sec === 'event'} onToggle={() => toggle('event')}>
                     <div className="mb-3 flex flex-wrap gap-1.5">
                         {CATEGORIES.map((c) => (
                             <button key={c.value} type="button" onClick={() => set({ category: c.value })} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition ${v.category === c.value ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600'}`}><c.icon className="text-sm" />{c.label}</button>
                         ))}
                     </div>
+
                     <FormItem label={tr("Title")} invalid={!!error && !v.title.trim()} errorMessage={error}>
                         <Input type="text" autoComplete="off" placeholder={tr("Meeting with the client…")} value={v.title} onChange={(e) => set({ title: e.target.value })} />
                     </FormItem>
                     <div className="mb-3 flex items-center gap-2 text-sm"><Switcher checked={v.allDay} onChange={(c) => set({ allDay: c })} /> {tr("All day")}</div>
                     <FormItem label={tr("Date")}><DateTimeRange start={v.start} end={v.end} allDay={v.allDay} disabled={readOnly || saving} onChange={(r) => set(r)} /></FormItem>
+                        </FoldSection>
+                        <FoldSection icon={<TbUsers />} tone="emerald" title={tr("People")} summary={peopleText} open={sec === 'people'} onToggle={() => toggle('people')}>
                     <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
                         <FormItem label={v.aboutType === 'lead' ? tr("Lead") : tr("Client")}>
                             <div className="flex items-center gap-2">
                                 <Segment size="sm" value={v.aboutType} onChange={(t) => { const x = Array.isArray(t) ? t[0] : t; if (x) set({ aboutType: x, inviteClient: false }) }}><Segment.Item value="client">{tr("Client")}</Segment.Item><Segment.Item value="lead">{tr("Lead")}</Segment.Item></Segment>
                                 <div className="min-w-0 flex-1">
                                     {v.aboutType === 'lead'
-                                        ? <RelationSelect key="lead" resource="leads" value={v.leadId} onChange={(id) => set({ leadId: id })} />
-                                        : <RelationSelect key="client" resource="clients" value={v.clientId} onChange={(id) => set({ clientId: id, inviteClient: id ? v.inviteClient : false })} />}
+                                        ? <RelationSelect key="lead" size="sm" resource="leads" value={v.leadId} onChange={(id) => set({ leadId: id })} />
+                                        : <RelationSelect key="client" size="sm" resource="clients" value={v.clientId} onChange={(id) => set({ clientId: id, inviteClient: id ? v.inviteClient : false })} />}
                                 </div>
                             </div>
                         </FormItem>
                         <FormItem label={tr("Team members")}>
-                            <Select isMulti placeholder={tr("Add people")} options={staffOpts} value={staffOpts.filter((o) => v.attendeeIds.includes(o.value))} onChange={(o) => set({ attendeeIds: (o || []).map((x) => x.value) })} />
+                            <Select size="sm" isMulti placeholder={tr("Add people")} options={staffOpts} value={staffOpts.filter((o) => v.attendeeIds.includes(o.value))} onChange={(o) => set({ attendeeIds: (o || []).map((x) => x.value) })} />
                         </FormItem>
                     </div>
-                    <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-                        <FormItem label={tr("Project")}><RelationSelect resource="projects" value={v.projectId} onChange={(id) => set({ projectId: id })} /></FormItem>
-                        <FormItem label={tr("Other guests (emails)")}><Input placeholder={tr("name@company.com, other@…")} value={v.attendeeEmails} onChange={(e) => set({ attendeeEmails: e.target.value })} /></FormItem>
-                    </div>
+                    <FormItem label={tr("Other guests (emails)")}><Input placeholder={tr("name@company.com, other@…")} value={v.attendeeEmails} onChange={(e) => set({ attendeeEmails: e.target.value })} /></FormItem>
+                    {hasGuests && !readOnly && (
+                        <div className="mb-2 rounded-xl border border-gray-200 p-3 dark:border-gray-600">
+                            <div className="flex items-center gap-2 text-sm"><Switcher checked={v.sendInvites} onChange={(c) => set({ sendInvites: c })} /><TbCalendarPlus className="text-lg" /> {tr("Email an invitation with the calendar file to guests")}</div>
+                            {v.sendInvites && v.aboutType === 'client' && v.clientId && <div className="mt-2 flex items-center gap-2 text-sm"><Switcher checked={v.inviteClient} onChange={(c) => set({ inviteClient: c })} /> {tr("Also invite the client's main contact")}</div>}
+                        </div>
+                    )}
+
+                        </FoldSection>
+                        <FoldSection icon={<TbVideo />} tone="violet" title={tr("Meeting")} summary={meetText} open={sec === 'meet'} onToggle={() => toggle('meet')}>
                     <FormItem label={tr("Meeting link")}>
                         <div className="flex gap-2">
                             <Input placeholder={tr("https://meet.google.com/… or Zoom, Teams")} value={v.meetingUrl} onChange={(e) => set({ meetingUrl: e.target.value })} />
@@ -187,25 +205,24 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                         {!readOnly && <p className="mt-1 text-xs text-gray-400"><b>{tr("Create")}</b> {tr("makes a video room on meet.trtcrm.com. For Google Meet use")} <a className="text-primary underline" href="https://meet.new" target="_blank" rel="noreferrer">{tr("meet.new")}</a> {tr("and paste the link.")}</p>}
                     </FormItem>
                     <FormItem label={tr("Location")}><Input placeholder={tr("Office, address…")} value={v.location} onChange={(e) => set({ location: e.target.value })} /></FormItem>
+                        </FoldSection>
+                        <FoldSection icon={<TbNotes />} tone="amber" title={tr("Details")} summary={detailsText} open={sec === 'more'} onToggle={() => toggle('more')}>
                     <FormItem label={tr("Description")}><Input textArea rows={2} placeholder={tr("Agenda, notes…")} value={v.description} onChange={(e) => set({ description: e.target.value })} /></FormItem>
                     <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+                        <FormItem label={tr("Project")}><RelationSelect size="sm" resource="projects" value={v.projectId} onChange={(id) => set({ projectId: id })} /></FormItem>
                         <FormItem label={tr("Colour")}>
-                            <Select options={COLORS} value={COLORS.filter((o) => o.value === v.color)} components={{ Option: ColorOption, Control: ColorControl }} onChange={(o) => set({ color: o?.value || 'blue' })} />
-                        </FormItem>
-                        <FormItem label={tr("Reminder before")}>
-                            <div className="flex gap-2">
-                                <Input type="number" min="0" placeholder="—" value={v.reminderBefore} onChange={(e) => set({ reminderBefore: e.target.value })} />
-                                <div className="w-36"><Select options={UNITS} value={UNITS.find((u) => u.value === v.reminderBeforeType)} onChange={(o) => set({ reminderBeforeType: o.value })} /></div>
-                            </div>
+                            <Select size="sm" options={COLORS} value={COLORS.filter((o) => o.value === v.color)} components={{ Option: ColorOption, Control: ColorControl }} onChange={(o) => set({ color: o?.value || 'blue' })} />
                         </FormItem>
                     </div>
-                    <div className="mb-2 flex items-center gap-2 text-sm"><Switcher checked={v.isPublic} onChange={(c) => set({ isPublic: c })} /> {tr("Visible to everyone in the team")}</div>
-                    {hasGuests && !readOnly && (
-                        <div className="mb-2 rounded-xl border border-gray-200 p-3 dark:border-gray-600">
-                            <div className="flex items-center gap-2 text-sm"><Switcher checked={v.sendInvites} onChange={(c) => set({ sendInvites: c })} /><TbCalendarPlus className="text-lg" /> {tr("Email an invitation with the calendar file to guests")}</div>
-                            {v.sendInvites && v.aboutType === 'client' && v.clientId && <div className="mt-2 flex items-center gap-2 text-sm"><Switcher checked={v.inviteClient} onChange={(c) => set({ inviteClient: c })} /> {tr("Also invite the client's main contact")}</div>}
+                    <FormItem label={tr("Reminder before")}>
+                        <div className="flex max-w-xs gap-2">
+                            <Input size="sm" type="number" min="0" placeholder="—" value={v.reminderBefore} onChange={(e) => set({ reminderBefore: e.target.value })} />
+                            <div className="w-36"><Select size="sm" options={UNITS} value={UNITS.find((u) => u.value === v.reminderBeforeType)} onChange={(o) => set({ reminderBeforeType: o.value })} /></div>
                         </div>
-                    )}
+                    </FormItem>
+                    <div className="mb-2 flex items-center gap-2 text-sm"><Switcher checked={v.isPublic} onChange={(c) => set({ isPublic: c })} /> {tr("Visible to everyone in the team")}</div>
+                        </FoldSection>
+                    </div>
                 </fieldset>
                 </div>
                 <div className="mt-3 flex shrink-0 items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">

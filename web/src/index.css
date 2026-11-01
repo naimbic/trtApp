@@ -17,7 +17,7 @@
 .rich-view .hashtag { font-weight: 600; color: #d97706; }
 
 /* layers over the Rapport popups (task, lead...: z-index 110): a dialog opened from a popup (Files from the Space, delete confirmations...), tooltips and floating menus must show on top, not under */
-.dialog-portal .dialog-overlay { z-index: 130 !important; }
+.dialog-portal .dialog-overlay { z-index: var(--dlg-z, 130) !important; } /* each popup opened gets a higher --dlg-z than the ones already open (see Dialog.jsx) */
 [data-floating-ui-portal] > * { z-index: 135 !important; }
 .tooltip { z-index: 140 !important; }
 

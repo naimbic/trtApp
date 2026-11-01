@@ -76,7 +76,10 @@ export async function getCalendarItems({ from, to }) {
             start: e.allDay ? iso(e.start).slice(0, 10) : iso(e.start),
             end: e.allDay ? (e.end ? iso(new Date(new Date(e.end).getTime() + 86400000)).slice(0, 10) : undefined) : iso(e.end),
             allDay: !!e.allDay,
-            eventColor: draft ? 'yellow' : colorName(e.color),
+            eventColor: draft ? 'yellow' : e.confirmed ? 'green' : colorName(e.color),
+            confirmed: !!e.confirmed,
+            remindClient: !!e.remindClient,
+            reminderTemplate: e.reminderTemplate || '',
             type: 'events',
             editable: mine || ctx.admin || ctx.editOthers,
             canEdit: mine || ctx.admin || ctx.editOthers,
@@ -186,6 +189,13 @@ const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
 const validUrl = (u) => /^https?:\/\/[^\s]+$/i.test(u)
 const OID = /^[0-9a-f]{24}$/i
 export const cleanEvent = (b) => clean(b)
+/** The ready-made emails a reminder to the client can use (more can be made in Settings → Email templates with a name starting with event-). */
+export const REMINDER_TEMPLATES = [
+    { slug: 'event-reminder', label: 'Meeting reminder' },
+    { slug: 'event-reminder-prepare', label: 'Meeting reminder: what to prepare' },
+    { slug: 'event-reminder-starting', label: 'Starting soon: join now' },
+]
+
 const clean = (b) => {
     const title = String(b.title || '').trim()
     if (!title) throw Object.assign(new Error('Title is required'), { status: 400 })
@@ -205,6 +215,9 @@ const clean = (b) => {
         location: String(b.location || '').trim() || null,
         meetingUrl: meetingUrl || null,
         report: b.report ? String(b.report) : null,
+        confirmed: !!b.confirmed,
+        remindClient: !!b.remindClient,
+        reminderTemplate: REMINDER_TEMPLATES.some((t) => t.slug === b.reminderTemplate) || /^event-[a-z0-9-]{1,60}$/.test(String(b.reminderTemplate || '')) ? String(b.reminderTemplate) : null,
         category: ['meeting', 'call', 'visit', 'deadline', 'reminder', 'other'].includes(b.category) ? b.category : 'meeting',
         projectId: OID.test(b.projectId || '') ? b.projectId : null,
         clientId: OID.test(b.clientId || '') && !OID.test(b.leadId || '') ? b.clientId : null, // a client or a lead, not both
@@ -255,9 +268,11 @@ async function ownEvent(id) {
 
 export async function updateCalendarEvent(id, body) {
     const ev = await ownEvent(id)
-    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType }
+    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, leadId: ev.leadId, confirmed: ev.confirmed, remindClient: ev.remindClient, reminderTemplate: ev.reminderTemplate }
     const data = clean({ ...current, ...body })
-    const updated = await prisma.crmEvent.update({ where: { id }, data })
+    // a new time or a new reminder: the reminder is due again
+    const moved = +new Date(data.start) !== +new Date(ev.start) || data.reminderBefore !== ev.reminderBefore || data.reminderBeforeType !== ev.reminderBeforeType
+    const updated = await prisma.crmEvent.update({ where: { id }, data: { ...data, ...(moved ? { reminderSentAt: null } : {}) } })
     let told = []
     if (updated.source && body.notifyRequester) told = await (await import('@/lib/crm/appointments')).tellRequester(updated, { kind: 'updated', message: body.requesterMessage })
     if (updated.source) emit('appointment.updated', { id: updated.id, status: updated.status || 'confirmed', title: updated.title, start: updated.start, end: updated.end, meeting_url: updated.meetingUrl || null, room: updated.externalRef || null, source: updated.source })
@@ -278,7 +293,10 @@ export async function calendarLookups() {
     const ctx = await context()
     if (!ctx) throw Object.assign(new Error('Unauthorized'), { status: 401 })
     const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true }, orderBy: { firstName: 'asc' } })
-    return { staff: staff.map((x) => ({ id: x.id, name: `${x.firstName || ''} ${x.lastName || ''}`.trim() || x.email, email: x.email, image: realPicture(x.profileImage) })), me: ctx.staffId }
+    const mine = await prisma.crmEmailTemplate.findMany({ where: { slug: { startsWith: 'event-' }, active: true }, select: { slug: true, name: true } })
+    const known = new Set(REMINDER_TEMPLATES.map((t) => t.slug))
+    const reminderTemplates = [...REMINDER_TEMPLATES, ...[...new Map(mine.filter((t) => !known.has(t.slug) && t.slug !== 'event-reminder-nolink').map((t) => [t.slug, { slug: t.slug, label: t.name || t.slug }])).values()]]
+    return { reminderTemplates, staff: staff.map((x) => ({ id: x.id, name: `${x.firstName || ''} ${x.lastName || ''}`.trim() || x.email, email: x.email, image: realPicture(x.profileImage) })), me: ctx.staffId }
 }
 
 /** One event as .ics (download / "add to calendar"). */

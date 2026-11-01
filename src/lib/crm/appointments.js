@@ -84,7 +84,7 @@ export async function getAppointment(request, id) {
 async function decideCore(e, { accept, staffId, notify, message }) {
     const status = accept ? 'confirmed' : 'declined'
     if (e.status === status) return { row: e, emailed: [], same: true }
-    const row = await prisma.crmEvent.update({ where: { id: e.id }, data: { status, decidedBy: staffId || null, decidedAt: new Date(), ...(accept ? { userId: staffId || e.userId, color: 'blue' } : {}) } })
+    const row = await prisma.crmEvent.update({ where: { id: e.id }, data: { status, decidedBy: staffId || null, decidedAt: new Date(), ...(accept ? { userId: staffId || e.userId, color: 'blue', confirmed: true } : {}) } })
     emit(accept ? 'appointment.accepted' : 'appointment.declined', shape(row))
     const emailed = []
     if (notify !== false) {

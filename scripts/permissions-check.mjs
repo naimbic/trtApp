@@ -897,7 +897,7 @@ try {
         check('an unknown decision is refused', (await adm('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'maybe' })).status === 400)
         const ok = await adm('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'accept', notify: false })
         const acc = await prisma.crmEvent.findUnique({ where: { id: EID } })
-        check('accepting makes it a confirmed event owned by who accepted', ok.status === 200 && acc.status === 'confirmed' && acc.userId === aAdm.staffId && !!acc.decidedAt && acc.decidedBy === aAdm.staffId)
+        check('accepting makes it a confirmed event owned by who accepted', ok.status === 200 && acc.status === 'confirmed' && acc.confirmed === true && acc.userId === aAdm.staffId && !!acc.decidedAt && acc.decidedBy === aAdm.staffId)
         check('...and it can be decided only once', (await adm('POST', `/api/crm/calendar/${EID}/decision`, { decision: 'decline' })).status === 409)
         check('...the program sees it confirmed, and it is now in the member meetings feed', (await (await call(kW, null, 'GET', `/api/v1/calendar/events/${EID}`)).json()).data?.status === 'confirmed' && ((await (await fetch(`${BASE}/api/v1/calendar/events?staff_id=${aAdm.staffId}`, { headers: { authorization: `Bearer ${kR}` } })).json()).data || []).some((x) => x.id === EID))
         check('a request for a confirmed room is not touched again', (await (await call(kW, { ...good, title: 'again' })).json()).created === false && (await prisma.crmEvent.findUnique({ where: { id: EID } })).title !== 'again')
@@ -934,6 +934,36 @@ try {
         check('...and nothing private leaves: no title, no name, no description', !JSON.stringify(bj).includes('zz private title') && !JSON.stringify(bj).includes('zz draft busy') && Object.keys(bi(evBusy.id)).sort().join() === 'all_day,end,id,staff_ids,start,status')
         check('...staff_id limits it to one member, a range of more than 62 days is refused', !(((await (await bz(kR, `?staff_id=${aMem.staffId}`)).json()).data || []).some((x) => x.id === evBusy.id)) && (await bz(kR, '?from=2026-01-01&to=2026-12-31')).status === 400)
         await prisma.crmNotification.deleteMany({ where: { additionalData: 'appointment', createdAt: { gte: t0 } } })
+    }
+
+    console.log('\n== Calendar: confirmed meetings, reminder for the client with a template')
+    {
+        const t0 = new Date()
+        const cU = await makeUser('cal-conf', { calendar: ['view', 'create', 'edit', 'view_all_events'] }, false), cAdm = await makeUser('cal-conf-admin', {}, true)
+        const cu = await login(cU), ca = await login(cAdm)
+        const st = new Date(Date.now() + 20 * 60000), en = new Date(Date.now() + 80 * 60000)
+        const body = { title: 'zz confirmed meeting', start: st.toISOString(), end: en.toISOString(), confirmed: true, remindClient: true, reminderBefore: 30, reminderBeforeType: 'minutes', reminderTemplate: 'event-reminder-prepare', attendeeEmails: 'guest@example.test', meetingUrl: 'https://meet.trtcrm.com/zz-conf' }
+        const mk = await cu('POST', '/api/crm/calendar', body); const EID = mk.body?.id
+        if (EID) made.rows.unshift(['crmEvent', EID])
+        const row = EID ? await prisma.crmEvent.findUnique({ where: { id: EID } }) : null
+        check('an event can be confirmed and can remind the client with a chosen template', mk.status < 300 && row?.confirmed === true && row.remindClient === true && row.reminderTemplate === 'event-reminder-prepare', String(mk.status))
+        const rng = `from=${new Date(Date.now() - 86400000).toISOString()}&to=${new Date(Date.now() + 2 * 86400000).toISOString()}`
+        const it = ((await cu('GET', `/api/crm/calendar?${rng}`)).body?.items || []).find((x) => x.rawId === EID)
+        check('a confirmed event is green and says so (the calendar draws the light green background and the glowing dot)', it?.confirmed === true && it.eventColor === 'green' && it.remindClient === true)
+        const plain = await cu('POST', '/api/crm/calendar', { ...body, title: 'zz unconfirmed', confirmed: false, remindClient: false, reminderTemplate: 'rm -rf', start: new Date(Date.now() + 5 * 86400000).toISOString(), end: new Date(Date.now() + 5 * 86400000 + 3600000).toISOString() })
+        if (plain.body?.id) made.rows.unshift(['crmEvent', plain.body.id])
+        const prow = plain.body?.id ? await prisma.crmEvent.findUnique({ where: { id: plain.body.id } }) : null
+        check('by default an event is not confirmed; an unknown template name is dropped', prow?.confirmed === false && prow.reminderTemplate === null)
+        const lk = (await cu('GET', '/api/crm/calendar/lookups')).body
+        check('the reminder templates are offered (ready-made ones)', (lk?.reminderTemplates || []).length >= 3 && lk.reminderTemplates.some((x) => x.slug === 'event-reminder-prepare'))
+        const dry = await ca('POST', '/api/crm/cron/run', { dry: true })
+        check('the automatic task finds the reminder that is due (30 minutes before an event in 20 minutes), client included', dry.status === 200 && JSON.stringify(dry.body).includes('Reminder of the event “zz confirmed meeting” would be sent (client too)'))
+        await prisma.crmEvent.update({ where: { id: EID }, data: { reminderSentAt: new Date() } })
+        const dry2 = await ca('POST', '/api/crm/cron/run', { dry: true })
+        check('...and only once: when it was sent it is not due again', !JSON.stringify(dry2.body).includes('zz confirmed meeting'))
+        await cu('PATCH', `/api/crm/calendar/${EID}`, { title: 'zz confirmed meeting', start: new Date(+st + 3600000).toISOString(), end: new Date(+en + 3600000).toISOString() })
+        check('a new time makes the reminder due again', (await prisma.crmEvent.findUnique({ where: { id: EID } })).reminderSentAt === null)
+        await prisma.crmNotification.deleteMany({ where: { additionalData: 'event-reminder', createdAt: { gte: t0 } } })
     }
 
     console.log('\n== Tickets: client area, rating, automatic messages, tasks and reminders')

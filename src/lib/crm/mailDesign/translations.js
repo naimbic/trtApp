@@ -3,6 +3,10 @@
 export const TRANSLATIONS = {
  "spanish": {
   "templates": {
+   "event-reminder": ["Recordatorio: {event_title}", "Su reunión se acerca", "Le recordamos amablemente nuestra reunión {event_title} el {event_date} a las {event_time}.\\nSi necesita cambiarla, responda a este correo.", "Unirse a la reunión"],
+   "event-reminder-prepare": ["Reunión {event_title}: qué preparar", "Su reunión se acerca", "Nuestra reunión {event_title} es el {event_date} a las {event_time}.\\nPara aprovecharla al máximo, tenga a mano sus preguntas y los documentos de los que hablamos.\\nSi necesita cambiarla, responda a este correo.", "Unirse a la reunión"],
+   "event-reminder-starting": ["Empieza pronto: {event_title}", "Su reunión empieza pronto", "Nuestra reunión {event_title} empieza a las {event_time} ({event_date}).\\nUse el botón para unirse: no hace falta cuenta.", "Unirse ahora"],
+   "event-reminder-nolink": ["Recordatorio: {event_title}", "Su reunión se acerca", "Le recordamos amablemente nuestra reunión {event_title} el {event_date} a las {event_time}.\\nSi necesita cambiarla, responda a este correo.", ""],
    "invoice-send-to-client": [
     "Factura {invoice_number} de {companyname}",
     "Su factura está lista",
@@ -563,6 +567,7 @@ export const TRANSLATIONS = {
    ]
   },
   "rowLabels": {
+   "Location": "Lugar",
    "Invoice": "Factura",
    "Status": "Estado",
    "Due date": "Fecha de vencimiento",
@@ -629,6 +634,10 @@ export const TRANSLATIONS = {
  },
  "japanese": {
   "templates": {
+   "event-reminder": ["リマインダー:{event_title}", "まもなく会議です", "会議「{event_title}」は {event_date} {event_time} です。\\n変更が必要な場合は、このメールに返信してください。", "会議に参加"],
+   "event-reminder-prepare": ["会議「{event_title}」の準備について", "まもなく会議です", "会議「{event_title}」は {event_date} {event_time} です。\\n有意義な時間にするため、ご質問と事前にお話しした資料をご準備ください。\\n変更が必要な場合は、このメールに返信してください。", "会議に参加"],
+   "event-reminder-starting": ["まもなく開始:{event_title}", "会議がまもなく始まります", "会議「{event_title}」は {event_time}({event_date})に始まります。\\nボタンから参加できます。アカウントは不要です。", "今すぐ参加"],
+   "event-reminder-nolink": ["リマインダー:{event_title}", "まもなく会議です", "会議「{event_title}」は {event_date} {event_time} です。\\n変更が必要な場合は、このメールに返信してください。", ""],
    "invoice-send-to-client": [
     "{companyname}より請求書 {invoice_number} のご送付",
     "請求書をご用意いたしました",
@@ -1189,6 +1198,7 @@ export const TRANSLATIONS = {
    ]
   },
   "rowLabels": {
+   "Location": "場所",
    "Invoice": "請求書",
    "Status": "ステータス",
    "Due date": "支払期限",
@@ -1255,6 +1265,10 @@ export const TRANSLATIONS = {
  },
  "arabic": {
   "templates": {
+   "event-reminder": ["تذكير: {event_title}", "اجتماعك يقترب", "تذكير ودّي باجتماعنا {event_title} بتاريخ {event_date} الساعة {event_time}.\\nإذا احتجت إلى تغييره فما عليك سوى الرد على هذه الرسالة.", "انضم إلى الاجتماع"],
+   "event-reminder-prepare": ["اجتماع {event_title}: ما يجب تحضيره", "اجتماعك يقترب", "اجتماعنا {event_title} بتاريخ {event_date} الساعة {event_time}.\\nللاستفادة منه، يرجى تجهيز أسئلتك والمستندات التي تحدثنا عنها.\\nإذا احتجت إلى تغييره فرد على هذه الرسالة.", "انضم إلى الاجتماع"],
+   "event-reminder-starting": ["يبدأ قريبًا: {event_title}", "اجتماعك يبدأ قريبًا", "اجتماعنا {event_title} يبدأ الساعة {event_time} ({event_date}).\\nاستخدم الزر للانضمام: لا حاجة إلى حساب.", "انضم الآن"],
+   "event-reminder-nolink": ["تذكير: {event_title}", "اجتماعك يقترب", "تذكير ودّي باجتماعنا {event_title} بتاريخ {event_date} الساعة {event_time}.\\nإذا احتجت إلى تغييره فما عليك سوى الرد على هذه الرسالة.", ""],
    "invoice-send-to-client": [
     "الفاتورة {invoice_number} من {companyname}",
     "فاتورتك جاهزة",
@@ -1815,6 +1829,7 @@ export const TRANSLATIONS = {
    ]
   },
   "rowLabels": {
+   "Location": "المكان",
    "Invoice": "الفاتورة",
    "Status": "الحالة",
    "Due date": "تاريخ الاستحقاق",

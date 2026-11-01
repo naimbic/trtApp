@@ -89,7 +89,7 @@ const renderEvent = (arg) => {
     const p = ev.extendedProps
     return (
         <Tooltip title={<EventTip ev={ev} timeText={arg.timeText} />} placement="top">
-            <div className={`sch-ev ${p.done ? 'is-done' : ''}`} style={{ '--c': dotOf(p) }}>
+            <div className={`sch-ev ${p.done ? 'is-done' : ''} ${p.confirmed && p.status !== 'draft' ? 'is-confirmed' : ''}`} style={{ '--c': dotOf(p) }}>
                 <i className="sch-ev__dot" />
                 {!ev.allDay && ev.start ? <span className="sch-ev__time">{hTime(ev.start)}</span> : null}
                 <b className="sch-ev__title">{nameOf(p, ev.title)}</b>
@@ -121,6 +121,7 @@ const Calendar = () => {
     const [dialog, setDialog] = useState({ open: false, selected: { type: 'NEW' } })
     const [saving, setSaving] = useState(false)
     const [staff, setStaff] = useState([])
+    const [reminderTemplates, setReminderTemplates] = useState([])
     const [selectedDay, setSelectedDay] = useState(dayOf(new Date()))
     const [menu, setMenu] = useState(null) // { it, el }
     const [addMenu, setAddMenu] = useState(null) // { day, time?, el }: the + on a day box or on the hovered hour
@@ -141,7 +142,7 @@ const Calendar = () => {
     const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
     const seq = useRef(0)
-    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => { setStaff((d.staff || []).filter((m) => m.active !== false)) }).catch(() => {}) }, [])
+    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => { setStaff((d.staff || []).filter((m) => m.active !== false)); setReminderTemplates(d.reminderTemplates || []) }).catch(() => {}) }, [])
 
     const load = useCallback(async (r = range.current) => {
         if (!r) return
@@ -213,7 +214,7 @@ const Calendar = () => {
                 type: 'EDIT', id: p.rawId, title: p.rawTitle, description: p.description, start: p.rawStart, end: p.rawEnd, allDay: p.allDay,
                 eventColor: p.eventColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, clientId: p.clientId, leadId: p.leadId,
                 category: p.category, projectId: p.projectId, attendeeIds: p.attendeeIds, attendeeEmails: p.attendeeEmails, reminderBefore: p.reminderBefore, reminderBeforeType: p.reminderBeforeType,
-                editable: p.canEdit, owner: p.owner, status: p.status, source: p.source, guests: p.guests,
+                editable: p.canEdit, owner: p.owner, status: p.status, source: p.source, guests: p.guests, confirmed: p.confirmed, remindClient: p.remindClient, reminderTemplate: p.reminderTemplate,
             },
         })
     }
@@ -319,7 +320,7 @@ const Calendar = () => {
     const daysLate = (d) => Math.max(1, dayjs(today).diff(dayjs(d), 'day'))
 
     const row = (it, late) => (
-        <li key={it.id} className={`sch-row ${it.done ? 'is-done' : ''}`}>
+        <li key={it.id} className={`sch-row ${it.done ? 'is-done' : ''} ${(it.confirmed ?? it.extendedProps?.confirmed) && (it.status ?? it.extendedProps?.status) !== 'draft' ? 'is-confirmed' : ''}`}>
             {it.type === 'tasks'
                 ? <button type="button" className="sch-check" aria-pressed={!!it.done} aria-label={it.done ? tr("Reopen") : tr("Mark complete")} onClick={() => setDone(it, !it.done)} style={{ '--c': dotOf(it) }}>{it.done && <TbCheck />}</button>
                 : <i className="sch-row__dot" style={{ background: dotOf(it) }} />}
@@ -407,7 +408,7 @@ const Calendar = () => {
                 selected={dialog.selected}
                 saving={saving}
                 onSubmit={submit}
-                onDelete={() => setConfirmDel(true)} staff={staff}
+                onDelete={() => setConfirmDel(true)} staff={staff} reminderTemplates={reminderTemplates}
                 onDecided={() => { setDialog((d) => ({ ...d, open: false })); load() }}
                 onClose={() => setDialog((d) => ({ ...d, open: false }))}
             />

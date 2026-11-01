@@ -4997,5 +4997,14 @@ export default {
     "+50 points": "+50 نقطة",
     "Points": "النقاط",
     "Trophy not found": "الكأس غير موجود",
-    "You are not allowed to see this": "غير مسموح لك برؤية هذا"
+    "You are not allowed to see this": "غير مسموح لك برؤية هذا",
+    "Also remind the client, the lead and the guests by email": "تذكير العميل والعميل المحتمل والضيوف بالبريد أيضًا",
+    "Choose a client or a lead, or add a guest email, to switch this on.": "اختر عميلًا أو عميلًا محتملًا، أو أضف بريد ضيف، لتفعيله.",
+    "Colour (green while confirmed)": "اللون (أخضر عند التأكيد)",
+    "Not confirmed yet": "غير مؤكد بعد",
+    "Meeting reminder": "تذكير بالاجتماع",
+    "Meeting reminder: what to prepare": "تذكير بالاجتماع: ما يجب تحضيره",
+    "Starting soon: join now": "يبدأ قريبًا: انضم الآن",
+    "Calendar event reminders": "تذكيرات أحداث التقويم",
+    "Send the calendar event reminders": "إرسال تذكيرات أحداث التقويم"
 }

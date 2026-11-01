@@ -4997,5 +4997,14 @@ export default {
     "+50 points": "+50ポイント",
     "Points": "ポイント",
     "Trophy not found": "トロフィーが見つかりません",
-    "You are not allowed to see this": "これを見る権限がありません"
+    "You are not allowed to see this": "これを見る権限がありません",
+    "Also remind the client, the lead and the guests by email": "クライアント、リード、ゲストにもメールでリマインドする",
+    "Choose a client or a lead, or add a guest email, to switch this on.": "オンにするには、クライアントまたはリードを選ぶか、ゲストのメールを追加してください。",
+    "Colour (green while confirmed)": "色(確定中は緑)",
+    "Not confirmed yet": "未確定",
+    "Meeting reminder": "会議のリマインダー",
+    "Meeting reminder: what to prepare": "会議のリマインダー:準備するもの",
+    "Starting soon: join now": "まもなく開始:今すぐ参加",
+    "Calendar event reminders": "カレンダーイベントのリマインダー",
+    "Send the calendar event reminders": "カレンダーイベントのリマインダーを送信"
 }

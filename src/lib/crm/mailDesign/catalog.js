@@ -313,3 +313,17 @@ D('purchase-order-send-to-client', 'c', 'info', '', [['Purchase order', 'Bon de 
 D('purchase-order-confirmed', 'c', 'success', '', [['Purchase order', 'Bon de commande', 'purchase_order_number'], ['Expected delivery', 'Livraison prévue', 'purchase_order_delivery'], ['Total', 'Total', 'purchase_order_total']], null,
   ['Order {purchase_order_number} confirmed', 'Your order is confirmed', 'Thank you. Purchase order {purchase_order_number} is confirmed and we are getting started.', ''],
   ['Commande {purchase_order_number} confirmée', 'Votre commande est confirmée', 'Merci. Le bon de commande {purchase_order_number} est confirmé et nous démarrons.', ''])
+
+/* ---------- Meetings ---------- */
+D('event-reminder', 'c', 'info', 'meeting_link', [['Date', 'Date', 'event_date'], ['Time', 'Heure', 'event_time'], ['Location', 'Lieu', 'event_location']], null,
+  ['Reminder: {event_title}', 'Your meeting is coming up', 'This is a friendly reminder of our meeting {event_title} on {event_date} at {event_time}.\nIf you need to move it, just reply to this email.', 'Join the meeting'],
+  ['Rappel : {event_title}', 'Votre rendez-vous approche', 'Petit rappel de notre rendez-vous {event_title} le {event_date} à {event_time}.\nSi vous devez le déplacer, répondez simplement à cet e-mail.', 'Rejoindre la réunion'])
+D('event-reminder-prepare', 'c', 'info', 'meeting_link', [['Date', 'Date', 'event_date'], ['Time', 'Heure', 'event_time'], ['Location', 'Lieu', 'event_location']], null,
+  ['Meeting {event_title}: what to prepare', 'Your meeting is coming up', 'Our meeting {event_title} is on {event_date} at {event_time}.\nTo make the most of it, please have your questions and the documents we talked about ready.\nIf you need to move it, reply to this email.', 'Join the meeting'],
+  ['Rendez-vous {event_title} : à préparer', 'Votre rendez-vous approche', 'Notre rendez-vous {event_title} a lieu le {event_date} à {event_time}.\nPour en profiter pleinement, merci de préparer vos questions et les documents dont nous avons parlé.\nSi vous devez le déplacer, répondez à cet e-mail.', 'Rejoindre la réunion'])
+D('event-reminder-starting', 'c', 'warn', 'meeting_link', [['Time', 'Heure', 'event_time'], ['Date', 'Date', 'event_date']], null,
+  ['Starting soon: {event_title}', 'Your meeting starts soon', 'Our meeting {event_title} starts at {event_time} ({event_date}).\nUse the button to join: no account is needed.', 'Join now'],
+  ['Bientôt : {event_title}', 'Votre rendez-vous commence bientôt', 'Notre rendez-vous {event_title} commence à {event_time} ({event_date}).\nUtilisez le bouton pour le rejoindre : aucun compte n\'est nécessaire.', 'Rejoindre maintenant'])
+D('event-reminder-nolink', 'c', 'info', '', [['Date', 'Date', 'event_date'], ['Time', 'Heure', 'event_time'], ['Location', 'Lieu', 'event_location']], null,
+  ['Reminder: {event_title}', 'Your meeting is coming up', 'This is a friendly reminder of our meeting {event_title} on {event_date} at {event_time}.\nIf you need to move it, just reply to this email.', ''],
+  ['Rappel : {event_title}', 'Votre rendez-vous approche', 'Petit rappel de notre rendez-vous {event_title} le {event_date} à {event_time}.\nSi vous devez le déplacer, répondez simplement à cet e-mail.', ''])

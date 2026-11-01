@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.153.0',
+        date: '2026-11-01',
+        title: 'Confirmed meetings in green, reminders for the client with an email template, popups on top of each other',
+        items: [
+            'Fixed: a popup opened from another popup (for example "Delete this event?" over the event form) showed under it. Every popup now opens above the ones already open.',
+            'Calendar event, Details: a switch Confirmed (off by default). A confirmed event turns green, with a light green background and a glowing dot in the calendar (month, week, day and the list at the side). Accepting an appointment request also confirms it. The Details section is now compact: the two switches on one line, project, colour and reminder on one row.',
+            'Reminders now really go out. At the time chosen ("30 minutes before") the team members of the event get a bell and Telegram / WhatsApp message, once. New switch "Also remind the client, the lead and the guests by email", with a choice of email template: Meeting reminder, what to prepare, or Starting soon (with the join link), in five languages, plus any template you make in Settings → Email templates whose name starts with event-. Without a meeting link the email has no join button. A new time makes the reminder due again. The automatic task is "Calendar event reminders" in Settings → Cron job (it must run every few minutes).',
+        ],
+    },
+    {
         version: '0.152.1',
         date: '2026-11-01',
         title: 'Meet can delete, edit and answer its requests even after its API key was replaced',

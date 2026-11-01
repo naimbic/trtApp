@@ -4997,5 +4997,14 @@ export default {
     "+50 points": "+50 points",
     "Points": "Points",
     "Trophy not found": "Trophée introuvable",
-    "You are not allowed to see this": "Vous n'avez pas le droit de voir ceci"
+    "You are not allowed to see this": "Vous n'avez pas le droit de voir ceci",
+    "Also remind the client, the lead and the guests by email": "Rappeler aussi le client, le prospect et les invités par e-mail",
+    "Choose a client or a lead, or add a guest email, to switch this on.": "Choisissez un client ou un prospect, ou ajoutez l'e-mail d'un invité, pour l'activer.",
+    "Colour (green while confirmed)": "Couleur (verte quand confirmé)",
+    "Not confirmed yet": "Pas encore confirmé",
+    "Meeting reminder": "Rappel de rendez-vous",
+    "Meeting reminder: what to prepare": "Rappel de rendez-vous : à préparer",
+    "Starting soon: join now": "Bientôt : rejoindre maintenant",
+    "Calendar event reminders": "Rappels des événements du calendrier",
+    "Send the calendar event reminders": "Envoyer les rappels des événements du calendrier"
 }

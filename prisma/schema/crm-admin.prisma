@@ -518,6 +518,12 @@ model CrmEvent {
   /// who asked: [{ name, email, phone }]
   guests             Json?
   apiKeyId           String?   @db.ObjectId
+  /// switched on by a team member (or by accepting a request): the event shows green, sure to happen
+  confirmed          Boolean   @default(false)
+  /// the reminder before the start also goes to the client / lead / guests by email, with this email template (slug)
+  remindClient       Boolean   @default(false)
+  reminderTemplate   String?
+  reminderSentAt     DateTime?
   decidedBy          String?   @db.ObjectId
   decidedAt          DateTime?
   createdAt          DateTime  @default(now())

@@ -559,6 +559,9 @@ export const GROUPS = {
             { title: 'Note and ticket reminders', desc: 'A note with "Remind me at" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
                 yes('cron_job_notereminders', 'Send the note reminders', { default: '1', cardToggle: true }),
             ] },
+            { title: 'Calendar event reminders', desc: 'At the time chosen on an event ("30 minutes before"), tells the team members of the event on the bell and on Telegram / WhatsApp, and emails the client, the lead and the guests when "Also remind the client" is on. The automatic tasks must run often (for example every 5 minutes).', fields: [
+                yes('cron_job_eventreminders', 'Send the calendar event reminders', { default: '1', cardToggle: true }),
+            ] },
             { title: 'Scheduled chat messages', desc: 'Posts the messages written in Scheduled messages (once or repeating) in the team chat or as private messages, at the first run after their time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
                 yes('cron_job_chatschedule', 'Send the scheduled chat messages', { default: '1', cardToggle: true }),
             ] },

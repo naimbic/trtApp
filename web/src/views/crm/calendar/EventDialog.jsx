@@ -63,10 +63,10 @@ const jitsi = () => `${MEET_HOST}/TRT-${Math.random().toString(36).slice(2, 8)}-
 const ROOMS = [['discovery_call', 'Discovery call'], ['proposal_review', 'Proposal review'], ['contract_signing', 'Contract signing'], ['client_checkin', 'Client check-in'], ['internal', 'Internal'], ['interview', 'Interview']]
 const roomUrl = (name) => `${MEET_HOST}/${String(name || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60)}`
 
-const EMPTY = { category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
+const EMPTY = { confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
-const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, onClose, onDecided }) => {
+const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], saving, onSubmit, onDelete, onClose, onDecided }) => {
     const [deciding, setDeciding] = useState('')
     const [note, setNote] = useState('') // a message for the person who asked
     const [tell, setTell] = useState(false)
@@ -101,6 +101,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
             aboutType: selected.leadId ? 'lead' : 'client',
             attendeeIds: selected.attendeeIds || [],
             attendeeEmails: (selected.attendeeEmails || []).join(', '),
+            confirmed: !!selected.confirmed, remindClient: !!selected.remindClient, reminderTemplate: selected.reminderTemplate || '',
             reminderBefore: selected.reminderBefore ?? '',
             reminderBeforeType: selected.reminderBeforeType || 'minutes',
         })
@@ -113,7 +114,9 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
     const dateText = v.start ? `${dayjs(v.start).format(v.allDay ? 'DD MMM' : 'DD MMM, HH:mm')}${v.end && !v.allDay ? ` → ${dayjs(v.end).format('HH:mm')}` : ''}` : tr("No date yet")
     const peopleText = [v.attendeeIds.length ? `${v.attendeeIds.length} ${tr("team")}` : '', v.attendeeEmails.trim() ? tr("guests") : '', v.clientId ? tr("Client") : v.leadId ? tr("Lead") : ''].filter(Boolean).join(' · ') || tr("Nobody yet")
     const meetText = v.meetingUrl ? v.meetingUrl.replace(/^https?:\/\//, '') : v.location || tr("No link")
-    const detailsText = [v.reminderBefore !== '' ? `${tr("Reminder")} ${v.reminderBefore} ${tr(v.reminderBeforeType)}` : '', v.isPublic ? tr("Visible to all") : '', v.description ? tr("Notes") : ''].filter(Boolean).join(' · ') || tr("Colour, reminder, notes")
+    const detailsText = [v.reminderBefore !== '' ? `${tr("Reminder")} ${v.reminderBefore} ${tr(v.reminderBeforeType)}` : '', v.isPublic ? tr("Visible to all") : '', v.confirmed ? tr("Confirmed") : '', v.description ? tr("Notes") : ''].filter(Boolean).join(' · ') || tr("Colour, reminder, notes")
+    const hasWho = !!(v.clientId || v.leadId || v.attendeeEmails.trim())
+    const tplOpts = (reminderTemplates.length ? reminderTemplates : [{ slug: 'event-reminder', label: 'Meeting reminder' }]).map((t) => ({ value: t.slug, label: tr(t.label) }))
     const hasGuests = v.attendeeIds.length > 0 || v.attendeeEmails.trim() || (v.aboutType === 'client' && v.clientId)
 
     const submit = (e) => {
@@ -128,6 +131,7 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
         onSubmit({
             title: v.title.trim(), description: v.description, start: start.toISOString(), end: end ? end.toISOString() : null, color: v.color, isPublic: v.isPublic,
             allDay: v.allDay, category: v.category, projectId: v.projectId, location: v.location, meetingUrl: v.meetingUrl.trim(), clientId: v.aboutType === 'client' ? v.clientId : null, leadId: v.aboutType === 'lead' ? v.leadId : null, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
+            confirmed: v.confirmed, remindClient: v.remindClient && hasWho && v.reminderBefore !== '', reminderTemplate: v.reminderTemplate || null,
             reminderBefore: v.reminderBefore === '' ? null : Number(v.reminderBefore), reminderBeforeType: v.reminderBeforeType,
             notifyRequester: tell && selected.status !== 'draft', requesterMessage: tell ? note.trim() : undefined,
             sendInvites: v.sendInvites && !!hasGuests, inviteClient: v.sendInvites && v.inviteClient && v.aboutType === 'client' && !!v.clientId,
@@ -217,20 +221,32 @@ const EventDialog = ({ open, selected, staff = [], saving, onSubmit, onDelete, o
                     <FormItem label={tr("Location")}><Input placeholder={tr("Office, address…")} value={v.location} onChange={(e) => set({ location: e.target.value })} /></FormItem>
                         </FoldSection>
                         <FoldSection icon={<TbNotes />} tone="amber" title={tr("Details")} summary={detailsText} open={sec === 'more'} onToggle={() => toggle('more')}>
-                    <FormItem label={tr("Description")}><Input textArea rows={2} placeholder={tr("Agenda, notes…")} value={v.description} onChange={(e) => set({ description: e.target.value })} /></FormItem>
-                    <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-                        <FormItem label={tr("Project")}><RelationSelect size="sm" resource="projects" value={v.projectId} onChange={(id) => set({ projectId: id })} /></FormItem>
-                        <FormItem label={tr("Colour")}>
-                            <Select size="sm" options={COLORS} value={COLORS.filter((o) => o.value === v.color)} components={{ Option: ColorOption, Control: ColorControl }} onChange={(o) => set({ color: o?.value || 'blue' })} />
+                    <div className="mb-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                        <label className={`flex items-center gap-2 rounded-full px-2.5 py-1 font-semibold transition ${v.confirmed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700'}`}><Switcher checked={v.confirmed} onChange={(c) => set({ confirmed: c })} /><span className={`h-2 w-2 rounded-full ${v.confirmed ? 'bg-emerald-500 shadow-[0_0_8px_2px_rgba(16,185,129,0.65)]' : 'bg-gray-400'}`} />{v.confirmed ? tr("Confirmed") : tr("Not confirmed yet")}</label>
+                        <label className="flex items-center gap-2"><Switcher checked={v.isPublic} onChange={(c) => set({ isPublic: c })} />{tr("Visible to everyone in the team")}</label>
+                    </div>
+                    <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-3">
+                        <FormItem className="!mb-2" label={tr("Project")}><RelationSelect size="sm" resource="projects" value={v.projectId} onChange={(id) => set({ projectId: id })} /></FormItem>
+                        <FormItem className="!mb-2" label={v.confirmed ? tr("Colour (green while confirmed)") : tr("Colour")}>
+                            <Select size="sm" isDisabled={v.confirmed} options={COLORS} value={COLORS.filter((o) => o.value === (v.confirmed ? 'green' : v.color))} components={{ Option: ColorOption, Control: ColorControl }} onChange={(o) => set({ color: o?.value || 'blue' })} />
+                        </FormItem>
+                        <FormItem className="!mb-2" label={tr("Reminder before")}>
+                            <div className="flex gap-1.5">
+                                <div className="w-16 shrink-0"><Input size="sm" type="number" min="0" placeholder="—" value={v.reminderBefore} onChange={(e) => set({ reminderBefore: e.target.value })} /></div>
+                                <div className="min-w-0 flex-1"><Select size="sm" isSearchable={false} options={UNITS} value={UNITS.find((u) => u.value === v.reminderBeforeType)} onChange={(o) => set({ reminderBeforeType: o.value })} /></div>
+                            </div>
                         </FormItem>
                     </div>
-                    <FormItem label={tr("Reminder before")}>
-                        <div className="flex max-w-xs gap-2">
-                            <Input size="sm" type="number" min="0" placeholder="—" value={v.reminderBefore} onChange={(e) => set({ reminderBefore: e.target.value })} />
-                            <div className="w-36"><Select size="sm" options={UNITS} value={UNITS.find((u) => u.value === v.reminderBeforeType)} onChange={(o) => set({ reminderBeforeType: o.value })} /></div>
+                    {v.reminderBefore !== '' && (
+                        <div className="mb-2.5 rounded-xl bg-gray-50 px-3 py-2 dark:bg-gray-700/40">
+                            <label className="flex items-center gap-2 text-sm"><Switcher disabled={!hasWho} checked={v.remindClient && hasWho} onChange={(c) => set({ remindClient: c })} />{tr("Also remind the client, the lead and the guests by email")}</label>
+                            {!hasWho && <p className="mt-1 text-xs text-gray-400">{tr("Choose a client or a lead, or add a guest email, to switch this on.")}</p>}
+                            {v.remindClient && hasWho && (
+                                <div className="mt-2 flex flex-wrap items-center gap-2"><span className="text-xs font-semibold text-gray-500">{tr("Email template")}</span><div className="w-64 max-w-full"><Select size="sm" isSearchable={false} options={tplOpts} value={tplOpts.find((o) => o.value === (v.reminderTemplate || 'event-reminder'))} onChange={(o) => set({ reminderTemplate: o.value })} /></div></div>
+                            )}
                         </div>
-                    </FormItem>
-                    <div className="mb-2 flex items-center gap-2 text-sm"><Switcher checked={v.isPublic} onChange={(c) => set({ isPublic: c })} /> {tr("Visible to everyone in the team")}</div>
+                    )}
+                    <FormItem className="!mb-1" label={tr("Description")}><Input size="sm" textArea rows={2} placeholder={tr("Agenda, notes…")} value={v.description} onChange={(e) => set({ description: e.target.value })} /></FormItem>
                         </FoldSection>
                     </div>
                 </fieldset>

@@ -1,11 +1,17 @@
+import { useEffect, useRef } from 'react'
 import Modal from 'react-modal'
 import classNames from 'classnames'
 import CloseButton from '../CloseButton'
 import { motion } from 'framer-motion'
 import useWindowSize from '../hooks/useWindowSize'
 
+// a popup opened from another popup (a confirmation over a form) must be on top of it, whatever the order the two were mounted in
+// (stays under the floating menus and tooltips, which are at 135 and above)
+let openCount = 0
+
 const Dialog = (props) => {
     const currentSize = useWindowSize()
+    const stack = useRef({ open: false, z: 130 })
 
     const {
         bodyOpenClassName,
@@ -37,11 +43,20 @@ const Dialog = (props) => {
         />
     )
 
+    if (isOpen && !stack.current.open) stack.current = { open: true, z: Math.min(134, 131 + openCount) }
+    else if (!isOpen && stack.current.open) stack.current = { ...stack.current, open: false }
+    useEffect(() => {
+        if (!isOpen) return undefined
+        openCount++
+        return () => { openCount = Math.max(0, openCount - 1) }
+    }, [isOpen])
+
     const contentStyle = {
         content: {
             inset: 'unset',
         },
         ...style,
+        overlay: { ...(style?.overlay || {}), '--dlg-z': stack.current.z },
     }
 
     if (width !== undefined) {

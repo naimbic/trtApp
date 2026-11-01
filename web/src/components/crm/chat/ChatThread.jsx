@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Mentioned from '@/components/crm/Mentioned'
+import RichEditor from '@/components/crm/RichEditor'
+import RichView from '@/components/crm/RichView'
+import Dropdown from '@/components/ui/Dropdown'
 import dayjs from 'dayjs'
-import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone, PiArrowBendUpLeftBold } from 'react-icons/pi'
+import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone, PiArrowBendUpLeftBold, PiCameraDuotone, PiTextAaBold, PiDotsThreeBold, PiCheckSquareDuotone, PiUsersDuotone, PiBuildingsDuotone, PiTagDuotone } from 'react-icons/pi'
 import classNames from '@/utils/classNames'
 import { ping } from './chatKit'
 import { tr } from '@/utils/t'
@@ -26,7 +29,10 @@ const time = (d) => (dayjs(d).isSame(dayjs(), 'day') ? dayjs(d).format('HH:mm') 
  * Message list + composer, shared by the staff widget and the client portal.
  * load(after) -> { messages, ...extra }   send(body) -> message   onData(extra) gets everything but messages.
  */
-const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr("No messages yet. Say hello!"), placeholder = tr("Write a message…") }) => {
+const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr("No messages yet. Say hello!"), placeholder = tr("Write a message…"), rich = false, onMessageAction, people = [], refreshSignal = 0 }) => {
+    const [html, setHtml] = useState('')
+    const [fmt, setFmt] = useState(false) // the full formatting bar of the rich editor
+    const editorRef = useRef(null)
     const [msgs, setMsgs] = useState(null)
     const [text, setText] = useState('')
     const [busy, setBusy] = useState(false)
@@ -53,6 +59,7 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
     }, [load, onData])
 
     useEffect(() => { last.current = null; setMsgs(null); stick.current = true; pull(true) }, [load]) // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { if (refreshSignal) pull(true) }, [refreshSignal]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (msgs?.length) last.current = msgs[msgs.length - 1].at }, [msgs])
     useEffect(() => {
         const t = setInterval(() => { if (!document.hidden) pull(false) }, POLL)
@@ -61,12 +68,13 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
     useEffect(() => { if (stick.current && box.current) box.current.scrollTop = box.current.scrollHeight }, [msgs])
 
     const submit = async (attachment) => {
-        const body = attachment ? '' : text.trim()
-        if ((!body && !attachment) || busy) return
+        const body = attachment ? '' : rich ? '' : text.trim()
+        const richHtml = rich && !attachment ? html : ''
+        if ((!body && !richHtml && !attachment) || busy) return
         setBusy(true); setErr('')
         try {
-            const m = await send(body, attachment, replyTo?.id)
-            if (!attachment) setText('')
+            const m = await send(body, attachment, replyTo?.id, richHtml || undefined)
+            if (!attachment) { setText(''); setHtml('') }
             setReplyTo(null)
             stick.current = true
             setMsgs((cur) => [...(cur || []).filter((x) => x.id !== m.id), m])
@@ -81,6 +89,25 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
             setBusy(false)
             await submit(att)
         } catch (e) { setErr(e.message || tr("Could not upload")); setBusy(false) } finally { if (fileInput.current) fileInput.current.value = '' }
+    }
+
+    // a picture of the screen (or of a window or tab) straight into the message
+    const screenshot = async () => {
+        if (!navigator.mediaDevices?.getDisplayMedia) { setErr(tr("Your browser cannot take a screenshot: paste a picture instead (Ctrl+V)")); return }
+        let stream
+        try { stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }) } catch { return }
+        try {
+            const v = document.createElement('video'); v.srcObject = stream; v.muted = true
+            await v.play(); await new Promise((r) => setTimeout(r, 350)) // one frame of what is shared
+            const cv = document.createElement('canvas'); cv.width = v.videoWidth; cv.height = v.videoHeight
+            cv.getContext('2d').drawImage(v, 0, 0)
+            const blob = await new Promise((r) => cv.toBlob(r, 'image/png'))
+            const fd = new FormData(); fd.append('file', new File([blob], 'screenshot.png', { type: 'image/png' }))
+            const res = await fetch('/api/crm/media/inline', { method: 'POST', body: fd, credentials: 'include' })
+            const j = await res.json().catch(() => ({}))
+            if (!res.ok) throw new Error(j.error || tr("Upload failed, try again"))
+            editorRef.current?.chain().focus().setImage({ src: j.url, alt: 'screenshot' }).run()
+        } catch (e) { setErr(e.message || tr("Could not take the screenshot")) } finally { stream.getTracks().forEach((x) => x.stop()) }
     }
 
     const startRec = async () => {
@@ -126,9 +153,24 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                                         </button>
                                     )}
                                     {m.attachment && <Attachment a={m.attachment} mine={m.mine} />}
-                                    <Mentioned text={m.body} onDark={m.mine} />
+                                    {m.rich ? <div className={classNames('-mx-1 rounded-xl px-2 py-1', m.mine ? 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100' : 'bg-white dark:bg-gray-800')}><RichView html={m.rich} /></div> : <Mentioned text={m.body} onDark={m.mine} />}
+                                    {(m.tags?.length > 0 || m.assigneeIds?.length > 0 || m.taskId || m.clientId) && (
+                                        <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
+                                            {(m.tags || []).map((t) => <span key={t} className={classNames('rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-primary/10 text-primary')}>#{t}</span>)}
+                                            {m.assigneeIds?.length > 0 && <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-600')}><PiUsersDuotone />{m.assigneeIds.map((id) => people.find((p) => p.id === id)?.name?.split(' ')[0]).filter(Boolean).join(', ') || m.assigneeIds.length}</span>}
+                                            {m.taskId && <a href={`/crm/tasks/${m.taskId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold', m.mine ? 'bg-white/20 underline' : 'bg-emerald-100 text-emerald-700')}><PiCheckSquareDuotone />{tr("Task")}</a>}
+                                            {m.clientId && <a href={`/crm/clients/${m.clientId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-sky-100 text-sky-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Client emailed") : tr("Client")}</a>}
+                                        </div>
+                                    )}
                                 </div>
                                 <button type="button" title={tr("Reply")} aria-label={tr("Reply")} onClick={() => { setReplyTo({ id: m.id, name: m.mine ? tr("You") : m.senderName, text: preview(m) }); input.current?.focus() }} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base text-gray-400 opacity-0 transition hover:bg-gray-100 hover:text-primary focus:opacity-100 group-hover/msg:opacity-100 dark:hover:bg-gray-700"><PiArrowBendUpLeftBold /></button>
+                                {rich && onMessageAction && (
+                                    <Dropdown placement={m.mine ? 'bottom-end' : 'bottom-start'} renderTitle={<span role="button" tabIndex={0} title={tr("More")} aria-label={tr("More")} className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-base text-gray-400 opacity-0 hover:bg-gray-100 hover:text-gray-600 group-hover/msg:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><PiDotsThreeBold /></span>}>
+                                        <Dropdown.Item eventKey="task" onClick={() => onMessageAction(m, 'task')}><PiCheckSquareDuotone className="text-lg" /><span>{tr("Make a task")}</span></Dropdown.Item>
+                                        <Dropdown.Item eventKey="assign" onClick={() => onMessageAction(m, 'assign')}><PiUsersDuotone className="text-lg" /><span>{tr("Assign to the team")}</span></Dropdown.Item>
+                                        <Dropdown.Item eventKey="client" onClick={() => onMessageAction(m, 'client')}><PiBuildingsDuotone className="text-lg" /><span>{tr("Link a client and email them")}</span></Dropdown.Item>
+                                    </Dropdown>
+                                )}
                             </div>
                             {(!msgs[i + 1] || msgs[i + 1].mine !== m.mine || +new Date(msgs[i + 1].at) - +new Date(m.at) > 5 * 60000) && <span className="px-1 pt-0.5 text-[11px] text-gray-400">{time(m.at)}</span>}
                         </div>
@@ -153,6 +195,15 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                 )}
                 <div className="flex items-end gap-2 p-3">
                     {upload && <button type="button" onClick={() => fileInput.current?.click()} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title={tr("Attach a file or picture")}><PiPaperclipDuotone /></button>}
+                    {rich ? (
+                        <>
+                            {upload && <button type="button" onClick={screenshot} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title={tr("Take a screenshot")}><PiCameraDuotone /></button>}
+                            <button type="button" onClick={() => setFmt((v) => !v)} className={classNames('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg hover:bg-gray-100 dark:hover:bg-gray-700', fmt ? 'bg-primary/10 text-primary' : 'text-gray-500')} title={tr("Formatting")}><PiTextAaBold /></button>
+                            <div className="max-h-48 min-w-0 flex-1 overflow-y-auto rounded-xl bg-gray-100 focus-within:ring-2 focus-within:ring-primary/40 dark:bg-gray-700">
+                                <RichEditor bare toolbar={fmt} minHeight={36} value={html} onChange={setHtml} placeholder={`${placeholder} (@ ${tr("mention")} · # ${tr("tag")})`} onSubmit={() => submit()} onReady={(e) => { editorRef.current = e }} className="[&_.rich-editor]:!py-2" />
+                            </div>
+                        </>
+                    ) : (
                     <textarea
                         ref={input}
                         rows={1}
@@ -163,8 +214,9 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } else if (e.key === 'Escape' && replyTo) { e.stopPropagation(); setReplyTo(null) } }}
                         className="max-h-28 min-h-9 flex-1 resize-none rounded-xl bg-gray-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40 dark:bg-gray-700"
                     />
-                    {text.trim() || !upload
-                        ? <button type="button" onClick={() => submit()} disabled={busy || !text.trim()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-lg text-white disabled:opacity-40"><PiPaperPlaneTiltFill /></button>
+                    )}
+                    {(rich ? html : text.trim()) || !upload
+                        ? <button type="button" onClick={() => submit()} disabled={busy || !(rich ? html : text.trim())} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-lg text-white disabled:opacity-40"><PiPaperPlaneTiltFill /></button>
                         : <button type="button" onClick={startRec} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-xl text-white disabled:opacity-40" title={tr("Record a voice message")}><PiMicrophoneDuotone /></button>}
                     <input ref={fileInput} type="file" className="hidden" onChange={(e) => sendFile(e.target.files?.[0])} />
                 </div>

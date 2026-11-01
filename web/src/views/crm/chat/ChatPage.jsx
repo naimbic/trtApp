@@ -1,3 +1,5 @@
+import ChatMessageTools from './ChatMessageTools'
+import { mentionDirectory } from '@/utils/mentions'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
@@ -165,7 +167,11 @@ const ChatPage = () => {
     useEffect(() => { if (data && roomId && !room) setParams({}, { replace: true }) }, [data, roomId, room, setParams])
 
     const loadMsgs = useCallback((after) => api(`/rooms/${roomId}${after ? `?after=${encodeURIComponent(after)}` : ''}`), [roomId])
-    const sendMsg = useCallback((body, attachment, replyTo) => post(`/rooms/${roomId}`, { body, attachment, replyTo }).then((m) => { refresh(); return m }), [roomId, refresh])
+    const sendMsg = useCallback((body, attachment, replyTo, rich) => post(`/rooms/${roomId}`, { body, attachment, replyTo, rich }).then((m) => { refresh(); return m }), [roomId, refresh])
+    const [tool, setTool] = useState(null) // { m, kind }
+    const [reload, setReload] = useState(0)
+    const [staff, setStaff] = useState([])
+    useEffect(() => { mentionDirectory().then((d) => setStaff(d.staff || [])) }, [])
     const uploadMsg = useCallback((file, voice) => { const fd = new FormData(); fd.append('file', file); if (voice) fd.append('voice', '1'); return uploadFile('/api/crm/chat/upload', fd) }, [])
     const onData = useCallback((x) => setTheirStatus(x.status ?? null), [])
 
@@ -222,7 +228,7 @@ const ChatPage = () => {
                                 {data.calls && (room.kind === 'direct' || room.kind === 'client') && <button type="button" title={tr("Voice call")} className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-primary hover:bg-gray-100 dark:hover:bg-gray-700" onClick={() => window.dispatchEvent(new CustomEvent('trt-chat-call', { detail: { roomId: room.id, peerName: room.title } }))}><PiPhoneCallDuotone /></button>}
                                 <button type="button" title={tr("Details")} className={classNames('flex h-9 w-9 items-center justify-center rounded-lg text-xl hover:bg-gray-100 dark:hover:bg-gray-700', info ? 'bg-primary/10 text-primary' : 'text-gray-500')} onClick={() => setInfo((v) => !v)}><PiInfoDuotone /></button>
                             </div>
-                            <ChatThread load={loadMsgs} send={sendMsg} upload={uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} empty={room.kind === 'group' ? tr("No messages yet. Say hello to the group!") : undefined} />
+                            <ChatThread rich={room.kind !== 'client'} load={loadMsgs} send={sendMsg} upload={uploadMsg} onData={onData} onMessageAction={(m, kind) => setTool({ m, kind })} people={staff} refreshSignal={reload} showSender={room.kind === 'team' || room.kind === 'group'} empty={room.kind === 'group' ? tr("No messages yet. Say hello to the group!") : undefined} />
                         </div>
                         {info && <div className="absolute inset-0 z-10 bg-white dark:bg-gray-800 lg:static lg:inset-auto lg:z-auto lg:w-72 lg:shrink-0 lg:border-l lg:border-gray-200 lg:dark:border-gray-700"><InfoPanel room={room} data={data} theirStatus={theirStatus} onClose={() => setInfo(false)} reload={refresh} onLeft={() => { setInfo(false); open(null) }} /></div>}
                     </div>
@@ -236,6 +242,7 @@ const ChatPage = () => {
                 )}
             </section>
 
+            <ChatMessageTools target={tool} onClose={() => setTool(null)} onDone={() => setReload((x) => x + 1)} />
             <NewChatDialog open={!!dlg} mode={dlg} people={data.people} onClose={() => setDlg(null)} onDirect={talkTo} onGroup={makeGroup} />
         </div>
     )

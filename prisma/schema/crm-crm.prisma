@@ -591,6 +591,14 @@ model CrmChatMessage {
   replyToId  String?  @db.ObjectId
   replyName  String?
   replyText  String?
+  /// the message as written in the rich editor (clean HTML with its screenshots); body keeps the plain text
+  rich       String?
+  tags       String[]
+  /// team members it was assigned to, the task made from it, the client it is linked to (and when the client was emailed)
+  assigneeIds String[] @db.ObjectId
+  taskId     String?  @db.ObjectId
+  clientId   String?  @db.ObjectId
+  clientMailedAt DateTime?
   createdAt  DateTime @default(now())
 
   @@index([roomId, createdAt])

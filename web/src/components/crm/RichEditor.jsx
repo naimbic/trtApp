@@ -102,7 +102,9 @@ const Btn = ({ on, active, title, children, disabled }) => (
  * an empty box gives ''. Old plain text is shown as paragraphs. Pictures are pasted, dropped or chosen and kept in the Space.
  * "@" suggests colleagues and "#" tags, like in every other text box.
  */
-const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = false, autoFocus = false, className }) => {
+const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = false, autoFocus = false, className, toolbar = true, onSubmit, onReady, bare = false }) => {
+    const submitRef = useRef(null)
+    submitRef.current = onSubmit
     const last = useRef(null)
     const fileRef = useRef(null)
     const [busy, setBusy] = useState(false)
@@ -141,6 +143,8 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
             handleDrop: (view, e) => { const f = e.dataTransfer?.files; if (f?.length && [...f].some((x) => x.type.startsWith('image/'))) { e.preventDefault(); insertImages(f, editorRef.current); return true } return false },
             handleKeyDown: (view, e) => {
                 const { mention: m, active: a } = mref.current
+                // Enter sends (Shift+Enter is a new line) when the parent asks for it, as in a chat
+                if (!m && submitRef.current && e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submitRef.current(); return true }
                 if (!m) return false
                 if (e.key === 'ArrowDown') { setActive((a + 1) % m.items.length); return true }
                 if (e.key === 'ArrowUp') { setActive((a - 1 + m.items.length) % m.items.length); return true }
@@ -171,6 +175,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     })
     const editorRef = useRef(null)
     editorRef.current = editor
+    useEffect(() => { if (editor) onReady?.(editor) }, [editor]) // eslint-disable-line react-hooks/exhaustive-deps
     // the colleagues' names are known a moment after the editor opens: draw the mentions again then
     useEffect(() => { let on = true; mentionDirectory().then((d) => { if (!on) return; namesRef.current = d.staff.map((s) => s.name).filter(Boolean).sort((a, b) => b.length - a.length); editorRef.current?.view?.dispatch(editorRef.current.state.tr) }); return () => { on = false } }, [editor])
 
@@ -192,8 +197,8 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
         editor.chain().focus().extendMarkRange('link').setLink({ href: /^(https?:|mailto:)/i.test(url.trim()) ? url.trim() : `https://${url.trim()}` }).run()
     }
     return (
-        <div className={classNames('overflow-hidden rounded-lg border border-gray-300 bg-white focus-within:border-primary dark:border-gray-600 dark:bg-gray-800', disabled && 'opacity-70', className)}>
-            {!disabled && (
+        <div className={classNames(bare ? '' : 'overflow-hidden rounded-lg border border-gray-300 bg-white focus-within:border-primary dark:border-gray-600 dark:bg-gray-800', disabled && 'opacity-70', className)}>
+            {!disabled && toolbar && (
                 <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-gray-50 px-1.5 py-1 dark:border-gray-700 dark:bg-gray-700/40">
                     <Btn title={tr('Bold')} active={editor.isActive('bold')} on={() => editor.chain().focus().toggleBold().run()}><TbBold /></Btn>
                     <Btn title={tr('Italic')} active={editor.isActive('italic')} on={() => editor.chain().focus().toggleItalic().run()}><TbItalic /></Btn>

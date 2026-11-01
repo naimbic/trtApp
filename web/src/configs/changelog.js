@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.141.0',
+        date: '2026-11-01',
+        title: 'Chat: rich messages with screenshots, tags and mentions; make a task, assign the team, email a client',
+        items: [
+            'The team chat box is now a real editor (not a plain text box): bold, italic, lists, links, colours (button Aa), @ to mention a colleague (they get a notification), # to add a tag (shown as a chip on the message), and pictures pasted, dropped or chosen. Enter sends, Shift+Enter makes a new line. The camera button takes a screenshot of your screen, a window or a tab and puts it in the message. The client chats keep the simple box.',
+            'On every message, the ⋯ menu: "Make a task" (the message becomes a task with its text and screenshots, the people you choose assigned and told, a due date and a client if you like; the message then shows a Task link), "Assign to the team" (people are told on the bell and shown on the message), and "Link a client and email them" (the message is linked to the client and, if you switch it on, emailed to the client\'s contact with the screenshots, and written in the activity log).',
+        ],
+    },
+    {
         version: '0.140.0',
         date: '2026-11-01',
         title: 'Scheduled messages: the CRM posts in the team chat by itself',

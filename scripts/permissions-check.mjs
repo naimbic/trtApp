@@ -235,6 +235,38 @@ try {
         void cc
     }
 
+    console.log('\n== Chat: rich messages, tags, task, team, client')
+    {
+        const t0 = new Date()
+        const kA = await makeUser('rc-a', { chat: ['view'], tasks: ['view', 'create'], customers: ['view'] }), kB = await makeUser('rc-b', { chat: ['view'] }), kC = await makeUser('rc-c', { chat: ['view'] })
+        const a = await login(kA), b = await login(kB), c = await login(kC)
+        const room = await a('POST', '/api/crm/chat/rooms', { staffId: kB.staffId }); const RID = room.body?.id
+        const rich = await a('POST', `/api/crm/chat/rooms/${RID}`, { rich: '<p>Hello <strong>team</strong> #urgent #Q4</p><script>alert(1)</script><p>second line</p>' })
+        check('a rich message keeps its formatting, drops scripts, and its text stays readable (tags found)', rich.status === 201 && /<strong>team<\/strong>/.test(rich.body?.rich || '') && !/script/i.test(rich.body?.rich || '') && /Hello team/.test(rich.body?.body || '') && rich.body?.tags?.join() === 'urgent,q4', JSON.stringify(rich.body).slice(0, 160))
+        const shot = await a('POST', `/api/crm/chat/rooms/${RID}`, { rich: '<p><img src="https://example.test/shot.png" alt="screenshot"></p>' })
+        check('a screenshot alone is a message', shot.status === 201 && /<img/.test(shot.body?.rich || '') && /Screenshot/.test(shot.body?.body || ''))
+        check('an empty rich message is refused', (await a('POST', `/api/crm/chat/rooms/${RID}`, { rich: '<p></p>' })).status === 400)
+        check('the other person sees the rich message', ((await b('GET', `/api/crm/chat/rooms/${RID}`)).body?.messages || []).some((m) => m.id === rich.body?.id && /<strong>/.test(m.rich || '')))
+        const MID = rich.body?.id
+        check('a person who is not in the conversation cannot act on its messages', (await c('POST', `/api/crm/chat/messages/${MID}`, { action: 'assign', assigneeIds: [kC.staffId] })).status === 404)
+        check('assign: the team members are saved and told', (await b('POST', `/api/crm/chat/messages/${MID}`, { action: 'assign', assigneeIds: [kA.staffId, kB.staffId, '000000000000000000000000'] })).body?.assigned === 2 && (await prisma.crmNotification.count({ where: { toUserId: kA.staffId, additionalData: 'chat-assigned', createdAt: { gte: t0 } } })) === 1)
+        check('make a task needs the permission to create tasks', (await b('POST', `/api/crm/chat/messages/${MID}`, { action: 'task' })).status === 403)
+        const cl = await prisma.crmClient.create({ data: { company: 'zz chat client', active: true } }); made.rows.unshift(['crmClient', cl.id])
+        const tk = await a('POST', `/api/crm/chat/messages/${MID}`, { action: 'task', assigneeIds: [kB.staffId], clientId: cl.id, dueDate: new Date(Date.now() + 86400000 * 2).toISOString() })
+        if (tk.body?.taskId) made.rows.unshift(['crmTask', tk.body.taskId])
+        const trow = tk.body?.taskId ? await prisma.crmTask.findUnique({ where: { id: tk.body.taskId } }) : null
+        check('a task is made from the message (name, description with its formatting, due date, client)', tk.status === 200 && /^Hello team/.test(trow?.name || '') && /strong/.test(trow?.description || '') && !!trow.dueDate && trow.relType === 'customer' && trow.relId === cl.id)
+        check('...with the assignee on it and the message linked to it', (await prisma.crmTaskAssigned.count({ where: { taskId: trow?.id, staffId: kB.staffId } })) === 1 && (await prisma.crmChatMessage.findUnique({ where: { id: MID } })).taskId === trow?.id)
+        check('...and only once', (await a('POST', `/api/crm/chat/messages/${MID}`, { action: 'task' })).status === 409)
+        const lk = await a('POST', `/api/crm/chat/messages/${MID}`, { action: 'client', clientId: cl.id })
+        check('a client can be linked to the message', lk.status === 200 && (await prisma.crmChatMessage.findUnique({ where: { id: MID } })).clientId === cl.id)
+        check('emailing needs a client contact with an email address', (await a('POST', `/api/crm/chat/messages/${MID}`, { action: 'client', clientId: cl.id, email: true })).status === 400)
+        check('an unknown client or action is refused', (await a('POST', `/api/crm/chat/messages/${MID}`, { action: 'client', clientId: '000000000000000000000000' })).status === 404 && (await a('POST', `/api/crm/chat/messages/${MID}`, { action: 'nope' })).status === 400)
+        const mids = (await prisma.crmChatMessage.findMany({ where: { roomId: RID } })).map((x) => x.id)
+        await prisma.crmChatMessage.deleteMany({ where: { roomId: RID } }); made.extraRows.push(['crmChatRoom', RID]); void mids
+        await prisma.crmNotification.deleteMany({ where: { additionalData: { in: ['chat-assigned', 'chat-task', 'mention'] }, createdAt: { gte: t0 } } })
+    }
+
     console.log('\n== Lead popup: mails, meetings (calendar events), followers; freelance lines')
     const lA = await makeUser('lead-a', {}), lB = await makeUser('lead-b', {}), lC = await makeUser('lead-c', {})
     const la = await login(lA), lb = await login(lB), lc = await login(lC)

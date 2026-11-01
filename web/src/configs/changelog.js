@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.154.0',
+        date: '2026-11-01',
+        title: 'Meet sends the meeting recap to the CRM: minutes on the event, action items as tasks',
+        items: [
+            'New call POST /api/v1/calendar/recap (key with the scope calendar:write). Meet sends the AI recap of a meeting with its room; the CRM finds the calendar event of that room, writes the minutes on it (also shown on its lead) and creates one task per action item, assigned to the person named in the recap when the name matches one team member, otherwise to the member who saved. Tasks are linked to the event\'s client or lead; saving twice adds the minutes below the first ones and never duplicates a task.',
+            'Calendar event: a new section "Meeting minutes" with a rich text editor, to read or change what Meet saved.',
+        ],
+    },
+    {
         version: '0.153.0',
         date: '2026-11-01',
         title: 'Confirmed meetings in green, reminders for the client with an email template, popups on top of each other',

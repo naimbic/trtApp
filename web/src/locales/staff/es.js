@@ -5006,5 +5006,11 @@ export default {
     "Meeting reminder: what to prepare": "Recordatorio de reunión: qué preparar",
     "Starting soon: join now": "Empieza pronto: unirse ahora",
     "Calendar event reminders": "Recordatorios de eventos del calendario",
-    "Send the calendar event reminders": "Enviar los recordatorios de eventos del calendario"
+    "Send the calendar event reminders": "Enviar los recordatorios de eventos del calendario",
+    "Meeting minutes": "Acta de la reunión",
+    "Nothing yet: Meet saves its recap here": "Nada todavía: Meet guarda aquí su resumen",
+    "Send the meeting recap": "Enviar el resumen de la reunión",
+    "The key needs the scope calendar:write. The minutes are written on the event of that room and every action item becomes a task, assigned to the named team member or else to staff_id. Saving twice adds the minutes and never duplicates a task.": "La clave necesita el alcance calendar:write. El acta se escribe en el evento de esa sala y cada acción se convierte en una tarea, asignada al miembro del equipo nombrado o, si no, a staff_id. Guardar dos veces añade el acta y nunca duplica una tarea.",
+    "What was said, decided and who does what": "Lo que se dijo, se decidió y quién hace qué",
+    "Written: open to read or change": "Redactada: abrir para leer o cambiar"
 }

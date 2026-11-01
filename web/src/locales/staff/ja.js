@@ -5006,5 +5006,11 @@ export default {
     "Meeting reminder: what to prepare": "会議のリマインダー:準備するもの",
     "Starting soon: join now": "まもなく開始:今すぐ参加",
     "Calendar event reminders": "カレンダーイベントのリマインダー",
-    "Send the calendar event reminders": "カレンダーイベントのリマインダーを送信"
+    "Send the calendar event reminders": "カレンダーイベントのリマインダーを送信",
+    "Meeting minutes": "議事録",
+    "Nothing yet: Meet saves its recap here": "まだありません。Meet がここに要約を保存します",
+    "Send the meeting recap": "会議の要約を送信",
+    "The key needs the scope calendar:write. The minutes are written on the event of that room and every action item becomes a task, assigned to the named team member or else to staff_id. Saving twice adds the minutes and never duplicates a task.": "キーには calendar:write スコープが必要です。議事録はそのルームのイベントに書き込まれ、各アクションは、名前の挙がったチームメンバー(いなければ staff_id)に割り当てられるタスクになります。2回保存すると議事録が追記され、タスクは重複しません。",
+    "What was said, decided and who does what": "話した内容、決定事項、担当者",
+    "Written: open to read or change": "作成済み:開いて読む・編集する"
 }

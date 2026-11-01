@@ -5006,5 +5006,11 @@ export default {
     "Meeting reminder: what to prepare": "تذكير بالاجتماع: ما يجب تحضيره",
     "Starting soon: join now": "يبدأ قريبًا: انضم الآن",
     "Calendar event reminders": "تذكيرات أحداث التقويم",
-    "Send the calendar event reminders": "إرسال تذكيرات أحداث التقويم"
+    "Send the calendar event reminders": "إرسال تذكيرات أحداث التقويم",
+    "Meeting minutes": "محضر الاجتماع",
+    "Nothing yet: Meet saves its recap here": "لا شيء بعد: يحفظ Meet ملخّصه هنا",
+    "Send the meeting recap": "إرسال ملخص الاجتماع",
+    "The key needs the scope calendar:write. The minutes are written on the event of that room and every action item becomes a task, assigned to the named team member or else to staff_id. Saving twice adds the minutes and never duplicates a task.": "يحتاج المفتاح إلى النطاق calendar:write. يُكتب المحضر على حدث تلك الغرفة ويتحول كل إجراء إلى مهمة تُسند إلى عضو الفريق المذكور أو إلى staff_id. الحفظ مرتين يضيف المحضر ولا يكرر أي مهمة.",
+    "What was said, decided and who does what": "ما قيل وما تقرر ومن يفعل ماذا",
+    "Written: open to read or change": "مكتوب: افتحه للقراءة أو التعديل"
 }

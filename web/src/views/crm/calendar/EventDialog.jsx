@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import { components } from 'react-select'
-import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand, TbNotes } from 'react-icons/tb'
+import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand, TbNotes, TbNotebook } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -10,6 +10,7 @@ import Badge from '@/components/ui/Badge'
 import Switcher from '@/components/ui/Switcher'
 import { Form, FormItem } from '@/components/ui/Form'
 import FoldSection from '@/components/crm/FoldSection'
+import RichEditor from '@/components/crm/RichEditor'
 import RelationSelect from '../kit/RelationSelect'
 import DateTimeRange from './DateTimeRange'
 import Segment from '@/components/ui/Segment'
@@ -63,7 +64,7 @@ const jitsi = () => `${MEET_HOST}/TRT-${Math.random().toString(36).slice(2, 8)}-
 const ROOMS = [['discovery_call', 'Discovery call'], ['proposal_review', 'Proposal review'], ['contract_signing', 'Contract signing'], ['client_checkin', 'Client check-in'], ['internal', 'Internal'], ['interview', 'Interview']]
 const roomUrl = (name) => `${MEET_HOST}/${String(name || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60)}`
 
-const EMPTY = { confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
+const EMPTY = { report: '', confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
 const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], saving, onSubmit, onDelete, onClose, onDecided }) => {
@@ -101,7 +102,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
             aboutType: selected.leadId ? 'lead' : 'client',
             attendeeIds: selected.attendeeIds || [],
             attendeeEmails: (selected.attendeeEmails || []).join(', '),
-            confirmed: !!selected.confirmed, remindClient: !!selected.remindClient, reminderTemplate: selected.reminderTemplate || '',
+            report: selected.report || '', confirmed: !!selected.confirmed, remindClient: !!selected.remindClient, reminderTemplate: selected.reminderTemplate || '',
             reminderBefore: selected.reminderBefore ?? '',
             reminderBeforeType: selected.reminderBeforeType || 'minutes',
         })
@@ -131,7 +132,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
         onSubmit({
             title: v.title.trim(), description: v.description, start: start.toISOString(), end: end ? end.toISOString() : null, color: v.color, isPublic: v.isPublic,
             allDay: v.allDay, category: v.category, projectId: v.projectId, location: v.location, meetingUrl: v.meetingUrl.trim(), clientId: v.aboutType === 'client' ? v.clientId : null, leadId: v.aboutType === 'lead' ? v.leadId : null, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
-            confirmed: v.confirmed, remindClient: v.remindClient && hasWho && v.reminderBefore !== '', reminderTemplate: v.reminderTemplate || null,
+            report: v.report || '', confirmed: v.confirmed, remindClient: v.remindClient && hasWho && v.reminderBefore !== '', reminderTemplate: v.reminderTemplate || null,
             reminderBefore: v.reminderBefore === '' ? null : Number(v.reminderBefore), reminderBeforeType: v.reminderBeforeType,
             notifyRequester: tell && selected.status !== 'draft', requesterMessage: tell ? note.trim() : undefined,
             sendInvites: v.sendInvites && !!hasGuests, inviteClient: v.sendInvites && v.inviteClient && v.aboutType === 'client' && !!v.clientId,
@@ -248,6 +249,11 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
                     )}
                     <FormItem className="!mb-1" label={tr("Description")}><Input size="sm" textArea rows={2} placeholder={tr("Agenda, notes…")} value={v.description} onChange={(e) => set({ description: e.target.value })} /></FormItem>
                         </FoldSection>
+                        {edit && (
+                            <FoldSection icon={<TbNotebook />} tone="rose" title={tr("Meeting minutes")} summary={v.report ? tr("Written: open to read or change") : tr("Nothing yet: Meet saves its recap here")} open={sec === 'minutes'} onToggle={() => toggle('minutes')}>
+                                <RichEditor minHeight={110} disabled={readOnly} value={v.report} onChange={(html) => setV((x) => ({ ...x, report: html }))} placeholder={tr("What was said, decided and who does what")} />
+                            </FoldSection>
+                        )}
                     </div>
                 </fieldset>
                 </div>

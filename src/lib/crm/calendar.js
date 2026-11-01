@@ -8,6 +8,7 @@ import { buildIcs } from '@/lib/crm/ics'
 import { deliver, getOptions, setOptions } from '@/lib/crm/mailer'
 import crypto from 'node:crypto'
 import { emit } from '@/lib/crm/webhooks'
+import { storeRich } from '@/lib/crm/richText'
 
 // Calendar layers shown next to the user's own events (each gated by the matching Perfex feature).
 export const LAYERS = ['events', 'reminders', 'tasks', 'invoices', 'projects', 'estimates', 'proposals', 'contracts']
@@ -84,6 +85,7 @@ export async function getCalendarItems({ from, to }) {
             editable: mine || ctx.admin || ctx.editOthers,
             canEdit: mine || ctx.admin || ctx.editOthers,
             description: e.description || '',
+            report: e.report || '',
             isPublic: e.isPublic,
             rawId: e.id,
             rawTitle: e.title,
@@ -214,7 +216,7 @@ const clean = (b) => {
         allDay: !!b.allDay,
         location: String(b.location || '').trim() || null,
         meetingUrl: meetingUrl || null,
-        report: b.report ? String(b.report) : null,
+        report: b.report ? storeRich(String(b.report), 40000) : null,
         confirmed: !!b.confirmed,
         remindClient: !!b.remindClient,
         reminderTemplate: REMINDER_TEMPLATES.some((t) => t.slug === b.reminderTemplate) || /^event-[a-z0-9-]{1,60}$/.test(String(b.reminderTemplate || '')) ? String(b.reminderTemplate) : null,
@@ -268,7 +270,7 @@ async function ownEvent(id) {
 
 export async function updateCalendarEvent(id, body) {
     const ev = await ownEvent(id)
-    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, leadId: ev.leadId, confirmed: ev.confirmed, remindClient: ev.remindClient, reminderTemplate: ev.reminderTemplate }
+    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, report: ev.report, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, leadId: ev.leadId, confirmed: ev.confirmed, remindClient: ev.remindClient, reminderTemplate: ev.reminderTemplate }
     const data = clean({ ...current, ...body })
     // a new time or a new reminder: the reminder is due again
     const moved = +new Date(data.start) !== +new Date(ev.start) || data.reminderBefore !== ev.reminderBefore || data.reminderBeforeType !== ev.reminderBeforeType

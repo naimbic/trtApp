@@ -4887,5 +4887,9 @@ export default {
     "meeting_url must be an https address": "يجب أن يكون meeting_url عنوان https",
     "start is in the past": "البداية في الماضي",
     "start must be a date (ISO 8601)": "يجب أن تكون البداية تاريخًا (ISO 8601)",
-    "title is required": "العنوان مطلوب"
+    "title is required": "العنوان مطلوب",
+    "@ mentions a colleague, # adds a tag, and you can paste or drop screenshots.": "@ للإشارة إلى زميل، # لإضافة وسم، ويمكنك لصق لقطات الشاشة أو إفلاتها.",
+    "Also email it to the client (with the screenshots)": "أرسلها أيضًا بالبريد إلى العميل (مع لقطات الشاشة)",
+    "Make a task of it (for the people above)": "حوّلها إلى مهمة (للأشخاص أعلاه)",
+    "When it goes out": "عند الإرسال"
 }

@@ -207,18 +207,23 @@ export async function roomMessages(id, after) {
 /** Tags written as #word in a message. */
 const tagsOf = (text) => [...new Set([...String(text || '').matchAll(/(?:^|\s)#([\p{L}\p{N}_-]{2,30})/gu)].map((x) => x[1].toLowerCase()))].slice(0, 10)
 
+/** The parts of a rich message: the clean HTML (kept only when it adds something), the plain text, the text shown in lists, the tags. */
+export function richParts(rich, body = '', allowAttachment = false) {
+    let html = rich ? storeRich(rich, 20000) : ''
+    const pictures = /<img\b/i.test(html)
+    const plain = html ? plainText(html).replace(/\n{3,}/g, '\n\n') : body
+    const text = cleanBody(plain, allowAttachment || pictures)
+    if (!text && !allowAttachment && !pictures) throw fail('Write a message first')
+    if (html && !text && !pictures) html = ''
+    return { html, text, shown: text || (pictures ? '🖼 Screenshot' : ''), tags: html ? tagsOf(text) : [] }
+}
+
 export async function sendMessage(id, body, attachment, replyTo, rich) {
     const c = await ctx()
     const room = await roomFor(c, id)
     const att = cleanAttachment(attachment)
-    let html = rich ? storeRich(rich, 20000) : ''
-    const pictures = /<img\b/i.test(html)
-    const plain = html ? plainText(html).replace(/\n{3,}/g, '\n\n') : body
-    const text = cleanBody(plain, !!att || pictures)
-    if (!text && !att && !pictures) throw fail('Write a message first')
-    const shown = text || (pictures ? '🖼 Screenshot' : '')
-    if (html && !text && !pictures) html = ''
-    const m = await prisma.crmChatMessage.create({ data: { roomId: room.id, senderType: 'staff', senderId: c.staffId, senderName: c.name, body: shown, ...(html ? { rich: html, tags: tagsOf(text) } : {}), ...(att || {}), ...(await replySnapshot(room.id, replyTo)) } })
+    const { html, shown, tags } = richParts(rich, body, !!att)
+    const m = await prisma.crmChatMessage.create({ data: { roomId: room.id, senderType: 'staff', senderId: c.staffId, senderName: c.name, body: shown, ...(html ? { rich: html, tags } : {}), ...(att || {}), ...(await replySnapshot(room.id, replyTo)) } })
     await prisma.crmChatRoom.update({ where: { id: room.id }, data: { lastMessageAt: m.createdAt, lastMessage: previewOf(shown, att) } })
     await prisma.crmChatRead.upsert({ where: { roomId_memberKey: { roomId: room.id, memberKey: c.key } }, update: { readAt: m.createdAt }, create: { roomId: room.id, memberKey: c.key, readAt: m.createdAt } }).catch(() => {})
     if (html) notifyNewMentions({ by: { staffId: c.staffId, name: c.name }, text: html, prev: '', link: `/crm/chat?room=${room.id}`, subject: 'Chat' }).catch(() => {})
@@ -241,6 +246,13 @@ const validStaff = async (ids) => { const list = [...new Set((Array.isArray(ids)
 export async function messageAction(mid, body = {}) {
     const c = await ctx()
     const m = await messageFor(c, mid)
+    if (body.action === 'task') await requirePermission('tasks', 'create')
+    if (body.action === 'client') await requirePermission('customers', 'view')
+    return applyAction(c, m, body)
+}
+
+/** The doing, for a person (c = { staffId, name }) and a message: also used by the scheduled messages when they go out. Permissions are checked by the caller. */
+export async function applyAction(c, m, body = {}) {
     const link = `/crm/chat?room=${m.roomId}`
     if (body.action === 'assign') {
         const ids = await validStaff(body.assigneeIds)
@@ -249,7 +261,6 @@ export async function messageAction(mid, body = {}) {
         return { success: true, assigned: ids.length }
     }
     if (body.action === 'task') {
-        await requirePermission('tasks', 'create')
         if (m.taskId && (await prisma.crmTask.findUnique({ where: { id: m.taskId }, select: { id: true } }))) throw fail('This message already has a task', 409)
         const ids = await validStaff(body.assigneeIds?.length ? body.assigneeIds : m.assigneeIds)
         const due = body.dueDate ? new Date(body.dueDate) : null
@@ -264,7 +275,6 @@ export async function messageAction(mid, body = {}) {
         return { success: true, taskId: task.id }
     }
     if (body.action === 'client') {
-        await requirePermission('customers', 'view')
         const clientId = oid(body.clientId)
         const client = clientId && (await prisma.crmClient.findUnique({ where: { id: clientId }, select: { id: true, company: true } }))
         if (!client) throw fail('Choose a client', 404)

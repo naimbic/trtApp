@@ -1,6 +1,8 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
-import { cleanBody, previewOf } from '@/lib/crm/chatApi'
+import { richParts, previewOf, applyAction } from '@/lib/crm/chatApi'
+import { storeRich, plainText } from '@/lib/crm/richText'
+import { notifyNewMentions } from '@/lib/crm/mentionsApi'
 import { REPEATS, nextAfter, describe } from '@/lib/crm/scheduleRules'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
@@ -20,28 +22,48 @@ async function recipients(m, senderId) {
     return (await prisma.crmStaff.findMany({ where, select: { id: true } })).map((s) => s.id).filter((id) => id !== senderId)
 }
 
-async function post(roomId, sender, text) {
-    const m = await prisma.crmChatMessage.create({ data: { roomId, senderType: 'staff', senderId: sender.id, senderName: staffName(sender), body: text } })
-    await prisma.crmChatRoom.update({ where: { id: roomId }, data: { lastMessageAt: m.createdAt, lastMessage: previewOf(text, null) } })
+async function post(roomId, sender, parts) {
+    const m = await prisma.crmChatMessage.create({ data: { roomId, senderType: 'staff', senderId: sender.id, senderName: staffName(sender), body: parts.shown, ...(parts.html ? { rich: parts.html, tags: parts.tags } : {}) } })
+    await prisma.crmChatRoom.update({ where: { id: roomId }, data: { lastMessageAt: m.createdAt, lastMessage: previewOf(parts.shown, null) } })
+    if (parts.html) notifyNewMentions({ by: { staffId: sender.id, name: staffName(sender) }, text: parts.html, prev: '', link: `/crm/chat?room=${roomId}`, subject: 'Chat' }).catch(() => {})
+    return m
 }
 
-/** Posts the message in the chat now. Returns how many conversations received it. */
+/** Posts the message in the chat now, then does what was asked with it: tell the assigned team, make a task, link and email the client.
+ *  Returns { n: conversations that received it, notes: what could not be done }. */
 export async function deliverScheduled(m) {
     const sender = (m.createdBy && (await prisma.crmStaff.findFirst({ where: { id: m.createdBy, active: true }, select: { id: true, firstName: true, lastName: true, email: true } }))) || (await prisma.crmStaff.findFirst({ where: { active: true, admin: true }, select: { id: true, firstName: true, lastName: true, email: true } }))
     if (!sender) throw fail('No active sender for this message')
-    const text = cleanBody(m.body)
-    let n = 0
+    const parts = richParts(m.rich, m.body)
+    const posted = []
     if (m.audience === 'team') {
         const room = (await prisma.crmChatRoom.findFirst({ where: { kind: 'team' } })) || (await prisma.crmChatRoom.create({ data: { kind: 'team' } }))
-        await post(room.id, sender, text); n = 1
+        posted.push(await post(room.id, sender, parts))
     } else {
         for (const to of await recipients(m, sender.id)) {
             const found = await prisma.crmChatRoom.findFirst({ where: { kind: 'direct', AND: [{ staffIds: { has: sender.id } }, { staffIds: { has: to } }] } })
             const room = found || (await prisma.crmChatRoom.create({ data: { kind: 'direct', staffIds: [sender.id, to] } }))
-            await post(room.id, sender, text); n++
+            posted.push(await post(room.id, sender, parts))
         }
     }
-    return n
+    const notes = []
+    if (posted.length) {
+        const c = { staffId: sender.id, name: staffName(sender) }
+        const ids = posted.map((x) => x.id), first = posted[0]
+        const team = (m.assigneeIds || [])
+        try {
+            if (m.makeTask) {
+                const r = await applyAction(c, first, { action: 'task', assigneeIds: team, clientId: m.clientId })
+                await prisma.crmChatMessage.updateMany({ where: { id: { in: ids } }, data: { taskId: r.taskId } })
+            }
+            if (team.length) { await applyAction(c, first, { action: 'assign', assigneeIds: team }); await prisma.crmChatMessage.updateMany({ where: { id: { in: ids } }, data: { assigneeIds: team } }) }
+            if (m.clientId) {
+                await applyAction(c, first, { action: 'client', clientId: m.clientId, email: !!m.emailClient, subject: m.title })
+                await prisma.crmChatMessage.updateMany({ where: { id: { in: ids } }, data: { clientId: m.clientId } })
+            }
+        } catch (e) { notes.push(e.message) }
+    }
+    return { n: posted.length, notes }
 }
 
 /** The automatic task: sends what is due. A message is claimed first (its next moment moves on), so two runs never send it twice. */
@@ -53,14 +75,15 @@ export async function scheduledMessagesJob({ lines, dry }) {
         const claimed = await prisma.crmScheduledMessage.updateMany({ where: { id: m.id, nextAt: m.nextAt, active: true }, data: { nextAt: next, active: !!next } })
         if (!claimed.count) continue
         try {
-            const n = await deliverScheduled(m)
+            const { n, notes } = await deliverScheduled(m)
             await prisma.crmScheduledMessage.update({ where: { id: m.id }, data: { lastSentAt: new Date(), lastCount: n, sentCount: { increment: 1 } } })
             lines.push(`Scheduled message “${m.title}” sent to ${n} conversation(s)${next ? '' : ' (done)'}`)
+            for (const x of notes) lines.push(`! Scheduled message “${m.title}”: ${x}`)
         } catch (e) { lines.push(`! Scheduled message “${m.title}”: ${e.message}`) }
     }
 }
 
-const shape = (m, names) => ({ id: m.id, title: m.title, body: m.body, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, repeatLabel: describe(m.repeat), nextAt: m.nextAt, active: m.active, lastSentAt: m.lastSentAt, lastCount: m.lastCount, sentCount: m.sentCount, createdBy: names[m.createdBy] || '', createdAt: m.createdAt })
+const shape = (m, names) => ({ id: m.id, title: m.title, body: m.body, rich: m.rich || null, assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, repeatLabel: describe(m.repeat), nextAt: m.nextAt, active: m.active, lastSentAt: m.lastSentAt, lastCount: m.lastCount, sentCount: m.sentCount, createdBy: names[m.createdBy] || '', createdAt: m.createdAt })
 
 export async function listScheduled() {
     await gate('view')
@@ -75,10 +98,26 @@ export async function saveScheduled(id, body = {}) {
     if (id && !cur) throw fail('Message not found', 404)
     const data = {}
     if (!cur || body.title !== undefined) { const t = String(body.title || '').trim(); if (!t) throw fail('Give the message a title'); data.title = t.slice(0, 120) }
-    if (!cur || body.body !== undefined) { const b = String(body.body || '').replace(/\r\n/g, '\n').trim(); if (!b) throw fail('Write the message first'); if (b.length > 2000) throw fail('The message is too long (2000 characters at most)'); data.body = b }
+    if (!cur || body.body !== undefined || body.rich !== undefined) {
+        const html = body.rich !== undefined ? (body.rich ? storeRich(body.rich, 20000) : '') : ''
+        const text = html ? plainText(html).replace(/\n{3,}/g, '\n\n').trim() : String(body.body ?? '').replace(/\r\n/g, '\n').trim()
+        const pictures = /<img\b/i.test(html)
+        if (!text && !pictures) throw fail('Write the message first')
+        if (text.length > 2000) throw fail('The message is too long (2000 characters at most)')
+        data.body = text || '🖼 Screenshot'; data.rich = html || null
+    }
     if (!cur || body.audience !== undefined) { if (!AUDIENCES.includes(body.audience || 'team')) throw fail('Unknown audience'); data.audience = body.audience || 'team' }
     if (body.staffIds !== undefined) data.staffIds = [...new Set((Array.isArray(body.staffIds) ? body.staffIds : []).map(oid).filter(Boolean))]
     if ((data.audience || cur?.audience) === 'selected' && !(data.staffIds ?? cur?.staffIds ?? []).length) throw fail('Choose at least one person')
+    if (body.assigneeIds !== undefined) data.assigneeIds = [...new Set((Array.isArray(body.assigneeIds) ? body.assigneeIds : []).map(oid).filter(Boolean))]
+    if (body.clientId !== undefined) {
+        const cid = oid(body.clientId)
+        if (cid) { await requirePermission('customers', 'view'); if (!(await prisma.crmClient.findUnique({ where: { id: cid }, select: { id: true } }))) throw fail('Client not found', 404) }
+        data.clientId = cid
+    }
+    if (body.emailClient !== undefined) data.emailClient = !!body.emailClient
+    if (body.makeTask !== undefined) { data.makeTask = !!body.makeTask; if (data.makeTask) await requirePermission('tasks', 'create') }
+    if ((data.emailClient ?? cur?.emailClient) && !(data.clientId ?? cur?.clientId)) throw fail('Choose the client to email')
     if (!cur || body.repeat !== undefined) { if (!REPEATS.includes(body.repeat || 'none')) throw fail('Unknown repeat'); data.repeat = body.repeat || 'none' }
     if (!cur || body.sendAt !== undefined) {
         const at = new Date(body.sendAt)
@@ -111,7 +150,7 @@ export async function sendScheduledNow(id) {
     await gate('edit')
     const cur = oid(id) && (await prisma.crmScheduledMessage.findUnique({ where: { id } }))
     if (!cur) throw fail('Message not found', 404)
-    const n = await deliverScheduled(cur)
+    const { n, notes } = await deliverScheduled(cur)
     await prisma.crmScheduledMessage.update({ where: { id }, data: { lastSentAt: new Date(), lastCount: n, sentCount: { increment: 1 } } })
-    return { success: true, sent: n }
+    return { success: true, sent: n, notes }
 }

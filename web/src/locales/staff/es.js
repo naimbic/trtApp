@@ -4887,5 +4887,9 @@ export default {
     "meeting_url must be an https address": "meeting_url debe ser una dirección https",
     "start is in the past": "el inicio está en el pasado",
     "start must be a date (ISO 8601)": "el inicio debe ser una fecha (ISO 8601)",
-    "title is required": "el título es obligatorio"
+    "title is required": "el título es obligatorio",
+    "@ mentions a colleague, # adds a tag, and you can paste or drop screenshots.": "@ menciona a un compañero, # añade una etiqueta y puede pegar o soltar capturas de pantalla.",
+    "Also email it to the client (with the screenshots)": "Enviarlo también por correo al cliente (con las capturas)",
+    "Make a task of it (for the people above)": "Convertirlo en tarea (para las personas anteriores)",
+    "When it goes out": "Cuando se envía"
 }

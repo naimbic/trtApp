@@ -4887,5 +4887,9 @@ export default {
     "meeting_url must be an https address": "meeting_url はhttpsアドレスにしてください",
     "start is in the past": "開始が過去です",
     "start must be a date (ISO 8601)": "開始は日付(ISO 8601)にしてください",
-    "title is required": "タイトルは必須です"
+    "title is required": "タイトルは必須です",
+    "@ mentions a colleague, # adds a tag, and you can paste or drop screenshots.": "@ で同僚にメンション、# でタグを追加、スクリーンショットは貼り付けやドロップができます。",
+    "Also email it to the client (with the screenshots)": "クライアントにもメールで送る(スクリーンショット付き)",
+    "Make a task of it (for the people above)": "タスクにする(上のメンバー向け)",
+    "When it goes out": "送信されるとき"
 }

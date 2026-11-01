@@ -781,9 +781,27 @@ try {
         check('to chosen people: one private message each', (await m('POST', `/api/crm/scheduled-messages/${sel.body?.id}`)).body?.sent === 2)
         for (const x of await prisma.crmChatMessage.findMany({ where: { body: 'zz hello selected', createdAt: { gte: t0 } } })) { made.rows.unshift(['crmChatMessage', x.id]); const r = await prisma.crmChatRoom.findUnique({ where: { id: x.roomId } }); if (r) made.rows.unshift(['crmChatRoom', r.id]) }
         check('it can be switched off and on again, and changed', (await m('PUT', `/api/crm/scheduled-messages/${MID}`, { active: false })).status === 200 && (await prisma.crmScheduledMessage.findUnique({ where: { id: MID } })).active === false && (await m('PUT', `/api/crm/scheduled-messages/${MID}`, { active: true })).status === 200 && (await m('PUT', `/api/crm/scheduled-messages/${MID}`, { body: 'zz hello team v2' })).status === 200)
+        // rich body, screenshots, tags, mentions, team, task, client
+        const sRich = await makeUser('sm-rich', { scheduled_messages: ['view', 'create', 'edit'], tasks: ['view', 'create'], customers: ['view'] }), rr = await login(sRich)
+        const clx = await prisma.crmClient.create({ data: { company: 'zz sched client', active: true } }); made.rows.unshift(['crmClient', clx.id])
+        const rich = { title: 'zz sched rich', rich: '<p>Weekly <strong>report</strong> #weekly</p><script>x</script><p><img src="https://example.test/s.png" alt="screenshot"></p>', audience: 'team', repeat: 'none', sendAt: soon, assigneeIds: [sMan.staffId, sRich.staffId], makeTask: true, clientId: clx.id, emailClient: false }
+        check('making a task or linking a client needs the matching permission', (await m('POST', '/api/crm/scheduled-messages', { ...rich, clientId: null })).status === 403 && (await v('POST', '/api/crm/scheduled-messages', rich)).status === 403)
+        check('emailing the client needs a client', (await rr('POST', '/api/crm/scheduled-messages', { ...rich, clientId: null, emailClient: true })).status === 400)
+        const rm = await rr('POST', '/api/crm/scheduled-messages', rich); const RID2 = rm.body?.id
+        if (RID2) made.rows.unshift(['crmScheduledMessage', RID2])
+        const rrow = RID2 ? await prisma.crmScheduledMessage.findUnique({ where: { id: RID2 } }) : null
+        check('a rich message is saved: clean formatting, screenshot kept, plain text for lists, team, task and client options', rm.status === 201 && /<strong>report<\/strong>/.test(rrow?.rich || '') && /<img/.test(rrow.rich) && !/script/i.test(rrow.rich) && /Weekly report/.test(rrow.body) && rrow.makeTask && rrow.clientId === clx.id && rrow.assigneeIds.length === 2)
+        const go = await rr('POST', `/api/crm/scheduled-messages/${RID2}`)
+        const chatm = await prisma.crmChatMessage.findFirst({ where: { body: { startsWith: 'Weekly report' }, createdAt: { gte: t0 } } })
+        if (chatm) made.rows.unshift(['crmChatMessage', chatm.id])
+        if (chatm?.taskId) made.rows.unshift(['crmTask', chatm.taskId])
+        check('when it goes out the chat shows the rich message with its tag, the team, the task and the client', go.status === 200 && /<strong>report/.test(chatm?.rich || '') && chatm.tags.join() === 'weekly' && chatm.assigneeIds.length === 2 && !!chatm.taskId && chatm.clientId === clx.id, JSON.stringify(go.body))
+        check('...the task has the assignees and the client; the team is told', (await prisma.crmTaskAssigned.count({ where: { taskId: chatm?.taskId } })) === 2 && (await prisma.crmTask.findUnique({ where: { id: chatm.taskId } }))?.relId === clx.id && (await prisma.crmNotification.count({ where: { toUserId: sMan.staffId, additionalData: { in: ['chat-assigned', 'chat-task'] }, createdAt: { gte: t0 } } })) >= 1)
+        check('a message with no text and no screenshot is refused', (await rr('POST', '/api/crm/scheduled-messages', { ...rich, rich: '<p></p>', clientId: null, makeTask: false })).status === 400)
         await prisma.crmScheduledMessage.update({ where: { id: MID }, data: { nextAt: new Date(Date.now() - 60000), active: true } })
         const pv = await (await login(sAdm))('POST', '/api/crm/cron/run', { dry: true })
         check('a due message shows in the dry run of the automatic tasks (nothing is sent)', pv.status === 200 && JSON.stringify(pv.body).includes('zz sched team') && !(await prisma.crmChatMessage.findFirst({ where: { body: 'zz hello team v2' } })))
+        await prisma.crmNotification.deleteMany({ where: { additionalData: { in: ['chat-assigned', 'chat-task', 'mention'] }, createdAt: { gte: t0 } } })
         check('only Delete removes it', (await m('DELETE', `/api/crm/scheduled-messages/${MID}`)).status === 403 && (await d('DELETE', `/api/crm/scheduled-messages/${MID}`)).status === 200 && !(await prisma.crmScheduledMessage.findUnique({ where: { id: MID } })))
     }
 

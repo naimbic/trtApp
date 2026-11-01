@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.143.0',
+        date: '2026-11-01',
+        title: 'Scheduled messages: rich editor with screenshots, mentions and tags; team, task and client',
+        items: [
+            'The message of a scheduled chat message is now written in the rich editor (formatting, links, colours, @ mentions, # tags, screenshots pasted or dropped) instead of a plain box, and goes into the chat exactly like that.',
+            'New options under "When it goes out": assign it to team members (they are told on the bell), make a task of it at each send (for the people assigned, with the client if one is chosen), and link a client and email them the message with its screenshots. If the task or the email cannot be done, the message still goes out and the automatic-task log says why.',
+        ],
+    },
+    {
         version: '0.142.0',
         date: '2026-11-01',
         title: 'Appointment requests from the Meet booking page land on the calendar as drafts',

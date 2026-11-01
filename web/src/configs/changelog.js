@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.148.1',
+        date: '2026-11-01',
+        title: 'Calendar feed says what it let the member see',
+        items: [
+            'GET /api/v1/calendar/events now ends with a "meta" block: which events the CRM let that member see (everything, own, invited, shared and public, or own and invited), how many it found in the range and how many it returned. It helps to tell a CRM that sent too little from a program that dropped some.',
+        ],
+    },
+    {
         version: '0.148.0',
         date: '2026-11-01',
         title: 'Meet shows the same meetings as the CRM calendar',

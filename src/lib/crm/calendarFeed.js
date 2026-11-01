@@ -43,11 +43,13 @@ export async function meetingsFeed(request) {
         // With a member's own token the CRM answers what that member sees in the CRM calendar: their events and the ones they are invited to, the
         // events nobody owns, the public ones, and every event for administrators and for who may see all events. (An API key stays at "this member's own".)
         let who = [{ userId: staffId }, { attendeeIds: { has: staffId } }]
+        let view = 'own and invited'
         if (userId) {
             const user = await prisma.user.findUnique({ where: { id: userId } })
             const { authority } = user ? await buildUserAuthority(user) : { authority: [] }
             if (!isCrmAdmin(authority) && !hasCap(authority, 'calendar', 'view')) { log(200); return { data: [], from, to, note: 'This member has no access to the calendar' } }
             who = isCrmAdmin(authority) || hasCap(authority, 'calendar', 'view_all_events') ? null : [...who, { userId: null }, { userId: { isSet: false } }, { isPublic: true }]
+            view = who ? 'own, invited, shared and public' : 'everything'
         }
         const rows = await prisma.crmEvent.findMany({
             where: { ...(unlinked ? {} : { meetingUrl: { not: null } }), NOT: { status: { in: ['draft', 'declined'] } }, start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }], AND: who ? [{ OR: who }] : [] },
@@ -65,6 +67,7 @@ export async function meetingsFeed(request) {
                 return { id: e.id, title: e.title, start: e.start, end: e.end || new Date(+e.start + (e.allDay ? 86400000 : 3600000)), all_day: e.allDay, category: e.category, location: e.location || null, meeting_url: e.meetingUrl || null, room, organizer: name[e.userId] || null, attendees: staffGuests, external_guests: (e.attendeeEmails || []).length, attendees_count: staffGuests.length + (e.attendeeEmails || []).length }
             }),
             from, to,
+            meta: { view, in_range: rows.length, returned: keep.length, include_unlinked: unlinked },
         }
         log(200)
         return out

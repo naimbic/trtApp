@@ -152,7 +152,7 @@ const resources = [
     },
     {
         key: 'ticket-pipe-log', model: 'crmTicketPipeLog', label: 'Pipe log entry', plural: 'Ticket pipe log',
-        group: 'Support', icon: 'TbMailForward', feature: 'settings', titleField: 'subject',
+        group: 'Support', nav: false, icon: 'TbMailForward', feature: 'settings', titleField: 'subject',
         search: ['subject', 'email', 'name'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'createdAt', label: 'Date', type: 'datetime' },
@@ -223,7 +223,7 @@ const resources = [
     },
     {
         key: 'tracked-mails', model: 'crmTrackedMail', label: 'Tracked email', plural: 'Tracked emails',
-        group: 'Support', icon: 'TbMailOpened', feature: 'settings', titleField: 'email',
+        group: 'Support', nav: false, icon: 'TbMailOpened', feature: 'settings', titleField: 'email',
         search: ['email', 'uid'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'email', label: 'Email', type: 'email', link: true },
@@ -236,7 +236,7 @@ const resources = [
     },
     {
         key: 'mail-queue', model: 'crmMailQueue', label: 'Queued email', plural: 'Email queue',
-        group: 'Support', icon: 'TbMailFast', feature: 'settings', titleField: 'email',
+        group: 'Support', nav: false, icon: 'TbMailFast', feature: 'settings', titleField: 'email',
         search: ['email', 'status'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'email', label: 'To', type: 'email', link: true },

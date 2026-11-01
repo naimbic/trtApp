@@ -1098,6 +1098,15 @@ try {
     check('Payroll: refused without the permission; View reads; only Edit saves a salary or a payment', (await pNone('GET', '/api/crm/payroll')).status === 403 && (await pPayV('GET', '/api/crm/payroll')).status === 200 && (await pPayV('POST', '/api/crm/payroll/payments', { staffId: pPayV.staffId || 'x', amount: 1 })).status === 403 && (await pPayE('GET', '/api/crm/payroll')).status === 200)
     check('Team growth: a member without "See everybody\'s growth" gets only their own page', (await pGr('GET', '/api/crm/growth/team')).status === 403 && (await pGrT('GET', '/api/crm/growth/team')).status === 200)
     check('Team growth: "Approve goals, set and pay primes" opens the team page and manages', (await pGrM('GET', '/api/crm/growth/team')).status === 200)
+    // every page of Settings still opens; the groups that only held unbuilt or duplicated options are gone
+    console.log('\n== Settings pages')
+    const sAdm = await login(await makeUser('settings-admin', {}, true))
+    const { SECTIONS } = await import('../src/lib/crm/settings/registry.js')
+    const opened = []
+    for (const g of SECTIONS.flatMap((x) => x.groups)) opened.push([g, (await sAdm('GET', `/api/crm/settings?group=${g}`)).status])
+    check(`all ${opened.length} Settings groups open`, opened.every(([, st]) => st === 200), opened.filter(([, st]) => st !== 200).join(' '))
+    check('removed groups answer 404 (google, pusher, banks, tags, subscriptions)', (await Promise.all(['google', 'pusher', 'banks', 'tags', 'subscriptions'].map(async (g) => (await sAdm('GET', `/api/crm/settings?group=${g}`)).status))).every((st) => st === 404))
+    check('the lists moved to the menu still open as pages', (await Promise.all(['task-statuses', 'ticket-statuses', 'ticket-priorities', 'departments', 'predefined-replies', 'spam-filters', 'lead-statuses', 'lead-sources', 'web-to-lead', 'currencies', 'taxes', 'tags', 'payment-modes', 'custom-fields', 'countries'].map(async (r) => (await sAdm('GET', `/api/crm/${r}?pageSize=5`)).status))).every((st) => st === 200))
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

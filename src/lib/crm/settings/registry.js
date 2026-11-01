@@ -33,10 +33,10 @@ const numbering = (name, prefixKey, prefixDefault, nextKey, formatKey, resetKey,
 
 export const SECTIONS = [
     { section: 'General', groups: ['general', 'company', 'localization', 'email'] },
-    { section: 'Billing', groups: ['sales_general', 'invoices', 'estimates', 'proposals', 'purchase_orders', 'credit_notes', 'subscriptions', 'banks'] },
+    { section: 'Billing', groups: ['sales_general', 'invoices', 'estimates', 'proposals', 'purchase_orders', 'credit_notes'] },
     { section: 'Configure features', groups: ['clients', 'tasks', 'tickets', 'leads'] },
-    { section: 'Integrations', groups: ['google', 'pusher', 'messaging'] },
-    { section: 'More', groups: ['calendar', 'ai', 'pdf', 'e_sign', 'tags'] },
+    { section: 'Integrations', groups: ['signin', 'messaging'] },
+    { section: 'More', groups: ['calendar', 'ai', 'pdf', 'e_sign'] },
     { section: 'Automation', groups: ['cronjob'] },
 ]
 
@@ -67,11 +67,10 @@ export const GROUPS = {
                 f('media_max_file_size_upload', 'Largest upload (MB)', 'number', { min: 1, max: 200, default: '50' }),
             ] },
             { title: 'Interface', fields: [
-                yes('rtl_support_admin', 'Right-to-left layout in the admin area', { soon: true }),
-                yes('rtl_support_client', 'Right-to-left layout in the client area', { soon: true }),
                 f('tables_pagination_limit', 'Rows per page in tables', 'number', { min: 5, max: 200 }),
                 f('delete_activity_log_older_then', 'Delete the activity log after (months)', 'number', { min: 0, max: 120, hint: '0 keeps everything. Cleaned by the daily cron job.' }),
             ] },
+            { title: 'Lists managed from the menu', desc: 'Tags and countries are managed from the menu, Setup.', links: [['Tags', '/crm/tags'], ['Countries', '/crm/countries']] },
         ],
     },
     company: {
@@ -102,12 +101,6 @@ export const GROUPS = {
             { title: 'Company block on documents', desc: 'Free text printed at the top of invoices, estimates and other documents. Use merge terms; click one to insert it.', panel: 'companyFormat', fields: [
                 f('company_info_format', 'Company information format', 'html', { rows: 8 }),
             ] },
-        ],
-    },
-    banks: {
-        label: 'Payment methods', icon: 'TbBuildingBank', desc: 'How clients pay you, and the bank accounts printed on invoices, estimates and purchase orders',
-        cards: [
-            { title: 'Payment methods and bank accounts', desc: 'One list: a method with bank details is a bank account (name, bank, holder, RIB / IBAN, SWIFT, the currency it receives). The default one is printed unless a client or a document has its own: choose it on the client page, or on the document itself; a document in a currency prints the account that receives that currency. They fill the merge terms company_bank, company_rib, company_swift and company_bank_holder. The single Bank / RIB / SWIFT fields in Company are only used while no account exists here.', panel: 'bankAccounts' },
         ],
     },
     localization: {
@@ -146,21 +139,19 @@ export const GROUPS = {
                 f('smtp_email_charset', 'Charset', 'text', { default: 'utf-8' }),
                 f('bcc_emails', 'Copy every email to (BCC)', 'text', { hint: 'One address, or several separated by commas.', emails: true }),
                 f('lead_mail_senders', 'Other "send from" addresses (lead mails)', 'text', { hint: 'Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member\'s own email. Your mail server must allow them. Separate several with commas.', emails: true }),
-                yes('email_queue_enabled', 'Send through a queue', { soon: true }),
-                yes('email_queue_skip_with_attachments', 'Do not queue emails with attachments', { soon: true }),
             ] },
             { title: 'Signature & design', desc: 'Added to every email. The design replaces the header/footer around each message.', panel: 'emailDesign', fields: [
                 f('email_signature', 'Signature (HTML)', 'html', { rows: 4 }),
                 f('email_header', 'Header (HTML)', 'html', { rows: 8 }),
                 f('email_footer', 'Footer (HTML)', 'html', { rows: 8 }),
             ] },
-            { title: 'Sign in with Google or Microsoft to send', desc: 'Send from a Gmail or Microsoft 365 mailbox instead of SMTP.', fields: [
-                f('google_mail_client_id', 'Google client ID', 'text', { soon: 'account' }),
-                f('google_mail_client_secret', 'Google client secret', 'password', { soon: 'account' }),
-                f('microsoft_mail_client_id', 'Microsoft client ID', 'text', { soon: 'account' }),
-                f('microsoft_mail_client_secret', 'Microsoft client secret', 'password', { soon: 'account' }),
-                f('microsoft_mail_azure_tenant_id', 'Microsoft tenant ID', 'text', { soon: 'account' }),
-            ] },
+        ],
+    },
+    signin: {
+        label: 'Sign-in & API', icon: 'TbPlugConnected', desc: 'Google and GitHub sign-in, API keys and the apps that sign in with this CRM',
+        cards: [
+            { title: 'Sign in with Google or GitHub', desc: 'Team members who already have an account here can sign in with the Google or GitHub account that uses the same email. The keys are server settings, not saved here.', panel: 'signInProviders' },
+            { title: 'API, webhooks and sign-in apps', desc: 'Keys for other apps (Meet, forms, automations), webhooks, and the apps that sign in with this CRM.', links: [['API and webhooks', '/crm/api']] },
         ],
     },
     messaging: {
@@ -189,15 +180,14 @@ export const GROUPS = {
                 f('number_padding_prefixes', 'Zeros in document numbers', 'number', { min: 1, max: 9, default: '3', hint: '3 gives 005 or 025' }),
                 yes('remove_decimals_on_zero', 'Hide decimals when they are zero', { hint: '2.00 becomes 2, 2.25 stays 2.25' }),
             ] },
-            { title: 'Currencies', desc: 'Currency symbol, and whether it goes before or after the amount (prefix / suffix).', panel: 'currencies' },
+            { title: 'Currencies, taxes and payment methods', desc: 'These lists are managed from the menu, Setup → Finance, so the whole team can use them.', links: [['Currencies', '/crm/currencies'], ['Taxes', '/crm/taxes'], ['Payment methods and bank accounts', '/crm/payment-modes']] },
             { title: 'Taxes', fields: [
                 f('default_tax', 'Default taxes', 'taxes', { hint: 'Added to new document lines automatically.' }),
                 yes('show_tax_per_item', 'Show tax per line item'),
                 yes('remove_tax_name_from_item_table', 'Hide the tax name in the items table'),
                 yes('items_table_amounts_exclude_currency_symbol', 'Hide the currency symbol in the items table'),
             ] },
-            { title: 'Taxes list', panel: 'taxes' },
-            { title: 'Total in words', desc: 'Prints the total in letters on documents ("Mille deux cents dirhams").', fields: [
+                        { title: 'Total in words', desc: 'Prints the total in letters on documents ("Mille deux cents dirhams").', fields: [
                 yes('total_to_words_enabled', 'Show the total in words'),
                 yes('total_to_words_lowercase', 'Use lowercase letters'),
             ] },
@@ -225,12 +215,10 @@ export const GROUPS = {
                 yes('show_sale_agent_on_invoices', 'Show the sale agent'),
                 yes('show_project_on_invoice', 'Show the project name'),
                 yes('show_total_paid_on_invoice', 'Show the total paid'),
-                yes('show_credits_applied_on_invoice', 'Show credits applied', { soon: true }),
                 yes('show_amount_due_on_invoice', 'Show the amount due'),
                 yes('attach_invoice_to_payment_receipt_email', 'Attach the invoice PDF to payment receipt emails'),
             ] },
             { title: 'Client access', fields: [
-                yes('view_invoice_only_logged_in', 'Clients must be signed in to see an invoice', { soon: true, hint: 'Needs the client portal, which is not built yet. Links with the secret key work for now.' }),
                 yes('exclude_invoice_from_client_area_with_draft_status', 'Hide draft invoices from clients', { hint: 'Always on for the public invoice link.' }),
                 yes('allow_staff_view_invoices_assigned', 'Staff can see invoices they are assigned to', { default: '1' }),
             ] },
@@ -244,11 +232,9 @@ export const GROUPS = {
                 f('estimate_due_after', 'Valid for (days)', 'number', { min: 0, max: 365 }),
                 f('predefined_clientnote_estimate', 'Client note', 'textarea', { rows: 3 }),
                 f('predefined_terms_estimate', 'Terms & conditions', 'textarea', { rows: 6 }),
-                f('estimates_pipeline_limit', 'Pipeline limit per status', 'number', { min: 1, soon: true }),
             ] },
             { title: 'Client answers', fields: [
                 yes('estimate_auto_convert_to_invoice_on_client_accept', 'Create the invoice automatically when the client accepts', { hint: 'A draft-free, unpaid invoice with the same lines.' }),
-                yes('view_estimate_only_logged_in', 'Clients must be signed in to see an estimate', { soon: true }),
                 yes('exclude_estimate_from_client_area_with_draft_status', 'Hide draft estimates from clients'),
                 yes('show_sale_agent_on_estimates', 'Show the sale agent on the document'),
                 yes('show_project_on_estimate', 'Show the project name on the document'),
@@ -263,8 +249,6 @@ export const GROUPS = {
             ] },
             { title: 'Defaults', fields: [
                 f('proposal_due_after', 'Open for (days)', 'number', { min: 0, max: 365 }),
-                f('proposal_info_format', 'Proposal details block (PDF and page)', 'textarea', { rows: 6, soon: true }),
-                f('proposals_pipeline_limit', 'Pipeline limit per status', 'number', { min: 1, soon: true }),
             ] },
             { title: 'Client answers', fields: [
                 yes('proposal_auto_convert_to_invoice_on_client_accept', 'Create an invoice automatically when the client accepts', { hint: 'Only for proposals made for a client (not a lead).' }),
@@ -296,13 +280,6 @@ export const GROUPS = {
             ] },
         ],
     },
-    subscriptions: {
-        label: 'Subscriptions', icon: 'TbRepeat', desc: 'Recurring billing display',
-        cards: [{ title: 'Subscriptions', fields: [
-            yes('show_subscriptions_in_customers_area', 'Show subscriptions in the client area', { soon: true }),
-            sel('after_subscription_payment_captured', 'After a payment is captured', [['nothing', 'Do nothing'], ['mark_paid', 'Mark the invoice as paid']], { default: 'mark_paid', soon: true }),
-        ] }],
-    },
     clients: {
         label: 'Clients', icon: 'TbUsers', desc: 'Client information, access and custom fields',
         cards: [
@@ -314,17 +291,7 @@ export const GROUPS = {
             { title: 'Rules', fields: [
                 yes('company_is_required', 'Company name is required'),
                 yes('company_requires_vat_number_field', 'The VAT / ICE field is required'),
-                yes('allow_primary_contact_to_manage_other_contacts', 'The primary contact manages the other contacts', { soon: true }),
-                yes('allow_primary_contact_to_view_edit_billing_and_shipping', 'The primary contact edits billing and shipping details', { soon: true }),
-                yes('only_own_files_contacts', 'Contacts only see the files they uploaded', { soon: true }),
-                yes('allow_contact_to_delete_files', 'Contacts can delete their own files', { soon: true }),
             ] },
-            { title: 'Registration', fields: [
-                yes('allow_registration', 'Let clients register themselves', { soon: true }),
-                yes('customers_register_require_confirmation', 'An administrator must confirm new registrations', { soon: true }),
-                yes('enable_honeypot_spam_validation', 'Spam protection on forms (honeypot)', { soon: true }),
-            ] },
-            { title: 'Knowledge base', fields: [yes('use_knowledge_base', 'Use the knowledge base', { soon: true }), yes('knowledge_base_without_registration', 'Visible without signing in', { soon: true })] },
             { title: 'Permissions & authorisations', panel: 'clientPermissions' },
             { title: 'Custom fields', desc: 'Extra fields on clients. Each one has a merge term you can use in documents, for example {cf_1}.', panel: 'customFields' },
         ],
@@ -339,7 +306,7 @@ export const GROUPS = {
                 yes('task_biillable_checked_on_creation', 'Billable by default'),
                 sel('default_task_priority', 'Default priority', [['1', 'Low'], ['2', 'Medium'], ['3', 'High'], ['4', 'Urgent']], { default: '2' }),
             ] },
-            { title: 'Statuses', desc: 'The columns of the Tasks board and the names you see on every task.', panel: 'taskStatuses' },
+            { title: 'Statuses', desc: 'The columns of the Tasks board and the names you see on every task are managed from the menu.', links: [['Task statuses', '/crm/task-statuses']] },
             { title: 'Timers', fields: [
                 yes('auto_stop_tasks_timers_on_new_timer', 'Stop other timers when one starts'),
                 yes('timer_started_change_status_in_progress', 'Move the task to In progress when a timer starts', { default: '1' }),
@@ -359,79 +326,30 @@ export const GROUPS = {
                 yes('services', 'Use services on tickets', { soon: true }),
                 yes('automatically_assign_ticket_to_first_staff_responding', 'Assign to the first person who replies', { default: '1' }),
                 yes('staff_access_only_assigned_departments', 'Staff only see tickets of their departments'),
-                yes('staff_related_ticket_notification_to_assignee_only', 'Notify only the assignee', { soon: true }),
-                yes('receive_notification_on_new_ticket', 'Notify me about new tickets', { soon: true }),
-                yes('receive_notification_on_new_ticket_replies', 'Notify me about client replies', { soon: true }),
-                yes('staff_members_open_tickets_to_all_contacts', 'Staff can open tickets for any contact', { soon: true }),
                 yes('ticket_replies_order', 'Newest replies first'),
-                yes('enable_support_menu_badges', 'Show a badge on the support menu', { soon: true }),
             ] },
             { title: 'Permissions', fields: [
-                yes('allow_non_admin_staff_to_delete_ticket_attachments', 'Staff can delete attachments', { soon: true }),
                 yes('allow_non_admin_members_to_delete_tickets_and_replies', 'Staff can delete tickets and replies'),
-                yes('allow_non_admin_members_to_edit_ticket_messages', 'Staff can edit messages', { soon: true }),
-                yes('allow_customer_to_change_ticket_status', 'Clients can change the status', { soon: true }),
-                yes('only_show_contact_tickets', 'Contacts only see their own tickets', { soon: true }),
-                yes('disable_ticket_public_url', 'Disable the public ticket link', { soon: true }),
-                yes('access_tickets_to_none_staff_members', 'Non-staff users can access tickets', { soon: true }),
             ] },
             { title: 'Attachments & email', fields: [
                 f('maximum_allowed_ticket_attachments', 'Attachments per ticket', 'number', { min: 0, max: 20 }),
                 f('ticket_attachments_file_extensions', 'Allowed extensions', 'text'),
-                yes('email_piping_only_registered', 'Email piping: registered users only', { soon: true }),
-                yes('email_piping_only_replies', 'Email piping: replies only', { soon: true }),
-                yes('ticket_import_reply_only', 'Import only the new part of a reply', { soon: true }),
             ] },
-            { title: 'Statuses', panel: 'ticketStatuses' },
-            { title: 'Priorities', panel: 'ticketPriorities' },
-            { title: 'Departments', panel: 'departments' },
-            { title: 'Predefined replies', panel: 'predefinedReplies' },
-            { title: 'Spam filters', panel: 'spamFilters' },
+            { title: 'Ticket lists', desc: 'Statuses, priorities, departments, predefined replies and spam filters are managed from the menu, Support.', links: [['Ticket statuses', '/crm/ticket-statuses'], ['Priorities', '/crm/ticket-priorities'], ['Departments', '/crm/departments'], ['Predefined replies', '/crm/predefined-replies'], ['Spam filters', '/crm/spam-filters']] },
         ],
     },
     leads: {
         label: 'Leads', icon: 'TbFilter', desc: 'Statuses, sources and follow-up',
         cards: [
-            { title: 'Statuses', desc: 'The columns of the lead pipeline.', panel: 'leadStatuses' },
-            { title: 'Sources', desc: 'Where leads come from.', panel: 'leadSources' },
+            { title: 'Pipeline lists', desc: 'Statuses, sources and web forms are managed from the menu, Leads.', links: [['Lead statuses', '/crm/lead-statuses'], ['Lead sources', '/crm/lead-sources'], ['Web-to-lead forms', '/crm/web-to-lead']] },
             { title: 'Rules & follow-up', fields: [
                 yes('auto_assign_customer_admin_after_lead_convert', 'Make the lead owner the client admin when converted'),
                 yes('lead_lock_after_convert_to_customer', 'Lock a lead after it becomes a client'),
-                yes('allow_non_admin_members_to_import_leads', 'Staff can import leads', { soon: true }),
                 f('leads_kanban_limit', 'Cards per column on the board', 'number', { min: 5, default: '50' }),
                 sel('default_leads_kanban_sort', 'Default board order', [['dateadded', 'Date added'], ['leadorder', 'Manual'], ['lastcontact', 'Last contact']], { default: 'leadorder' }),
                 sel('default_leads_kanban_sort_type', 'Order direction', [['asc', 'Ascending'], ['desc', 'Descending']], { default: 'asc' }),
             ] },
-            { title: 'Web-to-lead forms', desc: 'Capture leads from your website. Automations (assign, status, notify) are set on each form.', panel: 'webToLead' },
         ],
-    },
-    google: {
-        label: 'Google', icon: 'TbBrandGoogle', desc: 'Maps, reCAPTCHA and Calendar',
-        cards: [
-            { title: 'Google APIs', fields: [
-                f('google_api_key', 'API key', 'password', { soon: 'account' }),
-                f('google_client_id', 'Client ID', 'text', { soon: 'account' }),
-                yes('enable_google_picker', 'Google Picker', { soon: 'account' }),
-                f('google_calendar_main_calendar', 'Calendar ID', 'text', { soon: 'account', hint: 'The Google calendar events are shared with.' }),
-            ] },
-            { title: 'reCAPTCHA', fields: [
-                f('recaptcha_site_key', 'Site key', 'text', { soon: 'account' }),
-                f('recaptcha_secret_key', 'Secret key', 'password', { soon: 'account' }),
-                f('recaptcha_ignore_ips', 'Ignored IP addresses', 'textarea', { rows: 2, soon: 'account' }),
-                yes('use_recaptcha_customers_area', 'Protect client sign-in and registration', { soon: 'account' }),
-            ] },
-        ],
-    },
-    pusher: {
-        label: 'Pusher.com', icon: 'TbBellRinging', desc: 'Real-time notifications',
-        cards: [{ title: 'Pusher', fields: [
-            f('pusher_app_id', 'App ID', 'text', { soon: 'account' }),
-            f('pusher_app_key', 'App key', 'text', { soon: 'account' }),
-            f('pusher_app_secret', 'App secret', 'password', { soon: 'account' }),
-            yes('pusher_realtime_notifications', 'Real-time notifications', { soon: 'account' }),
-            yes('desktop_notifications', 'Desktop notifications', { soon: 'account' }),
-            f('auto_dismiss_desktop_notifications_after', 'Dismiss desktop notifications after (seconds)', 'number', { min: 0, soon: 'account', hint: '0 keeps them until closed.' }),
-        ] }],
     },
     calendar: {
         label: 'Calendar', icon: 'TbCalendar', desc: 'What shows on the calendar',
@@ -474,7 +392,6 @@ export const GROUPS = {
             ] },
             { title: 'Page size', fields: ['invoice', 'estimate', 'proposal', 'payment', 'credit_note', 'contract', 'statement'].map((k) => sel(`pdf_format_${k}`, `${k.replace('_', ' ').replace(/^./, (c) => c.toUpperCase())}`, PAGE_FORMATS, { default: 'A4-PORTRAIT' })) },
             { title: 'On invoices', fields: [
-                yes('show_pay_link_to_invoice_pdf', 'Show a "Pay online" link', { soon: true }),
                 yes('show_transactions_on_invoice_pdf', 'List the payments received'),
                 yes('show_status_on_pdf_ei', 'Show the status (invoices and estimates)'),
             ] },
@@ -486,14 +403,8 @@ export const GROUPS = {
         cards: [{ title: 'Signing', fields: [
             yes('estimate_accept_identity_confirmation', 'Estimates: ask for name, email and signature to accept'),
             yes('proposal_accept_identity_confirmation', 'Proposals: ask for name, email and signature to accept', { default: '1' }),
-            yes('contract_sign_identity_confirmation', 'Contracts: ask for name, email and signature to sign', { soon: true, default: '1' }),
-            yes('invoice_accept_identity_confirmation', 'Invoices: ask for a signature on acknowledgement', { soon: true }),
             f('e_sign_legal_text', 'Legal text next to the signature', 'textarea', { rows: 4, hint: 'Shown to the client when they sign.' }),
         ] }],
-    },
-    tags: {
-        label: 'Tags', icon: 'TbTags', desc: 'Labels used across the platform',
-        cards: [{ title: 'Tags', panel: 'tags' }],
     },
     cronjob: {
         label: 'Cron job', icon: 'TbClockPlay', desc: 'Automatic reminders and recurring work',
@@ -540,14 +451,12 @@ export const GROUPS = {
                 yes('cron_job_contracts', 'Run the contract tasks', { default: '1', cardToggle: true }),
                 f('contracts_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('contract_expiration_before', 'Expiry notice, days before', 'number', { min: 0, max: 120, default: '0', hint: '0 = no notice.' }),
-                f('contract_sign_reminder_every_days', 'Remind unsigned contracts every (days)', 'number', { min: 0, max: 60, default: '0', soon: true }),
             ] },
             { title: 'Tasks', fields: [
                 yes('cron_job_tasks', 'Run the task tasks', { default: '1', cardToggle: true }),
                 f('tasks_reminder_notification_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('tasks_reminder_notification_before', 'Deadline reminder, days before', 'number', { min: 0, max: 30, default: '0', hint: '0 = no reminder.' }),
                 f('automatically_stop_task_timer_after_hours', 'Stop forgotten timers after (hours)', 'number', { min: 0, max: 72, default: '0' }),
-                yes('reminder_for_completed_but_not_billed_tasks', 'Remind about completed tasks that are not billed', { soon: true }),
             ] },
             { title: 'Tickets', fields: [
                 yes('cron_job_tickets', 'Run the ticket tasks', { default: '1', cardToggle: true }),

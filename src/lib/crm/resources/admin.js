@@ -162,7 +162,7 @@ const resources = [
     },
     {
         key: 'newsfeed', model: 'crmPost', label: 'Post', plural: 'Newsfeed',
-        group: 'Administration', icon: 'TbNews', feature: null,
+        group: 'Administration', nav: false, icon: 'TbNews', feature: null,
         titleField: 'content', search: ['content'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'content', label: 'Content', type: 'text', link: true },
@@ -208,7 +208,7 @@ const resources = [
     },
     {
         key: 'modules', model: 'crmModule', label: 'Module', plural: 'Modules',
-        group: 'Administration', icon: 'TbPuzzle', feature: 'settings',
+        group: 'Administration', nav: false, icon: 'TbPuzzle', feature: 'settings',
         titleField: 'moduleName', search: ['moduleName'], defaultSort: { moduleName: 'asc' },
         columns: [
             { key: 'moduleName', label: 'Module', type: 'text', link: true },
@@ -423,7 +423,7 @@ const resources = [
     // ---------------------------------------------------------------- Utilities
     {
         key: 'notes', model: 'crmNote', label: 'Note', plural: 'Notes',
-        group: 'Utilities', icon: 'TbNote', feature: null, shareByRel: 'addedFrom',
+        group: 'Utilities', nav: false, icon: 'TbNote', feature: null, shareByRel: 'addedFrom',
         titleField: 'description', search: ['description'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'description', label: 'Note', type: 'text', link: true },

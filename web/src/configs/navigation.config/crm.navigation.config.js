@@ -44,10 +44,10 @@ const LAYOUT = {
     Support: [
         'tickets',
         S('setup', 'Ticket setup', ['ticket-statuses', 'ticket-priorities', 'services', 'predefined-replies']),
-        S('email', 'Email & spam', ['spam-filters', 'ticket-pipe-log', 'tracked-mails', 'mail-queue']),
+        S('email', 'Email & spam', ['spam-filters']),
     ],
     'Knowledge Base': ['help-center', 'kb-manage'],
-    Administration: ['staff', 'work-hours', 'payroll', 'roles', 'departments', S('comms', 'Communication', ['announcements', 'newsfeed']), 'modules'],
+    Administration: ['staff', 'work-hours', 'payroll', 'roles', 'departments', S('comms', 'Communication', ['announcements'])],
     Setup: [
         'platform-settings', 'mails',
         S('finance', 'Finance', ['currencies', 'taxes', 'payment-modes']),
@@ -55,7 +55,7 @@ const LAYOUT = {
     ],
     Utilities: [
         'reports', 'ai', 'file-manager', 'passwords',
-        S('tools', 'Personal', ['todos', 'reminders', 'notes', 'events']),
+        S('tools', 'Personal', ['todos', 'reminders', 'events']),
         S('team', 'Team & feedback', ['goals', 'surveys', 'notifications']),
         S('more', 'System', ['files', 'activity-log']),
     ],

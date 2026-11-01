@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.156.0',
+        date: '2026-11-02',
+        title: 'Settings and menu tidied: unbuilt options, duplicated lists and old Perfex pages removed',
+        items: [
+            'Settings: the Google and Pusher pages are gone (none of their options did anything), and so is "Sign in with Google or Microsoft to send" under Email and every option marked "Soon" that no screen used (queue, client registration, ticket notification switches, e-signature identity...). The Subscriptions, Payment methods and Tags pages went too: Subscriptions had no working option, and the other two lists live in the menu.',
+            'Statuses, priorities, departments, predefined replies, spam filters, lead statuses and sources, web-to-lead forms, task statuses, currencies, taxes, payment methods, tags and countries were in Settings and in the menu. They are now only in the menu (so the whole team finds them in one place); Settings keeps a card with buttons that open them. Their data and permissions are unchanged.',
+            'New Settings page "Sign-in & API" (Integrations): shows whether Google and GitHub sign-in are on, the address to register at each provider with a copy button, the server variables to set when one is off, and a button to API and webhooks.',
+            'Menu: the old Perfex pages Modules, Newsfeed (Announcements replace it), Mail queue, Tracked emails and Ticket pipe log are hidden (no feature used them; their data is kept). Notes was listed twice and now once, open to everybody. The Calendar sync entry of the gear menu is gone.',
+        ],
+    },
+    {
         version: '0.155.1',
         date: '2026-11-02',
         title: 'Sign in with trtAgency removed; Google and GitHub stay',

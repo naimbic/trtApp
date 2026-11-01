@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
-import { TbAdjustmentsHorizontal, TbBrandWhatsapp, TbBellRinging, TbBrandGoogle, TbBuilding, TbBuildingBank, TbCalendar, TbChecklist, TbClockPlay, TbFileDescription, TbFileInvoice, TbFileTypePdf, TbFilter, TbLifebuoy, TbMail, TbPresentation, TbReceipt2, TbReceiptRefund, TbRepeat, TbShoppingCart, TbSignature, TbSparkles, TbTags, TbUsers, TbWorld } from 'react-icons/tb'
+import { Link, useSearchParams } from 'react-router'
+import { TbPlugConnected, TbAdjustmentsHorizontal, TbBrandWhatsapp, TbBellRinging, TbBrandGoogle, TbBuilding, TbBuildingBank, TbCalendar, TbChecklist, TbClockPlay, TbFileDescription, TbFileInvoice, TbFileTypePdf, TbFilter, TbLifebuoy, TbMail, TbPresentation, TbReceipt2, TbReceiptRefund, TbRepeat, TbShoppingCart, TbSignature, TbSparkles, TbTags, TbUsers, TbWorld } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -12,20 +12,47 @@ import cn from '@/utils/classNames'
 import { GROUPS, SECTIONS } from '@/lib/crm/settings/registry'
 import { api, notify, useCan } from '../kit/api'
 import { Field } from './fields'
-import { InvoiceFormatPanel, PayrollExpensesPanel, ChannelsTestPanel, ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel, ResourceManager } from './panels'
+import { InvoiceFormatPanel, PayrollExpensesPanel, ChannelsTestPanel, ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel } from './panels'
 import { MailServerSettings } from '../mail/Mails'
 import AiSettingsPanel from '../ai/AiSettingsPanel'
 import { refreshBranding } from '@/utils/hooks/useBranding'
 import { tr } from '@/utils/t'
 
-const ICONS = { TbBrandWhatsapp, TbBuildingBank, TbAdjustmentsHorizontal, TbBuilding, TbWorld, TbMail, TbReceipt2, TbFileInvoice, TbFileDescription, TbPresentation, TbShoppingCart, TbReceiptRefund, TbRepeat, TbUsers, TbChecklist, TbLifebuoy, TbFilter, TbBrandGoogle, TbBellRinging, TbCalendar, TbSparkles, TbFileTypePdf, TbSignature, TbTags, TbClockPlay }
+const ICONS = { TbPlugConnected, TbBrandWhatsapp, TbBuildingBank, TbAdjustmentsHorizontal, TbBuilding, TbWorld, TbMail, TbReceipt2, TbFileInvoice, TbFileDescription, TbPresentation, TbShoppingCart, TbReceiptRefund, TbRepeat, TbUsers, TbChecklist, TbLifebuoy, TbFilter, TbBrandGoogle, TbBellRinging, TbCalendar, TbSparkles, TbFileTypePdf, TbSignature, TbTags, TbClockPlay }
 
-// panel key -> resource key for the plain list managers
-const LISTS = { taskStatuses: ['task-statuses', tr("The columns of the Tasks board. Type to rename, pick a colour, drag to reorder, add a row for a new status. New tasks start as Not started; the app needs Not started, In progress and Complete, so those cannot be deleted. Deleting another one sends its tasks back to Not started.")], currencies: ['currencies', tr("The currencies you invoice in. Prefix puts the symbol before the amount, suffix after it.")], taxes: ['taxes', tr("The taxes you can add to document lines.")], ticketStatuses: ['ticket-statuses'], ticketPriorities: ['ticket-priorities'], departments: ['departments'], predefinedReplies: ['predefined-replies'], spamFilters: ['spam-filters'], leadStatuses: ['lead-statuses'], leadSources: ['lead-sources'], webToLead: ['web-to-lead'], tags: ['tags', tr("Tags can be attached to clients, leads, tasks and more.")] }
+
+const COPY = (t) => navigator.clipboard?.writeText(t).then(() => notify('success', tr("Copied"))).catch(() => {})
+
+/** Shows whether Google and GitHub sign-in are on (their keys are server settings) and the addresses to register at the provider. */
+const SignInProvidersPanel = () => {
+    const [ways, setWays] = useState(null)
+    useEffect(() => { fetch('/api/crm/auth/providers').then((r) => r.json()).then(setWays).catch(() => setWays({})) }, [])
+    const origin = window.location.origin
+    const rows = [
+        { id: 'google', name: 'Google', env: 'GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET', where: 'Google Cloud Console → Credentials → OAuth client (Web application) → Authorised redirect URIs' },
+        { id: 'github', name: 'GitHub', env: 'GITHUB_AUTH_CLIENT_ID, GITHUB_AUTH_CLIENT_SECRET', where: 'GitHub → Settings → Developer settings → OAuth Apps → Authorization callback URL' },
+    ]
+    return (
+        <div className="flex flex-col gap-3">
+            {rows.map((r) => {
+                const on = !!ways?.[r.id]
+                const cb = `${origin}/api/auth/callback/${r.id}`
+                return (
+                    <div key={r.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                        <div className="mb-1 flex items-center gap-2 font-semibold">{r.name}<span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', !ways ? 'bg-gray-100 text-gray-500' : on ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}>{!ways ? '…' : on ? tr("On: the button shows on the sign-in page") : tr("Off: keys not set on the server")}</span></div>
+                        <div className="text-xs text-gray-500">{tr("Register this address at the provider")} ({tr(r.where)}):</div>
+                        <button type="button" onClick={() => COPY(cb)} className="mt-1 break-all rounded-md bg-gray-100 px-2 py-1 text-left font-mono text-xs hover:bg-gray-200 dark:bg-gray-700">{cb}</button>
+                        {!on && ways && <div className="mt-2 text-xs text-gray-500">{tr("Then add these variables to the server (Coolify → Environment variables) and redeploy:")} <code>{r.env}</code></div>}
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
 
 const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'ai') return <AiSettingsPanel />
-    if (name === 'bankAccounts') return <ResourceManager resourceKey="payment-modes" />
+    if (name === 'signInProviders') return <SignInProvidersPanel />
     if (name === 'smtp') return <MailServerSettings />
     if (name === 'channelsTest') return <ChannelsTestPanel />
     if (name === 'invoiceFormatApply') return <InvoiceFormatPanel />
@@ -37,7 +64,6 @@ const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'clientPermissions') return <ClientPermissionsPanel />
     if (name === 'cronCommand') return <CronPanel />
     if (name === 'cronLog') return <CronPanel log />
-    if (LISTS[name]) return <ResourceManager resourceKey={LISTS[name][0]} note={LISTS[name][1]} />
     return null
 }
 
@@ -124,7 +150,8 @@ const Settings = () => {
                                         <h5 className="mb-0.5">{c.title}</h5>
                                         {tg && <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500"><span className={on ? 'text-emerald-600' : 'text-gray-400'}>{on ? tr("On") : tr("Off")}</span><Switcher checked={on} disabled={!canEdit} onChange={(v) => setValue(tg.key, v ? '1' : '0')} /></label>}
                                     </div>
-                                    {c.desc && <p className="mb-4 text-sm text-gray-500">{c.desc}</p>}
+                                    {c.desc && <p className="mb-4 text-sm text-gray-500">{tr(c.desc)}</p>}
+                                    {c.links && <div className="flex flex-wrap gap-2">{c.links.map(([label, to]) => <Link key={to} to={to}><Button size="sm">{tr(label)}</Button></Link>)}</div>}
                                     {!c.desc && <div className="mb-3" />}
                                     {c.fields?.filter((x) => !x.cardToggle).length > 0 && (
                                         <div className={cn("grid grid-cols-1 gap-x-5 gap-y-4 transition-opacity md:grid-cols-2 [&>div.md\\:col-span-2:has(button[role=switch])]:border-t", !on && "opacity-50")}>

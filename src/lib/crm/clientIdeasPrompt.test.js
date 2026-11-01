@@ -38,3 +38,20 @@ test('client ideas AI: only http(s) addresses are kept', () => {
     assert.equal(url('javascript:alert(1)'), '')
     assert.equal(url(''), '')
 })
+
+import { codeFromName, activeCodes, IDEA_CATEGORY_DEFAULTS } from './ideaCategoriesCalc.js'
+test('idea categories: a new category gets a short unique code', () => {
+    assert.equal(codeFromName('Customer care!'), 'customer-care')
+    assert.equal(codeFromName('Customer care', ['customer-care']), 'customer-care-2')
+    assert.equal(codeFromName('Sécurité & conformité'), 'securite-conformite')
+    assert.equal(codeFromName('???'), 'category')
+})
+test('idea categories: the AI is offered the active categories, else the defaults', () => {
+    assert.deepEqual(activeCodes([{ code: 'a', isActive: true }, { code: 'b', isActive: false }]), ['a'])
+    assert.equal(activeCodes([]).length, IDEA_CATEGORY_DEFAULTS.length)
+})
+test('client ideas AI: a custom category is accepted, an unknown one falls back to Other', () => {
+    const r = parseResearch(JSON.stringify({ ideas: [{ title: 'a', category: 'customer-care' }, { title: 'b', category: 'zzz' }] }), ['grow', 'customer-care', 'other'])
+    assert.deepEqual(r.ideas.map((i) => i.category), ['customer-care', 'other'])
+    assert.ok(buildSystem({ categories: ['grow', 'customer-care'] }).includes('grow|customer-care'))
+})

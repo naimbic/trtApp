@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { requirePortal } from '@/lib/portal/session'
 import { ideaForClient, tellTeam, ANSWERS } from '@/lib/crm/clientIdeasApi'
 import { emit } from '@/lib/crm/webhooks'
+import { getIdeaCategories } from '@/lib/crm/ideaCategories'
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -9,12 +10,13 @@ const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const SEEN = { visible: true, status: { not: 'draft' } }
 const REPLY_OPEN = ['proposed', 'interested', 'approved', 'declined']
 
+const categoryMap = async () => Object.fromEntries((await getIdeaCategories()).map((c) => [c.code, { name: c.name, color: c.color }]))
 const currenciesById = async () => Object.fromEntries((await prisma.crmCurrency.findMany()).map((c) => [c.id, { name: c.name, symbol: c.symbol, placement: c.placement }]))
 
 export async function listIdeas() {
     const s = await requirePortal('ideas')
     const [rows, cur] = await Promise.all([prisma.crmClientIdea.findMany({ where: { clientId: s.client.id, ...SEEN }, orderBy: [{ proposedAt: 'desc' }, { createdAt: 'desc' }], take: 200 }), currenciesById()])
-    return { list: rows.map((i) => ideaForClient(i, cur[i.currencyId])), waiting: rows.filter((i) => i.status === 'proposed').length }
+    return { list: rows.map((i) => ideaForClient(i, cur[i.currencyId])), waiting: rows.filter((i) => i.status === 'proposed').length, categories: await categoryMap() }
 }
 
 export async function getIdea(id) {
@@ -22,7 +24,7 @@ export async function getIdea(id) {
     const idea = oid(id) && (await prisma.crmClientIdea.findFirst({ where: { id, clientId: s.client.id, ...SEEN } }))
     if (!idea) throw httpError('Idea not found', 404)
     const [cur, comments] = await Promise.all([currenciesById(), prisma.crmClientIdeaComment.findMany({ where: { ideaId: id, internal: false }, orderBy: { createdAt: 'asc' }, take: 300 })])
-    return { idea: ideaForClient(idea, cur[idea.currencyId]), canAnswer: REPLY_OPEN.includes(idea.status), comments: comments.map((c) => ({ id: c.id, mine: c.authorKind === 'client', authorName: c.authorKind === 'client' ? c.authorName : c.authorName || '', body: c.body, createdAt: c.createdAt })) }
+    return { idea: ideaForClient(idea, cur[idea.currencyId]), categories: await categoryMap(), canAnswer: REPLY_OPEN.includes(idea.status), comments: comments.map((c) => ({ id: c.id, mine: c.authorKind === 'client', authorName: c.authorKind === 'client' ? c.authorName : c.authorName || '', body: c.body, createdAt: c.createdAt })) }
 }
 
 const who = (c) => [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email

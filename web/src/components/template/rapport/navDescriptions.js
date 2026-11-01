@@ -12,6 +12,7 @@ export const NAV_DESC = {
     'consent-purposes': 'What clients agreed to',
     leads: 'Prospects and the pipeline',
     'lead-sources': 'Where leads come from',
+    'idea-categories': 'The categories of the ideas proposed to clients',
     'lead-statuses': 'Stages of the pipeline',
     'web-to-lead': 'Forms that create leads',
     'lead-email-integration': 'Leads from an inbox',

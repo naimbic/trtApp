@@ -5139,5 +5139,12 @@ export default {
     "A client idea changes status (for example Proposed)": "تتغير حالة فكرة عميل (مثلًا مقترحة)",
     "A client answers an idea (interested, approved or declined)": "يرد عميل على فكرة (مهتم أو موافق أو رافض)",
     "The Ideas tab of a client: ideas the team proposes to grow the client's business or save it money, with the AI research helper. Create writes and researches; Edit moves, answers and proposes them to the client (which sends them an email); Delete removes them. The client only sees an idea after it is proposed, and only when the client area allows Ideas.": "تبويب الأفكار لدى العميل: أفكار يقترحها الفريق لتنمية نشاط العميل أو توفير المال له، مع مساعد البحث بالذكاء الاصطناعي. الإنشاء يكتب ويبحث؛ التعديل ينقل ويجيب ويقترحها على العميل (فيُرسل له بريد)؛ الحذف يزيلها. لا يرى العميل الفكرة إلا بعد اقتراحها وإذا سمحت منطقة العميل بالأفكار.",
-    "The ideas the team proposes to the client, with its answer.": "الأفكار التي يقترحها الفريق على العميل مع ردّه."
+    "The ideas the team proposes to the client, with its answer.": "الأفكار التي يقترحها الفريق على العميل مع ردّه.",
+    "Edit categories": "تعديل الفئات",
+    "Idea categories": "فئات الأفكار",
+    "Idea category": "فئة فكرة",
+    "The categories of the ideas proposed to clients": "فئات الأفكار المقترحة على العملاء",
+    "The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.": "تُدار فئات الأفكار المقترحة على العملاء (تنمية النشاط، توفير المال…) من القائمة، العملاء.",
+    "Other is the category ideas fall back to: it stays (you can switch it off)": "«أخرى» هي الفئة الاحتياطية للأفكار: تبقى (يمكنك تعطيلها)",
+    "Ideas use this category: change their category first, or switch it off": "توجد أفكار تستخدم هذه الفئة: غيّر فئتها أولًا أو عطّلها"
 }

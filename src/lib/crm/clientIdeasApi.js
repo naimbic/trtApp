@@ -7,7 +7,8 @@ import { notifyStaffChannels } from '@/lib/crm/channels'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { realPicture } from '@/lib/crm/pictures'
 import { emit } from '@/lib/crm/webhooks'
-import { CATEGORIES } from '@/lib/crm/clientIdeasPrompt'
+import { getIdeaCategories } from '@/lib/crm/ideaCategories'
+import { FALLBACK_CATEGORY } from '@/lib/crm/ideaCategoriesCalc'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -15,7 +16,6 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 /** The columns of the board, left to right. A draft is internal; the client sees the others (when the idea is visible). */
 export const STATUSES = ['draft', 'proposed', 'interested', 'approved', 'doing', 'done', 'declined']
-export { CATEGORIES }
 /** What a client may answer, and the column it moves the idea to. */
 export const ANSWERS = { interested: 'interested', approved: 'approved', declined: 'declined' }
 const staffName = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || ''
@@ -46,11 +46,12 @@ const fingerprintOf = (clientId, title) => `${clientId}:${String(title || '').to
 export async function listIdeas(clientId) {
     const g = await gate('view')
     const client = await clientOf(g, clientId)
-    const [rows, staff, currencies, research] = await Promise.all([
+    const [rows, staff, currencies, research, categories] = await Promise.all([
         prisma.crmClientIdea.findMany({ where: { clientId }, orderBy: [{ position: 'asc' }, { createdAt: 'desc' }], take: 500 }),
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true }, orderBy: { firstName: 'asc' } }),
         prisma.crmCurrency.findMany({ select: { id: true, name: true, symbol: true } }),
         prisma.crmClientResearch.findFirst({ where: { clientId }, orderBy: { createdAt: 'desc' } }),
+        getIdeaCategories(),
     ])
     const counts = await prisma.crmClientIdeaComment.findMany({ where: { ideaId: { in: rows.map((r) => r.id) } }, select: { ideaId: true } })
     const n = {}
@@ -60,16 +61,17 @@ export async function listIdeas(clientId) {
         list: rows.map((r) => shape(r, { comments: n[r.id] || 0 })),
         staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })),
         currencies,
+        categories,
         research: research ? { id: research.id, summary: research.summary || '', competitors: research.competitors || [], provider: research.provider, model: research.model, webSearch: research.webSearch, createdAt: research.createdAt } : null,
         can: { create: hasCap(g.authority, 'client_ideas', 'create'), edit: hasCap(g.authority, 'client_ideas', 'edit'), delete: hasCap(g.authority, 'client_ideas', 'delete') },
     }
 }
 
-const clean = (b, cur = {}) => {
+const clean = (b, codes) => {
     const out = {}
     if (b.title !== undefined) { const t = String(b.title || '').trim().slice(0, 200); if (!t) throw fail('Give the idea a title'); out.title = t }
     if (b.body !== undefined) out.body = storeRich(String(b.body || ''), 20000) || null
-    if (b.category !== undefined) out.category = CATEGORIES.includes(b.category) ? b.category : 'other'
+    if (b.category !== undefined) out.category = codes.includes(b.category) ? b.category : FALLBACK_CATEGORY
     for (const k of ['priority', 'impact', 'effort']) if (b[k] !== undefined) out[k] = Math.min(3, Math.max(1, parseInt(b[k], 10) || 2))
     if (b.gain !== undefined) out.gain = String(b.gain || '').trim().slice(0, 300) || null
     if (b.price !== undefined) { const p = b.price === '' || b.price === null ? null : Number(b.price); if (p !== null && (!Number.isFinite(p) || p < 0)) throw fail('The price must be a number'); out.price = p }
@@ -78,7 +80,6 @@ const clean = (b, cur = {}) => {
     if (b.tags !== undefined) out.tags = [...new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => String(t).trim().replace(/^#/, '').slice(0, 30)).filter(Boolean))].slice(0, 10)
     if (b.assigneeIds !== undefined) out.assigneeIds = [...new Set((Array.isArray(b.assigneeIds) ? b.assigneeIds : []).filter(oid))].slice(0, 20)
     if (b.visible !== undefined) out.visible = !!b.visible
-    void cur
     return out
 }
 
@@ -103,7 +104,7 @@ export async function saveIdea(clientId, body = {}, id = null) {
     const client = await clientOf(g, clientId)
     const cur = id ? await prisma.crmClientIdea.findFirst({ where: { id, clientId } }) : null
     if (id && !cur) throw fail('Idea not found', 404)
-    const data = clean(body, cur || {})
+    const data = clean(body, (await getIdeaCategories()).map((c) => c.code))
     if (!id && !data.title) throw fail('Give the idea a title')
     let status = body.status !== undefined ? body.status : cur?.status
     if (status !== undefined && !STATUSES.includes(status)) throw fail('Unknown status')

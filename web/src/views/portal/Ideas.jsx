@@ -30,7 +30,7 @@ export const Ideas = () => {
                     {d.list.map((i) => (
                         <Card key={i.id} bodyClass="h-full">
                             <Link to={`/portal/ideas/${i.id}`} className="flex h-full flex-col gap-3">
-                                <div className="flex items-center justify-between gap-2"><span className="text-xs font-semibold text-gray-500">{t(CAT[i.category] || 'Other')}</span><Tag className={`whitespace-nowrap ${TONE[i.status] || 'bg-gray-100 text-gray-600'}`}>{t(LABEL[i.status] || i.status)}</Tag></div>
+                                <div className="flex items-center justify-between gap-2"><span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: `${d.categories?.[i.category]?.color || '#6b7280'}22`, color: d.categories?.[i.category]?.color || '#6b7280' }}>{t(d.categories?.[i.category]?.name || CAT[i.category] || 'Other')}</span><Tag className={`whitespace-nowrap ${TONE[i.status] || 'bg-gray-100 text-gray-600'}`}>{t(LABEL[i.status] || i.status)}</Tag></div>
                                 <h6 className="font-bold leading-snug hover:text-primary">{i.title}</h6>
                                 {i.gain && <p className="text-sm text-gray-600 dark:text-gray-300">{i.gain}</p>}
                                 <div className="mt-auto flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">

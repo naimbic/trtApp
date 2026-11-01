@@ -5139,5 +5139,12 @@ export default {
     "A client idea changes status (for example Proposed)": "クライアントのアイデアのステータスが変わったとき(例:提案済み)",
     "A client answers an idea (interested, approved or declined)": "クライアントがアイデアに回答したとき(関心あり・承認・辞退)",
     "The Ideas tab of a client: ideas the team proposes to grow the client's business or save it money, with the AI research helper. Create writes and researches; Edit moves, answers and proposes them to the client (which sends them an email); Delete removes them. The client only sees an idea after it is proposed, and only when the client area allows Ideas.": "クライアントの「アイデア」タブ:クライアントの事業を伸ばす、またはコストを減らすためにチームが提案するアイデアと、AI リサーチアシスタント。作成=書く・調べる、編集=移動・回答・クライアントへの提案(メールが送られます)、削除=消去。クライアントは提案後、かつクライアントエリアでアイデアが許可されている場合のみ閲覧できます。",
-    "The ideas the team proposes to the client, with its answer.": "チームがクライアントに提案するアイデアと、その回答。"
+    "The ideas the team proposes to the client, with its answer.": "チームがクライアントに提案するアイデアと、その回答。",
+    "Edit categories": "カテゴリを編集",
+    "Idea categories": "アイデアのカテゴリ",
+    "Idea category": "アイデアのカテゴリ",
+    "The categories of the ideas proposed to clients": "クライアントに提案するアイデアのカテゴリ",
+    "The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.": "クライアントに提案するアイデアのカテゴリ(事業を伸ばす、コスト削減など)はメニューの「顧客」から管理します。",
+    "Other is the category ideas fall back to: it stays (you can switch it off)": "「その他」はアイデアの既定のカテゴリなので削除できません(無効にはできます)",
+    "Ideas use this category: change their category first, or switch it off": "このカテゴリを使っているアイデアがあります。先にカテゴリを変えるか、無効にしてください"
 }

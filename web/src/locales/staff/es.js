@@ -5139,5 +5139,12 @@ export default {
     "A client idea changes status (for example Proposed)": "Una idea de cliente cambia de estado (por ejemplo Propuesta)",
     "A client answers an idea (interested, approved or declined)": "Un cliente responde a una idea (interesado, aprobada o rechazada)",
     "The Ideas tab of a client: ideas the team proposes to grow the client's business or save it money, with the AI research helper. Create writes and researches; Edit moves, answers and proposes them to the client (which sends them an email); Delete removes them. The client only sees an idea after it is proposed, and only when the client area allows Ideas.": "La pestaña Ideas de un cliente: ideas que el equipo propone para hacer crecer su negocio o ahorrarle dinero, con el asistente de investigación con IA. Crear escribe e investiga; Editar mueve, responde y las propone al cliente (lo que le envía un correo); Eliminar las borra. El cliente solo ve una idea cuando se propone, y solo si el área de cliente permite Ideas.",
-    "The ideas the team proposes to the client, with its answer.": "Las ideas que el equipo propone al cliente, con su respuesta."
+    "The ideas the team proposes to the client, with its answer.": "Las ideas que el equipo propone al cliente, con su respuesta.",
+    "Edit categories": "Editar categorías",
+    "Idea categories": "Categorías de ideas",
+    "Idea category": "Categoría de idea",
+    "The categories of the ideas proposed to clients": "Las categorías de las ideas propuestas a los clientes",
+    "The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.": "Las categorías de las ideas propuestas a los clientes (Hacer crecer el negocio, Ahorrar dinero…) se gestionan desde el menú, Clientes.",
+    "Other is the category ideas fall back to: it stays (you can switch it off)": "Otro es la categoría de respaldo de las ideas: se queda (puede desactivarla)",
+    "Ideas use this category: change their category first, or switch it off": "Hay ideas que usan esta categoría: cambie antes su categoría, o desactívela"
 }

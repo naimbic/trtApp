@@ -288,6 +288,7 @@ export const GROUPS = {
                 yes('portal_section_invoices', 'Invoices', { default: '1' }), yes('portal_section_estimates', 'Estimates', { default: '1' }), yes('portal_section_proposals', 'Proposals', { default: '1' }),
                 yes('portal_section_contracts', 'Contracts', { default: '1' }), yes('portal_section_projects', 'Projects', { default: '1' }), yes('portal_section_support', 'Support', { default: '1' }), yes('portal_section_ideas', 'Ideas', { default: '1', hint: 'The ideas the team proposes to the client, with its answer.' }),
             ] },
+            { title: 'Idea categories', desc: 'The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.', links: [['Idea categories', '/crm/idea-categories']] },
             { title: 'Rules', fields: [
                 yes('company_is_required', 'Company name is required'),
                 yes('company_requires_vat_number_field', 'The VAT / ICE field is required'),

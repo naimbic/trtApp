@@ -206,6 +206,7 @@ const hideSecrets = (resource, rows) => { for (const k of SECRET[resource.key] |
 export async function listRecords(key, params = {}) {
     const resource = resolveResource(key)
     if (resource.key === 'task-statuses') await (await import('@/lib/crm/taskStatuses')).ensureTaskStatuses()
+    if (resource.key === 'idea-categories') await (await import('@/lib/crm/ideaCategories')).ensureIdeaCategories()
     const session = await requirePermission(resource.feature, 'view')
     const page = Math.max(parseInt(params.pageIndex || '1', 10), 1)
     const size = Math.min(Math.max(parseInt(params.pageSize || '10', 10), 1), 200)
@@ -258,6 +259,14 @@ const audit = async (session, resource, action, id, label) => {
 // Server-side rules of a few lookup lists (kept here, not in the resource config, because that config is shared with the browser).
 //   beforeCreate(data)  fills what the person cannot type   lockDelete(row) -> text when it must not be deleted   afterDelete(row)  tidies what pointed at it
 const HOOKS = {
+    'idea-categories': {
+        beforeCreate: async (data) => { const { codeFromName } = await import('@/lib/crm/ideaCategoriesCalc'); data.code = codeFromName(data.name, (await prisma.crmIdeaCategory.findMany({ select: { code: true } })).map((r) => r.code)) },
+        lockDelete: async (row) => {
+            if (row.code === 'other') return 'Other is the category ideas fall back to: it stays (you can switch it off)'
+            const n = await prisma.crmClientIdea.count({ where: { category: row.code } })
+            return n ? 'Ideas use this category: change their category first, or switch it off' : null
+        },
+    },
     'task-statuses': {
         beforeCreate: async (data) => { const { nextCode } = await import('@/lib/crm/taskStatusesCalc'); data.code = nextCode((await prisma.crmTaskStatus.findMany({ select: { code: true } })).map((r) => r.code)) },
         lockDelete: async (row) => (await import('@/lib/crm/taskStatusesCalc')).deleteBlock(row.code),

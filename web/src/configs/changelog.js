@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.157.1',
+        date: '2026-11-02',
+        title: 'Ideas: editable categories, a plain tab with an AI icon, and the page no longer overflows',
+        items: [
+            'The Ideas tab is back to the normal tab design, with a small AI sparkle icon. The client page no longer grows wider than the screen when it has many tabs (the right column now keeps to its width and the board scrolls inside its card).',
+            'The categories of ideas can be edited: Customers → More → Idea categories (also the "Edit categories" link above the board, and a button in Settings → Clients). Name, colour, order, on/off, add your own. The eight that come with the app (Grow the business, Save money, Marketing, Sales, Tech, Operations, Brand, Other) are translated in the five languages; a category you add shows as you typed it. A category in use cannot be deleted (switch it off instead) and Other always stays. The AI research uses your list, and the client area shows the colours.',
+        ],
+    },
+    {
         version: '0.157.0',
         date: '2026-11-02',
         title: 'Client Ideas: a board of ideas to propose to each client, the client answers from its area, and an AI researcher',

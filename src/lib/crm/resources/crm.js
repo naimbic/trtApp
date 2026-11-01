@@ -279,6 +279,23 @@ const resources = [
         kanban: { statusResource: 'lead-statuses', statusField: 'statusId', orderField: 'leadOrder' },
     },
     {
+        key: 'idea-categories', lookup: { orderField: 'categoryOrder', colorField: 'color' }, usage: { model: 'crmClientIdea', field: 'category', by: 'code' },
+        model: 'crmIdeaCategory', label: 'Idea category', plural: 'Idea categories', group: 'Customers', icon: 'TbBulb', feature: 'client_ideas',
+        titleField: 'name', search: ['name'], defaultSort: { categoryOrder: 'asc' },
+        columns: [
+            { key: 'name', label: 'Name', type: 'text', link: true },
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'isActive', label: 'Active', type: 'boolean', defaultOn: true },
+        ],
+        fields: [
+            { key: 'name', label: 'Name', type: 'text', required: true, section: 'General' },
+            { key: 'color', label: 'Color', type: 'color', section: 'General' },
+            { key: 'categoryOrder', label: 'Order', type: 'number', section: 'General' },
+            { key: 'isActive', label: 'Active', type: 'boolean', defaultOn: true, section: 'General' },
+        ],
+        filters: [],
+    },
+    {
         key: 'lead-sources', lookup: { orderField: 'sourceOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmLead', field: 'sourceId', by: 'id' },
         model: 'crmLeadSource',
         label: 'Lead source',

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -137,7 +137,7 @@ const ClientDetail = () => {
         return [
             { key: 'overview', label: tr("Overview") },
             rel('invoices', tr("Invoices"), c.counts.invoices, 'invoices', { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: cols('invoices') }),
-            { key: 'ideas', label: tr("Ideas"), feature: 'client_ideas', accent: true },
+            { key: 'ideas', label: tr("Ideas"), feature: 'client_ideas', icon: <TbSparkles className="text-violet-500" /> },
             { key: 'payments', label: tr("Payments"), feature: 'payments' },
             rel('contracts', tr("Contracts"), c.counts.contracts, 'contracts', { resource: 'contracts', where, openPath: (r) => `/crm/contracts/${r.id}`, newPath: `/crm/contracts/new?clientId=${id}`, columns: cols('contracts') }),
             rel('estimates', tr("Estimates"), c.counts.estimates, 'estimates', { resource: 'estimates', where, openPath: (r) => `/crm/estimates/${r.id}`, newPath: `/crm/estimates/new?clientId=${id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('estimates') }),
@@ -235,7 +235,7 @@ const ClientDetail = () => {
                     <Card>
                         <Tabs value={tab} onChange={setTab}>
                             <TabList>
-                                {tabs.map((t) => <TabNav key={t.key} value={t.key} className={`!px-2.5 text-sm${t.accent ? (tab === t.key ? ' !font-bold !text-blue-600 ring-2 ring-blue-500' : ' !mx-1 !rounded-lg !bg-blue-500 !text-white hover:!bg-blue-600') : ''}`}>{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
+                                {tabs.map((t) => <TabNav key={t.key} value={t.key} className="!px-2.5 text-sm">{t.icon ? <span className="inline-flex items-center gap-1">{t.icon}{t.label}</span> : t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
                             </TabList>
                             <div className="p-4">
                                 {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}

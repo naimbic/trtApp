@@ -1,6 +1,6 @@
 import {
     PiUserCircleDuotone, PiIdentificationCardDuotone, PiUsersThreeDuotone, PiVaultDuotone, PiShieldCheckDuotone,
-    PiFunnelDuotone, PiMegaphoneDuotone, PiFlagDuotone, PiGlobeDuotone, PiEnvelopeOpenDuotone,
+    PiFunnelDuotone, PiLightbulbDuotone, PiMegaphoneDuotone, PiFlagDuotone, PiGlobeDuotone, PiEnvelopeOpenDuotone,
     PiKanbanDuotone, PiFlagBannerDuotone,
     PiCheckSquareDuotone, PiTimerDuotone, PiCalendarCheckDuotone, PiAirplaneTiltDuotone, PiCalendarXDuotone, PiListChecksDuotone,
     PiReceiptDuotone, PiMoneyDuotone, PiFileTextDuotone, PiFilePlusDuotone, PiShoppingBagDuotone, PiFileMagnifyingGlassDuotone,
@@ -18,7 +18,7 @@ import {
 export default {
     'nav.clients': <PiUserCircleDuotone />, 'nav.contacts': <PiIdentificationCardDuotone />,
     'nav.customer-groups': <PiUsersThreeDuotone />, 'nav.vault': <PiVaultDuotone />, 'nav.consent-purposes': <PiShieldCheckDuotone />,
-    'nav.leads': <PiFunnelDuotone />, 'nav.lead-sources': <PiMegaphoneDuotone />, 'nav.lead-statuses': <PiFlagDuotone />,
+    'nav.leads': <PiFunnelDuotone />, 'nav.lead-sources': <PiMegaphoneDuotone />, 'nav.idea-categories': <PiLightbulbDuotone />, 'nav.lead-statuses': <PiFlagDuotone />,
     'nav.web-to-lead': <PiGlobeDuotone />, 'nav.lead-email-integration': <PiEnvelopeOpenDuotone />,
     'nav.projects': <PiKanbanDuotone />, 'nav.milestones': <PiFlagBannerDuotone />,
     'nav.notes': <PiNotePencilDuotone />, 'nav.tasks-board': <PiKanbanDuotone />, 'nav.my-tasks': <PiUserCheckDuotone />, 'nav.scrum-board': <PiKanbanDuotone />, 'nav.team-tasks': <PiUsersThreeDuotone />, 'nav.issues': <PiBugBeetleDuotone />, 'nav.tasks': <PiCheckSquareDuotone />, 'nav.task-timers': <PiTimerDuotone />,

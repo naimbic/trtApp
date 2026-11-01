@@ -5,7 +5,8 @@ import { rateLimit } from '@/lib/rateLimit'
 import { chat, PROVIDERS } from '@/lib/crm/ai/providers'
 import { resolveAi, audit } from '@/lib/crm/ai/aiSettings'
 import { storeRich } from '@/lib/crm/richText'
-import { CATEGORIES, LANGS, FOCUS, PROJECT, PROPOSAL, url, buildSystem, buildUser, parseResearch, bodyOf } from '@/lib/crm/clientIdeasPrompt'
+import { getIdeaCategories } from '@/lib/crm/ideaCategories'
+import { LANGS, FOCUS, PROJECT, PROPOSAL, url, buildSystem, buildUser, parseResearch, bodyOf } from '@/lib/crm/clientIdeasPrompt'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -71,11 +72,12 @@ export async function researchClient(clientId, body = {}) {
     const web = body.web !== false && ai.provider === 'anthropic'
     const context = await gatherContext(client)
     const lang = LANGS[body.lang] ? body.lang : 'en'
-    const system = buildSystem({ about: ai.systemPrompt, lang, web })
+    const codes = (await getIdeaCategories()).filter((c) => c.isActive).map((c) => c.code)
+    const system = buildSystem({ about: ai.systemPrompt, lang, web, categories: codes.length ? codes : undefined })
     const user = buildUser({ context, focus, count, competitors, note: String(body.note || '') })
     const t = Date.now()
     const out = await chat({ provider: ai.provider, apiKey: ai.apiKey, workspaceId: ai.workspaceId, model: ai.model, system, user, maxTokens: web ? 6000 : 4000, webSearch: web ? 5 : 0, timeoutMs: 240000 })
-    const r = parseResearch(out.text)
+    const r = parseResearch(out.text, codes.length ? codes : undefined)
     const have = new Set((await prisma.crmClientIdea.findMany({ where: { clientId, fingerprint: { in: r.ideas.map((i) => fingerprintOf(clientId, i.title)) } }, select: { fingerprint: true } })).map((x) => x.fingerprint))
     const ideas = r.ideas.map((i) => ({ ...i, duplicate: have.has(fingerprintOf(clientId, i.title)) }))
     const saved = await prisma.crmClientResearch.create({ data: { clientId, summary: r.summary || null, competitors: r.competitors, provider: ai.provider, model: ai.model, webSearch: web, createdBy: staffId || undefined } })
@@ -88,11 +90,12 @@ export async function addAiIdeas(clientId, body = {}) {
     const { staffId } = await gate('create', clientId)
     const list = (Array.isArray(body.ideas) ? body.ideas : []).slice(0, 12)
     if (!list.length) throw fail('Pick at least one idea')
+    const codes = (await getIdeaCategories()).map((c) => c.code)
     const last = await prisma.crmClientIdea.findFirst({ where: { clientId, status: 'draft' }, orderBy: { position: 'desc' }, select: { position: true } })
     let pos = last?.position || 0
     const made = []
     for (const raw of list) {
-        const i = parseResearch(JSON.stringify({ ideas: [raw] })).ideas[0]
+        const i = parseResearch(JSON.stringify({ ideas: [raw] }), codes).ideas[0]
         if (!i) continue
         const fingerprint = fingerprintOf(clientId, i.title)
         if (await prisma.crmClientIdea.findFirst({ where: { clientId, fingerprint }, select: { id: true } })) continue

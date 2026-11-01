@@ -5139,5 +5139,12 @@ export default {
     "A client idea changes status (for example Proposed)": "Une idée client change de statut (par exemple Proposée)",
     "A client answers an idea (interested, approved or declined)": "Un client répond à une idée (intéressé, approuvé ou refusé)",
     "The Ideas tab of a client: ideas the team proposes to grow the client's business or save it money, with the AI research helper. Create writes and researches; Edit moves, answers and proposes them to the client (which sends them an email); Delete removes them. The client only sees an idea after it is proposed, and only when the client area allows Ideas.": "L'onglet Idées d'un client : les idées que l'équipe propose pour développer son activité ou lui faire économiser, avec l'assistant de recherche IA. Créer écrit et recherche ; Modifier déplace, répond et les propose au client (ce qui lui envoie un e-mail) ; Supprimer les retire. Le client ne voit une idée qu'une fois proposée, et seulement si l'espace client autorise les Idées.",
-    "The ideas the team proposes to the client, with its answer.": "Les idées proposées au client par l'équipe, avec sa réponse."
+    "The ideas the team proposes to the client, with its answer.": "Les idées proposées au client par l'équipe, avec sa réponse.",
+    "Edit categories": "Modifier les catégories",
+    "Idea categories": "Catégories d'idées",
+    "Idea category": "Catégorie d'idée",
+    "The categories of the ideas proposed to clients": "Les catégories des idées proposées aux clients",
+    "The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.": "Les catégories des idées proposées aux clients (Développer l'activité, Économiser…) se gèrent depuis le menu, Clients.",
+    "Other is the category ideas fall back to: it stays (you can switch it off)": "Autre est la catégorie de repli des idées : elle reste (vous pouvez la désactiver)",
+    "Ideas use this category: change their category first, or switch it off": "Des idées utilisent cette catégorie : changez d'abord leur catégorie, ou désactivez-la"
 }

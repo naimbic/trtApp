@@ -78,3 +78,19 @@ model CrmClientResearch {
   @@index([clientId])
   @@map("crm_client_research")
 }
+
+/// The categories of client ideas (Grow the business, Save money...): editable under Customers → Idea categories.
+model CrmIdeaCategory {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// what an idea stores in its `category`
+  code          String   @unique
+  name          String
+  color         String?
+  categoryOrder Int?
+  /// off: not offered for new ideas (ideas that have it keep it)
+  isActive      Boolean?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("crm_idea_categories")
+}

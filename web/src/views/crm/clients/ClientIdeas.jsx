@@ -12,6 +12,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FoldSection from '@/components/crm/FoldSection'
 import RichEditor from '@/components/crm/RichEditor'
 import cn from '@/utils/classNames'
+import { Link } from 'react-router'
 import { api, notify } from '../kit/api'
 import { useLocaleStore } from '@/store/localeStore'
 import { tr } from '@/utils/t'
@@ -21,18 +22,20 @@ export const STATUS = {
     draft: ['Draft', 'bg-gray-400'], proposed: ['Proposed', 'bg-blue-500'], interested: ['Interested', 'bg-sky-500'], approved: ['Approved', 'bg-emerald-500'],
     doing: ['In progress', 'bg-amber-500'], done: ['Done', 'bg-green-700'], declined: ['Declined', 'bg-rose-500'],
 }
-const CATS = {
-    grow: ['Grow the business', 'bg-emerald-100 text-emerald-700'], save: ['Save money', 'bg-amber-100 text-amber-700'], marketing: ['Marketing', 'bg-violet-100 text-violet-700'], sales: ['Sales', 'bg-indigo-100 text-indigo-700'],
-    tech: ['Tech', 'bg-sky-100 text-sky-700'], ops: ['Operations', 'bg-orange-100 text-orange-700'], brand: ['Brand', 'bg-pink-100 text-pink-700'], other: ['Other', 'bg-gray-100 text-gray-600'],
+/** A category as a small coloured label: its colour tints the background, its name is translated when it is one that comes with the app. */
+const Cat = ({ cat, code }) => {
+    const c = cat || { name: code || 'Other', color: '#6b7280' }
+    return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: `${c.color}22`, color: c.color }}>{tr(c.name)}</span>
 }
+const catOf = (cats, code) => (cats || []).find((c) => c.code === code)
 const LEVEL = { 1: 'Low', 2: 'Medium', 3: 'High' }
 const money = (n, cur) => `${Number(n).toLocaleString('fr-FR').replace(/ | /g, ' ')} ${cur?.symbol || cur?.name || ''}`.trim()
 const Dots = ({ n, color }) => <span className="inline-flex gap-0.5">{[1, 2, 3].map((k) => <i key={k} className={cn('h-1.5 w-1.5 rounded-full', k <= n ? color : 'bg-gray-200 dark:bg-gray-600')} />)}</span>
 
-const IdeaCard = ({ i, cur, onOpen }) => (
+const IdeaCard = ({ i, cur, cats, onOpen }) => (
     <button type="button" onClick={() => onOpen(i)} className="w-full rounded-xl border border-gray-200 bg-white p-3 text-start transition hover:border-primary/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
         <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-            <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', CATS[i.category]?.[1])}>{tr(CATS[i.category]?.[0] || 'Other')}</span>
+            <Cat cat={catOf(cats, i.category)} code={i.category} />
             {i.source === 'ai' && <span className="flex items-center gap-0.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700"><TbSparkles />AI</span>}
             <span className="ms-auto" title={i.visible ? tr("The client can see it") : tr("Only the team can see it")}>{i.visible ? <TbEye className="text-emerald-500" /> : <TbEyeOff className="text-gray-400" />}</span>
         </div>
@@ -72,7 +75,6 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
     const staffOpts = data.staff.map((s) => ({ value: s.id, label: s.name }))
     const curOpts = [{ value: '', label: '—' }, ...data.currencies.map((c) => ({ value: c.id, label: c.symbol || c.name }))]
     const statusOpts = Object.entries(STATUS).map(([value, [label]]) => ({ value, label: tr(label) }))
-    const catOpts = Object.entries(CATS).map(([value, [label]]) => ({ value, label: tr(label) }))
     const body = () => ({ clientId, ...v, price: v.price === '' ? null : Number(v.price), currencyId: v.currencyId || null, dueDate: v.dueDate || null, tags: v.tags.split(',').map((t) => t.trim()).filter(Boolean) })
     const save = async () => {
         if (!v.title.trim()) { setSec('idea'); return notify('danger', tr("Give the idea a title")) }
@@ -101,9 +103,9 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
                 </div>
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                     <fieldset disabled={readOnly || !!busy} className="contents">
-                        <FoldSection icon={<TbBulb />} tone="blue" title={tr("The idea")} summary={`${tr(CATS[v.category]?.[0])} · ${v.title || tr("No title yet")}`} open={sec === 'idea'} onToggle={() => toggle('idea')}>
+                        <FoldSection icon={<TbBulb />} tone="blue" title={tr("The idea")} summary={`${tr(catOf(data.categories, v.category)?.name || 'Other')} · ${v.title || tr("No title yet")}`} open={sec === 'idea'} onToggle={() => toggle('idea')}>
                             <div className="mb-3 flex flex-wrap gap-1.5">
-                                {Object.entries(CATS).map(([k, [label]]) => <button key={k} type="button" onClick={() => set({ category: k })} className={cn('rounded-full border px-3 py-1 text-xs font-semibold transition', v.category === k ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600')}>{tr(label)}</button>)}
+                                {data.categories.filter((c) => c.isActive || c.code === v.category).map((c) => <button key={c.code} type="button" onClick={() => set({ category: c.code })} className={cn('rounded-full border px-3 py-1 text-xs font-semibold transition', v.category === c.code ? 'border-transparent text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600')} style={v.category === c.code ? { background: c.color } : undefined}>{tr(c.name)}</button>)}
                             </div>
                             <div className="mb-3"><L>{tr("Title")}</L><Input autoComplete="off" placeholder={tr("What we propose, in one line")} value={v.title} onChange={(e) => set({ title: e.target.value })} /></div>
                             <L>{tr("Description")}</L>
@@ -243,7 +245,7 @@ const AiDialog = ({ open, clientId, data, onClose, onChanged }) => {
                                         <span className={cn('mt-0.5 grid size-5 shrink-0 place-items-center rounded border text-xs', pick[k] ? 'border-primary bg-primary text-white' : 'border-gray-300')}>{pick[k] && <TbCheck />}</span>
                                         <input type="checkbox" className="hidden" checked={!!pick[k]} onChange={(e) => setPick({ ...pick, [k]: e.target.checked })} />
                                         <span className="min-w-0 flex-1 text-sm">
-                                            <span className="flex flex-wrap items-center gap-1.5"><b>{i.title}</b><span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', CATS[i.category]?.[1])}>{tr(CATS[i.category]?.[0])}</span>{i.duplicate && <span className="rounded bg-gray-200 px-1.5 text-[10px]">{tr("Already on the board")}</span>}</span>
+                                            <span className="flex flex-wrap items-center gap-1.5"><b>{i.title}</b><Cat cat={catOf(data.categories, i.category)} code={i.category} />{i.duplicate && <span className="rounded bg-gray-200 px-1.5 text-[10px]">{tr("Already on the board")}</span>}</span>
                                             {i.why && <span className="mt-1 block text-xs text-gray-600 dark:text-gray-300"><b>{tr("Why")}:</b> {i.why}</span>}
                                             {i.gain && <span className="mt-0.5 block text-xs text-emerald-700 dark:text-emerald-400"><b>{tr("Gain")}:</b> {i.gain}</span>}
                                             {i.plan?.length > 0 && <ol className="mt-1 list-decimal ps-5 text-xs text-gray-500">{i.plan.map((p, n) => <li key={n}>{p}</li>)}</ol>}
@@ -301,13 +303,14 @@ const ClientIdeas = ({ clientId, openId }) => {
             load()
         } catch (e) { setD(before); notify('danger', e.message) }
     }
-    const catOpts = [{ value: '', label: tr("All categories") }, ...Object.entries(CATS).map(([value, [label]]) => ({ value, label: tr(label) }))]
+    const catOpts = [{ value: '', label: tr("All categories") }, ...d.categories.map((c) => ({ value: c.code, label: tr(c.name) }))]
     const waiting = d.list.filter((i) => i.status === 'proposed').length
     return (
         <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
                 <div className="w-full sm:w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search ideas")} value={q} onChange={(e) => setQ(e.target.value)} /></div>
                 <div className="w-48"><Select size="sm" isSearchable={false} options={catOpts} value={catOpts.find((o) => o.value === cat)} onChange={(o) => setCat(o.value)} /></div>
+                {d.can.edit && <Link to="/crm/idea-categories" className="text-xs text-primary hover:underline">{tr("Edit categories")}</Link>}
                 <span className="text-xs text-gray-400">{d.list.length} {tr("ideas")}{waiting ? ` · ${waiting} ${tr("waiting for the client")}` : ''}</span>
                 <div className="ms-auto flex gap-2">
                     {d.can.create && <Button size="sm" icon={<TbSparkles />} className="!border-violet-300 !bg-violet-50 !text-violet-700 hover:!bg-violet-100 dark:!bg-violet-500/10 dark:!text-violet-300" onClick={() => setAi(true)}>{tr("AI research")}</Button>}
@@ -332,7 +335,7 @@ const ClientIdeas = ({ clientId, openId }) => {
                                         <div className="min-h-[60px] space-y-2">
                                             {items.map((i, idx) => (
                                                 <Draggable key={i.id} draggableId={i.id} index={idx} isDragDisabled={!d.can.edit}>
-                                                    {(p, sn) => <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className={cn(sn.isDragging && 'rotate-1 shadow-xl')}><IdeaCard i={i} cur={cur[i.currencyId]} onOpen={setSel} /></div>}
+                                                    {(p, sn) => <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className={cn(sn.isDragging && 'rotate-1 shadow-xl')}><IdeaCard i={i} cur={cur[i.currencyId]} cats={d.categories} onOpen={setSel} /></div>}
                                                 </Draggable>
                                             ))}
                                             {prov.placeholder}

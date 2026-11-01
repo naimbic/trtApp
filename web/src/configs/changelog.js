@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.149.1',
+        date: '2026-11-01',
+        title: 'Fixed: after signing in for Meet, the browser went to the CRM instead of back to Meet',
+        items: [
+            'When another app (Meet) sends someone who is not signed in to the CRM, the sign-in page remembers the request. The page that guards the sign-in screen then sent the person to the CRM home as soon as they were signed in, which won the race against the return to the request. It now goes back to the authorization request (and from there to Meet) as a full page load. The server does the same when someone who is already signed in opens the sign-in address.',
+        ],
+    },
+    {
         version: '0.149.0',
         date: '2026-11-01',
         title: 'Fixed: older meetings were missing for Meet; a message for the person who asked',

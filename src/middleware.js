@@ -45,6 +45,9 @@ export default auth((req) => {
 
     if (isAuthRoute) {
         if (isSignedIn) {
+            /** A sign-in another app asked for (Meet): go back to its authorization request, not to the CRM home */
+            const back = nextUrl.searchParams.get(REDIRECT_URL_KEY)
+            if (back && back.startsWith('/api/oauth/')) return Response.redirect(new URL(back, nextUrl))
             /** Redirect to authenticated entry path if signed in & path is auth route */
             return Response.redirect(
                 new URL(appConfig.authenticatedEntryPath, nextUrl),

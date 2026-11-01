@@ -4933,5 +4933,11 @@ export default {
     "Who can apply": "من يمكنه التقديم",
     "Who can apply and how": "من يمكنه التقديم وكيف",
     "AI learning": "تعلّم الذكاء الاصطناعي",
-    "Program not found": "البرنامج غير موجود"
+    "Program not found": "البرنامج غير موجود",
+    "Stop after (times, empty = never)": "التوقف بعد (مرات، فارغ = أبدًا)",
+    "time(s)": "مرة",
+    "Custom…": "مخصص…",
+    "Repeat every 1 to 365": "التكرار كل 1 إلى 365",
+    "Unknown unit": "وحدة غير معروفة",
+    "The number of times is 0 (for ever) to 1000": "عدد المرات من 0 (دائمًا) إلى 1000"
 }

@@ -3,7 +3,7 @@ import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { richParts, previewOf, applyAction } from '@/lib/crm/chatApi'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { notifyNewMentions } from '@/lib/crm/mentionsApi'
-import { REPEATS, nextAfter, describe } from '@/lib/crm/scheduleRules'
+import { REPEATS, UNITS, customOf, nextAfter, describe } from '@/lib/crm/scheduleRules'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -71,19 +71,21 @@ export async function scheduledMessagesJob({ lines, dry }) {
     const due = await prisma.crmScheduledMessage.findMany({ where: { active: true, nextAt: { lte: new Date() } }, orderBy: { nextAt: 'asc' }, take: 50 })
     for (const m of due) {
         if (dry) { lines.push(`[preview] Scheduled message “${m.title}” would be sent (${m.audience})`); continue }
-        const next = nextAfter(m.nextAt, m.repeat)
+        // the last of a limited series ("2 times") does not schedule another one
+        const lastRun = m.cycles > 0 && (m.runs || 0) + 1 >= m.cycles
+        const next = lastRun ? null : nextAfter(m.nextAt, m.repeat, new Date(), { every: m.every, unit: m.unit })
         const claimed = await prisma.crmScheduledMessage.updateMany({ where: { id: m.id, nextAt: m.nextAt, active: true }, data: { nextAt: next, active: !!next } })
         if (!claimed.count) continue
         try {
             const { n, notes } = await deliverScheduled(m)
-            await prisma.crmScheduledMessage.update({ where: { id: m.id }, data: { lastSentAt: new Date(), lastCount: n, sentCount: { increment: 1 } } })
+            await prisma.crmScheduledMessage.update({ where: { id: m.id }, data: { lastSentAt: new Date(), lastCount: n, sentCount: { increment: 1 }, runs: { increment: 1 } } })
             lines.push(`Scheduled message “${m.title}” sent to ${n} conversation(s)${next ? '' : ' (done)'}`)
             for (const x of notes) lines.push(`! Scheduled message “${m.title}”: ${x}`)
         } catch (e) { lines.push(`! Scheduled message “${m.title}”: ${e.message}`) }
     }
 }
 
-const shape = (m, names) => ({ id: m.id, title: m.title, body: m.body, rich: m.rich || null, assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, leadId: m.leadId || null, emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, repeatLabel: describe(m.repeat), nextAt: m.nextAt, active: m.active, lastSentAt: m.lastSentAt, lastCount: m.lastCount, sentCount: m.sentCount, createdBy: names[m.createdBy] || '', createdAt: m.createdAt })
+const shape = (m, names) => ({ id: m.id, title: m.title, body: m.body, rich: m.rich || null, assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, leadId: m.leadId || null, emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, every: m.every || 1, unit: m.unit || 'day', cycles: m.cycles || 0, runs: m.runs || 0, repeatLabel: describe(m.repeat, { every: m.every, unit: m.unit }, m.cycles), nextAt: m.nextAt, active: m.active, lastSentAt: m.lastSentAt, lastCount: m.lastCount, sentCount: m.sentCount, createdBy: names[m.createdBy] || '', createdAt: m.createdAt })
 
 export async function listScheduled() {
     await gate('view')
@@ -120,6 +122,17 @@ export async function saveScheduled(id, body = {}) {
     if (body.makeTask !== undefined) { data.makeTask = !!body.makeTask; if (data.makeTask) await requirePermission('tasks', 'create') }
     if ((data.emailClient ?? cur?.emailClient) && !(data.clientId ?? cur?.clientId) && !(data.leadId ?? cur?.leadId)) throw fail('Choose the client or lead to email')
     if (!cur || body.repeat !== undefined) { if (!REPEATS.includes(body.repeat || 'none')) throw fail('Unknown repeat'); data.repeat = body.repeat || 'none' }
+    if (body.every !== undefined || body.unit !== undefined) {
+        const ev = Math.floor(Number(body.every)), un = body.unit
+        if (!(ev >= 1 && ev <= 365)) throw fail('Repeat every 1 to 365')
+        if (!UNITS.includes(un)) throw fail('Unknown unit')
+        data.every = ev; data.unit = un
+    }
+    if (body.cycles !== undefined) {
+        const cy = body.cycles === '' || body.cycles === null ? 0 : Math.floor(Number(body.cycles))
+        if (!(cy >= 0 && cy <= 1000)) throw fail('The number of times is 0 (for ever) to 1000')
+        data.cycles = cy; data.runs = 0 // a new count starts when the series is changed
+    }
     if (!cur || body.sendAt !== undefined) {
         const at = new Date(body.sendAt)
         if (Number.isNaN(+at)) throw fail('Choose the date and time to send')
@@ -129,7 +142,7 @@ export async function saveScheduled(id, body = {}) {
     if (cur && body.active !== undefined) {
         data.active = !!body.active
         if (data.active && !data.nextAt && (!cur.nextAt || cur.nextAt < new Date())) { // switched on again: the next moment after now
-            const nx = nextAfter(cur.nextAt || new Date(), data.repeat || cur.repeat)
+            const nx = nextAfter(cur.nextAt || new Date(), data.repeat || cur.repeat, new Date(), { every: data.every ?? cur.every, unit: data.unit ?? cur.unit })
             if (!nx) throw fail('Choose a new date and time first')
             data.nextAt = nx
         }

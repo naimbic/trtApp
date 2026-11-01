@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.151.0',
+        date: '2026-11-01',
+        title: 'Grow ideas can be dragged between columns; scheduled messages repeat as you choose',
+        items: [
+            'Grow → Ideas and advice: drag a card to another column (New, Accepted, In progress, Done, Dismissed) like leads and tasks. The status is saved at once and put back if it cannot be saved. It also works from the keyboard (focus a card, Space, arrow keys, Space). Only people who can edit Grow can drag.',
+            'Scheduled messages, Repeat: new "Custom…" with every N days, weeks, months or years (1 to 365), and for every repeat a "Stop after" number of times, as on recurring invoices: for example every day, 2 times, or every 2 weeks, 5 times. Empty means never stop. The card shows "Every 3 days, 2 times · 1/2". "Send now" does not use up one of the times.',
+        ],
+    },
+    {
         version: '0.150.0',
         date: '2026-11-01',
         title: 'Grow: free AI and cloud credits, grants and partner programs; AI learning',

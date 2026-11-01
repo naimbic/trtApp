@@ -4933,5 +4933,11 @@ export default {
     "Who can apply": "申請できる人",
     "Who can apply and how": "申請できる人と方法",
     "AI learning": "AI学習",
-    "Program not found": "プログラムが見つかりません"
+    "Program not found": "プログラムが見つかりません",
+    "Stop after (times, empty = never)": "終了までの回数(空欄=無期限)",
+    "time(s)": "回",
+    "Custom…": "カスタム…",
+    "Repeat every 1 to 365": "1〜365ごとに繰り返し",
+    "Unknown unit": "不明な単位",
+    "The number of times is 0 (for ever) to 1000": "回数は0(無期限)〜1000です"
 }

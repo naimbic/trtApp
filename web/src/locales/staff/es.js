@@ -4933,5 +4933,11 @@ export default {
     "Who can apply": "Quién puede solicitar",
     "Who can apply and how": "Quién puede solicitar y cómo",
     "AI learning": "Aprender IA",
-    "Program not found": "Programa no encontrado"
+    "Program not found": "Programa no encontrado",
+    "Stop after (times, empty = never)": "Parar después de (veces, vacío = nunca)",
+    "time(s)": "vez/veces",
+    "Custom…": "Personalizado…",
+    "Repeat every 1 to 365": "Repetir cada 1 a 365",
+    "Unknown unit": "Unidad desconocida",
+    "The number of times is 0 (for ever) to 1000": "El número de veces va de 0 (siempre) a 1000"
 }

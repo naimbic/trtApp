@@ -192,6 +192,11 @@ model CrmScheduledMessage {
   staffIds   String[]  @db.ObjectId
   /// none | daily | weekdays | weekly | monthly
   repeat     String    @default("none")
+  /// custom repeat: every N day | week | month | year; cycles = how many times in all (0 = for ever); runs = how many times it went out by the schedule
+  every      Int       @default(1)
+  unit       String    @default("day")
+  cycles     Int       @default(0)
+  runs       Int       @default(0)
   /// the first moment, then the next one
   nextAt     DateTime?
   active     Boolean   @default(true)

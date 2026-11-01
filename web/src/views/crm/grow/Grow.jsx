@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { TbSparkles, TbChartBar, TbBulb, TbRepeat, TbPlus, TbSearch, TbChecklist, TbTrash, TbRobot, TbPlayerPlay, TbEye, TbFlame, TbUsers, TbCash, TbInbox, TbTargetArrow, TbMessageCircle, TbGift, TbExternalLink, TbCheck } from 'react-icons/tb'
 import dayjs from 'dayjs'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -192,6 +193,14 @@ const Ideas = ({ openId }) => {
     useEffect(() => { load() }, [load])
     useEffect(() => { if (openId && d) { const i = d.list.find((x) => x.id === openId); if (i) setSel(i) } }, [openId, d])
     const cols = ['new', 'accepted', 'doing', 'done', ...(f.dismissed ? ['dismissed'] : [])]
+    // dragging a card to another column changes its status at once (and puts it back if the server refuses)
+    const onDragEnd = async ({ draggableId, destination, source }) => {
+        if (!destination || destination.droppableId === source.droppableId) return
+        const status = destination.droppableId
+        const before = d
+        setD((x) => ({ ...x, list: x.list.map((i) => (i.id === draggableId ? { ...i, status } : i)) }))
+        try { await api(`/api/crm/grow/ideas/${draggableId}`, { method: 'PUT', body: { status } }); load() } catch (e) { setD(before); notify('danger', e.message) }
+    }
     const move = async (i, status) => { try { await api(`/api/crm/grow/ideas/${i.id}`, { method: 'PUT', body: { status } }); load() } catch (e) { notify('danger', e.message) } }
     const catOpts = [{ value: '', label: tr("All categories") }, ...Object.entries(CATS).map(([value, [label]]) => ({ value, label: tr(label) }))]
     const perOpts = [{ value: '', label: tr("All repeats") }, ...Object.entries(PERIOD).map(([value, label]) => ({ value, label: tr(label) }))]
@@ -207,27 +216,38 @@ const Ideas = ({ openId }) => {
                 {d.can.create && <Button className="ms-auto" variant="solid" icon={<TbPlus />} onClick={() => setSel({ title: '', body: '', status: 'new', tags: [], assigneeIds: [], priority: 2, category: 'other', period: 'once', source: 'manual' })}>{tr("New idea")}</Button>}
             </div>
             {d.tags.length > 0 && <div className="flex flex-wrap gap-1.5">{d.tags.map((t) => <button key={t.name} type="button" onClick={() => setF({ ...f, tag: f.tag === t.name ? '' : t.name })} className={cn('rounded-full px-2.5 py-1 text-xs font-medium transition', f.tag === t.name ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300')}>#{t.name} <span className="opacity-60">{t.n}</span></button>)}</div>}
-            <div className={cn('grid gap-4', cols.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4')}>
-                {cols.map((c) => {
-                    const items = d.list.filter((i) => i.status === c)
-                    return (
-                        <div key={c} className="min-w-0 rounded-2xl bg-gray-50 p-2.5 dark:bg-gray-800/60">
-                            <div className="mb-2 flex items-center justify-between px-1"><span className="flex items-center gap-2 text-sm font-semibold"><i className={cn('h-2.5 w-2.5 rounded-full', STATUS[c][1])} />{tr(STATUS[c][0])}</span><span className="text-xs text-gray-400">{items.length}</span></div>
-                            <div className="space-y-2">
-                                {items.map((i) => (
-                                    <div key={i.id} className="group relative">
-                                        <IdeaCard i={i} onOpen={setSel} />
-                                        {d.can.edit && c !== 'done' && c !== 'dismissed' && (
-                                            <div className="absolute end-2 top-2 hidden gap-1 group-hover:flex">{c === 'new' && <button type="button" className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'accepted')}>{tr("Accept")}</button>}<button type="button" className="rounded-md bg-gray-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'dismissed')}>{tr("Dismiss")}</button></div>
-                                        )}
+            <DragDropContext onDragEnd={onDragEnd}>
+                <div className={cn('grid gap-4', cols.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4')}>
+                    {cols.map((c) => {
+                        const items = d.list.filter((i) => i.status === c)
+                        return (
+                            <Droppable key={c} droppableId={c}>
+                                {(prov, snap) => (
+                                    <div ref={prov.innerRef} {...prov.droppableProps} className={cn('min-w-0 rounded-2xl p-2.5 transition-colors', snap.isDraggingOver ? 'bg-primary/10 ring-2 ring-primary/30' : 'bg-gray-50 dark:bg-gray-800/60')}>
+                                        <div className="mb-2 flex items-center justify-between px-1"><span className="flex items-center gap-2 text-sm font-semibold"><i className={cn('h-2.5 w-2.5 rounded-full', STATUS[c][1])} />{tr(STATUS[c][0])}</span><span className="text-xs text-gray-400">{items.length}</span></div>
+                                        <div className="min-h-[60px] space-y-2">
+                                            {items.map((i, idx) => (
+                                                <Draggable key={i.id} draggableId={i.id} index={idx} isDragDisabled={!d.can.edit}>
+                                                    {(p2, s2) => (
+                                                        <div ref={p2.innerRef} {...p2.draggableProps} {...p2.dragHandleProps} className={cn('group relative', s2.isDragging && 'rotate-1 shadow-xl')}>
+                                                            <IdeaCard i={i} onOpen={setSel} />
+                                                            {d.can.edit && c !== 'done' && c !== 'dismissed' && !s2.isDragging && (
+                                                                <div className="absolute end-2 top-2 hidden gap-1 group-hover:flex">{c === 'new' && <button type="button" className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'accepted')}>{tr("Accept")}</button>}<button type="button" className="rounded-md bg-gray-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'dismissed')}>{tr("Dismiss")}</button></div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                            {prov.placeholder}
+                                            {!items.length && !snap.isDraggingOver && <p className="py-4 text-center text-xs text-gray-400">{c === 'new' ? tr("Nothing new") : '—'}</p>}
+                                        </div>
                                     </div>
-                                ))}
-                                {!items.length && <p className="py-4 text-center text-xs text-gray-400">{c === 'new' ? tr("Nothing new") : '—'}</p>}
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+                                )}
+                            </Droppable>
+                        )
+                    })}
+                </div>
+            </DragDropContext>
             <IdeaDialog idea={sel} lookups={d} onClose={() => setSel(null)} onChanged={load} />
         </div>
     )

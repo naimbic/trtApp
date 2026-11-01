@@ -4933,5 +4933,11 @@ export default {
     "Who can apply": "Qui peut candidater",
     "Who can apply and how": "Qui peut candidater et comment",
     "AI learning": "Apprendre l'IA",
-    "Program not found": "Programme introuvable"
+    "Program not found": "Programme introuvable",
+    "Stop after (times, empty = never)": "Arrêter après (fois, vide = jamais)",
+    "time(s)": "fois",
+    "Custom…": "Personnalisé…",
+    "Repeat every 1 to 365": "Répéter tous les 1 à 365",
+    "Unknown unit": "Unité inconnue",
+    "The number of times is 0 (for ever) to 1000": "Le nombre de fois va de 0 (toujours) à 1000"
 }

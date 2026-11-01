@@ -839,6 +839,14 @@ try {
         const pv = await (await login(sAdm))('POST', '/api/crm/cron/run', { dry: true })
         check('a due message shows in the dry run of the automatic tasks (nothing is sent)', pv.status === 200 && JSON.stringify(pv.body).includes('zz sched team') && !(await prisma.crmChatMessage.findFirst({ where: { body: 'zz hello team v2' } })))
         await prisma.crmNotification.deleteMany({ where: { additionalData: { in: ['chat-assigned', 'chat-task', 'mention'] }, createdAt: { gte: t0 } } })
+        // a custom repeat: every N units, a limited number of times
+        const custom = await m('POST', '/api/crm/scheduled-messages', { title: 'zz sched custom', body: 'zz custom twice', audience: 'team', repeat: 'custom', every: 3, unit: 'day', cycles: 2, sendAt: soon })
+        const CID = custom.body?.id
+        if (CID) made.rows.unshift(['crmScheduledMessage', CID])
+        const crow = CID ? await prisma.crmScheduledMessage.findUnique({ where: { id: CID } }) : null
+        check('a custom repeat (every 3 days, 2 times) is saved', custom.status === 201 && crow?.repeat === 'custom' && crow.every === 3 && crow.unit === 'day' && crow.cycles === 2 && crow.runs === 0)
+        check('...a bad custom repeat is refused (0 or 400 units, unknown unit, too many times)', (await m('POST', '/api/crm/scheduled-messages', { title: 'x', body: 'y', repeat: 'custom', every: 0, unit: 'day', sendAt: soon })).status === 400 && (await m('POST', '/api/crm/scheduled-messages', { title: 'x', body: 'y', repeat: 'custom', every: 400, unit: 'day', sendAt: soon })).status === 400 && (await m('POST', '/api/crm/scheduled-messages', { title: 'x', body: 'y', repeat: 'custom', every: 2, unit: 'hour', sendAt: soon })).status === 400 && (await m('POST', '/api/crm/scheduled-messages', { title: 'x', body: 'y', repeat: 'daily', cycles: 5000, sendAt: soon })).status === 400)
+        check('the list says how it repeats and how often it has run', ((await v('GET', '/api/crm/scheduled-messages')).body?.list || []).find((x) => x.id === CID)?.repeatLabel === 'Every 3 days, 2 times')
         check('only Delete removes it', (await m('DELETE', `/api/crm/scheduled-messages/${MID}`)).status === 403 && (await d('DELETE', `/api/crm/scheduled-messages/${MID}`)).status === 200 && !(await prisma.crmScheduledMessage.findUnique({ where: { id: MID } })))
     }
 

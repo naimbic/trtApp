@@ -19,7 +19,10 @@ import { tr } from '@/utils/t'
 
 const L = ({ children }) => <label className="mb-1 block text-xs font-semibold text-gray-500">{children}</label>
 const AUD = { team: ['The Team room (everybody sees it)', <TbMessages key="t" />], admins: ['Private message to each administrator', <TbUserShield key="a" />], all: ['Private message to each team member', <TbUsers key="l" />], selected: ['Private message to chosen people', <TbUsers key="s" />] }
-const REP = { none: 'Once', daily: 'Every day', weekdays: 'Every weekday (Mon to Fri)', weekly: 'Every week', monthly: 'Every month' }
+const REP = { none: 'Once', daily: 'Every day', weekdays: 'Every weekday (Mon to Fri)', weekly: 'Every week', monthly: 'Every month', custom: 'Custom…' }
+const UNIT = { day: 'day(s)', week: 'week(s)', month: 'month(s)', year: 'year(s)' }
+// "Every 2 weeks, 5 times"
+const repLabel = (r, every, unit, cycles) => `${r === 'custom' ? `${tr("Every")} ${every} ${tr(UNIT[unit] || unit)}` : tr(REP[r])}${r !== 'none' && cycles > 0 ? `, ${cycles} ${tr("time(s)")}` : ''}`
 const plain = (h) => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 const local = (d) => dayjs(d).format('YYYY-MM-DDTHH:mm')
 const soon = () => local(dayjs().add(1, 'hour').startOf('hour'))
@@ -37,11 +40,12 @@ const ScheduledMessages = () => {
     const staff = d?.staff || []
     const staffOpts = useMemo(() => staff.map((s) => ({ value: s.id, label: s.name })), [staff])
     const audOpts = Object.entries(AUD).map(([value, [label]]) => ({ value, label: tr(label) }))
+    const unitOpts = Object.entries(UNIT).map(([value, label]) => ({ value, label: tr(label) }))
     const repOpts = Object.entries(REP).map(([value, label]) => ({ value, label: tr(label) }))
-    const open = (m) => { setSec('msg'); setDlg(m ? { id: m.id, title: m.title, rich: m.rich || (m.body ? `<p>${m.body.replace(/&/g, '&amp;').replace(/</g, '&lt;').split('\n').join('</p><p>')}</p>` : ''), assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, leadId: m.leadId || null, aboutType: m.leadId ? 'lead' : 'client', emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, sendAt: m.nextAt ? local(m.nextAt) : soon() } : { title: '', rich: '', assigneeIds: [], clientId: null, leadId: null, aboutType: 'client', emailClient: false, makeTask: false, audience: 'team', staffIds: [], repeat: 'none', sendAt: soon() }) }
+    const open = (m) => { setSec('msg'); setDlg(m ? { id: m.id, title: m.title, rich: m.rich || (m.body ? `<p>${m.body.replace(/&/g, '&amp;').replace(/</g, '&lt;').split('\n').join('</p><p>')}</p>` : ''), assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, leadId: m.leadId || null, aboutType: m.leadId ? 'lead' : 'client', emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, every: m.every || 1, unit: m.unit || 'day', cycles: m.cycles || '', sendAt: m.nextAt ? local(m.nextAt) : soon() } : { title: '', rich: '', assigneeIds: [], clientId: null, leadId: null, aboutType: 'client', emailClient: false, makeTask: false, audience: 'team', staffIds: [], repeat: 'none', every: 1, unit: 'day', cycles: '', sendAt: soon() }) }
     const save = async () => {
         setBusy(true)
-        try { await api(dlg.id ? `/api/crm/scheduled-messages/${dlg.id}` : '/api/crm/scheduled-messages', { method: dlg.id ? 'PUT' : 'POST', body: { ...dlg, body: undefined, aboutType: undefined, sendAt: new Date(dlg.sendAt).toISOString() } }); notify('success', tr("Message saved")); setDlg(null); load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+        try { await api(dlg.id ? `/api/crm/scheduled-messages/${dlg.id}` : '/api/crm/scheduled-messages', { method: dlg.id ? 'PUT' : 'POST', body: { ...dlg, body: undefined, aboutType: undefined, every: Number(dlg.every) || 1, cycles: dlg.cycles === '' ? 0 : Number(dlg.cycles), sendAt: new Date(dlg.sendAt).toISOString() } }); notify('success', tr("Message saved")); setDlg(null); load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const patch = (m, body) => api(`/api/crm/scheduled-messages/${m.id}`, { method: 'PUT', body }).then(load).catch((e) => notify('danger', e.message))
     const sendNow = (m) => api(`/api/crm/scheduled-messages/${m.id}`, { method: 'POST' }).then((r) => { notify('success', tr("Sent to {n} conversation(s)", { n: r.sent })); load() }).catch((e) => notify('danger', e.message))
@@ -57,7 +61,7 @@ const ScheduledMessages = () => {
                         <Card key={m.id} className={cn(!m.active && 'opacity-60')}>
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2"><b className="text-base">{m.title}</b><span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{AUD[m.audience]?.[1]}{m.audience === 'selected' ? `${m.staffIds.length} ${tr("people")}` : tr(AUD[m.audience]?.[0].split(' (')[0])}</span><span className="inline-flex items-center gap-1 text-xs text-gray-500"><TbRepeat />{tr(REP[m.repeat])}</span></div>
+                                    <div className="flex flex-wrap items-center gap-2"><b className="text-base">{m.title}</b><span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{AUD[m.audience]?.[1]}{m.audience === 'selected' ? `${m.staffIds.length} ${tr("people")}` : tr(AUD[m.audience]?.[0].split(' (')[0])}</span><span className="inline-flex items-center gap-1 text-xs text-gray-500"><TbRepeat />{repLabel(m.repeat, m.every, m.unit, m.cycles)}{m.cycles > 0 && m.repeat !== 'none' ? ` · ${m.runs || 0}/${m.cycles}` : ''}</span></div>
                                     <p className="mt-2 whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300">{m.body.length > 220 ? `${m.body.slice(0, 220)}…` : m.body}{m.rich && /<img/i.test(m.rich) ? ' 🖼' : ''}</p>
                                     {(m.assigneeIds.length > 0 || m.makeTask || m.clientId || m.leadId) && <div className="mt-1.5 flex flex-wrap gap-1 text-[11px]">{m.assigneeIds.length > 0 && <span className="rounded-full bg-gray-200 px-1.5 py-0.5 dark:bg-gray-600">👥 {m.assigneeIds.map((id) => staff.find((s) => s.id === id)?.name?.split(' ')[0]).filter(Boolean).join(', ')}</span>}{m.makeTask && <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-emerald-700">{tr("Task")}</span>}{(m.clientId || m.leadId) && <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-sky-700">{m.emailClient ? (m.leadId ? tr("Lead emailed") : tr("Client emailed")) : m.leadId ? tr("Lead") : tr("Client")}</span>}</div>}
                                     <p className="mt-2 text-xs text-gray-500">{m.active && m.nextAt ? `${tr("Next")}: ${dayjs(m.nextAt).format('DD MMM YYYY, HH:mm')}` : tr("Done or switched off")}{m.lastSentAt ? ` · ${tr("last sent")} ${dayjs(m.lastSentAt).format('DD MMM, HH:mm')} (${m.sentCount}×)` : ''}</p>
@@ -89,11 +93,19 @@ const ScheduledMessages = () => {
                                 {dlg.audience === 'selected' && <div><L>{tr("People")}</L><Select size="sm" isMulti options={staffOpts} value={staffOpts.filter((o) => dlg.staffIds.includes(o.value))} onChange={(o) => setDlg({ ...dlg, staffIds: (o || []).map((x) => x.value) })} /></div>}
                             </div>
                         </FoldSection>
-                        <FoldSection icon={<TbCalendarTime />} tone="amber" title={tr("When")} summary={`${dlg.sendAt ? dayjs(dlg.sendAt).format('DD MMM, HH:mm') : ''} · ${tr(REP[dlg.repeat])}`} open={sec === 'when'} onToggle={() => toggle('when')}>
+                        <FoldSection icon={<TbCalendarTime />} tone="amber" title={tr("When")} summary={`${dlg.sendAt ? dayjs(dlg.sendAt).format('DD MMM, HH:mm') : ''} · ${repLabel(dlg.repeat, dlg.every, dlg.unit, Number(dlg.cycles) || 0)}`} open={sec === 'when'} onToggle={() => toggle('when')}>
                             <div className="grid gap-2.5 sm:grid-cols-2">
                                 <div><L>{dlg.repeat === 'none' ? tr("Send on") : tr("First time, at")}</L><Input size="sm" type="datetime-local" value={dlg.sendAt} onChange={(e) => setDlg({ ...dlg, sendAt: e.target.value })} /></div>
                                 <div><L>{tr("Repeat")}</L><Select size="sm" isSearchable={false} options={repOpts} value={repOpts.find((o) => o.value === dlg.repeat)} onChange={(o) => setDlg({ ...dlg, repeat: o.value })} /></div>
                             </div>
+                            {dlg.repeat !== 'none' && (
+                                <div className="mt-2.5 grid items-end gap-2.5 sm:grid-cols-2">
+                                    {dlg.repeat === 'custom' && (
+                                        <div><L>{tr("Every")}</L><div className="flex gap-2"><div className="w-24"><Input size="sm" type="number" min="1" max="365" value={dlg.every} onChange={(e) => setDlg({ ...dlg, every: e.target.value })} /></div><div className="min-w-0 flex-1"><Select size="sm" isSearchable={false} options={unitOpts} value={unitOpts.find((o) => o.value === dlg.unit)} onChange={(o) => setDlg({ ...dlg, unit: o.value })} /></div></div></div>
+                                    )}
+                                    <div><L>{tr("Stop after (times, empty = never)")}</L><Input size="sm" type="number" min="1" max="1000" placeholder="∞" value={dlg.cycles} onChange={(e) => setDlg({ ...dlg, cycles: e.target.value })} /></div>
+                                </div>
+                            )}
                             <p className="mt-2 text-xs text-gray-400">{tr("It goes out at the first run of the automatic tasks after that time (Settings → Cron job), so they must run often, for example every 5 minutes.")}</p>
                         </FoldSection>
                         <FoldSection icon={<TbLink />} tone="violet" title={tr("When it goes out")} summary={[dlg.assigneeIds.length ? `${dlg.assigneeIds.length} ${tr("people")}` : '', dlg.makeTask ? tr("Task") : '', dlg.clientId ? tr("Client") : dlg.leadId ? tr("Lead") : ''].filter(Boolean).join(' · ') || tr("Nothing more")} open={sec === 'out'} onToggle={() => toggle('out')}>

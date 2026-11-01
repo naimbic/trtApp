@@ -16,7 +16,7 @@ export const ROLES = withTools({
     'Super Admin': FULL,
     Admin: { ...without(FULL, SENSITIVE), roles: ['view', 'create', 'edit'], staff: ['view', 'create', 'edit'] },
     'Account Manager': pick({
-        customers: 'edit', leads: 'edit', estimates: 'edit', proposals: 'edit', contracts: 'edit', invoices: 'edit', payments: ['view', 'create'], expenses: 'read',
+        customers: 'edit', client_ideas: 'edit', leads: 'edit', estimates: 'edit', proposals: 'edit', contracts: 'edit', invoices: 'edit', payments: ['view', 'create'], expenses: 'read',
         projects: 'edit', tasks: 'edit', issues: 'edit', tickets: 'edit', knowledge_base: 'read', items: 'read', finance: ['view_amounts'], reports: REPORT('sales', 'leads', 'support', 'work'),
     }),
     Editor: pick({
@@ -24,7 +24,7 @@ export const ROLES = withTools({
         reports: REPORT('leads', 'support', 'work'),
     }),
     'Sales Rep': pick({
-        customers: 'edit', leads: ['view'], estimates: 'edit', proposals: 'edit', contracts: 'read', items: 'read', tasks: 'edit', tickets: 'read', finance: ['view_amounts'], reports: REPORT('leads'),
+        customers: 'edit', client_ideas: 'edit', leads: ['view'], estimates: 'edit', proposals: 'edit', contracts: 'read', items: 'read', tasks: 'edit', tickets: 'read', finance: ['view_amounts'], reports: REPORT('leads'),
     }),
     'Support Agent': pick({ customers: 'read', tickets: 'edit', knowledge_base: 'all', tasks: 'edit', issues: 'edit', projects: 'read', reports: REPORT('support') }),
     Accountant: pick({

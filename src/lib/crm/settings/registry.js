@@ -286,7 +286,7 @@ export const GROUPS = {
             { title: 'Client block on documents', desc: 'How the client appears on invoices and estimates. Click a merge term to insert it.', panel: 'customerFormat', fields: [f('customer_info_format', 'Client information format', 'html', { rows: 7 })] },
             { title: 'Client area', desc: 'The sections clients see after signing in. Each client can also be limited on its own (open the client, Edit → Client area access).', fields: [
                 yes('portal_section_invoices', 'Invoices', { default: '1' }), yes('portal_section_estimates', 'Estimates', { default: '1' }), yes('portal_section_proposals', 'Proposals', { default: '1' }),
-                yes('portal_section_contracts', 'Contracts', { default: '1' }), yes('portal_section_projects', 'Projects', { default: '1' }), yes('portal_section_support', 'Support', { default: '1' }),
+                yes('portal_section_contracts', 'Contracts', { default: '1' }), yes('portal_section_projects', 'Projects', { default: '1' }), yes('portal_section_support', 'Support', { default: '1' }), yes('portal_section_ideas', 'Ideas', { default: '1', hint: 'The ideas the team proposes to the client, with its answer.' }),
             ] },
             { title: 'Rules', fields: [
                 yes('company_is_required', 'Company name is required'),

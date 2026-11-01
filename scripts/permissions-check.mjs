@@ -1107,6 +1107,62 @@ try {
     check(`all ${opened.length} Settings groups open`, opened.every(([, st]) => st === 200), opened.filter(([, st]) => st !== 200).join(' '))
     check('removed groups answer 404 (google, pusher, banks, tags, subscriptions)', (await Promise.all(['google', 'pusher', 'banks', 'tags', 'subscriptions'].map(async (g) => (await sAdm('GET', `/api/crm/settings?group=${g}`)).status))).every((st) => st === 404))
     check('the lists moved to the menu still open as pages', (await Promise.all(['task-statuses', 'ticket-statuses', 'ticket-priorities', 'departments', 'predefined-replies', 'spam-filters', 'lead-statuses', 'lead-sources', 'web-to-lead', 'currencies', 'taxes', 'tags', 'payment-modes', 'custom-fields', 'countries'].map(async (r) => (await sAdm('GET', `/api/crm/${r}?pageSize=5`)).status))).every((st) => st === 200))
+    // ideas proposed to a client: team permissions, what the client sees, its answer, the AI helper's drafts
+    console.log('\n== Client ideas')
+    {
+        const iA = await login(await makeUser('idea-a', { customers: ['view', 'create', 'edit'], client_ideas: ['view', 'create', 'edit', 'delete'] }))
+        const iC = await login(await makeUser('idea-c', { customers: ['view'], client_ideas: ['view'] }))
+        const iN = await login(await makeUser('idea-none', { customers: ['view'] }))
+        const cx = await iA('POST', '/api/crm/customers', { company: 'zz idea client X', active: true }), cy = await iA('POST', '/api/crm/customers', { company: 'zz idea client Y', active: true })
+        if (cx.body?.id) made.extraRows.push(['crmClient', cx.body.id]); if (cy.body?.id) made.extraRows.push(['crmClient', cy.body.id])
+        const portalOf = async (clientId, tag) => {
+            const email = `idea.${tag}.${Date.now()}@test.local`
+            const ct = await prisma.crmContact.create({ data: { clientId, firstName: 'Ida', lastName: tag, email } }); made.extraRows.unshift(['crmContact', ct.id])
+            await iA('POST', `/api/crm/customers/${clientId}/portal-password`, { contactId: ct.id, password: 'Portal-Test-12345' })
+            const r = await fetch(`${BASE}/api/portal/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password: 'Portal-Test-12345' }) })
+            const ck = (r.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).join('; ')
+            return async (method, path, body) => { const x = await fetch(`${BASE}/api/portal${path}`, { method, headers: { cookie: ck, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); return { status: x.status, body: await x.json().catch(() => null) } }
+        }
+        const px = await portalOf(cx.body.id, 'x'), py = await portalOf(cy.body.id, 'y')
+        const X = cx.body.id
+        check('Ideas: without the permission the board is closed; view-only cannot create', (await iN('GET', `/api/crm/client-ideas?clientId=${X}`)).status === 403 && (await iC('GET', `/api/crm/client-ideas?clientId=${X}`)).status === 200 && (await iC('POST', '/api/crm/client-ideas', { clientId: X, title: 'zz nope' })).status === 403)
+        const mk = await iA('POST', '/api/crm/client-ideas', { clientId: X, title: 'zz idea one', body: '<p>Why <script>x</script>it matters</p>', category: 'grow', impact: 3, effort: 1, gain: 'More calls', price: 1500 })
+        const ID = mk.body?.idea?.id
+        check('Ideas: a team member creates a draft, hidden from the client, script removed', mk.status === 201 && mk.body.idea.status === 'draft' && mk.body.idea.visible === false && !/script/.test(mk.body.idea.body))
+        check('Ideas: the client does not see a draft, even by its address', (await px('GET', '/ideas')).body?.list?.length === 0 && (await px('GET', `/ideas/${ID}`)).status === 404)
+        check('Ideas: an empty title is refused', (await iA('POST', '/api/crm/client-ideas', { clientId: X, title: ' ' })).status === 400)
+        check('Ideas: view-only cannot move or delete', (await iC('POST', `/api/crm/client-ideas/${ID}/move`, { clientId: X, status: 'proposed', index: 0 })).status === 403 && (await iC('DELETE', `/api/crm/client-ideas/${ID}?clientId=${X}`)).status === 403)
+        const mv = await iA('POST', `/api/crm/client-ideas/${ID}/move`, { clientId: X, status: 'proposed', index: 0 })
+        check('Ideas: moving it to Proposed shows it to the client', mv.status === 200 && mv.body.idea.visible === true && !!mv.body.idea.proposedAt)
+        const seen = await px('GET', '/ideas')
+        check('Ideas: the client sees it; another client does not', seen.body?.list?.length === 1 && seen.body.list[0].title === 'zz idea one' && (await py('GET', '/ideas')).body?.list?.length === 0 && (await py('GET', `/ideas/${ID}`)).status === 404)
+        check('Ideas: the client area never leaks team-only fields', !('assigneeIds' in (seen.body.list[0] || {})) && !('addedFrom' in (seen.body.list[0] || {})) && !('fingerprint' in (seen.body.list[0] || {})))
+        await iA('POST', `/api/crm/client-ideas/${ID}/comments`, { clientId: X, body: 'zz team note', internal: true }); await iA('POST', `/api/crm/client-ideas/${ID}/comments`, { clientId: X, body: 'zz hello client' })
+        const det = await px('GET', `/ideas/${ID}`)
+        check('Ideas: the client reads the team message but never the internal note', det.body?.comments?.some((c) => c.body === 'zz hello client') && !det.body?.comments?.some((c) => c.body === 'zz team note'))
+        check('Ideas: a wrong answer is refused', (await px('POST', `/ideas/${ID}`, { action: 'answer', answer: 'maybe' })).status === 400)
+        const ans = await px('POST', `/ideas/${ID}`, { action: 'answer', answer: 'approved', comment: 'zz yes please' })
+        const after = (await iA('GET', `/api/crm/client-ideas?clientId=${X}`)).body?.list?.find((i) => i.id === ID)
+        check('Ideas: the client approves with a word: the idea moves to Approved and the team sees it', ans.status === 200 && after?.status === 'approved' && after?.answer === 'approved' && (await iA('GET', `/api/crm/client-ideas/${ID}/comments?clientId=${X}`)).body?.list?.some((c) => c.authorKind === 'client' && c.body === 'zz yes please'))
+        check('Ideas: the team is told on the bell', (await prisma.crmNotification.count({ where: { additionalData: 'client-idea', description: { contains: 'zz idea one' } } })) >= 1)
+        await iA('PUT', `/api/crm/client-ideas/${ID}`, { clientId: X, status: 'doing' })
+        check('Ideas: once we work on it the client can no longer change the answer', (await px('POST', `/ideas/${ID}`, { action: 'answer', answer: 'declined' })).status === 409)
+        const mt = await iA('POST', `/api/crm/client-ideas/${ID}/task`, { clientId: X })
+        check('Ideas: "make a task" needs the task permission', mt.status === 403)
+        await prisma.crmClient.update({ where: { id: X }, data: { portalHidden: ['ideas'] } })
+        check('Ideas: switched off for this client, the section is closed', (await px('GET', '/ideas')).status === 403)
+        await prisma.crmClient.update({ where: { id: X }, data: { portalHidden: [] } })
+        const ai1 = await iA('POST', '/api/crm/client-ideas/ai/add', { clientId: X, ideas: [{ title: 'zz ai idea', why: 'Because', plan: ['a', 'b'], impact: 3, effort: 1, gain: 'x', sources: ['https://example.com/a', 'javascript:alert(1)'] }] })
+        const ai2 = await iA('POST', '/api/crm/client-ideas/ai/add', { clientId: X, ideas: [{ title: 'zz ai idea', why: 'Because' }] })
+        const aiRow = (await iA('GET', `/api/crm/client-ideas?clientId=${X}`)).body?.list?.find((i) => i.title === 'zz ai idea')
+        check('Ideas: AI ideas are added as hidden drafts, only safe links kept, never twice', ai1.body?.created === 1 && ai2.body?.created === 0 && aiRow?.source === 'ai' && aiRow?.status === 'draft' && aiRow?.visible === false && aiRow?.sources?.length === 1)
+        check('Ideas: the AI helper needs the permission to run', (await iC('POST', '/api/crm/client-ideas/ai', { clientId: X })).status === 403 && (await iA('GET', `/api/crm/client-ideas/ai?clientId=${X}`)).status === 200)
+        check('Ideas: delete needs the permission', (await iC('DELETE', `/api/crm/client-ideas/${ID}?clientId=${X}`)).status === 403 && (await iA('DELETE', `/api/crm/client-ideas/${ID}?clientId=${X}`)).status === 200)
+        await prisma.crmClientIdeaComment.deleteMany({ where: { ideaId: ID } })
+        await prisma.crmClientIdea.deleteMany({ where: { clientId: { in: [X, cy.body.id] } } })
+        await prisma.crmClientResearch.deleteMany({ where: { clientId: { in: [X, cy.body.id] } } })
+        await prisma.crmMailLog.deleteMany({ where: { relType: 'client_idea' } })
+    }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

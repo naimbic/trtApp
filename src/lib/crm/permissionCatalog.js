@@ -54,6 +54,7 @@ export const FEATURE_HINTS = {
     announcements: 'Post, edit and delete the announcements the whole team sees.',
     leave: 'Leave requests and days off (Attendance & leave in the menu). View own lets someone see their own; View lets a manager see everybody\'s.',
     calendar: 'The Calendar page: tasks, deadlines, meetings and events. Without it the page and its menu entry are hidden.',
+    client_ideas: 'The Ideas tab of a client: ideas the team proposes to grow the client\'s business or save it money, with the AI research helper. Create writes and researches; Edit moves, answers and proposes them to the client (which sends them an email); Delete removes them. The client only sees an idea after it is proposed, and only when the client area allows Ideas.',
     growth: 'The My growth page: my skills and certification goals, learning ideas, points, levels and trophies, and the team playbook. Everyone can have it. "See everybody\'s growth" shows the team page; "Approve goals, set and pay primes" lets a manager approve a goal, fix the company support and prime, mark a prime paid and award trophies.',
     ai: 'AI insights: the analyses, the assistant and the routine that read your own CRM data. View = use them; Edit = change the AI keys, models and instructions in Settings. The super administrator always has both.',
     payroll: 'The Payroll page: salaries, payments and the expenses they create. View = read; Edit = change salaries and payments. The super administrator always has both. Give it with great care.',
@@ -71,6 +72,7 @@ export const PERMISSION_GROUPS = [
         features: [
             { key: 'customers', label: 'Customers', caps: CRUD, auto: { view_own: 'Staff always see the customers they are an admin of' } },
             { key: 'leads', label: 'Leads', caps: ['view', 'delete', 'edit_others_notes', 'edit_others_mails', 'edit_others_meetings'], auto: { view_own: 'Staff always see leads assigned to or added by them, and can add and edit those', create: 'Any staff member can add leads', edit: 'Any staff member can edit their own leads' } },
+            { key: 'client_ideas', label: 'Client ideas', caps: CRUD },
             { key: 'estimate_request', label: 'Estimate requests', caps: STD },
             { key: 'lead_mail', label: 'Lead email integration', caps: ['view', 'edit'] },
         ],

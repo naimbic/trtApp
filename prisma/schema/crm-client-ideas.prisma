@@ -1,0 +1,80 @@
+/// Ideas the team proposes to a client (to grow its business or to save it money). A draft is internal; the client sees it once it is proposed.
+model CrmClientIdea {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  clientId    String    @db.ObjectId
+  title       String
+  /// rich text: what, why, the steps
+  body        String?
+  /// grow | save | marketing | sales | tech | ops | brand | other
+  category    String    @default("grow")
+  /// draft | proposed | interested | approved | doing | done | declined
+  status      String    @default("draft")
+  /// the client can see it (never while it is a draft)
+  visible     Boolean   @default(false)
+  /// 1 low, 2 medium, 3 high
+  priority    Int       @default(2)
+  impact      Int       @default(2)
+  effort      Int       @default(2)
+  /// what the client gains, in a sentence
+  gain        String?
+  price       Float?
+  currencyId  String?   @db.ObjectId
+  dueDate     DateTime?
+  /// manual | ai
+  source      String    @default("manual")
+  /// pages the idea relies on (AI research)
+  sources     String[]
+  /// stops the AI from writing the same idea twice
+  fingerprint String?
+  tags        String[]
+  assigneeIds String[]  @db.ObjectId
+  /// what the client answered: interested | approved | declined
+  answer      String?
+  answeredAt  DateTime?
+  answeredBy  String?
+  /// the order of the card inside its column
+  position    Int       @default(0)
+  taskId      String?   @db.ObjectId
+  proposedAt  DateTime?
+  addedFrom   String?   @db.ObjectId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([fingerprint])
+  @@map("crm_client_ideas")
+}
+
+/// Messages on an idea: from the team (internal ones stay inside) or from the client.
+model CrmClientIdeaComment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  ideaId     String   @db.ObjectId
+  /// staff | client
+  authorKind String   @default("staff")
+  authorId   String?  @db.ObjectId
+  authorName String?
+  body       String
+  /// a note for the team only
+  internal   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([ideaId])
+  @@map("crm_client_idea_comments")
+}
+
+/// The last AI research on a client: its business, its competitors and what was found.
+model CrmClientResearch {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  clientId    String   @db.ObjectId
+  summary     String?
+  competitors Json?
+  provider    String?
+  model       String?
+  webSearch   Boolean  @default(false)
+  createdBy   String?  @db.ObjectId
+  createdAt   DateTime @default(now())
+
+  @@index([clientId])
+  @@map("crm_client_research")
+}

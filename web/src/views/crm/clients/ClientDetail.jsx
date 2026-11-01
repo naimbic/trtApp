@@ -16,6 +16,7 @@ import Tabs from '@/components/ui/Tabs'
 import Pagination from '@/components/ui/Pagination'
 import { getResource } from '@/lib/crm/resources'
 import ResourceTable from '../kit/ResourceTable'
+import ClientIdeas from './ClientIdeas'
 import RecordDrawer from '../kit/RecordDrawer'
 import { api, notify, qs, useCan } from '../kit/api'
 import { useClientLookups, makeMoney } from './shared'
@@ -114,7 +115,7 @@ const ClientDetail = () => {
     const money = makeMoney(lookups.currencies)
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState('overview')
+    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas'].includes(t) ? t : 'overview' })
     const [cur, setCur] = useState(null)
     const [confirmDel, setConfirmDel] = useState(false)
     const [profile, setProfile] = useState(null)
@@ -136,6 +137,7 @@ const ClientDetail = () => {
         return [
             { key: 'overview', label: tr("Overview") },
             rel('invoices', tr("Invoices"), c.counts.invoices, 'invoices', { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: cols('invoices') }),
+            { key: 'ideas', label: tr("Ideas"), feature: 'client_ideas', accent: true },
             { key: 'payments', label: tr("Payments"), feature: 'payments' },
             rel('contracts', tr("Contracts"), c.counts.contracts, 'contracts', { resource: 'contracts', where, openPath: (r) => `/crm/contracts/${r.id}`, newPath: `/crm/contracts/new?clientId=${id}`, columns: cols('contracts') }),
             rel('estimates', tr("Estimates"), c.counts.estimates, 'estimates', { resource: 'estimates', where, openPath: (r) => `/crm/estimates/${r.id}`, newPath: `/crm/estimates/new?clientId=${id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('estimates') }),
@@ -233,12 +235,13 @@ const ClientDetail = () => {
                     <Card>
                         <Tabs value={tab} onChange={setTab}>
                             <TabList>
-                                {tabs.map((t) => <TabNav key={t.key} value={t.key} className="!px-2.5 text-sm">{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
+                                {tabs.map((t) => <TabNav key={t.key} value={t.key} className={`!px-2.5 text-sm${t.accent ? (tab === t.key ? ' !font-bold !text-blue-600 ring-2 ring-blue-500' : ' !mx-1 !rounded-lg !bg-blue-500 !text-white hover:!bg-blue-600') : ''}`}>{t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
                             </TabList>
                             <div className="p-4">
                                 {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}
                                 {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
                                 {tab === 'payments' && <PaymentsTab id={id} money={money} />}
+                                {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}
                                 {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
                                 {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}
                             </div>

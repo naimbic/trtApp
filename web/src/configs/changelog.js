@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.157.0',
+        date: '2026-11-02',
+        title: 'Client Ideas: a board of ideas to propose to each client, the client answers from its area, and an AI researcher',
+        items: [
+            'New blue tab Ideas on every client, next to Invoices: a board like Tasks with the columns Draft, Proposed, Interested, Approved, In progress, Done and Declined. Drag a card to change its status. A card shows its category, impact and effort, price, whether the client can see it, comments and the client\'s answer.',
+            'The idea popup has accordions: The idea (title, category, rich description), Value (impact, effort, priority, what the client gains, price, answer-by date), Status and client (status, visible to the client, the client\'s answer), Team and work (who works on it, tags, "Make a task of it") and Discussion (messages with the client and team-only notes).',
+            'The client sees an idea only after it is Proposed, and only when Settings → Clients → Client area has Ideas on (also per client under Client area access). Moving a card to Proposed emails the client\'s contacts (new email templates "client-idea-proposed" and "client-idea-message", in five languages). In the client area, a new Ideas page lists the ideas and the client can Approve, say it is interested or decline, with a word, and ask questions. The team is told on the bell and on Telegram / WhatsApp when the client answers or writes.',
+            'AI research: the button reads what we sold this client, its projects, support subjects, proposals and the ideas already written, studies its business, and (with Claude) searches the web for the closest competitors and compares them with the client. It proposes only ideas we can deliver with our services and prices, each with the evidence, the plan, the expected gain, impact and effort, our service that fits and its sources. Generic advice is refused by the prompt. You pick the ideas; they become hidden drafts. The last research (the business and the competitor benchmark) stays on top of the board. Only company-level facts are sent to the AI: never contact names, emails or phone numbers.',
+            'New permission row "Client ideas" (View, Create, Edit, Delete) in Roles & permissions; the Account Manager and Sales Rep roles get Edit. New webhook events client_idea.created, client_idea.moved and client_idea.answered.',
+        ],
+    },
+    {
         version: '0.156.1',
         date: '2026-11-02',
         title: 'Drag to reorder works again (task checklists, milestones, lists)',

@@ -3,6 +3,8 @@
 export const TRANSLATIONS = {
  "spanish": {
   "templates": {
+   "client-idea-proposed": ["Una nueva idea para {client_company}: {idea_title}", "Tenemos una idea para usted", "Hemos analizado su actividad y preparado una idea que podría ayudar a {client_company}.\nÁbrala para ver el detalle, hacer una pregunta o decirnos si le interesa.", "Ver la idea"],
+   "client-idea-message": ["Nuevo mensaje: {idea_title}", "Hemos respondido sobre su idea", "{staff_name} le ha escrito sobre la idea {idea_title}:", "Abrir la conversación"],
    "event-reminder": ["Recordatorio: {event_title}", "Su reunión se acerca", "Le recordamos amablemente nuestra reunión {event_title} el {event_date} a las {event_time}.\\nSi necesita cambiarla, responda a este correo.", "Unirse a la reunión"],
    "event-reminder-prepare": ["Reunión {event_title}: qué preparar", "Su reunión se acerca", "Nuestra reunión {event_title} es el {event_date} a las {event_time}.\\nPara aprovecharla al máximo, tenga a mano sus preguntas y los documentos de los que hablamos.\\nSi necesita cambiarla, responda a este correo.", "Unirse a la reunión"],
    "event-reminder-starting": ["Empieza pronto: {event_title}", "Su reunión empieza pronto", "Nuestra reunión {event_title} empieza a las {event_time} ({event_date}).\\nUse el botón para unirse: no hace falta cuenta.", "Unirse ahora"],
@@ -634,6 +636,8 @@ export const TRANSLATIONS = {
  },
  "japanese": {
   "templates": {
+   "client-idea-proposed": ["{client_company} への新しいご提案:{idea_title}", "ご提案があります", "貴社の状況を分析し、{client_company} のお役に立てそうなアイデアをまとめました。\n詳細の確認、ご質問、ご興味の有無のご連絡は、こちらからどうぞ。", "アイデアを見る"],
+   "client-idea-message": ["新着メッセージ:{idea_title}", "アイデアについて返信しました", "{staff_name} がアイデア「{idea_title}」についてメッセージを送りました:", "会話を開く"],
    "event-reminder": ["リマインダー:{event_title}", "まもなく会議です", "会議「{event_title}」は {event_date} {event_time} です。\\n変更が必要な場合は、このメールに返信してください。", "会議に参加"],
    "event-reminder-prepare": ["会議「{event_title}」の準備について", "まもなく会議です", "会議「{event_title}」は {event_date} {event_time} です。\\n有意義な時間にするため、ご質問と事前にお話しした資料をご準備ください。\\n変更が必要な場合は、このメールに返信してください。", "会議に参加"],
    "event-reminder-starting": ["まもなく開始:{event_title}", "会議がまもなく始まります", "会議「{event_title}」は {event_time}({event_date})に始まります。\\nボタンから参加できます。アカウントは不要です。", "今すぐ参加"],
@@ -1265,6 +1269,8 @@ export const TRANSLATIONS = {
  },
  "arabic": {
   "templates": {
+   "client-idea-proposed": ["فكرة جديدة لـ {client_company}: {idea_title}", "لدينا فكرة لك", "حللنا نشاطك وأعددنا فكرة قد تفيد {client_company}.\nافتحها لتطّلع على التفاصيل أو لتطرح سؤالًا أو لتخبرنا إن كانت تهمك.", "عرض الفكرة"],
+   "client-idea-message": ["رسالة جديدة: {idea_title}", "ردّنا بخصوص فكرتك", "كتب لك {staff_name} بخصوص الفكرة {idea_title}:", "فتح المحادثة"],
    "event-reminder": ["تذكير: {event_title}", "اجتماعك يقترب", "تذكير ودّي باجتماعنا {event_title} بتاريخ {event_date} الساعة {event_time}.\\nإذا احتجت إلى تغييره فما عليك سوى الرد على هذه الرسالة.", "انضم إلى الاجتماع"],
    "event-reminder-prepare": ["اجتماع {event_title}: ما يجب تحضيره", "اجتماعك يقترب", "اجتماعنا {event_title} بتاريخ {event_date} الساعة {event_time}.\\nللاستفادة منه، يرجى تجهيز أسئلتك والمستندات التي تحدثنا عنها.\\nإذا احتجت إلى تغييره فرد على هذه الرسالة.", "انضم إلى الاجتماع"],
    "event-reminder-starting": ["يبدأ قريبًا: {event_title}", "اجتماعك يبدأ قريبًا", "اجتماعنا {event_title} يبدأ الساعة {event_time} ({event_date}).\\nاستخدم الزر للانضمام: لا حاجة إلى حساب.", "انضم الآن"],

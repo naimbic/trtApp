@@ -327,3 +327,11 @@ D('event-reminder-starting', 'c', 'warn', 'meeting_link', [['Time', 'Heure', 'ev
 D('event-reminder-nolink', 'c', 'info', '', [['Date', 'Date', 'event_date'], ['Time', 'Heure', 'event_time'], ['Location', 'Lieu', 'event_location']], null,
   ['Reminder: {event_title}', 'Your meeting is coming up', 'This is a friendly reminder of our meeting {event_title} on {event_date} at {event_time}.\nIf you need to move it, just reply to this email.', ''],
   ['Rappel : {event_title}', 'Votre rendez-vous approche', 'Petit rappel de notre rendez-vous {event_title} le {event_date} à {event_time}.\nSi vous devez le déplacer, répondez simplement à cet e-mail.', ''])
+
+/* ---------- Client ideas ---------- */
+D('client-idea-proposed', 'c', 'info', 'idea_link', [['Idea', 'Idée', 'idea_title'], ['What you gain', 'Ce que vous gagnez', 'idea_gain']], null,
+  ['A new idea for {client_company}: {idea_title}', 'We have an idea for you', 'We looked at your activity and prepared an idea that could help {client_company}.\nOpen it to see the details, ask a question, or tell us if you are interested.', 'See the idea'],
+  ['Une nouvelle idée pour {client_company} : {idea_title}', 'Nous avons une idée pour vous', "Nous avons analysé votre activité et préparé une idée qui pourrait aider {client_company}.\nOuvrez-la pour voir le détail, poser une question ou nous dire si elle vous intéresse.", "Voir l'idée"])
+D('client-idea-message', 'c', 'info', 'idea_link', [['Idea', 'Idée', 'idea_title']], { quote: 'idea_message' },
+  ['New message about: {idea_title}', 'We answered about your idea', '{staff_name} wrote to you about the idea {idea_title}:', 'Open the conversation'],
+  ['Nouveau message : {idea_title}', 'Nous avons répondu à propos de votre idée', '{staff_name} vous a écrit à propos de l\'idée {idea_title} :', 'Ouvrir la conversation'])

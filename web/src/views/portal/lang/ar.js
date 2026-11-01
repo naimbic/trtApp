@@ -273,5 +273,6 @@ export default {
     "You": "أنت",
     "You are interested": "أنت مهتم",
     "Your answer": "ردّك",
-    "Your answer and questions": "ردّك وأسئلتك"
+    "Your answer and questions": "ردّك وأسئلتك",
+    "Your company account is not active. Please contact us.": "حساب شركتك غير مفعّل. يرجى التواصل معنا."
 }

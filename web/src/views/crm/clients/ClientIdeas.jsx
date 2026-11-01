@@ -30,6 +30,20 @@ const Cat = ({ cat, code }) => {
 const catOf = (cats, code) => (cats || []).find((c) => c.code === code)
 const LEVEL = { 1: 'Low', 2: 'Medium', 3: 'High' }
 const money = (n, cur) => `${Number(n).toLocaleString('fr-FR').replace(/ | /g, ' ')} ${cur?.symbol || cur?.name || ''}`.trim()
+/** Low / Medium / High as small tags. The colour follows the meaning: a high impact is good (green), a high effort or priority needs attention (red). */
+const TONE = {
+    gray: 'bg-gray-100 text-gray-600 ring-gray-300 dark:bg-gray-600/40 dark:text-gray-200', sky: 'bg-sky-100 text-sky-700 ring-sky-300 dark:bg-sky-500/20 dark:text-sky-200',
+    emerald: 'bg-emerald-100 text-emerald-700 ring-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-200', amber: 'bg-amber-100 text-amber-700 ring-amber-300 dark:bg-amber-500/20 dark:text-amber-200', rose: 'bg-rose-100 text-rose-700 ring-rose-300 dark:bg-rose-500/20 dark:text-rose-200',
+}
+const LEVEL_TONE = { impact: { 1: 'gray', 2: 'sky', 3: 'emerald' }, effort: { 1: 'emerald', 2: 'amber', 3: 'rose' }, priority: { 1: 'gray', 2: 'sky', 3: 'rose' } }
+const LevelTags = ({ kind, value, onChange }) => (
+    <div className="flex gap-1.5">
+        {[1, 2, 3].map((n) => (
+            <button key={n} type="button" onClick={() => onChange(n)} aria-pressed={value === n} className={cn('rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition', value === n ? `${TONE[LEVEL_TONE[kind][n]]} ring-1` : 'bg-gray-50 text-gray-400 hover:bg-gray-100 dark:bg-gray-700/40 dark:hover:bg-gray-700')}>{tr(LEVEL[n])}</button>
+        ))}
+    </div>
+)
+
 const Dots = ({ n, color }) => <span className="inline-flex gap-0.5">{[1, 2, 3].map((k) => <i key={k} className={cn('h-1.5 w-1.5 rounded-full', k <= n ? color : 'bg-gray-200 dark:bg-gray-600')} />)}</span>
 
 const IdeaCard = ({ i, cur, cats, onOpen }) => (
@@ -115,7 +129,7 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
                         <FoldSection icon={<TbCoin />} tone="emerald" title={tr("Value")} summary={`${tr("Impact")} ${tr(LEVEL[v.impact])} · ${tr("Effort")} ${tr(LEVEL[v.effort])}${v.price !== '' ? ` · ${money(v.price, data.currencies.find((c) => c.id === v.currencyId))}` : ''}`} open={sec === 'value'} onToggle={() => toggle('value')}>
                             <div className="mb-3 grid gap-3 sm:grid-cols-3">
                                 {[['impact', tr("Impact for the client")], ['effort', tr("Effort for us")], ['priority', tr("Priority")]].map(([k, label]) => (
-                                    <div key={k}><L>{label}</L><Segment value={v[k]} onChange={(x) => set({ [k]: Array.isArray(x) ? x[0] : x })} size="sm" className="w-full">{[1, 2, 3].map((n) => <Segment.Item key={n} value={n} className="flex-1">{tr(LEVEL[n])}</Segment.Item>)}</Segment></div>
+                                    <div key={k}><L>{label}</L><LevelTags kind={k} value={v[k]} onChange={(x) => set({ [k]: x })} /></div>
                                 ))}
                             </div>
                             <div className="mb-3"><L>{tr("What the client gains")}</L><Input placeholder={tr("In one sentence, with the assumption")} maxLength={300} value={v.gain} onChange={(e) => set({ gain: e.target.value })} /></div>

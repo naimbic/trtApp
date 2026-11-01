@@ -27,7 +27,9 @@ export async function portalLogin(email, password, request) {
     let hit = null
     for (const c of contacts) if (c.passwordHash && (await bcrypt.compare(String(password), c.passwordHash))) { hit = c; break }
     const client = hit ? await prisma.crmClient.findUnique({ where: { id: hit.clientId }, select: { active: true } }) : null
-    if (!hit || !client?.active) { await recordFailure(key(e), requestIp(request)); throw httpError('Wrong email or password', 401) }
+    if (!hit) { await recordFailure(key(e), requestIp(request)); throw httpError('Wrong email or password', 401) }
+    // the password is right but the company is switched off: say so (only someone who knows the password learns this)
+    if (!client?.active) throw httpError('Your company account is not active. Please contact us.', 403)
     await clearFailures(key(e))
     await prisma.crmContact.update({ where: { id: hit.id }, data: { lastLogin: new Date(), lastIp: requestIp(request) } })
     return { value: sign(hit), contact: hit }
@@ -103,7 +105,10 @@ export async function setContactPassword(clientId, contactId, password) {
     if (!c.active) throw httpError('This contact is inactive')
     if (String(password || '').length < 8) throw httpError('The password needs at least 8 characters')
     await prisma.crmContact.update({ where: { id: c.id }, data: { passwordHash: await bcrypt.hash(String(password), 10), lastPasswordChange: new Date(), newPassKey: null, newPassKeyRequested: null, emailVerifiedAt: c.emailVerifiedAt || new Date() } })
-    return { success: true, email: c.email }
+    const fresh = await prisma.crmContact.findUnique({ where: { id: c.id } })
+    const client = await prisma.crmClient.findUnique({ where: { id: clientId }, select: { active: true } })
+    const access = (await portalAccess(client, [fresh]))[c.id]
+    return { success: true, email: c.email, access: { ok: access.ok, reasons: access.reasons }, url: `${publicBase()}/portal` }
 }
 
 /** Staff preview of the client area as one contact (no password). The cookie is read-only and lasts 2 hours. */

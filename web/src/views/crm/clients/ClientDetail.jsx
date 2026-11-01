@@ -164,9 +164,10 @@ const ClientDetail = () => {
     const savePw = async () => {
         setPwBusy(true)
         try {
-            await api(`/api/crm/customers/${id}/portal-password`, { method: 'POST', body: { contactId: pwFor.id, password: pw } })
+            const r = await api(`/api/crm/customers/${id}/portal-password`, { method: 'POST', body: { contactId: pwFor.id, password: pw } })
             try { await navigator.clipboard.writeText(pw) } catch { /* clipboard blocked */ }
-            notify('success', tr("Password set for {name}. It was copied: share it with them (they can change it in their profile).", { name: pwFor.name }))
+            if (r.access && !r.access.ok) notify('warning', tr("Password saved, but {name} still cannot sign in: {why}", { name: pwFor.name, why: r.access.reasons.map((x) => tr(x)).join(' · ') }))
+            else notify('success', tr("Password set for {name}. It was copied: share it with them. They sign in at {url} (not on the team sign-in).", { name: pwFor.name, url: r.url || '/portal' }))
             setPwFor(null); setPw(''); loadProfile()
         } catch (e) { notify('danger', e.message) } finally { setPwBusy(false) }
     }

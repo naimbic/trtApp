@@ -5156,5 +5156,10 @@ export default {
     "Your request was declined. Ask an administrator.": "Su solicitud fue rechazada. Consulte a un administrador.",
     "{n} tries": "{n} intentos",
     "Let people ask for an account with Google or GitHub": "Permitir que las personas soliciten una cuenta con Google o GitHub",
-    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "Cuando alguien inicia sesión con Google o GitHub y no tiene cuenta, puede solicitar una. Los administradores reciben un aviso y aprueban o rechazan cada solicitud en Equipo. Nadie tiene acceso antes de la aprobación."
+    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "Cuando alguien inicia sesión con Google o GitHub y no tiene cuenta, puede solicitar una. Los administradores reciben un aviso y aprueban o rechazan cada solicitud en Equipo. Nadie tiene acceso antes de la aprobación.",
+    "Password saved, but {name} still cannot sign in: {why}": "Contraseña guardada, pero {name} aún no puede iniciar sesión: {why}",
+    "Password set for {name}. It was copied: share it with them. They sign in at {url} (not on the team sign-in).": "Contraseña definida para {name}. Se copió: compártala. Inicia sesión en {url} (no en el acceso del equipo).",
+    "These details belong to a client area account. Sign in at {url}": "Estos datos pertenecen a una cuenta del área de cliente. Inicie sesión en {url}",
+    "Are you a client?": "¿Es usted cliente?",
+    "Client area sign-in": "Acceso al área de cliente"
 }

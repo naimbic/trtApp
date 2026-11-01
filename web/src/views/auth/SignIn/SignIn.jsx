@@ -46,6 +46,7 @@ export const SignInBase = ({
                 }
             />
             <SocialSignIn />
+            <p className="mt-6 text-center text-sm text-gray-500">{tr("Are you a client?")} <a href="/portal" className="font-semibold text-primary hover:underline">{tr("Client area sign-in")}</a></p>
         </>
     )
 }

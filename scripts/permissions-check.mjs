@@ -1069,7 +1069,7 @@ try {
         check('the client page says the contact can sign in', acc?.ok === true, JSON.stringify(acc))
         await prisma.crmClient.update({ where: { id: cl.body.id }, data: { active: false } })
         const acc2 = (await sc('GET', `/api/crm/customers/${cl.body.id}/profile`)).body?.contacts?.find((x) => x.id === ct.id)?.access
-        check('...and says why when the client is inactive', acc2?.ok === false && acc2.reasons.includes('The client is not active') && (await tryLogin(mail, 'Portal-Test-12345')).status === 401, JSON.stringify(acc2))
+        check('...and says why when the client is inactive', acc2?.ok === false && acc2.reasons.includes('The client is not active') && (await tryLogin(mail, 'Portal-Test-12345')).status === 403, JSON.stringify(acc2))
         await prisma.crmClient.update({ where: { id: cl.body.id }, data: { active: true } })
         for (let i = 0; i < 5; i++) await tryLogin(mail, 'Wrong-pass-0000')
         const acc3 = (await sc('GET', `/api/crm/customers/${cl.body.id}/profile`)).body?.contacts?.find((x) => x.id === ct.id)?.access
@@ -1199,6 +1199,28 @@ try {
         check('Requests: an email that already has an account is refused', (await rA('POST', `/api/crm/team/signup-requests/${idOf(e3)}/approve`, {})).status === 409)
         await prisma.crmSignupRequest.deleteMany({ where: { email: { in: [e1, e2, e3] } } })
         await prisma.crmMailLog.deleteMany({ where: { relType: 'signup_request' } })
+    }
+    // a client contact whose password a team member sets: what stops them from signing in is said at once
+    console.log('\n== Client sign-in help')
+    {
+        const cs = await login(await makeUser('cs-staff', { customers: ['view', 'create', 'edit'] }))
+        const cl = await cs('POST', '/api/crm/customers', { company: 'zz sign-in help', active: true })
+        if (cl.body?.id) made.extraRows.push(['crmClient', cl.body.id])
+        const email = `zz.signin.${Date.now()}@test.local`, pw = 'Portal-Test-12345'
+        const ct = await prisma.crmContact.create({ data: { clientId: cl.body.id, firstName: 'Zz', lastName: 'Contact', email } }); made.extraRows.unshift(['crmContact', ct.id])
+        const portalLogin = (e, p) => fetch(`${BASE}/api/portal/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: e, password: p }) }).then(async (r) => ({ status: r.status, body: await r.json().catch(() => ({})) }))
+        const set1 = await cs('POST', `/api/crm/customers/${cl.body.id}/portal-password`, { contactId: ct.id, password: pw })
+        check('Client sign-in: setting the password tells whether the contact can sign in now, and where', set1.status === 200 && set1.body?.access?.ok === true && /\/portal$/.test(set1.body?.url || ''))
+        check('Client sign-in: the contact signs in with it', (await portalLogin(email, pw)).status === 200)
+        await prisma.crmClient.update({ where: { id: cl.body.id }, data: { active: false } })
+        const set2 = await cs('POST', `/api/crm/customers/${cl.body.id}/portal-password`, { contactId: ct.id, password: pw })
+        check('Client sign-in: an inactive client is reported when the password is set', set2.body?.access?.ok === false && set2.body.access.reasons.includes('The client is not active'))
+        const inactive = await portalLogin(email, pw), wrong = await portalLogin(email, 'wrong-password-1')
+        check('Client sign-in: with the right password, an inactive company is told so; a wrong password just fails', inactive.status === 403 && /not active/.test(inactive.body?.error || '') && wrong.status === 401 && wrong.body?.error === 'Wrong email or password')
+        await prisma.crmClient.update({ where: { id: cl.body.id }, data: { active: true } })
+        const cc = (e, p) => fetch(`${BASE}/api/crm/auth/client-check`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: e, password: p }) }).then((r) => r.json())
+        check('Client sign-in: the team sign-in recognises a client account, and only with the right password', (await cc(email, pw)).client === true && (await cc(email, 'nope-nope-1')).client === false && (await cc('nobody@test.local', pw)).client === false)
+        await prisma.loginAttempt.deleteMany({ where: { key: `portal:${email}` } })
     }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {

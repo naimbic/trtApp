@@ -5156,5 +5156,10 @@ export default {
     "Your request was declined. Ask an administrator.": "تم رفض طلبك. اسأل أحد المسؤولين.",
     "{n} tries": "{n} محاولات",
     "Let people ask for an account with Google or GitHub": "السماح للأشخاص بطلب حساب عبر Google أو GitHub",
-    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "عندما يسجّل شخص الدخول عبر Google أو GitHub وليس لديه حساب يمكنه طلب واحد. يُبلَّغ المسؤولون ويوافقون على كل طلب أو يرفضونه في الفريق. لا أحد يحصل على وصول قبل الموافقة."
+    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "عندما يسجّل شخص الدخول عبر Google أو GitHub وليس لديه حساب يمكنه طلب واحد. يُبلَّغ المسؤولون ويوافقون على كل طلب أو يرفضونه في الفريق. لا أحد يحصل على وصول قبل الموافقة.",
+    "Password saved, but {name} still cannot sign in: {why}": "تم حفظ كلمة المرور لكن {name} ما زال لا يستطيع الدخول: {why}",
+    "Password set for {name}. It was copied: share it with them. They sign in at {url} (not on the team sign-in).": "تم تعيين كلمة مرور لـ {name} ونُسخت: شاركها معه. يسجّل الدخول من {url} (وليس من دخول الفريق).",
+    "These details belong to a client area account. Sign in at {url}": "هذه البيانات تخص حساب منطقة العميل. سجّل الدخول من {url}",
+    "Are you a client?": "هل أنت عميل؟",
+    "Client area sign-in": "دخول منطقة العميل"
 }

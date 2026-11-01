@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.158.2',
+        date: '2026-11-02',
+        title: 'Smaller coloured tags for impact, effort and priority; help when a client cannot sign in',
+        items: [
+            'Idea popup, Value: Impact, Effort and Priority are now small tags, light-coloured by meaning: a high impact is green, a high effort is red, a high priority is red, low ones are grey or green.',
+            'Setting a client\'s area password now tells you at once if that contact still cannot sign in (client inactive, contact inactive, no valid email, locked) and where they sign in (/portal, not the team sign-in). The client area now says "Your company account is not active" when the password is right but the client is switched off, instead of "Wrong email or password".',
+            'Team sign-in page: a link "Client area sign-in", and if a client types their client email and password there, it says these belong to the client area and gives the address.',
+        ],
+    },
+    {
         version: '0.158.1',
         date: '2026-11-02',
         title: 'Fixed: Impact, Effort and Priority of an idea can be selected',

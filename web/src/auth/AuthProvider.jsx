@@ -96,6 +96,11 @@ function AuthProvider({ children }) {
             const u = await fetchSession()
             if (!u) {
                 const st = await fetch(`/api/crm/auth/status?email=${encodeURIComponent(email)}`).then((r) => r.json()).catch(() => ({}))
+                // a client's email and password typed on the team sign-in: point to the client area instead of "invalid"
+                if (!st.locked && !otp) {
+                    const cc = await fetch('/api/crm/auth/client-check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }).then((r) => r.json()).catch(() => ({}))
+                    if (cc.client) return { status: 'failed', message: tr("These details belong to a client area account. Sign in at {url}", { url: `${window.location.origin}/portal` }) }
+                }
                 return {
                     status: 'failed',
                     message: st.locked ? `Too many failed attempts. Try again in ${st.minutes} minute${st.minutes === 1 ? '' : 's'}.` : otp ? tr("That code is not right or has expired") : tr("Invalid email or password, or the account is inactive"),

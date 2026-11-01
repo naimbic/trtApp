@@ -5156,5 +5156,10 @@ export default {
     "Your request was declined. Ask an administrator.": "リクエストは却下されました。管理者にご相談ください。",
     "{n} tries": "{n} 回の試行",
     "Let people ask for an account with Google or GitHub": "Google または GitHub でのアカウントリクエストを許可する",
-    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "Google または GitHub でサインインしてもアカウントがない場合、アカウントをリクエストできます。管理者に通知され、「チーム」で承認または却下します。承認前は誰もアクセスできません。"
+    "When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.": "Google または GitHub でサインインしてもアカウントがない場合、アカウントをリクエストできます。管理者に通知され、「チーム」で承認または却下します。承認前は誰もアクセスできません。",
+    "Password saved, but {name} still cannot sign in: {why}": "パスワードを保存しましたが、{name} はまだサインインできません:{why}",
+    "Password set for {name}. It was copied: share it with them. They sign in at {url} (not on the team sign-in).": "{name} のパスワードを設定し、コピーしました。本人に伝えてください。サインインは {url} で行います(チーム用サインインではありません)。",
+    "These details belong to a client area account. Sign in at {url}": "この情報はクライアントエリアのアカウントのものです。{url} でサインインしてください。",
+    "Are you a client?": "クライアントの方はこちら",
+    "Client area sign-in": "クライアントエリアにサインイン"
 }

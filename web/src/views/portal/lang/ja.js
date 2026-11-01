@@ -273,5 +273,6 @@ export default {
     "You": "あなた",
     "You are interested": "興味あり",
     "Your answer": "あなたの回答",
-    "Your answer and questions": "回答とご質問"
+    "Your answer and questions": "回答とご質問",
+    "Your company account is not active. Please contact us.": "会社のアカウントが有効ではありません。お問い合わせください。"
 }

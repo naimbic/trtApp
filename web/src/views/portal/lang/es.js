@@ -273,5 +273,6 @@ export default {
     "You": "Usted",
     "You are interested": "Le interesa",
     "Your answer": "Su respuesta",
-    "Your answer and questions": "Su respuesta y preguntas"
+    "Your answer and questions": "Su respuesta y preguntas",
+    "Your company account is not active. Please contact us.": "La cuenta de su empresa no está activa. Póngase en contacto con nosotros."
 }

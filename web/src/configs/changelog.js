@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.158.1',
+        date: '2026-11-02',
+        title: 'Fixed: Impact, Effort and Priority of an idea can be selected',
+        items: ['In the idea popup (Value section) the three choices Low / Medium / High did not show which one was picked, so they looked impossible to select. Every switch with number values (Impact, Effort, Priority, the number of ideas for the AI research) now highlights its choice.'],
+    },
+    {
         version: '0.158.0',
         date: '2026-11-02',
         title: 'Sign in with Google or GitHub without an account: the person asks, the administrators approve',

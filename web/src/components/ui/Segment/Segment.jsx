@@ -42,15 +42,12 @@ const Segment = (props) => {
 
     const segmentValue = useMemo(() => {
         if (selectionType === 'single') {
-            if (value && typeof value === 'string') {
-                return [value]
-            }
-
-            if (value && Array.isArray(value)) {
+            if (Array.isArray(value)) {
                 return value
             }
-
-            return []
+            // Accept any non-empty primitive — numbers too, not just strings — so a
+            // numeric single-select (e.g. Impact/Effort/Priority = 1/2/3) highlights.
+            return value === '' || value === null || value === undefined ? [] : [value]
         }
 
         if (selectionType === 'multiple') {

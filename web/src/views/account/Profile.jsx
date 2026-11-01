@@ -1,3 +1,4 @@
+import GrowthCard from '@/views/crm/grow/GrowthCard'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
@@ -187,10 +188,12 @@ const Profile = () => {
                     <TabNav value="security">{tr("Security")}</TabNav>
                     <TabNav value="notifications">{tr("Notifications")}</TabNav>
                     <TabNav value="preferences">{tr("Preferences")}</TabNav>
+                    <TabNav value="growth">{tr("Growth")}</TabNav>
                     <TabNav value="hours">{tr("Work hours")}</TabNav>
                     <TabNav value="access">{tr("Access")}</TabNav>
                 </TabList>
                 <div className="pt-5">
+                    <TabContent value="growth"><GrowthCard own /></TabContent>
                     <TabContent value="hours"><MyWorkHours /></TabContent>
                     <TabContent value="profile">
                         <Section title={tr("Personal information")} desc={tr("Shown to your team and on documents you send.")}>

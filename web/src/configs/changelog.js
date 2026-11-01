@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.152.0',
+        date: '2026-11-01',
+        title: 'Learning now earns points, levels and trophies with prizes from 200 to 1000 MAD',
+        items: [
+            'Points: every goal passed (certificate 100 to 300 by level, language exam 200, course 100, skill 80, +50 for AI), a few points for goals planned or started, +50 for every trophy. Levels: Rookie, Learner (100), Skilled (300), Expert (600), Master (1000), with the way to the next one.',
+            'Eight trophies with a cash prize or a badge: First step, First certificate (200 MAD), Polyglot (300), AI ready (400), Proof kept, Hat-trick (600, three goals in 12 months), High five (800, five goals in 12 months) and Master learner (1000 MAD, 1000 points). A trophy is won once, the member and the administrators are told, and the administrators see the prizes to pay on My growth → Team and mark them paid.',
+            'Primes from 200 to 1000 MAD: every certification and language exam of the catalog now shows its prime (200 to 700 by level, +100 for AI, +100 when the exam is paid; languages 600 to 1000). Approving a goal from the catalog with no prime set gives it that prime, and a manager can change it.',
+            'New My growth → Trophies tab: your level and points, the trophies (won ones lit, locked ones with progress and prize), the hall of fame of the team and how points work. My goals starts with your level. A Growth card with level, trophies and recent certificates is on the staff profile page and in My profile → Growth.',
+            'The team dashboard counts learning too: a Learning column in the leaderboard (+1 point per 4 learning points), a new Best learner badge, and the CSV export.',
+        ],
+    },
+    {
         version: '0.151.1',
         date: '2026-11-01',
         title: 'Sign-out address of an app (Meet): any page of the same site is accepted',

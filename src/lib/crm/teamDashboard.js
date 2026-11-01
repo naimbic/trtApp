@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { realPicture } from '@/lib/crm/pictures'
 import { requirePermission, viewScope, getStaffId, isCrmAdmin } from '@/lib/crm/permissions'
 import { STATUS as TASK_STATUS, PRIORITY as TASK_PRIORITY } from '@/lib/crm/tasksApi'
+import { goalPoints } from '@/lib/crm/growthRewards'
 
 const NONE = '000000000000000000000000'
 const DAY = 86400000
@@ -186,7 +187,7 @@ export async function teamDashboard({ days = 30 } = {}) {
         const myDone = cur.filter(mine)
         // everyone's numbers
         const per = {}
-        const row = (id) => (per[id] ||= { person: sm[id] || null, completed: 0, onTime: 0, speeds: [], hours: 0, comments: 0, issues: 0, converted: 0 })
+        const row = (id) => (per[id] ||= { person: sm[id] || null, completed: 0, onTime: 0, speeds: [], hours: 0, comments: 0, issues: 0, converted: 0, learning: 0 })
         for (const t of cur) for (const sid of owners[t.id] || []) { if (!sm[sid]) continue; const r = row(sid); r.completed++; if (onTime(t)) r.onTime++; r.speeds.push(speed(t)) }
         const [timers, cmts, resolved, convertedLeads] = await Promise.all([
             wantAll ? prisma.crmTaskTimer.findMany({ where: { endTime: { gte: since } }, select: { staffId: true, startTime: true, endTime: true }, take: 8000 }) : [],
@@ -199,12 +200,14 @@ export async function teamDashboard({ days = 30 } = {}) {
             for (const c of cmts) if (sm[c.staffId]) row(c.staffId).comments++
             for (const i of resolved) for (const sid of i.assigneeIds || []) if (sm[sid]) row(sid).issues++
             for (const l of convertedLeads) if (l.assigned && sm[l.assigned]) row(l.assigned).converted++
+            // learning: the points of the goals passed in the period (certificates, languages, courses), like tasks and leads
+            for (const gl of await prisma.crmSkillGoal.findMany({ where: { status: 'passed', doneDate: { gte: since } }, select: { staffId: true, kind: true, catalogKey: true, status: true } })) if (sm[gl.staffId]) row(gl.staffId).learning += goalPoints(gl)
         }
         const board = Object.values(per).map((r) => ({
             person: r.person, completed: r.completed, onTimeRate: r.completed ? Math.round((r.onTime / r.completed) * 100) : null, avgDays: r.speeds.length ? Math.round(avg(r.speeds) * 10) / 10 : null,
-            hours: Math.round(r.hours * 10) / 10, comments: r.comments, issues: r.issues, converted: r.converted,
-            score: r.completed * 10 + r.onTime * 5 + r.issues * 8 + r.converted * 15 + Math.min(40, Math.round(r.hours)),
-        })).filter((r) => r.person && (r.completed || r.issues || r.converted || r.hours)).sort((a, b) => b.score - a.score)
+            hours: Math.round(r.hours * 10) / 10, comments: r.comments, issues: r.issues, converted: r.converted, learning: r.learning,
+            score: r.completed * 10 + r.onTime * 5 + r.issues * 8 + r.converted * 15 + Math.min(40, Math.round(r.hours)) + Math.round(r.learning / 4),
+        })).filter((r) => r.person && (r.completed || r.issues || r.converted || r.hours || r.learning)).sort((a, b) => b.score - a.score)
         const pickBy = (list, fn, order) => { const l = list.filter(fn); if (!l.length) return null; return [...l].sort(order)[0].person.id }
         const enough = (r) => r.completed >= 3
         const myRow = per[staffId] ? board.find((r) => r.person?.id === staffId) : null
@@ -220,7 +223,7 @@ export async function teamDashboard({ days = 30 } = {}) {
             team: { completed: cur.length, previous: prev.length, previousOnTimeRate: prev.length ? Math.round((prev.filter(onTime).length / prev.length) * 100) : null, previousAvgDays: prev.length ? Math.round(avg(prev.map(speed)) * 10) / 10 : null, created: series.created.reduce((s, x) => s + x, 0), onTimeRate: cur.length ? Math.round((cur.filter(onTime).length / cur.length) * 100) : null, avgDays: cur.length ? Math.round(avg(cur.map(speed)) * 10) / 10 : null },
             weekday,
             leaderboard: wantAll ? board.slice(0, 10) : [],
-            badges: wantAll ? { top: board[0]?.person?.id || null, fastest: pickBy(board, (r) => enough(r) && r.avgDays !== null, (a, b) => a.avgDays - b.avgDays), reliable: pickBy(board, (r) => enough(r) && r.onTimeRate !== null, (a, b) => b.onTimeRate - a.onTimeRate || b.completed - a.completed), closer: pickBy(board, (r) => r.converted > 0, (a, b) => b.converted - a.converted), active: pickBy(board, (r) => r.comments + r.hours > 0, (a, b) => b.comments + b.hours - (a.comments + a.hours)) } : {},
+            badges: wantAll ? { top: board[0]?.person?.id || null, fastest: pickBy(board, (r) => enough(r) && r.avgDays !== null, (a, b) => a.avgDays - b.avgDays), reliable: pickBy(board, (r) => enough(r) && r.onTimeRate !== null, (a, b) => b.onTimeRate - a.onTimeRate || b.completed - a.completed), closer: pickBy(board, (r) => r.converted > 0, (a, b) => b.converted - a.converted), active: pickBy(board, (r) => r.comments + r.hours > 0, (a, b) => b.comments + b.hours - (a.comments + a.hours)), learner: pickBy(board, (r) => r.learning > 0, (a, b) => b.learning - a.learning) } : {},
             me: { completed: myDone.length, previous: prev.filter(mine).length, onTimeRate: myDone.length ? Math.round((myDone.filter(onTime).length / myDone.length) * 100) : null, avgDays: myDone.length ? Math.round(avg(myDone.map(speed)) * 10) / 10 : null, rank: myRow ? board.findIndex((r) => r.person.id === staffId) + 1 : null, of: board.length, score: myRow?.score || 0 },
         }
         if (wantAll) {

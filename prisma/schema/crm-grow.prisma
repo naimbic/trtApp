@@ -218,3 +218,18 @@ model CrmScheduledMessage {
   @@index([active, nextAt])
   @@map("crm_scheduled_messages")
 }
+
+/// A trophy a team member won by learning (first certificate, polyglot, AI ready...), with its prize in MAD and whether it was paid.
+model CrmTrophy {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  staffId   String    @db.ObjectId
+  key       String
+  prize     Float     @default(0)
+  awardedAt DateTime  @default(now())
+  paid      Boolean   @default(false)
+  paidAt    DateTime?
+  paidBy    String?   @db.ObjectId
+
+  @@unique([staffId, key])
+  @@map("crm_trophies")
+}

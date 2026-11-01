@@ -3,7 +3,7 @@ import StaffRing from '@/components/crm/StaffRing'
 import { Link, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { TbAdjustmentsHorizontal, TbUsersGroup, TbLayoutKanban, TbTimeline, TbUsers, TbFolders, TbCalendar, TbMessages, TbFileInvoice, TbFileDescription, TbReceipt, TbBook, TbFolder, TbKey, TbChartBar, TbDownload, TbFlag, TbTrophy, TbBolt, TbShieldCheck, TbTrendingUp, TbTrendingDown, TbHourglass, TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbArrowRight } from 'react-icons/tb'
+import { TbSchool, TbAdjustmentsHorizontal, TbUsersGroup, TbLayoutKanban, TbTimeline, TbUsers, TbFolders, TbCalendar, TbMessages, TbFileInvoice, TbFileDescription, TbReceipt, TbBook, TbFolder, TbKey, TbChartBar, TbDownload, TbFlag, TbTrophy, TbBolt, TbShieldCheck, TbTrendingUp, TbTrendingDown, TbHourglass, TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbArrowRight } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
@@ -310,6 +310,7 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
         ['reliable', tr('Most reliable'), <TbShieldCheck />, 'green', (r) => tr('{n}% on time', { n: r.onTimeRate })],
         ['closer', tr('Top closer'), <TbTargetArrow />, 'violet', (r) => tr('{n} leads converted', { n: r.converted })],
         ['active', tr('Most active'), <TbMessages />, 'teal', (r) => tr('{n} comments · {h} h tracked', { n: r.comments, h: r.hours })],
+        ['learner', tr('Best learner'), <TbSchool />, 'violet', (r) => tr('{n} learning points', { n: r.learning })],
     ].filter(([k]) => badges[k] && byId[badges[k]])
     const periods = [7, 30, 90]
     const sparse = labels.length > 31
@@ -392,10 +393,10 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
 
             <div className="mb-4 grid gap-4 xl:grid-cols-3">
                 {leaderboard.length > 0 && (
-                    <Panel className="xl:col-span-2" action={<Button size="xs" variant="plain" icon={<TbDownload />} onClick={() => downloadCsv(`team-performance-${days}d.csv`, [tr('Rank'), tr('Member'), tr('Tasks'), tr('On time'), tr('Avg. days'), tr('Hours'), tr('Comments'), tr('Issues'), tr('Leads converted'), tr('Score')], leaderboard.map((r, i) => [i + 1, r.person.name, r.completed, r.onTimeRate === null ? '' : `${r.onTimeRate}%`, r.avgDays ?? '', r.hours, r.comments, r.issues, r.converted, r.score]))}>{tr('Export CSV')}</Button>} title={tr('Leaderboard')} subtitle={tr('Points: 10 per task, +5 on time, +8 per issue resolved, +15 per lead converted, +1 per hour tracked (max 40)')}>
+                    <Panel className="xl:col-span-2" action={<Button size="xs" variant="plain" icon={<TbDownload />} onClick={() => downloadCsv(`team-performance-${days}d.csv`, [tr('Rank'), tr('Member'), tr('Tasks'), tr('On time'), tr('Avg. days'), tr('Hours'), tr('Comments'), tr('Issues'), tr('Leads converted'), tr('Learning points'), tr('Score')], leaderboard.map((r, i) => [i + 1, r.person.name, r.completed, r.onTimeRate === null ? '' : `${r.onTimeRate}%`, r.avgDays ?? '', r.hours, r.comments, r.issues, r.converted, r.learning || 0, r.score]))}>{tr('Export CSV')}</Button>} title={tr('Leaderboard')} subtitle={tr('Points: 10 per task, +5 on time, +8 per issue resolved, +15 per lead converted, +1 per hour tracked (max 40), +1 per 4 learning points (a certificate, a language exam, a course)')}>
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[620px] text-sm">
-                                <thead><tr className="text-left text-xs uppercase tracking-wide text-gray-400"><th className="pb-2 pe-2">#</th><th className="pb-2">{tr('Member')}</th><th className="pb-2 text-end">{tr('Tasks')}</th><th className="pb-2 text-end">{tr('On time')}</th><th className="pb-2 text-end">{tr('Avg. days')}</th><th className="pb-2 text-end">{tr('Hours')}</th><th className="pb-2 ps-4">{tr('Score')}</th></tr></thead>
+                                <thead><tr className="text-left text-xs uppercase tracking-wide text-gray-400"><th className="pb-2 pe-2">#</th><th className="pb-2">{tr('Member')}</th><th className="pb-2 text-end">{tr('Tasks')}</th><th className="pb-2 text-end">{tr('On time')}</th><th className="pb-2 text-end">{tr('Avg. days')}</th><th className="pb-2 text-end">{tr('Hours')}</th><th className="pb-2 text-end">{tr('Learning')}</th><th className="pb-2 ps-4">{tr('Score')}</th></tr></thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {leaderboard.map((r, i) => (
                                         <tr key={r.person.id} className={r.person.id === meId ? 'bg-primary/5' : ''}>
@@ -405,6 +406,7 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
                                             <td className={classNames('py-2.5 text-end', r.onTimeRate !== null && r.onTimeRate < 60 ? 'text-red-500' : '')}>{r.onTimeRate === null ? '—' : `${r.onTimeRate}%`}</td>
                                             <td className="py-2.5 text-end">{r.avgDays === null ? '—' : r.avgDays}</td>
                                             <td className="py-2.5 text-end">{r.hours || '—'}</td>
+                                            <td className={classNames('py-2.5 text-end', r.learning > 0 && 'font-semibold text-violet-600')}>{r.learning || '—'}</td>
                                             <td className="py-2.5 ps-4"><div className="flex items-center gap-2"><div className="h-2 w-24 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full rounded-full bg-primary" style={{ width: `${(r.score / maxScore) * 100}%` }} /></div><b className="w-9 text-end">{r.score}</b></div></td>
                                         </tr>
                                     ))}

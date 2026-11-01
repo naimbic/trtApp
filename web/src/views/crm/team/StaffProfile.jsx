@@ -1,4 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. */
+import GrowthCard from '../grow/GrowthCard'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
@@ -166,6 +167,7 @@ const StaffProfile = () => {
                         <Measure label={tr('Time tracked')} hint={tr('Timer hours against 8 hours per working day; only counted when they use timers')} v={p.hours ?? null} />
                         <p className="mt-3 text-xs text-gray-400">{tr('The score is the average of the measures that have data.')}</p>
                     </section>
+                    <GrowthCard staffId={id} />
                     {canAdmin && <SalaryCard staffId={id} name={m.name} />}
                     {wh && (
                         <section className="pt-card">

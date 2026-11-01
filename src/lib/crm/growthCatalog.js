@@ -12,7 +12,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "12 months (retake yearly)",
    "why": "Core credential for the Search campaigns that most clients buy; pass mark about 80%.",
-   "primeSuggestion": "500-1000 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "google-ads-display",
@@ -24,7 +25,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "12 months",
    "why": "Covers remarketing and awareness campaigns on the Display network.",
-   "primeSuggestion": "300-600 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "google-ads-video",
@@ -36,7 +38,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "12 months",
    "why": "YouTube and video campaigns are growing in the Moroccan market.",
-   "primeSuggestion": "300-600 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "google-ads-shopping",
@@ -48,7 +51,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "12 months",
    "why": "Needed to sell e-commerce clients Merchant Center and Shopping or Performance Max.",
-   "primeSuggestion": "400-800 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "google-ads-measurement",
@@ -60,7 +64,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "12 months",
    "why": "Proves you can set up conversion tracking and attribution so results are measurable.",
-   "primeSuggestion": "400-800 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "google-ads-apps",
@@ -72,7 +77,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "12 months",
    "why": "Useful when a client wants app install campaigns; pass mark about 70%.",
-   "primeSuggestion": "300-500 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "google-analytics-ga4",
@@ -84,7 +90,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "12 months",
    "why": "GA4 is the reporting base for every client dashboard and ads audit.",
-   "primeSuggestion": "400-800 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "google-tag-manager",
@@ -96,7 +103,8 @@ export const CATALOG = {
    "cost": "free courses; paid third-party certificates vary",
    "validity": "none official",
    "why": "Google has no current GTM exam; build a portfolio of real container setups instead.",
-   "primeSuggestion": "300-700 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "google-marketing-platform",
@@ -108,7 +116,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "12 months",
    "why": "Better dashboards and reporting for clients with Looker Studio.",
-   "primeSuggestion": "300-600 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "meta-dma",
@@ -120,7 +129,8 @@ export const CATALOG = {
    "cost": "about 99 USD",
    "validity": "2 years",
    "why": "Entry-level proof of Facebook and Instagram ads basics.",
-   "primeSuggestion": "500-1000 MAD"
+   "primeSuggestion": "300 MAD",
+   "prime": 300
   },
   {
    "key": "meta-media-buying",
@@ -132,7 +142,8 @@ export const CATALOG = {
    "cost": "about 150 USD (105 min, 60 questions)",
    "validity": "2 years",
    "why": "Strongest credential for Meta ads buyers; helps win ad-management retainers.",
-   "primeSuggestion": "1000-1500 MAD"
+   "primeSuggestion": "800 MAD",
+   "prime": 800
   },
   {
    "key": "meta-blueprint-free",
@@ -144,7 +155,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "course completion",
    "why": "Free prep for the paid exams and always up to date with Advantage+ changes.",
-   "primeSuggestion": "100-300 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "tiktok-academy",
@@ -156,7 +168,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "varies",
    "why": "TikTok ads are a growing channel for Moroccan retail and services.",
-   "primeSuggestion": "300-500 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "linkedin-marketing",
@@ -168,7 +181,8 @@ export const CATALOG = {
    "cost": "free (Marketing Labs); LinkedIn Learning paid",
    "validity": "varies",
    "why": "For B2B clients and for our own outbound and LinkedIn content.",
-   "primeSuggestion": "200-500 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "hubspot-inbound",
@@ -180,7 +194,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "about 13 months",
    "why": "Shared language for funnels, content and lead nurturing across the team.",
-   "primeSuggestion": "300-600 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "hubspot-content-seo",
@@ -192,7 +207,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "about 13 months",
    "why": "Good starter for content writers and junior SEO staff.",
-   "primeSuggestion": "300-500 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "hubspot-sales",
@@ -204,7 +220,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "about 13 months",
    "why": "Teaches pipeline discipline and follow-up habits for whoever handles leads.",
-   "primeSuggestion": "300-600 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "semrush-seo-toolkit",
@@ -216,7 +233,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "about 1 year (check current terms)",
    "why": "Practical keyword, audit and backlink workflow for client SEO reports.",
-   "primeSuggestion": "300-700 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "ahrefs-academy",
@@ -228,7 +246,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "no formal certificate",
    "why": "Best free training on link building and technical SEO; we already use Ahrefs.",
-   "primeSuggestion": "200-500 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "ms-advertising",
@@ -240,7 +259,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "varies",
    "why": "Bing and Edge ads are cheap; useful add-on for search clients.",
-   "primeSuggestion": "200-400 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "google-career-dm",
@@ -252,7 +272,8 @@ export const CATALOG = {
    "cost": "about 49 USD/month (varies by country), 7-day trial",
    "validity": "no expiry",
    "why": "Complete foundation for juniors; 6 months at about 10 h/week.",
-   "primeSuggestion": "800-1500 MAD"
+   "primeSuggestion": "300 MAD",
+   "prime": 300
   },
   {
    "key": "google-career-ux",
@@ -264,7 +285,8 @@ export const CATALOG = {
    "cost": "about 49 USD/month, under 300 USD in total",
    "validity": "no expiry",
    "why": "Raises quality of our website and landing page design process.",
-   "primeSuggestion": "800-1500 MAD"
+   "primeSuggestion": "300 MAD",
+   "prime": 300
   },
   {
    "key": "google-career-pm",
@@ -276,7 +298,8 @@ export const CATALOG = {
    "cost": "about 49 USD/month",
    "validity": "no expiry",
    "why": "Structure for managing client projects, scope and deadlines.",
-   "primeSuggestion": "800-1500 MAD"
+   "primeSuggestion": "300 MAD",
+   "prime": 300
   },
   {
    "key": "google-ai-essentials",
@@ -288,7 +311,8 @@ export const CATALOG = {
    "cost": "about 49 USD (check current offer)",
    "validity": "no expiry",
    "why": "Quick way for the whole team to use AI tools safely in daily work.",
-   "primeSuggestion": "300-600 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "anthropic-academy",
@@ -300,7 +324,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "completion certificate",
    "why": "Learn prompting, agents and MCP to productize AI services; ignore unofficial paid Claude certificates.",
-   "primeSuggestion": "300-700 MAD"
+   "primeSuggestion": "300 MAD",
+   "prime": 300
   },
   {
    "key": "openai-academy",
@@ -312,7 +337,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "no formal exam",
    "why": "Practical AI workflows for content, support and automation offers.",
-   "primeSuggestion": "200-500 MAD"
+   "primeSuggestion": "300 MAD",
+   "prime": 300
   },
   {
    "key": "hootsuite-social",
@@ -324,7 +350,8 @@ export const CATALOG = {
    "cost": "about 199 USD (prices vary; student coupons exist)",
    "validity": "about 2 years",
    "why": "Recognized social media strategy credential for community managers.",
-   "primeSuggestion": "600-1200 MAD"
+   "primeSuggestion": "500 MAD",
+   "prime": 500
   },
   {
    "key": "canva-design-school",
@@ -336,7 +363,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "completion certificate",
    "why": "Faster, more consistent social visuals for non-designers.",
-   "primeSuggestion": "100-300 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "figma-learn",
@@ -348,7 +376,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "no formal exam",
    "why": "Standard tool for website mockups and client handoff.",
-   "primeSuggestion": "200-500 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "zapier-n8n",
@@ -360,7 +389,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "no formal exam",
    "why": "Foundation for selling automation and CRM integration services.",
-   "primeSuggestion": "300-700 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "yoast-wordpress",
@@ -372,7 +402,8 @@ export const CATALOG = {
    "cost": "free (Yoast academy partly paid)",
    "validity": "completion certificate",
    "why": "WordPress sites are our bread and butter; technical SEO on-page basics.",
-   "primeSuggestion": "200-500 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "shopify-academy",
@@ -384,7 +415,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "completion certificate",
    "why": "Opens the e-commerce store build and retainer market.",
-   "primeSuggestion": "300-600 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "pmp-scrum",
@@ -396,7 +428,8 @@ export const CATALOG = {
    "cost": "PMP about 400-600 USD; PSM about 200 USD",
    "validity": "PMP 3 years; PSM no expiry",
    "why": "For the person leading delivery; PSM is the cheapest and quickest option.",
-   "primeSuggestion": "1500-3000 MAD"
+   "primeSuggestion": "800 MAD",
+   "prime": 800
   },
   {
    "key": "salesforce-trailhead",
@@ -408,7 +441,8 @@ export const CATALOG = {
    "cost": "free",
    "validity": "badges do not expire",
    "why": "Free CRM and pipeline concepts to improve our own CRM usage.",
-   "primeSuggestion": "200-500 MAD"
+   "primeSuggestion": "200 MAD",
+   "prime": 200
   },
   {
    "key": "sales-training",
@@ -420,7 +454,8 @@ export const CATALOG = {
    "cost": "free to 300 USD",
    "validity": "no expiry",
    "why": "Better discovery calls and proposals directly raise closing rate.",
-   "primeSuggestion": "500-1500 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "deeplearning-ai-short-courses",
@@ -432,7 +467,8 @@ export const CATALOG = {
    "cost": "free to take (a certificate may need a Coursera plan)",
    "validity": "no expiry",
    "why": "One-hour practical courses on LLM apps, agents, RAG and prompting, taught with the tool makers: the fastest way to learn what clients will ask for.",
-   "primeSuggestion": "200-500 MAD per course"
+   "primeSuggestion": "300 MAD",
+   "prime": 300
   },
   {
    "key": "aws-certified-ai-practitioner",
@@ -444,7 +480,8 @@ export const CATALOG = {
    "cost": "exam about 100 USD; free preparation on AWS Skill Builder",
    "validity": "3 years",
    "why": "A recognised proof of AI and generative AI basics on the cloud most clients use; it also helps when applying to AWS programs.",
-   "primeSuggestion": "800-1500 MAD"
+   "primeSuggestion": "400 MAD",
+   "prime": 400
   },
   {
    "key": "microsoft-azure-ai-fundamentals",
@@ -456,7 +493,8 @@ export const CATALOG = {
    "cost": "free learning path on Microsoft Learn; exam about 165 USD (the exam code may have changed: check the page)",
    "validity": "does not expire (check the page)",
    "why": "Covers AI workloads, machine learning, vision, language and generative AI with Azure; useful for the Microsoft partner and startup programs.",
-   "primeSuggestion": "800-1500 MAD"
+   "primeSuggestion": "300 MAD",
+   "prime": 300
   }
  ],
  "languages": [
@@ -471,7 +509,8 @@ export const CATALOG = {
    "freeResources": [
     "BBC Learning English https://www.bbc.co.uk/learningenglish",
     "British Council LearnEnglish https://learnenglish.britishcouncil.org"
-   ]
+   ],
+   "prime": 800
   },
   {
    "key": "french-delf",
@@ -484,7 +523,8 @@ export const CATALOG = {
    "freeResources": [
     "TV5Monde Apprendre https://apprendre.tv5monde.com",
     "RFI Savoirs https://savoirs.rfi.fr"
-   ]
+   ],
+   "prime": 600
   },
   {
    "key": "spanish-dele",
@@ -497,7 +537,8 @@ export const CATALOG = {
    "freeResources": [
     "Instituto Cervantes AVE Mundo https://aprende.cervantes.es",
     "Duolingo https://www.duolingo.com"
-   ]
+   ],
+   "prime": 600
   },
   {
    "key": "arabic-msa",
@@ -510,7 +551,8 @@ export const CATALOG = {
    "freeResources": [
     "Al Jazeera Learning Arabic https://learning.aljazeera.net",
     "Arabic Academy courses on YouTube"
-   ]
+   ],
+   "prime": 600
   },
   {
    "key": "japanese-jlpt",
@@ -523,7 +565,8 @@ export const CATALOG = {
    "freeResources": [
     "NHK Easy Japanese https://www.nhk.or.jp/lesson/en/",
     "Duolingo https://www.duolingo.com"
-   ]
+   ],
+   "prime": 1000
   }
  ],
  "newsSources": [

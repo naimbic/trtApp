@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -28,6 +28,7 @@ import NewTicketDialog from '../tickets/NewTicketDialog'
 import ProjectDialog from '../projects/ProjectDialog'
 import { tr } from '@/utils/t'
 
+import ClientRequests from './ClientRequests'
 const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -107,6 +108,15 @@ const PaymentsTab = ({ id, money }) => {
     )
 }
 
+const HIDE_WHEN_EMPTY = ['estimates', 'proposals', 'projects', 'files', 'tickets', 'notes']
+// each tab has its own colour for its count, so they are told apart at a glance
+const BUBBLE = {
+    invoices: 'bg-blue-100 text-blue-700 dark:bg-blue-500/25 dark:text-blue-200', ideas: 'bg-violet-100 text-violet-700 dark:bg-violet-500/25 dark:text-violet-200', contracts: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/25 dark:text-indigo-200',
+    estimates: 'bg-amber-100 text-amber-700 dark:bg-amber-500/25 dark:text-amber-200', proposals: 'bg-orange-100 text-orange-700 dark:bg-orange-500/25 dark:text-orange-200', projects: 'bg-teal-100 text-teal-700 dark:bg-teal-500/25 dark:text-teal-200',
+    tickets: 'bg-rose-100 text-rose-700 dark:bg-rose-500/25 dark:text-rose-200', notes: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/25 dark:text-yellow-200', files: 'bg-slate-200 text-slate-700 dark:bg-slate-500/30 dark:text-slate-200',
+    contacts: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/25 dark:text-cyan-200', requests: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/25 dark:text-fuchsia-200',
+}
+
 const ClientDetail = () => {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -115,7 +125,7 @@ const ClientDetail = () => {
     const money = makeMoney(lookups.currencies)
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas'].includes(t) ? t : 'overview' })
+    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests'].includes(t) ? t : 'overview' })
     const [cur, setCur] = useState(null)
     const [confirmDel, setConfirmDel] = useState(false)
     const [profile, setProfile] = useState(null)
@@ -137,7 +147,8 @@ const ClientDetail = () => {
         return [
             { key: 'overview', label: tr("Overview") },
             rel('invoices', tr("Invoices"), c.counts.invoices, 'invoices', { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: cols('invoices') }),
-            { key: 'ideas', label: tr("Ideas"), feature: 'client_ideas', icon: <TbSparkles className="text-violet-500" /> },
+            { key: 'ideas', label: tr("Ideas"), count: c.counts.ideas, feature: 'client_ideas', icon: <TbSparkles className="text-violet-500" /> },
+            { key: 'requests', label: tr("Requests"), count: c.counts.requests, feature: 'client_requests', icon: <TbBug className="text-fuchsia-500" /> },
             { key: 'payments', label: tr("Payments"), feature: 'payments' },
             rel('contracts', tr("Contracts"), c.counts.contracts, 'contracts', { resource: 'contracts', where, openPath: (r) => `/crm/contracts/${r.id}`, newPath: `/crm/contracts/new?clientId=${id}`, columns: cols('contracts') }),
             rel('estimates', tr("Estimates"), c.counts.estimates, 'estimates', { resource: 'estimates', where, openPath: (r) => `/crm/estimates/${r.id}`, newPath: `/crm/estimates/new?clientId=${id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('estimates') }),
@@ -146,10 +157,10 @@ const ClientDetail = () => {
             rel('tickets', tr("Tickets"), c.counts.tickets, 'tickets', { resource: 'tickets', where, openPath: (r) => `/crm/tickets/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('tickets') }),
             { key: 'activity', label: tr("Activity") },
             rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
-            { key: 'files', label: tr("Files") },
+            { key: 'files', label: tr("Files"), count: c.counts.files },
             rel('contacts', tr("Contacts"), c.counts.contacts, 'customers', { resource: 'contacts', where, initial: { clientId: id }, hide: ['clientId'], columns: cols('contacts') }),
-        ].filter((t) => !t.feature || can(t.feature, 'view'))
-    }, [c, id, can])
+        ].filter((t) => (!t.feature || can(t.feature, 'view')) && !(HIDE_WHEN_EMPTY.includes(t.key) && !t.count && t.key !== tab)) // an empty Estimates / Proposals / Projects / Files / Tickets / Notes tab is hidden (until it is the one open)
+    }, [c, id, can, tab])
 
     const openAsClient = async (k) => {
         try {
@@ -236,12 +247,13 @@ const ClientDetail = () => {
                     <Card>
                         <Tabs value={tab} onChange={setTab}>
                             <TabList>
-                                {tabs.map((t) => <TabNav key={t.key} value={t.key} className="!px-2.5 text-sm">{t.icon ? <span className="inline-flex items-center gap-1">{t.icon}{t.label}</span> : t.label}{t.count ? <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 text-xs dark:bg-gray-600">{t.count}</span> : null}</TabNav>)}
+                                {tabs.map((t) => <TabNav key={t.key} value={t.key} className="!px-2.5 text-sm">{t.icon ? <span className="inline-flex items-center gap-1">{t.icon}{t.label}</span> : t.label}{t.count ? <span className={`ml-1.5 rounded-full px-1.5 text-xs font-semibold ${BUBBLE[t.key] || 'bg-gray-100 dark:bg-gray-600'}`}>{t.count}</span> : null}</TabNav>)}
                             </TabList>
                             <div className="p-4">
                                 {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}
                                 {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
                                 {tab === 'payments' && <PaymentsTab id={id} money={money} />}
+                                {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}
                                 {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
                                 {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}

@@ -336,6 +336,14 @@ D('client-idea-message', 'c', 'info', 'idea_link', [['Idea', 'Idée', 'idea_titl
   ['New message about: {idea_title}', 'We answered about your idea', '{staff_name} wrote to you about the idea {idea_title}:', 'Open the conversation'],
   ['Nouveau message : {idea_title}', 'Nous avons répondu à propos de votre idée', '{staff_name} vous a écrit à propos de l\'idée {idea_title} :', 'Ouvrir la conversation'])
 
+/* ---------- Client requests (errors, integrations, changes) ---------- */
+D('client-request-update', 'c', 'info', 'request_link', [['Request', 'Demande', 'request_title'], ['Status', 'Statut', 'request_status']], null,
+  ['Your request: {request_title}', 'Your request has a new status', 'The status of your request {request_title} is now: {request_status}.', 'Open the request'],
+  ['Votre demande : {request_title}', 'Votre demande a un nouveau statut', 'Le statut de votre demande {request_title} est maintenant : {request_status}.', 'Ouvrir la demande'])
+D('client-request-message', 'c', 'info', 'request_link', [['Request', 'Demande', 'request_title']], { quote: 'request_message' },
+  ['New message about: {request_title}', 'We answered about your request', '{staff_name} wrote to you about the request {request_title}:', 'Open the conversation'],
+  ['Nouveau message : {request_title}', 'Nous avons répondu à propos de votre demande', "{staff_name} vous a écrit à propos de la demande {request_title} :", 'Ouvrir la conversation'])
+
 /* ---------- Account requests (Google / GitHub sign-in) ---------- */
 D('signup-request-to-admin', 's', 'info', 'request_link', [['Name', 'Nom', 'request_name'], ['Email', 'E-mail', 'request_email'], ['Sign-in', 'Connexion', 'request_provider']], null,
   ['Account request: {request_email}', 'Someone asks for an account', 'A person signed in with {request_provider} and has no account yet.\nOpen the Team page to approve or refuse the request. Nobody gets access before you approve.', 'Review the request'],

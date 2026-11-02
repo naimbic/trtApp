@@ -137,3 +137,17 @@ model CrmPushSubscription {
   @@index([contactId])
   @@map("crm_push_subscriptions")
 }
+
+/// A team member's own pin and favourite on a client card (each person has their own).
+model CrmClientMark {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  staffId  String   @db.ObjectId
+  clientId String   @db.ObjectId
+  pinned   Boolean  @default(false)
+  favorite Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([staffId, clientId])
+  @@index([staffId])
+  @@map("crm_client_marks")
+}

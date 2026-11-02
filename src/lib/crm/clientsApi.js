@@ -73,10 +73,15 @@ export async function clientLookups() {
     }
 }
 
-export async function listClients({ query = '', pageIndex = 1, pageSize = 10, sortKey, order, status, groupId } = {}) {
+export async function listClients({ query = '', pageIndex = 1, pageSize = 10, sortKey, order, status, groupId, favorites } = {}) {
     const session = await requirePermission('customers', 'view')
     const sc = await scope(session)
     const and = [sc]
+    // my pins and favourites: pinned clients come first, "favorites" keeps only the starred ones
+    const staffId = await getStaffId(session)
+    const marks = staffId ? await prisma.crmClientMark.findMany({ where: { staffId } }) : []
+    const markOf = Object.fromEntries(marks.map((m) => [m.clientId, m]))
+    if (favorites === '1') and.push({ id: { in: marks.filter((m) => m.favorite).map((m) => m.clientId) } })
     if (status === 'active') and.push({ active: true })
     if (status === 'inactive') and.push({ active: false })
     if (query) {
@@ -92,11 +97,15 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
     const orderBy = sortKey && sortable.includes(sortKey) ? { [sortKey]: order === 'desc' ? 'desc' : 'asc' } : { company: 'asc' }
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1)
     const size = Math.min(Math.max(parseInt(pageSize, 10) || 10, 1), 200)
-    const [rows, total, all] = await Promise.all([
-        prisma.crmClient.findMany({ where, orderBy, skip: (page - 1) * size, take: size, include: { contacts: true, groupLinks: { include: { group: true } } } }),
-        prisma.crmClient.count({ where }),
+    const ids = (await prisma.crmClient.findMany({ where, orderBy, select: { id: true }, take: 5000 })).map((x) => x.id)
+    const ordered = [...ids.filter((i) => markOf[i]?.pinned), ...ids.filter((i) => !markOf[i]?.pinned)]
+    const pageIds = ordered.slice((page - 1) * size, page * size)
+    const [found, all] = await Promise.all([
+        pageIds.length ? prisma.crmClient.findMany({ where: { id: { in: pageIds } }, include: { contacts: true, groupLinks: { include: { group: true } } } }) : [],
         prisma.crmClient.findMany({ where: sc, select: { id: true, active: true, createdAt: true } }),
     ])
+    const total = ids.length
+    const rows = pageIds.map((i) => found.find((r) => r.id === i)).filter(Boolean)
     const money = await moneyFor(rows.map((r) => r.id))
     // the figures of the page head: new this week, and what the whole book still owes (in the base currency, with the Settings rates)
     const weekAgo = new Date(Date.now() - 7 * 86400000)
@@ -115,6 +124,7 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
                 contactsCount: c.contacts.length,
                 groups: c.groupLinks.map((l) => ({ id: l.groupId, name: l.group?.name || '' })),
                 money: money[c.id] || {},
+                pinned: !!markOf[c.id]?.pinned, favorite: !!markOf[c.id]?.favorite,
             }
         }),
         total, pageIndex: page, pageSize: size,
@@ -131,7 +141,7 @@ export async function getClientDetail(id) {
     const cname = Object.fromEntries(countries.map((x) => [x.legacyId, x.shortName || x.longName]))
     const staff = await prisma.crmStaff.findMany({ where: { id: { in: c.admins.map((a) => a.staffId) } } })
     const rel = { relId: id }
-    const [invoices, estimates, proposals, contracts, projects, tickets, notes, files] = await Promise.all([
+    const [invoices, estimates, proposals, contracts, projects, tickets, notes, files, mediaFiles, ideas, requests] = await Promise.all([
         prisma.crmInvoice.count({ where: { clientId: id } }),
         prisma.crmEstimate.count({ where: { clientId: id } }),
         prisma.crmProposal.count({ where: { relType: 'customer', ...rel } }),
@@ -140,6 +150,9 @@ export async function getClientDetail(id) {
         prisma.crmTicket.count({ where: { clientId: id } }),
         prisma.crmNote.count({ where: { relType: 'customer', ...rel } }),
         prisma.crmFile.count({ where: { relType: 'customer', ...rel } }),
+        prisma.crmMedia.count({ where: { relType: 'customer', relId: id, isFolder: false } }), // the files of the Files tab live in the file library
+        prisma.crmClientIdea.count({ where: { clientId: id } }),
+        prisma.crmClientRequest.count({ where: { clientId: id, status: { notIn: ['done', 'declined'] } } }),
     ])
     const money = (await moneyFor([id], true))[id] || {}
     return {
@@ -152,7 +165,7 @@ export async function getClientDetail(id) {
         admins: staff.map((s) => ({ id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() })),
         contacts: c.contacts.map((x) => ({ id: x.id, name: contactName(x), email: x.email, phone: x.phoneNumber, title: x.title, isPrimary: x.isPrimary, active: x.active, lastLogin: x.lastLogin })),
         money,
-        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files },
+        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests },
     }
 }
 
@@ -173,7 +186,7 @@ const fieldsFrom = (b) => {
     set('defaultCurrencyId', b.currencyId === undefined ? undefined : b.currencyId || null)
     set('bankAccountId', b.bankAccountId === undefined ? undefined : b.bankAccountId || null)
     if (b.active !== undefined) d.active = !!b.active
-    if (Array.isArray(b.portalHidden)) d.portalHidden = b.portalHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'projects', 'support'].includes(x))
+    if (Array.isArray(b.portalHidden)) d.portalHidden = b.portalHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'projects', 'support', 'ideas', 'requests'].includes(x))
     for (const [k, p] of [['billing', 'billing'], ['shipping', 'shipping']]) {
         const a = b[k]
         if (!a) continue
@@ -276,4 +289,17 @@ export async function clientPayments(id, { pageIndex = 1, pageSize = 10, query =
         }),
         total, pageIndex: page, pageSize: size, modes: modes.map((m) => ({ value: m.id, label: m.name })),
     }
+}
+
+/** Pin a client to the top of my list and/or star it as a favourite: my own marks, nobody else sees them. */
+export async function markClient(id, body = {}) {
+    const session = await requirePermission('customers', 'view')
+    const staffId = await getStaffId(session)
+    if (!staffId) throw Object.assign(new Error('Your account has no staff profile'), { status: 403 })
+    if (!/^[a-f0-9]{24}$/i.test(String(id)) || !(await prisma.crmClient.findFirst({ where: { id, ...(await scope(session)) }, select: { id: true } }))) throw Object.assign(new Error('Client not found'), { status: 404 })
+    const data = {}
+    if (body.pinned !== undefined) data.pinned = !!body.pinned
+    if (body.favorite !== undefined) data.favorite = !!body.favorite
+    const row = await prisma.crmClientMark.upsert({ where: { staffId_clientId: { staffId, clientId: id } }, update: data, create: { staffId, clientId: id, ...data } })
+    return { pinned: row.pinned, favorite: row.favorite }
 }

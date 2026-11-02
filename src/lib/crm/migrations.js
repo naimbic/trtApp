@@ -123,6 +123,7 @@ const SPLITS = [
     { mark: 'perm_migration_departments_v1', from: 'settings', to: 'departments', map: { view: ['view'], edit: ['create', 'edit', 'delete'] } },
     { mark: 'perm_migration_announcements_v1', from: 'settings', to: 'announcements', map: { view: ['view'], edit: ['create', 'edit', 'delete'] } },
     { mark: 'perm_migration_activity_log_v1', from: 'settings', to: 'activity_log', map: { view: ['view'] } },
+    { mark: 'perm_migration_client_requests_v1', from: 'customers', to: 'client_requests', map: { view: ['view'], view_own: ['view'], edit: ['create', 'edit'], delete: ['delete'] } },
     { mark: 'perm_migration_leave_v1', from: 'tasks', to: 'leave', map: { view: ['view'], view_own: ['view_own'], create: ['create'], edit: ['edit'], delete: ['delete'] } },
 ]
 export async function splitPermissions() {

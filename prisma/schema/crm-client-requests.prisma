@@ -1,0 +1,55 @@
+/// A request from (or for) a client: an error to report, a code integration to ask for, a change, a question.
+/// The team follows it like a task; the client sees it in the client area and can answer.
+model CrmClientRequest {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  clientId        String    @db.ObjectId
+  /// REQ-<seq>, in the order the requests were made (all clients)
+  seq             Int       @default(0)
+  title           String
+  body            String?
+  /// bug | integration | change | question | other
+  type            String    @default("other")
+  /// new | reviewing | planned | doing | testing | waiting | done | declined
+  status          String    @default("new")
+  priority        Int       @default(2)
+  /// the client sees it
+  visible         Boolean   @default(true)
+  /// staff | client
+  source          String    @default("staff")
+  createdByName   String?
+  createdById     String?   @db.ObjectId
+  /// the page where the problem happens, or what to integrate
+  url             String?
+  /// screenshots and files: [{ url, name, mime, size, kind }]
+  attachments     Json?
+  assigneeIds     String[]  @db.ObjectId
+  dueDate         DateTime?
+  position        Float?
+  taskId          String?   @db.ObjectId
+  statusChangedAt DateTime?
+  closedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@map("crm_client_requests")
+}
+
+model CrmClientRequestComment {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  requestId  String    @db.ObjectId
+  /// staff | client | system (a status change)
+  authorKind String    @default("staff")
+  authorId   String?   @db.ObjectId
+  authorName String?
+  body       String
+  /// a note for the team only
+  internal   Boolean   @default(false)
+  replyToId  String?   @db.ObjectId
+  editedAt   DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([requestId])
+  @@map("crm_client_request_comments")
+}

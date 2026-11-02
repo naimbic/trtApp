@@ -7,7 +7,7 @@ const TTL = 14 * 24 * 3600 * 1000
 const PREVIEW_TTL = 2 * 3600 * 1000 // a staff preview of the client area
 const secret = () => process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'dev-secret'
 const sig = (body) => crypto.createHmac('sha256', secret()).update(`portal.${body}`).digest('base64url')
-export const SECTIONS = ['invoices', 'estimates', 'proposals', 'contracts', 'projects', 'support', 'ideas']
+export const SECTIONS = ['invoices', 'estimates', 'proposals', 'contracts', 'projects', 'support', 'ideas', 'requests']
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
 

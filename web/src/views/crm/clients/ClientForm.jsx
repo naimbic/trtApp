@@ -165,7 +165,7 @@ const ClientForm = () => {
                             <h4>{tr("Client area access")}</h4>
                             <p className="text-sm text-gray-500">{tr("The sections this client sees after signing in to its client area. Switch one off to hide it for all its contacts.")}</p>
                             <div className="mt-4 grid gap-2.5">
-                                {[['invoices', tr("Invoices")], ['estimates', tr("Estimates")], ['proposals', tr("Proposals")], ['contracts', tr("Contracts")], ['projects', tr("Projects")], ['support', tr("Support")], ['ideas', tr("Ideas")]].map(([key, label]) => (
+                                {[['invoices', tr("Invoices")], ['estimates', tr("Estimates")], ['proposals', tr("Proposals")], ['contracts', tr("Contracts")], ['projects', tr("Projects")], ['support', tr("Support")], ['ideas', tr("Ideas")], ['requests', tr("Requests")]].map(([key, label]) => (
                                     <label key={key} className="flex items-center justify-between gap-4 text-sm"><span>{label}</span><Switcher checked={!(v.portalHidden || []).includes(key)} onChange={(on) => set({ portalHidden: on ? (v.portalHidden || []).filter((x) => x !== key) : [...(v.portalHidden || []), key] })} /></label>
                                 ))}
                             </div>

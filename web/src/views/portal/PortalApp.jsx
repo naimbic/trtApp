@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { Link, Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router'
-import { PiLightbulbDuotone, PiHouseDuotone, PiFileTextDuotone, PiFileMagnifyingGlassDuotone, PiPresentationChartDuotone, PiBriefcaseDuotone, PiLifebuoyDuotone, PiUserDuotone, PiSignOutDuotone, PiMoonDuotone, PiSunDuotone, PiDeviceMobileDuotone } from 'react-icons/pi'
+import { PiLightbulbDuotone, PiBugBeetleDuotone, PiHouseDuotone, PiFileTextDuotone, PiFileMagnifyingGlassDuotone, PiPresentationChartDuotone, PiBriefcaseDuotone, PiLifebuoyDuotone, PiUserDuotone, PiSignOutDuotone, PiMoonDuotone, PiSunDuotone, PiDeviceMobileDuotone } from 'react-icons/pi'
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import PhoneApp from '@/components/crm/PhoneApp'
@@ -19,6 +19,7 @@ import Dashboard from './Dashboard'
 import Documents from './Documents'
 import { Projects, ProjectDetail } from './Projects'
 import { Ideas, IdeaDetail } from './Ideas'
+import { Requests, RequestDetail } from './Requests'
 import { Tickets, TicketThread } from './Tickets'
 import Profile from './Profile'
 import ChatWidget from './ChatWidget'
@@ -36,6 +37,7 @@ const NAV = [
     { to: '/portal/contracts', label: 'Contracts', icon: <PiFileTextDuotone />, need: 'contracts' },
     { to: '/portal/projects', label: 'Projects', icon: <PiBriefcaseDuotone />, need: 'projects' },
     { to: '/portal/ideas', label: 'Ideas', icon: <PiLightbulbDuotone />, need: 'ideas' },
+    { to: '/portal/requests', label: 'Requests', icon: <PiBugBeetleDuotone />, need: 'requests' },
     { to: '/portal/tickets', label: 'Support', icon: <PiLifebuoyDuotone />, need: 'support' },
     { to: '/portal/help', label: 'Help center', icon: <PiBookOpenTextDuotone /> },
 ]
@@ -133,6 +135,8 @@ const PortalApp = () => (
             <Route path="projects/:id" element={<ProjectDetail />} />
             <Route path="ideas" element={<Ideas />} />
             <Route path="ideas/:id" element={<IdeaDetail />} />
+            <Route path="requests" element={<Requests />} />
+            <Route path="requests/:id" element={<RequestDetail />} />
             <Route path="tickets" element={<Tickets />} />
             <Route path="tickets/:id" element={<TicketThread />} />
             <Route path="help" element={<Knowledge />} />

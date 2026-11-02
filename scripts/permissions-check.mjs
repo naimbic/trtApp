@@ -1374,6 +1374,56 @@ try {
         const one = first ? await A('GET', `/api/crm/pipeline/leads?view=list&statusId=${first.id}&limit=1000`) : null
         check('Status pages: a lead status can be listed on its own', lr.status === 200 && one?.status === 200 && (one.body.list || []).every((l) => l.statusId === first.id))
     }
+    {
+        // Client requests: the team follows them on the client page, the client sends and follows them in the client area
+        const rA = await makeUser('req-a', { customers: ['view'], client_requests: ['view', 'create', 'edit', 'delete'], tasks: ['view', 'create'] }), rV = await makeUser('req-v', { customers: ['view'], client_requests: ['view'] }), rN = await makeUser('req-n', { customers: ['view'] })
+        const A = await login(rA), V = await login(rV), N = await login(rN), AD = await login(await makeUser('req-admin', {}, true))
+        const X = (await prisma.crmClient.findFirst({ where: { active: true }, select: { id: true } }))?.id
+        check('Requests: without the permission the tab is closed', (await N('GET', `/api/crm/client-requests?clientId=${X}`)).status === 403)
+        const mk = await A('POST', '/api/crm/client-requests', { clientId: X, title: 'zz request one', type: 'bug', priority: 3, body: '<p>Broken <script>x</script>form</p>', url: 'example.com/contact', attachments: [{ url: 'https://evil.example/x.png' }] })
+        const RID = mk.body?.request?.id
+        check('Requests: a request is created clean (script removed, address completed, foreign file dropped, numbered)', mk.status === 201 && /Broken/.test(mk.body.request.body) && !/script/i.test(mk.body.request.body) && mk.body.request.url === 'https://example.com/contact' && mk.body.request.attachments.length === 0 && /^REQ-\d+$/.test(mk.body.request.code) && mk.body.request.status === 'new')
+        check('Requests: an empty title is refused, view-only cannot create', (await A('POST', '/api/crm/client-requests', { clientId: X, title: ' ' })).status === 400 && (await V('POST', '/api/crm/client-requests', { clientId: X, title: 'zz nope' })).status === 403)
+        check('Requests: the board lists it with the statuses and the people', ((await V('GET', `/api/crm/client-requests?clientId=${X}`)).body?.list || []).some((r) => r.id === RID) && (await V('GET', `/api/crm/client-requests?clientId=${X}`)).body?.statuses?.length === 8)
+        const mv = await A('POST', `/api/crm/client-requests/${RID}/move`, { clientId: X, status: 'planned' })
+        check('Requests: moving it changes the status and writes a line in the follow-up', mv.status === 200 && mv.body.request.status === 'planned' && ((await A('GET', `/api/crm/client-requests/${RID}/comments?clientId=${X}`)).body?.list || []).some((c) => c.system?.to === 'planned'))
+        check('Requests: view-only cannot move, an unknown status is refused', (await V('POST', `/api/crm/client-requests/${RID}/move`, { clientId: X, status: 'done' })).status === 403 && (await A('POST', `/api/crm/client-requests/${RID}/move`, { clientId: X, status: 'nope' })).status === 400)
+        const c1 = await A('POST', `/api/crm/client-requests/${RID}/comments`, { clientId: X, body: '<p>We are on it</p>' })
+        const c2 = await A('POST', `/api/crm/client-requests/${RID}/comments`, { clientId: X, body: '<p>reply</p>', replyToId: c1.body?.comment?.id })
+        check('Requests: messages and replies work', c1.status === 201 && c2.status === 201 && c2.body.comment.replyTo?.id === c1.body.comment.id)
+        const tk = await A('POST', `/api/crm/client-requests/${RID}/task`, { clientId: X })
+        check('Requests: a task can be made from it, once', tk.status === 200 && tk.body.existing === false && (await A('POST', `/api/crm/client-requests/${RID}/task`, { clientId: X })).body?.existing === true)
+        if (tk.body?.taskId) made.rows.unshift(['crmTask', tk.body.taskId])
+        // the client area
+        const mail = `req.${Date.now()}@test.local`
+        const ct = await prisma.crmContact.create({ data: { clientId: X, firstName: 'Zq', lastName: 'Request', email: mail } }); made.extraRows.unshift(['crmContact', ct.id])
+        const pw = await AD('POST', `/api/crm/customers/${X}/portal-password`, { contactId: ct.id, password: 'Portal-Test-12345' })
+        const lg = await fetch(`${BASE}/api/portal/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: mail, password: 'Portal-Test-12345' }) })
+        const ck = (lg.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).join('; ')
+        const P = (m, path, body) => fetch(`${BASE}/api/portal${path}`, { method: m, headers: { cookie: ck, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }).then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) }))
+        check('Requests (client area): the contact signs in and sees the requests shown to it', pw.status === 200 && lg.status === 200 && ((await P('GET', '/requests')).body?.list || []).some((r) => r.id === RID))
+        const hid = await A('POST', '/api/crm/client-requests', { clientId: X, title: 'zz request hidden', visible: false })
+        check('Requests (client area): a team-only request is not shown, nor reachable', !((await P('GET', '/requests')).body?.list || []).some((r) => r.id === hid.body?.request?.id) && (await P('GET', `/requests/${hid.body?.request?.id}`)).status === 404)
+        const sent = await P('POST', '/requests', { title: 'zz request from client', type: 'integration', body: '<p>Please add <b>our</b> tracking</p>', url: 'https://kafaratplus.example/page', priority: 4 })
+        const CID = sent.body?.request?.id
+        check('Requests (client area): the client sends a request, the team is told', sent.status === 201 && sent.body.request.mine === true && !!(await prisma.crmNotification.findFirst({ where: { additionalData: 'client-request', description: { contains: 'zz request from client' } } })))
+        check('Requests (client area): the team sees it as coming from the client', ((await A('GET', `/api/crm/client-requests?clientId=${X}`)).body?.list || []).some((r) => r.id === CID && r.source === 'client' && r.status === 'new'))
+        const cm = await P('POST', `/requests/${CID}`, { action: 'comment', body: '<p>Any news?</p>' })
+        check('Requests (client area): the client writes, never sees team-only messages', cm.status === 200 && (await A('POST', `/api/crm/client-requests/${CID}/comments`, { clientId: X, body: '<p>zz secret</p>', internal: true })).status === 201 && !JSON.stringify((await P('GET', `/requests/${CID}`)).body).includes('zz secret'))
+        await A('POST', `/api/crm/client-requests/${CID}/move`, { clientId: X, status: 'waiting' })
+        await P('POST', `/requests/${CID}`, { action: 'comment', body: '<p>Here is the answer</p>' })
+        check('Requests (client area): answering a request that waits for the client puts it back under review', (await prisma.crmClientRequest.findUnique({ where: { id: CID } })).status === 'reviewing')
+        await A('POST', `/api/crm/client-requests/${CID}/move`, { clientId: X, status: 'done' })
+        check('Requests (client area): a finished request can be reopened by the client, an open one cannot', (await P('POST', `/requests/${CID}`, { action: 'reopen', comment: '<p>still broken</p>' })).status === 200 && (await prisma.crmClientRequest.findUnique({ where: { id: CID } })).status === 'reviewing' && (await P('POST', `/requests/${CID}`, { action: 'reopen' })).status === 409)
+        check('Requests (client area): without a session everything is closed', (await fetch(`${BASE}/api/portal/requests`)).status === 401 && (await fetch(`${BASE}/api/portal/requests`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status === 401)
+        check('Requests: only a deleter removes a request', (await V('DELETE', `/api/crm/client-requests/${RID}?clientId=${X}`)).status === 403 && (await A('DELETE', `/api/crm/client-requests/${RID}?clientId=${X}`)).status === 200)
+        for (const id of [CID, hid.body?.request?.id]) if (id) await A('DELETE', `/api/crm/client-requests/${id}?clientId=${X}`)
+        await prisma.crmClientRequestComment.deleteMany({ where: { OR: [{ requestId: RID || '000000000000000000000000' }, { body: { contains: 'zz ' } }] } }).catch(() => {})
+        await prisma.crmClientRequest.deleteMany({ where: { title: { startsWith: 'zz request' } } }).catch(() => {})
+        await prisma.crmNotification.deleteMany({ where: { additionalData: 'client-request', description: { contains: 'zz request' } } }).catch(() => {})
+        await prisma.crmPushSubscription.deleteMany({ where: { contactId: ct.id } }).catch(() => {})
+        await prisma.loginAttempt.deleteMany({ where: { key: `portal:${mail}` } }).catch(() => {})
+    }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.164.0',
+        date: '2026-11-02',
+        title: 'Client Requests tab; pin and favourite clients; empty tabs hidden; coloured counts',
+        items: [
+            'New Requests tab on the client page, built like Ideas: errors to report, code integrations, changes and questions (for example for a client whose website we do not build). Each request has a reference (REQ-12), a kind, a priority, details, the page address, screenshots and files, an assignee, a due date and a status (New, Under review, Planned, In progress, Testing, Waiting for the client, Done, Declined) that you move on a board. Every change is a line in the follow-up; messages support mentions (also the client’s contacts), replies, edit and delete; “Make a task” turns it into a task.',
+            'The client sees its requests in a new Requests section of the client area (switchable in Settings → Clients → Client area and per client): it sends a request with screenshots, follows the status, writes and replies, and reopens one that is not solved. The team is told on the bell and phone; the client by email and phone when the status changes or the team writes.',
+            'New permission “Client requests” in Roles (everybody who could see clients keeps seeing them).',
+            'Clients: each card has a Pin (pinned clients come first) and a Favorite star, personal to each team member, with a Favorites filter.',
+            'Client page: the Estimates, Proposals, Projects, Files, Tickets and Notes tabs are hidden while they are empty, and the count of each tab has its own colour. The count of the Files tab now includes the files of the file library.',
+            'Settings → Clients → Client area: the Ideas switch of a client is now saved (it was dropped before).',
+        ],
+    },
+    {
         version: '0.163.2',
         date: '2026-11-02',
         title: 'Ideas: mention the client’s contacts in the discussion',

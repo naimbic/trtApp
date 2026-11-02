@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import dayjs from 'dayjs'
-import { TbBuilding, TbCircleCheck, TbCoins, TbPlus, TbSearch, TbLayoutGrid, TbTable, TbDownload, TbDots, TbExternalLink, TbPencil, TbHistory, TbFileInvoice, TbMail, TbPhone, TbPower, TbTrash, TbMapPin } from 'react-icons/tb'
+import { TbBuilding, TbCircleCheck, TbCoins, TbPlus, TbSearch, TbLayoutGrid, TbTable, TbDownload, TbDots, TbExternalLink, TbPencil, TbHistory, TbFileInvoice, TbMail, TbPhone, TbPower, TbTrash, TbMapPin, TbPin, TbPinFilled, TbStar, TbStarFilled } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -43,6 +43,7 @@ const ClientsList = () => {
     const [data, setData] = useState({ list: [], total: 0, stats: {} })
     const [status, setStatus] = useState('active')
     const [groupId, setGroupId] = useState(null)
+    const [favOnly, setFavOnly] = useState(false)
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
     const [page, setPage] = useState(1)
@@ -59,11 +60,16 @@ const ClientsList = () => {
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            setData(await api(`/api/crm/customers?${qs({ query, status, groupId, pageIndex: page, pageSize, sortKey: key, order })}`))
+            setData(await api(`/api/crm/customers?${qs({ query, status, groupId, favorites: favOnly ? '1' : '', pageIndex: page, pageSize, sortKey: key, order })}`))
             setError('')
         } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [query, status, groupId, page, pageSize, key, order])
+    }, [query, status, groupId, favOnly, page, pageSize, key, order])
     useEffect(() => { load() }, [load])
+    // my own pin and favourite on a card: shown at once, saved in the background (a pinned client moves to the top)
+    const mark = async (c, change) => {
+        setData((d) => ({ ...d, list: d.list.map((x) => (x.id === c.id ? { ...x, ...change } : x)) }))
+        try { await api(`/api/crm/customers/${c.id}/mark`, { method: 'POST', body: change }); if ('pinned' in change || favOnly) load() } catch (e) { notify('danger', e.message); load() }
+    }
 
     const setViewSaved = (v) => { setView(v); setPage(1); try { localStorage.setItem('clients.view', v) } catch { /* private mode */ } }
     const toggle = async (c, active) => {
@@ -115,7 +121,7 @@ const ClientsList = () => {
             <article key={c.id} className="cx-card" style={{ '--i': Math.min(i, 12) }} data-href={`/crm/clients/${c.id}`} onClick={() => navigate(`/crm/clients/${c.id}`)} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/crm/clients/${c.id}`) }}>
                 <header className="cx-card__top">
                     {c.logoUrl ? <img className="cx-logo" src={c.logoUrl} alt="" loading="lazy" /> : <span className={`cx-logo cx-logo--${toneOf(c.company)}`}>{initials(c.company)}</span>}
-                    <span className="cx-card__tools" onClick={(e) => e.stopPropagation()}>{!c.active && <span className="cx-off">{tr("Inactive")}</span>}{dots(c)}</span>
+                    <span className="cx-card__tools" onClick={(e) => e.stopPropagation()}>{!c.active && <span className="cx-off">{tr("Inactive")}</span>}<button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-gray-100 dark:hover:bg-gray-700 ${c.pinned ? 'text-primary' : 'text-gray-400'}`} title={c.pinned ? tr("Unpin") : tr("Pin to the top")} aria-label={c.pinned ? tr("Unpin") : tr("Pin to the top")} aria-pressed={!!c.pinned} onClick={() => mark(c, { pinned: !c.pinned })}>{c.pinned ? <TbPinFilled /> : <TbPin />}</button><button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-gray-100 dark:hover:bg-gray-700 ${c.favorite ? 'text-amber-500' : 'text-gray-400'}`} title={c.favorite ? tr("Remove from favorites") : tr("Add to favorites")} aria-label={c.favorite ? tr("Remove from favorites") : tr("Add to favorites")} aria-pressed={!!c.favorite} onClick={() => mark(c, { favorite: !c.favorite })}>{c.favorite ? <TbStarFilled /> : <TbStar />}</button>{dots(c)}</span>
                 </header>
                 <h3 className="cx-card__name" title={c.company}>{c.company}</h3>
                 <p className="cx-card__role">{primary?.name || tr("No contact yet")}{c.city ? <><span> · </span><TbMapPin className="cx-pin" />{c.city}</> : null}</p>
@@ -154,6 +160,7 @@ const ClientsList = () => {
                     <Segment.Item value="all">{tr("All")}</Segment.Item><Segment.Item value="active">{tr("Active")}</Segment.Item><Segment.Item value="inactive">{tr("Inactive")}</Segment.Item>
                 </Segment>
                 <div className="w-44"><Select size="sm" isClearable placeholder={tr("All groups")} options={groupOptions} value={groupOptions.find((o) => o.value === groupId) || null} onChange={(o) => { setGroupId(o ? o.value : null); setPage(1) }} /></div>
+                <button type="button" className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition ${favOnly ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300'}`} aria-pressed={favOnly} onClick={() => { setFavOnly((v) => !v); setPage(1) }}>{favOnly ? <TbStarFilled /> : <TbStar />}{tr("Favorites")}</button>
                 <span className="cx-spacer" />
                 <div className="w-40"><Select size="sm" isSearchable={false} options={sortOptions} value={sortOptions.find((o) => o.value === sortKey)} onChange={(o) => { setSortKey(o.value); setPage(1) }} /></div>
                 <Segment size="sm" value={view} onChange={(v) => v && setViewSaved(Array.isArray(v) ? v[0] : v)}>

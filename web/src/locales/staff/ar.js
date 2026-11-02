@@ -5279,5 +5279,6 @@ export default {
     "Shown to the client": "ظاهر للعميل",
     "This page does not exist.": "هذه الصفحة غير موجودة.",
     "This status does not exist (any more).": "هذه الحالة غير موجودة (أو لم تعد موجودة).",
-    "Open the page of this status": "فتح صفحة هذه الحالة"
+    "Open the page of this status": "فتح صفحة هذه الحالة",
+    "Write to the client — use @ to mention a contact": "اكتب للعميل — استخدم @ لذكر جهة اتصال"
 }

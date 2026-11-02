@@ -103,7 +103,9 @@ const Btn = ({ on, active, title, children, disabled }) => (
  * an empty box gives ''. Old plain text is shown as paragraphs. Pictures are pasted, dropped or chosen and kept in the Space.
  * "@" suggests colleagues and "#" tags, like in every other text box.
  */
-const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = false, autoFocus = false, className, toolbar = true, onSubmit, onReady, bare = false, mentions = true, images = true }) => {
+const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = false, autoFocus = false, className, toolbar = true, onSubmit, onReady, bare = false, mentions = true, images = true, extraMentions = [] }) => {
+    const extraRef = useRef([])
+    extraRef.current = extraMentions
     const submitRef = useRef(null)
     submitRef.current = onSubmit
     const last = useRef(null)
@@ -165,7 +167,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
             if (!m) return setMention(null)
             const kind = m[2], q = m[3]
             const to = $from.pos, from = to - (kind.length + q.length)
-            mentionItems(kind, q).then((items) => {
+            mentionItems(kind, q, extraRef.current).then((items) => {
                 if (!items.length) return setMention(null)
                 const c = ed.view.coordsAtPos(to)
                 setActive(0)
@@ -178,7 +180,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     editorRef.current = editor
     useEffect(() => { if (editor) onReady?.(editor) }, [editor]) // eslint-disable-line react-hooks/exhaustive-deps
     // the colleagues' names are known a moment after the editor opens: draw the mentions again then
-    useEffect(() => { if (!mentions) return undefined; let on = true; mentionDirectory().then((d) => { if (!on) return; namesRef.current = d.staff.map((s) => s.name).filter(Boolean).sort((a, b) => b.length - a.length); editorRef.current?.view?.dispatch(editorRef.current.state.tr) }); return () => { on = false } }, [editor])
+    useEffect(() => { if (!mentions) return undefined; let on = true; mentionDirectory().then((d) => { if (!on) return; namesRef.current = [...d.staff, ...extraRef.current].map((s) => s.name).filter(Boolean).sort((a, b) => b.length - a.length); editorRef.current?.view?.dispatch(editorRef.current.state.tr) }); return () => { on = false } }, [editor])
 
     const pick = (m, item) => { editor.chain().focus().deleteRange({ from: m.from, to: m.to }).insertContent(item.insert).run(); setMention(null) }
 

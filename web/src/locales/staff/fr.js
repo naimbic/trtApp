@@ -5279,5 +5279,6 @@ export default {
     "Shown to the client": "Visible par le client",
     "This page does not exist.": "Cette page n'existe pas.",
     "This status does not exist (any more).": "Ce statut n'existe pas (ou plus).",
-    "Open the page of this status": "Ouvrir la page de ce statut"
+    "Open the page of this status": "Ouvrir la page de ce statut",
+    "Write to the client — use @ to mention a contact": "Écrivez au client — utilisez @ pour mentionner un contact"
 }

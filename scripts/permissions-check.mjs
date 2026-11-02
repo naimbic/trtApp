@@ -1157,6 +1157,12 @@ try {
         const m1 = await iA('POST', `/api/crm/client-ideas/${ID}/comments`, { clientId: X, body: '<p>Hello <strong>client</strong><script>x</script> @Checkidea-c please look</p>' })
         check('Ideas: a team message keeps its style, loses scripts, and mentioning a colleague tells them', m1.status === 201 && /<strong>client<\/strong>/.test(m1.body?.comment?.body || '') && !/script/.test(m1.body?.comment?.body || '') && (await prisma.crmNotification.count({ where: { toUserId: iCU.staffId, additionalData: 'mention' } })) >= 1)
         const rep = await iA('POST', `/api/crm/client-ideas/${ID}/comments`, { clientId: X, body: '<p>reply here</p>', replyToId: m1.body?.comment?.id })
+        const zc = await prisma.crmContact.create({ data: { clientId: X, firstName: 'Zzmention', lastName: 'Contact', email: `zz.mention.${Date.now()}@test.local` } })
+        const board = await iA('GET', `/api/crm/client-ideas?clientId=${X}`)
+        check('Ideas: the board lists the client contacts that can be named with @', (board.body?.contacts || []).some((c) => c.id === zc.id && c.name === 'Zzmention Contact'))
+        const mc = await iA('POST', `/api/crm/client-ideas/${ID}/comments`, { clientId: X, body: '<p>Hi @Zzmention Contact, what do you think?</p>' })
+        check('Ideas: a message that names a client contact is saved and replies to it work', mc.status === 201 && (await iA('POST', `/api/crm/client-ideas/${ID}/comments`, { clientId: X, body: '<p>re</p>', replyToId: mc.body?.comment?.id })).status === 201)
+        await prisma.crmContact.delete({ where: { id: zc.id } }).catch(() => {})
         check('Ideas: a reply points to the message it answers', rep.status === 201 && rep.body?.comment?.replyTo?.id === m1.body?.comment?.id && /Hello/.test(rep.body.comment.replyTo.text))
         check('Ideas: only the author edits a team message; a stranger is refused', (await iC('PUT', `/api/crm/client-ideas/${ID}/comments`, { clientId: X, commentId: m1.body?.comment?.id, body: '<p>hack</p>' })).status === 403 && (await iA('PUT', `/api/crm/client-ideas/${ID}/comments`, { clientId: X, commentId: m1.body?.comment?.id, body: '<p>Hello again</p>' })).status === 200)
         const cl1 = (await iA('GET', `/api/crm/client-ideas/${ID}/comments?clientId=${X}`)).body?.list || []

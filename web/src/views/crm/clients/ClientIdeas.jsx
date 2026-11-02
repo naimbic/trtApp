@@ -181,7 +181,7 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
                                 {can.edit && (
                                     <div className="mt-3 space-y-2">
                                         <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
-                                        <RichEditor minHeight={80} placeholder={internal || !v.visible ? tr("A note for the team only…") : tr("Write to the client…")} value={text} onChange={setText} />
+                                        <RichEditor minHeight={80} extraMentions={data.contacts || []} placeholder={internal || !v.visible ? tr("A note for the team only…") : tr("Write to the client — use @ to mention a contact")} value={text} onChange={setText} />
                                         <div className="flex items-center justify-between gap-2"><label className="flex items-center gap-2 text-xs text-gray-500"><Switcher checked={internal || !v.visible} disabled={!v.visible} onChange={setInternal} />{tr("Team only")}</label><Button size="sm" variant="solid" loading={busy === 'say'} disabled={!text.trim()} onClick={say}>{tr("Send")}</Button></div>
                                     </div>
                                 )}

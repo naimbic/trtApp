@@ -8,6 +8,7 @@ import { publicBase } from '@/lib/crm/shortLinks'
 import { realPicture } from '@/lib/crm/pictures'
 import { emit } from '@/lib/crm/webhooks'
 import { notifyComment } from '@/lib/crm/mentionsApi'
+import { mentionedIds } from '@/lib/crm/mentionsCalc'
 import { pushToContacts } from '@/lib/crm/push'
 import { getIdeaCategories } from '@/lib/crm/ideaCategories'
 import { FALLBACK_CATEGORY } from '@/lib/crm/ideaCategoriesCalc'
@@ -64,6 +65,8 @@ export async function listIdeas(clientId) {
         staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })),
         currencies,
         categories,
+        // the client's people the team can name with @ in the discussion (they are told, by email and on the phone)
+        contacts: (await prisma.crmContact.findMany({ where: { clientId, active: true }, select: { id: true, firstName: true, lastName: true } })).map((c) => ({ id: c.id, name: [c.firstName, c.lastName].filter(Boolean).join(' ') })).filter((c) => c.name),
         research: research ? { id: research.id, summary: research.summary || '', competitors: research.competitors || [], provider: research.provider, model: research.model, webSearch: research.webSearch, createdAt: research.createdAt } : null,
         can: { create: hasCap(g.authority, 'client_ideas', 'create'), edit: hasCap(g.authority, 'client_ideas', 'edit'), delete: hasCap(g.authority, 'client_ideas', 'delete') },
     }
@@ -194,7 +197,7 @@ export async function addComment(clientId, id, body = {}) {
     const row = await prisma.crmClientIdeaComment.create({ data: { ideaId: id, authorKind: 'staff', authorId: g.staffId || undefined, authorName: g.name, body: text, internal, replyToId: reply ? reply.id : null } })
     // the people named with @, the team of the idea, and the colleague who is answered
     try { await notifyComment({ by: { staffId: g.staffId, name: g.name }, text, link: `/crm/clients/${clientId}?tab=ideas&idea=${id}`, subject: idea.title, recipients: [...(await teamOf(idea, clientId)), reply?.authorKind === 'staff' ? reply.authorId : null] }) } catch (e) { console.error('[idea notify]', e.message) }
-    if (!internal) await tellClientOfComment(idea, client, g.name, plainText(text))
+    if (!internal) await tellClientOfComment(idea, client, g.name, plainText(text), mentionedIds(plainText(text), (await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, firstName: true, lastName: true } })).map((c) => ({ id: c.id, name: [c.firstName, c.lastName].filter(Boolean).join(' ') }))))
     const all = await prisma.crmClientIdeaComment.findMany({ where: { ideaId: id } })
     return { comment: commentOut(row, all, { me: g.staffId, canDelete: hasCap(g.authority, 'client_ideas', 'delete') }) }
 }
@@ -224,15 +227,16 @@ export async function deleteComment(clientId, id, commentId) {
 }
 
 /** A reply from the team shows in the client area; the contacts get a short email too. */
-async function tellClientOfComment(idea, client, who, text) {
-    const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { email: true, firstName: true, lastName: true } })
+async function tellClientOfComment(idea, client, who, text, named = []) {
+    const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, email: true, firstName: true, lastName: true } })
     const seen = new Set()
-    void pushToContacts({ clientId: client.id }, { title: who || 'trtCRM', body: text, url: `/portal/ideas/${idea.id}`, tag: `idea-${idea.id}` })
+    // a contact named with @ is told personally; the others get the usual message
+    for (const c of contacts) void pushToContacts({ contactId: c.id }, { title: named.includes(c.id) ? `${who || 'trtCRM'} · @${[c.firstName, c.lastName].filter(Boolean).join(' ')}` : who || 'trtCRM', body: text, url: `/portal/ideas/${idea.id}`, tag: `idea-${idea.id}` })
     for (const c of contacts) {
         const to = String(c.email || '').trim().toLowerCase()
         if (!EMAIL.test(to) || seen.has(to)) continue
         seen.add(to)
-        await sendTemplate({ slug: 'client-idea-message', to, relType: 'client_idea', relId: idea.id, data: { contact_firstname: c.firstName || '', contact_lastname: c.lastName || '', client_company: client.company || '', idea_title: idea.title, idea_message: text.slice(0, 600), staff_name: who || '', idea_link: `${publicBase()}/portal/ideas/${idea.id}` } }).catch(() => {})
+        await sendTemplate({ slug: 'client-idea-message', to, relType: 'client_idea', relId: idea.id, data: { contact_firstname: c.firstName || '', contact_lastname: c.lastName || '', client_company: client.company || '', idea_title: idea.title, idea_message: `${named.includes(c.id) ? `@${[c.firstName, c.lastName].filter(Boolean).join(' ')} · ` : ''}${text.slice(0, 600)}`, staff_name: who || '', idea_link: `${publicBase()}/portal/ideas/${idea.id}` } }).catch(() => {})
     }
 }
 

@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.163.2',
+        date: '2026-11-02',
+        title: 'Ideas: mention the client’s contacts in the discussion',
+        items: ['In the Discussion of an idea, typing @ now also suggests the client’s contacts (marked “Client”). A contact you name is told personally, by email and on their phone, and sees your message in the client area, where they can reply (replies to any message already work for the team and for the client).'],
+    },
+    {
         version: '0.163.1',
         date: '2026-11-02',
         title: 'Every status name is a link to its page',

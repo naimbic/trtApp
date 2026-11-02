@@ -5279,5 +5279,6 @@ export default {
     "Shown to the client": "お客様に表示",
     "This page does not exist.": "このページは存在しません。",
     "This status does not exist (any more).": "このステータスは存在しません（または削除されました）。",
-    "Open the page of this status": "このステータスのページを開く"
+    "Open the page of this status": "このステータスのページを開く",
+    "Write to the client — use @ to mention a contact": "お客様に書く — @で担当者をメンション"
 }

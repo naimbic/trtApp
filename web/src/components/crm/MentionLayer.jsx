@@ -89,10 +89,11 @@ const MentionLayer = () => {
 export default MentionLayer
 
 /** The suggestions for "@query" (colleagues) or "#query" (tags): [{ key, label, insert }]. Shared with the rich text editor. */
-export async function mentionItems(kind, q) {
+export async function mentionItems(kind, q, extra = []) {
     const d = await mentionDirectory()
     const n = norm(q)
-    const pool = kind === '@' ? d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` })) : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
+    // extra = people outside the team that can be named here (a client's contacts): [{ id, name }]
+    const pool = kind === '@' ? [...extra.map((s) => ({ key: `x-${s.id}`, label: s.name, hint: 'Client', insert: `@${s.name} ` })), ...d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` }))] : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
     const starts = pool.filter((p) => norm(p.label).startsWith(n)), has = pool.filter((p) => !norm(p.label).startsWith(n) && norm(p.label).includes(n))
     return [...starts, ...has].slice(0, 6)
 }
@@ -107,7 +108,7 @@ export const MentionBox = ({ kind, items, active, setActive, onPick, rect }) => 
             <div className="px-3 pb-1 pt-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{kind === '@' ? tr('Mention a colleague') : tr('Tags')}</div>
             {items.map((it, i) => (
                 <button key={it.key} type="button" role="option" aria-selected={i === active} onMouseEnter={() => setActive(i)} onClick={() => onPick(it)} className={`flex h-9 w-full items-center gap-2 px-3 text-left text-sm ${i === active ? 'bg-primary/10 text-primary' : ''}`}>
-                    <span className="text-gray-400">{kind === '@' ? <TbAt /> : <TbHash />}</span><span className="truncate font-semibold">{it.label}</span>
+                    <span className="text-gray-400">{kind === '@' ? <TbAt /> : <TbHash />}</span><span className="truncate font-semibold">{it.label}</span>{it.hint && <span className="ms-auto shrink-0 rounded-full bg-amber-100 px-1.5 text-[10px] font-bold text-amber-700">{tr(it.hint)}</span>}
                 </button>
             ))}
         </div>,

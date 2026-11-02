@@ -96,6 +96,25 @@ export async function migrateGrowthPermission() {
     await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
 }
 
+/** Notes (Keep-style) became a permission: everybody keeps them, with sharing. Runs once, marker-guarded. */
+export async function migrateNotesPermission() {
+    const MARK = 'perm_migration_notes_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    const CAPS = ['view', 'share']
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        const have = new Set((await prisma.crmStaffPermission.findMany({ where: { staffId: s.id, feature: 'notes' }, select: { capability: true } })).map((r) => r.capability))
+        const add = CAPS.filter((c) => !have.has(c))
+        if (add.length) await prisma.crmStaffPermission.createMany({ data: add.map((capability) => ({ staffId: s.id, feature: 'notes', capability })) })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms)) continue
+        if (!perms.notes) { perms.notes = CAPS; await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } }) }
+    }
+    await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
 /**
  * A function that used to hide under another permission gets its own row in Roles: whoever could do something with the old
  * feature keeps the same power over the new one ({ oldCapability: [newCapabilities] }). Runs once per split, marker-guarded.

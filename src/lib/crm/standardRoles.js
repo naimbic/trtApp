@@ -9,7 +9,7 @@ const pick = (spec) => Object.fromEntries(Object.entries(spec).map(([f, caps]) =
 const SENSITIVE = ['payroll', 'api', 'ai']
 const REPORT = (...kinds) => ['view', ...kinds.map((k) => `report_${k}`)]
 
-const TOOLS = { calendar: ['view'], chat: ['view', 'send_files', 'create_groups', 'call', 'client_chats'], chat_messages: ['react', 'bookmark', 'pin', 'edit_own', 'delete_own'], file_manager: ['view'], growth: ['view'] }
+const TOOLS = { calendar: ['view'], chat: ['view', 'send_files', 'create_groups', 'call', 'client_chats'], chat_messages: ['react', 'bookmark', 'pin', 'edit_own', 'delete_own'], file_manager: ['view'], growth: ['view'], notes: ['view', 'share'] }
 const withTools = (roles) => Object.fromEntries(Object.entries(roles).map(([n, p]) => [n, { ...TOOLS, ...p }]))
 
 export const ROLES = withTools({

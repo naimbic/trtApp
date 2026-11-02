@@ -123,7 +123,7 @@ const Pipeline = ({ columns, ends = [], onMove, onOpen, onAdd, onMoveTo, actions
                             <section key={c.id} className="rp-pl-col" style={{ '--t': t, '--on': on, '--ci': ci }}>
                                 <header className="rp-pl-head">
                                     <span className="rp-pl-dot" />
-                                    <span className="rp-pl-name" title={c.name}>{c.name}</span>
+                                    {c.href ? <Link to={c.href} className="rp-pl-name hover:underline" title={c.hrefTitle || c.name}>{c.name}</Link> : <span className="rp-pl-name" title={c.name}>{c.name}</span>}
                                     <span className="rp-pl-count">{c.count ?? c.items.length}</span>
                                     {(c.total || (money && c.items.some((i) => typeof i.amount === 'number'))) && <span className="rp-pl-total">{c.total || money(c.items.reduce((n, i) => n + (i.amount || 0), 0))}</span>}
                                     {onAdd && <button type="button" className="rp-pl-add" aria-label={tr('Add to {name}', { name: c.name })} title={tr('Add')} onClick={() => onAdd(c)}><TbPlus /></button>}

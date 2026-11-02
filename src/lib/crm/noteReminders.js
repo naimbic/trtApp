@@ -14,13 +14,15 @@ export async function noteRemindersJob({ lines, dry }) {
         const claimed = await prisma.crmQuickNote.updateMany({ where: { id: n.id, remindAt: n.remindAt }, data: { remindedFor: n.remindAt } })
         if (!claimed.count) continue
         if (!who?.active) { lines.push(`Reminder of “${n.title}” skipped: its owner is not active`); continue }
-        const link = '/crm/tasks'
-        const text = String(n.description || '').replace(/\s+/g, ' ').trim().slice(0, 300)
+        const link = `/crm/notes?note=${n.id}`
+        const text = String(n.description || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300)
+        // a note shared with colleagues can remind them too (bell, push, Telegram / WhatsApp)
+        if (n.remindShared) for (const to of n.sharedWith || []) { try { await prisma.crmNotification.create({ data: { toUserId: to, fromFullName: '⏰ Reminder', description: `${n.title}${text ? `: ${text}` : ''}`.slice(0, 200), link, additionalData: 'note-reminder', isRead: false } }); notifyStaffChannels(to, `⏰ Reminder: ${n.title}${text ? `\n${text}` : ''}\n${publicBase()}${link}`) } catch { /* one colleague failing never stops the others */ } }
         try { await prisma.crmNotification.create({ data: { toUserId: who.id, fromFullName: '⏰ Reminder', description: `${n.title}${text ? `: ${text}` : ''}`.slice(0, 200), link, additionalData: 'note-reminder', isRead: false } }) } catch (e) { lines.push(`! Bell notification of “${n.title}” failed: ${e.message}`) }
         notifyStaffChannels(who.id, `⏰ Reminder: ${n.title}${text ? `\n${text}` : ''}\n${publicBase()}${link}`)
         let mailed = 'no email'
         if (who.email) {
-            const r = await deliver({ to: who.email, subject: `⏰ Reminder: ${n.title}`, html: `<p><strong>⏰ ${escapeHtml(n.title)}</strong></p>${text ? `<p>${escapeHtml(text)}</p>` : ''}<p><a href="${publicBase()}${link}">${publicBase()}${link}</a></p>` })
+            const r = await deliver({ to: who.email, subject: `⏰ Reminder: ${n.title || text.slice(0, 60)}`, html: `<p><strong>⏰ ${escapeHtml(n.title)}</strong></p>${text ? `<p>${escapeHtml(text)}</p>` : ''}<p><a href="${publicBase()}${link}">${publicBase()}${link}</a></p>` })
             mailed = r.sent ? 'email sent' : `email failed: ${r.error}`
         }
         lines.push(`Reminder of the note “${n.title}” sent (${mailed})`)

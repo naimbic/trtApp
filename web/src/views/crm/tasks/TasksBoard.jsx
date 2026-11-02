@@ -14,7 +14,8 @@ import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
 import { RemindTag, STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, useTaskStatuses } from './shared'
 import TaskDrawer from './TaskDrawer'
-import NoteDialog, { NOTES_EVENT } from './NoteDialog'
+import NoteEditor from '../notes/NoteEditor'
+import { NOTES_EVENT, plainOf } from '../notes/noteKit'
 import { tr, trn } from '@/utils/t'
 import { onCreate } from '@/utils/createIntent'
 
@@ -42,10 +43,10 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     const [notes, setNotes] = useState([]) // quick notes: only a title and a description, shown beside the tasks
     const [noteDialog, setNoteDialog] = useState({ open: false, note: null })
     const notesOn = !projectId && !boardOnly
-    const loadNotes = useCallback(() => { if (notesOn) api('/api/crm/quick-notes?pageSize=200').then((d) => setNotes(d.list || [])).catch(() => {}) }, [notesOn])
+    const loadNotes = useCallback(() => { if (notesOn) api('/api/crm/notes?board=1&limit=10').then((d) => setNotes(d.list || [])).catch(() => {}) }, [notesOn])
     useEffect(() => { loadNotes() }, [loadNotes])
     useEffect(() => { window.addEventListener(NOTES_EVENT, loadNotes); return () => window.removeEventListener(NOTES_EVENT, loadNotes) }, [loadNotes])
-    const shownNotes = useMemo(() => { const q = query.trim().toLowerCase(); return notes.filter((n) => !q || `${n.title} ${n.description || ''}`.toLowerCase().includes(q)) }, [notes, query])
+    const shownNotes = useMemo(() => { const q = query.trim().toLowerCase(); return notes.filter((n) => !q || `${n.title} ${plainOf(n.description)}`.toLowerCase().includes(q)) }, [notes, query])
     const isNote = (it) => String(it?.id || '').startsWith('n:')
     const noteOf = (it) => notes.find((n) => `n:${n.id}` === it.id)
     // a note becomes a task: moved to a status column or chosen from its menu
@@ -54,7 +55,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
         if (!n) return
         try {
             await api('/api/crm/work/tasks', { method: 'POST', body: { name: n.title, description: n.description || '', status: +status || 1 } })
-            await api(`/api/crm/quick-notes/${n.id}`, { method: 'DELETE' })
+            await api(`/api/crm/notes/${n.id}`, { method: 'DELETE' })
             notify('success', tr("The note is now a task")); loadNotes(); load()
         } catch (e) { notify('danger', e.message) }
     }
@@ -167,7 +168,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                     ends={data.can.edit ? [{ id: 'won', name: tr("Done"), metric: { value: done ? (columns[5] || []).length : "—", label: tr("completed") }, sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, { id: 'progress', name: tr("In progress"), metric: { value: (columns[4] || []).length, label: tr("tasks") }, sub: tr("Start working on it"), icon: <TbLoader />, tone: 'progress' }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), metric: { value: data.list.length, label: tr("in view") }, sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
                     actions={(it) => isNote(it) ? [
                         { label: tr("Make it a task"), icon: <TbArrowRight />, onClick: () => promote(it, 1) },
-                        { label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: async () => { try { await api(`/api/crm/quick-notes/${noteOf(it).id}`, { method: 'DELETE' }); notify('success', tr("Note deleted")); loadNotes() } catch (e) { notify('danger', e.message) } } },
+                        { label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: async () => { try { await api(`/api/crm/notes/${noteOf(it).id}`, { method: 'DELETE' }); notify('success', tr("Note deleted")); loadNotes() } catch (e) { notify('danger', e.message) } } },
                     ] : [
                         ...(data.can.edit ? [
                             { label: tr("Mark complete"), icon: <TbCircleCheck />, onClick: () => moveTo(it, 5) },
@@ -183,7 +184,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         if (String(to).startsWith('end:')) return String(to) === 'end:won' ? moveTo(item, 5) : String(to) === 'end:progress' ? moveTo(item, 4) : setDel(item)
                         onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
                     }}
-                    columns={[...(notesOn ? [{ id: 'notes', name: tr("Notes"), tone: 'butter', count: shownNotes.length, items: shownNotes.map((n) => ({ id: `n:${n.id}`, title: n.title, sub: String(n.description || '').slice(0, 90), date: n.remindAt ? <>{`🔔 ${dayjs(n.remindAt).format('DD MMM HH:mm')}`}<RemindTag when={n.remindAt} /></> : fmtDate(n.createdAt), label: '', fields: [{ label: tr("Description"), value: n.description }], team: [], people: <span className="text-[11px] opacity-70">{tr("Drag to a column to make it a task")}</span> })) }] : []), ...shownStatuses.map((s) => {
+                    columns={[...(notesOn ? [{ id: 'notes', name: tr("Notes"), href: '/crm/notes', hrefTitle: tr("Open the Notes page"), tone: 'butter', count: shownNotes.length, items: shownNotes.map((n) => ({ id: `n:${n.id}`, title: `${n.important ? '⭐ ' : ''}${n.pinned ? '📌 ' : ''}${n.title || plainOf(n.description).slice(0, 60) || tr('Note')}`, sub: n.kind === 'list' ? `☑ ${n.checklist.filter((c) => c.done).length}/${n.checklist.length}` : plainOf(n.description).slice(0, 90), date: n.remindAt ? <>{`🔔 ${dayjs(n.remindAt).format('DD MMM HH:mm')}`}<RemindTag when={n.remindAt} /></> : fmtDate(n.createdAt), label: '', fields: [{ label: tr("Description"), value: plainOf(n.description) }], team: [], people: <span className="text-[11px] opacity-70">{tr("Drag to a column to make it a task")}</span> })) }] : []), ...shownStatuses.map((s) => {
                         const all = columns[s.value] || []
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {
@@ -199,7 +200,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                 <TaskAgenda tasks={data.list} notes={shownNotes} onOpen={open} onOpenNote={(n) => setNoteDialog({ open: true, note: n })} />
             )}
 
-            <NoteDialog open={noteDialog.open} note={noteDialog.note} onClose={() => setNoteDialog((d) => ({ ...d, open: false }))} onSaved={loadNotes} />
+            <NoteEditor open={noteDialog.open} note={noteDialog.note} onClose={() => setNoteDialog((d) => ({ ...d, open: false }))} onSaved={loadNotes} />
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this task?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const it = del; setDel(null); remove(it) }}>
                 <p>{del?.title}</p>
             </ConfirmDialog>

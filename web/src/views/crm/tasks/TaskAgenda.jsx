@@ -1,5 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useMemo } from 'react'
+import { plainOf } from '../notes/noteKit'
 import dayjs from 'dayjs'
 import { TbNote, TbMessageCircle, TbListCheck, TbRepeat, TbAlertTriangle } from 'react-icons/tb'
 import { People, STATUS, statusOf, statusPillStyle, prioOf, isOverdue } from './shared'
@@ -78,7 +79,7 @@ const TaskAgenda = ({ tasks, notes = [], onOpen, onOpenNote }) => {
                         {notes.map((n) => (
                             <button key={n.id} type="button" onClick={() => onOpenNote(n)} className="flex w-full items-center gap-4 rounded-2xl border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-left shadow-sm transition hover:-translate-y-px hover:bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10">
                                 <span className="h-9 w-1 shrink-0 rounded-full bg-amber-400" /><TbNote className="shrink-0 text-xl text-amber-500" />
-                                <div className="min-w-0 flex-1"><div className="truncate font-bold">{n.title}</div><div className="truncate text-xs text-gray-500">{n.description || ''}</div></div>
+                                <div className="min-w-0 flex-1"><div className="truncate font-bold">{n.title || plainOf(n.description).slice(0, 60)}</div><div className="truncate text-xs text-gray-500">{plainOf(n.description)}</div></div>
                                 <span className="shrink-0 text-xs text-gray-400">{dayjs(n.createdAt).format('DD MMM')}</span>
                             </button>
                         ))}

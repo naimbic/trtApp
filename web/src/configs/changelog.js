@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.162.0',
+        date: '2026-11-02',
+        title: 'Notes like Google Keep: coloured cards, checklists, pictures, voice, reminders, sharing and comments',
+        items: [
+            'New Notes page: “Take a note…” bar, coloured cards in columns, pinned notes on top, important notes (star), labels, search, an Archive and a Shared tab. Cards show the text, the checklist (tick items right on the card), pictures, a voice player, files and links.',
+            'Each note has an editor with the same rich text as everywhere (styles, images, @mentions), a checklist mode, pictures, voice recording and files, links, a reminder (bell, phone notification, email, Telegram / WhatsApp), colours and labels, and comments with replies, edit and delete.',
+            'Share a note with colleagues (or just mention them with @ in the text): they get a notification, see the note, and can comment. The reminder can also tell them. Only the author changes or deletes the note.',
+            'Tasks page: the Notes column now shows the important and pinned notes first (about 10 cards) and its title opens the Notes page.',
+            'New permission “Notes” (View, Share notes) in Roles; everybody keeps the notes they already had.',
+        ],
+    },
+    {
         version: '0.161.1',
         date: '2026-11-02',
         title: 'Calendar: the team can edit and delete the events they are part of',

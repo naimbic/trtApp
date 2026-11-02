@@ -1320,6 +1320,38 @@ try {
         check('Push: the client area refuses without a client session', [401, 403].includes((await noSess('/api/portal/push')).status))
         await prisma.crmPushSubscription.deleteMany({ where: { endpoint: { startsWith: 'https://push.invalid/zz-check-' } } }).catch(() => {})
     }
+    {
+        // Notes (Keep-style): private by default, shared by choice or by @mention, comments for everybody who sees them
+        const nA = await makeUser('notes-a', { notes: ['view', 'share'] }), nB = await makeUser('notes-b', { notes: ['view'] }), nC = await makeUser('notes-c', {})
+        const A = await login(nA), B = await login(nB), C = await login(nC)
+        check('Notes: without the Notes permission the list is refused', (await C('GET', '/api/crm/notes')).status === 403)
+        const c1 = await A('POST', '/api/crm/notes', { title: 'zz note list', kind: 'list', checklist: [{ text: 'one' }, { text: 'two', done: true }, { text: '' }], labels: ['zz', 'ZZ'], color: 'blue', links: [{ url: 'example.com/x' }, { url: 'javascript:alert(1)' }], attachments: [{ url: 'https://evil.example/x.png', kind: 'image' }], important: true })
+        const N1 = c1.body?.note?.id
+        check('Notes: a checklist is saved clean (empty items, bad links, foreign files and duplicate labels dropped)', c1.status === 201 && c1.body.note.checklist.length === 2 && c1.body.note.labels.length === 1 && c1.body.note.links.length === 1 && c1.body.note.attachments.length === 0 && c1.body.note.color === 'blue' && c1.body.note.important === true)
+        check('Notes: an empty note is refused', (await A('POST', '/api/crm/notes', { title: '  ' })).status === 400)
+        check('Notes: a note is private to its author', !((await B('GET', '/api/crm/notes')).body?.list || []).some((n) => n.id === N1) && (await B('GET', `/api/crm/notes/${N1}`)).status === 404)
+        const sh = await A('PATCH', `/api/crm/notes/${N1}`, { sharedWith: [nB.staffId] })
+        check('Notes: shared with a colleague, who then sees it as not theirs', sh.status === 200 && ((await B('GET', '/api/crm/notes')).body?.list || []).some((n) => n.id === N1 && n.mine === false))
+        check('Notes: the colleague is told about the shared note', !!(await prisma.crmNotification.findFirst({ where: { toUserId: nB.staffId, additionalData: 'note-shared', link: `/crm/notes?note=${N1}` } })))
+        check('Notes: the colleague cannot change or delete it', (await B('PATCH', `/api/crm/notes/${N1}`, { title: 'hijack' })).status === 403 && (await B('DELETE', `/api/crm/notes/${N1}`)).status === 403)
+        const cm = await B('POST', `/api/crm/notes/${N1}/comments`, { body: '<p>zz note comment</p>' })
+        check('Notes: the colleague comments, the author sees it', cm.status === 201 && ((await A('GET', `/api/crm/notes/${N1}/comments`)).body?.list || []).length === 1)
+        check('Notes: only the writer edits a comment; the note owner may delete it', (await A('PUT', `/api/crm/notes/${N1}/comments`, { commentId: cm.body?.comment?.id, body: 'x' })).status === 403 && (await A('DELETE', `/api/crm/notes/${N1}/comments?commentId=${cm.body?.comment?.id}`)).status === 200)
+        const c2 = await A('POST', '/api/crm/notes', { title: 'zz note mention', description: '<p>hello @Checknotes-b look</p>' })
+        check('Notes: a colleague mentioned with @ gets the note shared', c2.status === 201 && c2.body.note.sharedWith.some((x) => x.id === nB.staffId))
+        const c3 = await B('POST', '/api/crm/notes', { title: 'zz note noshare', sharedWith: [nA.staffId], description: '<p>hi @Checknotes-a</p>' })
+        check('Notes: without the Share permission nothing is shared, mention or not', c3.status === 201 && c3.body.note.sharedWith.length === 0)
+        await A('PATCH', `/api/crm/notes/${N1}`, { archived: true })
+        check('Notes: archived notes leave the list and show in the archive', !((await A('GET', '/api/crm/notes')).body?.list || []).some((n) => n.id === N1) && ((await A('GET', '/api/crm/notes?archived=1')).body?.list || []).some((n) => n.id === N1))
+        await A('PATCH', `/api/crm/notes/${N1}`, { archived: false })
+        const bd = (await A('GET', '/api/crm/notes?board=1&limit=10')).body?.list || []
+        check('Notes: the Tasks page gets at most 10, the important one first', bd.length <= 10 && bd[0]?.id === N1)
+        check('Notes: a remote file or link cannot be attached as an upload', (await A('PATCH', `/api/crm/notes/${N1}`, { attachments: [{ url: 'http://localhost/x', kind: 'image' }] })).body?.note?.attachments?.length === 0)
+        check('Notes: only the author deletes the note', (await A('DELETE', `/api/crm/notes/${N1}`)).status === 200 && (await A('GET', `/api/crm/notes/${N1}`)).status === 404)
+        await prisma.crmQuickNoteComment.deleteMany({ where: { body: { contains: 'zz note' } } }).catch(() => {})
+        await prisma.crmQuickNote.deleteMany({ where: { title: { startsWith: 'zz note' } } }).catch(() => {})
+        await prisma.crmNotification.deleteMany({ where: { toUserId: { in: [nA.staffId, nB.staffId] } } }).catch(() => {})
+    }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

@@ -497,11 +497,47 @@ model CrmQuickNote {
   remindAt    DateTime?
   /// the remindAt value already notified (a new date notifies again)
   remindedFor DateTime?
+  /// Keep-style options (all optional: the old notes keep working)
+  /// note | list (a checklist)
+  kind        String?
+  /// a card colour: yellow, red, orange, green, teal, blue, purple, pink, gray
+  color       String?
+  pinned      Boolean?
+  /// "important" notes come first and show on the Tasks page
+  important   Boolean?
+  archived    Boolean?
+  /// the items of a checklist: [{ id, text, done }]
+  checklist   Json?
+  labels      String[]
+  /// pictures, voice notes and files: [{ url, name, mime, size, kind }]
+  attachments Json?
+  /// web links: [{ url, title }]
+  links       Json?
+  /// colleagues who can see and comment on this note (mentioned or chosen)
+  sharedWith  String[] @db.ObjectId
+  /// the reminder also tells the people the note is shared with
+  remindShared Boolean?
+  position    Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([addedFrom])
   @@map("crm_quick_notes")
+}
+
+/// A comment on a note (the owner and the people it is shared with).
+model CrmQuickNoteComment {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  noteId     String    @db.ObjectId
+  authorId   String?   @db.ObjectId
+  authorName String?
+  body       String
+  replyToId  String?   @db.ObjectId
+  editedAt   DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([noteId])
+  @@map("crm_quick_note_comments")
 }
 
 /// One row per team member per day (company time zone): when the CRM was first and last used that day and for how long they were active.

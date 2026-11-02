@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { parseForm, judge, buildLead, emailText, customLabels } from './leadMailCalc.js'
+import { parseForm, judge, buildLead, emailText, customLabels, subjectTag } from './leadMailCalc.js'
 
 const FORM = `Name: Sara Benali
 Email: sara@acme.ma
@@ -35,6 +35,22 @@ test('only form emails from the chosen sender and subject are leads', () => {
     assert.equal(judge({ ...msg, subject: 'Invoice 12' }, { subjectFilter: 'contact, devis' }, p).ok, false)
     const chat = { fromAddress: 'a@b.com', subject: 'hi', text: 'Hello, are you free tomorrow?' }
     assert.equal(judge(chat, {}, parseForm(chat.text)).ok, false) // not a form
+})
+
+test('a [LEAD] tag at the start of the subject makes a lead, any other tag ([CANDIDATE]) does not', () => {
+    const p = parseForm(FORM)
+    const msg = { fromAddress: 'noreply@site.com', subject: '[LEAD] Nouveau message de Ali', text: FORM }
+    const cfg = { subjectFilter: '[LEAD]' }
+    assert.equal(judge(msg, cfg, p).ok, true)
+    assert.equal(judge({ ...msg, subject: 'Re: [lead] hello' }, cfg, p).ok, true)
+    assert.equal(judge({ ...msg, subject: '[CANDIDATE] Candidature (lead developer)' }, cfg, p).ok, false)
+    assert.match(judge({ ...msg, subject: '[CANDIDATE] Candidature' }, cfg, p).reason, /\[CANDIDATE\] is not a lead tag/)
+    assert.equal(judge({ ...msg, subject: 'We need a lead [LEAD]' }, cfg, p).ok, false) // not leading
+    assert.equal(judge({ ...msg, subject: 'Hello' }, cfg, p).ok, false)
+    // plain words still work the old way, next to a tag
+    assert.equal(judge({ ...msg, subject: 'Quote request' }, { subjectFilter: '[LEAD], quote' }, p).ok, true)
+    assert.equal(subjectTag('Fwd: Re: [Candidate] x'), 'candidate')
+    assert.equal(subjectTag('no tag [LEAD]'), '')
 })
 
 test('the lead keeps every piece of information and falls back to Reply-To for the address', () => {

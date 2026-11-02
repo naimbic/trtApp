@@ -5312,5 +5312,7 @@ export default {
     "Under review": "En revisión",
     "Waiting for the client": "Esperando al cliente",
     "What is wrong, or what do we need?": "¿Qué falla o qué necesitamos?",
-    "{n} email(s) sent to the client.": "{n} correo(s) enviado(s) al cliente."
+    "{n} email(s) sent to the client.": "{n} correo(s) enviado(s) al cliente.",
+    "write [LEAD] to take only emails whose subject starts with the tag [LEAD]; a mail tagged [CANDIDATE] is then never a lead": "escribe [LEAD] para tomar solo los correos cuyo asunto empieza con la etiqueta [LEAD]; un correo marcado [CANDIDATE] nunca es un lead",
+    "[LEAD], contact, quote, new message": "[LEAD], contacto, presupuesto, nuevo mensaje"
 }

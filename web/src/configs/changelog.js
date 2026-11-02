@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.164.1',
+        date: '2026-11-02',
+        title: 'Lead email: match the [LEAD] tag at the start of the subject',
+        items: ['Settings → Leads → Lead email integration → Subject contains: an entry written [LEAD] now matches only emails whose subject starts with the tag [LEAD] (also after Re: / Fwd:), and an email that starts with another tag such as [CANDIDATE] is never taken for a lead (it is logged as “Subject tag [CANDIDATE] is not a lead tag”). Plain words still work as before. To switch your mailbox to the tag rule, write [LEAD] in “Subject contains”.'],
+    },
+    {
         version: '0.164.0',
         date: '2026-11-02',
         title: 'Client Requests tab; pin and favourite clients; empty tabs hidden; coloured counts',

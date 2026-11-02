@@ -5312,5 +5312,7 @@ export default {
     "Under review": "قيد المراجعة",
     "Waiting for the client": "بانتظار العميل",
     "What is wrong, or what do we need?": "ما المشكلة أو ما الذي نحتاجه؟",
-    "{n} email(s) sent to the client.": "تم إرسال {n} بريد إلى العميل."
+    "{n} email(s) sent to the client.": "تم إرسال {n} بريد إلى العميل.",
+    "write [LEAD] to take only emails whose subject starts with the tag [LEAD]; a mail tagged [CANDIDATE] is then never a lead": "اكتب [LEAD] لأخذ الرسائل التي يبدأ موضوعها بالوسم [LEAD] فقط؛ والرسالة الموسومة [CANDIDATE] لا تُعدّ عميلاً محتملاً أبداً",
+    "[LEAD], contact, quote, new message": "[LEAD], اتصال, عرض سعر, رسالة جديدة"
 }

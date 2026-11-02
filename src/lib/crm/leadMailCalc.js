@@ -142,6 +142,15 @@ export function parseForm(text, custom = new Map()) {
     return { fields, extras, pairCount: ps.length }
 }
 
+/** The leading [TAG] of a subject ("[LEAD] New message", also after Re: / Fwd:), lower case, or ''. */
+export function subjectTag(subject) {
+    let s = String(subject || '')
+    for (let i = 0; i < 4; i++) { const n = s.replace(/^\s*(re|fwd?|tr|aw)\s*:\s*/i, ''); if (n === s) break; s = n }
+    const m = /^\s*\[([^\]\n]{1,30})\]/.exec(s)
+    return m ? m[1].trim().toLowerCase() : ''
+}
+const asTag = (x) => { const m = /^\[([^\]]{1,30})\]$/.exec(x); return m ? m[1].trim() : null }
+
 const list = (s) => String(s || '').split(/[,\n;]/).map((x) => x.trim().toLowerCase()).filter(Boolean)
 
 /**
@@ -154,7 +163,13 @@ export function judge(msg, cfg, parsed) {
     const body = String(msg.text || '').toLowerCase()
     const f = list(cfg.fromFilter), s = list(cfg.subjectFilter), b = list(cfg.bodyFilter)
     if (f.length && !f.some((x) => from.includes(x))) return { ok: false, reason: 'Sender does not match the filter' }
-    if (s.length && !s.some((x) => subject.includes(x))) return { ok: false, reason: 'Subject does not match the filter' }
+    if (s.length) {
+        // an entry written [LEAD] matches the leading tag of the subject; a mail tagged with another kind ([CANDIDATE]) is never taken for a lead
+        const tags = s.map(asTag).filter(Boolean), words = s.filter((x) => !asTag(x))
+        const tag = subjectTag(msg.subject)
+        if (tags.length && tag && !tags.includes(tag)) return { ok: false, reason: `Subject tag [${tag.toUpperCase()}] is not a lead tag` }
+        if (!(tags.length && tag && tags.includes(tag)) && !words.some((x) => subject.includes(x))) return { ok: false, reason: 'Subject does not match the filter' }
+    }
     if (b.length && !b.some((x) => body.includes(x))) return { ok: false, reason: 'Text does not match the filter' }
     if (cfg.requireForm !== false) {
         const hasAddress = !!(parsed.fields.email || msg.replyTo)

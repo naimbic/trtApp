@@ -5312,5 +5312,7 @@ export default {
     "Under review": "確認中",
     "Waiting for the client": "お客様の回答待ち",
     "What is wrong, or what do we need?": "何が問題か、何が必要ですか？",
-    "{n} email(s) sent to the client.": "お客様に{n}件のメールを送信しました。"
+    "{n} email(s) sent to the client.": "お客様に{n}件のメールを送信しました。",
+    "write [LEAD] to take only emails whose subject starts with the tag [LEAD]; a mail tagged [CANDIDATE] is then never a lead": "[LEAD] と書くと、件名が [LEAD] で始まるメールだけを取り込みます。[CANDIDATE] のメールはリードになりません",
+    "[LEAD], contact, quote, new message": "[LEAD], お問い合わせ, 見積り, 新着メッセージ"
 }

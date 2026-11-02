@@ -214,6 +214,10 @@ try {
         check('...and the calendar marks it as not editable for that person', seen && seen.canEdit === false)
         const edited = EID ? await kd('PATCH', `/api/crm/calendar/${EID}`, { title: 'zz edited by a colleague' }) : null
         check('with "edit and delete events of others" a colleague can edit it', edited?.status === 200 && (await prisma.crmEvent.findUnique({ where: { id: EID } })).title === 'zz edited by a colleague', String(edited?.status))
+        const pub = await ka('POST', '/api/crm/calendar', { title: 'zz public event', start: start.toISOString(), end: end.toISOString(), isPublic: true }); if (pub.body?.id) made.rows.unshift(['crmEvent', pub.body.id])
+        check('a public event can be edited by any member who sees it', pub.body?.id && (await kb('PATCH', `/api/crm/calendar/${pub.body.id}`, { title: 'zz public edited' })).status === 200 && (((await kb('GET', `/api/crm/calendar?${range}`)).body?.items || []).find((i) => i.rawId === pub.body.id)?.canEdit === true))
+        const inv = await ka('POST', '/api/crm/calendar', { title: 'zz invited event', start: start.toISOString(), end: end.toISOString(), isPublic: false, attendeeIds: [kB.staffId] }); if (inv.body?.id) made.rows.unshift(['crmEvent', inv.body.id])
+        check('a member invited to an event can edit it, another member cannot', inv.body?.id && (await kb('PATCH', `/api/crm/calendar/${inv.body.id}`, { title: 'zz invited edited' })).status === 200 && (await (await login(await makeUser('cal-f', { calendar: ['view'] })))('PATCH', `/api/crm/calendar/${inv.body.id}`, { title: 'no' })).status === 403)
         check('a member without calendar access is refused', (await (await login(await makeUser('cal-e', {})))('GET', `/api/crm/calendar?${range}`)).status === 403)
     }
 

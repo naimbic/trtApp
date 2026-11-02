@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.161.1',
+        date: '2026-11-02',
+        title: 'Calendar: the team can edit and delete the events they are part of',
+        items: ['Everybody who opens the Calendar can now edit and delete their own events, the events they are invited to, and public events (before, only the author could, so colleagues got "Forbidden" on almost every event). Private events of others still need "Edit and delete events of others".'],
+    },
+    {
         version: '0.161.0',
         date: '2026-11-02',
         title: 'Install the app on the phone and get notifications on the screen',

@@ -29,6 +29,9 @@ export function colorName(color) {
 
 const iso = (d) => (d ? new Date(d).toISOString() : undefined)
 
+/** Who may edit or delete an event: its author, the people invited to it, everybody for a public event, and those with "edit and delete events of others". */
+const canChange = (e, ctx) => !e.userId || e.userId === ctx.staffId || ctx.admin || ctx.editOthers || e.isPublic === true || (!!ctx.staffId && (e.attendeeIds || []).includes(ctx.staffId))
+
 async function context() {
     const session = await auth()
     if (!session?.user?.id) return null
@@ -82,8 +85,8 @@ export async function getCalendarItems({ from, to }) {
             remindClient: !!e.remindClient,
             reminderTemplate: e.reminderTemplate || '',
             type: 'events',
-            editable: mine || ctx.admin || ctx.editOthers,
-            canEdit: mine || ctx.admin || ctx.editOthers,
+            editable: canChange(e, ctx),
+            canEdit: canChange(e, ctx),
             description: e.description || '',
             report: e.report || '',
             isPublic: e.isPublic,
@@ -264,7 +267,7 @@ async function ownEvent(id) {
     if (!ctx) throw Object.assign(new Error('Unauthorized'), { status: 401 })
     const ev = await prisma.crmEvent.findUnique({ where: { id } })
     if (!ev) throw Object.assign(new Error('Not found'), { status: 404 })
-    if (ev.userId && ev.userId !== ctx.staffId && !ctx.admin && !ctx.editOthers) throw Object.assign(new Error('Forbidden'), { status: 403 })
+    if (!canChange(ev, ctx)) throw Object.assign(new Error('Forbidden'), { status: 403 })
     return ev
 }
 

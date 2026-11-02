@@ -134,7 +134,7 @@ export const PERMISSION_GROUPS = [
     {
         group: 'Tools',
         features: [
-            { key: 'calendar', label: 'Calendar', caps: ['view', 'view_all_events', 'edit_others_events'], auto: { create: 'Anyone who can open the Calendar adds events', edit: 'Everyone edits their own events', delete: 'Everyone deletes their own events' } },
+            { key: 'calendar', label: 'Calendar', caps: ['view', 'view_all_events', 'edit_others_events'], auto: { create: 'Anyone who can open the Calendar adds events', edit: 'Everyone edits their own events, the events they are invited to and public events', delete: 'Everyone deletes their own events, the events they are invited to and public events' } },
             { key: 'chat', label: 'Team chat', caps: ['view', 'send_files', 'create_groups', 'call', 'client_chats'], auto: {} },
             { key: 'chat_messages', label: 'Chat messages', caps: ['react', 'bookmark', 'pin', 'edit_own', 'delete_own', 'delete_others'], auto: {} },
             { key: 'growth', label: 'My growth (skills, certifications, playbook)', caps: ['view', 'view_team', 'manage'], auto: {} },

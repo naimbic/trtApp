@@ -5221,5 +5221,7 @@ export default {
     "This device": "هذا الجهاز",
     "Push notifications on phones and computers": "الإشعارات الفورية على الهواتف والحواسيب",
     "Send push notifications to phones and computers": "إرسال إشعارات فورية إلى الهواتف والحواسيب",
-    "Everybody can install the app on their phone (Android: Install; iPhone: Share → Add to Home Screen) and switch notifications on from the profile menu → Install the app. Each bell notification and each private chat message then appears on the screen of the phone, even when the app is closed. Off stops all of them.": "يمكن لأي شخص تثبيت التطبيق على هاتفه (أندرويد: تثبيت؛ آيفون: مشاركة ← إضافة إلى الشاشة الرئيسية) وتفعيل الإشعارات من قائمة الملف الشخصي ← تثبيت التطبيق. ثم يظهر كل إشعار من الجرس وكل رسالة خاصة على شاشة الهاتف حتى مع إغلاق التطبيق. الإيقاف يوقفها جميعاً."
+    "Everybody can install the app on their phone (Android: Install; iPhone: Share → Add to Home Screen) and switch notifications on from the profile menu → Install the app. Each bell notification and each private chat message then appears on the screen of the phone, even when the app is closed. Off stops all of them.": "يمكن لأي شخص تثبيت التطبيق على هاتفه (أندرويد: تثبيت؛ آيفون: مشاركة ← إضافة إلى الشاشة الرئيسية) وتفعيل الإشعارات من قائمة الملف الشخصي ← تثبيت التطبيق. ثم يظهر كل إشعار من الجرس وكل رسالة خاصة على شاشة الهاتف حتى مع إغلاق التطبيق. الإيقاف يوقفها جميعاً.",
+    "Everyone edits their own events, the events they are invited to and public events": "يعدّل كل شخص أحداثه والأحداث التي دُعي إليها والأحداث العامة",
+    "Everyone deletes their own events, the events they are invited to and public events": "يحذف كل شخص أحداثه والأحداث التي دُعي إليها والأحداث العامة"
 }

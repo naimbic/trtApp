@@ -5221,5 +5221,7 @@ export default {
     "This device": "この端末",
     "Push notifications on phones and computers": "スマートフォンとパソコンへのプッシュ通知",
     "Send push notifications to phones and computers": "スマートフォンとパソコンにプッシュ通知を送る",
-    "Everybody can install the app on their phone (Android: Install; iPhone: Share → Add to Home Screen) and switch notifications on from the profile menu → Install the app. Each bell notification and each private chat message then appears on the screen of the phone, even when the app is closed. Off stops all of them.": "誰でもスマートフォンにアプリをインストールでき（Android：インストール、iPhone：共有 → ホーム画面に追加）、プロフィールメニュー → アプリをインストールから通知をオンにできます。ベルの通知やチャットのメッセージは、アプリを閉じていてもスマートフォンの画面に表示されます。オフにするとすべて停止します。"
+    "Everybody can install the app on their phone (Android: Install; iPhone: Share → Add to Home Screen) and switch notifications on from the profile menu → Install the app. Each bell notification and each private chat message then appears on the screen of the phone, even when the app is closed. Off stops all of them.": "誰でもスマートフォンにアプリをインストールでき（Android：インストール、iPhone：共有 → ホーム画面に追加）、プロフィールメニュー → アプリをインストールから通知をオンにできます。ベルの通知やチャットのメッセージは、アプリを閉じていてもスマートフォンの画面に表示されます。オフにするとすべて停止します。",
+    "Everyone edits their own events, the events they are invited to and public events": "自分のイベント、招待されたイベント、公開イベントは誰でも編集できます",
+    "Everyone deletes their own events, the events they are invited to and public events": "自分のイベント、招待されたイベント、公開イベントは誰でも削除できます"
 }

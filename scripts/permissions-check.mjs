@@ -1464,6 +1464,42 @@ try {
         await prisma.crmPushSubscription.deleteMany({ where: { contactId: ct.id } }).catch(() => {})
         await prisma.loginAttempt.deleteMany({ where: { key: `portal:${mail}` } }).catch(() => {})
     }
+    {
+        // Notifications: everything written for me shows in the feed, each one opens its item, and read / unread is per item and per person
+        const nA = await makeUser('notif-a', { tasks: ['view'] }), nB = await makeUser('notif-b', {})
+        const A = await login(nA), B = await login(nB)
+        const mkN = (toUserId, additionalData, description, link, fromFullName = 'Zz Sender') => prisma.crmNotification.create({ data: { toUserId, additionalData, description, link, fromFullName, isRead: false } })
+        const n1 = await mkN(nA.staffId, 'client-request', 'zz client sent a request: REQ-9 Broken form', '/crm/clients/6ad0f6b8360b540bcf889fa3?tab=requests&request=6ad0f6b8360b540bcf889fa9')
+        const n2 = await mkN(nA.staffId, 'note-shared', 'shared a note with you: zz note', '/crm/notes?note=6ad0f6b8360b540bcf889fb1')
+        const n3 = await mkN(nA.staffId, 'mention', 'zz look at this', '/crm/chat?room=6ad0f6b8360b540bcf889fc1')
+        const nb = await mkN(nB.staffId, 'mention', 'zz only for B', '/crm/notes')
+        const f1 = (await A('GET', '/api/crm/notifications')).body
+        const mine = (k) => (f1?.items || []).find((x) => x.id === `n:${k.id}`)
+        check('Notifications: everything written for me is in the feed, with its kind and the link that opens the item', mine(n1)?.kind === 'request' && mine(n1)?.link.includes('tab=requests&request=') && mine(n2)?.kind === 'note' && /shared a note/.test(mine(n2)?.title) && mine(n3)?.kind === 'mention' && mine(n3)?.link === '/crm/chat?room=6ad0f6b8360b540bcf889fc1' && mine(n1)?.read === false)
+        check('Notifications: the counts say how many are unread and of which kind; another person\'s notifications are not mine', f1?.counts?.unread >= 3 && f1.counts.byKind.request >= 1 && !(f1.items || []).some((x) => x.id === `n:${nb.id}`))
+        await A('POST', '/api/crm/notifications', { action: 'read', ids: [`n:${n1.id}`] })
+        const f2 = (await A('GET', '/api/crm/notifications')).body
+        check('Notifications: one item is read on its own (the others stay unread)', (f2.items.find((x) => x.id === `n:${n1.id}`)?.read === true) && f2.items.find((x) => x.id === `n:${n2.id}`)?.read === false && f2.counts.unread === f1.counts.unread - 1)
+        await A('POST', '/api/crm/notifications', { action: 'unread', ids: [`n:${n1.id}`] })
+        check('Notifications: and can be marked unread again', (await A('GET', '/api/crm/notifications')).body.items.find((x) => x.id === `n:${n1.id}`)?.read === false)
+        await B('POST', '/api/crm/notifications', { action: 'read', ids: [`n:${n2.id}`] })
+        await B('POST', '/api/crm/notifications')
+        check('Notifications: nobody reads or clears somebody else\'s notifications', (await prisma.crmNotification.findUnique({ where: { id: n2.id } })).isRead === false && (await prisma.crmNotification.findUnique({ where: { id: nb.id } })).isRead === true)
+        const derived = (f1?.items || []).find((x) => x.id.startsWith('d:'))
+        if (derived) {
+            await A('POST', '/api/crm/notifications', { action: 'read', ids: [derived.id] })
+            const fd = (await A('GET', '/api/crm/notifications')).body
+            await A('POST', '/api/crm/notifications', { action: 'unread', ids: [derived.id] })
+            check('Notifications: an item worked out from the records (a due task, a lead…) is read and unread by its stable key', fd.items.find((x) => x.id === derived.id)?.read === true && (await A('GET', '/api/crm/notifications')).body.items.find((x) => x.id === derived.id)?.read === false)
+        }
+        await A('POST', '/api/crm/notifications')
+        const f3 = (await A('GET', '/api/crm/notifications')).body
+        check('Notifications: "mark all as read" reads everything, stored or not', f3.counts.unread === 0 && f3.items.every((x) => x.read) && (await prisma.crmNotification.findUnique({ where: { id: n3.id } })).isRead === true)
+        check('Notifications: without a session the feed is closed', (await fetch(`${BASE}/api/crm/notifications`)).status === 401)
+        await prisma.crmNotification.deleteMany({ where: { id: { in: [n1.id, n2.id, n3.id, nb.id] } } })
+        await prisma.crmNotifState.deleteMany({ where: { staffId: { in: [nA.staffId, nB.staffId] } } })
+        await prisma.crmOption.deleteMany({ where: { name: { in: [`notif_seen_${nA.staffId}`, `notif_seen_${nB.staffId}`] } } })
+    }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

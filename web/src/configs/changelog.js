@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.166.0',
+        date: '2026-11-03',
+        title: 'Notifications redone: unread / read, every kind in one place, and a click lands on the item',
+        items: [
+            'The bell and the Notifications page now show everything written for you (before, requests from clients, shared notes, ideas, appointments, reminders, growth and account requests were missing): mentions, comments, assignments, tickets, tasks, leads, payments, shared notes, client requests and ideas, reminders.',
+            'Unread is the default view; Read and All are one click away. Each notification is read on its own when you open it, and can be marked read or unread from the small button on its line. “Mark all as read” remembers it for you on every device. Filter by kind (Tasks, Leads, Mentions, Requests…) and see the day it came (Today, Yesterday…).',
+            'More compact: one line per notification (icon, what happened, about what, how long ago). A click takes you to the exact task, lead, ticket, note, client request, idea or chat, even when that page is already open.',
+            'Reminders now open the record they are about (task, ticket, project, invoice, estimate, proposal, contract, expense) instead of nothing.',
+        ],
+    },
+    {
         version: '0.165.0',
         date: '2026-11-03',
         title: 'Team growth: a monthly prime with a ceiling, and a verification that cannot be tricked',

@@ -948,3 +948,16 @@ model CrmBankAccount {
 
   @@map("crm_bank_accounts")
 }
+
+/// Read / unread of one item of the notification feed that is worked out from the records (stored notifications use their own isRead).
+model CrmNotifState {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  staffId String   @db.ObjectId
+  key     String
+  read    Boolean  @default(true)
+  at      DateTime @default(now())
+
+  @@unique([staffId, key])
+  @@index([staffId])
+  @@map("crm_notif_states")
+}

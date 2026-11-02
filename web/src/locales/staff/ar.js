@@ -5365,5 +5365,12 @@ export default {
     "certificate(s) in a month": "شهادة (شهادات) في الشهر",
     "verified certificate(s)": "شهادة (شهادات) متحقق منها",
     "waiting for payment": "بانتظار الدفع",
-    "{n} more verified certificate(s) this month would bring you {amount} {cur}.": "{n} شهادة (شهادات) إضافية متحقق منها هذا الشهر تمنحك {amount} {cur}."
+    "{n} more verified certificate(s) this month would bring you {amount} {cur}.": "{n} شهادة (شهادات) إضافية متحقق منها هذا الشهر تمنحك {amount} {cur}.",
+    "All kinds": "كل الأنواع",
+    "Mark as read": "وضع علامة مقروء",
+    "Mark as unread": "وضع علامة غير مقروء",
+    "Mark these as read": "وضع علامة مقروء على هذه",
+    "See all notifications": "عرض كل الإشعارات",
+    "Unread": "غير المقروءة",
+    "Yesterday": "أمس"
 }

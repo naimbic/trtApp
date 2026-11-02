@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
 import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
@@ -35,6 +35,7 @@ const { Tr, Th, Td, THead, TBody } = Table
 /** A related list (contacts, invoices, …) with its own create/edit drawer. */
 const RelatedTab = ({ cfg, onChanged }) => {
     const navigate = useNavigate()
+    const loc = useLocation()
     const can = useCan()
     const resource = getResource(cfg.resource)
     const [reload, setReload] = useState(0)
@@ -127,6 +128,8 @@ const ClientDetail = () => {
     const [error, setError] = useState('')
     const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests'].includes(t) ? t : 'overview' })
     const [cur, setCur] = useState(null)
+    // a link from a notification (…?tab=requests&request=ID) switches the tab even when this client is already open
+    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests'].includes(t)) setTab(t) }, [loc.search])
     const [confirmDel, setConfirmDel] = useState(false)
     const [profile, setProfile] = useState(null)
     const [followUp, setFollowUp] = useState(null)

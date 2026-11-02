@@ -5365,5 +5365,12 @@ export default {
     "certificate(s) in a month": "certificado(s) en un mes",
     "verified certificate(s)": "certificado(s) verificado(s)",
     "waiting for payment": "pendiente de pago",
-    "{n} more verified certificate(s) this month would bring you {amount} {cur}.": "{n} certificado(s) verificado(s) más este mes te darían {amount} {cur}."
+    "{n} more verified certificate(s) this month would bring you {amount} {cur}.": "{n} certificado(s) verificado(s) más este mes te darían {amount} {cur}.",
+    "All kinds": "Todos los tipos",
+    "Mark as read": "Marcar como leída",
+    "Mark as unread": "Marcar como no leída",
+    "Mark these as read": "Marcar estas como leídas",
+    "See all notifications": "Ver todas las notificaciones",
+    "Unread": "No leídas",
+    "Yesterday": "Ayer"
 }

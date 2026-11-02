@@ -1,69 +1,60 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import { PiBellRingingDuotone } from 'react-icons/pi'
-import { HiOutlineMailOpen } from 'react-icons/hi'
+import { PiBellRingingDuotone, PiCheckCircleDuotone } from 'react-icons/pi'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Skeleton from '@/components/ui/Skeleton'
 import classNames from '@/utils/classNames'
-import { KIND, TONE } from '@/components/template/Notification/Notification'
-import { api } from './kit/api'
+import { NotifRow, useOpenNotif } from '@/components/template/Notification/Notification'
+import { kindLabel } from '@/components/template/Notification/notifKit'
+import { useNotifs } from '@/store/notifStore'
 import { tr } from '@/utils/t'
 
-dayjs.extend(relativeTime)
-const KIND_LABEL = () => ({ ticket: tr('Tickets'), task: tr('Tasks'), reminder: tr('Reminders'), mention: tr('Mentions'), payment: tr('Payments'), invoice: tr('Invoices'), estimate: tr('Estimates'), proposal: tr('Proposals'), lead: tr('Leads'), view: tr('Views') })
+const day = (d) => { const n = dayjs().startOf('day').diff(dayjs(d).startOf('day'), 'day'); return n <= 0 ? tr('Today') : n === 1 ? tr('Yesterday') : n < 7 ? dayjs(d).format('dddd') : dayjs(d).format('DD MMM YYYY') }
 
-/** Everything that needs the signed-in person's attention, the full list behind the bell. */
+/** Everything that needs the signed-in person's attention: unread first, by kind, grouped by day. Click an item to land on it. */
 const NotificationsPage = () => {
-    const nav = useNavigate()
-    const [items, setItems] = useState(null)
-    const [error, setError] = useState('')
+    const { items, counts, loaded, load, setRead, markAll } = useNotifs()
+    const [tab, setTab] = useState('unread')
     const [kind, setKind] = useState('')
-    const [seen, setSeen] = useState(0)
-    const load = useCallback(() => api('/api/crm/notifications').then((r) => { setItems(r.items || []); setSeen(r.seen || 0); setError('') }).catch((e) => setError(e.message)), [])
     useEffect(() => { load(); const t = setInterval(() => { if (!document.hidden) load() }, 60000); return () => clearInterval(t) }, [load])
-
-    const markAll = () => { const now = Date.now(); setSeen(now); api('/api/crm/notifications', { method: 'POST' }).catch(() => {}); window.dispatchEvent(new CustomEvent('notif-seen', { detail: now })) }
-    const kinds = [...new Set((items || []).map((i) => i.kind))]
-    const shown = (items || []).filter((i) => !kind || i.kind === kind)
-    const unread = (items || []).filter((i) => +new Date(i.date) > seen).length
+    const open = useOpenNotif()
+    const inTab = useMemo(() => items.filter((i) => (tab === 'unread' ? !i.read : tab === 'read' ? i.read : true)), [items, tab])
+    const kinds = useMemo(() => { const m = {}; for (const i of inTab) m[i.kind] = (m[i.kind] || 0) + 1; return m }, [inTab])
+    const shown = inTab.filter((i) => !kind || i.kind === kind)
+    const groups = useMemo(() => { const g = []; for (const i of shown) { const k = day(i.date); const last = g[g.length - 1]; if (last && last.k === k) last.list.push(i); else g.push({ k, list: [i] }) } return g }, [shown])
+    const readCount = items.length - counts.unread
+    const tabs = [['unread', tr('Unread'), counts.unread], ['read', tr('Read'), readCount], ['all', tr('All'), items.length]]
+    useEffect(() => { if (kind && !kinds[kind]) setKind('') }, [kinds, kind])
 
     return (
         <Container>
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>{tr('Notifications')}</h3><p className="text-gray-500">{items ? (unread ? tr('{n} new', { n: unread }) : tr('You are all caught up')) : ''}</p></div>
-                <Button size="sm" icon={<HiOutlineMailOpen />} disabled={!unread} onClick={markAll}>{tr('Mark all as read')}</Button>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div><h3>{tr('Notifications')}</h3><p className="text-sm text-gray-500">{loaded ? (counts.unread ? tr('{n} new', { n: counts.unread }) : tr('You are all caught up')) : ''}</p></div>
+                <Button size="sm" icon={<PiCheckCircleDuotone />} disabled={!counts.unread} onClick={markAll}>{tr('Mark all as read')}</Button>
             </div>
-            {kinds.length > 1 && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                    {['', ...kinds].map((k) => <button key={k || 'all'} type="button" onClick={() => setKind(k)} className={classNames('rounded-full px-3 py-1 text-sm font-semibold transition', kind === k ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300')}>{k ? KIND_LABEL()[k] || k : tr('All')}</button>)}
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-xl border border-gray-200 p-0.5 text-sm dark:border-gray-700">
+                    {tabs.map(([k, label, n]) => <button key={k} type="button" onClick={() => setTab(k)} className={classNames('rounded-lg px-3 py-1 font-semibold transition', tab === k ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700')}>{label}<span className="ms-1.5 text-xs opacity-80">{n}</span></button>)}
                 </div>
-            )}
-            {error && !items && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
-            {!items && !error && <div className="flex flex-col gap-3">{[0, 1, 2, 3].map((i) => <Skeleton key={i} height={68} />)}</div>}
-            {items && (
+                {Object.keys(kinds).length > 1 && (
+                    <div className="flex flex-wrap gap-1.5">
+                        {['', ...Object.keys(kinds)].map((k) => <button key={k || 'all'} type="button" onClick={() => setKind(k)} className={classNames('rounded-full px-2.5 py-1 text-xs font-semibold transition', kind === k ? 'bg-gray-800 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300')}>{k ? kindLabel(k) : tr('All kinds')}{k && <span className="ms-1 opacity-70">{kinds[k]}</span>}</button>)}
+                    </div>
+                )}
+                {tab === 'unread' && shown.length > 0 && kind && <Button size="xs" className="ms-auto" onClick={() => setRead(shown.map((i) => i.id), true)}>{tr('Mark these as read')}</Button>}
+            </div>
+            {!loaded && <div className="flex flex-col gap-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} height={44} />)}</div>}
+            {loaded && (
                 <Card bodyClass="p-2">
-                    {shown.length ? shown.map((i, idx) => {
-                        const [Icon, cls] = KIND[i.kind] || [PiBellRingingDuotone, 'bg-gray-100 text-gray-600']
-                        const isNew = +new Date(i.date) > seen
-                        return (
-                            <div key={i.id}>
-                                <div role={i.link ? 'button' : undefined} onClick={() => i.link && nav(i.link)} className={classNames('flex items-center gap-3 rounded-xl px-4 py-3', i.link && 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700')}>
-                                    <span className={classNames('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl', TONE[i.tone] && i.kind !== 'ticket' && i.kind !== 'reminder' ? TONE[i.tone] : cls)}><Icon /></span>
-                                    <div className="min-w-0 flex-1">
-                                        <div className={classNames('text-sm leading-snug', isNew ? 'font-bold heading-text' : 'font-semibold')}>{tr(i.title)}</div>
-                                        {i.detail && <div className="truncate text-xs text-gray-500">{i.detail}</div>}
-                                    </div>
-                                    <div className="shrink-0 text-end text-xs text-gray-400">{dayjs(i.date).fromNow()}{isNew && <span className="ms-2 inline-block h-2 w-2 rounded-full bg-primary align-middle" />}</div>
-                                </div>
-                                {idx < shown.length - 1 && <div className="mx-4 border-b border-gray-100 dark:border-gray-700" />}
-                            </div>
-                        )
-                    }) : (
-                        <div className="py-16 text-center"><PiBellRingingDuotone className="mx-auto mb-2 text-6xl text-gray-300" /><h6 className="font-semibold">{tr('You are all caught up')}</h6><p className="mt-1 text-sm text-gray-500">{tr('New tickets, tasks, payments and answers show up here.')}</p></div>
+                    {groups.length ? groups.map((g) => (
+                        <div key={g.k}>
+                            <div className="px-3 pb-0.5 pt-2 text-[11px] font-bold uppercase tracking-wide text-gray-400">{g.k}</div>
+                            {g.list.map((i) => <NotifRow key={i.id} i={i} onOpen={open} onToggle={(x) => setRead([x.id], !x.read)} />)}
+                        </div>
+                    )) : (
+                        <div className="py-14 text-center"><PiBellRingingDuotone className="mx-auto mb-2 text-6xl text-gray-300" /><h6 className="font-semibold">{tab === 'unread' ? tr('You are all caught up') : tr('Nothing here')}</h6><p className="mt-1 text-sm text-gray-500">{tr('New tickets, tasks, payments and answers show up here.')}</p></div>
                     )}
                 </Card>
             )}

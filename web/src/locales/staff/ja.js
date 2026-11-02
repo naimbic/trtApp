@@ -5365,5 +5365,12 @@ export default {
     "certificate(s) in a month": "1か月の証明書数",
     "verified certificate(s)": "確認済みの証明書",
     "waiting for payment": "支払い待ち",
-    "{n} more verified certificate(s) this month would bring you {amount} {cur}.": "今月あと{n}件の確認済み証明書で{amount} {cur}になります。"
+    "{n} more verified certificate(s) this month would bring you {amount} {cur}.": "今月あと{n}件の確認済み証明書で{amount} {cur}になります。",
+    "All kinds": "すべての種類",
+    "Mark as read": "既読にする",
+    "Mark as unread": "未読にする",
+    "Mark these as read": "これらを既読にする",
+    "See all notifications": "すべての通知を見る",
+    "Unread": "未読",
+    "Yesterday": "昨日"
 }

@@ -3,6 +3,22 @@ import { requirePermission, getStaffId, viewScope, hasCap } from '@/lib/crm/perm
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 
 const DAY = 86400000
+/** Where a reminder takes you: the record it is about. */
+const reminderLink = (r) => ({ customer: `/crm/clients/${r.relId}`, lead: `/crm/leads/${r.relId}`, task: `/crm/tasks/${r.relId}`, ticket: `/crm/tickets/${r.relId}`, project: `/crm/projects/${r.relId}`, invoice: `/crm/invoices/${r.relId}`, estimate: `/crm/estimates/${r.relId}`, proposal: `/crm/proposals/${r.relId}`, contract: `/crm/contracts/${r.relId}`, expense: `/crm/expenses/${r.relId}` }[r.relType] || null)
+/** The kind of a stored notification, from what the code that wrote it stamped on it. */
+const STORED_KIND = { mention: 'mention', 'note-reminder': 'reminder', 'ticket-reminder': 'reminder', 'event-reminder': 'reminder', appointment: 'calendar', 'recap-task': 'task', 'note-shared': 'note', 'client-request': 'request', 'client-idea': 'idea', 'signup-request': 'team', growth: 'grow', 'grow-task': 'grow', 'grow-ideas': 'grow', 'grow-assigned': 'grow' }
+const kindOfStored = (d) => (String(d || '').startsWith('comment|') ? 'comment' : String(d || '').startsWith('assign|') ? 'task' : STORED_KIND[d] || 'other')
+const TONE_OF = { reminder: 'amber', mention: 'amber', request: 'purple', idea: 'blue', note: 'blue', team: 'amber', grow: 'green', calendar: 'blue' }
+/** The words of a stored notification: who did what. */
+function storedWords(m, kind) {
+    const from = m.fromFullName || ''
+    const d = String(m.additionalData || '')
+    if (d === 'mention') return [`${from || 'A colleague'} mentioned you`, m.description]
+    if (kind === 'comment') return [`${from || 'A colleague'} commented on “${d.slice(8)}”`, m.description]
+    if (d.startsWith('assign|')) return [`${from || 'A colleague'} gave you a checklist step on “${d.slice(7)}”`, m.description]
+    if (d === 'note-shared') return [`${from || 'A colleague'} ${m.description || 'shared a note with you'}`, '']
+    return [m.description || 'Notification', from && !/^(Grow|Appointments|⏰ Reminder)$/.test(from) ? from : '']
+}
 const strip = (h) => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 
 /**
@@ -18,20 +34,21 @@ export async function notificationFeed() {
     const staffId = await getStaffId(session)
     const now = new Date(), today = new Date(now.toDateString())
     const since = (days) => new Date(Date.now() - days * DAY)
-    const items = []
-    const add = (kind, title, detail, date, link, tone = 'blue') => date && items.push({ id: `${kind}:${items.length}:${+new Date(date)}`, kind, tone, title, detail: detail || '', date, link })
+    const items = [], stored = []
+    // every item has a stable key (what it is about and when), so "read" survives the next refresh
+    const add = (kind, title, detail, date, link, tone = 'blue') => date && items.push({ id: `d:${kind}|${link || title}|${title}|${+new Date(date)}`.slice(0, 280), kind, tone, title, detail: detail || '', date, link })
 
     if (can('tickets')) {
         const scope = all('tickets') ? {} : staffId ? { OR: [{ assignedId: staffId }, { adminId: staffId }] } : { id: '000000000000000000000000' }
         const rows = await prisma.crmTicket.findMany({ where: { AND: [scope, { adminRead: 0 }] }, orderBy: { createdAt: 'desc' }, take: 8 })
-        for (const t of rows) add('ticket', t.lastReply ? `Client replied on ticket #${t.legacyId}` : `New ticket #${t.legacyId}`, t.subject, t.lastReply || t.createdAt, `/crm/tickets/${t.id}`, 'purple')
+        for (const t of rows) add('ticket', t.lastReply ? `Client replied on ticket #${t.legacyId ?? String(t.id).slice(-5).toUpperCase()}` : `New ticket #${t.legacyId ?? String(t.id).slice(-5).toUpperCase()}`, t.subject, t.lastReply || t.createdAt, `/crm/tickets/${t.id}`, 'purple')
     }
-    if (staffId) { // colleagues who mentioned me (@name in a comment, note or message)
-        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, OR: [{ additionalData: 'mention' }, { additionalData: { startsWith: 'comment|' } }, { additionalData: { startsWith: 'assign|' } }], createdAt: { gte: since(14) } }, orderBy: { createdAt: 'desc' }, take: 15 })
+    if (staffId) { // everything written for me: mentions, comments, assignments, shared notes, client requests and ideas, reminders, appointments, growth, account requests
+        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, OR: [{ isRead: false }, { createdAt: { gte: since(14) } }] }, orderBy: { createdAt: 'desc' }, take: 120 })
         for (const m of ms) {
-            if (m.additionalData === 'mention') add('mention', `${m.fromFullName || 'A colleague'} mentioned you`, m.description, m.createdAt, m.link, 'amber')
-            else if (m.additionalData.startsWith('assign|')) add('task', `${m.fromFullName || 'A colleague'} gave you a checklist step on “${m.additionalData.slice(7)}”`, m.description, m.createdAt, m.link, 'blue')
-            else add('comment', `${m.fromFullName || 'A colleague'} commented on “${m.additionalData.slice(8)}”`, m.description, m.createdAt, m.link, 'blue')
+            const kind = kindOfStored(m.additionalData)
+            const [title, detail] = storedWords(m, kind)
+            stored.push({ id: `n:${m.id}`, kind, tone: TONE_OF[kind] || 'blue', title, detail: detail || '', date: m.createdAt, link: m.link || null, read: !!m.isRead })
         }
     }
     if (staffId) { // my checklist steps: overdue, due today, or a reminder that has come
@@ -60,7 +77,7 @@ export async function notificationFeed() {
     }
     if (staffId) {
         const rem = await prisma.crmReminder.findMany({ where: { staffId, date: { gte: since(7), lte: new Date(Date.now() + DAY) } }, orderBy: { date: 'desc' }, take: 6 })
-        for (const r of rem) add('reminder', 'Reminder', r.description, r.date, r.relType === 'customer' ? `/crm/clients/${r.relId}` : r.relType === 'lead' ? `/crm/leads/${r.relId}` : null, 'amber')
+        for (const r of rem) add('reminder', 'Reminder', r.description, r.date, reminderLink(r), 'amber')
     }
     const padding = await numberPadding()
     if (all('payments') || all('invoices')) { // company-wide figures: only for people who see all of them
@@ -93,16 +110,40 @@ export async function notificationFeed() {
     }
     void hasCap; void strip
     const seenRow = staffId ? await prisma.crmOption.findUnique({ where: { name: `notif_seen_${staffId}` } }) : null
-    return { items: items.sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 40), serverTime: now.toISOString(), seen: seenRow?.value ? +new Date(seenRow.value) || 0 : 0 }
+    const seen = seenRow?.value ? +new Date(seenRow.value) || 0 : 0
+    const states = staffId && items.length ? await prisma.crmNotifState.findMany({ where: { staffId, key: { in: items.map((x) => x.id) } } }) : []
+    const state = Object.fromEntries(states.map((x) => [x.key, x.read]))
+    const feed = [...items.map((x) => ({ ...x, read: x.id in state ? state[x.id] : +new Date(x.date) <= seen })), ...stored]
+        .sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 150)
+    const unread = feed.filter((x) => !x.read)
+    const byKind = {}
+    for (const x of unread) byKind[x.kind] = (byKind[x.kind] || 0) + 1
+    return { items: feed, serverTime: now.toISOString(), seen, counts: { unread: unread.length, total: feed.length, byKind } }
 }
 
-/** "Mark all as read": remembered for the person (not the browser), so it follows them to another device and survives a sign-out. */
-export async function markNotificationsSeen() {
+/**
+ * Read / unread. No body or { action: 'all' }: everything is read (remembered for the person, not the browser).
+ * { action: 'read' | 'unread', ids: [...] }: those items only (an id starting with "n:" is a stored notification, "d:" one worked out from the records).
+ */
+export async function markNotificationsSeen(body = {}) {
     const session = await requirePermission(null)
     const staffId = await getStaffId(session)
     if (!staffId) return { seen: Date.now() }
-    const value = new Date().toISOString()
-    const name = `notif_seen_${staffId}`
-    await prisma.crmOption.upsert({ where: { name }, update: { value }, create: { name, value, autoload: false } })
-    return { seen: +new Date(value) }
+    const action = ['read', 'unread'].includes(body.action) ? body.action : 'all'
+    if (action === 'all') {
+        const value = new Date().toISOString()
+        const name = `notif_seen_${staffId}`
+        await prisma.crmOption.upsert({ where: { name }, update: { value }, create: { name, value, autoload: false } })
+        await prisma.crmNotification.updateMany({ where: { toUserId: staffId, isRead: false }, data: { isRead: true } })
+        await prisma.crmNotifState.deleteMany({ where: { staffId } })
+        return { seen: +new Date(value) }
+    }
+    const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).slice(0, 300)
+    const read = action === 'read'
+    const stored = ids.filter((x) => x.startsWith('n:') && /^[a-f0-9]{24}$/i.test(x.slice(2))).map((x) => x.slice(2))
+    if (stored.length) await prisma.crmNotification.updateMany({ where: { id: { in: stored }, toUserId: staffId }, data: { isRead: read } })
+    for (const key of ids.filter((x) => x.startsWith('d:')).slice(0, 200)) await prisma.crmNotifState.upsert({ where: { staffId_key: { staffId, key } }, update: { read, at: new Date() }, create: { staffId, key, read } })
+    // old states are forgotten after two months
+    await prisma.crmNotifState.deleteMany({ where: { staffId, at: { lt: new Date(Date.now() - 60 * DAY) } } }).catch(() => {})
+    return { success: true, count: ids.length }
 }

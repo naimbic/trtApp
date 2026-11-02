@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.165.0',
+        date: '2026-11-03',
+        title: 'Team growth: a monthly prime with a ceiling, and a verification that cannot be tricked',
+        items: [
+            'The prime of each certificate (200 to 1000 MAD, which could add up to a lot) is replaced by a monthly prime: 1 or 2 verified certificates in a month earn 200 MAD, 3 to 5 earn 500 MAD, and nobody earns more than 500 MAD in a month, trophy prizes included (a prize above the limit waits for the next month). The amounts and limits are settings (Settings → Tasks → Team growth).',
+            'Only what a manager verified counts: certificates and language exams only (courses and skills give points, not money); the goal approved by a manager BEFORE the exam; at least 7 days between creating the goal and the result; the certificate attached; the same certificate counts once whatever its title or its month; nobody approves, verifies or pays their own; the month is the day of the verification taken from the server, not a date typed by the member; a verified goal cannot be edited, renamed or deleted; a month can be paid once and the amount is worked out by the CRM, never taken from the screen.',
+            'My growth → My goals now explains what you gain and how to get it (the steps and the rules), shows your month, what is missing for the next amount, and why a certificate does not count. The Team tab lists the monthly primes to pay with a Pay button.',
+        ],
+    },
+    {
         version: '0.164.2',
         date: '2026-11-02',
         title: 'Lead email: a customer who writes again also gets the email in its notes',

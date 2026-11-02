@@ -34,7 +34,7 @@ export const EXTRA_LABELS = {
     delete_own: 'Delete own messages',
     delete_others: 'Delete messages of other people',
     view_team: "See everybody's growth, goals and trophies",
-    manage: 'Approve goals, set and pay primes, award trophies',
+    manage: 'Approve goals, verify certificates, pay the monthly primes and the trophy prizes',
     view_all_events: "See every event, private ones included",
     edit_others_events: "Edit and delete events of others",
     create_milestones: 'Create milestones',

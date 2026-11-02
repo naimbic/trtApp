@@ -139,12 +139,40 @@ model CrmSkillGoal {
   primePaidAt   DateTime?
   approved      Boolean   @default(false)
   approvedBy    String?   @db.ObjectId
+  /// when a manager approved it (set by the server)
+  approvedAt    DateTime?
+  /// when it first became "passed" (set by the server, never typed)
+  passedAt      DateTime?
+  /// a manager checked the certificate: only a verified goal counts for the monthly prime
+  verified      Boolean?
+  verifiedAt    DateTime?
+  verifiedBy    String?   @db.ObjectId
   createdBy     String?   @db.ObjectId
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([staffId, status])
   @@map("crm_skill_goals")
+}
+
+/// What was paid as monthly prime to one member for one month (at most one row per member and month).
+model CrmGrowPrime {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  staffId    String    @db.ObjectId
+  /// YYYY-MM
+  month      String
+  goalIds    String[]  @db.ObjectId
+  count      Int       @default(0)
+  /// what the rule gave at the last payment
+  amount     Float     @default(0)
+  paidAmount Float     @default(0)
+  paidAt     DateTime?
+  paidBy     String?   @db.ObjectId
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([staffId, month])
+  @@map("crm_grow_primes")
 }
 
 /// An app that signs its team in with the CRM account (OpenID Connect): the Meet app, for instance.

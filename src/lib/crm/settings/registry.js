@@ -320,6 +320,14 @@ export const GROUPS = {
                 sel('round_off_task_timer_option', 'Round timers', [['0', 'Up'], ['1', 'Down'], ['2', 'Nearest']], { default: '2' }),
                 f('round_off_task_timer_time', 'Round to (minutes)', 'number', { min: 0 }),
             ] },
+            { title: 'Team growth: monthly prime for certificates', desc: 'In one calendar month a member who passes 1 or 2 certificates earns the first amount, 3 or more the second amount, and nobody earns more than the ceiling (the prime and the trophy prizes together). Only certificates and language exams count, approved by a manager before the exam, with the proof attached and verified by another manager; the same certificate counts once.', fields: [
+                f('grow_prime_tier1', 'Prime for 1 to 2 certificates in a month (MAD)', 'number', { min: 0, max: 100000, default: '200' }),
+                f('grow_prime_tier2_from', 'Certificates needed for the second amount', 'number', { min: 2, max: 50, default: '3' }),
+                f('grow_prime_tier2', 'Prime from that number of certificates (MAD)', 'number', { min: 0, max: 100000, default: '500' }),
+                f('grow_prime_cap', 'Most one person can earn in a month (MAD)', 'number', { min: 0, max: 100000, default: '500', hint: 'The prime and the trophy prizes together. A prize above the ceiling waits for the next month.' }),
+                f('grow_prime_max_count', 'Certificates counted per month, at most', 'number', { min: 1, max: 50, default: '5' }),
+                f('grow_prime_min_days', 'Days between creating a goal and its result, at least', 'number', { min: 0, max: 365, default: '7', hint: 'A goal added and passed the same day is not a certificate someone studied for.' }),
+            ] },
             { title: 'Access', fields: [
                 yes('client_staff_add_edit_delete_task_comments_first_hour', 'Comments can only be changed during the first hour'),
                 f('tasks_kanban_limit', 'Cards per column on the board', 'number', { min: 5 }),

@@ -34,7 +34,7 @@ const GoalDialog = ({ goal, can, mine, currency, onClose, onChanged }) => {
     const [v, setV] = useState(null)
     const [busy, setBusy] = useState(false)
     const [del, setDel] = useState(false)
-    useEffect(() => { if (goal) setV({ title: goal.title || '', kind: goal.kind || 'certification', provider: goal.provider || '', url: goal.url || '', status: goal.status || 'planned', targetDate: goal.targetDate ? new Date(goal.targetDate) : null, note: goal.note || '', supportAmount: goal.supportAmount ?? '', primeAmount: goal.primeAmount ?? '', approved: !!goal.approved, primePaid: !!goal.primePaid, catalogKey: goal.catalogKey || '' }) }, [goal])
+    useEffect(() => { if (goal) setV({ title: goal.title || '', kind: goal.kind || 'certification', provider: goal.provider || '', url: goal.url || '', status: goal.status || 'planned', targetDate: goal.targetDate ? new Date(goal.targetDate) : null, note: goal.note || '', supportAmount: goal.supportAmount ?? '', approved: !!goal.approved, verified: !!goal.verified, catalogKey: goal.catalogKey || '' }) }, [goal])
     if (!goal || !v) return null
     const set = (p) => setV((x) => ({ ...x, ...p }))
     const isNew = !goal.id
@@ -42,7 +42,7 @@ const GoalDialog = ({ goal, can, mine, currency, onClose, onChanged }) => {
     const editable = owner || can.manage
     const save = async () => {
         setBusy(true)
-        try { await api(isNew ? '/api/crm/growth/goals' : `/api/crm/growth/goals/${goal.id}`, { method: isNew ? 'POST' : 'PUT', body: { ...v, targetDate: v.targetDate ? new Date(v.targetDate).toISOString() : null, supportAmount: v.supportAmount === '' ? null : v.supportAmount, primeAmount: v.primeAmount === '' ? null : v.primeAmount } }); notify('success', tr("Goal saved")); onChanged(); onClose() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+        try { await api(isNew ? '/api/crm/growth/goals' : `/api/crm/growth/goals/${goal.id}`, { method: isNew ? 'POST' : 'PUT', body: { ...v, targetDate: v.targetDate ? new Date(v.targetDate).toISOString() : null, supportAmount: v.supportAmount === '' ? null : v.supportAmount } }); notify('success', tr("Goal saved")); onChanged(); onClose() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const kinds = Object.entries(KIND).map(([value, [label]]) => ({ value, label: tr(label) }))
     const sts = Object.entries(ST).map(([value, [label]]) => ({ value, label: tr(label) }))
@@ -62,18 +62,17 @@ const GoalDialog = ({ goal, can, mine, currency, onClose, onChanged }) => {
                         <div><L>{tr("Link")}</L><Input size="sm" disabled={!editable} value={v.url} placeholder="https://" onChange={(e) => set({ url: e.target.value })} /></div>
                     </div>
                     <div><L>{tr("Notes")}</L><Input textArea rows={2} disabled={!editable} value={v.note} onChange={(e) => set({ note: e.target.value })} /></div>
-                    {(can.manage || goal.supportAmount != null || goal.primeAmount != null || goal.approved) && (
+                    {(can.manage || goal.supportAmount != null || goal.approved || goal.verified) && (
                         <div className="rounded-2xl bg-gray-50 p-3 dark:bg-gray-700/40">
-                            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><TbCash />{tr("Support and prime")}</div>
+                            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><TbCash />{tr("Support, approval and verification")}</div>
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <div><L>{`${tr("The company pays the cost")} (${currency})`}</L><Input size="sm" type="number" disabled={!can.manage} value={v.supportAmount} onChange={(e) => set({ supportAmount: e.target.value })} /></div>
-                                <div><L>{`${tr("Prime when passed")} (${currency})`}</L><Input size="sm" type="number" disabled={!can.manage} value={v.primeAmount} onChange={(e) => set({ primeAmount: e.target.value })} /></div>
                             </div>
                             <div className="mt-3 flex flex-wrap gap-5 text-sm">
-                                <label className="flex items-center gap-2"><Switcher disabled={!can.manage} checked={v.approved} onChange={(c) => set({ approved: c })} />{tr("Approved")}</label>
-                                <label className="flex items-center gap-2"><Switcher disabled={!can.manage || v.status !== 'passed'} checked={v.primePaid} onChange={(c) => set({ primePaid: c })} />{tr("Prime paid")}</label>
+                                <label className="flex items-center gap-2"><Switcher disabled={!can.manage || isNew || mine} checked={v.approved} onChange={(c) => set({ approved: c })} />{tr("Approved (before the exam)")}</label>
+                                <label className="flex items-center gap-2"><Switcher disabled={!can.manage || isNew || mine || v.status !== 'passed' || !v.approved} checked={v.verified} onChange={(c) => set({ verified: c })} />{tr("Certificate verified")}</label>
                             </div>
-                            {!can.manage && <p className="mt-2 text-xs text-gray-500">{tr("A manager sets the support and the prime when the goal is approved.")}</p>}
+                            <p className="mt-2 text-xs text-gray-500">{can.manage ? tr("Another manager than the member approves the goal before the exam and verifies the certificate after it. Only a verified certificate counts for the monthly prime, in the month of the verification.") : tr("A manager approves the goal before the exam and verifies your certificate after it: only then it counts for the monthly prime.")}</p>
                         </div>
                     )}
                     {!isNew && (
@@ -96,21 +95,66 @@ const GoalCard = ({ g, currency, showWho, onOpen }) => (
         <div className="font-semibold leading-snug">{g.title}</div>
         <div className="mt-0.5 text-xs text-gray-500">{[showWho && g.staffName, g.provider].filter(Boolean).join(' · ')}</div>
         {g.targetDate && g.status !== 'passed' && <div className="mt-2 text-xs text-gray-500">{tr("Target")}: {when(g.targetDate)}</div>}
-        <div className="mt-2 flex flex-wrap gap-3 text-xs">{g.supportAmount ? <span className="text-sky-600">{tr("Company pays")} {num(g.supportAmount)} {currency}</span> : null}{g.primeAmount ? <span className={g.primePaid ? 'text-emerald-600' : 'text-amber-600'}>{tr("Prime")} {num(g.primeAmount)} {currency}{g.primePaid ? ` · ${tr("paid")}` : ''}</span> : null}{g.files > 0 && <span className="text-gray-400">{g.files} {tr("file(s)")}</span>}</div>
+        <div className="mt-2 flex flex-wrap gap-3 text-xs">{g.supportAmount ? <span className="text-sky-600">{tr("Company pays")} {num(g.supportAmount)} {currency}</span> : null}{g.verified ? <span className="text-emerald-600">✓ {tr("Certificate verified")}</span> : g.approved ? <span className="text-sky-600">{tr("Approved")}</span> : null}{g.files > 0 && <span className="text-gray-400">{g.files} {tr("file(s)")}</span>}</div>
     </button>
 )
 
+/* ------------------------------------------------------------ the monthly prime: what you gain and how to get it */
+const PrimeInfo = ({ prime, rules, currency }) => {
+    if (!rules) return null
+    const [open, setOpen] = useState(false)
+    const cur = currency || 'MAD'
+    const steps = [
+        tr("Pick a certificate in the Catalog (or add your own goal)."),
+        tr("Ask a manager to approve it BEFORE you take the exam."),
+        tr("Study: the goal must exist at least {n} days before the result.", { n: rules.minDays }),
+        tr("Pass it, set the goal to Passed and attach the certificate (PDF or photo)."),
+        tr("Another manager verifies the certificate. It counts in the month of that verification."),
+        tr("A manager pays the prime of the month once it is done."),
+    ]
+    const fair = [
+        tr("Only certificates and language exams earn money. Courses and skills give points only."),
+        tr("The same certificate pays once, whatever its title."),
+        tr("Only a certificate verified by a manager counts, and nobody approves, verifies or pays their own."),
+        tr("The month is the month of the verification, not a date you type. A verified goal cannot be changed."),
+        tr("At most {n} certificates are counted in a month, and nobody earns more than {cap} {cur} in a month: the prime and the trophy prizes together. A prize above the limit waits for the next month.", { n: rules.maxCount, cap: num(rules.cap), cur }),
+    ]
+    return (
+        <Card>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div><h5 className="flex items-center gap-2"><TbCash className="text-violet-500" />{tr("Monthly prime for certificates")}</h5><p className="mt-1 text-sm text-gray-500">{tr("What you gain and how to get it.")}</p></div>
+                <div className="flex flex-wrap gap-2 text-sm font-semibold"><span className="rounded-xl bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">1–{rules.tier2From - 1} {tr("certificate(s) in a month")}: {num(rules.tier1)} {cur}</span><span className="rounded-xl bg-violet-50 px-3 py-1.5 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">{rules.tier2From}–{rules.maxCount}: {num(rules.tier2)} {cur}</span><span className="rounded-xl bg-amber-50 px-3 py-1.5 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">{tr("Most per month")}: {num(rules.cap)} {cur}</span></div>
+            </div>
+            {prime && (
+                <div className="mt-3 rounded-xl bg-gray-50 p-3 text-sm dark:bg-gray-700/40">
+                    <b>{prime.month}</b>: {prime.count} {tr("verified certificate(s)")} → <b>{num(prime.amount)} {cur}</b>{prime.paid > 0 ? ` · ${tr("paid")} ${num(prime.paid)}` : ''}{prime.due > 0 ? ` · ${tr("waiting for payment")} ${num(prime.due)}` : ''}
+                    {prime.next && <div className="mt-1 text-gray-600 dark:text-gray-300">{tr("{n} more verified certificate(s) this month would bring you {amount} {cur}.", { n: prime.next.more, amount: num(prime.next.amount), cur })}</div>}
+                    {prime.notCounted?.length > 0 && <ul className="mt-2 space-y-0.5 text-xs text-amber-700 dark:text-amber-300">{prime.notCounted.slice(0, 6).map((x) => <li key={x.id}>• <b>{x.title}</b>: {tr(x.reason, { n: rules.minDays })}</li>)}</ul>}
+                </div>
+            )}
+            <button type="button" onClick={() => setOpen((o) => !o)} className="mt-3 text-sm font-semibold text-primary">{open ? tr("Hide the rules") : tr("How it works and the rules")}</button>
+            {open && (
+                <div className="mt-3 grid gap-4 md:grid-cols-2">
+                    <div><div className="mb-1 text-sm font-semibold">{tr("How to get it")}</div><ol className="list-decimal space-y-1 ps-5 text-sm text-gray-600 dark:text-gray-300">{steps.map((x) => <li key={x}>{x}</li>)}</ol></div>
+                    <div><div className="mb-1 text-sm font-semibold">{tr("Fair play, to keep it fair for everybody")}</div><ul className="list-disc space-y-1 ps-5 text-sm text-gray-600 dark:text-gray-300">{fair.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                </div>
+            )}
+        </Card>
+    )
+}
+
 /* ------------------------------------------------------------ my goals */
-const Goals = ({ g, reload, currency, can, open, setOpen, me, goTrophies }) => {
+const Goals = ({ g, reload, currency, can, open, setOpen, me, goTrophies, prime, rules }) => {
     const list = g?.list || []
     const live = list.filter((x) => ['planned', 'learning'].includes(x.status)), done = list.filter((x) => !['planned', 'learning'].includes(x.status))
-    const owed = list.filter((x) => x.status === 'passed' && x.primeAmount && !x.primePaid).reduce((a, x) => a + x.primeAmount, 0)
+    const owed = prime?.due || 0
     return (
         <div className="space-y-5">
             {me && <Card><div className="grid items-center gap-4 sm:grid-cols-[1fr_auto]"><LevelBar r={me} /><button type="button" onClick={goTrophies} className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300"><TbTrophy className="text-xl" />{me.trophies.filter((t) => t.earned).length}/{me.trophies.length} {tr("trophies")}</button></div></Card>}
             <div className="grid gap-3 sm:grid-cols-3"><Stat icon={<TbTargetArrow />} tone="bg-amber-100 text-amber-600" label={tr("in progress")} value={live.length} /><Stat icon={<TbCertificate />} tone="bg-emerald-100 text-emerald-600" label={tr("passed")} value={list.filter((x) => x.status === 'passed').length} /><Stat icon={<TbCash />} tone="bg-violet-100 text-violet-600" label={`${tr("prime waiting for you")} ${currency}`} value={num(owed)} /></div>
+            <PrimeInfo prime={prime} rules={rules} currency={currency} />
             <div className="flex items-center justify-between"><h5>{tr("My goals")}</h5><Button variant="solid" size="sm" icon={<TbPlus />} onClick={() => setOpen({ title: '', kind: 'certification', status: 'planned' })}>{tr("New goal")}</Button></div>
-            {!list.length && <Card><div className="py-6 text-center"><p className="mb-1 font-semibold">{tr("You have no goal yet")}</p><p className="text-sm text-gray-500">{tr("Pick one in the Catalog: a certification each quarter, or a language exam. Your manager approves it and may pay the cost and a prime.")}</p></div></Card>}
+            {!list.length && <Card><div className="py-6 text-center"><p className="mb-1 font-semibold">{tr("You have no goal yet")}</p><p className="text-sm text-gray-500">{tr("Pick one in the Catalog: a certification each quarter, or a language exam. Your manager approves it and may pay the cost; each verified certificate counts for the monthly prime.")}</p></div></Card>}
             {live.length > 0 && <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{live.map((x) => <GoalCard key={x.id} g={x} currency={currency} onOpen={setOpen} />)}</div>}
             {done.length > 0 && <><h6 className="text-gray-500">{tr("Finished")}</h6><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{done.map((x) => <GoalCard key={x.id} g={x} currency={currency} onOpen={setOpen} />)}</div></>}
         </div>
@@ -135,7 +179,7 @@ const Catalog = ({ data, goals, add }) => {
                         <div className="mb-1 flex items-center gap-2 text-xs text-gray-500"><span className="rounded-full bg-violet-100 px-2 py-0.5 font-semibold text-violet-700">{tr(CAT[c.category] || c.category)}</span><span>{tr(LEVEL[c.level] || c.level)}</span></div>
                         <div className="font-semibold leading-snug">{c.title}</div><div className="text-xs text-gray-500">{c.provider}</div>
                         <p className="mt-2 flex-1 text-sm text-gray-600 dark:text-gray-300">{c.why}</p>
-                        <div className="mt-2 space-y-0.5 text-xs text-gray-500"><div>{tr("Cost")}: {c.cost}</div><div>{tr("Validity")}: {c.validity}</div><div className="font-semibold text-amber-600">{tr("Prime when passed")}: {money(c.prime)}</div></div>
+                        <div className="mt-2 space-y-0.5 text-xs text-gray-500"><div>{tr("Cost")}: {c.cost}</div><div>{tr("Validity")}: {c.validity}</div><div className="font-semibold text-amber-600">{tr("Counts for the monthly prime")}</div></div>
                         <div className="mt-3 flex items-center justify-between gap-2"><a href={c.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline"><TbExternalLink />{tr("Details")}</a>{have.has(c.key) ? <span className="text-xs font-semibold text-emerald-600">{tr("In your goals")}</span> : <Button size="xs" variant="solid" icon={<TbPlus />} onClick={() => add({ title: c.title, provider: c.provider, url: c.url, kind: 'certification', catalogKey: c.key, status: 'planned' })}>{tr("Add to my goals")}</Button>}</div>
                     </Card>
                 ))}
@@ -194,7 +238,7 @@ const Trophies = ({ data }) => {
                     <h5 className="mb-3 flex items-center gap-2"><TbRocket className="text-primary" />{tr("Your level")}</h5>
                     <LevelBar r={me} big />
                     <div className="mt-4 flex flex-wrap gap-2 text-xs">{data.levels.map((l) => <span key={l.key} className={cn('rounded-full px-2.5 py-1 font-semibold', LEVEL_TONE[l.key], me.level.key === l.key && 'ring-2 ring-primary/40')}>{tr(l.label)} · {l.min}</span>)}</div>
-                    <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{tr("Every certificate, language exam or course you pass gives points and can win a trophy with a cash prize between 200 and 1000 MAD, on top of the prime of the goal. Pick a goal in the Catalog and ask for approval: the first step is the easiest.")}</p>
+                    <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{tr("Every certificate, language exam or course you pass gives points and can win a trophy with a cash prize between 200 and 1000 MAD. The prizes and the monthly prime together never pass the monthly limit (see My goals): a prize above it waits for the next month. Pick a goal in the Catalog and ask for approval: the first step is the easiest.")}</p>
                     {owed > 0 && <p className="mt-2 rounded-xl bg-amber-50 p-2 text-sm font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">{tr("Prize waiting for payment")}: {money(owed)}</p>}
                 </Card>
                 <Card>
@@ -218,11 +262,17 @@ const Team = ({ currency, setOpen, version }) => {
     useEffect(() => { load() }, [load, version])
     if (!t) return <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>
     const tot = t.totals
-    const attention = all.filter((g) => (!g.approved && ['planned', 'learning'].includes(g.status)) || (g.status === 'passed' && g.primeAmount && !g.primePaid))
+    const attention = all.filter((g) => (!g.approved && ['planned', 'learning'].includes(g.status)) || (g.status === 'passed' && g.approved && !g.verified))
     return (
         <div className="space-y-5">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Stat icon={<TbTargetArrow />} tone="bg-amber-100 text-amber-600" label={tr("learning now")} value={tot.learning} /><Stat icon={<TbCertificate />} tone="bg-emerald-100 text-emerald-600" label={tr("passed this year")} value={tot.passedThisYear} /><Stat icon={<TbCash />} tone="bg-violet-100 text-violet-600" label={`${tr("primes to pay")} ${currency}`} value={num(tot.primeOwed)} /><Stat icon={<TbUsers />} tone="bg-red-100 text-red-600" label={tr("members without a goal")} value={tot.withoutGoal} /></div>
             {attention.length > 0 && <div><h5 className="mb-2">{tr("Waiting for you")}</h5><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{attention.map((g) => <GoalCard key={g.id} g={g} currency={currency} showWho onOpen={setOpen} />)}</div></div>}
+            {(t.primesToPay || []).length > 0 && (
+                <Card><h5 className="mb-2 flex items-center gap-2"><TbCash className="text-violet-500" />{tr("Monthly primes to pay")} <span className="text-sm font-normal text-gray-500">{money(tot.primeOwed)}</span></h5>
+                    <div className="space-y-1.5">{t.primesToPay.map((x) => <div key={`${x.staffId}-${x.month}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-violet-50 px-3 py-2 text-sm dark:bg-violet-500/10"><span><b>{x.staffName}</b> · {x.month} · {x.count} {tr("verified certificate(s)")}<span className="block text-xs text-gray-500">{x.goals.join(' · ')}</span></span><span className="flex items-center gap-2"><b>{money(x.due)}</b>{t.can?.manage && <Button size="xs" variant="solid" icon={<TbCheck />} onClick={() => api('/api/crm/growth/primes', { method: 'POST', body: { staffId: x.staffId, month: x.month } }).then(() => { notify('success', tr("Marked as paid")); load() }).catch((e) => notify('danger', e.message))}>{tr("Pay")}</Button>}</span></div>)}</div>
+                    <p className="mt-2 text-xs text-gray-500">{tr("The amount is worked out by the CRM from the verified certificates and the limits in Settings → Tasks. Another manager than the member pays it.")}</p>
+                </Card>
+            )}
             {(t.trophiesOwed || []).length > 0 && (
                 <Card><h5 className="mb-2 flex items-center gap-2"><TbTrophy className="text-amber-500" />{tr("Trophy prizes to pay")} <span className="text-sm font-normal text-gray-500">{money(tot.trophyOwed)}</span></h5>
                     <div className="space-y-1.5">{t.trophiesOwed.map((x) => <div key={x.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm dark:bg-amber-500/10"><span><b>{x.staffName}</b> · {tr(x.label)} · {dayjs(x.awardedAt).format('DD MMM YYYY')}</span><span className="flex items-center gap-2"><b>{money(x.prize)}</b>{t.can?.manage && <Button size="xs" variant="solid" icon={<TbCheck />} onClick={() => api(`/api/crm/growth/trophies/${x.id}`, { method: 'PUT', body: { paid: true } }).then(() => { notify('success', tr("Marked as paid")); load() }).catch((e) => notify('danger', e.message))}>{tr("Paid")}</Button>}</span></div>)}</div>
@@ -256,7 +306,7 @@ const MyGrowth = () => {
             <Tabs value={tab} onChange={(t) => setSp({ tab: t })}>
                 <TabList><TabNav value="goals" icon={<TbTargetArrow />}>{tr("My goals")}</TabNav><TabNav value="trophies" icon={<TbTrophy />}>{tr("Trophies")}</TabNav><TabNav value="catalog" icon={<TbBooks />}>{tr("Catalog")}</TabNav><TabNav value="playbook" icon={<TbListCheck />}>{tr("Playbook")}</TabNav>{can.all && <TabNav value="team" icon={<TbUsers />}>{tr("Team")}</TabNav>}</TabList>
                 <div className="pt-5">
-                    <TabContent value="goals"><Goals g={goals} reload={reload} currency={data.currency} can={can} open={open} setOpen={setOpen} me={data.me} goTrophies={() => setSp({ tab: 'trophies' })} /></TabContent>
+                    <TabContent value="goals"><Goals g={goals} reload={reload} currency={data.currency} can={can} open={open} setOpen={setOpen} me={data.me} prime={data.prime} rules={data.primeRules} goTrophies={() => setSp({ tab: 'trophies' })} /></TabContent>
                     <TabContent value="trophies"><Trophies data={data} /></TabContent>
                     <TabContent value="catalog"><Catalog data={data} goals={goals} add={setOpen} /></TabContent>
                     <TabContent value="playbook"><Playbook data={data} /></TabContent>

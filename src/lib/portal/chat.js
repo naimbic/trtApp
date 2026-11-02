@@ -9,7 +9,7 @@ async function room(s) {
     return found || prisma.crmChatRoom.create({ data: { kind: 'client', clientId: s.client.id, contactId: s.contact.id } })
 }
 
-const shape = (m, s) => ({ id: m.id, body: m.body, attachment: attachmentOf(m), replyTo: replyOf(m), at: m.createdAt, senderType: m.senderType, senderName: m.senderName, mine: m.senderType === 'contact' && m.senderId === s.contact.id })
+const shape = (m, s) => ({ id: m.id, body: m.deletedAt ? '' : m.body, deleted: !!m.deletedAt, attachment: m.deletedAt ? null : attachmentOf(m), replyTo: replyOf(m), at: m.createdAt, senderType: m.senderType, senderName: m.senderName, mine: m.senderType === 'contact' && m.senderId === s.contact.id })
 
 /** Messages of the signed-in contact, who in the team is available, and the unread count (for the badge). */
 export async function portalChat(after) {

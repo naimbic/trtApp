@@ -1,6 +1,6 @@
 import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
-import { requirePermission, getStaffId, isCrmAdmin } from '@/lib/crm/permissions'
+import { requirePermission, getStaffId, isCrmAdmin, hasCap } from '@/lib/crm/permissions'
 import { processUpload, putMedia, MediaError, PREFIX } from '@/lib/media'
 import { CDN_URL } from '@/lib/spaces'
 import { getOptions, setOptions, deliver, escapeHtml } from '@/lib/crm/mailer'
@@ -129,8 +129,11 @@ async function ctx() {
     const staffId = await getStaffId(session)
     if (!staffId) throw fail('Chat needs a staff profile linked to your login', 403)
     const me = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
-    return { staffId, key: `staff:${staffId}`, name: staffName(me || {}), image: realPicture(me?.profileImage), admin: isCrmAdmin(session.user.authority || []) }
+    const authority = session.user.authority || []
+    return { staffId, key: `staff:${staffId}`, name: staffName(me || {}), image: realPicture(me?.profileImage), admin: isCrmAdmin(authority), authority, can: (feature, cap) => hasCap(authority, feature, cap) }
 }
+/** Refuses an action the role does not allow (the message says which one). */
+const need = (c, feature, cap, what) => { if (!c.can(feature, cap)) throw fail(`You are not allowed to ${what}`, 403) }
 
 async function teamRoom() {
     return (await prisma.crmChatRoom.findFirst({ where: { kind: 'team' } })) || prisma.crmChatRoom.create({ data: { kind: 'team' } })
@@ -140,10 +143,24 @@ async function roomFor(c, id) {
     const room = oid(id) && (await prisma.crmChatRoom.findUnique({ where: { id } }))
     if (!room) throw fail('Conversation not found', 404)
     if ((room.kind === 'direct' || room.kind === 'group') && !room.staffIds.includes(c.staffId)) throw fail('Conversation not found', 404)
+    if (room.kind === 'client' && !c.can('chat', 'client_chats')) throw fail('Conversation not found', 404)
     return room
 }
 
-const shape = (m, c) => ({ id: m.id, body: m.body, rich: m.rich || null, tags: m.tags || [], assigneeIds: m.assigneeIds || [], taskId: m.taskId || null, clientId: m.clientId || null, leadId: m.leadId || null, clientMailed: !!m.clientMailedAt, attachment: attachmentOf(m), replyTo: replyOf(m), at: m.createdAt, senderType: m.senderType, senderId: m.senderId, senderName: m.senderName, mine: m.senderType === 'staff' && m.senderId === c.staffId, system: m.senderType === 'system' })
+/** The stamps a message can be reacted with. */
+export const STAMPS = ['👍', '❤️', '😂', '🎉', '🙏', '👀', '✅', '🔥']
+const reactionsOf = (m, key) => Object.entries(m.reactions && typeof m.reactions === 'object' ? m.reactions : {}).filter(([e, v]) => STAMPS.includes(e) && Array.isArray(v) && v.length).map(([emoji, keys]) => ({ emoji, count: keys.length, mine: keys.includes(key) }))
+const shape = (m, c, marks = null) => {
+    const gone = !!m.deletedAt
+    const mine = m.senderType === 'staff' && m.senderId === c.staffId
+    return {
+        id: m.id, body: gone ? '' : m.body, rich: gone ? null : m.rich || null, tags: gone ? [] : m.tags || [], assigneeIds: m.assigneeIds || [], taskId: m.taskId || null, clientId: m.clientId || null, leadId: m.leadId || null, clientMailed: !!m.clientMailedAt,
+        attachment: gone ? null : attachmentOf(m), replyTo: replyOf(m), at: m.createdAt, senderType: m.senderType, senderId: m.senderId, senderName: m.senderName, mine, system: m.senderType === 'system',
+        edited: !!m.editedAt && !gone, deleted: gone, pinned: !!m.pinnedAt && !gone, reactions: gone ? [] : reactionsOf(m, c.key), bookmarked: !!marks?.has(m.id),
+        canEdit: mine && !gone && !m.attUrl && c.can('chat_messages', 'edit_own'), canDelete: !gone && m.senderType === 'staff' && ((mine && c.can('chat_messages', 'delete_own')) || c.can('chat_messages', 'delete_others')),
+    }
+}
+const marksOf = async (c, rows) => new Set((await prisma.crmChatBookmark.findMany({ where: { memberKey: c.key, messageId: { in: rows.map((r) => r.id) } }, select: { messageId: true } })).map((x) => x.messageId))
 
 export async function listRooms() {
     const c = await ctx()
@@ -152,7 +169,7 @@ export async function listRooms() {
     const [direct, groups, clients, staff, reads, pres] = await Promise.all([
         prisma.crmChatRoom.findMany({ where: { kind: 'direct', staffIds: { has: c.staffId } } }),
         prisma.crmChatRoom.findMany({ where: { kind: 'group', staffIds: { has: c.staffId } } }),
-        prisma.crmChatRoom.findMany({ where: { kind: 'client' }, orderBy: { lastMessageAt: 'desc' }, take: 60 }),
+        c.can('chat', 'client_chats') ? prisma.crmChatRoom.findMany({ where: { kind: 'client' }, orderBy: { lastMessageAt: 'desc' }, take: 60 }) : Promise.resolve([]),
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
         prisma.crmChatRead.findMany({ where: { memberKey: c.key } }),
         prisma.crmChatPresence.findMany({ where: { lastSeen: { gt: new Date(Date.now() - ONLINE_MS) } } }),
@@ -174,7 +191,7 @@ export async function listRooms() {
         ...clients.map((r) => { const p = cMap[r.contactId]; return { id: r.id, kind: 'client', title: p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email : 'Client', subtitle: coMap[r.clientId] || '', image: realPicture(p?.profileImage), status: st(`contact:${r.contactId}`), lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
     ]
     const people = Object.values(sMap).filter((s) => s.id !== c.staffId).sort((a, b) => (b.status === 'online') - (a.status === 'online') || (b.status === 'idle') - (a.status === 'idle') || a.name.localeCompare(b.name))
-    return { me: { id: c.staffId, name: c.name, image: c.image, admin: c.admin }, rooms: out, people, directory: Object.values(sMap), unread: out.reduce((n, r) => n + r.unread, 0), calls: await callsEnabled(), iceServers: iceServers() }
+    return { me: { id: c.staffId, name: c.name, image: c.image, admin: c.admin, can: Object.fromEntries([['chat', ['send_files', 'create_groups', 'call', 'client_chats']], ['chat_messages', ['react', 'bookmark', 'pin', 'edit_own', 'delete_own', 'delete_others']]].flatMap(([f, caps]) => caps.map((k) => [k, c.can(f, k)]))) }, rooms: out, people, directory: Object.values(sMap), unread: out.reduce((n, r) => n + r.unread, 0), calls: await callsEnabled(), iceServers: iceServers() }
 }
 
 export async function openDirect(otherId) {
@@ -186,7 +203,7 @@ export async function openDirect(otherId) {
     return { id: (found || (await prisma.crmChatRoom.create({ data: { kind: 'direct', staffIds: [c.staffId, otherId] } }))).id }
 }
 
-export async function roomMessages(id, after) {
+export async function roomMessages(id, after, changedSince) {
     const c = await ctx()
     await touch(c.key)
     const room = await roomFor(c, id)
@@ -201,7 +218,12 @@ export async function roomMessages(id, after) {
         const other = room.staffIds.find((i) => i !== c.staffId)
         status = statusOf(await prisma.crmChatPresence.findUnique({ where: { memberKey: `staff:${other}` } }))
     }
-    return { messages: rows.map((m) => shape(m, c)), status }
+    // what changed in the messages already on screen (edited, deleted, pinned, reacted) since the last look
+    const sinceAt = changedSince && !isNaN(new Date(changedSince)) ? new Date(changedSince) : null
+    const changed = sinceAt && after ? await prisma.crmChatMessage.findMany({ where: { roomId: room.id, updatedAt: { gt: sinceAt }, createdAt: { lte: new Date(after) } }, orderBy: { createdAt: 'asc' }, take: 100 }) : []
+    const marks = await marksOf(c, [...rows, ...changed])
+    const pins = (await prisma.crmChatMessage.findMany({ where: { roomId: room.id, pinnedAt: { not: null } }, orderBy: { pinnedAt: 'desc' }, take: 20 })).filter((m) => !m.deletedAt)
+    return { messages: rows.map((m) => shape(m, c, marks)), changed: changed.map((m) => shape(m, c, marks)), pinned: pins.map((m) => ({ id: m.id, senderName: m.senderName, text: previewOf(m.body, m.attUrl ? { attKind: m.attKind, attName: m.attName } : null).slice(0, 140), at: m.createdAt })), status, now: new Date().toISOString() }
 }
 
 /** Tags written as #word in a message. */
@@ -221,6 +243,7 @@ export function richParts(rich, body = '', allowAttachment = false) {
 export async function sendMessage(id, body, attachment, replyTo, rich) {
     const c = await ctx()
     const room = await roomFor(c, id)
+    if (attachment) need(c, 'chat', 'send_files', 'send files, pictures or voice messages')
     const att = cleanAttachment(attachment)
     const { html, shown, tags } = richParts(rich, body, !!att)
     const m = await prisma.crmChatMessage.create({ data: { roomId: room.id, senderType: 'staff', senderId: c.staffId, senderName: c.name, body: shown, ...(html ? { rich: html, tags } : {}), ...(att || {}), ...(await replySnapshot(room.id, replyTo)) } })
@@ -246,9 +269,89 @@ const validStaff = async (ids) => { const list = [...new Set((Array.isArray(ids)
 export async function messageAction(mid, body = {}) {
     const c = await ctx()
     const m = await messageFor(c, mid)
+    if (['react', 'bookmark', 'pin', 'edit', 'delete'].includes(body.action)) return tool(c, m, body)
     if (body.action === 'task') await requirePermission('tasks', 'create')
     if (body.action === 'client') await requirePermission(oid(body.leadId) && !oid(body.clientId) ? 'leads' : 'customers', 'view')
     return applyAction(c, m, body)
+}
+
+/** The preview shown in the list of conversations: the last message that is still there. */
+async function refreshLast(roomId) {
+    const last = (await prisma.crmChatMessage.findMany({ where: { roomId }, orderBy: { createdAt: 'desc' }, take: 6 })).find((x) => !x.deletedAt)
+    await prisma.crmChatRoom.update({ where: { id: roomId }, data: { lastMessage: last ? previewOf(last.body, last.attUrl ? { attKind: last.attKind, attName: last.attName } : null) : '' } }).catch(() => {})
+}
+
+/** react (a stamp) · bookmark (for me only) · pin (for the conversation) · edit (my own text) · delete (mine, or anyone's with the right). */
+async function tool(c, m, body) {
+    if (m.deletedAt) throw fail('This message was deleted', 410)
+    const action = body.action
+    const now = new Date()
+    if (action === 'react') {
+        need(c, 'chat_messages', 'react', 'react to messages')
+        if (!STAMPS.includes(body.emoji)) throw fail('Choose one of the stamps')
+        const cur = m.reactions && typeof m.reactions === 'object' ? { ...m.reactions } : {}
+        const list = Array.isArray(cur[body.emoji]) ? cur[body.emoji] : []
+        cur[body.emoji] = list.includes(c.key) ? list.filter((k) => k !== c.key) : [...list, c.key]
+        if (!cur[body.emoji].length) delete cur[body.emoji]
+        const row = await prisma.crmChatMessage.update({ where: { id: m.id }, data: { reactions: cur } })
+        return { success: true, message: shape(row, c, await marksOf(c, [row])) }
+    }
+    if (action === 'bookmark') {
+        need(c, 'chat_messages', 'bookmark', 'save messages')
+        const on = body.on !== false
+        if (on) await prisma.crmChatBookmark.upsert({ where: { memberKey_messageId: { memberKey: c.key, messageId: m.id } }, update: {}, create: { memberKey: c.key, messageId: m.id, roomId: m.roomId } })
+        else await prisma.crmChatBookmark.deleteMany({ where: { memberKey: c.key, messageId: m.id } })
+        return { success: true, bookmarked: on }
+    }
+    if (action === 'pin') {
+        need(c, 'chat_messages', 'pin', 'pin messages')
+        const on = body.on !== false
+        if (on === !!m.pinnedAt) return { success: true, pinned: on }
+        await prisma.crmChatMessage.update({ where: { id: m.id }, data: { pinnedAt: on ? now : null, pinnedBy: on ? c.staffId : null } })
+        await sys(m.roomId, c, `${c.name} ${on ? 'pinned' : 'unpinned'} a message`)
+        return { success: true, pinned: on }
+    }
+    if (action === 'edit') {
+        need(c, 'chat_messages', 'edit_own', 'edit messages')
+        if (m.senderType !== 'staff' || m.senderId !== c.staffId) throw fail('You can only edit your own messages', 403)
+        if (m.attUrl) throw fail('A message with a file cannot be edited: delete it and send it again', 400)
+        const { html, shown, tags } = richParts(body.rich, body.body, false)
+        const row = await prisma.crmChatMessage.update({ where: { id: m.id }, data: { body: shown, rich: html || null, tags: html ? tags : [], editedAt: now } })
+        if (html) notifyNewMentions({ by: { staffId: c.staffId, name: c.name }, text: html, prev: m.rich || '', link: `/crm/chat?room=${m.roomId}`, subject: 'Chat' }).catch(() => {})
+        await refreshLast(m.roomId)
+        return { success: true, message: shape(row, c, await marksOf(c, [row])) }
+    }
+    // delete
+    const own = m.senderType === 'staff' && m.senderId === c.staffId
+    if (m.senderType !== 'staff') throw fail('Only team messages can be deleted here', 403)
+    need(c, 'chat_messages', own ? 'delete_own' : 'delete_others', own ? 'delete messages' : 'delete the messages of other people')
+    await prisma.crmChatMessage.update({ where: { id: m.id }, data: { deletedAt: now, deletedBy: c.staffId, body: '', rich: null, tags: [], attUrl: null, attName: null, attMime: null, attSize: null, attKind: null, pinnedAt: null, pinnedBy: null, reactions: {}, assigneeIds: [] } })
+    await prisma.crmChatBookmark.deleteMany({ where: { messageId: m.id } })
+    await refreshLast(m.roomId)
+    return { success: true, deleted: true }
+}
+
+/** Everything this person saved for later, newest first. */
+export async function myBookmarks() {
+    const c = await ctx()
+    need(c, 'chat_messages', 'bookmark', 'save messages')
+    const marks = await prisma.crmChatBookmark.findMany({ where: { memberKey: c.key }, orderBy: { createdAt: 'desc' }, take: 100 })
+    if (!marks.length) return { list: [] }
+    const msgs = await prisma.crmChatMessage.findMany({ where: { id: { in: marks.map((x) => x.messageId) } } })
+    const rooms = await prisma.crmChatRoom.findMany({ where: { id: { in: [...new Set(marks.map((x) => x.roomId))] } } })
+    const staff = await prisma.crmStaff.findMany({ where: { id: { in: rooms.flatMap((r) => r.staffIds) } }, select: { id: true, firstName: true, lastName: true, email: true } })
+    const sName = Object.fromEntries(staff.map((s) => [s.id, staffName(s)]))
+    const title = (r) => (r.kind === 'team' ? 'Team' : r.kind === 'group' ? r.name || 'Group' : r.kind === 'client' ? 'Client' : sName[r.staffIds.find((i) => i !== c.staffId)] || 'Direct')
+    const mm = Object.fromEntries(msgs.map((m) => [m.id, m])), rr = Object.fromEntries(rooms.map((r) => [r.id, r]))
+    const out = []
+    for (const k of marks) {
+        const m = mm[k.messageId], r = rr[k.roomId]
+        if (!m || m.deletedAt || !r) continue
+        if ((r.kind === 'direct' || r.kind === 'group') && !r.staffIds.includes(c.staffId)) continue
+        if (r.kind === 'client' && !c.can('chat', 'client_chats')) continue
+        out.push({ id: m.id, roomId: r.id, roomTitle: title(r), roomKind: r.kind, senderName: m.senderName, text: previewOf(m.body, m.attUrl ? { attKind: m.attKind, attName: m.attName } : null), at: m.createdAt, savedAt: k.createdAt })
+    }
+    return { list: out }
 }
 
 /** The doing, for a person (c = { staffId, name }) and a message: also used by the scheduled messages when they go out. Permissions are checked by the caller. */
@@ -304,7 +407,7 @@ export async function applyAction(c, m, body = {}) {
 }
 
 export async function staffUpload(file, voice) {
-    await ctx()
+    need(await ctx(), 'chat', 'send_files', 'send files, pictures or voice messages')
     return uploadChatFile(file, voice)
 }
 
@@ -316,6 +419,7 @@ export async function staffSignals(since) {
 
 export async function staffSendSignal(body) {
     const c = await ctx()
+    need(c, 'chat', 'call', 'make calls')
     const room = await roomFor(c, body.roomId)
     return relaySignal({ key: c.key, name: c.name }, room, body)
 }
@@ -334,6 +438,7 @@ async function activeStaff(ids) {
 
 export async function createGroup(name, staffIds) {
     const c = await ctx()
+    need(c, 'chat', 'create_groups', 'create groups')
     const title = cleanName(name)
     const members = (await activeStaff(staffIds)).filter((s) => s.id !== c.staffId)
     if (!members.length) throw fail('Choose at least one colleague')

@@ -1,4 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { PiStarDuotone, PiStarFill, PiXBold } from 'react-icons/pi'
+import { chatApi, chatPost } from './chatClient'
+import { tr } from '@/utils/t'
 import classNames from '@/utils/classNames'
 import { useChatStatus, STATUS } from '@/store/chatStatusStore'
 
@@ -79,4 +82,28 @@ export function ring() {
             o.start(t0 + d); o.stop(t0 + d + 0.22)
         })
     } catch { /* no audio available */ }
+}
+
+/** The stamps a message can be reacted with (the same list as the server). */
+export const STAMPS = ['👍', '❤️', '😂', '🎉', '🙏', '👀', '✅', '🔥']
+
+/** The messages this person saved for later; a click opens their conversation. */
+export const SavedMessages = ({ onOpen, onRemoved, reload = 0 }) => {
+    const [list, setList] = useState(null)
+    const load = useCallback(() => chatApi('/bookmarks').then((r) => setList(r.list)).catch(() => setList([])), [])
+    useEffect(() => { load() }, [load, reload])
+    if (!list) return <div className="py-10 text-center text-sm text-gray-400">{tr("Loading…")}</div>
+    if (!list.length) return <div className="px-6 py-12 text-center text-sm text-gray-400"><PiStarDuotone className="mx-auto mb-2 text-3xl text-amber-400" />{tr("Nothing saved yet. Hover a message and press the star to keep it here.")}</div>
+    const remove = async (e, it) => { e.stopPropagation(); await chatPost(`/messages/${it.id}`, { action: 'bookmark', on: false }).catch(() => {}); load(); onRemoved?.() }
+    return (
+        <div className="space-y-1">
+            {list.map((it) => (
+                <div key={it.id} role="button" tabIndex={0} onClick={() => onOpen(it)} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(it) }} className="group flex w-full cursor-pointer items-start gap-2 rounded-xl px-3 py-2 text-start hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <PiStarFill className="mt-0.5 shrink-0 text-amber-500" />
+                    <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2 text-xs text-gray-500"><b className="truncate text-gray-700 dark:text-gray-200">{it.senderName}</b><span className="shrink-0">{it.roomTitle}</span></span><span className="line-clamp-2 text-sm text-gray-800 dark:text-gray-100">{it.text}</span></span>
+                    <button type="button" title={tr("Remove from saved")} aria-label={tr("Remove from saved")} onClick={(e) => remove(e, it)} className="shrink-0 text-gray-300 opacity-0 hover:text-red-500 group-hover:opacity-100"><PiXBold /></button>
+                </div>
+            ))}
+        </div>
+    )
 }

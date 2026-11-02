@@ -1241,6 +1241,55 @@ try {
         check('Client sign-in: the team sign-in recognises a client account, and only with the right password', (await cc(email, pw)).client === true && (await cc(email, 'nope-nope-1')).client === false && (await cc('nobody@test.local', pw)).client === false)
         await prisma.loginAttempt.deleteMany({ where: { key: `portal:${email}` } })
     }
+    // chat messages: stamps, bookmarks, pins, edit and delete, and the finer chat switches
+    console.log('\n== Chat messages')
+    {
+        const full = { chat: ['view', 'send_files', 'create_groups', 'call', 'client_chats'], chat_messages: ['react', 'bookmark', 'pin', 'edit_own', 'delete_own'] }
+        const uA = await makeUser('chat-a', full), uB = await makeUser('chat-b', full), uMod = await makeUser('chat-mod', { ...full, chat_messages: [...full.chat_messages, 'delete_others'] })
+        const uView = await makeUser('chat-view', { chat: ['view'] })
+        const A = await login(uA), B = await login(uB), MOD = await login(uMod), V = await login(uView)
+        const R = (await A('POST', '/api/crm/chat/rooms', { staffId: uB.staffId })).body?.id
+        const send = async (u, body) => (await u('POST', `/api/crm/chat/rooms/${R}`, { body })).body
+        const m1 = await send(A, 'zz chat hello'), m2 = await send(A, 'zz chat second')
+        const act = (u, m, body) => u('POST', `/api/crm/chat/messages/${m.id}`, body)
+        const seen = async (u) => (await u('GET', `/api/crm/chat/rooms/${R}`)).body
+        check('Chat messages: a colleague reacts with a stamp, others see the count, and it can be taken back', (await act(B, m1, { action: 'react', emoji: '👍' })).status === 200 && (await seen(A)).messages.find((x) => x.id === m1.id).reactions.some((r) => r.emoji === '👍' && r.count === 1 && r.mine === false) && (await seen(B)).messages.find((x) => x.id === m1.id).reactions[0].mine === true && (await act(B, m1, { action: 'react', emoji: '👍' })).status === 200 && (await seen(A)).messages.find((x) => x.id === m1.id).reactions.length === 0)
+        check('Chat messages: only the listed stamps are accepted', (await act(B, m1, { action: 'react', emoji: '💩' })).status === 400)
+        await act(B, m1, { action: 'bookmark', on: true })
+        const bm = await B('GET', '/api/crm/chat/bookmarks'), bmA = await A('GET', '/api/crm/chat/bookmarks')
+        check('Chat messages: a saved message is in my saved list only, and can be removed', bm.body?.list?.some((x) => x.id === m1.id && x.roomId === R) && !bmA.body?.list?.some((x) => x.id === m1.id) && (await seen(B)).messages.find((x) => x.id === m1.id).bookmarked === true && (await act(B, m1, { action: 'bookmark', on: false })).status === 200 && !(await B('GET', '/api/crm/chat/bookmarks')).body?.list?.some((x) => x.id === m1.id))
+        await act(B, m2, { action: 'pin', on: true })
+        const pinned = await seen(A)
+        check('Chat messages: a pinned message is shown to everybody in the conversation, with a line saying who pinned it', pinned.pinned?.some((p) => p.id === m2.id) && pinned.messages.find((x) => x.id === m2.id).pinned === true && pinned.messages.some((x) => x.system && /pinned a message/.test(x.body)) && (await act(B, m2, { action: 'pin', on: false })).status === 200 && !(await seen(A)).pinned?.some((p) => p.id === m2.id))
+        check('Chat messages: edit is for the author only, and the edit shows to the others as "edited"', (await act(B, m1, { action: 'edit', body: 'hack' })).status === 403 && (await act(A, m1, { action: 'edit', body: 'zz chat hello edited' })).status === 200 && (await seen(B)).messages.find((x) => x.id === m1.id).edited === true && /edited/.test((await seen(B)).messages.find((x) => x.id === m1.id).body))
+        const before = new Date(Date.now() - 1500).toISOString()
+        await act(A, m2, { action: 'edit', body: 'zz chat second v2' })
+        const last = (await seen(B)).messages.at(-1)
+        const poll = await B('GET', `/api/crm/chat/rooms/${R}?after=${encodeURIComponent(last.at)}&since=${encodeURIComponent(before)}`)
+        check('Chat messages: an open conversation learns about edits made since its last look', poll.body?.changed?.some((x) => x.id === m2.id && /v2/.test(x.body)) && !!poll.body?.now)
+        check('Chat messages: an empty edit is refused', (await act(A, m2, { action: 'edit', body: '   ' })).status === 400)
+        check('Chat messages: a colleague cannot delete mine; I can; a moderator can delete anybody\'s', (await act(B, m2, { action: 'delete' })).status === 403 && (await act(A, m2, { action: 'delete' })).status === 200)
+        const teamId = (await A('GET', '/api/crm/chat/rooms')).body?.rooms?.find((r) => r.kind === 'team')?.id
+        const m3 = (await A('POST', `/api/crm/chat/rooms/${teamId}`, { body: 'zz chat third' })).body
+        check('Chat messages: a moderator (Delete messages of other people) deletes a colleague\'s message; an ordinary colleague cannot', (await act(B, m3, { action: 'delete' })).status === 403 && (await act(MOD, m3, { action: 'delete' })).status === 200)
+        const after = (await seen(A)).messages.find((x) => x.id === m2.id)
+        check('Chat messages: a deleted message keeps only a "deleted" line (no text, no stamps, no pin), and cannot be acted on again', after.deleted === true && after.body === '' && after.reactions.length === 0 && (await act(B, m2, { action: 'react', emoji: '👍' })).status === 410)
+        // permissions
+        const vU = (await V('GET', '/api/crm/chat/rooms')).body
+        const mV = await V('POST', `/api/crm/chat/rooms/${R}`, { body: 'x' })
+        const tm = (await A('POST', `/api/crm/chat/rooms/${teamId}`, { body: 'zz chat for the viewer' })).body
+        check('Chat messages: with Team chat → View only, stamps, saving, pinning, editing and deleting are refused', (await act(V, tm, { action: 'react', emoji: '👍' })).status === 403 && (await act(V, tm, { action: 'bookmark' })).status === 403 && (await act(V, tm, { action: 'pin' })).status === 403 && (await V('GET', '/api/crm/chat/bookmarks')).status === 403 && vU?.me?.can?.react === false)
+        const team = (vU?.rooms || []).find((r) => r.kind === 'team')
+        const mine = await V('POST', `/api/crm/chat/rooms/${team?.id}`, { body: 'zz view only message' }); const mid = mine.body?.id
+        check('Chat messages: without Edit / Delete own, even my own message cannot be edited or deleted', mine.status === 201 && (await act(V, { id: mid }, { action: 'edit', body: 'again' })).status === 403 && (await act(V, { id: mid }, { action: 'delete' })).status === 403)
+        void mV
+        const fd = new FormData(); fd.append('file', new File(['hello'], 'a.txt', { type: 'text/plain' }))
+        check('Chat switches: files, groups and client conversations need their own switch', (await V('POST', '/api/crm/chat/upload', fd)).status === 403 && (await V('POST', '/api/crm/chat/rooms', { group: { name: 'zz g', staffIds: [uA.staffId] } })).status === 403 && !(vU?.rooms || []).some((r) => r.kind === 'client'))
+        check('Chat switches: with them, groups open', [200, 201].includes((await A('POST', '/api/crm/chat/rooms', { group: { name: 'zz chat group', staffIds: [uB.staffId] } })).status))
+        const gr = (await A('GET', '/api/crm/chat/rooms')).body?.rooms?.find((r) => r.title === 'zz chat group'); if (gr) await prisma.crmChatRoom.delete({ where: { id: gr.id } }).catch(() => {})
+        await prisma.crmChatBookmark.deleteMany({ where: { memberKey: { in: [`staff:${uA.staffId}`, `staff:${uB.staffId}`, `staff:${uView.staffId}`] } } })
+        await prisma.crmChatMessage.deleteMany({ where: { roomId: R } }); await prisma.crmChatMessage.deleteMany({ where: { body: { startsWith: 'zz view only' } } }); await prisma.crmChatMessage.deleteMany({ where: { OR: [{ body: { startsWith: 'zz chat' } }, { roomId: teamId, body: '' }, { body: { contains: 'pinned a message' } }, { body: { contains: 'unpinned a message' } }] } }); await prisma.crmChatRoom.delete({ where: { id: R } }).catch(() => {})
+    }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

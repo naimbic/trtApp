@@ -8,7 +8,7 @@ import ChatThread from './ChatThread'
 import CallOverlay from './CallOverlay'
 import useCall from './useCall'
 import { upload as uploadFile } from '@/views/crm/kit/api'
-import { StatusDot, usePresence, usePingOnIncrease } from './chatKit'
+import { StatusDot, usePresence, usePingOnIncrease, SavedMessages } from './chatKit'
 import { useChatStatus, useMyStatus, STATUS } from '@/store/chatStatusStore'
 import { chatApi, chatPost } from './chatClient'
 import { tr, trn } from '@/utils/t'
@@ -35,7 +35,7 @@ const Row = ({ r, onClick }) => (
     </button>
 )
 
-const TABS = [['chats', tr("Chats")], ['people', tr("People")], ['clients', tr("Clients")]]
+const TABS = [['chats', tr("Chats")], ['people', tr("People")], ['clients', tr("Clients")], ['saved', tr("Saved")]]
 
 const ChatWidget = () => {
     const [open, setOpen] = useState(false)
@@ -56,7 +56,8 @@ const ChatWidget = () => {
     usePresence(sendPresence)
     usePingOnIncrease(data?.unread ?? 0)
 
-    const loadMsgs = useCallback((after) => api(`/rooms/${room.id}${after ? `?after=${encodeURIComponent(after)}` : ''}`), [room?.id])
+    const loadMsgs = useCallback((after, since) => api(`/rooms/${room.id}${after ? `?after=${encodeURIComponent(after)}${since ? `&since=${encodeURIComponent(since)}` : ''}` : ''}`), [room?.id])
+    const actMsg = useCallback((m, body) => api(`/messages/${m.id}`, { method: 'POST', body: JSON.stringify(body) }), [])
     const sendMsg = useCallback((body, attachment, replyTo) => api(`/rooms/${room.id}`, { method: 'POST', body: JSON.stringify({ body, attachment, replyTo }) }).then((m) => { refresh(); return m }), [room?.id, refresh])
     const uploadMsg = useCallback((file, voice) => { const fd = new FormData(); fd.append('file', file); if (voice) fd.append('voice', '1'); return uploadFile('/api/crm/chat/upload', fd) }, [])
     const fetchSignals = useCallback(() => api('/signals'), [])
@@ -89,7 +90,7 @@ const ChatWidget = () => {
     const peopleOnline = data.people.filter((p) => p.status === 'online').length
     const pick = (r) => { setTheirStatus(null); setRoom(r) }
     const talkTo = async (p) => { const { id } = await api('/rooms', { method: 'POST', body: JSON.stringify({ staffId: p.id }) }); pick({ id, kind: 'direct', title: p.name, image: p.image, status: p.status }); refresh() }
-    const badge = { chats: chatUnread, clients: clientUnread, people: 0 }
+    const badge = { chats: chatUnread, clients: clientUnread, people: 0, saved: 0 }
 
     return (
         <div className="fixed bottom-5 right-5 flex flex-col items-end gap-3" style={{ zIndex: open ? 100001 : 40 }}>
@@ -105,7 +106,7 @@ const ChatWidget = () => {
                                 {data.calls && room.kind !== 'team' && room.kind !== 'group' && <button type="button" className="text-xl text-primary" title={tr("Voice call")} onClick={() => phone.start({ roomId: room.id, peerName: room.title })}><PiPhoneCallDuotone /></button>}
                                 <button type="button" className="text-lg text-gray-400" onClick={() => setOpen(false)}><PiXBold /></button>
                             </div>
-                            <ChatThread load={loadMsgs} send={sendMsg} upload={uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} />
+                            <ChatThread act={actMsg} can={data.me?.can || {}} load={loadMsgs} send={sendMsg} upload={data.me?.can?.send_files === false ? null : uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} />
                         </>
                     ) : (
                         <>
@@ -114,12 +115,14 @@ const ChatWidget = () => {
                                 <div className="flex items-center gap-3 text-lg text-gray-400"><button type="button" title={tr("Open the full chat page")} onClick={() => { setOpen(false); navigate('/crm/chat') }}><PiArrowsOutSimpleDuotone /></button>{data.me?.admin && <button type="button" title={data.calls ? tr("Voice calls are on (click to turn off)") : tr("Voice calls are off (click to turn on)")} onClick={() => setCalls(!data.calls)} className={data.calls ? 'text-emerald-500' : ''}><PiPhoneCallDuotone /></button>}<button type="button" title={muted ? tr("Sound off") : tr("Sound on")} onClick={() => setMuted(!muted)}>{muted ? <PiBellSimpleSlashDuotone /> : <PiBellSimpleDuotone />}</button><button type="button" onClick={() => setOpen(false)}><PiXBold /></button></div>
                             </div>
                             <div className="flex gap-1 px-3 pb-2 pt-3">
-                                {TABS.map(([k, label]) => (
+                                {TABS.filter(([k]) => (k !== 'clients' || data.me?.can?.client_chats !== false) && (k !== 'saved' || data.me?.can?.bookmark !== false)).map(([k, label]) => (
                                     <button key={k} type="button" onClick={() => setTab(k)} className={classNames('flex-1 rounded-xl py-1.5 text-sm font-semibold', tab === k ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700')}>{label}{badge[k] > 0 && <span className="ml-1.5 rounded-full bg-primary px-1.5 text-xs text-white">{badge[k]}</span>}</button>
                                 ))}
                             </div>
                             <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
-                                {tab === 'people' ? (
+                                {tab === 'saved' ? (
+                                    <SavedMessages onOpen={(it) => { const r = rooms.find((x) => x.id === it.roomId); if (r) { pick(r); setTab('chats') } else navigate(`/crm/chat?room=${it.roomId}`) }} />
+                                ) : tab === 'people' ? (
                                     data.people.map((p) => <Row key={p.id} r={{ kind: 'direct', title: p.name, image: p.image, status: p.status }} onClick={() => talkTo(p)} />)
                                 ) : (
                                     <>

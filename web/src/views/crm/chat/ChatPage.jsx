@@ -11,14 +11,14 @@ import Input from '@/components/ui/Input'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import classNames from '@/utils/classNames'
 import ChatThread from '@/components/crm/chat/ChatThread'
-import { StatusDot, usePingOnIncrease } from '@/components/crm/chat/chatKit'
+import { StatusDot, usePingOnIncrease, SavedMessages } from '@/components/crm/chat/chatKit'
 import { chatApi as api, chatPost as post, chatPatch as patch, chatDelete as del } from '@/components/crm/chat/chatClient'
 import { upload as uploadFile, notify } from '../kit/api'
 import { useChatStatus, useMyStatus, STATUS } from '@/store/chatStatusStore'
 import { tr } from '@/utils/t'
 
 const POLL = 6000
-const TABS = [['all', tr("All")], ['group', tr("Groups")], ['direct', tr("Direct")], ['client', tr("Clients")]]
+const TABS = [['all', tr("All")], ['group', tr("Groups")], ['direct', tr("Direct")], ['client', tr("Clients")], ['saved', tr("Saved")]]
 const inTab = (tab, r) => tab === 'all' || (tab === 'group' ? r.kind === 'group' || r.kind === 'team' : r.kind === tab)
 const stamp = (d) => (dayjs(d).isSame(dayjs(), 'day') ? dayjs(d).format('HH:mm') : dayjs(d).isSame(dayjs(), 'year') ? dayjs(d).format('MMM D') : dayjs(d).format('YYYY-MM-DD'))
 
@@ -166,7 +166,8 @@ const ChatPage = () => {
     const open = (id) => { setTheirStatus(null); setParams(id ? { room: id } : {}, { replace: true }) }
     useEffect(() => { if (data && roomId && !room) setParams({}, { replace: true }) }, [data, roomId, room, setParams])
 
-    const loadMsgs = useCallback((after) => api(`/rooms/${roomId}${after ? `?after=${encodeURIComponent(after)}` : ''}`), [roomId])
+    const loadMsgs = useCallback((after, since) => api(`/rooms/${roomId}${after ? `?after=${encodeURIComponent(after)}${since ? `&since=${encodeURIComponent(since)}` : ''}` : ''}`), [roomId])
+    const actMsg = useCallback((m, body) => post(`/messages/${m.id}`, body), [])
     const sendMsg = useCallback((body, attachment, replyTo, rich) => post(`/rooms/${roomId}`, { body, attachment, replyTo, rich }).then((m) => { refresh(); return m }), [roomId, refresh])
     const [tool, setTool] = useState(null) // { m, kind }
     const [reload, setReload] = useState(0)
@@ -201,15 +202,16 @@ const ChatPage = () => {
                 </div>
                 <div className="flex gap-2 px-4 pt-3">
                     <Button size="sm" variant="solid" className="flex-1" icon={<PiChatCircleTextDuotone />} onClick={() => setDlg('direct')}>{tr("New chat")}</Button>
-                    <Button size="sm" className="flex-1" icon={<PiUsersThreeDuotone />} onClick={() => setDlg('group')}>{tr("New group")}</Button>
+                    {data.me.can?.create_groups !== false && <Button size="sm" className="flex-1" icon={<PiUsersThreeDuotone />} onClick={() => setDlg('group')}>{tr("New group")}</Button>}
                 </div>
                 <div className="px-4 pt-3"><Input size="sm" value={q} prefix={<PiMagnifyingGlassDuotone />} placeholder={tr("Search conversations")} onChange={(e) => setQ(e.target.value)} /></div>
                 <div className="flex gap-1 px-3 pb-2 pt-3">
-                    {TABS.map(([k, label]) => <button key={k} type="button" onClick={() => setTab(k)} className={classNames('flex-1 rounded-lg py-1.5 text-xs font-semibold', tab === k ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700')}>{label}{unreadOf(k) > 0 && <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] text-white">{unreadOf(k)}</span>}</button>)}
+                    {TABS.filter(([k]) => (k !== 'client' || data.me.can?.client_chats !== false) && (k !== 'saved' || data.me.can?.bookmark !== false)).map(([k, label]) => <button key={k} type="button" onClick={() => setTab(k)} className={classNames('flex-1 rounded-lg py-1.5 text-xs font-semibold', tab === k ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700')}>{label}{unreadOf(k) > 0 && <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] text-white">{unreadOf(k)}</span>}</button>)}
                 </div>
                 <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
-                    {rows.map((r) => <Row key={r.id} r={r} active={r.id === roomId} onClick={() => open(r.id)} />)}
-                    {!rows.length && (
+                    {tab === 'saved' && <SavedMessages reload={reload} onOpen={(it) => { setTab('all'); open(it.roomId) }} />}
+                    {tab !== 'saved' && rows.map((r) => <Row key={r.id} r={r} active={r.id === roomId} onClick={() => open(r.id)} />)}
+                    {tab !== 'saved' && !rows.length && (
                         <div className="px-6 py-14 text-center text-sm text-gray-400">
                             {tab === 'client' ? <><PiBuildingsDuotone className="mx-auto mb-2 text-3xl" />{tr("Clients who write from their portal appear here.")}</> : q ? tr("No conversation matches your search.") : tab === 'group' ? tr("No group yet. Create one with New group.") : tr("Nothing here yet. Start with New chat.")}
                         </div>
@@ -225,10 +227,10 @@ const ChatPage = () => {
                                 <button type="button" className="text-xl text-gray-500 md:hidden" onClick={() => open(null)}><PiCaretLeftBold /></button>
                                 <Face r={{ ...room, status }} size={40} />
                                 <div className="min-w-0 flex-1"><div className="truncate font-bold heading-text">{room.title}</div><div className="truncate text-xs text-gray-500">{sub}</div></div>
-                                {data.calls && (room.kind === 'direct' || room.kind === 'client') && <button type="button" title={tr("Voice call")} className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-primary hover:bg-gray-100 dark:hover:bg-gray-700" onClick={() => window.dispatchEvent(new CustomEvent('trt-chat-call', { detail: { roomId: room.id, peerName: room.title } }))}><PiPhoneCallDuotone /></button>}
+                                {data.calls && data.me.can?.call !== false && (room.kind === 'direct' || room.kind === 'client') && <button type="button" title={tr("Voice call")} className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-primary hover:bg-gray-100 dark:hover:bg-gray-700" onClick={() => window.dispatchEvent(new CustomEvent('trt-chat-call', { detail: { roomId: room.id, peerName: room.title } }))}><PiPhoneCallDuotone /></button>}
                                 <button type="button" title={tr("Details")} className={classNames('flex h-9 w-9 items-center justify-center rounded-lg text-xl hover:bg-gray-100 dark:hover:bg-gray-700', info ? 'bg-primary/10 text-primary' : 'text-gray-500')} onClick={() => setInfo((v) => !v)}><PiInfoDuotone /></button>
                             </div>
-                            <ChatThread rich={room.kind !== 'client'} load={loadMsgs} send={sendMsg} upload={uploadMsg} onData={onData} onMessageAction={(m, kind) => setTool({ m, kind })} people={staff} refreshSignal={reload} showSender={room.kind === 'team' || room.kind === 'group'} empty={room.kind === 'group' ? tr("No messages yet. Say hello to the group!") : undefined} />
+                            <ChatThread act={actMsg} can={data.me.can || {}} rich={room.kind !== 'client'} load={loadMsgs} send={sendMsg} upload={data.me.can?.send_files === false ? null : uploadMsg} onData={onData} onMessageAction={(m, kind) => setTool({ m, kind })} people={staff} refreshSignal={reload} showSender={room.kind === 'team' || room.kind === 'group'} empty={room.kind === 'group' ? tr("No messages yet. Say hello to the group!") : undefined} />
                         </div>
                         {info && <div className="absolute inset-0 z-10 bg-white dark:bg-gray-800 lg:static lg:inset-auto lg:z-auto lg:w-72 lg:shrink-0 lg:border-l lg:border-gray-200 lg:dark:border-gray-700"><InfoPanel room={room} data={data} theirStatus={theirStatus} onClose={() => setInfo(false)} reload={refresh} onLeft={() => { setInfo(false); open(null) }} /></div>}
                     </div>

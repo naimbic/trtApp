@@ -3,7 +3,7 @@ import { roomMessages, sendMessage, updateGroup, deleteGroup } from '@/lib/crm/c
 import { errorResponse } from '@/lib/crm/crud'
 
 export async function GET(request, { params }) {
-    try { return NextResponse.json(await roomMessages((await params).id, request.nextUrl.searchParams.get('after'))) } catch (e) { return errorResponse(e) }
+    try { return NextResponse.json(await roomMessages((await params).id, request.nextUrl.searchParams.get('after'), request.nextUrl.searchParams.get('since'))) } catch (e) { return errorResponse(e) }
 }
 
 export async function POST(request, { params }) {

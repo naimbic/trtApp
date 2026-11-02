@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.160.0',
+        date: '2026-11-02',
+        title: 'Chat messages: stamps, saved messages, pins, edit and delete, and finer chat permissions',
+        items: [
+            'Chat (the bubble and the page): hover a message for React (8 stamps, click a stamp again to take yours back), a star to save it for later, and "..." to Pin to the conversation, Edit (your own text) and Delete. A pinned message shows on top of the conversation (click to jump to it) and a line says who pinned it. A deleted message leaves a grey "This message was deleted" line; an edited one says "edited". Other people\'s open conversations pick these changes up at once (every 3 seconds).',
+            'New "Saved" tab in the chat page and in the bubble: all the messages you starred, from every conversation; click one to open its conversation.',
+            'Roles & permissions: a new row "Chat messages" (React with stamps, Save messages, Pin, Edit own, Delete own, Delete messages of other people for moderators) and the Team chat row now has Send files / pictures / voice, Create groups, Make calls and See and answer client conversations. Everybody who had the chat keeps all of it (except deleting other people\'s messages, which only the Admin roles get by default); the read-only Viewer role only reads. Clients see a deleted message as deleted in their chat.',
+        ],
+    },
+    {
         version: '0.159.0',
         date: '2026-11-02',
         title: 'Client ideas: real conversations (editor, mentions, replies, edit, delete); long text no longer leaves its card',

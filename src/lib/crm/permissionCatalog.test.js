@@ -10,6 +10,7 @@ test('roles: Calendar, Team chat and File manager are permissions every standard
         for (const [name, perms] of Object.entries(ROLES)) {
             // the administrator roles also carry every extra switch of the tool (the calendar's "see every event" and "edit events of others")
             if (k === 'calendar' && ['Super Admin', 'Admin'].includes(name)) assert.deepEqual(perms[k], ['view', 'view_all_events', 'edit_others_events'], `${name} has every calendar switch`)
+            else if (k === 'chat') assert.deepEqual(perms[k], name === 'Viewer' ? ['view'] : ['view', 'send_files', 'create_groups', 'call', 'client_chats'], `${name} has the chat with its switches (the read-only Viewer only reads)`)
             else assert.deepEqual(perms[k], ['view'], `${name} has ${k}`)
         }
     }
@@ -61,4 +62,15 @@ test('roles: payroll, API keys and AI keys have their own rows and stay off the 
 test('roles: growth can be given team view and approval', () => {
     assert.deepEqual(FEATURES.find((f) => f.key === 'growth').caps, ['view', 'view_team', 'manage'])
     assert.deepEqual(ROLES['Sales Rep'].growth, ['view'])
+})
+
+test('roles: chat messages have their own row, and every standard role keeps the message tools (only Admins moderate)', () => {
+    assert.deepEqual(FEATURES.find((f) => f.key === 'chat_messages').caps, ['react', 'bookmark', 'pin', 'edit_own', 'delete_own', 'delete_others'])
+    for (const [name, perms] of Object.entries(ROLES)) {
+        const tools = perms.chat_messages || []
+        if (name === 'Viewer') { assert.deepEqual(tools, [], 'the read-only Viewer has no message tool'); continue }
+        for (const c of ['react', 'bookmark', 'pin', 'edit_own', 'delete_own']) assert.ok(tools.includes(c), `${name} can ${c}`)
+        assert.equal(tools.includes('delete_others'), ['Super Admin', 'Admin'].includes(name), `${name} moderation`)
+    }
+    assert.ok(FEATURE_HINTS.chat_messages)
 })

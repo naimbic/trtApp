@@ -600,10 +600,34 @@ model CrmChatMessage {
   clientId   String?  @db.ObjectId
   leadId     String?  @db.ObjectId
   clientMailedAt DateTime?
+  /// edited by its author / deleted (the text and files are gone, a line "deleted" stays) / pinned in the conversation
+  editedAt   DateTime?
+  deletedAt  DateTime?
+  deletedBy  String?   @db.ObjectId
+  pinnedAt   DateTime?
+  pinnedBy   String?   @db.ObjectId
+  /// { "👍": ["staff:id", ...] }
+  reactions  Json?
   createdAt  DateTime @default(now())
+  /// moves on every change, so the screens that are open pick the change up
+  updatedAt  DateTime? @updatedAt
 
   @@index([roomId, createdAt])
+  @@index([roomId, updatedAt])
   @@map("crm_chat_message")
+}
+
+/// A message a member saved for later (private to that member).
+model CrmChatBookmark {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  memberKey String
+  messageId String   @db.ObjectId
+  roomId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  @@unique([memberKey, messageId])
+  @@index([memberKey, createdAt])
+  @@map("crm_chat_bookmark")
 }
 
 model CrmChatRead {

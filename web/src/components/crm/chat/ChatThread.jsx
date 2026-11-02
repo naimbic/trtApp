@@ -4,9 +4,9 @@ import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
 import Dropdown from '@/components/ui/Dropdown'
 import dayjs from 'dayjs'
-import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone, PiArrowBendUpLeftBold, PiCameraDuotone, PiTextAaBold, PiDotsThreeBold, PiCheckSquareDuotone, PiUsersDuotone, PiBuildingsDuotone, PiTagDuotone } from 'react-icons/pi'
+import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone, PiArrowBendUpLeftBold, PiCameraDuotone, PiTextAaBold, PiDotsThreeBold, PiCheckSquareDuotone, PiUsersDuotone, PiBuildingsDuotone, PiTagDuotone, PiSmileyDuotone, PiStarDuotone, PiStarFill, PiPushPinDuotone, PiPushPinFill, PiPencilSimpleDuotone, PiTrashDuotone, PiCaretDownBold } from 'react-icons/pi'
 import classNames from '@/utils/classNames'
-import { ping } from './chatKit'
+import { ping, STAMPS } from './chatKit'
 import { tr } from '@/utils/t'
 
 const POLL = 3000
@@ -29,7 +29,7 @@ const time = (d) => (dayjs(d).isSame(dayjs(), 'day') ? dayjs(d).format('HH:mm') 
  * Message list + composer, shared by the staff widget and the client portal.
  * load(after) -> { messages, ...extra }   send(body) -> message   onData(extra) gets everything but messages.
  */
-const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr("No messages yet. Say hello!"), placeholder = tr("Write a message…"), rich = false, onMessageAction, people = [], refreshSignal = 0 }) => {
+const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr("No messages yet. Say hello!"), placeholder = tr("Write a message…"), rich = false, onMessageAction, people = [], refreshSignal = 0, act = null, can = {} }) => {
     const [html, setHtml] = useState('')
     const [fmt, setFmt] = useState(false) // the full formatting bar of the rich editor
     const editorRef = useRef(null)
@@ -45,20 +45,30 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
     const [recording, setRecording] = useState(null) // { seconds }
     const last = useRef(null)
     const stick = useRef(true)
+    const nowRef = useRef(null)
+    const [pinned, setPinned] = useState([])
+    const [pinOpen, setPinOpen] = useState(false)
+    const [stampFor, setStampFor] = useState(null) // the message whose stamp picker is open
+    const [editing, setEditing] = useState(null) // { id, text, html }
 
     const pull = useCallback(async (full) => {
         try {
-            const { messages, ...rest } = await load(full ? null : last.current)
+            const { messages, changed, pinned: pins, now, ...rest } = await load(full ? null : last.current, full ? null : nowRef.current)
+            if (now) nowRef.current = now
+            if (pins) setPinned(pins)
             onData?.(rest)
             if (full) setMsgs(messages)
-            else if (messages.length) {
-                setMsgs((cur) => [...(cur || []), ...messages.filter((m) => !(cur || []).some((x) => x.id === m.id))])
-                if (messages.some((m) => !m.mine)) ping()
+            else {
+                if (changed?.length) setMsgs((cur) => (cur || []).map((x) => changed.find((c) => c.id === x.id) || x))
+                if (messages.length) {
+                    setMsgs((cur) => [...(cur || []), ...messages.filter((m) => !(cur || []).some((x) => x.id === m.id))])
+                    if (messages.some((m) => !m.mine)) ping()
+                }
             }
         } catch (e) { if (full) setMsgs([]) }
     }, [load, onData])
 
-    useEffect(() => { last.current = null; setMsgs(null); stick.current = true; pull(true) }, [load]) // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { last.current = null; nowRef.current = null; setPinned([]); setEditing(null); setMsgs(null); stick.current = true; pull(true) }, [load]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (refreshSignal) pull(true) }, [refreshSignal]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (msgs?.length) last.current = msgs[msgs.length - 1].at }, [msgs])
     useEffect(() => {
@@ -66,6 +76,27 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
         return () => clearInterval(t)
     }, [pull])
     useEffect(() => { if (stick.current && box.current) box.current.scrollTop = box.current.scrollHeight }, [msgs])
+
+    const swap = (m) => setMsgs((cur) => (cur || []).map((x) => (x.id === m.id ? m : x)))
+    /** react / bookmark / pin / edit / delete: the server answers, the line on screen follows. */
+    const tool = async (m, body) => {
+        setErr('')
+        try {
+            const r = await act(m, body)
+            if (r.message) swap(r.message)
+            else if (body.action === 'bookmark') swap({ ...m, bookmarked: r.bookmarked })
+            else if (body.action === 'pin') { swap({ ...m, pinned: r.pinned }); pull(false) }
+            else if (body.action === 'delete') { swap({ ...m, deleted: true, body: '', rich: null, attachment: null, reactions: [], pinned: false, bookmarked: false, canEdit: false, canDelete: false }); pull(false) }
+            return r
+        } catch (e) { setErr(e.message || tr("Could not do this")) }
+    }
+    const saveEdit = async (m) => {
+        const body = m.rich ? { action: 'edit', rich: editing.html } : { action: 'edit', body: editing.text }
+        if (m.rich ? !editing.html?.replace(/<[^>]*>/g, '').trim() && !/<img\b/i.test(editing.html || '') : !editing.text?.trim()) return setErr(tr("A message cannot be empty. Delete it instead."))
+        const r = await tool(m, body)
+        if (r) setEditing(null)
+    }
+    const goTo = (id) => { const el = box.current?.querySelector(`[data-mid="${id}"]`); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('ring-2', 'ring-amber-400'); setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400'), 1400) } setPinOpen(false) }
 
     const submit = async (attachment) => {
         const body = attachment ? '' : rich ? '' : text.trim()
@@ -135,45 +166,84 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
+            {pinned.length > 0 && (
+                <div className="relative border-b border-amber-200 bg-amber-50 text-xs dark:border-amber-500/30 dark:bg-amber-500/10">
+                    <button type="button" onClick={() => setPinOpen((o) => !o)} className="flex w-full items-center gap-2 px-3 py-1.5 text-start"><PiPushPinFill className="shrink-0 text-amber-600" /><span className="min-w-0 flex-1 truncate"><b>{pinned[0].senderName}:</b> {pinned[0].text}</span>{pinned.length > 1 && <span className="shrink-0 rounded-full bg-amber-200 px-1.5 text-[10px] font-bold text-amber-800">{pinned.length}</span>}<PiCaretDownBold className={classNames('shrink-0 transition', pinOpen && 'rotate-180')} /></button>
+                    {pinOpen && <div className="absolute inset-x-0 top-full z-20 max-h-56 overflow-y-auto border-b border-amber-200 bg-amber-50 shadow-lg dark:border-amber-500/30 dark:bg-gray-800">{pinned.map((p) => <button key={p.id} type="button" onClick={() => goTo(p.id)} className="flex w-full items-start gap-2 px-3 py-1.5 text-start hover:bg-amber-100 dark:hover:bg-gray-700"><PiPushPinDuotone className="mt-0.5 shrink-0 text-amber-600" /><span className="min-w-0 flex-1"><b>{p.senderName}</b> <span className="text-gray-400">{time(p.at)}</span><span className="block truncate">{p.text}</span></span></button>)}</div>}
+                </div>
+            )}
             <div ref={box} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60 }} className="flex-1 space-y-1 overflow-y-auto px-4 py-3">
                 {msgs && !msgs.length && <div className="py-10 text-center text-sm text-gray-400">{empty}</div>}
                 {(msgs || []).map((m, i) => {
                     const prev = msgs[i - 1]
                     if (m.system) return <div key={m.id} className="py-2 text-center text-xs text-gray-400">{m.body} · {time(m.at)}</div>
                     const firstOfRun = !prev || prev.mine !== m.mine || prev.senderName !== m.senderName || +new Date(m.at) - +new Date(prev.at) > 5 * 60000
+                    const isEditing = editing?.id === m.id
+                    const hasMenu = (rich && onMessageAction && !m.deleted) || (act && !m.deleted && (can.pin || m.canEdit || m.canDelete))
                     return (
                         <div key={m.id} className={classNames('flex flex-col', m.mine ? 'items-end' : 'items-start', firstOfRun && i > 0 && 'pt-2')}>
                             {firstOfRun && !m.mine && showSender && <span className="mb-0.5 px-1 text-xs font-semibold text-gray-500">{m.senderName}</span>}
-                            <div className={classNames('group/msg flex max-w-[92%] items-center gap-1', m.mine && 'flex-row-reverse')}>
-                                <div data-mid={m.id} title={time(m.at)} className={classNames('min-w-0 whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm', m.mine ? 'rounded-br-md bg-primary text-white' : 'rounded-bl-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100')}>
-                                    {m.replyTo && (
-                                        <button type="button" onClick={() => { const el = box.current?.querySelector(`[data-mid="${m.replyTo.id}"]`); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('ring-2', 'ring-amber-400'); setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400'), 1400) } }} className={classNames('mb-1 block w-full rounded-lg border-s-4 px-2 py-1 text-start text-xs', m.mine ? 'border-white/70 bg-white/15' : 'border-primary bg-white/70 dark:bg-gray-600')}>
-                                            <span className="block font-semibold">{m.replyTo.name}</span>
-                                            <span className="line-clamp-2 opacity-80">{m.replyTo.text}</span>
-                                        </button>
-                                    )}
-                                    {m.attachment && <Attachment a={m.attachment} mine={m.mine} />}
-                                    {m.rich ? <div className={classNames('-mx-1 rounded-xl px-2 py-1', m.mine ? 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100' : 'bg-white dark:bg-gray-800')}><RichView html={m.rich} /></div> : <Mentioned text={m.body} onDark={m.mine} />}
-                                    {(m.tags?.length > 0 || m.assigneeIds?.length > 0 || m.taskId || m.clientId || m.leadId) && (
-                                        <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
-                                            {(m.tags || []).map((t) => <span key={t} className={classNames('rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-primary/10 text-primary')}>#{t}</span>)}
-                                            {m.assigneeIds?.length > 0 && <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-600')}><PiUsersDuotone />{m.assigneeIds.map((id) => people.find((p) => p.id === id)?.name?.split(' ')[0]).filter(Boolean).join(', ') || m.assigneeIds.length}</span>}
-                                            {m.taskId && <a href={`/crm/tasks/${m.taskId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold', m.mine ? 'bg-white/20 underline' : 'bg-emerald-100 text-emerald-700')}><PiCheckSquareDuotone />{tr("Task")}</a>}
-                                            {m.clientId && <a href={`/crm/clients/${m.clientId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-sky-100 text-sky-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Client emailed") : tr("Client")}</a>}
-                                            {m.leadId && <a href={`/crm/leads/${m.leadId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-violet-100 text-violet-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Lead emailed") : tr("Lead")}</a>}
-                                        </div>
+                            <div className={classNames('group/msg relative flex max-w-[92%] items-center gap-1', m.mine && 'flex-row-reverse')}>
+                                <div data-mid={m.id} title={time(m.at)} className={classNames('min-w-0 whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm', m.deleted ? 'rounded-bl-md border border-dashed border-gray-300 italic text-gray-400 dark:border-gray-600' : m.mine ? 'rounded-br-md bg-primary text-white' : 'rounded-bl-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100', m.pinned && !m.deleted && 'ring-1 ring-amber-400/70')}>
+                                    {m.deleted ? <span className="flex items-center gap-1"><PiTrashDuotone />{tr("This message was deleted")}</span> : (
+                                        <>
+                                            {m.pinned && <span className="mb-0.5 flex items-center gap-1 text-[11px] font-semibold opacity-80"><PiPushPinFill />{tr("Pinned")}</span>}
+                                            {m.replyTo && (
+                                                <button type="button" onClick={() => goTo(m.replyTo.id)} className={classNames('mb-1 block w-full rounded-lg border-s-4 px-2 py-1 text-start text-xs', m.mine ? 'border-white/70 bg-white/15' : 'border-primary bg-white/70 dark:bg-gray-600')}>
+                                                    <span className="block font-semibold">{m.replyTo.name}</span>
+                                                    <span className="line-clamp-2 opacity-80">{m.replyTo.text}</span>
+                                                </button>
+                                            )}
+                                            {m.attachment && <Attachment a={m.attachment} mine={m.mine} />}
+                                            {isEditing ? (
+                                                <div className="min-w-[200px] space-y-1.5 text-gray-800">
+                                                    {m.rich
+                                                        ? <div className="overflow-hidden rounded-xl bg-white"><RichEditor bare toolbar={false} autoFocus minHeight={40} value={editing.html} onChange={(h) => setEditing((e) => ({ ...e, html: h }))} onSubmit={() => saveEdit(m)} /></div>
+                                                        : <textarea autoFocus rows={2} value={editing.text} maxLength={2000} onChange={(e) => setEditing((x) => ({ ...x, text: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(m) } else if (e.key === 'Escape') setEditing(null) }} className="w-full resize-none rounded-lg bg-white px-2 py-1 text-sm outline-none ring-1 ring-primary/40" />}
+                                                    <div className="flex justify-end gap-1.5"><button type="button" onClick={() => setEditing(null)} className="rounded-lg bg-white/80 px-2 py-0.5 text-xs font-semibold text-gray-600">{tr("Cancel")}</button><button type="button" onClick={() => saveEdit(m)} className="rounded-lg bg-white px-2 py-0.5 text-xs font-semibold text-primary">{tr("Save")}</button></div>
+                                                </div>
+                                            ) : m.rich ? <div className={classNames('-mx-1 rounded-xl px-2 py-1', m.mine ? 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100' : 'bg-white dark:bg-gray-800')}><RichView html={m.rich} /></div> : <Mentioned text={m.body} onDark={m.mine} />}
+                                            {(m.tags?.length > 0 || m.assigneeIds?.length > 0 || m.taskId || m.clientId || m.leadId) && (
+                                                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
+                                                    {(m.tags || []).map((t) => <span key={t} className={classNames('rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-primary/10 text-primary')}>#{t}</span>)}
+                                                    {m.assigneeIds?.length > 0 && <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-600')}><PiUsersDuotone />{m.assigneeIds.map((id) => people.find((p) => p.id === id)?.name?.split(' ')[0]).filter(Boolean).join(', ') || m.assigneeIds.length}</span>}
+                                                    {m.taskId && <a href={`/crm/tasks/${m.taskId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold', m.mine ? 'bg-white/20 underline' : 'bg-emerald-100 text-emerald-700')}><PiCheckSquareDuotone />{tr("Task")}</a>}
+                                                    {m.clientId && <a href={`/crm/clients/${m.clientId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-sky-100 text-sky-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Client emailed") : tr("Client")}</a>}
+                                                    {m.leadId && <a href={`/crm/leads/${m.leadId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-violet-100 text-violet-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Lead emailed") : tr("Lead")}</a>}
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
-                                <button type="button" title={tr("Reply")} aria-label={tr("Reply")} onClick={() => { setReplyTo({ id: m.id, name: m.mine ? tr("You") : m.senderName, text: preview(m) }); input.current?.focus() }} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base text-gray-400 opacity-0 transition hover:bg-gray-100 hover:text-primary focus:opacity-100 group-hover/msg:opacity-100 dark:hover:bg-gray-700"><PiArrowBendUpLeftBold /></button>
-                                {rich && onMessageAction && (
-                                    <Dropdown placement={m.mine ? 'bottom-end' : 'bottom-start'} renderTitle={<span role="button" tabIndex={0} title={tr("More")} aria-label={tr("More")} className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-base text-gray-400 opacity-0 hover:bg-gray-100 hover:text-gray-600 group-hover/msg:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><PiDotsThreeBold /></span>}>
-                                        <Dropdown.Item eventKey="task" onClick={() => onMessageAction(m, 'task')}><PiCheckSquareDuotone className="text-lg" /><span>{tr("Make a task")}</span></Dropdown.Item>
-                                        <Dropdown.Item eventKey="assign" onClick={() => onMessageAction(m, 'assign')}><PiUsersDuotone className="text-lg" /><span>{tr("Assign to the team")}</span></Dropdown.Item>
-                                        <Dropdown.Item eventKey="client" onClick={() => onMessageAction(m, 'client')}><PiBuildingsDuotone className="text-lg" /><span>{tr("Link a client and email them")}</span></Dropdown.Item>
-                                    </Dropdown>
+                                {!m.deleted && (
+                                    <>
+                                        <button type="button" title={tr("Reply")} aria-label={tr("Reply")} onClick={() => { setReplyTo({ id: m.id, name: m.mine ? tr("You") : m.senderName, text: preview(m) }); input.current?.focus() }} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base text-gray-400 opacity-0 transition hover:bg-gray-100 hover:text-primary focus:opacity-100 group-hover/msg:opacity-100 dark:hover:bg-gray-700"><PiArrowBendUpLeftBold /></button>
+                                        {act && can.react && <button type="button" title={tr("React")} aria-label={tr("React")} onClick={() => setStampFor((x) => (x === m.id ? null : m.id))} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base text-gray-400 opacity-0 transition hover:bg-gray-100 hover:text-amber-500 focus:opacity-100 group-hover/msg:opacity-100 dark:hover:bg-gray-700"><PiSmileyDuotone /></button>}
+                                        {act && can.bookmark && <button type="button" title={m.bookmarked ? tr("Remove from saved") : tr("Save for later")} aria-label={tr("Save for later")} aria-pressed={!!m.bookmarked} onClick={() => tool(m, { action: 'bookmark', on: !m.bookmarked })} className={classNames('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base transition hover:bg-gray-100 dark:hover:bg-gray-700', m.bookmarked ? 'text-amber-500 opacity-100' : 'text-gray-400 opacity-0 hover:text-amber-500 focus:opacity-100 group-hover/msg:opacity-100')}>{m.bookmarked ? <PiStarFill /> : <PiStarDuotone />}</button>}
+                                        {hasMenu && (
+                                            <Dropdown placement={m.mine ? 'bottom-end' : 'bottom-start'} renderTitle={<span role="button" tabIndex={0} title={tr("More")} aria-label={tr("More")} className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-base text-gray-400 opacity-0 hover:bg-gray-100 hover:text-gray-600 group-hover/msg:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><PiDotsThreeBold /></span>}>
+                                                {act && can.pin && <Dropdown.Item eventKey="pin" onClick={() => tool(m, { action: 'pin', on: !m.pinned })}>{m.pinned ? <PiPushPinFill className="text-lg" /> : <PiPushPinDuotone className="text-lg" />}<span>{m.pinned ? tr("Unpin") : tr("Pin to the conversation")}</span></Dropdown.Item>}
+                                                {act && m.canEdit && <Dropdown.Item eventKey="edit" onClick={() => setEditing({ id: m.id, text: m.body, html: m.rich || '' })}><PiPencilSimpleDuotone className="text-lg" /><span>{tr("Edit")}</span></Dropdown.Item>}
+                                                {act && m.canDelete && <Dropdown.Item eventKey="delete" onClick={() => { if (window.confirm(tr("Delete this message? It disappears for everybody."))) tool(m, { action: 'delete' }) }}><PiTrashDuotone className="text-lg text-red-500" /><span className="text-red-500">{tr("Delete")}</span></Dropdown.Item>}
+                                                {rich && onMessageAction && <Dropdown.Item eventKey="task" onClick={() => onMessageAction(m, 'task')}><PiCheckSquareDuotone className="text-lg" /><span>{tr("Make a task")}</span></Dropdown.Item>}
+                                                {rich && onMessageAction && <Dropdown.Item eventKey="assign" onClick={() => onMessageAction(m, 'assign')}><PiUsersDuotone className="text-lg" /><span>{tr("Assign to the team")}</span></Dropdown.Item>}
+                                                {rich && onMessageAction && <Dropdown.Item eventKey="client" onClick={() => onMessageAction(m, 'client')}><PiBuildingsDuotone className="text-lg" /><span>{tr("Link a client and email them")}</span></Dropdown.Item>}
+                                            </Dropdown>
+                                        )}
+                                    </>
+                                )}
+                                {stampFor === m.id && (
+                                    <div className={classNames('absolute -top-9 z-20 flex gap-0.5 rounded-full border border-gray-200 bg-white px-1.5 py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800', m.mine ? 'right-0' : 'left-0')} onMouseLeave={() => setStampFor(null)}>
+                                        {STAMPS.map((e) => <button key={e} type="button" onClick={() => { setStampFor(null); tool(m, { action: 'react', emoji: e }) }} className="rounded-full px-1 text-lg transition hover:scale-125">{e}</button>)}
+                                    </div>
                                 )}
                             </div>
-                            {(!msgs[i + 1] || msgs[i + 1].mine !== m.mine || +new Date(msgs[i + 1].at) - +new Date(m.at) > 5 * 60000) && <span className="px-1 pt-0.5 text-[11px] text-gray-400">{time(m.at)}</span>}
+                            {m.reactions?.length > 0 && (
+                                <div className={classNames('mt-0.5 flex max-w-[92%] flex-wrap gap-1', m.mine ? 'justify-end' : 'justify-start')}>
+                                    {m.reactions.map((r) => <button key={r.emoji} type="button" disabled={!act || !can.react} onClick={() => tool(m, { action: 'react', emoji: r.emoji })} className={classNames('flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs transition', r.mine ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300')}><span>{r.emoji}</span><b>{r.count}</b></button>)}
+                                </div>
+                            )}
+                            {(!msgs[i + 1] || msgs[i + 1].mine !== m.mine || +new Date(msgs[i + 1].at) - +new Date(m.at) > 5 * 60000) && <span className="px-1 pt-0.5 text-[11px] text-gray-400">{time(m.at)}{m.edited ? ` · ${tr("edited")}` : ''}{m.bookmarked ? ' ⭐' : ''}</span>}
                         </div>
                     )
                 })}

@@ -53,6 +53,33 @@ export async function migrateToolPermissions() {
     await prisma.crmOption.create({ data: { name: MARK3, value: new Date().toISOString() } })
 }
 
+/**
+ * The chat got finer switches (files, groups, calls, client conversations) and a Chat messages row (stamps, bookmarks, pins, edit, delete):
+ * whoever had the chat keeps everything they could do, and gets the new message tools except "delete other people's messages". Once, marker-guarded.
+ */
+const CHAT_CAPS = ['send_files', 'create_groups', 'call', 'client_chats']
+const MESSAGE_CAPS = ['react', 'bookmark', 'pin', 'edit_own', 'delete_own']
+export async function migrateChatPermissions() {
+    const MARK = 'perm_migration_chat_v2'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        const rows = await prisma.crmStaffPermission.findMany({ where: { staffId: s.id, feature: { in: ['chat', 'chat_messages'] } }, select: { feature: true, capability: true } })
+        if (!rows.some((r) => r.feature === 'chat' && r.capability === 'view')) continue
+        const have = new Set(rows.map((r) => `${r.feature}.${r.capability}`))
+        const add = [...CHAT_CAPS.map((capability) => ({ feature: 'chat', capability })), ...MESSAGE_CAPS.map((capability) => ({ feature: 'chat_messages', capability }))].filter((x) => !have.has(`${x.feature}.${x.capability}`))
+        if (add.length) await prisma.crmStaffPermission.createMany({ data: add.map((x) => ({ staffId: s.id, ...x })) })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms) || !(perms.chat || []).includes('view')) continue
+        perms.chat = [...new Set([...perms.chat, ...CHAT_CAPS])]
+        perms.chat_messages = [...new Set([...(perms.chat_messages || []), ...MESSAGE_CAPS])]
+        await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
 /** "My growth" is a tool everybody has at first, like the calendar and the chat. Runs once, marker-guarded. */
 export async function migrateGrowthPermission() {
     const MARK = 'perm_migration_growth_v1'

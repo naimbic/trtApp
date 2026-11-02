@@ -5271,5 +5271,12 @@ export default {
     "Everyone edits their own notes": "自分のメモは誰でも編集できます",
     "Everyone deletes their own notes": "自分のメモは誰でも削除できます",
     "The Notes page (like Google Keep): coloured notes and checklists with reminders, pictures, voice notes, links and comments. View = write your own notes; \"Share notes\" = share them with colleagues (also by mentioning them with @).": "メモのページ（Google Keep風）：色付きのメモとチェックリスト、リマインダー、画像、音声メモ、リンク、コメント。表示＝自分のメモを書く、「メモを共有」＝同僚と共有（@メンションでも可）。",
-    "Share notes": "メモを共有"
+    "Share notes": "メモを共有",
+    "Every status of Tasks, Leads and Ideas has its own page. A status you add in the settings gets its page automatically.": "タスク・リード・アイデアの各ステータスには専用ページがあります。設定で追加したステータスのページは自動で作られます。",
+    "Manage statuses": "ステータスを管理",
+    "Moved to {name}": "{name}に移動しました",
+    "Nothing in this status.": "このステータスには何もありません。",
+    "Shown to the client": "お客様に表示",
+    "This page does not exist.": "このページは存在しません。",
+    "This status does not exist (any more).": "このステータスは存在しません（または削除されました）。"
 }

@@ -270,3 +270,15 @@ export async function tellTeam(idea, clientId, text, byName) {
 
 /* ---------------------------------------------------------------- the client area (portal) */
 export const ideaForClient = (i, currency) => ({ id: i.id, title: i.title, body: i.body || '', category: i.category, status: i.status, gain: i.gain || '', price: i.price ?? null, currency: currency || null, impact: i.impact, effort: i.effort, dueDate: i.dueDate, answer: i.answer || null, answeredAt: i.answeredAt, proposedAt: i.proposedAt, sources: i.sources || [] })
+
+/** Every idea of the clients this person may see, with its client: the page of one status (and the count of each status). */
+export async function ideasByStatus({ status = '' } = {}) {
+    const g = await gate('view')
+    const clients = await prisma.crmClient.findMany({ where: await clientScope(g.session), select: { id: true, company: true }, take: 5000 })
+    const name = Object.fromEntries(clients.map((c) => [c.id, c.company || '']))
+    const rows = clients.length ? await prisma.crmClientIdea.findMany({ where: { clientId: { in: clients.map((c) => c.id) } }, orderBy: [{ updatedAt: 'desc' }], take: 2000 }) : []
+    const counts = {}
+    for (const r of rows) counts[r.status] = (counts[r.status] || 0) + 1
+    const list = rows.filter((r) => !status || r.status === status).slice(0, 300).map((r) => shape(r, { clientName: name[r.clientId] || '' }))
+    return { counts, list, can: { create: hasCap(g.authority, 'client_ideas', 'create'), edit: hasCap(g.authority, 'client_ideas', 'edit') } }
+}

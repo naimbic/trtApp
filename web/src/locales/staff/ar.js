@@ -5271,5 +5271,12 @@ export default {
     "Everyone edits their own notes": "يعدّل كل شخص ملاحظاته",
     "Everyone deletes their own notes": "يحذف كل شخص ملاحظاته",
     "The Notes page (like Google Keep): coloured notes and checklists with reminders, pictures, voice notes, links and comments. View = write your own notes; \"Share notes\" = share them with colleagues (also by mentioning them with @).": "صفحة الملاحظات (مثل Google Keep): ملاحظات وقوائم ملوّنة مع تذكيرات وصور وملاحظات صوتية وروابط وتعليقات. عرض = كتابة ملاحظاتك؛ «مشاركة الملاحظات» = مشاركتها مع الزملاء (أيضاً بذكرهم بـ @).",
-    "Share notes": "مشاركة الملاحظات"
+    "Share notes": "مشاركة الملاحظات",
+    "Every status of Tasks, Leads and Ideas has its own page. A status you add in the settings gets its page automatically.": "لكل حالة في المهام والعملاء المحتملين والأفكار صفحتها الخاصة. أي حالة تضيفها من الإعدادات تحصل على صفحتها تلقائياً.",
+    "Manage statuses": "إدارة الحالات",
+    "Moved to {name}": "تم النقل إلى {name}",
+    "Nothing in this status.": "لا شيء في هذه الحالة.",
+    "Shown to the client": "ظاهر للعميل",
+    "This page does not exist.": "هذه الصفحة غير موجودة.",
+    "This status does not exist (any more).": "هذه الحالة غير موجودة (أو لم تعد موجودة)."
 }

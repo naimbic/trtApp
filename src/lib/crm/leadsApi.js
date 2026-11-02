@@ -72,12 +72,13 @@ export async function listLeads(p = {}) {
     if (p.mine === '1' && a.staffId) and.push({ OR: [{ assigned: a.staffId }, { assignedIds: { has: a.staffId } }] })
     if (p.from || p.to) and.push({ createdAt: { ...(p.from ? { gte: new Date(p.from) } : {}), ...(p.to ? { lte: new Date(`${p.to}T23:59:59.999`) } : {}) } })
     if (p.query) { const c = { contains: p.query, mode: 'insensitive' }; and.push({ OR: [{ name: c }, { company: c }, { email: c }, { phoneNumber: c }] }) }
+    if (p.view === 'list' && oid(p.statusId)) and.push({ statusId: p.statusId }) // one status: its own page
     const where = { AND: and }
     const [statuses, sources] = await Promise.all([prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' } }), prisma.crmLeadSource.findMany({ orderBy: [{ sourceOrder: 'asc' }, { name: 'asc' }] })])
     const sMap = Object.fromEntries(statuses.map((s) => [s.id, s])), srcMap = Object.fromEntries(sources.map((s) => [s.id, s]))
     const can = { create: true, edit: a.can('edit'), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') }
     if (p.view === 'list') {
-        const rows = await prisma.crmLead.findMany({ where, orderBy: [{ createdAt: 'desc' }], take: 300 })
+        const rows = await prisma.crmLead.findMany({ where, orderBy: [{ createdAt: 'desc' }], take: Math.min(Math.max(parseInt(p.limit, 10) || 300, 1), 1000) })
         await attachNotes(rows)
         const people = await staffMap(rows.flatMap(teamOf))
         return { list: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])), total: await prisma.crmLead.count({ where }), can, statuses: statuses.map((s) => ({ id: s.id, name: s.name, color: s.color })), sources: sources.map((s) => ({ id: s.id, name: s.name, color: s.color || null })) }

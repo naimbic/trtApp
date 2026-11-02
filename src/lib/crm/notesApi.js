@@ -17,12 +17,15 @@ async function gate(cap = 'view') {
     const session = await requirePermission('notes', cap)
     const authority = session.user.authority || []
     const staffId = await getStaffId(session)
-    if (!staffId) throw fail('Your account has no staff profile', 403)
-    return { session, authority, staffId, name: session.user.name || session.user.email || '', canShare: isCrmAdmin(authority) || hasCap(authority, 'notes', 'share') }
+    const admin = isCrmAdmin(authority)
+    if (!staffId && !admin) throw fail('Your account has no staff profile', 403)
+    return { session, authority, staffId, admin, name: session.user.name || session.user.email || '', canShare: admin || hasCap(authority, 'notes', 'share') }
 }
 
-/** The notes this person sees: their own and the ones shared with them. */
-const visible = (staffId) => ({ OR: [{ addedFrom: staffId }, { sharedWith: { has: staffId } }] })
+/** The notes this person sees: their own and the ones shared with them. Administrators see every note (as they always did). */
+const visible = (staffId, admin = false) => (admin ? {} : { OR: [{ addedFrom: staffId }, { sharedWith: { has: staffId } }] })
+/** A note this person may change: their own, or any for an administrator. */
+const changeable = (g) => (g.admin ? {} : { addedFrom: g.staffId })
 
 async function peopleOf(ids) {
     const rows = ids.length ? await prisma.crmStaff.findMany({ where: { id: { in: ids } }, select: { id: true, firstName: true, lastName: true, email: true } }) : []
@@ -36,7 +39,7 @@ const noteOut = (n, g, who, counts) => ({
     attachments: Array.isArray(n.attachments) ? n.attachments : [], links: Array.isArray(n.links) ? n.links : [],
     sharedWith: (n.sharedWith || []).map((id) => ({ id, name: who[id] || '' })),
     remindAt: n.remindAt, remindShared: !!n.remindShared,
-    mine: n.addedFrom === g.staffId, owner: n.addedFrom ? who[n.addedFrom] || '' : '',
+    own: n.addedFrom === g.staffId, mine: n.addedFrom === g.staffId || g.admin, owner: n.addedFrom ? who[n.addedFrom] || '' : '',
     comments: counts?.[n.id] || 0, createdAt: n.createdAt, updatedAt: n.updatedAt,
 })
 
@@ -44,7 +47,7 @@ const noteOut = (n, g, who, counts) => ({
 export async function listNotes({ q = '', archived = false, label = '', board = false, limit = 500 } = {}) {
     const g = await gate()
     // archived is filtered here: a filter like { archived: { not: true } } would hide the old notes that lack the field
-    let rows = (await prisma.crmQuickNote.findMany({ where: visible(g.staffId), orderBy: { updatedAt: 'desc' }, take: 1000 })).filter((n) => (board || !archived ? !n.archived : !!n.archived))
+    let rows = (await prisma.crmQuickNote.findMany({ where: visible(g.staffId, g.admin && !board), orderBy: { updatedAt: 'desc' }, take: 1000 })).filter((n) => (board || !archived ? !n.archived : !!n.archived))
     const needle = String(q || '').trim().toLowerCase()
     if (needle) rows = rows.filter((n) => `${n.title} ${plainText(n.description || '')} ${(n.labels || []).join(' ')} ${(Array.isArray(n.checklist) ? n.checklist : []).map((c) => c.text).join(' ')}`.toLowerCase().includes(needle))
     if (label) rows = rows.filter((n) => (n.labels || []).some((l) => l.toLowerCase() === String(label).toLowerCase()))
@@ -55,7 +58,7 @@ export async function listNotes({ q = '', archived = false, label = '', board = 
     const [who, comments, all] = await Promise.all([
         peopleOf([...new Set(rows.flatMap((n) => [n.addedFrom, ...(n.sharedWith || [])]).filter(Boolean))]),
         ids.length ? prisma.crmQuickNoteComment.groupBy({ by: ['noteId'], where: { noteId: { in: ids } }, _count: { _all: true } }) : [],
-        prisma.crmQuickNote.findMany({ where: visible(g.staffId), select: { labels: true } }),
+        prisma.crmQuickNote.findMany({ where: visible(g.staffId, g.admin), select: { labels: true } }),
     ])
     const counts = Object.fromEntries(comments.map((c) => [c.noteId, c._count._all]))
     const labels = [...new Set(all.flatMap((n) => n.labels || []))].sort((a, b) => a.localeCompare(b))
@@ -64,7 +67,7 @@ export async function listNotes({ q = '', archived = false, label = '', board = 
 
 export async function getNote(id) {
     const g = await gate()
-    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...visible(g.staffId) } }))
+    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...visible(g.staffId, g.admin) } }))
     if (!n) throw fail('Note not found', 404)
     const who = await peopleOf([...new Set([n.addedFrom, ...(n.sharedWith || [])].filter(Boolean))])
     return { note: noteOut(n, g, who, { [n.id]: await prisma.crmQuickNoteComment.count({ where: { noteId: n.id } }) }) }
@@ -85,7 +88,7 @@ async function tellShared(g, note, ids) {
 /** Create (id = null) or change a note. Only its owner changes it; the people it is shared with only read and comment. */
 export async function saveNote(body = {}, id = null) {
     const g = await gate()
-    const cur = id ? (oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, addedFrom: g.staffId } }))) : null
+    const cur = id ? (oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...changeable(g) } }))) : null
     if (id && !cur) {
         const other = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, sharedWith: { has: g.staffId } }, select: { id: true } }))
         throw fail(other ? 'Only the owner can change this note' : 'Note not found', other ? 403 : 404)
@@ -117,8 +120,8 @@ export async function saveNote(body = {}, id = null) {
     let row
     if (cur) row = await prisma.crmQuickNote.update({ where: { id: cur.id }, data })
     else {
-        const last = await prisma.crmQuickNote.findFirst({ where: { addedFrom: g.staffId }, orderBy: { position: 'desc' }, select: { position: true } })
-        row = await prisma.crmQuickNote.create({ data: { title: '', kind: 'note', ...data, addedFrom: g.staffId, position: (last?.position || 0) + 1 } })
+        const last = await prisma.crmQuickNote.findFirst({ where: { addedFrom: g.staffId || '__none__' }, orderBy: { position: 'desc' }, select: { position: true } })
+        row = await prisma.crmQuickNote.create({ data: { title: '', kind: 'note', ...data, addedFrom: g.staffId || undefined, position: (last?.position || 0) + 1 } })
     }
     const fresh = (row.sharedWith || []).filter((x) => !(cur?.sharedWith || []).includes(x))
     if (fresh.length) await tellShared(g, row, fresh)
@@ -128,7 +131,7 @@ export async function saveNote(body = {}, id = null) {
 
 export async function deleteNote(id) {
     const g = await gate()
-    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, addedFrom: g.staffId } }))
+    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...changeable(g) } }))
     if (!n) {
         const other = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, sharedWith: { has: g.staffId } }, select: { id: true } }))
         throw fail(other ? 'Only the owner can delete this note' : 'Note not found', other ? 403 : 404)
@@ -159,10 +162,10 @@ export async function uploadNoteFile(file, voice = false) {
 const commentOut = (c, all, g, ownerId) => {
     const r = c.replyToId ? all.find((x) => x.id === c.replyToId) : null
     const mine = !!c.authorId && c.authorId === g.staffId
-    return { id: c.id, authorName: c.authorName || '', body: c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine, canDelete: mine || ownerId === g.staffId, replyTo: r ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null }
+    return { id: c.id, authorName: c.authorName || '', body: c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine, canDelete: mine || ownerId === g.staffId || g.admin, replyTo: r ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null }
 }
 async function noteFor(g, id) {
-    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...visible(g.staffId) } }))
+    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...visible(g.staffId, g.admin) } }))
     if (!n) throw fail('Note not found', 404)
     return n
 }
@@ -203,7 +206,7 @@ export async function deleteNoteComment(id, commentId) {
     const n = await noteFor(g, id)
     const c = oid(commentId) && (await prisma.crmQuickNoteComment.findFirst({ where: { id: commentId, noteId: n.id } }))
     if (!c) throw fail('Message not found', 404)
-    if (c.authorId !== g.staffId && n.addedFrom !== g.staffId) throw fail('You can only delete your own messages', 403)
+    if (c.authorId !== g.staffId && n.addedFrom !== g.staffId && !g.admin) throw fail('You can only delete your own messages', 403)
     await prisma.crmQuickNoteComment.updateMany({ where: { replyToId: c.id }, data: { replyToId: null } })
     await prisma.crmQuickNoteComment.delete({ where: { id: c.id } })
     return { success: true }

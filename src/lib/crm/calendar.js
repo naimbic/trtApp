@@ -215,7 +215,7 @@ const clean = (b) => {
     if (badEmail) throw Object.assign(new Error(`"${badEmail}" is not a valid email address`), { status: 400 })
     const remind = b.reminderBefore === '' || b.reminderBefore == null ? null : Math.max(0, Math.round(Number(b.reminderBefore)))
     return {
-        title, description: b.description || null, start, end, color: NAMES.includes(b.color) ? b.color : 'blue', isPublic: !!b.isPublic,
+        title, description: b.description || null, start, end, color: NAMES.includes(b.color) ? b.color : 'blue', isPublic: b.isPublic === undefined || b.isPublic === null ? true : !!b.isPublic, // visible to the whole team unless switched off
         allDay: !!b.allDay,
         location: String(b.location || '').trim() || null,
         meetingUrl: meetingUrl || null,

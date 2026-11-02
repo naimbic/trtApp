@@ -214,6 +214,8 @@ try {
         check('...and the calendar marks it as not editable for that person', seen && seen.canEdit === false)
         const edited = EID ? await kd('PATCH', `/api/crm/calendar/${EID}`, { title: 'zz edited by a colleague' }) : null
         check('with "edit and delete events of others" a colleague can edit it', edited?.status === 200 && (await prisma.crmEvent.findUnique({ where: { id: EID } })).title === 'zz edited by a colleague', String(edited?.status))
+        const dflt = await ka('POST', '/api/crm/calendar', { title: 'zz default event', start: start.toISOString(), end: end.toISOString() }); if (dflt.body?.id) made.rows.unshift(['crmEvent', dflt.body.id])
+        check('a new event is visible to the whole team by default', dflt.body?.isPublic === true && ((await kb('GET', `/api/crm/calendar?${range}`)).body?.items || []).some((i) => i.rawId === dflt.body.id))
         const pub = await ka('POST', '/api/crm/calendar', { title: 'zz public event', start: start.toISOString(), end: end.toISOString(), isPublic: true }); if (pub.body?.id) made.rows.unshift(['crmEvent', pub.body.id])
         check('a public event can be edited by any member who sees it', pub.body?.id && (await kb('PATCH', `/api/crm/calendar/${pub.body.id}`, { title: 'zz public edited' })).status === 200 && (((await kb('GET', `/api/crm/calendar?${range}`)).body?.items || []).find((i) => i.rawId === pub.body.id)?.canEdit === true))
         const inv = await ka('POST', '/api/crm/calendar', { title: 'zz invited event', start: start.toISOString(), end: end.toISOString(), isPublic: false, attendeeIds: [kB.staffId] }); if (inv.body?.id) made.rows.unshift(['crmEvent', inv.body.id])
@@ -1341,6 +1343,8 @@ try {
         check('Notes: a colleague mentioned with @ gets the note shared', c2.status === 201 && c2.body.note.sharedWith.some((x) => x.id === nB.staffId))
         const c3 = await B('POST', '/api/crm/notes', { title: 'zz note noshare', sharedWith: [nA.staffId], description: '<p>hi @Checknotes-a</p>' })
         check('Notes: without the Share permission nothing is shared, mention or not', c3.status === 201 && c3.body.note.sharedWith.length === 0)
+        const adm = await login(await makeUser('notes-admin', {}, true))
+        check('Notes: an administrator sees every note, like the old Notes page did, and the Tasks board only their own', ((await adm('GET', '/api/crm/notes')).body?.list || []).some((n) => n.id === N1 && n.mine === true && n.own === false) && !((await adm('GET', '/api/crm/notes?board=1')).body?.list || []).some((n) => n.id === N1))
         await A('PATCH', `/api/crm/notes/${N1}`, { archived: true })
         check('Notes: archived notes leave the list and show in the archive', !((await A('GET', '/api/crm/notes')).body?.list || []).some((n) => n.id === N1) && ((await A('GET', '/api/crm/notes?archived=1')).body?.list || []).some((n) => n.id === N1))
         await A('PATCH', `/api/crm/notes/${N1}`, { archived: false })
@@ -1351,6 +1355,18 @@ try {
         await prisma.crmQuickNoteComment.deleteMany({ where: { body: { contains: 'zz note' } } }).catch(() => {})
         await prisma.crmQuickNote.deleteMany({ where: { title: { startsWith: 'zz note' } } }).catch(() => {})
         await prisma.crmNotification.deleteMany({ where: { toUserId: { in: [nA.staffId, nB.staffId] } } }).catch(() => {})
+    }
+    {
+        // Status pages: the ideas of every status (needs Ideas → View) and one lead status at a time
+        const sA = await makeUser('stat-a', { client_ideas: ['view'], leads: ['view'] }), sB = await makeUser('stat-b', {})
+        const A = await login(sA), B = await login(sB)
+        check('Status pages: ideas by status need the Ideas permission', (await B('GET', '/api/crm/client-ideas/overview')).status === 403)
+        const ov = await A('GET', '/api/crm/client-ideas/overview?status=draft')
+        check('Status pages: with it, every status comes with its count and the ideas of the one asked for', ov.status === 200 && typeof ov.body?.counts === 'object' && Array.isArray(ov.body?.list) && ov.body.list.every((i) => i.status === 'draft'))
+        const lr = await A('GET', '/api/crm/pipeline/leads?view=list&limit=1000')
+        const first = lr.body?.statuses?.[0]
+        const one = first ? await A('GET', `/api/crm/pipeline/leads?view=list&statusId=${first.id}&limit=1000`) : null
+        check('Status pages: a lead status can be listed on its own', lr.status === 200 && one?.status === 200 && (one.body.list || []).every((l) => l.statusId === first.id))
     }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {

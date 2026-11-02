@@ -64,7 +64,7 @@ const jitsi = () => `${MEET_HOST}/TRT-${Math.random().toString(36).slice(2, 8)}-
 const ROOMS = [['discovery_call', 'Discovery call'], ['proposal_review', 'Proposal review'], ['contract_signing', 'Contract signing'], ['client_checkin', 'Client check-in'], ['internal', 'Internal'], ['interview', 'Interview']]
 const roomUrl = (name) => `${MEET_HOST}/${String(name || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60)}`
 
-const EMPTY = { report: '', confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: false, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
+const EMPTY = { report: '', confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: true, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
 const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], saving, onSubmit, onDelete, onClose, onDecided }) => {
@@ -91,7 +91,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
             start: selected.start ? dayjs(selected.start).toDate() : null,
             end: selected.end ? dayjs(selected.end).toDate() : null,
             color: selected.eventColor || 'blue',
-            isPublic: !!selected.isPublic,
+            isPublic: selected.type === 'EDIT' ? !!selected.isPublic : selected.isPublic !== false, // a new event is visible to the whole team unless switched off
             allDay: !!selected.allDay,
             category: selected.category || 'meeting',
             projectId: selected.projectId || null,

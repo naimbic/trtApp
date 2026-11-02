@@ -59,7 +59,7 @@ const NoteCard = ({ note: n, onOpen, onPatch, onDelete, onToTask, compact = fals
                 {n.labels.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{n.labels.map((l) => <span key={l} className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] font-semibold dark:bg-white/15">{l}</span>)}</div>}
                 <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-gray-500">
                     {n.remindAt && <span className="inline-flex items-center gap-0.5 font-semibold text-amber-700 dark:text-amber-400"><TbBellRinging />{dayjs(n.remindAt).format('DD MMM, HH:mm')}<RemindTag when={n.remindAt} /></span>}
-                    {!mine && n.owner && <span className="inline-flex items-center gap-0.5"><TbUsers />{tr('From {name}', { name: n.owner })}</span>}
+                    {!n.own && n.owner && <span className="inline-flex items-center gap-0.5"><TbUsers />{tr('From {name}', { name: n.owner })}</span>}
                     {mine && n.sharedWith.length > 0 && <span className="inline-flex items-center gap-0.5" title={n.sharedWith.map((s) => s.name).join(', ')}><TbUsers />{n.sharedWith.length}</span>}
                     {n.comments > 0 && <span className="inline-flex items-center gap-0.5"><TbMessageCircle />{n.comments}</span>}
                     {n.kind === 'list' && <span className="inline-flex items-center gap-0.5"><TbChecklist />{done.length}/{n.checklist.length}</span>}

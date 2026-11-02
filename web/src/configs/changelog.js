@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.163.0',
+        date: '2026-11-02',
+        title: 'A page for every status of Tasks, Leads and Ideas; old notes back; new events are public',
+        items: [
+            'New Statuses page (Tasks menu and Leads menu): every status of Tasks, Leads and Ideas as a coloured card with its count. Each status has its own page showing its items as a canvas of cards: open and edit them in the usual popup, add a new one in that status, and move a card to another status from its menu or the step bar. A status you add in the settings gets its page automatically.',
+            'Notes: administrators see every note again, as on the old Notes page (they can read, comment, edit and delete them); the Tasks board shows only their own and the ones shared with them.',
+            'Calendar: a new event is visible to the whole team by default (the switch is on).',
+        ],
+    },
+    {
         version: '0.162.0',
         date: '2026-11-02',
         title: 'Notes like Google Keep: coloured cards, checklists, pictures, voice, reminders, sharing and comments',

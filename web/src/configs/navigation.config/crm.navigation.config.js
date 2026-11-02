@@ -33,9 +33,9 @@ const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 const S = (key, title, items) => ({ sub: key, title, items })
 const LAYOUT = {
     Customers: ['clients', 'contacts', S('more', 'More', ['customer-groups', 'idea-categories', 'vault', 'consent-purposes'])],
-    Leads: ['leads', S('setup', 'Lead setup', ['lead-sources', 'lead-statuses', 'web-to-lead', 'lead-email-integration'])],
+    Leads: ['leads', 'lead-status-pages', S('setup', 'Lead setup', ['lead-sources', 'lead-statuses', 'web-to-lead', 'lead-email-integration'])],
     Projects: ['projects', 'scrum-board', 'milestones'],
-    Tasks: ['tasks-board', 'my-tasks', 'notes', 'team-tasks', 'timeline', 'time-report', 'issues', 'tasks', 'task-timers', S('hr', 'Attendance & leave', ['timesheets', 'leave-requests', 'days-off']), S('setup', 'Task setup', ['task-statuses', 'checklist-templates'])],
+    Tasks: ['tasks-board', 'my-tasks', 'notes', 'statuses', 'team-tasks', 'timeline', 'time-report', 'issues', 'tasks', 'task-timers', S('hr', 'Attendance & leave', ['timesheets', 'leave-requests', 'days-off']), S('setup', 'Task setup', ['task-statuses', 'checklist-templates'])],
     Sales: [
         'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses', 'freelancers',
         S('catalog', 'Items & catalog', ['items', 'item-groups']),

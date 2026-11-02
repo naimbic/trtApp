@@ -5271,5 +5271,12 @@ export default {
     "Everyone edits their own notes": "Chacun modifie ses propres notes",
     "Everyone deletes their own notes": "Chacun supprime ses propres notes",
     "The Notes page (like Google Keep): coloured notes and checklists with reminders, pictures, voice notes, links and comments. View = write your own notes; \"Share notes\" = share them with colleagues (also by mentioning them with @).": "La page Notes (comme Google Keep) : notes colorées et listes avec rappels, images, notes vocales, liens et commentaires. Voir = écrire ses propres notes ; « Partager les notes » = les partager avec des collègues (aussi en les mentionnant avec @).",
-    "Share notes": "Partager les notes"
+    "Share notes": "Partager les notes",
+    "Every status of Tasks, Leads and Ideas has its own page. A status you add in the settings gets its page automatically.": "Chaque statut des tâches, prospects et idées a sa propre page. Un statut ajouté dans les réglages obtient sa page automatiquement.",
+    "Manage statuses": "Gérer les statuts",
+    "Moved to {name}": "Déplacé vers {name}",
+    "Nothing in this status.": "Rien dans ce statut.",
+    "Shown to the client": "Visible par le client",
+    "This page does not exist.": "Cette page n'existe pas.",
+    "This status does not exist (any more).": "Ce statut n'existe pas (ou plus)."
 }

@@ -133,6 +133,8 @@ const crmRoutes = [
         component: lazy(() => import('@/views/crm/tasks/TasksBoard')),
         authority: [],
     },
+    { key: 'crm.statuses', path: '/crm/statuses', component: lazy(() => import('@/views/crm/status/StatusPages').then((m) => ({ default: m.StatusOverview }))), authority: [] },
+    { key: 'crm.status', path: '/crm/status/:kind/:key', component: lazy(() => import('@/views/crm/status/StatusPages').then((m) => ({ default: m.StatusPage }))), authority: [] },
     { key: 'crm.notes', path: '/crm/notes', component: lazy(() => import('@/views/crm/notes/NotesPage')), authority: [] },
     { key: 'crm.leads', path: '/crm/leads', component: lazy(() => import('@/views/crm/leads/LeadsBoard')), authority: [] },
     { key: 'crm.leads.view', path: '/crm/leads/:id', component: lazy(() => import('@/views/crm/leads/LeadsBoard')), authority: [] },

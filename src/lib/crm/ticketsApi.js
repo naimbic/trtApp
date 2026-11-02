@@ -8,6 +8,7 @@ import { publicBase } from '@/lib/crm/shortLinks'
 import { attachmentOut, prepareFiles, saveTicketFiles } from '@/lib/crm/ticketFiles'
 import { autoMessage } from '@/lib/crm/ticketAuto'
 import { emit } from '@/lib/crm/webhooks'
+import { storeRich, plainText } from '@/lib/crm/richText'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -36,11 +37,12 @@ async function staffMap(ids) {
     return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: staffName(s), image: realPicture(s.profileImage) }]))
 }
 const contactName = (c) => (c ? [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email : null)
-const stripHtml = (h) => String(h || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
+const stripHtml = (h) => (/<[a-z][\s\S]*>/i.test(String(h || '')) ? plainText(String(h)) : String(h || '')).replace(/&nbsp;/g, ' ').trim()
 
 // Perfex stores ticket messages as HTML; staff write plain text here. Escape plain text, keep legacy HTML.
 const esc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-const toHtml = (t) => (/<[a-z][\s\S]*>/i.test(t) ? t : esc(t).replace(/\r?\n/g, '<br />'))
+// a message written in the editor is clean HTML (scripts and styles removed); plain text is escaped
+const toHtml = (t) => (/<[a-z][\s\S]*>/i.test(t) ? storeRich(String(t), 40000) || '' : esc(t).replace(/\r?\n/g, '<br />'))
 
 /** Email text: the message followed by the links of the files that came with it. */
 export const withFiles = (text, files) => (files?.length ? `${text}${text ? '\n\n' : ''}Attachments:\n${files.map((f) => `- ${f.fileName}: ${f.url}`).join('\n')}` : text)
@@ -228,7 +230,7 @@ export async function replyTicket(id, { message, statusId, notify = true, intern
     const nextStatus = close && closed ? closed.id : oid(statusId) || answered?.id || t.statusId
     await prisma.crmTicket.update({ where: { id }, data: { statusId: nextStatus, lastReply: new Date(), clientRead: 0, adminRead: 1, ...(t.assignedId || !a.S.on('automatically_assign_ticket_to_first_staff_responding') ? {} : { assignedId: a.staffId }) } })
     let mail = null
-    if (notify) { const to = await clientEmail(t); if (to) mail = await sendTemplate({ slug: 'ticket-reply', to, data: await mailVars({ ...t, statusId: nextStatus }, { message: withFiles(text || '', saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: id }) }
+    if (notify) { const to = await clientEmail(t); if (to) mail = await sendTemplate({ slug: 'ticket-reply', to, data: await mailVars({ ...t, statusId: nextStatus }, { message: withFiles(stripHtml(text || ''), saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: id }) }
     if (nextStatus && nextStatus !== t.statusId) await autoMessage({ ...t, statusId: nextStatus }, nextStatus)
     return { success: true, id: r.id, mail, files: saved.length }
 }

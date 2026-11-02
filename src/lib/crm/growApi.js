@@ -155,7 +155,7 @@ export async function ideaComments(id) {
 
 export async function addComment(id, body) {
     const g = await gate('view')
-    const text = String(body?.body || '').trim().slice(0, 3000)
+    const text = storeRich(String(body?.body || ''), 12000)
     if (!text) throw fail('Write your comment first')
     if (!oid(id) || !(await prisma.crmGrowIdea.findUnique({ where: { id }, select: { id: true } }))) throw fail('Idea not found', 404)
     await prisma.crmGrowComment.create({ data: { ideaId: id, staffId: g.staffId, authorName: g.name, body: text } })

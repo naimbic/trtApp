@@ -11,6 +11,7 @@ import { codeOfLanguage } from '@/lib/crm/langCodes'
 import { notifyStaffOfClient } from '@/lib/crm/ticketNotify'
 import { autoMessage } from '@/lib/crm/ticketAuto'
 import { emit } from '@/lib/crm/webhooks'
+import { storeRich, plainText } from '@/lib/crm/richText'
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -133,9 +134,10 @@ export async function getProject(id) {
 }
 
 // ---------------------------------------------------------------- support
-const stripHtml = (h) => String(h || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
+const stripHtml = (h) => (/<[a-z][\s\S]*>/i.test(String(h || '')) ? plainText(String(h)) : String(h || '')).replace(/&nbsp;/g, ' ').trim()
 const esc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-const toHtml = (t) => esc(t).replace(/\r?\n/g, '<br />')
+// a message written in the editor is clean HTML; plain text is escaped
+const toHtml = (t) => (/<[a-z][\s\S]*>/i.test(t) ? storeRich(String(t), 40000) || '' : esc(t).replace(/\r?\n/g, '<br />'))
 
 export async function listTickets() {
     const s = await requirePortal('support')
@@ -171,7 +173,7 @@ export async function getTicket(id) {
 
 export async function createTicket(body, files = []) {
     const s = await requirePortal('support')
-    const subject = String(body.subject || '').trim().slice(0, 200), message = String(body.message || '').trim().slice(0, 10000)
+    const subject = String(body.subject || '').trim().slice(0, 200), message = String(body.message || '').trim().slice(0, 40000)
     if (!subject) throw httpError('Give your request a subject')
     if (!message) throw httpError('Describe what you need')
     const prepared = await prepareFiles(files).catch((e) => { throw httpError(e.message, e.status || 400) })
@@ -182,7 +184,7 @@ export async function createTicket(body, files = []) {
     const name = [s.contact.firstName, s.contact.lastName].filter(Boolean).join(' ') || null
     const t = await prisma.crmTicket.create({ data: { legacyId: (last?.legacyId || 0) + 1, clientId: s.client.id, contactId: s.contact.id, name, email: s.contact.email, departmentId: oid(body.departmentId), priorityId: prio?.id || null, statusId: open?.id || null, subject, message: toHtml(message), ticketKey: (await import('node:crypto')).randomBytes(16).toString('hex'), adminRead: 0, clientRead: 1, lastReply: null } })
     const saved = await saveTicketFiles({ ticketId: t.id, prepared, uploaderName: name || s.contact.email })
-    void notifyStaffOfClient(t, { text: message, files: saved })
+    void notifyStaffOfClient(t, { text: stripHtml(message), files: saved })
     emit('ticket.created', { id: t.id, number: t.legacyId, subject: t.subject, client_id: t.clientId })
     await autoMessage(t, 'created')
     return { success: true, id: t.id, number: t.legacyId, files: saved.length }
@@ -192,7 +194,7 @@ export async function replyTicket(id, message, files = []) {
     const s = await requirePortal('support')
     const t = oid(id) && (await prisma.crmTicket.findFirst({ where: { id, clientId: s.client.id } }))
     if (!t) throw httpError('Ticket not found', 404)
-    const text = String(message || '').trim().slice(0, 10000)
+    const text = String(message || '').trim().slice(0, 40000)
     const prepared = await prepareFiles(files).catch((e) => { throw httpError(e.message, e.status || 400) })
     if (!text && !prepared.length) throw httpError('Write your reply first')
     const [statuses] = await Promise.all([prisma.crmTicketStatus.findMany()])
@@ -201,7 +203,7 @@ export async function replyTicket(id, message, files = []) {
     const r = await prisma.crmTicketReply.create({ data: { ticketId: id, contactId: s.contact.id, clientId: s.client.id, name, email: s.contact.email, message: toHtml(text) } })
     const saved = await saveTicketFiles({ ticketId: id, replyId: r.id, prepared, uploaderName: name || s.contact.email })
     const updated = await prisma.crmTicket.update({ where: { id }, data: { statusId: open?.id || t.statusId, lastReply: new Date(), adminRead: 0, clientRead: 1 } })
-    void notifyStaffOfClient(updated, { reply: true, text, files: saved })
+    void notifyStaffOfClient(updated, { reply: true, text: stripHtml(text), files: saved })
     emit('ticket.replied', { id: updated.id, number: updated.legacyId, subject: updated.subject, client_id: updated.clientId })
     if (updated.statusId && updated.statusId !== t.statusId) await autoMessage(updated, updated.statusId)
     return { success: true, files: saved.length }

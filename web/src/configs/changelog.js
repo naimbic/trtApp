@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.160.1',
+        date: '2026-11-02',
+        title: 'Ticket messages and more comment boxes use the editor',
+        items: [
+            'Support tickets: the reply box of the team, the new ticket message (team and client area) and the reply box of the client are now the rich text editor (bold, lists, links, colours, tags), no longer a plain text area. Pasted screenshots still go to the attachments. The email the client or the team gets is the text of the message (with its attachment links). Messages are cleaned of scripts on the server; old plain messages display as before.',
+            'Issues (comments) and Grow ideas (comments) use the editor too, with @mentions and #tags.',
+            'Still plain text on purpose: the notes printed on invoices / estimates, and the comments on contracts, estimates and proposals, because the client sees them on the public pages, which only show plain text.',
+        ],
+    },
+    {
         version: '0.160.0',
         date: '2026-11-02',
         title: 'Chat messages: stamps, saved messages, pins, edit and delete, and finer chat permissions',

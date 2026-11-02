@@ -8,6 +8,7 @@ import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
+import RichEditor from '@/components/crm/RichEditor'
 import Select from '@/components/ui/Select'
 import Spinner from '@/components/ui/Spinner'
 import Switcher from '@/components/ui/Switcher'
@@ -119,7 +120,7 @@ const TicketView = () => {
                                     <h5 className="flex items-center gap-2">{internal ? <><TbLock className="text-amber-600" />{tr("Internal note")}</> : tr("Reply")}</h5>
                                     {lk.predefined.length > 0 && <div className="w-56"><Select size="sm" isClearable placeholder={tr("Insert a saved reply")} options={lk.predefined.map((r) => ({ value: r.id, label: r.name }))} value={null} onChange={(o) => { const r = lk.predefined.find((x) => x.id === o?.value); if (r) setReply((x) => (x ? `${x}\n\n${r.message}` : r.message)) }} /></div>}
                                 </div>
-                                <Input textArea rows={6} placeholder={internal ? tr("Write a note for your team (the client never sees it)") : tr("Write your reply. Paste a screenshot (Ctrl+V) or drop files here.")} value={reply} onChange={(e) => setReply(e.target.value)} onPaste={tf.onPaste} />
+                                <div onPaste={tf.onPaste}><RichEditor minHeight={140} images={false} mentions={internal} placeholder={internal ? tr("Write a note for your team (the client never sees it)") : tr("Write your reply. Paste a screenshot (Ctrl+V) or drop files here.")} value={reply} onChange={setReply} /></div>
                                 <FileTray tf={tf} />
                                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                                     <AttachButtons tf={tf} />

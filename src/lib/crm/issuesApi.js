@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import { realPicture } from '@/lib/crm/pictures'
+import { storeRich } from '@/lib/crm/richText'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 
 export const STATUS = { open: 'Open', in_progress: 'In progress', in_review: 'In review', resolved: 'Resolved', closed: 'Closed' }
@@ -157,7 +158,7 @@ export async function addIssueComment(id, text) {
     const a = await access(session)
     const i = await prisma.crmIssue.findFirst({ where: { AND: [{ id: oid(id) || NONE }, visible(a)] } })
     if (!i) throw fail('Issue not found', 404)
-    const body = clean(text, 5000)
+    const body = storeRich(String(text ?? ''), 20000)
     if (!body) throw fail('Write a comment first')
     await prisma.crmIssueComment.create({ data: { issueId: i.id, staffId: a.staffId || null, kind: 'comment', body } })
     await prisma.crmIssue.update({ where: { id: i.id }, data: { updatedAt: new Date() } })

@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
+import RichEditor from '@/components/crm/RichEditor'
 import Select from '@/components/ui/Select'
 import Skeleton from '@/components/ui/Skeleton'
 import classNames from '@/utils/classNames'
@@ -109,7 +110,7 @@ export const Tickets = () => {
                             <div className="flex flex-wrap gap-2">{(d?.priorities || []).map((p) => <button key={p.id} type="button" onClick={() => setV({ ...v, priorityId: v.priorityId === p.id ? null : p.id })} className={classNames('rounded-full border px-3 py-1.5 text-sm font-semibold transition', v.priorityId === p.id ? `${PRIO(p.name)} border-transparent ring-2 ring-primary/40` : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700')}>{p.name}</button>)}</div>
                         </div>
                     </div>
-                    <div className="relative" {...tf.dropProps}><DropHint tf={tf} t={t} /><L>{t('Message')}</L><Input textArea rows={7} placeholder={t('Describe what you need or what went wrong')} value={v.message} onChange={(e) => setV({ ...v, message: e.target.value })} onPaste={tf.onPaste} /><p className="mt-1 text-xs text-gray-400">{t('Paste a screenshot (Ctrl+V) or drop files here.')}</p><FileTray tf={tf} t={t} /><div className="mt-2"><AttachButtons tf={tf} t={t} size="sm" /></div></div>
+                    <div className="relative" {...tf.dropProps}><DropHint tf={tf} t={t} /><L>{t('Message')}</L><div onPaste={tf.onPaste}><RichEditor mentions={false} images={false} minHeight={150} placeholder={t('Describe what you need or what went wrong')} value={v.message} onChange={(h) => setV({ ...v, message: h })} /></div><p className="mt-1 text-xs text-gray-400">{t('Paste a screenshot (Ctrl+V) or drop files here.')}</p><FileTray tf={tf} t={t} /><div className="mt-2"><AttachButtons tf={tf} t={t} size="sm" /></div></div>
                 </div>
                 <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setDialog(false)}>{t('Cancel')}</Button><Button variant="solid" loading={busy} disabled={!v.subject.trim() || !v.message.trim()} onClick={create}>{t('Send request')}</Button></div>
             </Dialog>
@@ -168,7 +169,7 @@ export const TicketThread = () => {
                         <Card>
                             <h5 className="mb-3">{t.closed ? tr('Reply to reopen this request') : tr('Reply')}</h5>
                             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
-                            <Input textArea rows={5} placeholder={tr('Write your message')} value={text} onChange={(e) => setText(e.target.value)} onPaste={tf.onPaste} />
+                            <div onPaste={tf.onPaste}><RichEditor mentions={false} images={false} minHeight={120} placeholder={tr('Write your message')} value={text} onChange={setText} /></div>
                             <p className="mt-1 text-xs text-gray-400">{tr('Paste a screenshot (Ctrl+V) or drop files here.')}</p>
                             <FileTray tf={tf} t={tr} />
                             <div className="mt-3 flex items-center justify-between gap-3"><AttachButtons tf={tf} t={tr} /><Button variant="solid" icon={<TbSend />} loading={busy} disabled={!text.trim() && !tf.items.length} onClick={send}>{tr('Send reply')}</Button></div>

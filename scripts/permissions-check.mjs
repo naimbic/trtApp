@@ -1028,6 +1028,12 @@ try {
         check('the team sees the rating and the automatic messages tagged in the ticket', sd?.body?.ticket?.rating === 4 && sd.body.thread.some((m) => m.auto), JSON.stringify(sd?.body?.ticket?.rating))
         const reo = TID ? await pc('POST', `/tickets/${TID}/close`, { action: 'reopen' }) : null
         check('the client reopens it', reo?.status === 200 && (await prisma.crmTicket.findUnique({ where: { id: TID } })).statusId === openSt?.id, String(reo?.status))
+        // messages written in the editor keep their style and lose scripts, for the client and for the team
+        const rr = TID ? await pc('POST', `/tickets/${TID}/reply`, { message: '<p>Hello <strong>team</strong><script>alert(1)</script> <img src=x onerror=alert(2)></p>' }) : null
+        const rs = TID ? await sa('POST', `/api/crm/support/tickets/${TID}/reply`, { message: '<p>Thanks, <em>noted</em><script>alert(3)</script></p>', notify: false }) : null
+        const thr = TID ? (await sa('GET', `/api/crm/support/tickets/${TID}`)).body?.thread || [] : []
+        check('Ticket messages: a client reply written in the editor keeps its style and loses scripts and event handlers', rr?.status < 300 && thr.some((m) => /<strong>team<\/strong>/.test(m.html || m.message || '')) && !thr.some((m) => /<script|onerror/i.test(m.html || m.message || '')))
+        check('Ticket messages: the team reply too, and plain text still works', rs?.status < 300 && thr.some((m) => /<em>noted<\/em>/.test(m.html || m.message || '')) && (await sa('POST', `/api/crm/support/tickets/${TID}/reply`, { message: 'plain <b> text', notify: false })).status < 300)
         // reminders and tasks (team side)
         const soon = new Date(Date.now() + 3600000).toISOString()
         const rem = TID ? await sa('POST', `/api/crm/support/tickets/${TID}/reminder`, { date: soon, note: 'Call the client' }) : null

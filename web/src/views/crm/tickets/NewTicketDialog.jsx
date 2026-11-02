@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import RichEditor from '@/components/crm/RichEditor'
 import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import { notify, api, upload } from '../kit/api'
@@ -49,7 +50,7 @@ const NewTicketDialog = ({ open, onClose, lookups, onCreated, presets }) => {
                     <div><L>{tr("Priority")}</L><Select isClearable options={opt(lookups.priorities)} value={pick(lookups.priorities, v.priorityId)} onChange={(o) => set({ priorityId: o?.value || null })} placeholder={tr("Medium")} /></div>
                     <div><L>{tr("Assign to")}</L><Select isClearable options={opt(lookups.staff)} value={pick(lookups.staff, v.assignedId)} onChange={(o) => set({ assignedId: o?.value || null })} /></div>
                 </div>
-                <div className="relative" {...tf.dropProps}><DropHint tf={tf} /><L>{tr("Message")}</L><Input textArea rows={7} placeholder={tr("Describe the problem. Paste a screenshot (Ctrl+V) or drop files here.")} value={v.message} onChange={(e) => set({ message: e.target.value })} onPaste={tf.onPaste} /><FileTray tf={tf} /><div className="mt-2"><AttachButtons tf={tf} size="sm" /></div></div>
+                <div className="relative" {...tf.dropProps}><DropHint tf={tf} /><L>{tr("Message")}</L><div onPaste={tf.onPaste}><RichEditor minHeight={150} images={false} mentions={false} placeholder={tr("Describe the problem. Paste a screenshot (Ctrl+V) or drop files here.")} value={v.message} onChange={(h) => set({ message: h })} /></div><FileTray tf={tf} /><div className="mt-2"><AttachButtons tf={tf} size="sm" /></div></div>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={v.notifyClient} onChange={(c) => set({ notifyClient: c })} />{tr("Email the client that the ticket was opened")}</label>
             </div>
             <div className="mt-6 flex justify-end gap-2"><Button onClick={onClose}>{tr("Cancel")}</Button><Button variant="solid" loading={saving} disabled={!v.subject.trim() || (!v.message.trim() && !tf.items.length) || (!v.clientId && !v.email.trim())} onClick={save}>{tr("Create ticket")}</Button></div>

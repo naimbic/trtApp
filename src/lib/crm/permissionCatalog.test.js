@@ -9,7 +9,7 @@ test('roles: Calendar, Team chat and File manager are permissions every standard
         assert.ok(FEATURE_HINTS[k], `${k} has an explanation`)
         for (const [name, perms] of Object.entries(ROLES)) {
             // the administrator roles also carry every extra switch of the tool (the calendar's "see every event" and "edit events of others")
-            if (k === 'calendar' && ['Super Admin', 'Admin'].includes(name)) assert.deepEqual(perms[k], ['view', 'view_all_events', 'edit_others_events'], `${name} has every calendar switch`)
+            if (k === 'calendar' && ['Super Admin', 'Admin'].includes(name)) assert.deepEqual(perms[k], ['view', 'view_all_events', 'edit_others_events', 'close_days'], `${name} has every calendar switch`)
             else if (k === 'chat') assert.deepEqual(perms[k], name === 'Viewer' ? ['view'] : ['view', 'send_files', 'create_groups', 'call', 'client_chats'], `${name} has the chat with its switches (the read-only Viewer only reads)`)
             else assert.deepEqual(perms[k], ['view'], `${name} has ${k}`)
         }

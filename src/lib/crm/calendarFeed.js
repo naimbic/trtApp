@@ -113,7 +113,9 @@ export async function busyFeed(request) {
             where: { start: { lt: to }, OR: [{ end: { gte: from } }, { start: { gte: from }, OR: [{ end: null }, { end: { isSet: false } }] }], ...(only ? { AND: [{ OR: [{ userId: only }, { attendeeIds: { has: only } }] }] } : {}) },
             orderBy: { start: 'asc' }, take: 1000, select: { id: true, start: true, end: true, allDay: true, status: true, userId: true, attendeeIds: true },
         })
-        const out = { data: rows.filter((e) => (e.status || 'confirmed') !== 'declined').map((e) => ({ id: e.id, start: e.start, end: e.end || new Date(+e.start + 3600000), all_day: !!e.allDay, status: e.status || 'confirmed', staff_ids: [...new Set([e.userId, ...(e.attendeeIds || [])].filter(Boolean))] })), from, to }
+        const { closedBlocks } = await import('@/lib/crm/closedDaysApi')
+        const extra = await closedBlocks(from, to) // closed days and the minimum notice: the booking page treats them as busy
+        const out = { rules: extra.rules, data: [...extra.blocks, ...rows.filter((e) => (e.status || 'confirmed') !== 'declined').map((e) => ({ id: e.id, start: e.start, end: e.end || new Date(+e.start + 3600000), all_day: !!e.allDay, status: e.status || 'confirmed', staff_ids: [...new Set([e.userId, ...(e.attendeeIds || [])].filter(Boolean))] }))], from, to }
         log(200)
         return out
     } catch (e) { log(e.status || 500); throw e }

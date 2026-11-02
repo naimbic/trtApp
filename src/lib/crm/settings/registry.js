@@ -369,6 +369,9 @@ export const GROUPS = {
     calendar: {
         label: 'Calendar', icon: 'TbCalendar', desc: 'What shows on the calendar',
         cards: [
+            { title: 'Appointments from the Meet booking page', desc: 'Visitors book a free hour on the booking page. Closed days and the minimum notice below are given to it as busy time, so those hours are never offered. Closed days (holidays, when you are out or too busy) are managed from the Calendar page.', fields: [
+                f('appointment_min_notice_days', 'Earliest day a visitor can book, from today (days)', 'number', { min: 0, max: 30, default: '2', hint: '2 = today and tomorrow cannot be booked (nobody books the day before). 1 = from tomorrow. 0 = no limit.' }),
+            ], links: [['Closed days', '/calendar?closed=1']] },
             { title: 'View', fields: [
                 sel('default_view_calendar', 'Default view', [['dayGridMonth', 'Month'], ['timeGridWeek', 'Week'], ['timeGridDay', 'Day']], { default: 'dayGridMonth' }),
                 sel('calendar_first_day', 'Week starts on', [['1', 'Monday'], ['0', 'Sunday'], ['6', 'Saturday']], { default: '1' }),

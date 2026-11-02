@@ -5,7 +5,7 @@ import Container from '@/components/shared/Container'
 import CalendarView from '@/components/shared/CalendarView'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
-import { TbPlus, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers, TbChevronLeft, TbChevronRight, TbCalendarEvent, TbCalendarWeek, TbAlertTriangle, TbDots, TbCheck, TbExternalLink, TbCircleCheck, TbRotate, TbUserPlus, TbCalendarDue, TbChecklist } from 'react-icons/tb'
+import { TbPlus, TbCalendarOff, TbRefresh, TbVideo, TbMapPin, TbUser, TbBuilding, TbUsers, TbChevronLeft, TbChevronRight, TbCalendarEvent, TbCalendarWeek, TbAlertTriangle, TbDots, TbCheck, TbExternalLink, TbCircleCheck, TbRotate, TbUserPlus, TbCalendarDue, TbChecklist } from 'react-icons/tb'
 import RowMenu from '@/components/crm/RowMenu'
 import { STATUS, useTaskStatuses } from '../tasks/shared'
 import { InvoiceHead } from '../sales/InvoiceInsights'
@@ -15,6 +15,7 @@ import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EventDialog from './EventDialog'
 import SyncDialog from './SyncDialog'
+import ClosedDays from './ClosedDays'
 import useMe from '@/utils/hooks/useMe'
 import './calendar.css'
 import { tr } from '@/utils/t'
@@ -138,6 +139,8 @@ const Calendar = () => {
     const hour12 = (display.timeFormat || (app.time_format === '12' ? '12h' : '24h')) === '12h'
     const [params, setParams] = useSearchParams()
     const [syncOpen, setSyncOpen] = useState(params.get('sync') === '1')
+    const [closedOpen, setClosedOpen] = useState(params.get('closed') === '1')
+    useEffect(() => { if (params.get('closed') === '1') { setClosedOpen(true); setParams({}, { replace: true }) } }, [params, setParams])
     useEffect(() => { if (params.get('sync') === '1') { setSyncOpen(true); setParams({}, { replace: true }) } }, [params, setParams])
     const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
@@ -338,7 +341,7 @@ const Calendar = () => {
         <Container className="h-full">
             <InvoiceHead
                 title={tr("Schedule")}
-                action={<span className="flex flex-wrap items-center gap-2"><Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => openNew()}>{tr("New event")}</Button><Button size="sm" icon={<TbRefresh />} onClick={() => setSyncOpen(true)}>{tr("Sync with Google / Apple")}</Button></span>}
+                action={<span className="flex flex-wrap items-center gap-2"><Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => openNew()}>{tr("New event")}</Button><Button size="sm" icon={<TbCalendarOff />} onClick={() => setClosedOpen(true)}>{tr("Closed days")}</Button><Button size="sm" icon={<TbRefresh />} onClick={() => setSyncOpen(true)}>{tr("Sync with Google / Apple")}</Button></span>}
                 stats={[
                     { icon: <TbCalendarEvent />, label: tr("Today"), value: String(todayCount) },
                     { icon: <TbCalendarWeek />, label: tr("This week"), value: String(weekCount) },
@@ -400,6 +403,7 @@ const Calendar = () => {
             {addMenu && <RowMenu anchor={addMenu.el} items={[{ label: addMenu.time ? `${tr("New event")} · ${dayjs(`${addMenu.day} ${addMenu.time}`).format(hour12 ? 'h:mm A' : 'HH:mm')}` : tr("New event"), icon: <TbCalendarEvent />, onClick: () => openNew(addMenu.day, addMenu.time) }, { label: addMenu.time ? `${tr("New task")} · ${dayjs(addMenu.day).format('DD MMM')}` : tr("New task"), icon: <TbChecklist />, onClick: () => navigate(`/crm/tasks?new=1&due=${addMenu.day}`) }]} onClose={() => setAddMenu(null)} />}
             {menu && <RowMenu anchor={menu.el} items={menuItems(menu.it)} onClose={() => setMenu(null)} />}
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
+            <ClosedDays open={closedOpen} onClose={() => setClosedOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete this event?")} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
                 <p>{tr("The event is removed for everyone who was invited.")}</p>
             </ConfirmDialog>

@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.167.0',
+        date: '2026-11-03',
+        title: 'Meet: no booking the day before, closed days; shorter notifications',
+        items: [
+            'Minimum notice for the Meet booking page: by default today and tomorrow cannot be booked (nobody books the day before). Change it in Settings → Calendar (days from today: 2 by default, 1 = from tomorrow, 0 = no limit). Meet itself now also refuses anything under 48 hours when the CRM cannot be reached.',
+            'Closed days: Calendar → Closed days. Close one day or a period (holidays, Eid, away, too busy) with a reason only the team sees; the Meet booking page never offers those days. New permission “Close days for appointments” in Roles (administrators have it). Both rules reach Meet as busy time, so nothing changes to deploy except the Meet update.',
+            'Notifications: one header for every filter (Unread / Read / All and the kinds) in a single row that slides sideways; the bell popup is 460 px wide; the title and the description of each notification are short (cut at a word, the whole text is in the tooltip) and every line has a light background (tinted when unread) so it is easy to read, hover and click.',
+        ],
+    },
+    {
         version: '0.166.1',
         date: '2026-11-03',
         title: 'Bell popup: Unread / Read / All and the kind filters too',

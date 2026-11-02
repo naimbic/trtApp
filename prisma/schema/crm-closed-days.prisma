@@ -1,0 +1,12 @@
+/// A period when the team takes no appointments (holiday, out of office). Days are calendar days in the company time zone, YYYY-MM-DD.
+model CrmClosedDay {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  fromDay   String
+  toDay     String
+  label     String?
+  createdBy String?  @db.ObjectId
+  createdAt DateTime @default(now())
+
+  @@index([toDay])
+  @@map("crm_closed_days")
+}

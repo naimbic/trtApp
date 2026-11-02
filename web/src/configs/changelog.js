@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.167.1',
+        date: '2026-11-03',
+        title: 'Fix: the client page opened blank',
+        items: ['The client (customer) page crashed to a blank screen since 0.166.0 (a link from a notification could not switch the tab). It opens again, and a notification link to a client request or idea switches the tab even when that client is already open.'],
+    },
+    {
         version: '0.167.0',
         date: '2026-11-03',
         title: 'Meet: no booking the day before, closed days; shorter notifications',

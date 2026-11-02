@@ -35,7 +35,6 @@ const { Tr, Th, Td, THead, TBody } = Table
 /** A related list (contacts, invoices, …) with its own create/edit drawer. */
 const RelatedTab = ({ cfg, onChanged }) => {
     const navigate = useNavigate()
-    const loc = useLocation()
     const can = useCan()
     const resource = getResource(cfg.resource)
     const [reload, setReload] = useState(0)
@@ -121,6 +120,7 @@ const BUBBLE = {
 const ClientDetail = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const loc = useLocation()
     const can = useCan()
     const lookups = useClientLookups()
     const money = makeMoney(lookups.currencies)

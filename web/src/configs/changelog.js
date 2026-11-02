@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.160.3',
+        date: '2026-11-02',
+        title: 'Chat bubble: same full-width messages and tools under the message',
+        items: ['The chat bubble (the flying chat) now shows messages the way the chat page does: full width, the name and time above each group, and the tools (Reply, React, Save, Pin / Edit / Delete) in a small bar under the message when the pointer is on it. The emoji bar floats above the bubble.'],
+    },
+    {
         version: '0.160.2',
         date: '2026-11-02',
         title: 'Chat: any emoji, a full-width conversation, tools under the message, emoji button everywhere',

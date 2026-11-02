@@ -106,7 +106,7 @@ const ChatWidget = () => {
                                 {data.calls && room.kind !== 'team' && room.kind !== 'group' && <button type="button" className="text-xl text-primary" title={tr("Voice call")} onClick={() => phone.start({ roomId: room.id, peerName: room.title })}><PiPhoneCallDuotone /></button>}
                                 <button type="button" className="text-lg text-gray-400" onClick={() => setOpen(false)}><PiXBold /></button>
                             </div>
-                            <ChatThread act={actMsg} can={data.me?.can || {}} load={loadMsgs} send={sendMsg} upload={data.me?.can?.send_files === false ? null : uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} />
+                            <ChatThread wide act={actMsg} can={data.me?.can || {}} load={loadMsgs} send={sendMsg} upload={data.me?.can?.send_files === false ? null : uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} />
                         </>
                     ) : (
                         <>

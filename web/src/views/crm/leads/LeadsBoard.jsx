@@ -148,7 +148,7 @@ const LeadsBoard = () => {
                         onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
                     }}
                     columns={data.statuses.map((c) => ({
-                        id: c.id, name: c.name, color: c.color, count: c.count,
+                        id: c.id, name: c.name, ...(c.id !== 'none' ? { href: `/crm/status/leads/${c.id}`, hrefTitle: tr("Open the page of this status") } : {}), color: c.color, count: c.count,
                         items: c.leads.map((l) => ({ id: l.id, href: `/crm/leads/${l.id}`, title: l.name, sub: l.company, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), todo: l.doText || '', comments: l.notes || 0, label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
                             fields: [{ label: tr("Email"), value: l.email }, { label: tr("Phone"), value: l.phone }, { label: tr("Source"), value: l.source }, { label: tr("Owner"), value: l.assigned?.name }],
                             team: l.assignees || [],

@@ -5278,5 +5278,6 @@ export default {
     "Nothing in this status.": "このステータスには何もありません。",
     "Shown to the client": "お客様に表示",
     "This page does not exist.": "このページは存在しません。",
-    "This status does not exist (any more).": "このステータスは存在しません（または削除されました）。"
+    "This status does not exist (any more).": "このステータスは存在しません（または削除されました）。",
+    "Open the page of this status": "このステータスのページを開く"
 }

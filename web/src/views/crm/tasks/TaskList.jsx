@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import StaffRing from '@/components/crm/StaffRing'
-import { useLocation, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
@@ -53,7 +53,7 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }
                     </div>
                 )}
             </Td>
-            <Td className="w-[150px]"><Pill cls="tpill" style={statusPillStyle(t.status)}>{statusOf(t.status).label}</Pill></Td>
+            <Td className="w-[150px]"><Link to={`/crm/status/tasks/${t.status}`} onClick={(e) => e.stopPropagation()} title={tr("Open the page of this status")}><Pill cls="tpill" style={statusPillStyle(t.status)}>{statusOf(t.status).label}</Pill></Link></Td>
             <Td className="w-[130px]"><Pill cls={PRIO_PILL[t.priority]}>{prioOf(t.priority).label}</Pill></Td>
             <Td className="w-[140px]"><span className={classNames('font-semibold', t.dueDate && !done && dayjs(t.dueDate).endOf('day').isBefore(dayjs()) && 'text-red-500')}>{t.dueDate ? dayjs(t.dueDate).format('MMMM DD') : '-'}</span></Td>
             <Td className="w-[200px]">

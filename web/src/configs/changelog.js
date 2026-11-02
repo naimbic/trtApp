@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.163.1',
+        date: '2026-11-02',
+        title: 'Every status name is a link to its page',
+        items: ['The title of each column on the Tasks board, the Leads board and the client Ideas board, and the status of a task in the task list, now opens the page of that status, like the Notes column opens the Notes page.'],
+    },
+    {
         version: '0.163.0',
         date: '2026-11-02',
         title: 'A page for every status of Tasks, Leads and Ideas; old notes back; new events are public',

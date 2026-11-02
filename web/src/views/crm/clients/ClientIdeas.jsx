@@ -359,7 +359,7 @@ const ClientIdeas = ({ clientId, openId }) => {
                             <Droppable key={s} droppableId={s} isDropDisabled={!d.can.edit}>
                                 {(prov, snap) => (
                                     <div ref={prov.innerRef} {...prov.droppableProps} className={cn('w-[250px] shrink-0 rounded-2xl p-2.5 transition-colors', snap.isDraggingOver ? 'bg-primary/10 ring-2 ring-primary/30' : 'bg-gray-50 dark:bg-gray-800/60')}>
-                                        <div className="mb-2 flex items-center justify-between px-1"><span className="flex items-center gap-2 text-sm font-semibold"><i className={cn('h-2.5 w-2.5 rounded-full', dot)} />{tr(label)}</span><span className="rounded-full bg-white px-2 text-xs text-gray-500 dark:bg-gray-700">{items.length}</span></div>
+                                        <div className="mb-2 flex items-center justify-between px-1"><span className="flex items-center gap-2 text-sm font-semibold"><i className={cn('h-2.5 w-2.5 rounded-full', dot)} /><Link to={`/crm/status/ideas/${s}`} title={tr("Open the page of this status")} className="hover:underline">{tr(label)}</Link></span><span className="rounded-full bg-white px-2 text-xs text-gray-500 dark:bg-gray-700">{items.length}</span></div>
                                         <div className="min-h-[60px] space-y-2">
                                             {items.map((i, idx) => (
                                                 <Draggable key={i.id} draggableId={i.id} index={idx} isDragDisabled={!d.can.edit}>

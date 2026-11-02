@@ -5278,5 +5278,6 @@ export default {
     "Nothing in this status.": "لا شيء في هذه الحالة.",
     "Shown to the client": "ظاهر للعميل",
     "This page does not exist.": "هذه الصفحة غير موجودة.",
-    "This status does not exist (any more).": "هذه الحالة غير موجودة (أو لم تعد موجودة)."
+    "This status does not exist (any more).": "هذه الحالة غير موجودة (أو لم تعد موجودة).",
+    "Open the page of this status": "فتح صفحة هذه الحالة"
 }

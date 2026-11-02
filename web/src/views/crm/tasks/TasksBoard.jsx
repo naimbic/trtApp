@@ -188,7 +188,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         const all = columns[s.value] || []
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {
-                            id: s.value, name: s.label, color: s.color, count: all.length,
+                            id: s.value, name: s.label, href: `/crm/status/tasks/${s.value}`, hrefTitle: tr("Open the page of this status"), color: s.color, count: all.length,
                             items: all.slice(0, limit).map((t) => ({ id: t.id, href: `/crm/tasks/${t.id}`, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, subHref: t.rel?.href, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, labelPill: ['#6b7280', '#2563eb', '#ea580c', '#dc2626'][(t.priority || 1) - 1], priority: t.priority, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, kicker: `${tr("Task")}${t.rel?.label ? ` · ${t.rel.label}` : ''}`,
                                 fields: [{ label: tr("Priority"), value: prioOf(t.priority).label }, { label: tr("Due"), value: fmtDate(t.dueDate) }, { label: tr("Related to"), value: t.rel?.label }, { label: tr("Checklist"), value: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : '' }],
                                 team: t.assignees, comments: t.comments || 0, people: <People list={t.assignees} size={26} /> })),

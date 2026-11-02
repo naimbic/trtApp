@@ -5278,5 +5278,6 @@ export default {
     "Nothing in this status.": "Rien dans ce statut.",
     "Shown to the client": "Visible par le client",
     "This page does not exist.": "Cette page n'existe pas.",
-    "This status does not exist (any more).": "Ce statut n'existe pas (ou plus)."
+    "This status does not exist (any more).": "Ce statut n'existe pas (ou plus).",
+    "Open the page of this status": "Ouvrir la page de ce statut"
 }

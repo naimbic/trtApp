@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.164.2',
+        date: '2026-11-02',
+        title: 'Lead email: a customer who writes again also gets the email in its notes',
+        items: ['When someone who is already a lead writes again, the email is added to that lead (Mails tab, notes, activity and a follow-up task), never as a new lead: this already worked. Now an existing customer who writes again also gets the email added to the notes of its client page, next to the follow-up task.'],
+    },
+    {
         version: '0.164.1',
         date: '2026-11-02',
         title: 'Lead email: match the [LEAD] tag at the start of the subject',

@@ -223,7 +223,9 @@ export async function importOne(cfg, r, dry) {
         const client = await prisma.crmClient.findUnique({ where: { id: contact.clientId }, select: { id: true, company: true } })
         const task = await prisma.crmTask.create({ data: { name: `Existing customer wrote: ${client?.company || lead.name}`, description: lead.description || msg.subject || '', priority: 3, startDate: new Date(), dueDate: new Date(Date.now() + (cfg.followUpHours ?? 24) * 3600000), relType: 'customer', relId: contact.clientId, status: 1 } })
         if (cfg.responsible) await prisma.crmTaskAssigned.create({ data: { taskId: task.id, staffId: cfg.responsible } })
-        return { result: 'duplicate', reason: `Already a customer (${client?.company || 'client'}): a task was created`, leadId: null, lead }
+        // the email itself is kept on the client too (Notes and emails of its page)
+        await prisma.crmNote.create({ data: { relType: 'customer', relId: contact.clientId, description: `Wrote again by email${msg.subject ? ` — ${msg.subject}` : ''}\n\n${lead.description || ''}`.slice(0, 5000), dateContacted: msg.date, addedFrom: null } }).catch(() => {})
+        return { result: 'duplicate', reason: `Already a customer (${client?.company || 'client'}): a task was created and the email was added to its notes`, leadId: null, lead }
     }
     if (existing) {
         await prisma.crmNote.create({ data: { relType: 'lead', relId: existing.id, description: `New enquiry by email${msg.subject ? ` — ${msg.subject}` : ''}\n\n${lead.description || ''}`.slice(0, 5000), dateContacted: msg.date, addedFrom: null } })

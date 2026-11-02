@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { cleanHtml, plainText, looksLikeHtml, unescapeHtml } from './richText.js'
+import { cleanHtml, plainText, looksLikeHtml, unescapeHtml, storeRich } from './richText.js'
 
 test('richText: escaped HTML from the old system is understood, plain text is not mistaken for HTML', () => {
     assert.equal(unescapeHtml('&lt;p&gt;Hi &amp;amp; bye&lt;/p&gt;'), '<p>Hi &amp; bye</p>')
@@ -61,4 +61,11 @@ test('cleanEmailHtml keeps a signature table with styles and pictures, drops any
     assert.doesNotMatch(out, /script|onclick|onerror|javascript|url\(/)
     assert.equal(cleanEmailHtml('Best regards,\nNaim'), 'Best regards,<br>Naim')
     assert.doesNotMatch(cleanEmailHtml('<img src="javascript:alert(1)"><a href="javascript:x()">y</a>'), /javascript/)
+})
+
+test('tables written in the editor are kept (rows, header cells, cells), their attributes are not', () => {
+    const html = '<table><tbody><tr><th colspan="1" rowspan="1" style="width:9px"><p>A</p></th><th><p>B</p></th></tr><tr><td colspan="1"><p>1</p></td><td><p>2</p></td></tr></tbody></table>'
+    const out = storeRich(html)
+    assert.equal(out, '<table><tbody><tr><th><p>A</p></th><th><p>B</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td></tr></tbody></table>')
+    assert.ok(!/<script/i.test(storeRich('<table><tr><td><script>x</script>ok</td></tr></table>')))
 })

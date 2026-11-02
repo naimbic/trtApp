@@ -413,8 +413,10 @@ async function deliverDraft({ id, lead, m, a, how }) {
 /** The scheduled drafts whose time has come are sent (called by the automatic tasks). A send that fails is not retried: the draft keeps the reason and the author is told. */
 export async function sendScheduledMails({ dry = false } = {}) {
     const lines = []
-    const due = await prisma.crmLeadMail.findMany({ where: { direction: 'draft', scheduledAt: { lte: new Date() } }, orderBy: { scheduledAt: 'asc' }, take: 50 })
+    // a draft with NO schedule is stored with scheduledAt = null, and in MongoDB that null also matches "<= now": it must be asked for explicitly
+    const due = await prisma.crmLeadMail.findMany({ where: { direction: 'draft', AND: [{ scheduledAt: { not: null } }, { scheduledAt: { lte: new Date() } }] }, orderBy: { scheduledAt: 'asc' }, take: 50 })
     for (const m of due) {
+        if (!m.scheduledAt) continue
         const lead = await prisma.crmLead.findUnique({ where: { id: m.leadId } })
         const label = `"${m.subject || '(no subject)'}"${lead ? ` (${lead.name})` : ''}`
         if (dry) { lines.push(`[preview] The scheduled mail ${label} would be sent`); continue }
@@ -427,6 +429,8 @@ export async function sendScheduledMails({ dry = false } = {}) {
             if (!lead) throw new Error('The lead no longer exists')
             await deliverDraft({ id: m.leadId, lead, m, a, how: ' (scheduled)' })
             lines.push(`Scheduled mail sent: ${label}`)
+            // the person who scheduled it is told it went out
+            try { if (m.addedFrom) await notifyComment({ by: { staffId: undefined, name: 'CRM' }, text: `✉ Scheduled mail sent: ${m.subject || ''}`, link: `/crm/leads/${m.leadId}`, subject: lead.name, recipients: [m.addedFrom] }) } catch (err) { console.error('[scheduled mail notify]', err.message) }
         } catch (e) {
             const why = String(e.message || e).slice(0, 300)
             await prisma.crmLeadMail.update({ where: { id: m.id }, data: { sendError: why } }).catch(() => {})

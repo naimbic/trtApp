@@ -5390,5 +5390,10 @@ export default {
     "There is no minimum notice (Settings → Calendar).": "No hay antelación mínima (Ajustes → Calendario).",
     "Visitors book a free hour on the booking page. Closed days and the minimum notice below are given to it as busy time, so those hours are never offered. Closed days (holidays, when you are out or too busy) are managed from the Calendar page.": "Los visitantes reservan una hora libre en la página de reservas. Los días cerrados y la antelación mínima de abajo se le dan como tiempo ocupado, así que esas horas nunca se ofrecen. Los días cerrados (vacaciones, ausencia, demasiado ocupado) se gestionan desde la página Calendario.",
     "Visitors can book from {date} at the earliest (minimum notice: {n} day(s), in Settings → Calendar).": "Los visitantes pueden reservar desde el {date} como pronto (antelación mínima: {n} día(s), en Ajustes → Calendario).",
-    "You can see the closed days. Closing days needs the permission “Close days for appointments”.": "Puedes ver los días cerrados. Cerrar días requiere el permiso «Cerrar días para citas»."
+    "You can see the closed days. Closing days needs the permission “Close days for appointments”.": "Puedes ver los días cerrados. Cerrar días requiere el permiso «Cerrar días para citas».",
+    "Add a column": "Añadir una columna",
+    "Add a row": "Añadir una fila",
+    "Delete the column": "Eliminar la columna",
+    "Delete the row": "Eliminar la fila",
+    "Delete the table": "Eliminar la tabla"
 }

@@ -5390,5 +5390,10 @@ export default {
     "There is no minimum notice (Settings → Calendar).": "最短の予約期間は設定されていません（設定→カレンダー）。",
     "Visitors book a free hour on the booking page. Closed days and the minimum notice below are given to it as busy time, so those hours are never offered. Closed days (holidays, when you are out or too busy) are managed from the Calendar page.": "訪問者は予約ページで空いている1時間を予約します。休止日と下の最短予約期間は予約ページに「予定あり」として渡されるため、その時間は提示されません。休止日（休暇・不在・多忙）はカレンダーページで管理します。",
     "Visitors can book from {date} at the earliest (minimum notice: {n} day(s), in Settings → Calendar).": "訪問者が予約できるのは早くても{date}からです（最短予約期間：{n}日、設定→カレンダー）。",
-    "You can see the closed days. Closing days needs the permission “Close days for appointments”.": "休止日は閲覧できます。休止にするには「予約の受付を休止する日」の権限が必要です。"
+    "You can see the closed days. Closing days needs the permission “Close days for appointments”.": "休止日は閲覧できます。休止にするには「予約の受付を休止する日」の権限が必要です。",
+    "Add a column": "列を追加",
+    "Add a row": "行を追加",
+    "Delete the column": "列を削除",
+    "Delete the row": "行を削除",
+    "Delete the table": "表を削除"
 }

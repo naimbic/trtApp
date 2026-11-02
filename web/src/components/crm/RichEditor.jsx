@@ -5,6 +5,10 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import Table from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row'
+import TableHeader from '@tiptap/extension-table-header'
+import TableCell from '@tiptap/extension-table-cell'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextStyle from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
@@ -15,7 +19,7 @@ import { Extension } from '@tiptap/core'
 import { Plugin } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { mentionDirectory } from '@/utils/mentions'
-import { TbAt, TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPhoto, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
+import { TbAt, TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPhoto, TbTable, TbColumnInsertRight, TbRowInsertBottom, TbColumnRemove, TbRowRemove, TbTableOff, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
 import { notify } from '@/views/crm/kit/api'
@@ -136,6 +140,10 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
             mentionMarks(() => namesRef.current),
             Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
             Image.configure({ inline: false }),
+            Table.configure({ resizable: false }),
+            TableRow,
+            TableHeader,
+            TableCell,
             Placeholder.configure({ placeholder: placeholder || '' }),
         ],
         content: cleanHtml(value),
@@ -215,6 +223,16 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <Btn title={tr('Numbered list')} active={editor.isActive('orderedList')} on={() => editor.chain().focus().toggleOrderedList().run()}><TbListNumbers /></Btn>
                     <Btn title={tr('Quote')} active={editor.isActive('blockquote')} on={() => editor.chain().focus().toggleBlockquote().run()}><TbQuote /></Btn>
                     <Btn title={tr('Code')} active={editor.isActive('code')} on={() => editor.chain().focus().toggleCode().run()}><TbCode /></Btn>
+                    <Btn title={tr('Table')} active={editor.isActive('table')} disabled={editor.isActive('table')} on={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TbTable /></Btn>
+                    {editor.isActive('table') && (
+                        <>
+                            <Btn title={tr('Add a column')} on={() => editor.chain().focus().addColumnAfter().run()}><TbColumnInsertRight /></Btn>
+                            <Btn title={tr('Add a row')} on={() => editor.chain().focus().addRowAfter().run()}><TbRowInsertBottom /></Btn>
+                            <Btn title={tr('Delete the column')} on={() => editor.chain().focus().deleteColumn().run()}><TbColumnRemove /></Btn>
+                            <Btn title={tr('Delete the row')} on={() => editor.chain().focus().deleteRow().run()}><TbRowRemove /></Btn>
+                            <Btn title={tr('Delete the table')} on={() => editor.chain().focus().deleteTable().run()}><TbTableOff /></Btn>
+                        </>
+                    )}
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
                     <Btn title={tr('Align left')} active={editor.isActive({ textAlign: 'left' })} on={() => editor.chain().focus().setTextAlign('left').run()}><TbAlignLeft /></Btn>
                     <Btn title={tr('Align centre')} active={editor.isActive({ textAlign: 'center' })} on={() => editor.chain().focus().setTextAlign('center').run()}><TbAlignCenter /></Btn>

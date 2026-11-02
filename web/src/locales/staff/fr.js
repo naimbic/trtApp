@@ -5390,5 +5390,10 @@ export default {
     "There is no minimum notice (Settings → Calendar).": "Il n'y a pas de préavis minimum (Réglages → Calendrier).",
     "Visitors book a free hour on the booking page. Closed days and the minimum notice below are given to it as busy time, so those hours are never offered. Closed days (holidays, when you are out or too busy) are managed from the Calendar page.": "Les visiteurs réservent une heure libre sur la page de réservation. Les jours fermés et le préavis minimum ci-dessous lui sont donnés comme temps occupé : ces heures ne sont donc jamais proposées. Les jours fermés (congés, absence, trop occupé) se gèrent depuis la page Calendrier.",
     "Visitors can book from {date} at the earliest (minimum notice: {n} day(s), in Settings → Calendar).": "Les visiteurs peuvent réserver à partir du {date} au plus tôt (préavis minimum : {n} jour(s), dans Réglages → Calendrier).",
-    "You can see the closed days. Closing days needs the permission “Close days for appointments”.": "Vous voyez les jours fermés. Fermer des jours demande la permission « Fermer des jours aux rendez-vous »."
+    "You can see the closed days. Closing days needs the permission “Close days for appointments”.": "Vous voyez les jours fermés. Fermer des jours demande la permission « Fermer des jours aux rendez-vous ».",
+    "Add a column": "Ajouter une colonne",
+    "Add a row": "Ajouter une ligne",
+    "Delete the column": "Supprimer la colonne",
+    "Delete the row": "Supprimer la ligne",
+    "Delete the table": "Supprimer le tableau"
 }

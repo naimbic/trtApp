@@ -68,7 +68,7 @@ export async function deliverScheduled(m) {
 
 /** The automatic task: sends what is due. A message is claimed first (its next moment moves on), so two runs never send it twice. */
 export async function scheduledMessagesJob({ lines, dry }) {
-    const due = await prisma.crmScheduledMessage.findMany({ where: { active: true, nextAt: { lte: new Date() } }, orderBy: { nextAt: 'asc' }, take: 50 })
+    const due = await prisma.crmScheduledMessage.findMany({ where: { active: true, AND: [{ nextAt: { not: null } }, { nextAt: { lte: new Date() } }] }, orderBy: { nextAt: 'asc' }, take: 50 })
     for (const m of due) {
         if (dry) { lines.push(`[preview] Scheduled message “${m.title}” would be sent (${m.audience})`); continue }
         // the last of a limited series ("2 times") does not schedule another one

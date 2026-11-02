@@ -5390,5 +5390,10 @@ export default {
     "There is no minimum notice (Settings → Calendar).": "لا يوجد حد أدنى للإشعار المسبق (الإعدادات ← التقويم).",
     "Visitors book a free hour on the booking page. Closed days and the minimum notice below are given to it as busy time, so those hours are never offered. Closed days (holidays, when you are out or too busy) are managed from the Calendar page.": "يحجز الزوار ساعة فارغة في صفحة الحجز. تُعطى الأيام المغلقة والحد الأدنى للإشعار أدناه لصفحة الحجز كوقت مشغول فلا تُعرض تلك الساعات أبداً. تُدار الأيام المغلقة (عطل، غياب، انشغال) من صفحة التقويم.",
     "Visitors can book from {date} at the earliest (minimum notice: {n} day(s), in Settings → Calendar).": "يمكن للزوار الحجز بدءاً من {date} على أبكر تقدير (الحد الأدنى للإشعار: {n} يوم، في الإعدادات ← التقويم).",
-    "You can see the closed days. Closing days needs the permission “Close days for appointments”.": "يمكنك رؤية الأيام المغلقة. إغلاق الأيام يتطلب صلاحية «إغلاق أيام أمام المواعيد»."
+    "You can see the closed days. Closing days needs the permission “Close days for appointments”.": "يمكنك رؤية الأيام المغلقة. إغلاق الأيام يتطلب صلاحية «إغلاق أيام أمام المواعيد».",
+    "Add a column": "إضافة عمود",
+    "Add a row": "إضافة صف",
+    "Delete the column": "حذف العمود",
+    "Delete the row": "حذف الصف",
+    "Delete the table": "حذف الجدول"
 }

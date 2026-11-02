@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.167.2',
+        date: '2026-11-03',
+        title: 'Lead mails: no more notifications for drafts that are not scheduled; tables in every editor',
+        items: [
+            'Fixed: a lead draft mail with NO schedule was treated as due by the automatic sending, so the CRM tried to send it at every run and told you “Scheduled mail not sent” again and again (and could even have sent a complete draft by itself). Now only a draft with a date and time that has come is picked up. You are told when a scheduled mail went out, or once when it could not be sent (and why). The same safeguard now protects the note reminders, the ticket reminders and the scheduled messages.',
+            'Every text editor (client requests, notes, comments, replies, ideas, tickets, emails…) can now insert tables: the Table button adds a 3×3 table with a header row, and when the cursor is in the table the buttons add or delete a column, a row or the whole table.',
+        ],
+    },
+    {
         version: '0.167.1',
         date: '2026-11-03',
         title: 'Fix: the client page opened blank',

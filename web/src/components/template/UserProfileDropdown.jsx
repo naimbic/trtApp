@@ -3,7 +3,9 @@ import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useSessionUser } from '@/store/authStore'
 import { Link } from 'react-router'
-import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiRocketLaunchDuotone, PiChartLineUpDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone } from 'react-icons/pi'
+import { useState } from 'react'
+import PhoneApp from '@/components/crm/PhoneApp'
+import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiRocketLaunchDuotone, PiChartLineUpDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone, PiDeviceMobileDuotone } from 'react-icons/pi'
 import { useThemeStore } from '@/store/themeStore'
 import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
@@ -24,6 +26,7 @@ const _UserDropdown = ({ className }) => {
     const { avatar, userName, email, authority = [] } = useSessionUser((state) => state.user)
 
     const { signOut } = useAuth()
+    const [phoneApp, setPhoneApp] = useState(false)
     const { smaller } = useResponsive()
     const me = useMe()
     const chatState = useMyStatus()
@@ -41,6 +44,7 @@ const _UserDropdown = ({ className }) => {
     }
 
     return (
+        <>
         <Dropdown
             className="flex"
             toggleClassName="flex items-center"
@@ -101,6 +105,10 @@ const _UserDropdown = ({ className }) => {
                     </Link>
                 </Dropdown.Item>
             ))}
+            <Dropdown.Item eventKey="phone-app" className="gap-2" onClick={() => setPhoneApp(true)}>
+                <span className="text-xl"><PiDeviceMobileDuotone /></span>
+                <span>{tr("Install the app & notifications")}</span>
+            </Dropdown.Item>
             <Dropdown.Item variant="divider" />
             <Dropdown.Item eventKey="Theme" className="gap-2" onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
                 <span className="text-xl">{mode === 'dark' ? <PiSunDuotone /> : <PiMoonDuotone />}</span>
@@ -117,6 +125,8 @@ const _UserDropdown = ({ className }) => {
                 <span>{tr("Sign Out")}</span>
             </Dropdown.Item>
         </Dropdown>
+        <PhoneApp open={phoneApp} onClose={() => setPhoneApp(false)} />
+        </>
     )
 }
 

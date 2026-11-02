@@ -119,3 +119,21 @@ model CrmSignupRequest {
   @@index([status])
   @@map("crm_signup_requests")
 }
+
+/// A phone or computer that asked to receive push notifications (a team member, or a client contact of the client area).
+model CrmPushSubscription {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  staffId    String?   @db.ObjectId
+  contactId  String?   @db.ObjectId
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  failures   Int       @default(0)
+
+  @@index([staffId])
+  @@index([contactId])
+  @@map("crm_push_subscriptions")
+}

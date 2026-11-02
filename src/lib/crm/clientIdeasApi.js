@@ -8,6 +8,7 @@ import { publicBase } from '@/lib/crm/shortLinks'
 import { realPicture } from '@/lib/crm/pictures'
 import { emit } from '@/lib/crm/webhooks'
 import { notifyComment } from '@/lib/crm/mentionsApi'
+import { pushToContacts } from '@/lib/crm/push'
 import { getIdeaCategories } from '@/lib/crm/ideaCategories'
 import { FALLBACK_CATEGORY } from '@/lib/crm/ideaCategoriesCalc'
 
@@ -89,6 +90,7 @@ async function tellClient(idea, client) {
     const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { email: true, firstName: true, lastName: true } })
     let sent = 0
     const seen = new Set()
+    void pushToContacts({ clientId: client.id }, { title: client.company || 'trtCRM', body: idea.title, url: `/portal/ideas/${idea.id}`, tag: `idea-${idea.id}` })
     for (const c of contacts) {
         const to = String(c.email || '').trim().toLowerCase()
         if (!EMAIL.test(to) || seen.has(to)) continue
@@ -225,6 +227,7 @@ export async function deleteComment(clientId, id, commentId) {
 async function tellClientOfComment(idea, client, who, text) {
     const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { email: true, firstName: true, lastName: true } })
     const seen = new Set()
+    void pushToContacts({ clientId: client.id }, { title: who || 'trtCRM', body: text, url: `/portal/ideas/${idea.id}`, tag: `idea-${idea.id}` })
     for (const c of contacts) {
         const to = String(c.email || '').trim().toLowerCase()
         if (!EMAIL.test(to) || seen.has(to)) continue

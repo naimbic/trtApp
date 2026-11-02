@@ -1,6 +1,6 @@
 /* trtCRM service worker: keeps the app itself (page shell, scripts, styles, fonts, images) in the browser so it opens fast on a slow
    connection. It never touches the API, short links or uploads: personal data is not stored here. */
-const VERSION = 'v1'
+const VERSION = 'v2'
 const ASSETS = `trtcrm-assets-${VERSION}`   // /assets/* files have a hash in their name, so a copy never goes out of date
 const SHELL = `trtcrm-shell-${VERSION}`
 
@@ -47,4 +47,34 @@ self.addEventListener('fetch', (e) => {
             }
         })())
     }
+})
+
+
+/* ---------------------------------------------------------------- push notifications (a message on the screen of the phone, even when the app is closed) */
+self.addEventListener('push', (e) => {
+    let d = {}
+    try { d = e.data ? e.data.json() : {} } catch { d = { body: e.data ? e.data.text() : '' } }
+    e.waitUntil((async () => {
+        // the person is looking at the app right now: the bell and the sound already tell them
+        const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        if (wins.some((w) => w.visibilityState === 'visible' && w.focused)) return
+        await self.registration.showNotification(d.title || 'trtCRM', { body: d.body || '', icon: d.icon, badge: d.badge, tag: d.tag, renotify: !!d.tag, data: { url: d.url || '/' } })
+    })())
+})
+
+self.addEventListener('notificationclick', (e) => {
+    e.notification.close()
+    const url = new URL(e.notification.data?.url || '/', self.location.origin).href
+    e.waitUntil((async () => {
+        const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        for (const w of wins) {
+            if (new URL(w.url).origin === self.location.origin) { await w.focus(); if ('navigate' in w) { try { await w.navigate(url) } catch { /* the page opens it itself */ } } return }
+        }
+        await self.clients.openWindow(url)
+    })())
+})
+
+// the browser renewed the subscription: tell the page, which saves the new one
+self.addEventListener('pushsubscriptionchange', (e) => {
+    e.waitUntil(self.clients.matchAll({ includeUncontrolled: true }).then((all) => all.forEach((c) => c.postMessage({ type: 'push-resubscribe' }))))
 })

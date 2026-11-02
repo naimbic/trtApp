@@ -7,6 +7,7 @@ import { getOptions, setOptions, deliver, escapeHtml } from '@/lib/crm/mailer'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { notifyNewMentions } from '@/lib/crm/mentionsApi'
 import { publicBase } from '@/lib/crm/shortLinks'
+import { pushToStaff, pushToContacts } from '@/lib/crm/push'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -252,6 +253,9 @@ export async function sendMessage(id, body, attachment, replyTo, rich) {
     await prisma.crmChatRoom.update({ where: { id: room.id }, data: { lastMessageAt: m.createdAt, lastMessage: previewOf(shown, att) } })
     await prisma.crmChatRead.upsert({ where: { roomId_memberKey: { roomId: room.id, memberKey: c.key } }, update: { readAt: m.createdAt }, create: { roomId: room.id, memberKey: c.key, readAt: m.createdAt } }).catch(() => {})
     if (html) notifyNewMentions({ by: { staffId: c.staffId, name: c.name }, text: html, prev: '', link: `/crm/chat?room=${room.id}`, subject: 'Chat' }).catch(() => {})
+    // a private message or a group message is pushed to the phones of the others; the answer to a client goes to the client's phone
+    if (room.kind === 'direct' || room.kind === 'group') for (const to of room.staffIds.filter((i) => i !== c.staffId)) void pushToStaff(to, { title: room.kind === 'group' ? `${c.name} · ${room.name || 'Group'}` : c.name, body: shown || previewOf('', att), url: `/crm/chat?room=${room.id}`, tag: `chat-${room.id}` })
+    else if (room.kind === 'client' && room.contactId) void pushToContacts({ contactId: room.contactId }, { title: c.name, body: shown || previewOf('', att), url: '/portal', tag: `chat-${room.id}` })
     return shape(m, c)
 }
 

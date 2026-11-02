@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.161.0',
+        date: '2026-11-02',
+        title: 'Install the app on the phone and get notifications on the screen',
+        items: [
+            'trtCRM is now an installable app (Android and iPhone) with your logo and name: Android → profile menu → Install the app; iPhone → Safari → Share → Add to Home Screen, then open it from the home screen.',
+            'Push notifications: every bell notification (mentions, tasks, assignments…), private and group chat messages, and for clients the answers on tickets, ideas and chat appear on the phone screen, even when the app is closed. Tapping one opens the right page.',
+            'Profile menu → Install the app & notifications (team and client area): install button or steps, turn notifications on or off per device, send a test, remove a device.',
+            'Settings → WhatsApp & Telegram → Push notifications: one switch for the whole company. The VAPID keys are created once automatically and stored encrypted.',
+        ],
+    },
+    {
         version: '0.160.3',
         date: '2026-11-02',
         title: 'Chat bubble: same full-width messages and tools under the message',

@@ -1297,6 +1297,25 @@ try {
         await prisma.crmChatBookmark.deleteMany({ where: { memberKey: { in: [`staff:${uA.staffId}`, `staff:${uB.staffId}`, `staff:${uView.staffId}`] } } })
         await prisma.crmChatMessage.deleteMany({ where: { roomId: R } }); await prisma.crmChatMessage.deleteMany({ where: { body: { startsWith: 'zz view only' } } }); await prisma.crmChatMessage.deleteMany({ where: { OR: [{ body: { startsWith: 'zz chat' } }, { roomId: teamId, body: '' }, { body: { contains: 'pinned a message' } }, { body: { contains: 'unpinned a message' } }] } }); await prisma.crmChatRoom.delete({ where: { id: R } }).catch(() => {})
     }
+    {
+        // Phone app + push notifications: any signed-in member, own devices only, nothing leaks without a session
+        const A = await login(await makeUser('push-a', {}))
+        const noSess = (path, init = {}) => fetch(`${BASE}${path}`, { redirect: 'manual', ...init })
+        check('Push: the app manifest and icons are public', (await noSess('/api/crm/branding/manifest')).status === 200 && (await noSess('/api/crm/branding/pwa-icon?size=192')).status === 200)
+        check('Push: without a session the device list, subscribing and the test are refused', [401, 403].includes((await noSess('/api/crm/push')).status) && [401, 403].includes((await noSess('/api/crm/push/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status) && [401, 403].includes((await noSess('/api/crm/push/test', { method: 'POST' })).status))
+        const st = await A('GET', '/api/crm/push')
+        check('Push: a member gets the public key and an empty device list', st.status === 200 && typeof st.body?.publicKey === 'string' && st.body.publicKey.length > 40 && Array.isArray(st.body.devices) && st.body.devices.length === 0)
+        check('Push: an invalid subscription is refused', (await A('POST', '/api/crm/push/subscribe', { subscription: { endpoint: 'http://x', keys: {} } })).status === 400)
+        const ep = 'https://push.invalid/zz-check-' + Date.now()
+        const sub = { endpoint: ep, keys: { p256dh: 'B'.repeat(87), auth: 'C'.repeat(22) } }
+        check('Push: a device is saved and listed', (await A('POST', '/api/crm/push/subscribe', { subscription: sub, userAgent: 'zz check' })).status === 200 && (await A('GET', '/api/crm/push')).body?.devices?.length === 1)
+        const tst = await A('POST', '/api/crm/push/test', {})
+        check('Push: the test reports a failing device without crashing', tst.status === 200)
+        await A('DELETE', '/api/crm/push/subscribe', { endpoint: ep })
+        check('Push: a device can be removed', (await A('GET', '/api/crm/push')).body?.devices?.length === 0)
+        check('Push: the client area refuses without a client session', [401, 403].includes((await noSess('/api/portal/push')).status))
+        await prisma.crmPushSubscription.deleteMany({ where: { endpoint: { startsWith: 'https://push.invalid/zz-check-' } } }).catch(() => {})
+    }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

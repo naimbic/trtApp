@@ -171,6 +171,9 @@ export const GROUPS = {
                 f('whatsapp_template', 'Template name (optional)', 'text'),
                 f('whatsapp_template_lang', 'Template language', 'text', { default: 'en', hint: 'For example en, fr, es, ja, ar.' }),
             ] },
+            { title: 'Push notifications on phones and computers', desc: 'Everybody can install the app on their phone (Android: Install; iPhone: Share → Add to Home Screen) and switch notifications on from the profile menu → Install the app. Each bell notification and each private chat message then appears on the screen of the phone, even when the app is closed. Off stops all of them.', fields: [
+                yes('push_notifications', 'Send push notifications to phones and computers', { default: '1' }),
+            ] },
             { title: 'Test', panel: 'channelsTest' },
         ],
     },

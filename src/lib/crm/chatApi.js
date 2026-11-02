@@ -149,7 +149,9 @@ async function roomFor(c, id) {
 
 /** The stamps a message can be reacted with. */
 export const STAMPS = ['👍', '❤️', '😂', '🎉', '🙏', '👀', '✅', '🔥']
-const reactionsOf = (m, key) => Object.entries(m.reactions && typeof m.reactions === 'object' ? m.reactions : {}).filter(([e, v]) => STAMPS.includes(e) && Array.isArray(v) && v.length).map(([emoji, keys]) => ({ emoji, count: keys.length, mine: keys.includes(key) }))
+/** One emoji (with its skin tone, joiners, flag...): anything else is refused. */
+export const isEmoji = (e) => typeof e === 'string' && e.length > 0 && e.length <= 24 && /^(?:\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3|\p{Extended_Pictographic}[\p{Extended_Pictographic}\p{Emoji_Modifier}\u200D\uFE0F\u20E3\u{E0020}-\u{E007F}]*)$/u.test(e)
+const reactionsOf = (m, key) => Object.entries(m.reactions && typeof m.reactions === 'object' ? m.reactions : {}).filter(([e, v]) => isEmoji(e) && Array.isArray(v) && v.length).map(([emoji, keys]) => ({ emoji, count: keys.length, mine: keys.includes(key) }))
 const shape = (m, c, marks = null) => {
     const gone = !!m.deletedAt
     const mine = m.senderType === 'staff' && m.senderId === c.staffId
@@ -288,8 +290,9 @@ async function tool(c, m, body) {
     const now = new Date()
     if (action === 'react') {
         need(c, 'chat_messages', 'react', 'react to messages')
-        if (!STAMPS.includes(body.emoji)) throw fail('Choose one of the stamps')
+        if (!isEmoji(body.emoji)) throw fail('Choose an emoji')
         const cur = m.reactions && typeof m.reactions === 'object' ? { ...m.reactions } : {}
+        if (!cur[body.emoji] && Object.keys(cur).length >= 24) throw fail('This message already has plenty of reactions')
         const list = Array.isArray(cur[body.emoji]) ? cur[body.emoji] : []
         cur[body.emoji] = list.includes(c.key) ? list.filter((k) => k !== c.key) : [...list, c.key]
         if (!cur[body.emoji].length) delete cur[body.emoji]

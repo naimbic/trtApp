@@ -5185,5 +5185,9 @@ export default {
     "Delete own messages": "حذف رسائلي",
     "Delete messages of other people": "حذف رسائل الآخرين",
     "The chat bubble and the Chat page: team room, direct messages and calls. Without View they are hidden and the chat refuses this person. The other switches decide who can send files, pictures and voice messages, create groups, make calls, and see and answer the conversations with clients.": "فقاعة الدردشة وصفحتها: غرفة الفريق والرسائل المباشرة والمكالمات. بدون العرض تُخفى وترفض الدردشة هذا الشخص. تحدد المفاتيح الأخرى من يستطيع إرسال الملفات والصور والرسائل الصوتية وإنشاء المجموعات والمكالمات وعرض محادثات العملاء والرد عليها.",
-    "What a person can do with the messages of the chat: react with stamps, save (bookmark) a message for later, pin it for everybody in the conversation, edit and delete their own messages, and delete the messages of other people (for moderators). Needs Team chat → View.": "ما يمكن للشخص فعله برسائل الدردشة: التفاعل بالملصقات وحفظ رسالة لوقت لاحق وتثبيتها للجميع في المحادثة وتعديل رسائله وحذفها وحذف رسائل الآخرين (للمشرفين). يتطلب الدردشة ← العرض."
+    "What a person can do with the messages of the chat: react with stamps, save (bookmark) a message for later, pin it for everybody in the conversation, edit and delete their own messages, and delete the messages of other people (for moderators). Needs Team chat → View.": "ما يمكن للشخص فعله برسائل الدردشة: التفاعل بالملصقات وحفظ رسالة لوقت لاحق وتثبيتها للجميع في المحادثة وتعديل رسائله وحذفها وحذف رسائل الآخرين (للمشرفين). يتطلب الدردشة ← العرض.",
+    "Emoji": "إيموجي",
+    "More emojis": "المزيد من الإيموجي",
+    "Choose an emoji": "اختر إيموجي",
+    "This message already has plenty of reactions": "هذه الرسالة لديها تفاعلات كثيرة بالفعل"
 }

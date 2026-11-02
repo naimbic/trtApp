@@ -5185,5 +5185,9 @@ export default {
     "Delete own messages": "Eliminar los propios mensajes",
     "Delete messages of other people": "Eliminar mensajes de otras personas",
     "The chat bubble and the Chat page: team room, direct messages and calls. Without View they are hidden and the chat refuses this person. The other switches decide who can send files, pictures and voice messages, create groups, make calls, and see and answer the conversations with clients.": "La burbuja de chat y la página Chat: sala del equipo, mensajes directos y llamadas. Sin Ver quedan ocultas y el chat rechaza a esta persona. Los demás interruptores deciden quién puede enviar archivos, imágenes y mensajes de voz, crear grupos, hacer llamadas, y ver y responder las conversaciones con clientes.",
-    "What a person can do with the messages of the chat: react with stamps, save (bookmark) a message for later, pin it for everybody in the conversation, edit and delete their own messages, and delete the messages of other people (for moderators). Needs Team chat → View.": "Lo que una persona puede hacer con los mensajes del chat: reaccionar con sellos, guardar (marcador) un mensaje para después, fijarlo para todos en la conversación, editar y eliminar los propios, y eliminar los de otras personas (moderadores). Requiere Chat del equipo → Ver."
+    "What a person can do with the messages of the chat: react with stamps, save (bookmark) a message for later, pin it for everybody in the conversation, edit and delete their own messages, and delete the messages of other people (for moderators). Needs Team chat → View.": "Lo que una persona puede hacer con los mensajes del chat: reaccionar con sellos, guardar (marcador) un mensaje para después, fijarlo para todos en la conversación, editar y eliminar los propios, y eliminar los de otras personas (moderadores). Requiere Chat del equipo → Ver.",
+    "Emoji": "Emoji",
+    "More emojis": "Más emojis",
+    "Choose an emoji": "Elija un emoji",
+    "This message already has plenty of reactions": "Este mensaje ya tiene muchas reacciones"
 }

@@ -7,6 +7,8 @@ import dayjs from 'dayjs'
 import { PiPaperPlaneTiltFill, PiPaperclipDuotone, PiMicrophoneDuotone, PiStopFill, PiXBold, PiFileDuotone, PiArrowBendUpLeftBold, PiCameraDuotone, PiTextAaBold, PiDotsThreeBold, PiCheckSquareDuotone, PiUsersDuotone, PiBuildingsDuotone, PiTagDuotone, PiSmileyDuotone, PiStarDuotone, PiStarFill, PiPushPinDuotone, PiPushPinFill, PiPencilSimpleDuotone, PiTrashDuotone, PiCaretDownBold } from 'react-icons/pi'
 import classNames from '@/utils/classNames'
 import { ping, STAMPS } from './chatKit'
+import EmojiPicker from '@/components/crm/EmojiPicker'
+import { createPortal } from 'react-dom'
 import { tr } from '@/utils/t'
 
 const POLL = 3000
@@ -29,7 +31,7 @@ const time = (d) => (dayjs(d).isSame(dayjs(), 'day') ? dayjs(d).format('HH:mm') 
  * Message list + composer, shared by the staff widget and the client portal.
  * load(after) -> { messages, ...extra }   send(body) -> message   onData(extra) gets everything but messages.
  */
-const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr("No messages yet. Say hello!"), placeholder = tr("Write a message…"), rich = false, onMessageAction, people = [], refreshSignal = 0, act = null, can = {} }) => {
+const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr("No messages yet. Say hello!"), placeholder = tr("Write a message…"), rich = false, onMessageAction, people = [], refreshSignal = 0, act = null, can = {}, wide = false }) => {
     const [html, setHtml] = useState('')
     const [fmt, setFmt] = useState(false) // the full formatting bar of the rich editor
     const editorRef = useRef(null)
@@ -48,8 +50,21 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
     const nowRef = useRef(null)
     const [pinned, setPinned] = useState([])
     const [pinOpen, setPinOpen] = useState(false)
-    const [stampFor, setStampFor] = useState(null) // the message whose stamp picker is open
+    const [stampFor, setStampFor] = useState(null) // { id, rect }: the message whose stamp picker is open and where its button is
     const [editing, setEditing] = useState(null) // { id, text, html }
+    useEffect(() => {
+        if (!stampFor) return undefined
+        const away = (e) => { if (!e.target.closest?.('[data-stamp-bar]') && !e.target.closest?.('[data-emoji-picker]')) setStampFor(null) }
+        document.addEventListener('pointerdown', away, true)
+        return () => document.removeEventListener('pointerdown', away, true)
+    }, [stampFor])
+    const addEmoji = (e) => {
+        if (rich) { editorRef.current?.chain().focus().insertContent(e).run(); return }
+        const el = input.current
+        const a = el ? el.selectionStart : text.length, b = el ? el.selectionEnd : text.length
+        setText((t) => `${t.slice(0, a)}${e}${t.slice(b)}`)
+        setTimeout(() => { if (el) { el.focus(); el.setSelectionRange(a + e.length, a + e.length) } }, 0)
+    }
 
     const pull = useCallback(async (full) => {
         try {
@@ -172,29 +187,31 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                     {pinOpen && <div className="absolute inset-x-0 top-full z-20 max-h-56 overflow-y-auto border-b border-amber-200 bg-amber-50 shadow-lg dark:border-amber-500/30 dark:bg-gray-800">{pinned.map((p) => <button key={p.id} type="button" onClick={() => goTo(p.id)} className="flex w-full items-start gap-2 px-3 py-1.5 text-start hover:bg-amber-100 dark:hover:bg-gray-700"><PiPushPinDuotone className="mt-0.5 shrink-0 text-amber-600" /><span className="min-w-0 flex-1"><b>{p.senderName}</b> <span className="text-gray-400">{time(p.at)}</span><span className="block truncate">{p.text}</span></span></button>)}</div>}
                 </div>
             )}
-            <div ref={box} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60 }} className="flex-1 space-y-1 overflow-y-auto px-4 py-3">
+            <div ref={box} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60 }} className={classNames('flex-1 space-y-1 overflow-y-auto px-4 pt-3', wide ? 'pb-10' : 'pb-3')}>
                 {msgs && !msgs.length && <div className="py-10 text-center text-sm text-gray-400">{empty}</div>}
                 {(msgs || []).map((m, i) => {
                     const prev = msgs[i - 1]
                     if (m.system) return <div key={m.id} className="py-2 text-center text-xs text-gray-400">{m.body} · {time(m.at)}</div>
                     const firstOfRun = !prev || prev.mine !== m.mine || prev.senderName !== m.senderName || +new Date(m.at) - +new Date(prev.at) > 5 * 60000
                     const isEditing = editing?.id === m.id
+                    const onDark = m.mine && !wide // only the bubble in the main colour is dark
                     const hasMenu = (rich && onMessageAction && !m.deleted) || (act && !m.deleted && (can.pin || m.canEdit || m.canDelete))
                     return (
-                        <div key={m.id} className={classNames('flex flex-col', m.mine ? 'items-end' : 'items-start', firstOfRun && i > 0 && 'pt-2')}>
-                            {firstOfRun && !m.mine && showSender && <span className="mb-0.5 px-1 text-xs font-semibold text-gray-500">{m.senderName}</span>}
-                            <div className={classNames('group/msg relative flex max-w-[92%] items-center gap-1', m.mine && 'flex-row-reverse')}>
-                                <div data-mid={m.id} title={time(m.at)} className={classNames('min-w-0 whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm', m.deleted ? 'rounded-bl-md border border-dashed border-gray-300 italic text-gray-400 dark:border-gray-600' : m.mine ? 'rounded-br-md bg-primary text-white' : 'rounded-bl-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100', m.pinned && !m.deleted && 'ring-1 ring-amber-400/70')}>
+                        <div key={m.id} className={classNames('flex flex-col', wide ? 'w-full items-stretch' : m.mine ? 'items-end' : 'items-start', firstOfRun && i > 0 && 'pt-2')}>
+                            {wide && firstOfRun && <div className="mb-0.5 flex items-baseline gap-2 px-1"><b className="text-sm text-gray-800 dark:text-gray-100">{m.mine ? tr("You") : m.senderName}</b><span className="text-[11px] text-gray-400">{time(m.at)}{m.edited ? ` · ${tr("edited")}` : ''}{m.bookmarked ? ' ⭐' : ''}</span></div>}
+                            {!wide && firstOfRun && !m.mine && showSender && <span className="mb-0.5 px-1 text-xs font-semibold text-gray-500">{m.senderName}</span>}
+                            <div className={classNames('group/msg relative', wide ? 'block w-full pb-1' : classNames('flex max-w-[92%] items-center gap-1', m.mine && 'flex-row-reverse'))}>
+                                <div data-mid={m.id} title={time(m.at)} className={classNames('min-w-0 whitespace-pre-wrap break-words px-3 py-2 text-sm', wide ? 'w-full rounded-xl' : 'rounded-2xl', m.deleted ? classNames('border border-dashed border-gray-300 italic text-gray-400 dark:border-gray-600', !wide && 'rounded-bl-md') : wide ? (m.mine ? 'bg-primary/10 text-gray-800 dark:text-gray-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100') : m.mine ? 'rounded-br-md bg-primary text-white' : 'rounded-bl-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100', m.pinned && !m.deleted && 'ring-1 ring-amber-400/70')}>
                                     {m.deleted ? <span className="flex items-center gap-1"><PiTrashDuotone />{tr("This message was deleted")}</span> : (
                                         <>
                                             {m.pinned && <span className="mb-0.5 flex items-center gap-1 text-[11px] font-semibold opacity-80"><PiPushPinFill />{tr("Pinned")}</span>}
                                             {m.replyTo && (
-                                                <button type="button" onClick={() => goTo(m.replyTo.id)} className={classNames('mb-1 block w-full rounded-lg border-s-4 px-2 py-1 text-start text-xs', m.mine ? 'border-white/70 bg-white/15' : 'border-primary bg-white/70 dark:bg-gray-600')}>
+                                                <button type="button" onClick={() => goTo(m.replyTo.id)} className={classNames('mb-1 block w-full rounded-lg border-s-4 px-2 py-1 text-start text-xs', onDark ? 'border-white/70 bg-white/15' : 'border-primary bg-white/70 dark:bg-gray-600')}>
                                                     <span className="block font-semibold">{m.replyTo.name}</span>
                                                     <span className="line-clamp-2 opacity-80">{m.replyTo.text}</span>
                                                 </button>
                                             )}
-                                            {m.attachment && <Attachment a={m.attachment} mine={m.mine} />}
+                                            {m.attachment && <Attachment a={m.attachment} mine={onDark} />}
                                             {isEditing ? (
                                                 <div className="min-w-[200px] space-y-1.5 text-gray-800">
                                                     {m.rich
@@ -202,23 +219,23 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                                                         : <textarea autoFocus rows={2} value={editing.text} maxLength={2000} onChange={(e) => setEditing((x) => ({ ...x, text: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(m) } else if (e.key === 'Escape') setEditing(null) }} className="w-full resize-none rounded-lg bg-white px-2 py-1 text-sm outline-none ring-1 ring-primary/40" />}
                                                     <div className="flex justify-end gap-1.5"><button type="button" onClick={() => setEditing(null)} className="rounded-lg bg-white/80 px-2 py-0.5 text-xs font-semibold text-gray-600">{tr("Cancel")}</button><button type="button" onClick={() => saveEdit(m)} className="rounded-lg bg-white px-2 py-0.5 text-xs font-semibold text-primary">{tr("Save")}</button></div>
                                                 </div>
-                                            ) : m.rich ? <div className={classNames('-mx-1 rounded-xl px-2 py-1', m.mine ? 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100' : 'bg-white dark:bg-gray-800')}><RichView html={m.rich} /></div> : <Mentioned text={m.body} onDark={m.mine} />}
+                                            ) : m.rich ? <div className={classNames('-mx-1 rounded-xl px-2 py-1', onDark ? 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100' : 'bg-white dark:bg-gray-800')}><RichView html={m.rich} /></div> : <Mentioned text={m.body} onDark={onDark} />}
                                             {(m.tags?.length > 0 || m.assigneeIds?.length > 0 || m.taskId || m.clientId || m.leadId) && (
                                                 <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
-                                                    {(m.tags || []).map((t) => <span key={t} className={classNames('rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-primary/10 text-primary')}>#{t}</span>)}
-                                                    {m.assigneeIds?.length > 0 && <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-600')}><PiUsersDuotone />{m.assigneeIds.map((id) => people.find((p) => p.id === id)?.name?.split(' ')[0]).filter(Boolean).join(', ') || m.assigneeIds.length}</span>}
-                                                    {m.taskId && <a href={`/crm/tasks/${m.taskId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold', m.mine ? 'bg-white/20 underline' : 'bg-emerald-100 text-emerald-700')}><PiCheckSquareDuotone />{tr("Task")}</a>}
-                                                    {m.clientId && <a href={`/crm/clients/${m.clientId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-sky-100 text-sky-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Client emailed") : tr("Client")}</a>}
-                                                    {m.leadId && <a href={`/crm/leads/${m.leadId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', m.mine ? 'bg-white/20 underline' : 'bg-violet-100 text-violet-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Lead emailed") : tr("Lead")}</a>}
+                                                    {(m.tags || []).map((t) => <span key={t} className={classNames('rounded-full px-1.5 py-0.5', onDark ? 'bg-white/20' : 'bg-primary/10 text-primary')}>#{t}</span>)}
+                                                    {m.assigneeIds?.length > 0 && <span className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', onDark ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-600')}><PiUsersDuotone />{m.assigneeIds.map((id) => people.find((p) => p.id === id)?.name?.split(' ')[0]).filter(Boolean).join(', ') || m.assigneeIds.length}</span>}
+                                                    {m.taskId && <a href={`/crm/tasks/${m.taskId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold', onDark ? 'bg-white/20 underline' : 'bg-emerald-100 text-emerald-700')}><PiCheckSquareDuotone />{tr("Task")}</a>}
+                                                    {m.clientId && <a href={`/crm/clients/${m.clientId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', onDark ? 'bg-white/20 underline' : 'bg-sky-100 text-sky-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Client emailed") : tr("Client")}</a>}
+                                                    {m.leadId && <a href={`/crm/leads/${m.leadId}`} target="_blank" rel="noreferrer" className={classNames('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5', onDark ? 'bg-white/20 underline' : 'bg-violet-100 text-violet-700')}><PiBuildingsDuotone />{m.clientMailed ? tr("Lead emailed") : tr("Lead")}</a>}
                                                 </div>
                                             )}
                                         </>
                                     )}
                                 </div>
                                 {!m.deleted && (
-                                    <>
+                                    <div className={wide ? 'absolute left-2 top-full z-20 -mt-2 flex items-center gap-0.5 rounded-lg border border-gray-200 bg-white px-1 py-0.5 opacity-0 shadow-md transition focus-within:opacity-100 group-hover/msg:opacity-100 dark:border-gray-600 dark:bg-gray-800 [&_button]:!opacity-100 [&_span[role=button]]:!opacity-100' : 'contents'}>
                                         <button type="button" title={tr("Reply")} aria-label={tr("Reply")} onClick={() => { setReplyTo({ id: m.id, name: m.mine ? tr("You") : m.senderName, text: preview(m) }); input.current?.focus() }} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base text-gray-400 opacity-0 transition hover:bg-gray-100 hover:text-primary focus:opacity-100 group-hover/msg:opacity-100 dark:hover:bg-gray-700"><PiArrowBendUpLeftBold /></button>
-                                        {act && can.react && <button type="button" title={tr("React")} aria-label={tr("React")} onClick={() => setStampFor((x) => (x === m.id ? null : m.id))} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base text-gray-400 opacity-0 transition hover:bg-gray-100 hover:text-amber-500 focus:opacity-100 group-hover/msg:opacity-100 dark:hover:bg-gray-700"><PiSmileyDuotone /></button>}
+                                        {act && can.react && <button type="button" title={tr("React")} aria-label={tr("React")} onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setStampFor((x) => (x?.id === m.id ? null : { id: m.id, rect })) }} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base text-gray-400 opacity-0 transition hover:bg-gray-100 hover:text-amber-500 focus:opacity-100 group-hover/msg:opacity-100 dark:hover:bg-gray-700"><PiSmileyDuotone /></button>}
                                         {act && can.bookmark && <button type="button" title={m.bookmarked ? tr("Remove from saved") : tr("Save for later")} aria-label={tr("Save for later")} aria-pressed={!!m.bookmarked} onClick={() => tool(m, { action: 'bookmark', on: !m.bookmarked })} className={classNames('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base transition hover:bg-gray-100 dark:hover:bg-gray-700', m.bookmarked ? 'text-amber-500 opacity-100' : 'text-gray-400 opacity-0 hover:text-amber-500 focus:opacity-100 group-hover/msg:opacity-100')}>{m.bookmarked ? <PiStarFill /> : <PiStarDuotone />}</button>}
                                         {hasMenu && (
                                             <Dropdown placement={m.mine ? 'bottom-end' : 'bottom-start'} renderTitle={<span role="button" tabIndex={0} title={tr("More")} aria-label={tr("More")} className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-base text-gray-400 opacity-0 hover:bg-gray-100 hover:text-gray-600 group-hover/msg:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><PiDotsThreeBold /></span>}>
@@ -230,24 +247,30 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                                                 {rich && onMessageAction && <Dropdown.Item eventKey="client" onClick={() => onMessageAction(m, 'client')}><PiBuildingsDuotone className="text-lg" /><span>{tr("Link a client and email them")}</span></Dropdown.Item>}
                                             </Dropdown>
                                         )}
-                                    </>
-                                )}
-                                {stampFor === m.id && (
-                                    <div className={classNames('absolute -top-9 z-20 flex gap-0.5 rounded-full border border-gray-200 bg-white px-1.5 py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800', m.mine ? 'right-0' : 'left-0')} onMouseLeave={() => setStampFor(null)}>
-                                        {STAMPS.map((e) => <button key={e} type="button" onClick={() => { setStampFor(null); tool(m, { action: 'react', emoji: e }) }} className="rounded-full px-1 text-lg transition hover:scale-125">{e}</button>)}
                                     </div>
                                 )}
                             </div>
                             {m.reactions?.length > 0 && (
-                                <div className={classNames('mt-0.5 flex max-w-[92%] flex-wrap gap-1', m.mine ? 'justify-end' : 'justify-start')}>
+                                <div className={classNames('mt-0.5 flex flex-wrap gap-1', wide ? 'w-full justify-start px-1' : classNames('max-w-[92%]', m.mine ? 'justify-end' : 'justify-start'))}>
                                     {m.reactions.map((r) => <button key={r.emoji} type="button" disabled={!act || !can.react} onClick={() => tool(m, { action: 'react', emoji: r.emoji })} className={classNames('flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs transition', r.mine ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300')}><span>{r.emoji}</span><b>{r.count}</b></button>)}
                                 </div>
                             )}
-                            {(!msgs[i + 1] || msgs[i + 1].mine !== m.mine || +new Date(msgs[i + 1].at) - +new Date(m.at) > 5 * 60000) && <span className="px-1 pt-0.5 text-[11px] text-gray-400">{time(m.at)}{m.edited ? ` · ${tr("edited")}` : ''}{m.bookmarked ? ' ⭐' : ''}</span>}
+                            {!wide && (!msgs[i + 1] || msgs[i + 1].mine !== m.mine || +new Date(msgs[i + 1].at) - +new Date(m.at) > 5 * 60000) && <span className="px-1 pt-0.5 text-[11px] text-gray-400">{time(m.at)}{m.edited ? ` · ${tr("edited")}` : ''}{m.bookmarked ? ' ⭐' : ''}</span>}
                         </div>
                     )
                 })}
             </div>
+            {stampFor && (() => {
+                const msg = (msgs || []).find((x) => x.id === stampFor.id)
+                if (!msg) return null
+                const above = stampFor.rect.top > 70
+                const left = Math.max(8, Math.min(stampFor.rect.left - 40, window.innerWidth - 400))
+                return createPortal(
+                    <div data-stamp-bar style={{ position: 'fixed', left, top: above ? stampFor.rect.top - 46 : stampFor.rect.bottom + 6, zIndex: 100003 }} className="flex items-center gap-0.5 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-2xl dark:border-gray-600 dark:bg-gray-800">
+                        {STAMPS.map((e) => <button key={e} type="button" onClick={() => { setStampFor(null); tool(msg, { action: 'react', emoji: e }) }} className="rounded-full px-1 text-xl transition hover:scale-125">{e}</button>)}
+                        <EmojiPicker title={tr('More emojis')} onPick={(e) => { setStampFor(null); tool(msg, { action: 'react', emoji: e }) }} className="!size-8 !text-xl" />
+                    </div>, document.body)
+            })()}
             {err && <div className="px-4 pb-1 text-xs text-red-500">{err}</div>}
             {recording ? (
                 <div className="flex items-center gap-3 border-t border-gray-200 p-3 dark:border-gray-700">
@@ -266,6 +289,7 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                 )}
                 <div className="flex items-end gap-2 p-3">
                     {upload && <button type="button" onClick={() => fileInput.current?.click()} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title={tr("Attach a file or picture")}><PiPaperclipDuotone /></button>}
+                    <EmojiPicker onPick={addEmoji} className="!size-9 shrink-0 !rounded-xl !text-xl" />
                     {rich ? (
                         <>
                             {upload && <button type="button" onClick={screenshot} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title={tr("Take a screenshot")}><PiCameraDuotone /></button>}

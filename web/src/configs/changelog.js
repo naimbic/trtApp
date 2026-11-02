@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.160.2',
+        date: '2026-11-02',
+        title: 'Chat: any emoji, a full-width conversation, tools under the message, emoji button everywhere',
+        items: [
+            'Reactions: besides the 8 quick stamps there is a "more" button with a full emoji picker (about 600 emojis in 8 groups: faces, hands, hearts, animals, food, sport and travel, objects, symbols and flags). Any emoji is accepted, with skin tones, flags and joined ones; text and markup are refused. The picker floats above everything, so it is never cut by the conversation or hidden behind another message.',
+            'Chat page: messages use the full width of the conversation, with the name and the time above each group of messages. The tools (Reply, React, Save, Pin / Edit / Delete...) appear in a small bar under the message when the pointer is on it. The chat bubble keeps the compact bubbles.',
+            'An emoji button next to the paperclip of the chat box, and in the toolbar of every rich text editor (tickets, comments, notes, ideas), inserts an emoji where the cursor is.',
+        ],
+    },
+    {
         version: '0.160.1',
         date: '2026-11-02',
         title: 'Ticket messages and more comment boxes use the editor',

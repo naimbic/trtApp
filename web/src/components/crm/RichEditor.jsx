@@ -19,6 +19,7 @@ import { TbAt, TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbL
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
 import { notify } from '@/views/crm/kit/api'
+import EmojiPicker from './EmojiPicker'
 import { MentionBox, mentionItems, MENTION_TRIGGER } from './MentionLayer'
 import classNames from '@/utils/classNames'
 import { tr } from '@/utils/t'
@@ -218,6 +219,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <Btn title={tr('Align right')} active={editor.isActive({ textAlign: 'right' })} on={() => editor.chain().focus().setTextAlign('right').run()}><TbAlignRight /></Btn>
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
                     {mentions && <Btn title={tr('Mention a colleague')} on={() => editor.chain().focus().insertContent('@').run()}><TbAt /></Btn>}
+                    <EmojiPicker onPick={(e) => editor.chain().focus().insertContent(e).run()} />
                     <Btn title={tr('Link')} active={editor.isActive('link')} on={link}><TbLink /></Btn>
                     <Btn title={tr('Clear formatting')} on={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><TbClearFormatting /></Btn>
                     {images && <Btn title={tr('Picture')} disabled={busy} on={() => fileRef.current?.click()}><TbPhoto /></Btn>}

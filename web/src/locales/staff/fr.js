@@ -5185,5 +5185,9 @@ export default {
     "Delete own messages": "Supprimer ses propres messages",
     "Delete messages of other people": "Supprimer les messages des autres",
     "The chat bubble and the Chat page: team room, direct messages and calls. Without View they are hidden and the chat refuses this person. The other switches decide who can send files, pictures and voice messages, create groups, make calls, and see and answer the conversations with clients.": "La bulle de chat et la page Chat : salon d'équipe, messages directs et appels. Sans Voir, ils sont masqués et le chat refuse cette personne. Les autres interrupteurs décident qui peut envoyer des fichiers, images et messages vocaux, créer des groupes, passer des appels, et voir et répondre aux conversations avec les clients.",
-    "What a person can do with the messages of the chat: react with stamps, save (bookmark) a message for later, pin it for everybody in the conversation, edit and delete their own messages, and delete the messages of other people (for moderators). Needs Team chat → View.": "Ce qu'une personne peut faire des messages du chat : réagir avec des stickers, enregistrer (favori) un message pour plus tard, l'épingler pour tous dans la conversation, modifier et supprimer ses propres messages, et supprimer ceux des autres (pour les modérateurs). Nécessite Chat d'équipe → Voir."
+    "What a person can do with the messages of the chat: react with stamps, save (bookmark) a message for later, pin it for everybody in the conversation, edit and delete their own messages, and delete the messages of other people (for moderators). Needs Team chat → View.": "Ce qu'une personne peut faire des messages du chat : réagir avec des stickers, enregistrer (favori) un message pour plus tard, l'épingler pour tous dans la conversation, modifier et supprimer ses propres messages, et supprimer ceux des autres (pour les modérateurs). Nécessite Chat d'équipe → Voir.",
+    "Emoji": "Emoji",
+    "More emojis": "Plus d'emojis",
+    "Choose an emoji": "Choisissez un emoji",
+    "This message already has plenty of reactions": "Ce message a déjà beaucoup de réactions"
 }

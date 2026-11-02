@@ -5185,5 +5185,9 @@ export default {
     "Delete own messages": "自分のメッセージを削除",
     "Delete messages of other people": "他の人のメッセージを削除",
     "The chat bubble and the Chat page: team room, direct messages and calls. Without View they are hidden and the chat refuses this person. The other switches decide who can send files, pictures and voice messages, create groups, make calls, and see and answer the conversations with clients.": "チャットバブルとチャットページ:チーム、ダイレクトメッセージ、通話。「表示」がないと非表示になり、チャットは利用できません。その他のスイッチで、ファイル・画像・音声メッセージの送信、グループ作成、通話、クライアントとの会話の閲覧と返信を許可するかを決めます。",
-    "What a person can do with the messages of the chat: react with stamps, save (bookmark) a message for later, pin it for everybody in the conversation, edit and delete their own messages, and delete the messages of other people (for moderators). Needs Team chat → View.": "チャットのメッセージでできること:スタンプでリアクション、後で見るために保存(ブックマーク)、会話の全員向けにピン留め、自分のメッセージの編集と削除、他の人のメッセージの削除(モデレーター向け)。「チーム チャット → 表示」が必要です。"
+    "What a person can do with the messages of the chat: react with stamps, save (bookmark) a message for later, pin it for everybody in the conversation, edit and delete their own messages, and delete the messages of other people (for moderators). Needs Team chat → View.": "チャットのメッセージでできること:スタンプでリアクション、後で見るために保存(ブックマーク)、会話の全員向けにピン留め、自分のメッセージの編集と削除、他の人のメッセージの削除(モデレーター向け)。「チーム チャット → 表示」が必要です。",
+    "Emoji": "絵文字",
+    "More emojis": "もっと絵文字",
+    "Choose an emoji": "絵文字を選んでください",
+    "This message already has plenty of reactions": "このメッセージにはすでに多くのリアクションがあります"
 }

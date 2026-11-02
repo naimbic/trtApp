@@ -2,6 +2,12 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.166.1',
+        date: '2026-11-03',
+        title: 'Bell popup: Unread / Read / All and the kind filters too',
+        items: ['The bell popup now has the same Unread, Read and All tabs and the same kind filters (Tasks, Leads, Mentions, Requests…) as the Notifications page, with the compact lines, the read / unread button on each line, and a click that opens the item.'],
+    },
+    {
         version: '0.166.0',
         date: '2026-11-03',
         title: 'Notifications redone: unread / read, every kind in one place, and a click lands on the item',

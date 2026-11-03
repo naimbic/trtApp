@@ -45,7 +45,7 @@ const ProposalEditor = () => {
                 const cloned = !id && !!inv // a duplicate: the content of another document, as a new draft with a new number and today's dates
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
                 const dd = l.defaults || {}
-                const dueAfter = dd.openFor !== '' && dd.openFor != null ? Number(dd.openFor) : 14
+                const dueAfter = dd.openFor !== '' && dd.openFor != null ? Number(dd.openFor) : 7
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     subject: inv?.subject || '', relType: inv?.relType || (params.get('leadId') ? 'lead' : 'customer'), relId: inv?.relId || params.get('clientId') || params.get('leadId') || null,

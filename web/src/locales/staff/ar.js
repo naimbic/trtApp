@@ -5413,5 +5413,8 @@ export default {
     "Uploaded on records": "المرفوعة على السجلات",
     "Accept, refuse and move the ideas on the board (administrators always can)": "قبول الأفكار ورفضها ونقلها على اللوحة (المسؤولون يستطيعون دائماً)",
     "Only an administrator accepts, refuses or moves an idea": "المسؤول وحده يقبل الفكرة أو يرفضها أو ينقلها",
-    "Another manager has to set the support for your goal": "يجب أن يحدد مسؤول آخر الدعم لهدفك"
+    "Another manager has to set the support for your goal": "يجب أن يحدد مسؤول آخر الدعم لهدفك",
+    "The due date a new invoice starts with: the day it is created plus these days.": "تاريخ استحقاق الفاتورة الجديدة: يوم إنشائها زائد هذه الأيام.",
+    "The “valid until” date a new estimate starts with: the day it is created plus these days.": "تاريخ «صالح حتى» لعرض السعر الجديد: يوم إنشائه زائد هذه الأيام.",
+    "The “open until” date a new proposal starts with: the day it is created plus these days.": "تاريخ «مفتوح حتى» للمقترح الجديد: يوم إنشائه زائد هذه الأيام."
 }

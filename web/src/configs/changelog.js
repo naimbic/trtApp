@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.169.5',
+        date: '2026-11-03',
+        title: 'Proposals, estimates and invoices: 7 days by default',
+        items: [
+            'A new proposal is open for 7 days from the day it is created (“Open until”), a new estimate is valid for 7 days (“Valid until”) and a new invoice is due in 7 days, instead of 14, 14 and 30. The number of days is still yours to change in Settings → Proposals / Estimates / Invoices (a value saved there before is kept).',
+        ],
+    },
+    {
         version: '0.169.4',
         date: '2026-11-03',
         title: 'Lead cards: the company name on top, in bold',

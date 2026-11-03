@@ -5413,5 +5413,8 @@ export default {
     "Uploaded on records": "Subidos en fichas",
     "Accept, refuse and move the ideas on the board (administrators always can)": "Aceptar, rechazar y mover las ideas del tablero (los administradores siempre pueden)",
     "Only an administrator accepts, refuses or moves an idea": "Solo un administrador acepta, rechaza o mueve una idea",
-    "Another manager has to set the support for your goal": "Otro responsable debe fijar el apoyo para su objetivo"
+    "Another manager has to set the support for your goal": "Otro responsable debe fijar el apoyo para su objetivo",
+    "The due date a new invoice starts with: the day it is created plus these days.": "El vencimiento con el que empieza una factura nueva: el día de su creación más estos días.",
+    "The “valid until” date a new estimate starts with: the day it is created plus these days.": "La fecha «válido hasta» de un presupuesto nuevo: el día de su creación más estos días.",
+    "The “open until” date a new proposal starts with: the day it is created plus these days.": "La fecha «abierta hasta» de una propuesta nueva: el día de su creación más estos días."
 }

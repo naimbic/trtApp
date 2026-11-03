@@ -41,7 +41,7 @@ const EstimateEditor = () => {
                 const def = l.currencies.find((c) => c.isDefault) || l.currencies[0]
                 const dd = l.defaults || {}
                 const pc = !inv && params.get('clientId') ? await api(`/api/crm/customers/${params.get('clientId')}`).catch(() => null) : null // a new one for a client: its currency
-                const dueAfter = dd.validFor !== '' && dd.validFor != null ? Number(dd.validFor) : 14
+                const dueAfter = dd.validFor !== '' && dd.validFor != null ? Number(dd.validFor) : 7
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,

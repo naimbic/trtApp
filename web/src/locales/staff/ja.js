@@ -5413,5 +5413,8 @@ export default {
     "Uploaded on records": "レコードにアップロード済み",
     "Accept, refuse and move the ideas on the board (administrators always can)": "ボード上のアイデアの承認・却下・移動（管理者は常に可能）",
     "Only an administrator accepts, refuses or moves an idea": "アイデアの承認・却下・移動は管理者のみ可能です",
-    "Another manager has to set the support for your goal": "あなたの目標の支援額は別の責任者が設定する必要があります"
+    "Another manager has to set the support for your goal": "あなたの目標の支援額は別の責任者が設定する必要があります",
+    "The due date a new invoice starts with: the day it is created plus these days.": "新しい請求書の支払期限：作成日にこの日数を足した日。",
+    "The “valid until” date a new estimate starts with: the day it is created plus these days.": "新しい見積書の「有効期限」：作成日にこの日数を足した日。",
+    "The “open until” date a new proposal starts with: the day it is created plus these days.": "新しい提案書の「公開期限」：作成日にこの日数を足した日。"
 }

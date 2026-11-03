@@ -50,7 +50,7 @@ const InvoiceEditor = () => {
                 const dd = l.defaults || {}
                 // a new invoice for a client (the + on its page): the client's currency and bank account, not the company default
                 const pc = !inv && params.get('clientId') ? await api(`/api/crm/customers/${params.get('clientId')}`).catch(() => null) : null
-                const dueAfter = dd.dueAfter !== '' && dd.dueAfter != null ? Number(dd.dueAfter) : 30
+                const dueAfter = dd.dueAfter !== '' && dd.dueAfter != null ? Number(dd.dueAfter) : 7
                 const baseLine = () => ({ ...emptyLine(), taxes: (dd.taxes || []).filter((t) => l.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     clientId: inv?.clientId || params.get('clientId') || null,

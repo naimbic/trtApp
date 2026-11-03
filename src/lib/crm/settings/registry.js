@@ -220,7 +220,7 @@ export const GROUPS = {
             numbering('invoice', 'invoice_prefix', 'FA -', 'next_invoice_number', 'invoice_number_format', 'invoice_number_reset', 'delete_only_on_last_invoice', 'invoice_number_decrement_on_delete'),
             { title: 'Existing invoices', desc: 'Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.', panel: 'invoiceFormatApply' },
             { title: 'Defaults for new invoices', fields: [
-                f('invoice_due_after', 'Due after (days)', 'number', { min: 0, max: 365, hint: 'The due date a new invoice starts with.' }),
+                f('invoice_due_after', 'Due after (days)', 'number', { min: 0, max: 365, default: '7', hint: 'The due date a new invoice starts with: the day it is created plus these days.' }),
                 f('predefined_clientnote_invoice', 'Client note', 'textarea', { rows: 3 }),
                 f('predefined_terms_invoice', 'Terms & conditions', 'textarea', { rows: 8 }),
             ] },
@@ -242,7 +242,7 @@ export const GROUPS = {
         cards: [
             numbering('estimate', 'estimate_prefix', 'DE -', 'next_estimate_number', 'estimate_number_format', 'estimate_number_reset', 'delete_only_on_last_estimate', 'estimate_number_decrement_on_delete'),
             { title: 'Defaults for new estimates', fields: [
-                f('estimate_due_after', 'Valid for (days)', 'number', { min: 0, max: 365 }),
+                f('estimate_due_after', 'Valid for (days)', 'number', { min: 0, max: 365, default: '7', hint: 'The “valid until” date a new estimate starts with: the day it is created plus these days.' }),
                 f('predefined_clientnote_estimate', 'Client note', 'textarea', { rows: 3 }),
                 f('predefined_terms_estimate', 'Terms & conditions', 'textarea', { rows: 6 }),
             ] },
@@ -261,7 +261,7 @@ export const GROUPS = {
                 f('proposal_number_prefix', 'Prefix', 'text', { max: 20, hint: 'The proposal number is its running number after this prefix.' }),
             ] },
             { title: 'Defaults', fields: [
-                f('proposal_due_after', 'Open for (days)', 'number', { min: 0, max: 365 }),
+                f('proposal_due_after', 'Open for (days)', 'number', { min: 0, max: 365, default: '7', hint: 'The “open until” date a new proposal starts with: the day it is created plus these days.' }),
             ] },
             { title: 'Client answers', fields: [
                 yes('proposal_auto_convert_to_invoice_on_client_accept', 'Create an invoice automatically when the client accepts', { hint: 'Only for proposals made for a client (not a lead).' }),

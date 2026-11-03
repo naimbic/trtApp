@@ -5410,5 +5410,8 @@ export default {
     "Started: the reviews arrive in the chats within a few minutes": "بدأ الإرسال: ستصل المراجعات إلى المحادثات خلال دقائق",
     "On records": "على السجلات",
     "Open the record": "افتح السجل",
-    "Uploaded on records": "المرفوعة على السجلات"
+    "Uploaded on records": "المرفوعة على السجلات",
+    "Accept, refuse and move the ideas on the board (administrators always can)": "قبول الأفكار ورفضها ونقلها على اللوحة (المسؤولون يستطيعون دائماً)",
+    "Only an administrator accepts, refuses or moves an idea": "المسؤول وحده يقبل الفكرة أو يرفضها أو ينقلها",
+    "Another manager has to set the support for your goal": "يجب أن يحدد مسؤول آخر الدعم لهدفك"
 }

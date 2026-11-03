@@ -17,6 +17,10 @@ export const PERIODS = ['daily', 'weekly', 'monthly', 'once']
 export const STATUSES = ['new', 'accepted', 'doing', 'done', 'dismissed']
 const staffName = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || ''
 
+/** Who accepts, refuses and moves ideas: administrators, and the people given "Accept or refuse ideas" in Grow. Editing an idea is not enough. */
+const canDecide = (authority) => isCrmAdmin(authority) || hasCap(authority, 'grow', 'approve')
+const NOT_DECIDER = 'Only an administrator accepts, refuses or moves an idea'
+
 async function gate(cap = 'view') {
     const session = await requirePermission('grow', cap)
     return { session, authority: session.user.authority || [], staffId: await getStaffId(session), name: session.user.name || session.user.email }
@@ -103,7 +107,7 @@ export async function listIdeas(q = {}) {
     const tags = {}; for (const i of all) for (const t of i.tags) tags[t] = (tags[t] || 0) + 1
     const counts = {}; for (const i of all) counts[i.status] = (counts[i.status] || 0) + 1
     const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true } })
-    return { list: rows.map((r) => shapeIdea(r, people, tMap[r.taskId])), counts, tags: Object.entries(tags).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([name, n]) => ({ name, n })), staff: staff.map((s) => ({ id: s.id, name: staffName(s) })), can: { create: hasCap(g.authority, 'grow', 'create'), edit: hasCap(g.authority, 'grow', 'edit'), delete: hasCap(g.authority, 'grow', 'delete'), task: hasCap(g.authority, 'tasks', 'create') } }
+    return { list: rows.map((r) => shapeIdea(r, people, tMap[r.taskId])), counts, tags: Object.entries(tags).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([name, n]) => ({ name, n })), staff: staff.map((s) => ({ id: s.id, name: staffName(s) })), can: { create: hasCap(g.authority, 'grow', 'create'), edit: hasCap(g.authority, 'grow', 'edit'), decide: canDecide(g.authority), delete: hasCap(g.authority, 'grow', 'delete'), task: hasCap(g.authority, 'tasks', 'create') } }
 }
 
 const cleanTags = (v) => [...new Set((Array.isArray(v) ? v : String(v || '').split(',')).map((t) => String(t).trim().toLowerCase().replace(/\s+/g, '-').slice(0, 30)).filter(Boolean))].slice(0, 10)
@@ -124,11 +128,13 @@ export async function saveIdea(body = {}, id = null) {
     if (id) {
         const prev = oid(id) && (await prisma.crmGrowIdea.findUnique({ where: { id } }))
         if (!prev) throw fail('Idea not found', 404)
+        if (data.status !== undefined && data.status !== prev.status && !canDecide(g.authority)) throw fail(NOT_DECIDER, 403)
         await prisma.crmGrowIdea.update({ where: { id }, data })
         const added = (data.assigneeIds || []).filter((x) => !(prev.assigneeIds || []).includes(x) && x !== g.staffId)
         await notifyAssigned(added, data.title || prev.title, id, g.name, g.staffId)
         return { success: true, id }
     }
+    if (data.status && data.status !== 'new' && !canDecide(g.authority)) throw fail(NOT_DECIDER, 403) // a new idea starts as new: somebody else decides
     const row = await prisma.crmGrowIdea.create({ data: { category: 'other', period: 'once', priority: 2, tags: [], assigneeIds: [], ...data, source: 'manual', addedFrom: g.staffId } })
     await notifyAssigned((row.assigneeIds || []).filter((x) => x !== g.staffId), row.title, row.id, g.name, g.staffId)
     emit('idea.created', { id: row.id, title: row.title, category: row.category })
@@ -177,6 +183,7 @@ export async function ideaToTask(id, body = {}) {
     if (!hasCap(g.authority, 'tasks', 'create')) throw fail('You are not allowed to create tasks', 403)
     const idea = oid(id) && (await prisma.crmGrowIdea.findUnique({ where: { id } }))
     if (!idea) throw fail('Idea not found', 404)
+    if (idea.status === 'new' && !canDecide(g.authority)) throw fail(NOT_DECIDER, 403) // making a task accepts the idea
     if (idea.taskId && (await prisma.crmTask.findUnique({ where: { id: idea.taskId }, select: { id: true } }))) throw fail('This idea already has a task', 409)
     const assignees = [...new Set(((Array.isArray(body.assigneeIds) && body.assigneeIds.length ? body.assigneeIds : idea.assigneeIds) || []).map(oid).filter(Boolean))]
     const due = body.dueDate ? new Date(body.dueDate) : idea.dueDate

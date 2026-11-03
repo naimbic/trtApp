@@ -5410,5 +5410,8 @@ export default {
     "Started: the reviews arrive in the chats within a few minutes": "Iniciado: las revisiones llegan a los chats en unos minutos",
     "On records": "En fichas",
     "Open the record": "Abrir la ficha",
-    "Uploaded on records": "Subidos en fichas"
+    "Uploaded on records": "Subidos en fichas",
+    "Accept, refuse and move the ideas on the board (administrators always can)": "Aceptar, rechazar y mover las ideas del tablero (los administradores siempre pueden)",
+    "Only an administrator accepts, refuses or moves an idea": "Solo un administrador acepta, rechaza o mueve una idea",
+    "Another manager has to set the support for your goal": "Otro responsable debe fijar el apoyo para su objetivo"
 }

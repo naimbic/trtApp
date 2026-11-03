@@ -154,7 +154,7 @@ const IdeaDialog = ({ idea, lookups, onClose, onChanged }) => {
                         <div><L>{tr("Category")}</L><Select size="sm" isDisabled={dis} isSearchable={false} options={catOpts} value={catOpts.find((o) => o.value === v.category)} onChange={(o) => set({ category: o.value })} /></div>
                         <div><L>{tr("Repeats")}</L><Select size="sm" isDisabled={dis} isSearchable={false} options={perOpts} value={perOpts.find((o) => o.value === v.period)} onChange={(o) => set({ period: o.value })} /></div>
                         <div><L>{tr("Priority")}</L><Select size="sm" isDisabled={dis} isSearchable={false} options={prOpts} value={prOpts.find((o) => o.value === v.priority)} onChange={(o) => set({ priority: o.value })} /></div>
-                        <div><L>{tr("Status")}</L><Select size="sm" isDisabled={dis || isNew} isSearchable={false} options={stOpts} value={stOpts.find((o) => o.value === v.status)} onChange={(o) => set({ status: o.value })} /></div>
+                        <div><L>{tr("Status")}</L><Select size="sm" isDisabled={dis || isNew || !can.decide} isSearchable={false} options={stOpts} value={stOpts.find((o) => o.value === v.status)} onChange={(o) => set({ status: o.value })} /></div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div><L>{tr("Assigned to")}</L><Select size="sm" isMulti isDisabled={dis} options={staffOpts} value={staffOpts.filter((o) => v.assigneeIds.includes(o.value))} onChange={(o) => set({ assigneeIds: (o || []).map((x) => x.value) })} /></div>
@@ -173,7 +173,7 @@ const IdeaDialog = ({ idea, lookups, onClose, onChanged }) => {
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2">
                 {idea.id && can.delete && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setDel(true)}>{tr("Delete")}</Button>}
-                {idea.id && can.edit && can.task && !idea.taskId && <Button icon={<TbChecklist />} loading={busy} onClick={toTask}>{tr("Make a task")}</Button>}
+                {idea.id && can.edit && can.task && !idea.taskId && (can.decide || idea.status !== 'new') && <Button icon={<TbChecklist />} loading={busy} onClick={toTask}>{tr("Make a task")}</Button>}
                 {idea.taskId && <Link to={`/crm/tasks/${idea.taskId}`} className="text-sm text-primary hover:underline">{tr("Open its task")}</Link>}
                 <div className="ms-auto flex gap-2"><Button onClick={onClose}>{tr("Close")}</Button>{!dis && <Button variant="solid" loading={busy} onClick={save}>{tr("Save")}</Button>}</div>
             </div>
@@ -227,11 +227,11 @@ const Ideas = ({ openId }) => {
                                         <div className="mb-2 flex items-center justify-between px-1"><span className="flex items-center gap-2 text-sm font-semibold"><i className={cn('h-2.5 w-2.5 rounded-full', STATUS[c][1])} />{tr(STATUS[c][0])}</span><span className="text-xs text-gray-400">{items.length}</span></div>
                                         <div className="min-h-[60px] space-y-2">
                                             {items.map((i, idx) => (
-                                                <Draggable key={i.id} draggableId={i.id} index={idx} isDragDisabled={!d.can.edit}>
+                                                <Draggable key={i.id} draggableId={i.id} index={idx} isDragDisabled={!d.can.decide}>
                                                     {(p2, s2) => (
                                                         <div ref={p2.innerRef} {...p2.draggableProps} {...p2.dragHandleProps} className={cn('group relative', s2.isDragging && 'rotate-1 shadow-xl')}>
                                                             <IdeaCard i={i} onOpen={setSel} />
-                                                            {d.can.edit && c !== 'done' && c !== 'dismissed' && !s2.isDragging && (
+                                                            {d.can.decide && c !== 'done' && c !== 'dismissed' && !s2.isDragging && (
                                                                 <div className="absolute end-2 top-2 hidden gap-1 group-hover:flex">{c === 'new' && <button type="button" className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'accepted')}>{tr("Accept")}</button>}<button type="button" className="rounded-md bg-gray-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'dismissed')}>{tr("Dismiss")}</button></div>
                                                             )}
                                                         </div>

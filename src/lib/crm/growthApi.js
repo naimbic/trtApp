@@ -16,7 +16,7 @@ async function gate() {
     const authority = session.user.authority || []
     const staffId = await getStaffId(session)
     if (!staffId) throw fail('Only team members have a growth plan', 403)
-    return { authority, staffId, name: session.user.name || session.user.email, seeAll: isCrmAdmin(authority) || hasCap(authority, 'grow', 'view') || hasCap(authority, 'growth', 'view_team') || hasCap(authority, 'growth', 'manage'), manage: isCrmAdmin(authority) || hasCap(authority, 'grow', 'edit') || hasCap(authority, 'growth', 'manage'), remove: isCrmAdmin(authority) || hasCap(authority, 'grow', 'delete') }
+    return { authority, staffId, name: session.user.name || session.user.email, seeAll: isCrmAdmin(authority) || hasCap(authority, 'grow', 'view') || hasCap(authority, 'growth', 'view_team') || hasCap(authority, 'growth', 'manage'), manage: isCrmAdmin(authority) || hasCap(authority, 'growth', 'manage'), remove: isCrmAdmin(authority) || hasCap(authority, 'grow', 'delete') }
 }
 
 const notify = (toIds, description, link, byName, byId) => Promise.all([...new Set(toIds.filter(Boolean))].map((to) => prisma.crmNotification.create({ data: { toUserId: to, fromUserId: byId || undefined, fromFullName: byName || null, description: description.slice(0, 200), link, additionalData: 'growth', isRead: false } }).catch(() => {})))
@@ -162,7 +162,8 @@ export async function saveGoal(id, body = {}) {
     if (body.targetDate !== undefined) data.targetDate = date(body.targetDate)
     if (body.doneDate !== undefined) data.doneDate = date(body.doneDate)
     if (g.manage) {
-        if (body.supportAmount !== undefined) data.supportAmount = money(body.supportAmount)
+        // nobody sets the company support on their own goal (an administrator may on their own, another manager does for the others)
+        if (body.supportAmount !== undefined) { if (owner === g.staffId && !isCrmAdmin(g.authority)) throw fail('Another manager has to set the support for your goal', 403); data.supportAmount = money(body.supportAmount) }
         if (body.approved !== undefined && !!body.approved !== !!cur?.approved) {
             // nobody approves their own goal: another manager does
             if (owner === g.staffId) throw fail('Another manager has to approve your goal', 403)

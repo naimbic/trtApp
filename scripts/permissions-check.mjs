@@ -559,7 +559,7 @@ try {
     console.log('\n== Grow: dashboard, ideas, routine')
     {
         const t0 = new Date()
-        const gNone = await makeUser('grow-none', {}), gView = await makeUser('grow-view', { grow: ['view'] }), gEdit = await makeUser('grow-edit', { grow: ['view', 'create', 'edit'], tasks: ['view', 'create'] }), gDel = await makeUser('grow-del', { grow: ['view', 'delete'] })
+        const gNone = await makeUser('grow-none', {}), gView = await makeUser('grow-view', { grow: ['view'] }), gEdit = await makeUser('grow-edit', { grow: ['view', 'create', 'edit', 'approve'], growth: ['view', 'manage'], tasks: ['view', 'create'] }), gDel = await makeUser('grow-del', { grow: ['view', 'delete'] })
         const n = await login(gNone), v = await login(gView), e = await login(gEdit), d = await login(gDel)
         check('Grow is closed to a member without the permission', (await n('GET', '/api/crm/grow')).status === 403 && (await n('GET', '/api/crm/grow/ideas')).status === 403)
         const ov = await v('GET', '/api/crm/grow')
@@ -619,7 +619,7 @@ try {
     console.log('\n== My growth: goals, catalog, primes, team overview')
     {
         const t0 = new Date()
-        const gNone = await makeUser('gw-none', {}), gA = await makeUser('gw-a', { growth: ['view'] }), gB = await makeUser('gw-b', { growth: ['view'] }), gV = await makeUser('gw-viewer', { growth: ['view'], grow: ['view'] }), gM = await makeUser('gw-manager', { growth: ['view'], grow: ['view', 'edit'] }), gD = await makeUser('gw-deleter', { growth: ['view'], grow: ['view', 'edit', 'delete'] })
+        const gNone = await makeUser('gw-none', {}), gA = await makeUser('gw-a', { growth: ['view'] }), gB = await makeUser('gw-b', { growth: ['view'] }), gV = await makeUser('gw-viewer', { growth: ['view'], grow: ['view'] }), gM = await makeUser('gw-manager', { growth: ['view', 'manage'], grow: ['view', 'edit'] }), gD = await makeUser('gw-deleter', { growth: ['view', 'manage'], grow: ['view', 'edit', 'delete'] })
         const n = await login(gNone), a = await login(gA), b = await login(gB), v = await login(gV), m = await login(gM), d = await login(gD)
         check('without the My growth permission everything is closed', (await n('GET', '/api/crm/growth')).status === 403 && (await n('GET', '/api/crm/growth/goals')).status === 403)
         const cat = await a('GET', '/api/crm/growth')
@@ -1162,6 +1162,26 @@ try {
     if (kk.body?.id || kk.body?.key?.id) { const kid = kk.body.id || kk.body.key.id; check('...and revokes it', [200, 204].includes((await pApiE('DELETE', `/api/crm/api-keys/${kid}`)).status)); await prisma.crmApiKey?.deleteMany?.({ where: { id: kid } }).catch(() => {}) }
     check('AI: refused without the permission; View uses it but cannot change the settings', (await pNone('GET', '/api/crm/ai/settings')).status === 403 && (await pAiV('GET', '/api/crm/ai/settings')).status === 200 && (await pAiV('PUT', '/api/crm/ai/settings', { systemPrompt: 'x' })).status === 403)
     check('AI monthly team review: refused without the AI permission; View may only ask for their own review, only Edit sends it to the team', (await pNone('GET', '/api/crm/ai/coach')).status === 403 && (await pNone('POST', '/api/crm/ai/coach', { who: 'me' })).status === 403 && (await pAiV('GET', '/api/crm/ai/coach')).status === 200 && (await pAiV('POST', '/api/crm/ai/coach', { who: 'all' })).status === 403)
+    {
+        // Grow ideas: writing or editing an idea is not deciding it; only an administrator (or "Accept or refuse ideas") accepts, refuses or moves it
+        const gEd = await login(await makeUser('grow-idea-editor', { grow: ['view', 'create', 'edit'], growth: ['view'], tasks: ['view', 'create'] })), gAp = await login(await makeUser('grow-approve', { grow: ['view', 'create', 'edit', 'approve'] })), gAdm = await login(await makeUser('grow-admin', {}, true))
+        const direct = await gEd('POST', '/api/crm/grow/ideas', { title: 'permcheck idea accepted', status: 'accepted' })
+        const plain = await gEd('POST', '/api/crm/grow/ideas', { title: 'permcheck idea' })
+        if (plain.body?.id) made.rows.unshift(['crmGrowIdea', plain.body.id])
+        check('Grow ideas: an editor cannot create an idea already accepted, a plain one is created as new', direct.status === 403 && plain.status === 201, `${direct.status}/${plain.status}`)
+        const id = plain.body?.id
+        check('Grow ideas: an editor can change the text but not accept, refuse or move the idea', !!id && (await gEd('PUT', `/api/crm/grow/ideas/${id}`, { title: 'permcheck idea edited' })).status === 200 && (await gEd('PUT', `/api/crm/grow/ideas/${id}`, { status: 'accepted' })).status === 403 && (await gEd('PUT', `/api/crm/grow/ideas/${id}`, { status: 'dismissed' })).status === 403)
+        check('Grow ideas: an editor cannot make a task from a new idea (it would accept it)', !!id && (await gEd('POST', `/api/crm/grow/ideas/${id}/task`, {})).status === 403)
+        check('Grow ideas: an administrator and a person with "Accept or refuse ideas" can decide', !!id && (await gAp('PUT', `/api/crm/grow/ideas/${id}`, { status: 'accepted' })).status === 200 && (await gAdm('PUT', `/api/crm/grow/ideas/${id}`, { status: 'dismissed' })).status === 200)
+        const gMem = await login(await makeUser('growth-member', { growth: ['view'] }))
+        const goal = await gMem('POST', '/api/crm/growth/goals', { title: 'permcheck certificate', kind: 'certification' })
+        if (goal.body?.id) made.rows.unshift(['crmSkillGoal', goal.body.id])
+        const gid = goal.body?.id
+        await gMem('PUT', `/api/crm/growth/goals/${gid}`, { approved: true })
+        const stays = ((await gMem('GET', '/api/crm/growth/goals')).body?.list || []).find((x) => x.id === gid)?.approved === false
+        check('Growth goals: a member adds a certificate; an idea editor cannot approve it, the member cannot approve their own, an administrator can', goal.status === 201 && (await gEd('PUT', `/api/crm/growth/goals/${gid}`, { approved: true })).status === 403 && stays && (await gAdm('PUT', `/api/crm/growth/goals/${gid}`, { approved: true })).status === 200, String(goal.status))
+        check('Grow ideas: the list says who may decide', (await gEd('GET', '/api/crm/grow/ideas')).body?.can?.decide === false && (await gAdm('GET', '/api/crm/grow/ideas')).body?.can?.decide === true)
+    }
     check('File manager "On records": a person with no rights sees no file of a record, and cannot attach it to a draft', (await pNone('GET', '/api/crm/media?records=1')).status === 200 && ((await pNone('GET', '/api/crm/media?records=1')).body?.list || []).every((f) => f.relType !== 'ticket' && f.relType !== 'invoice'))
     check('Payroll: refused without the permission; View reads; only Edit saves a salary or a payment', (await pNone('GET', '/api/crm/payroll')).status === 403 && (await pPayV('GET', '/api/crm/payroll')).status === 200 && (await pPayV('POST', '/api/crm/payroll/payments', { staffId: pPayV.staffId || 'x', amount: 1 })).status === 403 && (await pPayE('GET', '/api/crm/payroll')).status === 200)
     check('Team growth: a member without "See everybody\'s growth" gets only their own page', (await pGr('GET', '/api/crm/growth/team')).status === 403 && (await pGrT('GET', '/api/crm/growth/team')).status === 200)

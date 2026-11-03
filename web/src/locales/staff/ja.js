@@ -5410,5 +5410,8 @@ export default {
     "Started: the reviews arrive in the chats within a few minutes": "開始しました。数分以内に各チャットにレビューが届きます",
     "On records": "レコード上",
     "Open the record": "レコードを開く",
-    "Uploaded on records": "レコードにアップロード済み"
+    "Uploaded on records": "レコードにアップロード済み",
+    "Accept, refuse and move the ideas on the board (administrators always can)": "ボード上のアイデアの承認・却下・移動（管理者は常に可能）",
+    "Only an administrator accepts, refuses or moves an idea": "アイデアの承認・却下・移動は管理者のみ可能です",
+    "Another manager has to set the support for your goal": "あなたの目標の支援額は別の責任者が設定する必要があります"
 }

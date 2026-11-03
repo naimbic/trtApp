@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.169.3',
+        date: '2026-11-03',
+        title: 'Grow: only an administrator accepts, refuses or moves ideas; certificates are approved by a manager, never by the person',
+        items: [
+            'Grow ideas: writing or editing an idea no longer lets anybody accept it. A new idea always starts as “New”; accepting, refusing, moving it on the board, or making a task from a new idea needs an administrator, or the new permission “Accept, refuse and move the ideas” (Grow). The status field and the board buttons are locked for everyone else.',
+            'Certificates and goals: approving a goal, setting the company support and verifying a certificate need an administrator or “Approve goals, verify certificates…” (My growth). “Edit” on Grow (ideas) no longer gives that power. Nobody approves or verifies their own goal, and nobody sets the support on their own goal (administrators included for the approval).',
+        ],
+    },
+    {
         version: '0.169.2',
         date: '2026-11-03',
         title: 'Files uploaded on tasks, leads and clients show in the File manager and can be added to a draft mail',

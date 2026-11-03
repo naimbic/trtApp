@@ -1,12 +1,13 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, viewScope, hasCap } from '@/lib/crm/permissions'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
+import { workDayStart } from '@/lib/crm/notifyHoursApi'
 
 const DAY = 86400000
 /** Where a reminder takes you: the record it is about. */
-const reminderLink = (r) => ({ customer: `/crm/clients/${r.relId}`, lead: `/crm/leads/${r.relId}`, task: `/crm/tasks/${r.relId}`, ticket: `/crm/tickets/${r.relId}`, project: `/crm/projects/${r.relId}`, invoice: `/crm/invoices/${r.relId}`, estimate: `/crm/estimates/${r.relId}`, proposal: `/crm/proposals/${r.relId}`, contract: `/crm/contracts/${r.relId}`, expense: `/crm/expenses/${r.relId}` }[r.relType] || null)
+export const reminderLink = (r) => ({ customer: `/crm/clients/${r.relId}`, lead: `/crm/leads/${r.relId}`, task: `/crm/tasks/${r.relId}`, ticket: `/crm/tickets/${r.relId}`, project: `/crm/projects/${r.relId}`, invoice: `/crm/invoices/${r.relId}`, estimate: `/crm/estimates/${r.relId}`, proposal: `/crm/proposals/${r.relId}`, contract: `/crm/contracts/${r.relId}`, expense: `/crm/expenses/${r.relId}` }[r.relType] || null)
 /** The kind of a stored notification, from what the code that wrote it stamped on it. */
-const STORED_KIND = { mention: 'mention', 'note-reminder': 'reminder', 'ticket-reminder': 'reminder', 'event-reminder': 'reminder', appointment: 'calendar', 'recap-task': 'task', 'note-shared': 'note', 'client-request': 'request', 'client-idea': 'idea', 'signup-request': 'team', growth: 'grow', 'grow-task': 'grow', 'grow-ideas': 'grow', 'grow-assigned': 'grow' }
+const STORED_KIND = { mention: 'mention', 'note-reminder': 'reminder', 'ticket-reminder': 'reminder', 'event-reminder': 'reminder', appointment: 'calendar', 'recap-task': 'task', 'note-shared': 'note', 'client-request': 'request', 'client-idea': 'idea', 'record-reminder': 'reminder', 'signup-request': 'team', growth: 'grow', 'grow-task': 'grow', 'grow-ideas': 'grow', 'grow-assigned': 'grow' }
 const kindOfStored = (d) => (String(d || '').startsWith('comment|') ? 'comment' : String(d || '').startsWith('assign|') ? 'task' : STORED_KIND[d] || 'other')
 const TONE_OF = { reminder: 'amber', mention: 'amber', request: 'purple', idea: 'blue', note: 'blue', team: 'amber', grow: 'green', calendar: 'blue' }
 /** The words of a stored notification: who did what. */
@@ -33,6 +34,8 @@ export async function notificationFeed() {
     const all = (f) => viewScope(authority, f) === 'all'
     const staffId = await getStaffId(session)
     const now = new Date(), today = new Date(now.toDateString())
+    // "due today" and "overdue" belong to the working day: they carry its first hour (not midnight) and show once the day has started
+    const dayStart = new Date(await workDayStart(+now)), started = +now >= +dayStart
     const since = (days) => new Date(Date.now() - days * DAY)
     const items = [], stored = []
     // every item has a stable key (what it is about and when), so "read" survives the next refresh
@@ -58,8 +61,8 @@ export async function notificationFeed() {
             const due = new Date(st.dueDate), dueEnd = +new Date(due.toDateString()) + DAY
             const remindAt = st.reminder == null ? null : +due - st.reminder * 60000
             const late = +now >= dueEnd, soon = +now >= +today && +now < dueEnd
-            if (late) add('task', 'Checklist step overdue', `${st.description} · ${taskNames[st.taskId] || ''}`, today, `/crm/tasks/${st.taskId}`, 'red')
-            else if (soon) add('task', 'Checklist step due today', `${st.description} · ${taskNames[st.taskId] || ''}`, today, `/crm/tasks/${st.taskId}`, 'amber')
+            if (late && started) add('task', 'Checklist step overdue', `${st.description} · ${taskNames[st.taskId] || ''}`, dayStart, `/crm/tasks/${st.taskId}`, 'red')
+            else if (soon && started) add('task', 'Checklist step due today', `${st.description} · ${taskNames[st.taskId] || ''}`, dayStart, `/crm/tasks/${st.taskId}`, 'amber')
             else if (remindAt !== null && +now >= remindAt) add('reminder', 'Reminder: checklist step', `${st.description} · ${taskNames[st.taskId] || ''}`, new Date(remindAt), `/crm/tasks/${st.taskId}`, 'amber')
         }
     }
@@ -71,7 +74,7 @@ export async function notificationFeed() {
             const when = Object.fromEntries(mine.map((m) => [m.taskId, m.createdAt]))
             for (const t of tasks) {
                 if (when[t.id] >= since(7)) add('task', 'A task was assigned to you', t.name, when[t.id], `/crm/tasks-board?task=${t.id}`, 'blue')
-                if (t.dueDate && new Date(t.dueDate) <= new Date(+today + DAY)) add('task', new Date(t.dueDate) < today ? 'Task overdue' : 'Task due today', t.name, new Date(t.dueDate) < today ? today : t.dueDate, `/crm/tasks-board?task=${t.id}`, 'red')
+                if (started && t.dueDate && new Date(t.dueDate) <= new Date(+today + DAY)) add('task', new Date(t.dueDate) < today ? 'Task overdue' : 'Task due today', t.name, dayStart, `/crm/tasks-board?task=${t.id}`, 'red')
             }
         }
     }
@@ -82,7 +85,7 @@ export async function notificationFeed() {
     const padding = await numberPadding()
     if (all('payments') || all('invoices')) { // company-wide figures: only for people who see all of them
         const inv = await prisma.crmInvoice.findMany({ where: { status: 4 }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true } })
-        if (inv.length) add('invoice', `${inv.length} invoice${inv.length === 1 ? ' is' : 's are'} overdue`, inv.slice(0, 3).map((i) => docNumberOf(i, padding)).join(', ') + (inv.length > 3 ? '…' : ''), today, '/crm/invoices', 'red')
+        if (inv.length && started) add('invoice', `${inv.length} invoice${inv.length === 1 ? ' is' : 's are'} overdue`, inv.slice(0, 3).map((i) => docNumberOf(i, padding)).join(', ') + (inv.length > 3 ? '…' : ''), dayStart, '/crm/invoices', 'red')
         const pays = await prisma.crmPayment.findMany({ where: { OR: [{ paymentDate: { gte: since(7) } }, { createdAt: { gte: since(7) } }] }, orderBy: { createdAt: 'desc' }, take: 6 })
         if (pays.length) {
             const invs = await prisma.crmInvoice.findMany({ where: { id: { in: pays.map((p) => p.invoiceId) } }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, clientId: true } })

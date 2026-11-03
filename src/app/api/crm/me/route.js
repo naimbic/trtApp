@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { isCrmAdmin } from '@/lib/crm/permissions'
 import { codeOfLanguage } from '@/lib/crm/langCodes'
 import { DEFAULT_PREFS, realPicture } from '@/lib/crm/profile'
+import { notifyHours } from '@/lib/crm/notifyHoursApi'
 
 // The signed-in user with their role label, for the sidebar footer and the profile menu.
 export async function GET() {
@@ -19,6 +20,7 @@ export async function GET() {
         role: admin ? 'Super admin' : staff?.role?.name || 'Staff',
         admin,
         loginAs: session.user.imp ? { by: session.user.imp.name || '' } : null,
+        notifyHours: await notifyHours().then((c) => ({ on: c.on, from: c.from, to: c.to, workFrom: c.workFrom, workTo: c.workTo })).catch(() => null), // the reminder pickers start inside these hours
         language: codeOfLanguage(staff?.defaultLanguage), // the language the person chose in the profile or the menu: it follows them on every browser
         display: (() => { try { return { ...DEFAULT_PREFS.display, ...(JSON.parse(staff?.preferences || '{}').display || {}) } } catch { return DEFAULT_PREFS.display } })(),
     })

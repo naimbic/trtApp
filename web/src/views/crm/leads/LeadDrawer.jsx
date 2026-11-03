@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import RemindMe from '@/components/crm/RemindMe'
 import RichView from '@/components/crm/RichView'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichEditor from '@/components/crm/RichEditor'
@@ -165,6 +166,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             footer={
                 <div className="flex w-full items-center gap-2">
                     {edit && detail?.can.delete && !l?.converted && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}
+                    {edit && <RemindMe relType="lead" relId={id} />}
                     <div className="ml-auto flex gap-2"><Button onClick={onClose}>{canEdit ? tr("Cancel") : tr("Close")}</Button>{canEdit && <Button variant="solid" loading={saving} onClick={save}>{edit ? tr("Save changes") : tr("Create lead")}</Button>}</div>
                 </div>
             }

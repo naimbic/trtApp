@@ -36,6 +36,16 @@ export async function sendTelegram(chatId, text, s) {
 export async function notifyStaffChannels(staffId, text) {
     try {
         if (!staffId || !text) return
+        const { windowOpen } = await import('@/lib/crm/notifyHoursApi')
+        if (!(await windowOpen()).open) { const { enqueueNotice } = await import('@/lib/crm/noticeQueue'); await enqueueNotice(staffId, 'channel', { text }); return } // outside the notification hours it waits
+    } catch { /* if the hours cannot be read the message goes out */ }
+    return notifyStaffChannelsNow(staffId, text)
+}
+
+/** Sends at once, whatever the hour (the queue calls it when the hours open). */
+export async function notifyStaffChannelsNow(staffId, text) {
+    try {
+        if (!staffId || !text) return
         const c = await settings()
         if (!c.telegram && !c.whatsapp) return
         const who = await prisma.crmStaff.findUnique({ where: { id: staffId } })

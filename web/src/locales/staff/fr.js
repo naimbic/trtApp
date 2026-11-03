@@ -5395,5 +5395,9 @@ export default {
     "Add a row": "Ajouter une ligne",
     "Delete the column": "Supprimer la colonne",
     "Delete the row": "Supprimer la ligne",
-    "Delete the table": "Supprimer le tableau"
+    "Delete the table": "Supprimer le tableau",
+    "Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).": "Vous seul(e) êtes prévenu(e) : sur la cloche, sur votre téléphone, par e-mail et sur Telegram ou WhatsApp (si réglé dans votre profil).",
+    "Remind me about this": "Me le rappeler",
+    "Send an email too": "Envoyer aussi un e-mail",
+    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "Le CRM notifie entre {from}:00 et {to}:00 : un rappel qui tombe hors de ces heures est envoyé à l'ouverture."
 }

@@ -50,8 +50,18 @@ const send = async (rows, payload) => {
     return { sent, failed }
 }
 
-/** Tells a team member on every device they registered. Never throws: a notification must not break what caused it. */
+/** Tells a team member on every device they registered, inside the notification hours (outside them the message waits, see noticeQueue). Never throws: a notification must not break what caused it. */
 export async function pushToStaff(staffId, msg) {
+    try {
+        if (!staffId) return { sent: 0, failed: 0 }
+        const { windowOpen } = await import('@/lib/crm/notifyHoursApi')
+        if (!(await windowOpen()).open) { const { enqueueNotice } = await import('@/lib/crm/noticeQueue'); await enqueueNotice(staffId, 'push', msg); return { sent: 0, failed: 0, queued: true } }
+    } catch (e) { console.error('[push hours]', e.message) } // if the hours cannot be read the message goes out
+    return pushToStaffNow(staffId, msg)
+}
+
+/** Sends at once, whatever the hour (the queue calls it when the hours open). */
+export async function pushToStaffNow(staffId, msg) {
     try {
         if (!staffId) return { sent: 0, failed: 0 }
         return await send(await prisma.crmPushSubscription.findMany({ where: { staffId: String(staffId) }, take: 10 }), buildPayload(msg))
@@ -100,6 +110,6 @@ export async function pushUnsubscribe(endpoint) {
 export async function pushTest() {
     const { staffId } = await me()
     if (!(await pushEnabled())) throw fail('Push notifications are switched off in Settings', 409)
-    const r = await pushToStaff(staffId, { title: 'trtCRM', body: 'Notifications work on this device.', url: '/', tag: 'test' })
+    const r = await pushToStaffNow(staffId, { title: 'trtCRM', body: 'Notifications work on this device.', url: '/', tag: 'test' }) // a test you ask for is sent at once, whatever the hour
     return { success: true, ...r }
 }

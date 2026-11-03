@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import useMe from '@/utils/hooks/useMe'
+import { defaultRemindAt } from '@/utils/remind'
 import { Link, useNavigate, useParams } from 'react-router'
 import { TbTrash, TbSend, TbMail, TbPhone, TbArrowBackUp, TbLock, TbCircleCheck, TbRefresh, TbChecklist, TbBellPlus, TbRobot, TbStarFilled, TbX, TbBell } from 'react-icons/tb'
 import dayjs from 'dayjs'
@@ -27,6 +29,7 @@ const L = ({ children }) => <label className="mb-1.5 block text-xs font-semibold
 const clean = (h) => String(h || '').replace(/<(script|style|iframe|object|embed)[\s\S]*?<\/\1>/gi, '').replace(/\son\w+="[^"]*"/gi, '').replace(/\son\w+='[^']*'/gi, '').replace(/javascript:/gi, '')
 
 const TicketView = () => {
+    const me = useMe()
     const { id } = useParams()
     const nav = useNavigate()
     const [d, setD] = useState(null)
@@ -92,7 +95,7 @@ const TicketView = () => {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     {d.can.createTask && <Button size="sm" icon={<TbChecklist />} onClick={() => setTaskPopup((p) => ({ open: true, k: p.k + 1 }))}>{tr("Create a task")}</Button>}
-                    <Button size="sm" icon={<TbBellPlus />} onClick={() => setRemind({ date: dayjs().add(1, 'day').hour(9).minute(0).second(0).toDate(), note: '' })}>{tr("Remind me")}</Button>
+                    <Button size="sm" icon={<TbBellPlus />} onClick={() => setRemind({ date: defaultRemindAt(me?.notifyHours), note: '' })}>{tr("Remind me")}</Button>
                     {d.can.edit && (isClosed ? d.openStatusId && <Button size="sm" icon={<TbRefresh />} onClick={() => patch({ statusId: d.openStatusId }, tr("Ticket reopened"))}>{tr("Reopen")}</Button> : d.closedStatusId && <Button size="sm" icon={<TbCircleCheck />} onClick={() => patch({ statusId: d.closedStatusId }, tr("Ticket closed"))}>{tr("Close ticket")}</Button>)}
                     {d.can.delete && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm({ type: 'ticket' })}>{tr("Delete")}</Button>}
                 </div>

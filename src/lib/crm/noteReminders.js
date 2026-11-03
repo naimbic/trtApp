@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { deliver, escapeHtml } from '@/lib/crm/mailer'
 import { notifyStaffChannels } from '@/lib/crm/channels'
 import { publicBase } from '@/lib/crm/shortLinks'
+import { reminderLink } from '@/lib/crm/notifications'
 
 /** A note with a reminder tells its owner when the moment comes: the bell, an email and the Telegram / WhatsApp of their profile. */
 export async function noteRemindersJob({ lines, dry }) {
@@ -29,23 +30,24 @@ export async function noteRemindersJob({ lines, dry }) {
     }
 }
 
-/** The reminders set on a ticket (Ticket → Remind me): the bell, an email and the Telegram / WhatsApp of the person who set them. */
+/** The reminders people set on a record (a ticket, a client, a lead, a task...): the bell, an email and the Telegram / WhatsApp of the person who set them. */
 export async function ticketRemindersJob({ lines, dry }) {
-    const rows = await prisma.crmReminder.findMany({ where: { relType: 'ticket', isNotified: false, AND: [{ date: { not: null } }, { date: { lte: new Date() } }] }, orderBy: { date: 'asc' }, take: 200 })
+    const rows = await prisma.crmReminder.findMany({ where: { isNotified: false, AND: [{ date: { not: null } }, { date: { lte: new Date() } }] }, orderBy: { date: 'asc' }, take: 200 })
     for (const r of rows) {
-        const [who, t] = await Promise.all([r.staffId ? prisma.crmStaff.findUnique({ where: { id: r.staffId }, select: { id: true, email: true, active: true } }) : null, r.relId ? prisma.crmTicket.findUnique({ where: { id: r.relId }, select: { id: true, legacyId: true, subject: true } }) : null])
-        const title = t ? `Ticket #${t.legacyId ?? ''} ${t.subject || ''}`.trim() : 'Ticket'
+        const [who, t] = await Promise.all([r.staffId ? prisma.crmStaff.findUnique({ where: { id: r.staffId }, select: { id: true, email: true, active: true } }) : null, r.relType === 'ticket' && r.relId ? prisma.crmTicket.findUnique({ where: { id: r.relId }, select: { id: true, legacyId: true, subject: true } }) : null])
+        const note = String(r.description || '').trim()
+        const kind = r.relType ? String(r.relType).replace(/_/g, ' ') : ''
+        const title = r.relType === 'ticket' ? (t ? `Ticket #${t.legacyId ?? String(t.id).slice(-5).toUpperCase()} ${t.subject || ''}`.trim() : 'Ticket') : `Reminder${kind ? ` · ${kind}` : ''}`
         if (dry) { lines.push(`[preview] Reminder of ${title} would be sent`); continue }
         const claimed = await prisma.crmReminder.updateMany({ where: { id: r.id, isNotified: false }, data: { isNotified: true } })
         if (!claimed.count) continue
-        if (!who?.active || !t) { lines.push(`Reminder of ${title} skipped: ${t ? 'its owner is not active' : 'the ticket no longer exists'}`); continue }
-        const link = `/crm/tickets/${t.id}`
-        const note = String(r.description || '').trim()
-        try { await prisma.crmNotification.create({ data: { toUserId: who.id, fromFullName: '⏰ Reminder', description: `${title}${note ? `: ${note}` : ''}`.slice(0, 200), link, additionalData: 'ticket-reminder', isRead: false } }) } catch (e) { lines.push(`! Bell notification of ${title} failed: ${e.message}`) }
+        if (!who?.active || (r.relType === 'ticket' && !t)) { lines.push(`Reminder of ${title} skipped: ${who?.active ? 'the ticket no longer exists' : 'its owner is not active'}`); continue }
+        const link = r.relType === 'ticket' ? `/crm/tickets/${t.id}` : (reminderLink(r) || '/crm/notifications')
+        try { await prisma.crmNotification.create({ data: { toUserId: who.id, fromFullName: '⏰ Reminder', description: `${r.relType === 'ticket' ? title : note || title}${r.relType === 'ticket' && note ? `: ${note}` : ''}`.slice(0, 200), link, additionalData: r.relType === 'ticket' ? 'ticket-reminder' : 'record-reminder', isRead: false } }) } catch (e) { lines.push(`! Bell notification of ${title} failed: ${e.message}`) }
         notifyStaffChannels(who.id, `⏰ Reminder: ${title}${note ? `\n${note}` : ''}\n${publicBase()}${link}`)
         let mailed = 'no email'
         if (who.email && r.notifyByEmail !== false) {
-            const res = await deliver({ to: who.email, subject: `⏰ Reminder: ${title}`, html: `<p><strong>⏰ ${escapeHtml(title)}</strong></p>${note ? `<p>${escapeHtml(note)}</p>` : ''}<p><a href="${publicBase()}${link}">${publicBase()}${link}</a></p>` })
+            const res = await deliver({ to: who.email, subject: `⏰ Reminder: ${note ? note.slice(0, 80) : title}`, html: `<p><strong>⏰ ${escapeHtml(title)}</strong></p>${note ? `<p>${escapeHtml(note)}</p>` : ''}<p><a href="${publicBase()}${link}">${publicBase()}${link}</a></p>` })
             mailed = res.sent ? 'email sent' : `email failed: ${res.error}`
         }
         lines.push(`Reminder of ${title} sent (${mailed})`)

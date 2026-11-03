@@ -5395,5 +5395,9 @@ export default {
     "Add a row": "إضافة صف",
     "Delete the column": "حذف العمود",
     "Delete the row": "حذف الصف",
-    "Delete the table": "حذف الجدول"
+    "Delete the table": "حذف الجدول",
+    "Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).": "يتم إشعارك أنت فقط: على الجرس وعلى هاتفك وبالبريد الإلكتروني وعلى تيليجرام أو واتساب (إذا تم ضبطه في ملفك الشخصي).",
+    "Remind me about this": "ذكّرني بهذا",
+    "Send an email too": "أرسل بريدًا إلكترونيًا أيضًا",
+    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "ينبّه النظام بين {from}:00 و{to}:00: التذكير الذي يحين خارج هذه الساعات يُرسل عند بدايتها."
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import RemindMe from '@/components/crm/RemindMe'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichView from '@/components/crm/RichView'
@@ -208,6 +209,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             footer={
                 <div className="flex w-full items-center gap-2">
                     {edit && detail?.can.delete && <Button variant="plain" className="text-red-500" onClick={() => setConfirmDel(true)}>{tr("Delete")}</Button>}
+                    {edit && <RemindMe relType="task" relId={id} />}
                     <div className="ml-auto flex gap-2">
                         <Button onClick={onClose}>{canEdit ? tr("Cancel") : tr("Close")}</Button>
                         {awaitingMe && <Button className="!bg-emerald-500 !text-white hover:!bg-emerald-600" icon={<TbChecks />} loading={saving} onClick={complete}>{tr("Mark as complete")}</Button>}

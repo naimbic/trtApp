@@ -5395,5 +5395,9 @@ export default {
     "Add a row": "行を追加",
     "Delete the column": "列を削除",
     "Delete the row": "行を削除",
-    "Delete the table": "表を削除"
+    "Delete the table": "表を削除",
+    "Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).": "通知はあなただけに届きます：ベル、スマートフォン、メール、Telegram／WhatsApp（プロフィールで設定している場合）。",
+    "Remind me about this": "これをリマインドする",
+    "Send an email too": "メールも送る",
+    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "CRMは{from}:00〜{to}:00の間に通知します。この時間外のリマインダーは開始時に送信されます。"
 }

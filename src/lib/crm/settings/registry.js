@@ -44,6 +44,13 @@ export const GROUPS = {
     general: {
         label: 'General', icon: 'TbAdjustmentsHorizontal', desc: 'Name, logos and files of the platform',
         cards: [
+            { title: 'Working hours and notification hours', desc: 'The CRM only disturbs people during the notification hours (company time zone, Settings → Localization): pushes on phones and computers, Telegram / WhatsApp messages and the reminders. What happens outside them waits and is sent when the hours open (a long wait becomes one message: "you have N notifications waiting"). The bell always shows everything. The working day sets the time given to "due today" items instead of midnight.', fields: [
+                yes('notify_hours_on', 'Notify only during the notification hours', { default: '1', cardToggle: true }),
+                f('notify_hours_from', 'Notify from (hour)', 'number', { min: 0, max: 23, default: '10' }),
+                f('notify_hours_to', 'Notify until (hour)', 'number', { min: 1, max: 24, default: '17', hint: '17 = until 17:00.' }),
+                f('work_hours_from', 'Working day starts (hour)', 'number', { min: 0, max: 23, default: '9' }),
+                f('work_hours_to', 'Working day ends (hour)', 'number', { min: 1, max: 24, default: '18' }),
+            ] },
             { title: 'Platform', desc: 'Shown in the menu, on the sign-in page and in the browser tab.', fields: [
                 f('platform_name', 'Platform name', 'text', { max: 60, ph: 'trtCRM', hint: 'Shown in the browser tab and on the sign-in page.' }),
                 f('companyname', 'Company brand name', 'text', { max: 80, hint: 'Used in emails and documents: {companyname}.' }),

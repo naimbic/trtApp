@@ -1,3 +1,5 @@
+import useMe from '@/utils/hooks/useMe'
+import { defaultRemindAt } from '@/utils/remind'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import dayjs from 'dayjs'
@@ -138,9 +140,10 @@ export const Timeline = ({ items }) => {
 }
 
 export const FollowUpDialog = ({ open, onClose, clientId, onSaved, initialType = 'note' }) => {
+    const me = useMe()
     const [type, setType] = useState(initialType)
     const [text, setText] = useState('')
-    const [date, setDate] = useState(dayjs().add(1, 'day').hour(9).minute(0).toDate())
+    const [date, setDate] = useState(defaultRemindAt(me?.notifyHours))
     const [mail, setMail] = useState(true)
     const [saving, setSaving] = useState(false)
     const save = async () => {

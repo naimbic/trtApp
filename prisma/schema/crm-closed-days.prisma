@@ -10,3 +10,16 @@ model CrmClosedDay {
   @@index([toDay])
   @@map("crm_closed_days")
 }
+
+/// A push or a Telegram / WhatsApp message that came outside the notification hours: it waits here and goes out when the hours open.
+model CrmNoticeQueue {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  staffId   String   @db.ObjectId
+  /// push | channel
+  kind      String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([staffId])
+  @@map("crm_notice_queue")
+}

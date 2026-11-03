@@ -11,6 +11,8 @@ import { leadMailJob } from '@/lib/crm/leadMail'
 import { noteRemindersJob } from '@/lib/crm/noteReminders'
 import { scheduledMessagesJob } from '@/lib/crm/scheduledMessages'
 import { eventRemindersJob } from '@/lib/crm/eventReminders'
+import { flushNotices } from '@/lib/crm/noticeQueue'
+import { windowOpen } from '@/lib/crm/notifyHoursApi'
 import { growJob } from '@/lib/crm/growApi'
 
 /**
@@ -235,7 +237,10 @@ async function freelanceJob({ today, lines, dry }) {
     }
 }
 
+// the jobs whose whole purpose is to tell people something: they wait for the notification hours (Settings → General), a manual run ignores them
+const NOTIFYING = new Set(['tasks', 'eventreminders', 'notereminders', 'grow'])
 const JOBS = [
+    { key: 'noticequeue', label: 'Notifications that waited for the notification hours', hour: null, run: async ({ lines, dry }) => { lines.push(...(await flushNotices({ dry }))) } },
     { key: 'invoices', label: 'Invoices', hour: 'invoice_auto_operations_hour', run: invoicesJob },
     { key: 'estimates', label: 'Estimates', hour: 'estimates_auto_operations_hour', run: estimatesJob },
     { key: 'proposals', label: 'Proposals', hour: 'proposals_auto_operations_hour', run: proposalsJob },
@@ -268,6 +273,7 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
             for (const j of JOBS) {
                 // a category switched off in Settings → Cron job is skipped, whatever started the run
                 if (o(`cron_job_${j.key}`, '1') === '0') { lines.push(`${j.label}: turned off`); groups.push({ key: j.key, label: j.label, from: lines.length - 1, to: lines.length }); continue }
+                if (NOTIFYING.has(j.key) && !force && !(await windowOpen()).open) { lines.push(`${j.label}: waiting for the notification hours`); continue }
                 const last = o(`cron_last_${j.key}`)
                 const atHour = j.hour ? num(o(j.hour, '9')) : 0
                 const due = force || (j.hour ? hour >= atHour && last !== ymd : j.daily ? last !== ymd : true)
@@ -280,7 +286,7 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
             }
             if (!dry) await setOptions({ ...done, last_cron_run: Math.floor(Date.now() / 1000) })
         } catch (e) { ok = false; lines.push(`! Cron failed: ${e.message}`); console.error('[cron]', e) }
-        const summary = lines.filter((l) => !l.endsWith('nothing to do') && !l.endsWith('turned off')).slice(0, 3).join(' · ') || 'Nothing to do'
+        const summary = lines.filter((l) => !l.endsWith('nothing to do') && !l.endsWith('turned off') && !l.endsWith('waiting for the notification hours')).slice(0, 3).join(' · ') || 'Nothing to do'
         const run = await prisma.crmCronRun.create({ data: { trigger: dry ? 'preview' : trigger, ok: ok && !lines.some((l) => l.startsWith('!')), summary: summary.slice(0, 300), lines, ms: Date.now() - t0 } })
         await prisma.crmCronRun.deleteMany({ where: { startedAt: { lt: new Date(Date.now() - 30 * DAY) } } }).catch(() => {})
         const refs = lines.refs || []

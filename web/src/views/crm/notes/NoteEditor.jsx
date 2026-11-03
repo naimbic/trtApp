@@ -1,6 +1,8 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
+import useMe from '@/utils/hooks/useMe'
+import { defaultRemindAt } from '@/utils/remind'
 import { TbBellRinging, TbFileText, TbLink, TbMessageCircle, TbMicrophone, TbPalette, TbPaperclip, TbPhoto, TbPlus, TbSend, TbStar, TbStarFilled, TbPin, TbPinFilled, TbTrash, TbUsers, TbX, TbPlayerStopFilled } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
@@ -59,6 +61,7 @@ const Comments = ({ noteId }) => {
 
 /** Create or change a note. note = null creates one; preset = { kind: 'list' } starts a checklist. Someone who only received the note reads it and comments. */
 const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) => {
+    const me = useMe()
     const [v, setV] = useState(EMPTY)
     const [busy, setBusy] = useState(false)
     const [fold, setFold] = useState({ content: true })
@@ -211,7 +214,7 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
                         <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/5">
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                                 <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-sm font-semibold">
-                                    <Switcher checked={!!v.remindAt} onChange={(c) => set({ remindAt: c ? dayjs().add(1, 'hour').minute(0).second(0).toDate() : null })} />
+                                    <Switcher checked={!!v.remindAt} onChange={(c) => set({ remindAt: c ? defaultRemindAt(me?.notifyHours) : null })} />
                                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><TbBellRinging className="shrink-0" />{tr('Remind me')}</span>
                                 </label>
                                 {v.remindAt && <div className="w-full sm:w-56"><DatePicker.DateTimepicker size="sm" value={v.remindAt} onChange={(d) => set({ remindAt: d || null })} /></div>}

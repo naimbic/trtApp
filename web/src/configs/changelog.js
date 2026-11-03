@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.168.0',
+        date: '2026-11-03',
+        title: 'Notification hours (10:00–17:00), working day (9:00–18:00), reminders with a time on every record',
+        items: [
+            'The CRM now notifies only inside the notification hours (default 10:00 to 17:00, company time zone). Push, Telegram/WhatsApp and reminder emails that come outside them wait and are sent when the hours open (several at once become one summary). Change the hours in Settings > General > Working hours and notification hours.',
+            'No more midnight notifications: “due today” and “overdue” items in the bell are dated at the start of the working day (default 09:00) and appear only once the day has started.',
+            'Reminders: a new Remind me button on tasks and leads (date AND time, optional note and email). Reminders on tickets, client follow-ups and every other record are now really notified (they were saved but never sent before). The default time of a new reminder is the next hour inside the notification hours.',
+        ],
+    },
+    {
         version: '0.167.2',
         date: '2026-11-03',
         title: 'Lead mails: no more notifications for drafts that are not scheduled; tables in every editor',

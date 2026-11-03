@@ -296,8 +296,13 @@ export async function reorderTasks(status, ids) {
     const session = await requirePermission('tasks', 'edit')
     const a = await access(session)
     const st = (await statusCodes()).has(+status) ? +status : null
-    if (!st || !Array.isArray(ids)) throw fail('Bad request')
+    if (!Array.isArray(ids) || (!st && status != null)) throw fail('Bad request')
     const where = await visibleWhere(a)
+    if (!st) { // no status: only the order of a list that mixes statuses (the tasks of a lead), nothing else changes
+        const list = ids.filter(oid).slice(0, 500)
+        for (const [i, id] of list.entries()) await prisma.crmTask.updateMany({ where: { AND: [{ id }, where] }, data: { kanbanOrder: i } })
+        return { success: true, denied: 0, blocked: 0 }
+    }
     let denied = 0, blocked = 0
     for (const [i, id] of ids.filter(oid).entries()) {
         const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { status: true, dateFinished: true, addedFrom: true, assignees: { select: { staffId: true } } } })

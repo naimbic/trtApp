@@ -55,6 +55,7 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
             if (op.action === 'add') await api('/api/crm/work/tasks', { method: 'POST', body: { name: op.description, relType: 'lead', relId: leadId, dueDate: op.dueDate || null, assigneeIds: op.assignedIds || [] } })
             else if (op.action === 'toggle') await api(`/api/crm/work/tasks/${op.itemId}/move`, { method: 'POST', body: { status: op.finished ? 5 : 1 } })
             else if (op.action === 'delete') await api(`/api/crm/work/tasks/${op.itemId}`, { method: 'DELETE' })
+            else if (op.action === 'reorder') await api('/api/crm/work/tasks/reorder', { method: 'POST', body: { ids: op.ids } })
             else if (op.action === 'update') {
                 const change = {}
                 if (op.description !== undefined) change.name = op.description
@@ -69,7 +70,7 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
     return (
         <div className="space-y-3">
             {list === null ? <p className="text-sm text-gray-500">{tr("Loading…")}</p> : (
-                <ChecklistPanel title={tr("Tasks")} items={items} staff={staff} canEdit={can('tasks', 'edit') && can('tasks', 'create')} canDelete={can('tasks', 'delete')} reminders={false} sortable={false}
+                <ChecklistPanel title={tr("Tasks")} items={items} staff={staff} canEdit={can('tasks', 'edit') && can('tasks', 'create')} canDelete={can('tasks', 'delete')} reminders={false}
                     placeholder={tr("Add a task for this lead (@ to mention, # for a tag)")} empty={tr("No tasks for this lead yet.")} act={act} onOpen={(i) => setPopup({ open: true, id: i.id, k: popup.k + 1 })} />
             )}
             {can('tasks', 'create') && <Button size="sm" icon={<TbPlus />} onClick={() => setPopup({ open: true, id: null, k: popup.k + 1 })}>{tr("New task with all its details")}</Button>}

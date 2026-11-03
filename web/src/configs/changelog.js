@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.169.1',
+        date: '2026-11-03',
+        title: 'Lead popup: drag the tasks to reorder them',
+        items: [
+            'In the lead popup, Tasks tab, every task now has a drag handle: drag it up or down to put the tasks in the order you want (the order is saved). Dragging only changes the order, never the status of a task.',
+        ],
+    },
+    {
         version: '0.169.0',
         date: '2026-11-03',
         title: 'Monthly team review by AI, sent to each person’s chat',

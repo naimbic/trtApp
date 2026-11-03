@@ -20,7 +20,9 @@ import { tr, trn } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const KIND_LABEL = { folder: tr("Folder"), image: tr("Image"), pdf: 'PDF', doc: tr("Document"), text: tr("Text"), sheet: tr("Spreadsheet"), slides: tr("Presentation"), archive: tr("Archive"), video: tr("Video"), audio: tr("Audio") }
-const KINDS = [['', tr("All")], ['image', tr("Images")], ['pdf', 'PDF'], ['doc', tr("Documents")], ['sheet', tr("Sheets")], ['archive', tr("Archives")], ['video', tr("Video")]]
+const RECORD_PATH = { task: 'tasks', lead: 'leads', leadmail: 'leads', customer: 'clients', client: 'clients', ticket: 'tickets' }
+const recordHref = (f) => (RECORD_PATH[f.relType] && f.relType !== 'leadmail' ? `/crm/${RECORD_PATH[f.relType]}/${f.relId}` : null)
+const KINDS = [['', tr("All")], ['image', tr("Images")], ['pdf', 'PDF'], ['doc', tr("Documents")], ['sheet', tr("Sheets")], ['archive', tr("Archives")], ['video', tr("Video")], ['records', tr("On records")]]
 
 /** Image thumbnail that falls back to the type icon when the file cannot be shown (e.g. a private object). */
 const Thumb = ({ f, className, iconClass }) => {
@@ -58,7 +60,7 @@ const FileManager = () => {
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            setData(await api(`/api/crm/media?${qs({ parentId, query, kind, pageSize: 200 })}`))
+            setData(await api(`/api/crm/media?${qs(kind === 'records' ? { records: 1, query, pageSize: 200 } : { parentId, query, kind, pageSize: 200 })}`))
             setStats(await api('/api/crm/media/stats'))
             if (!parentId && !query && !kind) setRecent((await api('/api/crm/media?recent=20')).list); else setRecent([])
         } catch (e) { notify('danger', e.message) } finally { setLoading(false) }
@@ -107,10 +109,11 @@ const FileManager = () => {
         <Dropdown renderTitle={<button type="button" onClick={(e) => e.stopPropagation()} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><TbDotsVertical /></button>} placement="bottom-end">
             <Dropdown.Item eventKey="open" onClick={() => open(f)}><TbExternalLink className="mr-2 text-lg" />{f.isFolder ? tr("Open") : tr("Open in a new tab")}</Dropdown.Item>
             {!f.isFolder && <Dropdown.Item eventKey="copy" onClick={() => copyLink(f)}><TbCopy className="mr-2 text-lg" />{tr("Copy link")}</Dropdown.Item>}
+            {f.relType ? (recordHref(f) && <Dropdown.Item eventKey="record" onClick={() => window.open(recordHref(f), '_blank', 'noopener')}><TbExternalLink className="mr-2 text-lg" />{tr("Open the record")}</Dropdown.Item>) : (<>
             <Dropdown.Item eventKey="rename" onClick={() => setRename({ id: f.id, name: f.name })}><TbPencil className="mr-2 text-lg" />{tr("Rename")}</Dropdown.Item>
             <Dropdown.Item eventKey="move" onClick={() => openMove(f)}><TbFolderSymlink className="mr-2 text-lg" />{tr("Move to…")}</Dropdown.Item>
             <Dropdown.Item variant="divider" />
-            <Dropdown.Item eventKey="delete" className="text-red-500" onClick={() => setDel(f)}><TbTrash className="mr-2 text-lg" />{tr("Delete")}</Dropdown.Item>
+            <Dropdown.Item eventKey="delete" className="text-red-500" onClick={() => setDel(f)}><TbTrash className="mr-2 text-lg" />{tr("Delete")}</Dropdown.Item></>)}
         </Dropdown>
     )
 
@@ -124,7 +127,7 @@ const FileManager = () => {
         <div role="button" onClick={() => click(f)} className={`flex cursor-pointer items-center justify-between gap-2 rounded-2xl border bg-white px-3.5 py-4 transition-all hover:shadow-[0_0_1rem_0.25rem_rgba(0,0,0,0.04),0px_2rem_1.5rem_-1rem_rgba(0,0,0,0.12)] dark:bg-gray-800 ${selected === f.id ? 'border-primary' : 'border-gray-200 dark:border-transparent'}`}>
             <div className="flex min-w-0 items-center gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"><Thumb f={f} className="h-10 w-10 object-cover" iconClass="text-3xl" /></span>
-                <div className="min-w-0"><div className="heading-text truncate font-bold" title={f.name}>{f.name}</div><span className="text-xs">{f.isFolder ? `${f.itemCount ?? ''}${f.itemCount !== undefined ? ' items' : tr("Folder")}` : formatBytes(f.size)}</span></div>
+                <div className="min-w-0"><div className="heading-text truncate font-bold" title={f.name}>{f.name}</div><span className="text-xs">{f.isFolder ? `${f.itemCount ?? ''}${f.itemCount !== undefined ? ' items' : tr("Folder")}` : formatBytes(f.size)}{f.recordLabel ? ` · ${f.recordLabel}` : ''}</span></div>
             </div>
             <Menu f={f} />
         </div>

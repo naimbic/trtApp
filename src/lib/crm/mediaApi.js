@@ -65,8 +65,36 @@ const shape = (m) => ({
 })
 
 /** Folder contents (or attachments of one record), newest first, folders on top. */
-export async function listMedia({ parentId, query, relType, relId, kind, flat, foldersOnly, recent, pageIndex = 1, pageSize = 60 } = {}) {
+/** "View own" only opens the records that are the person's own: for a task, one they made, do or follow; the other kinds need the full "view". */
+async function ownRecord(ctx, r) {
+    if (['lead', 'leadmail', 'skillgoal'].includes(r.relType) || ctx.admin || hasCap(ctx.authority, REL_FEATURE[r.relType], 'view')) return true
+    if (r.relType !== 'task' || !ctx.staffId) return false
+    const t = await prisma.crmTask.findUnique({ where: { id: r.relId }, select: { addedFrom: true, assignees: { select: { staffId: true } }, followers: { select: { staffId: true } } } })
+    return !!t && (t.addedFrom === ctx.staffId || t.assignees.some((x) => x.staffId === ctx.staffId) || t.followers.some((x) => x.staffId === ctx.staffId))
+}
+
+/** Files that were uploaded on records (tasks, leads, clients...), newest first, each with the record it belongs to; only the ones the person may open. */
+async function listOnRecords(ctx, { query, pageSize }) {
+    const rows = await prisma.crmMedia.findMany({ where: { isFolder: false, relType: { not: null }, ...(query ? { name: { contains: query, mode: 'insensitive' } } : {}) }, orderBy: { createdAt: 'desc' }, take: 400 })
+    const ok = new Map()
+    const allowed = async (r) => { const k = `${r.relType}:${r.relId}`; if (!ok.has(k)) ok.set(k, await relAccess(ctx, r.relType, 'view', r.relId).then(() => ownRecord(ctx, r), () => false)); return ok.get(k) }
+    const keep = []
+    for (const r of rows) { if (keep.length >= Math.min(Number(pageSize) || 60, 200)) break; if (r.relId && REL_FEATURE[r.relType] && (await allowed(r))) keep.push(r) }
+    const ids = (t) => [...new Set(keep.filter((r) => r.relType === t).map((r) => r.relId))]
+    const names = {}
+    const put = (t, list, f) => { for (const x of list) names[`${t}:${x.id}`] = f(x) }
+    put('task', ids('task').length ? await prisma.crmTask.findMany({ where: { id: { in: ids('task') } }, select: { id: true, name: true } }) : [], (x) => x.name)
+    put('lead', ids('lead').length ? await prisma.crmLead.findMany({ where: { id: { in: ids('lead') } }, select: { id: true, name: true, company: true } }) : [], (x) => x.name || x.company)
+    for (const t of ['customer', 'client']) put(t, ids(t).length ? await prisma.crmClient.findMany({ where: { id: { in: ids(t) } }, select: { id: true, company: true } }) : [], (x) => x.company)
+    put('project', ids('project').length ? await prisma.crmProject.findMany({ where: { id: { in: ids('project') } }, select: { id: true, name: true } }) : [], (x) => x.name)
+    put('ticket', ids('ticket').length ? await prisma.crmTicket.findMany({ where: { id: { in: ids('ticket') } }, select: { id: true, subject: true } }) : [], (x) => x.subject)
+    const TYPE = { task: 'Task', lead: 'Lead', leadmail: 'Lead mail', customer: 'Client', client: 'Client', project: 'Project', ticket: 'Ticket', invoice: 'Invoice', estimate: 'Estimate', proposal: 'Proposal', contract: 'Contract', expense: 'Expense', issue: 'Issue' }
+    return plain({ list: keep.map((r) => ({ ...shape(r), recordLabel: [TYPE[r.relType] || r.relType, names[`${r.relType}:${r.relId}`]].filter(Boolean).join(' · ') })), total: keep.length, path: [] })
+}
+
+export async function listMedia({ parentId, query, relType, relId, kind, flat, foldersOnly, recent, records, pageIndex = 1, pageSize = 60 } = {}) {
     const ctx = await who()
+    if (records) return listOnRecords(ctx, { query, pageSize })
     if (recent) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: false, relType: null }, orderBy: { createdAt: 'desc' }, take: Math.min(parseInt(recent, 10) || 20, 100) })).map(shape), total: 0, path: [] })
     if (foldersOnly) return plain({ list: (await prisma.crmMedia.findMany({ where: { isFolder: true, relType: null }, orderBy: { name: 'asc' }, take: 500 })).map(shape), total: 0, path: [] })
     if (!relType && !hasCap(ctx.authority, 'file_manager', 'view')) throw new PermissionError('You do not have access to the file manager', 403)
@@ -163,8 +191,9 @@ export async function mediaAction(body) {
         const relType = body.relType, relId = body.relId
         if (!relType || !OID.test(relId || '')) fail('relType and relId are required')
         await relAccess(ctx, relType, 'edit', relId)
-        const src = await prisma.crmMedia.findFirst({ where: { id: String(body.mediaId || ''), isFolder: false, relType: null } })
+        const src = await prisma.crmMedia.findFirst({ where: { id: String(body.mediaId || ''), isFolder: false } })
         if (!src || !src.key) fail('Choose a file from the file manager', 404)
+        if (src.relType) { await relAccess(ctx, src.relType, 'view', src.relId); if (!(await ownRecord(ctx, src))) fail('You do not have access to this file', 403) } // a file of another record: only if the person may open that record
         const row = await prisma.crmMedia.create({ data: { name: src.name, key: src.key, url: src.url, mime: src.mime, kind: src.kind, size: src.size, originalSize: src.originalSize, width: src.width, height: src.height, purpose: 'attachment', parentId: null, relType, relId, visibleToClient: !!body.visibleToClient, uploadedBy: ctx.staffId || undefined, uploaderName: ctx.name } })
         return plain(shape(row))
     }

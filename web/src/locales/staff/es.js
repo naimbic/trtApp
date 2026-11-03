@@ -5407,5 +5407,8 @@ export default {
     "Review sent to the chat": "Revisión enviada al chat",
     "Send me my review of {month}": "Enviarme mi revisión de {month}",
     "Send to the whole team now": "Enviar a todo el equipo ahora",
-    "Started: the reviews arrive in the chats within a few minutes": "Iniciado: las revisiones llegan a los chats en unos minutos"
+    "Started: the reviews arrive in the chats within a few minutes": "Iniciado: las revisiones llegan a los chats en unos minutos",
+    "On records": "En fichas",
+    "Open the record": "Abrir la ficha",
+    "Uploaded on records": "Subidos en fichas"
 }

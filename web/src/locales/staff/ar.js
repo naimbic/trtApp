@@ -5407,5 +5407,8 @@ export default {
     "Review sent to the chat": "تم إرسال المراجعة إلى الدردشة",
     "Send me my review of {month}": "أرسل لي مراجعتي لشهر {month}",
     "Send to the whole team now": "أرسل إلى الفريق كله الآن",
-    "Started: the reviews arrive in the chats within a few minutes": "بدأ الإرسال: ستصل المراجعات إلى المحادثات خلال دقائق"
+    "Started: the reviews arrive in the chats within a few minutes": "بدأ الإرسال: ستصل المراجعات إلى المحادثات خلال دقائق",
+    "On records": "على السجلات",
+    "Open the record": "افتح السجل",
+    "Uploaded on records": "المرفوعة على السجلات"
 }

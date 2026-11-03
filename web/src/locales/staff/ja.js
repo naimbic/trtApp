@@ -5407,5 +5407,8 @@ export default {
     "Review sent to the chat": "レビューをチャットに送信しました",
     "Send me my review of {month}": "{month}の自分のレビューを送る",
     "Send to the whole team now": "今すぐチーム全員に送る",
-    "Started: the reviews arrive in the chats within a few minutes": "開始しました。数分以内に各チャットにレビューが届きます"
+    "Started: the reviews arrive in the chats within a few minutes": "開始しました。数分以内に各チャットにレビューが届きます",
+    "On records": "レコード上",
+    "Open the record": "レコードを開く",
+    "Uploaded on records": "レコードにアップロード済み"
 }

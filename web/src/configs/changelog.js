@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.169.2',
+        date: '2026-11-03',
+        title: 'Files uploaded on tasks, leads and clients show in the File manager and can be added to a draft mail',
+        items: [
+            'File manager: a new filter “On records” lists the files uploaded on tasks, leads, clients, tickets and other records, with the record each one belongs to (Open the record). You only see the files of records you may open.',
+            'Lead draft mail → Attachments → “From files”: choose “Uploaded on records” to add a file that is already on a task, a lead or a client to the mail, without uploading it again (the same file is not stored twice).',
+        ],
+    },
+    {
         version: '0.169.1',
         date: '2026-11-03',
         title: 'Lead popup: drag the tasks to reorder them',

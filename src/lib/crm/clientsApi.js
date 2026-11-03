@@ -254,6 +254,8 @@ export async function deleteClient(id) {
     await prisma.crmCustomerGroupLink.deleteMany({ where: { clientId: id } })
     await prisma.crmCustomerAdmin.deleteMany({ where: { clientId: id } })
     await prisma.crmNote.deleteMany({ where: { relType: 'customer', relId: id } })
+    try { const { dropMailFiles } = await import('@/lib/crm/leadsApi'); await dropMailFiles((await prisma.crmLeadMail.findMany({ where: { clientId: id }, select: { id: true } })).map((x) => x.id)) } catch (e) { console.error('[client mails]', e.message) }
+    await prisma.crmLeadMail.deleteMany({ where: { clientId: id } })
     await prisma.crmClient.delete({ where: { id } })
     return { success: true }
 }

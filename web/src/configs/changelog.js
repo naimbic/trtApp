@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.170.0',
+        date: '2026-11-03',
+        title: 'Customers: a Mails tab, the same as the Mails tab of a lead',
+        items: [
+            'New “Mails” tab on every customer: log a received or sent mail (date and time, from, to, subject, text), or write a draft with To, Cc, Bcc, Reply to, the sender address, a note for whoever sends it, checks to confirm before sending, attached files (also from the files already on the customer’s tasks and records), and send it now or automatically at a date and time. The address starts with the customer’s primary contact.',
+            'Who can do what: anybody who sees the customer reads its mails; “Edit” on Customers writes, sends and deletes their own; the new permission “Edit mails logged by others” (Customers) lets someone change or send the mails of a colleague. A scheduled mail that goes out, or cannot go out, is told to its author, like for leads.',
+        ],
+    },
+    {
         version: '0.169.7',
         date: '2026-11-03',
         title: 'Events: cancelling the confirmation brings the colour back',

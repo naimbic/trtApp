@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -29,6 +29,7 @@ import ProjectDialog from '../projects/ProjectDialog'
 import { tr } from '@/utils/t'
 
 import ClientRequests from './ClientRequests'
+import ClientMails from './ClientMails'
 const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -126,10 +127,10 @@ const ClientDetail = () => {
     const money = makeMoney(lookups.currencies)
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests'].includes(t) ? t : 'overview' })
+    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'mails'].includes(t) ? t : 'overview' })
     const [cur, setCur] = useState(null)
     // a link from a notification (…?tab=requests&request=ID) switches the tab even when this client is already open
-    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests'].includes(t)) setTab(t) }, [loc.search])
+    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'mails'].includes(t)) setTab(t) }, [loc.search])
     const [confirmDel, setConfirmDel] = useState(false)
     const [profile, setProfile] = useState(null)
     const [followUp, setFollowUp] = useState(null)
@@ -158,6 +159,7 @@ const ClientDetail = () => {
             rel('proposals', tr("Proposals"), c.counts.proposals, 'proposals', { resource: 'proposals', where: { relType: 'customer', relId: id }, openPath: (r) => `/crm/proposals/${r.id}`, newPath: `/crm/proposals/new?clientId=${id}`, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'] }),
             rel('projects', tr("Projects"), c.counts.projects, 'projects', { resource: 'projects', where, openPath: (r) => `/crm/projects/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('projects') }),
             rel('tickets', tr("Tickets"), c.counts.tickets, 'tickets', { resource: 'tickets', where, openPath: (r) => `/crm/tickets/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('tickets') }),
+            { key: 'mails', label: tr("Mails"), icon: <TbMail className="text-sky-500" /> },
             { key: 'activity', label: tr("Activity") },
             rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
             { key: 'files', label: tr("Files"), count: c.counts.files },
@@ -258,6 +260,7 @@ const ClientDetail = () => {
                                 {tab === 'payments' && <PaymentsTab id={id} money={money} />}
                                 {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}
+                                {tab === 'mails' && <ClientMails key={id} clientId={id} />}
                                 {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
                                 {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}
                             </div>

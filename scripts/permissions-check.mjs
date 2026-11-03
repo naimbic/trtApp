@@ -1163,6 +1163,24 @@ try {
     check('AI: refused without the permission; View uses it but cannot change the settings', (await pNone('GET', '/api/crm/ai/settings')).status === 403 && (await pAiV('GET', '/api/crm/ai/settings')).status === 200 && (await pAiV('PUT', '/api/crm/ai/settings', { systemPrompt: 'x' })).status === 403)
     check('AI monthly team review: refused without the AI permission; View may only ask for their own review, only Edit sends it to the team', (await pNone('GET', '/api/crm/ai/coach')).status === 403 && (await pNone('POST', '/api/crm/ai/coach', { who: 'me' })).status === 403 && (await pAiV('GET', '/api/crm/ai/coach')).status === 200 && (await pAiV('POST', '/api/crm/ai/coach', { who: 'all' })).status === 403)
     {
+        // Client mails (the Mails tab of a customer): the same rules as lead mails, with the customers permissions
+        const cl = await prisma.crmClient.create({ data: { company: 'permcheck mails client' } })
+        made.rows.unshift(['crmClient', cl.id])
+        const cNone = await login(await makeUser('cm-none', {})), cView = await login(await makeUser('cm-view', { customers: ['view'] })), cEdit = await login(await makeUser('cm-edit', { customers: ['view', 'edit'] })), cEdit2 = await login(await makeUser('cm-edit2', { customers: ['view', 'edit'] })), cOthers = await login(await makeUser('cm-others', { customers: ['view', 'edit', 'edit_others_mails'] })), cOwn = await login(await makeUser('cm-own', { customers: ['view_own', 'edit'] }))
+        const base = `/api/crm/customers/${cl.id}/mails`
+        const mk = await cEdit('POST', base, { direction: 'draft', subject: 'permcheck client draft', body: '<p>x</p>' })
+        if (mk.body?.id) made.rows.unshift(['crmLeadMail', mk.body.id])
+        const MID = mk.body?.id
+        check('Client mails: nobody without Customers sees them; View sees them but cannot write; Edit writes', [403, 404].includes((await cNone('GET', base)).status) && (await cView('GET', base)).status === 200 && (await cView('POST', base, { direction: 'in', subject: 'x' })).status === 403 && mk.status === 201, String(mk.status))
+        check('Client mails: a client the person does not see (View own, not its admin) is closed', (await cOwn('GET', base)).status === 404)
+        const list = await cEdit('GET', base)
+        check('Client mails: the list shows the draft, with its rights', list.status === 200 && list.body?.mails?.some((m) => m.id === MID && m.direction === 'draft' && m.canEdit && m.canDelete) && Array.isArray(list.body?.senders))
+        check('Client mails: a draft with nobody to write to cannot be sent, nor scheduled', !!MID && (await cEdit('POST', `${base}/send`, { mailId: MID })).status === 400 && (await cEdit('PUT', base, { mailId: MID, direction: 'draft', subject: 'permcheck client draft', body: '<p>x</p>', scheduledAt: new Date(Date.now() + 86400000).toISOString() })).status === 400)
+        check('Client mails: another editor cannot change or send the draft, one with "Edit mails logged by others" can', !!MID && (await cEdit2('PUT', base, { mailId: MID, direction: 'draft', subject: 'hijack', body: '<p>x</p>' })).status === 403 && (await cEdit2('POST', `${base}/send`, { mailId: MID })).status === 403 && (await cOthers('PUT', base, { mailId: MID, direction: 'draft', subject: 'permcheck client draft', body: '<p>y</p>' })).status === 200)
+        check('Client mails: the files of a client draft follow the client (View reads, only the author or the right adds)', !!MID && (await cView('GET', `/api/crm/media?relType=leadmail&relId=${MID}`)).status === 200 && (await cNone('GET', `/api/crm/media?relType=leadmail&relId=${MID}`)).status === 403)
+        check('Client mails: log a received mail; only the author (or the right) deletes it', (await (async () => { const r = await cEdit('POST', base, { direction: 'in', subject: 'permcheck received', body: '<p>hi</p>' }); if (r.body?.id) made.rows.unshift(['crmLeadMail', r.body.id]); return r.status === 201 && (await cEdit2('DELETE', `${base}?mailId=${r.body.id}`)).status === 403 && (await cEdit('DELETE', `${base}?mailId=${r.body.id}`)).status === 200 })()))
+    }
+    {
         // Grow ideas: writing or editing an idea is not deciding it; only an administrator (or "Accept or refuse ideas") accepts, refuses or moves it
         const gEd = await login(await makeUser('grow-idea-editor', { grow: ['view', 'create', 'edit'], growth: ['view'], tasks: ['view', 'create'] })), gAp = await login(await makeUser('grow-approve', { grow: ['view', 'create', 'edit', 'approve'] })), gAdm = await login(await makeUser('grow-admin', {}, true))
         const direct = await gEd('POST', '/api/crm/grow/ideas', { title: 'permcheck idea accepted', status: 'accepted' })

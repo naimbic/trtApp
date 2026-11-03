@@ -692,7 +692,9 @@ model CrmLeadEmailImport {
 /// An email sent to or received from a lead, logged on the lead by hand or by the lead mailbox import.
 model CrmLeadMail {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  leadId      String   @db.ObjectId
+  /// the mail belongs to a lead OR to a client (customer): one of the two is set
+  leadId      String?  @db.ObjectId
+  clientId    String?  @db.ObjectId
   /// in = received from the lead, out = sent to the lead, draft = written but not sent yet
   direction   String   @default("in")
   subject     String?
@@ -718,4 +720,5 @@ model CrmLeadMail {
   updatedAt   DateTime @updatedAt
 
   @@index([leadId, date])
+  @@index([clientId, date])
 }

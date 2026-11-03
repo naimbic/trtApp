@@ -82,7 +82,7 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
 const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', note: '', checks: [], scheduledAt: null, subject: '', body: '' })
 
 /** Emails sent to or received from the lead, written in the editor with their date and time. Mails read by the lead mailbox land here too. */
-export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit, run }) => {
+export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit, run, base = `/api/crm/pipeline/leads/${leadId}` }) => {
     const [form, setForm] = useState(null) // { id?, ...fields }
     const [del, setDel] = useState(null)
     const [send, setSend] = useState(null)
@@ -95,8 +95,8 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
     const [newCheck, setNewCheck] = useState('')
     const addCheck = () => { const t = newCheck.trim(); if (t) { set({ checks: [...(form.checks || []), { text: t, done: false }] }); setNewCheck('') } }
     const [toggling, setToggling] = useState(false) // one click at a time: each one rewrites the list of checks
-    const toggle = (m, i) => { if (toggling) return; setToggling(true); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails/send`, { method: 'POST', body: { action: 'check', mailId: m.id, index: i, done: !m.checks[i].done } }), null).finally(() => setToggling(false)) }
-    const save = () => run(() => api(`/api/crm/pipeline/leads/${leadId}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString(), scheduledAt: draft && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null } }).then((r) => { if (r?.scheduleCancelled) notify('warning', tr("The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.")); if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
+    const toggle = (m, i) => { if (toggling) return; setToggling(true); run(() => api(`${base}/mails/send`, { method: 'POST', body: { action: 'check', mailId: m.id, index: i, done: !m.checks[i].done } }), null).finally(() => setToggling(false)) }
+    const save = () => run(() => api(`${base}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString(), scheduledAt: draft && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null } }).then((r) => { if (r?.scheduleCancelled) notify('warning', tr("The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.")); if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
     // the lead is the other side of every mail: received = from the lead, sent or draft = to the lead (and a draft goes out from our own sender)
     const aim = (f, dir) => {
         const lead = leadEmail.trim()
@@ -186,10 +186,10 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
                 </div>
             ))}
             {!mails.length && !form && <p className="text-sm text-gray-500">{tr("No mails logged yet.")}</p>}
-            <ConfirmDialog isOpen={!!send} type="info" title={tr("Send this draft now?")} confirmText={tr("Send")} onClose={() => setSend(null)} onCancel={() => setSend(null)} onConfirm={() => { const m = send; setSend(null); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails/send`, { method: 'POST', body: { mailId: m.id } }).then(() => setForm(null)), tr("Mail sent")) }}>
+            <ConfirmDialog isOpen={!!send} type="info" title={tr("Send this draft now?")} confirmText={tr("Send")} onClose={() => setSend(null)} onCancel={() => setSend(null)} onConfirm={() => { const m = send; setSend(null); run(() => api(`${base}/mails/send`, { method: 'POST', body: { mailId: m.id } }).then(() => setForm(null)), tr("Mail sent")) }}>
                 <p>{send?.subject}</p><p className="text-sm text-gray-500">{tr("To")} {send?.to}</p>
             </ConfirmDialog>
-            <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this mail?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const m = del; setDel(null); run(() => api(`/api/crm/pipeline/leads/${leadId}/mails?mailId=${m.id}`, { method: 'DELETE' }), tr("Mail deleted")) }}>
+            <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this mail?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const m = del; setDel(null); run(() => api(`${base}/mails?mailId=${m.id}`, { method: 'DELETE' }), tr("Mail deleted")) }}>
                 <p>{del?.subject}</p>
             </ConfirmDialog>
         </div>

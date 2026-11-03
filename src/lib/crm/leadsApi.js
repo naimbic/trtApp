@@ -267,7 +267,7 @@ export async function deleteNote(id, noteId) {
 }
 
 /* ------------------------------------------------ mails logged on a lead ------------------------------------------------ */
-const mailData = (b) => {
+export const mailData = (b) => {
     const subject = nz(b.subject)
     const body = storeRich(b.body)
     if (!subject && !body) throw fail('Give the mail a subject or write its text')
@@ -277,7 +277,7 @@ const mailData = (b) => {
 }
 
 /** A draft can be scheduled: it needs a future date, an address, a subject and every check confirmed. Returns whether the schedule had to be dropped. */
-function checkSchedule(data, lead, prev, contentChanged) {
+export function checkSchedule(data, lead, prev, contentChanged) {
     if (!data.scheduledAt) return false
     if (Number.isNaN(+data.scheduledAt)) throw fail('The date to send the mail is not valid')
     const same = prev?.scheduledAt && +new Date(prev.scheduledAt) === +data.scheduledAt
@@ -319,16 +319,16 @@ export async function saveMail(id, body, mailId) {
     return { success: true, id: m.id }
 }
 
-const MAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/
-const addrList = (v) => String(v || '').split(/[,;\s]+/).filter(Boolean)
+export const MAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/
+export const addrList = (v) => String(v || '').split(/[,;\s]+/).filter(Boolean)
 const MAX_ATTACH_MB = 20
 const DEFAULT_SENDER = 'hello@trtmaroc.com' // the first and default "send from" address until Settings → Email says otherwise
 
 /** A draft goes out from an allowed address: its own when that is still allowed, otherwise the default one. */
-const draftFrom = (from, senders) => { const f = String(from || '').trim(); return senders.find((e) => e.toLowerCase() === f.toLowerCase()) || senders[0] || f }
+export const draftFrom = (from, senders) => { const f = String(from || '').trim(); return senders.find((e) => e.toLowerCase() === f.toLowerCase()) || senders[0] || f }
 
 /** The addresses a lead mail may be sent from: hello@trtmaroc.com always first (the default), the extra ones set in Settings → Email, and the staff member's own email. The mail server's own address is never offered unless it is added to that list. */
-async function senderOptions(a) {
+export async function senderOptions(a) {
     const { getAccounts } = await import('@/lib/crm/mailer')
     const [opt, me, accounts] = await Promise.all([prisma.crmOption.findUnique({ where: { name: 'lead_mail_senders' } }), a.staffId ? prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true } }) : null, getAccounts()])
     const seen = new Set(), out = []
@@ -353,7 +353,7 @@ export async function checkDraftMail(id, mailId, index, done) {
 }
 
 /** Removes the files attached to mails (the rows and the stored objects). */
-async function dropMailFiles(mailIds) {
+export async function dropMailFiles(mailIds) {
     if (!mailIds.length) return
     const rows = await prisma.crmMedia.findMany({ where: { relType: 'leadmail', relId: { in: mailIds } } })
     if (!rows.length) return
@@ -376,10 +376,10 @@ export async function sendDraftMail(id, mailId) {
     return deliverDraft({ id, lead, m, a, how: '' })
 }
 
-/** Sends a draft (the permission checks are done by the caller: the person clicking Send now, or the scheduled run for the author). */
-async function deliverDraft({ id, lead, m, a, how }) {
+/** Validates a draft and sends it through the CRM mail server, then turns it into a sent mail dated now (leads and clients alike). The caller checked the permissions and does what is specific to its record. `fallbackTo` is the address used when the draft has none. */
+export async function sendDraftCore({ m, a, fallbackTo = '' }) {
     const mailId = m.id
-    const to = addrList(m.toAddress || lead.email), cc = addrList(m.ccAddress), bcc = addrList(m.bccAddress), reply = addrList(m.replyTo)
+    const to = addrList(m.toAddress || fallbackTo), cc = addrList(m.ccAddress), bcc = addrList(m.bccAddress), reply = addrList(m.replyTo)
     if (!to.length) throw fail('Add the email address to send to')
     const bad = [...to, ...cc, ...bcc, ...reply].find((e) => !MAIL_RE.test(e))
     if (bad) throw fail(`"${bad}" is not a valid email address`)
@@ -402,12 +402,17 @@ async function deliverDraft({ id, lead, m, a, how }) {
     })
     if (!res.sent) throw fail(res.error || 'The email could not be sent')
     const now = new Date()
-    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { direction: 'out', date: now, fromAddress: from } })
+    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { direction: 'out', date: now, fromAddress: from, scheduledAt: null, sendError: null } })
+    return { from, now }
+}
+
+/** Sends a lead's draft (the permission checks are done by the caller: the person clicking Send now, or the scheduled run for the author). */
+async function deliverDraft({ id, lead, m, a, how }) {
+    const { now } = await sendDraftCore({ m, a, fallbackTo: lead.email })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: now } })
-    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { scheduledAt: null, sendError: null } })
     await logActivity(id, a, `Mail sent${how}: ${m.subject}`)
-    try { await notifyComment({ by: { staffId: a.staffId, name: a.session.user.name }, text: `✉ ${m.subject}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
-    return { success: true, id: mailId }
+    try { await notifyComment({ by: { staffId: a.staffId, name: a.session.user.name }, text: `✉ ${m.subject}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notification]', e.message) }
+    return { success: true, id: m.id }
 }
 
 /** The scheduled drafts whose time has come are sent (called by the automatic tasks). A send that fails is not retried: the draft keeps the reason and the author is told. */
@@ -417,7 +422,8 @@ export async function sendScheduledMails({ dry = false } = {}) {
     const due = await prisma.crmLeadMail.findMany({ where: { direction: 'draft', AND: [{ scheduledAt: { not: null } }, { scheduledAt: { lte: new Date() } }] }, orderBy: { scheduledAt: 'asc' }, take: 50 })
     for (const m of due) {
         if (!m.scheduledAt) continue
-        const lead = await prisma.crmLead.findUnique({ where: { id: m.leadId } })
+        if (!m.leadId && m.clientId) { const { sendScheduledClientMail } = await import('@/lib/crm/clientMailsApi'); lines.push(...(await sendScheduledClientMail(m, { dry }))); continue } // a client's draft
+        const lead = m.leadId ? await prisma.crmLead.findUnique({ where: { id: m.leadId } }) : null
         const label = `"${m.subject || '(no subject)'}"${lead ? ` (${lead.name})` : ''}`
         if (dry) { lines.push(`[preview] The scheduled mail ${label} would be sent`); continue }
         // claim it first, so two runs at the same time never send it twice

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.169.4',
+        date: '2026-11-03',
+        title: 'Lead cards: the company name on top, in bold',
+        items: [
+            'On the lead cards of the board, the company name is now the bold title and the contact name is the line under it. A lead without a company keeps the contact name as the title.',
+        ],
+    },
+    {
         version: '0.169.3',
         date: '2026-11-03',
         title: 'Grow: only an administrator accepts, refuses or moves ideas; certificates are approved by a manager, never by the person',

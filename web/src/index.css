@@ -19,6 +19,8 @@
 /* layers over the Rapport popups (task, lead...: z-index 110): a dialog opened from a popup (Files from the Space, delete confirmations...), tooltips and floating menus must show on top, not under */
 .dialog-portal .dialog-overlay { z-index: var(--dlg-z, 130) !important; } /* each popup opened gets a higher --dlg-z than the ones already open (see Dialog.jsx) */
 [data-floating-ui-portal] > * { z-index: 135 !important; }
+/* a menu opened from the chat bubble (z-index 100001) has to be above it */
+[data-floating-ui-portal] > [data-menu-above] { z-index: 100002 !important; }
 .tooltip { z-index: 140 !important; }
 
 .rich-editor .mention { border-radius: 4px; padding: 0 2px; font-weight: 600; background: color-mix(in srgb, var(--rp-accent, #2563eb) 14%, transparent); color: var(--rp-accent, #2563eb); }

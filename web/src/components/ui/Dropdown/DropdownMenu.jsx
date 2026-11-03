@@ -44,6 +44,7 @@ const DropdownMenu = (props) => {
         disabled,
         toggleClassName,
         menuClass,
+        menuZIndex, // set it for a menu opened inside something that sits above the page (the chat bubble): it is then drawn above it
         placement,
         trigger = 'click',
         onOpen,
@@ -272,6 +273,7 @@ const DropdownMenu = (props) => {
                                 <div
                                     ref={refs.setFloating}
                                     style={floatingStyles}
+                                    data-menu-above={menuZIndex ? '' : undefined}
                                     {...getFloatingProps()}
                                     className="outline-hidden z-40"
                                 >

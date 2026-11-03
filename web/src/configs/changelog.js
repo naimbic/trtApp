@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.169.6',
+        date: '2026-11-03',
+        title: 'Chat bubble: the message menu (three dots) shows above the popup',
+        items: [
+            'In the chat bubble, the menu of the three dots on a message (Pin, Edit, Delete, Make a task…) was drawn under the chat popup and was cut off. It now opens on top of it.',
+        ],
+    },
+    {
         version: '0.169.5',
         date: '2026-11-03',
         title: 'Proposals, estimates and invoices: 7 days by default',

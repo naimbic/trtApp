@@ -90,7 +90,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
             description: selected.description || '',
             start: selected.start ? dayjs(selected.start).toDate() : null,
             end: selected.end ? dayjs(selected.end).toDate() : null,
-            color: selected.eventColor || 'blue',
+            color: selected.baseColor || selected.eventColor || 'blue',
             isPublic: selected.type === 'EDIT' ? !!selected.isPublic : selected.isPublic !== false, // a new event is visible to the whole team unless switched off
             allDay: !!selected.allDay,
             category: selected.category || 'meeting',

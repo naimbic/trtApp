@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.169.7',
+        date: '2026-11-03',
+        title: 'Events: cancelling the confirmation brings the colour back',
+        items: [
+            'Fixed: when you confirmed an event it turned green, but un-confirming it (and saving) kept it green. The event now remembers the colour you chose, so un-confirming brings that colour back. An event that was already un-confirmed while green keeps green: choose its colour again once.',
+        ],
+    },
+    {
         version: '0.169.6',
         date: '2026-11-03',
         title: 'Chat bubble: the message menu (three dots) shows above the popup',

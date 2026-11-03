@@ -81,6 +81,7 @@ export async function getCalendarItems({ from, to }) {
             end: e.allDay ? (e.end ? iso(new Date(new Date(e.end).getTime() + 86400000)).slice(0, 10) : undefined) : iso(e.end),
             allDay: !!e.allDay,
             eventColor: draft ? 'yellow' : e.confirmed ? 'green' : colorName(e.color),
+            baseColor: colorName(e.color), // the colour the person chose: a confirmed event is shown green, but un-confirming must bring this one back
             confirmed: !!e.confirmed,
             remindClient: !!e.remindClient,
             reminderTemplate: e.reminderTemplate || '',

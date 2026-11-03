@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import CreatableSelect from 'react-select/creatable'
-import { TbCheck, TbKey, TbPlugConnected, TbTrash, TbRefresh } from 'react-icons/tb'
+import { TbBrain, TbCheck, TbKey, TbPlugConnected, TbTrash, TbRefresh } from 'react-icons/tb'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -65,6 +65,30 @@ const Provider = ({ p, isDefault, onSaved }) => {
     )
 }
 
+/** Monthly team review: the AI reads what each person did last month and writes a short personal review into their chat (automatic on the 8th at 08:00). */
+const CoachCard = () => {
+    const [st, setSt] = useState(null)
+    const [busy, setBusy] = useState('')
+    const [result, setResult] = useState(null)
+    useEffect(() => { api('/api/crm/ai/coach').then(setSt).catch(() => {}) }, [])
+    const run = async (who) => {
+        setBusy(who); setResult(null)
+        try { const r = await api('/api/crm/ai/coach', { method: 'POST', body: { who } }); setResult(r); notify('success', r.started ? tr('Started: the reviews arrive in the chats within a few minutes') : r.sent ? tr('Review sent to the chat') : tr('Nothing was sent')) } catch (e) { notify('danger', e.message) } finally { setBusy('') }
+    }
+    return (
+        <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+            <div className="mb-1 flex items-center gap-2 font-semibold"><TbBrain className="text-lg" />{tr('Monthly team review')}</div>
+            <p className="mb-3 text-sm text-gray-500">{tr('On the 8th of every month at 08:00 the AI reads what each team member did last month (tasks done and late, tasks without a deadline or a supervisor, tasks closed alone, time tracked) and sends a short personal review with advice to their own chat conversation “My monthly review”.')}</p>
+            <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="solid" icon={<TbBrain />} loading={busy === 'me'} disabled={!!busy || st?.ready === false} onClick={() => run('me')}>{tr('Send me my review of {month}', { month: st?.month || '' })}</Button>
+                <Button size="sm" loading={busy === 'all'} disabled={!!busy || st?.ready === false} onClick={() => run('all')}>{tr('Send to the whole team now')}</Button>
+                {st?.ready === false && <span className="text-sm text-amber-600">{tr('Add an API key first.')}</span>}
+            </div>
+            {result && <ul className="mt-3 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">{result.lines.map((l, i) => <li key={i} className={l.startsWith('!') ? 'text-red-500' : ''}>{l}</li>)}</ul>}
+        </div>
+    )
+}
+
 /** Settings → AI: keys, models and the default for the AI analyses. */
 const AiSettingsPanel = () => {
     const [d, setD] = useState(null)
@@ -82,6 +106,7 @@ const AiSettingsPanel = () => {
         <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-500">{tr('Pick the provider you pay for, add its API key, choose the model. The analyses send totals, rates and company names to that provider; never emails, phone numbers or addresses.')}</p>
             {d.providers.map((p) => <Provider key={p.id} p={p} isDefault={d.provider === p.id} onSaved={apply} />)}
+            <CoachCard />
             <div>
                 <div className="mb-1 text-xs font-semibold text-gray-500">{tr('About your company (optional): added to every analysis')}</div>
                 <Input textArea rows={3} value={prompt} placeholder={tr('For example: web agency in Casablanca, clients are SMEs, we invoice in MAD.')} onChange={(e) => setPrompt(e.target.value)} />

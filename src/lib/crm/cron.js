@@ -22,8 +22,8 @@ import { growJob } from '@/lib/crm/growApi'
 const DAY = 86400000
 const num = (v) => Number(v) || 0
 
-const JOB_SWITCH = ['invoices', 'estimates', 'proposals', 'contracts', 'expenses', 'freelance', 'tasks', 'tickets', 'leadmail', 'leadmailsend', 'notereminders', 'eventreminders', 'chatschedule', 'grow', 'cleanup'].map((k) => `cron_job_${k}`)
-const OPTION_KEYS = [...JOB_SWITCH, 'automatically_stop_task_timer_after_hours', 'default_timezone', 'cron_key', 'cron_enabled', 'invoice_auto_operations_hour', 'invoice_due_notice_before', 'invoice_due_notice_resend_after', 'automatically_send_invoice_overdue_reminder_after', 'automatically_resend_invoice_overdue_reminder_after', 'create_invoice_from_recurring_only_on_paid_invoices', 'new_recurring_invoice_action', 'invoice_due_after',
+const JOB_SWITCH = ['invoices', 'estimates', 'proposals', 'contracts', 'expenses', 'freelance', 'tasks', 'tickets', 'leadmail', 'leadmailsend', 'notereminders', 'eventreminders', 'chatschedule', 'grow', 'coach', 'cleanup'].map((k) => `cron_job_${k}`)
+const OPTION_KEYS = [...JOB_SWITCH, 'cron_last_coach', 'automatically_stop_task_timer_after_hours', 'default_timezone', 'cron_key', 'cron_enabled', 'invoice_auto_operations_hour', 'invoice_due_notice_before', 'invoice_due_notice_resend_after', 'automatically_send_invoice_overdue_reminder_after', 'automatically_resend_invoice_overdue_reminder_after', 'create_invoice_from_recurring_only_on_paid_invoices', 'new_recurring_invoice_action', 'invoice_due_after',
     'estimates_auto_operations_hour', 'send_estimate_expiry_reminder_before', 'proposals_auto_operations_hour', 'send_proposal_expiry_reminder_before', 'contracts_auto_operations_hour', 'contract_expiration_before', 'tasks_reminder_notification_hour', 'tasks_reminder_notification_before', 'autoclose_tickets_after', 'delete_activity_log_older_then',
     'cron_last_invoices', 'cron_last_estimates', 'cron_last_proposals', 'cron_last_contracts', 'cron_last_tasks', 'cron_last_expenses', 'expenses_auto_operations_hour', 'cron_last_freelance', 'freelance_auto_operations_hour', 'cron_last_cleanup', 'last_cron_run']
 
@@ -251,6 +251,7 @@ const JOBS = [
     { key: 'cleanup', label: 'Cleanup', hour: null, daily: true, run: cleanupJob },
     { key: 'tickets', label: 'Tickets', hour: null, run: ticketsJob },
     { key: 'leadmail', label: 'Lead emails', hour: null, run: leadMailJob },
+    { key: 'coach', label: 'Monthly team review (AI)', hour: null, monthly: true, run: async (ctx) => { const { coachJob } = await import('@/lib/crm/coach'); await coachJob(ctx) } },
     { key: 'grow', label: 'Grow routine', hour: null, daily: true, run: growJob },
     { key: 'eventreminders', label: 'Calendar event reminders', hour: null, run: eventRemindersJob },
     { key: 'chatschedule', label: 'Scheduled chat messages', hour: null, run: scheduledMessagesJob },
@@ -282,7 +283,7 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
                 try { await j.run({ o, today, lines, dry }) } catch (e) { ok = false; lines.push(`! ${j.label} failed: ${e.message}`); console.error('[cron]', j.key, e) }
                 if (lines.length === before) lines.push(`${j.label}: nothing to do`)
                 groups.push({ key: j.key, label: j.label, from: before, to: lines.length })
-                if ((j.hour || j.daily) && !dry) done[`cron_last_${j.key}`] = ymd
+                if ((j.hour || j.daily) && !dry) done[`cron_last_${j.key}`] = ymd // a monthly job keeps its own marker (cron_last_<key> holds the month)
             }
             if (!dry) await setOptions({ ...done, last_cron_run: Math.floor(Date.now() / 1000) })
         } catch (e) { ok = false; lines.push(`! Cron failed: ${e.message}`); console.error('[cron]', e) }

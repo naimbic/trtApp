@@ -5399,5 +5399,13 @@ export default {
     "Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).": "Vous seul(e) êtes prévenu(e) : sur la cloche, sur votre téléphone, par e-mail et sur Telegram ou WhatsApp (si réglé dans votre profil).",
     "Remind me about this": "Me le rappeler",
     "Send an email too": "Envoyer aussi un e-mail",
-    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "Le CRM notifie entre {from}:00 et {to}:00 : un rappel qui tombe hors de ces heures est envoyé à l'ouverture."
+    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "Le CRM notifie entre {from}:00 et {to}:00 : un rappel qui tombe hors de ces heures est envoyé à l'ouverture.",
+    "Add an API key first.": "Ajoutez d'abord une clé API.",
+    "Monthly team review": "Bilan mensuel de l'équipe",
+    "Nothing was sent": "Rien n'a été envoyé",
+    "On the 8th of every month at 08:00 the AI reads what each team member did last month (tasks done and late, tasks without a deadline or a supervisor, tasks closed alone, time tracked) and sends a short personal review with advice to their own chat conversation “My monthly review”.": "Le 8 de chaque mois à 08:00, l'IA lit ce que chaque membre a fait le mois dernier (tâches terminées et en retard, tâches sans échéance ni superviseur, tâches fermées seul, temps suivi) et envoie un court bilan personnel avec des conseils dans sa conversation « Mon bilan mensuel ».",
+    "Review sent to the chat": "Bilan envoyé dans le chat",
+    "Send me my review of {month}": "M'envoyer mon bilan de {month}",
+    "Send to the whole team now": "Envoyer à toute l'équipe maintenant",
+    "Started: the reviews arrive in the chats within a few minutes": "Lancé : les bilans arrivent dans les chats d'ici quelques minutes"
 }

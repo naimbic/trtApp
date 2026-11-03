@@ -5399,5 +5399,13 @@ export default {
     "Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).": "通知はあなただけに届きます：ベル、スマートフォン、メール、Telegram／WhatsApp（プロフィールで設定している場合）。",
     "Remind me about this": "これをリマインドする",
     "Send an email too": "メールも送る",
-    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "CRMは{from}:00〜{to}:00の間に通知します。この時間外のリマインダーは開始時に送信されます。"
+    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "CRMは{from}:00〜{to}:00の間に通知します。この時間外のリマインダーは開始時に送信されます。",
+    "Add an API key first.": "先にAPIキーを追加してください。",
+    "Monthly team review": "チームの月次レビュー",
+    "Nothing was sent": "何も送信されませんでした",
+    "On the 8th of every month at 08:00 the AI reads what each team member did last month (tasks done and late, tasks without a deadline or a supervisor, tasks closed alone, time tracked) and sends a short personal review with advice to their own chat conversation “My monthly review”.": "毎月8日の08:00に、AIが各メンバーの先月の働き（完了・遅延したタスク、期限や担当責任者のないタスク、一人で完了したタスク、記録した時間）を読み取り、助言付きの短い個人レビューを各自のチャット「月次レビュー」に送ります。",
+    "Review sent to the chat": "レビューをチャットに送信しました",
+    "Send me my review of {month}": "{month}の自分のレビューを送る",
+    "Send to the whole team now": "今すぐチーム全員に送る",
+    "Started: the reviews arrive in the chats within a few minutes": "開始しました。数分以内に各チャットにレビューが届きます"
 }

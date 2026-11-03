@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.169.0',
+        date: '2026-11-03',
+        title: 'Monthly team review by AI, sent to each person’s chat',
+        items: [
+            'New: on the 8th of every month at 08:00 the AI reads what each team member did the month before (tasks done on time and late, tasks made without a deadline or a description, tasks created and closed alone with nobody following them, supervisors not following the work, time tracked, comments) and writes a short personal review with what went well, what to improve and 3 actions for next month. It arrives in their own chat conversation “My monthly review” (with a push). Supervisors (the administrators, or the people set in the option coach_supervisors) also get how much of the team work they followed.',
+            'Settings → AI → Monthly team review: “Send me my review of last month” and “Send to the whole team now”. Turn it off in Settings → Cron job → Monthly team review. It uses the AI key already set in Settings → AI.',
+        ],
+    },
+    {
         version: '0.168.0',
         date: '2026-11-03',
         title: 'Notification hours (10:00–17:00), working day (9:00–18:00), reminders with a time on every record',

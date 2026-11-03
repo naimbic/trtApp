@@ -502,6 +502,9 @@ export const GROUPS = {
             { title: 'Grow routine', desc: 'Once a day (and once a week, once a month) writes the ideas and advice of Grow: from the figures of the CRM, and from the AI with a search of what is new when an AI key is set. Choose what it does in Grow → Routine.', fields: [
                 yes('cron_job_grow', 'Run the Grow routine', { default: '1', cardToggle: true }),
             ] },
+            { title: 'Monthly team review (AI)', desc: 'On the 8th of every month at 08:00 the AI reads what each team member did last month (tasks done and late, tasks made without a deadline or a supervisor, tasks closed alone, time tracked) and sends a short personal review with advice to their own chat conversation "My monthly review". Needs an AI key in Settings → AI. Send it now from Settings → AI.', fields: [
+                yes('cron_job_coach', 'Send the monthly team review', { default: '1', cardToggle: true }),
+            ] },
             { title: 'Scheduled lead mails', desc: 'Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
                 yes('cron_job_leadmailsend', 'Send the scheduled lead mails', { default: '1', cardToggle: true }),
             ] },

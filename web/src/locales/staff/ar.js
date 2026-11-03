@@ -5399,5 +5399,13 @@ export default {
     "Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).": "يتم إشعارك أنت فقط: على الجرس وعلى هاتفك وبالبريد الإلكتروني وعلى تيليجرام أو واتساب (إذا تم ضبطه في ملفك الشخصي).",
     "Remind me about this": "ذكّرني بهذا",
     "Send an email too": "أرسل بريدًا إلكترونيًا أيضًا",
-    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "ينبّه النظام بين {from}:00 و{to}:00: التذكير الذي يحين خارج هذه الساعات يُرسل عند بدايتها."
+    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "ينبّه النظام بين {from}:00 و{to}:00: التذكير الذي يحين خارج هذه الساعات يُرسل عند بدايتها.",
+    "Add an API key first.": "أضف مفتاح API أولاً.",
+    "Monthly team review": "المراجعة الشهرية للفريق",
+    "Nothing was sent": "لم يتم إرسال شيء",
+    "On the 8th of every month at 08:00 the AI reads what each team member did last month (tasks done and late, tasks without a deadline or a supervisor, tasks closed alone, time tracked) and sends a short personal review with advice to their own chat conversation “My monthly review”.": "في الثامن من كل شهر الساعة 08:00 يقرأ الذكاء الاصطناعي ما أنجزه كل عضو في الشهر الماضي (المهام المنجزة والمتأخرة، المهام بلا موعد نهائي أو مشرف، المهام المغلقة بمفرده، الوقت المسجَّل) ويرسل مراجعة شخصية قصيرة مع نصائح إلى محادثته «مراجعتي الشهرية».",
+    "Review sent to the chat": "تم إرسال المراجعة إلى الدردشة",
+    "Send me my review of {month}": "أرسل لي مراجعتي لشهر {month}",
+    "Send to the whole team now": "أرسل إلى الفريق كله الآن",
+    "Started: the reviews arrive in the chats within a few minutes": "بدأ الإرسال: ستصل المراجعات إلى المحادثات خلال دقائق"
 }

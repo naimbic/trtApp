@@ -5399,5 +5399,13 @@ export default {
     "Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).": "Solo se avisa a usted: en la campana, en su teléfono, por correo y en Telegram o WhatsApp (si está configurado en su perfil).",
     "Remind me about this": "Recordármelo",
     "Send an email too": "Enviar también un correo",
-    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "El CRM notifica entre las {from}:00 y las {to}:00: un recordatorio fuera de ese horario se envía cuando abre."
+    "The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.": "El CRM notifica entre las {from}:00 y las {to}:00: un recordatorio fuera de ese horario se envía cuando abre.",
+    "Add an API key first.": "Añada primero una clave API.",
+    "Monthly team review": "Revisión mensual del equipo",
+    "Nothing was sent": "No se envió nada",
+    "On the 8th of every month at 08:00 the AI reads what each team member did last month (tasks done and late, tasks without a deadline or a supervisor, tasks closed alone, time tracked) and sends a short personal review with advice to their own chat conversation “My monthly review”.": "El día 8 de cada mes a las 08:00 la IA lee lo que cada miembro hizo el mes pasado (tareas hechas y atrasadas, tareas sin fecha límite ni supervisor, tareas cerradas en solitario, tiempo registrado) y envía una breve revisión personal con consejos a su conversación «Mi revisión mensual».",
+    "Review sent to the chat": "Revisión enviada al chat",
+    "Send me my review of {month}": "Enviarme mi revisión de {month}",
+    "Send to the whole team now": "Enviar a todo el equipo ahora",
+    "Started: the reviews arrive in the chats within a few minutes": "Iniciado: las revisiones llegan a los chats en unos minutos"
 }

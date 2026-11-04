@@ -1338,7 +1338,7 @@ export default {
     "Items": "Articles",
     "Items & Groups": "Articles et groupes",
     "Website SEO data (free: Open PageRank)": "Données SEO du site (gratuit : Open PageRank)",
-    "Free: get a key at openpagerank.com (an account is enough). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.": "Gratuit : obtenez une clé sur openpagerank.com (un compte suffit). Elle donne une note d'autorité de 0 à 10 et le rang mondial du site d'un lead. Utilisée si aucune clé Ahrefs ou Ubersuggest ne répond. Les contrôles SEO de base (titre, description, mobile, indexation, robots.txt, sitemap) n'ont besoin d'aucune clé.",
+    "Free: get a key at openpagerank.keywordseverywhere.com/dashboard (sign in with a Keywords Everywhere key; old DomCop keys no longer work). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.": "Gratuit : obtenez une clé sur openpagerank.keywordseverywhere.com/dashboard (un compte suffit). Elle donne une note d'autorité de 0 à 10 et le rang mondial du site d'un lead. Utilisée si aucune clé Ahrefs ou Ubersuggest ne répond. Les contrôles SEO de base (titre, description, mobile, indexation, robots.txt, sitemap) n'ont besoin d'aucune clé.",
     "Open PageRank API key": "Clé API Open PageRank",
     "World rank": "Rang mondial",
     "SEO basics": "SEO de base",

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.175.1',
+        date: '2026-11-04',
+        title: 'A refused SEO key now says why and which IP the server calls from',
+        items: [
+            'Settings → AI → Test: when Ahrefs or Open PageRank refuses the key, the message gives the answer of the service and the public IP address this server calls from, to add to the list of allowed IPs of the service. Open PageRank moved to openpagerank.keywordseverywhere.com (old DomCop keys no longer work): the CRM now calls the new address.',
+        ],
+    },
+    {
         version: '0.175.0',
         date: '2026-11-04',
         title: 'Public comments: the @ list is fully visible and names the client too; free SEO checks for lead websites',

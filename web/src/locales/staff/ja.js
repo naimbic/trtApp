@@ -1338,7 +1338,7 @@ export default {
     "Items": "アイテム",
     "Items & Groups": "アイテムとグループ",
     "Website SEO data (free: Open PageRank)": "ウェブサイトのSEOデータ（無料：Open PageRank）",
-    "Free: get a key at openpagerank.com (an account is enough). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.": "無料：openpagerank.com でキーを取得します（アカウントだけで可）。リードのサイトの0〜10の権威スコアと世界ランクが分かります。AhrefsやUbersuggestのキーが応答しないときに使われます。基本のSEOチェック（タイトル、説明、モバイル、インデックス、robots.txt、サイトマップ）はキー不要です。",
+    "Free: get a key at openpagerank.keywordseverywhere.com/dashboard (sign in with a Keywords Everywhere key; old DomCop keys no longer work). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.": "無料：openpagerank.keywordseverywhere.com/dashboard でキーを取得します（アカウントだけで可）。リードのサイトの0〜10の権威スコアと世界ランクが分かります。AhrefsやUbersuggestのキーが応答しないときに使われます。基本のSEOチェック（タイトル、説明、モバイル、インデックス、robots.txt、サイトマップ）はキー不要です。",
     "Open PageRank API key": "Open PageRank APIキー",
     "World rank": "世界ランク",
     "SEO basics": "SEOの基本",

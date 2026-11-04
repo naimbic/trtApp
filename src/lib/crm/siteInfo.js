@@ -115,10 +115,21 @@ async function ahrefsKey() {
     return r?.value ? open(r.value) : null
 }
 
+/** The public address this server calls from (what a service that limits keys by IP must be given); '' when it cannot be found. */
+async function egressIp() {
+    try { const r = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(4000) }); return String((await r.json()).ip || '') } catch { return '' }
+}
+/** A refused key, with the reason the service gave and the address it saw. */
+async function refused(name, res) {
+    const body = (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 140)
+    const ip = await egressIp()
+    return new Error(`The ${name} key was refused (${res.status}${body ? `: ${body}` : ''})${ip ? `. This server calls from IP ${ip}: if the service limits keys by IP, add exactly this one` : ''}`)
+}
+
 /** Open PageRank (free key from openpagerank.com): a 0-10 authority score and the world rank of the domain. */
 async function openPageRankOf(domain, key, fetchFn = fetch) {
-    const res = await fetchFn(`https://openpagerank.com/api/v1.0/getPageRank?domains[]=${encodeURIComponent(domain)}`, { headers: { 'API-OPR': key, accept: 'application/json' }, signal: AbortSignal.timeout(10000) })
-    if (res.status === 401 || res.status === 403) throw new Error('The Open PageRank key was refused')
+    const res = await fetchFn(`https://openpagerank.keywordseverywhere.com/api/v1.0/getPageRank?domains[]=${encodeURIComponent(domain)}`, { headers: { 'API-OPR': key, accept: 'application/json' }, signal: AbortSignal.timeout(10000) })
+    if (res.status === 401 || res.status === 403) throw await refused('Open PageRank', res)
     if (!res.ok) throw new Error(`Open PageRank answered ${res.status}`)
     const r = (await res.json()).response?.[0]
     if (!r || r.status_code !== 200) return { opr: null, rank: null, source: 'Open PageRank' }
@@ -130,7 +141,7 @@ async function ahrefsOf(domain, key, fetchFn = fetch) {
     const date = new Date().toISOString().slice(0, 10)
     const get = async (path, extra = '') => {
         const res = await fetchFn(`https://api.ahrefs.com/v3/site-explorer/${path}?target=${encodeURIComponent(domain)}&date=${date}${extra}`, { headers: { authorization: `Bearer ${key}`, accept: 'application/json' }, signal: AbortSignal.timeout(15000) })
-        if (res.status === 401 || res.status === 403) throw new Error('The Ahrefs key was refused')
+        if (res.status === 401 || res.status === 403) throw await refused('Ahrefs', res)
         if (!res.ok) throw new Error(`Ahrefs answered ${res.status}: ${(await res.text()).slice(0, 120)}`)
         return res.json()
     }

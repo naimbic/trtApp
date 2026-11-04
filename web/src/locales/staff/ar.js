@@ -1338,7 +1338,7 @@ export default {
     "Items": "العناصر",
     "Items & Groups": "العناصر والمجموعات",
     "Website SEO data (free: Open PageRank)": "بيانات SEO للموقع (مجاني: Open PageRank)",
-    "Free: get a key at openpagerank.com (an account is enough). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.": "مجاني: احصل على مفتاح من openpagerank.com (يكفي حساب). يعطي درجة سلطة من 0 إلى 10 والترتيب العالمي لموقع العميل المحتمل. يُستخدم عندما لا يستجيب مفتاح Ahrefs أو Ubersuggest. الفحوص الأساسية (العنوان، الوصف، الجوال، الفهرسة، robots.txt، خريطة الموقع) لا تحتاج أي مفتاح.",
+    "Free: get a key at openpagerank.keywordseverywhere.com/dashboard (sign in with a Keywords Everywhere key; old DomCop keys no longer work). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.": "مجاني: احصل على مفتاح من openpagerank.keywordseverywhere.com/dashboard (يكفي حساب). يعطي درجة سلطة من 0 إلى 10 والترتيب العالمي لموقع العميل المحتمل. يُستخدم عندما لا يستجيب مفتاح Ahrefs أو Ubersuggest. الفحوص الأساسية (العنوان، الوصف، الجوال، الفهرسة، robots.txt، خريطة الموقع) لا تحتاج أي مفتاح.",
     "Open PageRank API key": "مفتاح Open PageRank API",
     "World rank": "الترتيب العالمي",
     "SEO basics": "أساسيات SEO",

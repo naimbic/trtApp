@@ -116,7 +116,7 @@ const SeoCard = ({ seo, onSaved }) => {
         </div>
         <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
             <div className="mb-1 flex items-center gap-2 font-semibold"><TbWorldSearch className="text-lg" />{tr('Website SEO data (free: Open PageRank)')}</div>
-            <p className="mb-3 text-sm text-gray-500">{tr('Free: get a key at openpagerank.com (an account is enough). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.')}</p>
+            <p className="mb-3 text-sm text-gray-500">{tr('Free: get a key at openpagerank.keywordseverywhere.com/dashboard (sign in with a Keywords Everywhere key; old DomCop keys no longer work). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.')}</p>
             <div className="flex flex-wrap items-center gap-2">
                 <Input size="sm" className="max-w-xs" type="password" placeholder={seo.opr?.hasKey ? seo.opr.hint : tr('Open PageRank API key')} value={oprKey} onChange={(e) => setOprKey(e.target.value)} />
                 <Button size="sm" variant="solid" icon={<TbKey />} loading={busy === 'save'} disabled={!oprKey.trim()} onClick={() => save({ oprKey: oprKey.trim() }, tr('API key saved'))}>{tr('Save key')}</Button>

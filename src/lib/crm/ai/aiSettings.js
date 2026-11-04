@@ -22,7 +22,7 @@ export const audit = async (session, description) => { try { await prisma.crmAct
 /** The AI settings for the screen: which providers have a key (never the key itself), the models, the default. */
 export async function getAiSettings() {
     await requireSuper()
-    const names = ['ai_provider', 'ai_model', 'ai_system_prompt', 'ubersuggest_key', 'ubersuggest_url', 'ahrefs_key', ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])]
+    const names = ['ai_provider', 'ai_model', 'ai_system_prompt', 'ubersuggest_key', 'ubersuggest_url', 'ahrefs_key', 'openpagerank_key', ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])]
     const o = await read(names)
     const opened = Object.fromEntries(providerIds.map((id) => [id, o[KEY(id)] ? open(o[KEY(id)]) : null]))
     const def = providerIds.includes(o.ai_provider) && opened[o.ai_provider] ? o.ai_provider : providerIds.find((id) => opened[id]) || ''
@@ -32,8 +32,9 @@ export async function getAiSettings() {
         return { id, label: PROVIDERS[id].label, help: PROVIDERS[id].help, presets: PROVIDERS[id].presets, hasKey: !!plain, workspaceId: o[WORKSPACE(id)] || '', hint: plain ? `••••${plain.slice(-4)}` : null, unreadable: !!o[KEY(id)] && !plain, model: (id === def && o.ai_model) || o[MODEL(id)] || PROVIDERS[id].presets[0] }
     })
     const seoPlain = o.ubersuggest_key ? open(o.ubersuggest_key) : null
+    const oprPlain = o.openpagerank_key ? open(o.openpagerank_key) : null
     const ahrefsPlain = o.ahrefs_key ? open(o.ahrefs_key) : null
-    return { providers, provider: def, model: providers.find((p) => p.id === def)?.model || '', systemPrompt: o.ai_system_prompt || '', seo: { hasKey: !!seoPlain, hint: seoPlain ? `••••${seoPlain.slice(-4)}` : null, url: o.ubersuggest_url || '', ahrefs: { hasKey: !!ahrefsPlain, hint: ahrefsPlain ? `••••${ahrefsPlain.slice(-4)}` : null } } }
+    return { providers, provider: def, model: providers.find((p) => p.id === def)?.model || '', systemPrompt: o.ai_system_prompt || '', seo: { hasKey: !!seoPlain, hint: seoPlain ? `••••${seoPlain.slice(-4)}` : null, url: o.ubersuggest_url || '', opr: { hasKey: !!oprPlain, hint: oprPlain ? `••••${oprPlain.slice(-4)}` : null }, ahrefs: { hasKey: !!ahrefsPlain, hint: ahrefsPlain ? `••••${ahrefsPlain.slice(-4)}` : null } } }
 }
 
 /** body: { keys: { id: 'new key' | null (remove) }, models: { id: 'model' }, provider, model, systemPrompt } */
@@ -80,6 +81,14 @@ export async function saveAiSettings(body = {}) {
         if (body.ahrefsKey === null) { await prisma.crmOption.deleteMany({ where: { name: 'ahrefs_key' } }); changed.push('removed the Ahrefs key') } else if (k) {
             if (k.length < 8 || k.length > 600 || /\s/.test(k)) throw bad('That does not look like an API key')
             await write('ahrefs_key', seal(k)); changed.push('set the Ahrefs key')
+        }
+    }
+    // the Open PageRank key (free): a 0-10 authority score and the world rank
+    if (body.oprKey !== undefined) {
+        const k = String(body.oprKey || '').trim()
+        if (body.oprKey === null) { await prisma.crmOption.deleteMany({ where: { name: 'openpagerank_key' } }); changed.push('removed the Open PageRank key') } else if (k) {
+            if (k.length < 8 || k.length > 600 || /\s/.test(k)) throw bad('That does not look like an API key')
+            await write('openpagerank_key', seal(k)); changed.push('set the Open PageRank key')
         }
     }
     if (body.seoUrl !== undefined) {

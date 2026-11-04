@@ -16,13 +16,15 @@ const PublicComment = () => {
     const [busy, setBusy] = useState(false)
     const [err, setErr] = useState('')
     const [ready, setReady] = useState(false)
+    const [people, setPeople] = useState([])
+    const [typing, setTyping] = useState(false) // the editor has the focus: the frame leaves room for the @ and # list
     const box = useRef(null)
     const base = `/api/crm/public/${kind}/${id}/${hash}`
 
     useEffect(() => { document.documentElement.classList.remove('dark'); document.body.style.background = 'transparent' }, [])
     useEffect(() => {
         let off = false
-        fetch(`${base}/team`).then((r) => (r.ok ? r.json() : { staff: [], tags: [] })).catch(() => ({ staff: [], tags: [] })).then((d) => { if (!off) { setMentionDirectory(d); setReady(true) } })
+        fetch(`${base}/team`).then((r) => (r.ok ? r.json() : { staff: [], tags: [], contacts: [] })).catch(() => ({ staff: [], tags: [], contacts: [] })).then((d) => { if (!off) { setMentionDirectory(d); setPeople(d.contacts || []); setReady(true) } })
         return () => { off = true }
     }, [base])
     // the page around the frame follows the height of the box
@@ -32,7 +34,7 @@ const PublicComment = () => {
         if (box.current) ro.observe(box.current)
         send()
         return () => ro.disconnect()
-    }, [ready])
+    }, [ready, typing])
 
     const empty = !html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
     const submit = async () => {
@@ -48,9 +50,9 @@ const PublicComment = () => {
     }
     if (!kind || !id || !hash) return null
     return (
-        <div ref={box} className="bg-transparent p-1 font-sans text-sm text-gray-800">
+        <div ref={box} onFocus={() => setTyping(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setTyping(false) }} style={{ paddingBottom: typing ? 230 : 0 }} className="bg-transparent p-1 font-sans text-sm text-gray-800">
             <input value={name} maxLength={80} placeholder={q.get('n') || ''} onChange={(e) => setName(e.target.value)} className="mb-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:border-blue-500" />
-            {ready && <RichEditor value={html} onChange={setHtml} minHeight={110} placeholder={q.get('p') || ''} images={false} />}
+            {ready && <RichEditor value={html} onChange={setHtml} minHeight={110} placeholder={q.get('p') || ''} images={false} extraMentions={people} />}
             <div className="mt-2 flex items-center justify-end gap-3">
                 {err && <span className="me-auto text-sm text-red-600">{err}</span>}
                 <button type="button" disabled={busy} onClick={submit} className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-60">{q.get('s') || 'Send'}</button>

@@ -75,6 +75,11 @@ export function summary(info) {
     if (s?.server) rows.push(['Server', s.server])
     if (s?.generator) rows.push(['Built with', s.generator])
     if (s?.ssl?.validTo) rows.push(['SSL', `valid until ${s.ssl.validTo.slice(0, 10)}${s.ssl.issuer ? ` · ${s.ssl.issuer}` : ''}`])
+    if (s?.online) {
+        const mark = (ok) => (ok ? '✓' : '✗')
+        const bits = [`Title ${s.title ? `${s.title.length} chars ${mark(s.title.length >= 20 && s.title.length <= 65)}` : '✗'}`, `Description ${s.desc ? `${s.desc.length} chars ${mark(s.desc.length >= 70 && s.desc.length <= 170)}` : '✗'}`, `Mobile ${mark(s.viewport)}`, `Indexable ${mark(!s.noindex)}`, `Canonical ${mark(s.canonical)}`, `robots.txt ${mark(s.robots)}`, `Sitemap ${mark(s.sitemap)}`]
+        rows.push(['SEO basics', bits.join(' · ')])
+    }
     const w = info.whois
     if (w?.created) rows.push(['Domain age', `${span(w.created)} (since ${w.created.slice(0, 10)})`])
     if (w?.expires) rows.push(['Domain expires', `${w.expires.slice(0, 10)}${+new Date(w.expires) < Date.now() ? ' · expired' : ` · in ${span(w.expires)}`}`])

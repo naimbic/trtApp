@@ -17,7 +17,7 @@ export const siteHref = (v) => {
     return /^https?:\/\//i.test(s) ? s : `https://${s}`
 }
 
-const FIGURES = [['da', 'Domain authority'], ['traffic', 'Organic traffic'], ['keywords', 'Organic keywords'], ['backlinks', 'Backlinks'], ['refDomains', 'Referring domains']]
+const FIGURES = [['da', 'Domain authority'], ['traffic', 'Organic traffic'], ['keywords', 'Organic keywords'], ['backlinks', 'Backlinks'], ['refDomains', 'Referring domains'], ['opr', 'Page rank (0-10)'], ['rank', 'World rank']]
 const fmt = (n) => (n == null ? '–' : new Intl.NumberFormat().format(n))
 
 /** What is known about a website: online or not, domain age, hosting, and the SEO figures. Loaded the first time it is shown. */
@@ -45,7 +45,7 @@ export const SiteInfoBody = ({ website }) => {
                 </div>
             )}
             {d.seo?.error && <div className="mt-2 border-t border-white/15 pt-2 opacity-80">{tr("SEO figures")}: {d.seo.error}</div>}
-            {d.seo === null && <div className="mt-2 border-t border-white/15 pt-2 opacity-60">{tr("SEO figures (authority, traffic, keywords, backlinks) appear here once an Ahrefs or Ubersuggest key is saved in Settings → AI.")}</div>}
+            {d.seo === null && <div className="mt-2 border-t border-white/15 pt-2 opacity-60">{tr("SEO figures (authority, traffic, keywords, backlinks) appear here once an Ahrefs, Ubersuggest or free Open PageRank key is saved in Settings → AI.")}</div>}
         </div>
     )
 }

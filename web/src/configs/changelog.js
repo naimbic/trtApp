@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.175.0',
+        date: '2026-11-04',
+        title: 'Public comments: the @ list is fully visible and names the client too; free SEO checks for lead websites',
+        items: [
+            'Public proposal, estimate and contract comments: the @ and # suggestion list was cut by the comment frame; the frame now makes room for it. @ also offers the client side of the document (the contacts and company of the client, or the lead).',
+            'Lead website tooltip, free: a line of SEO basics needs no key at all (title and description length, mobile, indexing, canonical, robots.txt, sitemap). For authority figures, an Ahrefs API needs a paid plan with API access (a refused key means the plan has none), so a free Open PageRank key (openpagerank.com) can be saved in Settings → AI: page rank 0-10 and world rank. The sources are tried in order: Ahrefs, Ubersuggest, Open PageRank.',
+        ],
+    },
+    {
         version: '0.174.0',
         date: '2026-11-04',
         title: 'Items & Groups in one page; dragging a group no longer crashes; Ahrefs for the SEO figures of a lead website',

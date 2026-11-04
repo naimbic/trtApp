@@ -43,12 +43,25 @@ async function checkSite(host, startUrl) {
                 while (n < 120000) { const { done, value } = await reader.read(); if (done) break; html += Buffer.from(value).toString('utf8'); n += value.length; if (/<\/head>/i.test(html)) break }
                 reader.cancel().catch(() => {})
                 out.title = decodeEntities(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] || '').replace(/\s+/g, ' ').trim().slice(0, 120)
+                const meta = (re) => (re.exec(html)?.[1] || '').trim()
+                out.desc = decodeEntities(meta(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)/i) || meta(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["']/i)).slice(0, 400)
+                out.viewport = /<meta[^>]+name=["']viewport["']/i.test(html)
+                out.canonical = !!/<link[^>]+rel=["']canonical["']/i.test(html)
+                out.noindex = /<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(html)
+                out.lang = meta(/<html[^>]+lang=["']([^"']+)/i).slice(0, 12)
+                out.og = /<meta[^>]+property=["']og:title["']/i.test(html)
                 out.generator = (/<meta[^>]+name=["']generator["'][^>]+content=["']([^"']+)/i.exec(html)?.[1] || '').slice(0, 60)
             } else await res.body?.cancel().catch(() => {})
             break
         }
         if (!out.finalUrl && out.status) { out.online = true; out.finalUrl = url }
     } catch (e) { out.error = /not a public/.test(e.message) ? 'not a public website' : /abort|timeout|timed out/i.test(e.message) ? 'no answer' : /ENOTFOUND|EAI_AGAIN/.test(`${e.cause?.code} ${e.message}`) ? 'the domain does not exist' : String(e.cause?.code || e.message).slice(0, 60) }
+    if (out.online && out.finalUrl) {
+        // the two files every search engine asks for first
+        const origin = new URL(out.finalUrl).origin
+        const probe = async (path, ok) => { try { const r = await fetch(origin + path, { redirect: 'manual', headers: { 'user-agent': UA }, signal: AbortSignal.timeout(5000) }); const t = r.status === 200 ? (await r.text()).slice(0, 4000) : ''; return !!t && ok(t) } catch { return false } }
+        ;[out.robots, out.sitemap] = await Promise.all([probe('/robots.txt', (t) => !/<html/i.test(t)), probe('/sitemap.xml', (t) => /<urlset|<sitemapindex/i.test(t))])
+    }
     const finalHost = hostOf(out.finalUrl || url)
     if (out.online && /^https:/i.test(out.finalUrl || url) && finalHost && !net.isIP(finalHost)) out.ssl = await sslOf(finalHost).catch(() => null)
     return out
@@ -102,6 +115,16 @@ async function ahrefsKey() {
     return r?.value ? open(r.value) : null
 }
 
+/** Open PageRank (free key from openpagerank.com): a 0-10 authority score and the world rank of the domain. */
+async function openPageRankOf(domain, key, fetchFn = fetch) {
+    const res = await fetchFn(`https://openpagerank.com/api/v1.0/getPageRank?domains[]=${encodeURIComponent(domain)}`, { headers: { 'API-OPR': key, accept: 'application/json' }, signal: AbortSignal.timeout(10000) })
+    if (res.status === 401 || res.status === 403) throw new Error('The Open PageRank key was refused')
+    if (!res.ok) throw new Error(`Open PageRank answered ${res.status}`)
+    const r = (await res.json()).response?.[0]
+    if (!r || r.status_code !== 200) return { opr: null, rank: null, source: 'Open PageRank' }
+    return { opr: r.page_rank_decimal ?? r.page_rank_integer ?? null, rank: r.rank ? Number(r.rank) : null, source: 'Open PageRank' }
+}
+
 /** Ahrefs API v3: domain rating, organic traffic and keywords, backlinks and referring domains of a domain. */
 async function ahrefsOf(domain, key, fetchFn = fetch) {
     const date = new Date().toISOString().slice(0, 10)
@@ -120,16 +143,24 @@ export async function seoOf(domain) {
     const hit = seoCache.get(domain)
     if (hit && Date.now() - hit.at < SEO_TTL) return hit.data
     const ah = await ahrefsKey()
-    const cfg = ah ? null : await seoKey()
-    if (!ah && !cfg) return null
-    let data
-    try {
-        if (ah) data = await ahrefsOf(domain, ah)
-        else {
-        const j = await callTool({ url: cfg.url, token: cfg.key, name: 'domain_overview', args: { domain } })
-        data = { da: j.domainAuthority ?? null, traffic: j.traffic ?? null, keywords: j.organic ?? null, backlinks: j.backlinks ?? null, refDomains: j.refDomains ?? null, source: 'Ubersuggest' }
-        }
-    } catch (e) { return { error: e.message } } // an error is not kept: the next hover tries again
+    const cfg = await seoKey()
+    const opr = (await prisma.crmOption.findFirst({ where: { name: 'openpagerank_key' } }))?.value
+    const oprKey = opr ? open(opr) : null
+    if (!ah && !cfg && !oprKey) return null
+    // the sources in order (Ahrefs, Ubersuggest, Open PageRank): the first one that answers; a refused key falls through to the next
+    let data, lastErr = ''
+    for (const source of [ah && 'ahrefs', cfg && 'uber', oprKey && 'opr'].filter(Boolean)) {
+        try {
+            if (source === 'ahrefs') data = await ahrefsOf(domain, ah)
+            else if (source === 'opr') data = await openPageRankOf(domain, oprKey)
+            else {
+                const j = await callTool({ url: cfg.url, token: cfg.key, name: 'domain_overview', args: { domain } })
+                data = { da: j.domainAuthority ?? null, traffic: j.traffic ?? null, keywords: j.organic ?? null, backlinks: j.backlinks ?? null, refDomains: j.refDomains ?? null, source: 'Ubersuggest' }
+            }
+            break
+        } catch (e) { lastErr = e.message }
+    }
+    if (!data) return { error: lastErr } // an error is not kept: the next hover tries again
     seoCache.set(domain, { at: Date.now(), data })
     return data
 }
@@ -154,5 +185,5 @@ export async function siteInfo(website, { force = false } = {}) {
 }
 
 /** The Ubersuggest key for the settings screen. */
-export { ahrefsOf }
+export { ahrefsOf, openPageRankOf }
 export const SEO_DEFAULT_URL = SEO_URL

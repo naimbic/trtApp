@@ -93,12 +93,13 @@ const CoachCard = () => {
 const SeoCard = ({ seo, onSaved }) => {
     const [key, setKey] = useState('')
     const [ahKey, setAhKey] = useState('')
+    const [oprKey, setOprKey] = useState('')
     const [busy, setBusy] = useState('')
     const [result, setResult] = useState(null)
-    const save = async (body, ok) => { setBusy('save'); try { onSaved(await api('/api/crm/ai/settings', { method: 'PUT', body })); setKey(''); setAhKey(''); setResult(null); if (ok) notify('success', ok) } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
+    const save = async (body, ok) => { setBusy('save'); try { onSaved(await api('/api/crm/ai/settings', { method: 'PUT', body })); setKey(''); setAhKey(''); setOprKey(''); setResult(null); if (ok) notify('success', ok) } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
     const test = async () => {
         setBusy('test'); setResult(null)
-        try { const r = await api('/api/crm/pipeline/leads/site-info?url=trtdigital.ma&force=1'); setResult(r.seo && !r.seo.error ? { ok: true, text: `trtdigital.ma: DA ${r.seo.da ?? '–'}, ${r.seo.keywords ?? '–'} ${tr('keywords')}, ${r.seo.backlinks ?? '–'} ${tr('backlinks')}` } : { ok: false, text: r.seo?.error || tr('No key saved yet') }) } catch (e) { setResult({ ok: false, text: e.message }) } finally { setBusy('') }
+        try { const r = await api('/api/crm/pipeline/leads/site-info?url=trtdigital.ma&force=1'); setResult(r.seo && !r.seo.error ? { ok: true, text: `trtdigital.ma: ${r.seo.source || ''} · DA ${r.seo.da ?? r.seo.opr ?? '–'}, ${r.seo.keywords ?? '–'} ${tr('keywords')}, ${r.seo.backlinks ?? '–'} ${tr('backlinks')}` } : { ok: false, text: r.seo?.error || tr('No key saved yet') }) } catch (e) { setResult({ ok: false, text: e.message }) } finally { setBusy('') }
     }
     return (
         <div className="space-y-4">
@@ -110,6 +111,17 @@ const SeoCard = ({ seo, onSaved }) => {
                 <Button size="sm" variant="solid" icon={<TbKey />} loading={busy === 'save'} disabled={!ahKey.trim()} onClick={() => save({ ahrefsKey: ahKey.trim() }, tr('API key saved'))}>{tr('Save key')}</Button>
                 {seo.ahrefs?.hasKey && <Button size="sm" icon={<TbPlugConnected />} loading={busy === 'test'} onClick={test}>{tr('Test')}</Button>}
                 {seo.ahrefs?.hasKey && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => save({ ahrefsKey: null }, tr('Key removed'))}>{tr('Remove')}</Button>}
+                {result && <span className={`text-sm ${result.ok ? 'text-emerald-600' : 'text-red-500'}`}>{result.text}</span>}
+            </div>
+        </div>
+        <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+            <div className="mb-1 flex items-center gap-2 font-semibold"><TbWorldSearch className="text-lg" />{tr('Website SEO data (free: Open PageRank)')}</div>
+            <p className="mb-3 text-sm text-gray-500">{tr('Free: get a key at openpagerank.com (an account is enough). It gives a 0-10 authority score and the world rank of a lead website. Used when no Ahrefs or Ubersuggest key answers. The basic SEO checks (title, description, mobile, indexing, robots.txt, sitemap) need no key at all.')}</p>
+            <div className="flex flex-wrap items-center gap-2">
+                <Input size="sm" className="max-w-xs" type="password" placeholder={seo.opr?.hasKey ? seo.opr.hint : tr('Open PageRank API key')} value={oprKey} onChange={(e) => setOprKey(e.target.value)} />
+                <Button size="sm" variant="solid" icon={<TbKey />} loading={busy === 'save'} disabled={!oprKey.trim()} onClick={() => save({ oprKey: oprKey.trim() }, tr('API key saved'))}>{tr('Save key')}</Button>
+                {seo.opr?.hasKey && <Button size="sm" icon={<TbPlugConnected />} loading={busy === 'test'} onClick={test}>{tr('Test')}</Button>}
+                {seo.opr?.hasKey && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => save({ oprKey: null }, tr('Key removed'))}>{tr('Remove')}</Button>}
                 {result && <span className={`text-sm ${result.ok ? 'text-emerald-600' : 'text-red-500'}`}>{result.text}</span>}
             </div>
         </div>

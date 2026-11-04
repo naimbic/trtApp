@@ -1189,6 +1189,8 @@ try {
         check('Public proposal comment: the rich text is kept (bold, links, lists) and made safe (no script, no javascript: link)', posted.status === 200 && /<strong>@Team<\/strong>/.test(saved?.content || '') && /<li>a<\/li>/.test(saved?.content || '') && /href="https:\/\/example\.com"/.test(saved?.content || '') && !/script|javascript:/i.test(saved?.content || ''))
         const team = await fetch(`${pub}/team`)
         check('Public proposal comment: the team and tags to @mention come only with the link of the document', team.status === 200 && Array.isArray((await team.json()).staff) && (await fetch(`${BASE}/api/crm/public/proposal/${pr.id}/wronghash/team`)).status === 404)
+        const leadRow = await prisma.crmLead.findUnique({ where: { id: lead.id }, select: { name: true } })
+        check('Public proposal comment: the lead or client of the document can be @mentioned too', !leadRow?.name || (await (await fetch(`${pub}/team`)).json()).contacts?.some((c) => c.name === leadRow.name))
         const page = await (await fetch(pub)).text()
         check('Public proposal page: the comment box is the CRM editor (a frame) and the comment shows with its style', /id="cfr"/.test(page) && /public-comment\?kind=proposal/.test(page) && /<strong>@Team<\/strong>/.test(page) && !/<script>alert/.test(page))
         // the files of the document go with the email

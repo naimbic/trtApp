@@ -162,6 +162,9 @@ const crmRoutes = [
     { key: 'crm.timeline', path: '/crm/timeline', component: lazy(() => import('@/views/crm/tasks/Timeline')), authority: [] },
     { key: 'crm.time-report', path: '/crm/time-report', component: lazy(() => import('@/views/crm/tasks/TimeReport')), authority: [] },
     { key: 'crm.notifications', path: '/crm/notifications', component: lazy(() => import('@/views/crm/NotificationsPage')), authority: [] },
+    { key: 'crm.item-groups', path: '/crm/item-groups', component: lazy(() => import('@/views/crm/redirects/GroupRedirect').then((m) => ({ default: m.ToItems }))), authority: [] },
+    { key: 'crm.expense-categories', path: '/crm/expense-categories', component: lazy(() => import('@/views/crm/redirects/GroupRedirect').then((m) => ({ default: m.ToExpenses }))), authority: [] },
+    { key: 'crm.contract-types', path: '/crm/contract-types', component: lazy(() => import('@/views/crm/redirects/GroupRedirect').then((m) => ({ default: m.ToContracts }))), authority: [] },
     { key: 'crm.items', path: '/crm/items', component: lazy(() => import('@/views/crm/sales/ItemsPage')), authority: [] },
     {
         key: 'crm.resource',

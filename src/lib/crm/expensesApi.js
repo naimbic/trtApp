@@ -6,6 +6,7 @@ import { round2 } from '@/lib/crm/sales/calc'
 import { trendOf } from '@/lib/crm/trend'
 import { toBase } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
+import { colorName, autoColor } from '@/lib/crm/itemsCalc'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -22,11 +23,11 @@ const withTax = (e, taxes) => { const r1 = taxes[e.taxId]?.rate || 0, r2 = taxes
 
 async function lookups() {
     const [categories, taxes, modes, currencies] = await Promise.all([
-        prisma.crmExpenseCategory.findMany({ orderBy: { name: 'asc' } }), prisma.crmTax.findMany({ orderBy: { name: 'asc' } }),
+        prisma.crmExpenseCategory.findMany({ orderBy: { name: 'asc' } }).then((l) => l.sort((a, b) => (a.order ?? 1e9) - (b.order ?? 1e9) || a.name.localeCompare(b.name))), prisma.crmTax.findMany({ orderBy: { name: 'asc' } }),
         prisma.crmPaymentMode.findMany({ orderBy: { name: 'asc' } }), prisma.crmCurrency.findMany(),
     ])
     return {
-        categories: categories.map((c) => ({ id: c.id, name: c.name })), taxes: taxes.map((t) => ({ id: t.id, name: t.name, rate: t.taxRate })),
+        categories: categories.map((c) => ({ id: c.id, name: c.name, color: colorName(c.color || autoColor(c.name)) })), taxes: taxes.map((t) => ({ id: t.id, name: t.name, rate: t.taxRate })),
         paymentModes: modes.map((m) => ({ id: m.id, name: m.name })), currencies: currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, placement: c.placement, isDefault: !!c.isDefault })),
     }
 }
@@ -46,7 +47,7 @@ export async function listExpenses(q = {}) {
     if (q.from || q.to) and.push({ date: { ...(q.from ? { gte: new Date(q.from) } : {}), ...(q.to ? { lte: new Date(`${q.to}T23:59:59Z`) } : {}) } })
     if (q.query) { const c = { contains: q.query, mode: 'insensitive' }; and.push({ OR: [{ expenseName: c }, { note: c }, { referenceNo: c }] }) }
     const where = { AND: and }
-    const page = Math.max(parseInt(q.pageIndex, 10) || 1, 1), size = Math.min(Math.max(parseInt(q.pageSize, 10) || 20, 5), 100)
+    const page = Math.max(parseInt(q.pageIndex, 10) || 1, 1), size = Math.min(Math.max(parseInt(q.pageSize, 10) || 20, 5), 500)
     const sortMap = { date: { date: q.order === 'asc' ? 'asc' : 'desc' }, amount: { amount: q.order === 'asc' ? 'asc' : 'desc' }, name: { expenseName: q.order === 'asc' ? 'asc' : 'desc' } }
     const [rows, total, lk, all] = await Promise.all([
         prisma.crmExpense.findMany({ where, orderBy: sortMap[q.sortKey] || sortMap.date, skip: (page - 1) * size, take: size }),
@@ -174,3 +175,48 @@ export async function createCategory(name) {
     const c = await prisma.crmExpenseCategory.create({ data: { name: n } })
     return { success: true, id: c.id, name: c.name }
 }
+
+/* ---- the groups of the Expenses page: the categories, coloured and in the order of the page; and the drag of expenses between them ---- */
+export async function saveCategory(body = {}, id = null) {
+    await requirePermission('expenses', id ? 'edit' : 'create')
+    const n = nz(body.name)
+    if (!n) throw fail('Name the category')
+    const data = { name: n.slice(0, 80), color: colorName(body.color || autoColor(n)) }
+    const dup = await prisma.crmExpenseCategory.findFirst({ where: { name: { equals: n, mode: 'insensitive' }, ...(id ? { NOT: { id } } : {}) } })
+    if (dup) throw fail('That category already exists')
+    if (id) {
+        if (!oid(id) || !(await prisma.crmExpenseCategory.findUnique({ where: { id }, select: { id: true } }))) throw fail('Category not found', 404)
+        await prisma.crmExpenseCategory.update({ where: { id }, data })
+        return { success: true, id }
+    }
+    const all = await prisma.crmExpenseCategory.findMany({ select: { order: true }, take: 1000 })
+    const c = await prisma.crmExpenseCategory.create({ data: { ...data, order: Math.max(-1, ...all.map((x) => x.order ?? -1)) + 1 } })
+    return { success: true, id: c.id }
+}
+
+/** A category that still has expenses cannot go: every expense needs one. */
+export async function deleteCategory(id) {
+    await requirePermission('expenses', 'delete')
+    if (!oid(id) || !(await prisma.crmExpenseCategory.findUnique({ where: { id }, select: { id: true } }))) throw fail('Category not found', 404)
+    const n = await prisma.crmExpense.count({ where: { categoryId: id } })
+    if (n) throw fail(`This category still has ${n} expense${n > 1 ? 's' : ''}. Move them to another category first.`, 409)
+    await prisma.crmExpenseCategory.delete({ where: { id } })
+    return { success: true }
+}
+
+export async function reorderCategories(ids) {
+    await requirePermission('expenses', 'edit')
+    for (const [i, id] of (Array.isArray(ids) ? ids : []).filter(oid).entries()) await prisma.crmExpenseCategory.updateMany({ where: { id }, data: { order: i } })
+    return { success: true }
+}
+
+/** Dropping expenses on another category: only the ones the person may change. */
+export async function moveExpenses({ ids, categoryId } = {}) {
+    const session = await requirePermission('expenses', 'edit')
+    const a = await access(session)
+    if (!oid(categoryId) || !(await prisma.crmExpenseCategory.findUnique({ where: { id: categoryId }, select: { id: true } }))) throw fail('Category not found', 404)
+    const list = (Array.isArray(ids) ? ids : []).filter(oid).slice(0, 200)
+    const r = await prisma.crmExpense.updateMany({ where: { AND: [{ id: { in: list } }, await visible(a)] }, data: { categoryId } })
+    return { success: true, moved: r.count }
+}
+

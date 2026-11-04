@@ -10,6 +10,8 @@ import { amountInWords } from '@/lib/crm/numberWords'
 import { createInvoiceFromEstimate } from '@/lib/crm/sales/convert'
 import { bankTokensFor } from '@/lib/crm/bankDb'
 import { bankBlockHtml } from '@/lib/crm/docTokens'
+import { cleanHtml, looksLikeHtml, storeRich } from '@/lib/crm/richText'
+import { notifyComment } from '@/lib/crm/mentionsApi'
 
 export const ESTIMATE = { DRAFT: 1, SENT: 2, DECLINED: 3, ACCEPTED: 4, EXPIRED: 5 }
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }) }
@@ -91,6 +93,29 @@ export async function estimatePdf(id, hash, staff = false) {
     return { pdf: await htmlToPdf(html), name: `${d.number.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}.pdf` }
 }
 
+/** The comment box of a public page: the editor of the CRM itself (style, links, @team, #tags) in a frame; it saves through the comments address of the page. */
+export function commentFrame(p) {
+    const m = /\/public\/(proposal|estimate|contract)\/([^/]+)\/([^/]+)/.exec(p.base || '')
+    if (!m) return ''
+    const T = p.T || {}
+    const q = new URLSearchParams({ kind: m[1], id: m[2], hash: m[3], n: T.yourName || 'Your name', p: T.yourComment || 'Your comment', s: T.send || 'Send', r: T.required || 'Required', name: [p.contact?.firstName, p.contact?.lastName].filter(Boolean).join(' ') })
+    return `<iframe id="cfr" title="${esc(T.comments || 'Comments')}" src="${esc(publicBase())}/public-comment?${q.toString()}" style="width:100%;height:300px;border:0;margin-top:12px;background:transparent" loading="lazy"></iframe>`
+}
+
+/** A comment as safe HTML: a comment written in the editor is cleaned, an older plain one is escaped. */
+export const commentBody = (v) => (looksLikeHtml(v) ? cleanHtml(v) : esc(v).replace(/\n/g, '<br>'))
+
+/** What a comment from the public page is saved as (cleaned HTML, at most 6000 characters of it) and 'plain' for the bell and the notices. */
+export const publicCommentText = (v) => storeRich(String(v || '').slice(0, 12000), 6000)
+
+/** The team is told that the lead or the client commented: the bell, Telegram / WhatsApp, to the one in charge and the one who made the document. */
+export async function tellTeamOfComment({ doc, kind, number, name, html }) {
+    try {
+        const link = `/crm/${kind}/${doc.id}`
+        await notifyComment({ by: { staffId: undefined, name: name || 'Client' }, text: html, link, subject: number, recipients: [doc.assignedId, doc.addedFrom].filter(Boolean) })
+    } catch (e) { console.error('[public comment notice]', e.message) }
+}
+
 export const initials = (n) => String(n || '?').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase()
 
 /** The public page (document + Accept / Refuse + comments) shared by estimates and proposals. */
@@ -114,13 +139,13 @@ ${paperCss()}
 <div class="bar"><div class="in"><b>${esc(p.companyName)}</b><span class="sp"></span><a class="btn gr-b" href="${p.base}/pdf">${T.pdf}</a>${p.acting ? `${p.noRefuse ? '' : `<button class="btn no-b" onclick="document.getElementById('refuse').showModal()">${T.refuse}</button>`}<button class="btn ok-b" onclick="document.getElementById('accept').showModal()">${T.accept}</button>` : ''}</div></div>
 <div class="wrap">${p.banner}<div class="card">${p.docHtml}</div>
 <div class="card no-print"><h3>${T.comments} (${p.commentsCount})</h3>${p.commentsHtml}
-<form id="cf" class="fm" style="margin-top:14px"><input name="name" placeholder="${T.yourName}" maxlength="80" value="${esc([contact?.firstName, contact?.lastName].filter(Boolean).join(' '))}"><textarea name="content" rows="3" placeholder="${T.yourComment}" maxlength="2000" required></textarea><div style="text-align:right"><button class="btn pr-b" type="submit">${T.send}</button></div><div class="err" id="ce"></div></form></div></div>
+${commentFrame(p)}</div></div>
 <dialog id="accept"><h3>${T.acceptTitle}</h3><p class="muted" style="margin:0 0 4px">${T.acceptText}</p><div class="fm"><div class="row"><div><label>${T.first}</label><input id="fn" value="${esc(contact?.firstName || '')}"></div><div><label>${T.last}</label><input id="ln" value="${esc(contact?.lastName || '')}"></div></div><div><label>${T.email}</label><input id="em" type="email" value="${esc(contact?.email || '')}"></div>${p.identity ? `<div><label>${T.sign} <a href="#" id="clr" style="font-weight:400;float:right">${T.clear}</a></label><canvas class="pad" id="pad"></canvas></div>` : ''}</div>${p.legalText ? `<p class="muted" style="font-size:12px;margin:10px 0 0">${esc(p.legalText)}</p>` : ''}<div class="err" id="ae"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('accept').close()">${T.cancel}</button><button class="btn ok-b" id="aok">${T.confirmAccept}</button></div></dialog>
 ${p.noRefuse ? '' : `<dialog id="refuse"><h3>${T.refuseTitle}</h3><p class="muted" style="margin:0">${T.refuseText}</p><label>${T.reason}</label><textarea id="rr" rows="3" maxlength="500"></textarea><div class="err" id="re"></div><div class="acts"><button class="btn gr-b" onclick="document.getElementById('refuse').close()">${T.cancel}</button><button class="btn no-b" id="rok">${T.confirmRefuse}</button></div></dialog>`}
 <script>
 const base=${JSON.stringify(p.base)},identity=${p.identity},reqMsg=${JSON.stringify(T.required)};
 const post=async(p,b)=>{const r=await fetch(base+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j};
-document.getElementById('cf').onsubmit=async(e)=>{e.preventDefault();const f=e.target;try{await post('/comments',{name:f.name.value,content:f.content.value});location.reload()}catch(x){document.getElementById('ce').textContent=x.message}};
+window.addEventListener('message',(e)=>{const d=e.data||{};const f=document.getElementById('cfr');if(!f||e.source!==f.contentWindow)return;if(d.type==='trt-height')f.style.height=Math.min(Math.max(+d.h||0,200),900)+'px';if(d.type==='trt-sent')location.reload()});
 let drawn=false;const cv=document.getElementById('pad');
 if(cv){const ctx=cv.getContext('2d');const fit=()=>{const r=cv.getBoundingClientRect();cv.width=r.width*2;cv.height=r.height*2;ctx.scale(2,2);ctx.lineWidth=2.2;ctx.lineCap='round';ctx.strokeStyle='#111'};
 document.getElementById('accept').addEventListener('toggle',fit);let down=false;const pos=(e)=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
@@ -145,7 +170,7 @@ export async function estimatePage(id, hash) {
         ? `<div class="banner ok"><strong>${T.accepted}</strong><div>${esc(T.acceptedBy)} ${esc([e.acceptanceFirstname, e.acceptanceLastname].filter(Boolean).join(' '))}${e.acceptanceDate ? ` ${T.on} ${fmtDate(e.acceptanceDate, S.dateFormat, S.timezone)}` : ''}</div>${e.signature?.startsWith('data:image/png;base64,') ? `<img class="sig" src="${e.signature}" alt="">` : ''}</div>`
         : d.status === ESTIMATE.DECLINED ? `<div class="banner no"><strong>${T.declined}</strong></div>`
         : d.status === ESTIMATE.EXPIRED ? `<div class="banner exp"><strong>${T.expired}</strong></div>` : ''
-    const comments = d.comments.length ? d.comments.map((c) => `<div class="cm"><div class="av ${c.staffId ? 'st' : ''}">${esc(initials(c.authorName))}</div><div><div class="meta"><strong>${esc(c.authorName || (c.staffId ? T.team : ''))}</strong>${c.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(c.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${esc(c.content)}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
+    const comments = d.comments.length ? d.comments.map((c) => `<div class="cm"><div class="av ${c.staffId ? 'st' : ''}">${esc(initials(c.authorName))}</div><div><div class="meta"><strong>${esc(c.authorName || (c.staffId ? T.team : ''))}</strong>${c.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(c.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${commentBody(c.content)}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
     const base = `/api/crm/public/estimate/${id}/${hash}`
     const identity = o('estimate_accept_identity_confirmation', '1') === '1'
     return renderPublicPage({ lang, T, number: d.number, companyName: o('companyname'), banner, commentsHtml: comments, commentsCount: d.comments.length, docHtml: await documentHtml(d, lang, S), base, acting, identity, legalText: o('e_sign_legal_text'), contact })
@@ -220,13 +245,14 @@ export async function declineEstimate(id, hash, body) {
 export async function commentEstimate(id, hash, body) {
     const d = await loadEstimateDoc(id, hash)
     if (!d) fail('Estimate not found', 404)
-    const content = String(body.content || '').trim().slice(0, 2000)
+    const content = publicCommentText(body.content)
     if (!content) fail('Write your comment first')
     const recent = await prisma.crmEstimateComment.count({ where: { estimateId: id, staffId: null, createdAt: { gte: new Date(Date.now() - 60000) } } })
     if (recent >= 5) fail('Too many comments, please wait a minute', 429)
     const name = String(body.name || '').trim().slice(0, 80) || d.client?.company || null
     await prisma.crmEstimateComment.create({ data: { estimateId: id, content, authorName: name } })
     await log(id, `New comment from ${name || 'the client'}`)
+    await tellTeamOfComment({ doc: d.estimate, kind: 'estimates', number: d.number, name, html: content })
     const staff = await staffTarget(d.estimate)
     if (staff?.email) {
         const data = { ...(await baseData()), estimate_number: d.number }

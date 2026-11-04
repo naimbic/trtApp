@@ -13,6 +13,8 @@ export function mentionDirectory() {
     return loading
 }
 export const forgetMentions = () => { dir = null }
+/** The directory of a page that is not signed in (a public document): the people and tags it was given. */
+export const setMentionDirectory = (d) => { dir = { staff: d?.staff || [], tags: d?.tags || [] } }
 
 export { mentionedIds } from '@/lib/crm/mentionsCalc'
 

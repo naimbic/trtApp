@@ -5,7 +5,8 @@ import { errorResponse } from '@/lib/crm/crud'
 export async function POST(request, { params }) {
     try {
         const { id } = await params
-        const r = await addProposalComment(id, (await request.json()).content)
+        const b = await request.json()
+        const r = await addProposalComment(id, b.content, { notifyClient: b.notifyClient !== false })
         return NextResponse.json(r, { status: r.success ? 201 : 400 })
     } catch (e) {
         return errorResponse(e)

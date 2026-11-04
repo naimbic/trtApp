@@ -8,7 +8,6 @@ import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Dropdown from '@/components/ui/Dropdown'
-import Input from '@/components/ui/Input'
 import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify, useCan, printPage } from '../kit/api'
 import { makeMoney, useClientLookups } from '../clients/shared'
@@ -17,6 +16,9 @@ import { ProposalStatusTag, fmtDate } from './shared'
 import ShareButton from '@/components/crm/ShareButton'
 import { tr } from '@/utils/t'
 import RichText from '../kit/RichText'
+import RichEditor from '@/components/crm/RichEditor'
+import RichView from '@/components/crm/RichView'
+import Switcher from '@/components/ui/Switcher'
 import { plainText } from '@/lib/crm/richText'
 import ReminderCard from '../kit/ReminderCard'
 
@@ -33,6 +35,7 @@ const ProposalView = () => {
     const [mail, setMail] = useState(false)
     const [confirm, setConfirm] = useState(null) // 'delete' | 'convert'
     const [reply, setReply] = useState('')
+    const [notifyClient, setNotifyClient] = useState(true)
 
     const load = useCallback(() => api(`/api/crm/sales/proposals/${id}`).then((d) => { setData(d); setError('') }).catch((e) => setError(e.message)), [id])
     useEffect(() => { load() }, [load])
@@ -56,7 +59,8 @@ const ProposalView = () => {
     const state = (action, ok) => run(() => api(`/api/crm/sales/proposals/${id}/state`, { method: 'POST', body: { action } }), ok)
     const copy = async () => { try { await navigator.clipboard.writeText(clientLink); notify('success', tr("Client link copied")) } catch { notify('danger', tr("Could not copy")) } }
     const convert = async (to) => { const r = await run(() => api(`/api/crm/sales/proposals/${id}/convert`, { method: 'POST', body: { to } }), to === 'invoice' ? tr("Invoice created") : tr("Estimate created")); if (r?.invoiceId) navigate(`/crm/invoices/${r.invoiceId}`); else if (r?.estimateId) navigate(`/crm/estimates/${r.estimateId}`) }
-    const sendReply = async () => { if (!reply.trim()) return; if (await run(() => api(`/api/crm/sales/proposals/${id}/comments`, { method: 'POST', body: { content: reply } }), tr("Reply added"))) setReply('') }
+    const emptyReply = !String(reply || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+    const sendReply = async () => { if (emptyReply) return; if (await run(() => api(`/api/crm/sales/proposals/${id}/comments`, { method: 'POST', body: { content: reply, notifyClient } }), tr("Reply added"))) setReply('') }
     const delComment = (cid) => run(() => api(`/api/crm/sales/proposals/${id}/comments?commentId=${cid}`, { method: 'DELETE' }), tr("Comment deleted"))
     const doConfirm = async () => {
         const c = confirm; setConfirm(null)
@@ -152,14 +156,20 @@ const ProposalView = () => {
                                     <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${c.staffId ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}`}>{(c.authorName || '?').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase()}</span>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500"><b className="text-sm text-gray-900 dark:text-gray-100">{c.authorName || tr("Client")}</b>{c.staffId ? <span className="rounded bg-emerald-100 px-1.5 text-emerald-700">{tr("Team")}</span> : <span className="rounded bg-indigo-100 px-1.5 text-indigo-700">{tr("Client")}</span>}<span>{dayjs(c.createdAt).format('DD MMM YYYY, HH:mm')}</span>{can('proposals', 'edit') && <button type="button" className="ml-auto text-red-500 hover:underline" onClick={() => delComment(c.id)}>{tr("Delete")}</button>}</div>
-                                        <p className="mt-0.5 whitespace-pre-line text-sm">{c.content}</p>
+                                        <div className="mt-0.5 text-sm">{/<\/?[a-z][a-z0-9]*\b[^>]*>/i.test(c.content || '') ? <RichView html={c.content} /> : <p className="whitespace-pre-line">{c.content}</p>}</div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
                     {can('proposals', 'edit') && (
-                        <div className="flex gap-2"><Input textArea rows={2} placeholder={tr("Reply to the client… (visible on the public proposal page)")} value={reply} onChange={(ev) => setReply(ev.target.value)} /><Button variant="solid" loading={busy} onClick={sendReply}>{tr("Reply")}</Button></div>
+                        <div className="space-y-2">
+                            <RichEditor minHeight={90} placeholder={tr("Reply to the lead or client… (visible on the public proposal page; @ to tell a colleague)")} value={reply} onChange={setReply} />
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <label className="flex cursor-pointer items-center gap-2 text-sm"><Switcher checked={notifyClient} onChange={setNotifyClient} />{tr("Email the lead or client")}</label>
+                                <Button variant="solid" loading={busy} disabled={emptyReply} onClick={sendReply}>{tr("Reply")}</Button>
+                            </div>
+                        </div>
                     )}
                 </Card>
 

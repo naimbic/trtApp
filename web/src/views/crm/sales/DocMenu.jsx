@@ -56,6 +56,7 @@ export const useDocMenu = (cfg, reload) => {
     }
     return {
         head: <Th className="w-12" />,
+        button: (r) => <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-lg text-gray-500 transition hover:rotate-90 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Actions")} aria-haspopup="menu" onClick={(e) => { e.stopPropagation(); setMenu({ row: r, el: e.currentTarget }) }}><TbDots /></button>,
         cell: (r) => (
             <Td className="text-right" onClick={(e) => e.stopPropagation()}>
                 <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-lg text-gray-500 transition hover:rotate-90 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Actions")} aria-haspopup="menu" onClick={(e) => setMenu({ row: r, el: e.currentTarget })}><TbDots /></button>

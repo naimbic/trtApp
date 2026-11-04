@@ -1163,6 +1163,42 @@ try {
     check('AI: refused without the permission; View uses it but cannot change the settings', (await pNone('GET', '/api/crm/ai/settings')).status === 403 && (await pAiV('GET', '/api/crm/ai/settings')).status === 200 && (await pAiV('PUT', '/api/crm/ai/settings', { systemPrompt: 'x' })).status === 403)
     check('AI monthly team review: refused without the AI permission; View may only ask for their own review, only Edit sends it to the team', (await pNone('GET', '/api/crm/ai/coach')).status === 403 && (await pNone('POST', '/api/crm/ai/coach', { who: 'me' })).status === 403 && (await pAiV('GET', '/api/crm/ai/coach')).status === 200 && (await pAiV('POST', '/api/crm/ai/coach', { who: 'all' })).status === 403)
     {
+        // Expenses and Contracts in groups (categories / types): add, rename, drag, delete; and the comment box of a public document
+        const xView = await login(await makeUser('gx-view', { expenses: ['view'], contracts: ['view'] })), xEdit = await login(await makeUser('gx-edit', { expenses: ['view', 'create', 'edit'], contracts: ['view', 'create', 'edit'] })), xDel = await login(await makeUser('gx-del', { expenses: ['view', 'delete'], contracts: ['view', 'delete'] }))
+        const ec = await xEdit('POST', '/api/crm/sales/expenses/groups', { name: 'permcheck category', color: 'red' }), ec2 = await xEdit('POST', '/api/crm/sales/expenses/groups', { name: 'permcheck category 2' })
+        for (const r of [ec, ec2]) if (r.body?.id) made.rows.unshift(['crmExpenseCategory', r.body.id])
+        const ex = await prisma.crmExpense.create({ data: { expenseName: 'permcheck expense', categoryId: ec.body?.id, amount: 5, date: new Date() } })
+        made.rows.unshift(['crmExpense', ex.id])
+        check('Expense categories on the Expenses page: View cannot add, move or rename; Edit does; the drag moves the expense', ec.status === 201 && (await xView('POST', '/api/crm/sales/expenses/groups', { name: 'x' })).status === 403 && (await xView('POST', '/api/crm/sales/expenses/move', { ids: [ex.id], categoryId: ec2.body.id })).status === 403 && (await xEdit('POST', '/api/crm/sales/expenses/move', { ids: [ex.id], categoryId: ec2.body.id })).body?.moved === 1 && (await prisma.crmExpense.findUnique({ where: { id: ex.id } })).categoryId === ec2.body.id)
+        check('Expense categories: a category that still has expenses cannot be deleted; an empty one can (only with Delete)', (await xDel('DELETE', `/api/crm/sales/expenses/groups?id=${ec2.body.id}`)).status === 409 && (await xEdit('DELETE', `/api/crm/sales/expenses/groups?id=${ec.body.id}`)).status === 403 && (await xDel('DELETE', `/api/crm/sales/expenses/groups?id=${ec.body.id}`)).status === 200)
+        const ct = await xEdit('POST', '/api/crm/sales/contracts/types', { name: 'permcheck type', color: 'amber', defaultMonths: 6 }), ct2 = await xEdit('POST', '/api/crm/sales/contracts/types', { name: 'permcheck type 2' })
+        for (const r of [ct, ct2]) if (r.body?.id) made.rows.unshift(['crmContractType', r.body.id])
+        const cl = await prisma.crmClient.findFirst({ select: { id: true } })
+        const kc = await prisma.crmContract.create({ data: { subject: 'permcheck contract', clientId: cl.id, contractTypeId: ct.body?.id, dateStart: new Date(), hash: 'pcx1' } })
+        made.rows.unshift(['crmContract', kc.id])
+        check('Contract types on the Contracts page: View cannot add or move; Edit does; a signed contract keeps its type; a used type cannot be deleted', ct.status === 201 && (await xView('POST', '/api/crm/sales/contracts/types', { name: 'x' })).status === 403 && (await xView('POST', '/api/crm/sales/contracts/move', { ids: [kc.id], typeId: ct2.body.id })).status === 403 && (await xEdit('POST', '/api/crm/sales/contracts/move', { ids: [kc.id], typeId: ct2.body.id })).body?.moved === 1 && (await prisma.crmContract.update({ where: { id: kc.id }, data: { signed: true } })) && (await xEdit('POST', '/api/crm/sales/contracts/move', { ids: [kc.id], typeId: ct.body.id })).body?.moved === 0 && (await xDel('DELETE', `/api/crm/sales/contracts/types?id=${ct2.body.id}`)).status === 409)
+        check('Contracts: the period (start date) filters the list', (await xView('GET', '/api/crm/sales/contracts?from=1999-01-01&to=1999-12-31&pageSize=500')).body?.list?.every((c) => c.subject !== 'permcheck contract') && (await xView('GET', '/api/crm/sales/contracts?pageSize=500')).body?.list?.some((c) => c.subject === 'permcheck contract'))
+        // the comment box of a public proposal: rich comment, cleaned, with the team to @mention (only with the link)
+        const lead = await prisma.crmLead.findFirst({ select: { id: true } })
+        const pr = await prisma.crmProposal.create({ data: { subject: 'permcheck public comment', relType: 'lead', relId: lead.id, status: 4, allowComments: true, hash: 'pcxhash1234567890', date: new Date(), openTill: new Date(Date.now() + 86400000), total: 1, subtotal: 1, number: 987099 } })
+        made.rows.unshift(['crmProposal', pr.id])
+        const pub = `${BASE}/api/crm/public/proposal/${pr.id}/${pr.hash}`
+        const posted = await fetch(`${pub}/comments`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'Lead', content: '<p>Hi <strong>@Team</strong> <a href="javascript:alert(1)">x</a> <a href="https://example.com">link</a><script>alert(1)</script></p><ul><li>a</li></ul>' }) })
+        const saved = await prisma.crmProposalComment.findFirst({ where: { proposalId: pr.id }, orderBy: { createdAt: 'desc' } })
+        if (saved?.id) made.rows.unshift(['crmProposalComment', saved.id])
+        check('Public proposal comment: the rich text is kept (bold, links, lists) and made safe (no script, no javascript: link)', posted.status === 200 && /<strong>@Team<\/strong>/.test(saved?.content || '') && /<li>a<\/li>/.test(saved?.content || '') && /href="https:\/\/example\.com"/.test(saved?.content || '') && !/script|javascript:/i.test(saved?.content || ''))
+        const team = await fetch(`${pub}/team`)
+        check('Public proposal comment: the team and tags to @mention come only with the link of the document', team.status === 200 && Array.isArray((await team.json()).staff) && (await fetch(`${BASE}/api/crm/public/proposal/${pr.id}/wronghash/team`)).status === 404)
+        const page = await (await fetch(pub)).text()
+        check('Public proposal page: the comment box is the CRM editor (a frame) and the comment shows with its style', /id="cfr"/.test(page) && /public-comment\?kind=proposal/.test(page) && /<strong>@Team<\/strong>/.test(page) && !/<script>alert/.test(page))
+        // the files of the document go with the email
+        const sendAs = await login(await makeUser('gx-mail', { proposals: ['view', 'edit'] }))
+        const file = await prisma.crmMedia.create({ data: { name: 'permcheck.txt', key: 'pc/x.txt', url: 'data:text/plain;base64,aGk=', kind: 'text', size: 2, relType: 'proposal', relId: pr.id, isFolder: false, purpose: 'attachment' } })
+        made.rows.unshift(['crmMedia', file.id])
+        const cmp = await sendAs('GET', `/api/crm/mail/compose?kind=proposal&id=${pr.id}`)
+        check('Send by email: the files uploaded on the proposal are offered to be attached (and the PDF)', cmp.status === 200 && cmp.body?.files?.some((f) => f.name === 'permcheck.txt') && cmp.body?.pdf === true)
+    }
+    {
         // The Items page (groups, drag, AI help) and the website information of a lead
         const iNone = await login(await makeUser('it-none', {})), iView = await login(await makeUser('it-view', { items: ['view'] })), iEdit = await login(await makeUser('it-edit', { items: ['view', 'create', 'edit'] })), iDel = await login(await makeUser('it-del', { items: ['view', 'delete'] }))
         const gr = await iEdit('POST', '/api/crm/items-board/groups', { name: 'permcheck group' })

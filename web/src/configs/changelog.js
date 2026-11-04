@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.173.0',
+        date: '2026-11-04',
+        title: 'Proposal mails carry the uploaded files; real editor on public comments; Expenses and Contracts in coloured groups',
+        items: [
+            'Fixed: a proposal sent by email did not carry the files uploaded on it. The Send dialog now lists the files of the document (all ticked, up to 20 MB in all) and offers the document as a PDF (proposals, estimates, contracts and invoices).',
+            'Comments on a public proposal, estimate or contract use the same editor as the rest of the CRM, not a plain text box: bold, italic, underline, colours, headings, lists, quotes, tables, alignment, links, emoji, and @ to mention a colleague and # for tags. The comment is cleaned for safety, shown with its style, and the colleagues named are told (bell, push, Telegram / WhatsApp), like the person in charge of the document.',
+            'Proposals: your reply (same editor, @ to tell a colleague) can be emailed to the lead or client with the message and the link, in their language; the comments of the team and of the lead show with their style.',
+            'Expenses: the list is now grouped by category in coloured accordions (totals per category), with drag between categories, rename, recolour, add and delete a category right on the page. The period filter is on the page and starts on This month (Last month, This year, All time or two dates). The Expense categories page and menu are gone.',
+            'Contracts: the same, by contract type (colour, length in months, default, offered), with the period on the start date, This month by default. A signed contract keeps its type. The Contract types page and menu are gone, as is Item groups (groups are managed on the Items page).',
+        ],
+    },
+    {
         version: '0.172.0',
         date: '2026-11-04',
         title: 'Lead website (clean, open, info on hover), Items in coloured groups with drag and AI, clear Telegram / WhatsApp notices',

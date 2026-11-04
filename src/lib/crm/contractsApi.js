@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { buildSeries } from '@/lib/crm/series'
 import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
 import { lockProblem } from '@/lib/crm/docLock'
+import { colorName, autoColor } from '@/lib/crm/itemsCalc'
 
 const httpError = (message, status = 400) => Object.assign(new Error(message), { status })
 const EXPIRING_DAYS = 7
@@ -31,7 +32,7 @@ async function mustFind(session, id) {
     return c
 }
 
-export async function listContracts({ query = '', state, clientId, typeId, pageIndex = 1, pageSize = 15, sortKey = 'dateStart', order = 'desc' } = {}) {
+export async function listContracts({ query = '', state, clientId, typeId, from, to, pageIndex = 1, pageSize = 15, sortKey = 'dateStart', order = 'desc' } = {}) {
     const session = await requirePermission('contracts', 'view')
     const where = { AND: [await scope(session), clientId ? { clientId } : {}, typeId ? { contractTypeId: typeId } : {}] }
     const [rows, clients, types] = await Promise.all([
@@ -61,12 +62,14 @@ export async function listContracts({ query = '', state, clientId, typeId, pageI
     if (state) list = list.filter((c) => c.state === state)
     else list = list.filter((c) => c.state !== 'trash') // trash is only shown when asked for
     if (q) list = list.filter((c) => c.subject.toLowerCase().includes(q) || c.client.toLowerCase().includes(q) || c.type.toLowerCase().includes(q))
+    // the period: contracts that start in it (a contract without a start date is judged on the day it was made)
+    if (from || to) list = list.filter((c) => { const d = +new Date(c.dateStart || c.createdAt || 0); return (!from || d >= +new Date(from)) && (!to || d <= +new Date(`${to}T23:59:59Z`)) })
     const dir = order === 'asc' ? 1 : -1
     const keyFn = { subject: (c) => c.subject.toLowerCase(), client: (c) => c.client.toLowerCase(), value: (c) => c.value, dateStart: (c) => +new Date(c.dateStart || 0), dateEnd: (c) => +new Date(c.dateEnd || 8.64e15), type: (c) => c.type.toLowerCase() }[sortKey] || ((c) => +new Date(c.dateStart || 0))
     list.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1)
-    const size = Math.min(Math.max(parseInt(pageSize, 10) || 15, 1), 200)
-    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name, color: t.color || null, isDefault: !!t.isDefault, active: t.isActive !== false, months: t.defaultMonths || null })) } }
+    const size = Math.min(Math.max(parseInt(pageSize, 10) || 15, 1), 500)
+    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name, color: t.color ? colorName(t.color) : colorName(autoColor(t.name)), order: t.typeOrder ?? null, isDefault: !!t.isDefault, active: t.isActive !== false, months: t.defaultMonths || null })) } }
 }
 
 export async function getContract(id) {
@@ -177,3 +180,49 @@ export async function deleteContract(id, force = false) {
     await prisma.crmContract.delete({ where: { id } })
     return { success: true }
 }
+
+/* ---- the groups of the Contracts page: the contract types, coloured and in the order of the page; and the drag of contracts between them ---- */
+const trouble = (m, status = 400) => Object.assign(new Error(m), { status })
+export async function saveContractType(body = {}, id = null) {
+    await requirePermission('contracts', id ? 'edit' : 'create')
+    const name = String(body.name || '').trim().slice(0, 80)
+    if (!name) throw trouble('Name the contract type')
+    if (await prisma.crmContractType.findFirst({ where: { name: { equals: name, mode: 'insensitive' }, ...(id ? { NOT: { id } } : {}) } })) throw trouble('That contract type already exists')
+    const months = body.defaultMonths === '' || body.defaultMonths == null ? null : Math.max(0, Math.min(600, parseInt(body.defaultMonths, 10) || 0)) || null
+    const data = { name, color: colorName(body.color || autoColor(name)), defaultMonths: months, ...(body.isActive !== undefined ? { isActive: !!body.isActive } : {}) }
+    if (id) {
+        if (!oid(id) || !(await prisma.crmContractType.findUnique({ where: { id }, select: { id: true } }))) throw trouble('Contract type not found', 404)
+        if (body.isDefault === true) await prisma.crmContractType.updateMany({ where: { NOT: { id } }, data: { isDefault: false } })
+        await prisma.crmContractType.update({ where: { id }, data: { ...data, ...(body.isDefault !== undefined ? { isDefault: !!body.isDefault } : {}) } })
+        return { success: true, id }
+    }
+    const all = await prisma.crmContractType.findMany({ select: { typeOrder: true }, take: 500 })
+    if (body.isDefault === true) await prisma.crmContractType.updateMany({ data: { isDefault: false } })
+    const t = await prisma.crmContractType.create({ data: { ...data, isDefault: !!body.isDefault, isActive: body.isActive !== false, typeOrder: Math.max(-1, ...all.map((x) => x.typeOrder ?? -1)) + 1 } })
+    return { success: true, id: t.id }
+}
+
+export async function deleteContractType(id) {
+    await requirePermission('contracts', 'delete')
+    if (!oid(id) || !(await prisma.crmContractType.findUnique({ where: { id }, select: { id: true } }))) throw trouble('Contract type not found', 404)
+    const n = await prisma.crmContract.count({ where: { contractTypeId: id } })
+    if (n) throw trouble(`This type still has ${n} contract${n > 1 ? 's' : ''}. Move them to another type first.`, 409)
+    await prisma.crmContractType.delete({ where: { id } })
+    return { success: true }
+}
+
+export async function reorderContractTypes(ids) {
+    await requirePermission('contracts', 'edit')
+    for (const [i, id] of (Array.isArray(ids) ? ids : []).filter(oid).entries()) await prisma.crmContractType.updateMany({ where: { id }, data: { typeOrder: i } })
+    return { success: true }
+}
+
+/** Dropping contracts on another type (a contract that is signed keeps its type: it is what was agreed). */
+export async function moveContracts({ ids, typeId } = {}) {
+    const session = await requirePermission('contracts', 'edit')
+    if (!oid(typeId) || !(await prisma.crmContractType.findUnique({ where: { id: typeId }, select: { id: true } }))) throw trouble('Contract type not found', 404)
+    const list = (Array.isArray(ids) ? ids : []).filter(oid).slice(0, 200)
+    const r = await prisma.crmContract.updateMany({ where: { AND: [{ id: { in: list } }, await scope(session), { signed: false, markedAsSigned: false }] }, data: { contractTypeId: typeId } })
+    return { success: true, moved: r.count, kept: list.length - r.count }
+}
+

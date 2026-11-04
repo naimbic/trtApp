@@ -518,6 +518,9 @@ model CrmExpenseCategory {
   id          String       @id @default(auto()) @map("_id") @db.ObjectId
   legacyId    Int?
   name        String
+  /// the colour of the group on the Expenses page (a name of the palette) and its place
+  color       String?
+  order       Int?
   description String?
   expenses    CrmExpense[]
   createdAt   DateTime     @default(now())

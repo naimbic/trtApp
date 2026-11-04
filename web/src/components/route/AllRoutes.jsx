@@ -8,6 +8,9 @@ import { protectedRoutes, publicRoutes } from '@/configs/routes.config'
 import appConfig from '@/configs/app.config'
 import { useAuth } from '@/auth'
 import { Routes, Route, Navigate } from 'react-router'
+import { lazy } from 'react'
+
+const PublicComment = lazy(() => import('@/views/public/PublicComment'))
 
 const { authenticatedEntryPath } = appConfig
 
@@ -16,6 +19,8 @@ const AllRoutes = (props) => {
 
     return (
         <Routes>
+            {/* the comment box of a public proposal / estimate / contract, shown in a frame of that page: open to everybody, signed in or not */}
+            <Route path="/public-comment" element={<AppRoute routeKey="publicComment" component={PublicComment} layout="blank" />} />
             <Route path="/" element={<PublicRoute />}>
                 <Route
                     index

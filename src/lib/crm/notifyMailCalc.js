@@ -27,6 +27,11 @@ Object.assign(T.french, { mentionedYou: '{name} vous a mentionné(e)', commented
 Object.assign(T.spanish, { mentionedYou: '{name} le ha mencionado', commented: '{name} ha comentado', gaveStep: '{name} le asignó un paso', startsIn: 'Empieza en {when}', appointment: 'Cita', signupAsked: 'Solicitud de cuenta', clientWrote: 'Novedad de un cliente', ideaUpdate: 'Novedad en una idea', lowLevel: 'Baja', whatLabel: 'Qué' })
 Object.assign(T.japanese, { mentionedYou: '{name} さんがあなたをメンションしました', commented: '{name} さんがコメントしました', gaveStep: '{name} さんがチェックリスト項目を割り当てました', startsIn: '{when} 後に開始', appointment: '予約', signupAsked: 'アカウント申請', clientWrote: '顧客からの更新', ideaUpdate: 'アイデアの更新', lowLevel: '低', whatLabel: '内容' })
 Object.assign(T.arabic, { mentionedYou: 'أشار إليك {name}', commented: 'علّق {name}', gaveStep: 'أسند إليك {name} خطوة', startsIn: 'يبدأ بعد {when}', appointment: 'موعد', signupAsked: 'طلب حساب', clientWrote: 'جديد من عميل', ideaUpdate: 'جديد في فكرة', lowLevel: 'منخفضة', whatLabel: 'ماذا' })
+Object.assign(T.english, { openOnline: 'View and reply', newCommentOn: 'New comment on {doc}', commentBy: '{name} wrote' })
+Object.assign(T.french, { openOnline: 'Voir et répondre', newCommentOn: 'Nouveau commentaire sur {doc}', commentBy: '{name} a écrit' })
+Object.assign(T.spanish, { openOnline: 'Ver y responder', newCommentOn: 'Nuevo comentario en {doc}', commentBy: '{name} ha escrito' })
+Object.assign(T.japanese, { openOnline: '確認して返信', newCommentOn: '{doc} に新しいコメント', commentBy: '{name} さんからのメッセージ' })
+Object.assign(T.arabic, { openOnline: 'عرض والرد', newCommentOn: 'تعليق جديد على {doc}', commentBy: 'كتب {name}' })
 export const textsFor = (language) => T[language] || T.english
 
 export const nameOf = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || ''

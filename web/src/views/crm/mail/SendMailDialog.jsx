@@ -6,7 +6,7 @@ import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import Alert from '@/components/ui/Alert'
 import { Link } from 'react-router'
-import { api, notify } from '../kit/api'
+import { api, notify, formatBytes } from '../kit/api'
 import { tr } from '@/utils/t'
 
 /** Pick a template, recipients and send a document by email (invoice, estimate, proposal, contract). */
@@ -16,6 +16,7 @@ const SendMailDialog = ({ open, kind, id, template, onClose, onSent }) => {
     const [picked, setPicked] = useState({})
     const [extra, setExtra] = useState('')
     const [attachPdf, setAttachPdf] = useState(false)
+    const [files, setFiles] = useState({}) // the files uploaded on the document: ticked by default, they go with the email
     const [subject, setSubject] = useState('')
     const [loading, setLoading] = useState(false)
     const [sending, setSending] = useState(false)
@@ -31,6 +32,7 @@ const SendMailDialog = ({ open, kind, id, template, onClose, onSent }) => {
                 if (!live) return
                 setData(d); setSubject(d.subject)
                 setPicked(Object.fromEntries(d.recipients.map((r) => [r.email, !!r.checked])))
+                setFiles((cur) => Object.fromEntries((d.files || []).map((f) => [f.id, f.id in cur ? cur[f.id] : true])))
             })
             .catch((e) => live && setError(e.message))
             .finally(() => live && setLoading(false))
@@ -42,7 +44,7 @@ const SendMailDialog = ({ open, kind, id, template, onClose, onSent }) => {
         const cc = extra.split(/[,;\s]+/).filter(Boolean)
         setSending(true)
         try {
-            await api('/api/crm/mail/send', { method: 'POST', body: { kind, id, template: data.template, to, cc, subject, attachPdf: kind === 'invoice' && attachPdf } })
+            await api('/api/crm/mail/send', { method: 'POST', body: { kind, id, template: data.template, to, cc, subject, attachPdf: !!data.pdf && attachPdf, attachFileIds: Object.keys(files).filter((k) => files[k]) } })
             notify('success', tr("Email sent"))
             onSent?.(); onClose()
         } catch (e) { setError(e.message) } finally { setSending(false) }
@@ -76,8 +78,14 @@ const SendMailDialog = ({ open, kind, id, template, onClose, onSent }) => {
                         </div>
                         <div className="flex shrink-0 flex-wrap items-end gap-x-5 gap-y-2">
                             <div className="min-w-[260px] flex-1"><label className="form-label mb-1 block">{tr("Subject")}</label><Input size="sm" value={subject} onChange={(e) => setSubject(e.target.value)} /></div>
-                            {kind === 'invoice' && <label className="flex cursor-pointer items-center gap-2 pb-1.5 text-sm"><Switcher checked={attachPdf} onChange={setAttachPdf} />{tr("Attach the invoice as a PDF")}</label>}
+                            {data.pdf && <label className="flex cursor-pointer items-center gap-2 pb-1.5 text-sm"><Switcher checked={attachPdf} onChange={setAttachPdf} />{kind === 'invoice' ? tr("Attach the invoice as a PDF") : tr("Attach the document as a PDF")}</label>}
                         </div>
+                        {(data.files || []).length > 0 && (
+                            <div className="shrink-0 rounded-xl border border-gray-200 p-2.5 dark:border-gray-600">
+                                <div className="form-label mb-1.5">{tr("Attached files")} <span className="font-normal text-gray-400">· {tr("the files uploaded on this document, up to 20 MB in all")}</span></div>
+                                <div className="flex flex-wrap gap-x-5 gap-y-1.5">{data.files.map((f) => <label key={f.id} className="flex cursor-pointer items-center gap-2 text-sm" title={f.name}><Switcher checked={!!files[f.id]} onChange={(v) => setFiles({ ...files, [f.id]: v })} /><span className="max-w-[220px] truncate font-semibold">{f.name}</span><span className="text-xs text-gray-400">{formatBytes(f.size)}</span></label>)}</div>
+                            </div>
+                        )}
                         <div className="flex min-h-[180px] flex-1 flex-col">
                             <label className="form-label mb-1 block shrink-0">{tr("Preview")}</label>
                             <iframe title={tr("Email preview")} sandbox="" srcDoc={data.html} className="min-h-0 w-full flex-1 rounded-xl border border-gray-200 bg-white dark:border-gray-600" />

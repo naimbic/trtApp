@@ -37,9 +37,7 @@ const LAYOUT = {
     Projects: ['projects', 'scrum-board', 'milestones'],
     Tasks: ['tasks-board', 'my-tasks', 'notes', 'statuses', 'team-tasks', 'timeline', 'time-report', 'issues', 'tasks', 'task-timers', S('hr', 'Attendance & leave', ['timesheets', 'leave-requests', 'days-off']), S('setup', 'Task setup', ['task-statuses', 'checklist-templates'])],
     Sales: [
-        'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses', 'freelancers',
-        S('catalog', 'Items & catalog', ['items', 'item-groups']),
-        S('setup', 'Sales setup', ['expense-categories', 'contract-types']),
+        'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses', 'freelancers', 'items',
     ],
     Support: [
         'tickets',

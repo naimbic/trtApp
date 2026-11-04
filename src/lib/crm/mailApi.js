@@ -185,8 +185,11 @@ export async function composeMail(kind, id, slug) {
     await requirePermission(spec.feature, 'view')
     const { ctx, template, chosen } = await compose(kind, id, slug)
     const smtp = await getSmtp()
+    const files = await prisma.crmMedia.findMany({ where: { relType: kind, relId: id, isFolder: false }, orderBy: { createdAt: 'asc' }, take: 50 })
     return plain({
         templates: spec.templates,
+        files: files.filter((f) => f.url).map((f) => ({ id: f.id, name: f.name, size: f.size || 0, kind: f.kind || '' })),
+        pdf: PDF_KINDS.includes(kind),
         template: chosen.slug,
         templateActive: template.active !== false,
         recipients: ctx.recipients,
@@ -197,23 +200,24 @@ export async function composeMail(kind, id, slug) {
     })
 }
 
+const PDF_KINDS = ['invoice', 'proposal', 'estimate', 'contract']
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
 const toList = (v) => (Array.isArray(v) ? v : String(v || '').split(/[,;\s]+/)).map((s) => s.trim()).filter(Boolean)
 
-export async function sendMail({ kind, id, template: slug, to, cc, subject, attachPdf }) {
+export async function sendMail({ kind, id, template: slug, to, cc, subject, attachPdf, attachFileIds }) {
     const spec = KINDS[kind]
     if (!spec) fail('Unknown document type')
     const session = await requirePermission(spec.feature, 'edit')
     const staffId = await getStaffId(session)
     if (!toList(to).length) fail('Choose at least one recipient')
-    return sendMailCore({ kind, id, template: slug, to, cc, subject, attachPdf, staffId })
+    return sendMailCore({ kind, id, template: slug, to, cc, subject, attachPdf, attachFileIds, staffId })
 }
 
 /**
  * Sends one document email with no permission check (used by the signed-in dialog and by the cron job).
  * Without `to`, it goes to the client contacts that are set to receive this kind of email.
  */
-export async function sendMailCore({ kind, id, template: slug, to, cc, subject, attachPdf, staffId = null }) {
+export async function sendMailCore({ kind, id, template: slug, to, cc, subject, attachPdf, attachFileIds, staffId = null }) {
     const { ctx, template } = await compose(kind, id, slug)
     const toAll = toList(to).length ? toList(to) : ctx.recipients.filter((r) => r.checked).map((r) => r.email)
     const ccAll = toList(cc)
@@ -234,6 +238,21 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
     if (kind === 'invoice' && attachPdf) {
         const { renderInvoicePdf, pdfFileName } = await import('@/lib/crm/invoicePdf')
         try { attachments = [{ filename: pdfFileName(ctx.data.invoice_number), content: await renderInvoicePdf(id), contentType: 'application/pdf' }] } catch (e) { fail(`Could not create the PDF: ${e.message}`) }
+    }
+    // the files uploaded on the document (Files tab) that the person ticked, and the document itself as a PDF
+    const MAX = 20 * 1024 * 1024
+    const fileIds = [...new Set((Array.isArray(attachFileIds) ? attachFileIds : []).map(String))].slice(0, 30)
+    if (fileIds.length) {
+        const files = await prisma.crmMedia.findMany({ where: { id: { in: fileIds }, relType: kind, relId: id, isFolder: false } })
+        const total = files.reduce((n, f) => n + (f.size || 0), 0)
+        if (total > MAX) fail('The attached files are larger than 20 MB together')
+        attachments = [...(attachments || []), ...files.filter((f) => f.url).map((f) => ({ filename: f.name, path: f.url }))]
+    }
+    if (attachPdf && ['proposal', 'estimate', 'contract'].includes(kind)) {
+        try {
+            const r = kind === 'proposal' ? await (await import('@/lib/crm/proposalPublic')).proposalPdf(id, null, true) : kind === 'estimate' ? await (await import('@/lib/crm/estimatePublic')).estimatePdf(id, null, true) : await (await import('@/lib/crm/contractPublic')).contractPdf(id, null, true)
+            if (r?.pdf) attachments = [...(attachments || []), { filename: r.name, content: r.pdf, contentType: 'application/pdf' }]
+        } catch (e) { fail(`Could not create the PDF: ${e.message}`) }
     }
     const res = await deliver({ attachments, to: toAll.join(', '), cc: ccAll.join(', '), subject: finalSubject, html, fromName: template.fromName && !/^\{/.test(template.fromName) ? template.fromName : mergeFields(template.fromName, ctx.data), fromEmail: undefined })
 

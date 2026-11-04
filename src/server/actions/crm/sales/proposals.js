@@ -10,6 +10,8 @@ import { numberPadding } from '@/lib/crm/numbering'
 import { manualNumber, applyManualNumber } from '@/lib/crm/sales/docNumbering'
 import { createInvoiceFromDocument, createEstimateFromProposal } from '@/lib/crm/sales/convert'
 import { displayNumber, loadItems, nextProposalNumber } from '@/lib/crm/proposalDoc'
+import { storeRich, plainText } from '@/lib/crm/richText'
+import { notifyComment } from '@/lib/crm/mentionsApi'
 
 const REL = 'proposal'
 const plain = (v) => JSON.parse(JSON.stringify(v))
@@ -147,15 +149,36 @@ export async function convertProposal(id, to) {
     } catch (err) { return fail(err.message) }
 }
 
-export async function addProposalComment(id, content) {
+export async function addProposalComment(id, content, { notifyClient = true } = {}) {
     const session = await requirePermission('proposals', 'edit')
     await assertDocVisible(session, 'proposal', id)
     const staffId = await getStaffId(session)
-    const text = String(content || '').trim().slice(0, 2000)
+    const text = storeRich(String(content || '').slice(0, 12000), 6000)
     if (!text) return fail('Write your reply first')
     const staff = staffId ? await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { firstName: true, lastName: true } }) : null
-    await prisma.crmProposalComment.create({ data: { proposalId: id, content: text, authorName: `${staff?.firstName || ''} ${staff?.lastName || ''}`.trim() || session.user.name || 'Team', staffId: staffId || undefined } })
-    return { success: true }
+    const author = `${staff?.firstName || ''} ${staff?.lastName || ''}`.trim() || session.user.name || 'Team'
+    await prisma.crmProposalComment.create({ data: { proposalId: id, content: text, authorName: author, staffId: staffId || undefined } })
+    const p = await prisma.crmProposal.findUnique({ where: { id } })
+    const number = await displayNumber(p)
+    // the team: the people named with @ and the ones in charge of the proposal are told (bell, push, Telegram / WhatsApp)
+    try { await notifyComment({ by: { staffId, name: author }, text, link: `/crm/proposals/${id}`, subject: number, recipients: [p.assignedId, p.addedFrom].filter(Boolean) }) } catch (e) { console.error('[proposal comment notice]', e.message) }
+    // the lead or the client: an email with the message and the link of the proposal (they answer from there)
+    let emailed = false
+    if (notifyClient && p.allowComments) {
+        try {
+            const holder = p.relType === 'lead' ? await prisma.crmLead.findUnique({ where: { id: p.relId }, select: { defaultLanguage: true, email: true, name: true } }) : p.relType === 'customer' ? await prisma.crmClient.findUnique({ where: { id: p.relId }, select: { defaultLanguage: true } }) : null
+            const contact = p.relType === 'customer' ? await prisma.crmContact.findFirst({ where: { clientId: p.relId, active: true, NOT: { email: null } }, orderBy: { isPrimary: 'desc' }, select: { email: true } }) : null
+            const to = p.email || contact?.email || holder?.email
+            if (to) {
+                const { sendPartyMail } = await import('@/lib/crm/notifyMail')
+                const { shortLink } = await import('@/lib/crm/shortLinks')
+                const link = await shortLink({ prefix: 'prop', relType: 'proposal', relId: id, label: p.subject || 'proposal', target: `/api/crm/public/proposal/${id}/${p.hash}` })
+                const r = await sendPartyMail({ to, language: holder?.defaultLanguage || undefined, headingKey: 'newCommentOn', vars: { doc: number }, title: p.subject || number, rows: [], note: plainText(text), link, subject: `${number}: ${author}`, relType: 'proposal', relId: id, slug: 'proposal-comment-to-client' })
+                emailed = !!r.sent
+            }
+        } catch (e) { console.error('[proposal comment email]', e.message) }
+    }
+    return { success: true, emailed }
 }
 
 export async function deleteProposalComment(commentId) {

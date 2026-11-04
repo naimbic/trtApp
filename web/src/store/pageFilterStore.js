@@ -4,7 +4,7 @@ import { useDashFilters } from '@/store/dashFilterStore'
 
 /** Pages that show the dashboard filter bar in the top bar (exact paths). They all share the dashboard's period and currency. */
 export const PAGE_FILTERS = {
-    '/crm/reports': true, '/crm/expenses': true, '/crm/invoices': true, '/crm/estimates': true, '/crm/proposals': true,
+    '/crm/reports': true, '/crm/invoices': true, '/crm/estimates': true, '/crm/proposals': true,
     '/crm/purchase-orders': true, '/crm/payments': true, '/crm/tickets': true, '/crm/leads': true,
 }
 

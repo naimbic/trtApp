@@ -136,3 +136,19 @@ export async function notifyNotice(staffId, spec) {
     try { await notifyStaffChannels(staffId, await noticeFor(staffId, spec)) } catch (e) { console.error('[notice]', e.message) }
 }
 
+/**
+ * A designed email to somebody outside the team (a lead or a client), in their language: a heading, what it is about, a quoted message
+ * (plain text) and a button. { to, language, headingKey, introKey, vars, title, rows, note, link, subject }
+ */
+export async function sendPartyMail({ to, language = 'english', headingKey, vars = {}, title, rows = [], note, link, subject, tone = 'info', slug = 'notification', relType, relId }) {
+    if (!to) return { sent: false, error: 'No email address' }
+    if (!(await emailAllowed(to, slug))) return { sent: false, error: 'The recipient chose not to receive email notifications' }
+    const L = textsFor(T[language] ? language : 'english')
+    const heading = String(L[headingKey] || headingKey || '').replace(/\{(\w+)\}/g, (m, k) => (vars[k] ?? m))
+    const msg = richMessage({ baseUrl: publicBase(), L, tone, heading, card: { kind: null, title, rows, excerpt: '' }, quote: note, quoteLabel: '', link, buttonLabel: L.openOnline })
+    const html = await buildHtml(msg, { companyname: (await getOptions(['companyname']))('companyname') })
+    const res = await deliver({ to, subject, html })
+    await prisma.crmMailLog.create({ data: { to, subject: String(subject).slice(0, 200), template: slug, relType: relType || null, relId: relId || undefined, status: res.sent ? 'sent' : 'failed', error: res.error || null } }).catch(() => {})
+    return res
+}
+

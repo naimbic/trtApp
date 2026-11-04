@@ -22,7 +22,7 @@ const ACCEPT = '.pdf,image/*', MAX_MB = 5
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const money = (n, cur) => moneyHidden() ? MASK : `${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur?.symbol || cur?.name || ''}`.trim()
 
-const ExpenseDrawer = ({ open, id, lookups, onClose, onChanged, onLookups }) => {
+const ExpenseDrawer = ({ open, id, lookups, initial, onClose, onChanged, onLookups }) => {
     const nav = useNavigate()
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
@@ -52,7 +52,7 @@ const ExpenseDrawer = ({ open, id, lookups, onClose, onChanged, onLookups }) => 
         if (!open) return
         setDetail(null); setPending([])
         if (id) load()
-        else setV({ ...EMPTY, currencyId: (lookups.currencies || []).find((c) => c.isDefault)?.id || null })
+        else setV({ ...EMPTY, currencyId: (lookups.currencies || []).find((c) => c.isDefault)?.id || null, ...(initial || {}) })
     }, [open, id, load]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const pick_ = useRef(null)

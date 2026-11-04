@@ -3,7 +3,7 @@ import { getOptions, sendTemplate } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { pdfSettings, paperCss } from '@/lib/crm/docStyle'
 import { esc, htmlToPdf, fmtDate } from '@/lib/crm/invoicePdf'
-import { TXT as BASE_TXT, renderPublicPage, initials } from '@/lib/crm/estimatePublic'
+import { TXT as BASE_TXT, renderPublicPage, initials, commentBody, publicCommentText, tellTeamOfComment } from '@/lib/crm/estimatePublic'
 import { contractDocumentHtml, contractNumber, CONTRACT_CSS, signStamp } from '@/lib/crm/contractDoc'
 
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }) }
@@ -56,7 +56,7 @@ export async function contractPage(id, hash) {
     const banner = signed
         ? `<div class="banner ok"><strong>${T.accepted}</strong><div>${esc(T.acceptedBy)} ${esc([c.acceptanceFirstname, c.acceptanceLastname].filter(Boolean).join(' ') || '—')}${c.acceptanceDate ? ` ${T.on} ${signStamp(c.acceptanceDate, S)}` : ''}</div>${c.acceptanceIp ? `<div style="opacity:.8;font-size:.92em">${esc(TXT[lang].ip || 'IP')}: ${esc(String(c.acceptanceIp).replace(/^::ffff:/i, ''))}</div>` : ''}</div>`
         : ended ? `<div class="banner exp"><strong>${T.expired}</strong></div>` : ''
-    const commentsHtml = d.comments.length ? d.comments.map((m) => `<div class="cm"><div class="av ${m.staffId ? 'st' : ''}">${esc(initials(m.authorName || ''))}</div><div><div class="meta"><strong>${esc(m.authorName || (m.staffId ? T.team : ''))}</strong>${m.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(m.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${esc(m.content || '')}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
+    const commentsHtml = d.comments.length ? d.comments.map((m) => `<div class="cm"><div class="av ${m.staffId ? 'st' : ''}">${esc(initials(m.authorName || ''))}</div><div><div class="meta"><strong>${esc(m.authorName || (m.staffId ? T.team : ''))}</strong>${m.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(m.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${commentBody(m.content || '')}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
     const base = `/api/crm/public/contract/${id}/${hash}`
     const page = renderPublicPage({ lang, T, number: `${c.subject || ''} ${d.number}`.trim(), companyName: o('companyname'), banner, commentsHtml, commentsCount: d.comments.length, docHtml: await contractHtml(d, S), base, acting, noRefuse: true, identity: true, legalText: o('e_sign_legal_text'), contact })
     return page.replace('</style>', `${CONTRACT_CSS}${paperCss()}</style>`)
@@ -95,12 +95,13 @@ export async function signContract(id, hash, body, request) {
 export async function commentContract(id, hash, body) {
     const d = await loadContractDoc(id, hash)
     if (!d) fail('Contract not found', 404)
-    const content = String(body.content || '').trim().slice(0, 2000)
+    const content = publicCommentText(body.content)
     if (!content) fail('Write your comment first')
     const recent = await prisma.crmContractComment.count({ where: { contractId: id, staffId: null, createdAt: { gte: new Date(Date.now() - 60000) } } })
     if (recent >= 5) fail('Too many comments, please wait a minute', 429)
     const name = String(body.name || '').trim().slice(0, 80) || d.client?.company || null
     await prisma.crmContractComment.create({ data: { contractId: id, content, authorName: name } })
+    await tellTeamOfComment({ doc: d.contract, kind: 'contracts', number: d.number || d.contract.subject || '', name, html: content })
     const staff = await staffOf(d.contract)
     await notify('contract-comment-to-admin', staff?.email, d, { staff_firstname: staff?.firstName || '' })
     return { success: true }

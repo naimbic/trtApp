@@ -1,6 +1,25 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
+import '@fontsource/inter/latin-300.css'
+import '@fontsource/inter/latin-400.css'
+import '@fontsource/inter/latin-600.css'
+import '@fontsource/inter/latin-700.css'
+import '@fontsource/urbanist/latin-400.css'
+import '@fontsource/urbanist/latin-500.css'
+import '@fontsource/urbanist/latin-600.css'
+import '@fontsource/urbanist/latin-700.css'
+import '@fontsource/urbanist/latin-800.css'
+import '@fontsource/cairo/arabic-300.css'
+import '@fontsource/cairo/arabic-400.css'
+import '@fontsource/cairo/arabic-500.css'
+import '@fontsource/cairo/arabic-600.css'
+import '@fontsource/cairo/arabic-700.css'
+import '@fontsource/cairo/latin-300.css'
+import '@fontsource/cairo/latin-400.css'
+import '@fontsource/cairo/latin-500.css'
+import '@fontsource/cairo/latin-600.css'
+import '@fontsource/cairo/latin-700.css'
 import { loadStaffLang, tr } from '@/utils/t'
 import { useThemeStore } from '@/store/themeStore'
 import { dropCache } from '@/utils/offlineCache'
@@ -10,7 +29,17 @@ import { localizeShared } from '@/utils/localizeShared'
 
 // If the server says the session is gone (401) — signed out elsewhere, deactivated, or the database changed —
 // clear the local state and go to the sign-in page instead of showing a raw error.
-const nativeFetch = window.fetch.bind(window)
+const rawFetch = window.fetch.bind(window)
+// the same GET asked twice at the same moment (two components that both need /api/crm/me, the room list...) is sent once: everyone gets a copy of the answer
+const inflight = new Map()
+const nativeFetch = (input, init) => {
+    const method = (init?.method || 'GET').toUpperCase()
+    if (method !== 'GET' || typeof input !== 'string' || !input.startsWith('/api/') || init?.signal || /stream|events|export|download|\/pdf/i.test(input)) return rawFetch(input, init)
+    const key = `${input}|${init?.credentials || ''}`
+    let p = inflight.get(key)
+    if (!p) { p = rawFetch(input, init).finally(() => inflight.delete(key)); inflight.set(key, p) }
+    return p.then((r) => r.clone())
+}
 let redirecting = false
 window.fetch = async (...args) => {
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || ''

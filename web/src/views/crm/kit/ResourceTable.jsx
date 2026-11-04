@@ -1,3 +1,4 @@
+import Skeleton from '@/components/ui/Skeleton'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TbSearch, TbArrowUp, TbArrowDown } from 'react-icons/tb'
 import Input from '@/components/ui/Input'
@@ -117,7 +118,11 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
                         ))}
                     </TBody>
                 </Table>
-                {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
+                {loading && !data.list.length && (
+                    <div className="space-y-3 px-4 py-4" role="status" aria-label={tr("Loading…")}>
+                        {Array.from({ length: 8 }, (_, i) => <div key={i} className="flex items-center gap-4">{cols.slice(0, 5).map((c, j) => <Skeleton key={c.key} height={14} className="rounded" width={j === 0 ? '24%' : `${12 + ((i + j * 3) % 4) * 4}%`} />)}</div>)}
+                    </div>
+                )}
                 {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{emptyText}</div>}
             </div>
 

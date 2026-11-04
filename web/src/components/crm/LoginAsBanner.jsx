@@ -1,3 +1,4 @@
+import useMe from '@/utils/hooks/useMe'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TbUserShare, TbArrowBackUp } from 'react-icons/tb'
@@ -26,11 +27,8 @@ export async function loginAs(staffId) {
 const LoginAsBanner = () => {
     const [info, setInfo] = useState(null)
     const [busy, setBusy] = useState(false)
-    useEffect(() => {
-        let alive = true
-        fetch('/api/crm/me', { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && d?.loginAs) setInfo({ name: d.name, by: d.loginAs.by }) }).catch(() => {})
-        return () => { alive = false }
-    }, [])
+    const me = useMe() // the same single request as the rest of the app
+    useEffect(() => { if (me?.loginAs) setInfo({ name: me.name, by: me.loginAs.by }) }, [me])
     const back = async () => {
         setBusy(true)
         try { await call('DELETE'); clearUserData(); forgetLanguage(); window.location.assign('/crm/staff') } catch { setBusy(false) }

@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.176.0',
+        date: '2026-11-04',
+        title: 'Faster pages: fonts and pictures served by us, lighter first load, skeleton tables, slow-query log',
+        items: [
+            'Fonts (Inter, Urbanist, Cairo) are now served by the CRM itself instead of Google: no outside request before the page can draw, and only the needed weights.',
+            'The sign-in side picture is AVIF / WebP (20 KB instead of 288 KB); thumbnails below the fold load lazily.',
+            'The chat message list and its editor (about 300 KB) load only when a conversation is opened, so most pages start lighter.',
+            'The same request asked twice at the same moment is sent once; the "logged in as" bar no longer repeats the /me request.',
+            'Tables show grey skeleton rows while the first page loads instead of a plain "Loading…".',
+            'Server: database calls slower than 0.8 s are written to the log ([slow-query] model.action ms), the connection pool is explicit (30 connections, idle ones closed, 15 s wait limit), and the last two outside calls have a time limit.',
+        ],
+    },
+    {
         version: '0.175.1',
         date: '2026-11-04',
         title: 'A refused SEO key now says why and which IP the server calls from',

@@ -4,7 +4,6 @@
  * dock and a pill navigation. Everything is scoped to .rp-app (the Rapport layout), so the other layouts keep their old look.
  * Logical properties only (inline-start / inline-end), so Arabic (right to left) mirrors by itself.
  */
-@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap');
 
 .rp-app, .rp-portal, body:has(.rp-app) [data-floating-ui-portal] {
     --rp-font: 'Urbanist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;

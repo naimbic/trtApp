@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import { PiChatCircleDotsFill, PiXBold, PiCaretLeftBold, PiUsersThreeDuotone, PiUserCircleDuotone, PiBuildingsDuotone, PiBellSimpleDuotone, PiBellSimpleSlashDuotone, PiPhoneCallDuotone, PiChatsCircleDuotone, PiArrowsOutSimpleDuotone } from 'react-icons/pi'
 import Avatar from '@/components/ui/Avatar'
 import classNames from '@/utils/classNames'
-import ChatThread from './ChatThread'
+// the message list and its editor (about 300 KB) are only fetched when a conversation is opened, not on every page
+const ChatThread = lazy(() => import('./ChatThread'))
 import CallOverlay from './CallOverlay'
 import useCall from './useCall'
 import { upload as uploadFile } from '@/views/crm/kit/api'
@@ -106,7 +107,7 @@ const ChatWidget = () => {
                                 {data.calls && room.kind !== 'team' && room.kind !== 'group' && <button type="button" className="text-xl text-primary" title={tr("Voice call")} onClick={() => phone.start({ roomId: room.id, peerName: room.title })}><PiPhoneCallDuotone /></button>}
                                 <button type="button" className="text-lg text-gray-400" onClick={() => setOpen(false)}><PiXBold /></button>
                             </div>
-                            <ChatThread wide act={actMsg} can={data.me?.can || {}} load={loadMsgs} send={sendMsg} upload={data.me?.can?.send_files === false ? null : uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} />
+                            <Suspense fallback={<div className="flex h-40 items-center justify-center text-sm text-gray-400">{tr("Loading…")}</div>}><ChatThread wide act={actMsg} can={data.me?.can || {}} load={loadMsgs} send={sendMsg} upload={data.me?.can?.send_files === false ? null : uploadMsg} onData={onData} showSender={room.kind === 'team' || room.kind === 'group'} /></Suspense>
                         </>
                     ) : (
                         <>

@@ -102,7 +102,7 @@ export const FileTray = ({ tf, t = tr }) => (
             {tf.items.map((x) => (
                 <div key={x.id} className="group relative">
                     {x.url ? (
-                        <img src={x.url} alt={x.file.name} className="h-16 w-20 rounded-lg border border-gray-200 object-cover dark:border-gray-600" />
+                        <img loading="lazy" decoding="async" src={x.url} alt={x.file.name} className="h-16 w-20 rounded-lg border border-gray-200 object-cover dark:border-gray-600" />
                     ) : (
                         <div className="flex h-16 min-w-[140px] max-w-[200px] items-center gap-2 rounded-lg border border-gray-200 px-3 dark:border-gray-600"><FileIcon kind={kindOf(x.file)} className="text-2xl" /><div className="min-w-0"><div className="truncate text-xs font-semibold">{x.file.name}</div><div className="text-[11px] text-gray-400">{formatSize(x.file.size)}</div></div></div>
                     )}

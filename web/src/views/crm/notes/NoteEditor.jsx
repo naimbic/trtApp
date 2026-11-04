@@ -187,7 +187,7 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
                         <div className="space-y-2">
                             {v.attachments.map((a) => (
                                 <div key={a.url} className="flex items-center gap-2 rounded-lg border border-gray-200 p-1.5 text-sm dark:border-gray-700">
-                                    {a.kind === 'image' ? <img src={a.url} alt={a.name} className="size-12 shrink-0 rounded-md object-cover" /> : a.kind === 'audio' ? <TbMicrophone className="mx-2 shrink-0 text-xl text-primary" /> : <TbPaperclip className="mx-2 shrink-0 text-xl text-gray-400" />}
+                                    {a.kind === 'image' ? <img loading="lazy" decoding="async" src={a.url} alt={a.name} className="size-12 shrink-0 rounded-md object-cover" /> : a.kind === 'audio' ? <TbMicrophone className="mx-2 shrink-0 text-xl text-primary" /> : <TbPaperclip className="mx-2 shrink-0 text-xl text-gray-400" />}
                                     <div className="min-w-0 flex-1">
                                         <a href={a.url} target="_blank" rel="noreferrer" className="block truncate font-semibold hover:underline">{a.kind === 'audio' ? tr('Voice note') : a.name}</a>
                                         {a.kind === 'audio' ? <audio controls preload="none" src={a.url} className="mt-1 h-8 w-full" /> : <span className="text-xs text-gray-400">{formatBytes(a.size)}</span>}

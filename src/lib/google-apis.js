@@ -230,7 +230,7 @@ export async function requestIndexing(url) {
     } catch (e) {
         // Fallback: Google ping
         try {
-            await fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(url)}`)
+            await fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) })
             return { success: true, method: 'google-ping', message: 'Pinged Google' }
         } catch {
             return { success: false, error: e.message }

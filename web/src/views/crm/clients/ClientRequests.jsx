@@ -99,7 +99,7 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
                             <label className="mb-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600"><TbPaperclip />{tr('Add a screenshot or a file')}<input type="file" multiple hidden onChange={(e) => { addFiles([...e.target.files]); e.target.value = '' }} /></label>
                             <div className="space-y-1.5">{v.attachments.map((a) => (
                                 <div key={a.url} className="flex items-center gap-2 rounded-lg border border-gray-200 p-1.5 text-sm dark:border-gray-700">
-                                    {a.kind === 'image' ? <img src={a.url} alt="" className="size-10 shrink-0 rounded-md object-cover" /> : <TbPaperclip className="mx-2 shrink-0 text-gray-400" />}
+                                    {a.kind === 'image' ? <img loading="lazy" decoding="async" src={a.url} alt="" className="size-10 shrink-0 rounded-md object-cover" /> : <TbPaperclip className="mx-2 shrink-0 text-gray-400" />}
                                     <a href={a.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-semibold hover:underline">{a.name}</a><span className="text-xs text-gray-400">{formatBytes(a.size)}</span>
                                     {!readOnly && <button type="button" aria-label={tr('Remove')} onClick={() => set({ attachments: v.attachments.filter((x) => x.url !== a.url) })} className="text-gray-400 hover:text-red-500"><TbTrash /></button>}
                                 </div>

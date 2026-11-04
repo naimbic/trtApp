@@ -300,7 +300,7 @@ const Calendar = () => {
         if (!list.length) return null
         return (
             <span className="sch-faces" aria-hidden="true">
-                {list.slice(0, max).map((m) => (m.image ? <img key={m.id} src={m.image} alt="" title={m.name} /> : <span key={m.id} className="sch-faces__i" title={m.name}>{initialsOf(m.name)}</span>))}
+                {list.slice(0, max).map((m) => (m.image ? <img loading="lazy" decoding="async" key={m.id} src={m.image} alt="" title={m.name} /> : <span key={m.id} className="sch-faces__i" title={m.name}>{initialsOf(m.name)}</span>))}
                 {list.length > max && <span className="sch-faces__i sch-faces__more">+{list.length - max}</span>}
             </span>
         )
@@ -353,7 +353,7 @@ const Calendar = () => {
                     <button type="button" className="sch-chip sch-chip--all" aria-pressed={!people.length} onClick={() => setPeople([])}><TbUsers className="sch-chip__ico" />{tr("All")}</button>
                     {staff.map((m) => (
                         <button key={m.id} type="button" className="sch-chip" aria-pressed={people.includes(m.id)} onClick={() => togglePerson(m.id)} title={m.name}>
-                            {m.image ? <img src={m.image} alt="" /> : <span className="sch-chip__av">{initialsOf(m.name)}</span>}<span className="sch-chip__name">{m.name.split(' ')[0]}</span>
+                            {m.image ? <img loading="lazy" decoding="async" src={m.image} alt="" /> : <span className="sch-chip__av">{initialsOf(m.name)}</span>}<span className="sch-chip__name">{m.name.split(' ')[0]}</span>
                         </button>
                     ))}
                 </div>

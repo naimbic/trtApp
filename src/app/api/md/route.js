@@ -12,6 +12,7 @@ export async function GET(request) {
     try {
         const resp = await fetch(
             `${BASE_PATH}/${mdType}/${mdPrefixPath}/${mdPath}/${mdName}.md`,
+            { signal: AbortSignal.timeout(8000) },
         )
 
         const md = await resp.text()

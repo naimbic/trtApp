@@ -128,7 +128,7 @@ const Side = ({ children, ...rest }) => {
 
             {/* Right: wide picture panel with slides */}
             <aside className="relative hidden items-center overflow-hidden bg-primary-deep p-14 text-white lg:flex xl:p-20">
-                <img src="/img/others/auth-side-bg.png" alt="" className="absolute inset-0 h-full w-full origin-right scale-[1.35] object-cover object-right opacity-40" />
+                <picture><source srcSet="/img/others/auth-side-bg.avif" type="image/avif" /><source srcSet="/img/others/auth-side-bg.webp" type="image/webp" /><img src="/img/others/auth-side-bg.png" alt="" decoding="async" className="absolute inset-0 h-full w-full origin-right scale-[1.35] object-cover object-right opacity-40" /></picture>
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary via-primary-deep to-black/70" />
                 <div className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 animate-pulse rounded-full bg-white/20 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-32 -right-16 h-[28rem] w-[28rem] animate-pulse rounded-full bg-primary/60 blur-3xl [animation-duration:5s]" />

@@ -94,7 +94,9 @@ export async function notifyChannels({ email, subject, data, relType, relId }) {
         const mail = String(email).trim()
         const who = (await prisma.crmContact.findFirst({ where: { email: { equals: mail, mode: 'insensitive' }, active: true } })) || (await prisma.crmStaff.findFirst({ where: { email: { equals: mail, mode: 'insensitive' } } }))
         if (!who) return
-        const text = [subject, linkOf(data)].filter(Boolean).join('\n')
+        const { textsFor, formatNotice, T } = await import('@/lib/crm/notifyMailCalc')
+        const L = textsFor(T[who.defaultLanguage] ? who.defaultLanguage : 'english')
+        const text = formatNotice({ L, kind: L.kinds[relType === 'client' ? 'customer' : relType] ? (relType === 'client' ? 'customer' : relType) : 'notification', title: subject, link: linkOf(data) })
         const log = (to, r) => prisma.crmMailLog.create({ data: { to, subject, template: 'channel', relType: relType || null, relId: relId || undefined, status: r.sent ? 'sent' : 'failed', error: r.error || null } }).catch(() => {})
         if (c.telegram && who.notifyTelegram && who.telegramChatId) log(`telegram:${who.telegramChatId}`, await sendTelegram(who.telegramChatId, text, c))
         const wa = who.whatsappNumber || who.whatsapp // a contact has whatsappNumber, a team member has the WhatsApp number of the profile

@@ -1,3 +1,4 @@
+import ItemPicker from './ItemPicker'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
@@ -156,7 +157,7 @@ const InvoiceEditor = () => {
                 <Card>
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <h4>{tr("Items")}</h4>
-                        <div className="w-72"><RelationSelect resource="items" value={null} onChange={addFromCatalog} /></div>
+                        <div className="w-72"><ItemPicker onChange={addFromCatalog} /></div>
                     </div>
                     <LineItemsTable items={v.items} onChange={(items) => set({ items })} taxOptions={taxOptions} newLine={newLine} />
 

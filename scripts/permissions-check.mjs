@@ -1163,6 +1163,23 @@ try {
     check('AI: refused without the permission; View uses it but cannot change the settings', (await pNone('GET', '/api/crm/ai/settings')).status === 403 && (await pAiV('GET', '/api/crm/ai/settings')).status === 200 && (await pAiV('PUT', '/api/crm/ai/settings', { systemPrompt: 'x' })).status === 403)
     check('AI monthly team review: refused without the AI permission; View may only ask for their own review, only Edit sends it to the team', (await pNone('GET', '/api/crm/ai/coach')).status === 403 && (await pNone('POST', '/api/crm/ai/coach', { who: 'me' })).status === 403 && (await pAiV('GET', '/api/crm/ai/coach')).status === 200 && (await pAiV('POST', '/api/crm/ai/coach', { who: 'all' })).status === 403)
     {
+        // The Items page (groups, drag, AI help) and the website information of a lead
+        const iNone = await login(await makeUser('it-none', {})), iView = await login(await makeUser('it-view', { items: ['view'] })), iEdit = await login(await makeUser('it-edit', { items: ['view', 'create', 'edit'] })), iDel = await login(await makeUser('it-del', { items: ['view', 'delete'] }))
+        const gr = await iEdit('POST', '/api/crm/items-board/groups', { name: 'permcheck group' })
+        if (gr.body?.id) made.rows.unshift(['crmItemGroup', gr.body.id])
+        const GID = gr.body?.id
+        check('Items page: nobody without Items sees it; View sees it but cannot add, move, rename or ask the AI', [403, 404].includes((await iNone('GET', '/api/crm/items-board')).status) && (await iView('GET', '/api/crm/items-board')).status === 200 && (await iView('POST', '/api/crm/items-board/groups', { name: 'x' })).status === 403 && (await iView('POST', '/api/crm/items-board/reorder', { groupId: null, ids: [] })).status === 403 && (await iView('POST', '/api/crm/items-board/bulk', { items: [{ description: 'x' }] })).status === 403 && (await iView('POST', '/api/crm/items-board/ai', { prompt: 'seo' })).status === 403)
+        check('Items page: Edit adds a group, adds items to it and moves them; only Delete removes a group', gr.status === 201 && !!GID && (await iEdit('PUT', '/api/crm/items-board/groups', { id: GID, name: 'permcheck group 2', color: 'red' })).status === 200 && (await iEdit('DELETE', `/api/crm/items-board/groups?id=${GID}`)).status === 403)
+        const bulk = await iEdit('POST', '/api/crm/items-board/bulk', { groupId: GID, items: [{ description: 'permcheck item 1', rate: 5 }, { description: 'permcheck item 2', rate: 6 }] })
+        const board = (await iEdit('GET', '/api/crm/items-board')).body
+        const mine = board?.groups?.find((g) => g.id === GID)?.items || []
+        mine.forEach((m) => made.rows.unshift(['crmItem', m.id]))
+        check('Items page: the items of a group come back in the order they were put in, and a drop reorders them', bulk.status === 201 && mine.length === 2 && (await iEdit('POST', '/api/crm/items-board/reorder', { groupId: GID, ids: [mine[1].id, mine[0].id] })).status === 200 && (await iEdit('GET', '/api/crm/items-board')).body.groups.find((g) => g.id === GID).items.map((x) => x.description).join() === 'permcheck item 2,permcheck item 1')
+        check('Items page: a person with only Delete removes the group, its items stay without a group', (await iDel('DELETE', `/api/crm/items-board/groups?id=${GID}`)).status === 200 && ((await iEdit('GET', '/api/crm/items-board')).body.ungrouped || []).some((x) => x.description === 'permcheck item 1'))
+        const lv = await login(await makeUser('si-leads', { leads: ['view'] })), ln = await login(await makeUser('si-none', {}))
+        check('Website information: a person who sees leads gets it; nobody else; an internal address is never called; a text that is not an address is refused', (await lv('GET', '/api/crm/pipeline/leads/site-info?url=http%3A%2F%2F169.254.169.254%2F')).body?.site?.error === 'not a public website' && (await lv('GET', '/api/crm/pipeline/leads/site-info?url=nonsense')).status === 400 && (await lv('GET', '/api/crm/pipeline/leads/site-info?url=localhost')).status === 400)
+    }
+    {
         // Client mails (the Mails tab of a customer): the same rules as lead mails, with the customers permissions
         const cl = await prisma.crmClient.create({ data: { company: 'permcheck mails client' } })
         made.rows.unshift(['crmClient', cl.id])

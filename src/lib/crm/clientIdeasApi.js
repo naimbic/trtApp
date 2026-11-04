@@ -3,7 +3,7 @@ import { requirePermission, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { scope as clientScope } from '@/lib/crm/clientsApi'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { sendTemplate } from '@/lib/crm/mailer'
-import { notifyStaffChannels } from '@/lib/crm/channels'
+import { notifyNotice } from '@/lib/crm/notifyMail'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { realPicture } from '@/lib/crm/pictures'
 import { emit } from '@/lib/crm/webhooks'
@@ -268,7 +268,7 @@ export async function tellTeam(idea, clientId, text, byName) {
         const st = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { active: true } })
         if (!st?.active) continue
         await prisma.crmNotification.create({ data: { toUserId: staffId, fromFullName: byName || 'Client', description: text.slice(0, 200), link: `/crm/clients/${clientId}?tab=ideas&idea=${idea.id}`, additionalData: 'client-idea', isRead: false } }).catch(() => {})
-        await notifyStaffChannels(staffId, `${text}\n${publicBase()}/crm/clients/${clientId}?tab=ideas&idea=${idea.id}`).catch(() => {})
+        await notifyNotice(staffId, { kind: 'idea', headlineKey: 'ideaUpdate', relType: 'customer', relId: clientId, link: `/crm/clients/${clientId}?tab=ideas&idea=${idea.id}`, note: text })
     }
 }
 

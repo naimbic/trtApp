@@ -138,8 +138,21 @@ export function parseForm(text, custom = new Map()) {
     extras.push(...loose)
     if (!fields.name && (fields.firstName || fields.lastName)) fields.name = [fields.firstName, fields.lastName].filter(Boolean).join(' ')
     if (fields.email) { const m = EMAIL.exec(fields.email); fields.email = m ? m[0].toLowerCase() : '' }
-    if (fields.website && !/^https?:\/\//i.test(fields.website) && /\./.test(fields.website)) fields.website = fields.website.split(/\s/)[0]
+    if (fields.website) fields.website = cleanWebsite(fields.website) || fields.website.split(/\s/)[0]
     return { fields, extras, pairCount: ps.length }
+}
+
+// the words of a form that can end up glued to the web address when the cells of a table lose their separator ("https://site.fr/" + "PROJET")
+const GLUED = 'projet|project|message|details?|d[ée]tails|contact|coordonn[ée]es|informations?|budget|services?|subject|objet|name|nom|pr[ée]nom|email|e-mail|phone|t[ée]l[ée]phone|company|soci[ée]t[ée]|entreprise|city|ville|page|source'
+const GLUED_END = new RegExp(`(?:\\/|(?<=\\.[a-z]{2,24}))(?:${GLUED})$`, 'i')
+/** The web address of a lead as a clean address: the first one in the text, without what the form glued after it. '' when there is none. */
+export function cleanWebsite(v) {
+    const m = /(?:https?:\/\/|www\.)[^\s<>"'|]+|[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)+(?:\/[^\s<>"'|]*)?/i.exec(String(v || '').trim())
+    if (!m) return ''
+    let s = m[0].replace(/[),.;:]+$/, '')
+    const g = GLUED_END.exec(s)
+    if (g && g.index > 8) s = s.slice(0, g.index + (s[g.index] === '/' ? 1 : 0))
+    return s
 }
 
 /** The leading [TAG] of a subject ("[LEAD] New message", also after Re: / Fwd:), lower case, or ''. */

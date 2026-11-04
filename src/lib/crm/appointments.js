@@ -4,8 +4,7 @@ import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { storeRich } from '@/lib/crm/richText'
 import { emit } from '@/lib/crm/webhooks'
 import { deliver, escapeHtml } from '@/lib/crm/mailer'
-import { notifyStaffChannels } from '@/lib/crm/channels'
-import { publicBase } from '@/lib/crm/shortLinks'
+import { notifyNotice } from '@/lib/crm/notifyMail'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -57,7 +56,7 @@ export async function createAppointment(request) {
             const text = `Appointment request: ${title}${who ? ` (${who})` : ''} on ${start.toISOString().slice(0, 16).replace('T', ' ')} UTC`
             for (const a of admins) {
                 await prisma.crmNotification.create({ data: { toUserId: a.id, fromFullName: 'Appointments', description: text.slice(0, 200), link: '/calendar', additionalData: 'appointment', isRead: false } }).catch(() => {})
-                notifyStaffChannels(a.id, `${text}\n${publicBase()}/calendar`)
+                notifyNotice(a.id, { kind: 'calendar', headlineKey: 'appointment', title: title || '', link: '/calendar', note: text })
             }
             emit('appointment.requested', shape(row))
         }

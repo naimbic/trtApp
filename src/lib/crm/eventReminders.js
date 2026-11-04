@@ -1,7 +1,6 @@
 import prisma from '@/lib/prisma'
 import { sendTemplate } from '@/lib/crm/mailer'
-import { notifyStaffChannels } from '@/lib/crm/channels'
-import { publicBase } from '@/lib/crm/shortLinks'
+import { notifyNotice } from '@/lib/crm/notifyMail'
 
 const UNIT = { minutes: 60000, hours: 3600000, days: 86400000, weeks: 7 * 86400000 }
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -26,7 +25,7 @@ export async function eventRemindersJob({ lines, dry }) {
         const staff = staffIds.length ? await prisma.crmStaff.findMany({ where: { id: { in: staffIds }, active: true }, select: { id: true } }) : []
         for (const s of staff) {
             await prisma.crmNotification.create({ data: { toUserId: s.id, fromFullName: '⏰ Reminder', description: `In ${inText}: ${e.title}`.slice(0, 200), link: '/calendar', additionalData: 'event-reminder', isRead: false } }).catch(() => {})
-            notifyStaffChannels(s.id, `⏰ In ${inText}: ${e.title}${e.meetingUrl ? `\n${e.meetingUrl}` : ''}\n${publicBase()}/calendar`)
+            notifyNotice(s.id, { kind: 'calendar', headlineKey: 'startsIn', vars: { when: inText }, title: e.title, link: '/calendar', rows: [[e.meetingUrl ? 'Link' : '', e.meetingUrl || ''], [e.location ? '📍' : '', e.location || '']].filter(([k]) => k) })
         }
         // the client, the lead and the guests
         let mailed = 0

@@ -1,8 +1,6 @@
 import prisma from '@/lib/prisma'
-import { notifyStaffChannels } from '@/lib/crm/channels'
-import { publicBase } from '@/lib/crm/shortLinks'
 import { reminderLink } from '@/lib/crm/notifications'
-import { sendStaffMail, staffMailContext, textsFor } from '@/lib/crm/notifyMail'
+import { sendStaffMail, staffMailContext, textsFor, notifyNotice } from '@/lib/crm/notifyMail'
 
 /** A note with a reminder tells its owner when the moment comes: the bell, an email and the Telegram / WhatsApp of their profile. */
 export async function noteRemindersJob({ lines, dry }) {
@@ -18,9 +16,9 @@ export async function noteRemindersJob({ lines, dry }) {
         const link = `/crm/notes?note=${n.id}`
         const text = String(n.description || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300)
         // a note shared with colleagues can remind them too (bell, push, Telegram / WhatsApp)
-        if (n.remindShared) for (const to of n.sharedWith || []) { try { await prisma.crmNotification.create({ data: { toUserId: to, fromFullName: '⏰ Reminder', description: `${n.title}${text ? `: ${text}` : ''}`.slice(0, 200), link, additionalData: 'note-reminder', isRead: false } }); notifyStaffChannels(to, `⏰ Reminder: ${n.title}${text ? `\n${text}` : ''}\n${publicBase()}${link}`) } catch { /* one colleague failing never stops the others */ } }
+        if (n.remindShared) for (const to of n.sharedWith || []) { try { await prisma.crmNotification.create({ data: { toUserId: to, fromFullName: '⏰ Reminder', description: `${n.title}${text ? `: ${text}` : ''}`.slice(0, 200), link, additionalData: 'note-reminder', isRead: false } }); notifyNotice(to, { kind: 'reminder', title: n.title, link, note: text }) } catch { /* one colleague failing never stops the others */ } }
         try { await prisma.crmNotification.create({ data: { toUserId: who.id, fromFullName: '⏰ Reminder', description: `${n.title}${text ? `: ${text}` : ''}`.slice(0, 200), link, additionalData: 'note-reminder', isRead: false } }) } catch (e) { lines.push(`! Bell notification of “${n.title}” failed: ${e.message}`) }
-        notifyStaffChannels(who.id, `⏰ Reminder: ${n.title}${text ? `\n${text}` : ''}\n${publicBase()}${link}`)
+        notifyNotice(who.id, { kind: 'reminder', title: n.title, link, note: text })
         let mailed = 'no email'
         if (who.email) {
             const ctx = await staffMailContext(who.id)
@@ -45,7 +43,7 @@ export async function ticketRemindersJob({ lines, dry }) {
         if (!who?.active || (r.relType === 'ticket' && !t)) { lines.push(`Reminder of ${title} skipped: ${who?.active ? 'the ticket no longer exists' : 'its owner is not active'}`); continue }
         const link = r.relType === 'ticket' ? `/crm/tickets/${t.id}` : (reminderLink(r) || '/crm/notifications')
         try { await prisma.crmNotification.create({ data: { toUserId: who.id, fromFullName: '⏰ Reminder', description: `${r.relType === 'ticket' ? title : note || title}${r.relType === 'ticket' && note ? `: ${note}` : ''}`.slice(0, 200), link, additionalData: r.relType === 'ticket' ? 'ticket-reminder' : 'record-reminder', isRead: false } }) } catch (e) { lines.push(`! Bell notification of ${title} failed: ${e.message}`) }
-        notifyStaffChannels(who.id, `⏰ Reminder: ${title}${note ? `\n${note}` : ''}\n${publicBase()}${link}`)
+        notifyNotice(who.id, { kind: 'reminder', relType: r.relType, relId: r.relId, title, link, note })
         let mailed = 'no email'
         if (who.email && r.notifyByEmail !== false) {
             const ctx = await staffMailContext(who.id)

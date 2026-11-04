@@ -3,8 +3,7 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { plainText } from '@/lib/crm/richText'
-import { notifyStaffChannels } from '@/lib/crm/channels'
-import { publicBase } from '@/lib/crm/shortLinks'
+import { notifyNotice } from '@/lib/crm/notifyMail'
 
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const nameOf = (s) => [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || 'Staff'
@@ -38,7 +37,7 @@ export async function notifyMentions({ staffIds, text, url }) {
         const dup = await prisma.crmNotification.findFirst({ where: { toUserId: s.id, additionalData: 'mention', link, description: excerpt, createdAt: { gte: new Date(Date.now() - 600000) } }, select: { id: true } })
         if (dup) continue
         await prisma.crmNotification.create({ data: { toUserId: s.id, fromUserId: me, fromFullName: session.user.name || null, description: excerpt, link, additionalData: 'mention', isRead: false } })
-        notifyStaffChannels(s.id, `${session.user.name || 'A colleague'} mentioned you: ${excerpt}${link ? `\n${publicBase()}${link}` : ''}`)
+        notifyNotice(s.id, { kind: 'mention', headlineKey: 'mentionedYou', vars: { name: session.user.name || '…' }, link, note: excerpt })
         n++
     }
     return { notified: n }
@@ -61,7 +60,7 @@ export async function notifyComment({ by, text, link, subject, recipients = [] }
         const dup = await prisma.crmNotification.findFirst({ where: { toUserId: to, additionalData: tag, link, description: excerpt, createdAt: { gte: since } }, select: { id: true } })
         if (!dup) {
             await prisma.crmNotification.create({ data: { toUserId: to, fromUserId: by.staffId, fromFullName: by.name || null, description: excerpt, link, additionalData: tag, isRead: false } })
-            notifyStaffChannels(to, `${by.name || 'A colleague'} ${tag === 'mention' ? 'mentioned you' : `commented on “${String(subject || '')}”`}: ${excerpt}${link ? `\n${publicBase()}${link}` : ''}`)
+            notifyNotice(to, { kind: tag === 'mention' ? 'mention' : 'comment', headlineKey: tag === 'mention' ? 'mentionedYou' : 'commented', vars: { name: by.name || '…' }, link, title: String(subject || ''), note: excerpt })
         }
     }
     for (const to of named) await make(to, 'mention')
@@ -81,7 +80,7 @@ export async function notifyNewMentions({ by, text, prev, link, subject }) {
             const dup = await prisma.crmNotification.findFirst({ where: { toUserId: to, additionalData: 'mention', link, description: excerpt, createdAt: { gte: new Date(Date.now() - 600000) } }, select: { id: true } })
             if (!dup) {
                 await prisma.crmNotification.create({ data: { toUserId: to, fromUserId: by.staffId, fromFullName: by.name || null, description: `${subject ? `${subject}: ` : ''}${excerpt}`.slice(0, 200), link, additionalData: 'mention', isRead: false } })
-                notifyStaffChannels(to, `${by.name || 'A colleague'} mentioned you${subject ? ` in “${subject}”` : ''}: ${excerpt}${link ? `\n${publicBase()}${link}` : ''}`)
+                notifyNotice(to, { kind: 'mention', headlineKey: 'mentionedYou', vars: { name: by.name || '…' }, link, title: String(subject || ''), note: excerpt })
             }
         }
         return fresh.length

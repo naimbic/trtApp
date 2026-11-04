@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { parseForm, judge, buildLead, emailText, customLabels, subjectTag } from './leadMailCalc.js'
+import { parseForm, judge, buildLead, emailText, customLabels, subjectTag, cleanWebsite } from './leadMailCalc.js'
 
 const FORM = `Name: Sara Benali
 Email: sara@acme.ma
@@ -170,4 +170,19 @@ for (const lang of ['JA', 'AR']) {
 test('an unknown-language form still gets its phone number from the shape of the value', () => {
     const l = leadOf('이름: 김민준\n이메일: a@b.kr\n연락 번호: +82 10 1234 5678\n문의: 안녕하세요, 광고 문의드립니다.')
     assert.equal(l.phone, '+82 10 1234 5678')
+})
+
+test('the web address of a lead is clean: no text after it, no form word glued to it', () => {
+    const ok = [
+        ['https://www.strasforma.fr/ Projet', 'https://www.strasforma.fr/'],
+        ['https://www.strasforma.fr/PROJET', 'https://www.strasforma.fr/'],
+        ['https://natura-volt.ma\nProjet: refonte du site', 'https://natura-volt.ma'],
+        ['www.example.com Message : bonjour', 'www.example.com'],
+        ['example.ma Budget', 'example.ma'],
+        ['https://site.comProjet', 'https://site.com'],
+        ['https://site.com/boutique/chaussures', 'https://site.com/boutique/chaussures'],
+        ['  https://acme.io/path?x=1&y=2  ', 'https://acme.io/path?x=1&y=2'],
+    ]
+    for (const [raw, want] of ok) assert.equal(cleanWebsite(raw), want, raw)
+    assert.equal(cleanWebsite('pas de site'), ''); assert.equal(cleanWebsite(''), ''); assert.equal(cleanWebsite(null), '')
 })

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { T, textsFor, when, richMessage } from './notifyMailCalc.js'
+import { T, textsFor, when, richMessage, dotFor, levelOf, formatNotice, recordFromLink } from './notifyMailCalc.js'
 
 test('every language has the same keys as English', () => {
     const keys = Object.keys(T.english).sort()
@@ -30,4 +30,26 @@ test('the message shows what it is, the details and a button; the text of people
 test('Arabic is written right to left; a message without a link has no button', () => {
     assert.match(richMessage({ L: T.arabic, heading: 'x', card }), /dir="rtl"/)
     assert.doesNotMatch(richMessage({ L: T.english, heading: 'x', card }), /<a href/)
+})
+
+test('the dot of a notice follows the level of the task, else its category', () => {
+    assert.deepEqual([1, 2, 3, 4].map((p) => dotFor({ priority: p, kind: 'task' })), ['🟢', '🟡', '🟠', '🔴'])
+    assert.equal(dotFor({ kind: 'reminder' }), '🟡'); assert.equal(dotFor({ kind: 'mention' }), '🔵'); assert.equal(dotFor({ kind: 'nothing' }), '⚪')
+})
+
+test('a priority written as a name becomes a level', () => {
+    for (const [n, l] of [['Urgent', 4], ['Critical', 4], ['High', 3], ['Haute', 3], ['Medium', 2], ['Normal', 2], ['Low', 1], ['Basse', 1], ['3', 3], ['whatever', 0], ['', 0]]) assert.equal(levelOf(n), l, n)
+})
+
+test('a notice says its category first, then what happened, the title, the facts, the extract and the link', () => {
+    const t = formatNotice({ L: T.english, kind: 'task', priority: 4, title: 'Prepare the offer', headline: 'Imane gave you a checklist step', rows: [['Status', 'In progress'], ['Due', '05 Nov 2026'], ['Empty', '']], note: 'call them  before\n3pm', link: 'https://crm.example/crm/tasks/1' })
+    assert.equal(t, '🔴 TASK · Urgent\nImane gave you a checklist step\nPrepare the offer\nStatus: In progress\nDue: 05 Nov 2026\n“call them before 3pm”\nhttps://crm.example/crm/tasks/1')
+    assert.match(formatNotice({ L: T.french, kind: 'reminder', title: 'Appeler Sara' }), /^🟡 RAPPEL\nAppeler Sara$/)
+    assert.equal(formatNotice({ L: T.english, kind: 'lead', title: 'x', priorityLabel: 'Hot' }).split('\n')[0], '🟠 LEAD · Hot')
+})
+
+test('the record behind a link of the CRM', () => {
+    assert.deepEqual(recordFromLink('/crm/tasks/6aeb34f16efdacd853569836?tab=x'), { relType: 'task', relId: '6aeb34f16efdacd853569836' })
+    assert.equal(recordFromLink('/crm/clients/6aeb34f16efdacd853569836').relType, 'customer')
+    assert.equal(recordFromLink('/crm/notes?note=1'), null)
 })

@@ -237,3 +237,20 @@ export async function taskAssignCreatorDefault() {
     await prisma.crmOption.updateMany({ where: { name: 'new_task_auto_assign_current_member', value: { not: '1' } }, data: { value: '1' } })
     await prisma.crmOption.create({ data: { name: MARK, value: '1', autoload: false } })
 }
+
+/**
+ * The web address of leads received before it was cleaned could carry text from the form after it ("https://site.fr/ Projet…").
+ * Keeps only the address. Runs once, marker-guarded.
+ */
+export async function cleanLeadWebsites() {
+    const MARK4 = 'migration_lead_websites_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK4 } })) return
+    const { cleanWebsite } = await import('@/lib/crm/leadMailCalc')
+    const leads = await prisma.crmLead.findMany({ where: { NOT: { website: null } }, select: { id: true, website: true } })
+    let n = 0
+    for (const l of leads) {
+        const c = cleanWebsite(l.website) || null
+        if (c !== l.website && c) { await prisma.crmLead.update({ where: { id: l.id }, data: { website: c } }); n++ }
+    }
+    await prisma.crmOption.create({ data: { name: MARK4, value: `${new Date().toISOString()} · ${n} cleaned` } })
+}

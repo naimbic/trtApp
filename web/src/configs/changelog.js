@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.172.0',
+        date: '2026-11-04',
+        title: 'Lead website (clean, open, info on hover), Items in coloured groups with drag and AI, clear Telegram / WhatsApp notices',
+        items: [
+            'Lead popup → Contact: Website, Language and Position are on one line. The website is shown in grey with three icons: what is known about it on hover (online or not, response time, SSL, domain age and expiry, registrar, IP, name servers, mail provider, and, with an Ubersuggest key saved in Settings → AI, its domain authority, organic traffic and keywords, backlinks and referring domains), open it in a new tab, and change it.',
+            'Fixed: a lead received from a form could have text after its website (“…/ Projet”). The address is now cleaned when the lead arrives and when it is saved, and the leads already received are cleaned once.',
+            'Items page: the catalogue is shown in groups, as accordions with a colour (click a group to open its items). Drag an item to reorder it or to move it to another group, drag a group to reorder the groups, assign a group from the line, edit, delete, filter by group or search. “New group” adds a group; deleting a group keeps its items. “AI help” writes items from a short description (name, description, unit and a suggested price, in the language you work in); you tick the ones to add.',
+            'Proposals, estimates and invoices: “Add from the catalogue” lists the items by group name (coloured), searchable.',
+            'Telegram and WhatsApp notices now start with the category and the level: “🔴 TASK · Urgent”, then what happened (reminder, mention, comment, checklist step...), the title, the facts (status, due date, who, the client, the amount...), a short extract and the link. The dot follows the level of a task or ticket (green low, yellow medium, orange high, red urgent) and the colour of the category for the others. In the language of the person.',
+        ],
+    },
+    {
         version: '0.171.1',
         date: '2026-11-04',
         title: 'Proposals: Mark as… Expired',

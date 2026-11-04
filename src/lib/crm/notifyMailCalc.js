@@ -16,6 +16,17 @@ Object.assign(T.french, { proposalExpired: 'Proposition expirée', proposalExpir
 Object.assign(T.spanish, { proposalExpired: 'Propuesta vencida', proposalExpiredIntro: 'Nadie respondió antes de la fecha «abierta hasta»: la propuesta pasa a Vencida y el contacto fue avisado por correo.' })
 Object.assign(T.japanese, { proposalExpired: '提案書の期限切れ', proposalExpiredIntro: '「公開期限」までに返答がなかったため、提案書は期限切れになり、連絡先にメールでお知らせしました。' })
 Object.assign(T.arabic, { proposalExpired: 'انتهت صلاحية المقترح', proposalExpiredIntro: 'لم يردّ أحد قبل تاريخ «مفتوح حتى»: أصبح المقترح منتهي الصلاحية وتم إبلاغ جهة الاتصال بالبريد.' })
+// the other categories of notices (Telegram, WhatsApp) and the sentences that open them
+Object.assign(T.english.kinds, { reminder: 'Reminder', mention: 'Mention', comment: 'Comment', calendar: 'Calendar', event: 'Event', request: 'Client request', idea: 'Client idea', signup: 'Sign-up', checklist: 'Checklist step', notification: 'Notification' })
+Object.assign(T.french.kinds, { reminder: 'Rappel', mention: 'Mention', comment: 'Commentaire', calendar: 'Agenda', event: 'Événement', request: 'Demande client', idea: 'Idée client', signup: 'Inscription', checklist: 'Étape de liste', notification: 'Notification' })
+Object.assign(T.spanish.kinds, { reminder: 'Recordatorio', mention: 'Mención', comment: 'Comentario', calendar: 'Agenda', event: 'Evento', request: 'Solicitud de cliente', idea: 'Idea de cliente', signup: 'Registro', checklist: 'Paso de lista', notification: 'Notificación' })
+Object.assign(T.japanese.kinds, { reminder: 'リマインダー', mention: 'メンション', comment: 'コメント', calendar: 'カレンダー', event: 'イベント', request: '顧客リクエスト', idea: '顧客アイデア', signup: '登録申請', checklist: 'チェックリスト項目', notification: '通知' })
+Object.assign(T.arabic.kinds, { reminder: 'تذكير', mention: 'إشارة', comment: 'تعليق', calendar: 'التقويم', event: 'حدث', request: 'طلب عميل', idea: 'فكرة عميل', signup: 'تسجيل', checklist: 'خطوة قائمة', notification: 'إشعار' })
+Object.assign(T.english, { mentionedYou: '{name} mentioned you', commented: '{name} commented', gaveStep: '{name} gave you a checklist step', startsIn: 'Starts in {when}', appointment: 'Appointment', signupAsked: 'Asked for an account', clientWrote: 'Update from a client', ideaUpdate: 'Update on an idea', lowLevel: 'Low', whatLabel: 'What' })
+Object.assign(T.french, { mentionedYou: '{name} vous a mentionné(e)', commented: '{name} a commenté', gaveStep: '{name} vous a confié une étape', startsIn: 'Commence dans {when}', appointment: 'Rendez-vous', signupAsked: 'Demande de compte', clientWrote: 'Nouveau message d’un client', ideaUpdate: 'Mise à jour d’une idée', lowLevel: 'Basse', whatLabel: 'Quoi' })
+Object.assign(T.spanish, { mentionedYou: '{name} le ha mencionado', commented: '{name} ha comentado', gaveStep: '{name} le asignó un paso', startsIn: 'Empieza en {when}', appointment: 'Cita', signupAsked: 'Solicitud de cuenta', clientWrote: 'Novedad de un cliente', ideaUpdate: 'Novedad en una idea', lowLevel: 'Baja', whatLabel: 'Qué' })
+Object.assign(T.japanese, { mentionedYou: '{name} さんがあなたをメンションしました', commented: '{name} さんがコメントしました', gaveStep: '{name} さんがチェックリスト項目を割り当てました', startsIn: '{when} 後に開始', appointment: '予約', signupAsked: 'アカウント申請', clientWrote: '顧客からの更新', ideaUpdate: 'アイデアの更新', lowLevel: '低', whatLabel: '内容' })
+Object.assign(T.arabic, { mentionedYou: 'أشار إليك {name}', commented: 'علّق {name}', gaveStep: 'أسند إليك {name} خطوة', startsIn: 'يبدأ بعد {when}', appointment: 'موعد', signupAsked: 'طلب حساب', clientWrote: 'جديد من عميل', ideaUpdate: 'جديد في فكرة', lowLevel: 'منخفضة', whatLabel: 'ماذا' })
 export const textsFor = (language) => T[language] || T.english
 
 export const nameOf = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || ''
@@ -61,3 +72,45 @@ export function richMessage({ baseUrl = '', L, name, tone = 'info', heading, int
 }
 const language_dir = (L, h) => (L === T.arabic ? `<div dir="rtl" style="direction:rtl;text-align:right;">${h}</div>` : h)
 
+
+
+/* ---------------------------------------------- the short notices of Telegram and WhatsApp ---------------------------------------------- */
+const PRIORITY_DOT = { 1: '🟢', 2: '🟡', 3: '🟠', 4: '🔴' }
+const KIND_DOT = { reminder: '🟡', mention: '🔵', comment: '🔵', calendar: '🟣', event: '🟣', request: '🟠', idea: '🟣', signup: '🟤', checklist: '🔵', lead: '🟠', customer: '🔵', proposal: '🟣', invoice: '🟠', estimate: '🟣', contract: '🟤', ticket: '🟠', project: '🔵', expense: '🟤', note: '🟡' }
+/** The dot in front of a notice: the level of a task or ticket (green, yellow, orange, red), else the colour of its category. */
+export const dotFor = ({ priority, kind } = {}) => PRIORITY_DOT[Number(priority)] || KIND_DOT[kind] || '⚪'
+
+/** The level (1 low .. 4 urgent) of a priority written as a name ("Urgent", "Haute", "Medium"...). */
+export function levelOf(name) {
+    const n = String(name ?? '').toLowerCase()
+    if (/^[1-4]$/.test(n)) return Number(n)
+    if (/urgent|critical|critique|emergency|urgence|عاج/.test(n)) return 4
+    if (/high|haut|alta|elev|élev|高|عالية/.test(n)) return 3
+    if (/medium|moyen|normal|media|中|متوسط/.test(n)) return 2
+    if (/low|bas|baj|低|منخفض/.test(n)) return 1
+    return 0
+}
+
+/**
+ * The text of a notice: "🔴 TASK · Urgent", what happened, the title, the facts (what, when, who), a short extract, the link.
+ *   { L, kind, title, headline, rows: [[label, value]], note, link, priority, priorityLabel }
+ */
+export function formatNotice({ L, kind, title, headline, rows = [], note, link, priority, priorityLabel } = {}) {
+    const cat = String((L || T.english).kinds[kind] || kind || '').toUpperCase()
+    const level = priorityLabel || (priority ? (L || T.english).priorities[priority] : '')
+    const out = [`${dotFor({ priority, kind })} ${cat}${level ? ` · ${level}` : ''}`]
+    if (headline) out.push(headline)
+    if (title) out.push(`${title}`)
+    for (const [k, v] of rows.slice(0, 7)) if (v) out.push(`${k}: ${v}`)
+    if (note) out.push(`“${String(note).replace(/\s+/g, ' ').trim().slice(0, 240)}”`)
+    if (link) out.push(link)
+    return out.join('\n')
+}
+
+/** The record a link of the CRM points to, for the notices that only know a link: /crm/tasks/<id> -> { relType: 'task', relId }. */
+export function recordFromLink(link) {
+    const m = /\/crm\/(tasks|leads|clients|tickets|projects|proposals|estimates|invoices|contracts|expenses)\/([a-f0-9]{24})/i.exec(String(link || ''))
+    if (!m) return null
+    const type = { tasks: 'task', leads: 'lead', clients: 'customer', tickets: 'ticket', projects: 'project', proposals: 'proposal', estimates: 'estimate', invoices: 'invoice', contracts: 'contract', expenses: 'expense' }[m[1].toLowerCase()]
+    return { relType: type, relId: m[2] }
+}

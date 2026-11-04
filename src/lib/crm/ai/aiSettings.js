@@ -22,7 +22,7 @@ export const audit = async (session, description) => { try { await prisma.crmAct
 /** The AI settings for the screen: which providers have a key (never the key itself), the models, the default. */
 export async function getAiSettings() {
     await requireSuper()
-    const names = ['ai_provider', 'ai_model', 'ai_system_prompt', ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])]
+    const names = ['ai_provider', 'ai_model', 'ai_system_prompt', 'ubersuggest_key', 'ubersuggest_url', ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])]
     const o = await read(names)
     const opened = Object.fromEntries(providerIds.map((id) => [id, o[KEY(id)] ? open(o[KEY(id)]) : null]))
     const def = providerIds.includes(o.ai_provider) && opened[o.ai_provider] ? o.ai_provider : providerIds.find((id) => opened[id]) || ''
@@ -31,7 +31,8 @@ export async function getAiSettings() {
         // the default provider shows the default model, the others the model last chosen for them
         return { id, label: PROVIDERS[id].label, help: PROVIDERS[id].help, presets: PROVIDERS[id].presets, hasKey: !!plain, workspaceId: o[WORKSPACE(id)] || '', hint: plain ? `••••${plain.slice(-4)}` : null, unreadable: !!o[KEY(id)] && !plain, model: (id === def && o.ai_model) || o[MODEL(id)] || PROVIDERS[id].presets[0] }
     })
-    return { providers, provider: def, model: providers.find((p) => p.id === def)?.model || '', systemPrompt: o.ai_system_prompt || '' }
+    const seoPlain = o.ubersuggest_key ? open(o.ubersuggest_key) : null
+    return { providers, provider: def, model: providers.find((p) => p.id === def)?.model || '', systemPrompt: o.ai_system_prompt || '', seo: { hasKey: !!seoPlain, hint: seoPlain ? `••••${seoPlain.slice(-4)}` : null, url: o.ubersuggest_url || '' } }
 }
 
 /** body: { keys: { id: 'new key' | null (remove) }, models: { id: 'model' }, provider, model, systemPrompt } */
@@ -64,6 +65,19 @@ export async function saveAiSettings(body = {}) {
     }
     if (body.model !== undefined) await write('ai_model', String(body.model || '').trim().slice(0, 120))
     if (body.systemPrompt !== undefined) await write('ai_system_prompt', String(body.systemPrompt || '').slice(0, 4000))
+    // the Ubersuggest key (SEO figures of a lead's website) and, if it ever changes, the address of its MCP server
+    if (body.seoKey !== undefined) {
+        const k = String(body.seoKey || '').trim()
+        if (body.seoKey === null) { await prisma.crmOption.deleteMany({ where: { name: 'ubersuggest_key' } }); changed.push('removed the Ubersuggest key') } else if (k) {
+            if (k.length < 8 || k.length > 600 || /\s/.test(k)) throw bad('That does not look like an API key')
+            await write('ubersuggest_key', seal(k)); changed.push('set the Ubersuggest key')
+        }
+    }
+    if (body.seoUrl !== undefined) {
+        const u = String(body.seoUrl || '').trim()
+        if (u && !/^https:\/\/[^\s]+$/i.test(u)) throw bad('The address must start with https://')
+        if (u) await write('ubersuggest_url', u); else await prisma.crmOption.deleteMany({ where: { name: 'ubersuggest_url' } })
+    }
     if (changed.length) await audit(session, `AI settings: ${changed.join(', ')}`)
     return getAiSettings()
 }

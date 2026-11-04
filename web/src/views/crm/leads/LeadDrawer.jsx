@@ -13,6 +13,7 @@ import FoldSection from '@/components/crm/FoldSection'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import WebsiteField from '@/components/crm/SiteInfo'
 import Switcher from '@/components/ui/Switcher'
 import Tabs from '@/components/ui/Tabs'
 import Tag from '@/components/ui/Tag'
@@ -92,9 +93,11 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div><L>{tr("Company")}</L><Input size={sz} disabled={!canEdit} value={v.company} onChange={(e) => set({ company: e.target.value })} /></div>
                     <div><L>{tr("Email")}</L><Input size={sz} disabled={!canEdit} value={v.email} onChange={(e) => set({ email: e.target.value })} /></div>
                     <div><L>{tr("Phone")}</L><Input size={sz} disabled={!canEdit} value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
-                    <div><L>{tr("Position")}</L><Input size={sz} disabled={!canEdit} value={v.title} onChange={(e) => set({ title: e.target.value })} /></div>
-                    <div><L>{tr("Website")}</L><Input size={sz} disabled={!canEdit} value={v.website} onChange={(e) => set({ website: e.target.value })} /></div>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                    <div><L>{tr("Website")}</L><WebsiteField size={sz} disabled={!canEdit} value={v.website} onChange={(x) => set({ website: x })} /></div>
                     <div><L>{tr("Language")}</L><Select size={sz} isDisabled={!canEdit} isSearchable={false} isClearable options={LEAD_LANGUAGES} value={LEAD_LANGUAGES.find((o) => o.value === v.defaultLanguage) || null} placeholder={tr("Not set")} onChange={(o) => set({ defaultLanguage: o?.value || '' })} /></div>
+                    <div><L>{tr("Position")}</L><Input size={sz} disabled={!canEdit} value={v.title} onChange={(e) => set({ title: e.target.value })} /></div>
                 </div>
             </FoldSection>
             <FoldSection icon={<TbMapPin />} tone="amber" title={tr("Address")} open={openSec.includes('address')} onToggle={() => toggleSec('address')} summary={[v.address, v.city, v.state, v.zip].filter(Boolean).join(', ')}>

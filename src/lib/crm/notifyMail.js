@@ -2,7 +2,8 @@ import prisma from '@/lib/prisma'
 import { buildHtml, deliver, getOptions } from '@/lib/crm/mailer'
 import { emailAllowed } from '@/lib/crm/channels'
 import { publicBase } from '@/lib/crm/shortLinks'
-import { T, textsFor, when, nameOf, strip, money, richMessage } from './notifyMailCalc.js'
+import { T, textsFor, when, nameOf, strip, money, richMessage, formatNotice, levelOf, recordFromLink } from './notifyMailCalc.js'
+import { notifyStaffChannels } from '@/lib/crm/channels'
 
 export { textsFor, when }
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
@@ -21,7 +22,7 @@ export async function recordCard(relType, relId, { language = 'english', tz = 'U
     const d = (x, time) => when(x, { time, language, tz })
     const rows = []
     const add = (label, value) => { if (value !== undefined && value !== null && String(value).trim() !== '') rows.push([label, String(value)]) }
-    let title = '', excerpt = '', link = ''
+    let title = '', excerpt = '', link = '', priority = 0
     const kind = relType === 'client' ? 'customer' : relType
     if (!relId || !/^[a-f0-9]{24}$/i.test(String(relId))) return null
     const staffNames = async (ids) => ((ids || []).length ? (await prisma.crmStaff.findMany({ where: { id: { in: ids } }, select: { firstName: true, lastName: true, email: true } })).map(nameOf).join(', ') : '')
@@ -31,7 +32,7 @@ export async function recordCard(relType, relId, { language = 'english', tz = 'U
         const t = await prisma.crmTask.findUnique({ where: { id: relId }, include: { assignees: true, checklistItems: true } })
         if (!t) return null
         const names = await taskStatusNames().catch(() => ({}))
-        title = t.name; excerpt = strip(t.description); link = `/crm/tasks/${t.id}`
+        title = t.name; excerpt = strip(t.description); link = `/crm/tasks/${t.id}`; priority = t.priority || 0
         add(L.status, names[t.status] || '')
         add(L.priority, L.priorities[t.priority] || '')
         add(L.start, d(t.startDate, false)); add(L.due, d(t.dueDate, false))
@@ -57,7 +58,7 @@ export async function recordCard(relType, relId, { language = 'english', tz = 'U
     } else if (kind === 'ticket') {
         const t = await prisma.crmTicket.findUnique({ where: { id: relId }, include: { status: true, priority: true } })
         if (!t) return null
-        title = `#${t.legacyId ?? String(t.id).slice(-5).toUpperCase()} ${t.subject || ''}`.trim(); link = `/crm/tickets/${t.id}`
+        title = `#${t.legacyId ?? String(t.id).slice(-5).toUpperCase()} ${t.subject || ''}`.trim(); link = `/crm/tickets/${t.id}`; priority = levelOf(t.priority?.name)
         const dep = t.departmentId ? await prisma.crmDepartment.findUnique({ where: { id: t.departmentId }, select: { name: true } }) : null
         add(L.client, await clientName(t.clientId)); add(L.status, t.status?.name); add(L.priority, t.priority?.name); add(L.department, dep?.name); add(L.assigned, await staffNames(t.assignedId ? [t.assignedId] : []))
     } else if (kind === 'project') {
@@ -87,7 +88,7 @@ export async function recordCard(relType, relId, { language = 'english', tz = 'U
         title = e.expenseName || e.category?.name || ''; link = `/crm/expenses/${e.id}`
         add(L.category, e.category?.name); add(L.amount, money(e.amount, await currencyName(e.currencyId))); add(L.date, d(e.date, false)); add(L.client, await clientName(e.clientId))
     } else return null
-    return { kind, title, rows, excerpt, link }
+    return { kind, title, rows, excerpt, link, priority }
 }
 
 /** Who a staff member is for an email: their name, language (their own, else the company's) and address. */
@@ -112,3 +113,26 @@ export async function sendStaffMail({ staffId, headingKey = 'reminder', introKey
     await prisma.crmMailLog.create({ data: { to, subject: String(subject).slice(0, 200), template: slug, relType: relType || null, relId: relId || undefined, status: res.sent ? 'sent' : 'failed', error: res.error || null } }).catch(() => {})
     return res
 }
+
+/**
+ * The text of a notice for Telegram / WhatsApp, in the language of the person: the category first ("TASK · Urgent"), what happened,
+ * the title, the facts (what, when, who...), a short extract and the link; the dot follows the level of a task or a ticket.
+ * spec: { kind, relType, relId, headlineKey, vars, note, link, title, rows }  (relType + relId add the facts of the record; a link of the CRM finds its record).
+ */
+export async function noticeFor(staffId, spec = {}) {
+    const ctx = await staffMailContext(staffId)
+    const L = textsFor(ctx.language)
+    const rec = spec.relType ? { relType: spec.relType, relId: spec.relId } : recordFromLink(spec.link)
+    const card = rec?.relId ? await recordCard(rec.relType, rec.relId, { language: ctx.language, tz: ctx.tz }).catch(() => null) : null
+    const vars = spec.vars || {}
+    // the category is the record when there is one (TASK, LEAD...); what happened to it opens the notice (⏰ Reminder, Imane mentioned you...)
+    const headline = spec.headlineKey ? String(L[spec.headlineKey] || spec.headlineKey).replace(/\{(\w+)\}/g, (m, k) => (vars[k] ?? m)) : card && spec.kind && spec.kind !== card.kind ? `${spec.kind === 'reminder' ? '⏰ ' : ''}${L.kinds[spec.kind] || ''}` : ''
+    const link = (card?.link || spec.link || '')
+    return formatNotice({ L, kind: card?.kind || spec.kind || 'notification', title: card?.title || spec.title || '', headline, rows: [...(card?.rows || []), ...(spec.rows || [])], note: spec.note, link: link && !/^https?:/i.test(link) ? `${publicBase()}${link}` : link, priority: card?.priority })
+}
+
+/** Sends a notice to the Telegram / WhatsApp of a team member (when they switched it on). Never throws: a notice must not break what it reports. */
+export async function notifyNotice(staffId, spec) {
+    try { await notifyStaffChannels(staffId, await noticeFor(staffId, spec)) } catch (e) { console.error('[notice]', e.message) }
+}
+

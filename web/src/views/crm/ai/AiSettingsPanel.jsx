@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import CreatableSelect from 'react-select/creatable'
-import { TbBrain, TbCheck, TbKey, TbPlugConnected, TbTrash, TbRefresh } from 'react-icons/tb'
+import { TbWorldSearch, TbBrain, TbCheck, TbKey, TbPlugConnected, TbTrash, TbRefresh } from 'react-icons/tb'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -89,6 +89,31 @@ const CoachCard = () => {
     )
 }
 
+/** The Ubersuggest key: lets the CRM show the SEO figures (authority, traffic, keywords, backlinks) of a lead's website when you hover it. */
+const SeoCard = ({ seo, onSaved }) => {
+    const [key, setKey] = useState('')
+    const [busy, setBusy] = useState('')
+    const [result, setResult] = useState(null)
+    const save = async (body, ok) => { setBusy('save'); try { onSaved(await api('/api/crm/ai/settings', { method: 'PUT', body })); setKey(''); setResult(null); if (ok) notify('success', ok) } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
+    const test = async () => {
+        setBusy('test'); setResult(null)
+        try { const r = await api('/api/crm/pipeline/leads/site-info?url=trtdigital.ma&force=1'); setResult(r.seo && !r.seo.error ? { ok: true, text: `trtdigital.ma: DA ${r.seo.da ?? '–'}, ${r.seo.keywords ?? '–'} ${tr('keywords')}, ${r.seo.backlinks ?? '–'} ${tr('backlinks')}` } : { ok: false, text: r.seo?.error || tr('No key saved yet') }) } catch (e) { setResult({ ok: false, text: e.message }) } finally { setBusy('') }
+    }
+    return (
+        <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+            <div className="mb-1 flex items-center gap-2 font-semibold"><TbWorldSearch className="text-lg" />{tr('Website SEO data (Ubersuggest)')}</div>
+            <p className="mb-3 text-sm text-gray-500">{tr('With your Ubersuggest API key, hovering the website of a lead also shows its domain authority, organic traffic and keywords, and backlinks. The key is stored encrypted and never shown again.')}</p>
+            <div className="flex flex-wrap items-center gap-2">
+                <Input size="sm" className="max-w-xs" type="password" placeholder={seo.hasKey ? seo.hint : tr('Ubersuggest API key')} value={key} onChange={(e) => setKey(e.target.value)} />
+                <Button size="sm" variant="solid" icon={<TbKey />} loading={busy === 'save'} disabled={!key.trim()} onClick={() => save({ seoKey: key.trim() }, tr('API key saved'))}>{tr('Save key')}</Button>
+                {seo.hasKey && <Button size="sm" icon={<TbPlugConnected />} loading={busy === 'test'} onClick={test}>{tr('Test')}</Button>}
+                {seo.hasKey && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => save({ seoKey: null }, tr('Key removed'))}>{tr('Remove')}</Button>}
+                {result && <span className={`text-sm ${result.ok ? 'text-emerald-600' : 'text-red-500'}`}>{result.text}</span>}
+            </div>
+        </div>
+    )
+}
+
 /** Settings → AI: keys, models and the default for the AI analyses. */
 const AiSettingsPanel = () => {
     const [d, setD] = useState(null)
@@ -107,6 +132,7 @@ const AiSettingsPanel = () => {
             <p className="text-sm text-gray-500">{tr('Pick the provider you pay for, add its API key, choose the model. The analyses send totals, rates and company names to that provider; never emails, phone numbers or addresses.')}</p>
             {d.providers.map((p) => <Provider key={p.id} p={p} isDefault={d.provider === p.id} onSaved={apply} />)}
             <CoachCard />
+            <SeoCard seo={d.seo || { hasKey: false }} onSaved={apply} />
             <div>
                 <div className="mb-1 text-xs font-semibold text-gray-500">{tr('About your company (optional): added to every analysis')}</div>
                 <Input textArea rows={3} value={prompt} placeholder={tr('For example: web agency in Casablanca, clients are SMEs, we invoice in MAD.')} onChange={(e) => setPrompt(e.target.value)} />

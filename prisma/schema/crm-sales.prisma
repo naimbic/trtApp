@@ -9,6 +9,10 @@ model CrmItemGroup {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   legacyId  Int?
   name      String
+  /// the colour of the group on the Items page (a name of the palette)
+  color     String?
+  /// the place of the group on the Items page
+  order     Int?
   items     CrmItem[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -27,6 +31,8 @@ model CrmItem {
   tax2Id          String?       @db.ObjectId
   unit            String?
   groupId         String?       @db.ObjectId
+  /// the place of the item inside its group on the Items page
+  order           Int?
   group           CrmItemGroup? @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt

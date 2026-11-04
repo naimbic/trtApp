@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { sendTemplate } from '@/lib/crm/mailer'
-import { notifyStaffChannels } from '@/lib/crm/channels'
+import { notifyNotice } from '@/lib/crm/notifyMail'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { signupOutcome, splitName } from '@/lib/crm/signupCalc'
 import { rateLimit } from '@/lib/rateLimit'
@@ -54,7 +54,7 @@ async function tellDeciders(row) {
     const label = row.provider === 'github' ? 'GitHub' : 'Google'
     for (const s of await deciders()) {
         await prisma.crmNotification.create({ data: { toUserId: s.id, fromFullName: label, description: `${row.name || row.email} asked for an account (${label})`.slice(0, 200), link: '/crm/team?requests=1', additionalData: 'signup-request', isRead: false } }).catch(() => {})
-        await notifyStaffChannels(s.id, `${row.name || row.email} (${row.email}) asked for an account with ${label}.\n${link}`).catch(() => {})
+        await notifyNotice(s.id, { kind: 'signup', headlineKey: 'signupAsked', title: `${row.name || row.email} (${row.email})`, link, rows: [['', '']], note: label })
         if (s.email) await sendTemplate({ slug: 'signup-request-to-admin', to: s.email, relType: 'signup_request', relId: row.id, data: { staff_firstname: s.firstName || '', request_name: row.name || '', request_email: row.email, request_provider: label, request_link: link } }).catch(() => {})
     }
 }

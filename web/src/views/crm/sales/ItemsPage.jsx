@@ -98,7 +98,8 @@ const ItemsPage = () => {
         if (!destination || filtering) return
         if (type === 'GROUP') {
             if (destination.index === source.index) return
-            const ids = placed(board.groups.map((g) => g.id), draggableId, destination.index)
+            const gid = draggableId.replace(/^g-/, '')
+            const ids = placed(board.groups.map((g) => g.id), gid, destination.index)
             setBoard((b) => ({ ...b, groups: ids.map((id) => b.groups.find((g) => g.id === id)) }))
             return post('/api/crm/items-board/reorder', { groups: ids })
         }
@@ -148,7 +149,7 @@ const ItemsPage = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h3>{tr('Items')}</h3>
+                    <h3>{tr('Items & Groups')}</h3>
                     <p className="text-sm text-gray-500">{tr('The products and services you add to proposals, estimates and invoices')} · {total}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

@@ -9,7 +9,7 @@ import { hostOf, rootDomain, isPrivateIp, readRdap, readWhois, summary, decodeEn
 
 /**
  * What a salesperson wants to know about the website of a lead, on hover: is it online, how old is the domain, who hosts it, and its
- * SEO figures (Ubersuggest, when a key is saved in Settings → AI). Every address the server calls is checked to be public first.
+ * SEO figures (Ahrefs, else Ubersuggest, whichever key is saved in Settings → AI). Every address the server calls is checked to be public first.
  */
 const UA = 'Mozilla/5.0 (compatible; trtCRM-site-check/1.0)'
 const cache = new Map() // host -> { at, data }
@@ -96,16 +96,39 @@ async function seoKey() {
     return key ? { key, url: o.ubersuggest_url || SEO_URL } : null
 }
 
-/** Domain authority, organic traffic and keywords, backlinks and referring domains, from the Ubersuggest MCP. */
+/** The Ahrefs API key saved in Settings → AI (sealed), or null. */
+async function ahrefsKey() {
+    const r = await prisma.crmOption.findFirst({ where: { name: 'ahrefs_key' } })
+    return r?.value ? open(r.value) : null
+}
+
+/** Ahrefs API v3: domain rating, organic traffic and keywords, backlinks and referring domains of a domain. */
+async function ahrefsOf(domain, key, fetchFn = fetch) {
+    const date = new Date().toISOString().slice(0, 10)
+    const get = async (path, extra = '') => {
+        const res = await fetchFn(`https://api.ahrefs.com/v3/site-explorer/${path}?target=${encodeURIComponent(domain)}&date=${date}${extra}`, { headers: { authorization: `Bearer ${key}`, accept: 'application/json' }, signal: AbortSignal.timeout(15000) })
+        if (res.status === 401 || res.status === 403) throw new Error('The Ahrefs key was refused')
+        if (!res.ok) throw new Error(`Ahrefs answered ${res.status}: ${(await res.text()).slice(0, 120)}`)
+        return res.json()
+    }
+    const [dr, m, bl] = await Promise.all([get('domain-rating'), get('metrics', '&mode=subdomains'), get('backlinks-stats', '&mode=subdomains')])
+    return { da: dr.domain_rating?.domain_rating != null ? Math.round(dr.domain_rating.domain_rating) : null, traffic: m.metrics?.org_traffic ?? null, keywords: m.metrics?.org_keywords ?? null, backlinks: bl.metrics?.live ?? null, refDomains: bl.metrics?.live_refdomains ?? null, source: 'Ahrefs' }
+}
+
+/** Domain authority, organic traffic and keywords, backlinks and referring domains: Ahrefs when its key is saved, else the Ubersuggest MCP. */
 export async function seoOf(domain) {
     const hit = seoCache.get(domain)
     if (hit && Date.now() - hit.at < SEO_TTL) return hit.data
-    const cfg = await seoKey()
-    if (!cfg) return null
+    const ah = await ahrefsKey()
+    const cfg = ah ? null : await seoKey()
+    if (!ah && !cfg) return null
     let data
     try {
+        if (ah) data = await ahrefsOf(domain, ah)
+        else {
         const j = await callTool({ url: cfg.url, token: cfg.key, name: 'domain_overview', args: { domain } })
-        data = { da: j.domainAuthority ?? null, traffic: j.traffic ?? null, keywords: j.organic ?? null, backlinks: j.backlinks ?? null, refDomains: j.refDomains ?? null }
+        data = { da: j.domainAuthority ?? null, traffic: j.traffic ?? null, keywords: j.organic ?? null, backlinks: j.backlinks ?? null, refDomains: j.refDomains ?? null, source: 'Ubersuggest' }
+        }
     } catch (e) { return { error: e.message } } // an error is not kept: the next hover tries again
     seoCache.set(domain, { at: Date.now(), data })
     return data
@@ -131,4 +154,5 @@ export async function siteInfo(website, { force = false } = {}) {
 }
 
 /** The Ubersuggest key for the settings screen. */
+export { ahrefsOf }
 export const SEO_DEFAULT_URL = SEO_URL

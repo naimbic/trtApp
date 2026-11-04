@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.174.0',
+        date: '2026-11-04',
+        title: 'Items & Groups in one page; dragging a group no longer crashes; Ahrefs for the SEO figures of a lead website',
+        items: [
+            'Fixed: dragging a group on the Items page crashed the page. The menu now shows one entry, Items & Groups; the Item groups, Expense categories and Contract types entries no longer appear (their old links still open the right page).',
+            'Lead website tooltip: the SEO figures (domain rating, organic traffic and keywords, backlinks, referring domains) now come from Ahrefs. Save the Ahrefs API key in Settings → AI; when both an Ahrefs and an Ubersuggest key are saved, Ahrefs is used.',
+        ],
+    },
+    {
         version: '0.173.0',
         date: '2026-11-04',
         title: 'Proposal mails carry the uploaded files; real editor on public comments; Expenses and Contracts in coloured groups',

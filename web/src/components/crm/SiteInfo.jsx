@@ -45,7 +45,7 @@ export const SiteInfoBody = ({ website }) => {
                 </div>
             )}
             {d.seo?.error && <div className="mt-2 border-t border-white/15 pt-2 opacity-80">{tr("SEO figures")}: {d.seo.error}</div>}
-            {d.seo === null && <div className="mt-2 border-t border-white/15 pt-2 opacity-60">{tr("SEO figures (authority, traffic, keywords, backlinks) appear here once an Ubersuggest key is saved in Settings → AI.")}</div>}
+            {d.seo === null && <div className="mt-2 border-t border-white/15 pt-2 opacity-60">{tr("SEO figures (authority, traffic, keywords, backlinks) appear here once an Ahrefs or Ubersuggest key is saved in Settings → AI.")}</div>}
         </div>
     )
 }

@@ -67,7 +67,7 @@ const ProposalsList = () => {
     const doc = useDocMenu({
         path: '/crm/proposals', apiBase: '/api/crm/sales/proposals', perm: 'proposals', name: (r) => `${r.number || ''} ${r.subject || ''}`.trim(),
         mail: { kind: 'proposal', template: 'proposal-send-to-customer' },
-        statuses: [[6, 'markDraft'], [1, 'markOpen'], [4, 'markSent'], [5, 'markRevised'], [3, 'markAccepted'], [2, 'markDeclined']].map(([st, action]) => ({ label: STATUS[st].label, action, current: (r) => r.status === st })),
+        statuses: [[6, 'markDraft'], [1, 'markOpen'], [4, 'markSent'], [5, 'markRevised'], [3, 'markAccepted'], [2, 'markDeclined'], [7, 'markExpired']].map(([st, action]) => ({ label: STATUS[st].label, action, current: (r) => r.status === st })),
         convert: { label: tr("Convert to invoice"), perm: 'invoices', when: (r) => r.status === 3, url: (r) => `/api/crm/sales/proposals/${r.id}/convert`, body: { to: 'invoice' }, to: (res) => res.invoiceId && `/crm/invoices/${res.invoiceId}` },
     }, load)
 

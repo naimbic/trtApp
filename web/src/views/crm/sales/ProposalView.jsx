@@ -89,6 +89,7 @@ const ProposalView = () => {
                             {e.status !== 5 && <Dropdown.Item eventKey="r" onClick={() => state('markRevised', tr("Marked as revised"))}>{tr("Revised")}</Dropdown.Item>}
                             {e.status !== 3 && <Dropdown.Item eventKey="a" onClick={() => state('markAccepted', tr("Marked as accepted"))}>{tr("Accepted")}</Dropdown.Item>}
                             {e.status !== 2 && <Dropdown.Item eventKey="x" onClick={() => state('markDeclined', tr("Marked as declined"))}>{tr("Declined")}</Dropdown.Item>}
+                            {e.status !== 7 && <Dropdown.Item eventKey="e" onClick={() => state('markExpired', tr("Marked as expired"))}>{tr("Expired")}</Dropdown.Item>}
                         </Dropdown>
                     )}
                     {can('proposals', 'edit') && !locked && <Button size="sm" icon={<TbPencil />} data-href={`/crm/proposals/${id}/edit`} onClick={() => navigate(`/crm/proposals/${id}/edit`)}>{tr("Edit")}</Button>}

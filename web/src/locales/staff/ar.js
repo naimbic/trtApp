@@ -5418,5 +5418,6 @@ export default {
     "The “valid until” date a new estimate starts with: the day it is created plus these days.": "تاريخ «صالح حتى» لعرض السعر الجديد: يوم إنشائه زائد هذه الأيام.",
     "The “open until” date a new proposal starts with: the day it is created plus these days.": "تاريخ «مفتوح حتى» للمقترح الجديد: يوم إنشائه زائد هذه الأيام.",
     "Not set": "غير محدد",
-    "Proposal expired": "انتهت صلاحية المقترح"
+    "Proposal expired": "انتهت صلاحية المقترح",
+    "Marked as expired": "تم وضعها كمنتهية الصلاحية"
 }

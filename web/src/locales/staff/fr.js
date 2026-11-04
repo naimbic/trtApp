@@ -5418,5 +5418,6 @@ export default {
     "The “valid until” date a new estimate starts with: the day it is created plus these days.": "La date « valable jusqu'au » d'un nouveau devis : le jour de sa création plus ces jours.",
     "The “open until” date a new proposal starts with: the day it is created plus these days.": "La date « ouverte jusqu'au » d'une nouvelle proposition : le jour de sa création plus ces jours.",
     "Not set": "Non défini",
-    "Proposal expired": "Proposition expirée"
+    "Proposal expired": "Proposition expirée",
+    "Marked as expired": "Marquée comme expirée"
 }

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.171.1',
+        date: '2026-11-04',
+        title: 'Proposals: Mark as… Expired',
+        items: [
+            'A proposal can now be marked Expired by hand, from the “Mark as” menu of the proposal and of the proposals list (for a proposal you want to close before its “open until” date). Mark it Open, Sent or Revised again to reopen it; if its date has passed it expires again at the next automatic run.',
+        ],
+    },
+    {
         version: '0.171.0',
         date: '2026-11-04',
         title: 'Clear notification emails, a Language on leads, proposals that go Sent then Expired',

@@ -100,14 +100,14 @@ export async function saveProposal(input) {
     return { success: true, id: proposal.id }
 }
 
-/** action: markDraft | markOpen | markSent | markRevised | markAccepted | markDeclined */
+/** action: markDraft | markOpen | markSent | markRevised | markAccepted | markDeclined | markExpired */
 export async function setProposalState(id, action) {
     const session = await requirePermission('proposals', 'edit')
     await assertDocVisible(session, 'proposal', id)
     const staffId = await getStaffId(session)
     const p = await prisma.crmProposal.findUnique({ where: { id } })
     if (!p) return fail('Proposal not found')
-    const map = { markDraft: [{ status: 6 }, 'Marked as draft'], markOpen: [{ status: 1 }, 'Marked as open'], markSent: [{ status: 4 }, 'Marked as sent'], markRevised: [{ status: 5 }, 'Marked as revised'], markAccepted: [{ status: 3 }, 'Marked as accepted'], markDeclined: [{ status: 2 }, 'Marked as declined'] }
+    const map = { markDraft: [{ status: 6 }, 'Marked as draft'], markOpen: [{ status: 1 }, 'Marked as open'], markSent: [{ status: 4 }, 'Marked as sent'], markRevised: [{ status: 5 }, 'Marked as revised'], markAccepted: [{ status: 3 }, 'Marked as accepted'], markDeclined: [{ status: 2 }, 'Marked as declined'], markExpired: [{ status: 7 }, 'Marked as expired'] }
     const m = map[action]
     if (!m) return fail('Unknown action')
     await prisma.crmProposal.update({ where: { id }, data: m[0] })

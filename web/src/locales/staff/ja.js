@@ -5418,5 +5418,6 @@ export default {
     "The “valid until” date a new estimate starts with: the day it is created plus these days.": "新しい見積書の「有効期限」：作成日にこの日数を足した日。",
     "The “open until” date a new proposal starts with: the day it is created plus these days.": "新しい提案書の「公開期限」：作成日にこの日数を足した日。",
     "Not set": "未設定",
-    "Proposal expired": "提案書の期限切れ"
+    "Proposal expired": "提案書の期限切れ",
+    "Marked as expired": "期限切れにしました"
 }

@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { getOptions, setOptions, sendTemplate } from '@/lib/crm/mailer'
+import { sendStaffMail, staffMailContext, textsFor } from '@/lib/crm/notifyMail'
 import { sendMailCore } from '@/lib/crm/mailApi'
 import { allocateNumber, ensureRealNumber } from '@/lib/crm/sales/docNumbering'
 import { publicBase } from '@/lib/crm/shortLinks'
@@ -124,12 +125,37 @@ async function estimatesJob({ o, today, lines, dry }) {
 }
 
 async function proposalsJob({ o, today, lines, dry }) {
+    // proposals that were emailed while they were still Draft (before sending set the status) become Sent, so their link opens
+    // (done once: a proposal that is put back to Draft later on stays Draft)
+    if (!dry && !(await prisma.crmOption.findUnique({ where: { name: 'proposals_sent_healed' } }))) {
+        const stuck = await prisma.crmMailLog.findMany({ where: { template: 'proposal-send-to-customer', relType: 'proposal', status: 'sent' }, select: { relId: true }, take: 2000 })
+        const ids = [...new Set(stuck.map((m) => m.relId).filter(Boolean))]
+        if (ids.length) { const r = await prisma.crmProposal.updateMany({ where: { id: { in: ids }, status: 6 }, data: { status: 4 } }); if (r.count) lines.push(`${r.count} proposal${r.count > 1 ? 's' : ''} that had been emailed are now marked Sent`) }
+        await prisma.crmOption.create({ data: { name: 'proposals_sent_healed', value: '1', autoload: false } })
+    }
     const before = num(o('send_proposal_expiry_reminder_before'))
-    if (before <= 0) return
-    const list = (await prisma.crmProposal.findMany({ where: { status: { in: [1, 4, 5] }, isExpiryNotified: false, openTill: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })).filter((p) => p.remindClient !== false)
-    for (const p of list) {
-        if (dry) { lines.push(`[preview] Expiry reminder would be sent for proposal "${p.subject || p.id}"`); ref(lines, 'proposal', p.id, p.subject || p.id); continue }
-        try { await sendMailCore({ kind: 'proposal', id: p.id, template: 'proposal-expiry-reminder' }); await prisma.crmProposal.update({ where: { id: p.id }, data: { isExpiryNotified: true } }); lines.push(`Expiry reminder sent for proposal "${p.subject || p.id}"`); ref(lines, 'proposal', p.id, p.subject || p.id) } catch (err) { lines.push(`! Proposal "${p.subject || p.id}": ${err.message}`) }
+    if (before > 0) {
+        const list = (await prisma.crmProposal.findMany({ where: { status: { in: [1, 4, 5] }, isExpiryNotified: false, openTill: { gte: today, lte: new Date(today.getTime() + before * DAY) } } })).filter((p) => p.remindClient !== false)
+        for (const p of list) {
+            if (dry) { lines.push(`[preview] Expiry reminder would be sent for proposal "${p.subject || p.id}"`); ref(lines, 'proposal', p.id, p.subject || p.id); continue }
+            try { await sendMailCore({ kind: 'proposal', id: p.id, template: 'proposal-expiry-reminder' }); await prisma.crmProposal.update({ where: { id: p.id }, data: { isExpiryNotified: true } }); lines.push(`Expiry reminder sent for proposal "${p.subject || p.id}"`); ref(lines, 'proposal', p.id, p.subject || p.id) } catch (e) { lines.push(`! Proposal "${p.subject || p.id}": ${e.message}`) }
+        }
+    }
+    // the day after "open until" the proposal becomes Expired: the lead or client is told, and so is the person in charge
+    const expired = await prisma.crmProposal.findMany({ where: { status: { in: [1, 4, 5] }, AND: [{ openTill: { not: null } }, { openTill: { lt: today } }] }, take: 100 })
+    for (const p of expired) {
+        const label = p.subject || p.id
+        if (dry) { lines.push(`[preview] Proposal "${label}" would become Expired and its contact would be told`); ref(lines, 'proposal', p.id, label); continue }
+        const claimed = await prisma.crmProposal.updateMany({ where: { id: p.id, status: p.status }, data: { status: 7 } })
+        if (!claimed.count) continue
+        let told = 'nobody told'
+        if (p.remindClient !== false) { try { const r = await sendMailCore({ kind: 'proposal', id: p.id, template: 'proposal-expired' }); told = `told ${r.to.join(', ')}` } catch (e) { told = `could not tell the contact: ${e.message}` } }
+        const owner = p.assignedId || p.addedFrom
+        if (owner) {
+            try { await prisma.crmNotification.create({ data: { toUserId: owner, fromFullName: '⌛ Proposal expired', description: `${label} is now Expired`.slice(0, 200), link: `/crm/proposals/${p.id}`, additionalData: 'proposal-expired', isRead: false } }) } catch { /* the bell is a courtesy */ }
+            try { const ctx = await staffMailContext(owner); await sendStaffMail({ staffId: owner, headingKey: 'proposalExpired', introKey: 'proposalExpiredIntro', tone: 'danger', relType: 'proposal', relId: p.id, subject: `⌛ ${textsFor(ctx.language).proposalExpired}: ${label}`, slug: 'proposal-expired-to-staff' }) } catch { /* idem */ }
+        }
+        lines.push(`Proposal "${label}" is now Expired (${told})`); ref(lines, 'proposal', p.id, label)
     }
 }
 
@@ -161,7 +187,8 @@ async function tasksJob({ o, today, lines, dry }) {
         for (const a of t.assignees) {
             const s = await prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { email: true, firstName: true, lastName: true, active: true } })
             if (!s?.email || s.active === false) continue
-            const r = await sendTemplate({ slug: 'task-deadline-notification', to: s.email, relType: 'task', relId: t.id, data: { staff_firstname: s.firstName || '', staff_lastname: s.lastName || '', task_name: t.name, task_duedate: t.dueDate.toISOString().slice(0, 10), task_link: `${publicBase()}/crm/tasks/${t.id}` } })
+            const ctx = await staffMailContext(a.staffId)
+            const r = await sendStaffMail({ staffId: a.staffId, headingKey: 'deadline', introKey: 'deadlineIntro', tone: 'warn', relType: 'task', relId: t.id, subject: `⏰ ${textsFor(ctx.language).deadline}: ${t.name}`, slug: 'task-deadline-notification' })
             if (r.sent) sent++; else lines.push(`! Task "${t.name}": ${r.error}`)
         }
         await prisma.crmTask.update({ where: { id: t.id }, data: { deadlineNotified: true } })

@@ -5416,5 +5416,7 @@ export default {
     "Another manager has to set the support for your goal": "Otro responsable debe fijar el apoyo para su objetivo",
     "The due date a new invoice starts with: the day it is created plus these days.": "El vencimiento con el que empieza una factura nueva: el día de su creación más estos días.",
     "The “valid until” date a new estimate starts with: the day it is created plus these days.": "La fecha «válido hasta» de un presupuesto nuevo: el día de su creación más estos días.",
-    "The “open until” date a new proposal starts with: the day it is created plus these days.": "La fecha «abierta hasta» de una propuesta nueva: el día de su creación más estos días."
+    "The “open until” date a new proposal starts with: the day it is created plus these days.": "La fecha «abierta hasta» de una propuesta nueva: el día de su creación más estos días.",
+    "Not set": "Sin definir",
+    "Proposal expired": "Propuesta vencida"
 }

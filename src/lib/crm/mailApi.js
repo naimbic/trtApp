@@ -45,6 +45,7 @@ export const KINDS = {
         feature: 'proposals', contactFlag: null,
         templates: [
             { slug: 'proposal-send-to-customer', label: 'Send proposal' },
+            { slug: 'proposal-expired', label: 'Proposal expired' },
             { slug: 'proposal-expiry-reminder', label: 'Expiry reminder' },
             { slug: 'proposal-client-thank-you', label: 'Thank you' },
         ],
@@ -162,13 +163,15 @@ async function loadContext(kind, id) {
         client_company: client?.company || doc.proposalTo || '', client_phonenumber: client?.phoneNumber || '', client_vat_number: client?.vat || '',
         contact_firstname: first, contact_lastname: rest.join(' '), contact_email: lead?.email || '',
     })
-    return { doc, client, recipients, data }
+    // the language of the person who receives it (the lead's or the client's, set on their record), else the company's
+    const holder = kind === 'proposal' && doc.relType === 'lead' ? await prisma.crmLead.findUnique({ where: { id: doc.relId }, select: { defaultLanguage: true } }).catch(() => null) : client
+    return { doc, client, recipients, data, language: holder?.defaultLanguage || null }
 }
 
 async function compose(kind, id, slug) {
     const spec = KINDS[kind]
     const ctx = await loadContext(kind, id)
-    const language = await companyLanguage()
+    const language = ctx.language || (await companyLanguage())
     const chosen = spec.templates.find((t) => t.slug === slug) || spec.templates[0]
     const template = await findTemplate(chosen.slug, language)
     if (!template) fail(`No email template "${chosen.slug}" found. Create it in Mails → Templates.`)
@@ -245,6 +248,7 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
         await prisma.crmInvoice.update({ where: { id }, data: patch })
     } else if (kind === 'purchase_order') await prisma.crmPurchaseOrder.update({ where: { id }, data: { sent: true, dateSend: now, ...(ctx.doc.status === 1 ? { status: 2 } : {}) } })
     else if (kind === 'estimate') await prisma.crmEstimate.update({ where: { id }, data: { sent: true, dateSend: now, ...(ctx.doc.status === 1 ? { status: 2 } : {}) } })
+    else if (kind === 'proposal' && ctx.doc.status === 6 && slug !== 'proposal-expired') await prisma.crmProposal.update({ where: { id }, data: { status: 4 } }) // a draft that goes out is Sent: from then on its link opens for the lead or the client
     const staff = staffId ? await prisma.user.findUnique({ where: { id: staffId }, select: { name: true } }).catch(() => null) : null
     await prisma.crmSalesActivity.create({ data: { relType: kind, relId: id, description: `Email "${template.name || template.slug}" sent to ${toAll.join(', ')}`, staffId: staffId || undefined, fullName: staff?.name || (staffId ? null : 'Automatic'), date: now } }).catch(() => {})
     return { success: true, to: toAll }

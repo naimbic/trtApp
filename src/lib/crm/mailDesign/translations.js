@@ -145,6 +145,12 @@ export const TRANSLATIONS = {
     "Un cliente ha comentado la propuesta \"{proposal_subject}\".",
     "Ver comentario"
    ],
+   "proposal-expired": [
+    "La propuesta {proposal_number} ha vencido",
+    "Su propuesta ha vencido",
+    "Hola {proposal_proposal_to},\nLa propuesta {proposal_number} estuvo abierta hasta el {proposal_open_till} y ahora está cerrada.\nSi todavía le interesa, responda a este correo y con gusto la renovaremos.",
+    "Ver propuesta"
+   ],
    "proposal-expiry-reminder": [
     "La propuesta {proposal_number} vence pronto",
     "Su propuesta vence pronto",
@@ -782,6 +788,12 @@ export const TRANSLATIONS = {
     "クライアントが提案書「{proposal_subject}」にコメントしました。",
     "コメントを表示"
    ],
+   "proposal-expired": [
+    "提案書 {proposal_number} の有効期限が切れました",
+    "提案書の有効期限が切れました",
+    "{proposal_proposal_to} 様、\n提案書 {proposal_number} は {proposal_open_till} まででしたが、現在は終了しております。\nご関心がございましたら、このメールにご返信ください。喜んで更新いたします。",
+    "提案書を表示"
+   ],
    "proposal-expiry-reminder": [
     "提案書 {proposal_number} の有効期限が近づいております",
     "提案書の有効期限が近づいております",
@@ -1418,6 +1430,12 @@ export const TRANSLATIONS = {
     "تعليق جديد على مقترح",
     "قام أحد العملاء بالتعليق على المقترح «{proposal_subject}».",
     "عرض التعليق"
+   ],
+   "proposal-expired": [
+    "انتهت صلاحية المقترح {proposal_number}",
+    "انتهت صلاحية مقترحكم",
+    "مرحباً {proposal_proposal_to}،\nكان المقترح {proposal_number} متاحاً حتى {proposal_open_till} وهو الآن مغلق.\nإذا كنتم لا تزالون مهتمين، يكفي أن ترددوا على هذا البريد وسنجدده لكم بكل سرور.",
+    "عرض المقترح"
    ],
    "proposal-expiry-reminder": [
     "اقتراب انتهاء صلاحية المقترح {proposal_number}",

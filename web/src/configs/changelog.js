@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.171.0',
+        date: '2026-11-04',
+        title: 'Clear notification emails, a Language on leads, proposals that go Sent then Expired',
+        items: [
+            'Emails to the team now tell you what it is at a glance, in your language: reminders on a task, lead, client, ticket, project, invoice, estimate, proposal, contract or expense show the record (status, priority, dates, who, the client, the amount, a short extract), your note, and a button to open it. The same design is used for a note reminder, a task deadline and an expired proposal. Before, they only had a title and a link.',
+            'Leads have a Language (Lead popup → Contact). The proposal emails (send, expiry reminder, expired) are written in the language of the lead, or of the client for a client.',
+            'Fixed: sending a proposal by email left it as Draft, and a Draft proposal cannot be opened by the lead on its public link. A proposal that goes out is now Sent and its link opens. Proposals that had already been emailed while Draft become Sent by themselves.',
+            'The day after “Open until”, a Sent / Open / Revised proposal becomes Expired by itself: the lead or client gets an email saying it expired (new template “Proposal expired”, in Mails → Templates), and the person in charge gets a bell notification and an email.',
+        ],
+    },
+    {
         version: '0.170.0',
         date: '2026-11-03',
         title: 'Customers: a Mails tab, the same as the Mails tab of a lead',

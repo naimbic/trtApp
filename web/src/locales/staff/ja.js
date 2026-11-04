@@ -5416,5 +5416,7 @@ export default {
     "Another manager has to set the support for your goal": "あなたの目標の支援額は別の責任者が設定する必要があります",
     "The due date a new invoice starts with: the day it is created plus these days.": "新しい請求書の支払期限：作成日にこの日数を足した日。",
     "The “valid until” date a new estimate starts with: the day it is created plus these days.": "新しい見積書の「有効期限」：作成日にこの日数を足した日。",
-    "The “open until” date a new proposal starts with: the day it is created plus these days.": "新しい提案書の「公開期限」：作成日にこの日数を足した日。"
+    "The “open until” date a new proposal starts with: the day it is created plus these days.": "新しい提案書の「公開期限」：作成日にこの日数を足した日。",
+    "Not set": "未設定",
+    "Proposal expired": "提案書の期限切れ"
 }

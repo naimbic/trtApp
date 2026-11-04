@@ -5416,5 +5416,7 @@ export default {
     "Another manager has to set the support for your goal": "يجب أن يحدد مسؤول آخر الدعم لهدفك",
     "The due date a new invoice starts with: the day it is created plus these days.": "تاريخ استحقاق الفاتورة الجديدة: يوم إنشائها زائد هذه الأيام.",
     "The “valid until” date a new estimate starts with: the day it is created plus these days.": "تاريخ «صالح حتى» لعرض السعر الجديد: يوم إنشائه زائد هذه الأيام.",
-    "The “open until” date a new proposal starts with: the day it is created plus these days.": "تاريخ «مفتوح حتى» للمقترح الجديد: يوم إنشائه زائد هذه الأيام."
+    "The “open until” date a new proposal starts with: the day it is created plus these days.": "تاريخ «مفتوح حتى» للمقترح الجديد: يوم إنشائه زائد هذه الأيام.",
+    "Not set": "غير محدد",
+    "Proposal expired": "انتهت صلاحية المقترح"
 }

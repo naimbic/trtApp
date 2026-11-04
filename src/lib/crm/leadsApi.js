@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma'
 import { emit } from '@/lib/crm/webhooks'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { readSettings } from '@/lib/crm/appSettings'
+import { LANGUAGES } from '@/lib/crm/settings/registry'
 import { convertLeadToClient } from '@/server/actions/crm/crm/convertLead'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
@@ -151,7 +152,7 @@ export async function saveLead(body, id) {
     if (!name) throw fail('Give the lead a name')
     const email = nz(body.email)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fail('That email address does not look right')
-    const data = { ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: nz(body.website), description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
+    const data = { ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: nz(body.website), description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), ...(body.defaultLanguage !== undefined ? { defaultLanguage: LANGUAGES.includes(String(body.defaultLanguage || '').toLowerCase()) ? String(body.defaultLanguage).toLowerCase() : null } : {}), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
     if (id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)

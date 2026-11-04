@@ -23,7 +23,8 @@ import { LeadTasks, LeadMails, LeadMeetings } from './LeadTabs'
 import { useCan } from '../kit/api'
 import { tr } from '@/utils/t'
 
-const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false }
+const LEAD_LANGUAGES = [['english', 'English'], ['french', 'Français'], ['arabic', 'العربية'], ['spanish', 'Español'], ['german', 'Deutsch'], ['italian', 'Italiano'], ['portuguese', 'Português'], ['dutch', 'Nederlands'], ['turkish', 'Türkçe'], ['russian', 'Русский'], ['japanese', '日本語']].map(([value, label]) => ({ value, label }))
+const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false, defaultLanguage: '' }
 const L = ({ children }) => <label className="mb-1 block text-xs font-semibold text-gray-500 dark:text-gray-400">{children}</label>
 
 const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("Sent"), 5: tr("Revised"), 6: tr("Draft") }
@@ -54,7 +55,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             const d = await api(`/api/crm/pipeline/leads/${id}`)
             setDetail(d)
             const l = d.lead
-            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: d.followerIds || l.followerIds || [], isPublic: !!l.isPublic })
+            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: d.followerIds || l.followerIds || [], isPublic: !!l.isPublic, defaultLanguage: l.defaultLanguage || '' })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (!open) return; setDetail(null); setNote(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
@@ -85,7 +86,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div className="col-span-2 flex items-center justify-between text-sm"><span>{tr("Visible to the whole team")}</span><Switcher disabled={!canEdit} checked={v.isPublic} onChange={(c) => set({ isPublic: c })} /></div>
                 </div>
             </FoldSection>
-            <FoldSection icon={<TbAddressBook />} tone="emerald" title={tr("Contact")} open={openSec.includes('contact')} onToggle={() => toggleSec('contact')} summary={[v.name, v.company, v.email, v.phone].filter(Boolean).join(' · ')}>
+            <FoldSection icon={<TbAddressBook />} tone="emerald" title={tr("Contact")} open={openSec.includes('contact')} onToggle={() => toggleSec('contact')} summary={[v.name, v.company, v.email, v.phone, v.defaultLanguage && (LEAD_LANGUAGES.find((o) => o.value === v.defaultLanguage)?.label || v.defaultLanguage)].filter(Boolean).join(' · ')}>
                 <div className="grid grid-cols-2 gap-3">
                     <div><L>{tr("Name")}</L><Input size={sz} disabled={!canEdit} value={v.name} onChange={(e) => set({ name: e.target.value })} /></div>
                     <div><L>{tr("Company")}</L><Input size={sz} disabled={!canEdit} value={v.company} onChange={(e) => set({ company: e.target.value })} /></div>
@@ -93,6 +94,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div><L>{tr("Phone")}</L><Input size={sz} disabled={!canEdit} value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
                     <div><L>{tr("Position")}</L><Input size={sz} disabled={!canEdit} value={v.title} onChange={(e) => set({ title: e.target.value })} /></div>
                     <div><L>{tr("Website")}</L><Input size={sz} disabled={!canEdit} value={v.website} onChange={(e) => set({ website: e.target.value })} /></div>
+                    <div><L>{tr("Language")}</L><Select size={sz} isDisabled={!canEdit} isSearchable={false} isClearable options={LEAD_LANGUAGES} value={LEAD_LANGUAGES.find((o) => o.value === v.defaultLanguage) || null} placeholder={tr("Not set")} onChange={(o) => set({ defaultLanguage: o?.value || '' })} /></div>
                 </div>
             </FoldSection>
             <FoldSection icon={<TbMapPin />} tone="amber" title={tr("Address")} open={openSec.includes('address')} onToggle={() => toggleSec('address')} summary={[v.address, v.city, v.state, v.zip].filter(Boolean).join(', ')}>

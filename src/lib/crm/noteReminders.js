@@ -1,8 +1,8 @@
 import prisma from '@/lib/prisma'
-import { deliver, escapeHtml } from '@/lib/crm/mailer'
 import { notifyStaffChannels } from '@/lib/crm/channels'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { reminderLink } from '@/lib/crm/notifications'
+import { sendStaffMail, staffMailContext, textsFor } from '@/lib/crm/notifyMail'
 
 /** A note with a reminder tells its owner when the moment comes: the bell, an email and the Telegram / WhatsApp of their profile. */
 export async function noteRemindersJob({ lines, dry }) {
@@ -23,7 +23,8 @@ export async function noteRemindersJob({ lines, dry }) {
         notifyStaffChannels(who.id, `⏰ Reminder: ${n.title}${text ? `\n${text}` : ''}\n${publicBase()}${link}`)
         let mailed = 'no email'
         if (who.email) {
-            const r = await deliver({ to: who.email, subject: `⏰ Reminder: ${n.title || text.slice(0, 60)}`, html: `<p><strong>⏰ ${escapeHtml(n.title)}</strong></p>${text ? `<p>${escapeHtml(text)}</p>` : ''}<p><a href="${publicBase()}${link}">${publicBase()}${link}</a></p>` })
+            const ctx = await staffMailContext(who.id)
+            const r = await sendStaffMail({ staffId: who.id, relType: 'note', title: n.title || text.slice(0, 60), link, note: text, noteLabel: 'yourNote', introKey: 'reminderIntro', subject: `⏰ ${textsFor(ctx.language).reminder}: ${n.title || text.slice(0, 60)}`, slug: 'note-reminder' })
             mailed = r.sent ? 'email sent' : `email failed: ${r.error}`
         }
         lines.push(`Reminder of the note “${n.title}” sent (${mailed})`)
@@ -47,7 +48,8 @@ export async function ticketRemindersJob({ lines, dry }) {
         notifyStaffChannels(who.id, `⏰ Reminder: ${title}${note ? `\n${note}` : ''}\n${publicBase()}${link}`)
         let mailed = 'no email'
         if (who.email && r.notifyByEmail !== false) {
-            const res = await deliver({ to: who.email, subject: `⏰ Reminder: ${note ? note.slice(0, 80) : title}`, html: `<p><strong>⏰ ${escapeHtml(title)}</strong></p>${note ? `<p>${escapeHtml(note)}</p>` : ''}<p><a href="${publicBase()}${link}">${publicBase()}${link}</a></p>` })
+            const ctx = await staffMailContext(who.id)
+            const res = await sendStaffMail({ staffId: who.id, relType: r.relType, relId: r.relId, title, link, note, noteLabel: 'yourNote', subject: `⏰ ${textsFor(ctx.language).reminder}: ${note ? note.slice(0, 80) : title}`, slug: 'record-reminder' })
             mailed = res.sent ? 'email sent' : `email failed: ${res.error}`
         }
         lines.push(`Reminder of ${title} sent (${mailed})`)

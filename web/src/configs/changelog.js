@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.179.3',
+        date: '2026-11-05',
+        title: 'The @mention written by Reply is clickable',
+        items: [
+            'A reply that starts with the @mention written by the Reply button now shows the name as a clickable mention (it opens the chat), like any other mention.',
+        ],
+    },
+    {
         version: '0.179.2',
         date: '2026-11-05',
         title: 'Event reminder emails open the event',

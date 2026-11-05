@@ -29,7 +29,7 @@ function decorate(html, dir) {
     const names = dir.staff.filter((s) => s.name).sort((a, b) => b.name.length - a.name.length)
     const byName = new Map(names.map((s) => [norm(s.name), s]))
     const tags = new Set(dir.tags.map((t) => norm(t.replace(/\s+/g, '-'))))
-    const re = new RegExp(`(^|[\\s(])(@(?:${names.map((s) => esc(s.name)).join('|') || '(?!)'})|#[\\p{L}\\p{N}_-]+)(?=$|[\\s.,;:!?)])`, 'giu')
+    const re = new RegExp(`(^|[\\s(])(@(?:${names.map((s) => esc(s.name)).join('|') || '(?!)'})|#[\\p{L}\\p{N}_-]+)(?=$|[\\s.,;:!?)]|&nbsp;)`, 'giu') // a mention followed by a non-breaking space (the one a Reply writes) still counts
     let inLink = 0
     return html.split(/(<[^>]+>)/g).map((part) => {
         if (part.startsWith('<')) { if (/^<a\b/i.test(part)) inLink++; else if (/^<\/a>/i.test(part)) inLink = Math.max(0, inLink - 1); return part }

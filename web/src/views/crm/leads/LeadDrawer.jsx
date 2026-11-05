@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import RemindMe from '@/components/crm/RemindMe'
 import RichView from '@/components/crm/RichView'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichEditor from '@/components/crm/RichEditor'
 import { plainOf } from '@/components/crm/ShareButton'
-import { CommentTools, CommentEdit } from '@/components/crm/CommentParts'
+import { CommentFoot, CommentThread, startReply, CommentEdit, ReplyingTo } from '@/components/crm/CommentParts'
+import StaffRing from '@/components/crm/StaffRing'
+import Avatar from '@/components/ui/Avatar'
+import { initials } from '../tasks/shared'
 import { Link, useNavigate } from 'react-router'
 import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText, TbUsers, TbAddressBook, TbMapPin, TbTarget } from 'react-icons/tb'
 import dayjs from 'dayjs'
@@ -37,6 +40,8 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const [v, setV] = useState(EMPTY)
     const [tabV, setTabV] = useTabParam(['profile', 'tasks', 'mails', 'meetings', 'files', 'notes', 'related', 'activity'], 'profile')
     const [editingNote, setEditingNote] = useState(null)
+    const [replyTo, setReplyTo] = useState(null)
+    const editorRef = useRef(null)
     const [detail, setDetail] = useState(null)
     const [lk, setLk] = useState({ statuses: [], sources: [] })
     const [saving, setSaving] = useState(false)
@@ -61,7 +66,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: d.followerIds || l.followerIds || [], isPublic: !!l.isPublic, defaultLanguage: l.defaultLanguage || '' })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
-    useEffect(() => { if (!open) return; setDetail(null); setNote(''); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
+    useEffect(() => { if (!open) return; setDetail(null); setNote(''); setReplyTo(null); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
 
     const run = async (fn, ok, after) => { try { const r = await fn(); if (ok) notify('success', ok); onChanged(); if (after) after(r); else await load() } catch (e) { notify('danger', e.message) } }
     const save = async () => {
@@ -118,16 +123,21 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     const notes = detail && (
         <div className="space-y-4">
-            <div className="space-y-2"><RichEditor minHeight={90} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={setNote} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note } }).then(() => setNote('')), tr("Note added"))}>{tr("Add comment")}</Button></div>
-            {detail.notes.map((n) => (
-                <div key={n.id} className="group relative rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
-                    <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{dayjs(n.date).format('DD MMM YYYY, HH:mm')}{n.edited ? ` · ${tr('edited')}` : ''}</span></div>
-                    {editingNote === n.id
-                        ? <CommentEdit initial={n.content} onCancel={() => setEditingNote(null)} onSave={async (text) => { await api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'PUT', body: { noteId: n.id, content: text } }); setEditingNote(null); await load() }} />
-                        : <RichView html={n.content} />}
-                    {editingNote !== n.id && <CommentTools share={{ url: `/crm/leads/${id}`, title: l?.name, text: `${n.by?.name ? `${n.by.name}: ` : ''}${plainOf(n.content)}` }} onReply={() => setNote((x) => x || (n.by?.name ? `@${n.by.name} ` : ''))} onEdit={n.canEdit ? () => setEditingNote(n.id) : null} onDelete={n.canDelete ? () => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' })) : null} />}
+            <div className="space-y-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><RichEditor minHeight={90} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={setNote} onReady={(ed) => { editorRef.current = ed }} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note, replyToId: replyTo?.id } }).then(() => { setNote(''); setReplyTo(null) }), tr("Note added"))}>{tr("Add comment")}</Button></div>
+            <CommentThread comments={detail.notes} render={(n) => (
+                <div className="group relative flex gap-3">
+                    <StaffRing id={n.by?.id} name={n.by?.name} size={30}><Avatar size={30} shape="circle" src={n.by?.image || undefined}>{initials(n.by?.name || '?')}</Avatar></StaffRing>
+                    <div className="min-w-0 flex-1">
+                        <div className="rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
+                            <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{dayjs(n.date).format('DD MMM YYYY, HH:mm')}{n.edited ? ` · ${tr('edited')}` : ''}</span></div>
+                            {editingNote === n.id
+                                ? <CommentEdit initial={n.content} onCancel={() => setEditingNote(null)} onSave={async (text) => { await api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'PUT', body: { noteId: n.id, content: text } }); setEditingNote(null); await load() }} />
+                                : <RichView html={n.content} />}
+                        </div>
+                        {editingNote !== n.id && <CommentFoot reactions={n.reactions} onReact={(emoji) => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { noteId: n.id, react: emoji } }))} share={{ url: `/crm/leads/${id}?tab=notes`, title: l?.name, text: `${n.by?.name ? `${n.by.name}: ` : ''}${plainOf(n.content)}` }} onReply={() => { setReplyTo({ id: n.id, name: n.by?.name || tr('Unknown') }); startReply(editorRef.current, n.by?.name) }} onEdit={n.canEdit ? () => setEditingNote(n.id) : null} onDelete={n.canDelete ? () => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' })) : null} />}
+                    </div>
                 </div>
-            ))}
+            )} />
             {!detail.notes.length && <p className="text-sm text-gray-500">{tr("No comments yet.")}</p>}
         </div>
     )

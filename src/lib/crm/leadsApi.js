@@ -135,7 +135,8 @@ export async function getLead(id) {
     const people = await staffMap([...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
     return {
         lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), followerIds: l.followerIds || [], addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
-        notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canEdit: mayChangeItem(a, n.addedFrom, 'notes'), canDelete: mayDropItem(a, n.addedFrom), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000 })),
+        notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canEdit: mayChangeItem(a, n.addedFrom, 'notes'), canDelete: mayDropItem(a, n.addedFrom), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000, replyToId: n.replyToId || null,
+            reactions: Object.entries(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!a.staffId && ids.includes(a.staffId), names: ids.map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count) })),
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
@@ -232,15 +233,34 @@ export async function convertLead(id, opts = {}) {
     return r
 }
 
-export async function addNote(id, { content, date }) {
+export async function addNote(id, { content, date, replyToId }) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     const lead = await loadOne(id, a)
     const text = storeRich(content)
     if (!text) throw fail('Write the note first')
-    await prisma.crmNote.create({ data: { relType: 'lead', relId: id, description: text, dateContacted: date ? new Date(date) : new Date(), addedFrom: a.staffId } })
+    const reply = oid(replyToId) && (await prisma.crmNote.findFirst({ where: { id: replyToId, relType: 'lead', relId: id }, select: { id: true, addedFrom: true } }))
+    await prisma.crmNote.create({ data: { relType: 'lead', relId: id, description: text, dateContacted: date ? new Date(date) : new Date(), addedFrom: a.staffId, replyToId: reply ? reply.id : null } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: date ? new Date(date) : new Date() } })
-    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}?tab=notes`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), lead.addedFrom] }) } catch (e) { console.error('[note notify]', e.message) }
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}?tab=notes`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), lead.addedFrom, reply?.addedFrom] }) } catch (e) { console.error('[note notify]', e.message) }
+    return { success: true }
+}
+
+/** Adds the emoji reaction of the signed-in person to a lead comment, or takes it back when it is already there. */
+export async function reactNote(id, noteId, emoji) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    await loadOne(id, a)
+    const e = String(emoji || '').trim()
+    if (!e || e.length > 16) throw fail('Pick an emoji')
+    if (!a.staffId) throw fail('Only staff can react', 403)
+    const n = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'lead', relId: id } }))
+    if (!n) throw fail('Note not found', 404)
+    const all = n.reactions && typeof n.reactions === 'object' ? { ...n.reactions } : {}
+    const ids = Array.isArray(all[e]) ? all[e] : []
+    const next = ids.includes(a.staffId) ? ids.filter((x) => x !== a.staffId) : [...ids, a.staffId]
+    if (next.length) all[e] = next; else delete all[e]
+    await prisma.crmNote.update({ where: { id: noteId }, data: { reactions: all, updatedAt: n.updatedAt } })
     return { success: true }
 }
 

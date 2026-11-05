@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.179.0',
+        date: '2026-11-05',
+        title: 'Lead comments work like task comments: threaded replies, reactions, tools under the comment',
+        items: [
+            'Lead Comments: replies sit under the comment they answer (also replies to replies), pushed to the right with a line.',
+            'Share / reply / edit / delete moved under each comment so they no longer hide the date; emoji reactions on every comment.',
+            'Reply writes the @mention with a space and puts the cursor after it. The person you answer is notified.',
+        ],
+    },
+    {
         version: '0.178.0',
         date: '2026-11-05',
         title: 'Notifications open the exact tab; lead Comments and Offers; files, pictures and audio in comments; files and links on meetings',

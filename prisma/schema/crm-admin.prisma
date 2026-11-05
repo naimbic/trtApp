@@ -391,6 +391,10 @@ model CrmNote {
   description   String?
   dateContacted DateTime?
   addedFrom     String?   @db.ObjectId // staff
+  /// the comment this one answers (lead comments)
+  replyToId     String?   @db.ObjectId
+  /// emoji reactions: { "👍": [staffId, ...] }
+  reactions     Json?
   createdAt     DateTime  @default(now()) // notes.dateadded
   updatedAt     DateTime  @updatedAt
 

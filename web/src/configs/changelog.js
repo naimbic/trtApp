@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.183.1',
+        date: '2026-11-05',
+        title: 'Emoji picker: the group tabs sit on a light bar',
+        items: [
+            'The row of group tabs at the top of the emoji picker (faces, hands, hearts, animals...) is now on a light background bar with the open group highlighted, so it is not mistaken for emojis to send.',
+        ],
+    },
+    {
         version: '0.183.0',
         date: '2026-11-05',
         title: 'Lead address: Country next to the ZIP code',

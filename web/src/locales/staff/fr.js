@@ -4269,6 +4269,7 @@ export default {
     "Write a comment on this mail (only the team reads it)": "Écrivez un commentaire sur ce mail (seule l'équipe le lit)",
     "Comment added": "Commentaire ajouté",
     "Kept on Mails": "Gardé dans Mails",
+    "Emoji group": "Groupe d'emojis",
     "Replying to {name}": "Réponse à {name}",
     "edited": "modifié",
     "{n} comments": "{n} commentaires",

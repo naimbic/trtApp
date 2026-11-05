@@ -4269,6 +4269,7 @@ export default {
     "Write a comment on this mail (only the team reads it)": "اكتب تعليقاً على هذه الرسالة (الفريق فقط يقرؤه)",
     "Comment added": "تمت إضافة التعليق",
     "Kept on Mails": "محفوظة في البريد",
+    "Emoji group": "مجموعة الرموز",
     "Replying to {name}": "الرد على {name}",
     "edited": "تم التعديل",
     "{n} comments": "{n} تعليقات",

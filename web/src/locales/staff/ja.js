@@ -4269,6 +4269,7 @@ export default {
     "Write a comment on this mail (only the team reads it)": "このメールへのコメントを書く（チームのみ閲覧可）",
     "Comment added": "コメントを追加しました",
     "Kept on Mails": "メールに保存",
+    "Emoji group": "絵文字グループ",
     "Replying to {name}": "{name}に返信中",
     "edited": "編集済み",
     "{n} comments": "{n}件のコメント",

@@ -21,6 +21,7 @@ import RichView from '@/components/crm/RichView'
 import Switcher from '@/components/ui/Switcher'
 import { plainText } from '@/lib/crm/richText'
 import ReminderCard from '../kit/ReminderCard'
+import { CommentThread } from '@/components/crm/CommentParts'
 
 const effective = (p) => (p.openTill && [1, 4, 5].includes(p.status) && fmtDate(p.openTill) < fmtDate(new Date()) ? 7 : p.status)
 
@@ -151,7 +152,7 @@ const ProposalView = () => {
                     <h4 className="mb-3">{tr("Comments")} {comments.length ? <span className="text-sm font-normal text-gray-400">({comments.length})</span> : null}</h4>
                     {!comments.length ? <p className="mb-3 text-sm text-gray-400">{tr("No comments yet. The client can comment from the public proposal page.")}</p> : (
                         <div className="mb-4 flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
-                            {comments.map((c) => (
+                            <CommentThread comments={comments} render={(c) => (
                                 <div key={c.id} className="flex gap-3 py-3">
                                     <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${c.staffId ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}`}>{(c.authorName || '?').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase()}</span>
                                     <div className="min-w-0 flex-1">
@@ -159,7 +160,7 @@ const ProposalView = () => {
                                         <div className="mt-0.5 text-sm">{/<\/?[a-z][a-z0-9]*\b[^>]*>/i.test(c.content || '') ? <RichView html={c.content} /> : <p className="whitespace-pre-line">{c.content}</p>}</div>
                                     </div>
                                 </div>
-                            ))}
+                            )} />
                         </div>
                     )}
                     {can('proposals', 'edit') && (

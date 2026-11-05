@@ -12,7 +12,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FoldSection from '@/components/crm/FoldSection'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
-import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
+import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
 import cn from '@/utils/classNames'
 import { api, notify, upload, formatBytes } from '../kit/api'
 import { tr } from '@/utils/t'
@@ -117,7 +117,7 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
                         {!isNew && (
                             <FoldSection icon={<TbMessageCircle />} tone="emerald" title={tr('Follow-up')} summary={comments.filter((c) => !c.system).length ? tr('{n} message(s)', { n: comments.filter((c) => !c.system).length }) : tr('No message yet')} open={sec === 'talk'} onToggle={() => toggle('talk')}>
                                 <div className="space-y-3">
-                                    {comments.map((c) => c.system ? <SystemLine key={c.id} s={c.system} labels={labels} /> : (
+                                    <CommentThread comments={comments} render={(c) => c.system ? <SystemLine key={c.id} s={c.system} labels={labels} /> : (
                                         <div key={c.id} className="group relative flex gap-2.5">
                                             <span className={cn('mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white', c.authorKind === 'client' ? 'bg-blue-500' : c.internal ? 'bg-amber-500' : 'bg-gray-500')}>{(c.authorName || '?')[0]?.toUpperCase()}</span>
                                             <div className={cn('min-w-0 flex-1 rounded-xl p-2.5 text-sm', c.authorKind === 'client' ? 'bg-blue-50 dark:bg-blue-500/10' : c.internal ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-gray-50 dark:bg-gray-700/40')}>
@@ -129,7 +129,7 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
                                             </div>
                                             {editingId !== c.id && can.edit && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.authorName || tr('Client') }); setText((x) => x || (c.authorKind === 'staff' && c.authorName ? `@${c.authorName} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => removeComment(c) : null} />}
                                         </div>
-                                    ))}
+                                    )} />
                                     {!comments.length && <p className="py-2 text-center text-xs text-gray-400">{tr('Questions, answers and status changes between you and the client appear here.')}</p>}
                                 </div>
                                 {can.edit && (

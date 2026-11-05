@@ -4270,6 +4270,8 @@ export default {
     "Comment added": "تمت إضافة التعليق",
     "Kept on Mails": "محفوظة في البريد",
     "Emoji group": "مجموعة الرموز",
+    "Show older comments": "إظهار التعليقات الأقدم",
+    "{n} older not shown": "{n} أقدم غير معروضة",
     "Replying to {name}": "الرد على {name}",
     "edited": "تم التعديل",
     "{n} comments": "{n} تعليقات",

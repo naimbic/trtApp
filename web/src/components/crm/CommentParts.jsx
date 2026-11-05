@@ -109,19 +109,50 @@ export const CommentFoot = ({ reactions = [], onReact, onMention, onComment, rem
     </div>
 )
 
-/** Comments as threads: each reply sits under the comment it answers, pushed to the right. `render(comment, depth)` draws one comment (wrap it in "group"). */
-export const CommentThread = ({ comments, render }) => {
+const dateOfComment = (c) => +new Date(c.createdAt || c.date || c.at || c.created || 0) || 0
+
+/**
+ * Comments as threads, the newest on top: each reply sits under the comment it answers (oldest first inside a thread), pushed to the right.
+ * Only the threads with something in the last `days` days are shown at first (at least the newest few); "Show older comments" adds `step` more.
+ * `render(comment, depth)` draws one comment (wrap it in "group"). A reply is known by `replyToId` or by `replyTo.id`.
+ */
+export const CommentThread = ({ comments = [], render, days = 5, step = 10 }) => {
+    const [extra, setExtra] = useState(0)
+    const parentOf = (c) => c.replyToId || c.replyTo?.id || null
     const ids = new Set(comments.map((c) => c.id))
     const kids = {}
     const roots = []
-    for (const c of comments) { if (c.replyToId && ids.has(c.replyToId)) (kids[c.replyToId] ||= []).push(c); else roots.push(c) }
-    const node = (c, depth) => (
-        <div key={c.id}>
-            {render(c, depth)}
-            {kids[c.id] && <div className={classNames('mt-3 space-y-3 border-l-2 border-gray-200 pl-4 dark:border-gray-700', depth === 0 ? 'ml-5' : depth < 3 ? 'ml-3' : '')}>{kids[c.id].map((k) => node(k, depth + 1))}</div>}
-        </div>
+    for (const c of comments) { const pid = parentOf(c); if (pid && ids.has(pid) && pid !== c.id) (kids[pid] ||= []).push(c); else roots.push(c) }
+    for (const k of Object.values(kids)) k.sort((x, y) => dateOfComment(x) - dateOfComment(y))
+    // the last moment something happened in a thread: the comment itself or any reply under it
+    const activity = (c, seen = new Set()) => { if (seen.has(c.id)) return 0; seen.add(c.id); return Math.max(dateOfComment(c), ...(kids[c.id] || []).map((k) => activity(k, seen))) }
+    const threads = roots.map((c) => ({ c, at: activity(c) })).sort((x, y) => y.at - x.at)
+    const cutoff = Date.now() - days * 86400000
+    const recent = threads.filter((t) => t.at >= cutoff).length
+    const first = recent > 0 ? recent : Math.min(step, threads.length)
+    const shown = threads.slice(0, first + extra * step)
+    const hidden = threads.length - shown.length
+    const node = (c, depth, seen = new Set()) => {
+        if (seen.has(c.id)) return null
+        seen.add(c.id)
+        return (
+            <div key={c.id}>
+                {render(c, depth)}
+                {kids[c.id] && <div className={classNames('mt-3 space-y-3 border-l-2 border-gray-200 pl-4 dark:border-gray-700', depth === 0 ? 'ml-5' : depth < 3 ? 'ml-3' : '')}>{kids[c.id].map((k) => node(k, depth + 1, seen))}</div>}
+            </div>
+        )
+    }
+    return (
+        <>
+            {shown.map((t) => node(t.c, 0))}
+            {hidden > 0 && (
+                <div className="flex items-center justify-center gap-3 pt-1">
+                    <Button size="sm" onClick={() => setExtra((n) => n + 1)}>{tr('Show older comments')} ({Math.min(step, hidden)})</Button>
+                    <span className="text-xs text-gray-400">{tr('{n} older not shown', { n: hidden })}</span>
+                </div>
+            )}
+        </>
     )
-    return roots.map((r) => node(r, 0))
 }
 
 /** Puts "@Name " (with the space) in an empty writing box and leaves the cursor after it, so typing can start at once. */

@@ -168,6 +168,7 @@ const TaskPage = () => {
                         <div className="pt-5">
                             {tab === 'comments' && (
                                 <div className="space-y-5">
+                                    <div className="flex flex-col gap-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><RichEditor minHeight={90} value={comment} placeholder={tr('Write a comment')} onChange={setComment} onReady={(ed) => { editorRef.current = ed }} /><div className="flex justify-end"><Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) })}>{tr('Comment')}</Button></div></div>
                                     <CommentThread comments={d.comments} render={(c, depth) => (
                                         <div className="group relative flex gap-3">
                                             <StaffRing id={c.staff?.id} name={c.staff?.name} size={depth ? 30 : 36}><Avatar size={depth ? 30 : 36} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr('Client') : '?'))}</Avatar></StaffRing>
@@ -182,7 +183,6 @@ const TaskPage = () => {
                                         </div>
                                     )} />
                                     {!d.comments.length && <p className="text-sm text-gray-400">{tr('No comments yet.')}</p>}
-                                    <div className="flex flex-col gap-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><RichEditor minHeight={90} value={comment} placeholder={tr('Write a comment')} onChange={setComment} onReady={(ed) => { editorRef.current = ed }} /><div className="flex justify-end"><Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) })}>{tr('Comment')}</Button></div></div>
                                 </div>
                             )}
                             {tab === 'subtasks' && (

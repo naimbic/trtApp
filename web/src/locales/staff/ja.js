@@ -4270,6 +4270,8 @@ export default {
     "Comment added": "コメントを追加しました",
     "Kept on Mails": "メールに保存",
     "Emoji group": "絵文字グループ",
+    "Show older comments": "古いコメントを表示",
+    "{n} older not shown": "古い{n}件は非表示",
     "Replying to {name}": "{name}に返信中",
     "edited": "編集済み",
     "{n} comments": "{n}件のコメント",

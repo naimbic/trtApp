@@ -3,7 +3,7 @@ import { getOptions, buildHtml, mergeFields, deliver, findTemplate, companyLangu
 import { publicBase } from '@/lib/crm/shortLinks'
 import { pdfSettings, paperCss } from '@/lib/crm/docStyle'
 import { esc, htmlToPdf, fmtDate } from '@/lib/crm/invoicePdf'
-import { CSS, TXT as BASE_TXT, renderPublicPage, initials, commentBody, publicCommentText, tellTeamOfComment } from '@/lib/crm/estimatePublic'
+import { CSS, TXT as BASE_TXT, renderPublicPage, publicCommentsHtml, initials, commentBody, publicCommentText, tellTeamOfComment } from '@/lib/crm/estimatePublic'
 import { createInvoiceFromDocument } from '@/lib/crm/sales/convert'
 import { PROPOSAL, EXPIRED, effectiveStatus, displayNumber, loadItems, proposalDocumentHtml, PROPOSAL_CSS } from '@/lib/crm/proposalDoc'
 import { formatMoney } from '@/lib/crm/docStyle'
@@ -58,7 +58,7 @@ export async function proposalPage(id, hash) {
         ? `<div class="banner ok"><strong>${T.accepted}</strong><div>${esc(T.acceptedBy)} ${esc([p.acceptanceFirstname, p.acceptanceLastname].filter(Boolean).join(' '))}${p.acceptanceDate ? ` ${T.on} ${fmtDate(p.acceptanceDate, S.dateFormat, S.timezone)}` : ''}</div>${p.signature?.startsWith('data:image/png;base64,') ? `<img class="sig" src="${p.signature}" alt="">` : ''}</div>`
         : d.status === PROPOSAL.DECLINED ? `<div class="banner no"><strong>${T.declined}</strong></div>`
         : d.status === EXPIRED ? `<div class="banner exp"><strong>${T.expired}</strong></div>` : ''
-    const commentsHtml = d.comments.length ? d.comments.map((c) => `<div class="cm"><div class="av ${c.staffId ? 'st' : ''}">${esc(initials(c.authorName))}</div><div><div class="meta"><strong>${esc(c.authorName || (c.staffId ? T.team : ''))}</strong>${c.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(c.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${commentBody(c.content)}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
+    const commentsHtml = publicCommentsHtml(d.comments, T, lang)
     const base = `/api/crm/public/proposal/${id}/${hash}`
     const page = renderPublicPage({ lang, T, number: d.number, companyName: o('companyname'), banner, commentsHtml: p.allowComments ? commentsHtml : '', commentsCount: d.comments.length, docHtml: await proposalHtmlDoc(d, S), base, acting, identity: o('proposal_accept_identity_confirmation', '1') === '1', legalText: o('e_sign_legal_text'), contact })
     // the shared page uses the estimate CSS; proposals add their own block styles and may hide the comment box

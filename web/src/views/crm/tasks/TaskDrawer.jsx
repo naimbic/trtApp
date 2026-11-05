@@ -157,6 +157,11 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     const comments = detail && (
         <div className="space-y-4">
+            <div className="space-y-2">
+                <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
+                <RichEditor minHeight={90} placeholder={tr("Write a comment")} value={comment} onChange={setComment} onReady={(ed) => { editorRef.current = ed }} />
+                <Button size="sm" variant="solid" disabled={!comment.trim()} onClick={() => act(() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) }))}>{tr("Comment")}</Button>
+            </div>
             <CommentThread comments={detail.comments} render={(c, depth) => (
                 <div className="group relative flex gap-3">
                     <StaffRing id={c.staff?.id} name={c.staff?.name} size={30}><Avatar size={30} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr("Client") : '?'))}</Avatar></StaffRing>
@@ -173,11 +178,6 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                 </div>
             )} />
             {!detail.comments.length && <p className="text-sm text-gray-500">{tr("No comments yet.")}</p>}
-            <div className="space-y-2">
-                <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
-                <RichEditor minHeight={90} placeholder={tr("Write a comment")} value={comment} onChange={setComment} onReady={(ed) => { editorRef.current = ed }} />
-                <Button size="sm" variant="solid" disabled={!comment.trim()} onClick={() => act(() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) }))}>{tr("Comment")}</Button>
-            </div>
         </div>
     )
 

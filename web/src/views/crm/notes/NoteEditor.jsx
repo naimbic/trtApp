@@ -12,7 +12,7 @@ import DatePicker from '@/components/ui/DatePicker'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
 import FoldSection from '@/components/crm/FoldSection'
-import { CommentTools, CommentEdit } from '@/components/crm/CommentParts'
+import { CommentTools, CommentEdit, CommentThread } from '@/components/crm/CommentParts'
 import { mentionDirectory } from '@/utils/mentions'
 import { looksLikeHtml } from '@/lib/crm/richText'
 import { api, notify, formatBytes } from '../kit/api'
@@ -38,7 +38,7 @@ const Comments = ({ noteId }) => {
     return (
         <div>
             <div className="max-h-72 space-y-2 overflow-y-auto">
-                {(list || []).map((c) => (
+                <CommentThread comments={list || []} render={(c) => (
                     <div key={c.id} className={`group relative rounded-xl border px-3 py-2 text-sm ${c.mine ? 'border-primary/30 bg-primary/5' : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/30'}`}>
                         <div className="text-xs"><b>{c.authorName}</b> <span className="text-gray-400">{dayjs(c.createdAt).format('DD MMM, HH:mm')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
                         {c.replyTo && <div className="mt-1 truncate border-s-2 border-gray-300 ps-2 text-xs text-gray-500"><b>{c.replyTo.name}</b> {c.replyTo.text}</div>}
@@ -47,7 +47,7 @@ const Comments = ({ noteId }) => {
                             : <div className="mt-0.5">{looksLikeHtml(c.body) ? <RichView html={c.body} /> : <p className="whitespace-pre-line">{c.body}</p>}</div>}
                         {edit !== c.id && <CommentTools onReply={() => setReply(c)} onEdit={c.mine ? () => setEdit(c.id) : undefined} onDelete={c.canDelete ? async () => { try { await api(`/api/crm/notes/${noteId}/comments?commentId=${c.id}`, { method: 'DELETE' }); load(); notesChanged() } catch (e) { notify('danger', e.message) } } : undefined} />}
                     </div>
-                ))}
+                )} />
                 {list && !list.length && <p className="py-2 text-center text-xs text-gray-400">{tr('No comments yet.')}</p>}
             </div>
             {reply && <div className="mt-2 flex items-center gap-2 rounded-lg bg-gray-50 px-2 py-1 text-xs text-gray-500 dark:bg-gray-700/40"><span className="min-w-0 flex-1 truncate">{tr('Replying to {name}', { name: reply.authorName })}</span><button type="button" onClick={() => setReply(null)} aria-label={tr('Cancel')}><TbX /></button></div>}

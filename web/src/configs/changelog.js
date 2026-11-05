@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.184.0',
+        date: '2026-11-05',
+        title: 'Comments everywhere: newest on top with its replies, last 5 days first, then "Show older comments"',
+        items: [
+            'Every comment list in the CRM now shows the newest thread on top, with its replies right under it (oldest reply first inside a thread). A thread that gets a new reply moves up. No more scrolling to the bottom to see the latest.',
+            'Only the threads with something in the last 5 days are shown at first (at least the newest few); the button "Show older comments" adds 10 more each time. Faster pages when there are hundreds of comments.',
+            'Applies to task comments (popup and page), lead comments, client requests and ideas (CRM and client portal), quick-note comments, the comments of proposals, estimates and contracts, and the public document pages (older ones are folded in "Older comments").',
+            'On tasks the writing box is now above the list, next to the newest comment.',
+        ],
+    },
+    {
         version: '0.183.1',
         date: '2026-11-05',
         title: 'Emoji picker: the group tabs sit on a light bar',

@@ -4270,6 +4270,8 @@ export default {
     "Comment added": "Comentario añadido",
     "Kept on Mails": "Guardado en Correos",
     "Emoji group": "Grupo de emojis",
+    "Show older comments": "Mostrar comentarios más antiguos",
+    "{n} older not shown": "{n} más antiguos sin mostrar",
     "Replying to {name}": "Respondiendo a {name}",
     "edited": "editado",
     "{n} comments": "{n} comentarios",

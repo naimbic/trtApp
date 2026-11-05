@@ -7,7 +7,7 @@ import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
-import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
+import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
 import Skeleton from '@/components/ui/Skeleton'
 import { portal, portalUpload } from './api'
 import { Empty } from './ui'
@@ -134,7 +134,7 @@ export const RequestDetail = () => {
             <Card>
                 <h5 className="mb-3"><TbMessageCircle className="me-1 inline" />{t('Follow-up')}</h5>
                 <div className="space-y-3">
-                    {d.comments.map((c) => c.system ? <div key={c.id} className="text-center text-xs text-gray-400">{t('Status')}: <b>{t(STATUS[c.system.from] || c.system.from)}</b> → <b>{t(STATUS[c.system.to] || c.system.to)}</b> · {date(c.createdAt, 'DD MMM HH:mm')}</div> : (
+                    <CommentThread comments={d.comments} render={(c) => c.system ? <div key={c.id} className="text-center text-xs text-gray-400">{t('Status')}: <b>{t(STATUS[c.system.from] || c.system.from)}</b> → <b>{t(STATUS[c.system.to] || c.system.to)}</b> · {date(c.createdAt, 'DD MMM HH:mm')}</div> : (
                         <div key={c.id} className={`group relative flex gap-2.5 ${c.mine ? 'flex-row-reverse' : ''}`}>
                             <div className={`min-w-0 max-w-[88%] flex-1 rounded-xl p-3 text-sm ${c.mine ? 'bg-blue-50 dark:bg-blue-500/10' : 'bg-gray-50 dark:bg-gray-700/40'}`}>
                                 <div className="mb-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500"><b className="truncate">{c.mine ? t('You') : c.authorName || t('Our team')}</b><span className="ms-auto shrink-0">{date(c.createdAt, 'DD MMM HH:mm')}{c.edited ? ` · ${t('edited')}` : ''}</span></div>
@@ -143,7 +143,7 @@ export const RequestDetail = () => {
                             </div>
                             {!ro && editingId !== c.id && <CommentTools onReply={() => setReplyTo({ id: c.id, name: c.mine ? t('You') : c.authorName || t('Our team') })} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.mine ? () => act({ action: 'delete', commentId: c.id }, 'del') : null} />}
                         </div>
-                    ))}
+                    )} />
                     {!d.comments.length && <p className="py-2 text-sm text-gray-500">{t('Add details or ask a question here.')}</p>}
                 </div>
                 {!ro ? (

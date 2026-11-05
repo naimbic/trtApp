@@ -3,7 +3,7 @@ import { getOptions, sendTemplate } from '@/lib/crm/mailer'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { pdfSettings, paperCss } from '@/lib/crm/docStyle'
 import { esc, htmlToPdf, fmtDate } from '@/lib/crm/invoicePdf'
-import { TXT as BASE_TXT, renderPublicPage, initials, commentBody, publicCommentText, tellTeamOfComment } from '@/lib/crm/estimatePublic'
+import { TXT as BASE_TXT, renderPublicPage, publicCommentsHtml, initials, commentBody, publicCommentText, tellTeamOfComment } from '@/lib/crm/estimatePublic'
 import { contractDocumentHtml, contractNumber, CONTRACT_CSS, signStamp } from '@/lib/crm/contractDoc'
 
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }) }
@@ -56,7 +56,7 @@ export async function contractPage(id, hash) {
     const banner = signed
         ? `<div class="banner ok"><strong>${T.accepted}</strong><div>${esc(T.acceptedBy)} ${esc([c.acceptanceFirstname, c.acceptanceLastname].filter(Boolean).join(' ') || '—')}${c.acceptanceDate ? ` ${T.on} ${signStamp(c.acceptanceDate, S)}` : ''}</div>${c.acceptanceIp ? `<div style="opacity:.8;font-size:.92em">${esc(TXT[lang].ip || 'IP')}: ${esc(String(c.acceptanceIp).replace(/^::ffff:/i, ''))}</div>` : ''}</div>`
         : ended ? `<div class="banner exp"><strong>${T.expired}</strong></div>` : ''
-    const commentsHtml = d.comments.length ? d.comments.map((m) => `<div class="cm"><div class="av ${m.staffId ? 'st' : ''}">${esc(initials(m.authorName || ''))}</div><div><div class="meta"><strong>${esc(m.authorName || (m.staffId ? T.team : ''))}</strong>${m.staffId ? `<span class="tag">${T.team}</span>` : ''}<span>${new Date(m.createdAt).toLocaleString(lang === 'french' ? 'fr-FR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span></div><div class="txt">${commentBody(m.content || '')}</div></div></div>`).join('') : `<p class="muted">${T.noComments}</p>`
+    const commentsHtml = publicCommentsHtml(d.comments, T, lang)
     const base = `/api/crm/public/contract/${id}/${hash}`
     const page = renderPublicPage({ lang, T, number: `${c.subject || ''} ${d.number}`.trim(), companyName: o('companyname'), banner, commentsHtml, commentsCount: d.comments.length, docHtml: await contractHtml(d, S), base, acting, noRefuse: true, identity: true, legalText: o('e_sign_legal_text'), contact })
     return page.replace('</style>', `${CONTRACT_CSS}${paperCss()}</style>`)

@@ -89,7 +89,7 @@ const MailDialog = ({ open, box, lookups, onClose, onSaved }) => {
     )
 }
 
-const RESULT = { imported: ['bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', 'New lead'], duplicate: ['bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300', 'Already known'], skipped: ['bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300', 'Not a lead'] }
+const RESULT = { caught: ['bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300', 'Kept on Mails'], imported: ['bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', 'New lead'], duplicate: ['bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300', 'Already known'], skipped: ['bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300', 'Not a lead'] }
 
 /** What the reader decided for the last emails (preview, nothing is saved) or what it did (the activity log). */
 const ListDialog = ({ mode, box, onClose }) => {
@@ -110,7 +110,7 @@ const ListDialog = ({ mode, box, onClose }) => {
             {rows && !rows.length && <div className="py-10 text-center text-gray-400">{tr('Nothing here')}</div>}
             <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
                 {rows?.map((r, i) => {
-                    const res = mode === 'preview' ? (r.lead ? 'imported' : 'skipped') : r.result
+                    const res = mode === 'preview' ? (r.lead ? 'imported' : r.caught ? 'caught' : 'skipped') : r.result
                     const [cls, label] = RESULT[res] || RESULT.skipped
                     return (
                         <div key={r.id || r.uid || i} className="rounded-xl border border-gray-200 p-3 text-sm dark:border-gray-700">

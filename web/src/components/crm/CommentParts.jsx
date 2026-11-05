@@ -2,7 +2,7 @@
 import RichEditor from '@/components/crm/RichEditor'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { TbArrowBackUp, TbAt, TbPencil, TbTrash, TbX } from 'react-icons/tb'
+import { TbArrowBackUp, TbMessage, TbAt, TbPencil, TbTrash, TbX } from 'react-icons/tb'
 import RemindMe from '@/components/crm/RemindMe'
 import { mentionDirectory } from '@/utils/mentions'
 import Button from '@/components/ui/Button'
@@ -94,7 +94,7 @@ const MentionPick = ({ onPick }) => {
     )
 }
 
-export const CommentFoot = ({ reactions = [], onReact, onMention, remind, ...tools }) => (
+export const CommentFoot = ({ reactions = [], onReact, onMention, onComment, remind, ...tools }) => (
     <div className="mt-1.5 flex min-h-6 flex-wrap items-center gap-1">
         {reactions.map((r) => (
             <button key={r.emoji} type="button" title={[...(r.mine ? [tr('You')] : []), ...r.names].join(', ')} onClick={() => onReact?.(r.emoji)} className={classNames('flex h-6 items-center gap-1 rounded-full border px-2 text-xs transition', r.mine ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:border-primary dark:border-gray-600 dark:text-gray-300')}><span className="text-sm leading-none">{r.emoji}</span>{whoReacted(r)}</button>
@@ -102,6 +102,7 @@ export const CommentFoot = ({ reactions = [], onReact, onMention, remind, ...too
         {onReact && <EmojiPicker title={tr('React')} onPick={onReact} className="!size-6" />}
         <div className="flex items-center gap-0.5 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
             {onMention && <MentionPick onPick={onMention} />}
+            {onComment && <button type="button" title={tr('Comment')} aria-label={tr('Comment')} onClick={onComment} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbMessage /></button>}
             {remind && <RemindMe iconOnly relType={remind.relType} relId={remind.relId} initialNote={remind.note} tab={remind.tab} />}
             <CommentTools inline {...tools} />
         </div>

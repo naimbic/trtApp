@@ -134,6 +134,8 @@ export async function getLead(id) {
     const senders = await senderOptions(a)
     const { filesByMail } = await import('@/lib/crm/mailCatch')
     const mailFiles = await filesByMail(mails)
+    const { commentsByMail } = await import('@/lib/crm/mailCatch')
+    const mailComments = await commentsByMail(mails)
     const people = await staffMap([...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...notes.flatMap((n) => Object.values(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).flat()), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
     return {
         lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), followerIds: l.followerIds || [], addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
@@ -142,7 +144,7 @@ export async function getLead(id) {
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
-        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
+        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
         senders,
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
@@ -279,6 +281,32 @@ export async function mentionNote(id, noteId, staffId) {
     const plain = plainText(c.description || '')
     if (!plain.includes(`@${name}`)) await prisma.crmNote.update({ where: { id: noteId }, data: { description: `${c.description || ''}<p>@${name.replace(/[&<>]/g, '')}</p>`, updatedAt: c.updatedAt } })
     await notifyMentions({ staffIds: [who.id], text: plain, url: `/crm/leads/${id}?tab=notes` })
+    return { success: true }
+}
+
+/** An internal comment on a mail of the lead (only the team reads it); the people following the lead are told. */
+export async function commentMail(id, mailId, content) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    const lead = await loadOne(id, a)
+    const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id }, select: { id: true, subject: true } }))
+    if (!m) throw fail('Mail not found', 404)
+    const text = storeRich(content)
+    if (!text) throw fail('Write a comment first')
+    await prisma.crmNote.create({ data: { relType: 'leadmail', relId: m.id, description: text, dateContacted: new Date(), addedFrom: a.staffId } })
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}?tab=mails`, subject: `${lead.name} · ${m.subject || 'mail'}`, recipients: [...teamOf(lead), ...(lead.followerIds || []), lead.addedFrom] }) } catch (e) { console.error('[mail comment notify]', e.message) }
+    return { success: true }
+}
+
+/** Tags a colleague on a mail of the lead: they are told and the notification opens the Mails tab. */
+export async function mentionMail(id, mailId, staffId) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    const lead = await loadOne(id, a)
+    const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id }, select: { id: true, subject: true } }))
+    if (!m) throw fail('Mail not found', 404)
+    if (!oid(staffId)) throw fail('Choose a colleague')
+    await notifyMentions({ staffIds: [staffId], text: `✉ ${m.subject || 'mail'} (${lead.name})`, url: `/crm/leads/${id}?tab=mails` })
     return { success: true }
 }
 

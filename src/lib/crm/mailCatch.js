@@ -203,3 +203,15 @@ export async function filesByMail(mails) {
     for (const r of rows) (out[r.relId] ||= []).push({ id: r.id, name: r.name, url: r.url, kind: r.kind, size: r.size })
     return out
 }
+
+/** The internal comments on each mail of a list: { mailId: [{ id, content, by, date }] } (stored as notes of the mail). */
+export async function commentsByMail(mails) {
+    const ids = (mails || []).map((m) => m.id)
+    if (!ids.length) return {}
+    const notes = await prisma.crmNote.findMany({ where: { relType: 'leadmail', relId: { in: ids } }, orderBy: { createdAt: 'asc' } })
+    const staff = notes.length ? await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(notes.map((n) => n.addedFrom).filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true, email: true } }) : []
+    const name = Object.fromEntries(staff.map((x) => [x.id, [x.firstName, x.lastName].filter(Boolean).join(' ') || x.email || '']))
+    const out = {}
+    for (const n of notes) (out[n.relId] ||= []).push({ id: n.id, content: n.description || '', by: n.addedFrom ? { id: n.addedFrom, name: name[n.addedFrom] || '' } : null, date: n.createdAt })
+    return out
+}

@@ -172,7 +172,10 @@ export async function previewMailbox(id, n = 15) {
             for (const uid of uids) {
                 const r = await readOne(client, uid, cfg, custom)
                 if (!r) continue
-                out.push({ uid, date: r.msg.date, from: r.msg.fromAddress, subject: r.msg.subject, lead: r.verdict.ok, reason: r.verdict.reason || null, found: r.verdict.ok ? buildLead(r.msg, r.parsed) : null, extras: r.verdict.ok ? r.parsed.extras : [] })
+                // not a form: would it be kept on the Mails tab of a lead or client?
+                let caught = null
+                if (!r.verdict.ok && cfg.catchReplies !== false) caught = await catchReply(cfg, r, { dry: true }).catch((e) => ({ caught: false, reason: String(e.message).slice(0, 100) }))
+                out.push({ uid, date: r.msg.date, from: r.msg.fromAddress, subject: r.msg.subject, lead: r.verdict.ok, caught: !!caught?.caught, reason: caught ? (caught.caught ? caught.reason : `${r.verdict.reason} · ${caught.reason}`) : r.verdict.reason || null, found: r.verdict.ok ? buildLead(r.msg, r.parsed) : null, extras: r.verdict.ok ? r.parsed.extras : [] })
             }
             return { list: out }
         } finally { lock.release() }
@@ -270,7 +273,7 @@ export async function runMailbox(id, { dry = false, force = false } = {}) {
         try {
             const validity = String(client.mailbox.uidValidity)
             if (cfg.uidValidity && cfg.uidValidity !== validity) lastUid = 0
-            const q = { since: cfg.startFrom || cfg.createdAt, ...(cfg.onlyLoopOnUnseenEmails && !force ? { seen: false } : {}) }
+            const q = { since: cfg.startFrom || cfg.createdAt, ...(cfg.onlyLoopOnUnseenEmails && !force && cfg.catchReplies === false ? { seen: false } : {}) }
             const found = ((await client.search(q, { uid: true })) || []).filter((u) => u > lastUid).sort((a, b) => a - b).slice(0, MAX_PER_RUN)
             for (const uid of found) {
                 stat.looked++

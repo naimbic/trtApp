@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay, TbPaperclip } from 'react-icons/tb'
+import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay, TbPaperclip, TbSearch } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -18,6 +18,7 @@ import { api, notify, qs, useCan } from '../kit/api'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import TaskDrawer from '../tasks/TaskDrawer'
 import { People, useTaskStatuses } from '../tasks/shared'
+import { CommentFoot } from '@/components/crm/CommentParts'
 import { tr } from '@/utils/t'
 
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
@@ -82,8 +83,23 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
 const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', note: '', checks: [], scheduledAt: null, subject: '', body: '' })
 
 /** Emails sent to or received from the lead, written in the editor with their date and time. Mails read by the lead mailbox land here too. */
-export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit, run, base = `/api/crm/pipeline/leads/${leadId}` }) => {
+export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '', canEdit, run, kind = 'lead', allowDelete = true, base = `/api/crm/pipeline/leads/${leadId}` }) => {
     const [form, setForm] = useState(null) // { id?, ...fields }
+    const [commenting, setCommenting] = useState(null)
+    const [commentText, setCommentText] = useState('')
+    const [fil, setFil] = useState({ q: '', from: '', to: '', files: false, dir: '' })
+    // the mails shown: by words, by date and by attached files
+    const mails = useMemo(() => allMails.filter((m) => {
+        const d = dayjs(m.date)
+        if (fil.from && d.isBefore(dayjs(fil.from).startOf('day'))) return false
+        if (fil.to && d.isAfter(dayjs(fil.to).endOf('day'))) return false
+        if (fil.files && !(m.files || []).length) return false
+        if (fil.dir && m.direction !== fil.dir) return false
+        const q = fil.q.trim().toLowerCase()
+        if (q && !`${m.subject} ${m.from} ${m.to} ${String(m.body || '').replace(/<[^>]+>/g, ' ')} ${(m.files || []).map((f) => f.name).join(' ')}`.toLowerCase().includes(q)) return false
+        return true
+    }), [allMails, fil])
+    const filtering = !!(fil.q || fil.from || fil.to || fil.files || fil.dir)
     const [del, setDel] = useState(null)
     const [send, setSend] = useState(null)
     const set = (p) => setForm((f) => ({ ...f, ...p }))
@@ -105,6 +121,12 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
         return { ...f, direction: dir, to: !f.to || f.to === lead ? lead : f.to, from: f.from === lead || (dir === 'draft' && !f.from) ? (dir === 'draft' ? senders[0] || '' : '') : f.from }
     }
     const newDraft = () => { setMore(false); setForm(aim(MAIL_EMPTY(), 'draft')) }
+    // answer a received mail: a draft to the sender, "Re: subject", with the mail quoted
+    const replyTo = (m) => {
+        setMore(false)
+        const base0 = aim(MAIL_EMPTY(), 'draft')
+        setForm({ ...base0, to: m.direction === 'in' ? m.from || leadEmail : m.to || leadEmail, subject: /^re\s*:/i.test(m.subject || '') ? m.subject : `Re: ${m.subject || ''}`, body: `<p></p><blockquote><p>${dayjs(m.date).format('DD MMM YYYY, HH:mm')} · ${m.from || ''}</p>${m.body || ''}</blockquote>` })
+    }
     return (
         <div className="space-y-4">
             {canEdit && !form && <div className="flex gap-2"><Button size="sm" icon={<TbPlus />} onClick={() => setForm(aim(MAIL_EMPTY(), 'in'))}>{tr("Log a mail")}</Button><Button size="sm" icon={<TbFileText />} onClick={newDraft}>{tr("New draft")}</Button></div>}
@@ -156,6 +178,16 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
                     <div className="flex flex-wrap gap-2"><Button size="sm" variant="solid" onClick={save}>{draft ? tr("Save draft") : tr("Save mail")}</Button><Button size="sm" onClick={() => setForm(null)}>{draft && form.id ? tr("Close") : tr("Cancel")}</Button></div>
                 </div>
             )}
+            {allMails.length > 0 && (
+                <div className="flex flex-wrap items-end gap-2 rounded-xl border border-gray-200 p-2 dark:border-gray-700">
+                    <div className="min-w-[10rem] flex-1"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search the mails")} value={fil.q} onChange={(e) => setFil((f) => ({ ...f, q: e.target.value }))} /></div>
+                    <div><div className="mb-0.5 text-[11px] font-semibold text-gray-500">{tr("From")}</div><Input size="sm" type="date" value={fil.from} onChange={(e) => setFil((f) => ({ ...f, from: e.target.value }))} /></div>
+                    <div><div className="mb-0.5 text-[11px] font-semibold text-gray-500">{tr("To")}</div><Input size="sm" type="date" value={fil.to} onChange={(e) => setFil((f) => ({ ...f, to: e.target.value }))} /></div>
+                    <Select size="sm" className="w-36" isClearable isSearchable={false} placeholder={tr("All mails")} options={[{ value: 'in', label: tr('Received') }, { value: 'out', label: tr('Sent') }, { value: 'draft', label: tr('Drafts') }]} value={fil.dir ? { value: fil.dir, label: fil.dir === 'in' ? tr('Received') : fil.dir === 'out' ? tr('Sent') : tr('Drafts') } : null} onChange={(o) => setFil((f) => ({ ...f, dir: o?.value || '' }))} />
+                    <label className="flex items-center gap-1.5 pb-1.5 text-xs font-semibold"><Switcher checked={fil.files} onChange={(c) => setFil((f) => ({ ...f, files: c }))} /><TbPaperclip />{tr("With files")}</label>
+                    {filtering && <Button size="xs" onClick={() => setFil({ q: '', from: '', to: '', files: false, dir: '' })}>{tr("Clear")}</Button>}
+                </div>
+            )}
             {mails.map((m) => (
                 <div key={m.id} className={card}>
                     <div className="mb-1 flex items-start justify-between gap-2">
@@ -178,15 +210,30 @@ export const LeadMails = ({ leadId, mails, senders = [], leadEmail = '', canEdit
                         </div>
                     )}
                     {m.direction === 'draft' && m.canEdit && (canEdit || !m.mine) && (() => { const left = m.checks.filter((c) => !c.done).length; return <div className="mt-2 flex items-center gap-2"><Button size="sm" variant="solid" icon={<TbSend />} disabled={left > 0} onClick={() => setSend(m)}>{tr("Send now")}</Button>{left > 0 && <span className="text-xs text-red-600">{tr("Confirm the red checks first")} ({left})</span>}</div> })()}
-                    {(m.canEdit || m.canDelete) && (
-                        <div className="absolute end-2 bottom-2 flex gap-0.5 opacity-0 transition group-hover:opacity-100">
-                            {m.canEdit && (canEdit || !m.mine) && <Button size="xs" variant="plain" icon={<TbPencil />} aria-label={tr("Edit")} onClick={() => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, note: m.note, checks: m.checks, scheduledAt: m.scheduledAt ? new Date(m.scheduledAt) : null, subject: m.subject, body: m.body })} />}
-                            {m.canDelete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} aria-label={tr("Delete")} onClick={() => setDel(m)} />}
+                    <CommentFoot
+                        remind={{ relType: kind === 'client' ? 'customer' : 'lead', relId: leadId, tab: kind === 'client' ? null : 'mails', note: `${tr('Reply')}: ${m.subject || ''}`.slice(0, 140) }}
+                        onMention={(sid) => run(() => api(`${base}/mails/send`, { method: 'POST', body: { action: 'mention', mailId: m.id, staffId: sid } }), tr('Colleague mentioned'), () => {})}
+                        onComment={() => { setCommenting(commenting === m.id ? null : m.id); setCommentText('') }}
+                        onReply={m.direction !== 'draft' && canEdit ? () => replyTo(m) : null}
+                        onEdit={m.canEdit && (canEdit || !m.mine) ? () => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, note: m.note, checks: m.checks, scheduledAt: m.scheduledAt ? new Date(m.scheduledAt) : null, subject: m.subject, body: m.body }) : null}
+                        onDelete={m.canDelete && (allowDelete || m.direction === 'draft') ? () => setDel(m) : null}
+                    />
+                    {(m.comments || []).length > 0 && (
+                        <div className="mt-2 space-y-1.5 border-l-2 border-primary/30 pl-3">
+                            {m.comments.map((c) => (
+                                <div key={c.id} className="text-xs"><span className="font-semibold">{c.by?.name || tr('Unknown')}</span><span className="ms-2 text-gray-400">{dayjs(c.date).format('DD MMM, HH:mm')}</span><div className="mt-0.5 text-sm"><RichView html={c.content} /></div></div>
+                            ))}
+                        </div>
+                    )}
+                    {commenting === m.id && (
+                        <div className="mt-2 space-y-2">
+                            <RichEditor minHeight={70} images={false} placeholder={tr("Write a comment on this mail (only the team reads it)")} value={commentText} onChange={setCommentText} />
+                            <div className="flex justify-end gap-2"><Button size="xs" onClick={() => setCommenting(null)}>{tr("Cancel")}</Button><Button size="xs" variant="solid" disabled={!commentText.trim()} onClick={() => run(() => api(`${base}/mails/send`, { method: 'POST', body: { action: 'comment', mailId: m.id, content: commentText } }).then(() => { setCommenting(null); setCommentText('') }), tr("Comment added"))}>{tr("Comment")}</Button></div>
                         </div>
                     )}
                 </div>
             ))}
-            {!mails.length && !form && <p className="text-sm text-gray-500">{tr("No mails logged yet.")}</p>}
+            {!mails.length && !form && <p className="text-sm text-gray-500">{filtering ? tr("No mail matches these filters.") : tr("No mails logged yet.")}</p>}
             <ConfirmDialog isOpen={!!send} type="info" title={tr("Send this draft now?")} confirmText={tr("Send")} onClose={() => setSend(null)} onCancel={() => setSend(null)} onConfirm={() => { const m = send; setSend(null); run(() => api(`${base}/mails/send`, { method: 'POST', body: { mailId: m.id } }).then(() => setForm(null)), tr("Mail sent")) }}>
                 <p>{send?.subject}</p><p className="text-sm text-gray-500">{tr("To")} {send?.to}</p>
             </ConfirmDialog>

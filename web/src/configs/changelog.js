@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.182.0',
+        date: '2026-11-05',
+        title: 'Mails tab: hover icons, comments on mails, filters; lead replies are caught even if already read',
+        items: [
+            'Every mail of a lead or a client has hover icons: mention a colleague, remind me, comment (internal, only the team reads it), reply (a draft to the sender with the mail quoted) and edit. On a client, received and sent mails can no longer be deleted (drafts can).',
+            'New filters above the mails: search, from / to dates, received / sent / drafts, and "With files". Received mails show their attached files.',
+            'The mailbox no longer skips emails that were already opened in webmail when it keeps the replies of leads and clients (the "unread only" rule applies only if you switch the catching off).',
+            'The mailbox Preview now shows, for each email, whether it would be kept on a Mails tab ("Kept on Mails") or why not.',
+        ],
+    },
+    {
         version: '0.181.2',
         date: '2026-11-05',
         title: 'Direct emails from a lead or client are matched by company domain too',

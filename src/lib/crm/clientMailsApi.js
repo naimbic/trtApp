@@ -41,9 +41,11 @@ export async function getClientMails(id) {
     const people = Object.fromEntries(staff.map((s) => [s.id, { id: s.id, name: staffName(s), image: s.profileImage || null }]))
     const { filesByMail } = await import('@/lib/crm/mailCatch')
     const mailFiles = await filesByMail(mails)
+    const { commentsByMail } = await import('@/lib/crm/mailCatch')
+    const mailComments = await commentsByMail(mails)
     return {
         email, senders, can: { edit: a.edit },
-        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.edit && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) })),
+        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.edit && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) })),
     }
 }
 
@@ -67,6 +69,33 @@ export async function saveClientMail(id, body, mailId) {
     const m = await prisma.crmLeadMail.create({ data: { ...data, clientId: id, addedFrom: a.staffId, source: 'manual' } })
     if (data.direction !== 'draft') await prisma.crmActivityLog.create({ data: { description: `${data.direction === 'out' ? 'Mail sent' : 'Mail received'} logged on ${client.company || 'a client'}${data.subject ? `: ${data.subject}` : ''}`.slice(0, 400), staffId: a.staffId } }).catch(() => {})
     return { success: true, id: m.id }
+}
+
+/** The staff who look after the client: told about what happens on its mails. */
+const accountTeam = async (id) => (await prisma.crmCustomerAdmin.findMany({ where: { clientId: id }, select: { staffId: true } })).map((x) => x.staffId)
+
+/** An internal comment on a mail of the client. */
+export async function commentClientMail(id, mailId, content) {
+    const { a, client } = await gate(id)
+    const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, clientId: id }, select: { id: true, subject: true } }))
+    if (!m) throw fail('Mail not found', 404)
+    const { storeRich } = await import('@/lib/crm/richText')
+    const text = storeRich(content)
+    if (!text) throw fail('Write a comment first')
+    await prisma.crmNote.create({ data: { relType: 'leadmail', relId: m.id, description: text, dateContacted: new Date(), addedFrom: a.staffId } })
+    try { await notifyComment({ by: { staffId: a.staffId, name: a.session.user.name }, text, link: `/crm/clients/${id}`, subject: `${client.company || 'Client'} · ${m.subject || 'mail'}`, recipients: await accountTeam(id) }) } catch (e) { console.error('[mail comment notify]', e.message) }
+    return { success: true }
+}
+
+/** Tags a colleague on a mail of the client. */
+export async function mentionClientMail(id, mailId, staffId) {
+    const { client } = await gate(id)
+    const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, clientId: id }, select: { id: true, subject: true } }))
+    if (!m) throw fail('Mail not found', 404)
+    if (!oid(staffId)) throw fail('Choose a colleague')
+    const { notifyMentions } = await import('@/lib/crm/mentionsApi')
+    await notifyMentions({ staffIds: [staffId], text: `✉ ${m.subject || 'mail'} (${client.company || 'client'})`, url: `/crm/clients/${id}` })
+    return { success: true }
 }
 
 export async function checkClientDraft(id, mailId, index, done) {

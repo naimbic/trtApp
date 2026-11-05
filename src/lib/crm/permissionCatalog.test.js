@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { FEATURES, cleanPermissions, FEATURE_HINTS } from './permissionCatalog.js'
+import { FEATURES, PERMISSION_GROUPS, cleanPermissions, FEATURE_HINTS } from './permissionCatalog.js'
 import { ROLES } from './standardRoles.js'
 
 test('roles: Calendar, Team chat and File manager are permissions every standard role carries', () => {
@@ -73,4 +73,10 @@ test('roles: chat messages have their own row, and every standard role keeps the
         assert.equal(tools.includes('delete_others'), ['Super Admin', 'Admin'].includes(name), `${name} moderation`)
     }
     assert.ok(FEATURE_HINTS.chat_messages)
+})
+
+test('roles: every permission has an explanation in the editor, and the password vault is among the team tools', () => {
+    for (const f of FEATURES) assert.ok(FEATURE_HINTS[f.key], `${f.key} has an explanation`)
+    const tools = PERMISSION_GROUPS.find((g) => g.group === 'Tools')
+    assert.ok(tools.features.some((f) => f.key === 'passwords'), 'the vault is listed under Tools')
 })

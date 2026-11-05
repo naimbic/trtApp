@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.182.1',
+        date: '2026-11-05',
+        title: 'Roles & permissions: the password vault is easy to find, every permission is explained',
+        items: [
+            'The Password vault permission moved to the Tools group and is called "Password vault (shared logins and passwords)", with an explanation of the per-entry sharing (only me, selected people, whole team).',
+            'Every permission in the role editor now has a short explanation (28 had none). The lead email integration entry explains the new reply catching and automatic answer.',
+            'A test makes sure no future permission is added without an explanation.',
+        ],
+    },
+    {
         version: '0.182.0',
         date: '2026-11-05',
         title: 'Mails tab: hover icons, comments on mails, filters; lead replies are caught even if already read',

@@ -4237,6 +4237,7 @@ export default {
     "Mention a colleague": "同僚にメンション",
     "Mentions": "メンション",
     "Chat with {name}": "{name}とチャット",
+    "Pick an emoji": "絵文字を選んでください",
     "Replying to {name}": "{name}に返信中",
     "edited": "編集済み",
     "{n} comments": "{n}件のコメント",

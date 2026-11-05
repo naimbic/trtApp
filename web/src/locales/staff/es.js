@@ -4237,6 +4237,7 @@ export default {
     "Mention a colleague": "Mencionar a un compañero",
     "Mentions": "Menciones",
     "Chat with {name}": "Chatear con {name}",
+    "Pick an emoji": "Elige un emoji",
     "Replying to {name}": "Respondiendo a {name}",
     "edited": "editado",
     "{n} comments": "{n} comentarios",

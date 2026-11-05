@@ -177,6 +177,8 @@ export async function getTask(id) {
         comments: t.comments.map((c) => {
             const to = c.replyToId ? t.comments.find((x) => x.id === c.replyToId) : null
             return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
+                replyToId: c.replyToId || null,
+                reactions: Object.entries(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!a.staffId && ids.includes(a.staffId), names: ids.map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count),
                 replyTo: to ? { id: to.id, name: people[to.staffId]?.name || (to.contactId ? 'Client' : ''), text: String(to.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90) } : null }
         }),
         timers, running, totalSeconds: timers.reduce((s, x) => s + x.seconds, 0),
@@ -358,6 +360,24 @@ export async function addComment(id, content, replyToId) {
         const [asg, fol] = await Promise.all([prisma.crmTaskAssigned.findMany({ where: { taskId: id }, select: { staffId: true } }), prisma.crmTaskFollower.findMany({ where: { taskId: id }, select: { staffId: true } })])
         await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/tasks/${id}`, subject: task.name, recipients: [...asg.map((x) => x.staffId), ...fol.map((x) => x.staffId), task.addedFrom, reply?.staffId] })
     } catch (e) { console.error('[comment notify]', e.message) }
+    return { success: true }
+}
+
+/** Adds the emoji reaction of the signed-in person to a comment, or takes it back when it is already there. */
+export async function reactComment(id, commentId, emoji) {
+    const session = await requirePermission('tasks', 'view')
+    const a = await access(session)
+    await loadOne(id, a)
+    const e = String(emoji || '').trim()
+    if (!e || e.length > 16) throw fail('Pick an emoji')
+    if (!a.staffId) throw fail('Only staff can react', 403)
+    const c = oid(commentId) && (await prisma.crmTaskComment.findFirst({ where: { id: commentId, taskId: id } }))
+    if (!c) throw fail('Comment not found', 404)
+    const all = c.reactions && typeof c.reactions === 'object' ? { ...c.reactions } : {}
+    const ids = Array.isArray(all[e]) ? all[e] : []
+    const next = ids.includes(a.staffId) ? ids.filter((x) => x !== a.staffId) : [...ids, a.staffId]
+    if (next.length) all[e] = next; else delete all[e]
+    await prisma.crmTaskComment.update({ where: { id: commentId }, data: { reactions: all, updatedAt: c.updatedAt } })
     return { success: true }
 }
 

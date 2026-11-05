@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.177.0',
+        date: '2026-11-05',
+        title: 'Task comments: threaded replies, emoji reactions, tools under the comment',
+        items: [
+            'Replies now sit under the comment they answer, pushed to the right with a line, also replies to replies.',
+            'The share / reply / edit / delete icons moved under each comment, so they no longer hide the date.',
+            'Pressing Reply writes the @mention followed by a space and puts the cursor after it: just start typing.',
+            'Emoji reactions on task comments: pick any emoji, click a reaction again to take it back; hover shows who reacted.',
+        ],
+    },
+    {
         version: '0.176.0',
         date: '2026-11-04',
         title: 'Faster pages: fonts and pictures served by us, lighter first load, skeleton tables, slow-query log',

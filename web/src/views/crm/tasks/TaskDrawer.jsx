@@ -5,7 +5,7 @@ import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
 import { plainOf } from '@/components/crm/ShareButton'
-import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
+import { CommentFoot, CommentThread, startReply, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import StaffRing from '@/components/crm/StaffRing'
 import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks, TbListDetails, TbUsers, TbLink, TbFileText, TbSettings } from 'react-icons/tb'
 import Drawer from '@/components/crm/PopupFrame'
@@ -39,6 +39,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const [item, setItem] = useState('')
     const [comment, setComment] = useState('')
     const [replyTo, setReplyTo] = useState(null)
+    const editorRef = useRef(null)
     const [editingId, setEditingId] = useState(null)
     const [tick, setTick] = useState(0)
     const [openSec, setOpenSec] = useState(['main', 'people'])
@@ -154,23 +155,25 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     const comments = detail && (
         <div className="space-y-4">
-            {detail.comments.map((c) => (
-                <div key={c.id} className="group relative flex gap-3">
+            <CommentThread comments={detail.comments} render={(c, depth) => (
+                <div className="group relative flex gap-3">
                     <StaffRing id={c.staff?.id} name={c.staff?.name} size={30}><Avatar size={30} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr("Client") : '?'))}</Avatar></StaffRing>
-                    <div className="min-w-0 flex-1 rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
-                        <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{c.staff?.name || (c.fromClient ? tr("Client") : tr("Unknown"))}</span><span>{dayjs(c.createdAt).format('DD MMM, HH:mm')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
-                        <ReplyQuote r={c.replyTo} />
-                        {editingId === c.id
-                            ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
-                            : <RichView html={c.content} />}
+                    <div className="min-w-0 flex-1">
+                        <div className="rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
+                            <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{c.staff?.name || (c.fromClient ? tr("Client") : tr("Unknown"))}</span><span>{dayjs(c.createdAt).format('DD MMM, HH:mm')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
+                            {depth === 0 && <ReplyQuote r={c.replyTo} />}
+                            {editingId === c.id
+                                ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
+                                : <RichView html={c.content} />}
+                        </div>
+                        {editingId !== c.id && <CommentFoot reactions={c.reactions} onReact={(emoji) => act(() => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, react: emoji } }))} share={{ url: `/crm/tasks/${id}`, title: detail?.task.name, text: `${c.staff?.name ? `${c.staff.name}: ` : ''}${plainOf(c.content)}` }} onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); startReply(editorRef.current, c.staff?.name) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' })) : null} />}
                     </div>
-                    {editingId !== c.id && <CommentTools share={{ url: `/crm/tasks/${id}`, title: detail?.task.name, text: `${c.staff?.name ? `${c.staff.name}: ` : ''}${plainOf(c.content)}` }} onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); setComment((x) => x || (c.staff?.name ? `@${c.staff.name} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' })) : null} />}
                 </div>
-            ))}
+            )} />
             {!detail.comments.length && <p className="text-sm text-gray-500">{tr("No comments yet.")}</p>}
             <div className="space-y-2">
                 <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
-                <RichEditor minHeight={90} placeholder={tr("Write a comment")} value={comment} onChange={setComment} />
+                <RichEditor minHeight={90} placeholder={tr("Write a comment")} value={comment} onChange={setComment} onReady={(ed) => { editorRef.current = ed }} />
                 <Button size="sm" variant="solid" disabled={!comment.trim()} onClick={() => act(() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) }))}>{tr("Comment")}</Button>
             </div>
         </div>

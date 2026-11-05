@@ -4237,6 +4237,7 @@ export default {
     "Mention a colleague": "ذكر زميل",
     "Mentions": "الإشارات",
     "Chat with {name}": "الدردشة مع {name}",
+    "Pick an emoji": "اختر رمزاً تعبيرياً",
     "Replying to {name}": "الرد على {name}",
     "edited": "تم التعديل",
     "{n} comments": "{n} تعليقات",

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.181.2',
+        date: '2026-11-05',
+        title: 'Direct emails from a lead or client are matched by company domain too',
+        items: [
+            'An email that is not a form is kept on the Mails tab of the lead or client who wrote it. If the exact address is not known (info@company.com writes, the lead is contact@company.com), the company domain is used: only company domains (never Gmail, Outlook...), and only when exactly one lead or client has that domain. The Activity log says "matched by its company domain".',
+        ],
+    },
+    {
         version: '0.181.1',
         date: '2026-11-05',
         title: 'Re-read the mailbox since a date',

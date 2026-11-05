@@ -52,17 +52,36 @@ export function parseIcs(text) {
 
 /* ---------------- who wrote ---------------- */
 
-/** The lead (by its email) or the client (by the email of one of its contacts) behind an address, or null. */
+const FREE_MAIL = /^(gmail|googlemail|yahoo|ymail|hotmail|outlook|live|msn|icloud|me|mac|aol|proton|protonmail|pm|gmx|web|yandex|mail|zoho|orange|wanadoo|free|sfr|laposte|neuf|bbox|menara|maktoob|iam|inwi|live|qq|163|126|naver|rediffmail|tutanota|fastmail)\./i
+
+/**
+ * The lead (by its email) or the client (by the email of one of its contacts) behind an address, or null. When the exact address is not known
+ * the company's domain is tried (info@strasforma.com writes, the lead is contact@strasforma.com): only for company domains, never webmail,
+ * and only when one lead or client matches.
+ */
 export async function whoIs(address) {
     const a = lower(address)
     if (!a) return null
     const lead = await prisma.crmLead.findFirst({ where: { email: { equals: a, mode: 'insensitive' }, junk: false }, orderBy: { createdAt: 'desc' } })
     if (lead) return { kind: 'lead', id: lead.id, name: lead.name || lead.company || a, record: lead }
     const contact = await prisma.crmContact.findFirst({ where: { email: { equals: a, mode: 'insensitive' } }, select: { clientId: true, firstName: true, lastName: true } })
-    if (!contact?.clientId) return null
-    const client = await prisma.crmClient.findUnique({ where: { id: contact.clientId }, select: { id: true, company: true } })
-    if (!client) return null
-    return { kind: 'client', id: client.id, name: client.company || [contact.firstName, contact.lastName].filter(Boolean).join(' ') || a, record: client }
+    if (contact?.clientId) {
+        const client = await prisma.crmClient.findUnique({ where: { id: contact.clientId }, select: { id: true, company: true } })
+        if (client) return { kind: 'client', id: client.id, name: client.company || [contact.firstName, contact.lastName].filter(Boolean).join(' ') || a, record: client }
+    }
+    const domain = a.split('@')[1] || ''
+    if (!domain || FREE_MAIL.test(domain)) return null
+    const [leads, contacts, clientsWeb] = await Promise.all([
+        prisma.crmLead.findMany({ where: { junk: false, OR: [{ email: { endsWith: `@${domain}`, mode: 'insensitive' } }, { website: { contains: domain, mode: 'insensitive' } }] }, orderBy: { createdAt: 'desc' }, take: 5 }),
+        prisma.crmContact.findMany({ where: { email: { endsWith: `@${domain}`, mode: 'insensitive' } }, select: { clientId: true }, take: 20 }),
+        prisma.crmClient.findMany({ where: { website: { contains: domain, mode: 'insensitive' } }, select: { id: true, company: true }, take: 5 }),
+    ])
+    // a lead that was converted and its client are one company: count it once
+    const clientIds = [...new Set([...contacts.map((c) => c.clientId), ...clientsWeb.map((c) => c.id)].filter(Boolean))].filter((c) => !leads.some((l) => l.clientId === c))
+    if (leads.length + clientIds.length !== 1) return null // nobody, or several companies: not guessed
+    if (leads.length === 1) return { kind: 'lead', id: leads[0].id, name: leads[0].name || leads[0].company || a, record: leads[0], via: 'domain' }
+    const client = await prisma.crmClient.findUnique({ where: { id: clientIds[0] }, select: { id: true, company: true } })
+    return client ? { kind: 'client', id: client.id, name: client.company || a, record: client, via: 'domain' } : null
 }
 
 /** Who has to know and answer: the team of a lead (or the account managers of a client) and the mailbox's responsible person. */
@@ -130,7 +149,7 @@ export async function catchReply(cfg, { msg, mail }, { dry = false } = {}) {
     if (isAutomatic(mail, address)) return { caught: false, reason: 'Automatic email (newsletter, bounce or out-of-office)' }
     const who = (await whoIs(address)) || (msg.replyTo ? await whoIs(msg.replyTo) : null)
     if (!who) return { caught: false, reason: 'The sender is not a lead or a client contact' }
-    if (dry) return { caught: true, kind: who.kind, name: who.name, reason: `Reply from ${who.name}: would be added to its Mails` }
+    if (dry) return { caught: true, kind: who.kind, name: who.name, reason: `Reply from ${who.name}${who.via ? ' (matched by its company domain)' : ''}: would be added to its Mails` }
 
     const link = who.kind === 'lead' ? { leadId: who.id } : { clientId: who.id }
     const html = mail?.html ? cleanHtml(String(mail.html)) : `<p>${escHtml(String(msg.text || '').slice(0, 20000)).replace(/\n/g, '<br>')}</p>`
@@ -169,7 +188,7 @@ export async function catchReply(cfg, { msg, mail }, { dry = false } = {}) {
     }
 
     const reply = await autoReply(cfg, { to: msg.fromAddress, name: who.name, subject: msg.subject, messageId: msg.messageId, mail, ...link }).catch((e) => ({ sent: false, reason: e.message }))
-    return { caught: true, kind: who.kind, id: who.id, name: who.name, files: kept, filesLeft: left, meeting, autoReplied: !!reply.sent, reason: `Reply from ${who.name} added to its Mails${kept.length ? ` with ${kept.length} file${kept.length === 1 ? '' : 's'}` : ''}${meeting ? ', meeting booked in the calendar' : ''}${reply.sent ? ', automatic answer sent' : ''}${left.length ? `; left out: ${left.join(', ')}` : ''}` }
+    return { caught: true, kind: who.kind, id: who.id, name: who.name, files: kept, filesLeft: left, meeting, autoReplied: !!reply.sent, reason: `Reply from ${who.name}${who.via ? ' (matched by its company domain)' : ''} added to its Mails${kept.length ? ` with ${kept.length} file${kept.length === 1 ? '' : 's'}` : ''}${meeting ? ', meeting booked in the calendar' : ''}${reply.sent ? ', automatic answer sent' : ''}${left.length ? `; left out: ${left.join(', ')}` : ''}` }
 }
 
 /** A staff member answered: the reminders to answer this lead or client are no longer needed. */

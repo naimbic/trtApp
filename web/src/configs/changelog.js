@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.181.0',
+        date: '2026-11-05',
+        title: 'The mailbox keeps the emails of your leads and clients, with files and meeting bookings',
+        items: [
+            'An email from a lead (or from a contact of a client) that is not a website form is now kept on their Mails tab as a received mail, with its attached files (open them from the mail).',
+            'A meeting invitation (.ics) in the email becomes a calendar event about that lead or client, with its video link.',
+            'The team is told with a bell notification that opens the Mails tab, a "Reply to ..." task is created, and the responsible person gets a reminder to answer (default after 4 hours; it is removed when you send your answer).',
+            'Optional automatic answer ("we received your email, we will check your request and get back to you"): switch it on in the mailbox settings; once a day per person at most, never to robots or out-of-office messages, and it shows on the Mails tab.',
+            'Settings of the mailbox: new group "Emails from your leads and clients".',
+        ],
+    },
+    {
         version: '0.180.2',
         date: '2026-11-05',
         title: 'Comment reactions show who sent each emoji',

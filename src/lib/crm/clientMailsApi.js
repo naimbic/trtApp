@@ -39,9 +39,11 @@ export async function getClientMails(id) {
     const [mails, senders, email] = await Promise.all([prisma.crmLeadMail.findMany({ where: { clientId: id }, orderBy: { date: 'desc' }, take: 200 }), senderOptions(a), clientEmail(id)])
     const staff = await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(mails.map((m) => m.addedFrom).filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
     const people = Object.fromEntries(staff.map((s) => [s.id, { id: s.id, name: staffName(s), image: s.profileImage || null }]))
+    const { filesByMail } = await import('@/lib/crm/mailCatch')
+    const mailFiles = await filesByMail(mails)
     return {
         email, senders, can: { edit: a.edit },
-        mails: mails.map((m) => ({ id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.edit && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) })),
+        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.edit && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) })),
     }
 }
 

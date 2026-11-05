@@ -383,6 +383,14 @@ model CrmLeadEmailIntegration {
   /// create a task "Follow up" for the responsible person
   followUpTask             Boolean?
   followUpHours            Int?
+  /// emails from leads and client contacts that are not website forms go to their Mails tab (empty = yes)
+  catchReplies             Boolean?
+  /// hours before a reminder to answer such an email (0 = none, empty = 4)
+  replyReminderHours       Int?
+  /// a short automatic answer "we received your email"
+  autoReply                Boolean?
+  autoReplySubject         String?
+  autoReplyBody            String?
   markSeen                 Boolean?
   /// last email (UID) looked at, and the mailbox it belongs to
   lastUid                  Int?

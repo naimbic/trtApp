@@ -19,7 +19,7 @@ const Sw = ({ checked, onChange, children }) => <label className="flex items-cen
 const Group = ({ title, desc, children }) => <section className="mb-5"><h6 className="mb-0.5">{title}</h6>{desc && <p className="mb-3 text-xs text-gray-400">{desc}</p>}<div className="grid grid-cols-1 gap-4 md:grid-cols-2">{children}</div></section>
 const pick = (list, v) => list.find((o) => o.value === v) || null
 
-const blank = () => ({ active: true, email: '', imapServer: '', imapPort: '', imapUser: '', encryption: 'ssl', folder: 'INBOX', checkEvery: 5, password: '', hasPassword: false, leadSourceId: null, leadStatusId: null, responsible: null, markPublic: false, startFrom: dayjs().format('YYYY-MM-DD'), fromFilter: '', subjectFilter: '', bodyFilter: '', requireForm: true, fieldMap: '', createTaskIfCustomer: true, followUpTask: true, followUpHours: 24, markSeen: true, deleteAfterImport: false, onlyUnseen: false })
+const blank = () => ({ active: true, email: '', imapServer: '', imapPort: '', imapUser: '', encryption: 'ssl', folder: 'INBOX', checkEvery: 5, password: '', hasPassword: false, leadSourceId: null, leadStatusId: null, responsible: null, markPublic: false, startFrom: dayjs().format('YYYY-MM-DD'), fromFilter: '', subjectFilter: '', bodyFilter: '', requireForm: true, fieldMap: '', createTaskIfCustomer: true, followUpTask: true, followUpHours: 24, catchReplies: true, replyReminderHours: 4, autoReply: false, autoReplySubject: '', autoReplyBody: '', markSeen: true, deleteAfterImport: false, onlyUnseen: false })
 
 const MailDialog = ({ open, box, lookups, onClose, onSaved }) => {
     const [v, setV] = useState(blank())
@@ -69,6 +69,13 @@ const MailDialog = ({ open, box, lookups, onClose, onSaved }) => {
                     <div><Label hint={tr('hours to answer')}>{tr('Task due after')}</Label><Input type="number" min={0} disabled={!v.followUpTask} value={v.followUpHours} onChange={(e) => set({ followUpHours: e.target.value })} /></div>
                     <Sw checked={v.createTaskIfCustomer} onChange={(c) => set({ createTaskIfCustomer: c })}>{tr('When the sender is already a customer, create a task instead of a lead')}</Sw>
                     <Sw checked={v.markPublic} onChange={(c) => set({ markPublic: c })}>{tr('Make the leads public (everyone sees them)')}</Sw>
+                </Group>
+                <Group title={tr('Emails from your leads and clients')}>
+                    <Sw checked={v.catchReplies} onChange={(c) => set({ catchReplies: c })}>{tr('Keep their emails on the Mails tab (with the attached files and meeting invitations)')}</Sw>
+                    <div><Label hint={tr('hours, 0 = no reminder')}>{tr('Remind to answer after')}</Label><Input type="number" min={0} disabled={!v.catchReplies} value={v.replyReminderHours} onChange={(e) => set({ replyReminderHours: e.target.value })} /></div>
+                    <Sw checked={v.autoReply} onChange={(c) => set({ autoReply: c })}>{tr('Send an automatic answer: we received your email')}</Sw>
+                    <div><Label hint={tr('empty = Re: their subject')}>{tr('Answer subject')}</Label><Input disabled={!v.autoReply} value={v.autoReplySubject} onChange={(e) => set({ autoReplySubject: e.target.value })} /></div>
+                    <div className="md:col-span-2"><Label hint={tr('{name} is replaced by their name; empty = a short default text')}>{tr('Answer text')}</Label><Input textArea rows={4} disabled={!v.autoReply} value={v.autoReplyBody} onChange={(e) => set({ autoReplyBody: e.target.value })} placeholder={'Hello {name},\n\nThank you for your email: we received it, we will check your request and get back to you as soon as possible.'} /></div>
                 </Group>
                 <Group title={tr('After importing')}>
                     <Sw checked={v.markSeen} onChange={(c) => set({ markSeen: c })}>{tr('Mark the email as read')}</Sw>

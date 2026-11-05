@@ -6,6 +6,7 @@ import { simpleParser } from 'mailparser'
 import prisma from '@/lib/prisma'
 import { requireAnyPermission } from '@/lib/crm/permissions'
 import { seal, unseal } from '@/lib/crm/twoFactor'
+import { catchReply, autoReply } from '@/lib/crm/mailCatch'
 import { emailText, parseForm, judge, buildLead, customLabels, digits } from '@/lib/crm/leadMailCalc'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
@@ -21,7 +22,7 @@ const PUBLIC = (r) => ({
     folder: r.folder || 'INBOX', checkEvery: r.checkEvery || 5, hasPassword: !!(r.passwordEnc || r.password),
     leadSourceId: r.leadSourceId, leadStatusId: r.leadStatusId, responsible: r.responsible, markPublic: !!r.markPublic,
     startFrom: r.startFrom, fromFilter: r.fromFilter || '', subjectFilter: r.subjectFilter || '', bodyFilter: r.bodyFilter || '', requireForm: r.requireForm !== false,
-    fieldMap: r.fieldMap || '', createTaskIfCustomer: r.createTaskIfCustomer !== false, followUpTask: r.followUpTask !== false, followUpHours: r.followUpHours ?? 24,
+    fieldMap: r.fieldMap || '', createTaskIfCustomer: r.createTaskIfCustomer !== false, followUpTask: r.followUpTask !== false, followUpHours: r.followUpHours ?? 24, catchReplies: r.catchReplies !== false, replyReminderHours: r.replyReminderHours ?? 4, autoReply: !!r.autoReply, autoReplySubject: r.autoReplySubject || '', autoReplyBody: r.autoReplyBody || '',
     markSeen: r.markSeen !== false, deleteAfterImport: !!r.deleteAfterImport, onlyUnseen: !!r.onlyLoopOnUnseenEmails,
     lastRunAt: r.lastRunAt, lastResult: r.lastResult, lastError: r.lastError, importedCount: r.importedCount || 0,
 })
@@ -57,6 +58,7 @@ export async function saveMailbox(b, id) {
         startFrom: b.startFrom ? new Date(b.startFrom) : undefined,
         fromFilter: nz(b.fromFilter), subjectFilter: nz(b.subjectFilter), bodyFilter: nz(b.bodyFilter), requireForm: b.requireForm !== false, fieldMap: nz(b.fieldMap),
         createTaskIfCustomer: b.createTaskIfCustomer !== false, followUpTask: b.followUpTask !== false, followUpHours: Math.min(Math.max(Number(b.followUpHours ?? 24) || 0, 0), 24 * 30),
+        catchReplies: b.catchReplies !== false, replyReminderHours: Math.min(Math.max(Number(b.replyReminderHours ?? 4) || 0, 0), 24 * 14), autoReply: !!b.autoReply, autoReplySubject: nz(b.autoReplySubject), autoReplyBody: nz(b.autoReplyBody),
         markSeen: b.markSeen !== false, deleteAfterImport: !!b.deleteAfterImport, onlyLoopOnUnseenEmails: !!b.onlyUnseen,
     }
     if (nz(b.password)) data.passwordEnc = seal(String(b.password))
@@ -151,7 +153,7 @@ export async function readRaw(source, uid, cfg, custom, internalDate) {
         date: p.date || internalDate || new Date(),
     }
     const parsed = parseForm(text, custom)
-    return { msg, parsed, verdict: judge(msg, cfg, parsed) }
+    return { msg, parsed, verdict: judge(msg, cfg, parsed), mail: p }
 }
 
 /** What the reader would decide for the latest emails, without saving anything: to tune the filters. */
@@ -233,6 +235,7 @@ export async function importOne(cfg, r, dry) {
         await logMail(existing.id, cfg, msg)
         await activity(existing.id, 'Wrote again by email (added as a note)')
         if (!existing.clientId) await followUp(cfg, existing, `Follow up: ${existing.name} wrote again`, lead.description || '')
+        await autoReply(cfg, { to: lead.email, name: existing.name, subject: msg.subject, messageId: msg.messageId, mail: r.mail, leadId: existing.id }).catch(() => {})
         return { result: 'duplicate', reason: 'Already a lead: the message was added to it as a note', leadId: existing.id, lead }
     }
     const { status, source } = await defaults(cfg)
@@ -247,6 +250,7 @@ export async function importOne(cfg, r, dry) {
     await logMail(created.id, cfg, msg)
     await activity(created.id, `Lead imported from the mailbox ${cfg.email}`)
     await followUp(cfg, created, `Follow up: ${created.name}`, [lead.email, lead.phone, lead.company].filter(Boolean).join(' · ') + (lead.description ? `\n\n${lead.description}` : ''))
+    await autoReply(cfg, { to: lead.email, name: lead.name, subject: msg.subject, messageId: msg.messageId, mail: r.mail, leadId: created.id }).catch(() => {})
     return { result: 'imported', leadId: created.id, lead }
 }
 
@@ -256,7 +260,7 @@ export async function runMailbox(id, { dry = false, force = false } = {}) {
     if (!cfg) throw fail('Mailbox not found', 404)
     if (running.has(id)) return { ok: true, imported: 0, duplicates: 0, skipped: 0, message: 'Already checking this mailbox' }
     running.add(id)
-    const stat = { imported: 0, duplicates: 0, skipped: 0, looked: 0 }
+    const stat = { imported: 0, duplicates: 0, skipped: 0, looked: 0, caught: 0 }
     const custom = customLabels(cfg.fieldMap)
     const client = connection(cfg)
     let lastUid = cfg.lastUid ?? 0, error = null
@@ -279,6 +283,19 @@ export async function runMailbox(id, { dry = false, force = false } = {}) {
                 const log = { integrationId: id, messageId, uid, subject: (r.msg.subject || '').slice(0, 300), fromAddress: r.msg.fromAddress, receivedAt: r.msg.date }
                 const before = cfg.startFrom || cfg.createdAt
                 if (r.msg.date && new Date(r.msg.date) < new Date(before)) { stat.skipped++; if (!dry) await prisma.crmLeadEmailImport.create({ data: { ...log, result: 'skipped', reason: 'Received before the start date' } }); continue }
+                if (!r.verdict.ok && cfg.catchReplies !== false) {
+                    // not a website form: when a lead or a client wrote it, it belongs on their Mails tab
+                    const c = await catchReply(cfg, r, { dry }).catch((e) => { console.error('[mail catch]', e); return { caught: false, reason: `Could not keep it: ${String(e.message).slice(0, 120)}` } })
+                    if (c.caught) {
+                        stat.caught++
+                        if (!dry) {
+                            await prisma.crmLeadEmailImport.create({ data: { ...log, result: 'caught', reason: c.reason, leadId: c.kind === 'lead' ? c.id : null } })
+                            if (cfg.markSeen !== false) await client.messageFlagsAdd(uid, ['\\Seen'], { uid: true }).catch(() => {})
+                        }
+                        continue
+                    }
+                    r.verdict = { ...r.verdict, reason: `${r.verdict.reason} · ${c.reason}` }
+                }
                 if (!r.verdict.ok) { stat.skipped++; if (!dry) await prisma.crmLeadEmailImport.create({ data: { ...log, result: 'skipped', reason: r.verdict.reason } }); continue }
                 try {
                     const out = await importOne(cfg, r, dry)
@@ -293,7 +310,7 @@ export async function runMailbox(id, { dry = false, force = false } = {}) {
             if (!dry) await prisma.crmLeadEmailIntegration.update({ where: { id }, data: { uidValidity: validity, lastUid: lastUid || cfg.lastUid || null } })
         } finally { lock.release() }
     } catch (e) { error = why(e) } finally { await client.logout().catch(() => {}); running.delete(id) }
-    const message = error || `${stat.imported} new lead${stat.imported === 1 ? '' : 's'}, ${stat.duplicates} already known, ${stat.skipped} not a lead (${stat.looked} email${stat.looked === 1 ? '' : 's'} read)`
+    const message = error || `${stat.imported} new lead${stat.imported === 1 ? '' : 's'}, ${stat.caught} repl${stat.caught === 1 ? 'y' : 'ies'} kept on Mails, ${stat.duplicates} already known, ${stat.skipped} not a lead (${stat.looked} email${stat.looked === 1 ? '' : 's'} read)`
     if (!dry) await prisma.crmLeadEmailIntegration.update({ where: { id }, data: { lastRunAt: new Date(), lastResult: error ? null : message, lastError: error, importedCount: (cfg.importedCount || 0) + stat.imported } })
     void force
     return { ok: !error, ...stat, message }

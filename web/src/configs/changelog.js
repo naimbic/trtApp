@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.182.2',
+        date: '2026-11-05',
+        title: 'Direct emails are also matched by the company name',
+        items: [
+            'When the sender is neither a known address nor a known domain, the email is matched by name: the company name in the domain (info@strasforma.ch) or the sender\'s display name against the name or company of a lead or client. Only when exactly one lead or client has that name; webmail senders (Gmail, Outlook...) are matched by their display name only. The Activity log says "matched by its company domain or name".',
+        ],
+    },
+    {
         version: '0.182.1',
         date: '2026-11-05',
         title: 'Roles & permissions: the password vault is easy to find, every permission is explained',

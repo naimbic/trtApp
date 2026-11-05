@@ -25,7 +25,7 @@ export async function eventRemindersJob({ lines, dry }) {
         const staff = staffIds.length ? await prisma.crmStaff.findMany({ where: { id: { in: staffIds }, active: true }, select: { id: true } }) : []
         for (const s of staff) {
             await prisma.crmNotification.create({ data: { toUserId: s.id, fromFullName: '⏰ Reminder', description: `In ${inText}: ${e.title}`.slice(0, 200), link: `/calendar?event=${e.id}`, additionalData: 'event-reminder', isRead: false } }).catch(() => {})
-            notifyNotice(s.id, { kind: 'calendar', headlineKey: 'startsIn', vars: { when: inText }, title: e.title, link: '/calendar', rows: [[e.meetingUrl ? 'Link' : '', e.meetingUrl || ''], [e.location ? '📍' : '', e.location || '']].filter(([k]) => k) })
+            notifyNotice(s.id, { kind: 'calendar', headlineKey: 'startsIn', vars: { when: inText }, title: e.title, link: `/calendar?event=${e.id}`, rows: [[e.meetingUrl ? 'Link' : '', e.meetingUrl || ''], [e.location ? '📍' : '', e.location || '']].filter(([k]) => k) })
         }
         // the client, the lead and the guests
         let mailed = 0

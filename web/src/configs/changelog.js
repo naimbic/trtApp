@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.179.2',
+        date: '2026-11-05',
+        title: 'Event reminder emails open the event',
+        items: [
+            'The link in an event reminder email now opens that event in the Calendar, like the in-app notification.',
+        ],
+    },
+    {
         version: '0.179.1',
         date: '2026-11-05',
         title: 'A meeting notification opens the meeting popup',

@@ -81,7 +81,7 @@ const LeadsBoard = () => {
     const patch = async (item, change, ok) => {
         try {
             const l = (await api(`/api/crm/pipeline/leads/${item.id}`)).lead
-            const keys = ['name', 'doText', 'title', 'company', 'email', 'phone', 'website', 'description', 'address', 'city', 'state', 'zip', 'sourceId', 'statusId', 'assignedIds', 'isPublic', 'lastContact']
+            const keys = ['name', 'doText', 'title', 'company', 'email', 'phone', 'website', 'description', 'address', 'city', 'state', 'zip', 'country', 'sourceId', 'statusId', 'assignedIds', 'isPublic', 'lastContact']
             await api(`/api/crm/pipeline/leads/${item.id}`, { method: 'PUT', body: { ...Object.fromEntries(keys.map((k) => [k, l[k] ?? null])), ...(typeof change === 'function' ? change(l) : change) } })
             notify('success', ok); load()
         } catch (e) { notify('danger', e.message) }

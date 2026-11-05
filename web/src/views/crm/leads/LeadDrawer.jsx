@@ -29,7 +29,7 @@ import { tr } from '@/utils/t'
 import useTabParam from '@/utils/useTabParam'
 
 const LEAD_LANGUAGES = [['english', 'English'], ['french', 'Français'], ['arabic', 'العربية'], ['spanish', 'Español'], ['german', 'Deutsch'], ['italian', 'Italiano'], ['portuguese', 'Português'], ['dutch', 'Nederlands'], ['turkish', 'Türkçe'], ['russian', 'Русский'], ['japanese', '日本語']].map(([value, label]) => ({ value, label }))
-const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false, defaultLanguage: '' }
+const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', country: null, sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false, defaultLanguage: '' }
 const L = ({ children }) => <label className="mb-1 block text-xs font-semibold text-gray-500 dark:text-gray-400">{children}</label>
 
 const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("Sent"), 5: tr("Revised"), 6: tr("Draft") }
@@ -43,7 +43,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const [replyTo, setReplyTo] = useState(null)
     const editorRef = useRef(null)
     const [detail, setDetail] = useState(null)
-    const [lk, setLk] = useState({ statuses: [], sources: [] })
+    const [lk, setLk] = useState({ statuses: [], sources: [], countries: [] })
     const [saving, setSaving] = useState(false)
     const [confirm, setConfirm] = useState(null)
     const [withNotes, setWithNotes] = useState(true)
@@ -63,7 +63,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             const d = await api(`/api/crm/pipeline/leads/${id}`)
             setDetail(d)
             const l = d.lead
-            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: d.followerIds || l.followerIds || [], isPublic: !!l.isPublic, defaultLanguage: l.defaultLanguage || '' })
+            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', country: l.country ?? null, sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: d.followerIds || l.followerIds || [], isPublic: !!l.isPublic, defaultLanguage: l.defaultLanguage || '' })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (!open) return; setDetail(null); setNote(''); setReplyTo(null); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
@@ -107,12 +107,13 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div><L>{tr("Position")}</L><Input size={sz} disabled={!canEdit} value={v.title} onChange={(e) => set({ title: e.target.value })} /></div>
                 </div>
             </FoldSection>
-            <FoldSection icon={<TbMapPin />} tone="amber" title={tr("Address")} open={openSec.includes('address')} onToggle={() => toggleSec('address')} summary={[v.address, v.city, v.state, v.zip].filter(Boolean).join(', ')}>
+            <FoldSection icon={<TbMapPin />} tone="amber" title={tr("Address")} open={openSec.includes('address')} onToggle={() => toggleSec('address')} summary={[v.address, v.city, v.state, v.zip, (lk.countries || []).find((o) => o.value === v.country)?.label].filter(Boolean).join(', ')}>
                 <div className="grid grid-cols-6 gap-3">
                     <div className="col-span-6"><L>{tr("Address")}</L><Input size={sz} disabled={!canEdit} value={v.address} onChange={(e) => set({ address: e.target.value })} /></div>
                     <div className="col-span-3"><L>{tr("City")}</L><Input size={sz} disabled={!canEdit} value={v.city} onChange={(e) => set({ city: e.target.value })} /></div>
-                    <div className="col-span-2"><L>{tr("State")}</L><Input size={sz} disabled={!canEdit} value={v.state} onChange={(e) => set({ state: e.target.value })} /></div>
-                    <div className="col-span-1"><L>{tr("ZIP")}</L><Input size={sz} disabled={!canEdit} value={v.zip} onChange={(e) => set({ zip: e.target.value })} /></div>
+                    <div className="col-span-3"><L>{tr("State")}</L><Input size={sz} disabled={!canEdit} value={v.state} onChange={(e) => set({ state: e.target.value })} /></div>
+                    <div className="col-span-2"><L>{tr("ZIP")}</L><Input size={sz} disabled={!canEdit} value={v.zip} onChange={(e) => set({ zip: e.target.value })} /></div>
+                    <div className="col-span-4"><L>{tr("Country")}</L><Select size={sz} isClearable isDisabled={!canEdit} placeholder={tr("Country")} options={lk.countries || []} value={(lk.countries || []).find((o) => o.value === v.country) || null} onChange={(o) => set({ country: o ? o.value : null })} /></div>
                 </div>
             </FoldSection>
             <FoldSection icon={<TbFileText />} tone="violet" title={tr("Description")} open={openSec.includes('about')} onToggle={() => toggleSec('about')} summary={plainOf(v.description || '').replace(/\s+/g, ' ').slice(0, 140)}>

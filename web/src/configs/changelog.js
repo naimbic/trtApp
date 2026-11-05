@@ -2,6 +2,23 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.183.0',
+        date: '2026-11-05',
+        title: 'Lead address: Country next to the ZIP code',
+        items: [
+            'The Address of a lead now has a Country (same list as the clients), next to the ZIP code, and it shows in the address summary.',
+        ],
+    },
+    {
+        version: '0.182.3',
+        date: '2026-11-05',
+        title: 'Direct emails: the people in copy count, and the log explains ambiguous companies',
+        items: [
+            'An email is now also matched through the other addresses it was sent to or copied to: a colleague of the lead writes and the lead\'s own address is only in copy (Cc), the email still goes to that lead\'s Mails tab.',
+            'When several leads or clients use the same company domain and nothing else tells which one, the Activity log and the Preview say so and tell you what to fix (put the sender, or the person in copy, as the email of the right lead or contact) instead of "not a lead".',
+        ],
+    },
+    {
         version: '0.182.2',
         date: '2026-11-05',
         title: 'Direct emails are also matched by the company name',

@@ -138,7 +138,7 @@ export async function getLead(id) {
     const mailComments = await commentsByMail(mails)
     const people = await staffMap([...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...notes.flatMap((n) => Object.values(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).flat()), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
     return {
-        lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), followerIds: l.followerIds || [], addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
+        lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, country: l.country ?? null, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), followerIds: l.followerIds || [], addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
         notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canEdit: mayChangeItem(a, n.addedFrom, 'notes'), canDelete: mayDropItem(a, n.addedFrom), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000, replyToId: n.replyToId || null,
             reactions: Object.entries(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!a.staffId && ids.includes(a.staffId), names: ids.filter((i) => i !== a.staffId).map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count) })),
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
@@ -158,7 +158,7 @@ export async function saveLead(body, id) {
     if (!name) throw fail('Give the lead a name')
     const email = nz(body.email)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fail('That email address does not look right')
-    const data = { ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: cleanWebsite(body.website) || null, description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), ...(body.defaultLanguage !== undefined ? { defaultLanguage: LANGUAGES.includes(String(body.defaultLanguage || '').toLowerCase()) ? String(body.defaultLanguage).toLowerCase() : null } : {}), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
+    const data = { ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), ...(body.country !== undefined ? { country: body.country === null || body.country === '' ? null : Number(body.country) || null } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: cleanWebsite(body.website) || null, description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), ...(body.defaultLanguage !== undefined ? { defaultLanguage: LANGUAGES.includes(String(body.defaultLanguage || '').toLowerCase()) ? String(body.defaultLanguage).toLowerCase() : null } : {}), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
     if (id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)
@@ -584,10 +584,12 @@ export async function deleteLead(id) {
 
 export async function leadLookups() {
     await requirePermission('leads', 'view')
-    const [staff, statuses, sources] = await Promise.all([
+    const [staff, statuses, sources, countryRows] = await Promise.all([
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }),
         prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' }, select: { id: true, name: true, color: true, isActive: true } }),
         prisma.crmLeadSource.findMany({ orderBy: [{ sourceOrder: 'asc' }, { name: 'asc' }], select: { id: true, name: true, color: true, isActive: true } }),
+        prisma.crmCountry.findMany({ orderBy: { shortName: 'asc' }, select: { legacyId: true, shortName: true, longName: true, iso2: true } }),
     ])
-    return { staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), statuses, sources }
+    const countries = countryRows.filter((c) => c.legacyId != null).map((c) => ({ value: c.legacyId, label: c.shortName || c.longName || c.iso2 }))
+    return { countries, staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), statuses, sources }
 }

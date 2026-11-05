@@ -90,8 +90,8 @@ export const CommentFoot = ({ reactions = [], onReact, onMention, remind, ...too
         {reactions.map((r) => (
             <button key={r.emoji} type="button" title={r.names.join(', ')} onClick={() => onReact?.(r.emoji)} className={classNames('flex h-6 items-center gap-1 rounded-full border px-2 text-xs transition', r.mine ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:border-primary dark:border-gray-600 dark:text-gray-300')}><span className="text-sm leading-none">{r.emoji}</span>{r.count}</button>
         ))}
+        {onReact && <EmojiPicker title={tr('React')} onPick={onReact} className="!size-6" />}
         <div className="flex items-center gap-0.5 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
-            {onReact && <EmojiPicker title={tr('React')} onPick={onReact} className="!size-6" />}
             {onMention && <MentionPick onPick={onMention} />}
             {remind && <RemindMe iconOnly relType={remind.relType} relId={remind.relId} initialNote={remind.note} tab={remind.tab} />}
             <CommentTools inline {...tools} />

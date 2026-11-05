@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.180.1',
+        date: '2026-11-05',
+        title: 'The emoji reaction button is always visible on comments',
+        items: [
+            'The emoji button under every task and lead comment is shown all the time (not only on hover), next to the reactions already given.',
+        ],
+    },
+    {
         version: '0.180.0',
         date: '2026-11-05',
         title: 'Sent comments: tag a colleague and set a reminder from the hover row',

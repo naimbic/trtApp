@@ -97,6 +97,7 @@ export async function getCalendarItems({ from, to }) {
             rawEnd: iso(e.end),
             location: e.location || '',
             meetingUrl: e.meetingUrl || '',
+            files: Array.isArray(e.files) ? e.files : [],
             clientId: e.clientId || null,
             clientName: e.clientId ? clientName[e.clientId] || '' : '',
             leadId: e.leadId || null,
@@ -202,6 +203,15 @@ export const REMINDER_TEMPLATES = [
     { slug: 'event-reminder-starting', label: 'Starting soon: join now' },
 ]
 
+/** Files and links of an event: at most 20, each with a name and an address from this site or over http(s). */
+const cleanFiles = (list) => (Array.isArray(list) ? list : []).slice(0, 20).map((f) => {
+    const url = String(f?.url || '').trim().slice(0, 600)
+    if (!/^(https?:\/\/|\/(?!\/))/i.test(url)) return null
+    const link = !!f.link
+    const name = String(f.name || '').trim().slice(0, 160) || (link ? url.replace(/^https?:\/\//i, '').slice(0, 80) : 'File')
+    return { name, url, kind: ['image', 'audio', 'video', 'pdf', 'doc', 'sheet', 'text', 'archive', 'file'].includes(f.kind) ? f.kind : 'file', link }
+}).filter(Boolean)
+
 const clean = (b) => {
     const title = String(b.title || '').trim()
     if (!title) throw Object.assign(new Error('Title is required'), { status: 400 })
@@ -220,6 +230,7 @@ const clean = (b) => {
         allDay: !!b.allDay,
         location: String(b.location || '').trim() || null,
         meetingUrl: meetingUrl || null,
+        files: cleanFiles(b.files),
         report: b.report ? storeRich(String(b.report), 40000) : null,
         confirmed: !!b.confirmed,
         remindClient: !!b.remindClient,
@@ -274,7 +285,7 @@ async function ownEvent(id) {
 
 export async function updateCalendarEvent(id, body) {
     const ev = await ownEvent(id)
-    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, report: ev.report, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, leadId: ev.leadId, confirmed: ev.confirmed, remindClient: ev.remindClient, reminderTemplate: ev.reminderTemplate }
+    const current = { title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, report: ev.report, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, files: ev.files, report: ev.report, category: ev.category, projectId: ev.projectId, clientId: ev.clientId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, leadId: ev.leadId, confirmed: ev.confirmed, remindClient: ev.remindClient, reminderTemplate: ev.reminderTemplate }
     const data = clean({ ...current, ...body })
     // a new time or a new reminder: the reminder is due again
     const moved = +new Date(data.start) !== +new Date(ev.start) || data.reminderBefore !== ev.reminderBefore || data.reminderBeforeType !== ev.reminderBeforeType

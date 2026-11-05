@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { components } from 'react-select'
-import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand, TbNotes, TbNotebook } from 'react-icons/tb'
+import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand, TbNotes, TbNotebook, TbPaperclip, TbFile, TbLink, TbX, TbPlus } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -57,6 +57,59 @@ const googleLink = (v) => {
     return `https://calendar.google.com/calendar/render?${q}`
 }
 // the company's own video server
+/** Files uploaded to an event, or links added as if they were files. */
+const EventFiles = ({ files = [], onChange, readOnly }) => {
+    const ref = useRef(null)
+    const [busy, setBusy] = useState(false)
+    const [link, setLink] = useState('')
+    const upload = async (list) => {
+        setBusy(true)
+        try {
+            const out = []
+            for (const f of list) {
+                const fd = new FormData(); fd.append('file', f)
+                const r = await fetch('/api/crm/media/inline', { method: 'POST', body: fd, credentials: 'include' })
+                const j = await r.json().catch(() => ({}))
+                if (!r.ok) throw new Error(j.error || tr('Upload failed, try again'))
+                out.push({ name: j.name || f.name, url: j.url, kind: j.kind || 'file', link: false })
+            }
+            onChange([...files, ...out])
+        } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+    }
+    const add = () => {
+        const u = /^https?:\/\//i.test(link.trim()) ? link.trim() : link.trim() ? `https://${link.trim()}` : ''
+        if (!u) return
+        try { new URL(u) } catch { return notify('danger', tr('Paste a full web address')) }
+        onChange([...files, { name: u.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, ''), url: u, kind: 'file', link: true }])
+        setLink('')
+    }
+    return (
+        <div className="space-y-2">
+            {files.length > 0 && (
+                <ul className="space-y-1">
+                    {files.map((f, i) => (
+                        <li key={`${f.url}${i}`} className="flex items-center gap-2 rounded-lg bg-gray-100 px-2.5 py-1.5 text-sm dark:bg-gray-700/50">
+                            {f.kind === 'image' && !f.link ? <img src={f.url} alt="" className="size-6 rounded object-cover" loading="lazy" /> : <TbFile className="shrink-0 text-lg text-gray-500" />}
+                            <a href={f.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate font-medium hover:underline" title={f.url}>{f.name}</a>
+                            {!readOnly && <button type="button" aria-label={tr('Remove')} onClick={() => onChange(files.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500"><TbX /></button>}
+                        </li>
+                    ))}
+                </ul>
+            )}
+            {!readOnly && (
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button type="button" size="sm" icon={<TbPaperclip />} loading={busy} onClick={() => ref.current?.click()}>{tr('Add a file')}</Button>
+                    <input ref={ref} type="file" multiple className="hidden" onChange={(e) => { upload([...e.target.files]); e.target.value = '' }} />
+                    <div className="flex min-w-[12rem] flex-1 gap-1.5">
+                        <Input size="sm" prefix={<TbLink />} placeholder={tr('…or paste a link')} value={link} onChange={(e) => setLink(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }} />
+                        <Button type="button" size="sm" icon={<TbPlus />} disabled={!link.trim()} onClick={add}>{tr('Add')}</Button>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
 const MEET_HOST = 'https://meet.trtcrm.com'
 const jitsi = () => `${MEET_HOST}/TRT-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`
 
@@ -64,7 +117,7 @@ const jitsi = () => `${MEET_HOST}/TRT-${Math.random().toString(36).slice(2, 8)}-
 const ROOMS = [['discovery_call', 'Discovery call'], ['proposal_review', 'Proposal review'], ['contract_signing', 'Contract signing'], ['client_checkin', 'Client check-in'], ['internal', 'Internal'], ['interview', 'Interview']]
 const roomUrl = (name) => `${MEET_HOST}/${String(name || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60)}`
 
-const EMPTY = { report: '', confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: true, allDay: false, location: '', meetingUrl: '', clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
+const EMPTY = { report: '', confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: true, allDay: false, location: '', meetingUrl: '', files: [], clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
 const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], saving, onSubmit, onDelete, onClose, onDecided }) => {
@@ -97,6 +150,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
             projectId: selected.projectId || null,
             location: selected.location || '',
             meetingUrl: selected.meetingUrl || '',
+            files: selected.files || [],
             clientId: selected.clientId || null,
             leadId: selected.leadId || null,
             aboutType: selected.leadId ? 'lead' : 'client',
@@ -131,7 +185,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
         const end = v.allDay ? noon(v.end || v.start) : v.end
         onSubmit({
             title: v.title.trim(), description: v.description, start: start.toISOString(), end: end ? end.toISOString() : null, color: v.color, isPublic: v.isPublic,
-            allDay: v.allDay, category: v.category, projectId: v.projectId, location: v.location, meetingUrl: v.meetingUrl.trim(), clientId: v.aboutType === 'client' ? v.clientId : null, leadId: v.aboutType === 'lead' ? v.leadId : null, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
+            allDay: v.allDay, category: v.category, projectId: v.projectId, location: v.location, meetingUrl: v.meetingUrl.trim(), files: v.files, clientId: v.aboutType === 'client' ? v.clientId : null, leadId: v.aboutType === 'lead' ? v.leadId : null, attendeeIds: v.attendeeIds, attendeeEmails: v.attendeeEmails,
             report: v.report || '', confirmed: v.confirmed, remindClient: v.remindClient && hasWho && v.reminderBefore !== '', reminderTemplate: v.reminderTemplate || null,
             reminderBefore: v.reminderBefore === '' ? null : Number(v.reminderBefore), reminderBeforeType: v.reminderBeforeType,
             notifyRequester: tell && selected.status !== 'draft', requesterMessage: tell ? note.trim() : undefined,
@@ -219,6 +273,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
                         )}
                         {!readOnly && <p className="mt-1 text-xs text-gray-400"><b>{tr("Create")}</b> {tr("makes a video room on meet.trtcrm.com. For Google Meet use")} <a className="text-primary underline" href="https://meet.new" target="_blank" rel="noreferrer">{tr("meet.new")}</a> {tr("and paste the link.")}</p>}
                     </FormItem>
+                    <FormItem label={tr("Files or links")}><EventFiles files={v.files} readOnly={readOnly} onChange={(files) => set({ files })} /></FormItem>
                     <FormItem label={tr("Location")}><Input placeholder={tr("Office, address…")} value={v.location} onChange={(e) => set({ location: e.target.value })} /></FormItem>
                         </FoldSection>
                         <FoldSection icon={<TbNotes />} tone="amber" title={tr("Details")} summary={detailsText} open={sec === 'more'} onToggle={() => toggle('more')}>

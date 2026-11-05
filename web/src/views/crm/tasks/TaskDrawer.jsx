@@ -24,6 +24,7 @@ import RelationSelect from '../kit/RelationSelect'
 import { STATUS, PRIORITY, REL_TYPES, People, duration, initials, useTaskStatuses } from './shared'
 import Avatar from '@/components/ui/Avatar'
 import { tr } from '@/utils/t'
+import useTabParam from '@/utils/useTabParam'
 
 const EMPTY = { name: '', description: '', status: 1, priority: 2, startDate: null, dueDate: null, relType: null, relId: null, assigneeIds: [], followerIds: [], billable: false, isPublic: false, visibleToClient: false, hourlyRate: 0, recurring: false, recurringType: 'month', repeatEvery: 1, totalCycles: 0 }
 const toDate = (d) => (d ? new Date(d) : null)
@@ -34,6 +35,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     useTaskStatuses()
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
+    const [tabV, setTabV] = useTabParam(['details', 'checklist', 'comments', 'files', 'time'], 'details')
     const [saving, setSaving] = useState(false)
     const [confirmDel, setConfirmDel] = useState(false)
     const [item, setItem] = useState('')
@@ -230,7 +232,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                         </div>
                     )}
                     {detail.task.assignees.length > 0 && <div className="mb-3 flex items-center gap-2 text-sm text-gray-500"><People list={detail.task.assignees} max={5} size={28} />{detail.task.rel?.label && <span>· {detail.task.rel.label}</span>}</div>}
-                    <Tabs defaultValue="details">
+                    <Tabs value={tabV} onChange={setTabV}>
                         <Tabs.TabList>
                             <Tabs.TabNav value="details">{tr("Details")}</Tabs.TabNav>
                             <Tabs.TabNav value="checklist">{tr("Checklist")}{detail.checklist.length ? ` (${detail.checklist.filter((c) => c.finished).length}/${detail.checklist.length})` : ''}</Tabs.TabNav>

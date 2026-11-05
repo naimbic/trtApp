@@ -23,6 +23,7 @@ import { People } from '../tasks/shared'
 import { LeadTasks, LeadMails, LeadMeetings } from './LeadTabs'
 import { useCan } from '../kit/api'
 import { tr } from '@/utils/t'
+import useTabParam from '@/utils/useTabParam'
 
 const LEAD_LANGUAGES = [['english', 'English'], ['french', 'Français'], ['arabic', 'العربية'], ['spanish', 'Español'], ['german', 'Deutsch'], ['italian', 'Italiano'], ['portuguese', 'Português'], ['dutch', 'Nederlands'], ['turkish', 'Türkçe'], ['russian', 'Русский'], ['japanese', '日本語']].map(([value, label]) => ({ value, label }))
 const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false, defaultLanguage: '' }
@@ -34,6 +35,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const nav = useNavigate()
     const can = useCan()
     const [v, setV] = useState(EMPTY)
+    const [tabV, setTabV] = useTabParam(['profile', 'tasks', 'mails', 'meetings', 'files', 'notes', 'related', 'activity'], 'profile')
     const [editingNote, setEditingNote] = useState(null)
     const [detail, setDetail] = useState(null)
     const [lk, setLk] = useState({ statuses: [], sources: [] })
@@ -116,7 +118,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     const notes = detail && (
         <div className="space-y-4">
-            <div className="space-y-2"><RichEditor minHeight={90} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={setNote} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note } }).then(() => setNote('')), tr("Note added"))}>{tr("Add note")}</Button></div>
+            <div className="space-y-2"><RichEditor minHeight={90} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={setNote} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note } }).then(() => setNote('')), tr("Note added"))}>{tr("Add comment")}</Button></div>
             {detail.notes.map((n) => (
                 <div key={n.id} className="group relative rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
                     <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{dayjs(n.date).format('DD MMM YYYY, HH:mm')}{n.edited ? ` · ${tr('edited')}` : ''}</span></div>
@@ -126,7 +128,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     {editingNote !== n.id && <CommentTools share={{ url: `/crm/leads/${id}`, title: l?.name, text: `${n.by?.name ? `${n.by.name}: ` : ''}${plainOf(n.content)}` }} onReply={() => setNote((x) => x || (n.by?.name ? `@${n.by.name} ` : ''))} onEdit={n.canEdit ? () => setEditingNote(n.id) : null} onDelete={n.canDelete ? () => run(() => api(`/api/crm/pipeline/leads/${id}/notes?noteId=${n.id}`, { method: 'DELETE' })) : null} />}
                 </div>
             ))}
-            {!detail.notes.length && <p className="text-sm text-gray-500">{tr("No notes yet.")}</p>}
+            {!detail.notes.length && <p className="text-sm text-gray-500">{tr("No comments yet.")}</p>}
         </div>
     )
 
@@ -179,15 +181,15 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             {edit && !detail ? <div className="py-10 text-center text-gray-500">{tr("Loading…")}</div> : edit ? (
                 <>
                     {headerBadges}
-                    <Tabs defaultValue="profile">
+                    <Tabs value={tabV} onChange={setTabV}>
                         <Tabs.TabList>
                             <Tabs.TabNav value="profile">{tr("Profile")}</Tabs.TabNav>
                             {can('tasks', 'view') && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
                             <Tabs.TabNav value="mails">{tr("Mails")}{detail.mails.length ? ` (${detail.mails.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="meetings">{tr("Meetings")}{detail.meetings.length ? ` (${detail.meetings.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
-                            <Tabs.TabNav value="notes">{tr("Notes")}{detail.notes.length ? ` (${detail.notes.length})` : ''}</Tabs.TabNav>
-                            <Tabs.TabNav value="related">{tr("Related")}{detail.proposals.length ? ` (${detail.proposals.length})` : ''}</Tabs.TabNav>
+                            <Tabs.TabNav value="notes">{tr("Comments")}{detail.notes.length ? ` (${detail.notes.length})` : ''}</Tabs.TabNav>
+                            <Tabs.TabNav value="related">{tr("Offers")}{detail.proposals.length ? ` (${detail.proposals.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
                         </Tabs.TabList>
                         <div className="pt-4">

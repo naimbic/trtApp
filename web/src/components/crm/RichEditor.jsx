@@ -15,11 +15,11 @@ import Color from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
 import TextAlign from '@tiptap/extension-text-align'
 import { createPortal } from 'react-dom'
-import { Extension } from '@tiptap/core'
+import { Extension, Node } from '@tiptap/core'
 import { Plugin } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { mentionDirectory } from '@/utils/mentions'
-import { TbAt, TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPhoto, TbTable, TbColumnInsertRight, TbRowInsertBottom, TbColumnRemove, TbRowRemove, TbTableOff, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
+import { TbAt, TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPaperclip, TbTable, TbColumnInsertRight, TbRowInsertBottom, TbColumnRemove, TbRowRemove, TbTableOff, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
 import { notify } from '@/views/crm/kit/api'
@@ -34,8 +34,19 @@ const uploadImage = async (file) => {
     const r = await fetch('/api/crm/media/inline', { method: 'POST', body: fd, credentials: 'include' })
     const j = await r.json().catch(() => ({}))
     if (!r.ok) throw new Error(j.error || tr('Upload failed, try again'))
-    return j.url
+    return j
 }
+
+/** A voice note or song inside the text: a player, stored as <audio src>. */
+const Audio = Node.create({
+    name: 'audio',
+    group: 'block',
+    atom: true,
+    draggable: true,
+    addAttributes() { return { src: { default: null } } },
+    parseHTML() { return [{ tag: 'audio[src]' }] },
+    renderHTML({ HTMLAttributes }) { return ['audio', { controls: 'true', preload: 'none', src: HTMLAttributes.src, style: 'width:100%;max-width:340px' }] },
+})
 
 const TEXT_COLORS = ['#111827', '#6b7280', '#dc2626', '#ea580c', '#d97706', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777']
 const MARK_COLORS = ['#fef08a', '#fed7aa', '#fecaca', '#bbf7d0', '#a5f3fc', '#bfdbfe', '#ddd6fe', '#fbcfe8']
@@ -121,11 +132,20 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     const namesRef = useRef([])
     mref.current = { mention, active }
 
+    // pictures show as pictures, audio as a player, everything else as a link with a paperclip
     const insertImages = useCallback(async (files, editor) => {
-        const list = [...files].filter((f) => f.type.startsWith('image/'))
+        const list = [...files]
         if (!list.length) return false
         setBusy(true)
-        try { for (const f of list) { const url = await uploadImage(f); editor.chain().focus().setImage({ src: url, alt: f.name.replace(/\.[^.]+$/, '') }).run() } } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+        try {
+            for (const f of list) {
+                const j = await uploadImage(f)
+                const kind = j.kind || (f.type.startsWith('image/') ? 'image' : f.type.startsWith('audio/') ? 'audio' : 'file')
+                if (kind === 'image') editor.chain().focus().setImage({ src: j.url, alt: f.name.replace(/\.[^.]+$/, '') }).run()
+                else if (kind === 'audio') editor.chain().focus().insertContent([{ type: 'audio', attrs: { src: j.url } }, { type: 'paragraph' }]).run()
+                else editor.chain().focus().insertContent([{ type: 'text', text: `📎 ${j.name || f.name}`, marks: [{ type: 'link', attrs: { href: j.url } }] }, { type: 'text', text: ' ' }]).run()
+            }
+        } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
         return true
     }, [])
 
@@ -140,6 +160,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
             mentionMarks(() => namesRef.current),
             Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
             Image.configure({ inline: false }),
+            Audio,
             Table.configure({ resizable: false }),
             TableRow,
             TableHeader,
@@ -150,8 +171,8 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
         editable: !disabled,
         autofocus: autoFocus ? 'end' : false,
         editorProps: {
-            handlePaste: (view, e) => { const f = images ? e.clipboardData?.files : null; if (f?.length && [...f].some((x) => x.type.startsWith('image/'))) { insertImages(f, editorRef.current); return true } return false },
-            handleDrop: (view, e) => { const f = images ? e.dataTransfer?.files : null; if (f?.length && [...f].some((x) => x.type.startsWith('image/'))) { e.preventDefault(); insertImages(f, editorRef.current); return true } return false },
+            handlePaste: (view, e) => { const f = images ? e.clipboardData?.files : null; if (f?.length) { insertImages(f, editorRef.current); return true } return false },
+            handleDrop: (view, e) => { const f = images ? e.dataTransfer?.files : null; if (f?.length) { e.preventDefault(); insertImages(f, editorRef.current); return true } return false },
             handleKeyDown: (view, e) => {
                 const { mention: m, active: a } = mref.current
                 // Enter sends (Shift+Enter is a new line) when the parent asks for it, as in a chat
@@ -242,16 +263,16 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <EmojiPicker onPick={(e) => editor.chain().focus().insertContent(e).run()} />
                     <Btn title={tr('Link')} active={editor.isActive('link')} on={link}><TbLink /></Btn>
                     <Btn title={tr('Clear formatting')} on={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><TbClearFormatting /></Btn>
-                    {images && <Btn title={tr('Picture')} disabled={busy} on={() => fileRef.current?.click()}><TbPhoto /></Btn>}
+                    {images && <Btn title={tr('Picture, file or audio')} disabled={busy} on={() => fileRef.current?.click()}><TbPaperclip /></Btn>}
                     <span className="ml-auto flex gap-0.5">
                         <Btn title={tr('Undo')} disabled={!editor.can().undo()} on={() => editor.chain().focus().undo().run()}><TbArrowBackUp /></Btn>
                         <Btn title={tr('Redo')} disabled={!editor.can().redo()} on={() => editor.chain().focus().redo().run()}><TbArrowForwardUp /></Btn>
                     </span>
-                    <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { insertImages(e.target.files, editor); e.target.value = '' }} />
+                    <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => { insertImages(e.target.files, editor); e.target.value = '' }} />
                 </div>
             )}
             <EditorContent editor={editor} className={classNames('rich-editor px-3 py-2 text-sm', STYLE)} style={{ minHeight }} />
-            {busy && <div className="border-t border-gray-100 px-3 py-1 text-xs text-gray-400 dark:border-gray-700">{tr('Uploading the picture…')}</div>}
+            {busy && <div className="border-t border-gray-100 px-3 py-1 text-xs text-gray-400 dark:border-gray-700">{tr('Uploading…')}</div>}
             {mention && <MentionBox kind={mention.kind} items={mention.items} active={active} setActive={setActive} rect={mention.rect} onPick={(it) => pick(mention, it)} />}
         </div>
     )

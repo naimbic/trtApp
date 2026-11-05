@@ -215,7 +215,7 @@ const Calendar = () => {
             open: true,
             selected: {
                 type: 'EDIT', id: p.rawId, title: p.rawTitle, description: p.description, start: p.rawStart, end: p.rawEnd, allDay: p.allDay,
-                eventColor: p.eventColor, baseColor: p.baseColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, clientId: p.clientId, leadId: p.leadId,
+                eventColor: p.eventColor, baseColor: p.baseColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, files: p.files, clientId: p.clientId, leadId: p.leadId,
                 category: p.category, projectId: p.projectId, attendeeIds: p.attendeeIds, attendeeEmails: p.attendeeEmails, reminderBefore: p.reminderBefore, reminderBeforeType: p.reminderBeforeType,
                 editable: p.canEdit, owner: p.owner, status: p.status, source: p.source, guests: p.guests, report: p.report, confirmed: p.confirmed, remindClient: p.remindClient, reminderTemplate: p.reminderTemplate,
             },

@@ -21,6 +21,7 @@ import classNames from '@/utils/classNames'
 import { api, notify } from '../kit/api'
 import { STATUS, PRIORITY, statusOf, statusPillStyle, prioOf, initials, duration, useTaskStatuses } from './shared'
 import { tr } from '@/utils/t'
+import useTabParam from '@/utils/useTabParam'
 
 const portal = { menuPortalTarget: document.body, menuPosition: 'fixed', styles: { menuPortal: (b) => ({ ...b, zIndex: 10000 }) } }
 const PRIO_TEXT = { 1: 'text-purple-500', 2: 'text-orange-500', 3: 'text-red-500', 4: 'text-red-600' }
@@ -44,7 +45,7 @@ const TaskPage = () => {
     const [d, setD] = useState(null)
     const [staff, setStaff] = useState([])
     const [error, setError] = useState('')
-    const [tab, setTab] = useState('comments')
+    const [tab, setTab] = useTabParam(['comments', 'subtasks', 'checklist', 'files', 'time'], 'comments')
     const [titleEdit, setTitleEdit] = useState(null)
     const [descEdit, setDescEdit] = useState(null)
     const [comment, setComment] = useState('')

@@ -10,7 +10,7 @@ export const unescapeHtml = (s) => (/&lt;\/?[a-z][^&]*&gt;/i.test(String(s ?? ''
 
 export const looksLikeHtml = (s) => /<\/?[a-z][a-z0-9]*\b[^>]*>/i.test(unescapeHtml(s))
 
-const ALLOWED = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'sub', 'sup', 'code', 'pre', 'a', 'img', 'mark'])
+const ALLOWED = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'sub', 'sup', 'code', 'pre', 'a', 'img', 'mark', 'audio'])
 const VOID = new Set(['br', 'hr', 'img'])
 
 /** HTML made safe to show: only the tags above, no attributes (links keep an http, https or mailto address), no scripts or styles. Plain text becomes paragraphs with line breaks. */
@@ -39,10 +39,15 @@ export function cleanHtml(input) {
             const am = /alt\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrs)
             return `<img src="${escapeHtml(decode(src))}" alt="${escapeHtml(decode(am?.[1] ?? am?.[2] ?? ''))}" loading="lazy">`
         }
+        if (name === 'audio') { // a voice note or song uploaded in a comment: only from this site or over https
+            const sm = /src\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrs)
+            const src = (sm?.[1] ?? sm?.[2] ?? '').trim()
+            return /^(https?:\/\/|\/(?!\/))/i.test(src) ? `<audio controls preload="none" src="${escapeHtml(decode(src))}" style="width:100%;max-width:340px">` : ''
+        }
         if (name === 'a') {
             const h = /href\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrs)
             const url = (h?.[1] ?? h?.[2] ?? '').trim()
-            return /^(https?:|mailto:)/i.test(url) ? `<a href="${escapeHtml(decode(url))}" target="_blank" rel="noopener noreferrer">` : '<a>'
+            return /^(https?:|mailto:|\/(?!\/))/i.test(url) ? `<a href="${escapeHtml(decode(url))}" target="_blank" rel="noopener noreferrer">` : '<a>'
         }
         return `<${name}>`
     })
@@ -67,11 +72,11 @@ export const storeRich = (v, max = 20000) => {
     const s = String(v ?? '').trim()
     if (!s) return null
     const out = looksLikeHtml(s) ? cleanHtml(s) : s
-    return plainText(out) || /<img\b/i.test(out) ? out.slice(0, max) : null
+    return plainText(out) || /<(img|audio)\b/i.test(out) ? out.slice(0, max) : null
 }
 
 /* ---------- email signatures: richer HTML (tables, inline styles, pictures) kept safe ---------- */
-const EMAIL_TAGS = new Set([...ALLOWED, 'font', 'center', 'small', 'big', 'tfoot', 'caption', 'colgroup', 'col', 'figure', 'figcaption', 'address', 'cite', 'strike', 'del', 'ins', 'mark'])
+const EMAIL_TAGS = new Set([...[...ALLOWED].filter((t) => t !== 'audio'), 'font', 'center', 'small', 'big', 'tfoot', 'caption', 'colgroup', 'col', 'figure', 'figcaption', 'address', 'cite', 'strike', 'del', 'ins', 'mark'])
 const SAFE_PROP = /^(color|background-color|background|font|font-family|font-size|font-weight|font-style|text-decoration|text-align|text-transform|vertical-align|line-height|letter-spacing|white-space|word-break|(padding|margin)(-top|-right|-bottom|-left)?|border(-top|-right|-bottom|-left)?(-width|-style|-color|-radius)?|border-collapse|border-spacing|(min-|max-)?(width|height)|display)$/
 const colorOk = (v) => /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+\s*)?\)|[a-z]{3,20}|transparent)$/i.test(v)
 

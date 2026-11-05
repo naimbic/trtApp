@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.178.0',
+        date: '2026-11-05',
+        title: 'Notifications open the exact tab; lead Comments and Offers; files, pictures and audio in comments; files and links on meetings',
+        items: [
+            'Clicking a notification now lands on the exact tab: a lead comment opens the lead\'s Comments tab, a mail its Mails tab, a meeting its Meetings tab, a task comment the task\'s Comments tab.',
+            'On a lead, the tab "Notes" is now "Comments" and "Related" is now "Offers".',
+            'Comments (lead comments, task comments, any editor with pictures) accept pictures, files and audio: use the paperclip, drop or paste. Audio shows a player, other files a link.',
+            'Calendar events: add files or paste links in the Meeting section; a link is shown like a file.',
+        ],
+    },
+    {
         version: '0.177.0',
         date: '2026-11-05',
         title: 'Task comments: threaded replies, emoji reactions, tools under the comment',

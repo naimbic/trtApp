@@ -240,7 +240,7 @@ export async function addNote(id, { content, date }) {
     if (!text) throw fail('Write the note first')
     await prisma.crmNote.create({ data: { relType: 'lead', relId: id, description: text, dateContacted: date ? new Date(date) : new Date(), addedFrom: a.staffId } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: date ? new Date(date) : new Date() } })
-    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), lead.addedFrom] }) } catch (e) { console.error('[note notify]', e.message) }
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}?tab=notes`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), lead.addedFrom] }) } catch (e) { console.error('[note notify]', e.message) }
     return { success: true }
 }
 
@@ -317,7 +317,7 @@ export async function saveMail(id, body, mailId) {
     if (data.direction === 'draft') return { success: true, id: m.id } // nothing happened with the lead yet: it is only a draft
     await prisma.crmLead.update({ where: { id }, data: { lastContact: data.date > new Date() ? new Date() : data.date } })
     await logActivity(id, a, `${data.direction === 'out' ? 'Mail sent' : 'Mail received'} logged${data.subject ? `: ${data.subject}` : ''}`)
-    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `✉ ${data.subject || ''}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `✉ ${data.subject || ''}`, link: `/crm/leads/${id}?tab=mails`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notify]', e.message) }
     return { success: true, id: m.id }
 }
 
@@ -413,7 +413,7 @@ async function deliverDraft({ id, lead, m, a, how }) {
     const { now } = await sendDraftCore({ m, a, fallbackTo: lead.email })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: now } })
     await logActivity(id, a, `Mail sent${how}: ${m.subject}`)
-    try { await notifyComment({ by: { staffId: a.staffId, name: a.session.user.name }, text: `✉ ${m.subject}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notification]', e.message) }
+    try { await notifyComment({ by: { staffId: a.staffId, name: a.session.user.name }, text: `✉ ${m.subject}`, link: `/crm/leads/${id}?tab=mails`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || [])] }) } catch (e) { console.error('[mail notification]', e.message) }
     return { success: true, id: m.id }
 }
 
@@ -438,12 +438,12 @@ export async function sendScheduledMails({ dry = false } = {}) {
             await deliverDraft({ id: m.leadId, lead, m, a, how: ' (scheduled)' })
             lines.push(`Scheduled mail sent: ${label}`)
             // the person who scheduled it is told it went out
-            try { if (m.addedFrom) await notifyComment({ by: { staffId: undefined, name: 'CRM' }, text: `✉ Scheduled mail sent: ${m.subject || ''}`, link: `/crm/leads/${m.leadId}`, subject: lead.name, recipients: [m.addedFrom] }) } catch (err) { console.error('[scheduled mail notify]', err.message) }
+            try { if (m.addedFrom) await notifyComment({ by: { staffId: undefined, name: 'CRM' }, text: `✉ Scheduled mail sent: ${m.subject || ''}`, link: `/crm/leads/${m.leadId}?tab=mails`, subject: lead.name, recipients: [m.addedFrom] }) } catch (err) { console.error('[scheduled mail notify]', err.message) }
         } catch (e) {
             const why = String(e.message || e).slice(0, 300)
             await prisma.crmLeadMail.update({ where: { id: m.id }, data: { sendError: why } }).catch(() => {})
             lines.push(`! Scheduled mail ${label} was not sent: ${why}`)
-            try { if (lead && m.addedFrom) await notifyComment({ by: { staffId: undefined, name: 'CRM' }, text: `✉ Scheduled mail not sent: ${m.subject || ''} (${why})`, link: `/crm/leads/${m.leadId}`, subject: lead.name, recipients: [m.addedFrom] }) } catch (err) { console.error('[scheduled mail notify]', err.message) }
+            try { if (lead && m.addedFrom) await notifyComment({ by: { staffId: undefined, name: 'CRM' }, text: `✉ Scheduled mail not sent: ${m.subject || ''} (${why})`, link: `/crm/leads/${m.leadId}?tab=mails`, subject: lead.name, recipients: [m.addedFrom] }) } catch (err) { console.error('[scheduled mail notify]', err.message) }
         }
     }
     return lines
@@ -483,7 +483,7 @@ export async function saveMeeting(id, body, eventId) {
     const ev = await prisma.crmEvent.create({ data: { ...data, userId: a.staffId || undefined } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: new Date() } })
     await logActivity(id, a, `Meeting added: ${data.title}`)
-    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `📅 ${data.title}`, link: `/crm/leads/${id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), ...(data.attendeeIds || [])] }) } catch (e) { console.error('[meeting notify]', e.message) }
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `📅 ${data.title}`, link: `/crm/leads/${id}?tab=meetings`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), ...(data.attendeeIds || [])] }) } catch (e) { console.error('[meeting notify]', e.message) }
     return { success: true, id: ev.id }
 }
 

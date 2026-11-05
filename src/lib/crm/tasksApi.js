@@ -358,7 +358,7 @@ export async function addComment(id, content, replyToId) {
     // told: the people named with @, and everyone who follows the task (assigned, following, who created it, who is answered)
     try {
         const [asg, fol] = await Promise.all([prisma.crmTaskAssigned.findMany({ where: { taskId: id }, select: { staffId: true } }), prisma.crmTaskFollower.findMany({ where: { taskId: id }, select: { staffId: true } })])
-        await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/tasks/${id}`, subject: task.name, recipients: [...asg.map((x) => x.staffId), ...fol.map((x) => x.staffId), task.addedFrom, reply?.staffId] })
+        await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/tasks/${id}?tab=comments`, subject: task.name, recipients: [...asg.map((x) => x.staffId), ...fol.map((x) => x.staffId), task.addedFrom, reply?.staffId] })
     } catch (e) { console.error('[comment notify]', e.message) }
     return { success: true }
 }

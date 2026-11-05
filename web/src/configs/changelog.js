@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.180.2',
+        date: '2026-11-05',
+        title: 'Comment reactions show who sent each emoji',
+        items: [
+            'Under a task or lead comment, each emoji now shows the names of the people who sent it (You, Ada, Naim +2), always visible, not only on hover.',
+        ],
+    },
+    {
         version: '0.180.1',
         date: '2026-11-05',
         title: 'The emoji reaction button is always visible on comments',

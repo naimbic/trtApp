@@ -47,6 +47,15 @@ export const ReplyingTo = ({ name, onCancel }) => name ? (
     <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary"><TbArrowBackUp />{tr('Replying to {name}', { name })}<button type="button" aria-label={tr('Cancel')} onClick={onCancel} className="ml-auto"><TbX /></button></div>
 ) : null
 
+/** "You, Ada" / "Ada, Naim +2": who sent this emoji, shown on the chip itself. */
+const whoReacted = (r) => {
+    const others = (r.names || []).filter((n, i, all) => all.indexOf(n) === i).map((n) => n.split(' ')[0])
+    const list = [...(r.mine ? [tr('You')] : []), ...others]
+    const shown = list.slice(0, 3)
+    const more = r.count - shown.length
+    return <span className="max-w-[10rem] truncate">{shown.join(', ')}{more > 0 ? ` +${more}` : ''}</span>
+}
+
 /** Under a comment: the emoji reactions it got (always shown) and, on hover, the picker plus share / reply / edit / delete. Nothing sits over the date. The parent needs the class "group". */
 /** "@": pick a colleague to tag on a comment that is already sent. */
 const MentionPick = ({ onPick }) => {
@@ -88,7 +97,7 @@ const MentionPick = ({ onPick }) => {
 export const CommentFoot = ({ reactions = [], onReact, onMention, remind, ...tools }) => (
     <div className="mt-1.5 flex min-h-6 flex-wrap items-center gap-1">
         {reactions.map((r) => (
-            <button key={r.emoji} type="button" title={r.names.join(', ')} onClick={() => onReact?.(r.emoji)} className={classNames('flex h-6 items-center gap-1 rounded-full border px-2 text-xs transition', r.mine ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:border-primary dark:border-gray-600 dark:text-gray-300')}><span className="text-sm leading-none">{r.emoji}</span>{r.count}</button>
+            <button key={r.emoji} type="button" title={[...(r.mine ? [tr('You')] : []), ...r.names].join(', ')} onClick={() => onReact?.(r.emoji)} className={classNames('flex h-6 items-center gap-1 rounded-full border px-2 text-xs transition', r.mine ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:border-primary dark:border-gray-600 dark:text-gray-300')}><span className="text-sm leading-none">{r.emoji}</span>{whoReacted(r)}</button>
         ))}
         {onReact && <EmojiPicker title={tr('React')} onPick={onReact} className="!size-6" />}
         <div className="flex items-center gap-0.5 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">

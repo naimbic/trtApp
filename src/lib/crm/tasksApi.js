@@ -159,7 +159,7 @@ export async function getTask(id) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const t = await loadOne(id, a)
-    const ids = [...t.assignees.map((x) => x.staffId), ...t.followers.map((x) => x.staffId), ...t.comments.map((c) => c.staffId).filter(Boolean), ...t.timers.map((x) => x.staffId).filter(Boolean), ...t.checklistItems.flatMap(stepPeople), t.addedFrom].filter(Boolean)
+    const ids = [...t.assignees.map((x) => x.staffId), ...t.followers.map((x) => x.staffId), ...t.comments.map((c) => c.staffId).filter(Boolean), ...t.comments.flatMap((c) => Object.values(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).flat()), ...t.timers.map((x) => x.staffId).filter(Boolean), ...t.checklistItems.flatMap(stepPeople), t.addedFrom].filter(Boolean)
     const people = await staffMap(ids)
     const rels = await relLabels([t])
     const now = Date.now()
@@ -178,7 +178,7 @@ export async function getTask(id) {
             const to = c.replyToId ? t.comments.find((x) => x.id === c.replyToId) : null
             return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
                 replyToId: c.replyToId || null,
-                reactions: Object.entries(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!a.staffId && ids.includes(a.staffId), names: ids.map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count),
+                reactions: Object.entries(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!a.staffId && ids.includes(a.staffId), names: ids.filter((i) => i !== a.staffId).map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count),
                 replyTo: to ? { id: to.id, name: people[to.staffId]?.name || (to.contactId ? 'Client' : ''), text: String(to.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90) } : null }
         }),
         timers, running, totalSeconds: timers.reduce((s, x) => s + x.seconds, 0),

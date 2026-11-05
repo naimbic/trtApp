@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.180.0',
+        date: '2026-11-05',
+        title: 'Sent comments: tag a colleague and set a reminder from the hover row',
+        items: [
+            'Every sent task or lead comment has a new @ icon in its hover row: pick a colleague and they are tagged under the comment and notified, without editing it.',
+            'Every sent comment also has a bell icon: a reminder on that comment, with the comment as its note; the reminder opens the Comments tab.',
+        ],
+    },
+    {
         version: '0.179.3',
         date: '2026-11-05',
         title: 'The @mention written by Reply is clickable',

@@ -1,6 +1,6 @@
 import { realPicture } from '@/lib/crm/pictures'
-import { notifyComment, notifyNewMentions } from '@/lib/crm/mentionsApi'
-import { storeRich } from '@/lib/crm/richText'
+import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
+import { storeRich, plainText } from '@/lib/crm/richText'
 import { cleanEvent } from '@/lib/crm/calendar'
 import prisma from '@/lib/prisma'
 import { emit } from '@/lib/crm/webhooks'
@@ -261,6 +261,22 @@ export async function reactNote(id, noteId, emoji) {
     const next = ids.includes(a.staffId) ? ids.filter((x) => x !== a.staffId) : [...ids, a.staffId]
     if (next.length) all[e] = next; else delete all[e]
     await prisma.crmNote.update({ where: { id: noteId }, data: { reactions: all, updatedAt: n.updatedAt } })
+    return { success: true }
+}
+
+/** Tags a colleague on a comment that is already sent: their name is added under it and they are told. Anyone who can see the record may do it. */
+export async function mentionNote(id, noteId, staffId) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    await loadOne(id, a)
+    const c = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'lead', relId: id } }))
+    if (!c) throw fail('Note not found', 404)
+    const who = oid(staffId) && (await prisma.crmStaff.findFirst({ where: { id: staffId, active: true }, select: { id: true, firstName: true, lastName: true, email: true } }))
+    if (!who) throw fail('Choose a colleague')
+    const name = [who.firstName, who.lastName].filter(Boolean).join(' ') || who.email || 'Staff'
+    const plain = plainText(c.description || '')
+    if (!plain.includes(`@${name}`)) await prisma.crmNote.update({ where: { id: noteId }, data: { description: `${c.description || ''}<p>@${name.replace(/[&<>]/g, '')}</p>`, updatedAt: c.updatedAt } })
+    await notifyMentions({ staffIds: [who.id], text: plain, url: `/crm/leads/${id}?tab=notes` })
     return { success: true }
 }
 

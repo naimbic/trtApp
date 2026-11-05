@@ -414,6 +414,8 @@ model CrmReminder {
   relId         String?  @db.ObjectId
   staffId       String?  @db.ObjectId // staff to remind
   notifyByEmail Boolean  @default(true)
+  /// the tab of the record the reminder opens (a reminder set on one comment opens the Comments tab)
+  tab           String?
   creatorId     String?  @db.ObjectId // staff
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

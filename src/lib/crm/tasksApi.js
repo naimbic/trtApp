@@ -4,9 +4,9 @@ import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
 import { emit } from '@/lib/crm/webhooks'
-import { notifyComment, notifyNewMentions } from '@/lib/crm/mentionsApi'
+import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
 import { notifyNotice } from '@/lib/crm/notifyMail'
-import { storeRich } from '@/lib/crm/richText'
+import { storeRich, plainText } from '@/lib/crm/richText'
 import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 
 export const STATUS = { 1: 'Not started', 4: 'In progress', 3: 'Testing', 2: 'Awaiting feedback', 5: 'Complete' }
@@ -378,6 +378,22 @@ export async function reactComment(id, commentId, emoji) {
     const next = ids.includes(a.staffId) ? ids.filter((x) => x !== a.staffId) : [...ids, a.staffId]
     if (next.length) all[e] = next; else delete all[e]
     await prisma.crmTaskComment.update({ where: { id: commentId }, data: { reactions: all, updatedAt: c.updatedAt } })
+    return { success: true }
+}
+
+/** Tags a colleague on a comment that is already sent: their name is added under it and they are told. Anyone who can see the record may do it. */
+export async function mentionComment(id, commentId, staffId) {
+    const session = await requirePermission('tasks', 'view')
+    const a = await access(session)
+    await loadOne(id, a)
+    const c = oid(commentId) && (await prisma.crmTaskComment.findFirst({ where: { id: commentId, taskId: id } }))
+    if (!c) throw fail('Comment not found', 404)
+    const who = oid(staffId) && (await prisma.crmStaff.findFirst({ where: { id: staffId, active: true }, select: { id: true, firstName: true, lastName: true, email: true } }))
+    if (!who) throw fail('Choose a colleague')
+    const name = [who.firstName, who.lastName].filter(Boolean).join(' ') || who.email || 'Staff'
+    const plain = plainText(c.content || '')
+    if (!plain.includes(`@${name}`)) await prisma.crmTaskComment.update({ where: { id: commentId }, data: { content: `${c.content || ''}<p>@${name.replace(/[&<>]/g, '')}</p>`, updatedAt: c.updatedAt } })
+    await notifyMentions({ staffIds: [who.id], text: plain, url: `/crm/tasks/${id}?tab=comments` })
     return { success: true }
 }
 

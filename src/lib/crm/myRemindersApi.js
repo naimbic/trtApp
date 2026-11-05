@@ -28,7 +28,7 @@ export async function addMine(body = {}) {
     const date = new Date(body.date)
     if (Number.isNaN(+date)) throw fail('Choose a date and a time')
     if (+date < Date.now() - 60000) throw fail('Choose a date and a time in the future')
-    const row = await prisma.crmReminder.create({ data: { relType: body.relType, relId: body.relId, staffId, creatorId: staffId, date, description: String(body.note || '').trim().slice(0, 500) || null, notifyByEmail: body.notifyByEmail !== false, isNotified: false } })
+    const row = await prisma.crmReminder.create({ data: { relType: body.relType, relId: body.relId, staffId, creatorId: staffId, date, description: String(body.note || '').trim().slice(0, 500) || null, tab: /^[a-z]{3,12}$/.test(String(body.tab || '')) ? String(body.tab) : null, notifyByEmail: body.notifyByEmail !== false, isNotified: false } })
     return { id: row.id }
 }
 

@@ -13,7 +13,7 @@ import { api, notify } from '@/views/crm/kit/api'
 import { tr } from '@/utils/t'
 
 /** "Remind me": a reminder with a date AND a time on this record (a task, a lead...), only for the person who sets it. */
-const RemindMe = ({ relType, relId, size = 'sm' }) => {
+const RemindMe = ({ relType, relId, size = 'sm', iconOnly = false, initialNote = '', tab = null }) => {
     const me = useMe()
     const [open, setOpen] = useState(false)
     const [list, setList] = useState([])
@@ -23,17 +23,17 @@ const RemindMe = ({ relType, relId, size = 'sm' }) => {
     const [busy, setBusy] = useState(false)
     const load = useCallback(() => api(`/api/crm/my-reminders?relType=${relType}&relId=${relId}`).then((r) => setList(r.list || [])).catch(() => {}), [relType, relId])
     useEffect(() => { if (relId) load() }, [relId, load])
-    useEffect(() => { if (open) { setDate(defaultRemindAt(me?.notifyHours)); setNote(''); setMail(true) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { if (open) { setDate(defaultRemindAt(me?.notifyHours)); setNote(initialNote); setMail(true) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
     if (!relId) return null
     const pending = list.filter((r) => !r.done)
     const nh = me?.notifyHours
     const add = async () => {
         setBusy(true)
-        try { await api('/api/crm/my-reminders', { method: 'POST', body: { relType, relId, date: new Date(date).toISOString(), note, notifyByEmail: mail } }); notify('success', tr('Reminder set')); setNote(''); setDate(defaultRemindAt(nh)); await load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+        try { await api('/api/crm/my-reminders', { method: 'POST', body: { relType, relId, date: new Date(date).toISOString(), note, notifyByEmail: mail, tab } }); notify('success', tr('Reminder set')); setNote(iconOnly ? initialNote : ''); setDate(defaultRemindAt(nh)); await load(); if (iconOnly) setOpen(false) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     return (
         <>
-            <Button size={size} icon={<TbBellPlus />} onClick={() => setOpen(true)}>{tr('Remind me')}{pending.length > 0 && <span className="ms-1.5 rounded-full bg-primary/15 px-1.5 text-xs font-bold text-primary">{pending.length}</span>}</Button>
+            {iconOnly ? <button type="button" title={tr('Remind me')} aria-label={tr('Remind me')} onClick={() => setOpen(true)} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbBellPlus /></button> : <Button size={size} icon={<TbBellPlus />} onClick={() => setOpen(true)}>{tr('Remind me')}{pending.length > 0 && <span className="ms-1.5 rounded-full bg-primary/15 px-1.5 text-xs font-bold text-primary">{pending.length}</span>}</Button>}
             <Dialog isOpen={open} width={460} onClose={() => setOpen(false)} onRequestClose={() => setOpen(false)}>
                 <h5 className="mb-1">{tr('Remind me about this')}</h5>
                 <p className="mb-3 text-sm text-gray-500">{tr('Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).')}{nh?.on !== false && nh ? ` ${tr('The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.', { from: nh.from, to: nh.to })}` : ''}</p>

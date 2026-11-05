@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.179.1',
+        date: '2026-11-05',
+        title: 'A meeting notification opens the meeting popup',
+        items: [
+            'Meeting notifications (a meeting added to a lead, an event reminder, an appointment request) now open the Calendar on that event, with its popup, whatever month it is in.',
+        ],
+    },
+    {
         version: '0.179.0',
         date: '2026-11-05',
         title: 'Lead comments work like task comments: threaded replies, reactions, tools under the comment',

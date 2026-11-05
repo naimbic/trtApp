@@ -503,7 +503,7 @@ export async function saveMeeting(id, body, eventId) {
     const ev = await prisma.crmEvent.create({ data: { ...data, userId: a.staffId || undefined } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: new Date() } })
     await logActivity(id, a, `Meeting added: ${data.title}`)
-    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `📅 ${data.title}`, link: `/crm/leads/${id}?tab=meetings`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), ...(data.attendeeIds || [])] }) } catch (e) { console.error('[meeting notify]', e.message) }
+    try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `📅 ${data.title}`, link: `/calendar?event=${ev.id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), ...(data.attendeeIds || [])] }) } catch (e) { console.error('[meeting notify]', e.message) }
     return { success: true, id: ev.id }
 }
 

@@ -41,18 +41,19 @@ async function context() {
 }
 
 /** Everything that belongs on the calendar between `from` and `to` (ISO dates). */
-export async function getCalendarItems({ from, to }) {
+export async function getCalendarItems({ from, to, eventId }) {
     const ctx = await context()
     if (!ctx) return null
+    const one = /^[a-f0-9]{24}$/i.test(String(eventId || '')) ? String(eventId) : null // a notification opens one event, wherever it is in time
     const start = new Date(from)
     const end = new Date(to)
-    if (Number.isNaN(+start) || Number.isNaN(+end)) throw new Error('Invalid range')
+    if (!one && (Number.isNaN(+start) || Number.isNaN(+end))) throw new Error('Invalid range')
     const items = []
     const layers = ['events']
 
     // own, invited-to and public events (and unowned ones)
     const events = await prisma.crmEvent.findMany({
-        where: { start: { lt: end }, OR: [{ end: { gte: start } }, { end: null, start: { gte: start } }] },
+        where: one ? { id: one } : { start: { lt: end }, OR: [{ end: { gte: start } }, { end: null, start: { gte: start } }] },
     })
     const staffRows = await prisma.crmStaff.findMany({ select: { id: true, firstName: true, lastName: true } })
     const staffName = Object.fromEntries(staffRows.map((x) => [x.id, `${x.firstName || ''} ${x.lastName || ''}`.trim()]))

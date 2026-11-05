@@ -55,8 +55,8 @@ export async function createAppointment(request) {
             const who = guests.map((g) => g.name || g.email).filter(Boolean).join(', ')
             const text = `Appointment request: ${title}${who ? ` (${who})` : ''} on ${start.toISOString().slice(0, 16).replace('T', ' ')} UTC`
             for (const a of admins) {
-                await prisma.crmNotification.create({ data: { toUserId: a.id, fromFullName: 'Appointments', description: text.slice(0, 200), link: '/calendar', additionalData: 'appointment', isRead: false } }).catch(() => {})
-                notifyNotice(a.id, { kind: 'calendar', headlineKey: 'appointment', title: title || '', link: '/calendar', note: text })
+                await prisma.crmNotification.create({ data: { toUserId: a.id, fromFullName: 'Appointments', description: text.slice(0, 200), link: `/calendar?event=${row.id}`, additionalData: 'appointment', isRead: false } }).catch(() => {})
+                notifyNotice(a.id, { kind: 'calendar', headlineKey: 'appointment', title: title || '', link: `/calendar?event=${row.id}`, note: text })
             }
             emit('appointment.requested', shape(row))
         }

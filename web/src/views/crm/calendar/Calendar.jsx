@@ -141,6 +141,15 @@ const Calendar = () => {
     const [syncOpen, setSyncOpen] = useState(params.get('sync') === '1')
     const [closedOpen, setClosedOpen] = useState(params.get('closed') === '1')
     useEffect(() => { if (params.get('closed') === '1') { setClosedOpen(true); setParams({}, { replace: true }) } }, [params, setParams])
+    const openedEvent = useRef(null)
+    // a notification link (/calendar?event=ID) opens that event's popup, whatever month it is in
+    useEffect(() => {
+        const id = params.get('event')
+        if (!id) { openedEvent.current = null; return }
+        if (openedEvent.current === id) return
+        openedEvent.current = id // the address keeps ?event=ID: changing it would rebuild the page and lose the popup
+        api(`/api/crm/calendar?event=${encodeURIComponent(id)}`).then((d) => { const it = (d.items || []).find((x) => x.type === 'events'); if (it) { calRef.current?.getApi?.()?.gotoDate?.(it.start); openItem({ ...it, ...(it.extendedProps || {}) }) } else notifyOnce(tr('That event is no longer there')) }).catch((e) => { notifyOnce(e.message) })
+    }, [params]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (params.get('sync') === '1') { setSyncOpen(true); setParams({}, { replace: true }) } }, [params, setParams])
     const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
@@ -414,7 +423,7 @@ const Calendar = () => {
                 onSubmit={submit}
                 onDelete={() => setConfirmDel(true)} staff={staff} reminderTemplates={reminderTemplates}
                 onDecided={() => { setDialog((d) => ({ ...d, open: false })); load() }}
-                onClose={() => setDialog((d) => ({ ...d, open: false }))}
+                onClose={() => { setDialog((d) => ({ ...d, open: false })); if (params.get('event')) { const r = new URLSearchParams(params); r.delete('event'); setParams(r, { replace: true }) } }}
             />
         </Container>
     )

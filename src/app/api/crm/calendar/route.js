@@ -7,7 +7,7 @@ const fail = (e) => (e instanceof SyntaxError ? NextResponse.json({ error: 'The 
 export async function GET(request) {
     try {
         const sp = request.nextUrl.searchParams
-        const data = await getCalendarItems({ from: sp.get('from'), to: sp.get('to') })
+        const data = await getCalendarItems({ from: sp.get('from'), to: sp.get('to'), eventId: sp.get('event') })
         if (!data) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         return NextResponse.json(data)
     } catch (e) {

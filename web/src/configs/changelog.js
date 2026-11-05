@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.185.0',
+        date: '2026-11-05',
+        title: 'Client ideas: a detailed offer in the Value section (SaaS, development, marketing, hosting; one price or recurring; contracts; options)',
+        items: [
+            'The Value section of an idea now has "Simple price" (as before) or "Detailed offer": what we sell (SaaS, development, marketing, hosting, service, design), how it is billed (once, monthly, every 3 months, yearly) and the contract length (1 to 5 years, or open with a notice period).',
+            'A setup fee, a discount in % and a catalogue of options to add in one click: domain name, SSL, professional mailboxes, web hosting, VPS, managed server, CDN, backups, maintenance, support (standard and priority), monitoring, hours packs, setup, migration, training, integrations, audits, extra users and storage, white label, API access, SEO, ads, social media, content, monthly report. Each option is once, monthly or yearly, with a price and a quantity, and can be switched off; or add your own.',
+            'Ready-made starting points: SaaS subscription, Website + hosting and maintenance, Custom app + support plan, Marketing monthly package, Hosting + domain + mailboxes.',
+            'The totals are worked out as you build: paid once, per month, first year and the whole contract (or "open"). The price of the idea follows the offer (the first year), so cards and lists stay in step.',
+            'The client sees the same offer line by line in their portal, with the totals.',
+        ],
+    },
+    {
         version: '0.184.0',
         date: '2026-11-05',
         title: 'Comments everywhere: newest on top with its replies, last 5 days first, then "Show older comments"',

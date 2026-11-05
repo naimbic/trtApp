@@ -18,6 +18,8 @@ model CrmClientIdea {
   /// what the client gains, in a sentence
   gain        String?
   price       Float?
+  /// the detailed offer: { kind, billing, term, price, setupFee, discountPct, noticeMonths, options[] } (the price above follows it)
+  offer       Json?
   currencyId  String?   @db.ObjectId
   dueDate     DateTime?
   /// manual | ai

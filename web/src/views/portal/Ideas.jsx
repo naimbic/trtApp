@@ -10,8 +10,37 @@ import Skeleton from '@/components/ui/Skeleton'
 import Tag from '@/components/ui/Tag'
 import { portal, money } from './api'
 import { Empty } from './ui'
+import { OFFER_KINDS, TERMS } from '@/lib/crm/ideaOffer'
 import { useI18n } from './i18n'
 import { usePortal } from './PortalApp'
+
+const UNIT = { monthly: 'per month', quarterly: 'every 3 months', yearly: 'per year', one_shot: 'once' }
+/** What is offered, line by line: the main price, the setup fee, each option, the discount, and the totals. */
+const OfferView = ({ i, t }) => {
+    const o = i.offer, tt = i.totals
+    if (!o || !tt) return null
+    const kind = OFFER_KINDS.find(([k]) => k === o.kind)?.[1] || 'Other'
+    const term = o.billing === 'one_shot' ? '' : o.term === 0 ? t('Open contract') : t(TERMS.find(([k]) => k === o.term)?.[1] || '')
+    const line = (label, amount, unit) => <div className="flex items-baseline justify-between gap-3 border-b border-gray-100 py-1.5 last:border-0 dark:border-gray-700"><span>{label}</span><span className="shrink-0 tabular-nums"><b>{money(amount, i.currency)}</b> <span className="text-xs text-gray-400">{t(UNIT[unit])}</span></span></div>
+    return (
+        <Card className="xl:col-span-3">
+            <h5 className="mb-1">{t('Our offer')}</h5>
+            <p className="mb-3 text-sm text-gray-500">{t(kind.replace(/ \(.*\)$/, ''))}{term ? ` · ${term}` : ''}{o.billing !== 'one_shot' && o.term === 0 && o.noticeMonths ? ` · ${t('{n} month(s) notice', { n: o.noticeMonths })}` : ''}</p>
+            <div className="text-sm">
+                {o.price > 0 && line(t(kind.replace(/ \(.*\)$/, '')), o.price, o.billing)}
+                {o.setupFee > 0 && line(t('Setup fee'), o.setupFee, 'one_shot')}
+                {o.options.filter((x) => x.on).map((x) => line(`${x.label}${x.qty > 1 ? ` × ${x.qty}` : ''}`, x.price * x.qty, x.billing))}
+                {o.discountPct > 0 && <div className="flex justify-between py-1.5 text-emerald-600"><span>{t('Discount')}</span><b>- {o.discountPct} %</b></div>}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                <div className="rounded-lg bg-gray-100 p-2 dark:bg-gray-700/50"><div className="text-xs text-gray-500">{t('Paid once')}</div><b>{money(tt.oneOff, i.currency)}</b></div>
+                <div className="rounded-lg bg-gray-100 p-2 dark:bg-gray-700/50"><div className="text-xs text-gray-500">{t('Per month')}</div><b>{money(tt.monthly, i.currency)}</b></div>
+                <div className="rounded-lg bg-emerald-50 p-2 dark:bg-emerald-500/10"><div className="text-xs text-gray-500">{t('First year')}</div><b>{money(tt.firstYear, i.currency)}</b></div>
+                <div className="rounded-lg bg-gray-100 p-2 dark:bg-gray-700/50"><div className="text-xs text-gray-500">{tt.contract != null ? t('Whole contract') : t('Contract')}</div><b>{tt.contract != null ? money(tt.contract, i.currency) : tt.open ? t('Open') : '—'}</b></div>
+            </div>
+        </Card>
+    )
+}
 
 const TONE = { proposed: 'bg-blue-100 text-blue-700', interested: 'bg-sky-100 text-sky-700', approved: 'bg-emerald-100 text-emerald-700', doing: 'bg-amber-100 text-amber-700', done: 'bg-green-100 text-green-700', declined: 'bg-rose-100 text-rose-700' }
 const LABEL = { proposed: 'New idea', interested: 'You are interested', approved: 'Approved', doing: 'In progress', done: 'Done', declined: 'Declined' }
@@ -88,6 +117,7 @@ export const IdeaDetail = () => {
                         {i.answer && <div className="rounded-lg bg-white p-2 dark:bg-gray-700"><TbCheck className="me-1 inline text-emerald-500" />{t('Your answer')}: <b>{t(LABEL[i.answer] || i.answer)}</b>{i.answeredAt ? ` · ${date(i.answeredAt)}` : ''}</div>}
                     </div>
                 </Card>
+                <OfferView i={i} t={t} />
             </div>
             <Card>
                 <h5 className="mb-3"><TbMessageCircle className="me-1 inline" />{t('Your answer and questions')}</h5>

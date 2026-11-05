@@ -10,6 +10,7 @@ import Switcher from '@/components/ui/Switcher'
 import Segment from '@/components/ui/Segment'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FoldSection from '@/components/crm/FoldSection'
+import OfferEditor, { offerSummary } from './OfferEditor'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
@@ -66,7 +67,7 @@ const IdeaCard = ({ i, cur, cats, onOpen }) => (
 )
 
 /* ------------------------------------------------------------ the idea */
-const blank = { title: '', body: '', category: 'grow', status: 'draft', visible: false, priority: 2, impact: 2, effort: 2, gain: '', price: '', currencyId: '', dueDate: '', tags: '', assigneeIds: [] }
+const blank = { title: '', body: '', category: 'grow', status: 'draft', visible: false, priority: 2, impact: 2, effort: 2, gain: '', price: '', offer: null, currencyId: '', dueDate: '', tags: '', assigneeIds: [] }
 
 const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
     const [v, setV] = useState(null)
@@ -132,15 +133,17 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
                             <RichEditor minHeight={150} disabled={readOnly} value={v.body} onChange={(html) => set({ body: html })} placeholder={tr("Why it matters for this client, the steps, what we do and what they do")} />
                             {idea.sources?.length > 0 && <div className="mt-3 rounded-lg bg-gray-50 p-2.5 text-xs dark:bg-gray-700/40"><b className="mb-1 block text-gray-500">{tr("Sources found by the AI")}</b>{idea.sources.map((s) => <a key={s} href={s} target="_blank" rel="noreferrer noopener" className="flex items-center gap-1 truncate text-primary hover:underline"><TbExternalLink className="shrink-0" />{s}</a>)}</div>}
                         </FoldSection>
-                        <FoldSection icon={<TbCoin />} tone="emerald" title={tr("Value")} summary={`${tr("Impact")} ${tr(LEVEL[v.impact])} · ${tr("Effort")} ${tr(LEVEL[v.effort])}${v.price !== '' ? ` · ${money(v.price, data.currencies.find((c) => c.id === v.currencyId))}` : ''}`} open={sec === 'value'} onToggle={() => toggle('value')}>
+                        <FoldSection icon={<TbCoin />} tone="emerald" title={tr("Value")} summary={`${tr("Impact")} ${tr(LEVEL[v.impact])} · ${tr("Effort")} ${tr(LEVEL[v.effort])}${v.offer ? ` · ${offerSummary(v.offer, data.currencies.find((c) => c.id === v.currencyId))}` : v.price !== '' ? ` · ${money(v.price, data.currencies.find((c) => c.id === v.currencyId))}` : ''}`} open={sec === 'value'} onToggle={() => toggle('value')}>
                             <div className="mb-3 grid gap-3 sm:grid-cols-3">
                                 {[['impact', tr("Impact for the client")], ['effort', tr("Effort for us")], ['priority', tr("Priority")]].map(([k, label]) => (
                                     <div key={k}><L>{label}</L><LevelTags kind={k} value={v[k]} onChange={(x) => set({ [k]: x })} /></div>
                                 ))}
                             </div>
                             <div className="mb-3"><L>{tr("What the client gains")}</L><Input placeholder={tr("In one sentence, with the assumption")} maxLength={300} value={v.gain} onChange={(e) => set({ gain: e.target.value })} /></div>
-                            <div className="grid gap-3 sm:grid-cols-3">
-                                <div><L>{tr("Price (optional)")}</L><Input type="number" min="0" value={v.price} onChange={(e) => set({ price: e.target.value })} /></div>
+                            <div className="mb-3 rounded-xl border border-emerald-200 p-3 dark:border-emerald-500/30">
+                                <OfferEditor offer={v.offer} onChange={(offer) => set({ offer })} price={v.price} onPrice={(price) => set({ price })} currency={data.currencies.find((c) => c.id === v.currencyId)} readOnly={readOnly} />
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
                                 <div><L>{tr("Currency")}</L><Select size="sm" isSearchable={false} options={curOpts} value={curOpts.find((o) => o.value === v.currencyId)} onChange={(o) => set({ currencyId: o.value })} /></div>
                                 <div><L>{tr("Answer by")}</L><Input type="date" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></div>
                             </div>

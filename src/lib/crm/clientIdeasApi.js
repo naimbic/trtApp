@@ -1,3 +1,4 @@
+import { cleanOffer, offerTotals, offerPrice } from '@/lib/crm/ideaOffer'
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { scope as clientScope } from '@/lib/crm/clientsApi'
@@ -39,7 +40,7 @@ async function clientOf(g, clientId) {
 
 const shape = (i, extra = {}) => ({
     id: i.id, clientId: i.clientId, title: i.title, body: i.body || '', category: i.category, status: i.status, visible: !!i.visible, priority: i.priority, impact: i.impact, effort: i.effort,
-    gain: i.gain || '', price: i.price ?? null, currencyId: i.currencyId || null, dueDate: i.dueDate, source: i.source, sources: i.sources || [], tags: i.tags || [], assigneeIds: i.assigneeIds || [],
+    gain: i.gain || '', price: i.price ?? null, offer: i.offer || null, totals: i.offer ? offerTotals(i.offer) : null, currencyId: i.currencyId || null, dueDate: i.dueDate, source: i.source, sources: i.sources || [], tags: i.tags || [], assigneeIds: i.assigneeIds || [],
     answer: i.answer || null, answeredAt: i.answeredAt, answeredBy: i.answeredBy || null, position: i.position, taskId: i.taskId || null, proposedAt: i.proposedAt, createdAt: i.createdAt, updatedAt: i.updatedAt, ...extra,
 })
 
@@ -80,6 +81,11 @@ const clean = (b, codes) => {
     for (const k of ['priority', 'impact', 'effort']) if (b[k] !== undefined) out[k] = Math.min(3, Math.max(1, parseInt(b[k], 10) || 2))
     if (b.gain !== undefined) out.gain = String(b.gain || '').trim().slice(0, 300) || null
     if (b.price !== undefined) { const p = b.price === '' || b.price === null ? null : Number(b.price); if (p !== null && (!Number.isFinite(p) || p < 0)) throw fail('The price must be a number'); out.price = p }
+    if (b.offer !== undefined) {
+        out.offer = cleanOffer(b.offer) || null
+        // the price of the idea follows its detailed offer (the first year); with no offer the price typed by hand stays
+        if (out.offer) out.price = offerPrice(out.offer)
+    }
     if (b.currencyId !== undefined) out.currencyId = oid(b.currencyId)
     if (b.dueDate !== undefined) out.dueDate = b.dueDate ? new Date(b.dueDate) : null
     if (b.tags !== undefined) out.tags = [...new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => String(t).trim().replace(/^#/, '').slice(0, 30)).filter(Boolean))].slice(0, 10)
@@ -273,7 +279,7 @@ export async function tellTeam(idea, clientId, text, byName) {
 }
 
 /* ---------------------------------------------------------------- the client area (portal) */
-export const ideaForClient = (i, currency) => ({ id: i.id, title: i.title, body: i.body || '', category: i.category, status: i.status, gain: i.gain || '', price: i.price ?? null, currency: currency || null, impact: i.impact, effort: i.effort, dueDate: i.dueDate, answer: i.answer || null, answeredAt: i.answeredAt, proposedAt: i.proposedAt, sources: i.sources || [] })
+export const ideaForClient = (i, currency) => ({ id: i.id, title: i.title, body: i.body || '', category: i.category, status: i.status, gain: i.gain || '', price: i.price ?? null, offer: i.offer || null, totals: i.offer ? offerTotals(i.offer) : null, currency: currency || null, impact: i.impact, effort: i.effort, dueDate: i.dueDate, answer: i.answer || null, answeredAt: i.answeredAt, proposedAt: i.proposedAt, sources: i.sources || [] })
 
 /** Every idea of the clients this person may see, with its client: the page of one status (and the count of each status). */
 export async function ideasByStatus({ status = '' } = {}) {

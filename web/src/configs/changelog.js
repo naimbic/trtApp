@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.181.1',
+        date: '2026-11-05',
+        title: 'Re-read the mailbox since a date',
+        items: [
+            'New button "Re-read since…" on each mailbox: the emails received from a chosen day on, read or unread, are looked at again. Emails skipped before (for example "subject does not match the filter") are now kept on the Mails tab of the lead or client who wrote them, with files and meeting invitations.',
+        ],
+    },
+    {
         version: '0.181.0',
         date: '2026-11-05',
         title: 'The mailbox keeps the emails of your leads and clients, with files and meeting bookings',

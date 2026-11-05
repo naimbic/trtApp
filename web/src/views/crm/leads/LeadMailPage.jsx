@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbMailForward, TbPlus, TbPencil, TbTrash, TbPlayerPlay, TbEye, TbHistory, TbPlugConnected, TbUsersPlus, TbAlertTriangle, TbCircleCheck } from 'react-icons/tb'
+import { TbMailForward, TbPlus, TbPencil, TbTrash, TbPlayerPlay, TbEye, TbHistory, TbPlugConnected, TbUsersPlus, TbAlertTriangle, TbCircleCheck, TbRefresh } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
@@ -137,7 +137,7 @@ const ListDialog = ({ mode, box, onClose }) => {
     )
 }
 
-const MailCard = ({ b, onEdit, onList, onRun, onDelete, onToggle, running }) => {
+const MailCard = ({ b, onEdit, onList, onRun, onReread, onDelete, onToggle, running }) => {
     const bad = !!b.lastError
     return (
         <section className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -155,6 +155,7 @@ const MailCard = ({ b, onEdit, onList, onRun, onDelete, onToggle, running }) => 
             <div className="mt-3 flex items-end justify-between"><div><div className="text-3xl font-extrabold tabular-nums">{b.importedCount}</div><div className="text-xs text-gray-400">{tr('leads imported')}</div></div></div>
             <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
                 <Button size="xs" variant="solid" icon={<TbPlayerPlay />} loading={running} onClick={onRun}>{tr('Check now')}</Button>
+                <Button size="xs" icon={<TbRefresh />} onClick={onReread}>{tr('Re-read since…')}</Button>
                 <Button size="xs" icon={<TbEye />} onClick={() => onList('preview')}>{tr('Preview')}</Button>
                 <Button size="xs" icon={<TbHistory />} onClick={() => onList('log')}>{tr('Activity')}</Button>
                 <Button size="xs" icon={<TbPencil />} onClick={onEdit}>{tr('Edit')}</Button>
@@ -172,12 +173,18 @@ const LeadMailPage = () => {
     const [list, setList] = useState({ mode: null, box: null })
     const [del, setDel] = useState(null)
     const [running, setRunning] = useState(null)
+    const [reread, setReread] = useState(null) // { box, since }
     const load = useCallback(() => { api('/api/crm/lead-mail').then((x) => { setD(x); setError('') }).catch((e) => setError(e.message)) }, [])
     useEffect(() => { load() }, [load])
     const boxes = d?.list || []
     const run = async (b) => {
         setRunning(b.id)
         try { const r = await post({ action: 'run', id: b.id }); notify(r.ok ? 'success' : 'danger', r.message) } catch (e) { notify('danger', e.message) } finally { setRunning(null); load() }
+    }
+    const doReread = async () => {
+        const { box, since } = reread
+        setReread(null); setRunning(box.id)
+        try { const r = await post({ action: 'reread', id: box.id, since }); notify(r.ok ? 'success' : 'danger', r.message) } catch (e) { notify('danger', e.message) } finally { setRunning(null); load() }
     }
     const toggle = async (b, c) => { try { await post({ action: 'save', id: b.id, data: { ...b, password: '', active: c } }); load() } catch (e) { notify('danger', e.message) } }
     return (
@@ -194,7 +201,7 @@ const LeadMailPage = () => {
             <div className="cx-tools"><Button size="sm" variant="solid" className="ml-auto" icon={<TbPlus />} onClick={() => setDlg({ open: true, box: null })}>{tr('New mailbox')}</Button></div>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {boxes.map((b) => <MailCard key={b.id} b={b} running={running === b.id} onEdit={() => setDlg({ open: true, box: b })} onList={(mode) => setList({ mode, box: b })} onRun={() => run(b)} onDelete={() => setDel(b)} onToggle={(c) => toggle(b, c)} />)}
+                {boxes.map((b) => <MailCard key={b.id} b={b} running={running === b.id} onEdit={() => setDlg({ open: true, box: b })} onList={(mode) => setList({ mode, box: b })} onRun={() => run(b)} onReread={() => setReread({ box: b, since: dayjs().format('YYYY-MM-DD') })} onDelete={() => setDel(b)} onToggle={(c) => toggle(b, c)} />)}
             </div>
             {d && !boxes.length && (
                 <div className="rounded-2xl border border-dashed border-gray-300 p-6 dark:border-gray-600">
@@ -210,6 +217,12 @@ const LeadMailPage = () => {
             {!d && !error && <div className="py-10 text-center text-gray-400">{tr('Loading…')}</div>}
             {d && <MailDialog open={dlg.open} box={dlg.box} lookups={d} onClose={() => setDlg({ open: false, box: null })} onSaved={load} />}
             <ListDialog mode={list.mode} box={list.box} onClose={() => setList({ mode: null, box: null })} />
+            <Dialog isOpen={!!reread} width={440} onClose={() => setReread(null)} onRequestClose={() => setReread(null)}>
+                <h5 className="mb-1">{tr('Re-read the emails since a date')}</h5>
+                <p className="mb-3 text-sm text-gray-500">{tr('The emails of this mailbox received from that day on, read or unread, are looked at again: the ones skipped before (not a form) are now kept on the Mails tab of the lead or client who wrote them. Nothing is done twice.')}</p>
+                <Input type="date" value={reread?.since || ''} onChange={(e) => setReread((r) => ({ ...r, since: e.target.value }))} />
+                <div className="mt-4 flex justify-end gap-2"><Button onClick={() => setReread(null)}>{tr('Cancel')}</Button><Button variant="solid" disabled={!reread?.since} onClick={doReread}>{tr('Re-read now')}</Button></div>
+            </Dialog>
             <ConfirmDialog isOpen={!!del} type="danger" title={tr('Delete this mailbox?')} confirmText={tr('Delete')} onClose={() => setDel(null)} onRequestClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={async () => {
                 try { await post({ action: 'delete', id: del.id }); notify('success', tr('Deleted')); setDel(null); load() } catch (e) { notify('danger', e.message) }
             }}>

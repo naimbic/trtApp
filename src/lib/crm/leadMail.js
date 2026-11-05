@@ -270,7 +270,7 @@ export async function runMailbox(id, { dry = false, force = false } = {}) {
         try {
             const validity = String(client.mailbox.uidValidity)
             if (cfg.uidValidity && cfg.uidValidity !== validity) lastUid = 0
-            const q = { since: cfg.startFrom || cfg.createdAt, ...(cfg.onlyLoopOnUnseenEmails ? { seen: false } : {}) }
+            const q = { since: cfg.startFrom || cfg.createdAt, ...(cfg.onlyLoopOnUnseenEmails && !force ? { seen: false } : {}) }
             const found = ((await client.search(q, { uid: true })) || []).filter((u) => u > lastUid).sort((a, b) => a - b).slice(0, MAX_PER_RUN)
             for (const uid of found) {
                 stat.looked++
@@ -312,8 +312,23 @@ export async function runMailbox(id, { dry = false, force = false } = {}) {
     } catch (e) { error = why(e) } finally { await client.logout().catch(() => {}); running.delete(id) }
     const message = error || `${stat.imported} new lead${stat.imported === 1 ? '' : 's'}, ${stat.caught} repl${stat.caught === 1 ? 'y' : 'ies'} kept on Mails, ${stat.duplicates} already known, ${stat.skipped} not a lead (${stat.looked} email${stat.looked === 1 ? '' : 's'} read)`
     if (!dry) await prisma.crmLeadEmailIntegration.update({ where: { id }, data: { lastRunAt: new Date(), lastResult: error ? null : message, lastError: error, importedCount: (cfg.importedCount || 0) + stat.imported } })
-    void force
     return { ok: !error, ...stat, message }
+}
+
+/**
+ * "Re-read the emails since a date": the emails of that period that were skipped before (for example because they did not look like a form, before
+ * replies from leads and clients were kept) are looked at again, read or unread. Emails already imported or kept are never done twice.
+ */
+export async function rereadSince(id, since) {
+    await admin()
+    const cfg = await prisma.crmLeadEmailIntegration.findUnique({ where: { id } })
+    if (!cfg) throw fail('Mailbox not found', 404)
+    const from = since ? new Date(since) : new Date(new Date().setHours(0, 0, 0, 0))
+    if (Number.isNaN(+from)) throw fail('Choose a date')
+    await prisma.crmLeadEmailImport.deleteMany({ where: { integrationId: id, result: 'skipped', OR: [{ receivedAt: { gte: from } }, { receivedAt: null, createdAt: { gte: from } }] } })
+    const startFrom = cfg.startFrom && new Date(cfg.startFrom) < from ? cfg.startFrom : from
+    await prisma.crmLeadEmailIntegration.update({ where: { id }, data: { lastUid: null, uidValidity: null, startFrom } })
+    return runMailbox(id, { force: true })
 }
 
 /** Manual "check now" from the screen. */

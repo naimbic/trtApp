@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { errorResponse } from '@/lib/crm/crud'
-import { listMailboxes, saveMailbox, deleteMailbox, importLog, testMailbox, previewMailbox, checkNow } from '@/lib/crm/leadMail'
+import { listMailboxes, saveMailbox, deleteMailbox, importLog, testMailbox, previewMailbox, checkNow, rereadSince } from '@/lib/crm/leadMail'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -24,6 +24,7 @@ export async function POST(request) {
             case 'test': return NextResponse.json(await testMailbox({ ...(b.data || {}), id: b.id }))
             case 'preview': return NextResponse.json(await previewMailbox(b.id))
             case 'run': return NextResponse.json(await checkNow(b.id))
+            case 'reread': return NextResponse.json(await rereadSince(b.id, b.since))
             default: return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
         }
     } catch (e) {

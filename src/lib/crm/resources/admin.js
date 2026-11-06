@@ -111,7 +111,7 @@ const resources = [
         filters: [], hidden: true,
     },
     {
-        key: 'departments', lookup: { orderField: 'departmentOrder', colorField: 'color' }, usage: { model: 'crmTicket', field: 'departmentId', by: 'id' }, model: 'crmDepartment', label: 'Department', plural: 'Departments',
+        key: 'departments', nav: false, lookup: { orderField: 'departmentOrder', colorField: 'color' }, usage: { model: 'crmTicket', field: 'departmentId', by: 'id' }, model: 'crmDepartment', label: 'Department', plural: 'Departments',
         group: 'Administration', icon: 'TbBuilding', feature: 'departments',
         titleField: 'name', search: ['name', 'email'], defaultSort: { departmentOrder: 'asc' },
         columns: [
@@ -242,7 +242,7 @@ const resources = [
         children: [], actions: [],
     },
     {
-        key: 'currencies', lookup: {}, model: 'crmCurrency', label: 'Currency', plural: 'Currencies',
+        key: 'currencies', nav: false, lookup: {}, model: 'crmCurrency', label: 'Currency', plural: 'Currencies',
         group: 'Setup', icon: 'TbCurrencyDollar', feature: 'settings',
         titleField: 'name', search: ['name', 'symbol'], defaultSort: { name: 'asc' },
         columns: [
@@ -264,7 +264,7 @@ const resources = [
         filters: [], children: [], actions: [],
     },
     {
-        key: 'taxes', lookup: {}, model: 'crmTax', label: 'Tax', plural: 'Taxes',
+        key: 'taxes', nav: false, lookup: {}, model: 'crmTax', label: 'Tax', plural: 'Taxes',
         group: 'Setup', icon: 'TbPercentage', feature: 'settings',
         titleField: 'name', search: ['name'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }, { key: 'taxRate', label: 'Rate (%)', type: 'number' }],
@@ -276,7 +276,7 @@ const resources = [
     },
     {
         // Payment methods and bank accounts are one list: a method with bank details IS a bank account (its id is what clients and documents point at)
-        key: 'payment-modes', lookup: { orderField: 'sortOrder' }, exclusive: 'isDefault', usage: { model: 'crmPayment', field: 'paymentModeId', by: 'id' },
+        key: 'payment-modes', nav: false, lookup: { orderField: 'sortOrder' }, exclusive: 'isDefault', usage: { model: 'crmPayment', field: 'paymentModeId', by: 'id' },
         model: 'crmPaymentMode', label: 'Payment method', plural: 'Payment methods',
         group: 'Setup', icon: 'TbCreditCard', feature: 'settings',
         titleField: 'name', search: ['name', 'description', 'bank', 'rib'], defaultSort: { sortOrder: 'asc' },
@@ -378,7 +378,7 @@ const resources = [
         fields: [], filters: [], readOnly: true, hidden: true,
     },
     {
-        key: 'tags', lookup: {}, model: 'crmTag', label: 'Tag', plural: 'Tags',
+        key: 'tags', nav: false, lookup: {}, model: 'crmTag', label: 'Tag', plural: 'Tags',
         group: 'Setup', icon: 'TbTag', feature: null,
         titleField: 'name', search: ['name'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],

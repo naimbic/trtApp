@@ -183,7 +183,7 @@ const resources = [
         hidden: true,
     },
     {
-        key: 'vault',
+        key: 'vault', nav: false,
         model: 'crmVaultEntry',
         label: 'Vault entry',
         plural: 'Vault',

@@ -13,7 +13,7 @@ import { NAV_ITEM_TYPE_COLLAPSE } from '@/constants/navigation.constant'
 import { tr } from '@/utils/t'
 
 const allowed = (authority = [], user = []) => !authority.length || !user.length || authority.some((a) => user.includes(a))
-const MAX_PILLS = 6
+const MAX_PILLS = 5
 
 /** The sections of a group: its own links first, then its sub-sections (Items & catalog, Finance...). */
 const sectionsOf = (group, ok) => {

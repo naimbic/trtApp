@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.192.0',
+        date: '2026-11-06',
+        title: 'Menus re-organised: five pills and a clear More, each area with its own setting entry',
+        items: [
+            'Pills: Sales, Customers, Leads, Projects, Tasks, then More. Support is no longer a pill: Tickets, Help center and Manage articles are a column of More.',
+            'More has one column per topic: Support & Help, Team, Time & pay, My space, Growth & insight, Setup. No column holds a single page, and there is no "More" column inside a pill any more.',
+            'Sales and Tasks have two named columns (Documents / Money & catalog, Work / Tracking). To-dos moved next to Notes in Tasks.',
+            'Every area ends with its own "... setting" entry (Sales, Customers, Leads, Tasks, Support, Team). They all open the same page, Lists & statuses, already filtered to that area; chips at the top switch area.',
+            'Currencies, taxes, payment modes, departments and tags moved into Lists & statuses (inline, paged). The old separate Vault list was removed from the menu: Password vault stays under Customers.',
+        ],
+    },
+    {
         version: '0.191.0',
         date: '2026-11-06',
         title: 'Every short list edited in place (no pencil, no popup) with paging, Customers setting, one Lists page, Events by month',

@@ -6,19 +6,23 @@ import {
 import { resources } from '@/lib/crm/resources'
 import { customNavItems } from '@/lib/crm/custom-nav'
 
-// Sidebar built from the Perfex resource registry (src/lib/crm/resources/*).
-const GROUP_ORDER = [
-    ['Sales', 'crmSales'],
-    ['Customers', 'crmCustomers'],
-    ['Leads', 'crmLeads'],
-    ['Projects', 'crmProjects'],
-    ['Tasks', 'crmTasks'],
-    ['Purchases', 'crmPurchases'],
-    ['Support', 'crmSupport'],
-    ['Knowledge Base', 'crmKnowledgeBase'],
-    ['Administration', 'crmAdministration'],
-    ['Setup', 'crmSetup'],
-    ['Utilities', 'crmUtilities'],
+// Sidebar built from the Perfex resource registry (src/lib/crm/resources/*) and the hand-built pages (src/lib/crm/custom-nav.js).
+// The structure is written here, once: five pills for the daily work, then "More" (one column per topic). Rules: a column holds 3 items or more,
+// there is no "More" column inside a pill, and every area ends with its own "... setting" entry (all of them open Lists & statuses, already filtered).
+const col = (title, items) => ({ sub: title.toLowerCase().replace(/[^a-z]+/g, ''), title, items })
+const STRUCTURE = [
+    { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
+    { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'customers-setting'] },
+    { group: 'Leads', icon: 'crmLeads', entries: ['leads', 'web-to-lead', 'lead-email-integration', 'leads-setting'] },
+    { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
+    { group: 'Tasks', icon: 'crmTasks', entries: [col('Work', ['tasks-board', 'my-tasks', 'team-tasks', 'timeline', 'notes', 'todos']), col('Tracking', ['time-report', 'task-timers', 'issues', 'statuses', 'checklist-templates', 'tasks-setting'])] },
+    // from here on: the "More" pill, one column per group
+    { group: 'Support & Help', icon: 'crmSupport', entries: ['tickets', 'help-center', 'kb-manage', 'support-setting'] },
+    { group: 'Team', icon: 'crmAdministration', entries: ['staff', 'roles', 'announcements', 'team-setting'] },
+    { group: 'Time & pay', icon: 'crmAdministration', entries: ['work-hours', 'timesheets', 'leave-requests', 'days-off', 'payroll'] },
+    { group: 'My space', icon: 'crmUtilities', entries: ['reminders', 'events', 'scheduled-messages', 'notifications', 'file-manager'] },
+    { group: 'Growth & insight', icon: 'crmUtilities', entries: ['goals', 'surveys', 'my-growth', 'grow', 'reports', 'ai', 'activity-log'] },
+    { group: 'Setup', icon: 'crmSetup', entries: ['platform-settings', 'mails', 'lists', 'custom-fields', 'countries', 'api', 'files'] },
 ]
 
 // `also`: newer, narrower permissions that open the same page (next to the older broad one)
@@ -29,55 +33,25 @@ const authorityFor = (feature, also = []) =>
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
-// Per group: important items first, the rest folded into sub-groups. Anything not listed is appended at the end.
-const S = (key, title, items) => ({ sub: key, title, items })
-const LAYOUT = {
-    Customers: ['clients', 'contacts', 'vault', 'customers-setting'],
-    Leads: ['leads', 'web-to-lead', 'lead-email-integration'],
-    Projects: ['projects', 'scrum-board', 'milestones'],
-    Tasks: ['tasks-board', 'my-tasks', 'team-tasks', 'timeline', 'notes', S('more', 'More', ['statuses', 'time-report', 'issues', 'tasks', 'task-timers', 'checklist-templates'])],
-    Sales: [
-        'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses', 'freelancers', 'items',
-    ],
-    Support: ['tickets'],
-    'Knowledge Base': ['help-center', 'kb-manage'],
-    Administration: ['staff', 'work-hours', 'payroll', 'roles', 'departments', S('hr', 'Attendance & leave', ['leave-requests', 'days-off', 'timesheets']), S('comms', 'Communication', ['announcements'])],
-    Setup: [
-        'platform-settings', 'mails', 'lists',
-        S('finance', 'Finance', ['currencies', 'taxes', 'payment-modes']),
-        S('data', 'Data', ['custom-fields', 'tags', 'countries']),
-    ],
-    Utilities: [
-        'reports', 'ai', 'file-manager', 'passwords',
-        S('tools', 'Personal', ['todos', 'reminders', 'events']),
-        S('team', 'Team & feedback', ['goals', 'surveys', 'notifications']),
-        S('more', 'System', ['files', 'activity-log']),
-    ],
-}
+const pool = Object.fromEntries([
+    ...customNavItems,
+    ...resources.filter((r) => r.nav !== false && !r.hidden).map((r) => ({ key: r.key, title: r.plural, path: `/crm/${r.key}`, feature: r.feature, also: r.also })),
+].map((i) => [i.key, i]))
+const placed = new Set(STRUCTURE.flatMap((g) => g.entries.flatMap((e) => (typeof e === 'string' ? [e] : e.items))))
+// a page nobody placed still shows (at the end of Setup), so nothing is ever missing from the menu
+const lost = Object.keys(pool).filter((k) => !placed.has(k))
+if (lost.length && import.meta.env?.DEV) console.warn('[menu] pages not placed in the structure:', lost.join(', '))
 
-const groups = GROUP_ORDER.map(([group, icon]) => {
-    const flat = [
-        ...customNavItems.filter((i) => i.group === group),
-        ...resources
-            .filter((r) => r.group === group && r.nav !== false && !r.hidden)
-            .map((r) => ({ key: r.key, title: r.plural, path: `/crm/${r.key}`, feature: r.feature, also: r.also })),
-    ]
-    const byKey = Object.fromEntries(flat.map((i) => [i.key, i]))
-    const used = new Set()
-    const take = (k) => {
-        used.add(k)
-        return byKey[k]
-    }
+const groups = STRUCTURE.map(({ group, icon, entries }) => {
+    const list = group === 'Setup' ? [...entries, ...lost] : entries
     const items = []
-    for (const e of LAYOUT[group] || []) {
-        if (typeof e === 'string') {
-            if (byKey[e]) items.push(take(e))
-        } else {
-            const kids = e.items.filter((k) => byKey[k]).map(take)
+    for (const e of list) {
+        if (typeof e === 'string') { if (pool[e]) items.push(pool[e]) } else {
+            const kids = e.items.filter((k) => pool[k]).map((k) => pool[k])
             if (kids.length) items.push({ sub: e.sub, title: e.title, items: kids })
         }
     }
-    flat.filter((i) => !used.has(i.key)).forEach((i) => items.push(i))
+    const flat = items.flatMap((i) => (i.sub ? i.items : [i]))
     return { group, icon, items, flat }
 }).filter((g) => g.flat.length)
 

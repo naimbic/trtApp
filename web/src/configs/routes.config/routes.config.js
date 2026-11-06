@@ -8,7 +8,7 @@ export const publicRoutes = [...authRoute]
 // Every CRM resource shares one generic route; hand-built screens get their own entry first.
 const ROUTE_FEATURE = [
     ['/crm/settings', 'settings'], ['/crm/company', 'settings'], ['/team', 'staff'], ['/crm/staff', 'staff'], ['/crm/work-hours', 'staff'], ['/crm/goals', 'goals'], ['/crm/surveys', 'surveys'], ['/crm/milestones', 'projects'], ['/crm/lead-email-integration', 'settings'], ['/crm/payroll', 'staff'], ['/crm/roles', 'roles'],
-    ['/crm/leave-requests', 'leave'], ['/crm/customers-setting', 'customers'], ['/crm/days-off', 'leave'], ['/crm/lists', 'settings'], ['/crm/clients', 'customers'], ['/crm/invoices', 'invoices'], ['/crm/estimates', 'estimates'], ['/crm/purchase-orders', 'purchase_orders'], ['/crm/proposals', 'proposals'], ['/crm/contracts', 'contracts'],
+    ['/crm/leave-requests', 'leave'], ['/crm/customers-setting', 'customers'], ['/crm/days-off', 'leave'], ['/crm/clients', 'customers'], ['/crm/invoices', 'invoices'], ['/crm/estimates', 'estimates'], ['/crm/purchase-orders', 'purchase_orders'], ['/crm/proposals', 'proposals'], ['/crm/contracts', 'contracts'],
     ['/crm/payments', 'payments'], ['/crm/expenses', 'expenses'], ['/crm/freelancers', 'freelancers'], ['/crm/mails', 'email_templates'], ['/crm/issues', 'issues'],
     ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/notes', 'notes'], ['/crm/todos', 'notes'], ['/crm/events', 'calendar'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'], ['/crm/timeline', 'tasks'],
     ['/crm/leads', 'leads'], ['/crm/projects', 'projects'], ['/crm/tickets', 'tickets'], ['/crm/passwords', 'passwords'],
@@ -135,7 +135,7 @@ const crmRoutes = [
     },
     { key: 'crm.statuses', path: '/crm/statuses', component: lazy(() => import('@/views/crm/status/StatusPages').then((m) => ({ default: m.StatusOverview }))), authority: [] },
     { key: 'crm.status', path: '/crm/status/:kind/:key', component: lazy(() => import('@/views/crm/status/StatusPages').then((m) => ({ default: m.StatusPage }))), authority: [] },
-    ...['lists', 'customers-setting', 'customer-groups', 'idea-categories', 'consent-purposes', 'lead-statuses', 'lead-sources', 'task-statuses', 'ticket-statuses', 'ticket-priorities', 'services', 'predefined-replies', 'spam-filters'].map((k) => ({ key: `crm.${k}`, path: `/crm/${k}`, component: lazy(() => import('@/views/crm/settings/ListsPage')), authority: [] })),
+    ...['lists', 'currencies', 'taxes', 'payment-modes', 'departments', 'tags', 'customers-setting', 'customer-groups', 'idea-categories', 'consent-purposes', 'lead-statuses', 'lead-sources', 'task-statuses', 'ticket-statuses', 'ticket-priorities', 'services', 'predefined-replies', 'spam-filters'].map((k) => ({ key: `crm.${k}`, path: `/crm/${k}`, component: lazy(() => import('@/views/crm/settings/ListsPage')), authority: [] })),
     { key: 'crm.leave-requests', path: '/crm/leave-requests', component: lazy(() => import('@/views/crm/team/LeaveRequests')), authority: [] },
     { key: 'crm.days-off', path: '/crm/days-off', component: lazy(() => import('@/views/crm/team/DaysOff')), authority: [] },
     { key: 'crm.todos', path: '/crm/todos', component: lazy(() => import('@/views/crm/notes/TodosPage')), authority: [] },

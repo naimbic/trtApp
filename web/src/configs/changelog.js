@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.198.0',
+        date: '2026-11-06',
+        title: 'Duplicate warning, deal value and forecast, contract from an accepted estimate or proposal',
+        items: [
+            'Possible duplicates: while you type a lead (company, email, phone) or a client (company, phone), an amber note lists leads and clients that already have the same email, the same phone (any country code) or the same company (case, accents and SARL / Ltd ignored), with a link to each.',
+            'Deal value: each lead can have a value, a chance of winning (empty = the status chance, set in Lists & statuses → Lead statuses → "Win chance", or its place in the pipeline) and an expected closing date. The cards show the value, each column its total, and the Leads page a strip: Open pipeline, Forecast (value × chance) and Expected this month.',
+            'Accepted estimates and proposals get a "Create contract" button: a draft contract for the same client with the same total, made once per document (asked again, it opens the first).',
+            'The browser tests now also cover the duplicate note, the forecast and the contract (9 flows).',
+        ],
+    },
+    {
         version: '0.197.0',
         date: '2026-11-06',
         title: 'Bulk actions, saved views and browser tests',

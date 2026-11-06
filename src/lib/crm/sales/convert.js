@@ -75,3 +75,19 @@ export async function createEstimateFromProposal(proposal, { label, staffId = nu
     await activity('proposal', d.id, `Estimate ${prefix}${number} created`, actor, staffId)
     return { ...est, prefix, number }
 }
+
+/** Creates a draft contract for the client of an accepted estimate or proposal (its subject, its total as the value, a note of where it came from). One contract per document: asked again, it returns the first. */
+export async function createContractFromDocument(kind, doc, { label, staffId = null, actor = 'Staff' } = {}) {
+    const clientId = clientOf(kind, doc)
+    if (!clientId) throw Object.assign(new Error('This document is for a lead. Make the lead a client first.'), { status: 400 })
+    const again = await prisma.crmContract.findFirst({ where: { fromType: kind, fromId: doc.id, trash: false }, select: { id: true } })
+    if (again) return { id: again.id, existing: true }
+    const last = await prisma.crmContract.findFirst({ where: { legacyId: { not: null } }, orderBy: { legacyId: 'desc' }, select: { legacyId: true } })
+    const c = await prisma.crmContract.create({ data: {
+        legacyId: (last?.legacyId || 0) + 1, subject: doc.subject || (label ? `Contract · ${label}` : 'Contract'), clientId, contractValue: doc.total || 0, dateStart: new Date(),
+        description: label ? `Made from ${LABEL[kind] || kind} ${label}` : null, fromType: kind, fromId: doc.id, addedFrom: staffId || doc.addedFrom || undefined,
+        hash: crypto.randomUUID().replace(/-/g, ''), signed: false, markedAsSigned: false, trash: false, isExpiryNotified: false,
+    } })
+    await activity(kind, doc.id, `Contract created${label ? ` from ${label}` : ''}`, actor, staffId)
+    return { id: c.id, existing: false }
+}

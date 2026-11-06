@@ -16,6 +16,10 @@ export default async function setup() {
         // two leads to select, and a notification to read
         const status = await p.crmLeadStatus.findFirst({ orderBy: { statusOrder: 'asc' } })
         for (const n of ['A', 'B']) await p.crmLead.create({ data: { name: `${E2E.tag} lead ${n}`, company: `${E2E.tag} company ${n}`, statusId: status?.id, addedFrom: staff.id, assigned: staff.id, assignedIds: [staff.id] } })
+        // an accepted estimate of a client, for the contract chain
+        const client = await p.crmClient.create({ data: { company: `${E2E.tag} company C` } })
+        const estimate = await p.crmEstimate.create({ data: { clientId: client.id, number: 987654, prefix: 'ZZ-', numberFormat: 1, date: new Date(), status: 4, total: 1000, adminNote: E2E.tag, hash: 'zze2e' } })
+        process.env.E2E_ESTIMATE_ID = estimate.id // the tests read it
         await p.crmNotification.create({ data: { toUserId: staff.id, fromFullName: 'Naim Admin', description: `${E2E.tag} please check the quote`, additionalData: 'mention', link: '/crm/notes', isRead: false } })
     } finally { await p.$disconnect() }
 }

@@ -56,6 +56,7 @@ const EstimateView = () => {
     const state = (action, ok) => run(() => api(`/api/crm/sales/estimates/${id}/state`, { method: 'POST', body: { action } }), ok)
     const copy = async () => { try { await navigator.clipboard.writeText(clientLink); notify('success', tr("Client link copied")) } catch { notify('danger', tr("Could not copy")) } }
     const makeOrder = async () => { const r = await run(() => api(`/api/crm/sales/estimates/${id}/purchase-order`, { method: 'POST' }), tr("Purchase order created")); if (r?.id) navigate(`/crm/purchase-orders/${r.id}`) }
+    const makeContract = async () => { const r = await run(() => api('/api/crm/sales/contracts/from-document', { method: 'POST', body: { kind: 'estimate', id } }), tr("Contract ready")); if (r?.id) navigate(`/crm/contracts/${r.id}/edit`) }
     const convert = async () => { const r = await run(() => api(`/api/crm/sales/estimates/${id}/convert`, { method: 'POST' }), tr("Invoice created")); if (r?.invoiceId) navigate(`/crm/invoices/${r.invoiceId}`) }
     const sendReply = async () => { if (!reply.trim()) return; if (await run(() => api(`/api/crm/sales/estimates/${id}/comments`, { method: 'POST', body: { content: reply } }), tr("Reply added"))) setReply('') }
     const delComment = (cid) => run(() => api(`/api/crm/sales/estimates/${id}/comments?commentId=${cid}`, { method: 'DELETE' }), tr("Comment deleted"))
@@ -81,6 +82,7 @@ const EstimateView = () => {
                     {e.status !== 1 && <Button size="sm" icon={<TbCopy />} onClick={copy}>{tr("Client link")}</Button>}
                     {can('purchase_orders', 'create') && !locked && [2, 4].includes(st) && <Button size="sm" icon={<TbShoppingCart />} loading={busy} onClick={makeOrder}>{tr("Purchase order")}</Button>}
                     {can('invoices', 'create') && !locked && [2, 4, 5].includes(st) && <Button size="sm" variant="solid" icon={<TbFileInvoice />} loading={busy} onClick={() => setConfirm('convert')}>{tr("Convert to invoice")}</Button>}
+                    {can('contracts', 'create') && e.status === 4 && <Button size="sm" icon={<TbFileInvoice />} loading={busy} onClick={makeContract}>{tr("Create contract")}</Button>}
                     {can('estimates', 'edit') && !locked && (
                         <Dropdown renderTitle={<Button size="sm" loading={busy}>{tr("Mark as…")}</Button>} placement="bottom-end">
                             {e.status !== 1 && <Dropdown.Item eventKey="d" onClick={() => state('markDraft', tr("Marked as draft"))}>{tr("Draft")}</Dropdown.Item>}

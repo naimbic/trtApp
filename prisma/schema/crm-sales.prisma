@@ -365,6 +365,9 @@ model CrmContract {
   isExpiryNotified    Boolean            @default(false)
   remindClient        Boolean?  // null / true: the expiration notice is emailed to the client; false: never
   contractValue       Float?
+  /// the document it was made from (estimate | proposal) and its id: one contract per document
+  fromType            String?
+  fromId              String?          @db.ObjectId
   trash               Boolean            @default(false)
   notVisibleToClient  Boolean            @default(false)
   hash                String?

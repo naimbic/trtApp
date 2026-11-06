@@ -342,6 +342,7 @@ const resources = [
         fields: [
             { key: 'name', label: 'Name', type: 'text', required: true, section: 'General' },
             { key: 'statusOrder', label: 'Order', type: 'number', section: 'General' },
+            { key: 'winProbability', label: 'Win chance (%)', type: 'number', section: 'General', inline: true },
             { key: 'color', label: 'Color', type: 'color', section: 'General' },
             { key: 'isDefault', label: 'Default', type: 'boolean', section: 'General' },
             { key: 'isActive', label: 'Active', type: 'boolean', defaultOn: true, section: 'General' },

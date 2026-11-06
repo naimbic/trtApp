@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import FoldSection from '@/components/crm/FoldSection'
 import { useNavigate, useParams } from 'react-router'
+import DuplicateWarning from '@/components/crm/DuplicateWarning'
 import { TbArrowNarrowLeft, TbTrash, TbBuilding, TbCoin, TbMapPin, TbUserPlus, TbPhoto, TbUsersGroup, TbShieldCheck, TbMail, TbPower } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import BottomStickyBar from '@/components/template/BottomStickyBar'
@@ -104,6 +105,7 @@ const ClientForm = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
                 <div className="mx-auto flex max-w-4xl flex-col gap-2.5">
                     <FoldSection icon={<TbBuilding />} tone="blue" title={tr("Company")} summary={[v.company, v.industry, v.phone].filter(Boolean).join(' · ')} open={openSec.includes('company')} onToggle={() => toggleSec('company')}>
+                        <DuplicateWarning className="mb-3" company={v.company} phone={v.phone} clientId={id} />
                         <div className="grid grid-cols-1 gap-x-4 md:grid-cols-3 [&>*]:!mb-3">
                                 <FormItem label={tr("Company name")} asterisk><Input value={v.company} placeholder={tr("Company name")} onChange={(e) => set({ company: e.target.value })} /></FormItem>
                                 <FormItem label={tr("VAT / ICE")}><Input value={v.vat} onChange={(e) => set({ vat: e.target.value })} /></FormItem>

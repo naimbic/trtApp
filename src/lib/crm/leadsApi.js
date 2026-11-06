@@ -39,6 +39,7 @@ async function staffMap(ids) {
 const card = (l, people, status, source) => ({
     id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title, doText: l.doText || '', notes: l._notes || 0,
     statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null, sourceColor: source?.color || null,
+    value: l.value ?? null, probability: l.probability ?? null, winProb: l.probability ?? status?.winProbability ?? null, expectedClose: l.expectedClose || null,
     assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId,
 })
 
@@ -106,7 +107,15 @@ export async function listLeads(p = {}) {
     const out = cols.map((c) => ({ id: c.id, name: c.name, color: c.color, count: c.count, leads: c.rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])) }))
     if (orphans.length) out.unshift({ id: 'none', name: 'No status', color: '#94a3b8', count: orphans.length, leads: orphans.map((l) => card(l, people, null, srcMap[l.sourceId])) })
     const totals = { lost: await prisma.crmLead.count({ where: { AND: [visible(a), { lost: true }] } }), junk: await prisma.crmLead.count({ where: { AND: [visible(a), { junk: true }] } }), converted: await prisma.crmLead.count({ where: { AND: [visible(a), { clientId: { not: null } }] } }) }
-    return { statuses: out, limit, totals, can, sources: sources.map((s) => ({ id: s.id, name: s.name })) }
+    // the money side: what the open leads are worth, what is likely to be won, what is expected this month (the filters of the page apply)
+    const money = show === '' ? await prisma.crmLead.findMany({ where: { AND: [...and, { value: { gt: 0 } }] }, select: { value: true, probability: true, statusId: true, expectedClose: true, clientId: true } }) : []
+    const pos = Object.fromEntries(statuses.map((s, i) => [s.id, Math.round(((i + 1) / (statuses.length + 1)) * 100)])) // a status without its own chance: its place in the pipeline
+    const chance = (r) => Math.min(100, Math.max(0, r.probability ?? sMap[r.statusId]?.winProbability ?? pos[r.statusId] ?? 0))
+    const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)), monthEnd = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() + 1, 1))
+    const openRows = money.filter((r) => !r.clientId)
+    const forecast = { count: openRows.length, open: Math.round(openRows.reduce((n, r) => n + r.value, 0)), weighted: Math.round(openRows.reduce((n, r) => n + (r.value * chance(r)) / 100, 0)), month: Math.round(openRows.filter((r) => r.expectedClose && r.expectedClose >= monthStart && r.expectedClose < monthEnd).reduce((n, r) => n + (r.value * chance(r)) / 100, 0)) }
+    const cur = await prisma.crmCurrency.findFirst({ where: { isDefault: true } }).catch(() => null)
+    return { statuses: out, limit, totals, can, forecast, currency: cur?.name || '', sources: sources.map((s) => ({ id: s.id, name: s.name })) }
 }
 
 async function loadOne(id, a) {
@@ -146,7 +155,7 @@ export async function getLead(id) {
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
         mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
-        senders,
+        senders, currency: (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }).catch(() => null))?.name || '',
         can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
 }
@@ -158,7 +167,10 @@ export async function saveLead(body, id) {
     if (!name) throw fail('Give the lead a name')
     const email = nz(body.email)
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fail('That email address does not look right')
-    const data = { ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), ...(body.country !== undefined ? { country: body.country === null || body.country === '' ? null : Number(body.country) || null } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: cleanWebsite(body.website) || null, description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), ...(body.defaultLanguage !== undefined ? { defaultLanguage: LANGUAGES.includes(String(body.defaultLanguage || '').toLowerCase()) ? String(body.defaultLanguage).toLowerCase() : null } : {}), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
+    const money = (v) => { if (v === null || v === '' || v === undefined) return null; const n = Number(v); if (!Number.isFinite(n) || n < 0 || n > 1e12) throw fail('The value is not a valid amount'); return Math.round(n * 100) / 100 }
+    const pct = (v) => { if (v === null || v === '' || v === undefined) return null; const n = Math.round(Number(v)); if (!Number.isFinite(n) || n < 0 || n > 100) throw fail('The chance of winning is between 0 and 100'); return n }
+    const day = (v) => { if (!v) return null; const d = new Date(`${String(v).slice(0, 10)}T12:00:00.000Z`); if (Number.isNaN(+d)) throw fail('The expected closing date is not valid'); return d }
+    const data = { ...(body.value !== undefined ? { value: money(body.value) } : {}), ...(body.probability !== undefined ? { probability: pct(body.probability) } : {}), ...(body.expectedClose !== undefined ? { expectedClose: day(body.expectedClose) } : {}), ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), ...(body.country !== undefined ? { country: body.country === null || body.country === '' ? null : Number(body.country) || null } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: cleanWebsite(body.website) || null, description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), ...(body.defaultLanguage !== undefined ? { defaultLanguage: LANGUAGES.includes(String(body.defaultLanguage || '').toLowerCase()) ? String(body.defaultLanguage).toLowerCase() : null } : {}), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
     if (id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)

@@ -12,6 +12,7 @@ import { Link, useNavigate } from 'react-router'
 import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText, TbUsers, TbAddressBook, TbMapPin, TbTarget } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Drawer from '@/components/crm/PopupFrame'
+import DuplicateWarning from '@/components/crm/DuplicateWarning'
 import FoldSection from '@/components/crm/FoldSection'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -29,7 +30,7 @@ import { tr } from '@/utils/t'
 import useTabParam from '@/utils/useTabParam'
 
 const LEAD_LANGUAGES = [['english', 'English'], ['french', 'Français'], ['arabic', 'العربية'], ['spanish', 'Español'], ['german', 'Deutsch'], ['italian', 'Italiano'], ['portuguese', 'Português'], ['dutch', 'Nederlands'], ['turkish', 'Türkçe'], ['russian', 'Русский'], ['japanese', '日本語']].map(([value, label]) => ({ value, label }))
-const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', country: null, sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false, defaultLanguage: '' }
+const EMPTY = { name: '', doText: '', title: '', company: '', email: '', phone: '', website: '', description: '', address: '', city: '', state: '', zip: '', country: null, sourceId: null, statusId: null, assignedIds: [], followerIds: [], isPublic: false, defaultLanguage: '', value: '', probability: '', expectedClose: '' }
 const L = ({ children }) => <label className="mb-1 block text-xs font-semibold text-gray-500 dark:text-gray-400">{children}</label>
 
 const PROPOSAL = { 1: tr("Open"), 2: tr("Declined"), 3: tr("Accepted"), 4: tr("Sent"), 5: tr("Revised"), 6: tr("Draft") }
@@ -63,7 +64,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             const d = await api(`/api/crm/pipeline/leads/${id}`)
             setDetail(d)
             const l = d.lead
-            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', country: l.country ?? null, sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: d.followerIds || l.followerIds || [], isPublic: !!l.isPublic, defaultLanguage: l.defaultLanguage || '' })
+            setV({ ...EMPTY, name: l.name || '', doText: l.doText || '', title: l.title || '', company: l.company || '', email: l.email || '', phone: l.phone || '', website: l.website || '', description: l.description || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', country: l.country ?? null, sourceId: l.sourceId, statusId: l.statusId, assignedIds: l.assignedIds || [], followerIds: d.followerIds || l.followerIds || [], isPublic: !!l.isPublic, defaultLanguage: l.defaultLanguage || '', value: l.value ?? '', probability: l.probability ?? '', expectedClose: l.expectedClose ? String(l.expectedClose).slice(0, 10) : '' })
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { if (!open) return; setDetail(null); setNote(''); setReplyTo(null); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey])
@@ -90,6 +91,11 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div><L>{tr("Source")}</L><Select size={sz} isClearable isDisabled={!canEdit} formatOptionLabel={(o) => <span className="inline-flex items-center gap-2">{o.color && <i className="h-2.5 w-2.5 rounded-full" style={{ background: o.color }} />}{o.label}</span>} options={lk.sources.filter((s) => s.isActive !== false || s.id === v.sourceId).map((s) => ({ value: s.id, label: s.name, color: s.color }))} value={opt(lk.sources, v.sourceId)} onChange={(o) => set({ sourceId: o?.value || null })} /></div>
                     <div><L>{tr("Assigned to")}</L><Select size={sz} isMulti isDisabled={!canEdit} options={staff.map((s) => ({ value: s.id, label: s.name }))} value={staff.filter((s) => (v.assignedIds || []).includes(s.id)).map((s) => ({ value: s.id, label: s.name }))} onChange={(o) => set({ assignedIds: (o || []).map((x) => x.value) })} placeholder={tr("Me")} /></div>
                     <div><L>{tr("Followers")}</L><Select size={sz} isMulti isDisabled={!canEdit} options={staff.map((s) => ({ value: s.id, label: s.name }))} value={staff.filter((s) => (v.followerIds || []).includes(s.id)).map((s) => ({ value: s.id, label: s.name }))} onChange={(o) => set({ followerIds: (o || []).map((x) => x.value) })} placeholder={tr("Who should follow this lead")} /></div>
+                    <div className="col-span-2 grid grid-cols-3 gap-3">
+                        <div><L>{tr("Deal value")}{detail?.currency ? ` (${detail.currency})` : ''}</L><Input size={sz} type="number" min="0" disabled={!canEdit} value={v.value} placeholder="0" onChange={(e) => set({ value: e.target.value })} /></div>
+                        <div><L>{tr("Chance of winning (%)")}</L><Input size={sz} type="number" min="0" max="100" disabled={!canEdit} value={v.probability} placeholder={tr("Status default")} onChange={(e) => set({ probability: e.target.value })} /></div>
+                        <div><L>{tr("Expected closing")}</L><Input size={sz} type="date" disabled={!canEdit} value={v.expectedClose} onChange={(e) => set({ expectedClose: e.target.value })} /></div>
+                    </div>
                     <div className="col-span-2"><L>{tr("DO:")}</L><Input size={sz} prefix={<TbTarget />} disabled={!canEdit} value={v.doText} maxLength={160} placeholder={tr("The next thing to do, shown on the card")} onChange={(e) => set({ doText: e.target.value })} /></div>
                     <div className="col-span-2 flex items-center justify-between text-sm"><span>{tr("Visible to the whole team")}</span><Switcher disabled={!canEdit} checked={v.isPublic} onChange={(c) => set({ isPublic: c })} /></div>
                 </div>
@@ -101,6 +107,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div><L>{tr("Email")}</L><Input size={sz} disabled={!canEdit} value={v.email} onChange={(e) => set({ email: e.target.value })} /></div>
                     <div><L>{tr("Phone")}</L><Input size={sz} disabled={!canEdit} value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
                 </div>
+                {canEdit && <DuplicateWarning className="mt-3" email={v.email} phone={v.phone} company={v.company} leadId={edit ? id : undefined} />}
                 <div className="mt-3 grid grid-cols-3 gap-3">
                     <div><L>{tr("Website")}</L><WebsiteField size={sz} disabled={!canEdit} value={v.website} onChange={(x) => set({ website: x })} /></div>
                     <div><L>{tr("Language")}</L><Select size={sz} isDisabled={!canEdit} isSearchable={false} isClearable options={LEAD_LANGUAGES} value={LEAD_LANGUAGES.find((o) => o.value === v.defaultLanguage) || null} placeholder={tr("Not set")} onChange={(o) => set({ defaultLanguage: o?.value || '' })} /></div>

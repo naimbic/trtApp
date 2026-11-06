@@ -27,6 +27,10 @@ export async function cleanup(p) {
     await p.crmLead.deleteMany({ where: { id: { in: leadIds } } })
     await p.crmContact.deleteMany({ where: { clientId: { in: clientIds } } }).catch(() => {})
     await p.crmClient.deleteMany({ where: { id: { in: clientIds } } })
+    const ests = await p.crmEstimate.findMany({ where: { adminNote: E2E.tag }, select: { id: true } })
+    await p.crmContract.deleteMany({ where: { fromId: { in: ests.map((e) => e.id) } } })
+    await p.crmSalesActivity.deleteMany({ where: { relType: 'estimate', relId: { in: ests.map((e) => e.id) } } }).catch(() => {})
+    await p.crmEstimate.deleteMany({ where: { adminNote: E2E.tag } })
     await p.crmTask.deleteMany({ where: { name: like } })
     await p.crmLeadSource.deleteMany({ where: { name: like } })
     if (staff) {

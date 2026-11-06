@@ -224,6 +224,8 @@ model CrmLeadStatus {
   isDefault   Boolean  @default(false) // isdefault
   /// off: no column for new leads (a column that still has leads stays visible)
   isActive    Boolean?
+  /// the chance (%) that a lead in this status is won: used for the forecast when a lead has none of its own
+  winProbability Int?
 
   leads       CrmLead[]
 
@@ -244,6 +246,10 @@ model CrmLead {
   description                    String?
   /// "DO:" the next thing to do for this lead (free text, shown on the lead's card)
   doText                         String?
+  /// what the deal is worth, the chance (%) of winning it (empty = the status's), and when it should close: the pipeline value and forecast
+  value                          Float?
+  probability                    Int?
+  expectedClose                  DateTime?
   country                        Int?           // legacy tblcountries.country_id
   zip                            String?
   city                           String?

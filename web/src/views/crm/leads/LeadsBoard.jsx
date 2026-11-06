@@ -125,6 +125,13 @@ const LeadsBoard = () => {
                 </div>
             </div>
 
+            {data.forecast?.count > 0 && show === '' && (
+                <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {[[tr('Open pipeline'), data.forecast.open, tr('{n} leads with a value', { n: data.forecast.count })], [tr('Forecast'), data.forecast.weighted, tr('value × chance of winning')], [tr('Expected this month'), data.forecast.month, tr('closing this month, weighted')]].map(([label, n, sub]) => (
+                        <div key={label} className="rounded-xl border border-gray-200 bg-white px-4 py-2 dark:border-gray-700 dark:bg-gray-800"><div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</div><div className="text-xl font-extrabold tabular-nums">{new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n)}{data.currency ? <span className="ms-1 text-sm font-semibold text-gray-400">{data.currency}</span> : null}</div><div className="text-xs text-gray-400">{sub}</div></div>
+                    ))}
+                </div>
+            )}
             <div className="mb-4 flex flex-wrap items-center gap-3">
                 <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search leads")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any owner")} options={staffOptions} value={staffOptions.find((o) => o.value === assigned) || null} onChange={(o) => { setAssigned(o?.value || null); setMine(false) }} /></div>
@@ -140,6 +147,7 @@ const LeadsBoard = () => {
                 <Pipeline
                     loading={loading}
                     emptyText={tr("No leads")}
+                    money={(n) => `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n || 0)}${data.currency ? ` ${data.currency}` : ''}`}
                     canDrag={() => show === ''}
                     onOpen={(it) => open(it.id)}
                     onAdd={(c) => setDrawer({ open: true, id: null, preset: { statusId: c.id }, k: 0 })}
@@ -157,7 +165,7 @@ const LeadsBoard = () => {
                     }}
                     columns={data.statuses.map((c) => ({
                         id: c.id, name: c.name, ...(c.id !== 'none' ? { href: `/crm/status/leads/${c.id}`, hrefTitle: tr("Open the page of this status") } : {}), color: c.color, count: c.count,
-                        items: c.leads.map((l) => ({ id: l.id, href: `/crm/leads/${l.id}`, title: l.company || l.name, sub: l.company ? l.name : '', date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), todo: l.doText || '', comments: l.notes || 0, label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
+                        items: c.leads.map((l) => ({ id: l.id, href: `/crm/leads/${l.id}`, title: l.company || l.name, sub: l.company ? l.name : '', amount: l.value || undefined, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), todo: l.doText || '', comments: l.notes || 0, label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
                             fields: [{ label: tr("Email"), value: l.email }, { label: tr("Phone"), value: l.phone }, { label: tr("Source"), value: l.source }, { label: tr("Owner"), value: l.assigned?.name }],
                             team: l.assignees || [],
                             people: l.assignees?.length ? <People list={l.assignees} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),

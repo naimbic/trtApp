@@ -27,7 +27,7 @@ test.describe('signed in', () => {
     test('a lead is created and converted to a client', async ({ page }) => {
         const title = name('new lead')
         await page.goto('/crm/leads')
-        await page.getByRole('button', { name: 'New lead' }).click()
+        await page.getByRole('button', { name: 'New lead', exact: true }).click()
         await page.getByRole('dialog').getByText('Name', { exact: true }).first().locator('xpath=following::input[1]').fill(title)
         await page.getByRole('button', { name: 'Create lead' }).click()
         const card = page.locator('.rp-pl-card', { hasText: title })
@@ -69,22 +69,55 @@ test.describe('signed in', () => {
         const list = page.locator('[data-list="lead-sources"]')
         await list.locator('button[aria-label="Add"]').click() // the + of the list opens it and shows the add row
         await list.getByPlaceholder(/New lead source/i).fill(source)
+        const created = page.waitForResponse((r) => r.url().includes('/api/crm/lead-sources') && r.request().method() === 'POST')
         await page.keyboard.press('Enter')
+        expect((await created).ok()).toBeTruthy()
         // after a reload the new row is there; rename it in place, saved when the field is left
         await page.reload()
         const row = (n) => page.locator('[data-list="lead-sources"] div.grid', { has: page.locator(`input[value="${n}"]`) })
+        const search = page.locator('[data-list="lead-sources"]').getByPlaceholder('Search…') // a long list is paged: the new row may be on the last page
+        if (await search.count()) await search.fill(source)
         await expect(row(source)).toBeVisible()
         const field = await row(source).locator(`input[value="${source}"]`).elementHandle() // a handle: the selector stops matching as soon as the text changes
         await field.fill(`${source} b`)
         await field.press('Enter')
         await page.waitForTimeout(800)
         await page.reload()
+        if (await search.count()) await search.fill(source)
         await expect(row(`${source} b`)).toBeVisible()
         // delete it
         await row(`${source} b`).getByRole('button').last().click()
         await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
         await page.reload()
         await expect(page.locator(`input[value="${source} b"]`)).toHaveCount(0)
+    })
+
+    test('a possible duplicate is flagged while typing', async ({ page }) => {
+        await page.goto('/crm/leads')
+        await page.getByRole('button', { name: 'New lead', exact: true }).click()
+        await page.getByRole('dialog').getByText('Company', { exact: true }).first().locator('xpath=following::input[1]').fill(`${E2E.tag} company A`)
+        await expect(page.getByRole('status').filter({ hasText: 'Possible duplicate' })).toBeVisible()
+        await expect(page.getByRole('status')).toContainText('same company')
+    })
+
+    test('a deal value feeds the forecast', async ({ page }) => {
+        await page.goto('/crm/leads')
+        const saved = await page.request.post('/api/crm/pipeline/leads', { data: { name: `${E2E.tag} deal`, value: 1000, probability: 50, expectedClose: new Date().toISOString().slice(0, 10) } })
+        expect(saved.ok()).toBeTruthy()
+        await page.reload()
+        await expect(page.getByText('Open pipeline')).toBeVisible()
+        await expect(page.getByText('Expected this month').locator('xpath=following-sibling::div[1]')).toContainText('500')
+    })
+
+    test('an accepted estimate becomes a contract, once', async ({ page }) => {
+        const est = { id: process.env.E2E_ESTIMATE_ID }
+        expect(est.id).toBeTruthy()
+        const first = await page.request.post('/api/crm/sales/contracts/from-document', { data: { kind: 'estimate', id: est.id } })
+        const a = await first.json()
+        expect(a.id).toBeTruthy()
+        const second = await (await page.request.post('/api/crm/sales/contracts/from-document', { data: { kind: 'estimate', id: est.id } })).json()
+        expect(second.id).toBe(a.id)
+        expect(second.existing).toBe(true)
     })
 
     test('a task is created and shows on the board', async ({ page }) => {

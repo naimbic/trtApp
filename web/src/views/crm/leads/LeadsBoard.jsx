@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbTrophy, TbBan, TbUserCheck, TbPencil, TbUserPlus, TbPlug, TbTrash } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbBan, TbUserCheck, TbUserPlus, TbPlug, TbTrash } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
@@ -15,6 +15,7 @@ import { api, qs, notify } from '../kit/api'
 import { usePageRange } from '@/store/pageFilterStore'
 import { People } from '../tasks/shared'
 import LeadDrawer from './LeadDrawer'
+import { onCreate } from '@/utils/createIntent'
 import { tr, trn } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
@@ -24,7 +25,6 @@ const LeadsBoard = () => {
     const nav = useNavigate()
     const { id: routeId } = useParams()
     const [data, setData] = useState({ statuses: [], can: {}, sources: [], totals: {} })
-    const [endsEl, setEndsEl] = useState(null)
     const [list, setList] = useState({ list: [], total: 0 })
     const [staff, setStaff] = useState([])
     const [view, setView] = useState(() => { try { return localStorage.getItem('leads.view') || 'board' } catch { return 'board' } })
@@ -99,6 +99,7 @@ const LeadsBoard = () => {
         if (from && to && from.id !== to.id) onDragEnd({ source: { droppableId: from.id, index: from.leads.findIndex((l) => l.id === item.id) }, destination: { droppableId: to.id, index: to.leads.length } })
     }
     const open = (id) => setDrawer({ open: true, id, preset: null, k: 0 })
+    useEffect(() => onCreate('lead', () => setDrawer({ open: true, id: null, preset: null, k: Date.now() })), [])
     const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); if (routeId) nav('/crm/leads', { replace: true }) }
     const staffOptions = staff.map((s) => ({ value: s.id, label: s.name }))
     const sourceOptions = data.sources?.length ? data.sources.map((s) => ({ value: s.id, label: s.name, color: s.color })) : (list.sources || []).map((s) => ({ value: s.id, label: s.name, color: s.color }))
@@ -109,7 +110,6 @@ const LeadsBoard = () => {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                     <div><h3>{tr("Leads")}</h3><p className="text-sm text-gray-500">{trn(total, "lead")}{show ? ` · ${SHOW.find((s) => s[0] === show)[1].toLowerCase()}` : ''}</p></div>
-                    <div ref={setEndsEl} />
                 </div>
                 <div className="flex items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
@@ -138,8 +138,6 @@ const LeadsBoard = () => {
                     onOpen={(it) => open(it.id)}
                     onAdd={(c) => setDrawer({ open: true, id: null, preset: { statusId: c.id }, k: 0 })}
                     onMoveTo={show === '' ? moveTo : undefined}
-                    endsTarget={endsEl}
-                    ends={show === '' ? [{ id: 'won', name: tr("Won"), metric: { value: data.totals?.converted ?? 0, label: tr("converted") }, sub: tr("Convert to a client"), icon: <TbTrophy /> }, { id: 'lost', name: tr("Lost"), metric: { value: data.totals?.lost ?? 0, label: tr("lost") }, sub: tr("Close the lead"), icon: <TbBan />, tone: 'lost' }] : []}
                     actions={(it) => (show === '' ? [
                         { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.some((x) => x.id === m.value), onClick: () => patch(it, (l) => ({ assignedIds: (l.assignedIds || []).includes(m.value) ? l.assignedIds.filter((x) => x !== m.value) : [...(l.assignedIds || []), m.value] }), tr("Team changed")) })) },
                         { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, color: m.color, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },
@@ -148,8 +146,7 @@ const LeadsBoard = () => {
                         { label: tr("Mark lost"), icon: <TbBan />, after: true, danger: true, onClick: () => flag(it, 'lost', tr("Marked as lost")) },
                         { label: tr("Delete"), icon: <TbTrash />, after: true, danger: true, onClick: () => setDelAsk(it) },
                     ] : [])}
-                    onMove={({ item, from, to, index, fromIndex }) => {
-                        if (String(to).startsWith('end:')) return String(to) === 'end:won' ? setAsk(item) : flag(item, 'lost', tr("Marked as lost"))
+                    onMove={({ from, to, index, fromIndex }) => {
                         onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
                     }}
                     columns={data.statuses.map((c) => ({

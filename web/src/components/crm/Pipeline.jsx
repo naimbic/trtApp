@@ -100,7 +100,7 @@ const TileMenu = ({ anchor, columns, item, col, actions, onMoveTo, onClose }) =>
  *   actions  (item, column) => [{ label, icon, onClick, danger, after }]   extra menu / popup actions (after: below the line)
  *   canDrag  (item, column) => bool
  */
-const Pipeline = ({ columns, ends = [], endsTarget = null, onMove, onOpen, onAdd, onMoveTo, actions, money, canDrag = () => true, loading = false, emptyText }) => {
+const Pipeline = ({ columns, onMove, onOpen, onAdd, onMoveTo, actions, money, canDrag = () => true, loading = false, emptyText }) => {
     const [menu, setMenu] = useState(null)
     const [dragging, setDragging] = useState(false)
     const findCol = (id) => columns.find((c) => c.items.some((i) => String(i.id) === String(id)))
@@ -115,7 +115,7 @@ const Pipeline = ({ columns, ends = [], endsTarget = null, onMove, onOpen, onAdd
     }
     const tones = Object.fromEntries(columns.map((c) => [String(c.id), colourOf(c)]))
     return (
-        <div className={cn('rp-pl', ends.length > 0 && !endsTarget && 'has-ends', dragging && 'is-dragging')}>
+        <div className={cn('rp-pl', dragging && 'is-dragging')}>
             <DragDropContext onDragStart={() => setDragging(true)} onDragEnd={onDragEnd}>
                 <div className="rp-pl-cols">
                     {columns.map((c, ci) => {
@@ -153,25 +153,6 @@ const Pipeline = ({ columns, ends = [], endsTarget = null, onMove, onOpen, onAdd
                         )
                     })}
                 </div>
-                {ends.length > 0 && (() => {
-                    const zones = (
-                        <div className={cn('rp-pl-ends', endsTarget && 'is-top')} style={endsTarget ? undefined : { gridTemplateRows: `repeat(${ends.length}, 1fr)` }}>
-                            {ends.map((e) => (
-                                <Droppable key={e.id} droppableId={`end:${e.id}`}>
-                                    {(prov, snap) => (
-                                        <div ref={prov.innerRef} {...prov.droppableProps} title={e.sub} className={cn('rp-pl-end', e.tone === 'lost' && 'is-lost', e.tone === 'progress' && 'is-progress', snap.isDraggingOver && 'is-over')}>
-                                            <span className="rp-pl-end-ico">{e.icon}</span>
-                                            <span className="rp-pl-end-txt"><b>{e.name}</b>{e.metric && <span className="rp-pl-end-metric"><strong>{e.metric.value}</strong><em>{e.metric.label}</em></span>}<small>{e.sub}</small></span>
-                                            <span className="rp-pl-end-hint">{tr('Drop here')}</span>
-                                            <div className="rp-pl-end-ph">{prov.placeholder}</div>
-                                        </div>
-                                    )}
-                                </Droppable>
-                            ))}
-                        </div>
-                    )
-                    return endsTarget ? createPortal(zones, endsTarget) : zones
-                })()}
             </DragDropContext>
             <AnimatePresence>
                 {menu && menuCol && <TileMenu key="menu" anchor={menu.el} item={menu.item} col={menuCol} columns={columns} actions={[{ label: tr('Open'), icon: <TbArrowUpRight />, onClick: () => onOpen?.(menu.item) }, ...(menu.item.href ? [{ label: tr('Open in new tab'), icon: <TbExternalLink />, onClick: () => window.open(menu.item.href, '_blank', 'noopener') }] : []), ...(actions?.(menu.item, menuCol) || [])]} onMoveTo={onMoveTo} onClose={() => setMenu(null)} />}

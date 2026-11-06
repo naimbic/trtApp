@@ -33,23 +33,19 @@ const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 const S = (key, title, items) => ({ sub: key, title, items })
 const LAYOUT = {
     Customers: ['clients', 'contacts', S('more', 'More', ['customer-groups', 'idea-categories', 'vault', 'consent-purposes'])],
-    Leads: ['leads', 'lead-status-pages', S('setup', 'Lead setup', ['lead-sources', 'lead-statuses', 'web-to-lead', 'lead-email-integration'])],
+    Leads: ['leads', 'lead-setup', S('more', 'More', ['web-to-lead', 'lead-email-integration'])],
     Projects: ['projects', 'scrum-board', 'milestones'],
-    Tasks: ['tasks-board', 'my-tasks', 'notes', 'statuses', 'team-tasks', 'timeline', 'time-report', 'issues', 'tasks', 'task-timers', S('hr', 'Attendance & leave', ['timesheets', 'leave-requests', 'days-off']), S('setup', 'Task setup', ['task-statuses', 'checklist-templates'])],
+    Tasks: ['tasks-board', 'my-tasks', 'team-tasks', 'timeline', 'notes', S('more', 'More', ['statuses', 'time-report', 'issues', 'tasks', 'task-timers', 'task-statuses', 'checklist-templates'])],
     Sales: [
         'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses', 'freelancers', 'items',
     ],
-    Support: [
-        'tickets',
-        S('setup', 'Ticket setup', ['ticket-statuses', 'ticket-priorities', 'services', 'predefined-replies']),
-        S('email', 'Email & spam', ['spam-filters']),
-    ],
+    Support: ['tickets', S('more', 'More', ['ticket-lists'])],
     'Knowledge Base': ['help-center', 'kb-manage'],
-    Administration: ['staff', 'work-hours', 'payroll', 'roles', 'departments', S('comms', 'Communication', ['announcements'])],
+    Administration: ['staff', 'work-hours', 'payroll', 'roles', 'departments', S('hr', 'Attendance & leave', ['leave-requests', 'days-off', 'timesheets']), S('comms', 'Communication', ['announcements'])],
     Setup: [
         'platform-settings', 'mails',
         S('finance', 'Finance', ['currencies', 'taxes', 'payment-modes']),
-        S('data', 'Data', ['custom-fields', 'tags', 'countries']),
+        S('data', 'More', ['lists', 'custom-fields', 'tags', 'countries']),
     ],
     Utilities: [
         'reports', 'ai', 'file-manager', 'passwords',

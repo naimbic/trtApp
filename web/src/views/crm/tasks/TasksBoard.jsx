@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import TaskAgenda from './TaskAgenda'
 import { useNavigate, useSearchParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbFlag, TbUserPlus, TbCalendarDue, TbLoader, TbNote, TbArrowRight } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbFlag, TbUserPlus, TbCalendarDue, TbNote, TbArrowRight } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Container from '@/components/shared/Container'
@@ -30,7 +30,6 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     const [data, setData] = useState({ list: [], counts: {}, can: {} })
     const [lookups, setLookups] = useState({ staff: [] })
     const [more, setMore] = useState({}) // columns opened beyond the card limit
-    const [endsEl, setEndsEl] = useState(null)
     const [view, setView] = useState(() => { if (boardOnly) return 'board'; try { return localStorage.getItem('tasks.view') || 'board' } catch { return 'board' } })
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
@@ -143,7 +142,6 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
             {!boardOnly && <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                     <div>{projectId ? <h5>{tr("Tasks")}</h5> : <h3>{tr("Tasks")}</h3>}<p className="text-sm text-gray-500">{trn(data.list.length, "task")} {tr("shown")}</p></div>
-                    <div ref={setEndsEl} />
                 </div>
                 <div className="flex items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
@@ -174,8 +172,6 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                     onOpen={(it) => (isNote(it) ? setNoteDialog({ open: true, note: noteOf(it) }) : open(it.id))}
                     onAdd={(c) => (c.id === 'notes' ? setNoteDialog({ open: true, note: null }) : data.can.create ? setDrawer({ open: true, id: null, preset: { status: c.id }, k: 0 }) : undefined)}
                     onMoveTo={data.can.edit ? moveTo : undefined}
-                    endsTarget={boardOnly ? null : endsEl}
-                    ends={data.can.edit ? [{ id: 'won', name: tr("Done"), metric: { value: done ? (columns[5] || []).length : "—", label: tr("completed") }, sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, { id: 'progress', name: tr("In progress"), metric: { value: (columns[4] || []).length, label: tr("tasks") }, sub: tr("Start working on it"), icon: <TbLoader />, tone: 'progress' }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), metric: { value: data.list.length, label: tr("in view") }, sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
                     actions={(it) => isNote(it) ? [
                         { label: tr("Make it a task"), icon: <TbArrowRight />, onClick: () => promote(it, 1) },
                         { label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: async () => { try { await api(`/api/crm/notes/${noteOf(it).id}`, { method: 'DELETE' }); notify('success', tr("Note deleted")); loadNotes() } catch (e) { notify('danger', e.message) } } },
@@ -191,7 +187,6 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                     ]}
                     onMove={({ item, from, to, index, fromIndex }) => {
                         if (isNote(item)) { if (to !== 'notes' && !String(to).startsWith('end:')) promote(item, to); return }
-                        if (String(to).startsWith('end:')) return String(to) === 'end:won' ? moveTo(item, 5) : String(to) === 'end:progress' ? moveTo(item, 4) : setDel(item)
                         onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
                     }}
                     columns={[...(notesOn ? [{ id: 'notes', name: tr("Notes"), href: '/crm/notes', hrefTitle: tr("Open the Notes page"), tone: 'butter', count: shownNotes.length, items: shownNotes.map((n) => ({ id: `n:${n.id}`, title: `${n.important ? '⭐ ' : ''}${n.pinned ? '📌 ' : ''}${n.title || plainOf(n.description).slice(0, 60) || tr('Note')}`, sub: n.kind === 'list' ? `☑ ${n.checklist.filter((c) => c.done).length}/${n.checklist.length}` : plainOf(n.description).slice(0, 90), date: n.remindAt ? <>{`🔔 ${dayjs(n.remindAt).format('DD MMM HH:mm')}`}<RemindTag when={n.remindAt} /></> : fmtDate(n.createdAt), label: '', fields: [{ label: tr("Description"), value: plainOf(n.description) }], team: [], people: <span className="text-[11px] opacity-70">{tr("Drag to a column to make it a task")}</span> })) }] : []), ...shownStatuses.map((s) => {

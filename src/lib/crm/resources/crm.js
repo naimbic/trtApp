@@ -296,7 +296,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'lead-sources', lookup: { orderField: 'sourceOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmLead', field: 'sourceId', by: 'id' },
+        key: 'lead-sources', nav: false, lookup: { orderField: 'sourceOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmLead', field: 'sourceId', by: 'id' },
         model: 'crmLeadSource',
         label: 'Lead source',
         plural: 'Lead sources',
@@ -322,7 +322,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'lead-statuses', lookup: { orderField: 'statusOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmLead', field: 'statusId', by: 'id' },
+        key: 'lead-statuses', nav: false, lookup: { orderField: 'statusOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmLead', field: 'statusId', by: 'id' },
         model: 'crmLeadStatus',
         label: 'Lead status',
         plural: 'Lead statuses',

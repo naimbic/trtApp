@@ -465,7 +465,7 @@ const resources = [
     },
     {
         key: 'todos', model: 'crmTodo', label: 'To-do', plural: 'To-dos',
-        group: 'Utilities', icon: 'TbChecklist', feature: null, privateField: 'staffId',
+        group: 'Utilities', icon: 'TbChecklist', feature: 'notes', privateField: 'staffId',
         titleField: 'description', search: ['description'], defaultSort: { createdAt: 'desc' },
         columns: [
             { key: 'description', label: 'Description', type: 'text', link: true },
@@ -497,6 +497,7 @@ const resources = [
             { key: 'description', label: 'Description', type: 'textarea', section: 'General' },
             { key: 'start', label: 'Start', type: 'datetime', required: true, section: 'General' },
             { key: 'end', label: 'End', type: 'datetime', section: 'General' },
+            { key: 'category', label: 'Category', type: 'select', section: 'General', options: ['meeting', 'call', 'visit', 'deadline', 'reminder', 'other'].map((v) => ({ value: v, label: v[0].toUpperCase() + v.slice(1) })) },
             { key: 'color', label: 'Color', type: 'color', section: 'General' },
             { key: 'isPublic', label: 'Public', type: 'boolean', section: 'General' },
             { key: 'reminderBefore', label: 'Reminder before', type: 'number', section: 'Reminder' },

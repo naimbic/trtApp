@@ -2,6 +2,24 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.190.0',
+        date: '2026-11-06',
+        title: 'One page for statuses and lists, leave and days off redesigned, to-dos like notes, cleaner menus',
+        items: [
+            'Won / Lost (Done / In progress / Delete) drop zones removed from the Leads and Tasks boards: use the card menu (Convert to client, Mark lost, Mark complete, Delete).',
+            'Lead statuses and sources are one page ("Statuses & sources" under Leads): one accordion per list, every cell edited in place (name, colour, default, active, order by drag, add at the top), saved as you type, no popup.',
+            'New page "Lists & statuses" (Setup > More): lead statuses and sources, task statuses, ticket statuses, priorities, services, predefined replies, spam filters and the new leave types, all as accordions with in-place editing. Task statuses use the same editor.',
+            'Timeline: one fold per project (name, done / total, late tasks, its span as a thin bar while closed), compact rows, task names and dates that stay in view while you scroll, "Hide completed", collapse / expand all.',
+            'Leave requests: accordions by status, leave type or person; subject, type, dates and days edited in the row; Accept / Refuse in one click (the person is told); month or date filters, person and type filters; new request in a row. New "Leave types" list and a new "Accept or refuse" use of the Attendance & leave permission.',
+            'Days off: a calendar, month by default (or week, or a list of cards by month); add a day off with the + of any day, click one to rename or delete it.',
+            'To-dos now live in the notes: same cards, colours, pins, reminders, sharing and comments, only the checklists, with Open / Done tabs. Your old to-dos are moved into one checklist note.',
+            'The + at the top right now creates a to-do, lead, task, client, expense or note in one click (only what you may create).',
+            'Reminders and Calendar events pages: accordions (late / today / coming up / done; by month or by category), everything edited in place.',
+            'Menu re-arranged: the important pages in one column, setup in "More"; Attendance & leave moved under Administration; one entry for the ticket lists.',
+            'Demo code of the original template removed (demo pages, menus and unused services); the template guide pages are kept (open by address /guide/documentation).',
+        ],
+    },
+    {
         version: '0.189.0',
         date: '2026-11-06',
         title: 'Cleaner lead and task cards, Won / Lost on top, Won counter fixed',

@@ -56,8 +56,8 @@ const Cell = ({ field, value, disabled, onCommit, draft }) => {
  * type in a cell, flip a switch, pick a colour, drag the handle to reorder (when the list has an order), add a row at the top.
  * `resource.lookup` = { orderField? }. The pencil opens the full form for the fields that do not fit a cell (long text...).
  */
-const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onOpen }) => {
-    const { orderField } = resource.lookup
+const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onOpen, onCount }) => {
+    const { orderField } = resource.lookup || {}
     const title = resource.titleField
     const main = resource.fields.find((f) => f.key === title) || resource.fields[0]
     const cols = resource.fields.filter((f) => f.key !== main.key && f.key !== orderField && f.inline !== false && INLINE.includes(f.type))
@@ -73,8 +73,9 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
         try {
             const d = await api(`/api/crm/${resource.key}?${qs({ pageIndex: 1, pageSize: 200, sortKey: orderField || main.key, order: 'asc' })}`)
             setRows(d.list)
+            onCount?.(d.list.length)
         } catch (e) { notify('danger', e.message) } finally { setLoading(false) }
-    }, [resource.key, orderField, main.key])
+    }, [resource.key, orderField, main.key]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { load() }, [load, reloadKey])
 
     const patch = (id, body) => api(`/api/crm/${resource.key}/${id}`, { method: 'PATCH', body })

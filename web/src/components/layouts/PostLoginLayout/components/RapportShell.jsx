@@ -4,7 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import Dropdown from '@/components/ui/Dropdown'
 import { requestCreate } from '@/utils/createIntent'
 import useWorkTracker from '@/utils/useWorkTracker'
-import { TbActivity, TbChecklist, TbNotes, TbPlus } from 'react-icons/tb'
+import { TbActivity, TbChecklist, TbCoin, TbFilter, TbListCheck, TbNotes, TbPlus, TbUserPlus } from 'react-icons/tb'
+import { hasCap } from '@/views/crm/kit/api'
 import { tr } from '@/utils/t'
 import { magnetic } from '@/vendor/rapport/motion'
 import RapportPills from '@/components/template/rapport/RapportPills'
@@ -47,6 +48,16 @@ const RapportShell = ({ children }) => {
     const navigate = useNavigate()
     useWorkTracker()
     const isAdmin = authority.includes('admin') || authority.includes('crm.admin')
+    const may = (f, c) => hasCap(authority, f, c)
+    // the + menu: a new record of each kind in one click (only the kinds this person may create)
+    const quick = [
+        may('notes', 'view') || may('notes', 'view_own') ? { key: 'todo', label: 'New to-do', icon: TbListCheck, intent: 'todo', to: '/crm/todos' } : null,
+        may('leads', 'create') ? { key: 'lead', label: 'New lead', icon: TbFilter, intent: 'lead', to: '/crm/leads' } : null,
+        may('tasks', 'create') ? { key: 'task', label: 'New task', icon: TbChecklist, intent: 'task', to: '/crm/tasks-board' } : null,
+        may('customers', 'create') ? { key: 'client', label: 'New client', icon: TbUserPlus, intent: null, to: '/crm/clients/new' } : null,
+        may('expenses', 'create') ? { key: 'expense', label: 'New expense', icon: TbCoin, intent: 'expense', to: '/crm/expenses' } : null,
+        may('notes', 'view') || may('notes', 'view_own') ? { key: 'note', label: 'New note', icon: TbNotes, intent: 'note', to: '/crm/notes' } : null,
+    ].filter(Boolean)
     const canChat = authority.includes('admin') || authority.includes('crm.admin') || authority.includes('crm.chat.view')
     const hasTabs = usePageTabsStore((st) => !!st.tabs)
     // on a computer the period / currency / colour pickers live in the dock; on a phone (no dock) they stay in a toolbar under the top bar
@@ -82,10 +93,11 @@ const RapportShell = ({ children }) => {
                     <Link to={appConfig.authenticatedEntryPath} className="rp-brand"><LottieLogo height={36} /></Link>
                     <div className="rp-pills">{larger.lg && <RapportPills />}</div>
                     <div className="rp-actions">
-                        <Dropdown placement="bottom-end" renderTitle={<button type="button" className="header-action-item header-action-item-hoverable text-2xl" title={tr('Create')} aria-label={tr('Create')}><TbPlus /></button>}>
-                            <Dropdown.Item eventKey="task" onClick={() => { requestCreate('task'); navigate('/crm/tasks-board') }}><span className="flex items-center"><TbChecklist className="mr-2 text-lg" />{tr('New task')}</span></Dropdown.Item>
-                            <Dropdown.Item eventKey="note" onClick={() => { requestCreate('note'); navigate('/crm/notes') }}><span className="flex items-center"><TbNotes className="mr-2 text-lg" />{tr('New note')}</span></Dropdown.Item>
-                        </Dropdown>
+                        {quick.length > 0 && (
+                            <Dropdown placement="bottom-end" renderTitle={<button type="button" className="header-action-item header-action-item-hoverable text-2xl" title={tr('Create')} aria-label={tr('Create')}><TbPlus /></button>}>
+                                {quick.map((q) => <Dropdown.Item key={q.key} eventKey={q.key} onClick={() => { if (q.intent) requestCreate(q.intent); if (pathname !== q.to) navigate(q.to) }}><span className="flex items-center"><q.icon className="mr-2 text-lg" />{tr(q.label)}</span></Dropdown.Item>)}
+                            </Dropdown>
+                        )}
                         {isAdmin && larger.lg && <Link to="/crm/all-activity" className="header-action-item header-action-item-hoverable text-2xl" title={tr('All activity')} aria-label={tr('All activity')}><TbActivity /></Link>}
                         <LanguageSelector />
                         <Notification />

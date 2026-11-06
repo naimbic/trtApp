@@ -392,12 +392,30 @@ model CrmLeaveRequest {
   status       Int?
   numberOfDays Float?
   extra        Json?
+  /// the kind of leave (annual, sick...): a CrmLeaveType
+  typeId       String?   @db.ObjectId
+  /// who accepted or refused it, and when
+  decidedBy    String?   @db.ObjectId
+  decidedAt    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@index([staffId])
   @@index([status])
+  @@index([typeId])
   @@map("crm_timesheets_requisition_leave")
+}
+
+/// The kinds of leave a request can be for (annual, sick, unpaid...), edited in place in Lists & statuses.
+model CrmLeaveType {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  color     String?
+  typeOrder Int?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("crm_leave_types")
 }
 
 /// Source table: timesheets_day_off (holidays / company days off)

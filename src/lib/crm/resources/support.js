@@ -88,7 +88,7 @@ const resources = [
         hidden: true,
     },
     {
-        key: 'ticket-statuses', lookup: { orderField: 'statusOrder', colorField: 'statusColor' }, model: 'crmTicketStatus', label: 'Ticket status', plural: 'Ticket statuses',
+        key: 'ticket-statuses', nav: false, lookup: { orderField: 'statusOrder', colorField: 'statusColor' }, model: 'crmTicketStatus', label: 'Ticket status', plural: 'Ticket statuses',
         group: 'Support', icon: 'TbProgressCheck', feature: 'settings', titleField: 'name',
         search: ['name'], defaultSort: { statusOrder: 'asc' },
         columns: [
@@ -106,7 +106,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'ticket-priorities', lookup: {}, model: 'crmTicketPriority', label: 'Ticket priority', plural: 'Ticket priorities',
+        key: 'ticket-priorities', nav: false, lookup: {}, model: 'crmTicketPriority', label: 'Ticket priority', plural: 'Ticket priorities',
         group: 'Support', icon: 'TbFlag', feature: 'settings', titleField: 'name',
         search: ['name'], defaultSort: { legacyId: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
@@ -114,7 +114,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'services', lookup: {}, model: 'crmService', label: 'Service', plural: 'Services',
+        key: 'services', nav: false, lookup: {}, model: 'crmService', label: 'Service', plural: 'Services',
         group: 'Support', icon: 'TbTool', feature: 'settings', titleField: 'name',
         search: ['name'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
@@ -122,7 +122,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'predefined-replies', model: 'crmPredefinedReply', label: 'Predefined reply', plural: 'Predefined replies',
+        key: 'predefined-replies', nav: false, model: 'crmPredefinedReply', label: 'Predefined reply', plural: 'Predefined replies',
         group: 'Support', icon: 'TbMessageCircleCog', feature: 'settings', titleField: 'name',
         search: ['name', 'message'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],
@@ -133,7 +133,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'spam-filters', lookup: {}, model: 'crmSpamFilter', label: 'Spam filter', plural: 'Spam filters',
+        key: 'spam-filters', nav: false, lookup: {}, model: 'crmSpamFilter', label: 'Spam filter', plural: 'Spam filters',
         group: 'Support', icon: 'TbShieldX', feature: 'settings', titleField: 'value',
         search: ['value'], defaultSort: { createdAt: 'desc' },
         columns: [

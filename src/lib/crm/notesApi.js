@@ -211,3 +211,26 @@ export async function deleteNoteComment(id, commentId) {
     await prisma.crmQuickNoteComment.delete({ where: { id: c.id } })
     return { success: true }
 }
+
+/** The old To-dos (one line each) become one checklist note of their owner, then they are removed: To-dos now live in the notes. */
+const importing = new Map() // one import at a time per person: two calls at once (a page that opens twice) must not make two notes
+export async function importTodos() {
+    const g = await gate()
+    if (!g.staffId) return { imported: 0 }
+    if (importing.has(g.staffId)) return importing.get(g.staffId)
+    const run = doImport(g).finally(() => importing.delete(g.staffId))
+    importing.set(g.staffId, run)
+    return run
+}
+
+async function doImport(g) {
+    const old = await prisma.crmTodo.findMany({ where: { staffId: g.staffId }, orderBy: [{ finished: 'asc' }, { itemOrder: 'asc' }, { createdAt: 'asc' }], take: 200 })
+    if (!old.length) return { imported: 0 }
+    const checklist = cleanChecklist(old.map((t) => ({ text: plainText(t.description || ''), done: !!t.finished })))
+    if (checklist.length) {
+        const last = await prisma.crmQuickNote.findFirst({ where: { addedFrom: g.staffId }, orderBy: { position: 'desc' }, select: { position: true } })
+        await prisma.crmQuickNote.create({ data: { title: 'My to-dos', kind: 'list', checklist, labels: [], addedFrom: g.staffId, position: (last?.position || 0) + 1 } })
+    }
+    await prisma.crmTodo.deleteMany({ where: { id: { in: old.map((t) => t.id) } } })
+    return { imported: checklist.length }
+}

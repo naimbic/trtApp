@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { TbArchive, TbChecklist, TbMicrophone, TbNotes, TbPhoto, TbSearch, TbShare3, TbStar } from 'react-icons/tb'
+import { TbArchive, TbChecklist, TbCircleCheck, TbCircleDashed, TbMicrophone, TbNotes, TbPhoto, TbSearch, TbShare3, TbStar } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Input from '@/components/ui/Input'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -19,9 +19,20 @@ const TABS = [
     { id: 'shared', label: 'Shared', icon: <TbShare3 /> },
     { id: 'archive', label: 'Archive', icon: <TbArchive /> },
 ]
+const TODO_TABS = [
+    { id: 'all', label: 'To-dos', icon: <TbChecklist /> },
+    { id: 'open', label: 'Open', icon: <TbCircleDashed /> },
+    { id: 'done', label: 'Done', icon: <TbCircleCheck /> },
+    { id: 'important', label: 'Important', icon: <TbStar /> },
+    { id: 'shared', label: 'Shared', icon: <TbShare3 /> },
+    { id: 'archive', label: 'Archive', icon: <TbArchive /> },
+]
+const isTodo = (n) => n.kind === 'list'
+const left = (n) => (n.checklist || []).filter((c) => !c.done).length
 
 /** Notes like Google Keep: coloured cards in columns, pinned first, checklists, pictures, voice notes, links, reminders, sharing and comments. */
-const NotesPage = () => {
+const NotesPage = ({ mode = 'notes' }) => {
+    const todos = mode === 'todos'
     const [params, setParams] = useSearchParams()
     const [data, setData] = useState(null)
     const [tab, setTab] = useState('all')
@@ -35,7 +46,8 @@ const NotesPage = () => {
     }, [tab])
     useEffect(() => { load() }, [load])
     useEffect(() => { window.addEventListener(NOTES_EVENT, load); return () => window.removeEventListener(NOTES_EVENT, load) }, [load])
-    useEffect(() => onCreate('note', () => setDlg({ open: true, note: null, preset: null })), [])
+    useEffect(() => onCreate(todos ? 'todo' : 'note', () => setDlg({ open: true, note: null, preset: todos ? { kind: 'list' } : null })), [todos])
+    useEffect(() => { if (todos) api('/api/crm/notes/import-todos', { method: 'POST' }).then((r) => r.imported && load()).catch(() => {}) }, [todos]) // eslint-disable-line react-hooks/exhaustive-deps
     // a link from a notification (…/crm/notes?note=ID) opens that note
     const wanted = params.get('note')
     useEffect(() => {
@@ -43,10 +55,10 @@ const NotesPage = () => {
         api(`/api/crm/notes/${wanted}`).then((d) => setDlg({ open: true, note: d.note, preset: null })).catch(() => notify('warning', tr('Note not found'))).finally(() => { params.delete('note'); setParams(params, { replace: true }) })
     }, [wanted]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    const all = data?.list || []
+    const all = (data?.list || []).filter((n) => !todos || isTodo(n))
     const shown = useMemo(() => {
         const q = query.trim().toLowerCase()
-        return all.filter((n) => (tab === 'important' ? n.important : tab === 'shared' ? (!n.mine || n.sharedWith.length > 0) : true) && (!label || n.labels.includes(label)) && (!q || `${n.title} ${n.description.replace(/<[^>]+>/g, ' ')} ${n.labels.join(' ')} ${n.checklist.map((c) => c.text).join(' ')}`.toLowerCase().includes(q)))
+        return all.filter((n) => (tab === 'important' ? n.important : tab === 'shared' ? (!n.mine || n.sharedWith.length > 0) : tab === 'open' ? left(n) > 0 : tab === 'done' ? (n.checklist || []).length > 0 && left(n) === 0 : true) && (!label || n.labels.includes(label)) && (!q || `${n.title} ${n.description.replace(/<[^>]+>/g, ' ')} ${n.labels.join(' ')} ${n.checklist.map((c) => c.text).join(' ')}`.toLowerCase().includes(q)))
     }, [all, tab, query, label])
     const pinned = shown.filter((n) => n.pinned)
     const others = shown.filter((n) => !n.pinned)
@@ -62,18 +74,18 @@ const NotesPage = () => {
 
     return (
         <Container>
-            <InvoiceHead title={tr('Notes')} stats={[{ icon: <TbNotes />, label: tr('Notes'), value: String(data ? all.length : '–') }, { icon: <TbStar />, label: tr('Important'), value: String(all.filter((n) => n.important).length) }]} />
+            <InvoiceHead title={todos ? tr('To-dos') : tr('Notes')} stats={todos ? [{ icon: <TbChecklist />, label: tr('To-dos'), value: String(data ? all.length : '–') }, { icon: <TbCircleDashed />, label: tr('Open'), value: String(all.filter((n) => left(n) > 0).length) }, { icon: <TbStar />, label: tr('Important'), value: String(all.filter((n) => n.important).length) }] : [{ icon: <TbNotes />, label: tr('Notes'), value: String(data ? all.length : '–') }, { icon: <TbStar />, label: tr('Important'), value: String(all.filter((n) => n.important).length) }]} />
             <div className="mx-auto mb-5 max-w-xl">
-                <div role="button" tabIndex={0} onClick={() => setDlg({ open: true, note: null, preset: null })} onKeyDown={(e) => { if (e.key === 'Enter') setDlg({ open: true, note: null, preset: null }) }} className="flex cursor-text items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
-                    <span className="flex-1 text-gray-400">{tr('Take a note…')}</span>
+                <div role="button" tabIndex={0} onClick={() => setDlg({ open: true, note: null, preset: todos ? { kind: 'list' } : null })} onKeyDown={(e) => { if (e.key === 'Enter') setDlg({ open: true, note: null, preset: todos ? { kind: 'list' } : null }) }} className="flex cursor-text items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                    <span className="flex-1 text-gray-400">{todos ? tr('Add a to-do…') : tr('Take a note…')}</span>
                     <button type="button" title={tr('New checklist')} aria-label={tr('New checklist')} onClick={(e) => { e.stopPropagation(); setDlg({ open: true, note: null, preset: { kind: 'list' } }) }} className="grid size-8 place-items-center rounded-full text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><TbChecklist /></button>
-                    <button type="button" title={tr('Note with a picture')} aria-label={tr('Note with a picture')} onClick={(e) => { e.stopPropagation(); setDlg({ open: true, note: null, preset: { focus: 'media' } }) }} className="grid size-8 place-items-center rounded-full text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><TbPhoto /></button>
-                    <button type="button" title={tr('Note with a voice recording')} aria-label={tr('Note with a voice recording')} onClick={(e) => { e.stopPropagation(); setDlg({ open: true, note: null, preset: { focus: 'media' } }) }} className="grid size-8 place-items-center rounded-full text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><TbMicrophone /></button>
+                    {!todos && <button type="button" title={tr('Note with a picture')} aria-label={tr('Note with a picture')} onClick={(e) => { e.stopPropagation(); setDlg({ open: true, note: null, preset: { focus: 'media' } }) }} className="grid size-8 place-items-center rounded-full text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><TbPhoto /></button>}
+                    {!todos && <button type="button" title={tr('Note with a voice recording')} aria-label={tr('Note with a voice recording')} onClick={(e) => { e.stopPropagation(); setDlg({ open: true, note: null, preset: { focus: 'media' } }) }} className="grid size-8 place-items-center rounded-full text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><TbMicrophone /></button>}
                 </div>
             </div>
             <div className="cx-tools flex-wrap">
                 <div className="inline-flex rounded-xl border border-gray-200 p-0.5 text-sm dark:border-gray-700">
-                    {TABS.map((t) => <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-semibold transition ${tab === t.id ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}>{t.icon}{tr(t.label)}</button>)}
+                    {(todos ? TODO_TABS : TABS).map((t) => <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-semibold transition ${tab === t.id ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}>{t.icon}{tr(t.label)}</button>)}
                 </div>
                 <div className="ms-auto w-64"><Input size="sm" prefix={<TbSearch />} placeholder={tr('Search')} value={query} onChange={(e) => setQuery(e.target.value)} /></div>
             </div>
@@ -85,7 +97,7 @@ const NotesPage = () => {
             {pinned.length > 0 && <><div className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-400">{tr('Pinned')}</div>{grid(pinned)}</>}
             {pinned.length > 0 && others.length > 0 && <div className="mb-2 mt-2 text-xs font-bold uppercase tracking-wide text-gray-400">{tr('Others')}</div>}
             {others.length > 0 && grid(others)}
-            {data && !shown.length && <div className="py-12 text-center text-gray-400">{tab === 'archive' ? tr('Nothing archived.') : tr('No notes yet. Use “Take a note…” to add one.')}</div>}
+            {data && !shown.length && <div className="py-12 text-center text-gray-400">{tab === 'archive' ? tr('Nothing archived.') : (todos ? tr('No to-dos yet. Use “Add a to-do…” to start a list.') : tr('No notes yet. Use “Take a note…” to add one.'))}</div>}
             <ConfirmDialog isOpen={!!del} type="danger" title={tr('Delete this note?')} confirmText={tr('Delete')} onClose={() => setDel(null)} onRequestClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={remove}>
                 <p>{del?.title || tr('Note')}</p>
             </ConfirmDialog>

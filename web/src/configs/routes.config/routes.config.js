@@ -1,16 +1,16 @@
 import { lazy } from 'react'
 import authRoute from './authRoute'
 import othersRoute from './othersRoute'
-import templateDemoRoutes from './templateDemoRoutes'
+import guideRoute from './guideRoute'
 
 export const publicRoutes = [...authRoute]
 
 // Every CRM resource shares one generic route; hand-built screens get their own entry first.
 const ROUTE_FEATURE = [
     ['/crm/settings', 'settings'], ['/crm/company', 'settings'], ['/team', 'staff'], ['/crm/staff', 'staff'], ['/crm/work-hours', 'staff'], ['/crm/goals', 'goals'], ['/crm/surveys', 'surveys'], ['/crm/milestones', 'projects'], ['/crm/lead-email-integration', 'settings'], ['/crm/payroll', 'staff'], ['/crm/roles', 'roles'],
-    ['/crm/clients', 'customers'], ['/crm/invoices', 'invoices'], ['/crm/estimates', 'estimates'], ['/crm/purchase-orders', 'purchase_orders'], ['/crm/proposals', 'proposals'], ['/crm/contracts', 'contracts'],
+    ['/crm/leave-requests', 'leave'], ['/crm/days-off', 'leave'], ['/crm/lists', 'settings'], ['/crm/clients', 'customers'], ['/crm/invoices', 'invoices'], ['/crm/estimates', 'estimates'], ['/crm/purchase-orders', 'purchase_orders'], ['/crm/proposals', 'proposals'], ['/crm/contracts', 'contracts'],
     ['/crm/payments', 'payments'], ['/crm/expenses', 'expenses'], ['/crm/freelancers', 'freelancers'], ['/crm/mails', 'email_templates'], ['/crm/issues', 'issues'],
-    ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/notes', 'notes'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'], ['/crm/timeline', 'tasks'],
+    ['/crm/my-tasks', 'tasks'], ['/crm/team-tasks', 'tasks'], ['/crm/tasks', 'tasks'], ['/crm/tasks-board', 'tasks'], ['/crm/notes', 'notes'], ['/crm/todos', 'notes'], ['/crm/events', 'calendar'], ['/crm/scrum-board', 'tasks'], ['/crm/time-report', 'tasks'], ['/crm/timeline', 'tasks'],
     ['/crm/leads', 'leads'], ['/crm/projects', 'projects'], ['/crm/tickets', 'tickets'], ['/crm/passwords', 'passwords'],
     ['/crm/knowledge-base', 'knowledge_base'], ['/crm/reports', 'reports'], ['/crm/activity', 'activity_log'],
     ['/crm/chat', 'chat'], ['/crm/grow', 'grow'], ['/crm/scheduled-messages', 'scheduled_messages'], ['/crm/my-growth', 'growth'], ['/crm/file-manager', 'file_manager'], ['/calendar', 'calendar'],
@@ -135,6 +135,12 @@ const crmRoutes = [
     },
     { key: 'crm.statuses', path: '/crm/statuses', component: lazy(() => import('@/views/crm/status/StatusPages').then((m) => ({ default: m.StatusOverview }))), authority: [] },
     { key: 'crm.status', path: '/crm/status/:kind/:key', component: lazy(() => import('@/views/crm/status/StatusPages').then((m) => ({ default: m.StatusPage }))), authority: [] },
+    ...['lists', 'lead-statuses', 'lead-sources', 'task-statuses', 'ticket-statuses', 'ticket-priorities', 'services', 'predefined-replies', 'spam-filters'].map((k) => ({ key: `crm.${k}`, path: `/crm/${k}`, component: lazy(() => import('@/views/crm/settings/ListsPage')), authority: [] })),
+    { key: 'crm.leave-requests', path: '/crm/leave-requests', component: lazy(() => import('@/views/crm/team/LeaveRequests')), authority: [] },
+    { key: 'crm.days-off', path: '/crm/days-off', component: lazy(() => import('@/views/crm/team/DaysOff')), authority: [] },
+    { key: 'crm.todos', path: '/crm/todos', component: lazy(() => import('@/views/crm/notes/TodosPage')), authority: [] },
+    { key: 'crm.reminders', path: '/crm/reminders', component: lazy(() => import('@/views/crm/notes/RemindersPage')), authority: [] },
+    { key: 'crm.events', path: '/crm/events', component: lazy(() => import('@/views/crm/calendar/EventsPage')), authority: [] },
     { key: 'crm.notes', path: '/crm/notes', component: lazy(() => import('@/views/crm/notes/NotesPage')), authority: [] },
     { key: 'crm.leads', path: '/crm/leads', component: lazy(() => import('@/views/crm/leads/LeadsBoard')), authority: [] },
     { key: 'crm.leads.view', path: '/crm/leads/:id', component: lazy(() => import('@/views/crm/leads/LeadsBoard')), authority: [] },
@@ -172,7 +178,7 @@ const crmRoutes = [
         component: lazy(() => import('@/views/crm/ResourcePage')),
         authority: [],
     },
-    ...templateDemoRoutes,
+    ...guideRoute.map((r) => ({ ...r, authority: ['admin', 'crm.admin'] })), // template guide docs: kept, opened by address only
     ...othersRoute,
 ]
 

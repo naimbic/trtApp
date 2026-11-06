@@ -16,6 +16,7 @@ import PeriodPicker, { periodRange } from '../kit/PeriodPicker'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import RelationSelect from '../kit/RelationSelect'
 import ExpenseDrawer from './ExpenseDrawer'
+import { onCreate } from '@/utils/createIntent'
 import { tr, trn } from '@/utils/t'
 import { KpiCard } from '../kit/KpiCard'
 
@@ -54,6 +55,7 @@ const ExpensesList = () => {
     const curOf = (id) => data.lookups.currencies.find((c) => c.id === id) || cur
     const catOpts = data.lookups.categories.map((c) => ({ value: c.id, label: c.name }))
     const open = (id) => setDrawer({ open: true, id })
+    useEffect(() => onCreate('expense', () => setDrawer({ open: true, id: null, categoryId: null })), [])
     const lookups = async () => { const l = await api('/api/crm/sales/expenses/lookups'); setData((d) => ({ ...d, lookups: l })) }
     const maxCat = Math.max(...data.topCategories.map((c) => c.value), 1)
 

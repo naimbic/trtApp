@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId } from '@/lib/crm/permissions'
+import { reminderLink } from '@/lib/crm/notifications'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -54,4 +55,54 @@ export async function removeMine(id) {
     if (!r) throw fail('Reminder not found', 404)
     await prisma.crmReminder.delete({ where: { id } })
     return { success: true }
+}
+
+/** All my reminders, with the record each is about (its name and where it opens). */
+export async function listAllMine() {
+    const staffId = await me()
+    const rows = await prisma.crmReminder.findMany({ where: { staffId }, orderBy: { date: 'asc' }, take: 500 })
+    const ids = (type) => [...new Set(rows.filter((r) => r.relType === type && r.relId).map((r) => r.relId))]
+    const find = async (model, type, select) => { const list = ids(type); return list.length ? prisma[model].findMany({ where: { id: { in: list } }, select }) : [] }
+    const [tasks, leads, clients, projects, tickets] = await Promise.all([
+        find('crmTask', 'task', { id: true, name: true }), find('crmLead', 'lead', { id: true, name: true, company: true }), find('crmClient', 'customer', { id: true, company: true }),
+        find('crmProject', 'project', { id: true, name: true }), find('crmTicket', 'ticket', { id: true, subject: true }),
+    ])
+    const label = {}
+    for (const t of tasks) label[`task:${t.id}`] = t.name
+    for (const l of leads) label[`lead:${l.id}`] = l.company || l.name
+    for (const c of clients) label[`customer:${c.id}`] = c.company
+    for (const p of projects) label[`project:${p.id}`] = p.name
+    for (const t of tickets) label[`ticket:${t.id}`] = t.subject
+    return {
+        list: rows.map((r) => ({ id: r.id, date: r.date, note: r.description || '', done: !!r.isNotified, relType: r.relType || '', relLabel: label[`${r.relType}:${r.relId}`] || '', link: r.relType ? reminderLink(r) : null })),
+    }
+}
+
+/** A reminder that is about nothing in particular: just a note with a time. */
+export async function addFree(body = {}) {
+    const staffId = await me()
+    const date = new Date(body.date)
+    if (Number.isNaN(+date)) throw fail('Choose a date and a time')
+    const note = String(body.note || '').replace(/\s+/g, ' ').trim().slice(0, 500)
+    if (!note) throw fail('Write what to remember')
+    const row = await prisma.crmReminder.create({ data: { staffId, creatorId: staffId, date, description: note, notifyByEmail: true } })
+    return { id: row.id }
+}
+
+/** Change my reminder: its words, its time (a new future time rings again), or tick it done. */
+export async function updateMine(id, body = {}) {
+    const staffId = await me()
+    const r = oid(id) && (await prisma.crmReminder.findFirst({ where: { id, staffId } }))
+    if (!r) throw fail('Reminder not found', 404)
+    const data = {}
+    if (body.note !== undefined) data.description = String(body.note).replace(/\s+/g, ' ').trim().slice(0, 500) || null
+    if (body.date !== undefined) {
+        const d = new Date(body.date)
+        if (Number.isNaN(+d)) throw fail('Choose a date and a time')
+        data.date = d
+        if (+d > Date.now()) data.isNotified = false
+    }
+    if (body.done !== undefined) data.isNotified = !!body.done
+    if (Object.keys(data).length) await prisma.crmReminder.update({ where: { id }, data })
+    return { id }
 }

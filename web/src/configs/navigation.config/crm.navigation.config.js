@@ -7,7 +7,7 @@ import { resources } from '@/lib/crm/resources'
 import { customNavItems } from '@/lib/crm/custom-nav'
 
 // Sidebar built from the Perfex resource registry (src/lib/crm/resources/*) and the hand-built pages (src/lib/crm/custom-nav.js).
-// The structure is written here, once: five pills for the daily work, then "More" (one column per topic). Rules: a column holds 3 items or more,
+// The structure is written here, once: seven pills for the daily work, then "More" (one column per topic). Rules: a column holds 3 items or more,
 // there is no "More" column inside a pill, and every area ends with its own "... setting" entry (all of them open Lists & statuses, already filtered).
 const col = (title, items) => ({ sub: title.toLowerCase().replace(/[^a-z]+/g, ''), title, items })
 const STRUCTURE = [
@@ -16,11 +16,11 @@ const STRUCTURE = [
     { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'customers-setting'] },
     { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
     { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
+    { group: 'My space', icon: 'crmUtilities', entries: ['reminders', 'events', 'scheduled-messages', 'notifications', 'file-manager'] },
+    { group: 'Growth & insight', icon: 'crmUtilities', entries: ['goals', 'surveys', 'my-growth', 'grow', 'reports', 'ai', 'activity-log'] },
     { group: 'Support & Help', icon: 'crmSupport', entries: ['tickets', 'help-center', 'kb-manage', 'support-setting'] },
     { group: 'Team', icon: 'crmAdministration', entries: ['staff', 'roles', 'announcements', 'team-setting'] },
     { group: 'Time & pay', icon: 'crmAdministration', entries: ['work-hours', 'timesheets', 'leave-requests', 'days-off', 'payroll'] },
-    { group: 'My space', icon: 'crmUtilities', entries: ['reminders', 'events', 'scheduled-messages', 'notifications', 'file-manager'] },
-    { group: 'Growth & insight', icon: 'crmUtilities', entries: ['goals', 'surveys', 'my-growth', 'grow', 'reports', 'ai', 'activity-log'] },
     { group: 'Setup', icon: 'crmSetup', entries: ['platform-settings', 'mails', 'lists', 'custom-fields', 'countries', 'api', 'files'] },
 ]
 

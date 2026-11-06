@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.194.0',
+        date: '2026-11-06',
+        title: 'My space and Growth & insight as pills, Remind me in the bell, notifications on mobile',
+        items: [
+            'Menu: "My space" and "Growth & insight" are pills before More (Dashboard, Leads, Tasks, Customers, Sales, Projects, My space, Growth & insight, More).',
+            'The notification bell has the Remind me alarm on every line (same choices as the Notifications page).',
+            'Notifications page on a phone: the action icons (read, remind, reply, open) sit under the content, and the header buttons wrap instead of being cut.',
+        ],
+    },
+    {
         version: '0.193.0',
         date: '2026-11-06',
         title: 'Notifications with actions, short lists like Items, menu order',

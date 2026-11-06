@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { PiBellRingingDuotone, PiCheckCircleDuotone } from 'react-icons/pi'
-import { TbAlarm, TbArrowBackUp, TbArrowUpRight, TbCheck, TbMailOpened, TbMail, TbSend } from 'react-icons/tb'
+import { TbArrowBackUp, TbArrowUpRight, TbCheck, TbMailOpened, TbMail, TbSend } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import Dropdown from '@/components/ui/Dropdown'
 import Skeleton from '@/components/ui/Skeleton'
 import Tooltip from '@/components/ui/Tooltip'
+import RemindMenu from '@/components/template/Notification/RemindMenu'
 import { NotifFilters, useOpenNotif } from '@/components/template/Notification/Notification'
 import { look, kindLabel, recordLabel, replyTarget } from '@/components/template/Notification/notifKit'
 import { useNotifs } from '@/store/notifStore'
@@ -17,7 +17,6 @@ import { tr } from '@/utils/t'
 const day = (d) => { const n = dayjs().startOf('day').diff(dayjs(d).startOf('day'), 'day'); return n <= 0 ? tr('Today') : n === 1 ? tr('Yesterday') : n < 7 ? dayjs(d).format('dddd') : dayjs(d).format('DD MMM YYYY') }
 const box = 'h-8 rounded-lg border border-gray-200 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-800'
 const PRESETS = [['today', 'Today', 0], ['5', 'Last 5 days', 4], ['14', '14 days', 13], ['30', '30 days', 29]]
-const SNOOZE = [['In 1 hour', () => dayjs().add(1, 'hour')], ['This evening, 18:00', () => (dayjs().hour() < 18 ? dayjs().hour(18).minute(0) : dayjs().add(1, 'day').hour(9).minute(0))], ['Tomorrow, 09:00', () => dayjs().add(1, 'day').hour(9).minute(0)], ['Next Monday, 09:00', () => dayjs().add(1, 'week').startOf('week').add(1, 'day').hour(9).minute(0)]]
 
 /** One notification as a card: what happened, the detail, who and about what, when; read, remind and answer without opening it. */
 const Card1 = ({ i, onOpen, onToggle }) => {
@@ -26,9 +25,6 @@ const Card1 = ({ i, onOpen, onToggle }) => {
     const [busy, setBusy] = useState(false)
     const target = replyTarget(i.link)
     const record = recordLabel(i.link)
-    const remind = async (when) => {
-        try { await api('/api/crm/my-reminders/all', { method: 'POST', body: { note: [tr(i.title), i.detail].filter(Boolean).join(' — ').slice(0, 480), date: when.toDate().toISOString(), link: i.link } }); notify('success', `${tr('Reminder set')} · ${when.format('ddd D MMM, HH:mm')}`) } catch (e) { notify('danger', e.message) }
-    }
     const send = async () => {
         if (!reply.trim()) return
         setBusy(true)
@@ -41,9 +37,9 @@ const Card1 = ({ i, onOpen, onToggle }) => {
     const act = 'grid size-8 place-items-center rounded-lg text-lg text-gray-500 transition hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700'
     return (
         <div className={`my-1 rounded-xl border px-3 py-2.5 transition ${i.read ? 'border-transparent bg-transparent' : 'border-primary/20 bg-primary/[0.04]'} hover:border-gray-200 dark:hover:border-gray-600`}>
-            <div className="flex items-start gap-3">
+            <div className="flex flex-wrap items-start gap-x-3 gap-y-1 sm:flex-nowrap">
                 <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl ${cls}`}><Icon /></span>
-                <button type="button" onClick={() => onOpen(i)} className="min-w-0 flex-1 text-start">
+                <button type="button" onClick={() => onOpen(i)} className="min-w-0 flex-1 basis-0 text-start">
                     <div className={`text-sm leading-snug ${i.read ? 'font-medium text-gray-600 dark:text-gray-300' : 'font-bold heading-text'}`}>{!i.read && <span className="me-1.5 inline-block size-2 rounded-full bg-primary align-middle" />}{tr(i.title)}</div>
                     {i.detail && <div className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-gray-500">{i.detail}</div>}
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-400">
@@ -53,11 +49,9 @@ const Card1 = ({ i, onOpen, onToggle }) => {
                         <span title={dayjs(i.date).format('dddd D MMMM YYYY, HH:mm')}>{dayjs(i.date).format('ddd D MMM, HH:mm')} · {dayjs(i.date).fromNow()}</span>
                     </div>
                 </button>
-                <div className="flex shrink-0 items-center gap-0.5">
+                <div className="flex w-full shrink-0 items-center gap-0.5 ps-12 sm:w-auto sm:ps-0">
                     <Tooltip title={i.read ? tr('Mark as unread') : tr('Mark as read')}><button type="button" aria-label={i.read ? tr('Mark as unread') : tr('Mark as read')} className={act} onClick={() => onToggle(i)}>{i.read ? <TbMail /> : <TbMailOpened />}</button></Tooltip>
-                    <Dropdown placement="bottom-end" renderTitle={<span role="button" tabIndex={0} aria-label={tr('Remind me')} title={tr('Remind me')} className={act}><TbAlarm /></span>}>
-                        {SNOOZE.map(([label, when]) => <Dropdown.Item key={label} eventKey={label} onClick={() => remind(when())}>{tr(label)}</Dropdown.Item>)}
-                    </Dropdown>
+                    <RemindMenu i={i} className={act} />
                     {target && <Tooltip title={tr('Reply')}><button type="button" aria-label={tr('Reply')} className={act} onClick={() => setReply((r) => (r === null ? '' : null))}><TbArrowBackUp /></button></Tooltip>}
                     {i.link && <Tooltip title={tr('Open')}><button type="button" aria-label={tr('Open')} className={act} onClick={() => onOpen(i)}><TbArrowUpRight /></button></Tooltip>}
                 </div>
@@ -100,7 +94,7 @@ const NotificationsPage = () => {
         <Container>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div><h3>{tr('Notifications')}</h3><p className="text-sm text-gray-500">{loaded ? `${counts.unread ? tr('{n} new', { n: counts.unread }) : tr('You are all caught up')} · ${tr('{n} shown', { n: shown.length })}` : ''}</p></div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {unreadShown.length > 0 && <Button size="sm" icon={<TbCheck />} onClick={() => setRead(unreadShown.map((i) => i.id), true)}>{tr('Mark these as read')} ({unreadShown.length})</Button>}
                     <Button size="sm" icon={<PiCheckCircleDuotone />} disabled={!counts.unread} onClick={markAll}>{tr('Mark all as read')}</Button>
                 </div>

@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.196.0',
+        date: '2026-11-06',
+        title: 'New profile menu, My space moved into it, Growth opens Grow, backups stream to the storage',
+        items: [
+            'Profile menu redesigned: a card with your picture, name, email and role that opens your profile (no more "My profile" line), your status switch, then My space (Reminders, Calendar events, Scheduled messages, Notifications, File manager) and My account (Password & security, My growth, Team & roles, Mail settings), each with a short description; the footer has icon buttons (dark mode, install the app) and Sign Out.',
+            'The "My space" pill is gone from the top menu (its pages are in the profile menu). "Growth & insight" now opens the Grow page.',
+            'Backups go to the DigitalOcean Space while they are read (the server never holds the file), and a download is a short-lived link straight from the Space.',
+        ],
+    },
+    {
         version: '0.195.0',
         date: '2026-11-06',
         title: 'Nightly backups, alerts to the administrators, compulsory two-step sign-in',

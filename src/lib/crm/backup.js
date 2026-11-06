@@ -1,8 +1,11 @@
-// Daily backup of the whole database to the file storage (DigitalOcean Spaces), kept 14 days + one a week for 12 weeks.
+// Daily backup of the whole database to the file storage (DigitalOcean Spaces): streamed there while it is read (the server never holds the file),
+// and downloaded straight from the storage with a short-lived link (the file never goes through the server). Kept 14 days + one a week for 12 weeks.
 // Every collection is read in batches and written as one gzip file of lines { c: collection, d: document } (extended JSON, so
 // ids and dates survive). It runs by itself once a day after 02:00 company time, whether the cron job is on or not, and can be run by hand.
 import zlib from 'node:zlib'
-import { PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { ListObjectsV2Command, DeleteObjectsCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { Upload } from '@aws-sdk/lib-storage'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import prisma from '@/lib/prisma'
 import spaces, { BUCKET } from '@/lib/spaces'
 import { getOptions, setOptions } from '@/lib/crm/mailer'
@@ -11,14 +14,10 @@ import { PREFIX, backupKey, backupDay, pickDeletes, backupLate, ymdOf } from '@/
 
 const storageReady = () => !!(BUCKET && process.env.DO_SPACES_KEY && process.env.DO_SPACES_SECRET)
 
-/** Every document of every collection, gzip-compressed: { buffer, collections: { name: count }, docs }. */
-export async function dumpDatabase() {
+/** Reads every document of every collection into the gzip stream `gz`; returns { collections: { name: count }, docs }. */
+async function writeDump(gz) {
     const list = await prisma.$runCommandRaw({ listCollections: 1, nameOnly: true })
     const names = (list.cursor?.firstBatch || []).filter((c) => c.type !== 'view' && !c.name.startsWith('system.')).map((c) => c.name).sort()
-    const gz = zlib.createGzip({ level: 6 })
-    const chunks = []
-    gz.on('data', (c) => chunks.push(c))
-    const done = new Promise((res, rej) => { gz.on('end', res); gz.on('error', rej) })
     const counts = {}
     let docs = 0
     const write = (obj) => new Promise((res) => { if (gz.write(`${JSON.stringify(obj)}\n`)) res(); else gz.once('drain', res) })
@@ -36,8 +35,7 @@ export async function dumpDatabase() {
         }
     }
     gz.end()
-    await done
-    return { buffer: Buffer.concat(chunks), collections: counts, docs }
+    return { collections: counts, docs }
 }
 
 export async function listBackups() {
@@ -60,14 +58,17 @@ export function runBackup({ reason = 'schedule' } = {}) {
         try {
             if (!storageReady()) throw new Error('The file storage (DigitalOcean Spaces) is not set up, so there is nowhere to put the backup')
             await setOptions({ backup_last_try: Date.now() })
-            const { buffer, collections, docs } = await dumpDatabase()
+            const gz = zlib.createGzip({ level: 6 })
             const key = backupKey(Date.now())
-            await spaces.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: 'application/gzip', Metadata: { docs: String(docs), collections: String(Object.keys(collections).length), reason } }))
+            const upload = new Upload({ client: spaces, params: { Bucket: BUCKET, Key: key, Body: gz, ContentType: 'application/gzip', Metadata: { reason } }, queueSize: 2, partSize: 8 * 1048576 })
+            const [{ collections, docs }] = await Promise.all([writeDump(gz).catch((e) => { gz.destroy(e); throw e }), upload.done()])
+            const head = (await listBackups()).find((b) => b.key === key)
+            const bytes = head?.size || 0
             const all = await listBackups()
             const gone = pickDeletes(all.map((b) => b.key), Date.now())
             if (gone.length) await spaces.send(new DeleteObjectsCommand({ Bucket: BUCKET, Delete: { Objects: gone.map((Key) => ({ Key })) } }))
-            await setOptions({ backup_last_ok: Date.now(), backup_last_info: `${key.slice(PREFIX.length)} · ${docs} documents · ${(buffer.length / 1048576).toFixed(1)} MB · ${Math.round((Date.now() - t0) / 1000)} s`, backup_last_error: '' })
-            return { ok: true, name: key.slice(PREFIX.length), size: buffer.length, docs, collections: Object.keys(collections).length }
+            await setOptions({ backup_last_ok: Date.now(), backup_last_info: `${key.slice(PREFIX.length)} · ${docs} documents · ${(bytes / 1048576).toFixed(1)} MB · ${Math.round((Date.now() - t0) / 1000)} s`, backup_last_error: '' })
+            return { ok: true, name: key.slice(PREFIX.length), size: bytes, docs, collections: Object.keys(collections).length }
         } catch (e) {
             const msg = String(e.message || e).slice(0, 300)
             await setOptions({ backup_last_error: msg }).catch(() => {})
@@ -84,12 +85,10 @@ export async function backupStatus() {
     return { storage: storageReady(), enabled: o('cron_job_backup', '1') !== '0', lastOk: last, lastTry: Number(o('backup_last_try')) || 0, info: o('backup_last_info'), error: o('backup_last_error'), late: storageReady() && backupLate(last, Date.now()) }
 }
 
-/** The stream of one backup file (the Backups panel downloads it). */
-export async function backupStream(name) {
-    const key = `${PREFIX}${name}`
+/** A link (valid 5 minutes) that downloads one backup straight from the file storage. */
+export async function backupLink(name) {
     if (!/^trtcrm-\d{4}-\d{2}-\d{2}\.ndjson\.gz$/.test(name)) throw Object.assign(new Error('Backup not found'), { status: 404 })
-    const r = await spaces.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))
-    return { body: r.Body, size: r.ContentLength }
+    return getSignedUrl(spaces, new GetObjectCommand({ Bucket: BUCKET, Key: `${PREFIX}${name}`, ResponseContentDisposition: `attachment; filename="${name}"` }), { expiresIn: 300 })
 }
 
 const localHour = (tz) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz || 'UTC', hour: '2-digit', hour12: false }).format(new Date())) % 24

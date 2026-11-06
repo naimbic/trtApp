@@ -7,7 +7,7 @@ import { resources } from '@/lib/crm/resources'
 import { customNavItems } from '@/lib/crm/custom-nav'
 
 // Sidebar built from the Perfex resource registry (src/lib/crm/resources/*) and the hand-built pages (src/lib/crm/custom-nav.js).
-// The structure is written here, once: seven pills for the daily work, then "More" (one column per topic). Rules: a column holds 3 items or more,
+// The structure is written here, once: six pills for the daily work, then "More" (one column per topic). Rules: a column holds 3 items or more,
 // there is no "More" column inside a pill, and every area ends with its own "... setting" entry (all of them open Lists & statuses, already filtered).
 const col = (title, items) => ({ sub: title.toLowerCase().replace(/[^a-z]+/g, ''), title, items })
 const STRUCTURE = [
@@ -16,8 +16,7 @@ const STRUCTURE = [
     { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'customers-setting'] },
     { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
     { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
-    { group: 'My space', icon: 'crmUtilities', entries: ['reminders', 'events', 'scheduled-messages', 'notifications', 'file-manager'] },
-    { group: 'Growth & insight', icon: 'crmUtilities', entries: ['goals', 'surveys', 'my-growth', 'grow', 'reports', 'ai', 'activity-log'] },
+    { group: 'Growth & insight', icon: 'crmUtilities', entries: ['grow', 'goals', 'surveys', 'my-growth', 'reports', 'ai', 'activity-log'] },
     { group: 'Support & Help', icon: 'crmSupport', entries: ['tickets', 'help-center', 'kb-manage', 'support-setting'] },
     { group: 'Team', icon: 'crmAdministration', entries: ['staff', 'roles', 'announcements', 'team-setting'] },
     { group: 'Time & pay', icon: 'crmAdministration', entries: ['work-hours', 'timesheets', 'leave-requests', 'days-off', 'payroll'] },
@@ -36,7 +35,9 @@ const pool = Object.fromEntries([
     ...customNavItems,
     ...resources.filter((r) => r.nav !== false && !r.hidden).map((r) => ({ key: r.key, title: r.plural, path: `/crm/${r.key}`, feature: r.feature, also: r.also })),
 ].map((i) => [i.key, i]))
-const placed = new Set(STRUCTURE.flatMap((g) => g.entries.flatMap((e) => (typeof e === 'string' ? [e] : e.items))))
+// pages that live in the profile menu (top right) instead of the menu: placed there, so they are not "lost"
+const IN_PROFILE_MENU = ['reminders', 'events', 'scheduled-messages', 'notifications', 'file-manager']
+const placed = new Set([...IN_PROFILE_MENU, ...STRUCTURE.flatMap((g) => g.entries.flatMap((e) => (typeof e === 'string' ? [e] : e.items)))])
 // a page nobody placed still shows (at the end of Setup), so nothing is ever missing from the menu
 const lost = Object.keys(pool).filter((k) => !placed.has(k))
 if (lost.length && import.meta.env?.DEV) console.warn('[menu] pages not placed in the structure:', lost.join(', '))

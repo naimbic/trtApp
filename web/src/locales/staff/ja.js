@@ -4400,6 +4400,7 @@ export default {
     "Remove from my favorites": "お気に入りから外す",
     "Add to my favorites": "お気に入りに追加",
     "Pin it first in its group and on the help center": "グループとヘルプセンターの先頭に固定",
+    "Date period": "期間",
     "Replying to {name}": "{name}に返信中",
     "edited": "編集済み",
     "{n} comments": "{n}件のコメント",

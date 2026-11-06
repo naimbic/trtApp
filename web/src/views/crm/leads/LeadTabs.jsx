@@ -13,6 +13,7 @@ import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import Tag from '@/components/ui/Tag'
+import Tooltip from '@/components/ui/Tooltip'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify, qs, useCan } from '../kit/api'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
@@ -129,7 +130,6 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
     }
     return (
         <div className="space-y-4">
-            {canEdit && !form && <div className="flex gap-2"><Button size="sm" icon={<TbPlus />} onClick={() => setForm(aim(MAIL_EMPTY(), 'in'))}>{tr("Log a mail")}</Button><Button size="sm" icon={<TbFileText />} onClick={newDraft}>{tr("New draft")}</Button></div>}
             {form && (
                 <div ref={formRef} className="scroll-mt-2 space-y-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
                     <div className="grid grid-cols-2 gap-3">
@@ -178,14 +178,18 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                     <div className="flex flex-wrap gap-2"><Button size="sm" variant="solid" onClick={save}>{draft ? tr("Save draft") : tr("Save mail")}</Button><Button size="sm" onClick={() => setForm(null)}>{draft && form.id ? tr("Close") : tr("Cancel")}</Button></div>
                 </div>
             )}
-            {allMails.length > 0 && (
-                <div className="flex flex-wrap items-end gap-2 rounded-xl border border-gray-200 p-2 dark:border-gray-700">
-                    <div className="min-w-[10rem] flex-1"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search the mails")} value={fil.q} onChange={(e) => setFil((f) => ({ ...f, q: e.target.value }))} /></div>
-                    <div><div className="mb-0.5 text-[11px] font-semibold text-gray-500">{tr("From")}</div><Input size="sm" type="date" value={fil.from} onChange={(e) => setFil((f) => ({ ...f, from: e.target.value }))} /></div>
-                    <div><div className="mb-0.5 text-[11px] font-semibold text-gray-500">{tr("To")}</div><Input size="sm" type="date" value={fil.to} onChange={(e) => setFil((f) => ({ ...f, to: e.target.value }))} /></div>
-                    <Select size="sm" className="w-36" isClearable isSearchable={false} placeholder={tr("All mails")} options={[{ value: 'in', label: tr('Received') }, { value: 'out', label: tr('Sent') }, { value: 'draft', label: tr('Drafts') }]} value={fil.dir ? { value: fil.dir, label: fil.dir === 'in' ? tr('Received') : fil.dir === 'out' ? tr('Sent') : tr('Drafts') } : null} onChange={(o) => setFil((f) => ({ ...f, dir: o?.value || '' }))} />
-                    <label className="flex items-center gap-1.5 pb-1.5 text-xs font-semibold"><Switcher checked={fil.files} onChange={(c) => setFil((f) => ({ ...f, files: c }))} /><TbPaperclip />{tr("With files")}</label>
-                    {filtering && <Button size="xs" onClick={() => setFil({ q: '', from: '', to: '', files: false, dir: '' })}>{tr("Clear")}</Button>}
+            {(allMails.length > 0 || (canEdit && !form)) && (
+                <div className="flex flex-nowrap items-center gap-1.5 rounded-xl border border-gray-200 p-1.5 dark:border-gray-700">
+                    {canEdit && !form && <><Tooltip title={tr("Log a mail")}><Button size="sm" className="shrink-0" icon={<TbPlus />} onClick={() => setForm(aim(MAIL_EMPTY(), 'in'))} /></Tooltip><Tooltip title={tr("New draft")}><Button size="sm" className="shrink-0" icon={<TbFileText />} onClick={newDraft} /></Tooltip></>}
+                    {allMails.length > 0 && (
+                        <>
+                            <div className="min-w-0 flex-1"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search the mails")} value={fil.q} onChange={(e) => setFil((f) => ({ ...f, q: e.target.value }))} /></div>
+                            <div className="w-44 shrink-0"><DatePicker.DatePickerRange size="sm" placeholder={tr("Date period")} inputFormat="DD MMM" value={[fil.from ? dayjs(fil.from).toDate() : null, fil.to ? dayjs(fil.to).toDate() : null]} onChange={(v) => setFil((f) => ({ ...f, from: v?.[0] ? dayjs(v[0]).format('YYYY-MM-DD') : '', to: v?.[1] ? dayjs(v[1]).format('YYYY-MM-DD') : '' }))} /></div>
+                            <Select size="sm" className="w-28 shrink-0" isClearable isSearchable={false} placeholder={tr("All")} options={[{ value: 'in', label: tr('Received') }, { value: 'out', label: tr('Sent') }, { value: 'draft', label: tr('Drafts') }]} value={fil.dir ? { value: fil.dir, label: fil.dir === 'in' ? tr('Received') : fil.dir === 'out' ? tr('Sent') : tr('Drafts') } : null} onChange={(o) => setFil((f) => ({ ...f, dir: o?.value || '' }))} />
+                            <Tooltip title={tr("With files")}><Button size="sm" className={`shrink-0 ${fil.files ? 'bg-primary/10 text-primary' : ''}`} icon={<TbPaperclip />} onClick={() => setFil((f) => ({ ...f, files: !f.files }))} /></Tooltip>
+                            {filtering && <Tooltip title={tr("Clear")}><Button size="sm" className="shrink-0" icon={<TbX />} onClick={() => setFil({ q: '', from: '', to: '', files: false, dir: '' })} /></Tooltip>}
+                        </>
+                    )}
                 </div>
             )}
             {mails.map((m) => (

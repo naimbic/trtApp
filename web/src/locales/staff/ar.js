@@ -4400,6 +4400,7 @@ export default {
     "Remove from my favorites": "إزالة من مفضلتي",
     "Add to my favorites": "أضف إلى مفضلتي",
     "Pin it first in its group and on the help center": "ثبّته في أعلى مجموعته وفي مركز المساعدة",
+    "Date period": "الفترة",
     "Replying to {name}": "الرد على {name}",
     "edited": "تم التعديل",
     "{n} comments": "{n} تعليقات",

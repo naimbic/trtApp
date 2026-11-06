@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.188.1',
+        date: '2026-11-06',
+        title: 'Lead Mails tab: buttons and filters on one compact row',
+        items: [
+            'Lead popup, Mails tab: "Log a mail" and "New draft" are small icon buttons (with a tooltip) on the same row as the filters.',
+            'The two From / To date fields are now one "Date period" picker (pick the first and last day on one calendar).',
+            'Search, period, Received / Sent / Drafts, "with files" (paperclip) and Clear fit on that single row.',
+        ],
+    },
+    {
         version: '0.188.0',
         date: '2026-11-06',
         title: 'Articles: full editor with mentions, favorites, pin, and comments (nested, reactions, edit)',

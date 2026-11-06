@@ -4400,6 +4400,7 @@ export default {
     "Remove from my favorites": "Retirer de mes favoris",
     "Add to my favorites": "Ajouter à mes favoris",
     "Pin it first in its group and on the help center": "Épingler en premier dans son groupe et dans le centre d'aide",
+    "Date period": "Période",
     "Replying to {name}": "Réponse à {name}",
     "edited": "modifié",
     "{n} comments": "{n} commentaires",

@@ -18,9 +18,9 @@ export const look = (i) => { const [Icon, cls] = KIND[i.kind] || KIND.other; ret
 /** What a CRM link points at, in words (tasks → Task...), and the record it names (for a reminder or a quick comment). */
 const RECORDS = { tasks: 'Task', 'tasks-board': 'Task', leads: 'Lead', clients: 'Client', tickets: 'Ticket', invoices: 'Invoice', estimates: 'Estimate', proposals: 'Proposal', contracts: 'Contract', projects: 'Project', expenses: 'Expense', chat: 'Chat', calendar: 'Event', notes: 'Note', 'knowledge-base': 'Article', issues: 'Issue' }
 export const recordLabel = (link) => { const m = /^\/(?:crm\/)?([a-z-]+)/i.exec(String(link || '')); return m && RECORDS[m[1]] ? tr(RECORDS[m[1]]) : '' }
-/** { type: 'task' | 'lead', id } when a person can answer on the record right from the notification. */
+/** { type: 'task' | 'lead' | 'ticket', id } when a person can answer on the record right from the notification. */
 export const replyTarget = (link) => {
-    const m = /^\/crm\/(tasks|tasks-board|leads)(?:\/([a-f0-9]{24}))?(?:\?.*?\btask=([a-f0-9]{24}))?/i.exec(String(link || ''))
+    const m = /^\/crm\/(tasks|tasks-board|leads|tickets)(?:\/([a-f0-9]{24}))?(?:\?.*?\btask=([a-f0-9]{24}))?/i.exec(String(link || ''))
     const id = m && (m[2] || m[3])
-    return id ? { type: m[1] === 'leads' ? 'lead' : 'task', id } : null
+    return id ? { type: m[1] === 'leads' ? 'lead' : m[1] === 'tickets' ? 'ticket' : 'task', id } : null
 }

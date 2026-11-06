@@ -1,4 +1,5 @@
 import { realPicture } from '@/lib/crm/pictures'
+import { parseDay, startOfDayUtc } from '@/lib/crm/closedDays'
 import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { cleanEvent } from '@/lib/crm/calendar'
@@ -62,7 +63,7 @@ async function logActivity(leadId, a, description, additional) {
 export async function listLeads(p = {}) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    const opt = await readSettings(['leads_kanban_limit', 'default_leads_kanban_sort', 'default_leads_kanban_sort_type'])
+    const opt = await readSettings(['leads_kanban_limit', 'default_leads_kanban_sort', 'default_leads_kanban_sort_type', 'default_timezone'])
     const limit = Math.min(Math.max(parseInt(p.limit, 10) || parseInt(opt.get('leads_kanban_limit'), 10) || 50, 5), 500)
     const sort = opt.get('default_leads_kanban_sort') || 'leadorder'
     const dir = opt.get('default_leads_kanban_sort_type') === 'asc' ? 'asc' : opt.get('default_leads_kanban_sort_type') === 'desc' ? 'desc' : null // Settings → Leads: order direction
@@ -73,7 +74,12 @@ export async function listLeads(p = {}) {
     if (oid(p.assigned)) and.push({ OR: [{ assigned: p.assigned }, { assignedIds: { has: p.assigned } }] })
     if (oid(p.sourceId)) and.push({ sourceId: p.sourceId })
     if (p.mine === '1' && a.staffId) and.push({ OR: [{ assigned: a.staffId }, { assignedIds: { has: a.staffId } }] })
-    if (p.from || p.to) and.push({ createdAt: { ...(p.from ? { gte: new Date(p.from) } : {}), ...(p.to ? { lte: new Date(`${p.to}T23:59:59.999`) } : {}) } })
+    // the days of the period are days of the company clock: from the first moment of the first day to the last moment of the last day there
+    if (p.from || p.to) {
+        const tz = opt.get('default_timezone') || 'Africa/Casablanca'
+        const a = parseDay(p.from), b = parseDay(p.to)
+        and.push({ createdAt: { ...(a ? { gte: new Date(startOfDayUtc(a.y, a.m, a.d, tz)) } : {}), ...(b ? { lte: new Date(startOfDayUtc(b.y, b.m, b.d, tz) + 86400000 - 1) } : {}) } })
+    }
     if (p.query) { const c = { contains: p.query, mode: 'insensitive' }; and.push({ OR: [{ name: c }, { company: c }, { email: c }, { phoneNumber: c }] }) }
     if (p.view === 'list' && oid(p.statusId)) and.push({ statusId: p.statusId }) // one status: its own page
     const where = { AND: and }

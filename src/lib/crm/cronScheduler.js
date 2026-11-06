@@ -4,6 +4,7 @@ import { isDue, normalizeSchedule } from '@/lib/crm/cronSchedule'
 import { backupTick } from '@/lib/crm/backup'
 import { alertAdmins } from '@/lib/crm/alerts'
 import { whatsappHealthTick } from '@/lib/crm/whatsappHealth'
+import { sendDigests } from '@/lib/crm/digest'
 
 const KEYS = ['cron_enabled', 'cron_mode', 'cron_every', 'cron_unit', 'cron_at_hour', 'last_cron_run', 'default_timezone']
 const localHour = (tz) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz || 'UTC', hour: '2-digit', hour12: false }).format(new Date())) % 24
@@ -35,6 +36,7 @@ export function startCronScheduler() {
 export async function watchdogTick(now = Date.now()) {
     await backupTick()
     await whatsappHealthTick()
+    await sendDigests()
     const o = await getOptions(['cron_enabled', 'last_cron_run'])
     const last = (Number(o('last_cron_run')) || 0) * 1000
     if (o('cron_enabled') === '1' && last && now - last > 6 * 3600000) await alertAdmins({ key: 'cron-stale', title: 'The automatic tasks have stopped', text: 'The cron job is switched on but has not run for more than 6 hours: reminders, recurring invoices and lead emails are waiting. Check the scheduler (Settings → Cron job).', everyMinutes: 720 })

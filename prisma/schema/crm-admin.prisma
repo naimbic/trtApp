@@ -15,6 +15,9 @@ model CrmStaff {
   id                      String   @id @default(auto()) @map("_id") @db.ObjectId
   /// notifications by Telegram / WhatsApp (empty = off)
   telegramChatId          String?
+  /// one summary email each morning instead of one email per event
+  emailDigest             Boolean?
+  digestSentOn            String?  // the day (YYYY-MM-DD, company time zone) of the last summary
   notifyEmail             Boolean? // empty = yes; off = no automatic email (sign-in and password emails always go)
   notifyTelegram          Boolean?
   notifyWhatsapp          Boolean?

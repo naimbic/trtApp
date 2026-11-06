@@ -50,6 +50,7 @@ export const GROUPS = {
                 f('notify_hours_to', 'Notify until (hour)', 'number', { min: 1, max: 24, default: '17', hint: '17 = until 17:00.' }),
                 f('work_hours_from', 'Working day starts (hour)', 'number', { min: 0, max: 23, default: '9' }),
                 f('work_hours_to', 'Working day ends (hour)', 'number', { min: 1, max: 24, default: '18' }),
+                f('digest_hour', 'Daily summary email at (hour)', 'number', { min: 0, max: 23, default: '8', hint: 'For the team members who chose "One summary a day" in their profile (Notifications): one email at this hour of the company clock, only when there is something to tell.' }),
             ] },
             { title: 'Platform', desc: 'Shown in the menu, on the sign-in page and in the browser tab.', fields: [
                 f('platform_name', 'Platform name', 'text', { max: 60, ph: 'trtCRM', hint: 'Shown in the browser tab and on the sign-in page.' }),

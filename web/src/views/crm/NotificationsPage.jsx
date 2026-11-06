@@ -23,6 +23,7 @@ const Card1 = ({ i, onOpen, onToggle }) => {
     const [Icon, cls] = look(i)
     const [reply, setReply] = useState(null) // text being written
     const [busy, setBusy] = useState(false)
+    const [internal, setInternal] = useState(false)
     const target = replyTarget(i.link)
     const record = recordLabel(i.link)
     const send = async () => {
@@ -30,8 +31,9 @@ const Card1 = ({ i, onOpen, onToggle }) => {
         setBusy(true)
         try {
             if (target.type === 'task') await api(`/api/crm/work/tasks/${target.id}/comments`, { method: 'POST', body: { content: reply.trim() } })
+            else if (target.type === 'ticket') await api(`/api/crm/support/tickets/${target.id}/reply`, { method: 'POST', body: { message: reply.trim(), internal } })
             else await api(`/api/crm/pipeline/leads/${target.id}/notes`, { method: 'POST', body: { content: reply.trim() } })
-            notify('success', tr('Comment sent')); setReply(null); if (!i.read) onToggle(i)
+            notify('success', target.type === 'ticket' ? (internal ? tr('Note added') : tr('Reply sent to the client')) : tr('Comment sent')); setReply(null); if (!i.read) onToggle(i)
         } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const act = 'grid size-8 place-items-center rounded-lg text-lg text-gray-500 transition hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700'
@@ -58,8 +60,8 @@ const Card1 = ({ i, onOpen, onToggle }) => {
             </div>
             {reply !== null && (
                 <div className="mt-2 flex items-end gap-2 ps-12">
-                    <textarea autoFocus rows={2} className="min-h-[56px] flex-1 rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800" placeholder={target.type === 'task' ? tr('Write a comment on the task…') : tr('Write a note on the lead…')} value={reply} onChange={(e) => setReply(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send() }} />
-                    <Button size="sm" variant="solid" icon={<TbSend />} loading={busy} disabled={!reply.trim()} onClick={send}>{tr('Send')}</Button>
+                    <textarea autoFocus rows={2} className="min-h-[56px] flex-1 rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800" placeholder={target.type === 'task' ? tr('Write a comment on the task…') : target.type === 'ticket' ? (internal ? tr('Write a note for the team…') : tr('Write a reply to the client…')) : tr('Write a note on the lead…')} value={reply} onChange={(e) => setReply(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send() }} />
+                    <div className="flex flex-col items-end gap-1.5">{target.type === 'ticket' && <label className="flex items-center gap-1.5 text-xs text-gray-500"><input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} />{tr('Internal note (the client does not see it)')}</label>}<Button size="sm" variant="solid" icon={<TbSend />} loading={busy} disabled={!reply.trim()} onClick={send}>{target.type === 'ticket' && !internal ? tr('Send to the client') : tr('Send')}</Button></div>
                 </div>
             )}
         </div>

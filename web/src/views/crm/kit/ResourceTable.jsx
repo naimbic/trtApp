@@ -69,7 +69,7 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
     return (
         <div>
             {/* one row: search, filters (they shrink to fit) and the action button */}
-            <div className="mb-4 flex items-center gap-2">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
                 <div className="w-52 shrink-0">
                     <Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search {v1}", { v1: resource.plural?.toLowerCase() || '' })} value={query} onChange={(e) => setQuery(e.target.value)} />
                 </div>

@@ -72,7 +72,7 @@ const TicketsList = () => {
             </div>
 
             {/* one row: search, filters (they shrink to fit) and the switches */}
-            <div className="mb-4 flex items-center gap-2">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
                 <div className="w-56 shrink-0"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search subject, #number, email")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="min-w-[7rem] max-w-[11rem] flex-1"><Select size="sm" isClearable placeholder={tr("Any priority")} options={opt(data.priorities)} value={sel(data.priorities, priorityId)} onChange={(o) => { setPriorityId(o?.value || null); setPage(1) }} {...portalSel} /></div>
                 <div className="min-w-[7rem] max-w-[12rem] flex-1"><Select size="sm" isClearable placeholder={tr("Any department")} options={opt(data.departments)} value={sel(data.departments, departmentId)} onChange={(o) => { setDepartmentId(o?.value || null); setPage(1) }} {...portalSel} /></div>

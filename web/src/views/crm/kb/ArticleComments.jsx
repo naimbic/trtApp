@@ -27,7 +27,7 @@ const ArticleComments = ({ articleId, subject, comments, canComment, onChange })
     }
     return (
         <section className="mt-10">
-            <h4 className="mb-4 flex items-center gap-2"><TbMessageCircle />{tr("Comments")}{comments.length ? ` (${comments.length})` : ''}<span className="text-sm font-normal text-gray-500">· {tr("only the team sees them")}</span></h4>
+            <h4 className="mb-4 flex flex-wrap items-center gap-2"><TbMessageCircle />{tr("Comments")}{comments.length ? ` (${comments.length})` : ''}<span className="text-sm font-normal text-gray-500">· {tr("only the team sees them")}</span></h4>
             {canComment && (
                 <div className="mb-5 space-y-2">
                     <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />

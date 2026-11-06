@@ -78,7 +78,7 @@ const PaymentsTab = ({ id, money }) => {
     const sizes = [10, 25, 50, 100].map((n) => ({ value: n, label: `${n} / page` }))
     return (
         <div>
-            <div className="mb-4 flex items-center gap-2">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
                 <div className="w-52 shrink-0"><Input size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search payments")} value={query} onChange={(e) => setQuery(e.target.value)} /></div>
                 <div className="min-w-[7rem] max-w-[11rem] flex-1"><Select size="sm" isClearable placeholder={tr("Payment mode")} options={d.modes || []} value={mode} onChange={(o) => { setMode(o); setPage(1) }} menuPortalTarget={document.body} menuPosition="fixed" styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} /></div>
                 <div className="w-36 shrink-0"><Input size="sm" type="date" title={tr("From")} value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }} /></div>

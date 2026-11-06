@@ -2,8 +2,15 @@ import bcrypt from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
 import { E2E, cleanup, localEnv } from './env.mjs'
 
+// compile the pages and routes the tests use before the first test, so a cold dev server does not time a test out
+async function warmUp() {
+    const urls = ['http://localhost:3200/sign-in', 'http://localhost:3200/crm/leads', 'http://localhost:3200/crm/tasks-board', 'http://localhost:3200/crm/lists', 'http://localhost:3200/crm/notifications', 'http://localhost:3200/api/crm/pipeline/leads', 'http://localhost:3200/api/crm/work/tasks', 'http://localhost:3200/api/crm/notifications', 'http://localhost:3200/api/crm/lead-sources', 'http://localhost:3200/api/crm/saved-views?page=leads', 'http://localhost:3200/api/crm/duplicates', 'http://localhost:3200/api/crm/pipeline/leads/bulk']
+    await Promise.all(urls.map((u) => fetch(u).catch(() => {})))
+}
+
 export default async function setup() {
     localEnv()
+    await warmUp()
     const p = new PrismaClient()
     try {
         await cleanup(p) // what a run that was stopped halfway left behind

@@ -296,7 +296,7 @@ const TaskList = ({ projectId = null }) => {
                                         <Draggable key={g.key} draggableId={g.key} index={gi}>
                                             {(p) => (
                                                 <div ref={p.innerRef} {...p.draggableProps}>
-                                                    <div className="mb-4 flex items-center gap-2">
+                                                    <div className="mb-4 flex flex-wrap items-center gap-2">
                                                         <span className="text-lg" {...p.dragHandleProps}><MdDragIndicator /></span>
                                                         <h4>{g.title}</h4>
                                                         <span className="rounded-full bg-gray-100 px-2 text-xs font-semibold text-gray-500 dark:bg-gray-700">{g.list.length}</span>

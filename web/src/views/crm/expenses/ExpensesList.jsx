@@ -104,7 +104,7 @@ const ExpensesList = () => {
                 <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search name, note, reference")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="w-52"><Select size="sm" isClearable placeholder={tr("Any category")} options={catOpts} value={catOpts.find((o) => o.value === categoryId) || null} onChange={(o) => setCategoryId(o?.value || null)} /></div>
                 <div className="w-52"><RelationSelect size="sm" resource="clients" value={clientId} onChange={(x) => setClientId(x || null)} /></div>
-                <Segment size="sm" value={state} onChange={(v) => setState(Array.isArray(v) ? v[0] ?? '' : v ?? '')}>{STATES.map(([v, l]) => <Segment.Item key={v || 'all'} value={v}>{l}</Segment.Item>)}</Segment>
+                <Segment size="sm" className="max-w-full overflow-x-auto" value={state} onChange={(v) => setState(Array.isArray(v) ? v[0] ?? '' : v ?? '')}>{STATES.map(([v, l]) => <Segment.Item key={v || 'all'} value={v}>{l}</Segment.Item>)}</Segment>
             </div>
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 

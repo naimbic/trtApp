@@ -117,7 +117,7 @@ export async function emailAllowed(email, slug) {
     try {
         if (!email || ESSENTIAL.test(String(slug || ''))) return true
         const mail = String(email).trim()
-        const who = (await prisma.crmContact.findFirst({ where: { email: { equals: mail, mode: 'insensitive' }, active: true }, select: { notifyEmail: true } })) || (await prisma.crmStaff.findFirst({ where: { email: { equals: mail, mode: 'insensitive' } }, select: { notifyEmail: true } }))
-        return who?.notifyEmail !== false
+        const who = (await prisma.crmContact.findFirst({ where: { email: { equals: mail, mode: 'insensitive' }, active: true }, select: { notifyEmail: true } })) || (await prisma.crmStaff.findFirst({ where: { email: { equals: mail, mode: 'insensitive' } }, select: { notifyEmail: true, emailDigest: true } }))
+        return who?.notifyEmail !== false && !who?.emailDigest // a team member who chose the daily summary gets that one email instead
     } catch { return true }
 }

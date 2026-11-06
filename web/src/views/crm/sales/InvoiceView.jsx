@@ -155,7 +155,7 @@ const InvoiceView = () => {
                 </div>
 
                 <div className="grid items-start gap-4 xl:grid-cols-3">
-                    <div className="flex flex-col gap-4 xl:col-span-2">
+                    <div className="flex min-w-0 flex-col gap-4 xl:col-span-2">
                         <Card>
                             <h5 className="mb-3">{tr("Items")}</h5>
                             <div className="overflow-x-auto">

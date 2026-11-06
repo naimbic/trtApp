@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.201.0',
+        date: '2026-11-06',
+        title: 'One summary a day, reply to tickets from a notification, phone fixes',
+        items: [
+            'Profile → Notifications → "One summary a day": one email each morning (at the hour set in Settings → General → Daily summary email) with what is new for you, tasks due or late, reminders and meetings of the day, instead of one email for each event; nothing is sent when there is nothing to tell. "Send me today\'s summary now" shows what it looks like. Chat apps, the bell and sign-in emails are not affected.',
+            'Notifications: a ticket notification can be answered from the card: a reply to the client (emailed as usual) or an internal note.',
+            'Phone pass: the Tasks board header, the Tickets filters (and every table filter row) wrap instead of pushing the page sideways, the Expenses period switcher scrolls, and the invoice page no longer widens the screen.',
+        ],
+    },
+    {
         version: '0.200.0',
         date: '2026-11-06',
         title: 'WhatsApp: "(#100) Invalid parameter" explained, template check, number format, optional webhook',

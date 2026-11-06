@@ -84,7 +84,7 @@ const IssueView = () => {
                     <Card><h5 className="mb-3">{tr('Files')}</h5><AttachmentsPanel relType="issue" relId={id} canEdit={can.edit} /></Card>
 
                     <Card>
-                        <h5 className="mb-4 flex items-center gap-2"><TbHistory />{tr('Activity')}</h5>
+                        <h5 className="mb-4 flex flex-wrap items-center gap-2"><TbHistory />{tr('Activity')}</h5>
                         <Timeline>
                             {feed.map((f) => (
                                 <Timeline.Item key={f.id} media={<Avatar size={25} shape="circle" src={f.staff?.image || undefined}>{initials(f.staff?.name || '?')}</Avatar>}>

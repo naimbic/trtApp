@@ -80,7 +80,7 @@ const TeamDashboard = () => {
             {perf && <Performance perf={perf} days={days} setDays={setDays} leadTrend={d.leadTrend} meId={d.me.id} reload={load} />}
 
             <div className="grid gap-4 xl:grid-cols-3">
-                <div className="flex flex-col gap-4 xl:col-span-2">
+                <div className="flex min-w-0 flex-col gap-4 xl:col-span-2">
                     {tasks && (
                         <Panel title={tr('My tasks')} subtitle={tr('Overdue first, then what is due soon')} action={<More to="/crm/my-tasks">{tr('All my tasks')}</More>}>
                             {tasks.mine.list.length ? (

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbBan, TbUserCheck, TbUserPlus, TbPlug, TbTrash } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbListDetails, TbBan, TbUserCheck, TbUserPlus, TbPlug, TbTrash } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
@@ -15,6 +15,8 @@ import { api, qs, notify } from '../kit/api'
 import { usePageRange } from '@/store/pageFilterStore'
 import { People } from '../tasks/shared'
 import LeadDrawer from './LeadDrawer'
+import SavedViews from '@/components/crm/SavedViews'
+import BulkBar, { TickBox, runBulk, useSelection } from '@/components/crm/BulkBar'
 import { onCreate } from '@/utils/createIntent'
 import { tr, trn } from '@/utils/t'
 
@@ -29,6 +31,7 @@ const LeadsBoard = () => {
     const [staff, setStaff] = useState([])
     const [view, setView] = useState(() => { try { return localStorage.getItem('leads.view') || 'board' } catch { return 'board' } })
     const [search, setSearch] = useState('')
+    const sel = useSelection()
     const [query, setQuery] = useState('')
     const [mine, setMine] = useState(false)
     const [assigned, setAssigned] = useState(null)
@@ -98,6 +101,8 @@ const LeadsBoard = () => {
         const from = data.statuses.find((c) => c.leads.some((l) => l.id === item.id)), to = data.statuses.find((c) => String(c.id) === String(toId))
         if (from && to && from.id !== to.id) onDragEnd({ source: { droppableId: from.id, index: from.leads.findIndex((l) => l.id === item.id) }, destination: { droppableId: to.id, index: to.leads.length } })
     }
+    const [bulkDel, setBulkDel] = useState(false)
+    const bulk = async (action, value) => { const r = await runBulk('/api/crm/pipeline/leads/bulk', { ids: sel.list(), action, value }); if (r) { sel.clear(); load() } }
     const open = (id) => setDrawer({ open: true, id, preset: null, k: 0 })
     useEffect(() => onCreate('lead', () => setDrawer({ open: true, id: null, preset: null, k: Date.now() })), [])
     const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); if (routeId) nav('/crm/leads', { replace: true }) }
@@ -125,7 +130,8 @@ const LeadsBoard = () => {
                 <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any owner")} options={staffOptions} value={staffOptions.find((o) => o.value === assigned) || null} onChange={(o) => { setAssigned(o?.value || null); setMine(false) }} /></div>
                 <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any source")} options={sourceOptions} value={sourceOptions.find((o) => o.value === sourceId) || null} onChange={(o) => setSourceId(o?.value || null)} /></div>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssigned(null) }} />{tr("My leads")}</label>
-                <Segment size="sm" value={show} onChange={(v) => setShow(Array.isArray(v) ? v[0] ?? '' : v ?? '')} className="ml-auto">{SHOW.map(([v, l]) => <Segment.Item key={v || 'active'} value={v}>{l}{v && data.totals?.[v] ? ` (${data.totals[v]})` : ''}</Segment.Item>)}</Segment>
+                <SavedViews className="ml-auto" page="leads" getState={() => ({ search, assigned, sourceId, mine, show })} applyState={(v) => { setSearch(v.search || ''); setAssigned(v.assigned || null); setSourceId(v.sourceId || null); setMine(!!v.mine); setShow(v.show || '') }} />
+                <Segment size="sm" value={show} onChange={(v) => setShow(Array.isArray(v) ? v[0] ?? '' : v ?? '')}>{SHOW.map(([v, l]) => <Segment.Item key={v || 'active'} value={v}>{l}{v && data.totals?.[v] ? ` (${data.totals[v]})` : ''}</Segment.Item>)}</Segment>
             </div>
 
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
@@ -161,22 +167,36 @@ const LeadsBoard = () => {
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <Table>
-                        <THead><Tr><Th>{tr("Name")}</Th><Th>{tr("Company")}</Th><Th>{tr("Email")}</Th><Th>{tr("Phone")}</Th><Th>{tr("Status")}</Th><Th>{tr("Source")}</Th><Th>{tr("Owner")}</Th><Th>{tr("Created")}</Th></Tr></THead>
+                        <THead><Tr><Th className="w-10"><TickBox label={tr('Select all')} checked={list.list.length > 0 && list.list.every((l) => sel.has(l.id))} onChange={(on) => sel.set(list.list.map((l) => l.id), on)} /></Th><Th>{tr("Name")}</Th><Th>{tr("Company")}</Th><Th>{tr("Email")}</Th><Th>{tr("Phone")}</Th><Th>{tr("Status")}</Th><Th>{tr("Source")}</Th><Th>{tr("Owner")}</Th><Th>{tr("Created")}</Th></Tr></THead>
                         <TBody>
                             {list.list.map((l) => (
                                 <Tr key={l.id} className="cursor-pointer" onClick={() => open(l.id)}>
+                                    <Td className="w-10"><TickBox checked={sel.has(l.id)} onChange={() => sel.toggle(l.id)} /></Td>
                                     <Td className="font-semibold">{l.name}</Td><Td>{l.company || '—'}</Td><Td>{l.email || '—'}</Td><Td>{l.phone || '—'}</Td>
                                     <Td><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: l.statusColor || '#94a3b8' }} />{l.status || '—'}</span></Td>
                                     <Td>{l.source || '—'}</Td><Td>{l.assignees?.length ? l.assignees.map((x) => x.name).join(', ') : '—'}</Td><Td>{dayjs(l.createdAt).format('DD MMM YYYY')}</Td>
                                 </Tr>
                             ))}
-                            {!loading && !list.list.length && <Tr><Td colSpan={8} className="py-10 text-center text-gray-500">{tr("No leads match")}</Td></Tr>}
+                            {!loading && !list.list.length && <Tr><Td colSpan={9} className="py-10 text-center text-gray-500">{tr("No leads match")}</Td></Tr>}
                         </TBody>
                     </Table>
                     {list.total > list.list.length && <div className="p-3 text-center text-xs text-gray-500">{tr("Showing the latest")} {list.list.length} {tr("of")} {list.total}{tr(". Use search or filters to narrow down.")}</div>}
                 </div>
             )}
 
+            <BulkBar
+                count={sel.count} onClear={sel.clear}
+                actions={[
+                    { label: tr('Status'), icon: <TbListDetails />, options: data.statuses.filter((c) => c.id !== 'none').map((c) => ({ label: c.name, color: c.color, onClick: () => bulk('status', c.id) })) },
+                    { label: tr('Source'), icon: <TbPlug />, options: sourceOptions.map((o) => ({ label: o.label, color: o.color, onClick: () => bulk('source', o.value) })) },
+                    { label: tr('Add owner'), icon: <TbUserPlus />, options: staffOptions.map((o) => ({ label: o.label, onClick: () => bulk('assign', o.value) })) },
+                    { label: show === '' ? tr('Mark lost') : tr('Restore'), icon: <TbBan />, onClick: () => bulk(show === '' ? 'lost' : 'restore') },
+                    { label: tr('Delete'), icon: <TbTrash />, danger: true, onClick: () => setBulkDel(true) },
+                ]}
+            />
+            <ConfirmDialog isOpen={bulkDel} type="danger" title={tr('Delete {n} leads?', { n: sel.count })} confirmText={tr('Delete')} onClose={() => setBulkDel(false)} onCancel={() => setBulkDel(false)} onConfirm={() => { setBulkDel(false); bulk('delete') }}>
+                <p>{tr('Leads converted to a client cannot be deleted; they are skipped.')}</p>
+            </ConfirmDialog>
             <ConfirmDialog isOpen={!!ask} type="info" title={tr("Convert to a client?")} confirmText={tr("Convert")} onClose={() => setAsk(null)} onCancel={() => setAsk(null)} onConfirm={() => { const it = ask; setAsk(null); convert(it) }}>
                 <p>{ask?.title}</p>
             </ConfirmDialog>

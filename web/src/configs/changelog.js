@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.197.0',
+        date: '2026-11-06',
+        title: 'Bulk actions, saved views and browser tests',
+        items: [
+            'Bulk actions on the Leads list and the Tasks list: tick several rows (or all) and a bar appears: Leads: status, source, add an owner, mark lost / restore, delete; Tasks: status, priority, add a person, delete. One request for all, each row goes through the usual permissions, and you are told how many worked and why the others did not.',
+            'Saved views: a "Views" button on Leads, Tasks and the tables saves the search and filters under a name (private, or shared with the team) and applies them in one click.',
+            'Browser tests of the main flows (npm run test:e2e, local test database only): sign in, create a lead and convert it to a client, change several leads at once, save and reuse a view, edit a list in place, create a task, read a notification. They create a throw-away administrator and remove everything they made.',
+        ],
+    },
+    {
         version: '0.196.0',
         date: '2026-11-06',
         title: 'New profile menu, My space moved into it, Growth opens Grow, backups stream to the storage',

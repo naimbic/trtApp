@@ -8,6 +8,7 @@ import Pagination from '@/components/ui/Pagination'
 import cn from '@/utils/classNames'
 import { api, qs } from './api'
 import { renderCell } from './format'
+import SavedViews from '@/components/crm/SavedViews'
 import { useAppSettings } from '@/store/appSettingsStore'
 import { tr } from '@/utils/t'
 
@@ -87,7 +88,7 @@ const ResourceTable = ({ resource, where = {}, columns, onRowClick, reloadKey = 
                         />
                     </div>
                 ))}
-                <div className="ml-auto flex shrink-0 items-center gap-2">{toolbar}</div>
+                <div className="ml-auto flex shrink-0 items-center gap-2"><SavedViews page={`table-${resource.key}`} getState={() => ({ query, filters, sort })} applyState={(v) => { setQuery(v.query || ''); setFilters(v.filters || {}); setSort(v.sort || null); setPage(1) }} />{toolbar}</div>
             </div>
 
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}

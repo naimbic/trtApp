@@ -665,3 +665,33 @@ export async function taskSummary(p = {}) {
     const running = mine ? await prisma.crmTask.findUnique({ where: { id: mine.taskId }, select: { id: true, name: true } }) : null
     return { dueToday, dueTodayDone, overdue, tomorrow, week, weekDone, noDate, inProgress, waiting, doneToday, unassigned, hoursToday: Math.round((ms / 3600000) * 10) / 10, running: running ? { ...running, since: mine.startTime } : null }
 }
+
+/**
+ * One action on several tasks at once (the Tasks list): status, priority, add a person, delete. Each task goes through the same permission
+ * rules as when it is changed alone; the answer says how many worked and which did not (and why).
+ */
+export async function bulkTasks({ ids = [], action, value } = {}) {
+    const list = [...new Set((Array.isArray(ids) ? ids : []).map(oid).filter(Boolean))].slice(0, 200)
+    if (!list.length) throw fail('Select at least one task')
+    const out = { done: 0, failed: [] }
+    for (const id of list) {
+        try {
+            if (action === 'status') await moveTask(id, { status: value })
+            else if (action === 'delete') await deleteTask(id)
+            else if (action === 'priority' || action === 'assign') {
+                const session = await requirePermission('tasks', 'edit')
+                const a = await access(session)
+                const t = await loadOne(id, a)
+                if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
+                if (action === 'priority') { if (![1, 2, 3, 4].includes(+value)) throw fail('Unknown priority'); await prisma.crmTask.update({ where: { id }, data: { priority: +value } }) }
+                else {
+                    const staffId = oid(value)
+                    if (!staffId) throw fail('Choose a person')
+                    if (!(await prisma.crmTaskAssigned.findFirst({ where: { taskId: id, staffId }, select: { id: true } }))) await prisma.crmTaskAssigned.create({ data: { taskId: id, staffId, assignedFrom: a.staffId || undefined } })
+                }
+            } else throw fail('Unknown action')
+            out.done++
+        } catch (e) { out.failed.push({ id, error: e.message }) }
+    }
+    return out
+}

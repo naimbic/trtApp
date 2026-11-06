@@ -593,3 +593,33 @@ export async function leadLookups() {
     const countries = countryRows.filter((c) => c.legacyId != null).map((c) => ({ value: c.legacyId, label: c.shortName || c.longName || c.iso2 }))
     return { countries, staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), statuses, sources }
 }
+
+/**
+ * One action on several leads at once (the Leads list): status, source, add a person, lost / junk / restore, delete. Each lead goes through the
+ * same permission rules as when it is changed alone; the answer says how many worked and which did not (and why).
+ */
+export async function bulkLeads({ ids = [], action, value } = {}) {
+    const list = [...new Set((Array.isArray(ids) ? ids : []).map(oid).filter(Boolean))].slice(0, 200)
+    if (!list.length) throw fail('Select at least one lead')
+    const out = { done: 0, failed: [] }
+    for (const id of list) {
+        try {
+            if (['lost', 'junk', 'restore'].includes(action)) await flagLead(id, action)
+            else if (action === 'delete') await deleteLead(id)
+            else if (['status', 'source', 'assign'].includes(action)) {
+                const session = await requirePermission('leads', 'view')
+                const a = await access(session)
+                const l = await loadOne(id, a)
+                if (!mayEdit(a, l)) throw fail('You can only edit your own leads', 403)
+                if (l.clientId && (await readSettings(['lead_lock_after_convert_to_customer'])).on('lead_lock_after_convert_to_customer') && !a.admin) throw fail('This lead is locked because it became a client', 403)
+                const v = oid(value)
+                if (!v) throw fail('Choose a value')
+                if (action === 'status') { if (v !== l.statusId) { await prisma.crmLead.update({ where: { id }, data: { statusId: v, lastStatusChange: new Date() } }); await logStatus(id, a, l.statusId, v) } }
+                else if (action === 'source') await prisma.crmLead.update({ where: { id }, data: { sourceId: v } })
+                else { const team = [...new Set([...teamOf(l), v])]; await prisma.crmLead.update({ where: { id }, data: { assignedIds: team, assigned: team[0] || null, dateAssigned: new Date() } }) }
+            } else throw fail('Unknown action')
+            out.done++
+        } catch (e) { out.failed.push({ id, error: e.message }) }
+    }
+    return out
+}

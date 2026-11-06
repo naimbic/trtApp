@@ -51,3 +51,7 @@ storage/
 
 # design reference project (kept locally, not part of the app)
 /.168-rapport/
+
+# browser tests
+/test-results/
+/playwright-report/

@@ -5,8 +5,9 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { MdDragIndicator } from 'react-icons/md'
-import { TbCalendarDue, TbCalendarEvent, TbCalendarWeek, TbLoader, TbHourglass, TbCircleCheck as TbDone, TbClock, TbUserOff, TbPlayerPlay, TbAlertTriangle, TbBookmarks, TbHierarchy2, TbCircleCheck, TbCircleCheckFilled, TbSearch, TbLayoutKanban, TbPlus } from 'react-icons/tb'
+import { TbTrash, TbCalendarDue, TbCalendarEvent, TbCalendarWeek, TbLoader, TbHourglass, TbCircleCheck as TbDone, TbClock, TbUserOff, TbPlayerPlay, TbAlertTriangle, TbBookmarks, TbHierarchy2, TbCircleCheck, TbCircleCheckFilled, TbSearch, TbLayoutKanban, TbPlus } from 'react-icons/tb'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
@@ -20,6 +21,7 @@ import classNames from '@/utils/classNames'
 import { api, qs, notify } from '../kit/api'
 import { STATUS, PRIORITY, statusOf, prioOf, initials, useTaskStatuses, statusPillStyle } from './shared'
 import TaskDrawer from './TaskDrawer'
+import BulkBar, { TickBox, runBulk, useSelection } from '@/components/crm/BulkBar'
 import TemplatesDialog from './TemplatesDialog'
 import { tr, trn } from '@/utils/t'
 
@@ -33,12 +35,12 @@ const ORDER_KEY = 'tasks.groupOrder'
 const Pill = ({ cls, style, children }) => <Tag className={classNames('mr-2 rtl:ml-2 mb-2', cls, !style && PILL)} style={style}>{children}</Tag>
 
 /** One line, same columns as the template: grip, check, name, status, priority, date, person. */
-const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, ...rest }) => {
+const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, selected, onSelect, ...rest }) => {
     const done = t.status === 5
     const who = t.assignees[0]
     return (
         <Tr ref={innerRef} {...rest}>
-            <Td className="w-[40px] text-lg">{dragHandle}</Td>
+            <Td className="w-[64px] text-lg"><span className="flex items-center gap-1">{dragHandle}<TickBox checked={!!selected} onChange={() => onSelect?.(t.id)} /></span></Td>
             <Td className="w-[40px]">
                 <button type="button" className="cursor-pointer pt-1 text-2xl" disabled={!canEdit || t.canFinish === false} title={t.canFinish === false ? tr("Only the people assigned to this task, or who created it, can change its status") : undefined} onClick={() => onToggle(t)}>
                     {done ? <TbCircleCheckFilled className="text-primary" /> : <TbCircleCheck className="hover:text-primary" />}
@@ -209,6 +211,9 @@ const TaskList = ({ projectId = null }) => {
         load()
     }
 
+    const sel = useSelection()
+    const [bulkDel, setBulkDel] = useState(false)
+    const bulk = async (action, value) => { const r = await runBulk('/api/crm/work/tasks/bulk', { ids: sel.list(), action, value }); if (r) { sel.clear(); load() } }
     const toggle = async (t) => {
         const to = t.status === 5 ? 1 : 5
         setData((d) => ({ ...d, list: d.list.map((x) => (x.id === t.id ? { ...x, status: to } : x)) }))
@@ -302,7 +307,7 @@ const TaskList = ({ projectId = null }) => {
                                                                 <TBody ref={dp.innerRef} {...dp.droppableProps}>
                                                                     {g.list.map((t, ti) => (
                                                                         <Draggable key={t.id} draggableId={t.id} index={ti} isDragDisabled={!data.can.edit || t.canFinish === false}>
-                                                                            {(tp) => <TaskRow t={t} innerRef={tp.innerRef} dragHandle={<span {...tp.dragHandleProps}><MdDragIndicator /></span>} onToggle={toggle} onOpen={open} canEdit={data.can.edit} {...tp.draggableProps} />}
+                                                                            {(tp) => <TaskRow t={t} innerRef={tp.innerRef} dragHandle={<span {...tp.dragHandleProps}><MdDragIndicator /></span>} onToggle={toggle} onOpen={open} canEdit={data.can.edit} selected={sel.has(t.id)} onSelect={sel.toggle} {...tp.draggableProps} />}
                                                                         </Draggable>
                                                                     ))}
                                                                     {dp.placeholder}
@@ -325,6 +330,20 @@ const TaskList = ({ projectId = null }) => {
                 {loading && !groups.length && <div className="py-10 text-center text-gray-400">{tr('Loading…')}</div>}
             </div>
 
+            {data.can.edit && (
+                <BulkBar
+                    count={sel.count} onClear={sel.clear}
+                    actions={[
+                        { label: tr('Status'), icon: <TbLoader />, options: STATUS.filter((x) => x.active).map((x) => ({ label: x.label, color: x.color, onClick: () => bulk('status', x.value) })) },
+                        { label: tr('Priority'), icon: <TbAlertTriangle />, options: PRIORITY.map((x) => ({ label: x.label, onClick: () => bulk('priority', x.value) })) },
+                        { label: tr('Add person'), icon: <TbUserOff />, options: (lookups.staff || []).map((x) => ({ label: x.name, onClick: () => bulk('assign', x.id) })) },
+                        ...(data.can.delete ? [{ label: tr('Delete'), icon: <TbTrash />, danger: true, onClick: () => setBulkDel(true) }] : []),
+                    ]}
+                />
+            )}
+            <ConfirmDialog isOpen={bulkDel} type="danger" title={tr('Delete {n} tasks?', { n: sel.count })} confirmText={tr('Delete')} onClose={() => setBulkDel(false)} onCancel={() => setBulkDel(false)} onConfirm={() => { setBulkDel(false); bulk('delete') }}>
+                <p>{tr('Their sub-tasks and time entries are deleted too.')}</p>
+            </ConfirmDialog>
             <TemplatesDialog isOpen={tpl} onClose={() => setTpl(false)} context={projectId ? { relType: 'project', relId: projectId } : {}} onUsed={(id) => nav(`/crm/tasks/${id}`)} />
             <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} presets={{ ...taskDefaults(lookups), ...(period === 'today' ? { dueDate: new Date() } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} />
         </Shell>

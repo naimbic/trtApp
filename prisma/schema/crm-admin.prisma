@@ -969,3 +969,20 @@ model CrmNotifState {
   @@index([staffId])
   @@map("crm_notif_states")
 }
+
+/// A saved view of a list page: a name and the filters / search / sort it applies. Private to its owner, or shared with the team.
+model CrmSavedView {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// which page: leads, tasks, clients...
+  page      String
+  name      String
+  /// the filters, search and sort, as the page wrote them
+  state     Json
+  ownerId   String   @db.ObjectId
+  shared    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([page, ownerId])
+  @@map("crm_saved_views")
+}

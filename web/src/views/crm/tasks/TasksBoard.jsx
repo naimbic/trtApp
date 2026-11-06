@@ -14,6 +14,7 @@ import Pipeline from '@/components/crm/Pipeline'
 import { api, qs, notify } from '../kit/api'
 import { RemindTag, STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, useTaskStatuses } from './shared'
 import TaskDrawer from './TaskDrawer'
+import SavedViews from '@/components/crm/SavedViews'
 import NoteEditor from '../notes/NoteEditor'
 import { NOTES_EVENT, plainOf } from '../notes/noteKit'
 import RelationSelect from '../kit/RelationSelect'
@@ -161,6 +162,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                 <div className="w-48"><RelationSelect size="sm" resource="clients" placeholder={tr("Any client")} value={clientId} onChange={(id) => setClientId(id || null)} /></div>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssignee(null) }} />{tr("My tasks")}</label>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={done} onChange={setDone} />{tr("Show completed")}</label>
+                <SavedViews className="ml-auto" page="tasks" getState={() => ({ search, assignee, priority, leadId, clientId, mine, done })} applyState={(v) => { setSearch(v.search || ''); setAssignee(v.assignee || null); setPriority(v.priority || null); setLeadId(v.leadId || null); setClientId(v.clientId || null); setMine(!!v.mine); setDone(!!v.done) }} />
             </div>}
 
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}

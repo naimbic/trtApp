@@ -30,6 +30,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     const [data, setData] = useState({ list: [], counts: {}, can: {} })
     const [lookups, setLookups] = useState({ staff: [] })
     const [more, setMore] = useState({}) // columns opened beyond the card limit
+    const [endsEl, setEndsEl] = useState(null)
     const [view, setView] = useState(() => { if (boardOnly) return 'board'; try { return localStorage.getItem('tasks.view') || 'board' } catch { return 'board' } })
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
@@ -140,7 +141,10 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     return (
         <Wrap>
             {!boardOnly && <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>{projectId ? <h5>{tr("Tasks")}</h5> : <h3>{tr("Tasks")}</h3>}<p className="text-sm text-gray-500">{trn(data.list.length, "task")} {tr("shown")}</p></div>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <div>{projectId ? <h5>{tr("Tasks")}</h5> : <h3>{tr("Tasks")}</h3>}<p className="text-sm text-gray-500">{trn(data.list.length, "task")} {tr("shown")}</p></div>
+                    <div ref={setEndsEl} />
+                </div>
                 <div className="flex items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
                         <Segment.Item value="board"><span className="inline-flex items-center gap-1"><TbLayoutKanban />{tr("Board")}</span></Segment.Item>
@@ -170,6 +174,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                     onOpen={(it) => (isNote(it) ? setNoteDialog({ open: true, note: noteOf(it) }) : open(it.id))}
                     onAdd={(c) => (c.id === 'notes' ? setNoteDialog({ open: true, note: null }) : data.can.create ? setDrawer({ open: true, id: null, preset: { status: c.id }, k: 0 }) : undefined)}
                     onMoveTo={data.can.edit ? moveTo : undefined}
+                    endsTarget={boardOnly ? null : endsEl}
                     ends={data.can.edit ? [{ id: 'won', name: tr("Done"), metric: { value: done ? (columns[5] || []).length : "—", label: tr("completed") }, sub: tr("Mark as complete"), icon: <TbCircleCheck /> }, { id: 'progress', name: tr("In progress"), metric: { value: (columns[4] || []).length, label: tr("tasks") }, sub: tr("Start working on it"), icon: <TbLoader />, tone: 'progress' }, ...(data.can.delete ? [{ id: 'lost', name: tr("Delete"), metric: { value: data.list.length, label: tr("in view") }, sub: tr("Remove the task"), icon: <TbTrash />, tone: 'lost' }] : [])] : []}
                     actions={(it) => isNote(it) ? [
                         { label: tr("Make it a task"), icon: <TbArrowRight />, onClick: () => promote(it, 1) },

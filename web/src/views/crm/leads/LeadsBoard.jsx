@@ -24,6 +24,7 @@ const LeadsBoard = () => {
     const nav = useNavigate()
     const { id: routeId } = useParams()
     const [data, setData] = useState({ statuses: [], can: {}, sources: [], totals: {} })
+    const [endsEl, setEndsEl] = useState(null)
     const [list, setList] = useState({ list: [], total: 0 })
     const [staff, setStaff] = useState([])
     const [view, setView] = useState(() => { try { return localStorage.getItem('leads.view') || 'board' } catch { return 'board' } })
@@ -106,7 +107,10 @@ const LeadsBoard = () => {
     return (
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div><h3>{tr("Leads")}</h3><p className="text-sm text-gray-500">{trn(total, "lead")}{show ? ` · ${SHOW.find((s) => s[0] === show)[1].toLowerCase()}` : ''}</p></div>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <div><h3>{tr("Leads")}</h3><p className="text-sm text-gray-500">{trn(total, "lead")}{show ? ` · ${SHOW.find((s) => s[0] === show)[1].toLowerCase()}` : ''}</p></div>
+                    <div ref={setEndsEl} />
+                </div>
                 <div className="flex items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
                         <Segment.Item value="board"><span className="inline-flex items-center gap-1"><TbLayoutKanban />{tr("Board")}</span></Segment.Item>
@@ -134,6 +138,7 @@ const LeadsBoard = () => {
                     onOpen={(it) => open(it.id)}
                     onAdd={(c) => setDrawer({ open: true, id: null, preset: { statusId: c.id }, k: 0 })}
                     onMoveTo={show === '' ? moveTo : undefined}
+                    endsTarget={endsEl}
                     ends={show === '' ? [{ id: 'won', name: tr("Won"), metric: { value: data.totals?.converted ?? 0, label: tr("converted") }, sub: tr("Convert to a client"), icon: <TbTrophy /> }, { id: 'lost', name: tr("Lost"), metric: { value: data.totals?.lost ?? 0, label: tr("lost") }, sub: tr("Close the lead"), icon: <TbBan />, tone: 'lost' }] : []}
                     actions={(it) => (show === '' ? [
                         { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.some((x) => x.id === m.value), onClick: () => patch(it, (l) => ({ assignedIds: (l.assignedIds || []).includes(m.value) ? l.assignedIds.filter((x) => x !== m.value) : [...(l.assignedIds || []), m.value] }), tr("Team changed")) })) },

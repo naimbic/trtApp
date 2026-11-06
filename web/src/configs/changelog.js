@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.189.0',
+        date: '2026-11-06',
+        title: 'Cleaner lead and task cards, Won / Lost on top, Won counter fixed',
+        items: [
+            'Lead and task cards redesigned so long names never break them: date on the left, comments and the menu on the right, the title on two lines (cut with "…"), the contact on one line, the next action as a pill, then the source as a chip and the team at the foot (3 faces and "+N").',
+            'Won and Lost (Done / In progress / Delete on tasks) moved to the top of the page, next to the count, as small one-line drop zones with their number.',
+            'The Won counter showed 0 even with converted leads: it now counts every lead converted to a client.',
+        ],
+    },
+    {
         version: '0.188.1',
         date: '2026-11-06',
         title: 'Lead Mails tab: buttons and filters on one compact row',

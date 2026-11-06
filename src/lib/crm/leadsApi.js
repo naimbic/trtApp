@@ -105,7 +105,7 @@ export async function listLeads(p = {}) {
     const people = await staffMap([...cols.flatMap((c) => c.rows), ...orphans].flatMap(teamOf))
     const out = cols.map((c) => ({ id: c.id, name: c.name, color: c.color, count: c.count, leads: c.rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])) }))
     if (orphans.length) out.unshift({ id: 'none', name: 'No status', color: '#94a3b8', count: orphans.length, leads: orphans.map((l) => card(l, people, null, srcMap[l.sourceId])) })
-    const totals = { lost: await prisma.crmLead.count({ where: { AND: [visible(a), { lost: true }] } }), junk: await prisma.crmLead.count({ where: { AND: [visible(a), { junk: true }] } }) }
+    const totals = { lost: await prisma.crmLead.count({ where: { AND: [visible(a), { lost: true }] } }), junk: await prisma.crmLead.count({ where: { AND: [visible(a), { junk: true }] } }), converted: await prisma.crmLead.count({ where: { AND: [visible(a), { clientId: { not: null } }] } }) }
     return { statuses: out, limit, totals, can, sources: sources.map((s) => ({ id: s.id, name: s.name })) }
 }
 

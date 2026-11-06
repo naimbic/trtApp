@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.200.0',
+        date: '2026-11-06',
+        title: 'WhatsApp: "(#100) Invalid parameter" explained, template check, number format, optional webhook',
+        items: [
+            'The test message now says what Meta objected to instead of "(#100) Invalid parameter": a wrong number format (write +212 600 000 000, never a 0 in front), a template that is not accepted as sent, or a wrong Phone number ID.',
+            'New optional "WhatsApp Business Account ID": with it, "Check the WhatsApp connection" lists the approved templates and checks the one named in Settings (exists? approved? in that language? how many variables?). The messages are then built with the right number of variables (a template with no variable, or with two, no longer fails with #100).',
+            'Numbers are cleaned before sending (spaces, dashes, + and 00 are removed) and a local number written with a 0 in front is refused with a clear sentence.',
+            'Optional webhook (the Meta app does not need it to SEND): the check panel shows the callback URL and a verify token to paste in Meta for Developers → WhatsApp → Configuration. Meta then tells the CRM when a message could not be delivered afterwards; the reason is shown in the panel and the administrators are alerted. With the App Secret saved, only Meta (signed requests) is believed.',
+        ],
+    },
+    {
         version: '0.199.0',
         date: '2026-11-06',
         title: 'WhatsApp check and renewal, idea discussion like comments, the team opening pages is not a client view',

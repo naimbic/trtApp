@@ -266,6 +266,11 @@ export const ChannelsTestPanel = () => {
                         {wa.ok ? <div><b>{wa.name || tr("Connected")}</b>{wa.phone ? ` · ${wa.phone}` : ''}{wa.quality ? ` · ${tr("quality")} ${wa.quality}` : ''}</div> : <div>{wa.error}</div>}
                         {wa.appError && <div>{wa.appError}</div>}
                         {wa.expiresAt !== undefined && <div className="text-xs opacity-80">{wa.expiresAt ? `${tr("The token ends on")} ${new Date(wa.expiresAt).toLocaleDateString('en-GB', { dateStyle: 'medium' })}` : tr("The token does not expire")}</div>}
+                        {wa.templateProblem && <div className="mt-1 font-semibold">{wa.templateProblem}</div>}
+                        {wa.templateError && <div className="mt-1">{wa.templateError}</div>}
+                        {wa.templates?.length > 0 && <div className="mt-1 text-xs opacity-80">{tr("Approved templates")}: {wa.templates.join(', ')}</div>}
+                        {wa.failures?.length > 0 && <div className="mt-2 text-xs"><b>{tr("Recent messages that were not delivered")}:</b>{wa.failures.map((f, i) => <div key={i}>{new Date(f.at).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' })} · {f.to} · {f.why}</div>)}</div>}
+                        {wa.webhook && <div className="mt-2 rounded-lg bg-white/60 p-2 text-xs text-gray-700 dark:bg-gray-900/40 dark:text-gray-200"><b>{tr("Webhook (optional, to learn about failed deliveries)")}</b><div>{tr("Callback URL")}: <code className="select-all">{wa.webhook.url}</code></div><div>{tr("Verify token")}: <code className="select-all">{wa.webhook.verifyToken}</code></div><div className="opacity-70">{tr("Meta for Developers → WhatsApp → Configuration → Webhook → Edit, then subscribe to “messages”.")}</div></div>}
                         {wa.canRenew && wa.expiresAt > 0 && <Button size="xs" className="mt-1" onClick={renew}>{tr("Renew the token now")}</Button>}
                         {!wa.canRenew && wa.expiresAt > 0 && <div className="text-xs">{tr("It will stop working then: paste a permanent token, or add the App ID and App Secret above.")}</div>}
                     </div>

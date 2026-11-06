@@ -1,16 +1,16 @@
 import prisma from '@/lib/prisma'
-import { explainWhatsapp } from '@/lib/crm/whatsappCalc'
+import { explainWhatsapp, normalizeWhatsappNumber } from '@/lib/crm/whatsappCalc'
 
 /**
  * Notifications by Telegram and WhatsApp, next to email. Settings → WhatsApp & Telegram holds the accounts; each team member and each
  * client contact has a chat id / number and a switch. Every email template that is sent also goes out as a short message (the subject and
  * the link of the document) to the person's channels that are switched on.
  */
-const KEYS = ['telegram_enabled', 'telegram_bot_token', 'whatsapp_enabled', 'whatsapp_phone_number_id', 'whatsapp_access_token', 'whatsapp_template', 'whatsapp_template_lang', 'whatsapp_app_id', 'whatsapp_app_secret']
+const KEYS = ['telegram_enabled', 'telegram_bot_token', 'whatsapp_enabled', 'whatsapp_phone_number_id', 'whatsapp_access_token', 'whatsapp_template', 'whatsapp_template_lang', 'whatsapp_app_id', 'whatsapp_app_secret', 'whatsapp_template_vars']
 async function settings() {
     const rows = await prisma.crmOption.findMany({ where: { name: { in: KEYS } }, select: { name: true, value: true } })
     const o = Object.fromEntries(rows.map((r) => [r.name, r.value]))
-    return { telegram: o.telegram_enabled === '1' && !!o.telegram_bot_token, token: o.telegram_bot_token || '', whatsapp: o.whatsapp_enabled === '1' && !!o.whatsapp_phone_number_id && !!o.whatsapp_access_token, phoneId: o.whatsapp_phone_number_id || '', waToken: o.whatsapp_access_token || '', template: o.whatsapp_template || '', lang: o.whatsapp_template_lang || 'en' }
+    return { telegram: o.telegram_enabled === '1' && !!o.telegram_bot_token, token: o.telegram_bot_token || '', whatsapp: o.whatsapp_enabled === '1' && !!o.whatsapp_phone_number_id && !!o.whatsapp_access_token, phoneId: o.whatsapp_phone_number_id || '', waToken: o.whatsapp_access_token || '', template: o.whatsapp_template || '', lang: o.whatsapp_template_lang || 'en', vars: o.whatsapp_template_vars === undefined || o.whatsapp_template_vars === '' ? 1 : Number(o.whatsapp_template_vars) || 0 }
 }
 
 const post = async (url, body, headers = {}) => {
@@ -70,10 +70,14 @@ export async function testOwnChannel(staffId, channel) {
 export async function sendWhatsapp(number, text, s) {
     const c = s || (await settings())
     if (!c.whatsapp) return { sent: false, error: 'WhatsApp is not set up (Settings → WhatsApp & Telegram)' }
-    const to = String(number).replace(/[^0-9]/g, '')
-    if (!to) return { sent: false, error: 'No WhatsApp number' }
+    const n = normalizeWhatsappNumber(number)
+    if (n.error) return { sent: false, error: n.error }
+    const to = n.to
+    // a template body has the number of variables the account says (the connection check reads it): none = no parameters, more = the text in the first, a dash in the others
+    const flat = String(text).replace(/\s*\n+\s*/g, ' · ').slice(0, 900)
+    const params = Array.from({ length: Math.min(c.vars, 10) }, (_, i) => ({ type: 'text', text: i === 0 ? flat : '-' }))
     const message = c.template
-        ? { type: 'template', template: { name: c.template, language: { code: c.lang }, components: [{ type: 'body', parameters: [{ type: 'text', text: String(text).replace(/\s*\n+\s*/g, ' · ').slice(0, 900) }] }] } }
+        ? { type: 'template', template: { name: c.template, language: { code: c.lang }, ...(params.length ? { components: [{ type: 'body', parameters: params }] } : {}) } }
         : { type: 'text', text: { body: String(text).slice(0, 3900), preview_url: true } }
     const r = await post(`https://graph.facebook.com/v20.0/${c.phoneId}/messages`, { messaging_product: 'whatsapp', to, ...message }, { Authorization: `Bearer ${c.waToken}` })
     return r.ok ? { sent: true } : { sent: false, error: explainWhatsapp(r.json?.error) }

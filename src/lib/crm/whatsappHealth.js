@@ -3,10 +3,12 @@
 // swap a short-lived one for a 60-day one (and renew it again before it ends). A permanent token (a System user's) never needs it.
 import { getOptions, setOptions } from '@/lib/crm/mailer'
 import { alertAdmins } from '@/lib/crm/alerts'
-import { tokenAdvice, explainWhatsapp } from '@/lib/crm/whatsappCalc'
+import crypto from 'node:crypto'
+import { publicBase } from '@/lib/crm/shortLinks'
+import { tokenAdvice, explainWhatsapp, templateVars, templateProblem } from '@/lib/crm/whatsappCalc'
 
 const G = 'https://graph.facebook.com/v20.0'
-const KEYS = ['whatsapp_enabled', 'whatsapp_phone_number_id', 'whatsapp_access_token', 'whatsapp_app_id', 'whatsapp_app_secret']
+const KEYS = ['whatsapp_enabled', 'whatsapp_phone_number_id', 'whatsapp_access_token', 'whatsapp_app_id', 'whatsapp_app_secret', 'whatsapp_waba_id', 'whatsapp_template', 'whatsapp_template_lang']
 const get = async (url) => {
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) })
     return { ok: res.ok, json: await res.json().catch(() => ({})) }
@@ -14,7 +16,7 @@ const get = async (url) => {
 
 async function creds() {
     const o = await getOptions(KEYS)
-    return { enabled: o('whatsapp_enabled') === '1', phoneId: o('whatsapp_phone_number_id'), token: o('whatsapp_access_token'), appId: o('whatsapp_app_id'), secret: o('whatsapp_app_secret') }
+    return { enabled: o('whatsapp_enabled') === '1', phoneId: o('whatsapp_phone_number_id'), token: o('whatsapp_access_token'), appId: o('whatsapp_app_id'), secret: o('whatsapp_app_secret'), waba: o('whatsapp_waba_id'), template: o('whatsapp_template'), lang: o('whatsapp_template_lang', 'en') }
 }
 
 /** { ok, phone, name, quality, tokenValid, expiresAt (ms, 0 = never), canRenew, advice, error } */
@@ -28,6 +30,23 @@ export async function whatsappStatus() {
         const dbg = await get(`${G}/debug_token?input_token=${encodeURIComponent(c.token)}&access_token=${encodeURIComponent(`${c.appId}|${c.secret}`)}`)
         if (dbg.ok && dbg.json?.data) { out.tokenValid = !!dbg.json.data.is_valid; out.expiresAt = (dbg.json.data.expires_at || 0) * 1000 } else if (!dbg.ok) out.appError = 'The App ID or the App Secret is not right (Meta for Developers → App settings → Basic).'
     }
+    // the templates of the WhatsApp Business account (needs its ID): is the one chosen in Settings there, approved, in that language, and how many variables does it have
+    if (c.waba) {
+        const t = await get(`${G}/${encodeURIComponent(c.waba)}/message_templates?fields=name,language,status,components&limit=100&access_token=${encodeURIComponent(c.token)}`)
+        if (t.ok) {
+            const list = (t.json.data || []).map((x) => ({ name: x.name, language: x.language, status: x.status, vars: templateVars(x.components) }))
+            out.templates = list.filter((x) => x.status === 'APPROVED').map((x) => `${x.name} (${x.language})`).slice(0, 20)
+            out.templateProblem = templateProblem(list, c.template, c.lang)
+            const used = c.template && list.find((x) => x.name === c.template && String(x.language).toLowerCase() === String(c.lang || 'en').toLowerCase())
+            if (used) await setOptions({ whatsapp_template_vars: used.vars }) // what the messages are built with
+        } else out.templateError = t.json?.error?.code === 100 ? 'The WhatsApp Business Account ID is not right (Meta for Developers → WhatsApp → API setup, under the phone number).' : explainWhatsapp(t.json?.error)
+    }
+    // the webhook (not needed to send): its address and the verify token to give Meta, and what failed lately
+    const w = await getOptions(['whatsapp_verify_token', 'whatsapp_failures'])
+    let token = w('whatsapp_verify_token')
+    if (!token) { token = crypto.randomBytes(16).toString('hex'); await setOptions({ whatsapp_verify_token: token }) }
+    out.webhook = { url: `${publicBase()}/api/crm/public/whatsapp`, verifyToken: token }
+    try { out.failures = JSON.parse(w('whatsapp_failures') || '[]').slice(0, 5) } catch { out.failures = [] }
     out.advice = tokenAdvice({ valid: out.tokenValid !== false, expiresAtSec: out.expiresAt ? Math.floor(out.expiresAt / 1000) : 0, canRenew: out.canRenew })
     return out
 }

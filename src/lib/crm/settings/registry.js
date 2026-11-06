@@ -177,6 +177,7 @@ export const GROUPS = {
             { title: 'WhatsApp (Cloud API)', desc: 'From Meta for Developers → WhatsApp → API setup: the phone number ID and a permanent access token (the App ID and App Secret are optional: they let the CRM check and renew the token). Outside a 24 hour conversation WhatsApp only delivers approved templates: give the name of a template with one body variable and its language, or leave it empty for plain messages.', fields: [
                 yes('whatsapp_enabled', 'Send notifications by WhatsApp'),
                 f('whatsapp_phone_number_id', 'Phone number ID', 'text'),
+                f('whatsapp_waba_id', 'WhatsApp Business Account ID (optional)', 'text', { hint: 'Meta for Developers → WhatsApp → API setup, under the phone number. Lets the CRM list your approved templates and check the one below.' }),
                 f('whatsapp_access_token', 'Access token', 'password'),
                 f('whatsapp_app_id', 'App ID (optional)', 'text', { hint: 'Meta for Developers → your app → App settings → Basic. Not needed to send. With the App Secret it lets the CRM check the token and renew it (a 24-hour test token becomes a 60-day one).' }),
                 f('whatsapp_app_secret', 'App Secret (optional)', 'password'),

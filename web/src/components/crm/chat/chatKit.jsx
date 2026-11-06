@@ -11,9 +11,17 @@ const BEAT_MS = 15000
 export const StatusDot = ({ status = 'offline', className }) => <span title={STATUS[status]?.label} className={classNames('inline-block h-2.5 w-2.5 rounded-full border-2 border-white dark:border-gray-800', STATUS[status]?.dot, className)} />
 
 let ctx
-/** Short two-note ping made with the Web Audio API (no sound file needed). Silent until the page has had a click or key press. */
+let bell
+/** The notification sound (public/sounds/notification.mp3). Silent while muted, and until the page has had a click or key press. If the file cannot play, the old two-note ping is made with the Web Audio API. */
 export function ping() {
     if (useChatStatus.getState().muted) return
+    try {
+        bell ||= Object.assign(new Audio('/sounds/notification.mp3'), { preload: 'auto', volume: 0.7 })
+        bell.currentTime = 0
+        const p = bell.play()
+        if (p?.catch) p.catch(() => {})
+        return
+    } catch { /* fall back to the synthesised ping */ }
     try {
         ctx ||= new (window.AudioContext || window.webkitAudioContext)()
         if (ctx.state === 'suspended') ctx.resume()

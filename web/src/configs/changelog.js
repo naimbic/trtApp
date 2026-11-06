@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.187.1',
+        date: '2026-11-06',
+        title: 'New notification sound',
+        items: [
+            'The sound that plays for a new chat message or notification is now the new "short notification" sound (a sound file instead of the synthesised ping). The mute switch still silences it; call ringing is unchanged.',
+        ],
+    },
+    {
         version: '0.187.0',
         date: '2026-11-06',
         title: 'Manage articles: groups as accordions, drag to reorder or move, switches, icons, pager',

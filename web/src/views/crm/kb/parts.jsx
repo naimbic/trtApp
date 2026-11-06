@@ -1,4 +1,4 @@
-import { TbBook2, TbEye, TbThumbUp, TbSearch, TbFolder } from 'react-icons/tb'
+import { TbBook2, TbEye, TbThumbUp, TbSearch, TbFolder, TbPinFilled, TbStarFilled } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
@@ -38,7 +38,7 @@ export const ArticleRow = ({ a, onClick, last, showState, unit = 'min read' }) =
         <div className="flex min-w-0 items-center gap-4">
             <Avatar className="bg-gray-100 dark:bg-gray-700" size={46} shape="round" icon={<span className="heading-text"><TbBook2 /></span>} />
             <div className="min-w-0">
-                <h6 className="truncate font-bold group-hover:text-primary">{a.subject}</h6>
+                <h6 className="flex items-center gap-1.5 truncate font-bold group-hover:text-primary"><span className="truncate">{a.subject}</span>{a.pinned && <TbPinFilled className="shrink-0 text-primary" title={tr("Pinned")} />}{a.favorite && <TbStarFilled className="shrink-0 text-amber-500" title={tr("Favorite")} />}</h6>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500"><span>{a.minutes} {unit}</span>{a.group && <><span>•</span><span>{a.group.name}</span></>}{showState && a.staffOnly && <Tag className="bg-amber-100 text-amber-700">{tr("Staff only")}</Tag>}{showState && !a.active && <Tag className="bg-gray-200 text-gray-600">{tr("Draft")}</Tag>}</div>
                 {a.excerpt && <p className="mt-1 line-clamp-1 text-sm text-gray-500">{a.excerpt}</p>}
             </div>

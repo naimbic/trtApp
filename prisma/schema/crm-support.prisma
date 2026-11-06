@@ -244,6 +244,10 @@ model CrmKnowledgeBaseArticle {
   articleOrder Int?
   /// 1 = staff-only article
   staffArticle Boolean               @default(false)
+  /// pinned: shown first in its group and in the Pinned strip of the help center
+  pinned       Boolean               @default(false)
+  /// staff who starred it as a favorite (each person has their own)
+  favoriteOf   String[]              @db.ObjectId
   feedback     CrmKnowledgeBaseArticleFeedback[]
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt

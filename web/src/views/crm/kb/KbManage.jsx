@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbSearch, TbTrash, TbFolderPlus, TbArrowLeft, TbPencil, TbChevronDown, TbEye, TbThumbUp, TbFolder, TbUsers, TbLock, TbGripVertical } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbTrash, TbFolderPlus, TbArrowLeft, TbPencil, TbChevronDown, TbEye, TbThumbUp, TbFolder, TbUsers, TbLock, TbGripVertical, TbStar, TbStarFilled, TbPin, TbPinFilled } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -137,6 +137,8 @@ const GroupBlock = ({ g, items, can, open, onToggle, size, groupDrag, index, onD
                                 <span className="hidden w-24 shrink-0 whitespace-nowrap text-end text-xs text-gray-400 md:block">{dayjs(a.updatedAt).format('DD MMM YYYY')}</span>
                                 <Tooltip title={a.active ? tr("Published: click to hide it") : tr("Hidden: click to publish it")}><span className="shrink-0"><Switcher checked={a.active} disabled={!can.edit} onChange={(c) => onPatch(a, { active: c })} /></span></Tooltip>
                                 <span className="flex shrink-0 items-center">
+                                    <Tooltip title={a.favorite ? tr("Remove from my favorites") : tr("Add to my favorites")}><Button size="xs" variant="plain" className={a.favorite ? 'text-amber-500' : ''} icon={a.favorite ? <TbStarFilled /> : <TbStar />} onClick={() => onPatch(a, { favorite: !a.favorite })} /></Tooltip>
+                                    {can.edit && <Tooltip title={a.pinned ? tr("Unpin") : tr("Pin it first in its group and on the help center")}><Button size="xs" variant="plain" className={a.pinned ? 'text-primary' : ''} icon={a.pinned ? <TbPinFilled /> : <TbPin />} onClick={() => onPatch(a, { pinned: !a.pinned })} /></Tooltip>}
                                     <Tooltip title={tr("Read it")}><Button size="xs" variant="plain" icon={<TbEye />} onClick={() => nav(`/crm/knowledge-base/article/${a.id}`)} /></Tooltip>
                                     {can.edit && <Tooltip title={tr("Edit")}><Button size="xs" variant="plain" icon={<TbPencil />} onClick={() => nav(`/crm/knowledge-base/edit/${a.id}`)} /></Tooltip>}
                                     {can.delete && <Tooltip title={tr("Delete")}><Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => onDelete(a)} /></Tooltip>}

@@ -4,7 +4,7 @@ import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 /** The records a person can set a reminder on (it is a private note to themselves, with a time). */
-export const REMIND_TYPES = ['task', 'lead', 'customer', 'ticket', 'project', 'invoice', 'estimate', 'proposal', 'contract', 'expense', 'issue']
+export const REMIND_TYPES = ['task', 'lead', 'customer', 'ticket', 'project', 'invoice', 'estimate', 'proposal', 'contract', 'expense', 'issue', 'kb_article']
 
 async function me() {
     const session = await requirePermission(null)

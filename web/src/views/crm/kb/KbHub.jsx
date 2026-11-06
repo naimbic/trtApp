@@ -53,6 +53,8 @@ const KbHub = () => {
                             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">{d.groups.map((g) => <GroupCard key={g.id} g={g} onClick={() => setSp({ group: g.id })} />)}</div>
                             {!d.groups.length && <p className="text-gray-500">{tr("No topics yet. Create a group in “Manage articles”.")}</p>}
                         </div>
+                        {d.pinned?.length > 0 && <div><h3 className="mb-2">{tr("Pinned")}</h3>{d.pinned.map((a, i) => <ArticleRow key={a.id} a={a} last={i === d.pinned.length - 1} onClick={() => open(a.id)} />)}</div>}
+                        {d.favorites?.length > 0 && <div><h3 className="mb-2">{tr("My favorites")}</h3>{d.favorites.map((a, i) => <ArticleRow key={a.id} a={a} last={i === d.favorites.length - 1} onClick={() => open(a.id)} />)}</div>}
                         {d.popular?.length > 0 && <div><h3 className="mb-2">{tr("Most read")}</h3>{d.popular.map((a, i) => <ArticleRow key={a.id} a={a} last={i === d.popular.length - 1} onClick={() => open(a.id)} />)}</div>}
                         {d.recent?.length > 0 && <div><h3 className="mb-2">{tr("Recently updated")}</h3>{d.recent.map((a, i) => <ArticleRow key={a.id} a={a} last={i === d.recent.length - 1} onClick={() => open(a.id)} />)}</div>}
                     </div>

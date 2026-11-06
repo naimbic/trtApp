@@ -10,7 +10,7 @@ import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import CreatableSelect from 'react-select/creatable'
 import { api, notify } from '../kit/api'
-import VisualEditor from '../mail/VisualEditor'
+import RichEditor from '@/components/crm/RichEditor'
 import { tr } from '@/utils/t'
 
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
@@ -44,7 +44,7 @@ const KbEditor = () => {
                 <div className="flex flex-col gap-4 xl:flex-row">
                     <div className="flex min-w-0 flex-1 flex-col gap-4">
                         <Card><L>{tr("Title")}</L><Input value={v.subject} placeholder={tr("e.g. How to reset your hosting password")} onChange={(e) => set({ subject: e.target.value })} /></Card>
-                        <Card><div className="mb-3"><h4>{tr("Article")}</h4><p className="text-sm text-gray-500">{tr("Headings (H2, H3) become the “In this page” menu.")}</p></div><VisualEditor docKey={`kb-${id || 'new'}`} value={v.description} onChange={(html) => set({ description: html })} /></Card>
+                        <Card><div className="mb-3"><h4>{tr("Article")}</h4><p className="text-sm text-gray-500">{tr("Headings (H2, H3) become the “In this page” menu. Colleagues you tag with @ are told.")}</p></div><RichEditor key={`kb-${id || 'new'}`} minHeight={460} value={v.description} onChange={(html) => set({ description: html })} placeholder={tr("Write the article. Type @ to tag a colleague, add pictures, tables, colours and emojis.")} /></Card>
                     </div>
                     <div className="flex flex-col gap-4 xl:w-[340px]">
                         <Card><h4 className="mb-4">{tr("Group")}</h4><Select componentAs={CreatableSelect} isClearable options={opts} value={opts.find((o) => o.value === v.groupId) || null} onChange={(o) => set({ groupId: o?.value || null })} onCreateOption={newGroup} formatCreateLabel={(t) => tr("Create group “{t}”", { t: t })} placeholder={tr("Pick or create a group")} /></Card>

@@ -19,7 +19,7 @@ import { Extension, Node } from '@tiptap/core'
 import { Plugin } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { mentionDirectory } from '@/utils/mentions'
-import { TbAt, TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbLink, TbPaperclip, TbTable, TbColumnInsertRight, TbRowInsertBottom, TbColumnRemove, TbRowRemove, TbTableOff, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
+import { TbAt, TbBold, TbItalic, TbUnderline, TbStrikethrough, TbH2, TbList, TbListNumbers, TbQuote, TbCode, TbH3, TbLink, TbPaperclip, TbTable, TbColumnInsertRight, TbRowInsertBottom, TbColumnRemove, TbRowRemove, TbTableOff, TbArrowBackUp, TbArrowForwardUp, TbTextColor, TbHighlight, TbAlignLeft, TbAlignCenter, TbAlignRight, TbClearFormatting } from 'react-icons/tb'
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
 import { notify } from '@/views/crm/kit/api'
@@ -240,6 +240,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <SwatchMenu title={tr('Highlight')} icon={<TbHighlight />} colors={MARK_COLORS} current={editor.getAttributes('highlight').color} onPick={(c) => editor.chain().focus().setHighlight({ color: c }).run()} onClear={() => editor.chain().focus().unsetHighlight().run()} indicator={editor.getAttributes('highlight').color || '#fef08a'} />
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
                     <Btn title={tr('Heading')} active={editor.isActive('heading', { level: 2 })} on={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><TbH2 /></Btn>
+                    <Btn title={tr('Sub-heading')} active={editor.isActive('heading', { level: 3 })} on={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><TbH3 /></Btn>
                     <Btn title={tr('Bulleted list')} active={editor.isActive('bulletList')} on={() => editor.chain().focus().toggleBulletList().run()}><TbList /></Btn>
                     <Btn title={tr('Numbered list')} active={editor.isActive('orderedList')} on={() => editor.chain().focus().toggleOrderedList().run()}><TbListNumbers /></Btn>
                     <Btn title={tr('Quote')} active={editor.isActive('blockquote')} on={() => editor.chain().focus().toggleBlockquote().run()}><TbQuote /></Btn>

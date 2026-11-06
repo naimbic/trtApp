@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.188.0',
+        date: '2026-11-06',
+        title: 'Articles: full editor with mentions, favorites, pin, and comments (nested, reactions, edit)',
+        items: [
+            'The article editor is now the full editor used in comments: headings H2 / H3, colours, highlight, tables, pictures, links, emojis and @ mentions (the colleagues you tag are told). Headings still build the "In this page" menu.',
+            'Favorites: a star on each article (and in Manage articles) keeps your own list; "My favorites" shows on the help center home.',
+            'Pin: pin an article to show it first in its group lists and in a "Pinned" strip on the help center home (needs the Edit permission).',
+            'Comments under every article (the team only, clients never see them): newest thread first, nested replies, emoji reactions, tag a colleague, set a reminder, edit and delete. People who starred the article or already commented are told of new comments.',
+            'Headings in all editors now show in proportion (H2 larger than H3).',
+        ],
+    },
+    {
         version: '0.187.1',
         date: '2026-11-06',
         title: 'New notification sound',

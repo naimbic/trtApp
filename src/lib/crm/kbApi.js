@@ -1,6 +1,9 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, hasCap, getStaffId } from '@/lib/crm/permissions'
 import { safeHtml } from '@/lib/crm/contractDoc'
+import { storeRich, plainText } from '@/lib/crm/richText'
+import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
+import { realPicture } from '@/lib/crm/pictures'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -35,7 +38,7 @@ async function votes(articleIds) {
     return out
 }
 
-const card = (a, group, v, f) => ({ id: a.id, subject: a.subject, groupId: a.groupId || null, order: a.articleOrder || 0, group: group ? { id: group.id, name: group.name, color: group.color } : null, excerpt: strip(a.description).slice(0, 160), minutes: readingTime(a.description), views: v[a.id] || 0, helpful: f[a.id]?.yes || 0, notHelpful: f[a.id]?.no || 0, active: a.active, staffOnly: a.staffArticle, updatedAt: a.updatedAt, createdAt: a.createdAt })
+const card = (a, group, v, f, me) => ({ id: a.id, subject: a.subject, pinned: !!a.pinned, favorite: !!me && (a.favoriteOf || []).includes(me), groupId: a.groupId || null, order: a.articleOrder || 0, group: group ? { id: group.id, name: group.name, color: group.color } : null, excerpt: strip(a.description).slice(0, 160), minutes: readingTime(a.description), views: v[a.id] || 0, helpful: f[a.id]?.yes || 0, notHelpful: f[a.id]?.no || 0, active: a.active, staffOnly: a.staffArticle, updatedAt: a.updatedAt, createdAt: a.createdAt })
 
 const LANGS = ['en', 'fr', 'es', 'ja', 'ar']
 /** Groups written in another language than the viewer's stay out of the way (a group with no language shows in every language). */
@@ -56,17 +59,20 @@ export async function kbHub({ q = '', groupId, lang } = {}) {
     const live = articles.filter((a) => a.active && (!a.groupId || okGroup.has(a.groupId)))
     const [v, f] = await Promise.all([views(live.map((a) => a.id)), votes(live.map((a) => a.id))])
     const gMap = Object.fromEntries(groups.map((g) => [g.id, g]))
+    const me = c.staffId
     const out = { groups: shown.filter((g) => g.active || c.can('edit')).map((g) => ({ id: g.id, name: g.name, description: g.description || '', color: g.color, active: g.active, count: live.filter((a) => a.groupId === g.id).length })), can: { create: c.can('create'), edit: c.can('edit'), delete: c.can('delete') }, total: live.length }
     const term = String(q).trim().toLowerCase()
     if (term || oid(groupId)) {
         let list = live
         if (oid(groupId)) list = list.filter((a) => a.groupId === groupId)
         if (term) list = list.filter((a) => `${a.subject} ${strip(a.description)}`.toLowerCase().includes(term))
-        out.results = list.map((a) => card(a, gMap[a.groupId], v, f))
+        out.results = list.map((a) => card(a, gMap[a.groupId], v, f, me)).sort((x, y) => Number(y.pinned) - Number(x.pinned))
         out.group = oid(groupId) ? out.groups.find((g) => g.id === groupId) || null : null
     } else {
-        out.popular = live.map((a) => card(a, gMap[a.groupId], v, f)).sort((x, y) => y.views - x.views).slice(0, 6)
-        out.recent = live.map((a) => card(a, gMap[a.groupId], v, f)).sort((x, y) => +new Date(y.updatedAt) - +new Date(x.updatedAt)).slice(0, 4)
+        out.pinned = live.filter((a) => a.pinned).map((a) => card(a, gMap[a.groupId], v, f, me))
+        out.favorites = live.filter((a) => me && (a.favoriteOf || []).includes(me)).map((a) => card(a, gMap[a.groupId], v, f, me))
+        out.popular = live.map((a) => card(a, gMap[a.groupId], v, f, me)).sort((x, y) => y.views - x.views).slice(0, 6)
+        out.recent = live.map((a) => card(a, gMap[a.groupId], v, f, me)).sort((x, y) => +new Date(y.updatedAt) - +new Date(x.updatedAt)).slice(0, 4)
     }
     return out
 }
@@ -76,7 +82,7 @@ export async function kbManage() {
     const [groups, articles] = await Promise.all([prisma.crmKnowledgeBaseGroup.findMany({ orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] }), prisma.crmKnowledgeBaseArticle.findMany({ orderBy: [{ articleOrder: 'asc' }, { subject: 'asc' }] })])
     const [v, f] = await Promise.all([views(articles.map((a) => a.id)), votes(articles.map((a) => a.id))])
     const gMap = Object.fromEntries(groups.map((g) => [g.id, g]))
-    return { list: articles.map((a) => card(a, gMap[a.groupId], v, f)), groups: groups.map((g) => ({ id: g.id, name: g.name, description: g.description || '', color: g.color, active: g.active, order: g.groupOrder, language: g.language || null, count: articles.filter((a) => a.groupId === g.id).length })), can: { create: c.can('create'), edit: c.can('edit'), delete: c.can('delete') } }
+    return { list: articles.map((a) => card(a, gMap[a.groupId], v, f, c.staffId)), groups: groups.map((g) => ({ id: g.id, name: g.name, description: g.description || '', color: g.color, active: g.active, order: g.groupOrder, language: g.language || null, count: articles.filter((a) => a.groupId === g.id).length })), can: { create: c.can('create'), edit: c.can('edit'), delete: c.can('delete') } }
 }
 
 export async function getArticle(id, { raw = false } = {}) {
@@ -85,9 +91,11 @@ export async function getArticle(id, { raw = false } = {}) {
     if (!a) throw fail('Article not found', 404)
     const [group, v, f, related] = await Promise.all([a.groupId ? prisma.crmKnowledgeBaseGroup.findUnique({ where: { id: a.groupId } }) : null, views([id]), votes([id]), a.groupId ? prisma.crmKnowledgeBaseArticle.findMany({ where: { groupId: a.groupId, id: { not: id }, active: true }, orderBy: { articleOrder: 'asc' }, take: 6 }) : []])
     const body = withToc(a.description)
+    const comments = await listComments(id, c)
     return {
-        article: { id: a.id, subject: a.subject, groupId: a.groupId, group: group ? { id: group.id, name: group.name, color: group.color } : null, html: raw ? a.description || '' : body.html, active: a.active, staffOnly: a.staffArticle, minutes: readingTime(a.description), views: v[id] || 0, helpful: f[id]?.yes || 0, notHelpful: f[id]?.no || 0, createdAt: a.createdAt, updatedAt: a.updatedAt },
-        toc: body.toc, related: related.map((r) => ({ id: r.id, subject: r.subject })), can: { edit: c.can('edit'), delete: c.can('delete') },
+        comments,
+        article: { id: a.id, subject: a.subject, pinned: !!a.pinned, favorite: !!c.staffId && (a.favoriteOf || []).includes(c.staffId), groupId: a.groupId, group: group ? { id: group.id, name: group.name, color: group.color } : null, html: raw ? a.description || '' : body.html, active: a.active, staffOnly: a.staffArticle, minutes: readingTime(a.description), views: v[id] || 0, helpful: f[id]?.yes || 0, notHelpful: f[id]?.no || 0, createdAt: a.createdAt, updatedAt: a.updatedAt },
+        toc: body.toc, related: related.map((r) => ({ id: r.id, subject: r.subject })), can: { edit: c.can('edit'), delete: c.can('delete'), comment: !!c.staffId },
     }
 }
 
@@ -96,23 +104,38 @@ export async function saveArticle(body, id) {
     if (!(id ? c.can('edit') : c.can('create'))) throw fail('You are not allowed to do that', 403)
     const subject = nz(body.subject)?.slice(0, 200)
     if (!subject) throw fail('Give the article a title')
-    const data = { subject, groupId: oid(body.groupId), description: body.description ?? null, active: body.active !== false, staffArticle: !!body.staffOnly, slug: slugify(subject) }
-    if (id) { if (!oid(id) || !(await prisma.crmKnowledgeBaseArticle.findUnique({ where: { id } }))) throw fail('Article not found', 404); await prisma.crmKnowledgeBaseArticle.update({ where: { id }, data }); return { success: true, id } }
+    const data = { subject, groupId: oid(body.groupId), description: storeRich(body.description, 400000), active: body.active !== false, staffArticle: !!body.staffOnly, slug: slugify(subject) }
+    if (id) {
+        const prev = oid(id) && (await prisma.crmKnowledgeBaseArticle.findUnique({ where: { id } }))
+        if (!prev) throw fail('Article not found', 404)
+        await prisma.crmKnowledgeBaseArticle.update({ where: { id }, data })
+        await notifyNewMentions({ by: { staffId: c.staffId, name: c.session.user.name }, text: data.description, prev: prev.description, link: `/crm/knowledge-base/article/${id}`, subject })
+        return { success: true, id }
+    }
     const last = await prisma.crmKnowledgeBaseArticle.findFirst({ orderBy: { articleOrder: 'desc' }, select: { articleOrder: true } })
     const a = await prisma.crmKnowledgeBaseArticle.create({ data: { ...data, articleOrder: (last?.articleOrder || 0) + 1 } })
+    await notifyNewMentions({ by: { staffId: c.staffId, name: c.session.user.name }, text: data.description, prev: '', link: `/crm/knowledge-base/article/${a.id}`, subject })
     return { success: true, id: a.id }
 }
 
 /** Quick changes from the list: publish / hide, clients or staff only, move to another group. */
 export async function patchArticle(id, body = {}) {
     const c = await ctx()
-    if (!c.can('edit')) throw fail('You are not allowed to do that', 403)
-    if (!oid(id) || !(await prisma.crmKnowledgeBaseArticle.findUnique({ where: { id } }))) throw fail('Article not found', 404)
+    const a = oid(id) && (await prisma.crmKnowledgeBaseArticle.findUnique({ where: { id } }))
+    if (!a) throw fail('Article not found', 404)
     const data = {}
+    if (body.favorite !== undefined) { // a favorite is the person's own: anyone who can open the article may star it
+        if (!c.staffId) throw fail('Only staff can star articles', 403)
+        const has = (a.favoriteOf || []).includes(c.staffId)
+        if (!!body.favorite !== has) data.favoriteOf = body.favorite ? [...(a.favoriteOf || []), c.staffId] : (a.favoriteOf || []).filter((x) => x !== c.staffId)
+    }
+    const shared = ['active', 'staffOnly', 'groupId', 'pinned'].some((k) => body[k] !== undefined)
+    if (shared && !c.can('edit')) throw fail('You are not allowed to do that', 403)
     if (body.active !== undefined) data.active = !!body.active
     if (body.staffOnly !== undefined) data.staffArticle = !!body.staffOnly
     if (body.groupId !== undefined) data.groupId = oid(body.groupId)
-    await prisma.crmKnowledgeBaseArticle.update({ where: { id }, data })
+    if (body.pinned !== undefined) data.pinned = !!body.pinned
+    if (Object.keys(data).length) await prisma.crmKnowledgeBaseArticle.update({ where: { id }, data: { ...data, updatedAt: a.updatedAt } })
     return { success: true }
 }
 
@@ -141,12 +164,107 @@ export async function reorderGroups(ids) {
     return { success: true }
 }
 
+/* ---------------- comments on an article (the team only: clients never see them) ---------------- */
+const staffNames = async (ids) => {
+    const list = ids.length ? await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(ids.filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : []
+    return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || 'Staff', image: realPicture(s.profileImage) }]))
+}
+const reactionsOf = (n) => (n.reactions && typeof n.reactions === 'object' ? n.reactions : {})
+
+async function listComments(articleId, c) {
+    const notes = await prisma.crmNote.findMany({ where: { relType: 'kb_article', relId: articleId }, orderBy: { createdAt: 'desc' } })
+    const people = await staffNames([...notes.map((n) => n.addedFrom), ...notes.flatMap((n) => Object.values(reactionsOf(n)).flat())])
+    return notes.map((n) => ({
+        id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.createdAt, mine: !!c.staffId && n.addedFrom === c.staffId,
+        canEdit: (!!c.staffId && n.addedFrom === c.staffId) || c.can('edit'), canDelete: (!!c.staffId && n.addedFrom === c.staffId) || c.can('delete'),
+        edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000, replyToId: n.replyToId || null,
+        reactions: Object.entries(reactionsOf(n)).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!c.staffId && ids.includes(c.staffId), names: ids.filter((i) => i !== c.staffId).map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count),
+    }))
+}
+
+async function loadComment(articleId, noteId) {
+    const n = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'kb_article', relId: articleId } }))
+    if (!n) throw fail('Comment not found', 404)
+    return n
+}
+
+async function articleOf(id) {
+    const a = oid(id) && (await prisma.crmKnowledgeBaseArticle.findUnique({ where: { id } }))
+    if (!a) throw fail('Article not found', 404)
+    return a
+}
+
+export async function addComment(id, { content, replyToId } = {}) {
+    const c = await ctx()
+    if (!c.staffId) throw fail('Only staff can comment', 403)
+    const a = await articleOf(id)
+    const text = storeRich(content)
+    if (!text) throw fail('Write a comment first')
+    const reply = oid(replyToId) && (await prisma.crmNote.findFirst({ where: { id: replyToId, relType: 'kb_article', relId: id }, select: { id: true, addedFrom: true } }))
+    await prisma.crmNote.create({ data: { relType: 'kb_article', relId: id, description: text, dateContacted: new Date(), addedFrom: c.staffId, replyToId: reply ? reply.id : null } })
+    // told: whoever starred the article, whoever already commented, and the person answered
+    const before = await prisma.crmNote.findMany({ where: { relType: 'kb_article', relId: id }, select: { addedFrom: true } })
+    try { await notifyComment({ by: { staffId: c.staffId, name: c.session.user.name }, text, link: `/crm/knowledge-base/article/${id}`, subject: a.subject, recipients: [...(a.favoriteOf || []), ...before.map((n) => n.addedFrom), reply?.addedFrom] }) } catch (e) { console.error('[kb comment notify]', e.message) }
+    return { success: true }
+}
+
+export async function editComment(id, noteId, content) {
+    const c = await ctx()
+    await articleOf(id)
+    const n = await loadComment(id, noteId)
+    if (!((!!c.staffId && n.addedFrom === c.staffId) || c.can('edit'))) throw fail('You can only edit your own comments', 403)
+    const text = storeRich(content)
+    if (!text) throw fail('Write a comment first')
+    await prisma.crmNote.update({ where: { id: noteId }, data: { description: text } })
+    await notifyNewMentions({ by: { staffId: c.staffId, name: c.session.user.name }, text, prev: n.description, link: `/crm/knowledge-base/article/${id}`, subject: (await articleOf(id)).subject })
+    return { success: true }
+}
+
+export async function deleteComment(id, noteId) {
+    const c = await ctx()
+    await articleOf(id)
+    const n = await loadComment(id, noteId)
+    if (!((!!c.staffId && n.addedFrom === c.staffId) || c.can('delete'))) throw fail('You can only delete your own comments', 403)
+    await prisma.crmNote.updateMany({ where: { relType: 'kb_article', relId: id, replyToId: noteId }, data: { replyToId: n.replyToId || null } })
+    await prisma.crmNote.delete({ where: { id: noteId } })
+    return { success: true }
+}
+
+export async function reactComment(id, noteId, emoji) {
+    const c = await ctx()
+    await articleOf(id)
+    const e = String(emoji || '').trim()
+    if (!e || e.length > 16) throw fail('Pick an emoji')
+    if (!c.staffId) throw fail('Only staff can react', 403)
+    const n = await loadComment(id, noteId)
+    const all = { ...reactionsOf(n) }
+    const ids = Array.isArray(all[e]) ? all[e] : []
+    const next = ids.includes(c.staffId) ? ids.filter((x) => x !== c.staffId) : [...ids, c.staffId]
+    if (next.length) all[e] = next; else delete all[e]
+    await prisma.crmNote.update({ where: { id: noteId }, data: { reactions: all, updatedAt: n.updatedAt } })
+    return { success: true }
+}
+
+export async function mentionComment(id, noteId, staffId) {
+    const c = await ctx()
+    await articleOf(id)
+    const n = await loadComment(id, noteId)
+    const who = oid(staffId) && (await prisma.crmStaff.findFirst({ where: { id: staffId, active: true }, select: { id: true, firstName: true, lastName: true, email: true } }))
+    if (!who) throw fail('Choose a colleague')
+    const name = [who.firstName, who.lastName].filter(Boolean).join(' ') || who.email || 'Staff'
+    const plain = plainText(n.description || '')
+    if (!plain.includes(`@${name}`)) await prisma.crmNote.update({ where: { id: noteId }, data: { description: `${n.description || ''}<p>@${name.replace(/[&<>]/g, '')}</p>`, updatedAt: n.updatedAt } })
+    await notifyMentions({ staffIds: [who.id], text: plain, url: `/crm/knowledge-base/article/${id}` })
+    return { success: true }
+}
+
 export async function deleteArticle(id) {
     const c = await ctx()
     if (!c.can('delete')) throw fail('You are not allowed to delete articles', 403)
     if (!oid(id)) throw fail('Article not found', 404)
     await prisma.crmKnowledgeBaseArticleFeedback.deleteMany({ where: { articleId: id } })
     await prisma.crmViewTracking.deleteMany({ where: { relType: 'kb_article', relId: id } })
+    await prisma.crmNote.deleteMany({ where: { relType: 'kb_article', relId: id } })
     await prisma.crmKnowledgeBaseArticle.delete({ where: { id } })
     return { success: true }
 }
@@ -184,7 +302,7 @@ export async function portalHub({ q = '', groupId, lang } = {}) {
         let list = articles
         if (oid(groupId)) list = list.filter((a) => a.groupId === groupId)
         if (term) list = list.filter((a) => `${a.subject} ${strip(a.description)}`.toLowerCase().includes(term))
-        out.results = list.map((a) => card(a, gMap[a.groupId], v, f))
+        out.results = list.map((a) => card(a, gMap[a.groupId], v, f)).sort((x, y) => Number(y.pinned) - Number(x.pinned))
         out.group = oid(groupId) ? out.groups.find((g) => g.id === groupId) || null : null
     } else out.popular = articles.map((a) => card(a, gMap[a.groupId], v, f)).sort((x, y) => y.views - x.views).slice(0, 6)
     return out

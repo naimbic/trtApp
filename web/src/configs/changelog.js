@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.187.0',
+        date: '2026-11-06',
+        title: 'Manage articles: groups as accordions, drag to reorder or move, switches, icons, pager',
+        items: [
+            'Manage articles is now organised by group: each group is a coloured accordion (fold / unfold, or Expand all / Collapse all; your choice is remembered).',
+            'Drag a group by its handle to reorder the groups; drag an article by its handle to reorder it, or drop it on another group (a row, or the group header) to move it there.',
+            'Every article row has a publish / hide switch, a Staff / Clients badge you click to change who sees it, views and helpful votes, and icons to read, edit and delete (with a confirmation). Every group header has its switch (shown or hidden in the help center), edit and delete icons.',
+            'Pager inside each group (5, 10, 20 or 50 articles per page, page numbers with Previous / Next); search and the Published / Drafts / Staff only filters open the groups that match.',
+            'The new order is the one the help center and the client area use.',
+        ],
+    },
+    {
         version: '0.186.0',
         date: '2026-11-06',
         title: 'Tasks shared with clients: they see them, answer and send files; Any lead / Any client filters; compact customer page with Email access',

@@ -35,7 +35,7 @@ async function votes(articleIds) {
     return out
 }
 
-const card = (a, group, v, f) => ({ id: a.id, subject: a.subject, group: group ? { id: group.id, name: group.name, color: group.color } : null, excerpt: strip(a.description).slice(0, 160), minutes: readingTime(a.description), views: v[a.id] || 0, helpful: f[a.id]?.yes || 0, notHelpful: f[a.id]?.no || 0, active: a.active, staffOnly: a.staffArticle, updatedAt: a.updatedAt, createdAt: a.createdAt })
+const card = (a, group, v, f) => ({ id: a.id, subject: a.subject, groupId: a.groupId || null, order: a.articleOrder || 0, group: group ? { id: group.id, name: group.name, color: group.color } : null, excerpt: strip(a.description).slice(0, 160), minutes: readingTime(a.description), views: v[a.id] || 0, helpful: f[a.id]?.yes || 0, notHelpful: f[a.id]?.no || 0, active: a.active, staffOnly: a.staffArticle, updatedAt: a.updatedAt, createdAt: a.createdAt })
 
 const LANGS = ['en', 'fr', 'es', 'ja', 'ar']
 /** Groups written in another language than the viewer's stay out of the way (a group with no language shows in every language). */
@@ -73,7 +73,7 @@ export async function kbHub({ q = '', groupId, lang } = {}) {
 
 export async function kbManage() {
     const c = await ctx()
-    const [groups, articles] = await Promise.all([prisma.crmKnowledgeBaseGroup.findMany({ orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] }), prisma.crmKnowledgeBaseArticle.findMany({ orderBy: { updatedAt: 'desc' } })])
+    const [groups, articles] = await Promise.all([prisma.crmKnowledgeBaseGroup.findMany({ orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] }), prisma.crmKnowledgeBaseArticle.findMany({ orderBy: [{ articleOrder: 'asc' }, { subject: 'asc' }] })])
     const [v, f] = await Promise.all([views(articles.map((a) => a.id)), votes(articles.map((a) => a.id))])
     const gMap = Object.fromEntries(groups.map((g) => [g.id, g]))
     return { list: articles.map((a) => card(a, gMap[a.groupId], v, f)), groups: groups.map((g) => ({ id: g.id, name: g.name, description: g.description || '', color: g.color, active: g.active, order: g.groupOrder, language: g.language || null, count: articles.filter((a) => a.groupId === g.id).length })), can: { create: c.can('create'), edit: c.can('edit'), delete: c.can('delete') } }
@@ -101,6 +101,44 @@ export async function saveArticle(body, id) {
     const last = await prisma.crmKnowledgeBaseArticle.findFirst({ orderBy: { articleOrder: 'desc' }, select: { articleOrder: true } })
     const a = await prisma.crmKnowledgeBaseArticle.create({ data: { ...data, articleOrder: (last?.articleOrder || 0) + 1 } })
     return { success: true, id: a.id }
+}
+
+/** Quick changes from the list: publish / hide, clients or staff only, move to another group. */
+export async function patchArticle(id, body = {}) {
+    const c = await ctx()
+    if (!c.can('edit')) throw fail('You are not allowed to do that', 403)
+    if (!oid(id) || !(await prisma.crmKnowledgeBaseArticle.findUnique({ where: { id } }))) throw fail('Article not found', 404)
+    const data = {}
+    if (body.active !== undefined) data.active = !!body.active
+    if (body.staffOnly !== undefined) data.staffArticle = !!body.staffOnly
+    if (body.groupId !== undefined) data.groupId = oid(body.groupId)
+    await prisma.crmKnowledgeBaseArticle.update({ where: { id }, data })
+    return { success: true }
+}
+
+/** The articles of one group (or of no group) in their new order; an article dropped from another group joins it. The order numbers are shared, so other groups keep their places. */
+export async function reorderArticles({ ids, groupId } = {}) {
+    const c = await ctx()
+    if (!c.can('edit')) throw fail('You are not allowed to do that', 403)
+    const list = (Array.isArray(ids) ? ids : []).filter(oid)
+    if (!list.length) return { success: true }
+    const rows = await prisma.crmKnowledgeBaseArticle.findMany({ where: { id: { in: list } }, select: { id: true, articleOrder: true } })
+    const slots = rows.map((r) => r.articleOrder || 0).sort((a, b) => a - b)
+    const top = (await prisma.crmKnowledgeBaseArticle.findFirst({ orderBy: { articleOrder: 'desc' }, select: { articleOrder: true } }))?.articleOrder || 0
+    // slots can repeat or be empty on old data: make them unique and increasing
+    const fixed = []
+    list.forEach((_, i) => fixed.push(Math.max(slots[i] ?? 0, (fixed[i - 1] ?? 0) + 1) || top + i + 1))
+    const gid = groupId === undefined ? undefined : oid(groupId)
+    await Promise.all(list.map((id, i) => prisma.crmKnowledgeBaseArticle.update({ where: { id }, data: { articleOrder: fixed[i], ...(gid !== undefined ? { groupId: gid } : {}) } })))
+    return { success: true }
+}
+
+export async function reorderGroups(ids) {
+    const c = await ctx()
+    if (!c.can('edit')) throw fail('You are not allowed to do that', 403)
+    const list = (Array.isArray(ids) ? ids : []).filter(oid)
+    await Promise.all(list.map((id, i) => prisma.crmKnowledgeBaseGroup.update({ where: { id }, data: { groupOrder: i + 1 } })))
+    return { success: true }
 }
 
 export async function deleteArticle(id) {

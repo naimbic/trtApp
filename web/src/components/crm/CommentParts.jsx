@@ -103,7 +103,7 @@ export const CommentFoot = ({ reactions = [], onReact, onMention, onComment, rem
         <div className="flex items-center gap-0.5 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
             {onMention && <MentionPick onPick={onMention} />}
             {onComment && <button type="button" title={tr('Comment')} aria-label={tr('Comment')} onClick={onComment} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbMessage /></button>}
-            {remind && <RemindMe iconOnly relType={remind.relType} relId={remind.relId} initialNote={remind.note} tab={remind.tab} />}
+            {remind && <RemindMe iconOnly relType={remind.relType} relId={remind.relId} initialNote={remind.note} tab={remind.tab} assignedIds={remind.assignedIds} />}
             <CommentTools inline {...tools} />
         </div>
     </div>

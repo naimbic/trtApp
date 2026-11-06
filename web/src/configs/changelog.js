@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.185.1',
+        date: '2026-11-06',
+        title: 'Reminder on a comment: the assigned people are reminded, email off by default',
+        items: [
+            'The bell icon of a comment now lists who is reminded: every person assigned to the task or lead and you, each with a switch, all on by default. Add anyone else with "Add another person".',
+            'Each person switched on gets their own reminder at the chosen time (bell and phone), marked with the name of who set it and the comment as the note. It opens the Comments tab.',
+            'The "Send an email too" switch is off by default on a comment reminder (the private "Remind me" button keeps its own default).',
+        ],
+    },
+    {
         version: '0.185.0',
         date: '2026-11-05',
         title: 'Client ideas: a detailed offer in the Value section (SaaS, development, marketing, hosting; one price or recurring; contracts; options)',

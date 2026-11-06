@@ -498,6 +498,8 @@ const resources = [
             { key: 'start', label: 'Start', type: 'datetime', required: true, section: 'General' },
             { key: 'end', label: 'End', type: 'datetime', section: 'General' },
             { key: 'category', label: 'Category', type: 'select', section: 'General', options: ['meeting', 'call', 'visit', 'deadline', 'reminder', 'other'].map((v) => ({ value: v, label: v[0].toUpperCase() + v.slice(1) })) },
+            { key: 'meetingUrl', label: 'Meeting link', type: 'url', section: 'General' },
+            { key: 'location', label: 'Location', type: 'text', section: 'General' },
             { key: 'color', label: 'Color', type: 'color', section: 'General' },
             { key: 'isPublic', label: 'Public', type: 'boolean', section: 'General' },
             { key: 'reminderBefore', label: 'Reminder before', type: 'number', section: 'Reminder' },

@@ -121,7 +121,7 @@ const resources = [
         children: [{ resource: 'consents', fk: 'contactId', label: 'Consents' }],
     },
     {
-        key: 'customer-groups', lookup: { orderField: 'sortOrder' }, cascade: [{ model: 'crmCustomerGroupLink', fk: 'groupId' }],
+        key: 'customer-groups', nav: false, lookup: { orderField: 'sortOrder' }, cascade: [{ model: 'crmCustomerGroupLink', fk: 'groupId' }],
         model: 'crmCustomerGroup',
         label: 'Customer group',
         plural: 'Customer groups',
@@ -279,7 +279,7 @@ const resources = [
         kanban: { statusResource: 'lead-statuses', statusField: 'statusId', orderField: 'leadOrder' },
     },
     {
-        key: 'idea-categories', lookup: { orderField: 'categoryOrder', colorField: 'color' }, usage: { model: 'crmClientIdea', field: 'category', by: 'code' },
+        key: 'idea-categories', nav: false, lookup: { orderField: 'categoryOrder', colorField: 'color' }, usage: { model: 'crmClientIdea', field: 'category', by: 'code' },
         model: 'crmIdeaCategory', label: 'Idea category', plural: 'Idea categories', group: 'Customers', icon: 'TbBulb', feature: 'client_ideas',
         titleField: 'name', search: ['name'], defaultSort: { categoryOrder: 'asc' },
         columns: [
@@ -442,7 +442,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'consent-purposes', lookup: {},
+        key: 'consent-purposes', nav: false, lookup: {},
         model: 'crmConsentPurpose',
         label: 'Consent purpose',
         plural: 'Consent purposes',

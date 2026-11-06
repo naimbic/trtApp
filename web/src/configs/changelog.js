@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.191.0',
+        date: '2026-11-06',
+        title: 'Every short list edited in place (no pencil, no popup) with paging, Customers setting, one Lists page, Events by month',
+        items: [
+            'All the short lists (statuses, sources, tags, taxes, currencies, payment modes, departments, groups...) are edited only in the row: the pencil and its popup are gone. Long texts (descriptions, predefined replies) are edited in the row too. Each list has its own pager (10 / 25 / 50 per page).',
+            'Lists & statuses is now the only page for lead statuses and sources, task statuses, ticket statuses, priorities, services, predefined replies, spam filters and leave types (menu: Setup). The duplicate "Statuses & sources" and "Ticket lists" menu entries are removed.',
+            'New "Customers setting" page under Customers: customer groups, idea categories and consent purposes as accordions. The "More" column of Customers is gone; Leads and Support menus are one column.',
+            'Calendar events: loads one month at a time, month arrows, search, a pager in each group (by week or category), two lines per event: title, category, times, then the meeting link (with a Join button), place, client or lead, owner, guests and a note.',
+        ],
+    },
+    {
         version: '0.190.0',
         date: '2026-11-06',
         title: 'One page for statuses and lists, leave and days off redesigned, to-dos like notes, cleaner menus',

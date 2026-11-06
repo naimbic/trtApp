@@ -45,10 +45,10 @@ const ResourcePage = () => {
                     <h3>{resource.plural}</h3>
                     <p className="text-sm text-gray-500">{resource.group}</p>
                 </div>
-                {canCreate && <Button variant="solid" icon={<TbPlus />} onClick={() => setDrawer({ open: true, id: null })}>{tr("New")} {resource.label.toLowerCase()}</Button>}
+                {canCreate && !resource.lookup && <Button variant="solid" icon={<TbPlus />} onClick={() => setDrawer({ open: true, id: null })}>{tr("New")} {resource.label.toLowerCase()}</Button>}
             </div>
             {resource.lookup ? (
-                <LookupManager key={`${resource.key}-list`} resource={resource} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} reloadKey={reload} onOpen={(id) => setDrawer({ open: true, id })} />
+                <LookupManager key={`${resource.key}-list`} resource={resource} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} reloadKey={reload} />
             ) : (
                 <AdaptiveCard>
                     <ResourceTable

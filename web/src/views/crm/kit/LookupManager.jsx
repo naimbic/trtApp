@@ -1,6 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { TbPencil, TbTrash, TbPlus } from 'react-icons/tb'
+import { TbTrash, TbPlus, TbChevronLeft, TbChevronRight } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Button from '@/components/ui/Button'
 import Switcher from '@/components/ui/Switcher'
@@ -10,14 +10,18 @@ import { useRowDrag, DragHandle } from '@/components/crm/RowDrag'
 import RelationSelect from './RelationSelect'
 import { tr } from '@/utils/t'
 
-const INLINE = ['text', 'email', 'url', 'number', 'money', 'date', 'boolean', 'color', 'select', 'relation']
+const INLINE = ['text', 'email', 'url', 'number', 'money', 'date', 'boolean', 'color', 'select', 'relation', 'textarea', 'richtext']
+const PAGE_SIZES = [10, 25, 50]
+const plain = (v) => String(v ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 const ctl = 'h-8 w-full rounded-lg border border-transparent bg-transparent px-2 text-sm hover:border-gray-200 focus:border-primary focus:bg-white focus:outline-none dark:hover:border-gray-600 dark:focus:bg-gray-800'
 
 /** One editable cell: text-like fields save on Enter / leaving the field, switches and selects save at once, colours after a short pause. */
 const Cell = ({ field, value, disabled, onCommit, draft }) => {
-    const [v, setV] = useState(value ?? '')
+    const long = field.type === 'richtext' || field.type === 'textarea'
+    const shown = field.type === 'richtext' ? plain(value) : value
+    const [v, setV] = useState(shown ?? '')
     const timer = useRef(null)
-    useEffect(() => { setV(value ?? '') }, [value])
+    useEffect(() => { setV(shown ?? '') }, [shown])
     const label = tr(field.label)
     if (field.type === 'boolean') return <Switcher checked={value === undefined || value === null ? !!field.defaultOn : !!value} disabled={disabled} onChange={(c) => onCommit(c)} />
     if (field.type === 'color') {
@@ -40,13 +44,14 @@ const Cell = ({ field, value, disabled, onCommit, draft }) => {
         )
     }
     const num = ['number', 'money'].includes(field.type)
-    const done = () => { const next = num ? (v === '' ? '' : Number(v)) : String(v).trim(); if (next !== (value ?? '')) onCommit(next) }
+    const done = () => { const next = num ? (v === '' ? '' : Number(v)) : String(v).trim(); if (next !== (shown ?? '')) onCommit(next) }
     return (
         <input
             disabled={disabled} aria-label={label} placeholder={draft ? label : undefined} className={ctl}
             type={num ? 'number' : field.type === 'date' ? 'date' : field.type === 'email' ? 'email' : 'text'} step={field.type === 'money' ? '0.01' : undefined}
             value={v ?? ''} onChange={(e) => setV(e.target.value)} onBlur={done}
-            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { setV(value ?? ''); e.currentTarget.blur() } }}
+            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { setV(shown ?? ''); e.currentTarget.blur() } }}
+            title={long ? String(v) : undefined}
         />
     )
 }
@@ -56,7 +61,7 @@ const Cell = ({ field, value, disabled, onCommit, draft }) => {
  * type in a cell, flip a switch, pick a colour, drag the handle to reorder (when the list has an order), add a row at the top.
  * `resource.lookup` = { orderField? }. The pencil opens the full form for the fields that do not fit a cell (long text...).
  */
-const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onOpen, onCount }) => {
+const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onCount }) => {
     const { orderField } = resource.lookup || {}
     const title = resource.titleField
     const main = resource.fields.find((f) => f.key === title) || resource.fields[0]
@@ -66,8 +71,10 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
     const [draft, setDraft] = useState({})
     const [del, setDel] = useState(null)
     const [q, setQ] = useState('')
+    const [page, setPage] = useState(1)
+    const [size, setSize] = useState(10)
     const uses = !!resource.usage // how many records use each item
-    const grid = { gridTemplateColumns: `${orderField ? '22px ' : ''}minmax(180px, 1.8fr) ${cols.map(() => 'minmax(96px, 1fr)').join(' ')} ${uses ? '64px ' : ''}76px` }
+    const grid = { gridTemplateColumns: `${orderField ? '22px ' : ''}minmax(180px, 1.8fr) ${cols.map((f) => (f.type === 'textarea' || f.type === 'richtext' ? 'minmax(220px, 2fr)' : 'minmax(96px, 1fr)')).join(' ')} ${uses ? '64px ' : ''}44px` }
 
     const load = useCallback(async () => {
         try {
@@ -104,9 +111,15 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
     }
     const rd = useRowDrag(move)
 
+    const needle = q.trim().toLowerCase()
+    const visible = rows.map((r, i) => ({ r, i })).filter(({ r }) => !needle || String(r[main.key] || '').toLowerCase().includes(needle))
+    const pages = Math.max(1, Math.ceil(visible.length / size))
+    const cur = Math.min(page, pages)
+    const shownRows = visible.slice((cur - 1) * size, cur * size)
+
     return (
         <div className="overflow-x-auto">
-            {rows.length > 6 && <div className="mb-2 w-60"><input type="search" className={`${ctl} border-gray-200 bg-white dark:border-gray-600`} placeholder={tr("Search…")} value={q} onChange={(e) => setQ(e.target.value)} /></div>}
+            {rows.length > 6 && <div className="mb-2 w-60"><input type="search" className={`${ctl} border-gray-200 bg-white dark:border-gray-600`} placeholder={tr("Search…")} value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} /></div>}
             <div className="min-w-[560px] rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                 <div className="grid items-center gap-3 border-b border-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:border-gray-700" style={grid}>
                     {orderField && <span />}
@@ -125,7 +138,7 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
                     </div>
                 )}
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {rows.map((r, i) => (!q.trim() || String(r[main.key] || '').toLowerCase().includes(q.trim().toLowerCase())) && (
+                    {shownRows.map(({ r, i }) => (
                         <div
                             key={r.id}
                             className={`grid items-center gap-3 px-3 py-1.5 ${rd.over === i ? 'bg-primary/5' : ''}`} style={grid} {...rd.row(i)}
@@ -134,13 +147,23 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onO
                             <div className={r.isActive === false ? 'opacity-50' : undefined}><Cell field={main} value={r[main.key]} disabled={!canEdit} onCommit={(val) => (val === '' ? load() : save(r, main.key, val))} /></div>
                             {cols.map((f) => <div key={f.key} className={r.isActive === false && f.key !== 'isActive' ? 'opacity-50' : undefined}><Cell field={f} value={r[f.key]} disabled={!canEdit} onCommit={(val) => save(r, f.key, val)} /></div>)}
                             {uses && <span className={`text-sm tabular-nums ${r._uses ? 'font-semibold text-gray-700 dark:text-gray-200' : 'text-gray-300'}`} title={r._uses ? tr("Records using it") : tr("Not used")}>{r._uses || 0}</span>}
-                            <span className="flex justify-end gap-0.5">
-                                <Tooltip title={canEdit ? tr("Edit") : tr("View")}><Button size="xs" variant="plain" icon={<TbPencil />} onClick={() => onOpen(r.id)} /></Tooltip>
+                            <span className="flex justify-end">
                                 {canDelete && <Tooltip title={tr("Delete")}><Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setDel(r)} /></Tooltip>}
                             </span>
                         </div>
                     ))}
                 </div>
+                {visible.length > PAGE_SIZES[0] && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-3 py-1.5 text-xs text-gray-500 dark:border-gray-700">
+                        <span>{(cur - 1) * size + 1}–{Math.min(cur * size, visible.length)} {tr("of")} {visible.length}</span>
+                        <span className="flex items-center gap-1">
+                            <select aria-label={tr("Rows per page")} className="h-7 rounded-lg border border-gray-200 bg-white px-1 text-xs dark:border-gray-600 dark:bg-gray-800" value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(1) }}>{PAGE_SIZES.map((n) => <option key={n} value={n}>{n} / {tr("page")}</option>)}</select>
+                            <Button size="xs" variant="plain" disabled={cur <= 1} icon={<TbChevronLeft />} aria-label={tr("Previous")} onClick={() => setPage(cur - 1)} />
+                            <b className="px-1 tabular-nums">{cur} / {pages}</b>
+                            <Button size="xs" variant="plain" disabled={cur >= pages} icon={<TbChevronRight />} aria-label={tr("Next")} onClick={() => setPage(cur + 1)} />
+                        </span>
+                    </div>
+                )}
                 {loading && !rows.length && <div className="py-8 text-center text-gray-400">{tr("Loading…")}</div>}
                 {!loading && !rows.length && <div className="py-8 text-center text-gray-400">{tr("Nothing here yet")}</div>}
             </div>

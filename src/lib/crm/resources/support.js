@@ -122,7 +122,7 @@ const resources = [
         filters: [],
     },
     {
-        key: 'predefined-replies', nav: false, model: 'crmPredefinedReply', label: 'Predefined reply', plural: 'Predefined replies',
+        key: 'predefined-replies', nav: false, lookup: {}, model: 'crmPredefinedReply', label: 'Predefined reply', plural: 'Predefined replies',
         group: 'Support', icon: 'TbMessageCircleCog', feature: 'settings', titleField: 'name',
         search: ['name', 'message'], defaultSort: { name: 'asc' },
         columns: [{ key: 'name', label: 'Name', type: 'text', link: true }],

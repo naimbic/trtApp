@@ -32,20 +32,20 @@ const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 // Per group: important items first, the rest folded into sub-groups. Anything not listed is appended at the end.
 const S = (key, title, items) => ({ sub: key, title, items })
 const LAYOUT = {
-    Customers: ['clients', 'contacts', S('more', 'More', ['customer-groups', 'idea-categories', 'vault', 'consent-purposes'])],
-    Leads: ['leads', 'lead-setup', S('more', 'More', ['web-to-lead', 'lead-email-integration'])],
+    Customers: ['clients', 'contacts', 'vault', 'customers-setting'],
+    Leads: ['leads', 'web-to-lead', 'lead-email-integration'],
     Projects: ['projects', 'scrum-board', 'milestones'],
-    Tasks: ['tasks-board', 'my-tasks', 'team-tasks', 'timeline', 'notes', S('more', 'More', ['statuses', 'time-report', 'issues', 'tasks', 'task-timers', 'task-statuses', 'checklist-templates'])],
+    Tasks: ['tasks-board', 'my-tasks', 'team-tasks', 'timeline', 'notes', S('more', 'More', ['statuses', 'time-report', 'issues', 'tasks', 'task-timers', 'checklist-templates'])],
     Sales: [
         'invoices', 'payments', 'estimates', 'proposals', 'contracts', 'purchase-orders', 'credit-notes', 'subscriptions', 'expenses', 'freelancers', 'items',
     ],
-    Support: ['tickets', S('more', 'More', ['ticket-lists'])],
+    Support: ['tickets'],
     'Knowledge Base': ['help-center', 'kb-manage'],
     Administration: ['staff', 'work-hours', 'payroll', 'roles', 'departments', S('hr', 'Attendance & leave', ['leave-requests', 'days-off', 'timesheets']), S('comms', 'Communication', ['announcements'])],
     Setup: [
-        'platform-settings', 'mails',
+        'platform-settings', 'mails', 'lists',
         S('finance', 'Finance', ['currencies', 'taxes', 'payment-modes']),
-        S('data', 'More', ['lists', 'custom-fields', 'tags', 'countries']),
+        S('data', 'Data', ['custom-fields', 'tags', 'countries']),
     ],
     Utilities: [
         'reports', 'ai', 'file-manager', 'passwords',

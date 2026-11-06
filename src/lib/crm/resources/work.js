@@ -256,7 +256,7 @@ const resources = [
         hidden: true,
     },
     {
-        key: 'task-statuses', lookup: { orderField: 'statusOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmTask', field: 'status', by: 'code' },
+        key: 'task-statuses', nav: false, lookup: { orderField: 'statusOrder', colorField: 'color' }, exclusive: 'isDefault', usage: { model: 'crmTask', field: 'status', by: 'code' },
         model: 'crmTaskStatus', label: 'Task status', plural: 'Task statuses', group: 'Tasks', icon: 'TbListDetails',
         feature: 'tasks', writeFeature: 'settings', titleField: 'name', search: ['name'], defaultSort: { statusOrder: 'asc' },
         columns: [

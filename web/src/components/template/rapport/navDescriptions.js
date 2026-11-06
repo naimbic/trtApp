@@ -13,6 +13,7 @@ export const NAV_DESC = {
     leads: 'Prospects and the pipeline',
     'lead-sources': 'Where leads come from',
     'lead-setup': 'Pipeline stages and where leads come from',
+    'customers-setting': 'Groups, idea categories, consent purposes',
     lists: 'Every status, priority and short list in one page',
     'ticket-lists': 'Ticket stages, priorities, services, replies, spam',
     'idea-categories': 'The categories of the ideas proposed to clients',

@@ -116,6 +116,15 @@ export async function listTasks(p = {}) {
     }
     if (oid(p.assignee)) and.push({ id: { in: (await prisma.crmTaskAssigned.findMany({ where: { staffId: p.assignee }, select: { taskId: true } })).map((x) => x.taskId) } })
     if (p.priority) and.push({ priority: parseInt(p.priority, 10) })
+    // one lead, or one client (its own tasks, the tasks of its projects and of the lead it came from)
+    if (oid(p.leadId)) and.push({ relType: 'lead', relId: p.leadId })
+    if (oid(p.clientId)) {
+        const [projects, leads] = await Promise.all([
+            prisma.crmProject.findMany({ where: { clientId: p.clientId }, select: { id: true } }),
+            prisma.crmLead.findMany({ where: { clientId: p.clientId }, select: { id: true } }),
+        ])
+        and.push({ OR: [{ relType: 'customer', relId: p.clientId }, { relType: 'project', relId: { in: projects.map((x) => x.id) } }, { relType: 'lead', relId: { in: leads.map((x) => x.id) } }] })
+    }
     if (p.relType) and.push({ relType: p.relType })
     if (oid(p.relId)) and.push({ relId: p.relId })
     if (p.query) and.push({ OR: [{ name: { contains: p.query, mode: 'insensitive' } }, { description: { contains: p.query, mode: 'insensitive' } }] })
@@ -161,6 +170,8 @@ export async function getTask(id) {
     const t = await loadOne(id, a)
     const ids = [...t.assignees.map((x) => x.staffId), ...t.followers.map((x) => x.staffId), ...t.comments.map((c) => c.staffId).filter(Boolean), ...t.comments.flatMap((c) => Object.values(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).flat()), ...t.timers.map((x) => x.staffId).filter(Boolean), ...t.checklistItems.flatMap(stepPeople), t.addedFrom].filter(Boolean)
     const people = await staffMap(ids)
+    const cIds = [...new Set(t.comments.map((c) => c.contactId).filter(Boolean))]
+    const contactName = Object.fromEntries((cIds.length ? await prisma.crmContact.findMany({ where: { id: { in: cIds } }, select: { id: true, firstName: true, lastName: true, email: true } }) : []).map((c) => [c.id, [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email || '']))
     const rels = await relLabels([t])
     const now = Date.now()
     const timers = t.timers.map((x) => ({ id: x.id, staff: people[x.staffId] || null, startTime: x.startTime, endTime: x.endTime, note: x.note, seconds: Math.max(0, Math.round(((x.endTime ? +x.endTime : now) - +(x.startTime || now)) / 1000)) }))
@@ -176,8 +187,8 @@ export async function getTask(id) {
         checklist: [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, assignedIds: stepPeople(c), people: stepPeople(c).map((i) => people[i]).filter(Boolean), person: people[c.assigned] || null, dueDate: c.dueDate || null, reminder: c.reminder ?? null, order: c.listOrder || 0 })),
         comments: t.comments.map((c) => {
             const to = c.replyToId ? t.comments.find((x) => x.id === c.replyToId) : null
-            return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
-                replyToId: c.replyToId || null,
+            return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, clientName: c.contactId ? contactName[c.contactId] || '' : '', createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
+                replyToId: c.replyToId || null, toClient: !!c.toClient,
                 reactions: Object.entries(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!a.staffId && ids.includes(a.staffId), names: ids.filter((i) => i !== a.staffId).map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count),
                 replyTo: to ? { id: to.id, name: people[to.staffId]?.name || (to.contactId ? 'Client' : ''), text: String(to.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90) } : null }
         }),
@@ -347,14 +358,16 @@ export async function deleteTask(id) {
     return { success: true }
 }
 
-export async function addComment(id, content, replyToId) {
+export async function addComment(id, content, replyToId, toClient = false) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const task = await loadOne(id, a)
     const text = storeRich(content)
     if (!text) throw fail('Write a comment first')
     const reply = oid(replyToId) && (await prisma.crmTaskComment.findFirst({ where: { id: replyToId, taskId: id }, select: { id: true, staffId: true } }))
-    await prisma.crmTaskComment.create({ data: { taskId: id, content: text, staffId: a.staffId, replyToId: reply ? reply.id : null } })
+    await prisma.crmTaskComment.create({ data: { taskId: id, content: text, staffId: a.staffId, replyToId: reply ? reply.id : null, toClient: !!toClient && !!task.visibleToClient } })
+    // a comment sent to the client of a shared task: its contacts are told (phone and email, unless switched off)
+    if (toClient && task.visibleToClient) { try { const { tellClientOfTask } = await import('@/lib/crm/taskClient'); await tellClientOfTask(task, { who: session.user.name, text: plainText(text) }) } catch (e) { console.error('[task client notify]', e.message) } }
     // told: the people named with @, and everyone who follows the task (assigned, following, who created it, who is answered)
     try {
         const [asg, fol] = await Promise.all([prisma.crmTaskAssigned.findMany({ where: { taskId: id }, select: { staffId: true } }), prisma.crmTaskFollower.findMany({ where: { taskId: id }, select: { staffId: true } })])

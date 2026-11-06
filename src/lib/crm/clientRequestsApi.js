@@ -15,6 +15,7 @@ import { CDN_URL } from '@/lib/spaces'
 import { rateLimit } from '@/lib/rateLimit'
 import { cleanAttachments } from '@/lib/crm/notesCalc'
 import { STATUSES, STATUS_LABEL, STATUS_COLOR, TYPES, PRIORITIES, isOpen, cleanStatus, cleanType, cleanPriority, cleanUrl, codeOf } from '@/lib/crm/clientRequestsCalc'
+import { emailOff } from '@/lib/crm/clientEmailAccess'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -100,12 +101,13 @@ async function tellClient(req, client, { kind, who, text = '', named = [] }) {
     const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, email: true, firstName: true, lastName: true } })
     const link = `${publicBase()}/portal/requests/${req.id}`
     const seen = new Set()
+    const noMail = await emailOff(client.id, 'requests')
     let mails = 0
     for (const c of contacts) {
         const me = named.includes(c.id)
         void pushToContacts({ contactId: c.id }, { title: me ? `${who || 'trtCRM'} · @${contactName(c)}` : kind === 'status' ? `${codeOf(req.seq)} · ${STATUS_LABEL[req.status]}` : who || 'trtCRM', body: kind === 'status' ? req.title : text, url: `/portal/requests/${req.id}`, tag: `request-${req.id}` })
         const to = String(c.email || '').trim().toLowerCase()
-        if (!EMAIL.test(to) || seen.has(to)) continue
+        if (!EMAIL.test(to) || seen.has(to) || noMail) continue // the client page can switch the emails off: the phone message above still goes
         seen.add(to)
         const base = { contact_firstname: c.firstName || '', contact_lastname: c.lastName || '', client_company: client.company || '', request_title: `${codeOf(req.seq)} ${req.title}`, request_link: link, staff_name: who || '' }
         const r = kind === 'status'

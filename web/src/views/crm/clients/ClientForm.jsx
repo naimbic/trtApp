@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import FoldSection from '@/components/crm/FoldSection'
 import { useNavigate, useParams } from 'react-router'
-import { TbArrowNarrowLeft, TbTrash } from 'react-icons/tb'
+import { TbArrowNarrowLeft, TbTrash, TbBuilding, TbCoin, TbMapPin, TbUserPlus, TbPhoto, TbUsersGroup, TbShieldCheck, TbMail, TbPower } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import BottomStickyBar from '@/components/template/BottomStickyBar'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -16,8 +17,11 @@ import { useClientLookups } from './shared'
 import { tr } from '@/utils/t'
 import BankAccountSelect from '../kit/BankAccountSelect'
 
+/** The emails a client's contacts can be switched off for, all together. */
+export const EMAIL_KINDS = [['invoices', 'Invoices'], ['estimates', 'Estimates'], ['proposals', 'Proposals'], ['contracts', 'Contracts'], ['credit_notes', 'Credit notes'], ['projects', 'Projects'], ['tasks', 'Tasks shared with the client'], ['support', 'Support tickets'], ['ideas', 'Ideas'], ['requests', 'Requests']]
+const PORTAL_KINDS = 8
 const addr = { street: '', city: '', state: '', zip: '', country: null }
-const blank = { diffBilling: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, portalHidden: [], active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
+const blank = { diffBilling: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, portalHidden: [], emailHidden: [], active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
 
 const norm = (x) => String(x ?? '').trim().toLowerCase()
 const sameAddress = (a, b) => ['street', 'city', 'state', 'zip'].every((k) => norm(a?.[k]) === norm(b?.[k])) && String(a?.country ?? '') === String(b?.country ?? '')
@@ -47,6 +51,8 @@ const ClientForm = () => {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [confirmDel, setConfirmDel] = useState(false)
+    const [openSec, setOpenSec] = useState(['company'])
+    const toggleSec = (k) => setOpenSec((o) => (o.includes(k) ? o.filter((x) => x !== k) : [...o, k]))
     const set = (patch) => setV((s) => ({ ...s, ...patch }))
 
     useEffect(() => {
@@ -56,7 +62,7 @@ const ClientForm = () => {
             const bil = { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }
             // a billing address that is empty or the same as the address above is just "the same": its fields stay hidden
             const differs = (x, ref) => !sameAddress(x, ref) && !isBlankAddress(x)
-            setV({ ...blank, diffBilling: differs(bil, main), logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
+            setV({ ...blank, diffBilling: differs(bil, main), logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [], currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
         }).catch((e) => setError(e.message)).finally(() => setLoading(false))
     }, [id])
 
@@ -96,25 +102,26 @@ const ClientForm = () => {
         <Form className="flex h-full w-full" containerClassName="flex flex-col w-full justify-between" onSubmit={(e) => e.preventDefault()}>
             <Container>
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
-                <div className="flex flex-col gap-4 md:flex-row">
-                    <div className="flex flex-auto flex-col gap-4">
-                        <Card>
-                            <h4 className="mb-6">{tr("Overview")}</h4>
-                            <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
+                <div className="mx-auto flex max-w-4xl flex-col gap-2.5">
+                    <FoldSection icon={<TbBuilding />} tone="blue" title={tr("Company")} summary={[v.company, v.industry, v.phone].filter(Boolean).join(' · ')} open={openSec.includes('company')} onToggle={() => toggleSec('company')}>
+                        <div className="grid grid-cols-1 gap-x-4 md:grid-cols-3 [&>*]:!mb-3">
                                 <FormItem label={tr("Company name")} asterisk><Input value={v.company} placeholder={tr("Company name")} onChange={(e) => set({ company: e.target.value })} /></FormItem>
                                 <FormItem label={tr("VAT / ICE")}><Input value={v.vat} onChange={(e) => set({ vat: e.target.value })} /></FormItem>
                                 <FormItem label={tr("Phone")}><Input value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></FormItem>
                                 <FormItem label={tr("Website")}><Input type="url" value={v.website} onChange={(e) => set({ website: e.target.value })} /></FormItem>
                                 <FormItem label={tr("Industry")}><Input placeholder={tr("e.g. Real estate, Retail…")} value={v.industry} onChange={(e) => set({ industry: e.target.value })} /></FormItem>
+</div>
+                    </FoldSection>
+                    <FoldSection icon={<TbCoin />} tone="emerald" title={tr("Money and documents")} summary={[currencyOptions.find((o) => o.value === v.currencyId)?.label, v.language && v.language.charAt(0).toUpperCase() + v.language.slice(1)].filter(Boolean).join(' · ')} open={openSec.includes('money')} onToggle={() => toggleSec('money')}>
+                        <div className="grid grid-cols-1 gap-x-4 md:grid-cols-3 [&>*]:!mb-3">
                                 <FormItem label={tr("Default currency")}><Select isClearable options={currencyOptions} value={currencyOptions.find((o) => o.value === v.currencyId) || null} onChange={(o) => set({ currencyId: o ? o.value : null })} /></FormItem>
                                 <FormItem label={tr("Bank account on its documents")}><BankAccountSelect value={v.bankAccountId} onChange={(id) => set({ bankAccountId: id })} emptyLabel={tr("The company's default account")} /></FormItem>
                                 <FormItem label={tr("Default language")}><Select isClearable placeholder={tr("Company language")} options={languageOptions} value={v.language ? languageOptions.find((o) => o.value === v.language.toLowerCase()) || { value: v.language, label: v.language } : null} onChange={(o) => set({ language: o?.value || '' })} /></FormItem>
                             </div>
-                        </Card>
-                        <Card>
-                            <div className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-                                <h4>{tr("Address")}</h4>
-                                <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+                    </FoldSection>
+                    <FoldSection icon={<TbMapPin />} tone="amber" title={tr("Address")} summary={[v.address, v.city, v.zip, (lookups.countries || []).find((o) => o.value === v.country)?.label].filter(Boolean).join(', ')} open={openSec.includes('address')} onToggle={() => toggleSec('address')}>
+                                                    <div className="mb-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                                                                <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
                                     <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-500"><span>{tr("Different billing address")}</span><Switcher checked={!!v.diffBilling} onChange={(c) => set({ diffBilling: c, ...(c && isBlankAddress(v.billing) ? { billing: { street: v.address, city: v.city, state: v.state, zip: v.zip, country: v.country } } : {}) })} /></label>
                                 </div>
                             </div>
@@ -129,55 +136,56 @@ const ClientForm = () => {
                                     )}
                                 </div>
                             )}
-                        </Card>
-                        {!id && (
-                            <Card>
-                                <h4 className="mb-1">{tr("Primary contact")}</h4>
-                                <p className="mb-5 text-sm text-gray-500">{tr("Optional — you can add contacts later from the client page.")}</p>
+
+                    </FoldSection>
+                    {!id && (
+                        <FoldSection icon={<TbUserPlus />} tone="violet" title={tr("Primary contact")} summary={[v.contact.firstName, v.contact.lastName, v.contact.email].filter(Boolean).join(' ') || tr("Optional")} open={openSec.includes('contact')} onToggle={() => toggleSec('contact')}>
+                                                            <p className="mb-5 text-sm text-gray-500">{tr("Optional — you can add contacts later from the client page.")}</p>
                                 <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
                                     {[['firstName', tr("First name")], ['lastName', tr("Last name")], ['email', tr("Email")], ['phone', tr("Phone")], ['title', tr("Position")]].map(([k, l]) => (
                                         <FormItem key={k} label={l}><Input value={v.contact[k]} onChange={(e) => set({ contact: { ...v.contact, [k]: e.target.value } })} /></FormItem>
                                     ))}
                                 </div>
-                            </Card>
-                        )}
-                    </div>
-                    <div className="flex flex-col gap-4 md:w-[370px]">
-                        <Card>
-                            <h4 className="mb-6">{tr("Image")}</h4>
-                            <div className="rounded-lg bg-gray-100 p-4 text-center dark:bg-gray-700">
+
+                        </FoldSection>
+                    )}
+                    <FoldSection icon={<TbPhoto />} tone="rose" title={tr("Image and groups")} summary={`${v.groupIds.length ? tr('{n} group(s)', { n: v.groupIds.length }) : tr('No group')}${v.logoUrl ? ` · ${tr('Logo')}` : ''}`} open={openSec.includes('image')} onToggle={() => toggleSec('image')}>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div>                            <div className="rounded-lg bg-gray-100 p-4 text-center dark:bg-gray-700">
                                 <div className="flex justify-center">
                                     {id ? <ImageUpload url={v.logoUrl} name={v.company} shape="circle" size={100} uploadUrl={`/api/crm/customers/${id}/logo`} onChange={(logoUrl) => set({ logoUrl })} /> : <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-white px-2 text-center text-xs text-gray-400 shadow dark:bg-gray-800">{tr("Add the logo after saving")}</div>}
                                 </div>
                                 <p className="mt-3 text-xs text-gray-500">{tr("The logo is optimised to WebP and shown on lists and the client page.")}</p>
-                            </div>
-                        </Card>
-                        <Card>
-                            <h4 className="mb-2">{tr("Client groups")}</h4>
-                            <div className="mt-6"><Select isMulti isClearable placeholder={tr("Add groups…")} options={groupOptions} value={groupOptions.filter((o) => v.groupIds.includes(o.value))} onChange={(opts) => set({ groupIds: (opts || []).map((o) => o.value) })} /></div>
-                        </Card>
-                        <Card>
-                            <h4 className="mb-2">{tr("Customer admins")}</h4>
-                            <p className="text-sm text-gray-500">{tr("Staff who can see this client with “view own”.")}</p>
+                            </div></div>
+                            <div><h6 className="mb-2">{tr("Client groups")}</h6>                            <div className="mt-6"><Select isMulti isClearable placeholder={tr("Add groups…")} options={groupOptions} value={groupOptions.filter((o) => v.groupIds.includes(o.value))} onChange={(opts) => set({ groupIds: (opts || []).map((o) => o.value) })} /></div></div>
+                        </div>
+                    </FoldSection>
+                    <FoldSection icon={<TbUsersGroup />} tone="blue" title={tr("Customer admins")} summary={v.adminIds.length ? tr('{n} staff', { n: v.adminIds.length }) : tr('Nobody yet')} open={openSec.includes('admins')} onToggle={() => toggleSec('admins')}>
+                                                    <p className="text-sm text-gray-500">{tr("Staff who can see this client with “view own”.")}</p>
                             <div className="mt-4"><Select isMulti isClearable placeholder={tr("Assign staff…")} options={staffOptions} value={staffOptions.filter((o) => v.adminIds.includes(o.value))} onChange={(opts) => set({ adminIds: (opts || []).map((o) => o.value) })} /></div>
-                        </Card>
-                        <Card>
-                            <h4>{tr("Client area access")}</h4>
-                            <p className="text-sm text-gray-500">{tr("The sections this client sees after signing in to its client area. Switch one off to hide it for all its contacts.")}</p>
+                    </FoldSection>
+                    <FoldSection icon={<TbShieldCheck />} tone="emerald" title={tr("Client area access")} summary={tr('{n} of {m} sections', { n: PORTAL_KINDS - (v.portalHidden || []).length, m: PORTAL_KINDS })} open={openSec.includes('access')} onToggle={() => toggleSec('access')}>
+                                                    <p className="text-sm text-gray-500">{tr("The sections this client sees after signing in to its client area. Switch one off to hide it for all its contacts.")}</p>
                             <div className="mt-4 grid gap-2.5">
                                 {[['invoices', tr("Invoices")], ['estimates', tr("Estimates")], ['proposals', tr("Proposals")], ['contracts', tr("Contracts")], ['projects', tr("Projects")], ['support', tr("Support")], ['ideas', tr("Ideas")], ['requests', tr("Requests")]].map(([key, label]) => (
                                     <label key={key} className="flex items-center justify-between gap-4 text-sm"><span>{label}</span><Switcher checked={!(v.portalHidden || []).includes(key)} onChange={(on) => set({ portalHidden: on ? (v.portalHidden || []).filter((x) => x !== key) : [...(v.portalHidden || []), key] })} /></label>
                                 ))}
                             </div>
-                        </Card>
-                        <Card>
-                            <h4>{tr("Account")}</h4>
-                            <div className="mt-6 flex items-center justify-between gap-8">
+                    </FoldSection>
+                    <FoldSection icon={<TbMail />} tone="amber" title={tr("Email access")} summary={tr('{n} of {m} kinds', { n: EMAIL_KINDS.length - (v.emailHidden || []).length, m: EMAIL_KINDS.length })} open={openSec.includes('email')} onToggle={() => toggleSec('email')}>
+                        <p className="text-sm text-gray-500">{tr("The emails this client's contacts receive from us. Switch one off to stop those emails for all its contacts (they stay available in the client area).")}</p>
+                                <div className="mt-3 grid gap-2.5 sm:grid-cols-2 sm:gap-x-8">
+                                    {EMAIL_KINDS.map(([key, label]) => (
+                                        <label key={key} className="flex items-center justify-between gap-4 text-sm"><span>{tr(label)}</span><Switcher checked={!(v.emailHidden || []).includes(key)} onChange={(on) => set({ emailHidden: on ? (v.emailHidden || []).filter((x) => x !== key) : [...(v.emailHidden || []), key] })} /></label>
+                                    ))}
+                                </div>
+                    </FoldSection>
+                    <FoldSection icon={<TbPower />} tone="violet" title={tr("Account")} summary={v.active ? tr('Active') : tr('Inactive')} open={openSec.includes('account')} onToggle={() => toggleSec('account')}>
+                                                    <div className="mt-6 flex items-center justify-between gap-8">
                                 <div><h6>{tr("Active")}</h6><p>{tr("Inactive clients stay in your records but are hidden from new documents.")}</p></div>
                                 <Switcher checked={v.active} onChange={(a) => set({ active: a })} />
                             </div>
-                        </Card>
-                    </div>
+                    </FoldSection>
                 </div>
             </Container>
             <BottomStickyBar>

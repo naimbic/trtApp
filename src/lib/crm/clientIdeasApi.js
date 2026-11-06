@@ -13,6 +13,7 @@ import { mentionedIds } from '@/lib/crm/mentionsCalc'
 import { pushToContacts } from '@/lib/crm/push'
 import { getIdeaCategories } from '@/lib/crm/ideaCategories'
 import { FALLBACK_CATEGORY } from '@/lib/crm/ideaCategoriesCalc'
+import { emailOff } from '@/lib/crm/clientEmailAccess'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -96,6 +97,7 @@ const clean = (b, codes) => {
 
 /** Tells the client's contacts that an idea is waiting for them. Returns how many emails went out. */
 async function tellClient(idea, client) {
+    if (await emailOff(client.id, 'ideas')) return 0
     const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { email: true, firstName: true, lastName: true } })
     let sent = 0
     const seen = new Set()
@@ -234,6 +236,7 @@ export async function deleteComment(clientId, id, commentId) {
 
 /** A reply from the team shows in the client area; the contacts get a short email too. */
 async function tellClientOfComment(idea, client, who, text, named = []) {
+    if (await emailOff(client.id, 'ideas')) return
     const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, email: true, firstName: true, lastName: true } })
     const seen = new Set()
     // a contact named with @ is told personally; the others get the usual message

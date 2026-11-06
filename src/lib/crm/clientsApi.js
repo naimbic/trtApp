@@ -156,7 +156,7 @@ export async function getClientDetail(id) {
     ])
     const money = (await moneyFor([id], true))[id] || {}
     return {
-        id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [],
+        id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [],
         address: c.address, city: c.city, state: c.state, zip: c.zip, country: c.country, countryName: cname[c.country] || '',
         billing: { street: c.billingStreet, city: c.billingCity, state: c.billingState, zip: c.billingZip, country: c.billingCountry, countryName: cname[c.billingCountry] || '' },
         shipping: { street: c.shippingStreet, city: c.shippingCity, state: c.shippingState, zip: c.shippingZip, country: c.shippingCountry, countryName: cname[c.shippingCountry] || '' },
@@ -187,6 +187,7 @@ const fieldsFrom = (b) => {
     set('bankAccountId', b.bankAccountId === undefined ? undefined : b.bankAccountId || null)
     if (b.active !== undefined) d.active = !!b.active
     if (Array.isArray(b.portalHidden)) d.portalHidden = b.portalHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'projects', 'support', 'ideas', 'requests'].includes(x))
+    if (Array.isArray(b.emailHidden)) d.emailHidden = b.emailHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'credit_notes', 'projects', 'tasks', 'support', 'ideas', 'requests'].includes(x))
     for (const [k, p] of [['billing', 'billing'], ['shipping', 'shipping']]) {
         const a = b[k]
         if (!a) continue

@@ -18,13 +18,14 @@ import { SignIn, Forgot, SetPassword } from './PortalAuth'
 import Dashboard from './Dashboard'
 import Documents from './Documents'
 import { Projects, ProjectDetail } from './Projects'
+import { Tasks, TaskDetail } from './Tasks'
 import { Ideas, IdeaDetail } from './Ideas'
 import { Requests, RequestDetail } from './Requests'
 import { Tickets, TicketThread } from './Tickets'
 import Profile from './Profile'
 import ChatWidget from './ChatWidget'
 import { Knowledge, HelpArticle } from './Knowledge'
-import { PiBookOpenTextDuotone } from 'react-icons/pi'
+import { PiBookOpenTextDuotone, PiCheckSquareDuotone } from 'react-icons/pi'
 
 const Ctx = createContext(null)
 export const usePortal = () => useContext(Ctx)
@@ -36,6 +37,7 @@ const NAV = [
     { to: '/portal/proposals', label: 'Proposals', icon: <PiPresentationChartDuotone />, need: 'proposals' },
     { to: '/portal/contracts', label: 'Contracts', icon: <PiFileTextDuotone />, need: 'contracts' },
     { to: '/portal/projects', label: 'Projects', icon: <PiBriefcaseDuotone />, need: 'projects' },
+    { to: '/portal/tasks', label: 'Tasks', icon: <PiCheckSquareDuotone />, need: 'projects' },
     { to: '/portal/ideas', label: 'Ideas', icon: <PiLightbulbDuotone />, need: 'ideas' },
     { to: '/portal/requests', label: 'Requests', icon: <PiBugBeetleDuotone />, need: 'requests' },
     { to: '/portal/tickets', label: 'Support', icon: <PiLifebuoyDuotone />, need: 'support' },
@@ -133,6 +135,8 @@ const PortalApp = () => (
             <Route path="contracts" element={<Documents kind="contracts" />} />
             <Route path="projects" element={<Projects />} />
             <Route path="projects/:id" element={<ProjectDetail />} />
+            <Route path="tasks" element={<Tasks />} />
+            <Route path="tasks/:id" element={<TaskDetail />} />
             <Route path="ideas" element={<Ideas />} />
             <Route path="ideas/:id" element={<IdeaDetail />} />
             <Route path="requests" element={<Requests />} />

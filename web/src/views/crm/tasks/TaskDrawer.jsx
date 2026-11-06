@@ -42,6 +42,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const [comment, setComment] = useState('')
     const [replyTo, setReplyTo] = useState(null)
     const editorRef = useRef(null)
+    const [toClient, setToClient] = useState(false) // the comment is also sent to the client (the task is shared with it)
     const [editingId, setEditingId] = useState(null)
     const [tick, setTick] = useState(0)
     const [openSec, setOpenSec] = useState(['main', 'people'])
@@ -137,6 +138,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <SW label={tr("Repeat this task")}><Switcher disabled={!canEdit} checked={!!v.recurring} onChange={(c) => set({ recurring: c })} /></SW>
                     <SW label={tr("Visible to the whole team")}><Switcher disabled={!canEdit} checked={!!v.isPublic} onChange={(c) => set({ isPublic: c })} /></SW>
                     <SW label={tr("Visible to the client")}><Switcher disabled={!canEdit} checked={!!v.visibleToClient} onChange={(c) => set({ visibleToClient: c })} /></SW>
+                    {v.visibleToClient && <p className={`col-span-2 -mt-1 rounded-lg px-2.5 py-1.5 text-xs ${v.relType ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10'}`}>{v.relType === 'customer' || v.relType === 'project' ? tr("The client sees this task in its client area (Tasks): status, dates, description, progress, the files you share and the comments you send to it. It can write and add files.") : v.relType === 'lead' ? tr("A lead has no client area yet: the task becomes visible to the client once the lead is converted.") : tr("Link the task to the client, to one of its projects or to its lead (Related to), otherwise nobody can see it.")}</p>}
                     {v.billable && <div className="col-span-2"><L>{tr("Hourly rate")}</L><Input size={sz} type="number" disabled={!canEdit} value={v.hourlyRate} onChange={(e) => set({ hourlyRate: e.target.value })} /></div>}
                     {v.recurring && (
                         <div className="col-span-2 grid grid-cols-3 gap-3">
@@ -160,14 +162,15 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             <div className="space-y-2">
                 <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
                 <RichEditor minHeight={90} placeholder={tr("Write a comment")} value={comment} onChange={setComment} onReady={(ed) => { editorRef.current = ed }} />
-                <Button size="sm" variant="solid" disabled={!comment.trim()} onClick={() => act(() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) }))}>{tr("Comment")}</Button>
+                {v.visibleToClient && <label className="flex items-center gap-2 text-sm"><Switcher checked={toClient} onChange={setToClient} /><span className={toClient ? 'font-semibold text-emerald-600' : ''}>{toClient ? tr("The client will see this comment") : tr("Team only: switch on to send it to the client too")}</span></label>}
+                <Button size="sm" variant="solid" disabled={!comment.trim()} onClick={() => act(() => post('comments', { content: comment, replyToId: replyTo?.id, toClient: toClient && !!v.visibleToClient }).then(() => { setComment(''); setReplyTo(null); setToClient(false) }))}>{tr("Comment")}</Button>
             </div>
             <CommentThread comments={detail.comments} render={(c, depth) => (
                 <div className="group relative flex gap-3">
                     <StaffRing id={c.staff?.id} name={c.staff?.name} size={30}><Avatar size={30} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr("Client") : '?'))}</Avatar></StaffRing>
                     <div className="min-w-0 flex-1">
                         <div className="rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
-                            <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{c.staff?.name || (c.fromClient ? tr("Client") : tr("Unknown"))}</span><span>{dayjs(c.createdAt).format('DD MMM, HH:mm')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
+                            <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{c.staff?.name || (c.fromClient ? c.clientName || tr("Client") : tr("Unknown"))}{c.fromClient && <span className="ms-1.5 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">{tr("From the client")}</span>}{!c.fromClient && c.toClient && <span className="ms-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">{tr("Seen by the client")}</span>}</span><span>{dayjs(c.createdAt).format('DD MMM, HH:mm')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
                             {depth === 0 && <ReplyQuote r={c.replyTo} />}
                             {editingId === c.id
                                 ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
@@ -244,7 +247,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             <Tabs.TabContent value="details">{details}</Tabs.TabContent>
                             <Tabs.TabContent value="checklist">{checklist}</Tabs.TabContent>
                             <Tabs.TabContent value="comments">{comments}</Tabs.TabContent>
-                            <Tabs.TabContent value="files"><div className="pt-4"><AttachmentsPanel relType="task" relId={id} canEdit={!!canEdit} /></div></Tabs.TabContent>
+                            <Tabs.TabContent value="files"><div className="pt-4"><AttachmentsPanel relType="task" relId={id} canEdit={!!canEdit} showClientToggle={!!v.visibleToClient} /></div></Tabs.TabContent>
                             <Tabs.TabContent value="time">{time}</Tabs.TabContent>
                         </div>
                     </Tabs>

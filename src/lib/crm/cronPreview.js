@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { emailOff } from '@/lib/crm/clientEmailAccess'
 
 // The extra facts shown next to each line of the cron preview (client, who would get the email, amount, dates). Read only: unlike
 // composing the real email, this creates no short link and no hash, so a preview still changes nothing.
@@ -50,7 +51,10 @@ export async function docInfo(kind, id, today = new Date()) {
     const client = clientId ? await prisma.crmClient.findUnique({ where: { id: clientId }, select: { company: true } }) : null
     const contacts = clientId ? await prisma.crmContact.findMany({ where: { clientId, active: true }, orderBy: { isPrimary: 'desc' } }) : []
     let to = pickRecipients(contacts, FLAG[kind]).map((r) => r.email)
-    if (!to.length && fallback) to = [fallback]
+    // the client page can switch off the emails of this kind (reminders and notices): none goes out
+    const off = clientId ? await emailOff(clientId, ({ invoice: 'invoices', estimate: 'estimates', proposal: 'proposals', contract: 'contracts' })[kind]) : false
+    if (off) to = []
+    else if (!to.length && fallback) to = [fallback]
     const days = dueDate ? daysFrom(dueDate, today) : null // positive: that many days past the date
     const daysLabel = days === null ? null : kind === 'invoice' ? (days > 0 ? `${days} day${days === 1 ? '' : 's'} overdue` : days === 0 ? 'due today' : `due in ${-days} day${days === -1 ? '' : 's'}`) : days > 0 ? `ended ${days} day${days === 1 ? '' : 's'} ago` : days === 0 ? 'ends today' : `ends in ${-days} day${days === -1 ? '' : 's'}`
     return { client: client?.company || (kind === 'proposal' ? doc.proposalTo : null) || null, to, noEmail: to.length === 0, amount, dueDate: day(dueDate), days, daysLabel }

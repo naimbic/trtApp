@@ -40,6 +40,8 @@ model CrmClient {
   defaultLanguage       String?
   /// client-area sections this client must NOT see (empty = all that Settings allows)
   portalHidden          String[]
+  /// kinds of emails (invoices, estimates, tasks...) that are not sent to the contacts of this client
+  emailHidden           String[]
   /// tblcurrencies.id (admin domain)
   defaultCurrencyId     String?  @db.ObjectId
   bankAccountId         String?  @db.ObjectId // the bank account printed on this client's documents (empty: the company's default one)

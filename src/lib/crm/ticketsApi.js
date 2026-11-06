@@ -10,6 +10,7 @@ import { autoMessage } from '@/lib/crm/ticketAuto'
 import { emit } from '@/lib/crm/webhooks'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { pushToContacts } from '@/lib/crm/push'
+import { emailOff } from '@/lib/crm/clientEmailAccess'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -232,7 +233,7 @@ export async function replyTicket(id, { message, statusId, notify = true, intern
     await prisma.crmTicket.update({ where: { id }, data: { statusId: nextStatus, lastReply: new Date(), clientRead: 0, adminRead: 1, ...(t.assignedId || !a.S.on('automatically_assign_ticket_to_first_staff_responding') ? {} : { assignedId: a.staffId }) } })
     if (notify && (t.contactId || t.clientId)) void pushToContacts({ contactId: t.contactId || null, clientId: t.contactId ? null : t.clientId }, { title: t.subject || 'Support', body: stripHtml(text || ''), url: `/portal/tickets/${id}`, tag: `ticket-${id}` })
     let mail = null
-    if (notify) { const to = await clientEmail(t); if (to) mail = await sendTemplate({ slug: 'ticket-reply', to, data: await mailVars({ ...t, statusId: nextStatus }, { message: withFiles(stripHtml(text || ''), saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: id }) }
+    if (notify && !(await emailOff(t.clientId, 'support'))) { const to = await clientEmail(t); if (to) mail = await sendTemplate({ slug: 'ticket-reply', to, data: await mailVars({ ...t, statusId: nextStatus }, { message: withFiles(stripHtml(text || ''), saved), vars: { contact_firstname: await clientFirst(t) } }), relType: 'ticket', relId: id }) }
     if (nextStatus && nextStatus !== t.statusId) await autoMessage({ ...t, statusId: nextStatus }, nextStatus)
     return { success: true, id: r.id, mail, files: saved.length }
 }

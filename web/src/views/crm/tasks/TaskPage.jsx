@@ -53,6 +53,7 @@ const TaskPage = () => {
     const [subName, setSubName] = useState('')
     const [replyTo, setReplyTo] = useState(null)
     const editorRef = useRef(null)
+    const [toClient, setToClient] = useState(false) // the comment is also sent to the client (the task is shared with it)
     const [editingId, setEditingId] = useState(null)
     const [tag, setTag] = useState('')
     const [confirmDel, setConfirmDel] = useState(false)
@@ -168,12 +169,12 @@ const TaskPage = () => {
                         <div className="pt-5">
                             {tab === 'comments' && (
                                 <div className="space-y-5">
-                                    <div className="flex flex-col gap-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><RichEditor minHeight={90} value={comment} placeholder={tr('Write a comment')} onChange={setComment} onReady={(ed) => { editorRef.current = ed }} /><div className="flex justify-end"><Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment, replyToId: replyTo?.id }).then(() => { setComment(''); setReplyTo(null) })}>{tr('Comment')}</Button></div></div>
+                                    <div className="flex flex-col gap-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><RichEditor minHeight={90} value={comment} placeholder={tr('Write a comment')} onChange={setComment} onReady={(ed) => { editorRef.current = ed }} /><div className="flex items-center justify-end gap-4">{t.visibleToClient && <label className="flex items-center gap-2 text-sm"><Switcher checked={toClient} onChange={setToClient} /><span className={toClient ? 'font-semibold text-emerald-600' : ''}>{toClient ? tr('The client will see this comment') : tr('Team only: switch on to send it to the client too')}</span></label>}<Button variant="solid" disabled={!comment.trim()} onClick={() => post('comments', { content: comment, replyToId: replyTo?.id, toClient: toClient && !!t.visibleToClient }).then(() => { setComment(''); setReplyTo(null); setToClient(false) })}>{tr('Comment')}</Button></div></div>
                                     <CommentThread comments={d.comments} render={(c, depth) => (
                                         <div className="group relative flex gap-3">
                                             <StaffRing id={c.staff?.id} name={c.staff?.name} size={depth ? 30 : 36}><Avatar size={depth ? 30 : 36} shape="circle" src={c.staff?.image || undefined}>{initials(c.staff?.name || (c.fromClient ? tr('Client') : '?'))}</Avatar></StaffRing>
                                             <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2 text-sm"><span className="font-bold heading-text">{c.staff?.name || (c.fromClient ? tr('Client') : tr('Unknown'))}</span><span className="text-gray-400">|</span><span className="text-gray-400">{dayjs(c.createdAt).format('DD MMM YYYY')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
+                                                <div className="flex items-center gap-2 text-sm"><span className="font-bold heading-text">{c.staff?.name || (c.fromClient ? c.clientName || tr('Client') : tr('Unknown'))}{c.fromClient && <span className="ms-1.5 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">{tr('From the client')}</span>}{!c.fromClient && c.toClient && <span className="ms-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">{tr('Seen by the client')}</span>}</span><span className="text-gray-400">|</span><span className="text-gray-400">{dayjs(c.createdAt).format('DD MMM YYYY')}{c.edited ? ` · ${tr('edited')}` : ''}</span></div>
                                                 {depth === 0 && <ReplyQuote r={c.replyTo} />}
                                                 {editingId === c.id
                                                     ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
@@ -201,7 +202,7 @@ const TaskPage = () => {
                                 </div>
                             )}
                             {tab === 'checklist' && <ChecklistPanel items={d.checklist} staff={staff} canEdit={e} act={(op) => post('checklist', op)} />}
-                            {tab === 'files' && <AttachmentsPanel relType="task" relId={id} canEdit={e} />}
+                            {tab === 'files' && <AttachmentsPanel relType="task" relId={id} canEdit={e} showClientToggle={!!t.visibleToClient} />}
                             {tab === 'time' && (
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-700">

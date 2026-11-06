@@ -65,7 +65,7 @@ export const ProjectDetail = () => {
             )}
             <Card bodyClass="p-0 sm:p-0">
                 <div className="px-6 pt-5"><h5><TbChecklist className="mr-1 inline" />{t('Tasks shared with you')}</h5></div>
-                {d.tasks.length ? <div className="overflow-x-auto"><Table><THead><Tr><Th>{t('Task')}</Th><Th>{t('Status')}</Th><Th>{t('Due')}</Th></Tr></THead><TBody>{d.tasks.map((t) => <Tr key={t.id}><Td className="font-semibold">{t.name}</Td><Td><StatusTag label={t.statusLabel} /></Td><Td>{date(t.dueDate)}</Td></Tr>)}</TBody></Table></div> : <Empty>{t('No tasks are shared with you for this project.')}</Empty>}
+                {d.tasks.length ? <div className="overflow-x-auto"><Table><THead><Tr><Th>{t('Task')}</Th><Th>{t('Status')}</Th><Th>{t('Due')}</Th></Tr></THead><TBody>{d.tasks.map((t) => <Tr key={t.id}><Td className="font-semibold"><Link to={`/portal/tasks/${t.id}`} className="hover:text-primary">{t.name}</Link></Td><Td><StatusTag label={t.statusLabel} /></Td><Td>{date(t.dueDate)}</Td></Tr>)}</TBody></Table></div> : <Empty>{t('No tasks are shared with you for this project.')}</Empty>}
             </Card>
             {d.files.length > 0 && <Card><h5 className="mb-3"><TbPaperclip className="mr-1 inline" />{t('Files')}</h5><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{d.files.map((f) => <div key={f.id} className="truncate rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700">{f.name}<div className="text-xs text-gray-500">{date(f.date)}</div></div>)}</div></Card>}
         </div>

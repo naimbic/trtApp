@@ -3,7 +3,7 @@ import { addComment, editComment, deleteComment, reactComment, mentionComment } 
 import { errorResponse } from '@/lib/crm/crud'
 
 export async function POST(request, { params }) {
-    try { const b = await request.json(); if (b.mention) return NextResponse.json(await mentionComment((await params).id, b.commentId, b.mention)); if (b.react) return NextResponse.json(await reactComment((await params).id, b.commentId, b.react)); return NextResponse.json(await addComment((await params).id, b.content, b.replyToId)) } catch (e) { return errorResponse(e) }
+    try { const b = await request.json(); if (b.mention) return NextResponse.json(await mentionComment((await params).id, b.commentId, b.mention)); if (b.react) return NextResponse.json(await reactComment((await params).id, b.commentId, b.react)); return NextResponse.json(await addComment((await params).id, b.content, b.replyToId, !!b.toClient)) } catch (e) { return errorResponse(e) }
 }
 
 export async function PUT(request, { params }) {

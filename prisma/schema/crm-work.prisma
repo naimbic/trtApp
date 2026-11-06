@@ -290,6 +290,8 @@ model CrmTaskComment {
   replyToId String?  @db.ObjectId
   /// emoji reactions: { "👍": [staffId, ...] }
   reactions Json?
+  /// a comment of the team the client sees too (the task is shared with the client)
+  toClient  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   task      CrmTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)

@@ -9,7 +9,9 @@ import { shortLink } from '@/lib/crm/shortLinks'
 import { activeLanguages, syncTemplateLanguages } from '@/lib/crm/templateLanguages'
 import { baseData, buildHtml, companyLanguage, deliver, findTemplate, getAccounts, getOptions, getSmtp, setOptions, smtpReady, testConnection, mergeFields, escapeHtml } from '@/lib/crm/mailer'
 import { bankTokensFor } from '@/lib/crm/bankDb'
+import { emailOff } from '@/lib/crm/clientEmailAccess'
 
+const MAIL_AREA = { invoice: 'invoices', purchase_order: 'estimates', estimate: 'estimates', proposal: 'proposals', contract: 'contracts' }
 const plain = (v) => JSON.parse(JSON.stringify(v))
 const fail = (message) => { throw new PermissionError(message, 400) }
 
@@ -155,8 +157,11 @@ async function loadContext(kind, id) {
     const recipients = contacts.filter((c) => c.email).map((c) => ({
         email: c.email, name: [c.firstName, c.lastName].filter(Boolean).join(' '), primary: c.isPrimary, checked: flag ? c[flag] !== false && (c[flag] || c.isPrimary) : c.isPrimary,
     }))
+    // the client page can switch off the emails of this kind: nobody is ticked (the person sending can still tick someone)
+    const off = clientId ? await emailOff(clientId, MAIL_AREA[kind]) : false
     if (!recipients.length && emailFallback) recipients.push({ email: emailFallback, name: doc.proposalTo || '', primary: true, checked: true })
-    if (recipients.length && !recipients.some((r) => r.checked)) recipients[0].checked = true
+    if (off) recipients.forEach((r) => { r.checked = false })
+    else if (recipients.length && !recipients.some((r) => r.checked)) recipients[0].checked = true
     const lead = recipients.find((r) => r.checked) || recipients[0]
     const [first = '', ...rest] = (lead?.name || '').split(' ')
     Object.assign(data, base, bank || {}, {

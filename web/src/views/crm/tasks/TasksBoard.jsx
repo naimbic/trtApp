@@ -16,6 +16,7 @@ import { RemindTag, STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, useTas
 import TaskDrawer from './TaskDrawer'
 import NoteEditor from '../notes/NoteEditor'
 import { NOTES_EVENT, plainOf } from '../notes/noteKit'
+import RelationSelect from '../kit/RelationSelect'
 import { tr, trn } from '@/utils/t'
 import { onCreate } from '@/utils/createIntent'
 
@@ -34,6 +35,8 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     const [query, setQuery] = useState('')
     const [mine, setMine] = useState(false)
     const [assignee, setAssignee] = useState(null)
+    const [leadId, setLeadId] = useState(null)
+    const [clientId, setClientId] = useState(null)
     const [priority, setPriority] = useState(null)
     const [done, setDone] = useState(!!projectId || boardOnly)
     const [loading, setLoading] = useState(true)
@@ -74,11 +77,11 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
 
     const load = useCallback(async () => {
         try {
-            setData(await api(`/api/crm/work/tasks?${qs({ query, mine: mine ? '1' : '', assignee: assignee || '', priority: priority || '', done: done ? '1' : '', ...(projectId ? { relType: 'project', relId: projectId } : {}) })}`))
+            setData(await api(`/api/crm/work/tasks?${qs({ query, mine: mine ? '1' : '', assignee: assignee || '', priority: priority || '', leadId: leadId || '', clientId: clientId || '', done: done ? '1' : '', ...(projectId ? { relType: 'project', relId: projectId } : {}) })}`))
             setError('')
             onChanged?.()
         } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [query, mine, assignee, priority, done, projectId]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [query, mine, assignee, priority, leadId, clientId, done, projectId]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { load() }, [load])
 
     const setViewSaved = (v) => { setView(v); try { localStorage.setItem('tasks.view', v) } catch { /* private mode */ } }
@@ -152,6 +155,8 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                 <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search tasks")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any assignee")} options={staffOptions} value={staffOptions.find((o) => o.value === assignee) || null} onChange={(o) => { setAssignee(o?.value || null); setMine(false) }} /></div>
                 <div className="w-36"><Select size="sm" isClearable placeholder={tr("Any priority")} options={PRIORITY.map((p) => ({ value: p.value, label: p.label }))} value={priority ? { value: priority, label: prioOf(priority).label } : null} onChange={(o) => setPriority(o?.value || null)} /></div>
+                <div className="w-48"><RelationSelect size="sm" resource="leads" placeholder={tr("Any lead")} value={leadId} onChange={(id) => setLeadId(id || null)} /></div>
+                <div className="w-48"><RelationSelect size="sm" resource="clients" placeholder={tr("Any client")} value={clientId} onChange={(id) => setClientId(id || null)} /></div>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssignee(null) }} />{tr("My tasks")}</label>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={done} onChange={setDone} />{tr("Show completed")}</label>
             </div>}

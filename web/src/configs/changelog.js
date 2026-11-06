@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.186.0',
+        date: '2026-11-06',
+        title: 'Tasks shared with clients: they see them, answer and send files; Any lead / Any client filters; compact customer page with Email access',
+        items: [
+            'Tasks page: two new filters, "Any lead" and "Any client" (for a client: its own tasks, the tasks of its projects and of the lead it came from).',
+            'A task switched "Visible to the client" is now seen by the client whenever it belongs to that client: its own tasks, the tasks of its projects (no project needed any more), or the tasks of the lead it came from once converted. The task popup tells you if the link is missing.',
+            'New "Tasks" page in the client area (and each task of a project opens it): status, dates, priority, description, team, progress of the checklist (the internal steps are never shown), the files you share and a conversation.',
+            'Conversation: a comment you write on a shared task has a switch "send to the client too" (off by default, so nothing leaks); the client gets a phone message and an email (unless switched off) and can answer and add files; you are told, and see "From the client" / "Seen by the client" badges. Files have the "visible to the client" switch.',
+            'Customer page: now compact, in accordions (Company, Money and documents, Address, Image and groups, Customer admins, Client area access, Email access, Account).',
+            'New "Email access" on the customer page, like the client area access: invoices, estimates, proposals, contracts, credit notes, projects, tasks, support tickets, ideas, requests. Switch one off and no email of that kind goes to any contact of that client (reminders, notices, ticket replies, idea and request messages, task comments; manual document mails start with nobody ticked).',
+        ],
+    },
+    {
         version: '0.185.1',
         date: '2026-11-06',
         title: 'Reminder on a comment: the assigned people are reminded, email off by default',

@@ -394,9 +394,9 @@ export const badBody = (error) => (error instanceof SyntaxError || (error instan
 export const errorResponse = (original) => {
     const error = badBody(original)
     const status = error?.status || 500
-    if (status === 500) console.error('[crm]', error)
+    if (status === 500) { console.error('[crm]', error); import('@/lib/crm/alerts').then((m) => m.noteServerError(error?.message)).catch(() => {}) }
     return Response.json(
-        { error: status === 500 ? 'Internal server error' : error.message },
+        { error: status === 500 ? 'Internal server error' : error.message, ...(error?.code === 'TWO_FACTOR_REQUIRED' ? { code: 'TWO_FACTOR_REQUIRED' } : {}) },
         { status, headers: error.retryAfter ? { 'Retry-After': String(error.retryAfter) } : undefined },
     )
 }

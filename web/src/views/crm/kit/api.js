@@ -15,6 +15,7 @@ export async function api(url, init = {}) {
 async function request(url, init = {}) {
     const res = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init, body: init.body && typeof init.body !== 'string' ? JSON.stringify(init.body) : init.body })
     const json = await res.json().catch(() => ({}))
+    if (!res.ok && json.code === 'TWO_FACTOR_REQUIRED' && !window.location.pathname.startsWith('/account/security')) window.location.assign('/account/security?setup=2fa') // the administrator requires the second step: set it up first
     if (!res.ok) throw new Error(tr(String(json.error || json.message || tr('Request failed ({status})', { status: res.status })).replace(/^LOCKED(_CONFIRM)?: /, '')))
     return json
 }

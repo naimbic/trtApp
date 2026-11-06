@@ -158,6 +158,9 @@ export const GROUPS = {
         label: 'Sign-in & API', icon: 'TbPlugConnected', desc: 'Google and GitHub sign-in, API keys and the apps that sign in with this CRM',
         cards: [
             { title: 'Sign in with Google or GitHub', desc: 'Team members who already have an account here can sign in with the Google or GitHub account that uses the same email. The keys are server settings, not saved here.', panel: 'signInProviders' },
+            { title: 'Two-step sign-in', desc: 'Make the second step (authenticator app or email code) compulsory. Someone the rule covers who has not turned it on can only open their profile, Security, until they do. Everybody can always turn it on themselves.', fields: [
+                sel('require_2fa', 'Required for', [['', 'Nobody (optional for everyone)'], ['admins', 'Administrators'], ['sensitive', 'Administrators and people who see the vault, payments or payroll']], { default: '' }),
+            ] },
             { title: 'Account requests', desc: 'When someone signs in with Google or GitHub and has no account, they can ask for one. The administrators are told and approve or refuse each request in Team. Nobody gets access before approval.', fields: [
                 yes('social_signup_requests', 'Let people ask for an account with Google or GitHub', { default: '1' }),
             ] },
@@ -442,6 +445,13 @@ export const GROUPS = {
                 f('cron_every', 'Run every', 'number', { min: 1, max: 59, default: '15', hint: 'Minutes up to 59, hours up to 23, days up to 30.' }),
                 sel('cron_unit', 'Unit', [['minute', 'Minutes'], ['hour', 'Hours'], ['day', 'Days']], { default: 'minute' }),
                 f('cron_at_hour', 'At (hour of day, 0–23)', 'number', { min: 0, max: 23, default: '9', hint: 'Only used when the unit is days.' }),
+            ] },
+            { title: 'Backups', desc: 'Every night after 02:00 (company time) the whole database is saved to the file storage: the last 14 days and one a week for 12 weeks. It does not need the automatic tasks to be on.', fields: [
+                yes('cron_job_backup', 'Back up the database every night', { default: '1', cardToggle: true }),
+            ] },
+            { title: 'Backup files', panel: 'backups' },
+            { title: 'Alerts', desc: 'The administrators are told (bell, email, Telegram / WhatsApp) when a backup fails or is late, when the automatic tasks stop or report errors, and when the CRM returns a burst of server errors. The same alert is sent once an hour at most.', fields: [
+                yes('alerts_enabled', 'Send alerts to the administrators', { default: '1' }),
             ] },
             { title: 'Command', panel: 'cronCommand' },
             { title: 'Invoices', desc: 'Overdue and due-soon reminders, and recurring invoices.', fields: [

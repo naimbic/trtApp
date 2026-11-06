@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { TbCopy, TbEye, TbExternalLink, TbPencil, TbPlayerPlay, TbPlus, TbRefresh } from 'react-icons/tb'
+import { TbDatabaseExport, TbDownload, TbCopy, TbEye, TbExternalLink, TbPencil, TbPlayerPlay, TbPlus, TbRefresh } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
@@ -295,3 +295,41 @@ export const PayrollExpensesPanel = () => {
     )
 }
 
+
+/** The nightly backups: when the last good one was made, any error, the files (download) and a button to back up now. */
+export const BackupsPanel = () => {
+    const [d, setD] = useState(null)
+    const [busy, setBusy] = useState(false)
+    const load = useCallback(async () => { try { setD(await api('/api/crm/backups')) } catch (e) { notify('danger', e.message) } }, [])
+    useEffect(() => { load() }, [load])
+    const now = async () => {
+        setBusy(true)
+        try { const r = await api('/api/crm/backups', { method: 'POST' }); if (r.ok) notify('success', `${tr("Backup done")} · ${r.docs} ${tr("documents")}`); else notify('danger', r.error) } catch (e) { notify('danger', e.message) } finally { setBusy(false); load() }
+    }
+    if (!d) return <div className="flex h-16 items-center justify-center"><Spinner size={22} /></div>
+    const s = d.status
+    const size = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`)
+    return (
+        <div className="flex flex-col gap-3 text-sm">
+            {!s.storage && <Alert type="warning" showIcon>{tr("The file storage (DigitalOcean Spaces) is not set up, so there is nowhere to put the backups.")}</Alert>}
+            {s.storage && s.late && <Alert type="danger" showIcon>{s.lastOk ? tr("The last good backup is older than a day and a half.") : tr("There is no backup yet.")}</Alert>}
+            {s.error && <Alert type="danger" showIcon>{tr("Last error")}: {s.error}</Alert>}
+            <div className="flex flex-wrap items-center gap-3">
+                <span className="text-gray-500">{s.lastOk ? <>{tr("Last good backup")}: <b>{new Date(s.lastOk).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</b>{s.info ? ` · ${s.info}` : ''}</> : tr("No backup yet.")}</span>
+                <Button size="sm" variant="solid" icon={<TbDatabaseExport />} loading={busy} disabled={!s.storage} onClick={now}>{tr("Back up now")}</Button>
+            </div>
+            {d.list.length > 0 && (
+                <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+                    {d.list.slice(0, 20).map((b) => (
+                        <div key={b.key} className="flex items-center gap-3 px-4 py-2">
+                            <span className="min-w-0 flex-1 truncate font-medium">{b.name}</span>
+                            <span className="text-xs text-gray-400">{size(b.size)}</span>
+                            <a href={`/api/crm/backups/${b.name}`} className="inline-flex items-center gap-1 text-primary hover:underline"><TbDownload />{tr("Download")}</a>
+                        </div>
+                    ))}
+                </div>
+            )}
+            <p className="text-xs text-gray-400">{tr("To restore a file, download it and run: node scripts/restore-backup.mjs <file> (add --apply to write).")}</p>
+        </div>
+    )
+}

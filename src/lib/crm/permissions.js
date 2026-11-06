@@ -1,6 +1,7 @@
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { IMPLIED_BY } from '@/lib/crm/capRules'
+import { enforceTwoFactor } from '@/lib/crm/twoFactorPolicy'
 
 /**
  * Perfex-style permission model on top of trtApp authority strings.
@@ -41,6 +42,7 @@ export const can = (session, feature, cap) =>
 export async function requirePermission(feature, cap) {
     const session = await auth()
     if (!session?.user?.id) throw new PermissionError('Unauthorized', 401)
+    await enforceTwoFactor(session) // a person the two-step rule covers must set it up first
     if (!feature) return session // resource without a feature: signed-in is enough
     const authority = session.user.authority || []
     const ok =

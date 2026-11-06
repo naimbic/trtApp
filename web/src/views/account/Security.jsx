@@ -53,6 +53,7 @@ const Security = ({ embedded = false }) => {
                     <p className="text-sm text-gray-500">{user.userName} · {user.email}</p>
                 </div>
             )}
+            {new URLSearchParams(window.location.search).get('setup') === '2fa' && <Alert type="warning" showIcon className="mb-4">{tr("Your administrator requires two-step sign-in. Turn on the authenticator app or the email code below to keep using the CRM.")}</Alert>}
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 <TwoStep />
                 <Card>

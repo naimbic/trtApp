@@ -12,7 +12,7 @@ import cn from '@/utils/classNames'
 import { GROUPS, SECTIONS } from '@/lib/crm/settings/registry'
 import { api, notify, useCan } from '../kit/api'
 import { Field } from './fields'
-import { InvoiceFormatPanel, PayrollExpensesPanel, ChannelsTestPanel, ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel } from './panels'
+import { InvoiceFormatPanel, PayrollExpensesPanel, ChannelsTestPanel, BackupsPanel, ClientPermissionsPanel, CronPanel, CustomFieldsPanel, EmailDesignPanel, FormatPanel } from './panels'
 import { MailServerSettings } from '../mail/Mails'
 import AiSettingsPanel from '../ai/AiSettingsPanel'
 import { refreshBranding } from '@/utils/hooks/useBranding'
@@ -62,6 +62,7 @@ const Panel = ({ name, group, values, setValue, ctx }) => {
     if (name === 'emailDesign') return <EmailDesignPanel values={values} setValue={setValue} />
     if (name === 'customFields') return <CustomFieldsPanel />
     if (name === 'clientPermissions') return <ClientPermissionsPanel />
+    if (name === 'backups') return <BackupsPanel />
     if (name === 'cronCommand') return <CronPanel />
     if (name === 'cronLog') return <CronPanel log />
     return null

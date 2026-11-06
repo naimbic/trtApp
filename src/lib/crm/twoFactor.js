@@ -1,3 +1,4 @@
+import { forgetTwoFactor } from '@/lib/crm/twoFactorPolicy'
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import QRCode from 'qrcode'
@@ -78,6 +79,7 @@ async function checkPassword(userId, password) {
 }
 
 async function syncStaffFlag(userId) {
+    forgetTwoFactor(userId) // the sign-in rule looks at the new state at once
     const on = (await twoFactorStatus(userId)).enabled
     await prisma.crmStaff.updateMany({ where: { userId }, data: { twoFactorAuthEnabled: on } })
 }

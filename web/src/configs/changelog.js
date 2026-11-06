@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.195.0',
+        date: '2026-11-06',
+        title: 'Nightly backups, alerts to the administrators, compulsory two-step sign-in',
+        items: [
+            'Backups: every night after 02:00 (company time) the whole database is saved to the file storage, kept 14 days plus one a week for 12 weeks. Settings → Cron job → Backup files: status, list, Download, "Back up now". It runs even when the automatic tasks are off. Restore with node scripts/restore-backup.mjs (checked on a copy: all documents and ids come back).',
+            'Alerts: the administrators are told (bell, email, Telegram / WhatsApp) when a backup fails or is late (36 h), when the automatic tasks stop (6 h) or report errors, and when the CRM returns 5 server errors in 10 minutes. One alert per kind per hour at most; switch off in Settings → Cron job → Alerts.',
+            'Two-step sign-in can be made compulsory (Settings → Sign-in & API): for administrators, or for administrators and everyone who sees the vault, payments or payroll. Someone covered who has not turned it on is sent to their Security page and can open nothing else until they do (takes effect within a minute).',
+        ],
+    },
+    {
         version: '0.194.0',
         date: '2026-11-06',
         title: 'My space and Growth & insight as pills, Remind me in the bell, notifications on mobile',

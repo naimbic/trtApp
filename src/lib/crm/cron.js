@@ -317,6 +317,7 @@ export function runCron({ trigger = 'http', force = false, dry = false } = {}) {
         const summary = lines.filter((l) => !l.endsWith('nothing to do') && !l.endsWith('turned off') && !l.endsWith('waiting for the notification hours')).slice(0, 3).join(' · ') || 'Nothing to do'
         const run = await prisma.crmCronRun.create({ data: { trigger: dry ? 'preview' : trigger, ok: ok && !lines.some((l) => l.startsWith('!')), summary: summary.slice(0, 300), lines, ms: Date.now() - t0 } })
         await prisma.crmCronRun.deleteMany({ where: { startedAt: { lt: new Date(Date.now() - 30 * DAY) } } }).catch(() => {})
+        if (!run.ok && !dry) { const { alertAdmins } = await import('@/lib/crm/alerts'); await alertAdmins({ key: 'cron-failed', title: 'The automatic tasks reported errors', text: lines.filter((l) => l.startsWith('!')).slice(0, 4).join('\n') || 'See Settings → Cron job → Log.', everyMinutes: 180 }) }
         const refs = lines.refs || []
         if (dry) { // the preview also says who each email would go to, how much, and how late (read only)
             for (const r of refs) if (r?.id && ['invoice', 'estimate', 'proposal', 'contract'].includes(r.type)) { try { r.info = await docInfo(r.type, r.id) } catch { /* the line is still shown */ } }

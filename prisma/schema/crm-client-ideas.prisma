@@ -62,6 +62,8 @@ model CrmClientIdeaComment {
   /// the message this one answers
   replyToId  String?  @db.ObjectId
   editedAt   DateTime?
+  /// emoji -> the team members who reacted: { "👍": [staffId...] }
+  reactions  Json?
   createdAt  DateTime @default(now())
 
   @@index([ideaId])

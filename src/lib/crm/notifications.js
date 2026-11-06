@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { teamIps } from '@/lib/crm/viewTracking'
 import { requirePermission, getStaffId, viewScope, hasCap } from '@/lib/crm/permissions'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { workDayStart } from '@/lib/crm/notifyHoursApi'
@@ -111,7 +112,8 @@ export async function notificationFeed({ days } = {}) {
     }
     if (can('invoices') || can('estimates') || can('proposals')) {
         const vs = await prisma.crmViewTracking.findMany({ where: { relType: { in: ['invoice', 'estimate', 'proposal'] }, createdAt: { gte: since(3) } }, orderBy: { createdAt: 'desc' }, take: 6 })
-        for (const v of vs) add('view', `Client opened ${v.relType === 'invoice' ? 'an invoice' : v.relType === 'estimate' ? 'an estimate' : 'a proposal'}`, v.viewIp ? `from ${v.viewIp}` : '', v.createdAt, `/crm/${v.relType === 'invoice' ? 'invoices' : v.relType === 'estimate' ? 'estimates' : 'proposals'}/${v.relId}`, 'gray')
+        const mine = await teamIps()
+        for (const v of vs.filter((x) => !mine.has(x.viewIp))) add('view', `Client opened ${v.relType === 'invoice' ? 'an invoice' : v.relType === 'estimate' ? 'an estimate' : 'a proposal'}`, v.viewIp ? `from ${v.viewIp}` : '', v.createdAt, `/crm/${v.relType === 'invoice' ? 'invoices' : v.relType === 'estimate' ? 'estimates' : 'proposals'}/${v.relId}`, 'gray')
     }
     void hasCap; void strip
     const seenRow = staffId ? await prisma.crmOption.findUnique({ where: { name: `notif_seen_${staffId}` } }) : null

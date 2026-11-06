@@ -1,11 +1,12 @@
 import prisma from '@/lib/prisma'
+import { explainWhatsapp } from '@/lib/crm/whatsappCalc'
 
 /**
  * Notifications by Telegram and WhatsApp, next to email. Settings → WhatsApp & Telegram holds the accounts; each team member and each
  * client contact has a chat id / number and a switch. Every email template that is sent also goes out as a short message (the subject and
  * the link of the document) to the person's channels that are switched on.
  */
-const KEYS = ['telegram_enabled', 'telegram_bot_token', 'whatsapp_enabled', 'whatsapp_phone_number_id', 'whatsapp_access_token', 'whatsapp_template', 'whatsapp_template_lang']
+const KEYS = ['telegram_enabled', 'telegram_bot_token', 'whatsapp_enabled', 'whatsapp_phone_number_id', 'whatsapp_access_token', 'whatsapp_template', 'whatsapp_template_lang', 'whatsapp_app_id', 'whatsapp_app_secret']
 async function settings() {
     const rows = await prisma.crmOption.findMany({ where: { name: { in: KEYS } }, select: { name: true, value: true } })
     const o = Object.fromEntries(rows.map((r) => [r.name, r.value]))
@@ -75,7 +76,7 @@ export async function sendWhatsapp(number, text, s) {
         ? { type: 'template', template: { name: c.template, language: { code: c.lang }, components: [{ type: 'body', parameters: [{ type: 'text', text: String(text).replace(/\s*\n+\s*/g, ' · ').slice(0, 900) }] }] } }
         : { type: 'text', text: { body: String(text).slice(0, 3900), preview_url: true } }
     const r = await post(`https://graph.facebook.com/v20.0/${c.phoneId}/messages`, { messaging_product: 'whatsapp', to, ...message }, { Authorization: `Bearer ${c.waToken}` })
-    return r.ok ? { sent: true } : { sent: false, error: r.json?.error?.message || 'WhatsApp refused the message' }
+    return r.ok ? { sent: true } : { sent: false, error: explainWhatsapp(r.json?.error) }
 }
 
 const linkOf = (data = {}) => {

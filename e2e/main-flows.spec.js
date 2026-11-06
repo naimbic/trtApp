@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, request as pwRequest } from '@playwright/test'
+import { PrismaClient } from '@prisma/client'
 import { E2E } from './env.mjs'
 
 // The main flows of the CRM, in one browser, in order: sign in, a lead from creation to client, bulk actions, saved views,
@@ -118,6 +119,28 @@ test.describe('signed in', () => {
         const second = await (await page.request.post('/api/crm/sales/contracts/from-document', { data: { kind: 'estimate', id: est.id } })).json()
         expect(second.id).toBe(a.id)
         expect(second.existing).toBe(true)
+    })
+
+    test('the team opening a public page is not counted as the client', async ({ page, baseURL }) => {
+        const id = process.env.E2E_ESTIMATE_ID
+        const prisma = new PrismaClient()
+        try {
+            const views = () => prisma.crmViewTracking.count({ where: { relType: 'estimate', relId: id } })
+            // a signed-in team member (the page's browser has the session)
+            const mine = await page.request.get(`/api/crm/public/estimate/${id}/zze2e`, { headers: { 'x-forwarded-for': '203.0.113.50' } })
+            expect(mine.ok()).toBeTruthy()
+            await page.waitForTimeout(600)
+            expect(await views()).toBe(0)
+            // somebody else (no session, an address nobody on the team used)
+            const outsider = await pwRequest.newContext({ baseURL, extraHTTPHeaders: { 'x-forwarded-for': '203.0.113.77' } })
+            expect((await outsider.get(`/api/crm/public/estimate/${id}/zze2e`)).ok()).toBeTruthy()
+            await page.waitForTimeout(600)
+            expect(await views()).toBe(1)
+            await outsider.dispose()
+        } finally {
+            await prisma.crmViewTracking.deleteMany({ where: { relType: 'estimate', relId: id } })
+            await prisma.$disconnect()
+        }
     })
 
     test('a task is created and shows on the board', async ({ page }) => {

@@ -13,7 +13,8 @@ import FoldSection from '@/components/crm/FoldSection'
 import OfferEditor, { offerSummary } from './OfferEditor'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
-import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
+import { CommentFoot, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
+import { plainOf } from '@/components/crm/ShareButton'
 import cn from '@/utils/classNames'
 import { Link } from 'react-router'
 import { api, notify } from '../kit/api'
@@ -110,6 +111,8 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
         setBusy('say')
         try { const r = await api(`/api/crm/client-ideas/${idea.id}/comments`, { method: 'POST', body: { clientId, body: text, internal, replyToId: replyTo?.id } }); setComments((c) => [...c, r.comment]); setText(''); setReplyTo(null); onChanged() } catch (e) { notify('danger', e.message) } finally { setBusy('') }
     }
+    const react = async (c, emoji) => { try { await api(`/api/crm/client-ideas/${idea.id}/comments`, { method: 'POST', body: { clientId, commentId: c.id, react: emoji } }); await reloadComments() } catch (e) { notify('danger', e.message) } }
+    const mention = async (c, sid) => { try { await api(`/api/crm/client-ideas/${idea.id}/comments`, { method: 'POST', body: { clientId, commentId: c.id, mention: sid } }); notify('success', tr("Colleague mentioned")) } catch (e) { notify('danger', e.message) } }
     const reloadComments = () => api(`/api/crm/client-ideas/${idea.id}/comments?clientId=${clientId}`).then((r) => setComments(r.list)).catch(() => {})
     const removeComment = async (c) => { try { await api(`/api/crm/client-ideas/${idea.id}/comments?clientId=${clientId}&commentId=${c.id}`, { method: 'DELETE' }); await reloadComments(); onChanged() } catch (e) { notify('danger', e.message) } }
     const task = async () => { setBusy('task'); try { const r = await api(`/api/crm/client-ideas/${idea.id}/task`, { method: 'POST', body: { clientId } }); notify('success', r.existing ? tr("The task already exists") : tr("Task created")); onChanged(); window.open(`/crm/tasks/${r.taskId}`, '_blank') } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
@@ -175,8 +178,18 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
                                                 {editingId === c.id
                                                     ? <CommentEdit initial={c.body} onCancel={() => setEditingId(null)} onSave={async (t) => { await api(`/api/crm/client-ideas/${idea.id}/comments`, { method: 'PUT', body: { clientId, commentId: c.id, body: t } }); setEditingId(null); await reloadComments() }} />
                                                     : <RichView html={c.body} />}
+                                                {editingId !== c.id && can.edit && (
+                                                    <CommentFoot
+                                                        remind={{ relType: 'customer', relId: clientId, tab: `ideas&idea=${idea.id}`, note: plainOf(c.body).slice(0, 140) }}
+                                                        reactions={c.reactions}
+                                                        onReact={(emoji) => react(c, emoji)}
+                                                        onMention={(sid) => mention(c, sid)}
+                                                        onReply={() => { setReplyTo({ id: c.id, name: c.authorName || tr('Client') }); setText((x) => x || (c.authorKind === 'staff' && c.authorName ? `@${c.authorName} ` : '')) }}
+                                                        onEdit={c.mine ? () => setEditingId(c.id) : null}
+                                                        onDelete={c.canDelete ? () => removeComment(c) : null}
+                                                    />
+                                                )}
                                             </div>
-                                            {editingId !== c.id && can.edit && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.authorName || tr('Client') }); setText((x) => x || (c.authorKind === 'staff' && c.authorName ? `@${c.authorName} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => removeComment(c) : null} />}
                                         </div>
                                     )} />
                                     {!comments.length && <p className="py-2 text-center text-xs text-gray-400">{tr("Questions and answers between you and the client appear here.")}</p>}

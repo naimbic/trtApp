@@ -8,7 +8,7 @@ import { notifyNotice } from '@/lib/crm/notifyMail'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { realPicture } from '@/lib/crm/pictures'
 import { emit } from '@/lib/crm/webhooks'
-import { notifyComment } from '@/lib/crm/mentionsApi'
+import { notifyComment, notifyMentions } from '@/lib/crm/mentionsApi'
 import { mentionedIds } from '@/lib/crm/mentionsCalc'
 import { pushToContacts } from '@/lib/crm/push'
 import { getIdeaCategories } from '@/lib/crm/ideaCategories'
@@ -174,14 +174,23 @@ export async function deleteIdea(clientId, id) {
 }
 
 /** A message as the screens show it. `replyTo` is the message it answers (name and first words). */
-export const commentOut = (c, all, { me = null, canDelete = false, forClient = false } = {}) => {
+const reactionsOf = (c) => (c.reactions && typeof c.reactions === 'object' && !Array.isArray(c.reactions) ? c.reactions : {})
+export const commentOut = (c, all, { me = null, canDelete = false, forClient = false, people = {} } = {}) => {
     const r = c.replyToId ? all.find((x) => x.id === c.replyToId && (!forClient || !x.internal)) : null
     const own = forClient ? c.authorKind === 'client' : c.authorKind === 'staff' && !!me && c.authorId === me
     return {
         id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own,
         replyTo: r ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,
-        ...(forClient ? {} : { internal: !!c.internal, canDelete: own || canDelete }),
+        ...(forClient ? {} : { internal: !!c.internal, canDelete: own || canDelete, reactions: Object.entries(reactionsOf(c)).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!me && ids.includes(me), names: ids.filter((i) => i !== me).map((i) => people[i]).filter(Boolean) })).filter((r) => r.count) }),
     }
+}
+
+/** id -> name of the team members who reacted on these comments. */
+async function reactors(rows) {
+    const ids = [...new Set(rows.flatMap((c) => Object.values(reactionsOf(c)).flat()))]
+    if (!ids.length) return {}
+    const staff = await prisma.crmStaff.findMany({ where: { id: { in: ids } }, select: { id: true, firstName: true, lastName: true, email: true } })
+    return Object.fromEntries(staff.map((s) => [s.id, [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || '']))
 }
 
 /** The conversation of an idea (internal notes included, for the team). */
@@ -189,7 +198,8 @@ export async function listComments(clientId, id) {
     const g = await gate('view')
     await clientOf(g, clientId)
     const rows = await prisma.crmClientIdeaComment.findMany({ where: { ideaId: id }, orderBy: { createdAt: 'asc' }, take: 300 })
-    return { list: rows.map((c) => commentOut(c, rows, { me: g.staffId, canDelete: hasCap(g.authority, 'client_ideas', 'delete') })) }
+    const people = await reactors(rows)
+    return { list: rows.map((c) => commentOut(c, rows, { me: g.staffId, canDelete: hasCap(g.authority, 'client_ideas', 'delete'), people })) }
 }
 
 /** Write to the client (or leave a note for the team): rich text, @mentions and #tags, and an answer to an earlier message. */
@@ -207,7 +217,36 @@ export async function addComment(clientId, id, body = {}) {
     try { await notifyComment({ by: { staffId: g.staffId, name: g.name }, text, link: `/crm/clients/${clientId}?tab=ideas&idea=${id}`, subject: idea.title, recipients: [...(await teamOf(idea, clientId)), reply?.authorKind === 'staff' ? reply.authorId : null] }) } catch (e) { console.error('[idea notify]', e.message) }
     if (!internal) await tellClientOfComment(idea, client, g.name, plainText(text), mentionedIds(plainText(text), (await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, firstName: true, lastName: true } })).map((c) => ({ id: c.id, name: [c.firstName, c.lastName].filter(Boolean).join(' ') }))))
     const all = await prisma.crmClientIdeaComment.findMany({ where: { ideaId: id } })
-    return { comment: commentOut(row, all, { me: g.staffId, canDelete: hasCap(g.authority, 'client_ideas', 'delete') }) }
+    return { comment: commentOut(row, all, { me: g.staffId, canDelete: hasCap(g.authority, 'client_ideas', 'delete'), people: {} }) }
+}
+
+/** An emoji on a message of the discussion (again on the same emoji takes it back). */
+export async function reactComment(clientId, id, body = {}) {
+    const g = await gate('edit')
+    await clientOf(g, clientId)
+    const e = String(body.react || '').trim()
+    if (!e || e.length > 16) throw fail('Pick an emoji')
+    if (!g.staffId) throw fail('Only staff can react', 403)
+    const c = oid(body.commentId) && (await prisma.crmClientIdeaComment.findFirst({ where: { id: body.commentId, ideaId: id } }))
+    if (!c) throw fail('Message not found', 404)
+    const all = { ...reactionsOf(c) }
+    const ids = Array.isArray(all[e]) ? all[e] : []
+    const next = ids.includes(g.staffId) ? ids.filter((x) => x !== g.staffId) : [...ids, g.staffId]
+    if (next.length) all[e] = next; else delete all[e]
+    await prisma.crmClientIdeaComment.update({ where: { id: c.id }, data: { reactions: all } })
+    return { success: true }
+}
+
+/** Tags a colleague on a message that is already sent: they are told (the message itself is not changed, the client may read it). */
+export async function mentionComment(clientId, id, body = {}) {
+    const g = await gate('edit')
+    await clientOf(g, clientId)
+    const c = oid(body.commentId) && (await prisma.crmClientIdeaComment.findFirst({ where: { id: body.commentId, ideaId: id } }))
+    if (!c) throw fail('Message not found', 404)
+    const who = oid(body.mention) && (await prisma.crmStaff.findFirst({ where: { id: body.mention, active: true }, select: { id: true } }))
+    if (!who) throw fail('Choose a colleague')
+    await notifyMentions({ staffIds: [who.id], text: plainText(c.body), url: `/crm/clients/${clientId}?tab=ideas&idea=${id}` })
+    return { success: true }
 }
 
 export async function editComment(clientId, id, body = {}) {

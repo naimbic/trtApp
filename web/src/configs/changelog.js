@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.199.0',
+        date: '2026-11-06',
+        title: 'WhatsApp check and renewal, idea discussion like comments, the team opening pages is not a client view',
+        items: [
+            'WhatsApp: sending only needs the Phone number ID and a token, but a 24-hour test token stops working the next day. New optional App ID and App Secret (Settings → WhatsApp & Telegram): the CRM checks the token every day, turns it into a 60-day one and renews it before it ends, and warns the administrators when it cannot. New "Check the WhatsApp connection" button (name and number, quality, until when the token is valid, Renew now).',
+            'WhatsApp errors from Meta are now explained in plain words (expired token, number not allowed, the 24-hour rule and templates, wrong template name or language, number not on WhatsApp, wrong Phone number ID).',
+            'Idea popup, Discussion: the same options as the comments elsewhere: emoji reactions, tag a colleague after sending, Remind me (opens the idea again), reply, edit and delete under each message.',
+            'Opening the public page of an invoice, estimate, proposal or contract as a team member (signed in, or from an address a team member used in the last 45 days, even in a private window) is no longer recorded as the client having seen it: no "Client opened a proposal" notification, and old rows from team addresses are hidden. Switch in Settings → Billing → Views by the team.',
+        ],
+    },
+    {
         version: '0.198.0',
         date: '2026-11-06',
         title: 'Duplicate warning, deal value and forecast, contract from an accepted estimate or proposal',

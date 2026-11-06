@@ -174,10 +174,12 @@ export const GROUPS = {
                 yes('telegram_enabled', 'Send notifications by Telegram'),
                 f('telegram_bot_token', 'Bot token', 'password'),
             ] },
-            { title: 'WhatsApp (Cloud API)', desc: 'From Meta for Developers → WhatsApp → API setup: the phone number ID and a permanent access token. Outside a 24 hour conversation WhatsApp only delivers approved templates: give the name of a template with one body variable and its language, or leave it empty for plain messages.', fields: [
+            { title: 'WhatsApp (Cloud API)', desc: 'From Meta for Developers → WhatsApp → API setup: the phone number ID and a permanent access token (the App ID and App Secret are optional: they let the CRM check and renew the token). Outside a 24 hour conversation WhatsApp only delivers approved templates: give the name of a template with one body variable and its language, or leave it empty for plain messages.', fields: [
                 yes('whatsapp_enabled', 'Send notifications by WhatsApp'),
                 f('whatsapp_phone_number_id', 'Phone number ID', 'text'),
                 f('whatsapp_access_token', 'Access token', 'password'),
+                f('whatsapp_app_id', 'App ID (optional)', 'text', { hint: 'Meta for Developers → your app → App settings → Basic. Not needed to send. With the App Secret it lets the CRM check the token and renew it (a 24-hour test token becomes a 60-day one).' }),
+                f('whatsapp_app_secret', 'App Secret (optional)', 'password'),
                 f('whatsapp_template', 'Template name (optional)', 'text'),
                 f('whatsapp_template_lang', 'Template language', 'text', { default: 'en', hint: 'For example en, fr, es, ja, ar.' }),
             ] },
@@ -195,6 +197,9 @@ export const GROUPS = {
                 sel('thousand_separator', 'Thousands separator', [[' ', 'Space (1 234)'], [',', 'Comma (1,234)'], ['.', 'Dot (1.234)'], ["'", "Apostrophe (1'234)"], ['', 'None (1234)']], { default: ' ' }),
                 f('number_padding_prefixes', 'Zeros in document numbers', 'number', { min: 1, max: 9, default: '3', hint: '3 gives 005 or 025' }),
                 yes('remove_decimals_on_zero', 'Hide decimals when they are zero', { hint: '2.00 becomes 2, 2.25 stays 2.25' }),
+            ] },
+            { title: 'Views by the team', desc: 'When a team member opens the public page of an invoice, estimate, proposal or contract (signed in, or from an address a team member used lately, even in a private window), it is not recorded as the client having seen it, so no "Client opened a proposal" notification.', fields: [
+                yes('ignore_team_views', 'Do not count the team opening the public pages', { default: '1' }),
             ] },
             { title: 'Currencies, taxes and payment methods', desc: 'These lists are managed from the menu, Setup → Finance, so the whole team can use them.', links: [['Currencies', '/crm/currencies'], ['Taxes', '/crm/taxes'], ['Payment methods and bank accounts', '/crm/payment-modes']] },
             { title: 'Taxes', fields: [

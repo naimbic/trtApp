@@ -43,7 +43,7 @@ export async function addMine(body = {}) {
     for (const t of valid) {
         const mine = t.id === staffId
         const description = (mine ? note : `${by}${note ? `: ${note}` : ''}`).slice(0, 500) || null
-        const row = await prisma.crmReminder.create({ data: { relType: body.relType, relId: body.relId, staffId: t.id, creatorId: staffId, date, description, tab: /^[a-z]{3,12}$/.test(String(body.tab || '')) ? String(body.tab) : null, notifyByEmail: body.notifyByEmail !== false, isNotified: false } })
+        const row = await prisma.crmReminder.create({ data: { relType: body.relType, relId: body.relId, staffId: t.id, creatorId: staffId, date, description, tab: /^[a-z]{3,12}(&idea=[a-f0-9]{24})?$/.test(String(body.tab || '')) ? String(body.tab) : null, notifyByEmail: body.notifyByEmail !== false, isNotified: false } })
         if (mine || !first) first = row
     }
     return { id: first.id, count: valid.length }

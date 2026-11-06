@@ -241,6 +241,10 @@ export const CronPanel = ({ log }) => {
 
 /** Sends a test message with the Telegram / WhatsApp accounts that are saved (save the settings first). */
 export const ChannelsTestPanel = () => {
+    const [wa, setWa] = useState(null)
+    const [checking, setChecking] = useState(false)
+    const check = async () => { setChecking(true); try { setWa(await api('/api/crm/channels/whatsapp')) } catch (e) { notify('danger', e.message) } finally { setChecking(false) } }
+    const renew = async () => { try { await api('/api/crm/channels/whatsapp', { method: 'POST' }); notify('success', tr("The token was renewed")); check() } catch (e) { notify('danger', e.message) } }
     const [to, setTo] = useState({ telegram: '', whatsapp: '' })
     const [busy, setBusy] = useState('')
     const send = async (channel) => {
@@ -255,6 +259,18 @@ export const ChannelsTestPanel = () => {
                     <div className="flex gap-2"><Input size="sm" placeholder={ph} value={to[ch]} onChange={(e) => setTo((t) => ({ ...t, [ch]: e.target.value }))} /><Button size="sm" variant="solid" loading={busy === ch} disabled={!to[ch].trim()} onClick={() => send(ch)}>{tr("Send a test")}</Button></div>
                 </div>
             ))}
+            <div className="md:col-span-2">
+                <Button size="sm" loading={checking} onClick={check}>{tr("Check the WhatsApp connection")}</Button>
+                {wa && (
+                    <div className={`mt-2 rounded-xl border px-3 py-2 text-sm ${wa.ok && wa.advice !== 'expired' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200'}`}>
+                        {wa.ok ? <div><b>{wa.name || tr("Connected")}</b>{wa.phone ? ` · ${wa.phone}` : ''}{wa.quality ? ` · ${tr("quality")} ${wa.quality}` : ''}</div> : <div>{wa.error}</div>}
+                        {wa.appError && <div>{wa.appError}</div>}
+                        {wa.expiresAt !== undefined && <div className="text-xs opacity-80">{wa.expiresAt ? `${tr("The token ends on")} ${new Date(wa.expiresAt).toLocaleDateString('en-GB', { dateStyle: 'medium' })}` : tr("The token does not expire")}</div>}
+                        {wa.canRenew && wa.expiresAt > 0 && <Button size="xs" className="mt-1" onClick={renew}>{tr("Renew the token now")}</Button>}
+                        {!wa.canRenew && wa.expiresAt > 0 && <div className="text-xs">{tr("It will stop working then: paste a permanent token, or add the App ID and App Secret above.")}</div>}
+                    </div>
+                )}
+            </div>
             <p className="text-xs text-gray-400 md:col-span-2">{tr("Save the settings above first: the test uses the saved accounts.")}</p>
         </div>
     )

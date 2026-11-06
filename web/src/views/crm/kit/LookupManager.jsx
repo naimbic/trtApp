@@ -1,6 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { TbTrash, TbPlus, TbChevronLeft, TbChevronRight } from 'react-icons/tb'
+import { TbTrash, TbPlus, TbChevronLeft, TbChevronRight, TbStar, TbStarFilled, TbX } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Button from '@/components/ui/Button'
 import Switcher from '@/components/ui/Switcher'
@@ -23,6 +23,7 @@ const Cell = ({ field, value, disabled, onCommit, draft }) => {
     const timer = useRef(null)
     useEffect(() => { setV(shown ?? '') }, [shown])
     const label = tr(field.label)
+    if (field.type === 'boolean' && field.key === 'isDefault') { const on = !!value; return <button type="button" disabled={disabled || on} aria-pressed={on} title={on ? tr("Default") : tr("Make it the default")} aria-label={tr("Default")} onClick={() => onCommit(true)} className={`grid size-8 place-items-center rounded-lg text-lg transition ${on ? 'text-amber-500' : 'text-gray-300 hover:bg-gray-100 hover:text-amber-500 dark:hover:bg-gray-700'}`}>{on ? <TbStarFilled /> : <TbStar />}</button> }
     if (field.type === 'boolean') return <Switcher checked={value === undefined || value === null ? !!field.defaultOn : !!value} disabled={disabled} onChange={(c) => onCommit(c)} />
     if (field.type === 'color') {
         const ok = /^#[0-9a-f]{6}$/i.test(v || '')
@@ -61,7 +62,7 @@ const Cell = ({ field, value, disabled, onCommit, draft }) => {
  * type in a cell, flip a switch, pick a colour, drag the handle to reorder (when the list has an order), add a row at the top.
  * `resource.lookup` = { orderField? }. The pencil opens the full form for the fields that do not fit a cell (long text...).
  */
-const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onCount }) => {
+const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onCount, addSignal = 0 }) => {
     const { orderField } = resource.lookup || {}
     const title = resource.titleField
     const main = resource.fields.find((f) => f.key === title) || resource.fields[0]
@@ -72,9 +73,11 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onC
     const [del, setDel] = useState(null)
     const [q, setQ] = useState('')
     const [page, setPage] = useState(1)
+    const [adding, setAdding] = useState(false)
+    useEffect(() => { if (addSignal > 0) setAdding(true) }, [addSignal])
     const [size, setSize] = useState(10)
     const uses = !!resource.usage // how many records use each item
-    const grid = { gridTemplateColumns: `${orderField ? '22px ' : ''}minmax(180px, 1.8fr) ${cols.map((f) => (f.type === 'textarea' || f.type === 'richtext' ? 'minmax(220px, 2fr)' : 'minmax(96px, 1fr)')).join(' ')} ${uses ? '64px ' : ''}44px` }
+    const grid = { gridTemplateColumns: `${orderField ? '22px ' : ''}minmax(180px, 1.8fr) ${cols.map((f) => (f.type === 'textarea' || f.type === 'richtext' ? 'minmax(220px, 2fr)' : 'minmax(96px, 1fr)')).join(' ')} ${uses ? '64px ' : ''}76px` }
 
     const load = useCallback(async () => {
         try {
@@ -88,7 +91,7 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onC
     const patch = (id, body) => api(`/api/crm/${resource.key}/${id}`, { method: 'PATCH', body })
     const save = async (r, key, value) => {
         setRows((l) => l.map((x) => (x.id === r.id ? { ...x, [key]: value } : x)))
-        try { await patch(r.id, { [key]: value === '' ? null : value }) } catch (e) { notify('danger', e.message); load() }
+        try { await patch(r.id, { [key]: value === '' ? null : value }); if (key === 'isDefault' && value) load() } catch (e) { notify('danger', e.message); load() }
     }
     const add = async () => {
         const body = { ...draft }
@@ -128,20 +131,20 @@ const LookupManager = ({ resource, canCreate, canEdit, canDelete, reloadKey, onC
                     {uses && <span>{tr("In use")}</span>}
                     <span />
                 </div>
-                {canCreate && (
-                    <div className="grid items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-3 py-2 dark:border-gray-700 dark:bg-gray-700/20" style={grid} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); setTimeout(add, 0) } }}>
+                {canCreate && (adding || (!loading && !rows.length)) && (
+                    <div className="grid items-center gap-3 border-b border-gray-100 bg-primary/5 px-3 py-2 dark:border-gray-700" style={grid} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); setTimeout(add, 0) } }}>
                         {orderField && <span />}
                         <input className={`${ctl} border-gray-200 bg-white dark:border-gray-600`} placeholder={tr("New {what}", { what: tr(resource.label).toLowerCase() })} aria-label={tr(main.label)} value={draft[main.key] || ''} onChange={(e) => setDraft((d) => ({ ...d, [main.key]: e.target.value }))} />
                         {cols.map((f) => <div key={f.key}>{f.required || ['color', 'boolean', 'select', 'relation'].includes(f.type) || f.type === 'number' ? <Cell draft field={f} value={draft[f.key]} onCommit={(val) => setDraft((d) => ({ ...d, [f.key]: val }))} /> : <span />}</div>)}
                         {uses && <span />}
-                        <Button size="xs" variant="solid" icon={<TbPlus />} onClick={add}>{tr("Add")}</Button>
+                        <span className="flex items-center gap-1"><Button size="xs" variant="solid" icon={<TbPlus />} onClick={add}>{tr("Add")}</Button><Button size="xs" variant="plain" icon={<TbX />} aria-label={tr("Close")} onClick={() => { setAdding(false); setDraft({}) }} /></span>
                     </div>
                 )}
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                <div className="flex flex-col gap-1.5 p-2">
                     {shownRows.map(({ r, i }) => (
                         <div
                             key={r.id}
-                            className={`grid items-center gap-3 px-3 py-1.5 ${rd.over === i ? 'bg-primary/5' : ''}`} style={grid} {...rd.row(i)}
+                            className={`grid items-center gap-3 rounded-lg border bg-white px-2 py-1 transition dark:bg-gray-800 ${rd.over === i ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'}`} style={grid} {...rd.row(i)}
                         >
                             {orderField && <DragHandle enabled={canEdit} {...rd.handle(i, canEdit)} />}
                             <div className={r.isActive === false ? 'opacity-50' : undefined}><Cell field={main} value={r[main.key]} disabled={!canEdit} onCommit={(val) => (val === '' ? load() : save(r, main.key, val))} /></div>

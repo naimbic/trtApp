@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useLocation, useSearchParams } from 'react-router'
-import { TbBuilding, TbCoin, TbCreditCard, TbPercentage, TbTag, TbBulb, TbShieldCheck, TbUsersGroup, TbBeach, TbBroadcast, TbChevronDown, TbFlag, TbListDetails, TbMessageCircleCog, TbProgressCheck, TbSettings, TbShieldX, TbTool } from 'react-icons/tb'
+import { TbPlus, TbBuilding, TbCoin, TbCreditCard, TbPercentage, TbTag, TbBulb, TbShieldCheck, TbUsersGroup, TbBeach, TbBroadcast, TbChevronDown, TbFlag, TbListDetails, TbMessageCircleCog, TbProgressCheck, TbSettings, TbShieldX, TbTool } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import { getResource } from '@/lib/crm/resources'
 import LookupManager from '../kit/LookupManager'
@@ -25,7 +25,9 @@ const BADGE = { Sales: 'bg-teal-500', Setup: 'bg-violet-500', Customers: 'bg-ind
 const store = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)) } catch { return null } }
 
 /** One list: a coloured header with its name and size, the editable rows when open (loaded the first time it opens). */
+const TINT = { Sales: 'bg-teal-50 dark:bg-teal-500/10', Customers: 'bg-indigo-50 dark:bg-indigo-500/10', Leads: 'bg-blue-50 dark:bg-blue-500/10', Tasks: 'bg-emerald-50 dark:bg-emerald-500/10', Support: 'bg-amber-50 dark:bg-amber-500/10', Administration: 'bg-rose-50 dark:bg-rose-500/10', Setup: 'bg-violet-50 dark:bg-violet-500/10' }
 const ListBlock = ({ resource, open, onToggle, can }) => {
+    const [add, setAdd] = useState(0)
     const [count, setCount] = useState(null)
     const [seen, setSeen] = useState(open)
     useEffect(() => { if (open) setSeen(true) }, [open])
@@ -33,15 +35,18 @@ const ListBlock = ({ resource, open, onToggle, can }) => {
     const Icon = ICONS[resource.key] || TbSettings
     return (
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800" data-list={resource.key}>
-            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center gap-3 px-4 py-2.5 text-start transition hover:bg-gray-50 dark:hover:bg-gray-700/40">
+            <div className={`flex items-center ${TINT[resource.group] || ''}`}>
+            <button type="button" aria-expanded={open} onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-start transition hover:bg-black/[0.03] dark:hover:bg-white/5">
                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base text-white ${BADGE[resource.group] || 'bg-violet-500'}`}><Icon /></span>
                 <span className="min-w-0 flex-1"><span className="block truncate font-semibold heading-text">{tr(resource.plural)}</span></span>
-                {count !== null && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold tabular-nums text-gray-600 dark:bg-gray-700 dark:text-gray-300">{count}</span>}
+                {count !== null && <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-bold tabular-nums text-gray-600 dark:bg-gray-700 dark:text-gray-300">{count}</span>}
                 <TbChevronDown className={`shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
+            {can(wf, 'create') && <button type="button" aria-label={tr('Add')} title={tr('Add')} onClick={() => { setAdd((n) => n + 1); if (!open) onToggle() }} className="me-3 ms-1 grid size-8 shrink-0 place-items-center rounded-full bg-white text-lg text-gray-600 shadow-sm transition hover:bg-primary hover:text-white dark:bg-gray-700 dark:text-gray-200"><TbPlus /></button>}
+            </div>
             {seen && (
                 <div className={open ? 'border-t border-gray-100 p-3 dark:border-gray-700' : 'hidden'}>
-                    <LookupManager resource={resource} canCreate={can(wf, 'create')} canEdit={can(wf, 'edit')} canDelete={can(wf, 'delete')} onCount={setCount} />
+                    <LookupManager resource={resource} canCreate={can(wf, 'create')} canEdit={can(wf, 'edit')} canDelete={can(wf, 'delete')} onCount={setCount} addSignal={add} />
                 </div>
             )}
         </div>

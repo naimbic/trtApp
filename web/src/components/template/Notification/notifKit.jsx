@@ -14,3 +14,13 @@ export const TONE = { red: 'bg-red-100 text-red-600', green: 'bg-emerald-100 tex
 export const kindLabel = (k) => ({ ticket: tr('Tickets'), task: tr('Tasks'), reminder: tr('Reminders'), mention: tr('Mentions'), payment: tr('Payments'), invoice: tr('Invoices'), estimate: tr('Estimates'), proposal: tr('Proposals'), lead: tr('Leads'), view: tr('Views'), comment: tr('Comments'), note: tr('Notes'), request: tr('Requests'), idea: tr('Ideas'), team: tr('Team'), grow: tr('Growth'), calendar: tr('Calendar'), other: tr('Other') }[k] || k)
 /** Icon component and classes of one notification. */
 export const look = (i) => { const [Icon, cls] = KIND[i.kind] || KIND.other; return [Icon, TONE[i.tone] && !['ticket', 'reminder', 'request', 'idea'].includes(i.kind) ? TONE[i.tone] : cls] }
+
+/** What a CRM link points at, in words (tasks → Task...), and the record it names (for a reminder or a quick comment). */
+const RECORDS = { tasks: 'Task', 'tasks-board': 'Task', leads: 'Lead', clients: 'Client', tickets: 'Ticket', invoices: 'Invoice', estimates: 'Estimate', proposals: 'Proposal', contracts: 'Contract', projects: 'Project', expenses: 'Expense', chat: 'Chat', calendar: 'Event', notes: 'Note', 'knowledge-base': 'Article', issues: 'Issue' }
+export const recordLabel = (link) => { const m = /^\/(?:crm\/)?([a-z-]+)/i.exec(String(link || '')); return m && RECORDS[m[1]] ? tr(RECORDS[m[1]]) : '' }
+/** { type: 'task' | 'lead', id } when a person can answer on the record right from the notification. */
+export const replyTarget = (link) => {
+    const m = /^\/crm\/(tasks|tasks-board|leads)(?:\/([a-f0-9]{24}))?(?:\?.*?\btask=([a-f0-9]{24}))?/i.exec(String(link || ''))
+    const id = m && (m[2] || m[3])
+    return id ? { type: m[1] === 'leads' ? 'lead' : 'task', id } : null
+}

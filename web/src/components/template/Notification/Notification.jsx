@@ -44,10 +44,10 @@ export const NotifRow = ({ i, onOpen, onToggle }) => {
             <span className={classNames('flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg', cls)}><Icon /></span>
             <div className="min-w-0 flex-1">
                 <div className={classNames('truncate text-[13px] leading-tight', i.read ? 'font-medium text-gray-600 dark:text-gray-300' : 'font-bold heading-text')}>{shorten(title, 46)}</div>
-                <div className="flex items-center gap-1.5 text-[11px] leading-tight text-gray-400"><span className="min-w-0 flex-1 truncate">{shorten(i.detail, 52)}</span><span className="shrink-0">{dayjs(i.date).fromNow(true)}</span></div>
+                <div className="flex items-center gap-1.5 text-[11px] leading-tight text-gray-400"><span className="min-w-0 flex-1 truncate">{i.from ? `${i.from} · ` : ''}{shorten(i.detail, 52)}</span><span className="shrink-0">{dayjs(i.date).fromNow(true)}</span></div>
             </div>
-            <button type="button" title={i.read ? tr('Mark as unread') : tr('Mark as read')} aria-label={i.read ? tr('Mark as unread') : tr('Mark as read')} onClick={(e) => { e.stopPropagation(); onToggle(i) }} className="hidden size-6 shrink-0 place-items-center rounded-full text-base text-gray-500 hover:bg-white hover:text-primary group-hover:grid dark:hover:bg-gray-600">{i.read ? <PiEnvelopeSimpleDuotone /> : <PiEnvelopeSimpleOpenDuotone />}</button>
-            {!i.read && <span className="size-2 shrink-0 rounded-full bg-primary group-hover:hidden" />}
+            <button type="button" title={i.read ? tr('Mark as unread') : tr('Mark as read')} aria-label={i.read ? tr('Mark as unread') : tr('Mark as read')} onClick={(e) => { e.stopPropagation(); onToggle(i) }} className="grid size-7 shrink-0 place-items-center rounded-full text-base text-gray-400 transition hover:bg-white hover:text-primary dark:hover:bg-gray-600">{i.read ? <PiEnvelopeSimpleDuotone /> : <PiEnvelopeSimpleOpenDuotone />}</button>
+            {!i.read && <span className="size-2 shrink-0 rounded-full bg-primary" />}
         </div>
     )
 }

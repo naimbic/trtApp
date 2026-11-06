@@ -21,6 +21,7 @@ const ResourcePage = () => {
     const can = useCan()
     const [drawer, setDrawer] = useState({ open: false, id: null })
     const [reload, setReload] = useState(0)
+    const [addSignal, setAddSignal] = useState(0)
 
     if (!resource) {
         const custom = customNavItems.find((i) => i.key === key)
@@ -45,10 +46,10 @@ const ResourcePage = () => {
                     <h3>{resource.plural}</h3>
                     <p className="text-sm text-gray-500">{resource.group}</p>
                 </div>
-                {canCreate && !resource.lookup && <Button variant="solid" icon={<TbPlus />} onClick={() => setDrawer({ open: true, id: null })}>{tr("New")} {resource.label.toLowerCase()}</Button>}
+                {canCreate && <Button variant="solid" icon={<TbPlus />} onClick={() => (resource.lookup ? setAddSignal((n) => n + 1) : setDrawer({ open: true, id: null }))}>{tr("New")} {resource.label.toLowerCase()}</Button>}
             </div>
             {resource.lookup ? (
-                <LookupManager key={`${resource.key}-list`} resource={resource} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} reloadKey={reload} />
+                <LookupManager key={`${resource.key}-list`} resource={resource} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} reloadKey={reload} addSignal={addSignal} />
             ) : (
                 <AdaptiveCard>
                     <ResourceTable

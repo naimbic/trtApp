@@ -11,12 +11,11 @@ import { customNavItems } from '@/lib/crm/custom-nav'
 // there is no "More" column inside a pill, and every area ends with its own "... setting" entry (all of them open Lists & statuses, already filtered).
 const col = (title, items) => ({ sub: title.toLowerCase().replace(/[^a-z]+/g, ''), title, items })
 const STRUCTURE = [
-    { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
-    { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'customers-setting'] },
     { group: 'Leads', icon: 'crmLeads', entries: ['leads', 'web-to-lead', 'lead-email-integration', 'leads-setting'] },
-    { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
     { group: 'Tasks', icon: 'crmTasks', entries: [col('Work', ['tasks-board', 'my-tasks', 'team-tasks', 'timeline', 'notes', 'todos']), col('Tracking', ['time-report', 'task-timers', 'issues', 'statuses', 'checklist-templates', 'tasks-setting'])] },
-    // from here on: the "More" pill, one column per group
+    { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'customers-setting'] },
+    { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
+    { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
     { group: 'Support & Help', icon: 'crmSupport', entries: ['tickets', 'help-center', 'kb-manage', 'support-setting'] },
     { group: 'Team', icon: 'crmAdministration', entries: ['staff', 'roles', 'announcements', 'team-setting'] },
     { group: 'Time & pay', icon: 'crmAdministration', entries: ['work-hours', 'timesheets', 'leave-requests', 'days-off', 'payroll'] },

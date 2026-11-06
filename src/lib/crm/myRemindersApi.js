@@ -78,6 +78,14 @@ export async function listAllMine() {
     }
 }
 
+const LINK_TYPES = { tasks: 'task', 'tasks-board': 'task', leads: 'lead', clients: 'customer', tickets: 'ticket', projects: 'project', invoices: 'invoice', estimates: 'estimate', proposals: 'proposal', contracts: 'contract', expenses: 'expense', issues: 'issue' }
+/** { relType, relId } from a CRM link such as /crm/tasks/<id> or /crm/tasks-board?task=<id>, or null. */
+export function recordOfLink(link) {
+    const m = /^\/crm\/([a-z-]+)(?:\/([a-f0-9]{24}))?(?:\?.*?\b(?:task|id)=([a-f0-9]{24}))?/i.exec(String(link || ''))
+    const type = m && LINK_TYPES[m[1]], id = m && (m[2] || m[3])
+    return type && oid(id) ? { relType: type, relId: id } : null
+}
+
 /** A reminder that is about nothing in particular: just a note with a time. */
 export async function addFree(body = {}) {
     const staffId = await me()
@@ -85,7 +93,9 @@ export async function addFree(body = {}) {
     if (Number.isNaN(+date)) throw fail('Choose a date and a time')
     const note = String(body.note || '').replace(/\s+/g, ' ').trim().slice(0, 500)
     if (!note) throw fail('Write what to remember')
-    const row = await prisma.crmReminder.create({ data: { staffId, creatorId: staffId, date, description: note, notifyByEmail: true } })
+    // a reminder made from a notification keeps the record it is about (a link of the CRM names the record)
+    const rec = recordOfLink(body.link)
+    const row = await prisma.crmReminder.create({ data: { staffId, creatorId: staffId, date, description: note, notifyByEmail: true, ...(rec || {}) } })
     return { id: row.id }
 }
 

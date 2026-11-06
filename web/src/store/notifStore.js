@@ -5,9 +5,9 @@ const post = (body) => fetch('/api/crm/notifications', { method: 'POST', credent
 
 export const useNotifs = create((set, get) => ({
     items: [], counts: { unread: 0, total: 0, byKind: {} }, loaded: false,
-    load: async () => {
+    load: async (days) => {
         try {
-            const r = await fetch('/api/crm/notifications', { credentials: 'include' })
+            const r = await fetch(`/api/crm/notifications${days > 14 ? `?days=${days}` : ''}`, { credentials: 'include' })
             if (r.ok) { const j = await r.json(); set({ items: j.items || [], counts: j.counts || { unread: 0, total: 0, byKind: {} }, loaded: true }) } else set({ loaded: true })
         } catch { set({ loaded: true }) } // offline: keep the last list
     },

@@ -4,8 +4,8 @@ import { errorResponse } from '@/lib/crm/crud'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-    try { return NextResponse.json(await notificationFeed()) } catch (e) { return errorResponse(e) }
+export async function GET(request) {
+    try { return NextResponse.json(await notificationFeed({ days: request.nextUrl.searchParams.get('days') })) } catch (e) { return errorResponse(e) }
 }
 
 // POST (no body) = mark everything read · { action: 'read' | 'unread', ids: [...] } = those items

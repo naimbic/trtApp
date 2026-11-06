@@ -28,7 +28,8 @@ const strip = (h) => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' 
  * records themselves (client replies, assignments, due dates, payments, answers, new leads, documents opened),
  * limited to what the person may see. "Read" is tracked in the browser by the time the bell was last opened.
  */
-export async function notificationFeed() {
+export async function notificationFeed({ days } = {}) {
+    const back = Math.min(180, Math.max(14, Number(days) || 14)) // how far back the stored notifications go (the page's date filter asks for more)
     const session = await requirePermission(null)
     const authority = session.user.authority || []
     const can = (f) => viewScope(authority, f) !== null
@@ -48,11 +49,11 @@ export async function notificationFeed() {
         for (const t of rows) add('ticket', t.lastReply ? `Client replied on ticket #${t.legacyId ?? String(t.id).slice(-5).toUpperCase()}` : `New ticket #${t.legacyId ?? String(t.id).slice(-5).toUpperCase()}`, t.subject, t.lastReply || t.createdAt, `/crm/tickets/${t.id}`, 'purple')
     }
     if (staffId) { // everything written for me: mentions, comments, assignments, shared notes, client requests and ideas, reminders, appointments, growth, account requests
-        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, OR: [{ isRead: false }, { createdAt: { gte: since(14) } }] }, orderBy: { createdAt: 'desc' }, take: 120 })
+        const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, OR: [{ isRead: false }, { createdAt: { gte: since(back) } }] }, orderBy: { createdAt: 'desc' }, take: back > 14 ? 600 : 120 })
         for (const m of ms) {
             const kind = kindOfStored(m.additionalData)
             const [title, detail] = storedWords(m, kind)
-            stored.push({ id: `n:${m.id}`, kind, tone: TONE_OF[kind] || 'blue', title, detail: detail || '', date: m.createdAt, link: m.link || null, read: !!m.isRead })
+            stored.push({ id: `n:${m.id}`, kind, tone: TONE_OF[kind] || 'blue', title, detail: detail || '', date: m.createdAt, link: m.link || null, read: !!m.isRead, from: m.fromFullName || '' })
         }
     }
     if (staffId) { // my checklist steps: overdue, due today, or a reminder that has come
@@ -118,7 +119,7 @@ export async function notificationFeed() {
     const states = staffId && items.length ? await prisma.crmNotifState.findMany({ where: { staffId, key: { in: items.map((x) => x.id) } } }) : []
     const state = Object.fromEntries(states.map((x) => [x.key, x.read]))
     const feed = [...items.map((x) => ({ ...x, read: x.id in state ? state[x.id] : +new Date(x.date) <= seen })), ...stored]
-        .sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 150)
+        .sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, back > 14 ? 700 : 150)
     const unread = feed.filter((x) => !x.read)
     const byKind = {}
     for (const x of unread) byKind[x.kind] = (byKind[x.kind] || 0) + 1

@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.193.0',
+        date: '2026-11-06',
+        title: 'Notifications with actions, short lists like Items, menu order',
+        items: [
+            'Notifications page: richer cards (what happened, the detail, kind, record, who sent it, exact date and time) and actions without opening them: mark read / unread, Remind me (in 1 hour, this evening, tomorrow, next Monday), Reply (a comment on the task or a note on the lead) and Open.',
+            'The page shows the last 5 days by default, newest first; quick periods (Today, 5, 14, 30 days, All) and From / To dates; "Mark these as read" for what is shown. The bell keeps a read button on every line and shows who it is from.',
+            'Lists & statuses (and every short list) look like Items & Groups: a coloured accordion per list with a + to add, drag handles, a colour you edit in the row, a star for the default, rows as small cards.',
+            'Menu order: Dashboard, Leads, Tasks, Customers, Sales, Projects, More.',
+        ],
+    },
+    {
         version: '0.192.0',
         date: '2026-11-06',
         title: 'Menus re-organised: five pills and a clear More, each area with its own setting entry',

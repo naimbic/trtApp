@@ -62,7 +62,7 @@ export const SettingImage = ({ field, value, canEdit, onSaved }) => {
 }
 
 /* ---------- a form field of any type ---------- */
-export const Field = ({ field: x, value, secretSet, onChange, canEdit, taxes }) => {
+export const Field = ({ field: x, value, secretSet, onChange, canEdit, taxes, staff }) => {
     const label = (
         <span className="flex flex-wrap items-center">
             <span className="font-semibold text-gray-700 dark:text-gray-200">{x.label}</span>
@@ -90,6 +90,8 @@ export const Field = ({ field: x, value, secretSet, onChange, canEdit, taxes }) 
         case 'textarea': control = <Input textArea rows={x.rows || 3} disabled={!canEdit} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />; break
         case 'html': control = <textarea id={`f-${x.key}`} rows={x.rows || 6} spellCheck={false} disabled={!canEdit} value={value ?? ''} onChange={(e) => onChange(e.target.value)} className="w-full rounded-xl border border-gray-300 bg-white p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-800" />; break
         case 'select': { const o = x.options; control = <Select isDisabled={!canEdit} options={o} value={o.find((i) => String(i.value) === String(value)) || null} onChange={(opt) => onChange(opt ? String(opt.value) : '')} />; break }
+        case 'checks': { const on = String(value || '').split(',').filter(Boolean); control = <div className={`grid grid-cols-2 gap-2 ${x.cols === 4 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>{x.options.map((o) => <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-600"><input type="checkbox" disabled={!canEdit} checked={on.includes(String(o.value))} onChange={(e) => onChange((e.target.checked ? [...on, String(o.value)] : on.filter((y) => y !== String(o.value))).join(','))} className="h-4 w-4 accent-[var(--primary)]" />{tr(o.label)}</label>)}</div>; break }
+        case 'staffs': { const on = String(value || '').split(',').filter(Boolean); const o = staff || []; control = <Select isMulti isDisabled={!canEdit} options={o} value={o.filter((i) => on.includes(i.value))} placeholder={tr('Choose the people')} onChange={(v) => onChange((v || []).map((i) => i.value).join(','))} />; break }
         case 'languages': { const on = String(value || '').split(',').filter(Boolean); control = <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{x.options.map((o) => <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-600"><input type="checkbox" disabled={!canEdit || o.value === 'english'} checked={on.includes(o.value) || o.value === 'english'} onChange={(e) => onChange((e.target.checked ? [...on, o.value] : on.filter((y) => y !== o.value)).join(','))} className="h-4 w-4 accent-[var(--primary)]" />{o.label}</label>)}</div>; break }
         case 'timezone': control = <Select isClearable isDisabled={!canEdit} options={ZONES} value={ZONES.find((z) => z.value === value) || null} onChange={(o) => onChange(o?.value || '')} />; break
         case 'color': control = <div className="flex gap-2"><input type="color" disabled={!canEdit} value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#000000'} onChange={(e) => onChange(e.target.value)} className="h-10 w-14 cursor-pointer rounded-lg border border-gray-300 bg-white p-1 dark:border-gray-600" /><Input disabled={!canEdit} value={value ?? ''} onChange={(e) => onChange(e.target.value)} placeholder="#323a45" /></div>; break

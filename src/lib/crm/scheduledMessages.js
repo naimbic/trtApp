@@ -3,11 +3,16 @@ import { requirePermission, getStaffId } from '@/lib/crm/permissions'
 import { richParts, previewOf, applyAction } from '@/lib/crm/chatApi'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { notifyNewMentions } from '@/lib/crm/mentionsApi'
+import { chat } from '@/lib/crm/ai/providers'
+import { resolveAi } from '@/lib/crm/ai/aiSettings'
+import { rateLimit } from '@/lib/rateLimit'
+import { shapeAiMessage } from '@/lib/crm/scheduledMessagesCalc'
 import { REPEATS, UNITS, customOf, nextAfter, describe } from '@/lib/crm/scheduleRules'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const AUDIENCES = ['team', 'admins', 'all', 'selected']
+export const CATEGORIES = ['tips', 'reminders', 'meetings', 'announcements', 'celebrations', 'other']
 const staffName = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || ''
 
 async function gate(cap) {
@@ -85,7 +90,7 @@ export async function scheduledMessagesJob({ lines, dry }) {
     }
 }
 
-const shape = (m, names) => ({ id: m.id, title: m.title, body: m.body, rich: m.rich || null, assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, leadId: m.leadId || null, emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, every: m.every || 1, unit: m.unit || 'day', cycles: m.cycles || 0, runs: m.runs || 0, repeatLabel: describe(m.repeat, { every: m.every, unit: m.unit }, m.cycles), nextAt: m.nextAt, active: m.active, lastSentAt: m.lastSentAt, lastCount: m.lastCount, sentCount: m.sentCount, createdBy: names[m.createdBy] || '', createdAt: m.createdAt })
+const shape = (m, names) => ({ id: m.id, category: m.category || 'other', title: m.title, body: m.body, rich: m.rich || null, assigneeIds: m.assigneeIds || [], clientId: m.clientId || null, leadId: m.leadId || null, emailClient: !!m.emailClient, makeTask: !!m.makeTask, audience: m.audience, staffIds: m.staffIds, repeat: m.repeat, every: m.every || 1, unit: m.unit || 'day', cycles: m.cycles || 0, runs: m.runs || 0, repeatLabel: describe(m.repeat, { every: m.every, unit: m.unit }, m.cycles), nextAt: m.nextAt, active: m.active, lastSentAt: m.lastSentAt, lastCount: m.lastCount, sentCount: m.sentCount, createdBy: names[m.createdBy] || '', createdAt: m.createdAt })
 
 export async function listScheduled() {
     await gate('view')
@@ -108,6 +113,7 @@ export async function saveScheduled(id, body = {}) {
         if (text.length > 2000) throw fail('The message is too long (2000 characters at most)')
         data.body = text || '🖼 Screenshot'; data.rich = html || null
     }
+    if (body.category !== undefined) { if (!CATEGORIES.includes(body.category)) throw fail('Unknown category'); data.category = body.category }
     if (!cur || body.audience !== undefined) { if (!AUDIENCES.includes(body.audience || 'team')) throw fail('Unknown audience'); data.audience = body.audience || 'team' }
     if (body.staffIds !== undefined) data.staffIds = [...new Set((Array.isArray(body.staffIds) ? body.staffIds : []).map(oid).filter(Boolean))]
     if ((data.audience || cur?.audience) === 'selected' && !(data.staffIds ?? cur?.staffIds ?? []).length) throw fail('Choose at least one person')
@@ -167,4 +173,20 @@ export async function sendScheduledNow(id) {
     const { n, notes } = await deliverScheduled(cur)
     await prisma.crmScheduledMessage.update({ where: { id }, data: { lastSentAt: new Date(), lastCount: n, sentCount: { increment: 1 } } })
     return { success: true, sent: n, notes }
+}
+
+/** The AI writes the message from a few words: what to tell the team, in what tone. Returns { title, html } for the editor. */
+export async function writeWithAi(body = {}) {
+    const g = await gate('create')
+    const idea = String(body.idea || '').replace(/\s+/g, ' ').trim().slice(0, 1200)
+    if (idea.length < 8) throw fail('Tell the AI what the message is about (a sentence or two)')
+    rateLimit(`sched-ai:${g.staffId}`, 30, 3600000)
+    const ai = await resolveAi()
+    const tone = { friendly: 'warm, friendly and encouraging', professional: 'clear and professional', short: 'very short and direct (3 or 4 lines)', motivating: 'motivating and positive' }[body.tone] || 'warm, friendly and encouraging'
+    const lang = { fr: 'French', es: 'Spanish', ar: 'Arabic', ja: 'Japanese', en: 'English' }[body.lang] || 'English'
+    const current = String(body.current || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1500)
+    const system = 'You write short internal messages that a CRM posts in the team chat. Write in ' + lang + ', ' + tone + '. Plain text only: no markdown symbols, no hashtags. Short paragraphs separated by a blank line; a list may use lines starting with "- ". At most 1500 characters. Reply with JSON only: {"title":"a short title of at most 8 words","message":"the message"}.'
+    const user = `What to tell the team: ${idea}${current ? `\n\nThe draft so far (improve it): ${current}` : ''}`
+    const out = await chat({ provider: ai.provider, apiKey: ai.apiKey, workspaceId: ai.workspaceId, model: ai.model, system, user, maxTokens: 900, timeoutMs: 60000 })
+    return shapeAiMessage(out.text)
 }

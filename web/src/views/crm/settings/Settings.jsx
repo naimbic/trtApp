@@ -102,6 +102,7 @@ const Settings = () => {
     useEffect(() => { load(group) }, [group, load])
     useEffect(() => {
         api('/api/crm/taxes?pageSize=100').then((d) => setCtx((c) => ({ ...c, taxes: d.list.map((t) => `${t.name}|${Number(t.taxRate).toFixed(2)}`) }))).catch(() => {})
+        api('/api/crm/team?pageSize=200').then((d) => setCtx((c) => ({ ...c, staff: (d.list || []).filter((t) => t.active !== false).map((t) => ({ value: t.id, label: [t.firstName, t.lastName].filter(Boolean).join(' ') || t.email })) }))).catch(() => {})
         api('/api/crm/custom-fields?where.fieldTo=customers&pageSize=100').then((d) => setCtx((c) => ({ ...c, customFields: d.list }))).catch(() => {})
     }, [])
 
@@ -148,7 +149,7 @@ const Settings = () => {
                                     {!c.desc && <div className={compact ? 'mb-1.5' : 'mb-3'} />}
                                     {c.fields?.filter((x) => !x.cardToggle).length > 0 && (
                                         <div className={cn(compact ? "grid grid-cols-1 gap-x-4 gap-y-3 transition-opacity md:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-x-5 gap-y-4 transition-opacity md:grid-cols-2", "[&>div.md\\:col-span-2:has(button[role=switch])]:border-t", !on && "opacity-50")}>
-                                            {c.fields.filter((x) => !x.cardToggle).map((x) => <Field key={x.key} field={x} value={values[x.key]} secretSet={secrets[x.key]} onChange={(v, instant) => setValue(x.key, v, instant)} canEdit={canEdit} taxes={ctx.taxes} />)}
+                                            {c.fields.filter((x) => !x.cardToggle).map((x) => <Field key={x.key} field={x} value={values[x.key]} secretSet={secrets[x.key]} onChange={(v, instant) => setValue(x.key, v, instant)} canEdit={canEdit} taxes={ctx.taxes} staff={ctx.staff} />)}
                                             {c.panel && <Panel name={c.panel} group={group} values={values} setValue={setValue} ctx={ctx} />}
                                         </div>
                                     )}

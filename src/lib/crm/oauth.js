@@ -6,6 +6,7 @@ import { seal, open } from '@/lib/crm/ai/secret'
 import { publicBase } from '@/lib/crm/shortLinks'
 import { buildUserAuthority } from '@/lib/crm/authBuild'
 import { rateLimit, clientIp } from '@/lib/rateLimit'
+import { getOptions } from '@/lib/crm/mailer'
 
 /* The CRM as an OpenID Connect provider: team members sign in to other apps (Meet) with their CRM account.
    Authorization code flow with PKCE, RS256 tokens. Only active staff can sign in: clients never. */
@@ -46,11 +47,21 @@ export function discovery() {
         issuer: base, authorization_endpoint: `${base}/api/oauth/authorize`, token_endpoint: `${base}/api/oauth/token`, userinfo_endpoint: `${base}/api/oauth/userinfo`,
         jwks_uri: `${base}/api/oauth/jwks`, end_session_endpoint: `${base}/api/oauth/logout`, response_types_supported: ['code'], grant_types_supported: ['authorization_code'],
         subject_types_supported: ['public'], id_token_signing_alg_values_supported: ['RS256'], scopes_supported: SCOPES, code_challenge_methods_supported: ['S256'],
-        token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'], claims_supported: ['sub', 'name', 'given_name', 'family_name', 'email', 'email_verified', 'picture', 'phone_number', 'locale', 'linkedin', 'staff_id', 'admin', 'role'],
+        token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'], claims_supported: ['can_host', 'sub', 'name', 'given_name', 'family_name', 'email', 'email_verified', 'picture', 'phone_number', 'locale', 'linkedin', 'staff_id', 'admin', 'role'],
     }
 }
 
 /* ------------------------------------------------------------ who may sign in, and what the app learns */
+/** Settings → Calendar → who can host a meeting on Meet: everybody, administrators and managers, or administrators only (plus the people named there). */
+async function canHostMeetings({ staffId, admin, roleName }) {
+    const o = await getOptions(['meeting_host_policy', 'meeting_host_staff'])
+    const policy = o('meeting_host_policy', 'all')
+    if (policy === 'all' || admin) return true
+    if (String(o('meeting_host_staff', '')).split(',').includes(String(staffId))) return true
+    if (policy === 'managers') { const r = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { role: { select: { name: true } } } }).catch(() => null); return /manager/i.test(`${r?.role?.name || ''} ${roleName || ''}`) }
+    return false
+}
+
 async function claimsFor(userId) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user || user.status === 'inactive' || user.status === 'blocked') return null
@@ -61,7 +72,7 @@ async function claimsFor(userId) {
     const raw = user.image || staff.profileImage
     const img = raw ? (/^https?:/i.test(raw) ? raw : `${issuer()}${raw.startsWith('/') ? '' : '/'}${raw}`) : undefined
     const clean = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== ''))
-    return clean({ sub: user.id, name: user.name || [staff.firstName, staff.lastName].filter(Boolean).join(' ') || user.email, given_name: staff.firstName || user.firstName, family_name: staff.lastName || user.lastName, email: user.email, email_verified: true, picture: img, phone_number: staff.phoneNumber || user.phone, locale: staff.defaultLanguage, linkedin: staff.linkedin, staff_id: staff.id, admin: isCrmAdmin(authority), role: user.role })
+    return clean({ sub: user.id, name: user.name || [staff.firstName, staff.lastName].filter(Boolean).join(' ') || user.email, given_name: staff.firstName || user.firstName, family_name: staff.lastName || user.lastName, email: user.email, email_verified: true, picture: img, phone_number: staff.phoneNumber || user.phone, locale: staff.defaultLanguage, linkedin: staff.linkedin, staff_id: staff.id, admin: isCrmAdmin(authority), role: user.role, can_host: await canHostMeetings({ staffId: staff.id, admin: isCrmAdmin(authority), roleName: user.role }) })
 }
 
 /* ------------------------------------------------------------ the apps (clients), for the super administrator */

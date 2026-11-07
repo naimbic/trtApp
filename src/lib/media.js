@@ -34,14 +34,14 @@ const FILE_TYPES = {
 }
 const IMAGE_FORMATS = new Set(['jpeg', 'png', 'webp', 'gif', 'avif', 'tiff', 'heif'])
 
-let cfgCache = { at: 0, allowed: null, maxMb: null }
-/** Settings → General → Files: allowed extensions and the largest upload (cached for 30 s). */
+let cfgCache = { at: 0, allowed: null, maxMb: null, maxImageMb: null, maxVideoMb: null }
+/** Settings → General → Files: allowed extensions and the largest upload for images, documents and videos/audio (cached for 30 s). */
 async function uploadConfig() {
     if (Date.now() - cfgCache.at < 30000) return cfgCache
-    const rows = await prisma.crmOption.findMany({ where: { name: { in: ['allowed_files', 'media_max_file_size_upload'] } } }).catch(() => [])
+    const rows = await prisma.crmOption.findMany({ where: { name: { in: ['allowed_files', 'media_max_file_size_upload', 'media_max_image_size_upload', 'media_max_video_size_upload'] } } }).catch(() => [])
     const m = Object.fromEntries(rows.map((r) => [r.name, r.value]))
     const list = String(m.allowed_files || '').split(/[,;\s]+/).map((x) => x.replace(/^\./, '').toLowerCase()).filter(Boolean)
-    cfgCache = { at: Date.now(), allowed: list.length ? new Set(list) : null, maxMb: Number(m.media_max_file_size_upload) > 0 ? Number(m.media_max_file_size_upload) : null }
+    cfgCache = { at: Date.now(), allowed: list.length ? new Set(list) : null, maxMb: Number(m.media_max_file_size_upload) > 0 ? Number(m.media_max_file_size_upload) : null, maxImageMb: Number(m.media_max_image_size_upload) > 0 ? Number(m.media_max_image_size_upload) : null, maxVideoMb: Number(m.media_max_video_size_upload) > 0 ? Number(m.media_max_video_size_upload) : null }
     return cfgCache
 }
 
@@ -66,7 +66,8 @@ export async function processUpload(file, { purpose = 'library', imageOnly = fal
     const ext = extOf(name)
     const cfg = await uploadConfig()
     if (!skipAllowed && cfg.allowed && !cfg.allowed.has(ext) && !(ext === 'jpg' && cfg.allowed.has('jpeg')) && !(ext === 'jpeg' && cfg.allowed.has('jpg'))) throw new MediaError(`".${ext || 'unknown'}" files are not allowed in Settings → General → Files`)
-    if (cfg.maxMb && file.size > cfg.maxMb * MB) throw new MediaError(`"${name}" is larger than ${cfg.maxMb} MB (Settings → General → Files)`)
+    const imgMb = cfg.maxImageMb || LIMITS.image / MB, fileMb = cfg.maxMb || LIMITS.file / MB, vidMb = cfg.maxVideoMb || fileMb
+    if (file.size > Math.max(imgMb, fileMb, vidMb) * MB) throw new MediaError(`"${name}" is too large (the biggest upload allowed is ${Math.max(imgMb, fileMb, vidMb)} MB, Settings → General → Files)`)
     const raw = Buffer.from(await file.arrayBuffer())
     if (!raw.length) throw new MediaError(`"${name}" is empty`)
 
@@ -75,7 +76,7 @@ export async function processUpload(file, { purpose = 'library', imageOnly = fal
     const isImage = !!meta && IMAGE_FORMATS.has(meta.format)
 
     if (isImage) {
-        if (raw.length > LIMITS.image) throw new MediaError(`"${name}" is too large (images up to ${LIMITS.image / MB} MB)`)
+        if (raw.length > imgMb * MB) throw new MediaError(`"${name}" is too large (images up to ${imgMb} MB, Settings → General → Files)`)
         const preset = PRESETS[purpose] || PRESETS.library
         const animated = (meta.pages || 1) > 1 && ['gif', 'webp'].includes(meta.format)
         let pipeline = sharp(raw, { failOn: 'none', animated, limitInputPixels: 100e6 }).rotate()
@@ -89,9 +90,10 @@ export async function processUpload(file, { purpose = 'library', imageOnly = fal
 
     if (imageOnly) throw new MediaError('Please choose an image (JPG, PNG, WebP, GIF or AVIF)')
     if (!FILE_TYPES[ext]) throw new MediaError(`".${ext || 'unknown'}" files are not allowed. Allowed: images, PDF, Office documents, CSV, TXT, ZIP/RAR/7Z, MP4/MOV/WEBM, MP3/WAV`)
-    if (raw.length > LIMITS.file) throw new MediaError(`"${name}" is too large (files up to ${LIMITS.file / MB} MB)`)
-    if (ext === 'pdf' && raw.subarray(0, 5).toString() !== '%PDF-') throw new MediaError(`"${name}" is not a valid PDF`)
     const [kind, contentType] = FILE_TYPES[ext]
+    const limitMb = kind === 'video' || kind === 'audio' ? vidMb : fileMb
+    if (raw.length > limitMb * MB) throw new MediaError(`"${name}" is too large (${kind === 'video' || kind === 'audio' ? 'videos and audio' : 'files'} up to ${limitMb} MB, Settings → General → Files)`)
+    if (ext === 'pdf' && raw.subarray(0, 5).toString() !== '%PDF-') throw new MediaError(`"${name}" is not a valid PDF`)
     return { buffer: raw, contentType, ext, kind, width: null, height: null, size: raw.length, originalSize: raw.length, name }
 }
 

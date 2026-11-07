@@ -5,6 +5,7 @@ import { storeRich } from '@/lib/crm/richText'
 import { emit } from '@/lib/crm/webhooks'
 import { deliver, escapeHtml } from '@/lib/crm/mailer'
 import { notifyNotice } from '@/lib/crm/notifyMail'
+import { getOptions } from '@/lib/crm/mailer'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -51,7 +52,8 @@ export async function createAppointment(request) {
             row = await prisma.crmEvent.update({ where: { id: same.id }, data })
         } else {
             row = await prisma.crmEvent.create({ data: { ...data, isPublic: false } }); created = true
-            const admins = await prisma.crmStaff.findMany({ where: { active: true, admin: true }, select: { id: true } })
+            const picked = String((await getOptions(['appointment_staff']))('appointment_staff') || '').split(',').filter((x) => /^[a-f0-9]{24}$/i.test(x)) // Settings → Calendar: who takes the appointments (empty = every administrator)
+            const admins = await prisma.crmStaff.findMany({ where: picked.length ? { active: true, id: { in: picked } } : { active: true, admin: true }, select: { id: true } })
             const who = guests.map((g) => g.name || g.email).filter(Boolean).join(', ')
             const text = `Appointment request: ${title}${who ? ` (${who})` : ''} on ${start.toISOString().slice(0, 16).replace('T', ' ')} UTC`
             for (const a of admins) {

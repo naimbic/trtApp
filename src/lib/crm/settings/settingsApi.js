@@ -34,6 +34,9 @@ export async function getSettings(group) {
 function clean(x, v) {
     const t = x.type
     if (t === 'languages') return normalizeLanguages(Array.isArray(v) ? v.join(',') : v).join(',')
+    if (t === 'checks') { const ok = new Set(x.options.map((o) => String(o.value))); return [...new Set((Array.isArray(v) ? v : String(v ?? '').split(',')).map(String).filter((y) => ok.has(y)))].join(',') }
+    if (t === 'staffs') return [...new Set((Array.isArray(v) ? v : String(v ?? '').split(',')).map((y) => String(y).trim()).filter((y) => /^[a-f0-9]{24}$/i.test(y)))].slice(0, 100).join(',')
+    if (x.key === 'booking_windows') { const val = String(v ?? '').replace(/\s+/g, ''); if (val && !/^\d{1,2}-\d{1,2}(,\d{1,2}-\d{1,2})*$/.test(val)) fail(`${x.label}: write it like 10-13,14-17`); for (const w of val ? val.split(',') : []) { const [a, b] = w.split('-').map(Number); if (!(a < b && a >= 0 && b <= 24)) fail(`${x.label}: each period must start before it ends, between 0 and 24`) } return val }
     if (t === 'switch') return v === true || v === '1' || v === 1 ? '1' : '0'
     if (t === 'number') {
         if (v === '' || v == null) return ''
@@ -140,7 +143,7 @@ export async function getBranding() {
     return { name: o('platform_name', 'trtCRM'), logo: url('platform_logo'), logoDark: url('platform_logo_dark'), favicon: url('favicon') }
 }
 
-const APP_KEYS = ['tables_pagination_limit', 'disable_language', 'dateformat', 'time_format', 'default_timezone', 'active_language', 'decimal_separator', 'thousand_separator', 'remove_decimals_on_zero', 'default_view_calendar', 'calendar_first_day', 'calendar_events_limit', 'show_tasks_on_calendar', 'show_invoices_on_calendar', 'show_estimates_on_calendar', 'show_proposals_on_calendar', 'show_contracts_on_calendar', 'show_projects_on_calendar', 'invoice_due_after', 'predefined_clientnote_invoice', 'predefined_terms_invoice', 'default_tax', 'show_tax_per_item', 'company_is_required', 'media_max_file_size_upload', 'allowed_files', 'estimate_due_after', 'predefined_clientnote_estimate', 'predefined_terms_estimate']
+const APP_KEYS = ['tables_pagination_limit', 'disable_language', 'dateformat', 'time_format', 'default_timezone', 'active_language', 'decimal_separator', 'thousand_separator', 'remove_decimals_on_zero', 'default_view_calendar', 'calendar_first_day', 'calendar_events_limit', 'show_tasks_on_calendar', 'show_invoices_on_calendar', 'show_estimates_on_calendar', 'show_proposals_on_calendar', 'show_contracts_on_calendar', 'show_projects_on_calendar', 'invoice_due_after', 'predefined_clientnote_invoice', 'predefined_terms_invoice', 'default_tax', 'show_tax_per_item', 'company_is_required', 'media_max_file_size_upload', 'media_max_image_size_upload', 'media_max_video_size_upload', 'allowed_files', 'estimate_due_after', 'predefined_clientnote_estimate', 'predefined_terms_estimate']
 /** Signed-in users: the non-secret settings screens use to behave (formats, defaults, calendar). */
 export async function getAppSettings() {
     const { auth } = await import('@/auth')

@@ -215,6 +215,8 @@ model CrmScheduledMessage {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
   title      String
   body       String
+  /// tips | reminders | meetings | announcements | celebrations | other: how the list is grouped
+  category   String?
   /// team (the Team room) | admins | all | selected: the last three are a private message to each person
   audience   String    @default("team")
   staffIds   String[]  @db.ObjectId

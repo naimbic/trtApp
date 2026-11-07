@@ -70,9 +70,11 @@ export const GROUPS = {
                 f('credit_note_logo_url', 'Credit note logo', 'image'),
                 f('company_signature_url', 'Signature', 'image', { preset: 'signature', hint: 'For documents that show a signature (see PDF settings).' }),
             ] },
-            { title: 'Files', fields: [
-                f('allowed_files', 'Allowed file types', 'text', { hint: 'Extensions separated by commas, for example .pdf,.docx,.png. Anything dangerous stays blocked anyway.', ph: '.png,.jpg,.pdf,.docx' }),
-                f('media_max_file_size_upload', 'Largest upload (MB)', 'number', { min: 1, max: 200, default: '50' }),
+            { title: 'Uploads: file types and sizes', desc: 'What people can upload anywhere in the CRM (tickets, tasks, chat, notes, library, client portal). Pictures are always optimised to WebP. Dangerous types (programs, scripts) stay blocked whatever you write.', fields: [
+                f('allowed_files', 'Allowed file types', 'text', { hint: 'Extensions separated by commas, for example .pdf,.docx,.png,.jpg. Empty = every supported type: images, PDF, Word/Excel/PowerPoint and OpenDocument, CSV, TXT, RTF, ZIP/RAR/7Z, MP4/MOV/WEBM, MP3/WAV/M4A.', ph: '.png,.jpg,.pdf,.docx' }),
+                f('media_max_image_size_upload', 'Largest picture (MB)', 'number', { min: 1, max: 100, default: '20' }),
+                f('media_max_file_size_upload', 'Largest document or archive (MB)', 'number', { min: 1, max: 200, default: '50' }),
+                f('media_max_video_size_upload', 'Largest video or audio (MB)', 'number', { min: 1, max: 500, default: '50', hint: 'Empty = same as documents. Keep it low: files are sent through the server.' }),
             ] },
             { title: 'Interface', fields: [
                 f('tables_pagination_limit', 'Rows per page in tables', 'number', { min: 5, max: 200 }),
@@ -386,9 +388,19 @@ export const GROUPS = {
     calendar: {
         label: 'Calendar', icon: 'TbCalendar', desc: 'What shows on the calendar',
         cards: [
-            { title: 'Appointments from the Meet booking page', desc: 'Visitors book a free hour on the booking page. Closed days and the minimum notice below are given to it as busy time, so those hours are never offered. Closed days (holidays, when you are out or too busy) are managed from the Calendar page.', fields: [
+            { title: 'Booking page: days and hours', desc: 'When visitors can book a meeting on the Meet booking page. Times are in the company time zone (Settings → Localization). A day or month you close here is never offered; single closed days and holidays are managed from the Calendar page.', fields: [
+                f('booking_days', 'Days people can book', 'checks', { default: '2,4', options: [['1','Monday'],['2','Tuesday'],['3','Wednesday'],['4','Thursday'],['5','Friday'],['6','Saturday'],['0','Sunday']].map(([value, label]) => ({ value, label })), cols: 4 }),
+                f('booking_windows', 'Hours of the day', 'text', { default: '10-13,14-17', ph: '10-13,14-17', hint: 'Hours from-to, separated by commas: 10-13,14-17 = 10:00 to 13:00 and 14:00 to 17:00 (the break at lunch time is simply left out). 24-hour clock.' }),
+                sel('booking_slot_minutes', 'Length of a meeting', [['30', '30 minutes'], ['45', '45 minutes'], ['60', '1 hour'], ['90', '1 hour 30'], ['120', '2 hours']], { default: '60' }),
                 f('appointment_min_notice_days', 'Earliest day a visitor can book, from today (days)', 'number', { min: 0, max: 30, default: '2', hint: '2 = today and tomorrow cannot be booked (nobody books the day before). 1 = from tomorrow. 0 = no limit.' }),
-            ], links: [['Closed days', '/calendar?closed=1']] },
+                f('booking_horizon_days', 'How far ahead people can book (days)', 'number', { min: 7, max: 365, default: '56' }),
+                f('booking_closed_months', 'Months closed every year', 'checks', { default: '', options: [['1','January'],['2','February'],['3','March'],['4','April'],['5','May'],['6','June'],['7','July'],['8','August'],['9','September'],['10','October'],['11','November'],['12','December']].map(([value, label]) => ({ value, label })), cols: 4, hint: 'For example August if the team is away every summer.' }),
+            ], links: [['Closed days (holidays, one-off)', '/calendar?closed=1']] },
+            { title: 'Who takes appointments and hosts meetings', desc: 'Who is told when a visitor asks for a meeting, and who may host a room on Meet. Anyone can still be invited to a meeting as a guest.', fields: [
+                f('appointment_staff', 'Team members who take the appointments', 'staffs', { default: '', hint: 'They are told about each request and can accept or refuse it. Empty = every administrator.' }),
+                sel('meeting_host_policy', 'Who can host or start a meeting on Meet', [['all', 'Every team member'], ['managers', 'Administrators and managers only'], ['admins', 'Administrators only']], { default: 'all', hint: 'Managers = a team member whose role is named "Manager". Others can still join with the room link as a guest or a team member.' }),
+                f('meeting_host_staff', 'Also allow these team members to host', 'staffs', { default: '', hint: 'Only used when the choice above is not "Every team member".' }),
+            ] },
             { title: 'View', fields: [
                 sel('default_view_calendar', 'Default view', [['dayGridMonth', 'Month'], ['timeGridWeek', 'Week'], ['timeGridDay', 'Day']], { default: 'dayGridMonth' }),
                 sel('calendar_first_day', 'Week starts on', [['1', 'Monday'], ['0', 'Sunday'], ['6', 'Saturday']], { default: '1' }),

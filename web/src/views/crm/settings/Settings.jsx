@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { TbPlugConnected, TbAdjustmentsHorizontal, TbBrandWhatsapp, TbBellRinging, TbBrandGoogle, TbBuilding, TbBuildingBank, TbCalendar, TbChecklist, TbClockPlay, TbFileDescription, TbFileInvoice, TbFileTypePdf, TbFilter, TbLifebuoy, TbMail, TbPresentation, TbReceipt2, TbReceiptRefund, TbRepeat, TbShoppingCart, TbSignature, TbSparkles, TbTags, TbUsers, TbWorld } from 'react-icons/tb'
+import { TbChevronDown, TbPlugConnected, TbAdjustmentsHorizontal, TbBrandWhatsapp, TbBellRinging, TbBrandGoogle, TbBuilding, TbBuildingBank, TbCalendar, TbChecklist, TbClockPlay, TbFileDescription, TbFileInvoice, TbFileTypePdf, TbFilter, TbLifebuoy, TbMail, TbPresentation, TbReceipt2, TbReceiptRefund, TbRepeat, TbShoppingCart, TbSignature, TbSparkles, TbTags, TbUsers, TbWorld } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Card from '@/components/ui/Card'
@@ -17,6 +17,15 @@ import { MailServerSettings } from '../mail/Mails'
 import AiSettingsPanel from '../ai/AiSettingsPanel'
 import { refreshBranding } from '@/utils/hooks/useBranding'
 import { tr } from '@/utils/t'
+
+const SEC_TONES = [
+    { bg: 'bg-orange-50 dark:bg-orange-500/10', dot: 'bg-orange-500', text: 'text-orange-800 dark:text-orange-300' },
+    { bg: 'bg-emerald-50 dark:bg-emerald-500/10', dot: 'bg-emerald-500', text: 'text-emerald-800 dark:text-emerald-300' },
+    { bg: 'bg-amber-50 dark:bg-amber-500/10', dot: 'bg-amber-500', text: 'text-amber-800 dark:text-amber-300' },
+    { bg: 'bg-blue-50 dark:bg-blue-500/10', dot: 'bg-blue-500', text: 'text-blue-800 dark:text-blue-300' },
+    { bg: 'bg-pink-50 dark:bg-pink-500/10', dot: 'bg-pink-500', text: 'text-pink-800 dark:text-pink-300' },
+    { bg: 'bg-violet-50 dark:bg-violet-500/10', dot: 'bg-violet-500', text: 'text-violet-800 dark:text-violet-300' },
+]
 
 const ICONS = { TbPlugConnected, TbBrandWhatsapp, TbBuildingBank, TbAdjustmentsHorizontal, TbBuilding, TbWorld, TbMail, TbReceipt2, TbFileInvoice, TbFileDescription, TbPresentation, TbShoppingCart, TbReceiptRefund, TbRepeat, TbUsers, TbChecklist, TbLifebuoy, TbFilter, TbBrandGoogle, TbBellRinging, TbCalendar, TbSparkles, TbFileTypePdf, TbSignature, TbTags, TbClockPlay }
 
@@ -113,6 +122,37 @@ const Settings = () => {
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
 
+    // a group whose cards carry a "section" is shown as accordions (one per section) instead of one long page of cards
+    const sectioned = (meta.cards || []).some((c) => c.section)
+    const sections = useMemo(() => { const m = new Map(); for (const c of meta.cards || []) { const k = c.section || 'More'; if (!m.has(k)) m.set(k, []); m.get(k).push(c) } return [...m].map(([name, cards]) => ({ name, cards })) }, [meta])
+    const memo = `settings.open.${group}`
+    const [openSecs, setOpenSecs] = useState([])
+    useEffect(() => { try { const v = JSON.parse(localStorage.getItem(memo) || 'null'); setOpenSecs(Array.isArray(v) ? v : [sections[0]?.name].filter(Boolean)) } catch { setOpenSecs([sections[0]?.name].filter(Boolean)) } }, [memo, sections])
+    const toggleSec = (n) => setOpenSecs((o) => { const next = o.includes(n) ? o.filter((x) => x !== n) : [...o, n]; try { localStorage.setItem(memo, JSON.stringify(next)) } catch { /* not saved */ } return next })
+    const renderCard = (c, compact) => {
+        const Wrapper = compact ? 'div' : Card // (a stable type: a component made on the spot would reset the fields at every keystroke)
+                                const tg = c.fields?.find((x) => x.cardToggle) // a category's own on/off switch, at the top right of its card
+                                const on = !tg || ['1', 1, true].includes(values[tg.key] ?? tg.default)
+                                return (
+                                <Wrapper key={c.title} {...(compact ? { className: 'rounded-xl border border-gray-200 px-3.5 py-3 dark:border-gray-700' } : {})}>
+                                    <div className="flex items-start justify-between gap-4">
+                                        {compact ? <h6 className="mb-0.5">{c.title}</h6> : <h5 className="mb-0.5">{c.title}</h5>}
+                                        {tg && <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500"><span className={on ? 'text-emerald-600' : 'text-gray-400'}>{on ? tr("On") : tr("Off")}</span><Switcher checked={on} disabled={!canEdit} onChange={(v) => setValue(tg.key, v ? '1' : '0')} /></label>}
+                                    </div>
+                                    {c.desc && <p className={compact ? 'mb-2.5 text-xs leading-snug text-gray-500' : 'mb-4 text-sm text-gray-500'}>{tr(c.desc)}</p>}
+                                    {c.links && <div className="flex flex-wrap gap-2">{c.links.map(([label, to]) => <Link key={to} to={to}><Button size="sm">{tr(label)}</Button></Link>)}</div>}
+                                    {!c.desc && <div className={compact ? 'mb-1.5' : 'mb-3'} />}
+                                    {c.fields?.filter((x) => !x.cardToggle).length > 0 && (
+                                        <div className={cn(compact ? "grid grid-cols-1 gap-x-4 gap-y-3 transition-opacity md:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-x-5 gap-y-4 transition-opacity md:grid-cols-2", "[&>div.md\\:col-span-2:has(button[role=switch])]:border-t", !on && "opacity-50")}>
+                                            {c.fields.filter((x) => !x.cardToggle).map((x) => <Field key={x.key} field={x} value={values[x.key]} secretSet={secrets[x.key]} onChange={(v, instant) => setValue(x.key, v, instant)} canEdit={canEdit} taxes={ctx.taxes} />)}
+                                            {c.panel && <Panel name={c.panel} group={group} values={values} setValue={setValue} ctx={ctx} />}
+                                        </div>
+                                    )}
+                                    {!c.fields?.length && c.panel && <Panel name={c.panel} group={group} values={values} setValue={setValue} ctx={ctx} />}
+                                </Wrapper>
+                                )
+    }
+
     const hasFields = (meta.cards || []).some((c) => c.fields?.length)
 
     return (
@@ -140,30 +180,28 @@ const Settings = () => {
                 <div className="min-w-0">
                     <div className="mb-4"><h4>{meta.label}</h4><p className="text-sm text-gray-500">{meta.desc}</p></div>
                     {error && <Alert showIcon type="danger" className="mb-4">{error}</Alert>}
+                    {sectioned && sections.length > 1 && data && <div className="mb-2 flex justify-end text-xs"><button type="button" className="font-semibold text-primary hover:underline" onClick={() => { const next = openSecs.length === sections.length ? [] : sections.map((x) => x.name); setOpenSecs(next); try { localStorage.setItem(memo, JSON.stringify(next)) } catch { /* not saved */ } }}>{openSecs.length === sections.length ? tr('Collapse all') : tr('Expand all')}</button></div>}
                     {!data && !error ? <div className="flex h-60 items-center justify-center"><Spinner size={32} /></div> : data && (
-                        <div className="flex flex-col gap-4">
-                            {meta.cards.map((c) => {
-                                const tg = c.fields?.find((x) => x.cardToggle) // a category's own on/off switch, at the top right of its card
-                                const on = !tg || ['1', 1, true].includes(values[tg.key] ?? tg.default)
+                        <div className={sectioned ? 'flex flex-col gap-2' : 'flex flex-col gap-4'}>
+                            {sectioned ? sections.map((sec, i) => {
+                                const tone = SEC_TONES[i % SEC_TONES.length]
+                                const open = openSecs.includes(sec.name)
+                                const toggles = sec.cards.map((c) => c.fields?.find((x) => x.cardToggle)).filter(Boolean)
+                                const onCount = toggles.filter((tg) => ['1', 1, true].includes(values[tg.key] ?? tg.default)).length
                                 return (
-                                <Card key={c.title}>
-                                    <div className="flex items-start justify-between gap-4">
-                                        <h5 className="mb-0.5">{c.title}</h5>
-                                        {tg && <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500"><span className={on ? 'text-emerald-600' : 'text-gray-400'}>{on ? tr("On") : tr("Off")}</span><Switcher checked={on} disabled={!canEdit} onChange={(v) => setValue(tg.key, v ? '1' : '0')} /></label>}
+                                    <div key={sec.name} className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white dark:border-gray-700 dark:bg-gray-800">
+                                        <button type="button" aria-expanded={open} onClick={() => toggleSec(sec.name)} className={cn('flex w-full items-center gap-2.5 px-3.5 py-2.5 text-start transition hover:brightness-95', tone.bg)}>
+                                            <span className={cn('size-2.5 shrink-0 rounded-full', tone.dot)} />
+                                            <span className={cn('font-semibold', tone.text)}>{tr(sec.name)}</span>
+                                            <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{sec.cards.length}</span>
+                                            {toggles.length > 0 && <span className={cn('text-xs font-semibold', onCount === toggles.length ? 'text-emerald-600' : onCount ? 'text-amber-600' : 'text-gray-400')}>{tr('{n} of {total} on', { n: onCount, total: toggles.length })}</span>}
+                                            <span className="min-w-0 flex-1 truncate text-xs text-gray-400">{open ? '' : sec.cards.map((c) => tr(c.title)).join(' · ')}</span>
+                                            <TbChevronDown className={cn('shrink-0 text-gray-400 transition-transform', open && 'rotate-180')} />
+                                        </button>
+                                        {open && <div className="flex flex-col gap-2.5 p-3">{sec.cards.map((c) => renderCard(c, true))}</div>}
                                     </div>
-                                    {c.desc && <p className="mb-4 text-sm text-gray-500">{tr(c.desc)}</p>}
-                                    {c.links && <div className="flex flex-wrap gap-2">{c.links.map(([label, to]) => <Link key={to} to={to}><Button size="sm">{tr(label)}</Button></Link>)}</div>}
-                                    {!c.desc && <div className="mb-3" />}
-                                    {c.fields?.filter((x) => !x.cardToggle).length > 0 && (
-                                        <div className={cn("grid grid-cols-1 gap-x-5 gap-y-4 transition-opacity md:grid-cols-2 [&>div.md\\:col-span-2:has(button[role=switch])]:border-t", !on && "opacity-50")}>
-                                            {c.fields.filter((x) => !x.cardToggle).map((x) => <Field key={x.key} field={x} value={values[x.key]} secretSet={secrets[x.key]} onChange={(v, instant) => setValue(x.key, v, instant)} canEdit={canEdit} taxes={ctx.taxes} />)}
-                                            {c.panel && <Panel name={c.panel} group={group} values={values} setValue={setValue} ctx={ctx} />}
-                                        </div>
-                                    )}
-                                    {!c.fields?.length && c.panel && <Panel name={c.panel} group={group} values={values} setValue={setValue} ctx={ctx} />}
-                                </Card>
                                 )
-                            })}
+                            }) : meta.cards.map((c) => renderCard(c, false))}
                         </div>
                     )}
                     {hasFields && canEdit && dirty && (

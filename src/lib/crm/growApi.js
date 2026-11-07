@@ -200,12 +200,17 @@ export async function ideaToTask(id, body = {}) {
 /* ============================================================ the routine */
 const SETTINGS_DEFAULT = { enabled: true, daily: true, weekly: true, monthly: true, ai: true, webSearch: true, lang: 'en' }
 
-export async function getRoutine() {
-    await gate('view')
+/** The routine settings and when each period last ran (no sign-in needed: the automatic task reads it too). */
+async function readRoutine() {
     const o = await getOptions(['grow_settings', 'grow_last_daily', 'grow_last_weekly', 'grow_last_monthly'])
     let s = {}; try { s = JSON.parse(o('grow_settings', '{}')) || {} } catch { s = {} }
     const ai = await resolveAiForJob().catch(() => null)
     return { settings: { ...SETTINGS_DEFAULT, ...s }, last: { daily: o('grow_last_daily') || null, weekly: o('grow_last_weekly') || null, monthly: o('grow_last_monthly') || null }, ai: ai ? { provider: ai.provider, model: ai.model, webSearch: ai.provider === 'anthropic' } : null, stamps: { daily: stamp('daily'), weekly: stamp('weekly'), monthly: stamp('monthly') } }
+}
+
+export async function getRoutine() {
+    await gate('view')
+    return readRoutine()
 }
 
 export async function saveRoutine(body = {}) {
@@ -241,7 +246,7 @@ Answer in ${LANG_NAME[settings.lang] || 'English'}. Return ONLY a JSON array (no
 /** Writes the ideas of one period (rules, then the AI when it is on and has a key). Returns the lines of what happened. */
 export async function runPeriod(period, { dry = false, settings } = {}) {
     const lines = []
-    const st = settings || (await getRoutine()).settings
+    const st = settings || (await readRoutine()).settings
     const figures = await gatherFigures()
     const candidates = [...ruleIdeas(period, figures, { lang: st.lang }).map((c) => ({ ...c, source: 'rule' }))]
     if (st.ai) candidates.push(...(await aiIdeas(period, figures, st, lines)).map((c) => ({ ...c, source: 'ai' })))
@@ -262,7 +267,7 @@ export async function runPeriod(period, { dry = false, settings } = {}) {
 
 /** The automatic task: once a day the daily ideas, once a week the weekly ones, once a month the monthly ones. */
 export async function growJob({ lines, dry }) {
-    const r = await getRoutine()
+    const r = await readRoutine() // the cron has no signed-in person: reading the routine must not ask for one
     if (!r.settings.enabled) { lines.push('Grow routine: switched off in Grow → Routine'); return }
     for (const period of ['daily', 'weekly', 'monthly']) {
         if (!r.settings[period]) continue

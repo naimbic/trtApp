@@ -444,24 +444,24 @@ export const GROUPS = {
     cronjob: {
         label: 'Cron job', icon: 'TbClockPlay', desc: 'Automatic reminders and recurring work',
         cards: [
-            { title: 'Automatic tasks', desc: 'Nothing is sent or changed automatically until you turn this on. Use Preview in the command section first to see what would happen.', fields: [
+            { title: 'Automatic tasks', section: 'Run and schedule', desc: 'Nothing is sent or changed automatically until you turn this on. Use Preview in the command section first to see what would happen.', fields: [
                 yes('cron_enabled', 'Run the automatic tasks when the cron job is called', { default: '0' }),
             ] },
-            { title: 'Schedule', desc: 'How often the automatic tasks wake up. Each task still does its work once a day at the hour set in its own card below (tickets every time).', fields: [
+            { title: 'Schedule', section: 'Run and schedule', desc: 'How often the automatic tasks wake up. Each task still does its work once a day at the hour set in its own card below (tickets every time).', fields: [
                 sel('cron_mode', 'Who runs it', [['built_in', 'The CRM itself (nothing to set up on the server)'], ['external', 'An external scheduler that calls the command below']], { default: 'external' }),
                 f('cron_every', 'Run every', 'number', { min: 1, max: 59, default: '15', hint: 'Minutes up to 59, hours up to 23, days up to 30.' }),
                 sel('cron_unit', 'Unit', [['minute', 'Minutes'], ['hour', 'Hours'], ['day', 'Days']], { default: 'minute' }),
                 f('cron_at_hour', 'At (hour of day, 0–23)', 'number', { min: 0, max: 23, default: '9', hint: 'Only used when the unit is days.' }),
             ] },
-            { title: 'Backups', desc: 'Every night after 02:00 (company time) the whole database is saved to the file storage: the last 14 days and one a week for 12 weeks. It does not need the automatic tasks to be on.', fields: [
+            { title: 'Backups', section: 'Safety and upkeep', desc: 'Every night after 02:00 (company time) the whole database is saved to the file storage: the last 14 days and one a week for 12 weeks. It does not need the automatic tasks to be on.', fields: [
                 yes('cron_job_backup', 'Back up the database every night', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Backup files', panel: 'backups' },
-            { title: 'Alerts', desc: 'The administrators are told (bell, email, Telegram / WhatsApp) when a backup fails or is late, when the automatic tasks stop or report errors, and when the CRM returns a burst of server errors. The same alert is sent once an hour at most.', fields: [
+            { title: 'Backup files', section: 'Safety and upkeep', panel: 'backups' },
+            { title: 'Alerts', section: 'Safety and upkeep', desc: 'The administrators are told (bell, email, Telegram / WhatsApp) when a backup fails or is late, when the automatic tasks stop or report errors, and when the CRM returns a burst of server errors. The same alert is sent once an hour at most.', fields: [
                 yes('alerts_enabled', 'Send alerts to the administrators', { default: '1' }),
             ] },
-            { title: 'Command', panel: 'cronCommand' },
-            { title: 'Invoices', desc: 'Overdue and due-soon reminders, and recurring invoices.', fields: [
+            { title: 'Command', section: 'Run and schedule', panel: 'cronCommand' },
+            { title: 'Invoices', section: 'Money documents', desc: 'Overdue and due-soon reminders, and recurring invoices.', fields: [
                 yes('cron_job_invoices', 'Run the invoice tasks', { default: '1', cardToggle: true }),
                 f('invoice_auto_operations_hour', 'Run at (hour of day, 0–23)', 'number', { min: 0, max: 23, default: '9' }),
                 f('invoice_due_notice_before', 'Remind this many days before the due date', 'number', { min: 0, max: 60, default: '0', hint: '0 = no reminder before the due date.' }),
@@ -471,64 +471,64 @@ export const GROUPS = {
                 yes('create_invoice_from_recurring_only_on_paid_invoices', 'Create the next recurring invoice only if the last one is paid'),
                 sel('new_recurring_invoice_action', 'New recurring invoice', [['generate_and_send', 'Create it and email it to the client'], ['generate_unpaid', 'Create it as unpaid'], ['generate_draft', 'Create it as a draft']], { default: 'generate_unpaid' }),
             ] },
-            { title: 'Estimates', fields: [
+            { title: 'Estimates', section: 'Money documents', fields: [
                 yes('cron_job_estimates', 'Run the estimate tasks', { default: '1', cardToggle: true }),
                 f('estimates_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('send_estimate_expiry_reminder_before', 'Expiry reminder, days before', 'number', { min: 0, max: 60, default: '0', hint: '0 = no reminder.' }),
             ] },
-            { title: 'Proposals', fields: [
+            { title: 'Proposals', section: 'Money documents', fields: [
                 yes('cron_job_proposals', 'Run the proposal tasks', { default: '1', cardToggle: true }),
                 f('proposals_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('send_proposal_expiry_reminder_before', 'Expiry reminder, days before', 'number', { min: 0, max: 60, default: '0', hint: '0 = no reminder.' }),
             ] },
-            { title: 'Expenses', desc: 'Recurring expenses.', fields: [
+            { title: 'Expenses', section: 'Money documents', desc: 'Recurring expenses.', fields: [
                 yes('cron_job_expenses', 'Run the expense tasks', { default: '1', cardToggle: true }),
                 f('expenses_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
             ] },
-            { title: 'Freelance jobs', desc: 'Repeating freelance jobs: the next one is created when it is due.', fields: [
+            { title: 'Freelance jobs', section: 'Money documents', desc: 'Repeating freelance jobs: the next one is created when it is due.', fields: [
                 yes('cron_job_freelance', 'Run the freelance tasks', { default: '1', cardToggle: true }),
                 f('freelance_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
             ] },
-            { title: 'Contracts', fields: [
+            { title: 'Contracts', section: 'Money documents', fields: [
                 yes('cron_job_contracts', 'Run the contract tasks', { default: '1', cardToggle: true }),
                 f('contracts_auto_operations_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('contract_expiration_before', 'Expiry notice, days before', 'number', { min: 0, max: 120, default: '0', hint: '0 = no notice.' }),
             ] },
-            { title: 'Tasks', fields: [
+            { title: 'Tasks', section: 'Work and support', fields: [
                 yes('cron_job_tasks', 'Run the task tasks', { default: '1', cardToggle: true }),
                 f('tasks_reminder_notification_hour', 'Run at (hour of day)', 'number', { min: 0, max: 23, default: '9' }),
                 f('tasks_reminder_notification_before', 'Deadline reminder, days before', 'number', { min: 0, max: 30, default: '0', hint: '0 = no reminder.' }),
                 f('automatically_stop_task_timer_after_hours', 'Stop forgotten timers after (hours)', 'number', { min: 0, max: 72, default: '0' }),
             ] },
-            { title: 'Tickets', fields: [
+            { title: 'Tickets', section: 'Work and support', fields: [
                 yes('cron_job_tickets', 'Run the ticket tasks', { default: '1', cardToggle: true }),
                 f('autoclose_tickets_after', 'Close tickets after no answer for (hours)', 'number', { min: 0, max: 8760, default: '0', hint: '0 = never.' }),
             ] },
-            { title: 'Lead emails', desc: 'Reads the mailboxes set up in Leads → Lead email integration and turns contact-form emails into leads (each mailbox has its own check interval).', fields: [
+            { title: 'Lead emails', section: 'Leads and growth', desc: 'Reads the mailboxes set up in Leads → Lead email integration and turns contact-form emails into leads (each mailbox has its own check interval).', fields: [
                 yes('cron_job_leadmail', 'Read the lead mailboxes', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Note and ticket reminders', desc: 'A note with "Remind me at" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
+            { title: 'Note and ticket reminders', section: 'Work and support', desc: 'A note with "Remind me at" tells its owner on the bell, by email and on Telegram / WhatsApp (if set in their profile) at the first run after that time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
                 yes('cron_job_notereminders', 'Send the note reminders', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Calendar event reminders', desc: 'At the time chosen on an event ("30 minutes before"), tells the team members of the event on the bell and on Telegram / WhatsApp, and emails the client, the lead and the guests when "Also remind the client" is on. The automatic tasks must run often (for example every 5 minutes).', fields: [
+            { title: 'Calendar event reminders', section: 'Work and support', desc: 'At the time chosen on an event ("30 minutes before"), tells the team members of the event on the bell and on Telegram / WhatsApp, and emails the client, the lead and the guests when "Also remind the client" is on. The automatic tasks must run often (for example every 5 minutes).', fields: [
                 yes('cron_job_eventreminders', 'Send the calendar event reminders', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Scheduled chat messages', desc: 'Posts the messages written in Scheduled messages (once or repeating) in the team chat or as private messages, at the first run after their time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
+            { title: 'Scheduled chat messages', section: 'Work and support', desc: 'Posts the messages written in Scheduled messages (once or repeating) in the team chat or as private messages, at the first run after their time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
                 yes('cron_job_chatschedule', 'Send the scheduled chat messages', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Grow routine', desc: 'Once a day (and once a week, once a month) writes the ideas and advice of Grow: from the figures of the CRM, and from the AI with a search of what is new when an AI key is set. Choose what it does in Grow → Routine.', fields: [
+            { title: 'Grow routine', section: 'Leads and growth', desc: 'Once a day (and once a week, once a month) writes the ideas and advice of Grow: from the figures of the CRM, and from the AI with a search of what is new when an AI key is set. Choose what it does in Grow → Routine.', fields: [
                 yes('cron_job_grow', 'Run the Grow routine', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Monthly team review (AI)', desc: 'On the 8th of every month at 08:00 the AI reads what each team member did last month (tasks done and late, tasks made without a deadline or a supervisor, tasks closed alone, time tracked) and sends a short personal review with advice to their own chat conversation "My monthly review". Needs an AI key in Settings → AI. Send it now from Settings → AI.', fields: [
+            { title: 'Monthly team review (AI)', section: 'Leads and growth', desc: 'On the 8th of every month at 08:00 the AI reads what each team member did last month (tasks done and late, tasks made without a deadline or a supervisor, tasks closed alone, time tracked) and sends a short personal review with advice to their own chat conversation "My monthly review". Needs an AI key in Settings → AI. Send it now from Settings → AI.', fields: [
                 yes('cron_job_coach', 'Send the monthly team review', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Scheduled lead mails', desc: 'Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
+            { title: 'Scheduled lead mails', section: 'Leads and growth', desc: 'Sends the lead mail drafts that have a date and time to send automatically (Lead popup → Mails). A draft goes out at the first run after its time, so the automatic tasks must run often (for example every 5 minutes).', fields: [
                 yes('cron_job_leadmailsend', 'Send the scheduled lead mails', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Cleanup', desc: 'Deletes old activity log entries once a day (how old is set in Settings → General).', fields: [
+            { title: 'Cleanup', section: 'Safety and upkeep', desc: 'Deletes old activity log entries once a day (how old is set in Settings → General).', fields: [
                 yes('cron_job_cleanup', 'Run the cleanup', { default: '1', cardToggle: true }),
             ] },
-            { title: 'Recent runs', panel: 'cronLog' },
+            { title: 'Recent runs', section: 'Recent runs', panel: 'cronLog' },
         ],
     },
 }

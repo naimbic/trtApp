@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.202.0',
+        date: '2026-11-07',
+        title: 'Cron job settings in colour-coded accordions, Grow routine fix',
+        items: [
+            'Settings → Cron job is now grouped in accordions (Run and schedule, Safety and upkeep, Money documents, Work and support, Leads and growth, Recent runs), with the same coloured rows as Expenses, a count of what is on in each, and Expand all / Collapse all. It remembers which ones you opened.',
+            'Fix: the automatic "Grow routine" no longer fails with "Unauthorized" when run by the scheduler (it needs no signed-in person to read its settings).',
+        ],
+    },
+    {
         version: '0.201.0',
         date: '2026-11-06',
         title: 'One summary a day, reply to tickets from a notification, phone fixes',

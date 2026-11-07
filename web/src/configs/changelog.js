@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.203.0',
+        date: '2026-11-07',
+        title: 'Settings: coloured accordions everywhere, left menu too',
+        items: [
+            'Settings left menu: the groups (General, Billing, Configure features, Integrations, More, Automation) are coloured accordions like Expenses; the one you are on is open and your choice is remembered.',
+            'Every settings page with several cards (General, Company, Invoices, Clients, Tasks, Tickets, Calendar, PDF, Sign-in, Messaging...) now shows each card as a coloured accordion row with its description on the row, instead of one long page.',
+        ],
+    },
+    {
         version: '0.202.0',
         date: '2026-11-07',
         title: 'Cron job settings in colour-coded accordions, Grow routine fix',

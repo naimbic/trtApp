@@ -123,20 +123,24 @@ const Settings = () => {
     }
 
     // a group whose cards carry a "section" is shown as accordions (one per section) instead of one long page of cards
-    const sectioned = (meta.cards || []).some((c) => c.section)
-    const sections = useMemo(() => { const m = new Map(); for (const c of meta.cards || []) { const k = c.section || 'More'; if (!m.has(k)) m.set(k, []); m.get(k).push(c) } return [...m].map(([name, cards]) => ({ name, cards })) }, [meta])
+    const explicit = (meta.cards || []).some((c) => c.section)
+    const sectioned = explicit || (meta.cards || []).length >= 3 // no sections given: each card becomes its own accordion row
+    const sections = useMemo(() => { if (!explicit) return (meta.cards || []).map((c) => ({ name: c.title, cards: [c], single: true })); const m = new Map(); for (const c of meta.cards || []) { const k = c.section || 'More'; if (!m.has(k)) m.set(k, []); m.get(k).push(c) } return [...m].map(([name, cards]) => ({ name, cards })) }, [meta, explicit])
+    const [navOpen, setNavOpen] = useState(() => { try { const v = JSON.parse(localStorage.getItem('settings.nav') || 'null'); return Array.isArray(v) ? v : [] } catch { return [] } })
+    const toggleNav = (n) => setNavOpen((o) => { const next = o.includes(n) ? o.filter((x) => x !== n) : [...o, n]; try { localStorage.setItem('settings.nav', JSON.stringify(next)) } catch { /* not saved */ } return next })
+    useEffect(() => { const sec = SECTIONS.find((x) => x.groups.includes(group))?.section; if (sec) setNavOpen((o) => (o.includes(sec) ? o : [...o, sec])) }, [group]) // the section of the page you are on is always open
     const memo = `settings.open.${group}`
     const [openSecs, setOpenSecs] = useState([])
     useEffect(() => { try { const v = JSON.parse(localStorage.getItem(memo) || 'null'); setOpenSecs(Array.isArray(v) ? v : [sections[0]?.name].filter(Boolean)) } catch { setOpenSecs([sections[0]?.name].filter(Boolean)) } }, [memo, sections])
     const toggleSec = (n) => setOpenSecs((o) => { const next = o.includes(n) ? o.filter((x) => x !== n) : [...o, n]; try { localStorage.setItem(memo, JSON.stringify(next)) } catch { /* not saved */ } return next })
-    const renderCard = (c, compact) => {
+    const renderCard = (c, compact, hideTitle) => {
         const Wrapper = compact ? 'div' : Card // (a stable type: a component made on the spot would reset the fields at every keystroke)
                                 const tg = c.fields?.find((x) => x.cardToggle) // a category's own on/off switch, at the top right of its card
                                 const on = !tg || ['1', 1, true].includes(values[tg.key] ?? tg.default)
                                 return (
                                 <Wrapper key={c.title} {...(compact ? { className: 'rounded-xl border border-gray-200 px-3.5 py-3 dark:border-gray-700' } : {})}>
                                     <div className="flex items-start justify-between gap-4">
-                                        {compact ? <h6 className="mb-0.5">{c.title}</h6> : <h5 className="mb-0.5">{c.title}</h5>}
+                                        {hideTitle ? <span /> : compact ? <h6 className="mb-0.5">{c.title}</h6> : <h5 className="mb-0.5">{c.title}</h5>}
                                         {tg && <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500"><span className={on ? 'text-emerald-600' : 'text-gray-400'}>{on ? tr("On") : tr("Off")}</span><Switcher checked={on} disabled={!canEdit} onChange={(v) => setValue(tg.key, v ? '1' : '0')} /></label>}
                                     </div>
                                     {c.desc && <p className={compact ? 'mb-2.5 text-xs leading-snug text-gray-500' : 'mb-4 text-sm text-gray-500'}>{tr(c.desc)}</p>}
@@ -160,21 +164,34 @@ const Settings = () => {
             <div className="mb-4"><h3>{tr("Settings")}</h3><p className="text-sm text-gray-500">{tr("Configure the whole platform")}</p></div>
             <div className="grid gap-5 lg:grid-cols-[250px_minmax(0,1fr)]">
                 <nav className="lg:sticky lg:top-20 lg:self-start">
-                    <Card bodyClass="p-2">
-                        {SECTIONS.map((s) => (
-                            <div key={s.section} className="mb-2 last:mb-0">
-                                <div className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">{s.section}</div>
-                                {s.groups.map((k) => {
-                                    const Icon = ICONS[GROUPS[k].icon]
-                                    return (
-                                        <button key={k} type="button" onClick={() => go(k)} className={cn('flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition', k === group ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50')}>
-                                            {Icon && <Icon className="text-lg" />}{GROUPS[k].label}
-                                        </button>
-                                    )
-                                })}
-                            </div>
-                        ))}
-                    </Card>
+                    <div className="flex flex-col gap-2">
+                        {SECTIONS.map((s, i) => {
+                            const tone = SEC_TONES[i % SEC_TONES.length]
+                            const open = navOpen.includes(s.section)
+                            return (
+                                <div key={s.section} className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white dark:border-gray-700 dark:bg-gray-800">
+                                    <button type="button" aria-expanded={open} onClick={() => toggleNav(s.section)} className={cn('flex w-full items-center gap-2.5 px-3.5 py-2.5 text-start transition hover:brightness-95', tone.bg)}>
+                                        <span className={cn('size-2.5 shrink-0 rounded-full', tone.dot)} />
+                                        <span className={cn('flex-1 text-sm font-semibold', tone.text)}>{tr(s.section)}</span>
+                                        <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{s.groups.length}</span>
+                                        <TbChevronDown className={cn('shrink-0 text-gray-400 transition-transform', open && 'rotate-180')} />
+                                    </button>
+                                    {open && (
+                                        <div className="p-1.5">
+                                            {s.groups.map((k) => {
+                                                const Icon = ICONS[GROUPS[k].icon]
+                                                return (
+                                                    <button key={k} type="button" onClick={() => go(k)} className={cn('flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition', k === group ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50')}>
+                                                        {Icon && <Icon className="text-lg" />}{tr(GROUPS[k].label)}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
                 </nav>
 
                 <div className="min-w-0">
@@ -193,12 +210,12 @@ const Settings = () => {
                                         <button type="button" aria-expanded={open} onClick={() => toggleSec(sec.name)} className={cn('flex w-full items-center gap-2.5 px-3.5 py-2.5 text-start transition hover:brightness-95', tone.bg)}>
                                             <span className={cn('size-2.5 shrink-0 rounded-full', tone.dot)} />
                                             <span className={cn('font-semibold', tone.text)}>{tr(sec.name)}</span>
-                                            <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{sec.cards.length}</span>
-                                            {toggles.length > 0 && <span className={cn('text-xs font-semibold', onCount === toggles.length ? 'text-emerald-600' : onCount ? 'text-amber-600' : 'text-gray-400')}>{tr('{n} of {total} on', { n: onCount, total: toggles.length })}</span>}
-                                            <span className="min-w-0 flex-1 truncate text-xs text-gray-400">{open ? '' : sec.cards.map((c) => tr(c.title)).join(' · ')}</span>
+                                            {!sec.single && <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{sec.cards.length}</span>}
+                                            {toggles.length > 0 && !sec.single && <span className={cn('text-xs font-semibold', onCount === toggles.length ? 'text-emerald-600' : onCount ? 'text-amber-600' : 'text-gray-400')}>{tr('{n} of {total} on', { n: onCount, total: toggles.length })}</span>}
+                                            <span className="min-w-0 flex-1 truncate text-xs text-gray-400">{open ? '' : sec.single ? tr(sec.cards[0].desc || '') : sec.cards.map((c) => tr(c.title)).join(' · ')}</span>
                                             <TbChevronDown className={cn('shrink-0 text-gray-400 transition-transform', open && 'rotate-180')} />
                                         </button>
-                                        {open && <div className="flex flex-col gap-2.5 p-3">{sec.cards.map((c) => renderCard(c, true))}</div>}
+                                        {open && <div className="flex flex-col gap-2.5 p-3">{sec.cards.map((c) => renderCard(c, true, sec.single))}</div>}
                                     </div>
                                 )
                             }) : meta.cards.map((c) => renderCard(c, false))}

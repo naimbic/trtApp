@@ -199,7 +199,8 @@ const Team = () => {
                                         <div className="flex items-center gap-3">
                                             <ScoreRing score={m.score} size={44}><Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar></ScoreRing>
                                             <div className="min-w-0">
-                                                <div className="flex items-center gap-1"><Link to={`/crm/staff/${m.id}`} className="font-semibold text-primary hover:underline">{m.name}</Link><PersonActions person={m} /></div>
+                                                <Link to={`/crm/staff/${m.id}`} className="block font-semibold text-primary hover:underline">{m.name}</Link>
+                                                <PersonActions person={m} />
                                                 <div className="truncate text-xs text-gray-500">{m.email}{m.phone ? ` · ${m.phone}` : ''}</div>
                                             </div>
                                         </div>

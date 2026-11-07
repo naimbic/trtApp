@@ -28,7 +28,7 @@ const PRIO_CLS = { low: 'bg-purple-200', medium: 'bg-orange-200', high: 'bg-red-
 const Empty = ({ children }) => <div className="py-6 text-center text-sm text-gray-400">{children}</div>
 const More = ({ to, children }) => <Link to={to} className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">{children}<TbArrowRight className="rtl:rotate-180" /></Link>
 /** A person's name that opens their profile page. */
-const Who = ({ id, person, className = '', children }) => (id ? <span className={`group inline-flex min-w-0 items-center gap-1 ${className.includes('flex-1') ? 'flex-1' : ''}`}><Link to={`/crm/staff/${id}`} className={`${className.replace('flex-1', '').replace('heading-text', '')} min-w-0 text-primary hover:underline`}>{children}</Link>{person && <PersonActions person={person} />}</span> : <span className={className}>{children}</span>)
+const Who = ({ id, person, className = '', children }) => (id ? <span className={`group inline-flex min-w-0 flex-col items-start ${className.includes('flex-1') ? 'flex-1' : ''}`}><Link to={`/crm/staff/${id}`} className={`${className.replace('flex-1', '').replace('heading-text', '')} min-w-0 text-primary hover:underline`}>{children}</Link>{person && <PersonActions person={person} />}</span> : <span className={className}>{children}</span>)
 const greet = () => { const h = new Date().getHours(); return h < 12 ? tr('Good morning, {name}') : h < 18 ? tr('Good afternoon, {name}') : tr('Good evening, {name}') }
 
 /** Home for the whole team: what I have to do today, who is doing what, what needs a follow-up. */

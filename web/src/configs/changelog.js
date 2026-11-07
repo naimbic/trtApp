@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.2',
+        date: '2026-11-07',
+        title: 'Contact icons under the name',
+        items: [
+            'Team page and team dashboard: the chat, WhatsApp, email and call icons now appear under the name, with a small slide, instead of beside it, so they never spill out of a card.',
+        ],
+    },
+    {
         version: '0.205.1',
         date: '2026-11-07',
         title: 'Fix: the server build of 0.205.0',

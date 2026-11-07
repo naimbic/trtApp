@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.1',
+        date: '2026-11-07',
+        title: 'Fix: the server build of 0.205.0',
+        items: [
+            'The appointments module was empty in 0.205.0 and the server build failed; it is restored (with the weekly schedule assignment). Redeploy to get 0.205.0 and everything after it.',
+        ],
+    },
+    {
         version: '0.205.0',
         date: '2026-11-07',
         title: 'Weekly meeting schedule with team assignment, quick contact on the team',

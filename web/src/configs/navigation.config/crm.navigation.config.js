@@ -18,7 +18,7 @@ const STRUCTURE = [
     { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
     { group: 'Growth & insight', icon: 'crmUtilities', entries: ['grow', 'goals', 'surveys', 'my-growth', 'reports', 'ai', 'activity-log'] },
     { group: 'Support & Help', icon: 'crmSupport', entries: ['tickets', 'help-center', 'kb-manage', 'support-setting'] },
-    { group: 'Team', icon: 'crmAdministration', entries: ['staff', 'roles', 'announcements', 'team-setting'] },
+    { group: 'Team', icon: 'crmAdministration', entries: ['staff', 'roles', 'announcements', 'scheduled-messages', 'team-setting'] },
     { group: 'Time & pay', icon: 'crmAdministration', entries: ['work-hours', 'timesheets', 'leave-requests', 'days-off', 'payroll'] },
     { group: 'Setup', icon: 'crmSetup', entries: ['platform-settings', 'mails', 'lists', 'custom-fields', 'countries', 'api', 'files'] },
 ]
@@ -36,7 +36,7 @@ const pool = Object.fromEntries([
     ...resources.filter((r) => r.nav !== false && !r.hidden).map((r) => ({ key: r.key, title: r.plural, path: `/crm/${r.key}`, feature: r.feature, also: r.also })),
 ].map((i) => [i.key, i]))
 // pages that live in the profile menu (top right) instead of the menu: placed there, so they are not "lost"
-const IN_PROFILE_MENU = ['reminders', 'events', 'scheduled-messages', 'notifications', 'file-manager']
+const IN_PROFILE_MENU = ['reminders', 'events', 'notifications', 'file-manager']
 const placed = new Set([...IN_PROFILE_MENU, ...STRUCTURE.flatMap((g) => g.entries.flatMap((e) => (typeof e === 'string' ? [e] : e.items)))])
 // a page nobody placed still shows (at the end of Setup), so nothing is ever missing from the menu
 const lost = Object.keys(pool).filter((k) => !placed.has(k))

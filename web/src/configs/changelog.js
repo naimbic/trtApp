@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.3',
+        date: '2026-11-07',
+        title: 'Scheduled messages in the menu',
+        items: [
+            'Scheduled messages is now in the main menu: More → Team → Scheduled messages (next to Announcements). It is still in the profile menu too.',
+        ],
+    },
+    {
         version: '0.205.2',
         date: '2026-11-07',
         title: 'Contact icons under the name',

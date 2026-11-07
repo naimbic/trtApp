@@ -102,7 +102,7 @@ const Settings = () => {
     useEffect(() => { load(group) }, [group, load])
     useEffect(() => {
         api('/api/crm/taxes?pageSize=100').then((d) => setCtx((c) => ({ ...c, taxes: d.list.map((t) => `${t.name}|${Number(t.taxRate).toFixed(2)}`) }))).catch(() => {})
-        api('/api/crm/team?pageSize=200').then((d) => setCtx((c) => ({ ...c, staff: (d.list || []).filter((t) => t.active !== false).map((t) => ({ value: t.id, label: [t.firstName, t.lastName].filter(Boolean).join(' ') || t.email })) }))).catch(() => {})
+        api('/api/crm/team?pageSize=200').then((d) => setCtx((c) => ({ ...c, staff: (d.members || []).filter((t) => t.active !== false).map((t) => ({ value: t.id, label: t.name || t.email })) }))).catch(() => {})
         api('/api/crm/custom-fields?where.fieldTo=customers&pageSize=100').then((d) => setCtx((c) => ({ ...c, customFields: d.list }))).catch(() => {})
     }, [])
 
@@ -139,8 +139,8 @@ const Settings = () => {
                                 const tg = c.fields?.find((x) => x.cardToggle) // a category's own on/off switch, at the top right of its card
                                 const on = !tg || ['1', 1, true].includes(values[tg.key] ?? tg.default)
                                 return (
-                                <Wrapper key={c.title} {...(compact ? { className: 'rounded-xl border border-gray-200 px-3.5 py-3 dark:border-gray-700' } : {})}>
-                                    <div className="flex items-start justify-between gap-4">
+                                <Wrapper key={c.title} {...(compact && !hideTitle ? { className: 'rounded-xl border border-gray-200 px-3.5 py-3 dark:border-gray-700' } : {})}>
+                                    <div className={cn('flex items-start justify-between gap-4', hideTitle && !tg && 'hidden')}>
                                         {hideTitle ? <span /> : compact ? <h6 className="mb-0.5">{c.title}</h6> : <h5 className="mb-0.5">{c.title}</h5>}
                                         {tg && <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500"><span className={on ? 'text-emerald-600' : 'text-gray-400'}>{on ? tr("On") : tr("Off")}</span><Switcher checked={on} disabled={!canEdit} onChange={(v) => setValue(tg.key, v ? '1' : '0')} /></label>}
                                     </div>
@@ -148,7 +148,7 @@ const Settings = () => {
                                     {c.links && <div className="flex flex-wrap gap-2">{c.links.map(([label, to]) => <Link key={to} to={to}><Button size="sm">{tr(label)}</Button></Link>)}</div>}
                                     {!c.desc && <div className={compact ? 'mb-1.5' : 'mb-3'} />}
                                     {c.fields?.filter((x) => !x.cardToggle).length > 0 && (
-                                        <div className={cn(compact ? "grid grid-cols-1 gap-x-4 gap-y-3 transition-opacity md:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-x-5 gap-y-4 transition-opacity md:grid-cols-2", "[&>div.md\\:col-span-2:has(button[role=switch])]:border-t", !on && "opacity-50")}>
+                                        <div className={cn(compact ? "grid grid-cols-1 gap-x-4 gap-y-3 transition-opacity md:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-x-5 gap-y-4 transition-opacity md:grid-cols-2", "[&>div.col-span-full:has(button[role=switch])]:border-t", !on && "opacity-50")}>
                                             {c.fields.filter((x) => !x.cardToggle).map((x) => <Field key={x.key} field={x} value={values[x.key]} secretSet={secrets[x.key]} onChange={(v, instant) => setValue(x.key, v, instant)} canEdit={canEdit} taxes={ctx.taxes} staff={ctx.staff} />)}
                                             {c.panel && <Panel name={c.panel} group={group} values={values} setValue={setValue} ctx={ctx} />}
                                         </div>
@@ -163,7 +163,7 @@ const Settings = () => {
     return (
         <Container>
             <div className="mb-4"><h3>{tr("Settings")}</h3><p className="text-sm text-gray-500">{tr("Configure the whole platform")}</p></div>
-            <div className="grid gap-5 lg:grid-cols-[250px_minmax(0,1fr)]">
+            <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
                 <nav className="lg:sticky lg:top-20 lg:self-start">
                     <div className="flex flex-col gap-2">
                         {SECTIONS.map((s, i) => {
@@ -171,18 +171,18 @@ const Settings = () => {
                             const open = navOpen.includes(s.section)
                             return (
                                 <div key={s.section} className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white dark:border-gray-700 dark:bg-gray-800">
-                                    <button type="button" aria-expanded={open} onClick={() => toggleNav(s.section)} className={cn('flex w-full items-center gap-2.5 px-3.5 py-2.5 text-start transition hover:brightness-95', tone.bg)}>
-                                        <span className={cn('size-2.5 shrink-0 rounded-full', tone.dot)} />
-                                        <span className={cn('flex-1 text-sm font-semibold', tone.text)}>{tr(s.section)}</span>
+                                    <button type="button" aria-expanded={open} onClick={() => toggleNav(s.section)} className={cn('flex w-full items-center gap-2 px-3 py-2 text-start transition hover:brightness-95', tone.bg)}>
+                                        <span className={cn('size-2 shrink-0 rounded-full', tone.dot)} />
+                                        <span className={cn('flex-1 text-[13px] font-semibold', tone.text)}>{tr(s.section)}</span>
                                         <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{s.groups.length}</span>
                                         <TbChevronDown className={cn('shrink-0 text-gray-400 transition-transform', open && 'rotate-180')} />
                                     </button>
                                     {open && (
-                                        <div className="p-1.5">
+                                        <div className="p-1">
                                             {s.groups.map((k) => {
                                                 const Icon = ICONS[GROUPS[k].icon]
                                                 return (
-                                                    <button key={k} type="button" onClick={() => go(k)} className={cn('flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition', k === group ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50')}>
+                                                    <button key={k} type="button" onClick={() => go(k)} className={cn('flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition', k === group ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50')}>
                                                         {Icon && <Icon className="text-lg" />}{tr(GROUPS[k].label)}
                                                     </button>
                                                 )

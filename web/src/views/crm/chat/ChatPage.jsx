@@ -184,6 +184,8 @@ const ChatPage = () => {
     const unreadOf = (t) => (data?.rooms || []).filter((r) => t !== 'all' && inTab(t, r)).reduce((n, r) => n + r.unread, 0)
 
     const talkTo = async (p) => { try { const { id } = await post('/rooms', { staffId: p.id }); setDlg(null); await refresh(); open(id) } catch (e) { notify('danger', e.message) } }
+    const withId = params.get('with') // a link like /crm/chat?with=<member> opens (or starts) the private conversation with that person
+    useEffect(() => { if (!withId || !data) return; post('/rooms', { staffId: withId }).then(async ({ id }) => { await refresh(); setParams({ room: id }, { replace: true }) }).catch((e) => { notify('danger', e.message); setParams({}, { replace: true }) }) }, [withId, !!data]) // eslint-disable-line react-hooks/exhaustive-deps
     const makeGroup = async (name, staffIds) => { try { const { id } = await post('/rooms', { group: { name, staffIds } }); setDlg(null); await refresh(); open(id); setInfo(false) } catch (e) { notify('danger', e.message) } }
 
     if (error && !data) return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>

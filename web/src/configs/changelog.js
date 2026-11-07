@@ -2,12 +2,22 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.0',
+        date: '2026-11-07',
+        title: 'Weekly meeting schedule with team assignment, quick contact on the team',
+        items: [
+            'Settings → Calendar → "Weekly schedule": for each day of the week, tick whether people can book, set the hours of that day and choose which team members take the meetings that day. The Meet booking page offers a time only while one of them is free, and the meeting is assigned to (and the notification goes to) the one who is free. Each day is one row with everything for that day: on/off, hours, length of a meeting (or the default) and team. Days without a chosen team use the default team.',
+            'Calendar → Closed days: quick picks for the coming week or a whole month.',
+            'Team page and team dashboard: the name opens the profile (in the primary colour) and, on hover, icons to send a chat message, a WhatsApp message, an email or call. A link like /crm/chat?with=<member> opens the private conversation.',
+        ],
+    },
+    {
         version: '0.204.0',
         date: '2026-11-07',
         title: 'Upload limits, booking days and hours, who hosts meetings, scheduled messages with AI',
         items: [
             'Settings → General → Uploads: the allowed file types and a separate largest size for pictures, documents and videos/audio, applied everywhere (tickets, tasks, chat, notes, library, client portal).',
-            'Settings → Calendar: "Booking page: days and hours" (days of the week, hours of the day, meeting length 30 min to 2 h, earliest day, how far ahead, months closed every year; one-off closed days stay on the Calendar page) and "Who takes appointments and hosts meetings" (who is told about a request; who may host on Meet: everybody, administrators and managers, or administrators only, plus named people). The Meet booking page follows these rules.',
+            'Settings → Calendar: "Booking page: days and hours" (days of the week, hours of the day, meeting length 30 min to 2 h, earliest day, how far ahead) and "Who takes appointments and hosts meetings" (who is told about a request; who may host on Meet: everybody, administrators and managers, or administrators only, plus named people). The Meet booking page follows these rules.',
             'Team dashboard: every name (workload, leads by owner, activity, performance) opens that person\'s profile.',
             'Scheduled messages: grouped in coloured accordions by category (Tips and training, Reminders, Meetings, Announcements, Celebrations, Other), with search, date filters (today, this week, next 30 days, your dates) and an "Active only" switch, one compact line per message. "Write it with AI": describe what you want to tell the team, pick a tone and the AI writes the message (and a title) for you to check and edit; it needs an AI key in Settings → AI.',
         ],

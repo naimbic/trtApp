@@ -8,6 +8,7 @@ import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Card from '@/components/ui/Card'
 import Avatar from '@/components/ui/Avatar'
+import PersonActions from '@/components/crm/PersonActions'
 import ScoreRing from '@/components/crm/ScoreRing'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -193,12 +194,12 @@ const Team = () => {
                         </THead>
                         <TBody>
                             {rows.map((m) => (
-                                <Tr key={m.id}>
+                                <Tr key={m.id} className="group">
                                     <Td className={m.active ? undefined : 'opacity-60 grayscale'}>
                                         <div className="flex items-center gap-3">
                                             <ScoreRing score={m.score} size={44}><Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar></ScoreRing>
                                             <div className="min-w-0">
-                                                <Link to={`/crm/staff/${m.id}`} className="font-semibold heading-text hover:underline">{m.name}</Link>
+                                                <div className="flex items-center gap-1"><Link to={`/crm/staff/${m.id}`} className="font-semibold text-primary hover:underline">{m.name}</Link><PersonActions person={m} /></div>
                                                 <div className="truncate text-xs text-gray-500">{m.email}{m.phone ? ` · ${m.phone}` : ''}</div>
                                             </div>
                                         </div>

@@ -62,6 +62,7 @@ export const SettingImage = ({ field, value, canEdit, onSaved }) => {
 }
 
 /* ---------- a form field of any type ---------- */
+const SLOTS = [{ value: '', label: tr('Default') }, { value: '30', label: '30 min' }, { value: '45', label: '45 min' }, { value: '60', label: '1 h' }, { value: '90', label: '1 h 30' }, { value: '120', label: '2 h' }]
 export const Field = ({ field: x, value, secretSet, onChange, canEdit, taxes, staff }) => {
     const label = (
         <span className="flex flex-wrap items-center">
@@ -74,22 +75,47 @@ export const Field = ({ field: x, value, secretSet, onChange, canEdit, taxes, st
 
     if (x.type === 'switch') {
         return (
-            <div className="flex items-start justify-between gap-4 py-3 md:col-span-2">
+            <div className="flex items-start justify-between gap-4 py-3 col-span-full">
                 <div className="min-w-0"><div className="text-sm">{label}</div>{hint}</div>
                 <Switcher checked={value === '1' || value === 1 || value === true} disabled={!canEdit} onChange={(v) => onChange(v ? '1' : '0')} />
             </div>
         )
     }
     if (x.type === 'image') {
-        return <div className="md:col-span-2"><div className="mb-2 text-sm">{label}</div><SettingImage field={x} value={value} canEdit={canEdit} onSaved={(u) => onChange(u || '', true)} />{hint}</div>
+        return <div className="col-span-full"><div className="mb-2 text-sm">{label}</div><SettingImage field={x} value={value} canEdit={canEdit} onSaved={(u) => onChange(u || '', true)} />{hint}</div>
     }
-    const wide = ['textarea', 'html', 'taxes', 'languages'].includes(x.type)
+    const wide = ['textarea', 'html', 'taxes', 'languages', 'schedule', 'checks'].includes(x.type)
     let control
     switch (x.type) {
         case 'number': control = <Input type="number" disabled={!canEdit} min={x.min} max={x.max} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />; break
         case 'textarea': control = <Input textArea rows={x.rows || 3} disabled={!canEdit} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />; break
         case 'html': control = <textarea id={`f-${x.key}`} rows={x.rows || 6} spellCheck={false} disabled={!canEdit} value={value ?? ''} onChange={(e) => onChange(e.target.value)} className="w-full rounded-xl border border-gray-300 bg-white p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-800" />; break
         case 'select': { const o = x.options; control = <Select isDisabled={!canEdit} options={o} value={o.find((i) => String(i.value) === String(value)) || null} onChange={(opt) => onChange(opt ? String(opt.value) : '')} />; break }
+        case 'schedule': {
+            let sch = {}
+            try { sch = value ? JSON.parse(value) : {} } catch { sch = {} }
+            if (!Object.keys(sch).length && !value) sch = { 2: { windows: '10-13,14-17', staff: [] }, 4: { windows: '10-13,14-17', staff: [] } } // what the booking page offers until you change it
+            const o = staff || []
+            const set = (d, patch) => { const next = { ...sch }; if (patch === null) delete next[d]; else next[d] = { windows: '10-13,14-17', staff: [], ...sch[d], ...patch }; onChange(JSON.stringify(next)) }
+            const days = [['1', 'Monday'], ['2', 'Tuesday'], ['3', 'Wednesday'], ['4', 'Thursday'], ['5', 'Friday'], ['6', 'Saturday'], ['0', 'Sunday']]
+            control = (
+                <div className="space-y-1.5">
+                    {days.map(([d, label]) => {
+                        const on = !!sch[d]
+                        return (
+                            <div key={d} className={`grid items-center gap-2 rounded-lg border px-2.5 py-1.5 md:grid-cols-[116px_140px_120px_minmax(0,1fr)] ${on ? 'border-primary/30 bg-primary/5' : 'border-gray-200 dark:border-gray-600'}`}>
+                                <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold"><input type="checkbox" disabled={!canEdit} checked={on} onChange={(e) => set(d, e.target.checked ? {} : null)} className="h-4 w-4 accent-[var(--primary)]" />{tr(label)}</label>
+                                <Input size="sm" disabled={!canEdit || !on} value={sch[d]?.windows ?? ''} placeholder="10-13,14-17" onChange={(e) => set(d, { windows: e.target.value })} />
+                                <Select size="sm" isSearchable={false} isDisabled={!canEdit || !on} options={SLOTS} value={SLOTS.find((i) => i.value === String(sch[d]?.slot || '')) || SLOTS[0]} onChange={(v) => set(d, { slot: v?.value ? Number(v.value) : undefined })} />
+                                <Select isMulti isDisabled={!canEdit || !on} options={o} value={o.filter((i) => (sch[d]?.staff || []).includes(i.value))} placeholder={tr('Default team')} onChange={(v) => set(d, { staff: (v || []).map((i) => i.value) })} />
+                            </div>
+                        )
+                    })}
+                    <p className="px-1 text-xs text-gray-400">{tr('Day · hours · length of a meeting · team members who take the meetings that day')}</p>
+                </div>
+            )
+            break
+        }
         case 'checks': { const on = String(value || '').split(',').filter(Boolean); control = <div className={`grid grid-cols-2 gap-2 ${x.cols === 4 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>{x.options.map((o) => <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-600"><input type="checkbox" disabled={!canEdit} checked={on.includes(String(o.value))} onChange={(e) => onChange((e.target.checked ? [...on, String(o.value)] : on.filter((y) => y !== String(o.value))).join(','))} className="h-4 w-4 accent-[var(--primary)]" />{tr(o.label)}</label>)}</div>; break }
         case 'staffs': { const on = String(value || '').split(',').filter(Boolean); const o = staff || []; control = <Select isMulti isDisabled={!canEdit} options={o} value={o.filter((i) => on.includes(i.value))} placeholder={tr('Choose the people')} onChange={(v) => onChange((v || []).map((i) => i.value).join(','))} />; break }
         case 'languages': { const on = String(value || '').split(',').filter(Boolean); control = <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{x.options.map((o) => <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-600"><input type="checkbox" disabled={!canEdit || o.value === 'english'} checked={on.includes(o.value) || o.value === 'english'} onChange={(e) => onChange((e.target.checked ? [...on, o.value] : on.filter((y) => y !== o.value)).join(','))} className="h-4 w-4 accent-[var(--primary)]" />{o.label}</label>)}</div>; break }
@@ -99,5 +125,5 @@ export const Field = ({ field: x, value, secretSet, onChange, canEdit, taxes, st
         case 'taxes': { const opts = (taxes || []).map((t) => ({ value: t, label: `${t.replace('|', ' · ')}%` })); control = <Select isMulti isDisabled={!canEdit} options={opts} value={opts.filter((o) => (value || []).includes(o.value))} onChange={(o) => onChange((o || []).map((i) => i.value))} />; break }
         default: control = <Input disabled={!canEdit} value={value ?? ''} placeholder={x.ph} maxLength={x.max} onChange={(e) => onChange(e.target.value)} />
     }
-    return <div className={wide ? 'md:col-span-2' : ''}><div className="mb-1.5 text-sm">{label}</div>{control}{hint}</div>
+    return <div className={wide ? 'col-span-full' : ''}><div className="mb-1.5 text-sm">{label}</div>{control}{hint}</div>
 }

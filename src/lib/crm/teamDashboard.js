@@ -7,7 +7,7 @@ import { goalPoints } from '@/lib/crm/growthRewards'
 const NONE = '000000000000000000000000'
 const DAY = 86400000
 const staffName = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || 'Staff'
-const person = (s) => (s ? { id: s.id, name: staffName(s), image: realPicture(s.profileImage) } : null)
+const person = (s) => (s ? { id: s.id, name: staffName(s), image: realPicture(s.profileImage), email: s.email || '', phone: s.phoneNumber || '', whatsapp: s.whatsapp || '' } : null)
 // due dates are stored as UTC midnight of the chosen day, so "today" is the UTC day too (like the other dashboards)
 const startOfDay = (d = new Date()) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
 
@@ -22,8 +22,8 @@ export async function teamDashboard({ days = 30 } = {}) {
     const admin = isCrmAdmin(authority)
     const scopes = Object.fromEntries(['tasks', 'leads', 'issues', 'tickets'].map((f) => [f, admin ? 'all' : viewScope(authority, f)]))
     const today = startOfDay(), tomorrow = new Date(+today + DAY), week = new Date(+today + 8 * DAY)
-    const me = staffId ? await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } }) : null
-    const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
+    const me = staffId ? await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true, phoneNumber: true, whatsapp: true } }) : null
+    const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true, phoneNumber: true, whatsapp: true } })
     const sm = Object.fromEntries(staff.map((s) => [s.id, person(s)]))
     days = [7, 30, 90].includes(Number(days)) ? Number(days) : 30
     const out = { days, me: person(me) || { id: null, name: session.user.name || session.user.email, image: null }, generatedAt: new Date().toISOString(), scopes, can: Object.fromEntries(Object.entries(scopes).map(([k, v]) => [k, !!v])) }

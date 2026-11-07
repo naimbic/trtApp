@@ -24,6 +24,7 @@ const ClosedDays = ({ open, onClose }) => {
         try { await api('/api/crm/calendar/closed', { method: 'POST', body: { fromDay: v.fromDay, toDay: v.toDay || v.fromDay, label: v.label } }); setV({ fromDay: '', toDay: '', label: '' }); await load(); notify('success', tr('Days closed')) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const remove = async (r) => { try { await api(`/api/crm/calendar/closed?id=${r.id}`, { method: 'DELETE' }); await load() } catch (e) { notify('danger', e.message) } }
+    const fill = (from, to) => setV((x) => ({ ...x, fromDay: from.format('YYYY-MM-DD'), toDay: to.format('YYYY-MM-DD') }))
     const first = d ? dayjs(d.today).add(d.minNoticeDays, 'day') : null
     return (
         <Dialog isOpen={open} width={560} onClose={onClose} onRequestClose={onClose}>
@@ -41,6 +42,13 @@ const ClosedDays = ({ open, onClose }) => {
             </div>
             {d?.can.edit ? (
                 <div className="mt-4 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                        <span className="self-center text-xs font-semibold text-gray-500">{tr('Quick pick')}</span>
+                        <button type="button" className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold hover:bg-gray-200 dark:bg-gray-700" onClick={() => fill(dayjs().add(1, 'week').startOf('week').add(1, 'day'), dayjs().add(1, 'week').endOf('week').add(1, 'day'))}>{tr('Next week')}</button>
+                        <button type="button" className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold hover:bg-gray-200 dark:bg-gray-700" onClick={() => fill(dayjs().startOf('month'), dayjs().endOf('month'))}>{tr('This month')}</button>
+                        <button type="button" className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold hover:bg-gray-200 dark:bg-gray-700" onClick={() => fill(dayjs().add(1, 'month').startOf('month'), dayjs().add(1, 'month').endOf('month'))}>{tr('Next month')}</button>
+                        <input type="month" className="rounded-full bg-gray-100 px-3 py-0.5 text-xs dark:bg-gray-700" aria-label={tr('A whole month')} onChange={(e) => e.target.value && fill(dayjs(`${e.target.value}-01`), dayjs(`${e.target.value}-01`).endOf('month'))} />
+                    </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                         <div><label className="mb-1 block text-xs font-semibold text-gray-500">{tr('First day')}</label><Input size="sm" type="date" value={v.fromDay} min={d.today} onChange={(e) => setV({ ...v, fromDay: e.target.value, toDay: v.toDay && v.toDay < e.target.value ? '' : v.toDay })} /></div>
                         <div><label className="mb-1 block text-xs font-semibold text-gray-500">{tr('Last day (empty = the same day)')}</label><Input size="sm" type="date" value={v.toDay} min={v.fromDay || d.today} onChange={(e) => setV({ ...v, toDay: e.target.value })} /></div>

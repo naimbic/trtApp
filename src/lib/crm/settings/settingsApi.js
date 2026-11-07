@@ -34,6 +34,20 @@ export async function getSettings(group) {
 function clean(x, v) {
     const t = x.type
     if (t === 'languages') return normalizeLanguages(Array.isArray(v) ? v.join(',') : v).join(',')
+    if (t === 'schedule') {
+        let o = {}
+        try { o = typeof v === 'string' ? (v.trim() ? JSON.parse(v) : {}) : v && typeof v === 'object' ? v : {} } catch { fail(`${x.label}: not understood`) }
+        const out = {}
+        for (const d of ['1', '2', '3', '4', '5', '6', '0']) {
+            const day = o[d]
+            if (!day || typeof day !== 'object') continue
+            const w = String(day.windows ?? '').replace(/\s+/g, '')
+            if (!/^\d{1,2}-\d{1,2}(,\d{1,2}-\d{1,2})*$/.test(w)) fail(`${x.label}: write the hours like 10-13,14-17`)
+            for (const p of w.split(',')) { const [a, b] = p.split('-').map(Number); if (!(a < b && a >= 0 && b <= 24)) fail(`${x.label}: each period must start before it ends, between 0 and 24`) }
+            out[d] = { windows: w, staff: [...new Set((Array.isArray(day.staff) ? day.staff : []).map(String).filter((y) => /^[a-f0-9]{24}$/i.test(y)))].slice(0, 50), ...([30, 45, 60, 90, 120].includes(Number(day.slot)) ? { slot: Number(day.slot) } : {}) }
+        }
+        return Object.keys(out).length ? JSON.stringify(out) : ''
+    }
     if (t === 'checks') { const ok = new Set(x.options.map((o) => String(o.value))); return [...new Set((Array.isArray(v) ? v : String(v ?? '').split(',')).map(String).filter((y) => ok.has(y)))].join(',') }
     if (t === 'staffs') return [...new Set((Array.isArray(v) ? v : String(v ?? '').split(',')).map((y) => String(y).trim()).filter((y) => /^[a-f0-9]{24}$/i.test(y)))].slice(0, 100).join(',')
     if (x.key === 'booking_windows') { const val = String(v ?? '').replace(/\s+/g, ''); if (val && !/^\d{1,2}-\d{1,2}(,\d{1,2}-\d{1,2})*$/.test(val)) fail(`${x.label}: write it like 10-13,14-17`); for (const w of val ? val.split(',') : []) { const [a, b] = w.split('-').map(Number); if (!(a < b && a >= 0 && b <= 24)) fail(`${x.label}: each period must start before it ends, between 0 and 24`) } return val }

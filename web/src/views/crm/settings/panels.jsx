@@ -62,7 +62,7 @@ export const FormatPanel = ({ kind, fieldKey, values, setValue, customFields = [
     }
     const html = renderFormat(values[fieldKey], data)
     return (
-        <div className="md:col-span-2">
+        <div className="col-span-full">
             <div className="mb-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">{tr("Merge terms")} <span className="font-normal text-gray-400">{tr("(click to insert in the text below)")}</span></div>
             <div className="mb-3 flex flex-wrap gap-1.5">{tokens.map((t) => <TokenChip key={t} token={t} onClick={insert} />)}</div>
             <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">{tr("Preview")} {isCompany ? tr("(with your details)") : tr("(with a sample client)")}</div>
@@ -89,7 +89,7 @@ export const EmailDesignPanel = ({ values, setValue }) => {
     const signature = values.email_signature || ''
     const preview = `${values.email_header || ''}<h2 style="font-family:Arial,sans-serif;margin:0 0 12px">${tr("Your invoice is ready")}</h2><p style="font-family:Arial,sans-serif;line-height:1.6">${tr("Hello, this is how your emails look with this header and footer.")}</p>${signature ? `<style>${SIGNATURE_CSS}</style><div class="sig">${signature}</div>` : ''}${values.email_footer || ''}`
     return (
-        <div className="md:col-span-2">
+        <div className="col-span-full">
             <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Button size="sm" icon={<TbRefresh />} onClick={() => { setValue('email_header', SHELL.header); setValue('email_footer', SHELL.footer); notify('success', tr("trtCRM design restored. Save to apply it.")) }}>{tr("Restore the trtCRM design")}</Button>
                 <Button size="sm" onClick={() => setOpen((o) => !o)}>{tr("Signature builder")}</Button>
@@ -259,7 +259,7 @@ export const ChannelsTestPanel = () => {
                     <div className="flex gap-2"><Input size="sm" placeholder={ph} value={to[ch]} onChange={(e) => setTo((t) => ({ ...t, [ch]: e.target.value }))} /><Button size="sm" variant="solid" loading={busy === ch} disabled={!to[ch].trim()} onClick={() => send(ch)}>{tr("Send a test")}</Button></div>
                 </div>
             ))}
-            <div className="md:col-span-2">
+            <div className="col-span-full">
                 <Button size="sm" loading={checking} onClick={check}>{tr("Check the WhatsApp connection")}</Button>
                 {wa && (
                     <div className={`mt-2 rounded-xl border px-3 py-2 text-sm ${wa.ok && wa.advice !== 'expired' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200'}`}>
@@ -276,7 +276,7 @@ export const ChannelsTestPanel = () => {
                     </div>
                 )}
             </div>
-            <p className="text-xs text-gray-400 md:col-span-2">{tr("Save the settings above first: the test uses the saved accounts.")}</p>
+            <p className="text-xs text-gray-400 col-span-full">{tr("Save the settings above first: the test uses the saved accounts.")}</p>
         </div>
     )
 }

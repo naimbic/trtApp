@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import StaffRing from '@/components/crm/StaffRing'
 import { Link, useNavigate } from 'react-router'
+import PersonActions from '@/components/crm/PersonActions'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { TbSchool, TbAdjustmentsHorizontal, TbUsersGroup, TbLayoutKanban, TbTimeline, TbUsers, TbFolders, TbCalendar, TbMessages, TbFileInvoice, TbFileDescription, TbReceipt, TbBook, TbFolder, TbKey, TbChartBar, TbDownload, TbFlag, TbTrophy, TbBolt, TbShieldCheck, TbTrendingUp, TbTrendingDown, TbHourglass, TbChecklist, TbAlertTriangle, TbCalendarEvent, TbTargetArrow, TbBug, TbLifebuoy, TbPlus, TbCircleCheck, TbBulb, TbBell, TbClock, TbArrowRight } from 'react-icons/tb'
@@ -27,7 +28,7 @@ const PRIO_CLS = { low: 'bg-purple-200', medium: 'bg-orange-200', high: 'bg-red-
 const Empty = ({ children }) => <div className="py-6 text-center text-sm text-gray-400">{children}</div>
 const More = ({ to, children }) => <Link to={to} className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">{children}<TbArrowRight className="rtl:rotate-180" /></Link>
 /** A person's name that opens their profile page. */
-const Who = ({ id, className = '', children }) => (id ? <Link to={`/crm/staff/${id}`} className={`${className} hover:text-primary hover:underline`}>{children}</Link> : <span className={className}>{children}</span>)
+const Who = ({ id, person, className = '', children }) => (id ? <span className={`group inline-flex min-w-0 items-center gap-1 ${className.includes('flex-1') ? 'flex-1' : ''}`}><Link to={`/crm/staff/${id}`} className={`${className.replace('flex-1', '').replace('heading-text', '')} min-w-0 text-primary hover:underline`}>{children}</Link>{person && <PersonActions person={person} />}</span> : <span className={className}>{children}</span>)
 const greet = () => { const h = new Date().getHours(); return h < 12 ? tr('Good morning, {name}') : h < 18 ? tr('Good afternoon, {name}') : tr('Good evening, {name}') }
 
 /** Home for the whole team: what I have to do today, who is doing what, what needs a follow-up. */
@@ -124,7 +125,7 @@ const TeamDashboard = () => {
                                         <div key={w.id} className="flex items-center gap-3">
                                             <StaffRing id={w.id} name={w.name} size={30}><Avatar size={30} shape="circle" src={w.image || undefined}>{initials(w.name)}</Avatar></StaffRing>
                                             <div className="min-w-0 flex-1">
-                                                <div className="mb-1 flex items-center justify-between text-sm"><Who id={w.id} className="truncate font-semibold">{w.name}</Who><span className="text-xs text-gray-500">{trn(w.open, 'open task')}{w.overdue > 0 && <b className="text-red-500"> · {tr('{n} overdue', { n: w.overdue })}</b>}{w.done > 0 && <span className="text-emerald-600"> · {tr('{n} done', { n: w.done })}</span>}</span></div>
+                                                <div className="mb-1 flex items-center justify-between text-sm"><Who id={w.id} person={w} className="truncate font-semibold">{w.name}</Who><span className="text-xs text-gray-500">{trn(w.open, 'open task')}{w.overdue > 0 && <b className="text-red-500"> · {tr('{n} overdue', { n: w.overdue })}</b>}{w.done > 0 && <span className="text-emerald-600"> · {tr('{n} done', { n: w.done })}</span>}</span></div>
                                                 <div className="flex h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"><div className="h-full bg-red-400" style={{ width: `${(w.overdue / maxLoad) * 100}%` }} /><div className="h-full bg-primary" style={{ width: `${((w.open - w.overdue) / maxLoad) * 100}%` }} /></div>
                                             </div>
                                         </div>
@@ -140,7 +141,7 @@ const TeamDashboard = () => {
                                 <DonutChart data={leads.team.byStatus} height={230} title={tr('Open leads')} />
                             </Panel>
                             <Panel title={tr('Leads by owner')} subtitle={tr('{n} without an owner', { n: leads.team.unassigned })}>
-                                {leads.team.byOwner.length ? <ul className="divide-y divide-gray-100 dark:divide-gray-700">{leads.team.byOwner.map((o, i) => <li key={i} className="flex items-center gap-3 py-2.5 text-sm"><Avatar size={28} shape="circle" src={o.person?.image || undefined}>{o.person ? initials(o.person.name) : '?'}</Avatar><Who id={o.person?.id} className="flex-1 truncate font-semibold">{o.person?.name || tr('Unassigned')}</Who><b>{o.n}</b></li>)}</ul> : <Empty>{tr('No lead yet.')}</Empty>}
+                                {leads.team.byOwner.length ? <ul className="divide-y divide-gray-100 dark:divide-gray-700">{leads.team.byOwner.map((o, i) => <li key={i} className="flex items-center gap-3 py-2.5 text-sm"><Avatar size={28} shape="circle" src={o.person?.image || undefined}>{o.person ? initials(o.person.name) : '?'}</Avatar><Who id={o.person?.id} person={o.person} className="flex-1 truncate font-semibold">{o.person?.name || tr('Unassigned')}</Who><b>{o.n}</b></li>)}</ul> : <Empty>{tr('No lead yet.')}</Empty>}
                             </Panel>
                         </div>
                     )}
@@ -180,7 +181,7 @@ const TeamDashboard = () => {
                                     <li key={i} className="flex items-start gap-3">
                                         <StaffRing id={a.staff?.id} name={a.staff?.name} size={28}><Avatar size={28} shape="circle" src={a.staff?.image || undefined}>{a.staff ? initials(a.staff.name) : '·'}</Avatar></StaffRing>
                                         <div className="min-w-0 text-sm">
-                                            <Who id={a.staff?.id} className="font-semibold heading-text">{a.staff?.name || tr('Someone')}</Who> <span className="text-gray-500">{{ comment: tr('commented on'), done: tr('completed'), lead: tr('added the lead'), issue: tr('commented on issue') }[a.type]}</span>{' '}
+                                            <Who id={a.staff?.id} person={a.staff} className="font-semibold heading-text">{a.staff?.name || tr('Someone')}</Who> <span className="text-gray-500">{{ comment: tr('commented on'), done: tr('completed'), lead: tr('added the lead'), issue: tr('commented on issue') }[a.type]}</span>{' '}
                                             {a.link ? <Link to={a.link} className="font-semibold text-primary hover:underline">{a.text}</Link> : <b>{a.text}</b>}
                                             <div className="text-xs text-gray-400">{dayjs(a.at).fromNow()}</div>
                                         </div>
@@ -370,7 +371,7 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
                                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><span className={classNames('flex h-6 w-6 items-center justify-center rounded-full text-base', TONES[tone])}>{icon}</span>{title}</div>
                                 <div className="mt-3 flex items-center gap-3">
                                     <StaffRing id={r.person.id} name={r.person.name} size={40}><Avatar size={40} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar></StaffRing>
-                                    <div className="min-w-0"><Who id={r.person.id} className="block truncate font-bold heading-text">{r.person.name}</Who><div className="truncate text-xs text-gray-500">{detail(r)}</div></div>
+                                    <div className="min-w-0"><Who id={r.person.id} person={r.person} className="block truncate font-bold heading-text">{r.person.name}</Who><div className="truncate text-xs text-gray-500">{detail(r)}</div></div>
                                 </div>
                             </Card>
                         )
@@ -403,7 +404,7 @@ const Performance = ({ perf, days, setDays, leadTrend, meId, reload }) => {
                                     {leaderboard.map((r, i) => (
                                         <tr key={r.person.id} className={r.person.id === meId ? 'bg-primary/5' : ''}>
                                             <td className="py-2.5 pe-2"><span className={classNames('flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold', MEDAL[i] || 'bg-gray-100 text-gray-500 dark:bg-gray-700')}>{i + 1}</span></td>
-                                            <td className="py-2.5"><div className="flex items-center gap-2.5"><StaffRing id={r.person.id} name={r.person.name} size={28}><Avatar size={28} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar></StaffRing><Who id={r.person.id} className="truncate font-semibold">{r.person.name}</Who></div></td>
+                                            <td className="py-2.5"><div className="flex items-center gap-2.5"><StaffRing id={r.person.id} name={r.person.name} size={28}><Avatar size={28} shape="circle" src={r.person.image || undefined}>{initials(r.person.name)}</Avatar></StaffRing><Who id={r.person.id} person={r.person} className="truncate font-semibold">{r.person.name}</Who></div></td>
                                             <td className="py-2.5 text-end font-bold">{r.completed}</td>
                                             <td className={classNames('py-2.5 text-end', r.onTimeRate !== null && r.onTimeRate < 60 ? 'text-red-500' : '')}>{r.onTimeRate === null ? '—' : `${r.onTimeRate}%`}</td>
                                             <td className="py-2.5 text-end">{r.avgDays === null ? '—' : r.avgDays}</td>

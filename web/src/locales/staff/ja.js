@@ -6048,5 +6048,6 @@ export default {
     "Voice notes": "音声メモ",
     "With a reminder": "リマインダーあり",
     "With comments": "コメントあり",
-    "With links": "リンクあり"
+    "With links": "リンクあり",
+    "Shared with": "共有先"
 }

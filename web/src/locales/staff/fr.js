@@ -6048,5 +6048,6 @@ export default {
     "Voice notes": "Notes vocales",
     "With a reminder": "Avec un rappel",
     "With comments": "Avec des commentaires",
-    "With links": "Avec des liens"
+    "With links": "Avec des liens",
+    "Shared with": "Partagée avec"
 }

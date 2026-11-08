@@ -1,12 +1,14 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useState } from 'react'
 import dayjs from 'dayjs'
-import { TbArchive, TbArchiveOff, TbBellRinging, TbChecklist, TbCheck, TbMessageCircle, TbPalette, TbPaperclip, TbPin, TbPinFilled, TbStar, TbStarFilled, TbTrash, TbUsers, TbLink } from 'react-icons/tb'
+import { TbArchive, TbArchiveOff, TbArrowRight, TbCalendar, TbBellRinging, TbChecklist, TbCheck, TbMessageCircle, TbPalette, TbPaperclip, TbPin, TbPinFilled, TbStar, TbStarFilled, TbTrash, TbUsers, TbLink } from 'react-icons/tb'
 import RichView from '@/components/crm/RichView'
 import { looksLikeHtml } from '@/lib/crm/richText'
 import { RemindTag } from '../tasks/shared'
 import { COLORS, cardClass, labelOfColor } from './noteKit'
 import { tr } from '@/utils/t'
+
+const Stat = ({ icon, children, title, tone = '' }) => <span title={title} className={`inline-flex items-center gap-0.5 rounded-full bg-black/5 px-1.5 py-0.5 font-semibold dark:bg-white/10 ${tone}`}>{icon}{children}</span>
 
 const ToolBtn = ({ title, onClick, active, danger, children }) => (
     <button type="button" title={title} aria-label={title} onClick={(e) => { e.stopPropagation(); onClick?.(e) }} className={`grid size-7 place-items-center rounded-full text-base transition hover:bg-black/10 dark:hover:bg-white/10 ${active ? 'text-primary' : danger ? 'text-red-500' : 'text-gray-600 dark:text-gray-300'}`}>{children}</button>
@@ -31,6 +33,17 @@ const NoteCard = ({ note: n, onOpen, onPatch, onDelete, onToTask, compact = fals
                 </div>
             )}
             <div className="p-3.5">
+                <div className="mb-1.5 flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-300">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 font-semibold dark:bg-white/10" title={dayjs(n.updatedAt).format('DD MMM YYYY, HH:mm')}><TbCalendar />{dayjs(n.updatedAt).format('DD MMM')}</span>
+                    <span className="ms-auto flex flex-wrap items-center justify-end gap-1">
+                        {n.remindAt && <Stat icon={<TbBellRinging />} tone="text-amber-700 dark:text-amber-400" title={tr('Reminder')}>{dayjs(n.remindAt).format('DD MMM HH:mm')}<RemindTag when={n.remindAt} /></Stat>}
+                        {n.kind === 'list' && <Stat icon={<TbChecklist />} title={tr('Checklist')}>{done.length}/{n.checklist.length}</Stat>}
+                        {n.attachments.length > 0 && <Stat icon={<TbPaperclip />} title={tr('Pictures, voice and files')}>{n.attachments.length}</Stat>}
+                        {n.links.length > 0 && <Stat icon={<TbLink />} title={tr('Links')}>{n.links.length}</Stat>}
+                        {n.comments > 0 && <Stat icon={<TbMessageCircle />} title={tr('Comments')}>{n.comments}</Stat>}
+                        {n.sharedWith.length > 0 && <Stat icon={<TbUsers />} title={n.sharedWith.map((x) => x.name).join(', ')}>{n.sharedWith.length}</Stat>}
+                    </span>
+                </div>
                 <div className="flex items-start gap-2">
                     {n.title ? <h6 className="min-w-0 flex-1 break-words font-bold leading-snug text-gray-900 dark:text-gray-100">{n.title}</h6> : <span className="flex-1" />}
                     {(n.important || n.pinned) && <span className="flex shrink-0 gap-1 text-base">{n.important && <TbStarFilled className="text-amber-500" title={tr('Important')} />}{n.pinned && <TbPinFilled className="text-primary" title={tr('Pinned')} />}</span>}
@@ -56,15 +69,15 @@ const NoteCard = ({ note: n, onOpen, onPatch, onDelete, onToTask, compact = fals
                 {audios.map((a) => <audio key={a.url} controls preload="none" src={a.url} onClick={(e) => e.stopPropagation()} className="mt-2 h-9 w-full" />)}
                 {files.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{files.map((a) => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex max-w-full items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 text-xs dark:bg-white/10"><TbPaperclip className="shrink-0" /><span className="truncate">{a.name}</span></a>)}</div>}
                 {n.links.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{n.links.slice(0, 4).map((l) => <a key={l.url} href={l.url} target="_blank" rel="noreferrer noopener" onClick={(e) => e.stopPropagation()} className="inline-flex max-w-full items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 text-xs text-primary dark:bg-white/10"><TbLink className="shrink-0" /><span className="truncate">{l.title || l.url.replace(/^https?:\/\/(www\.)?/, '')}</span></a>)}</div>}
-                <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-gray-500">
-                    {n.labels.length > 0 && <span className="flex flex-wrap gap-1">{n.labels.map((l) => <span key={l} className={`rounded-full px-2 py-0.5 text-[11px] font-semibold text-gray-800 ${COLORS[n.color]?.dot || 'bg-gray-300 dark:bg-gray-500 dark:text-gray-100'}`}>{l}</span>)}</span>}
-                    {n.remindAt && <span className="inline-flex items-center gap-0.5 font-semibold text-amber-700 dark:text-amber-400"><TbBellRinging />{dayjs(n.remindAt).format('DD MMM, HH:mm')}<RemindTag when={n.remindAt} /></span>}
-                    {!n.own && n.owner && <span className="inline-flex items-center gap-0.5"><TbUsers />{tr('From {name}', { name: n.owner })}</span>}
-                    {mine && n.sharedWith.length > 0 && <span className="inline-flex items-center gap-0.5" title={n.sharedWith.map((s) => s.name).join(', ')}><TbUsers />{n.sharedWith.length}</span>}
-                    {n.comments > 0 && <span className="inline-flex items-center gap-0.5"><TbMessageCircle />{n.comments}</span>}
-                    {n.kind === 'list' && <span className="inline-flex items-center gap-0.5"><TbChecklist />{done.length}/{n.checklist.length}</span>}
-                    <span className="ms-auto">{dayjs(n.updatedAt).format('DD MMM')}</span>
-                </div>
+                {(n.labels.length > 0 || n.owner || n.sharedWith.length > 0) && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                        {n.labels.length > 0 && <span className="flex min-w-0 flex-wrap gap-1">{n.labels.map((l) => <span key={l} className={`rounded-full px-2 py-0.5 text-[11px] font-semibold text-gray-800 ${COLORS[n.color]?.dot || 'bg-gray-300 dark:bg-gray-500 dark:text-gray-100'}`}>{l}</span>)}</span>}
+                        <span className="ms-auto flex min-w-0 max-w-full items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300" title={[n.owner && `${tr('From {name}', { name: n.owner })}`, n.sharedWith.length ? `${tr('Shared with')}: ${n.sharedWith.map((x) => x.name).join(', ')}` : ''].filter(Boolean).join(' · ')}>
+                            {n.owner && <span className="inline-flex min-w-0 items-center gap-1"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-black/10 text-[9px] font-bold dark:bg-white/15">{n.owner.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}</span><span className="truncate">{n.own ? tr('You') : n.owner}</span></span>}
+                            {n.sharedWith.length > 0 && <span className="inline-flex min-w-0 items-center gap-1 truncate"><TbArrowRight className="shrink-0" /><span className="truncate">{n.sharedWith.map((x) => x.name.split(' ')[0]).slice(0, 2).join(', ')}{n.sharedWith.length > 2 ? ` +${n.sharedWith.length - 2}` : ''}</span></span>}
+                        </span>
+                    </div>
+                )}
             </div>
             {mine && !compact && (
                 <div className="relative flex items-center gap-0.5 px-2 pb-2 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.214.0',
+        date: '2026-11-08',
+        title: 'Notes cards: date and counts on top, labels and people at the bottom',
+        items: [
+            'Notes page: each card has a top bar with the date on the left and small count icons on the right (reminder, checklist progress, files, links, comments, people it is shared with).',
+            'The bottom of the card has the labels (in the note colour) on the left, and on the right who the note is from and who it is shared with.',
+        ],
+    },
+    {
         version: '0.213.2',
         date: '2026-11-08',
         title: 'Notes on the Tasks board show colour and labels',

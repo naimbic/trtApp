@@ -6048,5 +6048,6 @@ export default {
     "Voice notes": "ملاحظات صوتية",
     "With a reminder": "مع تذكير",
     "With comments": "مع تعليقات",
-    "With links": "مع روابط"
+    "With links": "مع روابط",
+    "Shared with": "مشاركة مع"
 }

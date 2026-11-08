@@ -256,15 +256,22 @@ export async function cleanLeadWebsites() {
     await prisma.crmOption.create({ data: { name: MARK4, value: `${new Date().toISOString()} · ${n} cleaned` } })
 }
 
-/** Closed days used to be their own list: they are days off now (one per day), so the Calendar and the Days off menu show the same days. Safe to run at every start. */
-export async function mergeClosedDaysIntoDaysOff() {
-    const rows = await prisma.crmClosedDay.findMany({ take: 500 })
-    const day = (str) => new Date(`${str}T00:00:00Z`)
+/** Days off (one date each) became closed periods again: days in a row are one period. Safe to run at every start (it only moves what is left). */
+export async function mergeDaysOffIntoClosedDays() {
+    const rows = await prisma.crmDayOff.findMany({ where: { offDate: { not: null } }, orderBy: { offDate: 'asc' }, take: 5000 })
+    if (!rows.length) return
+    const str = (d) => new Date(d).toISOString().slice(0, 10)
+    const have = new Set()
+    for (const c of await prisma.crmClosedDay.findMany({ select: { fromDay: true, toDay: true } })) for (let t = +new Date(`${c.fromDay}T00:00:00Z`), n = 0; t <= +new Date(`${c.toDay}T00:00:00Z`) && n < 400; t += 86400000, n++) have.add(str(t))
+    const periods = []
     for (const r of rows) {
-        const have = new Set((await prisma.crmDayOff.findMany({ where: { offDate: { gte: day(r.fromDay), lte: day(r.toDay) } }, select: { offDate: true } })).map((x) => x.offDate.toISOString().slice(0, 10)))
-        const data = []
-        for (let t = +day(r.fromDay), n = 0; t <= +day(r.toDay) && n < 400; t += 86400000, n++) { const d = new Date(t); if (!have.has(d.toISOString().slice(0, 10))) data.push({ offDate: d, reason: r.label || null }) }
-        if (data.length) await prisma.crmDayOff.createMany({ data })
-        await prisma.crmClosedDay.delete({ where: { id: r.id } })
+        const d = str(r.offDate)
+        if (have.has(d)) continue
+        const last = periods[periods.length - 1]
+        const lab = (r.reason || '').trim()
+        if (last && last.label === (lab || null) && str(+new Date(`${last.toDay}T00:00:00Z`) + 86400000) === d && (+new Date(`${d}T00:00:00Z`) - +new Date(`${last.fromDay}T00:00:00Z`)) / 86400000 < 365) last.toDay = d
+        else periods.push({ fromDay: d, toDay: d, label: lab || null })
     }
+    if (periods.length) await prisma.crmClosedDay.createMany({ data: periods })
+    await prisma.crmDayOff.deleteMany({ where: { id: { in: rows.map((r) => r.id) } } })
 }

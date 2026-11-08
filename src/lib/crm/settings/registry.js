@@ -394,7 +394,7 @@ export const GROUPS = {
                 sel('booking_slot_minutes', 'Default length of a meeting', [['30', '30 minutes'], ['45', '45 minutes'], ['60', '1 hour'], ['90', '1 hour 30'], ['120', '2 hours']], { default: '60' }),
                 f('appointment_min_notice_days', 'Earliest day a visitor can book, from today (days)', 'number', { min: 0, max: 30, default: '2', hint: '2 = today and tomorrow cannot be booked (nobody books the day before). 1 = from tomorrow. 0 = no limit.' }),
                 f('booking_horizon_days', 'How far ahead people can book (days)', 'number', { min: 7, max: 365, default: '56' }),
-            ], links: [['Days off (holidays, one-off)', '/calendar?closed=1']] },
+            ], links: [['Closed days (holidays, one-off)', '/calendar?closed=1']] },
             { title: 'Who takes appointments and hosts meetings', desc: 'Who is told when a visitor asks for a meeting, and who may host a room on Meet. Anyone can still be invited to a meeting as a guest.', fields: [
                 f('appointment_staff', 'Default team for the meetings', 'staffs', { default: '', hint: 'Used for a day with nobody chosen in the weekly schedule. They are told about each request and can accept or refuse it. Empty = every administrator.' }),
                 sel('meeting_host_policy', 'Who can host or start a meeting on Meet', [['all', 'Every team member'], ['managers', 'Administrators and managers only'], ['admins', 'Administrators only']], { default: 'all', hint: 'Managers = a team member whose role is named "Manager". Others can still join with the room link as a guest or a team member.' }),

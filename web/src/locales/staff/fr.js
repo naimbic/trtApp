@@ -6048,8 +6048,5 @@ export default {
     "Voice notes": "Notes vocales",
     "With a reminder": "Avec un rappel",
     "With comments": "Avec des commentaires",
-    "With links": "Avec des liens",
-    "Company holidays: no work, no leave counted, and no appointment on the booking page.": "Jours fériés de l'entreprise : pas de travail, pas de congé décompté, et aucun rendez-vous sur la page de réservation.",
-    "Last day (optional, to close several days)": "Dernier jour (facultatif, pour fermer plusieurs jours)",
-    "Days off (holidays, one-off)": "Jours fériés (vacances, ponctuels)"
+    "With links": "Avec des liens"
 }

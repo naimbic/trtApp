@@ -6048,8 +6048,5 @@ export default {
     "Voice notes": "音声メモ",
     "With a reminder": "リマインダーあり",
     "With comments": "コメントあり",
-    "With links": "リンクあり",
-    "Company holidays: no work, no leave counted, and no appointment on the booking page.": "会社の休日：勤務なし、休暇は数えず、予約ページでも予約不可。",
-    "Last day (optional, to close several days)": "最終日（任意、複数日を休みにする場合）",
-    "Days off (holidays, one-off)": "休日（祝日・単発）"
+    "With links": "リンクあり"
 }

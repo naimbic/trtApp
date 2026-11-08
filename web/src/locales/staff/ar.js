@@ -6048,8 +6048,5 @@ export default {
     "Voice notes": "ملاحظات صوتية",
     "With a reminder": "مع تذكير",
     "With comments": "مع تعليقات",
-    "With links": "مع روابط",
-    "Company holidays: no work, no leave counted, and no appointment on the booking page.": "عطل الشركة: لا عمل ولا تُحتسب إجازة ولا مواعيد في صفحة الحجز.",
-    "Last day (optional, to close several days)": "اليوم الأخير (اختياري لإغلاق عدة أيام)",
-    "Days off (holidays, one-off)": "أيام العطل (إجازات، لمرة واحدة)"
+    "With links": "مع روابط"
 }

@@ -15,8 +15,7 @@ import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EventDialog from './EventDialog'
 import SyncDialog from './SyncDialog'
-import Dialog from '@/components/ui/Dialog'
-import { DaysOffView } from '../team/DaysOff'
+import ClosedDays from './ClosedDays'
 import useMe from '@/utils/hooks/useMe'
 import './calendar.css'
 import { tr } from '@/utils/t'
@@ -351,7 +350,7 @@ const Calendar = () => {
         <Container className="h-full">
             <InvoiceHead
                 title={tr("Schedule")}
-                action={<span className="flex flex-wrap items-center gap-2"><Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => openNew()}>{tr("New event")}</Button><Button size="sm" icon={<TbCalendarOff />} onClick={() => setClosedOpen(true)}>{tr("Days off")}</Button><Button size="sm" icon={<TbRefresh />} onClick={() => setSyncOpen(true)}>{tr("Sync with Google / Apple")}</Button></span>}
+                action={<span className="flex flex-wrap items-center gap-2"><Button size="sm" variant="solid" icon={<TbPlus />} onClick={() => openNew()}>{tr("New event")}</Button><Button size="sm" icon={<TbCalendarOff />} onClick={() => setClosedOpen(true)}>{tr("Closed days")}</Button><Button size="sm" icon={<TbRefresh />} onClick={() => setSyncOpen(true)}>{tr("Sync with Google / Apple")}</Button></span>}
                 stats={[
                     { icon: <TbCalendarEvent />, label: tr("Today"), value: String(todayCount) },
                     { icon: <TbCalendarWeek />, label: tr("This week"), value: String(weekCount) },
@@ -413,7 +412,7 @@ const Calendar = () => {
             {addMenu && <RowMenu anchor={addMenu.el} items={[{ label: addMenu.time ? `${tr("New event")} · ${dayjs(`${addMenu.day} ${addMenu.time}`).format(hour12 ? 'h:mm A' : 'HH:mm')}` : tr("New event"), icon: <TbCalendarEvent />, onClick: () => openNew(addMenu.day, addMenu.time) }, { label: addMenu.time ? `${tr("New task")} · ${dayjs(addMenu.day).format('DD MMM')}` : tr("New task"), icon: <TbChecklist />, onClick: () => navigate(`/crm/tasks?new=1&due=${addMenu.day}`) }]} onClose={() => setAddMenu(null)} />}
             {menu && <RowMenu anchor={menu.el} items={menuItems(menu.it)} onClose={() => setMenu(null)} />}
             <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
-            <Dialog isOpen={closedOpen} width={1000} onClose={() => setClosedOpen(false)} onRequestClose={() => setClosedOpen(false)}><div className="max-h-[80vh] overflow-y-auto pe-1"><DaysOffView embedded /></div></Dialog>
+            <ClosedDays open={closedOpen} onClose={() => setClosedOpen(false)} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete this event?")} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
                 <p>{tr("The event is removed for everyone who was invited.")}</p>
             </ConfirmDialog>

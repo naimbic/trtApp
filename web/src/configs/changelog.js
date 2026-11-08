@@ -2,13 +2,13 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
-        version: '0.211.0',
+        version: '0.212.0',
         date: '2026-11-08',
-        title: 'Closed days and Days off are now the same',
+        title: 'Closed days are back as they were; Days off is the same thing',
         items: [
-            'Calendar → Days off (before: Closed days) opens the very same calendar and popup as Days off in the More menu: month, week and list views, add a day with its reason, edit, delete.',
-            'One list for both: a day off closes the booking page too, and the old closed periods were moved into Days off (one day each). To close several days at once, fill the optional Last day.',
-            'Closing days works for people who manage Attendance & leave, or who may close days for appointments.',
+            'Calendar → Closed days is back exactly as it was (periods, quick picks, reason, the booking-page notice line).',
+            'Days off in the More menu now shows that same Closed days panel and works on the same list: what you close in one is in the other, and the booking page does not offer those days.',
+            'Leave requests do not count the closed days as working days. The days off added in the last release were moved back into closed periods (days in a row with the same reason become one period).',
         ],
     },
     {

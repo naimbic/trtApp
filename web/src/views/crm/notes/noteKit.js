@@ -18,6 +18,8 @@ export const COLORS = {
     pink: { card: 'bg-pink-100 border-pink-200 dark:bg-pink-500/20 dark:border-pink-500/30', dot: 'bg-pink-300', label: 'Pink' },
     gray: { card: 'bg-gray-200 border-gray-300 dark:bg-gray-600/40 dark:border-gray-500/40', dot: 'bg-gray-400', label: 'Gray' },
 }
+// the same colours as flat hex values, for the tiles of the Tasks board
+export const NOTE_HEX = { yellow: '#fcd34d', red: '#fda4af', orange: '#fdba74', green: '#6ee7b7', teal: '#5eead4', blue: '#7dd3fc', purple: '#c4b5fd', pink: '#f9a8d4', gray: '#d1d5db' }
 export const PLAIN_CARD = 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
 export const cardClass = (color) => COLORS[color]?.card || PLAIN_CARD
 

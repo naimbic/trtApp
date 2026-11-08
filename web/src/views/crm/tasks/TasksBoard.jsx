@@ -16,7 +16,7 @@ import { RemindTag, STATUS, PRIORITY, People, fmtDate, isOverdue, prioOf, useTas
 import TaskDrawer from './TaskDrawer'
 import SavedViews from '@/components/crm/SavedViews'
 import NoteEditor from '../notes/NoteEditor'
-import { NOTES_EVENT, plainOf } from '../notes/noteKit'
+import { NOTES_EVENT, NOTE_HEX, plainOf } from '../notes/noteKit'
 import RelationSelect from '../kit/RelationSelect'
 import { tr, trn } from '@/utils/t'
 import { onCreate } from '@/utils/createIntent'
@@ -194,7 +194,7 @@ const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, on
                         if (isNote(item)) { if (to !== 'notes' && !String(to).startsWith('end:')) promote(item, to); return }
                         onDragEnd({ source: { droppableId: from, index: fromIndex }, destination: { droppableId: to, index } })
                     }}
-                    columns={[...(notesOn ? [{ id: 'notes', name: tr("Notes"), href: '/crm/notes', hrefTitle: tr("Open the Notes page"), tone: 'butter', count: shownNotes.length, items: shownNotes.map((n) => ({ id: `n:${n.id}`, title: `${n.important ? '⭐ ' : ''}${n.pinned ? '📌 ' : ''}${n.title || plainOf(n.description).slice(0, 60) || tr('Note')}`, sub: n.kind === 'list' ? `☑ ${n.checklist.filter((c) => c.done).length}/${n.checklist.length}` : plainOf(n.description).slice(0, 90), date: n.remindAt ? <>{`🔔 ${dayjs(n.remindAt).format('DD MMM HH:mm')}`}<RemindTag when={n.remindAt} /></> : fmtDate(n.createdAt), label: '', fields: [{ label: tr("Description"), value: plainOf(n.description) }], team: [], people: <span className="text-[11px] opacity-70">{tr("Drag to a column to make it a task")}</span> })) }] : []), ...shownStatuses.map((s) => {
+                    columns={[...(notesOn ? [{ id: 'notes', name: tr("Notes"), href: '/crm/notes', hrefTitle: tr("Open the Notes page"), tone: 'butter', count: shownNotes.length, items: shownNotes.map((n) => ({ id: `n:${n.id}`, title: `${n.important ? '⭐ ' : ''}${n.pinned ? '📌 ' : ''}${n.title || plainOf(n.description).slice(0, 60) || tr('Note')}`, sub: n.kind === 'list' ? `☑ ${n.checklist.filter((c) => c.done).length}/${n.checklist.length}` : plainOf(n.description).slice(0, 90), date: n.remindAt ? <>{`🔔 ${dayjs(n.remindAt).format('DD MMM HH:mm')}`}<RemindTag when={n.remindAt} /></> : fmtDate(n.createdAt), label: (n.labels || []).join(' · '), tint: NOTE_HEX[n.color] || undefined, fields: [{ label: tr("Description"), value: plainOf(n.description) }], team: [], people: <span className="text-[11px] opacity-70">{tr("Drag to a column to make it a task")}</span> })) }] : []), ...shownStatuses.map((s) => {
                         const all = columns[s.value] || []
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {

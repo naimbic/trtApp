@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.213.2',
+        date: '2026-11-08',
+        title: 'Notes on the Tasks board show colour and labels',
+        items: [
+            'Tasks page, Notes column: each note tile now takes the colour chosen for the note and shows its labels at the bottom left (before, every tile was yellow with no label).',
+        ],
+    },
+    {
         version: '0.213.1',
         date: '2026-11-08',
         title: 'Note colour and labels easy to find',

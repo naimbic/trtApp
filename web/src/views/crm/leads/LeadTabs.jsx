@@ -30,7 +30,29 @@ const when = (d) => dayjs(d).format('DD MMM YYYY, HH:mm')
  * The tasks of the lead, right in its popup, with the same panel as a task's checklist: tick, rename in place, a date, one or several
  * people, delete; "@" and "#" work in the name. The arrow opens the full task popup. Every task created here is linked to the lead.
  */
-export const LeadTasks = ({ leadId, staff, onChanged }) => {
+export const LeadTasks = ({ leadId, staff, onChanged, asTasks = true, plain = [] }) => {
+    if (!asTasks) return <LeadPlainChecklist leadId={leadId} staff={staff} initial={plain} onChanged={onChanged} />
+    return <LeadTaskList leadId={leadId} staff={staff} onChanged={onChanged} />
+}
+
+/** The lead's checklist kept as plain lines on the lead itself (Settings > Leads): no task is created for an item. */
+const LeadPlainChecklist = ({ leadId, staff, initial, onChanged }) => {
+    const can = useCan()
+    const [items, setItems] = useState(initial)
+    useEffect(() => setItems(initial), [JSON.stringify(initial)]) // eslint-disable-line react-hooks/exhaustive-deps
+    const act = async (op) => {
+        try {
+            const r = await api(`/api/crm/pipeline/leads/${leadId}/checklist`, { method: 'POST', body: op })
+            setItems(r.checklist || []); onChanged?.()
+        } catch (e) { notify('danger', e.message) }
+    }
+    return (
+        <ChecklistPanel title={tr("Checklist")} items={items} staff={staff} canEdit={can('leads', 'edit')} canDelete={can('leads', 'edit')} reminders={false}
+            placeholder={tr("Add an item for this lead")} empty={tr("No items yet.")} act={act} />
+    )
+}
+
+const LeadTaskList = ({ leadId, staff, onChanged }) => {
     useTaskStatuses()
     const can = useCan()
     const [list, setList] = useState(null)
@@ -41,7 +63,7 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
         try { setList((await api(`/api/crm/work/tasks?${qs({ relType: 'lead', relId: leadId, done: '1' })}`)).list || []) } catch (e) { notify('danger', e.message); setList([]) }
     }, [leadId])
     useEffect(() => { load() }, [load])
-    const items = useMemo(() => (list || []).map((t) => ({ id: t.id, description: t.name, finished: t.status === 5, dueDate: t.dueDate, assignedIds: (t.assignees || []).map((x) => x.id), canFinish: t.canFinish })), [list])
+    const items = useMemo(() => (list || []).map((t) => ({ id: t.id, description: t.name, finished: t.status === 5, dueDate: t.dueDate, hours: t.hours, assignedIds: (t.assignees || []).map((x) => x.id), canFinish: t.canFinish })), [list])
     useEffect(() => { live.current = Object.fromEntries(items.map((i) => [i.id, i.assignedIds])) }, [items])
     const changed = async () => { await load(); onChanged?.() }
     // read the task, change one thing, save it back (the same way the board menu does)
@@ -54,13 +76,14 @@ export const LeadTasks = ({ leadId, staff, onChanged }) => {
     }
     const act = async (op) => {
         try {
-            if (op.action === 'add') await api('/api/crm/work/tasks', { method: 'POST', body: { name: op.description, relType: 'lead', relId: leadId, dueDate: op.dueDate || null, assigneeIds: op.assignedIds || [] } })
+            if (op.action === 'add') await api('/api/crm/work/tasks', { method: 'POST', body: { name: op.description, relType: 'lead', relId: leadId, dueDate: op.dueDate || null, hours: op.hours || null, assigneeIds: op.assignedIds || [] } })
             else if (op.action === 'toggle') await api(`/api/crm/work/tasks/${op.itemId}/move`, { method: 'POST', body: { status: op.finished ? 5 : 1 } })
             else if (op.action === 'delete') await api(`/api/crm/work/tasks/${op.itemId}`, { method: 'DELETE' })
             else if (op.action === 'reorder') await api('/api/crm/work/tasks/reorder', { method: 'POST', body: { ids: op.ids } })
             else if (op.action === 'update') {
                 const change = {}
                 if (op.description !== undefined) change.name = op.description
+                if (op.hours !== undefined) change.hours = op.hours
                 if (op.dueDate !== undefined) change.dueDate = op.dueDate ? dayjs(op.dueDate).format('YYYY-MM-DD') : null
                 if (op.assignedIds) { live.current[op.itemId] = op.assignedIds; change.assigneeIds = op.assignedIds }
                 if (op.toggleAssignee) { const cur = live.current[op.itemId] || []; const next = cur.includes(op.toggleAssignee) ? cur.filter((x) => x !== op.toggleAssignee) : [...cur, op.toggleAssignee]; live.current[op.itemId] = next; change.assigneeIds = next }

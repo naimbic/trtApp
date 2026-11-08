@@ -38,22 +38,15 @@ const ActivityFeed = ({ items = [], empty }) => {
     if (!rows.length) return <p className="text-sm text-gray-500">{empty || tr('Nothing logged yet.')}</p>
     const shown = rows.slice(page * PAGE, page * PAGE + PAGE)
     return (
-        <div className="min-w-0 space-y-3">
+        <div className="min-w-0 space-y-2">
             {shown.map((r) => {
                 const [Icon, tone] = KINDS[r.kind] || KINDS.edit
                 return (
-                    <article key={r.key} className="min-w-0 rounded-2xl border border-gray-200/80 bg-white p-3.5 dark:border-gray-700 dark:bg-gray-800">
-                        <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${tone}`}><Icon />{tr(LABEL[r.kind] || 'Edit')}</span>
-                            <time className="text-xs text-gray-500" dateTime={dayjs(r.at).toISOString()}>{dayjs(r.at).format('DD MMM YYYY')} · {dayjs(r.at).format('HH:mm')}</time>
-                        </header>
-                        <p className="mt-2.5 break-words text-sm leading-relaxed text-gray-800 dark:text-gray-100">{r.text}</p>
-                        {r.who && (
-                            <footer className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-2.5 text-xs text-gray-500 dark:border-gray-700">
-                                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gray-200 text-[11px] font-bold text-gray-600 dark:bg-gray-600 dark:text-gray-100">{r.who[0]?.toUpperCase()}</span>
-                                <b className="truncate font-semibold text-gray-700 dark:text-gray-200">{r.who}</b>
-                            </footer>
-                        )}
+                    <article key={r.key} className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl border border-gray-200/80 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+                        <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${tone}`}><Icon />{tr(LABEL[r.kind] || 'Edit')}</span>
+                        <p className="min-w-0 flex-1 basis-40 break-words text-sm leading-snug text-gray-800 dark:text-gray-100">{r.text}</p>
+                        <time className="shrink-0 text-[11px] leading-tight text-gray-500" dateTime={dayjs(r.at).toISOString()}>{dayjs(r.at).format('DD MMM YYYY · HH:mm')}</time>
+                        {r.who && <span className="flex shrink-0 items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300"><span className="grid size-5 place-items-center rounded-full bg-gray-200 text-[10px] font-bold dark:bg-gray-600">{r.who[0]?.toUpperCase()}</span><b className="max-w-[9rem] truncate font-semibold">{r.who}</b></span>}
                     </article>
                 )
             })}

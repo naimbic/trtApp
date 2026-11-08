@@ -21,11 +21,12 @@ import { Projects, ProjectDetail } from './Projects'
 import { Tasks, TaskDetail } from './Tasks'
 import { Ideas, IdeaDetail } from './Ideas'
 import { Requests, RequestDetail } from './Requests'
+import { Reports, ReportDetail } from './Reports'
 import { Tickets, TicketThread } from './Tickets'
 import Profile from './Profile'
 import ChatWidget from './ChatWidget'
 import { Knowledge, HelpArticle } from './Knowledge'
-import { PiBookOpenTextDuotone, PiCheckSquareDuotone, PiCalendarCheckDuotone } from 'react-icons/pi'
+import { PiChartLineUpDuotone, PiBookOpenTextDuotone, PiCheckSquareDuotone, PiCalendarCheckDuotone } from 'react-icons/pi'
 
 const Ctx = createContext(null)
 export const usePortal = () => useContext(Ctx)
@@ -40,6 +41,7 @@ const NAV = [
     { to: '/portal/tasks', label: 'Tasks', icon: <PiCheckSquareDuotone />, need: 'projects' },
     { to: '/portal/ideas', label: 'Ideas', icon: <PiLightbulbDuotone />, need: 'ideas' },
     { to: '/portal/requests', label: 'Requests', icon: <PiBugBeetleDuotone />, need: 'requests' },
+    { to: '/portal/reports', label: 'Reports & Strategies', icon: <PiChartLineUpDuotone />, need: 'reports' },
     { to: '/portal/tickets', label: 'Support', icon: <PiLifebuoyDuotone />, need: 'support' },
     { to: '/portal/help', label: 'Help center', icon: <PiBookOpenTextDuotone /> },
 ]
@@ -149,6 +151,8 @@ const PortalApp = () => (
             <Route path="ideas/:id" element={<IdeaDetail />} />
             <Route path="requests" element={<Requests />} />
             <Route path="requests/:id" element={<RequestDetail />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="reports/:id" element={<ReportDetail />} />
             <Route path="tickets" element={<Tickets />} />
             <Route path="tickets/:id" element={<TicketThread />} />
             <Route path="help" element={<Knowledge />} />

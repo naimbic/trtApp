@@ -6029,5 +6029,12 @@ export default {
     "{n} link(s)": "{n}件のリンク",
     "Sent to the client": "クライアントに送信済み",
     "Client is reviewing": "クライアントが確認中",
-    "Changes requested": "変更の依頼あり"
+    "Changes requested": "変更の依頼あり",
+    "Add an item for this lead": "このリード用の項目を追加",
+    "No items yet.": "項目はまだありません。",
+    "No time": "時間なし",
+    "e.g. 1, 2.5, 3": "例: 1、2.5、3",
+    "Keep lead checklist items as plain lines (no task is created for each item)": "リードのチェックリスト項目を単なる行として保持する（項目ごとにタスクを作成しない）",
+    "Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.": "オフ：リードのタスクタブで追加した項目は、リードにひも付いた実際のタスクとなり、タスクボードに表示されます。オン：項目はリード内にのみ残ります。",
+    "The reports and strategies the team shares with the client, with its answer.": "チームがクライアントと共有するレポートと戦略、およびその回答。"
 }

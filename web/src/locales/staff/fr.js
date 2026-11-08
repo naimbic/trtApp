@@ -6029,5 +6029,12 @@ export default {
     "{n} link(s)": "{n} lien(s)",
     "Sent to the client": "Envoyé au client",
     "Client is reviewing": "Le client examine",
-    "Changes requested": "Modifications demandées"
+    "Changes requested": "Modifications demandées",
+    "Add an item for this lead": "Ajouter un élément pour ce lead",
+    "No items yet.": "Aucun élément pour l'instant.",
+    "No time": "Sans durée",
+    "e.g. 1, 2.5, 3": "ex. 1, 2,5, 3",
+    "Keep lead checklist items as plain lines (no task is created for each item)": "Garder les éléments de la checklist d'un lead en simples lignes (aucune tâche n'est créée pour chaque élément)",
+    "Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.": "Désactivé : chaque élément ajouté dans l'onglet Tâches d'un lead devient une vraie tâche, liée au lead, visible sur le tableau des tâches. Activé : les éléments restent dans le lead uniquement.",
+    "The reports and strategies the team shares with the client, with its answer.": "Les rapports et stratégies que l'équipe partage avec le client, avec sa réponse."
 }

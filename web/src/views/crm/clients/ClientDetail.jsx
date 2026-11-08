@@ -128,10 +128,10 @@ const ClientDetail = () => {
     const money = makeMoney(lookups.currencies)
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'mails'].includes(t) ? t : 'overview' })
+    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'reports', 'mails'].includes(t) ? t : 'overview' })
     const [cur, setCur] = useState(null)
     // a link from a notification (…?tab=requests&request=ID) switches the tab even when this client is already open
-    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'mails'].includes(t)) setTab(t) }, [loc.search])
+    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'reports', 'mails'].includes(t)) setTab(t) }, [loc.search])
     const [confirmDel, setConfirmDel] = useState(false)
     const [profile, setProfile] = useState(null)
     const [followUp, setFollowUp] = useState(null)

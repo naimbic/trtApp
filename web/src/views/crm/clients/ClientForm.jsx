@@ -20,7 +20,7 @@ import BankAccountSelect from '../kit/BankAccountSelect'
 
 /** The emails a client's contacts can be switched off for, all together. */
 export const EMAIL_KINDS = [['invoices', 'Invoices'], ['estimates', 'Estimates'], ['proposals', 'Proposals'], ['contracts', 'Contracts'], ['credit_notes', 'Credit notes'], ['projects', 'Projects'], ['tasks', 'Tasks shared with the client'], ['support', 'Support tickets'], ['ideas', 'Ideas'], ['requests', 'Requests']]
-const PORTAL_KINDS = 8
+const PORTAL_KINDS = 9
 const addr = { street: '', city: '', state: '', zip: '', country: null }
 const blank = { diffBilling: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, portalHidden: [], emailHidden: [], active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
 
@@ -169,7 +169,7 @@ const ClientForm = () => {
                     <FoldSection icon={<TbShieldCheck />} tone="emerald" title={tr("Client area access")} summary={tr('{n} of {m} sections', { n: PORTAL_KINDS - (v.portalHidden || []).length, m: PORTAL_KINDS })} open={openSec.includes('access')} onToggle={() => toggleSec('access')}>
                                                     <p className="text-sm text-gray-500">{tr("The sections this client sees after signing in to its client area. Switch one off to hide it for all its contacts.")}</p>
                             <div className="mt-4 grid gap-2.5">
-                                {[['invoices', tr("Invoices")], ['estimates', tr("Estimates")], ['proposals', tr("Proposals")], ['contracts', tr("Contracts")], ['projects', tr("Projects")], ['support', tr("Support")], ['ideas', tr("Ideas")], ['requests', tr("Requests")]].map(([key, label]) => (
+                                {[['invoices', tr("Invoices")], ['estimates', tr("Estimates")], ['proposals', tr("Proposals")], ['contracts', tr("Contracts")], ['projects', tr("Projects")], ['support', tr("Support")], ['ideas', tr("Ideas")], ['requests', tr("Requests")], ['reports', tr("Reports & Strategies")]].map(([key, label]) => (
                                     <label key={key} className="flex items-center justify-between gap-4 text-sm"><span>{label}</span><Switcher checked={!(v.portalHidden || []).includes(key)} onChange={(on) => set({ portalHidden: on ? (v.portalHidden || []).filter((x) => x !== key) : [...(v.portalHidden || []), key] })} /></label>
                                 ))}
                             </div>

@@ -187,7 +187,7 @@ const fieldsFrom = (b) => {
     set('defaultCurrencyId', b.currencyId === undefined ? undefined : b.currencyId || null)
     set('bankAccountId', b.bankAccountId === undefined ? undefined : b.bankAccountId || null)
     if (b.active !== undefined) d.active = !!b.active
-    if (Array.isArray(b.portalHidden)) d.portalHidden = b.portalHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'projects', 'support', 'ideas', 'requests'].includes(x))
+    if (Array.isArray(b.portalHidden)) d.portalHidden = b.portalHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'projects', 'support', 'ideas', 'requests', 'reports'].includes(x))
     if (Array.isArray(b.emailHidden)) d.emailHidden = b.emailHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'credit_notes', 'projects', 'tasks', 'support', 'ideas', 'requests'].includes(x))
     for (const [k, p] of [['billing', 'billing'], ['shipping', 'shipping']]) {
         const a = b[k]

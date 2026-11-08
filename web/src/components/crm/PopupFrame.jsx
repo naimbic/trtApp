@@ -59,7 +59,7 @@ const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, te
                             <div className="rp-qv-row"><span>{date}</span>{cur && <span className="rp-qv-pill"><i />{cur.name}</span>}</div>
                             <h2>{title}</h2>
                             {sub && <p>{sub}</p>}
-                            {!compact && (team || actions) && <div className="rp-qv-foot"><div className="rp-qv-acts">{actions}</div>{team}</div>}
+                            {(compact ? actions : (team || actions)) && <div className="rp-qv-foot"><div className="rp-qv-acts">{actions}</div>{!compact && team}</div>}
                             {compact && meta && <div className="rp-qv-meta">{meta}</div>}
                             {compact && stepsNode}
                         </motion.div>

@@ -98,7 +98,7 @@ function card(t, people, rels, extra = {}) {
     const rel = t.relType && t.relId ? rels[`${t.relType}:${t.relId}`] : null
     return {
         id: t.id, name: t.name, status: t.status, statusLabel: STATUS[t.status] || '', priority: t.priority, priorityLabel: PRIORITY[t.priority] || '',
-        startDate: t.startDate, dueDate: t.dueDate, dateFinished: t.dateFinished, relType: t.relType, relId: t.relId, parentId: t.parentId || null,
+        startDate: t.startDate, dueDate: t.dueDate, hours: t.hours ?? null, dateFinished: t.dateFinished, relType: t.relType, relId: t.relId, parentId: t.parentId || null,
         rel: rel ? { type: t.relType, ...rel } : t.relType ? { type: t.relType, label: t.relType } : null,
         assignees: (t.assignees || []).map((x) => people[x.staffId]).filter(Boolean),
         checklistDone: (t.checklistItems || []).filter((c) => c.finished).length, checklistTotal: (t.checklistItems || []).length,
@@ -186,7 +186,7 @@ export async function getTask(id) {
             followers: t.followers.map((x) => people[x.staffId]).filter(Boolean),
             assigneeIds: t.assignees.map((x) => x.staffId), followerIds: t.followers.map((x) => x.staffId),
         },
-        checklist: [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, assignedIds: stepPeople(c), people: stepPeople(c).map((i) => people[i]).filter(Boolean), person: people[c.assigned] || null, dueDate: c.dueDate || null, reminder: c.reminder ?? null, order: c.listOrder || 0 })),
+        checklist: [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, assignedIds: stepPeople(c), people: stepPeople(c).map((i) => people[i]).filter(Boolean), person: people[c.assigned] || null, dueDate: c.dueDate || null, hours: c.hours ?? null, reminder: c.reminder ?? null, order: c.listOrder || 0 })),
         comments: t.comments.map((c) => {
             const to = c.replyToId ? t.comments.find((x) => x.id === c.replyToId) : null
             return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, clientName: c.contactId ? contactName[c.contactId] || '' : '', createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
@@ -214,6 +214,8 @@ export async function getTask(id) {
 }
 
 const dateOrNull = (v) => (v ? new Date(v) : null)
+/** Hours a task or a step takes: a number from 0.25 to 999, or nothing. */
+const hoursOrNull = (v) => { const n = Number(v); return v === null || v === undefined || v === '' || !Number.isFinite(n) || n <= 0 ? null : Math.min(999, Math.round(n * 100) / 100) }
 
 const PRIORITY_NAME = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }
 const day = (d) => (d ? new Date(d).toISOString().slice(0, 10) : 'none')
@@ -257,7 +259,7 @@ export async function saveTask(body, id) {
     if (body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date')
     const data = {
         name, description: storeRich(body.description), priority: prio, status,
-        startDate: dateOrNull(body.startDate), dueDate: dateOrNull(body.dueDate),
+        startDate: dateOrNull(body.startDate), dueDate: dateOrNull(body.dueDate), hours: hoursOrNull(body.hours),
         relType: body.relType || null, relId: oid(body.relId), milestoneId: oid(body.milestoneId),
         isPublic: !!body.isPublic, billable: body.billable === undefined && S ? S.on('task_biillable_checked_on_creation') : !!body.billable, visibleToClient: !!body.visibleToClient, hourlyRate: Number(body.hourlyRate) || 0,
         recurring: !!body.recurring, recurringType: body.recurring ? body.recurringType || 'month' : null, repeatEvery: body.recurring ? Math.max(parseInt(body.repeatEvery, 10) || 1, 1) : 0, totalCycles: body.recurring ? Math.max(parseInt(body.totalCycles, 10) || 0, 0) : 0,
@@ -509,7 +511,7 @@ export async function checklist(id, op) {
         if (!description) throw fail('Write the item first')
         const last = await prisma.crmTaskChecklistItem.findFirst({ where: { taskId: id }, orderBy: { listOrder: 'desc' }, select: { listOrder: true } })
         const people = pickPeople(op.assignedIds ?? op.assigned)
-        await prisma.crmTaskChecklistItem.create({ data: { taskId: id, description, listOrder: (last?.listOrder ?? 0) + 1, addedFrom: a.staffId, finished: false, assigned: people[0] || null, assignedIds: people, dueDate: dayOrNull(op.dueDate), reminder: REMINDERS.includes(+op.reminder) && op.reminder !== null && op.reminder !== '' ? +op.reminder : null } })
+        await prisma.crmTaskChecklistItem.create({ data: { taskId: id, description, listOrder: (last?.listOrder ?? 0) + 1, addedFrom: a.staffId, finished: false, assigned: people[0] || null, assignedIds: people, dueDate: dayOrNull(op.dueDate), hours: hoursOrNull(op.hours), reminder: REMINDERS.includes(+op.reminder) && op.reminder !== null && op.reminder !== '' ? +op.reminder : null } })
         await notify(people, description)
         await trackStep(task, a, `Checklist item added: ${description}${people.length ? ` (for ${await namesOf(people)})` : ''}`)
         return { success: true }
@@ -532,6 +534,7 @@ export async function checklist(id, op) {
             added = now.filter((x) => !cur.includes(x)); data.assignedIds = now; data.assigned = now[0] || null
         } else if (op.assignedIds !== undefined || op.assigned !== undefined) { const now = pickPeople(op.assignedIds ?? op.assigned); added = now.filter((x) => !stepPeople(item).includes(x)); data.assignedIds = now; data.assigned = now[0] || null }
         if (op.dueDate !== undefined) data.dueDate = dayOrNull(op.dueDate)
+        if (op.hours !== undefined) data.hours = hoursOrNull(op.hours)
         if (op.reminder !== undefined) data.reminder = op.reminder === null || op.reminder === '' ? null : REMINDERS.includes(+op.reminder) ? +op.reminder : null
         await prisma.crmTaskChecklistItem.update({ where: { id: item.id }, data })
         if (added.length) await trackStep(task, a, `Checklist item “${data.description ?? item.description}” given to ${await namesOf(added)}`)

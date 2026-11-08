@@ -26,6 +26,22 @@ export function dueLook(due, done) {
     return { cls: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300', label: dayjs(due).format('DD MMM') }
 }
 
+const HOURS = [0.5, 1, 2, 3, 4, 6, 8, 12]
+const fmtH = (h) => `${Number.isInteger(+h) ? +h : (+h).toFixed(2).replace(/0+$/, '')}h`
+/** How long a step takes: a small pill with a list (1h, 2h, 3h...). */
+const HoursChip = ({ value, onChange, disabled }) => {
+    const opts = value && !HOURS.includes(+value) ? [...HOURS, +value].sort((a, b) => a - b) : HOURS
+    return (
+        <label title={tr('Hours')} className={classNames('relative inline-flex h-7 items-center rounded-full px-2 text-xs font-semibold', value ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300', !disabled && 'cursor-pointer')}>
+            {value ? fmtH(value) : tr('Hours')}
+            <select disabled={disabled} value={value || ''} onChange={(e) => onChange(e.target.value ? +e.target.value : null)} aria-label={tr('Hours')} className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-default">
+                <option value="">{tr('No time')}</option>
+                {opts.map((h) => <option key={h} value={h}>{fmtH(h)}</option>)}
+            </select>
+        </label>
+    )
+}
+
 const day = (d) => (d ? dayjs(d).format('YYYY-MM-DD') : '')
 
 /** A date chip: press it and a real date field opens (with the browser's calendar) next to a button to clear the date. */
@@ -102,6 +118,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
     const [text, setText] = useState('')
     const [who, setWho] = useState([])
     const [due, setDue] = useState(null)
+    const [hrs, setHrs] = useState(null)
     const [editing, setEditing] = useState(null) // { id, text }
     const [hideDone, setHideDone] = useState(false)
     useEffect(() => setList(items), [items])
@@ -110,8 +127,8 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
     const add = async () => {
         const description = text.trim()
         if (!description) return
-        await act({ action: 'add', description, assignedIds: who, dueDate: due })
-        setText(''); setWho([]); setDue(null)
+        await act({ action: 'add', description, assignedIds: who, dueDate: due, hours: hrs })
+        setText(''); setWho([]); setDue(null); setHrs(null)
     }
     const move = async (from, to) => {
         const next = [...list]; const [m] = next.splice(from, 1); next.splice(to, 0, m)
@@ -154,6 +171,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
                                     : <div role={canEdit ? 'button' : undefined} tabIndex={canEdit ? 0 : undefined} onClick={canEdit ? () => setEditing({ id: c.id, text: c.description }) : undefined} onKeyDown={canEdit ? (e) => { if (e.key === 'Enter') setEditing({ id: c.id, text: c.description }) } : undefined} className={classNames('w-full break-words text-left', canEdit && 'cursor-text', c.finished && 'text-gray-400 line-through')}><Mentioned text={c.description} /></div>}
                             </div>
                             <div className="ml-auto flex items-center gap-1">
+                                <HoursChip value={c.hours} disabled={!canEdit} onChange={(v) => upd(c, { hours: v })} />
                                 <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />
                                 {reminders && <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />}
                                 <PeoplePicker staff={staff} value={c.assignedIds || (c.assigned ? [c.assigned] : [])} disabled={!canEdit} onToggle={(id) => { const cur = c.assignedIds || []; setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: cur.includes(id) ? cur.filter((y) => y !== id) : [...cur, id] } : x))); upd(c, { toggleAssignee: id }) }} onChange={(ids) => { setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: ids } : x))); upd(c, { assignedIds: ids }) }} />
@@ -169,6 +187,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
                     <form className="flex flex-wrap items-center gap-2 bg-gray-50/60 px-2.5 py-2 dark:bg-gray-700/20" onSubmit={(e) => { e.preventDefault(); add() }}>
                         <TbPlus className="shrink-0 text-lg text-gray-400" />
                         <input data-mention value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder={placeholder || tr('Add a step (@ to mention, # for a tag)')} className="h-8 min-w-[140px] flex-1 rounded-lg border border-transparent bg-transparent px-1 text-sm outline-none focus:border-gray-200 dark:focus:border-gray-600" />
+                        <HoursChip value={hrs} onChange={setHrs} />
                         <DateChip value={due} onChange={setDue} empty={tr('Date')} />
                         <PeoplePicker staff={staff} value={who} onChange={setWho} />
                         <Button size="xs" variant="solid" type="submit" disabled={!text.trim()}>{tr('Add')}</Button>

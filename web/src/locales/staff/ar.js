@@ -6029,5 +6029,12 @@ export default {
     "{n} link(s)": "{n} رابط",
     "Sent to the client": "أُرسل إلى العميل",
     "Client is reviewing": "العميل يراجعه",
-    "Changes requested": "طُلبت تعديلات"
+    "Changes requested": "طُلبت تعديلات",
+    "Add an item for this lead": "أضف عنصرًا لهذا العميل المحتمل",
+    "No items yet.": "لا توجد عناصر بعد.",
+    "No time": "بدون مدة",
+    "e.g. 1, 2.5, 3": "مثال: 1، 2.5، 3",
+    "Keep lead checklist items as plain lines (no task is created for each item)": "إبقاء عناصر قائمة مهام العميل المحتمل كأسطر بسيطة (دون إنشاء مهمة لكل عنصر)",
+    "Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.": "إيقاف: كل عنصر يُضاف في تبويب المهام للعميل المحتمل يصبح مهمة حقيقية مرتبطة به وتظهر على لوحة المهام. تشغيل: تبقى العناصر داخل العميل المحتمل فقط.",
+    "The reports and strategies the team shares with the client, with its answer.": "التقارير والاستراتيجيات التي يشاركها الفريق مع العميل مع ردّه."
 }

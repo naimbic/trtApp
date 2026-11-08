@@ -158,6 +158,8 @@ export async function getLead(id) {
         notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canEdit: mayChangeItem(a, n.addedFrom, 'notes'), canDelete: mayDropItem(a, n.addedFrom), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000, replyToId: n.replyToId || null,
             reactions: Object.entries(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!a.staffId && ids.includes(a.staffId), names: ids.filter((i) => i !== a.staffId).map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count) })),
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
+        checklistAsTasks: !(await readSettings(['lead_checklist_plain'])).on('lead_checklist_plain'),
+        checklist: Array.isArray(l.checklist) ? l.checklist : [],
         tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
         mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
@@ -246,6 +248,36 @@ export async function reorderLeads(statusId, ids) {
         if (moved) await logStatus(id, a, l.statusId, statusId)
     }
     return { success: true }
+}
+
+/** The plain checklist of a lead (used instead of tasks when the setting says so): add, toggle, update, delete, reorder. */
+export async function leadChecklist(id, op = {}) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    const l = await loadOne(id, a)
+    if (!mayEdit(a, l)) throw fail('Forbidden', 403)
+    let list = Array.isArray(l.checklist) ? [...l.checklist] : []
+    const hours = (v) => { const n = Number(v); return !Number.isFinite(n) || n <= 0 ? null : Math.min(999, Math.round(n * 100) / 100) }
+    const day = (v) => (v ? String(v).slice(0, 10) : null)
+    const item = list.find((x) => x.id === op.itemId)
+    if (op.action === 'add') {
+        const description = String(op.description || '').trim().slice(0, 500)
+        if (!description) throw fail('Write the item first')
+        list.push({ id: (await import('node:crypto')).randomBytes(12).toString('hex'), description, finished: false, dueDate: day(op.dueDate), hours: hours(op.hours), assignedIds: [] })
+        await logActivity(id, a, `Checklist item added: ${description}`)
+    } else if (op.action === 'reorder') {
+        const order = Array.isArray(op.ids) ? op.ids : []
+        list = [...list].sort((x, y) => (order.indexOf(x.id) + 1 || 1e9) - (order.indexOf(y.id) + 1 || 1e9))
+    } else if (!item) throw fail('Item not found', 404)
+    else if (op.action === 'toggle') { item.finished = !!op.finished; await logActivity(id, a, `Checklist item ${item.finished ? 'finished' : 'reopened'}: ${item.description}`) }
+    else if (op.action === 'delete') { list = list.filter((x) => x !== item); await logActivity(id, a, `Checklist item removed: ${item.description}`) }
+    else if (op.action === 'update') {
+        if (op.description !== undefined) item.description = String(op.description || '').trim().slice(0, 500) || item.description
+        if (op.dueDate !== undefined) item.dueDate = day(op.dueDate)
+        if (op.hours !== undefined) item.hours = hours(op.hours)
+    } else throw fail('Unknown action')
+    await prisma.crmLead.update({ where: { id }, data: { checklist: list } })
+    return { checklist: list }
 }
 
 export async function flagLead(id, action) {

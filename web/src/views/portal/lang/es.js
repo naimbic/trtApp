@@ -390,5 +390,21 @@ export default {
     "We are waiting for your answer…": "Esperamos su respuesta…",
     "What is wrong, or what do you need?": "¿Qué falla o qué necesita?",
     "Write to us": "Escríbanos",
-    "{n} request(s) are waiting for your answer.": "{n} solicitud(es) esperan su respuesta."
+    "{n} request(s) are waiting for your answer.": "{n} solicitud(es) esperan su respuesta.",
+    "Reports & Strategies": "Informes y estrategias",
+    "The reports and the strategies we share with you. Read them, approve them or ask for changes.": "Los informes y las estrategias que compartimos con usted. Léalos, apruébelos o pida cambios.",
+    "{n} document(s) are waiting for your answer.": "{n} documento(s) esperan su respuesta.",
+    "Nothing has been shared with you yet.": "Aún no se ha compartido nada con usted.",
+    "Report": "Informe",
+    "Strategy": "Estrategia",
+    "Waiting for your answer": "Esperando su respuesta",
+    "Changes requested": "Cambios solicitados",
+    "Declined": "Rechazado",
+    "Kind": "Tipo",
+    "Period": "Período",
+    "Shared": "Compartido",
+    "Ask for changes": "Pedir cambios",
+    "Decline": "Rechazar",
+    "Ask a question or tell us what you think here.": "Haga una pregunta o díganos qué opina aquí.",
+    "Back": "Volver"
 }

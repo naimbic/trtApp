@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.208.0',
+        date: '2026-11-08',
+        title: 'Client area: Reports & Strategies, hours on tasks, lead header, lead checklist setting',
+        items: [
+            'Client area: a new "Reports & Strategies" page. The client reads what the team shared (drafts and team-only items stay hidden), opens the files and links, writes back, and answers: Approve, Ask for changes or Decline. The team is notified. It can be switched off per client (Client area access) or for everyone (Settings > Client area).',
+            'Task popup: the content no longer slides to the left when you change tab. The Files and Time tabs are removed; Details, Checklist, Comments and Activity remain.',
+            'Hours: a new Hours field next to the start and due dates of a task, and an Hours chip next to the Date of every checklist item (and when adding one), from 30 minutes to 12 hours or more.',
+            'Lead popup: the status bar now sits inside the coloured header like on tasks, the duplicate status under it is gone, and the team shows at the right.',
+            'Settings > Leads: "Keep lead checklist items as plain lines". Off (default): each item added in a lead\'s Tasks tab is a real task linked to the lead. On: items stay in the lead and no task is created.',
+            'Activity cards are more compact: one row with the tag, what happened, then the date and time, then who did it.',
+        ],
+    },
+    {
         version: '0.207.0',
         date: '2026-11-08',
         title: 'Reports & Strategies like Requests, team and counts in the task header, activity cards',

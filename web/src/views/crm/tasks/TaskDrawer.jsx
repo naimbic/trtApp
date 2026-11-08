@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import RemindMe from '@/components/crm/RemindMe'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
-import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
 import { plainOf } from '@/components/crm/ShareButton'
 import { CommentFoot, CommentThread, startReply, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import StaffRing from '@/components/crm/StaffRing'
 import ActivityFeed from '@/components/crm/ActivityFeed'
-import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks, TbListDetails, TbUsers, TbLink, TbFileText, TbSettings, TbMessage, TbChecklist, TbClock } from 'react-icons/tb'
+import { TbChecks, TbListDetails, TbUsers, TbLink, TbFileText, TbSettings, TbMessage, TbChecklist } from 'react-icons/tb'
 import Drawer from '@/components/crm/PopupFrame'
 import FoldSection from '@/components/crm/FoldSection'
 import Button from '@/components/ui/Button'
@@ -17,17 +16,16 @@ import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
 import DatePicker from '@/components/ui/DatePicker'
 import Tabs from '@/components/ui/Tabs'
-import Checkbox from '@/components/ui/Checkbox'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import dayjs from 'dayjs'
 import { api, notify } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
-import { STATUS, PRIORITY, REL_TYPES, People, duration, initials, useTaskStatuses } from './shared'
+import { STATUS, PRIORITY, REL_TYPES, People, initials, useTaskStatuses } from './shared'
 import Avatar from '@/components/ui/Avatar'
 import { tr } from '@/utils/t'
 import useTabParam from '@/utils/useTabParam'
 
-const EMPTY = { name: '', description: '', status: 1, priority: 2, startDate: null, dueDate: null, relType: null, relId: null, assigneeIds: [], followerIds: [], billable: false, isPublic: false, visibleToClient: false, hourlyRate: 0, recurring: false, recurringType: 'month', repeatEvery: 1, totalCycles: 0 }
+const EMPTY = { name: '', description: '', status: 1, priority: 2, startDate: null, dueDate: null, hours: '', relType: null, relId: null, assigneeIds: [], followerIds: [], billable: false, isPublic: false, visibleToClient: false, hourlyRate: 0, recurring: false, recurringType: 'month', repeatEvery: 1, totalCycles: 0 }
 const toDate = (d) => (d ? new Date(d) : null)
 const L = ({ children }) => <label className="mb-1 block text-xs font-semibold text-gray-500 dark:text-gray-400">{children}</label>
 const SW = ({ label, children }) => <div className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-sm dark:bg-gray-700/30"><span>{label}</span>{children}</div>
@@ -36,16 +34,14 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     useTaskStatuses()
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
-    const [tabV, setTabV] = useTabParam(['details', 'checklist', 'comments', 'files', 'time', 'activity'], 'details')
+    const [tabV, setTabV] = useTabParam(['details', 'checklist', 'comments', 'activity'], 'details')
     const [saving, setSaving] = useState(false)
     const [confirmDel, setConfirmDel] = useState(false)
-    const [item, setItem] = useState('')
     const [comment, setComment] = useState('')
     const [replyTo, setReplyTo] = useState(null)
     const editorRef = useRef(null)
     const [toClient, setToClient] = useState(false) // the comment is also sent to the client (the task is shared with it)
     const [editingId, setEditingId] = useState(null)
-    const [tick, setTick] = useState(0)
     const [openSec, setOpenSec] = useState(['main', 'people'])
     const toggleSec = (k) => setOpenSec((o) => (o.includes(k) ? o.filter((x) => x !== k) : [...o, k]))
     const ALL_SEC = ['main', 'people', 'link', 'about', 'options']
@@ -65,10 +61,9 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         } catch (e) { notify('danger', e.message); onClose() }
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    useEffect(() => { if (!open) return; setDetail(null); setItem(''); setComment(''); setReplyTo(null); setEditingId(null); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
-    // live clock while a timer is running
-    useEffect(() => { if (!detail?.running) return; const t = setInterval(() => setTick((n) => n + 1), 1000); return () => clearInterval(t) }, [detail?.running])
-    useEffect(() => { const t = setTimeout(() => document.querySelector('.rp-qv [role=tab][aria-selected=true]')?.scrollIntoView({ inline: 'center', block: 'nearest' }), 80); return () => clearTimeout(t) }, [tabV, detail?.task?.id]) // a tab that is cut off by the width comes into view when chosen
+    useEffect(() => { if (!open) return; setDetail(null); setComment(''); setReplyTo(null); setEditingId(null); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+    // keep the active tab visible inside the tab bar only (scrollIntoView would also slide the whole popup sideways)
+    useEffect(() => { const t = setTimeout(() => { const el = document.querySelector('.rp-qv [role=tab][aria-selected=true]'); const bar = el?.parentElement; if (bar) bar.scrollTo({ left: Math.max(0, el.offsetLeft - (bar.clientWidth - el.offsetWidth) / 2), behavior: 'smooth' }) }, 80); return () => clearTimeout(t) }, [tabV, detail?.task?.id])
     const mounted = useRef(true)
     useEffect(() => () => { mounted.current = false }, [])
 
@@ -95,9 +90,6 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     }
     const awaitingMe = edit && !!detail?.task.assignedToMe && detail.task.status === 2 && detail.task.canFinish !== false
     const post = (path, body) => api(`/api/crm/work/tasks/${id}/${path}`, { method: 'POST', body })
-    const running = detail?.running
-    const runningSecs = running ? Math.max(0, Math.round((Date.now() - +new Date(running.startTime)) / 1000)) : 0
-    void tick
     const relResource = REL_TYPES.find((r) => r.value === v.relType)?.resource
 
     const sz = 'sm'
@@ -117,6 +109,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div><L>{tr("Priority")}</L><Select size={sz} isDisabled={!canEdit} options={PRIORITY.map((p) => ({ value: p.value, label: p.label }))} value={PRIORITY.filter((p) => p.value === +v.priority).map((p) => ({ value: p.value, label: p.label }))[0]} onChange={(o) => set({ priority: o.value })} /></div>
                     <div><L>{tr("Start date")}</L><DatePicker size={sz} disabled={!canEdit} value={v.startDate} onChange={(d) => set({ startDate: d })} /></div>
                     <div><L>{tr("Due date")}</L><DatePicker size={sz} disabled={!canEdit} value={v.dueDate} onChange={(d) => set({ dueDate: d })} /></div>
+                    <div><L>{tr("Hours")}</L><Input size={sz} type="number" min="0" step="0.25" disabled={!canEdit} value={v.hours ?? ''} onChange={(e) => set({ hours: e.target.value })} placeholder={tr("e.g. 1, 2.5, 3")} suffix="h" /></div>
                 </div>
             </FoldSection>
             <FoldSection icon={<TbUsers />} tone="emerald" title={tr("People")} open={openSec.includes('people')} onToggle={() => toggleSec('people')} summary={[names(v.assigneeIds), v.followerIds?.length ? `+${v.followerIds.length} ${tr("Followers").toLowerCase()}` : ''].filter(Boolean).join(' · ')}>
@@ -187,24 +180,6 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     )
 
 
-    const time = detail && (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-                <div><div className="text-sm text-gray-500">{tr("Total tracked")}</div><div className="text-xl font-bold">{duration(detail.totalSeconds)}</div></div>
-                {running
-                    ? <Button variant="solid" color="red-500" icon={<TbPlayerStop />} onClick={() => act(() => post('timer', { action: 'stop' }), tr("Timer stopped"))}>{tr("Stop ·")} {duration(runningSecs)}</Button>
-                    : <Button variant="solid" icon={<TbPlayerPlay />} onClick={() => act(() => post('timer', { action: 'start' }), tr("Timer started"))}>{tr("Start timer")}</Button>}
-            </div>
-            {detail.timers.map((t) => (
-                <div key={t.id} className="group flex items-center justify-between text-sm">
-                    <div><span className="font-medium">{t.staff?.name || '—'}</span><span className="ml-2 text-gray-500">{dayjs(t.startTime).format('DD MMM, HH:mm')}{t.endTime ? ` → ${dayjs(t.endTime).format('HH:mm')}` : tr(" · running")}</span></div>
-                    <div className="flex items-center gap-2"><span className="font-semibold">{duration(t.seconds)}</span><Button size="xs" variant="plain" className="opacity-0 group-hover:opacity-100" icon={<TbTrash />} onClick={() => act(() => post('timer', { action: 'delete', timerId: t.id }))} /></div>
-                </div>
-            ))}
-            {!detail.timers.length && <p className="text-sm text-gray-500">{tr("No time logged yet.")}</p>}
-        </div>
-    )
-
     // under the coloured head: who is on it, and what it holds (press a count to open that tab)
     const done = detail ? detail.checklist.filter((c) => c.finished).length : 0
     const meta = edit && detail ? (
@@ -213,7 +188,6 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             <div className="rp-qv-chips">
             <button type="button" className="rp-qv-chip" title={tr("Comments")} onClick={() => setTabV('comments')}><TbMessage />{detail.comments.length}</button>
             {detail.checklist.length > 0 && <button type="button" className="rp-qv-chip" title={tr("Checklist")} onClick={() => setTabV('checklist')}><TbChecklist />{done}/{detail.checklist.length}</button>}
-            {detail.totalSeconds > 0 && <button type="button" className="rp-qv-chip" title={tr("Time")} onClick={() => setTabV('time')}><TbClock />{duration(detail.totalSeconds)}</button>}
             </div>
         </>
     ) : null
@@ -256,16 +230,12 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             <Tabs.TabNav value="details">{tr("Details")}</Tabs.TabNav>
                             <Tabs.TabNav value="checklist">{tr("Checklist")}{detail.checklist.length ? ` (${detail.checklist.filter((c) => c.finished).length}/${detail.checklist.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="comments">{tr("Comments")}{detail.comments.length ? ` (${detail.comments.length})` : ''}</Tabs.TabNav>
-                            <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
-                            <Tabs.TabNav value="time">{tr("Time")}{detail.totalSeconds ? ` · ${duration(detail.totalSeconds)}` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
                         </Tabs.TabList>
                         <div className="pt-4">
                             <Tabs.TabContent value="details">{details}</Tabs.TabContent>
                             <Tabs.TabContent value="checklist">{checklist}</Tabs.TabContent>
                             <Tabs.TabContent value="comments">{comments}</Tabs.TabContent>
-                            <Tabs.TabContent value="files"><div className="pt-4"><AttachmentsPanel relType="task" relId={id} canEdit={!!canEdit} showClientToggle={!!v.visibleToClient} /></div></Tabs.TabContent>
-                            <Tabs.TabContent value="time">{time}</Tabs.TabContent>
                             <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>
                         </div>
                     </Tabs>

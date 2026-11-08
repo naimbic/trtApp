@@ -311,7 +311,7 @@ export const GROUPS = {
             { title: 'Client block on documents', desc: 'How the client appears on invoices and estimates. Click a merge term to insert it.', panel: 'customerFormat', fields: [f('customer_info_format', 'Client information format', 'html', { rows: 7 })] },
             { title: 'Client area', desc: 'The sections clients see after signing in. Each client can also be limited on its own (open the client, Edit → Client area access).', fields: [
                 yes('portal_section_invoices', 'Invoices', { default: '1' }), yes('portal_section_estimates', 'Estimates', { default: '1' }), yes('portal_section_proposals', 'Proposals', { default: '1' }),
-                yes('portal_section_contracts', 'Contracts', { default: '1' }), yes('portal_section_projects', 'Projects', { default: '1' }), yes('portal_section_support', 'Support', { default: '1' }), yes('portal_section_ideas', 'Ideas', { default: '1', hint: 'The ideas the team proposes to the client, with its answer.' }), yes('portal_section_requests', 'Requests', { default: '1', hint: 'The errors, integrations and changes the client asks for, and how they are followed.' }),
+                yes('portal_section_contracts', 'Contracts', { default: '1' }), yes('portal_section_projects', 'Projects', { default: '1' }), yes('portal_section_support', 'Support', { default: '1' }), yes('portal_section_ideas', 'Ideas', { default: '1', hint: 'The ideas the team proposes to the client, with its answer.' }), yes('portal_section_requests', 'Requests', { default: '1', hint: 'The errors, integrations and changes the client asks for, and how they are followed.' }), yes('portal_section_reports', 'Reports & Strategies', { default: '1', hint: 'The reports and strategies the team shares with the client, with its answer.' }),
             ] },
             { title: 'Idea categories', desc: 'The categories of the ideas proposed to clients (Grow the business, Save money...) are managed from the menu, Customers.', links: [['Idea categories', '/crm/idea-categories']] },
             { title: 'Rules', fields: [
@@ -379,6 +379,7 @@ export const GROUPS = {
             { title: 'Rules & follow-up', fields: [
                 yes('auto_assign_customer_admin_after_lead_convert', 'Make the lead owner the client admin when converted'),
                 yes('lead_lock_after_convert_to_customer', 'Lock a lead after it becomes a client'),
+                yes('lead_checklist_plain', 'Keep lead checklist items as plain lines (no task is created for each item)', { hint: 'Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.' }),
                 f('leads_kanban_limit', 'Cards per column on the board', 'number', { min: 5, default: '50' }),
                 sel('default_leads_kanban_sort', 'Default board order', [['dateadded', 'Date added'], ['leadorder', 'Manual'], ['lastcontact', 'Last contact']], { default: 'leadorder' }),
                 sel('default_leads_kanban_sort_type', 'Order direction', [['asc', 'Ascending'], ['desc', 'Descending']], { default: 'asc' }),

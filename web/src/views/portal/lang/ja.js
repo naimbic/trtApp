@@ -390,5 +390,21 @@ export default {
     "We are waiting for your answer…": "お客様の回答をお待ちしています…",
     "What is wrong, or what do you need?": "何が問題か、何が必要ですか？",
     "Write to us": "メッセージを書く",
-    "{n} request(s) are waiting for your answer.": "{n}件の依頼がお客様の回答を待っています。"
+    "{n} request(s) are waiting for your answer.": "{n}件の依頼がお客様の回答を待っています。",
+    "Reports & Strategies": "レポートと戦略",
+    "The reports and the strategies we share with you. Read them, approve them or ask for changes.": "共有するレポートと戦略です。内容を確認し、承認するか変更を依頼してください。",
+    "{n} document(s) are waiting for your answer.": "{n}件のドキュメントがご回答をお待ちしています。",
+    "Nothing has been shared with you yet.": "まだ何も共有されていません。",
+    "Report": "レポート",
+    "Strategy": "戦略",
+    "Waiting for your answer": "ご回答待ち",
+    "Changes requested": "変更依頼あり",
+    "Declined": "却下",
+    "Kind": "種類",
+    "Period": "期間",
+    "Shared": "共有日",
+    "Ask for changes": "変更を依頼",
+    "Decline": "却下する",
+    "Ask a question or tell us what you think here.": "ご質問やご意見をこちらにお書きください。",
+    "Back": "戻る"
 }

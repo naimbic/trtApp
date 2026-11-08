@@ -390,5 +390,21 @@ export default {
     "We are waiting for your answer…": "ننتظر ردّك…",
     "What is wrong, or what do you need?": "ما المشكلة أو ما الذي تحتاجه؟",
     "Write to us": "اكتب لنا",
-    "{n} request(s) are waiting for your answer.": "{n} طلب(ات) بانتظار ردّك."
+    "{n} request(s) are waiting for your answer.": "{n} طلب(ات) بانتظار ردّك.",
+    "Reports & Strategies": "التقارير والاستراتيجيات",
+    "The reports and the strategies we share with you. Read them, approve them or ask for changes.": "التقارير والاستراتيجيات التي نشاركها معك. اقرأها ووافق عليها أو اطلب تعديلات.",
+    "{n} document(s) are waiting for your answer.": "{n} مستند بانتظار ردّك.",
+    "Nothing has been shared with you yet.": "لم تتم مشاركة أي شيء معك بعد.",
+    "Report": "تقرير",
+    "Strategy": "استراتيجية",
+    "Waiting for your answer": "بانتظار ردّك",
+    "Changes requested": "طُلبت تعديلات",
+    "Declined": "مرفوض",
+    "Kind": "النوع",
+    "Period": "الفترة",
+    "Shared": "تمت المشاركة",
+    "Ask for changes": "طلب تعديلات",
+    "Decline": "رفض",
+    "Ask a question or tell us what you think here.": "اطرح سؤالًا أو أخبرنا برأيك هنا.",
+    "Back": "رجوع"
 }

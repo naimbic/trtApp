@@ -172,9 +172,8 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         </>
     )
 
-    const headerBadges = l && (
+    const headerBadges = l && (l.lost || l.junk || l.client) && (
         <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
-            {l.status && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: l.statusColor || '#94a3b8' }} />{l.status}</span>}
             {l.lost && <Tag className="bg-red-100 text-red-600">{tr("Lost")}</Tag>}{l.junk && <Tag className="bg-amber-100 text-amber-700">{tr("Junk")}</Tag>}
             {l.client && <Link className="text-primary hover:underline" to={`/crm/clients/${l.client.id}`}>{tr("→ client")} {l.client.company}</Link>}
         </div>
@@ -182,6 +181,8 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     return (
         <Drawer
+            compact={edit}
+            meta={edit && l?.assignees?.length ? <People list={l.assignees} max={5} size={28} /> : null}
             share={edit ? { url: `/crm/leads/${id}`, title: l?.name, text: l?.name } : undefined}
             title={edit ? l?.name || tr("Lead") : tr("New lead")} kicker={edit ? `${tr("Lead")}${l?.company ? ` · ${l.company}` : ''}` : tr("New lead")} sub={l?.company} date={l?.lastContact ? `${tr("Last contact")} ${dayjs(l.lastContact).format('DD MMM')}` : ''} team={l?.assignees?.length ? <People list={l.assignees} max={5} size={30} /> : null} actions={edit && detail?.can.edit && l ? headActions : null} stage={stage} isOpen={open} onClose={onClose} width={640}
             footer={
@@ -198,7 +199,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <Tabs value={tabV} onChange={setTabV}>
                         <Tabs.TabList>
                             <Tabs.TabNav value="profile">{tr("Profile")}</Tabs.TabNav>
-                            {can('tasks', 'view') && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
+                            {(can('tasks', 'view') || detail?.checklistAsTasks === false) && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
                             <Tabs.TabNav value="mails">{tr("Mails")}{detail.mails.length ? ` (${detail.mails.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="meetings">{tr("Meetings")}{detail.meetings.length ? ` (${detail.meetings.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
@@ -208,7 +209,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                         </Tabs.TabList>
                         <div className="pt-4">
                             <Tabs.TabContent value="profile">{profile}</Tabs.TabContent>
-                            {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} /></Tabs.TabContent>}
+                            {(can('tasks', 'view') || detail?.checklistAsTasks === false) && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} asTasks={detail?.checklistAsTasks !== false} plain={detail?.checklist || []} /></Tabs.TabContent>}
                             <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} senders={detail.senders || []} leadEmail={detail.lead?.email || ''} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
                             <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
                             <Tabs.TabContent value="files"><div className="pt-1"><AttachmentsPanel relType="lead" relId={id} canEdit={!!detail.can.edit} /></div></Tabs.TabContent>

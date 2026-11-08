@@ -240,6 +240,8 @@ model CrmLeadStatus {
 /// tblleads
 model CrmLead {
   id                             String         @id @default(auto()) @map("_id") @db.ObjectId
+  /// plain checklist: [{ id, description, finished, dueDate, hours }] (used when Settings > Leads keeps checklist items as plain lines)
+  checklist                      Json?
   legacyId                       Int?
   createdAt                      DateTime       @default(now()) // dateadded
   updatedAt                      DateTime       @updatedAt

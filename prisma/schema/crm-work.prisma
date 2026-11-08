@@ -199,6 +199,8 @@ model CrmTask {
   priority           Int       @default(2)
   startDate          DateTime?
   dueDate            DateTime?
+  /// time the task takes, in hours (1, 2.5...)
+  hours              Float?
   dateFinished       DateTime?
   addedFrom          String?   @db.ObjectId
   isAddedFromContact Boolean   @default(false)
@@ -316,6 +318,8 @@ model CrmTaskChecklistItem {
   /// everyone the step is given to (the first one is also in `assigned`)
   assignedIds  String[]  @db.ObjectId
   dueDate      DateTime?
+  /// time the step takes, in hours
+  hours        Float?
   /// minutes before the due date to remind the person (0 = at the due time), empty = no reminder
   reminder     Int?
   createdAt    DateTime  @default(now())

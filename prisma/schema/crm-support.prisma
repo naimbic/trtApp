@@ -347,9 +347,41 @@ model CrmClientReport {
   sentAt    DateTime?
   sentTo    String[]
   createdBy String?   @db.ObjectId
+  /// RPT-<seq> (optional: reports made before codes existed have none)
+  seq       Int?
+  /// 1 low .. 4 urgent (empty = medium)
+  priority  Int?
+  /// the client may see it (empty = yes)
+  visible   Boolean?
+  assigneeIds String[] @db.ObjectId
+  dueDate   DateTime?
+  position  Float?
+  /// files: [{ url, name, mime, size, kind }]
+  attachments Json?
+  /// links: [{ url, title }]
+  links     Json?
+  statusChangedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   @@index([clientId, createdAt])
   @@map("crm_client_reports")
+}
+
+model CrmClientReportComment {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  reportId   String    @db.ObjectId
+  /// staff | system (a status change)
+  authorKind String    @default("staff")
+  authorId   String?   @db.ObjectId
+  authorName String?
+  body       String
+  /// a note for the team only
+  internal   Boolean   @default(false)
+  replyToId  String?   @db.ObjectId
+  editedAt   DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([reportId])
+  @@map("crm_client_report_comments")
 }

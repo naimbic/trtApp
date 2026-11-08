@@ -6016,5 +6016,18 @@ export default {
     "amounts include tax": "المبالغ شاملة الضريبة",
     "contracts": "عقود",
     "started in this period": "بدأت في هذه الفترة",
-    "the files uploaded on this document, up to 20 MB in all": "الملفات المرفوعة على هذا المستند، حتى 20 ميغابايت إجمالاً"
+    "the files uploaded on this document, up to 20 MB in all": "الملفات المرفوعة على هذا المستند، حتى 20 ميغابايت إجمالاً",
+    "Add link": "إضافة رابط",
+    "Comments and status changes of this document appear here.": "تظهر هنا تعليقات هذا المستند وتغييرات حالته.",
+    "Enter a valid web address": "أدخل عنوان ويب صالحًا",
+    "Files and links": "الملفات والروابط",
+    "Give it a title": "أعطه عنوانًا",
+    "Name (optional)": "الاسم (اختياري)",
+    "The document": "المستند",
+    "Write a comment — use @ to mention a colleague": "اكتب تعليقًا — استخدم @ لذكر زميل",
+    "{n} file(s)": "{n} ملف",
+    "{n} link(s)": "{n} رابط",
+    "Sent to the client": "أُرسل إلى العميل",
+    "Client is reviewing": "العميل يراجعه",
+    "Changes requested": "طُلبت تعديلات"
 }

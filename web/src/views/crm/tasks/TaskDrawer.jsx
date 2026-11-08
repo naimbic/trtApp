@@ -210,10 +210,11 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const meta = edit && detail ? (
         <>
             {detail.task.assignees.length > 0 && <People list={detail.task.assignees} max={5} size={28} />}
-            <span className="flex-1" />
+            <div className="rp-qv-chips">
             <button type="button" className="rp-qv-chip" title={tr("Comments")} onClick={() => setTabV('comments')}><TbMessage />{detail.comments.length}</button>
             {detail.checklist.length > 0 && <button type="button" className="rp-qv-chip" title={tr("Checklist")} onClick={() => setTabV('checklist')}><TbChecklist />{done}/{detail.checklist.length}</button>}
             {detail.totalSeconds > 0 && <button type="button" className="rp-qv-chip" title={tr("Time")} onClick={() => setTabV('time')}><TbClock />{duration(detail.totalSeconds)}</button>}
+            </div>
         </>
     ) : null
     const activity = detail && <ActivityFeed items={detail.activity} empty={tr("Nothing logged yet.")} />

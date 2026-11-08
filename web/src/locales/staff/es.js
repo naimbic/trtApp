@@ -6016,5 +6016,18 @@ export default {
     "amounts include tax": "importes con impuestos incluidos",
     "contracts": "contratos",
     "started in this period": "iniciados en este período",
-    "the files uploaded on this document, up to 20 MB in all": "los archivos subidos en este documento, hasta 20 MB en total"
+    "the files uploaded on this document, up to 20 MB in all": "los archivos subidos en este documento, hasta 20 MB en total",
+    "Add link": "Añadir enlace",
+    "Comments and status changes of this document appear here.": "Aquí aparecen los comentarios y cambios de estado de este documento.",
+    "Enter a valid web address": "Introduce una dirección web válida",
+    "Files and links": "Archivos y enlaces",
+    "Give it a title": "Ponle un título",
+    "Name (optional)": "Nombre (opcional)",
+    "The document": "El documento",
+    "Write a comment — use @ to mention a colleague": "Escribe un comentario — usa @ para mencionar a un colega",
+    "{n} file(s)": "{n} archivo(s)",
+    "{n} link(s)": "{n} enlace(s)",
+    "Sent to the client": "Enviado al cliente",
+    "Client is reviewing": "El cliente lo está revisando",
+    "Changes requested": "Cambios solicitados"
 }

@@ -261,7 +261,7 @@ const ClientDetail = () => {
                                 {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}
                                 {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
                                 {tab === 'payments' && <PaymentsTab id={id} money={money} />}
-                                {tab === 'reports' && <ClientReports key={id} clientId={id} />}
+                                {tab === 'reports' && <ClientReports key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('report') || ''} />}
                                 {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}
                                 {tab === 'mails' && <ClientMails key={id} clientId={id} />}

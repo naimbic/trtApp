@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.207.0',
+        date: '2026-11-08',
+        title: 'Reports & Strategies like Requests, team and counts in the task header, activity cards',
+        items: [
+            'Customer, Reports & Strategies: now a board of statuses like Requests (Draft, Sent to the client, Client is reviewing, Changes requested, Approved, Declined). Drag a card to change its status; each card has a code (RPT-1, STR-1), priority, due date and team.',
+            'Each report or strategy opens in a popup with the same sections as a request: the document (title, kind, period, priority, content), Files and links (upload files and add links with a name), Status and team (assignees, due date, visible to the client), and a Follow-up conversation with replies, edit, delete, @mentions and Team-only notes. Buttons: Make a task, Send by email (the email now includes the links and files).',
+            'Task: the assigned team and the counts (comments, checklist, time) now sit inside the coloured header, on a light blur, under the title and above the statuses.',
+            'Task and lead Activity: every activity is a card with its tag (Status, People, Checklist, Comment...), the date and time, what was done and who did it, with pages of 10 when there are many. This also fixes the Activity tab being pushed to the left.',
+        ],
+    },
+    {
         version: '0.206.0',
         date: '2026-11-08',
         title: 'Task header, activity of tasks and leads, Reports & Strategies, contacts card',

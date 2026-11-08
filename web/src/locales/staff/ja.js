@@ -6016,5 +6016,18 @@ export default {
     "amounts include tax": "金額は税込み",
     "contracts": "件の契約",
     "started in this period": "この期間に開始",
-    "the files uploaded on this document, up to 20 MB in all": "この書類にアップロードされたファイル（合計20MBまで）"
+    "the files uploaded on this document, up to 20 MB in all": "この書類にアップロードされたファイル（合計20MBまで）",
+    "Add link": "リンクを追加",
+    "Comments and status changes of this document appear here.": "このドキュメントのコメントとステータス変更がここに表示されます。",
+    "Enter a valid web address": "有効なWebアドレスを入力してください",
+    "Files and links": "ファイルとリンク",
+    "Give it a title": "タイトルを入力してください",
+    "Name (optional)": "名前（任意）",
+    "The document": "ドキュメント",
+    "Write a comment — use @ to mention a colleague": "コメントを書く — @で同僚にメンション",
+    "{n} file(s)": "{n}件のファイル",
+    "{n} link(s)": "{n}件のリンク",
+    "Sent to the client": "クライアントに送信済み",
+    "Client is reviewing": "クライアントが確認中",
+    "Changes requested": "変更の依頼あり"
 }

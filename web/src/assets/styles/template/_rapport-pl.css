@@ -176,7 +176,10 @@
 .rp-face-label:empty { display: none; }
 
 /* compact popup head (tasks): the stage bar inside the coloured head, on a light blur; the team and counts sit right under it */
-.rp-qv-head--compact { gap: 2px; padding: 14px 18px 14px; }
+.rp-qv-head--compact { gap: 2px 14px; padding: 14px 18px 14px; grid-template-columns: minmax(0, 1fr) auto; }
+.rp-qv-head--compact > * { grid-column: 1 / -1; }
+.rp-qv-head--compact > h2 { grid-column: 1; }
+.rp-qv-head--compact > .rp-qv-meta { grid-column: 2; grid-row: 2 / span 2; align-self: start; }
 .rp-qv-head--compact h2 { font-size: 21px; margin-top: 4px; }
 .rp-qv-steps--in { margin-top: 12px; padding: 7px 10px 5px; border-radius: 16px; background: color-mix(in srgb, var(--on) 14%, transparent); border: 1px solid color-mix(in srgb, var(--on) 20%, transparent); -webkit-backdrop-filter: blur(10px) saturate(1.3); backdrop-filter: blur(10px) saturate(1.3); }
 .rp-qv-steps--in button { padding: 4px 2px 2px; gap: 5px; }
@@ -184,6 +187,8 @@
 .rp-qv-steps--in .rp-qv-bar i { background: var(--on) !important; }
 .rp-qv-steps--in .rp-qv-lab { font-size: 10.5px; color: color-mix(in srgb, var(--on) 68%, transparent); }
 .rp-qv-steps--in button[aria-current] .rp-qv-lab, .rp-qv-steps--in button:hover:not(:disabled) .rp-qv-lab { color: var(--on); }
-.rp-qv-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 2px 0; font-size: 13px; color: var(--rp-muted); min-width: 0; }
+.rp-qv-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin: 4px 0 0; font-size: 13px; color: inherit; min-width: 0; }
 .rp-qv-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; background: var(--rp-well); color: var(--rp-text); font-size: 12px; font-weight: 700; border: 0; cursor: pointer; transition: filter .15s; }
+.rp-qv-chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .rp-qv-chip:hover { filter: brightness(.95); }
+.rp-qv-head .rp-qv-chip { background: color-mix(in srgb, var(--on) 16%, transparent); color: var(--on); border: 1px solid color-mix(in srgb, var(--on) 22%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }

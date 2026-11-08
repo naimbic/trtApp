@@ -60,9 +60,9 @@ const PopupFrame = ({ isOpen, onClose, width = 560, kicker, title, sub, date, te
                             <h2>{title}</h2>
                             {sub && <p>{sub}</p>}
                             {!compact && (team || actions) && <div className="rp-qv-foot"><div className="rp-qv-acts">{actions}</div>{team}</div>}
+                            {compact && meta && <div className="rp-qv-meta">{meta}</div>}
                             {compact && stepsNode}
                         </motion.div>
-                        {compact && meta && <div className="rp-qv-meta">{meta}</div>}
                         {!compact && stepsNode}
                         <motion.div className="rp-qv-body" initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.35 }}>{children}</motion.div>
                         {footer && <div className="rp-qv-footer">{footer}</div>}

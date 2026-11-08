@@ -155,6 +155,9 @@ export async function getClientDetail(id) {
         prisma.crmClientRequest.count({ where: { clientId: id, status: { notIn: ['done', 'declined'] } } }),
         prisma.crmClientReport.count({ where: { clientId: id } }),
     ])
+    // open tasks of the client: its own, those of its projects and those of the lead it came from
+    const [pr, ld] = await Promise.all([prisma.crmProject.findMany({ where: { clientId: id }, select: { id: true } }), prisma.crmLead.findMany({ where: { clientId: id }, select: { id: true } })])
+    const tasks = await prisma.crmTask.count({ where: { status: { not: 5 }, OR: [{ relType: 'customer', relId: id }, { relType: 'project', relId: { in: pr.map((x) => x.id) } }, { relType: 'lead', relId: { in: ld.map((x) => x.id) } }] } }).catch(() => 0)
     const money = (await moneyFor([id], true))[id] || {}
     return {
         id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [],
@@ -166,7 +169,7 @@ export async function getClientDetail(id) {
         admins: staff.map((s) => ({ id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() })),
         contacts: c.contacts.map((x) => ({ id: x.id, name: contactName(x), email: x.email, phone: x.phoneNumber, title: x.title, isPrimary: x.isPrimary, active: x.active, lastLogin: x.lastLogin })),
         money,
-        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests, reports },
+        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests, reports, tasks },
     }
 }
 

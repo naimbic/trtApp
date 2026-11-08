@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.209.0',
+        date: '2026-11-08',
+        title: 'Client tabs in groups, and a Tasks tab',
+        items: [
+            'Client page: the tabs are in blocks with a small title each: Sales (Invoices, Payments, Estimates, Proposals, Contracts), Work (Projects, Tasks, Tickets), Client area (Ideas, Requests, Reports & Strategies), then Records (Mails, Notes, Files, Activity).',
+            'New Tasks tab on the client: the tasks of the client, of its projects and of its lead, in columns by status, managed the same way as on the Tasks page (move, assign, priority, dates, popup).',
+            'Each task has a Show to the client / Hide from the client choice in its menu, and a Client mark on its card. Only the tasks switched on are seen in the client area. A switch shows only those.',
+        ],
+    },
+    {
         version: '0.208.1',
         date: '2026-11-08',
         title: 'Lead: activity tiles and offers as cards',

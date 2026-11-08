@@ -6036,5 +6036,10 @@ export default {
     "e.g. 1, 2.5, 3": "مثال: 1، 2.5، 3",
     "Keep lead checklist items as plain lines (no task is created for each item)": "إبقاء عناصر قائمة مهام العميل المحتمل كأسطر بسيطة (دون إنشاء مهمة لكل عنصر)",
     "Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.": "إيقاف: كل عنصر يُضاف في تبويب المهام للعميل المحتمل يصبح مهمة حقيقية مرتبطة به وتظهر على لوحة المهام. تشغيل: تبقى العناصر داخل العميل المحتمل فقط.",
-    "The reports and strategies the team shares with the client, with its answer.": "التقارير والاستراتيجيات التي يشاركها الفريق مع العميل مع ردّه."
+    "The reports and strategies the team shares with the client, with its answer.": "التقارير والاستراتيجيات التي يشاركها الفريق مع العميل مع ردّه.",
+    "Hidden from the client": "تم إخفاؤها عن العميل",
+    "Only what the client sees": "ما يراه العميل فقط",
+    "Records": "السجلات",
+    "Show to the client": "إظهار للعميل",
+    "visible to the client": "ظاهرة للعميل"
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import TaskAgenda from './TaskAgenda'
 import { useNavigate, useSearchParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbFlag, TbUserPlus, TbCalendarDue, TbNote, TbArrowRight } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbFlag, TbUserPlus, TbCalendarDue, TbNote, TbArrowRight, TbEye, TbEyeOff } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Container from '@/components/shared/Container'
@@ -24,7 +24,7 @@ import { onCreate } from '@/utils/createIntent'
 const Plain = ({ children }) => <div>{children}</div>
 
 
-const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = null, onClosePopup }) => {
+const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, onChanged, openId = null, onClosePopup }) => {
     useTaskStatuses()
     const nav = useNavigate()
     const [params, setParams] = useSearchParams()
@@ -39,14 +39,15 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     const [leadId, setLeadId] = useState(null)
     const [clientId, setClientId] = useState(null)
     const [priority, setPriority] = useState(null)
-    const [done, setDone] = useState(!!projectId || boardOnly)
+    const [done, setDone] = useState(!!projectId || !!clientPage || boardOnly)
+    const [sharedOnly, setSharedOnly] = useState(false) // client page: only the tasks the client sees
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [del, setDel] = useState(null) // a task about to be deleted
     const [drawer, setDrawer] = useState({ open: !!openId, id: openId, preset: null, k: 0 })
     const [notes, setNotes] = useState([]) // quick notes: only a title and a description, shown beside the tasks
     const [noteDialog, setNoteDialog] = useState({ open: false, note: null })
-    const notesOn = !projectId && !boardOnly
+    const notesOn = !projectId && !clientPage && !boardOnly
     const loadNotes = useCallback(() => { if (notesOn) api('/api/crm/notes?board=1&limit=10').then((d) => setNotes(d.list || [])).catch(() => {}) }, [notesOn])
     useEffect(() => { loadNotes() }, [loadNotes])
     useEffect(() => { window.addEventListener(NOTES_EVENT, loadNotes); return () => window.removeEventListener(NOTES_EVENT, loadNotes) }, [loadNotes])
@@ -78,11 +79,11 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
 
     const load = useCallback(async () => {
         try {
-            setData(await api(`/api/crm/work/tasks?${qs({ query, mine: mine ? '1' : '', assignee: assignee || '', priority: priority || '', leadId: leadId || '', clientId: clientId || '', done: done ? '1' : '', ...(projectId ? { relType: 'project', relId: projectId } : {}) })}`))
+            setData(await api(`/api/crm/work/tasks?${qs({ query, mine: mine ? '1' : '', assignee: assignee || '', priority: priority || '', leadId: leadId || '', clientId: clientPage || clientId || '', clientVisible: sharedOnly ? '1' : '', done: done ? '1' : '', ...(projectId ? { relType: 'project', relId: projectId } : {}) })}`))
             setError('')
             onChanged?.()
         } catch (e) { setError(e.message) } finally { setLoading(false) }
-    }, [query, mine, assignee, priority, leadId, clientId, done, projectId]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [query, mine, assignee, priority, leadId, clientId, done, projectId, clientPage, sharedOnly]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => { load() }, [load])
 
     const setViewSaved = (v) => { setView(v); try { localStorage.setItem('tasks.view', v) } catch { /* private mode */ } }
@@ -137,12 +138,12 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
     const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); onClosePopup?.(); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
     const staffOptions = lookups.staff.map((s) => ({ value: s.id, label: s.name }))
 
-    const Wrap = projectId || boardOnly ? Plain : Container
+    const Wrap = projectId || clientPage || boardOnly ? Plain : Container
     return (
         <Wrap>
             {!boardOnly && <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                    <div>{projectId ? <h5>{tr("Tasks")}</h5> : <h3>{tr("Tasks")}</h3>}<p className="text-sm text-gray-500">{trn(data.list.length, "task")} {tr("shown")}</p></div>
+                    <div>{projectId || clientPage ? <h5>{tr("Tasks")}</h5> : <h3>{tr("Tasks")}</h3>}<p className="text-sm text-gray-500">{trn(data.list.length, "task")} {tr("shown")}{clientPage ? ` · ${data.list.filter((x) => x.visibleToClient).length} ${tr("visible to the client")}` : ''}</p></div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <Segment value={view} onChange={(v) => setViewSaved(Array.isArray(v) ? v[0] : v)} size="sm">
@@ -158,11 +159,12 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                 <div className="w-60"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search tasks")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any assignee")} options={staffOptions} value={staffOptions.find((o) => o.value === assignee) || null} onChange={(o) => { setAssignee(o?.value || null); setMine(false) }} /></div>
                 <div className="w-36"><Select size="sm" isClearable placeholder={tr("Any priority")} options={PRIORITY.map((p) => ({ value: p.value, label: p.label }))} value={priority ? { value: priority, label: prioOf(priority).label } : null} onChange={(o) => setPriority(o?.value || null)} /></div>
-                <div className="w-48"><RelationSelect size="sm" resource="leads" placeholder={tr("Any lead")} value={leadId} onChange={(id) => setLeadId(id || null)} /></div>
-                <div className="w-48"><RelationSelect size="sm" resource="clients" placeholder={tr("Any client")} value={clientId} onChange={(id) => setClientId(id || null)} /></div>
+                {!clientPage && <div className="w-48"><RelationSelect size="sm" resource="leads" placeholder={tr("Any lead")} value={leadId} onChange={(id) => setLeadId(id || null)} /></div>}
+                {!clientPage && <div className="w-48"><RelationSelect size="sm" resource="clients" placeholder={tr("Any client")} value={clientId} onChange={(id) => setClientId(id || null)} /></div>}
+                {clientPage && <label className="flex items-center gap-2 text-sm"><Switcher checked={sharedOnly} onChange={setSharedOnly} />{tr("Only what the client sees")}</label>}
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssignee(null) }} />{tr("My tasks")}</label>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={done} onChange={setDone} />{tr("Show completed")}</label>
-                <SavedViews className="ml-auto" page="tasks" getState={() => ({ search, assignee, priority, leadId, clientId, mine, done })} applyState={(v) => { setSearch(v.search || ''); setAssignee(v.assignee || null); setPriority(v.priority || null); setLeadId(v.leadId || null); setClientId(v.clientId || null); setMine(!!v.mine); setDone(!!v.done) }} />
+                {!clientPage && <SavedViews className="ml-auto" page="tasks" getState={() => ({ search, assignee, priority, leadId, clientId, mine, done })} applyState={(v) => { setSearch(v.search || ''); setAssignee(v.assignee || null); setPriority(v.priority || null); setLeadId(v.leadId || null); setClientId(v.clientId || null); setMine(!!v.mine); setDone(!!v.done) }} />}
             </div>}
 
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
@@ -181,6 +183,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         ...(data.can.edit ? [
                             { label: tr("Mark complete"), icon: <TbCircleCheck />, onClick: () => moveTo(it, 5) },
                             { label: tr("Priority"), icon: <TbFlag />, sub: PRIORITY.map((p) => ({ label: p.label, checked: it.priority === p.value, color: ['#9ca3af', '#3b82f6', '#f97316', '#ef4444'][p.value - 1], onClick: () => patch(it, () => ({ priority: p.value }), tr("Priority changed")) })) },
+                            { label: it.visibleToClient ? tr("Hide from the client") : tr("Show to the client"), icon: it.visibleToClient ? <TbEyeOff /> : <TbEye />, onClick: () => patch(it, (t) => ({ visibleToClient: !t.visibleToClient }), it.visibleToClient ? tr("Hidden from the client") : tr("Shown to the client")) },
                             { label: tr("Due date"), icon: <TbCalendarDue />, sub: [[tr("Today"), 0], [tr("Tomorrow"), 1], [tr("In a week"), 7], [tr("In a month"), 30]].map(([label, n]) => ({ label, onClick: () => patch(it, () => ({ dueDate: dayjs().add(n, 'day').format('YYYY-MM-DD') }), tr("Due date changed")) })).concat([{ label: tr("No due date"), onClick: () => patch(it, () => ({ dueDate: null }), tr("Due date changed")) }]) },
                             { label: tr("Assign to"), icon: <TbUserPlus />, sub: lookups.staff.map((m) => ({ label: m.name, checked: it.team?.some((x) => x.id === m.id), onClick: () => patch(it, (t) => ({ assigneeIds: t.assigneeIds.includes(m.id) ? t.assigneeIds.filter((x) => x !== m.id) : [...t.assigneeIds, m.id] }), tr("Team changed")) })) },
                             
@@ -196,7 +199,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
                         const limit = lookups.defaults?.kanbanLimit > 0 && !more[s.value] ? lookups.defaults.kanbanLimit : undefined
                         return {
                             id: s.value, name: s.label, href: `/crm/status/tasks/${s.value}`, hrefTitle: tr("Open the page of this status"), color: s.color, count: all.length,
-                            items: all.slice(0, limit).map((t) => ({ id: t.id, href: `/crm/tasks/${t.id}`, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, subHref: t.rel?.href, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, labelPill: ['#6b7280', '#2563eb', '#ea580c', '#dc2626'][(t.priority || 1) - 1], priority: t.priority, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, kicker: `${tr("Task")}${t.rel?.label ? ` · ${t.rel.label}` : ''}`,
+                            items: all.slice(0, limit).map((t) => ({ id: t.id, href: `/crm/tasks/${t.id}`, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, subHref: t.rel?.href, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, labelPill: ['#6b7280', '#2563eb', '#ea580c', '#dc2626'][(t.priority || 1) - 1], priority: t.priority, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, kicker: `${tr("Task")}${t.rel?.label ? ` · ${t.rel.label}` : ''}${t.visibleToClient ? ` · 👁 ${tr("Client")}` : ''}`,
                                 fields: [{ label: tr("Priority"), value: prioOf(t.priority).label }, { label: tr("Due"), value: fmtDate(t.dueDate) }, { label: tr("Related to"), value: t.rel?.label }, { label: tr("Checklist"), value: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : '' }],
                                 team: t.assignees, comments: t.comments || 0, people: <People list={t.assignees} size={26} /> })),
                             more: limit && all.length > limit ? { left: all.length - limit, onClick: () => setMore((m) => ({ ...m, [s.value]: true })) } : null,
@@ -211,7 +214,7 @@ const TasksBoard = ({ projectId = null, boardOnly = false, onChanged, openId = n
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this task?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const it = del; setDel(null); remove(it) }}>
                 <p>{del?.title}</p>
             </ConfirmDialog>
-            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} refreshKey={drawer.k} stage={stageOf(drawer.id)} presets={{ ...(drawer.preset || {}), ...(lookups.defaults ? { status: lookups.defaults.status, priority: lookups.defaults.priority, billable: lookups.defaults.billable, assigneeIds: lookups.defaults.assignMe && lookups.me ? [lookups.me] : [], followerIds: [...new Set([...(lookups.defaults.followMe && lookups.me ? [lookups.me] : []), ...(lookups.defaults.followAdminIds || [])])] } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}) }} onClose={close} onChanged={load} />
+            <TaskDrawer open={drawer.open} id={drawer.id} staff={lookups.staff} refreshKey={drawer.k} stage={stageOf(drawer.id)} presets={{ ...(drawer.preset || {}), ...(lookups.defaults ? { status: lookups.defaults.status, priority: lookups.defaults.priority, billable: lookups.defaults.billable, assigneeIds: lookups.defaults.assignMe && lookups.me ? [lookups.me] : [], followerIds: [...new Set([...(lookups.defaults.followMe && lookups.me ? [lookups.me] : []), ...(lookups.defaults.followAdminIds || [])])] } : {}), ...(projectId ? { relType: 'project', relId: projectId } : {}), ...(clientPage ? { relType: 'customer', relId: clientPage } : {}) }} onClose={close} onChanged={load} />
         </Wrap>
     )
 }

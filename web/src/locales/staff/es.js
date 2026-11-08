@@ -6036,5 +6036,10 @@ export default {
     "e.g. 1, 2.5, 3": "p. ej. 1, 2,5, 3",
     "Keep lead checklist items as plain lines (no task is created for each item)": "Mantener los elementos de la checklist de un lead como líneas simples (no se crea una tarea por elemento)",
     "Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.": "Desactivado: cada elemento añadido en la pestaña Tareas de un lead se convierte en una tarea real, vinculada al lead, visible en el tablero. Activado: los elementos solo quedan en el lead.",
-    "The reports and strategies the team shares with the client, with its answer.": "Los informes y estrategias que el equipo comparte con el cliente, con su respuesta."
+    "The reports and strategies the team shares with the client, with its answer.": "Los informes y estrategias que el equipo comparte con el cliente, con su respuesta.",
+    "Hidden from the client": "Oculta al cliente",
+    "Only what the client sees": "Solo lo que ve el cliente",
+    "Records": "Registros",
+    "Show to the client": "Mostrar al cliente",
+    "visible to the client": "visibles para el cliente"
 }

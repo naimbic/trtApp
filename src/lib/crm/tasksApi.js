@@ -102,7 +102,7 @@ function card(t, people, rels, extra = {}) {
         rel: rel ? { type: t.relType, ...rel } : t.relType ? { type: t.relType, label: t.relType } : null,
         assignees: (t.assignees || []).map((x) => people[x.staffId]).filter(Boolean),
         checklistDone: (t.checklistItems || []).filter((c) => c.finished).length, checklistTotal: (t.checklistItems || []).length,
-        comments: t._count?.comments ?? 0, milestoneId: t.milestoneId || null, code: `#T-${t.legacyId ?? String(t.id).slice(-5).toUpperCase()}`, billable: t.billable, recurring: t.recurring, order: t.kanbanOrder, createdAt: t.createdAt,
+        comments: t._count?.comments ?? 0, milestoneId: t.milestoneId || null, code: `#T-${t.legacyId ?? String(t.id).slice(-5).toUpperCase()}`, billable: t.billable, visibleToClient: !!t.visibleToClient, recurring: t.recurring, order: t.kanbanOrder, createdAt: t.createdAt,
         ...extra,
     }
 }
@@ -126,6 +126,7 @@ export async function listTasks(p = {}) {
         ])
         and.push({ OR: [{ relType: 'customer', relId: p.clientId }, { relType: 'project', relId: { in: projects.map((x) => x.id) } }, { relType: 'lead', relId: { in: leads.map((x) => x.id) } }] })
     }
+    if (p.clientVisible === '1') and.push({ visibleToClient: true })
     if (p.relType) and.push({ relType: p.relType })
     if (oid(p.relId)) and.push({ relId: p.relId })
     if (p.query) and.push({ OR: [{ name: { contains: p.query, mode: 'insensitive' } }, { description: { contains: p.query, mode: 'insensitive' } }] })

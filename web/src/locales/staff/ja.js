@@ -6036,5 +6036,10 @@ export default {
     "e.g. 1, 2.5, 3": "例: 1、2.5、3",
     "Keep lead checklist items as plain lines (no task is created for each item)": "リードのチェックリスト項目を単なる行として保持する（項目ごとにタスクを作成しない）",
     "Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.": "オフ：リードのタスクタブで追加した項目は、リードにひも付いた実際のタスクとなり、タスクボードに表示されます。オン：項目はリード内にのみ残ります。",
-    "The reports and strategies the team shares with the client, with its answer.": "チームがクライアントと共有するレポートと戦略、およびその回答。"
+    "The reports and strategies the team shares with the client, with its answer.": "チームがクライアントと共有するレポートと戦略、およびその回答。",
+    "Hidden from the client": "クライアントから非表示にしました",
+    "Only what the client sees": "クライアントに見えるものだけ",
+    "Records": "記録",
+    "Show to the client": "クライアントに表示",
+    "visible to the client": "クライアントに表示中"
 }

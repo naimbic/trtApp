@@ -155,7 +155,15 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         <div className="space-y-6">
             <div>
                 <div className="mb-2 flex items-center justify-between"><h6>{tr("Proposals")}</h6><Button size="xs" icon={<TbFileText />} data-href={`/crm/proposals/new?leadId=${id}`} onClick={() => nav(`/crm/proposals/new?leadId=${id}`)}>{tr("New proposal")}</Button></div>
-                {detail.proposals.map((p) => <Link key={p.id} to={`/crm/proposals/${p.id}`} className="flex items-center justify-between border-b border-gray-100 py-2 text-sm hover:text-primary dark:border-gray-700"><span>{p.subject || tr("Proposal {number}", { number: p.number })}</span><Tag>{PROPOSAL[p.status] || p.status}</Tag></Link>)}
+                <div className="space-y-2">{detail.proposals.map((p) => (
+                    <Link key={p.id} to={`/crm/proposals/${p.id}`} className="block rounded-xl border border-gray-200/80 bg-gray-50/70 p-3 transition hover:border-primary/40 hover:bg-white dark:border-gray-700 dark:bg-gray-800/60">
+                        <div className="flex items-start justify-between gap-2"><span className="min-w-0 truncate text-sm font-semibold">{p.subject || tr("Proposal {number}", { number: p.number })}</span><Tag>{PROPOSAL[p.status] || p.status}</Tag></div>
+                        <div className="mt-2 flex flex-wrap items-end justify-between gap-2 text-xs text-gray-500">
+                            <span className="flex flex-col gap-0.5"><span>#{p.number}{p.date ? ` · ${dayjs(p.date).format('DD MMM YYYY')}` : ''}</span>{p.by && <span>{tr("Created by")} <b className="font-semibold text-gray-700 dark:text-gray-200">{p.by}</b></span>}</span>
+                            <span className="text-base font-bold text-gray-800 dark:text-gray-100">{p.total != null ? `${Number(p.total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${p.currency || detail.currency || ''}` : '—'}</span>
+                        </div>
+                    </Link>
+                ))}</div>
                 {!detail.proposals.length && <p className="text-sm text-gray-500">{tr("No proposals yet.")}</p>}
             </div>
         </div>

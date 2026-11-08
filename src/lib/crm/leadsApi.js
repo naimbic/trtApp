@@ -142,7 +142,7 @@ export async function getLead(id) {
         prisma.crmNote.findMany({ where: { relType: 'lead', relId: id }, orderBy: { createdAt: 'desc' } }),
         prisma.crmLeadActivityLog.findMany({ where: { leadId: id }, orderBy: { createdAt: 'desc' }, take: 60 }),
         prisma.crmTask.findMany({ where: { relType: 'lead', relId: id }, orderBy: { createdAt: 'desc' }, select: { id: true, name: true, status: true, dueDate: true } }),
-        prisma.crmProposal.findMany({ where: { relType: 'lead', relId: id }, orderBy: { createdAt: 'desc' }, select: { id: true, number: true, legacyId: true, subject: true, status: true, total: true } }),
+        prisma.crmProposal.findMany({ where: { relType: 'lead', relId: id }, orderBy: { createdAt: 'desc' }, select: { id: true, number: true, legacyId: true, subject: true, status: true, total: true, addedFrom: true, currencyId: true, createdAt: true, date: true } }),
         l.clientId ? prisma.crmClient.findUnique({ where: { id: l.clientId }, select: { id: true, company: true } }) : null,
         prisma.crmLeadMail.findMany({ where: { leadId: id }, orderBy: { date: 'desc' }, take: 200 }),
         prisma.crmEvent.findMany({ where: { leadId: id }, orderBy: { start: 'desc' }, take: 200 }),
@@ -152,7 +152,8 @@ export async function getLead(id) {
     const mailFiles = await filesByMail(mails)
     const { commentsByMail } = await import('@/lib/crm/mailCatch')
     const mailComments = await commentsByMail(mails)
-    const people = await staffMap([...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...notes.flatMap((n) => Object.values(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).flat()), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
+    const curNames = Object.fromEntries((await prisma.crmCurrency.findMany({ where: { id: { in: [...new Set(proposals.map((p) => p.currencyId).filter(Boolean))] } }, select: { id: true, name: true } })).map((c) => [c.id, c.name]))
+    const people = await staffMap([...proposals.map((p) => p.addedFrom), ...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...notes.flatMap((n) => Object.values(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).flat()), ...mails.map((m) => m.addedFrom), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
     return {
         lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, country: l.country ?? null, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), followerIds: l.followerIds || [], addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
         notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canEdit: mayChangeItem(a, n.addedFrom, 'notes'), canDelete: mayDropItem(a, n.addedFrom), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000, replyToId: n.replyToId || null,
@@ -160,7 +161,7 @@ export async function getLead(id) {
         activity: activity.map((x) => ({ id: x.id, text: x.customActivity ? x.description : readable(x.description), by: x.fullName || '', date: x.createdAt })),
         checklistAsTasks: !(await readSettings(['lead_checklist_plain'])).on('lead_checklist_plain'),
         checklist: Array.isArray(l.checklist) ? l.checklist : [],
-        tasks, proposals: proposals.map((p) => ({ ...p, number: p.number ?? p.legacyId })),
+        tasks, proposals: proposals.map((p) => ({ id: p.id, subject: p.subject, status: p.status, total: p.total, number: p.number ?? p.legacyId, by: people[p.addedFrom]?.name || (typeof people[p.addedFrom] === 'string' ? people[p.addedFrom] : ''), currency: curNames[p.currencyId] || '', date: p.date || p.createdAt })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
         mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),

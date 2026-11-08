@@ -20,6 +20,7 @@ const kindOf = (t) => {
     if (/^note|reply added in the notes/.test(x)) return 'note'
     if (/^meeting/.test(x)) return 'meeting'
     if (/^file /.test(x)) return 'file'
+    if (/^checklist/.test(x)) return 'checklist'
     if (/^task/.test(x)) return /checklist/.test(x) ? 'checklist' : 'task'
     if (/assigned|followers/.test(x)) return 'people'
     if (/created|added through/.test(x)) return 'created'
@@ -27,6 +28,8 @@ const kindOf = (t) => {
 }
 const LABEL = { created: 'Created', status: 'Status', finished: 'Finished', priority: 'Priority', dates: 'Dates', people: 'People', edit: 'Edit', relation: 'Link', checklist: 'Checklist', file: 'File', comment: 'Comment', timer: 'Time', mail: 'Email', note: 'Note', meeting: 'Meeting', task: 'Task' }
 const PAGE = 10
+/** "Naim Benali" -> "Naim.B" */
+const shortName = (n = '') => { const p = String(n).trim().split(/\s+/).filter(Boolean); return p.length > 1 ? `${p[0]}.${p[p.length - 1][0].toUpperCase()}` : p[0] || '' }
 
 /** What happened, newest first: one card per activity (a tag for the kind, the date and time, who did it, what was done), in pages when there are many.
  *  items: [{ id?, type?, text, staff?: { name }, by?: string, at | date }] */
@@ -42,11 +45,13 @@ const ActivityFeed = ({ items = [], empty }) => {
             {shown.map((r) => {
                 const [Icon, tone] = KINDS[r.kind] || KINDS.edit
                 return (
-                    <article key={r.key} className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl border border-gray-200/80 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
-                        <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${tone}`}><Icon />{tr(LABEL[r.kind] || 'Edit')}</span>
-                        <p className="min-w-0 flex-1 basis-40 break-words text-sm leading-snug text-gray-800 dark:text-gray-100">{r.text}</p>
-                        <time className="shrink-0 text-[11px] leading-tight text-gray-500" dateTime={dayjs(r.at).toISOString()}>{dayjs(r.at).format('DD MMM YYYY · HH:mm')}</time>
-                        {r.who && <span className="flex shrink-0 items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300"><span className="grid size-5 place-items-center rounded-full bg-gray-200 text-[10px] font-bold dark:bg-gray-600">{r.who[0]?.toUpperCase()}</span><b className="max-w-[9rem] truncate font-semibold">{r.who}</b></span>}
+                    <article key={r.key} className="flex min-w-0 items-stretch gap-3 rounded-xl border border-gray-200/80 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-800">
+                        <span className={`flex size-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-center ${tone}`}><Icon className="text-lg" /><span className="max-w-full truncate text-[10px] font-bold leading-none">{tr(LABEL[r.kind] || 'Edit')}</span></span>
+                        <p className="min-w-0 flex-1 self-center break-words text-sm leading-snug text-gray-800 dark:text-gray-100">{r.text}</p>
+                        <div className="flex shrink-0 flex-col items-end justify-center rounded-lg bg-gray-50 px-2.5 py-1 text-right dark:bg-gray-700/50">
+                            {r.who && <b className="max-w-[8rem] truncate text-xs font-semibold text-gray-700 dark:text-gray-100" title={r.who}>{shortName(r.who)}</b>}
+                            <time className="text-[10px] leading-tight text-gray-500 dark:text-gray-300" dateTime={dayjs(r.at).toISOString()}>{dayjs(r.at).format('DD MMM · HH:mm')}</time>
+                        </div>
                     </article>
                 )
             })}

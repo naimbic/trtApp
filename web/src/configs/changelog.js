@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.208.1',
+        date: '2026-11-08',
+        title: 'Lead: activity tiles and offers as cards',
+        items: [
+            'Activity (tasks and leads): the tag is a small square tile, the icon on top and the tag name under it. The user (short, like Naim.B) and the date and time are together in a small compact card at the right.',
+            'Lead, Offers tab: each proposal is a light card with its title, status, number and date, who created it, and the total amount with its currency.',
+        ],
+    },
+    {
         version: '0.208.0',
         date: '2026-11-08',
         title: 'Client area: Reports & Strategies, hours on tasks, lead header, lead checklist setting',

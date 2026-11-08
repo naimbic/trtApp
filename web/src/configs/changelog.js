@@ -6,7 +6,7 @@ export const CHANGELOG = [
         date: '2026-11-08',
         title: 'YouTube videos in notes',
         items: [
-            'Notes cards: the labels and the person (from / shared with) are now in the top part of the card too, next to the date and the counts; the bottom footer is gone.',
+            'Notes cards have a header band: the person (from, and who it is shared with) and the date, then the counts (reminder, checklist, files, links, comments, people). The labels sit at the bottom right.',
             'Notes cards use the system colours of the left bar for the date, the counts, the labels and the person.',
             'Notes: a YouTube link (in the Links list or written in the text: watch, youtu.be, shorts, live) shows the video on the card as a picture with a play button, and as a player in the note popup.',
         ],

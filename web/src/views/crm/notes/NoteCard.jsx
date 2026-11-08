@@ -28,6 +28,30 @@ const NoteCard = ({ note: n, onOpen, onPatch, onDelete, onToTask, compact = fals
     return (
         <div role="button" tabIndex={0} onClick={() => onOpen(n)} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onOpen(n) }}
             className={`group relative mb-4 inline-block w-full break-inside-avoid cursor-pointer overflow-hidden rounded-2xl border text-start shadow-sm transition hover:shadow-md ${cardClass(n.color)}`}>
+            <div className="border-b border-black/10 bg-black/[0.07] px-3 py-2 dark:border-white/10 dark:bg-white/[0.07]">
+                <div className="flex items-center gap-2">
+                    {(n.owner || n.own) && (
+                        <>
+                            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--rp-dock)] text-[11px] font-bold text-[var(--rp-on-dock)]">{(n.owner || '').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || <TbUsers />}</span>
+                            <span className="min-w-0 flex-1 leading-tight" title={[n.owner && tr('From {name}', { name: n.owner }), n.sharedWith.length ? `${tr('Shared with')}: ${n.sharedWith.map((x) => x.name).join(', ')}` : ''].filter(Boolean).join(' · ')}>
+                                <b className="block truncate text-[13px] font-semibold text-[var(--rp-text)]">{n.own ? tr('You') : n.owner}</b>
+                                <span className="block truncate text-[11px] text-[var(--rp-muted)]">{n.sharedWith.length > 0 ? `→ ${n.sharedWith.map((x) => x.name.split(' ')[0]).slice(0, 3).join(', ')}${n.sharedWith.length > 3 ? ` +${n.sharedWith.length - 3}` : ''}` : tr('Private')}</span>
+                            </span>
+                        </>
+                    )}
+                    <span className="ms-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--rp-dock)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--rp-on-dock)]" title={dayjs(n.updatedAt).format('DD MMM YYYY, HH:mm')}><TbCalendar />{dayjs(n.updatedAt).format('DD MMM')}</span>
+                </div>
+                {(n.remindAt || n.kind === 'list' || n.attachments.length > 0 || n.links.length > 0 || n.comments > 0 || n.sharedWith.length > 0) && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px]">
+                        {n.remindAt && <Stat icon={<TbBellRinging />} tone="!text-[var(--rp-butter)]" title={tr('Reminder')}>{dayjs(n.remindAt).format('DD MMM HH:mm')}<RemindTag when={n.remindAt} /></Stat>}
+                        {n.kind === 'list' && <Stat icon={<TbChecklist />} title={tr('Checklist')}>{done.length}/{n.checklist.length}</Stat>}
+                        {n.attachments.length > 0 && <Stat icon={<TbPaperclip />} title={tr('Pictures, voice and files')}>{n.attachments.length}</Stat>}
+                        {n.links.length > 0 && <Stat icon={<TbLink />} title={tr('Links')}>{n.links.length}</Stat>}
+                        {n.comments > 0 && <Stat icon={<TbMessageCircle />} title={tr('Comments')}>{n.comments}</Stat>}
+                        {n.sharedWith.length > 0 && <Stat icon={<TbUsers />} title={n.sharedWith.map((x) => x.name).join(', ')}>{n.sharedWith.length}</Stat>}
+                    </div>
+                )}
+            </div>
             {images.length > 0 && (
                 <div className={`grid gap-0.5 ${images.length > 1 ? 'grid-cols-2' : ''}`}>
                     {images.slice(0, 4).map((a) => <img key={a.url} src={a.url} alt={a.name} loading="lazy" className="max-h-56 w-full object-cover" />)}
@@ -44,24 +68,6 @@ const NoteCard = ({ note: n, onOpen, onPatch, onDelete, onToTask, compact = fals
                 </div>
             )}
             <div className="p-3.5">
-                <div className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--rp-dock)] text-[var(--rp-on-dock)] px-2 py-0.5 font-semibold" title={dayjs(n.updatedAt).format('DD MMM YYYY, HH:mm')}><TbCalendar />{dayjs(n.updatedAt).format('DD MMM')}</span>
-                    {n.labels.map((l) => <span key={l} className={`rounded-full bg-[var(--rp-pill)] px-2 py-0.5 text-[11px] font-semibold text-[var(--rp-on-pill)]`}>{l}</span>)}
-                    <span className="ms-auto flex flex-wrap items-center justify-end gap-1">
-                        {n.remindAt && <Stat icon={<TbBellRinging />} tone="!text-[var(--rp-butter)]" title={tr('Reminder')}>{dayjs(n.remindAt).format('DD MMM HH:mm')}<RemindTag when={n.remindAt} /></Stat>}
-                        {n.kind === 'list' && <Stat icon={<TbChecklist />} title={tr('Checklist')}>{done.length}/{n.checklist.length}</Stat>}
-                        {n.attachments.length > 0 && <Stat icon={<TbPaperclip />} title={tr('Pictures, voice and files')}>{n.attachments.length}</Stat>}
-                        {n.links.length > 0 && <Stat icon={<TbLink />} title={tr('Links')}>{n.links.length}</Stat>}
-                        {n.comments > 0 && <Stat icon={<TbMessageCircle />} title={tr('Comments')}>{n.comments}</Stat>}
-                        {n.sharedWith.length > 0 && <Stat icon={<TbUsers />} title={n.sharedWith.map((x) => x.name).join(', ')}>{n.sharedWith.length}</Stat>}
-                    </span>
-                </div>
-                {(n.owner || n.sharedWith.length > 0) && (
-                    <div className="mb-1.5 flex min-w-0 items-center gap-1.5 text-[11px] text-[var(--rp-text)]" title={[n.owner && tr('From {name}', { name: n.owner }), n.sharedWith.length ? `${tr('Shared with')}: ${n.sharedWith.map((x) => x.name).join(', ')}` : ''].filter(Boolean).join(' · ')}>
-                        {n.owner && <span className="inline-flex min-w-0 items-center gap-1"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--rp-dock)] text-[var(--rp-on-dock)] text-[9px] font-bold">{n.owner.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}</span><span className="truncate font-semibold">{n.own ? tr('You') : n.owner}</span></span>}
-                        {n.sharedWith.length > 0 && <span className="inline-flex min-w-0 items-center gap-1"><TbArrowRight className="shrink-0" /><span className="truncate">{n.sharedWith.map((x) => x.name.split(' ')[0]).slice(0, 3).join(', ')}{n.sharedWith.length > 3 ? ` +${n.sharedWith.length - 3}` : ''}</span></span>}
-                    </div>
-                )}
                 <div className="flex items-start gap-2">
                     {n.title ? <h6 className="min-w-0 flex-1 break-words font-bold leading-snug text-gray-900 dark:text-gray-100">{n.title}</h6> : <span className="flex-1" />}
                     {(n.important || n.pinned) && <span className="flex shrink-0 gap-1 text-base">{n.important && <TbStarFilled className="text-amber-500" title={tr('Important')} />}{n.pinned && <TbPinFilled className="text-primary" title={tr('Pinned')} />}</span>}
@@ -87,6 +93,7 @@ const NoteCard = ({ note: n, onOpen, onPatch, onDelete, onToTask, compact = fals
                 {audios.map((a) => <audio key={a.url} controls preload="none" src={a.url} onClick={(e) => e.stopPropagation()} className="mt-2 h-9 w-full" />)}
                 {files.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{files.map((a) => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex max-w-full items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 text-xs dark:bg-white/10"><TbPaperclip className="shrink-0" /><span className="truncate">{a.name}</span></a>)}</div>}
                 {n.links.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{n.links.slice(0, 4).map((l) => <a key={l.url} href={l.url} target="_blank" rel="noreferrer noopener" onClick={(e) => e.stopPropagation()} className="inline-flex max-w-full items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 text-xs text-primary dark:bg-white/10"><TbLink className="shrink-0" /><span className="truncate">{l.title || l.url.replace(/^https?:\/\/(www\.)?/, '')}</span></a>)}</div>}
+                {n.labels.length > 0 && <div className="mt-3 flex flex-wrap justify-end gap-1">{n.labels.map((l) => <span key={l} className="rounded-full bg-[var(--rp-pill)] px-2 py-0.5 text-[11px] font-semibold text-[var(--rp-on-pill)]">{l}</span>)}</div>}
             </div>
             {mine && !compact && (
                 <div className="relative flex items-center gap-0.5 px-2 pb-2 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>

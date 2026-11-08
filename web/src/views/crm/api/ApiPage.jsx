@@ -19,7 +19,7 @@ const copy = async (text) => { try { await navigator.clipboard.writeText(text); 
 const Code = ({ children }) => (
     <div className="group relative">
         <pre className="overflow-x-auto rounded-xl bg-gray-900 p-3 text-xs leading-relaxed text-gray-100">{children}</pre>
-        <button type="button" aria-label={tr("Copy")} className="absolute end-2 top-2 hidden rounded-md bg-white/10 p-1.5 text-gray-200 hover:bg-white/20 group-hover:block" onClick={() => copy(children)}><TbCopy /></button>
+        <button type="button" aria-label={tr("Copy")} className="absolute end-2 top-2 hidden rounded-md bg-white/10 p-1.5 text-gray-200 hover:bg-white/20 group-hover:block [@media(hover:none)]:block" onClick={() => copy(children)}><TbCopy /></button>
     </div>
 )
 

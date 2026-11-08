@@ -232,7 +232,7 @@ const Ideas = ({ openId }) => {
                                                         <div ref={p2.innerRef} {...p2.draggableProps} {...p2.dragHandleProps} className={cn('group relative', s2.isDragging && 'rotate-1 shadow-xl')}>
                                                             <IdeaCard i={i} onOpen={setSel} />
                                                             {d.can.decide && c !== 'done' && c !== 'dismissed' && !s2.isDragging && (
-                                                                <div className="absolute end-2 top-2 hidden gap-1 group-hover:flex">{c === 'new' && <button type="button" className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'accepted')}>{tr("Accept")}</button>}<button type="button" className="rounded-md bg-gray-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'dismissed')}>{tr("Dismiss")}</button></div>
+                                                                <div className="absolute end-2 top-2 hidden gap-1 group-hover:flex [@media(hover:none)]:flex">{c === 'new' && <button type="button" className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'accepted')}>{tr("Accept")}</button>}<button type="button" className="rounded-md bg-gray-500 px-1.5 py-0.5 text-[10px] font-semibold text-white" onClick={() => move(i, 'dismissed')}>{tr("Dismiss")}</button></div>
                                                             )}
                                                         </div>
                                                     )}

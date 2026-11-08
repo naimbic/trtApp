@@ -39,7 +39,7 @@ export async function installGuide() {
     return doInstall()
 }
 
-const GUIDE_VERSION = '1' // raise it when the guide texts change and should be loaded again by themselves
+const GUIDE_VERSION = '2' // raise it when the guide texts change and should be loaded again by themselves
 let ensuring = null
 /** The first time anyone opens the help center after an update, the guide is loaded by itself (once per version), so it is there for staff and clients without pressing anything. */
 export function ensureGuide() {

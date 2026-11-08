@@ -134,7 +134,7 @@ const RolesPanel = () => {
                                     <span className="block text-[11px] leading-tight text-gray-500">{trn(r.members, "member")} · {r.permissionCount} {tr("on")}</span>
                                 </span>
                             </button>
-                            <span className={cn('absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5', !/^super admin$/i.test(r.name) && 'group-hover:flex')}>
+                            <span className={cn('absolute right-1.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5', !/^super admin$/i.test(r.name) && 'group-hover:flex [@media(hover:none)]:flex')}>
                                 <button type="button" title={tr("Rename")} aria-label={tr("Rename {name}", { name: r.name })} onClick={() => { pick(r); setNameDlg({ mode: 'rename', value: r.name }) }} className="grid h-6 w-6 place-items-center rounded-md text-gray-500 hover:bg-white hover:text-primary dark:hover:bg-gray-700"><TbPencil /></button>
                                 <button type="button" title={tr("Delete")} aria-label={tr("Delete {name}", { name: r.name })} onClick={() => { pick(r); setConfirmDelete(true) }} className="grid h-6 w-6 place-items-center rounded-md text-gray-500 hover:bg-white hover:text-red-500 dark:hover:bg-gray-700"><TbTrash /></button>
                             </span>

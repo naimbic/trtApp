@@ -302,3 +302,8 @@ body:has(.rp-app) .table-default > thead, body:has(.rp-app) .table-default > tbo
 body:has(.rp-app) .table-default > tbody > tr > td { border-top: 1px solid var(--rp-line); }
 body:has(.rp-app) .table-default > tbody > tr:first-child > td { border-top: 0; }
 body:has(.rp-app) .table-default > tfoot > tr > td { border-top: 1px solid var(--rp-line); background: var(--rp-well); }
+
+/* Touch screens have no hover: icons and tools that a mouse pointer reveals (edit, delete, reply, drag...) stay visible, and nothing hidden swallows a tap */
+@media (hover: none) {
+    [class*="group-hover:opacity-100"], [class*="group-focus-within:opacity-100"] { opacity: 1 !important; pointer-events: auto !important; }
+}

@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.9',
+        date: '2026-11-08',
+        title: 'Screenshots in the client area guide, chat links, hover tools on phones',
+        items: [
+            'The client area guide now has 26 screenshots (the sign-in page, the overview, the lists, a task, an idea, the new request forms, a support thread, the help center, the profile, the app install and the chat), taken in each of the five languages. The guide refreshes itself the first time the help center is opened after this update.',
+            'Chat: a link in a message can be clicked again. The tools that appear under a message (reply, react, save, more) kept catching clicks while hidden and covered the first line of the next message, so a link there could not be opened. They only react when you point at their message now.',
+            'Phones and tablets (screens without a mouse): everything that only showed on hover now shows. In the chat, tap a message to show its tools (reply, react, save, more) under it, tap again to hide them. Icons that appeared on hover elsewhere (edit, delete, reply, copy, contact icons on the Team page...) are always visible on a touch screen.',
+        ],
+    },
+    {
         version: '0.205.8',
         date: '2026-11-08',
         title: 'The client area guide appears by itself',

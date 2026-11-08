@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.6',
+        date: '2026-11-08',
+        title: 'Page titles, contact popup in accordions',
+        items: [
+            'Every page now has its own title in the browser tab and in the history: "Invoices · trtCRM", "Settings · Calendar · trtCRM", "Clients · New · trtCRM"... in your language. The client area too ("Invoices · Company name").',
+            'The edit popup of a record with several sections (a contact, for example) is now colour-coded accordions: General open first, WhatsApp & Telegram and Email notifications folded, with "10 of 10 on" on the notifications, and the switches as a tidy two-column list. Expand all / Collapse all when there are more than two.',
+        ],
+    },
+    {
         version: '0.205.5',
         date: '2026-11-08',
         title: 'Contact notifications match the client settings',

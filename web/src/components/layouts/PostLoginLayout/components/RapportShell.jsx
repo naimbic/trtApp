@@ -20,6 +20,7 @@ import MentionLayer from '@/components/crm/MentionLayer'
 import LoginAsBanner from '@/components/crm/LoginAsBanner'
 import DemoTour, { demoAllowed } from '@/demo/DemoTour'
 import AccentApplier from '@/components/template/AccentApplier'
+import PageTitle from '@/components/template/PageTitle'
 import PreferencesApplier from '@/components/template/PreferencesApplier'
 import LayoutBase from '@/components/template/LayoutBase'
 import LottieLogo from '@/components/template/LottieLogo'
@@ -85,6 +86,7 @@ const RapportShell = ({ children }) => {
         <LayoutBase type={LAYOUT_RAPPORT} className="rp-app app-layout-rapport flex flex-auto flex-col">
             <PreferencesApplier />
             <AccentApplier />
+            <PageTitle />
             <div className="rp-mesh" aria-hidden="true"><i /></div>
             {larger.lg && <RapportDock />}
             <div className="rp-frame">

@@ -12,7 +12,7 @@ const apply = (b) => {
         link.type = ''
         link.href = b.favicon
     }
-    if (b.name) document.title = b.name
+    if (b.name && !document.documentElement.dataset.titled) document.title = b.name // (a page title set by the app wins)
 }
 
 const load = () => {

@@ -55,6 +55,11 @@ const Shell = () => {
     const mode = useThemeStore((s) => s.mode)
     const setMode = useThemeStore((s) => s.setMode)
     useEffect(() => { portal('/me').then(setMe).catch(() => {}) }, [])
+    useEffect(() => { // the tab is titled with the section, then the company
+        if (!me) return
+        const n = NAV.find((x) => (x.end ? pathname === x.to : pathname === x.to || pathname.startsWith(`${x.to}/`)))
+        document.title = `${n ? t(n.label) : pathname.includes('/profile') ? t('My profile') : t('Client area')} · ${me.company.name || APP_NAME}`
+    }, [me, pathname, t])
     // first visit (nothing chosen yet): use the client's own language, else the browser's
     useEffect(() => {
         if (!me) return

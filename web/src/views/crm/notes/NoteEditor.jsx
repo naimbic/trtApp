@@ -16,7 +16,7 @@ import { CommentTools, CommentEdit, CommentThread } from '@/components/crm/Comme
 import { mentionDirectory } from '@/utils/mentions'
 import { looksLikeHtml } from '@/lib/crm/richText'
 import { api, notify, formatBytes } from '../kit/api'
-import { COLORS, cardClass, labelOfColor, notesChanged, uploadNoteFile } from './noteKit'
+import { COLORS, cardClass, labelOfColor, notesChanged, uploadNoteFile, videosOf } from './noteKit'
 import { tr } from '@/utils/t'
 
 const uid = () => Math.random().toString(36).slice(2, 10)
@@ -170,6 +170,11 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
                         ? (looksLikeHtml(v.description) ? <RichView html={v.description} /> : <p className="whitespace-pre-line text-sm">{v.description}</p>)
                         : <RichEditor minHeight={140} value={v.description} onChange={(html) => set({ description: html })} placeholder={tr('Take a note… Use @ to mention a colleague and share it with them')} />}
                 </FoldSection>
+                {videosOf(v).length > 0 && (
+                    <div className="mt-3 grid gap-2">
+                        {videosOf(v).map((id) => <div key={id} className="aspect-video w-full overflow-hidden rounded-xl bg-black"><iframe title="YouTube" src={`https://www.youtube-nocookie.com/embed/${id}`} loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" className="size-full border-0" /></div>)}
+                    </div>
+                )}
                 {!readOnly && (
                     <FoldSection icon={<TbPalette />} tone="emerald" title={tr('Colour and labels')} summary={[v.color ? labelOfColor(v.color) : '', v.labels.join(', ')].filter(Boolean).join(' · ')} open={!!fold.look} onToggle={() => tog('look')}>
                         <div className="mb-3 flex flex-wrap gap-1.5">

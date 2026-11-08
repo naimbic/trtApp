@@ -38,3 +38,17 @@ export async function uploadNoteFile(file, voice = false) {
     if (!r.ok) throw new Error(tr(j.error || 'Upload failed, try again'))
     return j
 }
+
+/** The id of a YouTube video in a link (watch, youtu.be, shorts, embed, live), or ''. */
+export const youtubeId = (url) => {
+    const m = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^\s"'<>]*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])/i.exec(String(url || ''))
+    return m ? m[1] : ''
+}
+/** The YouTube videos of a note: from its links and from addresses written in its text (at most 3). */
+export const videosOf = (n) => {
+    const ids = new Set()
+    for (const l of n.links || []) { const id = youtubeId(l.url); if (id) ids.add(id) }
+    const text = String(n.description || '').replace(/&amp;/g, '&')
+    for (const m of text.matchAll(/https?:\/\/[^\s"'<>]+/g)) { const id = youtubeId(m[0]); if (id) ids.add(id) }
+    return [...ids].slice(0, 3)
+}

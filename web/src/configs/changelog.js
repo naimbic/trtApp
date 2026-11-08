@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.214.1',
+        date: '2026-11-08',
+        title: 'YouTube videos in notes',
+        items: [
+            'Notes cards: the labels and the person (from / shared with) are now in the top part of the card too, next to the date and the counts; the bottom footer is gone.',
+            'Notes cards use the system colours of the left bar for the date, the counts, the labels and the person.',
+            'Notes: a YouTube link (in the Links list or written in the text: watch, youtu.be, shorts, live) shows the video on the card as a picture with a play button, and as a player in the note popup.',
+        ],
+    },
+    {
         version: '0.214.0',
         date: '2026-11-08',
         title: 'Notes cards: date and counts on top, labels and people at the bottom',

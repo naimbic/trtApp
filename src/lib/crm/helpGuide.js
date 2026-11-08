@@ -5,7 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import prisma from '@/lib/prisma'
 import { requirePermission, hasCap } from '@/lib/crm/permissions'
-import { getOptions } from '@/lib/crm/mailer'
+import { getOptions, setOptions } from '@/lib/crm/mailer'
 
 const CODE = { english: 'en', french: 'fr', spanish: 'es', japanese: 'ja', arabic: 'ar' }
 const slugify = (s) => String(s).toLowerCase().normalize('NFKD').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 80) || 'article'
@@ -32,10 +32,29 @@ async function guideLanguages() {
     return active.filter((c) => fs.existsSync(path.join(dir(), `${c}.json`)))
 }
 
-/** Creates (or refreshes) the guide groups and their articles. Returns { created, refreshed }. */
+/** Pressed by a person (Help center → Manage): creates or refreshes the guide. Returns { created, refreshed }. */
 export async function installGuide() {
     const session = await requirePermission('knowledge_base', 'create')
     if (!hasCap(session.user.authority || [], 'knowledge_base', 'delete')) throw Object.assign(new Error('Refreshing the guide replaces its articles: it needs the permission to delete articles'), { status: 403 })
+    return doInstall()
+}
+
+const GUIDE_VERSION = '1' // raise it when the guide texts change and should be loaded again by themselves
+let ensuring = null
+/** The first time anyone opens the help center after an update, the guide is loaded by itself (once per version), so it is there for staff and clients without pressing anything. */
+export function ensureGuide() {
+    ensuring ??= (async () => {
+        try {
+            const o = await getOptions(['help_guide_version'])
+            if (o('help_guide_version') === GUIDE_VERSION) return
+            await setOptions({ help_guide_version: GUIDE_VERSION }) // first, so two visitors at once do not both install it
+            await doInstall()
+        } catch (e) { console.error('[help guide]', e.message) }
+    })().finally(() => { setTimeout(() => { ensuring = null }, 60000) })
+    return ensuring
+}
+
+async function doInstall() {
     const langs = await guideLanguages()
     let order = (await prisma.crmKnowledgeBaseGroup.findFirst({ orderBy: { groupOrder: 'desc' }, select: { groupOrder: true } }))?.groupOrder || 0
     let aorder = (await prisma.crmKnowledgeBaseArticle.findFirst({ orderBy: { articleOrder: 'desc' }, select: { articleOrder: true } }))?.articleOrder || 0

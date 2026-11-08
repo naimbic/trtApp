@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.8',
+        date: '2026-11-08',
+        title: 'The client area guide appears by itself',
+        items: [
+            'The client area guide (22 articles in five languages) is now loaded automatically the first time anyone opens the help center after this update, in the CRM (Help center) and in the client area (/portal/help). Staff and clients both see it; nothing to press. The "Client area guide" button in Help center → Manage is still there to refresh it.',
+        ],
+    },
+    {
         version: '0.205.7',
         date: '2026-11-08',
         title: 'Client area guide in the help center, in five languages',

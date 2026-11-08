@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { ensureGuide } from '@/lib/crm/helpGuide'
 import { requirePermission, hasCap, getStaffId } from '@/lib/crm/permissions'
 import { safeHtml } from '@/lib/crm/contractDoc'
 import { storeRich, plainText } from '@/lib/crm/richText'
@@ -53,6 +54,7 @@ async function ctx() {
 /** Help-center home for staff: groups with counts, popular and (when searching) matching articles. */
 export async function kbHub({ q = '', groupId, lang } = {}) {
     const c = await ctx()
+    await ensureGuide()
     const [groups, articles] = await Promise.all([prisma.crmKnowledgeBaseGroup.findMany({ orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] }), prisma.crmKnowledgeBaseArticle.findMany({ orderBy: [{ articleOrder: 'asc' }, { subject: 'asc' }] })])
     const shown = groups.filter((g) => inLang(g, lang))
     const okGroup = new Set(shown.map((g) => g.id))
@@ -292,6 +294,7 @@ export async function deleteGroup(id) {
 
 /* ---------------- client area (articles meant for clients only) ---------------- */
 export async function portalHub({ q = '', groupId, lang } = {}) {
+    await ensureGuide()
     const groups = (await prisma.crmKnowledgeBaseGroup.findMany({ where: { active: true }, orderBy: [{ groupOrder: 'asc' }, { name: 'asc' }] })).filter((g) => inLang(g, lang))
     const articles = await prisma.crmKnowledgeBaseArticle.findMany({ where: { active: true, staffArticle: false, OR: [{ groupId: { in: groups.map((g) => g.id) } }, { groupId: null }] }, orderBy: [{ articleOrder: 'asc' }, { subject: 'asc' }] })
     const [v, f] = await Promise.all([views(articles.map((a) => a.id)), votes(articles.map((a) => a.id))])

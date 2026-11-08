@@ -25,6 +25,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify } from '../kit/api'
 import { People } from '../tasks/shared'
 import { LeadTasks, LeadMails, LeadMeetings } from './LeadTabs'
+import ActivityFeed from '@/components/crm/ActivityFeed'
 import { useCan } from '../kit/api'
 import { tr } from '@/utils/t'
 import useTabParam from '@/utils/useTabParam'
@@ -160,12 +161,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         </div>
     )
 
-    const activity = detail && (
-        <div className="space-y-3">
-            {detail.activity.map((a) => <div key={a.id} className="text-sm"><div>{a.text}</div><div className="text-xs text-gray-500">{a.by ? `${a.by} · ` : ''}{dayjs(a.date).format('DD MMM YYYY, HH:mm')}</div></div>)}
-            {!detail.activity.length && <p className="text-sm text-gray-500">{tr("Nothing logged yet.")}</p>}
-        </div>
-    )
+    const activity = detail && <ActivityFeed items={detail.activity} empty={tr("Nothing logged yet.")} />
 
     const headActions = l && (
         <>

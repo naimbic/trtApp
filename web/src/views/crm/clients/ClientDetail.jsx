@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail, TbChartBar } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -21,6 +21,7 @@ import RecordDrawer from '../kit/RecordDrawer'
 import { api, notify, qs, useCan } from '../kit/api'
 import { useClientLookups, makeMoney } from './shared'
 import { Timeline, FollowUpDialog } from './ProfileParts'
+import ClientReports from './ClientReports'
 import { ClientProfileCard, ClientInfoCard, ClientContactsCard, ClientJourneyCard } from './ClientSide'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import ClientOverview from './ClientOverview'
@@ -153,6 +154,7 @@ const ClientDetail = () => {
             rel('invoices', tr("Invoices"), c.counts.invoices, 'invoices', { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: cols('invoices') }),
             { key: 'ideas', label: tr("Ideas"), count: c.counts.ideas, feature: 'client_ideas', icon: <TbSparkles className="text-violet-500" /> },
             { key: 'requests', label: tr("Requests"), count: c.counts.requests, feature: 'client_requests', icon: <TbBug className="text-fuchsia-500" /> },
+            { key: 'reports', label: tr("Reports & Strategies"), count: c.counts.reports, feature: 'client_reports', icon: <TbChartBar className="text-blue-500" /> },
             { key: 'payments', label: tr("Payments"), feature: 'payments' },
             rel('contracts', tr("Contracts"), c.counts.contracts, 'contracts', { resource: 'contracts', where, openPath: (r) => `/crm/contracts/${r.id}`, newPath: `/crm/contracts/new?clientId=${id}`, columns: cols('contracts') }),
             rel('estimates', tr("Estimates"), c.counts.estimates, 'estimates', { resource: 'estimates', where, openPath: (r) => `/crm/estimates/${r.id}`, newPath: `/crm/estimates/new?clientId=${id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('estimates') }),
@@ -163,7 +165,6 @@ const ClientDetail = () => {
             { key: 'activity', label: tr("Activity") },
             rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
             { key: 'files', label: tr("Files"), count: c.counts.files },
-            rel('contacts', tr("Contacts"), c.counts.contacts, 'customers', { resource: 'contacts', where, initial: { clientId: id }, hide: ['clientId'], columns: cols('contacts') }),
         ].filter((t) => (!t.feature || can(t.feature, 'view')) && !(HIDE_WHEN_EMPTY.includes(t.key) && !t.count && t.key !== tab)) // an empty Estimates / Proposals / Projects / Files / Tickets / Notes tab is hidden (until it is the one open)
     }, [c, id, can, tab])
 
@@ -173,6 +174,7 @@ const ClientDetail = () => {
             window.open(r.url, '_blank')
         } catch (e) { notify('danger', e.message) }
     }
+    const [contactDrawer, setContactDrawer] = useState({ open: false, id: null }) // add or edit a contact from the Contacts card
     const [pwFor, setPwFor] = useState(null)
     const [pw, setPw] = useState('')
     const [pwBusy, setPwBusy] = useState(false)
@@ -226,7 +228,8 @@ const ClientDetail = () => {
         remove: () => setConfirmDel(true),
         openAsClient, invite,
         setPassword: (k) => { setPwFor(k); setPw('') }, unlock,
-        manageContacts: () => setTab('contacts'),
+        addContact: () => setContactDrawer({ open: true, id: null }),
+        editContact: (k) => setContactDrawer({ open: true, id: k.id }),
         logoChanged: (url) => setC((x) => ({ ...x, logoUrl: url })),
     }
 
@@ -258,6 +261,7 @@ const ClientDetail = () => {
                                 {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}
                                 {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
                                 {tab === 'payments' && <PaymentsTab id={id} money={money} />}
+                                {tab === 'reports' && <ClientReports key={id} clientId={id} />}
                                 {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}
                                 {tab === 'mails' && <ClientMails key={id} clientId={id} />}
@@ -269,6 +273,7 @@ const ClientDetail = () => {
                 </div>
             </div>
 
+            <RecordDrawer resource={getResource('contacts')} open={contactDrawer.open} id={contactDrawer.id} initial={{ clientId: id }} hide={['clientId']} canEdit={can('customers', contactDrawer.id ? 'edit' : 'create') || can('customers', 'edit')} canDelete={can('customers', 'delete')} onClose={() => setContactDrawer({ open: false, id: null })} onSaved={() => { load(); loadProfile() }} onDeleted={() => { load(); loadProfile() }} />
             <FollowUpDialog key={followUp || 'none'} open={!!followUp} initialType={followUp || 'note'} clientId={id} onClose={() => setFollowUp(null)} onSaved={() => { loadProfile(); load() }} />
             <NewTicketDialog open={ticketDialog} onClose={() => setTicketDialog(false)} lookups={ticketLk} presets={{ clientId: id }} onCreated={(tid) => navigate(`/crm/tickets/${tid}`)} />
             <ProjectDialog open={projectDialog} onClose={() => setProjectDialog(false)} presets={{ clientId: id }} onCreated={(pid) => navigate(`/crm/projects/${pid}`)} />

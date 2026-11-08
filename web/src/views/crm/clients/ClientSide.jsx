@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { Link } from 'react-router'
 import dayjs from 'dayjs'
-import { TbHistory, TbPencil, TbTrash, TbFileInvoice, TbMail, TbPhone, TbFileText, TbPresentation, TbLifebuoy, TbBriefcase, TbNotes, TbBell, TbBrandWhatsapp, TbTargetArrow, TbLogin, TbCheck, TbKey, TbLink, TbExternalLink } from 'react-icons/tb'
+import { TbPlus, TbHistory, TbPencil, TbTrash, TbFileInvoice, TbMail, TbPhone, TbFileText, TbPresentation, TbLifebuoy, TbBriefcase, TbNotes, TbBell, TbBrandWhatsapp, TbTargetArrow, TbLogin, TbCheck, TbKey, TbLink, TbExternalLink } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
 import Dropdown from '@/components/ui/Dropdown'
 import EllipsisButton from '@/components/shared/EllipsisButton'
@@ -103,26 +103,44 @@ export const ClientInfoCard = ({ c, profile, lookups, id, can, onSaved }) => {
 /** Contacts and what can be done with their client area account (open it, invite, set the password). */
 export const ClientContactsCard = ({ c, profile, can, a }) => {
     const canEdit = can('customers', 'edit')
+    const canAdd = can('customers', 'create') || canEdit
     return (
         <section className="pt-card">
-            <h3>{tr("Contacts (")}{c.contacts.length})<button type="button" onClick={a.manageContacts}>{tr("Manage contacts")}</button></h3>
+            <h3 className="flex items-center justify-between gap-2">
+                <span>{tr("Contacts")} <span className="text-sm font-semibold" style={{ color: 'var(--rp-muted)' }}>({c.contacts.length})</span></span>
+                {canAdd && <Tooltip title={tr("Add a contact")}><button type="button" aria-label={tr("Add a contact")} onClick={a.addContact} className="grid size-8 shrink-0 place-items-center rounded-full text-lg text-primary transition hover:bg-primary hover:text-white" style={{ background: 'var(--rp-well)' }}><TbPlus /></button></Tooltip>}
+            </h3>
             {c.contacts.length ? (
                 <div className="grid gap-2.5">
                     {c.contacts.map((k) => {
                         const pk = profile?.contacts.find((x) => x.id === k.id)
+                        const line = (Icon, text, href) => text ? <div className="flex min-w-0 items-start gap-1.5 text-xs" style={{ color: 'var(--rp-muted)' }}><Icon className="mt-0.5 shrink-0" />{href ? <a href={href} className="min-w-0 break-all hover:underline">{text}</a> : <span className="min-w-0 break-words">{text}</span>}</div> : null
                         return (
-                            <div key={k.id} className="rounded-2xl p-3" style={{ background: 'var(--rp-well)' }}>
-                                <div className="flex items-center gap-2 text-sm font-bold"><span className="truncate">{k.name}</span>{k.isPrimary && <Tag className="bg-blue-100 text-blue-700">{tr("Primary")}</Tag>}{!k.active && <Tag>{tr("Inactive")}</Tag>}</div>
-                                <div className="truncate text-xs" style={{ color: 'var(--rp-muted)' }}>{[k.title, k.email, k.phone].filter(Boolean).join(' · ')}</div>
-                                {pk?.lastLogin && <div className="mt-0.5 flex items-center gap-1 text-[11px]" style={{ color: 'var(--rp-muted)' }}><TbLogin />{tr("Last login")} {dayjs(pk.lastLogin).format('DD MMM YYYY, HH:mm')}</div>}
+                            <div key={k.id} className="min-w-0 rounded-2xl p-3" style={{ background: 'var(--rp-well)' }}>
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                        <div className="break-words text-sm font-bold">{k.name}</div>
+                                        {k.title && <div className="break-words text-xs" style={{ color: 'var(--rp-muted)' }}>{k.title}</div>}
+                                    </div>
+                                    {canEdit && <Tooltip title={tr("Edit this contact")}><button type="button" aria-label={tr("Edit this contact")} onClick={() => a.editContact(k)} className="grid size-7 shrink-0 place-items-center rounded-full text-base transition hover:bg-black/5 dark:hover:bg-white/10" style={{ color: 'var(--rp-muted)' }}><TbPencil /></button></Tooltip>}
+                                </div>
+                                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                    {k.isPrimary && <Tag className="bg-blue-100 text-blue-700">{tr("Primary")}</Tag>}
+                                    <Tag className={k.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{k.active ? tr("Active") : tr("Inactive")}</Tag>
+                                </div>
+                                <div className="mt-2 grid gap-1">
+                                    {line(TbMail, k.email, `mailto:${k.email}`)}
+                                    {line(TbPhone, k.phone, `tel:${String(k.phone || '').replace(/\s+/g, '')}`)}
+                                </div>
+                                {pk?.lastLogin && <div className="mt-1 flex items-center gap-1 text-[11px]" style={{ color: 'var(--rp-muted)' }}><TbLogin />{tr("Last login")} {dayjs(pk.lastLogin).format('DD MMM YYYY, HH:mm')}</div>}
                                 {pk?.access && (
                                     <div className={`mt-1.5 flex flex-wrap items-center gap-1.5 text-[11.5px] font-semibold ${pk.access.ok ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                        <span>{pk.access.ok ? `✓ ${tr("Can sign in to the client area")}` : `⚠ ${tr("Cannot sign in")}: ${pk.access.reasons.map((r) => tr(r)).join(' · ')}`}</span>
+                                        <span className="min-w-0 break-words">{pk.access.ok ? `✓ ${tr("Can sign in to the client area")}` : `⚠ ${tr("Cannot sign in")}: ${pk.access.reasons.map((r) => tr(r)).join(' · ')}`}</span>
                                         {pk.access.locked && canEdit && <Button size="xs" onClick={() => a.unlock(k)}>{tr("Unlock")}</Button>}
                                     </div>
                                 )}
                                 {k.active && canEdit && (
-                                    <div className="mt-2 flex items-center gap-1.5">
+                                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                         <Tooltip title={tr("Open the client area as this contact")}><Button size="xs" variant="solid" onClick={() => a.openAsClient(k)}>{tr("Client area")}</Button></Tooltip>
                                         {k.email && <Tooltip title={pk?.portal ? tr("Send a password reset link") : tr("Invite to the client area")}><Button size="xs" icon={<TbLink />} onClick={() => a.invite(k)} /></Tooltip>}
                                         {k.email && <Tooltip title={tr("Set the client area password")}><Button size="xs" icon={<TbKey />} onClick={() => a.setPassword(k)} /></Tooltip>}

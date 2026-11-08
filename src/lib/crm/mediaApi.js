@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { logLead, logTask } from '@/lib/crm/activity'
 import { auth } from '@/auth'
 import { PermissionError, requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { ListObjectsV2Command } from '@aws-sdk/client-s3'
@@ -163,6 +164,8 @@ export async function uploadMedia(formData) {
             const { key, url } = await putMedia(p, relType ? `attachments/${relType}` : 'library')
             const row = await prisma.crmMedia.create({ data: { name: p.name, key, url, mime: p.contentType, kind: p.kind, size: p.size, originalSize: p.originalSize, width: p.width, height: p.height, purpose, parentId: relType ? null : parentId, relType, relId: relType ? relId : null, visibleToClient, uploadedBy: ctx.staffId || undefined, uploaderName: ctx.name } })
             saved.push(shape(row))
+            if (relType === 'lead') await logLead(relId, ctx.staffId, `File added: ${row.name}`)
+            else if (relType === 'task') await logTask(relId, ctx.staffId, 'file', `File added: ${row.name}`)
         } catch (e) {
             if (e instanceof MediaError) errors.push({ name: file.name, error: e.message })
             else { console.error('[media] upload failed', e); errors.push({ name: file.name, error: 'Upload failed, try again' }) }
@@ -237,6 +240,8 @@ export async function mediaAction(body) {
         const shared = keys.length ? new Set((await prisma.crmMedia.findMany({ where: { key: { in: keys }, id: { notIn: gone } }, select: { key: true } })).map((r) => r.key)) : new Set()
         await deleteMedia(keys.filter((k) => !shared.has(k)), { allowAny: true })
         await prisma.crmMedia.deleteMany({ where: { id: { in: gone } } })
+        if (item.relType === 'lead' && item.relId) await logLead(item.relId, ctx.staffId, `File removed: ${item.name}`)
+        else if (item.relType === 'task' && item.relId) await logTask(item.relId, ctx.staffId, 'file', `File removed: ${item.name}`)
         return { success: true, removed: 1 + sub.ids.length }
     }
     fail('Unknown action')

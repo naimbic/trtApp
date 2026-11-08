@@ -7,7 +7,8 @@ import RichEditor from '@/components/crm/RichEditor'
 import { plainOf } from '@/components/crm/ShareButton'
 import { CommentFoot, CommentThread, startReply, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
 import StaffRing from '@/components/crm/StaffRing'
-import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks, TbListDetails, TbUsers, TbLink, TbFileText, TbSettings } from 'react-icons/tb'
+import ActivityFeed from '@/components/crm/ActivityFeed'
+import { TbPlayerPlay, TbPlayerStop, TbTrash, TbPlus, TbChecks, TbListDetails, TbUsers, TbLink, TbFileText, TbSettings, TbMessage, TbChecklist, TbClock } from 'react-icons/tb'
 import Drawer from '@/components/crm/PopupFrame'
 import FoldSection from '@/components/crm/FoldSection'
 import Button from '@/components/ui/Button'
@@ -35,7 +36,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     useTaskStatuses()
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
-    const [tabV, setTabV] = useTabParam(['details', 'checklist', 'comments', 'files', 'time'], 'details')
+    const [tabV, setTabV] = useTabParam(['details', 'checklist', 'comments', 'files', 'time', 'activity'], 'details')
     const [saving, setSaving] = useState(false)
     const [confirmDel, setConfirmDel] = useState(false)
     const [item, setItem] = useState('')
@@ -67,6 +68,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     useEffect(() => { if (!open) return; setDetail(null); setItem(''); setComment(''); setReplyTo(null); setEditingId(null); if (id) load(); else setV({ ...EMPTY, ...(presets || {}) }) }, [open, id, load, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
     // live clock while a timer is running
     useEffect(() => { if (!detail?.running) return; const t = setInterval(() => setTick((n) => n + 1), 1000); return () => clearInterval(t) }, [detail?.running])
+    useEffect(() => { const t = setTimeout(() => document.querySelector('.rp-qv [role=tab][aria-selected=true]')?.scrollIntoView({ inline: 'center', block: 'nearest' }), 80); return () => clearTimeout(t) }, [tabV, detail?.task?.id]) // a tab that is cut off by the width comes into view when chosen
     const mounted = useRef(true)
     useEffect(() => () => { mounted.current = false }, [])
 
@@ -203,13 +205,27 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
         </div>
     )
 
+    // under the coloured head: who is on it, and what it holds (press a count to open that tab)
+    const done = detail ? detail.checklist.filter((c) => c.finished).length : 0
+    const meta = edit && detail ? (
+        <>
+            {detail.task.assignees.length > 0 && <People list={detail.task.assignees} max={5} size={28} />}
+            <span className="flex-1" />
+            <button type="button" className="rp-qv-chip" title={tr("Comments")} onClick={() => setTabV('comments')}><TbMessage />{detail.comments.length}</button>
+            {detail.checklist.length > 0 && <button type="button" className="rp-qv-chip" title={tr("Checklist")} onClick={() => setTabV('checklist')}><TbChecklist />{done}/{detail.checklist.length}</button>}
+            {detail.totalSeconds > 0 && <button type="button" className="rp-qv-chip" title={tr("Time")} onClick={() => setTabV('time')}><TbClock />{duration(detail.totalSeconds)}</button>}
+        </>
+    ) : null
+    const activity = detail && <ActivityFeed items={detail.activity} empty={tr("Nothing logged yet.")} />
+
     return (
         <Drawer
+            compact={edit}
+            meta={meta}
             share={edit ? { url: `/crm/tasks/${id}`, title: detail?.task.name, text: detail?.task.name } : undefined}
             title={edit ? (detail?.task.name || tr("Task")) : tr("New task")}
             kicker={edit ? `${tr("Task")}${detail?.task.rel?.label ? ` · ${detail.task.rel.label}` : ''}` : tr("New task")}
             date={detail?.task.dueDate ? `${tr("Due")} ${dayjs(detail.task.dueDate).format('DD MMM')}` : ''}
-            team={detail?.task.assignees?.length ? <People list={detail.task.assignees} max={5} size={30} /> : null}
             stage={stage ? { ...stage, currentId: detail?.task?.status ?? stage.currentId } : stage}
             isOpen={open}
             onClose={onClose}
@@ -234,14 +250,14 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             <Button size="sm" variant="solid" icon={<TbChecks />} loading={saving} onClick={complete}>{tr("Mark as complete")}</Button>
                         </div>
                     )}
-                    {detail.task.assignees.length > 0 && <div className="mb-3 flex items-center gap-2 text-sm text-gray-500"><People list={detail.task.assignees} max={5} size={28} />{detail.task.rel?.label && <span>· {detail.task.rel.label}</span>}</div>}
                     <Tabs value={tabV} onChange={setTabV}>
-                        <Tabs.TabList>
+                        <Tabs.TabList className="max-w-full overflow-x-auto [&>*]:shrink-0">
                             <Tabs.TabNav value="details">{tr("Details")}</Tabs.TabNav>
                             <Tabs.TabNav value="checklist">{tr("Checklist")}{detail.checklist.length ? ` (${detail.checklist.filter((c) => c.finished).length}/${detail.checklist.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="comments">{tr("Comments")}{detail.comments.length ? ` (${detail.comments.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
                             <Tabs.TabNav value="time">{tr("Time")}{detail.totalSeconds ? ` · ${duration(detail.totalSeconds)}` : ''}</Tabs.TabNav>
+                            <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
                         </Tabs.TabList>
                         <div className="pt-4">
                             <Tabs.TabContent value="details">{details}</Tabs.TabContent>
@@ -249,6 +265,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             <Tabs.TabContent value="comments">{comments}</Tabs.TabContent>
                             <Tabs.TabContent value="files"><div className="pt-4"><AttachmentsPanel relType="task" relId={id} canEdit={!!canEdit} showClientToggle={!!v.visibleToClient} /></div></Tabs.TabContent>
                             <Tabs.TabContent value="time">{time}</Tabs.TabContent>
+                            <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>
                         </div>
                     </Tabs>
                 </>

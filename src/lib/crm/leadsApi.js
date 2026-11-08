@@ -4,6 +4,7 @@ import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/ment
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { cleanEvent } from '@/lib/crm/calendar'
 import prisma from '@/lib/prisma'
+import { namesOf } from '@/lib/crm/activity'
 import { emit } from '@/lib/crm/webhooks'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { readSettings } from '@/lib/crm/appSettings'
@@ -166,6 +167,25 @@ export async function getLead(id) {
     }
 }
 
+const EDIT_FIELDS = [['name', 'Name'], ['company', 'Company'], ['title', 'Position'], ['email', 'Email'], ['phone', 'Phone'], ['website', 'Website'], ['value', 'Value'], ['probability', 'Chance of winning'], ['expectedClose', 'Expected closing date'], ['city', 'City'], ['country', 'Country'], ['address', 'Address']]
+const shown = (v) => (v instanceof Date ? v.toISOString().slice(0, 10) : v === null || v === undefined || v === '' ? 'empty' : String(v).slice(0, 60))
+/** What was edited on a lead, field by field, and who it was given to: one line each in its activity. */
+async function logEdits(id, a, prev, data, team) {
+    for (const [k, label] of EDIT_FIELDS) {
+        if (!(k in data)) continue
+        if (shown(prev[k]) === shown(data[k])) continue
+        await logActivity(id, a, `${label} changed from “${shown(prev[k])}” to “${shown(data[k])}”`)
+    }
+    if (data.description !== undefined && (prev.description || '') !== (data.description || '')) await logActivity(id, a, 'Description edited')
+    if (data.sourceId !== undefined && (prev.sourceId || '') !== (data.sourceId || '')) await logActivity(id, a, 'Source changed')
+    if (team) {
+        const before = teamOf(prev), added = team.filter((x) => !before.includes(x)), removed = before.filter((x) => !team.includes(x))
+        if (added.length) await logActivity(id, a, `Assigned to ${await namesOf(added)}`)
+        if (removed.length) await logActivity(id, a, `No longer assigned: ${await namesOf(removed)}`)
+    }
+    if (data.followerIds !== undefined && JSON.stringify([...(prev.followerIds || [])].sort()) !== JSON.stringify([...data.followerIds].sort())) await logActivity(id, a, 'Followers changed')
+}
+
 export async function saveLead(body, id) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
@@ -189,6 +209,7 @@ export async function saveLead(body, id) {
         await prisma.crmLead.update({ where: { id }, data })
         if (data.description !== undefined) await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text: data.description, prev: prev.description, link: `/crm/leads/${id}`, subject: data.name })
         if (st && st !== prev.statusId) await logStatus(id, a, prev.statusId, st)
+        await logEdits(id, a, prev, data, team)
         return { success: true, id }
     }
     const def = await prisma.crmLeadStatus.findFirst({ where: { isDefault: true } }) || (await prisma.crmLeadStatus.findFirst({ orderBy: { statusOrder: 'asc' } }))
@@ -264,6 +285,7 @@ export async function addNote(id, { content, date, replyToId }) {
     const reply = oid(replyToId) && (await prisma.crmNote.findFirst({ where: { id: replyToId, relType: 'lead', relId: id }, select: { id: true, addedFrom: true } }))
     await prisma.crmNote.create({ data: { relType: 'lead', relId: id, description: text, dateContacted: date ? new Date(date) : new Date(), addedFrom: a.staffId, replyToId: reply ? reply.id : null } })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: date ? new Date(date) : new Date() } })
+    await logActivity(id, a, reply ? 'Reply added in the notes' : 'Note added')
     try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text, link: `/crm/leads/${id}?tab=notes`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), lead.addedFrom, reply?.addedFrom] }) } catch (e) { console.error('[note notify]', e.message) }
     return { success: true }
 }
@@ -338,6 +360,7 @@ export async function editNote(id, noteId, content) {
     const text = storeRich(content)
     if (!text) throw fail('Write the note first')
     await prisma.crmNote.update({ where: { id: noteId }, data: { description: text } })
+    await logActivity(id, a, 'Note edited')
     return { success: true }
 }
 
@@ -349,6 +372,7 @@ export async function deleteNote(id, noteId) {
     if (!n) throw fail('Note not found', 404)
     if (n.addedFrom !== a.staffId && !a.can('delete')) throw fail('You can only delete your own notes', 403)
     await prisma.crmNote.delete({ where: { id: noteId } })
+    await logActivity(id, a, 'Note deleted')
     return { success: true }
 }
 

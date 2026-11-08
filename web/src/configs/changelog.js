@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.206.0',
+        date: '2026-11-08',
+        title: 'Task header, activity of tasks and leads, Reports & Strategies, contacts card',
+        items: [
+            'Task: a compact header. The coloured part keeps the due date, the status and the title; the statuses now sit inside it on a light blur; under it, the assigned team once (no repeat) and counts of comments, checklist and time (press one to open its tab). The tabs scroll sideways instead of being cut.',
+            'Task: a new Activity tab, like the lead one: who changed the status, the dates, the people, who added or finished a checklist item, files added or removed, comments, timers; grouped by day with icons.',
+            'Lead activity is richer: every edit (name, email, phone, value... with before and after), who it was given to, notes added, edited or deleted, files added or removed, and what happens on its tasks (created, status, due date, people, checklist, comments). Same design, by day.',
+            'Customer: a new "Reports & Strategies" tab, kept like Requests for now: write a report or propose a strategy, send it by email to the contacts you tick, and note the client\'s answer (no answer yet, approved, declined). Permission: Client reports & strategies (roles that could handle Requests get it).',
+            'Customer: the Contacts tab is gone. The Contacts card on the left has a + to add a contact and a pencil to edit one; each contact shows Primary and Active or Inactive, with the details on their own lines so nothing runs out of the card.',
+        ],
+    },
+    {
         version: '0.205.9',
         date: '2026-11-08',
         title: 'Screenshots in the client area guide, chat links, hover tools on phones',

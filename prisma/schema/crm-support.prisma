@@ -331,3 +331,25 @@ model CrmUserApi {
   @@index([legacyId])
   @@map("crm_user_api")
 }
+
+/// Reports sent to a client and strategies proposed to it (the "Reports & Strategies" tab of a client)
+model CrmClientReport {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  clientId  String    @db.ObjectId
+  /// report | strategy
+  kind      String    @default("report")
+  title     String
+  body      String?
+  /// draft | sent | approved | declined (a strategy waits for the client's answer once sent)
+  status    String    @default("draft")
+  /// what period a report covers, free text ("October 2026")
+  period    String?
+  sentAt    DateTime?
+  sentTo    String[]
+  createdBy String?   @db.ObjectId
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([clientId, createdAt])
+  @@map("crm_client_reports")
+}

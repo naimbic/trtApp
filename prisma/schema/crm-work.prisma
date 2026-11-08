@@ -617,3 +617,17 @@ model CrmTaskStatus {
 
   @@map("crm_task_statuses")
 }
+
+/// What happened on a task: who changed the status, the people, the dates, the checklist... (shown in the task's Activity tab, and on the lead the task is linked to)
+model CrmTaskActivity {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  taskId    String   @db.ObjectId
+  /// created | status | priority | dates | people | edit | relation | checklist | file | finished
+  kind      String   @default("edit")
+  text      String
+  staffId   String?  @db.ObjectId
+  createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
+  @@map("crm_task_activity")
+}

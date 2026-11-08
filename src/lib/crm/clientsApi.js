@@ -141,7 +141,7 @@ export async function getClientDetail(id) {
     const cname = Object.fromEntries(countries.map((x) => [x.legacyId, x.shortName || x.longName]))
     const staff = await prisma.crmStaff.findMany({ where: { id: { in: c.admins.map((a) => a.staffId) } } })
     const rel = { relId: id }
-    const [invoices, estimates, proposals, contracts, projects, tickets, notes, files, mediaFiles, ideas, requests] = await Promise.all([
+    const [invoices, estimates, proposals, contracts, projects, tickets, notes, files, mediaFiles, ideas, requests, reports] = await Promise.all([
         prisma.crmInvoice.count({ where: { clientId: id } }),
         prisma.crmEstimate.count({ where: { clientId: id } }),
         prisma.crmProposal.count({ where: { relType: 'customer', ...rel } }),
@@ -153,6 +153,7 @@ export async function getClientDetail(id) {
         prisma.crmMedia.count({ where: { relType: 'customer', relId: id, isFolder: false } }), // the files of the Files tab live in the file library
         prisma.crmClientIdea.count({ where: { clientId: id } }),
         prisma.crmClientRequest.count({ where: { clientId: id, status: { notIn: ['done', 'declined'] } } }),
+        prisma.crmClientReport.count({ where: { clientId: id } }),
     ])
     const money = (await moneyFor([id], true))[id] || {}
     return {
@@ -165,7 +166,7 @@ export async function getClientDetail(id) {
         admins: staff.map((s) => ({ id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() })),
         contacts: c.contacts.map((x) => ({ id: x.id, name: contactName(x), email: x.email, phone: x.phoneNumber, title: x.title, isPrimary: x.isPrimary, active: x.active, lastLogin: x.lastLogin })),
         money,
-        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests },
+        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests, reports },
     }
 }
 

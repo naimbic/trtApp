@@ -3,6 +3,7 @@ import { realPicture } from '@/lib/crm/pictures'
 import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
+import { logTask, logLead, namesOf } from '@/lib/crm/activity'
 import { emit } from '@/lib/crm/webhooks'
 import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
 import { notifyNotice } from '@/lib/crm/notifyMail'
@@ -168,7 +169,8 @@ export async function getTask(id) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const t = await loadOne(id, a)
-    const ids = [...t.assignees.map((x) => x.staffId), ...t.followers.map((x) => x.staffId), ...t.comments.map((c) => c.staffId).filter(Boolean), ...t.comments.flatMap((c) => Object.values(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).flat()), ...t.timers.map((x) => x.staffId).filter(Boolean), ...t.checklistItems.flatMap(stepPeople), t.addedFrom].filter(Boolean)
+    const logs = await prisma.crmTaskActivity.findMany({ where: { taskId: id }, orderBy: { createdAt: 'desc' }, take: 120 })
+    const ids = [...logs.map((l) => l.staffId).filter(Boolean), ...t.assignees.map((x) => x.staffId), ...t.followers.map((x) => x.staffId), ...t.comments.map((c) => c.staffId).filter(Boolean), ...t.comments.flatMap((c) => Object.values(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).flat()), ...t.timers.map((x) => x.staffId).filter(Boolean), ...t.checklistItems.flatMap(stepPeople), t.addedFrom].filter(Boolean)
     const people = await staffMap(ids)
     const cIds = [...new Set(t.comments.map((c) => c.contactId).filter(Boolean))]
     const contactName = Object.fromEntries((cIds.length ? await prisma.crmContact.findMany({ where: { id: { in: cIds } }, select: { id: true, firstName: true, lastName: true, email: true } }) : []).map((c) => [c.id, [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email || '']))
@@ -195,12 +197,11 @@ export async function getTask(id) {
         timers, running, totalSeconds: timers.reduce((s, x) => s + x.seconds, 0),
         // what happened on the task, newest first (for the activity panel)
         activity: [
-            { type: 'created', staff: people[t.addedFrom] || null, at: t.createdAt },
-            ...(t.dateFinished && t.status === COMPLETE ? [{ type: 'finished', staff: null, at: t.dateFinished }] : []),
+            ...logs.map((l) => ({ type: l.kind, staff: people[l.staffId] || null, at: l.createdAt, text: l.text })),
+            ...(logs.some((l) => l.kind === 'created') ? [] : [{ type: 'created', staff: people[t.addedFrom] || null, at: t.createdAt, text: 'Task created' }]),
             ...t.comments.map((c) => ({ type: 'comment', staff: people[c.staffId] || null, at: c.createdAt, text: (c.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) })),
             ...t.timers.filter((x) => x.endTime).map((x) => ({ type: 'timer', staff: people[x.staffId] || null, at: x.endTime, seconds: Math.max(0, Math.round((+x.endTime - +(x.startTime || x.endTime)) / 1000)), text: x.note || '' })),
-            ...t.checklistItems.filter((c) => c.finished).map((c) => ({ type: 'checklist', staff: null, at: c.updatedAt || t.updatedAt, text: c.description || '' })),
-        ].sort((x, y) => +new Date(y.at) - +new Date(x.at)).slice(0, 60),
+        ].sort((x, y) => +new Date(y.at) - +new Date(x.at)).slice(0, 100),
         parent: t.parentId ? await prisma.crmTask.findUnique({ where: { id: t.parentId }, select: { id: true, name: true } }) : null,
         subtasks: await (async () => {
             const kids = await prisma.crmTask.findMany({ where: { parentId: id }, orderBy: [{ kanbanOrder: 'asc' }, { createdAt: 'asc' }], include: { assignees: { select: { staffId: true } } } })
@@ -213,6 +214,35 @@ export async function getTask(id) {
 }
 
 const dateOrNull = (v) => (v ? new Date(v) : null)
+
+const PRIORITY_NAME = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }
+const day = (d) => (d ? new Date(d).toISOString().slice(0, 10) : 'none')
+/** Writes what changed on a task into its activity (and into the lead it is linked to). `prev` is null for a new task. */
+async function trackTask({ task, prev, a, assigneeIds }) {
+    const by = a.staffId
+    const lead = (txt) => (task.relType === 'lead' && oid(task.relId) ? logLead(task.relId, by, `Task “${task.name}”: ${txt}`) : null)
+    if (!prev) {
+        await logTask(task.id, by, 'created', 'Task created'); await lead('created')
+        const who = Array.isArray(assigneeIds) ? [...new Set(assigneeIds.map(oid).filter(Boolean))] : []
+        if (who.length) { const t = `Assigned to ${await namesOf(who)}`; await logTask(task.id, by, 'people', t); await lead(t) }
+        return
+    }
+    const st = await getTaskStatuses()
+    const label = (v) => st.find((x) => x.value === v)?.name || String(v)
+    const log = async (kind, text, toLead = true) => { await logTask(task.id, by, kind, text); if (toLead) await lead(text) }
+    if (prev.status !== task.status) await log(task.status === COMPLETE ? 'finished' : 'status', `Status changed from ${label(prev.status)} to ${label(task.status)}`)
+    if (prev.priority !== task.priority) await log('priority', `Priority changed from ${PRIORITY_NAME[prev.priority] || prev.priority} to ${PRIORITY_NAME[task.priority] || task.priority}`, false)
+    if (day(prev.dueDate) !== day(task.dueDate)) await log('dates', `Due date changed from ${day(prev.dueDate)} to ${day(task.dueDate)}`)
+    if (day(prev.startDate) !== day(task.startDate)) await log('dates', `Start date changed from ${day(prev.startDate)} to ${day(task.startDate)}`, false)
+    if (prev.name !== task.name) await log('edit', `Renamed from “${prev.name}” to “${task.name}”`, false)
+    if ((prev.relType || '') !== (task.relType || '') || (prev.relId || '') !== (task.relId || '')) await log('relation', 'Related record changed', false)
+    if (Array.isArray(assigneeIds)) {
+        const before = prev.assignees.map((x) => x.staffId), now = [...new Set(assigneeIds.map(oid).filter(Boolean))]
+        const added = now.filter((x) => !before.includes(x)), removed = before.filter((x) => !now.includes(x))
+        if (added.length) await log('people', `Assigned to ${await namesOf(added)}`)
+        if (removed.length) await log('people', `No longer assigned: ${await namesOf(removed)}`)
+    }
+}
 
 export async function saveTask(body, id) {
     const session = await requirePermission('tasks', id ? 'edit' : 'create')
@@ -265,6 +295,7 @@ export async function saveTask(body, id) {
     const withAdmins = async (list) => (S?.on('new_task_follow_super_admin') ? [...new Set([...(list || []), ...(await superAdminIds())])] : list)
     const followers = id ? body.followerIds : await withAdmins(withCreator(Array.isArray(body.followerIds) ? body.followerIds : [], S?.on('new_task_auto_follower_current_member')))
     if (Array.isArray(assignees)) await sync('crmTaskAssigned', assignees, { assignedFrom: a.staffId })
+    await trackTask({ task, prev, a, assigneeIds: Array.isArray(assignees) ? assignees : null })
     if (Array.isArray(followers)) await sync('crmTaskFollower', followers)
     if (Array.isArray(body.tags)) {
         const want = [...new Set(body.tags.map((x) => String(x || '').trim().slice(0, 40)).filter(Boolean))].slice(0, 12)
@@ -300,6 +331,7 @@ export async function moveTask(id, { status, order }) {
     if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
     if (st === COMPLETE && t.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) }
     await prisma.crmTask.update({ where: { id }, data: { status: st, kanbanOrder: Number.isFinite(+order) ? Math.round(+order) : t.kanbanOrder, dateFinished: st === COMPLETE ? t.dateFinished || new Date() : null } })
+    if (st !== t.status) await trackTask({ task: { ...t, status: st }, prev: t, a })
     return { success: true }
 }
 
@@ -366,6 +398,7 @@ export async function addComment(id, content, replyToId, toClient = false) {
     if (!text) throw fail('Write a comment first')
     const reply = oid(replyToId) && (await prisma.crmTaskComment.findFirst({ where: { id: replyToId, taskId: id }, select: { id: true, staffId: true } }))
     await prisma.crmTaskComment.create({ data: { taskId: id, content: text, staffId: a.staffId, replyToId: reply ? reply.id : null, toClient: !!toClient && !!task.visibleToClient } })
+    if (task.relType === 'lead' && oid(task.relId)) await logLead(task.relId, a.staffId, `Comment on task “${task.name}”`)
     // a comment sent to the client of a shared task: its contacts are told (phone and email, unless switched off)
     if (toClient && task.visibleToClient) { try { const { tellClientOfTask } = await import('@/lib/crm/taskClient'); await tellClientOfTask(task, { who: session.user.name, text: plainText(text) }) } catch (e) { console.error('[task client notify]', e.message) } }
     // told: the people named with @, and everyone who follows the task (assigned, following, who created it, who is answered)
@@ -443,6 +476,12 @@ const pickPeople = (v) => [...new Set((Array.isArray(v) ? v : v ? [v] : []).map(
 const dayOrNull = (v) => (v ? new Date(`${String(v).slice(0, 10)}T12:00:00.000Z`) : null)
 
 /** The checklist of a task: add, tick, edit (text, person, date, reminder), reorder, delete. A person a step is assigned to may tick it. */
+/** A checklist change: in the task's activity, and in the lead's when the task is linked to one. */
+async function trackStep(task, a, text) {
+    await logTask(task.id, a.staffId, 'checklist', text)
+    if (task.relType === 'lead' && oid(task.relId)) await logLead(task.relId, a.staffId, `Task “${task.name}”: ${text}`)
+}
+
 export async function checklist(id, op) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
@@ -461,6 +500,7 @@ export async function checklist(id, op) {
         if (!item) throw fail('Item not found', 404)
         if (!mayAct(a, task) && !mine(item)) throw fail(NOT_YOURS, 403)
         await prisma.crmTaskChecklistItem.update({ where: { id: item.id }, data: { finished: !!op.finished, finishedFrom: op.finished ? a.staffId : null } })
+        await trackStep(task, a, `Checklist item ${op.finished ? 'done' : 'reopened'}: ${item.description}`)
         return { success: true }
     }
     if (!mayAct(a, task)) throw fail(NOT_YOURS, 403)
@@ -471,6 +511,7 @@ export async function checklist(id, op) {
         const people = pickPeople(op.assignedIds ?? op.assigned)
         await prisma.crmTaskChecklistItem.create({ data: { taskId: id, description, listOrder: (last?.listOrder ?? 0) + 1, addedFrom: a.staffId, finished: false, assigned: people[0] || null, assignedIds: people, dueDate: dayOrNull(op.dueDate), reminder: REMINDERS.includes(+op.reminder) && op.reminder !== null && op.reminder !== '' ? +op.reminder : null } })
         await notify(people, description)
+        await trackStep(task, a, `Checklist item added: ${description}${people.length ? ` (for ${await namesOf(people)})` : ''}`)
         return { success: true }
     }
     if (op.action === 'reorder') {
@@ -480,7 +521,7 @@ export async function checklist(id, op) {
     }
     const item = oid(op.itemId) && (await prisma.crmTaskChecklistItem.findFirst({ where: { id: op.itemId, taskId: id } }))
     if (!item) throw fail('Item not found', 404)
-    if (op.action === 'delete') await prisma.crmTaskChecklistItem.delete({ where: { id: item.id } })
+    if (op.action === 'delete') { await prisma.crmTaskChecklistItem.delete({ where: { id: item.id } }); await trackStep(task, a, `Checklist item removed: ${item.description}`) }
     else if (op.action === 'update') {
         const data = {}
         if (op.description !== undefined) { const d = String(op.description || '').trim().slice(0, 500); if (!d) throw fail('Write the item first'); data.description = d }
@@ -493,6 +534,7 @@ export async function checklist(id, op) {
         if (op.dueDate !== undefined) data.dueDate = dayOrNull(op.dueDate)
         if (op.reminder !== undefined) data.reminder = op.reminder === null || op.reminder === '' ? null : REMINDERS.includes(+op.reminder) ? +op.reminder : null
         await prisma.crmTaskChecklistItem.update({ where: { id: item.id }, data })
+        if (added.length) await trackStep(task, a, `Checklist item “${data.description ?? item.description}” given to ${await namesOf(added)}`)
         if (added.length) await notify(added, data.description ?? item.description)
         else if (data.description) await notifyNewMentions({ by: { staffId: a.staffId, name: session.user.name }, text: data.description, prev: item.description, link: `/crm/tasks/${id}`, subject: task.name })
     } else throw fail('Unknown action')

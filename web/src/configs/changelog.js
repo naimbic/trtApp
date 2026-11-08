@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.210.0',
+        date: '2026-11-08',
+        title: 'Coloured tab groups, icon tabs, more Notes filters',
+        items: [
+            'Client page: each group of tabs has its own light colour behind it (blue Sales, green Work, violet Client area, amber Records), like the colours of the counts.',
+            'Mails, Files and Activity tabs show only their icon (the name appears when you hover).',
+            'Notes: new filters for Person (owner or shared with), Date (today, 7 days, 30 days, this year), Colour, Attached files (any, none, pictures, voice notes, PDF, documents, sheets) and More (links, reminder, comments, pinned, shared), with a Clear filters button and a shown / total count. The label chips stay as the category filter.',
+        ],
+    },
+    {
         version: '0.209.0',
         date: '2026-11-08',
         title: 'Client tabs in groups, and a Tasks tab',

@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail, TbChartBar, TbChecklist } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail, TbChartBar, TbChecklist, TbPaperclip, TbHistory } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -151,31 +151,31 @@ const ClientDetail = () => {
         const rel = (key, label, count, feature, rel) => ({ key, label, count, feature, rel })
         const cols = (r) => getResource(r).columns.filter((x) => x.key !== 'clientId')
         // grouped by what they are for, so the bar reads in blocks: money, work, what the client sees and writes in its area, then records
-        const G = (group, list) => list.map((t) => ({ ...t, group }))
+        const G = (group, tint, list) => list.map((t) => ({ ...t, group, tint })) // tint = the light colour behind the group
         return [
             { key: 'overview', label: tr("Overview") },
-            ...G(tr("Sales"), [
+            ...G(tr("Sales"), "bg-blue-50 dark:bg-blue-500/10", [
                 rel('invoices', tr("Invoices"), c.counts.invoices, 'invoices', { resource: 'invoices', where, openPath: (r) => `/crm/invoices/${r.id}`, newPath: `/crm/invoices/new?clientId=${id}`, columns: cols('invoices') }),
                 { key: 'payments', label: tr("Payments"), feature: 'payments' },
                 rel('estimates', tr("Estimates"), c.counts.estimates, 'estimates', { resource: 'estimates', where, openPath: (r) => `/crm/estimates/${r.id}`, newPath: `/crm/estimates/new?clientId=${id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('estimates') }),
                 rel('proposals', tr("Proposals"), c.counts.proposals, 'proposals', { resource: 'proposals', where: { relType: 'customer', relId: id }, openPath: (r) => `/crm/proposals/${r.id}`, newPath: `/crm/proposals/new?clientId=${id}`, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'] }),
                 rel('contracts', tr("Contracts"), c.counts.contracts, 'contracts', { resource: 'contracts', where, openPath: (r) => `/crm/contracts/${r.id}`, newPath: `/crm/contracts/new?clientId=${id}`, columns: cols('contracts') }),
             ]),
-            ...G(tr("Work"), [
+            ...G(tr("Work"), "bg-teal-50 dark:bg-teal-500/10", [
                 rel('projects', tr("Projects"), c.counts.projects, 'projects', { resource: 'projects', where, openPath: (r) => `/crm/projects/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('projects') }),
                 { key: 'tasks', label: tr("Tasks"), count: c.counts.tasks, feature: 'tasks', icon: <TbChecklist className="text-lime-600" /> },
                 rel('tickets', tr("Tickets"), c.counts.tickets, 'tickets', { resource: 'tickets', where, openPath: (r) => `/crm/tickets/${r.id}`, initial: { clientId: id }, hide: ['clientId'], columns: cols('tickets') }),
             ]),
-            ...G(tr("Client area"), [
+            ...G(tr("Client area"), "bg-violet-50 dark:bg-violet-500/10", [
                 { key: 'ideas', label: tr("Ideas"), count: c.counts.ideas, feature: 'client_ideas', icon: <TbSparkles className="text-violet-500" /> },
                 { key: 'requests', label: tr("Requests"), count: c.counts.requests, feature: 'client_requests', icon: <TbBug className="text-fuchsia-500" /> },
                 { key: 'reports', label: tr("Reports & Strategies"), count: c.counts.reports, feature: 'client_reports', icon: <TbChartBar className="text-blue-500" /> },
             ]),
-            ...G(tr("Records"), [
-                { key: 'mails', label: tr("Mails"), icon: <TbMail className="text-sky-500" /> },
+            ...G(tr("Records"), "bg-amber-50 dark:bg-amber-500/10", [
+                { key: 'mails', label: tr("Mails"), iconOnly: true, icon: <TbMail className="text-sky-500" /> },
                 rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
-                { key: 'files', label: tr("Files"), count: c.counts.files },
-                { key: 'activity', label: tr("Activity") },
+                { key: 'files', label: tr("Files"), count: c.counts.files, iconOnly: true, icon: <TbPaperclip className="text-slate-500" /> },
+                { key: 'activity', label: tr("Activity"), iconOnly: true, icon: <TbHistory className="text-gray-500" /> },
             ]),
         ].filter((t) => (!t.feature || can(t.feature, 'view')) && !(HIDE_WHEN_EMPTY.includes(t.key) && !t.count && t.key !== tab)) // an empty Estimates / Proposals / Projects / Files / Tickets / Notes tab is hidden (until it is the one open)
     }, [c, id, can, tab])
@@ -267,7 +267,17 @@ const ClientDetail = () => {
                     <Card>
                         <Tabs value={tab} onChange={setTab}>
                             <TabList>
-                                {tabs.map((t, i) => <Fragment key={t.key}>{t.group && t.group !== tabs[i - 1]?.group && <span className={`flex shrink-0 items-center gap-1.5 self-center pe-1 ps-2 text-[10px] font-bold uppercase tracking-wide text-gray-400 ${i ? 'ms-1 border-s border-gray-200 dark:border-gray-600' : ''}`}>{t.group}</span>}<TabNav value={t.key} className="!px-2.5 text-sm">{t.icon ? <span className="inline-flex items-center gap-1">{t.icon}{t.label}</span> : t.label}{t.count ? <span className={`ml-1.5 rounded-full px-1.5 text-xs font-semibold ${BUBBLE[t.key] || 'bg-gray-100 dark:bg-gray-600'}`}>{t.count}</span> : null}</TabNav></Fragment>)}
+                                {tabs.reduce((acc, t) => { const last = acc[acc.length - 1]; if (last && last.group === (t.group || '')) last.list.push(t); else acc.push({ group: t.group || '', tint: t.tint, list: [t] }); return acc }, []).map((g) => (
+                                    <div key={g.group || 'first'} className={`flex shrink-0 items-center rounded-xl ${g.group ? `mx-1 px-1 ${g.tint || ''}` : ''}`}>
+                                        {g.group && <span className="shrink-0 pe-1 ps-2 text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">{g.group}</span>}
+                                        {g.list.map((t) => (
+                                            <TabNav key={t.key} value={t.key} className="!px-2.5 text-sm" title={t.iconOnly ? t.label : undefined} aria-label={t.iconOnly ? t.label : undefined}>
+                                                {t.iconOnly ? <span className="inline-flex items-center gap-1 text-base">{t.icon}</span> : t.icon ? <span className="inline-flex items-center gap-1">{t.icon}{t.label}</span> : t.label}
+                                                {t.count ? <span className={`ml-1.5 rounded-full px-1.5 text-xs font-semibold ${BUBBLE[t.key] || 'bg-gray-100 dark:bg-gray-600'}`}>{t.count}</span> : null}
+                                            </TabNav>
+                                        ))}
+                                    </div>
+                                ))}
                             </TabList>
                             <div className="p-4">
                                 {tab === 'overview' && <ClientOverview c={c} profile={profile} lookups={lookups} money={money} cur={cur} setCur={setCur} can={can} setTab={setTab} setFollowUp={setFollowUp} loadProfile={loadProfile} id={id} />}

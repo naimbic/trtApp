@@ -6041,5 +6041,12 @@ export default {
     "Only what the client sees": "ما يراه العميل فقط",
     "Records": "السجلات",
     "Show to the client": "إظهار للعميل",
-    "visible to the client": "ظاهرة للعميل"
+    "visible to the client": "ظاهرة للعميل",
+    "No files": "بدون ملفات",
+    "Pictures": "صور",
+    "Shared with someone": "مشاركة مع شخص",
+    "Voice notes": "ملاحظات صوتية",
+    "With a reminder": "مع تذكير",
+    "With comments": "مع تعليقات",
+    "With links": "مع روابط"
 }

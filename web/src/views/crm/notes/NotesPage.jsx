@@ -1,15 +1,17 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { TbArchive, TbChecklist, TbCircleCheck, TbCircleDashed, TbMicrophone, TbNotes, TbPhoto, TbSearch, TbShare3, TbStar } from 'react-icons/tb'
+import { TbX, TbArchive, TbChecklist, TbCircleCheck, TbCircleDashed, TbMicrophone, TbNotes, TbPhoto, TbSearch, TbShare3, TbStar } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
+import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify } from '../kit/api'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import NoteCard from './NoteCard'
 import NoteEditor from './NoteEditor'
-import { NOTES_EVENT, notesChanged } from './noteKit'
+import { NOTES_EVENT, notesChanged, COLORS } from './noteKit'
 import { tr } from '@/utils/t'
 import { onCreate } from '@/utils/createIntent'
 
@@ -38,6 +40,8 @@ const NotesPage = ({ mode = 'notes' }) => {
     const [tab, setTab] = useState('all')
     const [query, setQuery] = useState('')
     const [label, setLabel] = useState('')
+    const [f, setF] = useState({}) // more filters: person, date, colour, files, extras
+    const setFilter = (k, o) => setF((x) => ({ ...x, [k]: o ? o.value : undefined }))
     const [dlg, setDlg] = useState({ open: false, note: null, preset: null })
     const [del, setDel] = useState(null)
 
@@ -56,10 +60,21 @@ const NotesPage = ({ mode = 'notes' }) => {
     }, [wanted]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const all = (data?.list || []).filter((n) => !todos || isTodo(n))
+    const people = useMemo(() => [...new Set(all.flatMap((n) => [n.owner, ...n.sharedWith.map((x) => x.name)]).filter(Boolean))].sort(), [all])
+    const DATES = [['today', tr('Today'), 0], ['week', tr('Last 7 days'), 6], ['month', tr('Last 30 days'), 29], ['year', tr('This year'), -1]]
     const shown = useMemo(() => {
         const q = query.trim().toLowerCase()
-        return all.filter((n) => (tab === 'important' ? n.important : tab === 'shared' ? (!n.mine || n.sharedWith.length > 0) : tab === 'open' ? left(n) > 0 : tab === 'done' ? (n.checklist || []).length > 0 && left(n) === 0 : true) && (!label || n.labels.includes(label)) && (!q || `${n.title} ${n.description.replace(/<[^>]+>/g, ' ')} ${n.labels.join(' ')} ${n.checklist.map((c) => c.text).join(' ')}`.toLowerCase().includes(q)))
-    }, [all, tab, query, label])
+        const since = f.date ? (f.date === 'year' ? dayjs().startOf('year') : dayjs().subtract(DATES.find((d) => d[0] === f.date)[2], 'day').startOf('day')) : null
+        return all.filter((n) => (tab === 'important' ? n.important : tab === 'shared' ? (!n.mine || n.sharedWith.length > 0) : tab === 'open' ? left(n) > 0 : tab === 'done' ? (n.checklist || []).length > 0 && left(n) === 0 : true) && (!label || n.labels.includes(label)) && (!q || `${n.title} ${n.description.replace(/<[^>]+>/g, ' ')} ${n.labels.join(' ')} ${n.checklist.map((c) => c.text).join(' ')}`.toLowerCase().includes(q))
+            && (!f.person || n.owner === f.person || n.sharedWith.some((x) => x.name === f.person))
+            && (!since || !dayjs(n.updatedAt).isBefore(since))
+            && (!f.color || (n.color || 'none') === f.color)
+            && (!f.files || (f.files === 'with' ? n.attachments.length > 0 : f.files === 'without' ? n.attachments.length === 0 : n.attachments.some((a) => a.kind === f.files)))
+            && (!f.extra || (f.extra === 'links' ? n.links.length > 0 : f.extra === 'reminder' ? !!n.remindAt : f.extra === 'comments' ? n.comments > 0 : f.extra === 'pinned' ? n.pinned : f.extra === 'shared' ? n.sharedWith.length > 0 : true)))
+    }, [all, tab, query, label, f]) // eslint-disable-line react-hooks/exhaustive-deps
+    const filtered = !!(label || f.person || f.date || f.color || f.files || f.extra)
+    const opt = (list) => list.map(([value, text]) => ({ value, label: text }))
+    const pick = (k, list, ph) => <div className="w-40"><Select size="sm" isClearable isSearchable={false} placeholder={ph} options={opt(list)} value={opt(list).find((o) => o.value === f[k]) || null} onChange={(o) => setFilter(k, o)} menuPortalTarget={document.body} menuPosition="fixed" styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} /></div>
     const pinned = shown.filter((n) => n.pinned)
     const others = shown.filter((n) => !n.pinned)
 
@@ -88,6 +103,15 @@ const NotesPage = ({ mode = 'notes' }) => {
                     {(todos ? TODO_TABS : TABS).map((t) => <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-semibold transition ${tab === t.id ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}>{t.icon}{tr(t.label)}</button>)}
                 </div>
                 <div className="ms-auto w-64"><Input size="sm" prefix={<TbSearch />} placeholder={tr('Search')} value={query} onChange={(e) => setQuery(e.target.value)} /></div>
+            </div>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+                {pick('person', people.map((p) => [p, p]), tr('Person'))}
+                {pick('date', DATES, tr('Date'))}
+                {pick('color', [['none', tr('Default')], ...Object.keys(COLORS).map((c) => [c, tr(COLORS[c].label)])], tr('Colour'))}
+                {pick('files', [['with', tr('With files')], ['without', tr('No files')], ['image', tr('Pictures')], ['audio', tr('Voice notes')], ['pdf', tr('PDF')], ['doc', tr('Documents')], ['sheet', tr('Sheets')]], tr('Attached files'))}
+                {pick('extra', [['links', tr('With links')], ['reminder', tr('With a reminder')], ['comments', tr('With comments')], ['pinned', tr('Pinned')], ['shared', tr('Shared with someone')]], tr('More'))}
+                {filtered && <button type="button" onClick={() => { setF({}); setLabel('') }} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><TbX />{tr('Clear filters')}</button>}
+                <span className="ms-auto text-xs text-gray-500">{shown.length} / {all.length}</span>
             </div>
             {(data?.labels || []).length > 0 && (
                 <div className="mb-4 flex flex-wrap gap-1.5">

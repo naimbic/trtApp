@@ -6041,5 +6041,12 @@ export default {
     "Only what the client sees": "クライアントに見えるものだけ",
     "Records": "記録",
     "Show to the client": "クライアントに表示",
-    "visible to the client": "クライアントに表示中"
+    "visible to the client": "クライアントに表示中",
+    "No files": "ファイルなし",
+    "Pictures": "画像",
+    "Shared with someone": "誰かと共有",
+    "Voice notes": "音声メモ",
+    "With a reminder": "リマインダーあり",
+    "With comments": "コメントあり",
+    "With links": "リンクあり"
 }

@@ -6041,5 +6041,12 @@ export default {
     "Only what the client sees": "Seulement ce que le client voit",
     "Records": "Dossiers",
     "Show to the client": "Montrer au client",
-    "visible to the client": "visibles par le client"
+    "visible to the client": "visibles par le client",
+    "No files": "Sans fichiers",
+    "Pictures": "Images",
+    "Shared with someone": "Partagées avec quelqu'un",
+    "Voice notes": "Notes vocales",
+    "With a reminder": "Avec un rappel",
+    "With comments": "Avec des commentaires",
+    "With links": "Avec des liens"
 }

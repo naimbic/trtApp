@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.213.1',
+        date: '2026-11-08',
+        title: 'Note colour and labels easy to find',
+        items: [
+            'Note popup: Colour and labels now sit right under the text, open from the start (they were folded at the bottom, out of sight).',
+            'A label typed but not added with the Add button is now saved with the note.',
+            'Fixed: adding a note failed with "Internal server error" for an administrator who has no staff profile, so nothing (colour, label, text) was saved.',
+        ],
+    },
+    {
         version: '0.213.0',
         date: '2026-11-08',
         title: 'Note labels in the note colour',

@@ -64,7 +64,7 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
     const me = useMe()
     const [v, setV] = useState(EMPTY)
     const [busy, setBusy] = useState(false)
-    const [fold, setFold] = useState({ content: true })
+    const [fold, setFold] = useState({ content: true, look: true })
     const [staff, setStaff] = useState([])
     const [who, setWho] = useState('')
     const [labelText, setLabelText] = useState('')
@@ -80,7 +80,7 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
     useEffect(() => {
         if (!open) return
         setV(note ? { ...EMPTY, ...note, sharedWith: (note.sharedWith || []).map((s) => s.id), remindAt: note.remindAt ? new Date(note.remindAt) : null } : { ...EMPTY, ...(preset || {}), checklist: preset?.kind === 'list' ? [{ id: uid(), text: '', done: false }] : [] })
-        setFold({ content: true, media: !!preset?.focus, comments: !!note && !note.mine })
+        setFold({ content: true, look: true, media: !!preset?.focus, comments: !!note && !note.mine })
         setWho(''); setLabelText(''); setLinkText('')
         mentionDirectory().then((d) => setStaff((d.staff || []).filter((s) => s.id !== d.me)))
     }, [open, note, preset])
@@ -116,7 +116,7 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
     }
     const stopRec = (cancel = false) => { const s = recRef.current; if (!s) return; s.cancelled = cancel; try { s.mr.stop() } catch { /* already stopped */ } }
 
-    const body = () => ({ title: v.title, description: v.kind === 'list' ? '' : v.description, kind: v.kind, checklist: v.kind === 'list' ? v.checklist : v.checklist.filter((c) => c.text.trim()), color: v.color, pinned: v.pinned, important: v.important, labels: v.labels, links: v.links, attachments: v.attachments, remindAt: v.remindAt ? new Date(v.remindAt).toISOString() : null, remindShared: v.remindShared, ...(canShare ? { sharedWith: v.sharedWith } : {}) })
+    const body = () => ({ title: v.title, description: v.kind === 'list' ? '' : v.description, kind: v.kind, checklist: v.kind === 'list' ? v.checklist : v.checklist.filter((c) => c.text.trim()), color: v.color, pinned: v.pinned, important: v.important, labels: [...new Set([...v.labels, ...(labelText.trim() ? [labelText.trim()] : [])])].slice(0, 10), links: v.links, attachments: v.attachments, remindAt: v.remindAt ? new Date(v.remindAt).toISOString() : null, remindShared: v.remindShared, ...(canShare ? { sharedWith: v.sharedWith } : {}) })
     const save = async () => {
         setBusy(true)
         try {
@@ -170,6 +170,16 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
                         ? (looksLikeHtml(v.description) ? <RichView html={v.description} /> : <p className="whitespace-pre-line text-sm">{v.description}</p>)
                         : <RichEditor minHeight={140} value={v.description} onChange={(html) => set({ description: html })} placeholder={tr('Take a note… Use @ to mention a colleague and share it with them')} />}
                 </FoldSection>
+                {!readOnly && (
+                    <FoldSection icon={<TbPalette />} tone="emerald" title={tr('Colour and labels')} summary={[v.color ? labelOfColor(v.color) : '', v.labels.join(', ')].filter(Boolean).join(' · ')} open={!!fold.look} onToggle={() => tog('look')}>
+                        <div className="mb-3 flex flex-wrap gap-1.5">
+                            <button type="button" title={tr('Default')} onClick={() => set({ color: null })} className={`size-7 rounded-full border border-gray-300 bg-white ${!v.color ? 'ring-2 ring-primary' : ''}`} />
+                            {Object.entries(COLORS).map(([k, c]) => <button key={k} type="button" title={labelOfColor(k)} onClick={() => set({ color: k })} className={`size-7 rounded-full ${c.dot} ${v.color === k ? 'ring-2 ring-primary' : ''}`} />)}
+                        </div>
+                        <div className="mb-1.5 flex flex-wrap gap-1.5">{v.labels.map((l) => <span key={l} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold dark:bg-gray-700">{l}<button type="button" aria-label={tr('Remove')} onClick={() => set({ labels: v.labels.filter((x) => x !== l) })}><TbX /></button></span>)}</div>
+                        <div className="flex gap-2"><Input size="sm" value={labelText} onChange={(e) => setLabelText(e.target.value)} placeholder={tr('Add a label')} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (labelText.trim() && v.labels.length < 10) { set({ labels: [...new Set([...v.labels, labelText.trim()])] }); setLabelText('') } } }} /><Button size="sm" icon={<TbPlus />} disabled={!labelText.trim()} onClick={() => { set({ labels: [...new Set([...v.labels, labelText.trim()])] }); setLabelText('') }}>{tr('Add')}</Button></div>
+                    </FoldSection>
+                )}
 
                 {(!readOnly || v.attachments.length > 0) && (
                     <FoldSection icon={<TbPhoto />} tone="blue" title={tr('Pictures, voice and files')} summary={v.attachments.length ? tr('{n} attached', { n: v.attachments.length }) : ''} open={!!fold.media} onToggle={() => tog('media')}>
@@ -238,16 +248,6 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
                     </FoldSection>
                 )}
 
-                {!readOnly && (
-                    <FoldSection icon={<TbPalette />} tone="emerald" title={tr('Colour and labels')} summary={[v.color ? labelOfColor(v.color) : '', v.labels.join(', ')].filter(Boolean).join(' · ')} open={!!fold.look} onToggle={() => tog('look')}>
-                        <div className="mb-3 flex flex-wrap gap-1.5">
-                            <button type="button" title={tr('Default')} onClick={() => set({ color: null })} className={`size-7 rounded-full border border-gray-300 bg-white ${!v.color ? 'ring-2 ring-primary' : ''}`} />
-                            {Object.entries(COLORS).map(([k, c]) => <button key={k} type="button" title={labelOfColor(k)} onClick={() => set({ color: k })} className={`size-7 rounded-full ${c.dot} ${v.color === k ? 'ring-2 ring-primary' : ''}`} />)}
-                        </div>
-                        <div className="mb-1.5 flex flex-wrap gap-1.5">{v.labels.map((l) => <span key={l} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold dark:bg-gray-700">{l}<button type="button" aria-label={tr('Remove')} onClick={() => set({ labels: v.labels.filter((x) => x !== l) })}><TbX /></button></span>)}</div>
-                        <div className="flex gap-2"><Input size="sm" value={labelText} onChange={(e) => setLabelText(e.target.value)} placeholder={tr('Add a label')} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (labelText.trim() && v.labels.length < 10) { set({ labels: [...new Set([...v.labels, labelText.trim()])] }); setLabelText('') } } }} /><Button size="sm" icon={<TbPlus />} disabled={!labelText.trim()} onClick={() => { set({ labels: [...new Set([...v.labels, labelText.trim()])] }); setLabelText('') }}>{tr('Add')}</Button></div>
-                    </FoldSection>
-                )}
 
                 {note && (
                     <FoldSection icon={<TbMessageCircle />} tone="blue" title={tr('Comments')} summary={note.comments ? String(note.comments) : ''} open={!!fold.comments} onToggle={() => tog('comments')}>

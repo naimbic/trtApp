@@ -120,7 +120,7 @@ export async function saveNote(body = {}, id = null) {
     let row
     if (cur) row = await prisma.crmQuickNote.update({ where: { id: cur.id }, data })
     else {
-        const last = await prisma.crmQuickNote.findFirst({ where: { addedFrom: g.staffId || '__none__' }, orderBy: { position: 'desc' }, select: { position: true } })
+        const last = g.staffId ? await prisma.crmQuickNote.findFirst({ where: { addedFrom: g.staffId }, orderBy: { position: 'desc' }, select: { position: true } }) : null // an admin without a staff profile has no notes of their own yet
         row = await prisma.crmQuickNote.create({ data: { title: '', kind: 'note', ...data, addedFrom: g.staffId || undefined, position: (last?.position || 0) + 1 } })
     }
     const fresh = (row.sharedWith || []).filter((x) => !(cur?.sharedWith || []).includes(x))

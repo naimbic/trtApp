@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.5',
+        date: '2026-11-08',
+        title: 'Contact notifications match the client settings',
+        items: [
+            'A contact now has the same email notification switches as the client page: Invoices, Estimates, Proposals, Credit notes, Contracts, Projects, Tasks, Support, Ideas and Requests (new: Proposals, Ideas, Requests). They are in the contact\'s form (Email notifications) and in the client area, Profile, so the contact can choose too.',
+            'The switches are used when emails go out: proposal emails to the ticked contacts, idea and request messages only to contacts who have them on. A contact with no choice yet counts as on. The client-level switch still turns a kind off for everybody.',
+        ],
+    },
+    {
         version: '0.205.4',
         date: '2026-11-08',
         title: 'Client area: booking icon and blurred header',

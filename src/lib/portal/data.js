@@ -25,7 +25,7 @@ const pub = (type, id, hash) => `/api/crm/public/${type}/${id}/${hash}`
 const currencies = async () => Object.fromEntries((await prisma.crmCurrency.findMany()).map((c) => [c.id, { name: c.name, symbol: c.symbol, placement: c.placement }]))
 
 // the email notifications a contact can switch on or off (Perfex: contact -> Email notifications)
-export const MAIL_SWITCHES = ['invoiceEmails', 'estimateEmails', 'creditNoteEmails', 'contractEmails', 'taskEmails', 'projectEmails', 'ticketEmails']
+export const MAIL_SWITCHES = ['invoiceEmails', 'estimateEmails', 'proposalEmails', 'creditNoteEmails', 'contractEmails', 'taskEmails', 'projectEmails', 'ticketEmails', 'ideaEmails', 'requestEmails']
 
 export async function me() {
     const s = await requirePortal()

@@ -98,7 +98,7 @@ const clean = (b, codes) => {
 /** Tells the client's contacts that an idea is waiting for them. Returns how many emails went out. */
 async function tellClient(idea, client) {
     if (await emailOff(client.id, 'ideas')) return 0
-    const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { email: true, firstName: true, lastName: true } })
+    const contacts = (await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { email: true, firstName: true, lastName: true, ideaEmails: true } })).filter((c) => c.ideaEmails !== false) // a contact can switch the idea emails off (its own notifications)
     let sent = 0
     const seen = new Set()
     void pushToContacts({ clientId: client.id }, { title: client.company || 'trtCRM', body: idea.title, url: `/portal/ideas/${idea.id}`, tag: `idea-${idea.id}` })
@@ -276,7 +276,8 @@ export async function deleteComment(clientId, id, commentId) {
 /** A reply from the team shows in the client area; the contacts get a short email too. */
 async function tellClientOfComment(idea, client, who, text, named = []) {
     if (await emailOff(client.id, 'ideas')) return
-    const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, email: true, firstName: true, lastName: true } })
+    const everyone = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, email: true, firstName: true, lastName: true, ideaEmails: true } })
+    const contacts = everyone.filter((c) => c.ideaEmails !== false)
     const seen = new Set()
     // a contact named with @ is told personally; the others get the usual message
     for (const c of contacts) void pushToContacts({ contactId: c.id }, { title: named.includes(c.id) ? `${who || 'trtCRM'} · @${[c.firstName, c.lastName].filter(Boolean).join(' ')}` : who || 'trtCRM', body: text, url: `/portal/ideas/${idea.id}`, tag: `idea-${idea.id}` })

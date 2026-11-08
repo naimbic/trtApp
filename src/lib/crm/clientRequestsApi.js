@@ -98,7 +98,7 @@ export async function tellTeam(req, clientId, text, byName) {
 /** The client's contacts hear about a status change or a message: email and phone. `named` = the contacts a message names with @. */
 async function tellClient(req, client, { kind, who, text = '', named = [] }) {
     if (!req.visible) return 0
-    const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, email: true, firstName: true, lastName: true } })
+    const contacts = await prisma.crmContact.findMany({ where: { clientId: client.id, active: true }, select: { id: true, email: true, firstName: true, lastName: true, requestEmails: true } })
     const link = `${publicBase()}/portal/requests/${req.id}`
     const seen = new Set()
     const noMail = await emailOff(client.id, 'requests')
@@ -107,7 +107,7 @@ async function tellClient(req, client, { kind, who, text = '', named = [] }) {
         const me = named.includes(c.id)
         void pushToContacts({ contactId: c.id }, { title: me ? `${who || 'trtCRM'} · @${contactName(c)}` : kind === 'status' ? `${codeOf(req.seq)} · ${STATUS_LABEL[req.status]}` : who || 'trtCRM', body: kind === 'status' ? req.title : text, url: `/portal/requests/${req.id}`, tag: `request-${req.id}` })
         const to = String(c.email || '').trim().toLowerCase()
-        if (!EMAIL.test(to) || seen.has(to) || noMail) continue // the client page can switch the emails off: the phone message above still goes
+        if (!EMAIL.test(to) || seen.has(to) || noMail || c.requestEmails === false) continue // the client page, or the contact, can switch the emails off: the phone message above still goes
         seen.add(to)
         const base = { contact_firstname: c.firstName || '', contact_lastname: c.lastName || '', client_company: client.company || '', request_title: `${codeOf(req.seq)} ${req.title}`, request_link: link, staff_name: who || '' }
         const r = kind === 'status'

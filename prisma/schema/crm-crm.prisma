@@ -103,6 +103,10 @@ model CrmContact {
   taskEmails              Boolean   @default(true)
   projectEmails           Boolean   @default(true)
   ticketEmails            Boolean   @default(true)
+  /// newer kinds (optional: contacts that existed before have no value, which means on)
+  proposalEmails          Boolean?  @default(true)
+  ideaEmails              Boolean?  @default(true)
+  requestEmails           Boolean?  @default(true)
   /// client-area sections this contact must NOT see (empty = all that Settings allows)
   portalHidden            String[]
   /// notifications by Telegram / WhatsApp (empty = off)

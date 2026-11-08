@@ -44,7 +44,7 @@ export const KINDS = {
         ],
     },
     proposal: {
-        feature: 'proposals', contactFlag: null,
+        feature: 'proposals', contactFlag: 'proposalEmails',
         templates: [
             { slug: 'proposal-send-to-customer', label: 'Send proposal' },
             { slug: 'proposal-expired', label: 'Proposal expired' },
@@ -155,7 +155,7 @@ async function loadContext(kind, id) {
     const contacts = clientId ? await prisma.crmContact.findMany({ where: { clientId, active: true }, orderBy: { isPrimary: 'desc' } }) : []
     const flag = KINDS[kind].contactFlag
     const recipients = contacts.filter((c) => c.email).map((c) => ({
-        email: c.email, name: [c.firstName, c.lastName].filter(Boolean).join(' '), primary: c.isPrimary, checked: flag ? c[flag] !== false && (c[flag] || c.isPrimary) : c.isPrimary,
+        email: c.email, name: [c.firstName, c.lastName].filter(Boolean).join(' '), primary: c.isPrimary, checked: flag ? c[flag] !== false : c.isPrimary, // a contact that never chose (no value yet) counts as on
     }))
     // the client page can switch off the emails of this kind: nobody is ticked (the person sending can still tick someone)
     const off = clientId ? await emailOff(clientId, MAIL_AREA[kind]) : false

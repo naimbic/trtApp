@@ -11,7 +11,7 @@ import { usePortal } from './PortalApp'
 import { useI18n } from './i18n'
 
 const SECTION_LABEL = { invoices: 'Invoices', estimates: 'Estimates', proposals: 'Proposals', contracts: 'Contracts', projects: 'Projects', support: 'Support' }
-const MAILS = [['invoiceEmails', 'Invoices', 'When an invoice is sent, due or overdue, and payment receipts'], ['estimateEmails', 'Estimates', 'When an estimate is sent or its answer is needed'], ['creditNoteEmails', 'Credit notes', 'When a credit note is issued'], ['contractEmails', 'Contracts', 'When a contract needs your signature or is signed'], ['projectEmails', 'Projects', 'Updates on your projects'], ['taskEmails', 'Tasks', 'Updates on tasks that involve you'], ['ticketEmails', 'Support', 'Replies to your support requests']]
+const MAILS = [['invoiceEmails', 'Invoices', 'When an invoice is sent, due or overdue, and payment receipts'], ['estimateEmails', 'Estimates', 'When an estimate is sent or its answer is needed'], ['proposalEmails', 'Proposals', 'When a proposal is sent to you or is about to expire'], ['creditNoteEmails', 'Credit notes', 'When a credit note is issued'], ['contractEmails', 'Contracts', 'When a contract needs your signature or is signed'], ['projectEmails', 'Projects', 'Updates on your projects'], ['taskEmails', 'Tasks', 'Updates on tasks that involve you'], ['ticketEmails', 'Support', 'Replies to your support requests'], ['ideaEmails', 'Ideas', 'When the team proposes an idea or answers on one'], ['requestEmails', 'Requests', 'Updates and messages on your requests']]
 
 const Profile = () => {
     const { t } = useI18n()

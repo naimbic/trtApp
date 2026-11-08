@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.213.0',
+        date: '2026-11-08',
+        title: 'Note labels in the note colour',
+        items: [
+            'Notes: the labels of a note show at the bottom left of its card, as small tags in the colour chosen for the note (grey when the note has no colour).',
+        ],
+    },
+    {
         version: '0.212.0',
         date: '2026-11-08',
         title: 'Closed days are back as they were; Days off is the same thing',

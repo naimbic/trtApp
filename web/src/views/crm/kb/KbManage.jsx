@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbSearch, TbTrash, TbFolderPlus, TbArrowLeft, TbPencil, TbChevronDown, TbEye, TbThumbUp, TbFolder, TbUsers, TbLock, TbGripVertical, TbStar, TbStarFilled, TbPin, TbPinFilled } from 'react-icons/tb'
+import { TbPlus, TbBook2, TbSearch, TbTrash, TbFolderPlus, TbArrowLeft, TbPencil, TbChevronDown, TbEye, TbThumbUp, TbFolder, TbUsers, TbLock, TbGripVertical, TbStar, TbStarFilled, TbPin, TbPinFilled } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -172,6 +172,12 @@ const KbManage = () => {
     useEffect(() => { load() }, [load])
     const keep = (k, v) => { try { localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)) } catch { /* private window */ } }
     const can = d.can || {}
+    const [guideAsk, setGuideAsk] = useState(false)
+    const [guideBusy, setGuideBusy] = useState(false)
+    const loadGuide = async () => {
+        setGuideBusy(true)
+        try { const r = await api('/api/crm/kb/guide', { method: 'POST' }); notify('success', tr('{n} guide articles are in the help center', { n: r.created })); setGuideAsk(false); load() } catch (e) { notify('danger', e.message) } finally { setGuideBusy(false) }
+    }
     const t = search.trim().toLowerCase()
     const filtered = !!t || !!state
     const match = (a) => (!t || `${a.subject} ${a.excerpt}`.toLowerCase().includes(t)) && (!state || (state === 'published' ? a.active : state === 'draft' ? !a.active : a.staffOnly))
@@ -214,7 +220,7 @@ const KbManage = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div><div className="mb-1 cursor-pointer text-sm text-gray-500 hover:text-primary" data-href={'/crm/knowledge-base'} onClick={() => nav('/crm/knowledge-base')}><TbArrowLeft className="mr-1 inline" />{tr("Knowledge base")}</div><h3>{tr("Manage articles")}</h3></div>
-                <div className="flex gap-2">{can.edit && <Button icon={<TbFolderPlus />} onClick={() => setDialog(true)}>{tr("Groups")}</Button>}{can.create && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/knowledge-base/new'} onClick={() => nav('/crm/knowledge-base/new')}>{tr("New article")}</Button>}</div>
+                <div className="flex gap-2">{can.create && can.delete && <Button icon={<TbBook2 />} onClick={() => setGuideAsk(true)}>{tr("Client area guide")}</Button>}{can.edit && <Button icon={<TbFolderPlus />} onClick={() => setDialog(true)}>{tr("Groups")}</Button>}{can.create && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/knowledge-base/new'} onClick={() => nav('/crm/knowledge-base/new')}>{tr("New article")}</Button>}</div>
             </div>
             <div className="mb-4 flex flex-wrap items-center gap-3">
                 <div className="w-64"><Input size="sm" prefix={<TbSearch />} placeholder={tr("Search articles")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>
@@ -235,6 +241,9 @@ const KbManage = () => {
             <GroupDialog open={dialog} onClose={() => setDialog(false)} groups={d.groups} onChanged={load} />
             <ConfirmDialog isOpen={!!delArticle} type="danger" title={tr("Delete “{name}”?", { name: delArticle?.subject })} confirmText={tr("Delete")} onClose={() => setDelArticle(null)} onCancel={() => setDelArticle(null)} onConfirm={async () => { const a = delArticle; setDelArticle(null); try { await api(`/api/crm/kb/articles/${a.id}`, { method: 'DELETE' }); notify('success', tr("Deleted")); load() } catch (e) { notify('danger', e.message) } }}><p>{tr("The article, its votes and its views are deleted for good.")}</p></ConfirmDialog>
             <ConfirmDialog isOpen={!!delGroup} type="danger" title={tr("Delete “{name}”?", { name: delGroup?.name })} confirmText={tr("Delete")} onClose={() => setDelGroup(null)} onCancel={() => setDelGroup(null)} onConfirm={async () => { const g = delGroup; setDelGroup(null); try { await api(`/api/crm/kb/groups/${g.id}`, { method: 'DELETE' }); load() } catch (e) { notify('danger', e.message) } }}><p>{tr("The")} {delGroup?.count || 0} {tr("articles in it are kept without a group.")}</p></ConfirmDialog>
+            <ConfirmDialog isOpen={guideAsk} title={tr("Load the client area guide?")} confirmText={tr("Load the guide")} confirmLoading={guideBusy} onClose={() => setGuideAsk(false)} onRequestClose={() => setGuideAsk(false)} onCancel={() => setGuideAsk(false)} onConfirm={loadGuide}>
+                <p>{tr("Adds the articles that explain every page of the client area (invoices, estimates, proposals, contracts, projects, tasks, ideas, requests, support, profile...) in each language in use. If the guide is already there, its articles are refreshed; your own articles are not touched.")}</p>
+            </ConfirmDialog>
         </Container>
     )
 }

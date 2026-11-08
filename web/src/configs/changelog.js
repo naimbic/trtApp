@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.7',
+        date: '2026-11-08',
+        title: 'Client area guide in the help center, in five languages',
+        items: [
+            'New: 22 help center articles explaining every page of the client area, in English, French, Spanish, Japanese and Arabic, in five topics: Getting started, Invoices/estimates/proposals/contracts, Projects/tasks/ideas/requests, Support and the help center, Your account and notifications. The button names in the articles are the ones the client sees in their language.',
+            'To add them: Help center → Manage → "Client area guide" → "Load the guide". Pressing it again refreshes the guide articles; your own articles are not touched. It replaces the older, shorter "client area" group, which wrongly said invoices can be paid online (they are paid by bank transfer, as described on the invoice page).',
+        ],
+    },
+    {
         version: '0.205.6',
         date: '2026-11-08',
         title: 'Page titles, contact popup in accordions',

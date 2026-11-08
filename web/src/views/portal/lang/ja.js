@@ -178,6 +178,7 @@ export default {
     Sent: '送信済み',
     'Sign in': 'サインイン',
     'Sign in to your client area to follow your invoices, projects and support requests.': 'クライアントエリアにサインインして、請求書、プロジェクト、サポートリクエストをご確認ください。',
+    'Book a meeting': "ミーティングを予約",
     'Sign out': 'サインアウト',
     Signed: '署名済み',
     'Someone from our team is here. Say hello!': 'チームのスタッフがいます。お気軽にご挨拶ください！',

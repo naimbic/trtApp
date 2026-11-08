@@ -178,6 +178,7 @@ export default {
     Sent: 'مُرسل',
     'Sign in': 'تسجيل الدخول',
     'Sign in to your client area to follow your invoices, projects and support requests.': 'سجّل الدخول إلى فضاء العملاء لمتابعة فواتيرك ومشاريعك وطلبات الدعم.',
+    'Book a meeting': "حجز اجتماع",
     'Sign out': 'تسجيل الخروج',
     Signed: 'موقّع',
     'Someone from our team is here. Say hello!': 'أحد أفراد فريقنا هنا. ألقِ التحية!',

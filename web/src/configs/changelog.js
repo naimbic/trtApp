@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.205.4',
+        date: '2026-11-08',
+        title: 'Client area: booking icon and blurred header',
+        items: [
+            'Client area: a calendar icon at the top right opens the booking page on meet.trtcrm.com (book a meeting with the team).',
+            'Client area: the header gets the same blurred bar as the CRM once the page is scrolled.',
+        ],
+    },
+    {
         version: '0.205.3',
         date: '2026-11-07',
         title: 'Scheduled messages in the menu',

@@ -25,7 +25,7 @@ import { Tickets, TicketThread } from './Tickets'
 import Profile from './Profile'
 import ChatWidget from './ChatWidget'
 import { Knowledge, HelpArticle } from './Knowledge'
-import { PiBookOpenTextDuotone, PiCheckSquareDuotone } from 'react-icons/pi'
+import { PiBookOpenTextDuotone, PiCheckSquareDuotone, PiCalendarCheckDuotone } from 'react-icons/pi'
 
 const Ctx = createContext(null)
 export const usePortal = () => useContext(Ctx)
@@ -50,6 +50,8 @@ const Shell = () => {
     const { pathname } = useLocation()
     const [me, setMe] = useState(null)
     const [phoneApp, setPhoneApp] = useState(false)
+    const [stuck, setStuck] = useState(false) // the header gets its blurred bar once the page is scrolled, like in the CRM
+    useEffect(() => { const on = () => setStuck(window.scrollY > 6); on(); window.addEventListener('scroll', on, { passive: true }); return () => window.removeEventListener('scroll', on) }, [])
     const mode = useThemeStore((s) => s.mode)
     const setMode = useThemeStore((s) => s.setMode)
     useEffect(() => { portal('/me').then(setMe).catch(() => {}) }, [])
@@ -83,7 +85,7 @@ const Shell = () => {
                     </div>
                 )}
                 <div className="rp-frame rp-frame--portal">
-                    <header className="rp-top">
+                    <header className="rp-top" data-stuck={stuck}>
                         <Link to="/portal" className="rp-brand"><Logo imgClass="h-9 w-full object-contain object-left" logoWidth={130} mode={mode} /><span className="hidden max-w-[160px] truncate text-sm font-semibold sm:block">{me.company.name || ''}</span></Link>
                         <div className="rp-pills">
                             <div className="rp-pillbar">
@@ -96,6 +98,7 @@ const Shell = () => {
                             </div>
                         </div>
                         <div className="rp-actions">
+                            <a href="https://meet.trtcrm.com" target="_blank" rel="noreferrer" title={t('Book a meeting')} aria-label={t('Book a meeting')} className="header-action-item header-action-item-hoverable text-2xl"><PiCalendarCheckDuotone /></a>
                             <LanguageSelector />
                             <button type="button" className="header-action-item header-action-item-hoverable text-2xl" onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')} aria-label={t('Theme')}>{mode === 'dark' ? <PiSunDuotone /> : <PiMoonDuotone />}</button>
                             <Dropdown className="flex" toggleClassName="flex items-center" renderTitle={<div className="header-action-item flex cursor-pointer items-center"><Avatar size={32} {...avatar} /></div>} placement="bottom-end">

@@ -1,6 +1,8 @@
 /* Client area (portal) in the Rapport look: the customer-profile page of the template, for the client who signs in */
 .rp-frame--portal { padding-inline-start: var(--rp-gutter) !important; }
 .rp-frame--portal .rp-top { flex-wrap: wrap; row-gap: 10px; }
+/* the blurred bar behind the header (as in the CRM): the portal has no side dock, so it simply spans the page width */
+.rp-frame--portal .rp-top::before { inset-inline-start: calc(var(--rp-gutter) * -1); }
 .rp-frame--portal .rp-pills { overflow-x: auto; scrollbar-width: none; }
 .rp-frame--portal .rp-pills::-webkit-scrollbar { display: none; }
 @media (max-width: 1023px) { .rp-frame--portal .rp-pills { display: flex !important; order: 3; flex-basis: 100%; justify-content: flex-start; } }

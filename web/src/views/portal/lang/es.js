@@ -178,6 +178,7 @@ export default {
     Sent: 'Enviado',
     'Sign in': 'Iniciar sesión',
     'Sign in to your client area to follow your invoices, projects and support requests.': 'Inicie sesión en su área de clientes para seguir sus facturas, proyectos y solicitudes de soporte.',
+    'Book a meeting': "Reservar una reunión",
     'Sign out': 'Cerrar sesión',
     Signed: 'Firmado',
     'Someone from our team is here. Say hello!': 'Alguien de nuestro equipo está aquí. ¡Salude!',

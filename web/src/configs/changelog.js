@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.211.0',
+        date: '2026-11-08',
+        title: 'Closed days and Days off are now the same',
+        items: [
+            'Calendar → Days off (before: Closed days) opens the very same calendar and popup as Days off in the More menu: month, week and list views, add a day with its reason, edit, delete.',
+            'One list for both: a day off closes the booking page too, and the old closed periods were moved into Days off (one day each). To close several days at once, fill the optional Last day.',
+            'Closing days works for people who manage Attendance & leave, or who may close days for appointments.',
+        ],
+    },
+    {
         version: '0.210.0',
         date: '2026-11-08',
         title: 'Coloured tab groups, icon tabs, more Notes filters',

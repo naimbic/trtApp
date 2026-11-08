@@ -255,3 +255,16 @@ export async function cleanLeadWebsites() {
     }
     await prisma.crmOption.create({ data: { name: MARK4, value: `${new Date().toISOString()} · ${n} cleaned` } })
 }
+
+/** Closed days used to be their own list: they are days off now (one per day), so the Calendar and the Days off menu show the same days. Safe to run at every start. */
+export async function mergeClosedDaysIntoDaysOff() {
+    const rows = await prisma.crmClosedDay.findMany({ take: 500 })
+    const day = (str) => new Date(`${str}T00:00:00Z`)
+    for (const r of rows) {
+        const have = new Set((await prisma.crmDayOff.findMany({ where: { offDate: { gte: day(r.fromDay), lte: day(r.toDay) } }, select: { offDate: true } })).map((x) => x.offDate.toISOString().slice(0, 10)))
+        const data = []
+        for (let t = +day(r.fromDay), n = 0; t <= +day(r.toDay) && n < 400; t += 86400000, n++) { const d = new Date(t); if (!have.has(d.toISOString().slice(0, 10))) data.push({ offDate: d, reason: r.label || null }) }
+        if (data.length) await prisma.crmDayOff.createMany({ data })
+        await prisma.crmClosedDay.delete({ where: { id: r.id } })
+    }
+}

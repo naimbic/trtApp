@@ -20,22 +20,26 @@ const ctl = 'h-8 w-full rounded-lg border border-transparent bg-transparent px-2
 /** The small form that opens on a day: the reason, save, and delete when the day off already exists. */
 const Pop = ({ date, item, canEdit, canDelete, onSave, onDelete, onClose, end }) => {
     const [reason, setReason] = useState(item?.reason || '')
+    const [until, setUntil] = useState('')
     return (
         <div className={`absolute top-7 z-30 w-60 rounded-xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-600 dark:bg-gray-800 ${end ? 'end-1' : 'start-1'}`} onClick={(e) => e.stopPropagation()}>
             <div className="mb-1.5 flex items-center justify-between"><b className="text-sm">{dayjs(date).format('dddd D MMMM')}</b><button type="button" aria-label={tr('Close')} className="text-gray-400 hover:text-gray-600" onClick={onClose}><TbX /></button></div>
             <input
                 autoFocus disabled={!canEdit} className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-900" placeholder={tr('Reason (Eid, national day…)')}
-                value={reason} onChange={(e) => setReason(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && canEdit) onSave(reason.trim()); if (e.key === 'Escape') onClose() }}
+                value={reason} onChange={(e) => setReason(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && canEdit) onSave(reason.trim(), until); if (e.key === 'Escape') onClose() }}
             />
+            {!item && canEdit && <label className="mt-2 block text-xs font-semibold text-gray-500">{tr('Last day (optional, to close several days)')}<input type="date" min={ymd(date)} value={until} onChange={(e) => setUntil(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-900" /></label>}
             <div className="mt-2 flex items-center justify-between gap-2">
                 {item && canDelete ? <Button size="xs" className="text-red-500" icon={<TbTrash />} onClick={onDelete}>{tr('Delete')}</Button> : <span />}
-                {canEdit && <Button size="xs" variant="solid" onClick={() => onSave(reason.trim())}>{item ? tr('Save') : tr('Add day off')}</Button>}
+                {canEdit && <Button size="xs" variant="solid" onClick={() => onSave(reason.trim(), until)}>{item ? tr('Save') : tr('Add day off')}</Button>}
             </div>
         </div>
     )
 }
 
-const DaysOff = () => {
+/** The days off of the company, on a calendar. Shared: the page in the More menu and the popup of the Calendar show this same thing (closed days = days off). */
+export const DaysOffView = ({ embedded = false }) => {
+    const Wrap = embedded ? 'div' : Container
     const can = useCan()
     const [list, setList] = useState(null)
     const [view, setView] = useState(() => store('daysoff.view') || 'month')
@@ -52,7 +56,7 @@ const DaysOff = () => {
     const byDate = useMemo(() => { const m = {}; for (const x of list || []) (m[x.date] ||= []).push(x); return m }, [list])
 
     const act = async (fn, ok) => { try { await fn(); if (ok) notify('success', ok); setPop(null); load() } catch (e) { notify('danger', e.message) } }
-    const add = (date, reason) => act(() => api('/api/crm/days-off', { method: 'POST', body: { offDate: date, reason } }), tr('Day off added'))
+    const add = (date, reason, until) => act(() => (until && until > date ? api('/api/crm/calendar/closed', { method: 'POST', body: { fromDay: date, toDay: until, label: reason } }) : api('/api/crm/days-off', { method: 'POST', body: { offDate: date, reason } })), tr('Day off added'))
     const save = (item, body) => { setList((l) => l.map((x) => (x.id === item.id ? { ...x, ...('reason' in body ? { reason: body.reason } : {}) } : x))); return act(() => api(`/api/crm/days-off/${item.id}`, { method: 'PATCH', body }), '') }
     const remove = (item) => act(() => api(`/api/crm/days-off/${item.id}`, { method: 'DELETE' }), tr('Deleted'))
 
@@ -82,7 +86,7 @@ const DaysOff = () => {
                 {items.map((x) => (
                     <button key={x.id} type="button" onClick={() => setPop({ date: key, item: x })} className="truncate rounded-md bg-rose-100 px-1.5 py-0.5 text-start text-xs font-semibold text-rose-700 hover:bg-rose-200 dark:bg-rose-500/20 dark:text-rose-300" title={x.reason}>{x.reason || tr('Day off')}</button>
                 ))}
-                {open && <Pop date={key} item={pop.item} canEdit={pop.item ? canEdit : canCreate} canDelete={canDelete} end={i % 7 > 3} onClose={() => setPop(null)} onSave={(reason) => (pop.item ? act(() => api(`/api/crm/days-off/${pop.item.id}`, { method: 'PATCH', body: { reason } }), tr('Saved')) : add(key, reason))} onDelete={() => remove(pop.item)} />}
+                {open && <Pop date={key} item={pop.item} canEdit={pop.item ? canEdit : canCreate} canDelete={canDelete} end={i % 7 > 3} onClose={() => setPop(null)} onSave={(reason, until) => (pop.item ? act(() => api(`/api/crm/days-off/${pop.item.id}`, { method: 'PATCH', body: { reason } }), tr('Saved')) : add(key, reason, until))} onDelete={() => remove(pop.item)} />}
             </div>
         )
     }
@@ -92,11 +96,12 @@ const DaysOff = () => {
     const months = useMemo(() => Array.from({ length: 12 }, (_, m) => ({ m, rows: (list || []).filter((x) => x.date.startsWith(`${year}-${String(m + 1).padStart(2, '0')}`)) })), [list, year])
     const total = months.reduce((n, g) => n + g.rows.length, 0)
     const [newDate, setNewDate] = useState('')
+    const [newUntil, setNewUntil] = useState('')
 
     return (
-        <Container>
+        <Wrap>
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-                <div><h3>{tr('Days off')}</h3><p className="text-sm text-gray-500">{tr('Company holidays: no work, no leave counted.')}{list ? ` · ${tr('{n} days off', { n: (list || []).filter((x) => x.date.startsWith(String(year))).length })} ${year}` : ''}</p></div>
+                <div><h3>{tr('Days off')}</h3><p className="text-sm text-gray-500">{tr('Company holidays: no work, no leave counted, and no appointment on the booking page.')}{list ? ` · ${tr('{n} days off', { n: (list || []).filter((x) => x.date.startsWith(String(year))).length })} ${year}` : ''}</p></div>
                 <div className="flex flex-wrap items-center gap-2">
                     <div className="inline-flex rounded-xl border border-gray-200 p-0.5 text-sm dark:border-gray-700">
                         {VIEWS.map(([k, l, Icon]) => <button key={k} type="button" onClick={() => { setView(k); setPop(null) }} className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-semibold transition ${view === k ? 'bg-primary text-white' : 'text-gray-500 hover:text-primary'}`}><Icon />{tr(l)}</button>)}
@@ -128,7 +133,8 @@ const DaysOff = () => {
                     {canCreate && (
                         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-gray-300 bg-white p-2.5 dark:border-gray-600 dark:bg-gray-800" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); e.currentTarget.querySelector('button')?.click() } }}>
                             <input type="date" aria-label={tr('Date')} className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-900" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
-                            <NewReason disabled={!newDate} onAdd={(reason) => { add(newDate, reason).then(() => setNewDate('')) }} />
+                            <input type="date" aria-label={tr('Last day (optional, to close several days)')} title={tr('Last day (optional, to close several days)')} min={newDate || undefined} className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-900" value={newUntil} onChange={(e) => setNewUntil(e.target.value)} />
+                            <NewReason disabled={!newDate} onAdd={(reason) => { add(newDate, reason, newUntil).then(() => { setNewDate(''); setNewUntil('') }) }} />
                         </div>
                     )}
                     {list && !total && <div className="rounded-2xl border border-dashed border-gray-300 py-14 text-center text-gray-400 dark:border-gray-600"><TbCalendarOff className="mx-auto mb-2 text-3xl" />{tr('No day off in {year}.', { year })}</div>}
@@ -163,9 +169,11 @@ const DaysOff = () => {
                     })}
                 </div>
             )}
-        </Container>
+        </Wrap>
     )
 }
+
+const DaysOff = () => <DaysOffView />
 
 const ReasonCell = ({ value, disabled, onCommit }) => {
     const [v, setV] = useState(value || '')

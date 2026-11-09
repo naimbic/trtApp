@@ -6053,4 +6053,6 @@ export default {
     "Add a link": "Ajouter un lien",
     "Text to show (optional)": "Texte à afficher (facultatif)",
     "The phone's push service refused the message.": "Le service de notification du téléphone a refusé le message.",
+    "Client mails": "Mails clients",
+    "Client files": "Fichiers clients",
 }

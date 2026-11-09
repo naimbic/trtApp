@@ -43,7 +43,8 @@ async function relAccess(ctx, relType, cap, relId) {
             if (!mail.leadId && mail.clientId) { // the mail of a client: the client's rules (the clients the person sees; Edit to change; the author or "Edit mails logged by others" for a draft)
                 const { scope } = await import('@/lib/crm/clientsApi')
                 const seen = await prisma.crmClient.findFirst({ where: { AND: [{ id: mail.clientId }, await scope(ctx.session)] }, select: { id: true } })
-                const edit = ctx.admin || hasCap(ctx.authority, 'customers', 'edit')
+                const { mayWriteClientMails } = await import('@/lib/crm/clientsApi')
+                const edit = mayWriteClientMails(ctx.authority, await scope(ctx.session), ctx.admin)
                 const mine = !!ctx.staffId && mail.addedFrom === ctx.staffId
                 if (seen && (cap === 'view' || (edit && mail.direction === 'draft' && (mine || ctx.admin || hasCap(ctx.authority, 'customers', 'edit_others_mails'))))) return true
                 throw new PermissionError('You do not have access to these files', 403)
@@ -64,6 +65,11 @@ async function relAccess(ctx, relType, cap, relId) {
         throw new PermissionError('You do not have access to these files', 403)
     }
     if (hasCap(ctx.authority, feature, cap) || (cap === 'view' && hasCap(ctx.authority, feature, 'view_own'))) return true
+    // "Client files: Create" adds, renames and removes the files of a client the person can see (the Files tab of the Customers page)
+    if ((relType === 'customer' || relType === 'client') && cap !== 'view' && hasCap(ctx.authority, 'client_files', 'create') && OID.test(relId || '')) {
+        const { scope } = await import('@/lib/crm/clientsApi')
+        if (await prisma.crmClient.findFirst({ where: { AND: [{ id: relId }, await scope(ctx.session)] }, select: { id: true } })) return true
+    }
     throw new PermissionError('You do not have access to these files', 403)
 }
 

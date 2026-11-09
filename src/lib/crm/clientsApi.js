@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
-import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
+import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { toBase, ALL } from '@/lib/crm/rates'
@@ -19,6 +19,9 @@ export async function scope(session) {
     const ids = staffId ? (await prisma.crmCustomerAdmin.findMany({ where: { staffId }, select: { clientId: true } })).map((a) => a.clientId) : []
     return { id: { in: ids.length ? ids : ['000000000000000000000000'] } }
 }
+
+/** May this person write, draft and schedule mails on a client they can see? Edit or Create on Customers, "Client mails: Create", or a client they look after (View own). */
+export const mayWriteClientMails = (authority, sc, admin) => !!admin || hasCap(authority, 'customers', 'edit') || hasCap(authority, 'customers', 'create') || hasCap(authority, 'client_mails', 'create') || Object.keys(sc || {}).length > 0
 
 const contactName = (c) => (c ? [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email || '' : '')
 

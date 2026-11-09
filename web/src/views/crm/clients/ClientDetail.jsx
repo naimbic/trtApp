@@ -288,7 +288,7 @@ const ClientDetail = () => {
                                 {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}
                                 {tab === 'mails' && <ClientMails key={id} clientId={id} />}
-                                {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit')} showClientToggle />}
+                                {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit') || can('client_files', 'create')} showClientToggle />}
                                 {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}
                             </div>
                         </Tabs>

@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
-import { scope } from '@/lib/crm/clientsApi'
+import { scope, mayWriteClientMails } from '@/lib/crm/clientsApi'
 import { notifyComment } from '@/lib/crm/mentionsApi'
 import { mailData, checkSchedule, draftFrom, senderOptions, dropMailFiles, sendDraftCore } from '@/lib/crm/leadsApi'
 
@@ -19,8 +19,8 @@ async function gate(id, { write = false } = {}) {
     if (!client) throw fail('Client not found', 404)
     const staffId = await getStaffId(session)
     const admin = isCrmAdmin(authority)
-    // writing and scheduling mails: Edit or Create on Customers, or a client the person looks after (View own)
-    const edit = admin || hasCap(authority, 'customers', 'edit') || hasCap(authority, 'customers', 'create') || Object.keys(sc).length > 0
+    // writing and scheduling mails: Edit or Create on Customers, "Client mails: Create", or a client the person looks after (View own)
+    const edit = mayWriteClientMails(authority, sc, admin)
     if (write && !edit) throw fail('You are not allowed to change this client', 403)
     const a = { staffId: staffId || undefined, session, authority, admin, edit, can: (cap) => admin || hasCap(authority, 'customers', cap) }
     return { a, client }

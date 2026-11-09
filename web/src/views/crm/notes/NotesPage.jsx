@@ -35,7 +35,7 @@ const left = (n) => (n.checklist || []).filter((c) => !c.done).length
 /** Notes like Google Keep: coloured cards in columns, pinned first, checklists, pictures, voice notes, links, reminders, sharing and comments. */
 const NotesPage = ({ mode = 'notes' }) => {
     const todos = mode === 'todos'
-    const [params, setParams] = useSearchParams()
+    const [params] = useSearchParams()
     const [data, setData] = useState(null)
     const [tab, setTab] = useState('all')
     const [query, setQuery] = useState('')
@@ -56,7 +56,9 @@ const NotesPage = ({ mode = 'notes' }) => {
     const wanted = params.get('note')
     useEffect(() => {
         if (!wanted) return
-        api(`/api/crm/notes/${wanted}`).then((d) => setDlg({ open: true, note: d.note, preset: null })).catch(() => notify('warning', tr('Note not found'))).finally(() => { params.delete('note'); setParams(params, { replace: true }) })
+        api(`/api/crm/notes/${wanted}`).then((d) => setDlg({ open: true, note: d.note, preset: null })).catch(() => notify('warning', tr('Note not found'))).finally(() => { // the link is spent: take it out of the address WITHOUT going through the router (every router change reloads the whole page, which closed the note again at once)
+            try { const u = new URL(window.location.href); u.searchParams.delete('note'); window.history.replaceState(window.history.state, '', u.pathname + u.search + u.hash) } catch { /* the address stays as it is */ }
+        })
     }, [wanted]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const all = (data?.list || []).filter((n) => !todos || isTodo(n))

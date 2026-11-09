@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.216.4',
+        date: '2026-11-09',
+        title: 'Notes: a notification now opens the note; new rights Client mails and Client files',
+        items: [
+            'A note reminder (bell, email link or phone notification) opens the note and keeps it open. The page used to reload itself a moment after opening the note, which closed it at once.',
+            'Roles > Customers & leads: two new rights, "Client mails: Create" (write, draft, schedule and log mails from a client\'s Mails tab) and "Client files: Create" (upload, choose from the File manager, rename and remove files on a client\'s Files tab). They work on the clients the person can see and do not need the right to edit the client. The standard Account Manager, Editor and Sales Rep roles have them; tick them on your own roles.',
+        ],
+    },
+    {
         version: '0.216.3',
         date: '2026-11-09',
         title: 'Customers: mails can be drafted and scheduled by more roles; File manager in the menu',

@@ -16,15 +16,15 @@ export const ROLES = withTools({
     'Super Admin': FULL,
     Admin: { ...without(FULL, SENSITIVE), roles: ['view', 'create', 'edit'], staff: ['view', 'create', 'edit'] },
     'Account Manager': pick({
-        customers: 'edit', client_ideas: 'edit', client_requests: 'edit', client_reports: 'edit', leads: 'edit', estimates: 'edit', proposals: 'edit', contracts: 'edit', invoices: 'edit', payments: ['view', 'create'], expenses: 'read',
+        customers: 'edit', client_mails: 'edit', client_files: 'edit', client_ideas: 'edit', client_requests: 'edit', client_reports: 'edit', leads: 'edit', estimates: 'edit', proposals: 'edit', contracts: 'edit', invoices: 'edit', payments: ['view', 'create'], expenses: 'read',
         projects: 'edit', tasks: 'edit', issues: 'edit', tickets: 'edit', knowledge_base: 'read', items: 'read', finance: ['view_amounts'], reports: REPORT('sales', 'leads', 'support', 'work'),
     }),
     Editor: pick({
-        customers: 'edit', leads: 'edit', proposals: 'edit', contracts: 'edit', estimates: 'edit', projects: 'edit', tasks: 'edit', issues: 'edit', tickets: 'edit', knowledge_base: 'all', goals: 'edit',
+        customers: 'edit', client_mails: 'edit', client_files: 'edit', leads: 'edit', proposals: 'edit', contracts: 'edit', estimates: 'edit', projects: 'edit', tasks: 'edit', issues: 'edit', tickets: 'edit', knowledge_base: 'all', goals: 'edit',
         reports: REPORT('leads', 'support', 'work'),
     }),
     'Sales Rep': pick({
-        customers: 'edit', client_ideas: 'edit', client_requests: 'edit', client_reports: 'edit', leads: ['view'], estimates: 'edit', proposals: 'edit', contracts: 'read', items: 'read', tasks: 'edit', tickets: 'read', finance: ['view_amounts'], reports: REPORT('leads'),
+        customers: 'edit', client_mails: 'edit', client_files: 'edit', client_ideas: 'edit', client_requests: 'edit', client_reports: 'edit', leads: ['view'], estimates: 'edit', proposals: 'edit', contracts: 'read', items: 'read', tasks: 'edit', tickets: 'read', finance: ['view_amounts'], reports: REPORT('leads'),
     }),
     'Support Agent': pick({ customers: 'read', client_requests: 'edit', tickets: 'edit', knowledge_base: 'all', tasks: 'edit', issues: 'edit', projects: 'read', reports: REPORT('support') }),
     Accountant: pick({

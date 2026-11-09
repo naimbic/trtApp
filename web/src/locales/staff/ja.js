@@ -6053,4 +6053,6 @@ export default {
     "Add a link": "リンクを追加",
     "Text to show (optional)": "表示するテキスト（任意）",
     "The phone's push service refused the message.": "スマートフォンのプッシュ通知サービスがメッセージを拒否しました。",
+    "Client mails": "顧客のメール",
+    "Client files": "顧客のファイル",
 }

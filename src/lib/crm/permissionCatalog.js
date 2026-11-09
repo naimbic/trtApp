@@ -84,7 +84,7 @@ export const FEATURE_HINTS = {
     payments: 'The Payments list: money received on invoices. Money amounts also need "Financial figures".',
     invoices: 'Invoices and their payments, PDFs and reminders. Money amounts also need "Financial figures".',
     estimate_request: 'Estimate requests that come from the website or from clients.',
-    leads: 'The lead board and the lead popup: profile, tasks, mails, meetings, files, comments and offers. View own = only the leads assigned to you or added by you.',
+    leads: 'The lead board and the lead popup: profile, tasks, mails, meetings, files, comments and offers. View own = only the leads assigned to you or added by you. Edit = change any lead you can see, including its mails (write, draft and schedule), meetings and tasks; without it, only leads assigned to you or added by you.',
     customers: 'Clients with their contacts, mails, notes, files and requests. Without View the Customers menu is hidden. View own = only the clients you look after.',
     dashboard: 'The Dashboard with revenue, invoices and client figures. Administrators and people who manage roles always see it; everyone else lands on the Team dashboard.',
     activity_log: 'See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.',
@@ -117,7 +117,7 @@ export const PERMISSION_GROUPS = [
         group: 'Customers & leads',
         features: [
             { key: 'customers', label: 'Customers', caps: [...CRUD, 'edit_others_mails'], auto: { view_own: 'Staff always see the customers they are an admin of' } },
-            { key: 'leads', label: 'Leads', caps: ['view', 'delete', 'edit_others_notes', 'edit_others_mails', 'edit_others_meetings'], auto: { view_own: 'Staff always see leads assigned to or added by them, and can add and edit those', create: 'Any staff member can add leads', edit: 'Any staff member can edit their own leads' } },
+            { key: 'leads', label: 'Leads', caps: ['view', 'edit', 'delete', 'edit_others_notes', 'edit_others_mails', 'edit_others_meetings'], auto: { view_own: 'Staff always see leads assigned to or added by them, and can add and edit those', create: 'Any staff member can add leads' } },
             { key: 'client_ideas', label: 'Client ideas', caps: CRUD },
             { key: 'client_requests', label: 'Client requests', caps: CRUD },
             { key: 'client_reports', label: 'Client reports & strategies', caps: CRUD },

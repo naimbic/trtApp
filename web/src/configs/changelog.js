@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.216.2',
+        date: '2026-11-09',
+        title: 'Permissions: Leads > Edit can be given to a role',
+        items: [
+            'Roles > Customers & leads > Leads now has an Edit right. With it, a team member can change any lead they can see: write, draft and schedule its mails, add meetings, tasks and notes. Without it they can only do this on leads assigned to them or added by them.',
+        ],
+    },
+    {
         version: '0.216.1',
         date: '2026-11-09',
         title: 'Notifications: a tap opens the page; iPhone notifications fixed',

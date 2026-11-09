@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.215.2',
+        date: '2026-11-09',
+        title: 'Lead tasks: choosing who a task is given to works again',
+        items: [
+            'In a lead\'s Tasks tab, ticking a person on a task that is already overdue was refused by the server ("Due date cannot be before the start date") and the tick jumped back. A save that does not touch the dates is no longer blocked by dates that were already out of order.',
+            'Ticking several people quickly no longer lets a slow answer from the server undo the next click: the list is re-read only once every change has been saved.',
+        ],
+    },
+    {
         version: '0.215.0',
         date: '2026-11-08',
         title: 'Bulk selection without checkboxes',

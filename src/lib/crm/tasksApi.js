@@ -257,7 +257,6 @@ export async function saveTask(body, id) {
     const prio = [1, 2, 3, 4].includes(+body.priority) ? +body.priority : [1, 2, 3, 4].includes(S?.num('default_task_priority')) ? S.num('default_task_priority') : 2
     const valid = await statusCodes()
     const status = valid.has(+body.status) ? +body.status : await defaultTaskStatus()
-    if (body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date')
     const data = {
         name, description: storeRich(body.description), priority: prio, status,
         startDate: dateOrNull(body.startDate), dueDate: dateOrNull(body.dueDate), hours: hoursOrNull(body.hours),
@@ -278,8 +277,13 @@ export async function saveTask(body, id) {
         data.parentId = pid
     }
     let prev = null
-    if (id) { prev = await loadOne(id, a); if (!mayAct(a, prev)) throw fail(NOT_YOURS, 403); if (status === COMPLETE && prev.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) } data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
-    else data.dateFinished = status === COMPLETE ? new Date() : null
+    if (id) { prev = await loadOne(id, a); if (!mayAct(a, prev)) throw fail(NOT_YOURS, 403);
+        // an existing task whose dates are already out of order (a task added "now" with an earlier due date) can still be saved for other reasons, e.g. giving it to someone
+        const day = (d) => (d ? new Date(d).toISOString().slice(0, 10) : null)
+        const unchanged = day(data.startDate) === day(prev.startDate) && day(data.dueDate) === day(prev.dueDate)
+        if (!unchanged && body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date')
+        if (status === COMPLETE && prev.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) } data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
+    else { if (body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date'); data.dateFinished = status === COMPLETE ? new Date() : null }
     const task = id
         ? await prisma.crmTask.update({ where: { id }, data })
         : await prisma.crmTask.create({ data: { ...data, addedFrom: a.staffId, startDate: data.startDate || new Date() } })

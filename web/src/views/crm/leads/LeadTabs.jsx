@@ -59,6 +59,7 @@ const LeadTaskList = ({ leadId, staff, onChanged }) => {
     const [popup, setPopup] = useState({ open: false, id: null, k: 0 })
     const live = useRef({}) // the people of each task as the person sees them now, so two quick clicks never overwrite each other
     const queue = useRef(Promise.resolve())
+    const busy = useRef(0) // changes still being saved: the list is only re-read when none is left, so a slow answer never undoes the next click
     const load = useCallback(async () => {
         try { setList((await api(`/api/crm/work/tasks?${qs({ relType: 'lead', relId: leadId, done: '1' })}`)).list || []) } catch (e) { notify('danger', e.message); setList([]) }
     }, [leadId])
@@ -75,6 +76,7 @@ const LeadTaskList = ({ leadId, staff, onChanged }) => {
         return queue.current
     }
     const act = async (op) => {
+        busy.current += 1
         try {
             if (op.action === 'add') await api('/api/crm/work/tasks', { method: 'POST', body: { name: op.description, relType: 'lead', relId: leadId, dueDate: op.dueDate || null, hours: op.hours || null, assigneeIds: op.assignedIds || [] } })
             else if (op.action === 'toggle') await api(`/api/crm/work/tasks/${op.itemId}/move`, { method: 'POST', body: { status: op.finished ? 5 : 1 } })
@@ -89,8 +91,8 @@ const LeadTaskList = ({ leadId, staff, onChanged }) => {
                 if (op.toggleAssignee) { const cur = live.current[op.itemId] || []; const next = cur.includes(op.toggleAssignee) ? cur.filter((x) => x !== op.toggleAssignee) : [...cur, op.toggleAssignee]; live.current[op.itemId] = next; change.assigneeIds = next }
                 await patch(op.itemId, change)
             } else return
-            await changed()
-        } catch (e) { notify('danger', e.message); await load() }
+            if (busy.current === 1) await changed()
+        } catch (e) { notify('danger', e.message); if (busy.current === 1) await load() } finally { busy.current -= 1 }
     }
     return (
         <div className="space-y-3">

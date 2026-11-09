@@ -6051,5 +6051,6 @@ export default {
     "With links": "リンクあり",
     "Shared with": "共有先",
     "Add a link": "リンクを追加",
-    "Text to show (optional)": "表示するテキスト（任意）"
+    "Text to show (optional)": "表示するテキスト（任意）",
+    "The phone's push service refused the message.": "スマートフォンのプッシュ通知サービスがメッセージを拒否しました。",
 }

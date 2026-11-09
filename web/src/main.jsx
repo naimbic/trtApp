@@ -134,4 +134,14 @@ loadStaffLang().then(async (lang) => {
 // The app files (not the data) are kept in the browser by a service worker, so the CRM opens fast on a slow connection.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
+    // a tap on a notification while the app is open: go to its page (a note, a task, a chat...) without reloading
+    navigator.serviceWorker.addEventListener('message', (e) => {
+        if (e.data?.type !== 'open-url') return
+        try {
+            const u = new URL(e.data.url, location.origin)
+            if (u.origin !== location.origin) return
+            window.history.pushState({}, '', u.pathname + u.search + u.hash)
+            window.dispatchEvent(new PopStateEvent('popstate'))
+        } catch { /* a bad link is ignored */ }
+    })
 }

@@ -6051,5 +6051,6 @@ export default {
     "With links": "Avec des liens",
     "Shared with": "Partagée avec",
     "Add a link": "Ajouter un lien",
-    "Text to show (optional)": "Texte à afficher (facultatif)"
+    "Text to show (optional)": "Texte à afficher (facultatif)",
+    "The phone's push service refused the message.": "Le service de notification du téléphone a refusé le message.",
 }

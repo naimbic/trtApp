@@ -85,7 +85,7 @@ const PhoneApp = ({ open, onClose, base = '/api/crm/push', subscribePath = '/sub
             const r = await fetch(testBody ? base : `${base}/test`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(testBody || {}) })
             const j = await r.json().catch(() => ({}))
             if (!r.ok) throw new Error(j.error || tr("The test could not be sent"))
-            setMsg(j.sent ? tr("Sent. It should appear on the screen in a moment.") : tr("Nothing was sent: no device is registered yet."))
+            setMsg(j.sent ? tr("Sent. It should appear on the screen in a moment.") : j.failed ? `${tr("The phone's push service refused the message.")} ${j.error || ''}`.trim() : tr("Nothing was sent: no device is registered yet."))
         } catch (e) { setMsg(e.message) } finally { setBusy('') }
     }
 

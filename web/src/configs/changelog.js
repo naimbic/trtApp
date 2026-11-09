@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.216.1',
+        date: '2026-11-09',
+        title: 'Notifications: a tap opens the page; iPhone notifications fixed',
+        items: [
+            'Tapping a notification (a note reminder, a task, a chat...) while the app is open now takes you to that page. Before, the app only came to the front on a phone and the note did not open.',
+            'iPhone / iPad: a message that arrived while the app was open was hidden and nothing was shown, which also made the "Test" button look dead (and Apple then cancels such notifications). Messages are always shown on Apple devices, and a test is always shown.',
+            'Push messages now identify the server with its real https address (Apple refuses a made-up "localhost" contact). If a phone\'s push service still refuses the message, the Test button now tells you why instead of staying silent.',
+        ],
+    },
+    {
         version: '0.216.0',
         date: '2026-11-09',
         title: 'Lead tasks kept with "plain lines", counts on tasks, attachments on lead mail drafts',

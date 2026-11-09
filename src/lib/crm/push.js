@@ -11,7 +11,9 @@ let cached = null
 /** The server's push keys: made once, kept sealed in the settings (or taken from PUSH_VAPID_PUBLIC / PUSH_VAPID_PRIVATE). */
 export async function vapid() {
     if (cached) return cached
-    const subject = process.env.PUSH_SUBJECT || `mailto:${process.env.PUSH_CONTACT || 'admin@localhost.invalid'}`
+    // Apple's push service refuses a contact that is not real (a "localhost" address): the app's own https address is the safest default
+    const site = [process.env.PUBLIC_URL, process.env.NEXTAUTH_URL].find((u) => /^https:\/\/[^/\s]+\.[^/\s]+/.test(String(u || '')))
+    const subject = process.env.PUSH_SUBJECT || (process.env.PUSH_CONTACT ? `mailto:${process.env.PUSH_CONTACT}` : site ? new URL(site).origin : 'mailto:admin@localhost.invalid')
     if (process.env.PUSH_VAPID_PUBLIC && process.env.PUSH_VAPID_PRIVATE) return (cached = { publicKey: process.env.PUSH_VAPID_PUBLIC, privateKey: process.env.PUSH_VAPID_PRIVATE, subject })
     const row = await prisma.crmOption.findUnique({ where: { name: KEY } })
     const stored = row?.value ? open(row.value) : null
@@ -35,7 +37,7 @@ const send = async (rows, payload) => {
     if (!rows.length || !(await pushEnabled())) return { sent: 0, failed: 0 }
     const v = await vapid()
     const body = JSON.stringify(payload)
-    let sent = 0, failed = 0
+    let sent = 0, failed = 0, error = ''
     await Promise.all(rows.map(async (r) => {
         try {
             await webpush.sendNotification({ endpoint: r.endpoint, keys: { p256dh: r.p256dh, auth: r.auth } }, body, { vapidDetails: { subject: v.subject, publicKey: v.publicKey, privateKey: v.privateKey }, TTL: 3 * 3600, urgency: 'normal', timeout: 8000 })
@@ -43,11 +45,13 @@ const send = async (rows, payload) => {
             prisma.crmPushSubscription.update({ where: { id: r.id }, data: { lastUsedAt: new Date(), failures: 0 } }).catch(() => {})
         } catch (e) {
             failed++
+            error = `${e?.statusCode || ''} ${String(e?.body || e?.message || '').slice(0, 120)}`.trim()
+            console.error('[push send]', error, String(r.endpoint).slice(0, 48))
             if (isGone(e?.statusCode)) await prisma.crmPushSubscription.delete({ where: { id: r.id } }).catch(() => {})
             else prisma.crmPushSubscription.update({ where: { id: r.id }, data: { failures: { increment: 1 } } }).catch(() => {})
         }
     }))
-    return { sent, failed }
+    return { sent, failed, error }
 }
 
 /** Tells a team member on every device they registered, inside the notification hours (outside them the message waits, see noticeQueue). Never throws: a notification must not break what caused it. */
@@ -110,6 +114,6 @@ export async function pushUnsubscribe(endpoint) {
 export async function pushTest() {
     const { staffId } = await me()
     if (!(await pushEnabled())) throw fail('Push notifications are switched off in Settings', 409)
-    const r = await pushToStaffNow(staffId, { title: 'trtCRM', body: 'Notifications work on this device.', url: '/', tag: 'test' }) // a test you ask for is sent at once, whatever the hour
+    const r = await pushToStaffNow(staffId, { title: 'trtCRM', body: 'Notifications work on this device.', url: '/', tag: 'test', force: true }) // a test you ask for is sent at once, whatever the hour
     return { success: true, ...r }
 }

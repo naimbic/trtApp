@@ -30,6 +30,7 @@ const RolesPanel = () => {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [confirmDelete, setConfirmDelete] = useState(false)
+    const [stale, setStale] = useState(null) // a role saved without being applied: its members still have the old permissions
     const [nameDlg, setNameDlg] = useState(null) // { mode: 'new' | 'rename', value }
 
     const load = useCallback(async (keep) => {
@@ -74,8 +75,11 @@ const RolesPanel = () => {
                 saved = await api('/api/crm/access/roles', { method: 'POST', body: JSON.stringify(draft) })
                 notify('success', tr("Role created"))
             } else {
+                const changed = !same(draft.permissions, current?.permissions || {})
                 saved = await api(`/api/crm/access/roles/${selected}`, { method: 'PATCH', body: JSON.stringify({ ...draft, applyToMembers }) })
-                notify('success', applyToMembers ? `${tr('Role saved and applied to')} ${trn(saved.applied, 'member')}` : tr('Role saved'))
+                if (applyToMembers) setStale(null)
+                else if (changed && current?.members > 0) setStale(selected)
+                notify(!applyToMembers && changed && current?.members > 0 ? 'warning' : 'success', applyToMembers ? `${tr('Role saved and applied to')} ${trn(saved.applied, 'member')}` : !applyToMembers && changed && current?.members > 0 ? tr('Role saved, but its members still have their old permissions until you apply it to them.') : tr('Role saved'))
             }
             await load()
             pick(saved)
@@ -151,6 +155,12 @@ const RolesPanel = () => {
                     <>
                         {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
                         {locked && <div className="rounded-xl bg-purple-50 px-4 py-3 text-sm text-purple-700 dark:bg-purple-500/10">{tr("The Super Admin role has full access and is fixed: it cannot be edited, renamed or deleted.")}</div>}
+                        {stale === selected && selected !== 'new' && current?.members > 0 && (
+                            <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+                                <span className="min-w-0 flex-1">{tr('The role is saved, but the members who already have it keep their old permissions until you apply the change to them.')}</span>
+                                <Button size="sm" variant="solid" loading={saving} onClick={() => save(true)}>{tr('Apply to')} {trn(current.members, 'member')}</Button>
+                            </div>
+                        )}
                         <PermissionMatrix value={draft.permissions} disabled={locked} onChange={(permissions) => setDraft({ ...draft, permissions })} />
                         <p className="mt-3 text-xs text-gray-500">
                             {tr("Roles are templates: a member gets the role's permissions when the role is assigned. Use \"Save & apply to members\" to push changes to everyone who already has this role. Administrators always have full access.")}

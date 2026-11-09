@@ -12,6 +12,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FoldSection from '@/components/crm/FoldSection'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
+import { CommentAttach, CommentFiles, EMPTY_EXTRAS, hasExtras } from '@/components/crm/CommentExtras'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
 import cn from '@/utils/classNames'
 import { api, notify, upload, formatBytes } from '../kit/api'
@@ -31,6 +32,7 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
     const [sec, setSec] = useState('req')
     const [comments, setComments] = useState([])
     const [text, setText] = useState('')
+    const [extras, setExtras] = useState(EMPTY_EXTRAS)
     const [internal, setInternal] = useState(false)
     const [replyTo, setReplyTo] = useState(null)
     const [editingId, setEditingId] = useState(null)
@@ -43,7 +45,7 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
     useEffect(() => {
         if (!request) return
         setV({ ...blank, ...request, body: request.body || '', url: request.url || '', dueDate: request.dueDate ? dayjs(request.dueDate).format('YYYY-MM-DD') : '', assigneeIds: request.assigneeIds || [], attachments: request.attachments || [] })
-        setSec(request.id ? 'talk' : 'req'); setComments([]); setText(''); setInternal(false); setReplyTo(null); setEditingId(null)
+        setSec(request.id ? 'talk' : 'req'); setComments([]); setText(''); setExtras(EMPTY_EXTRAS); setInternal(false); setReplyTo(null); setEditingId(null)
         if (request.id) api(`/api/crm/client-requests/${request.id}/comments?clientId=${clientId}`).then((r) => setComments(r.list)).catch(() => {})
     }, [request, clientId])
     if (!request || !v) return null
@@ -64,9 +66,9 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
     }
     const remove = async () => { setBusy('del'); try { await api(`/api/crm/client-requests/${request.id}?clientId=${clientId}`, { method: 'DELETE' }); onChanged(); onClose() } catch (e) { notify('danger', e.message) } finally { setBusy(''); setDel(false) } }
     const say = async () => {
-        if (!text.replace(/<[^>]*>/g, '').trim() && !/<img/i.test(text)) return
+        if (!text.replace(/<[^>]*>/g, '').trim() && !/<img/i.test(text) && !hasExtras(extras)) return
         setBusy('say')
-        try { const r = await api(`/api/crm/client-requests/${request.id}/comments`, { method: 'POST', body: { clientId, body: text, internal, replyToId: replyTo?.id } }); setComments((c) => [...c, r.comment]); setText(''); setReplyTo(null); onChanged() } catch (e) { notify('danger', e.message) } finally { setBusy('') }
+        try { const r = await api(`/api/crm/client-requests/${request.id}/comments`, { method: 'POST', body: { clientId, body: text, internal, replyToId: replyTo?.id, ...extras } }); setComments((c) => [...c, r.comment]); setText(''); setExtras(EMPTY_EXTRAS); setReplyTo(null); onChanged() } catch (e) { notify('danger', e.message) } finally { setBusy('') }
     }
     const removeComment = async (c) => { try { await api(`/api/crm/client-requests/${request.id}/comments?clientId=${clientId}&commentId=${c.id}`, { method: 'DELETE' }); await reload(); onChanged() } catch (e) { notify('danger', e.message) } }
     const task = async () => { setBusy('task'); try { const r = await api(`/api/crm/client-requests/${request.id}/task`, { method: 'POST', body: { clientId } }); notify('success', r.existing ? tr('The task already exists') : tr('Task created')); onChanged(); window.open(`/crm/tasks/${r.taskId}`, '_blank') } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
@@ -125,7 +127,7 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
                                                 <ReplyQuote r={c.replyTo} />
                                                 {editingId === c.id
                                                     ? <CommentEdit initial={c.body} onCancel={() => setEditingId(null)} onSave={async (t) => { await api(`/api/crm/client-requests/${request.id}/comments`, { method: 'PUT', body: { clientId, commentId: c.id, body: t } }); setEditingId(null); await reload() }} />
-                                                    : <RichView html={c.body} />}
+                                                    : <><RichView html={c.body} /><CommentFiles attachments={c.attachments} links={c.links} /></>}
                                             </div>
                                             {editingId !== c.id && can.edit && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.authorName || tr('Client') }); setText((x) => x || (c.authorKind === 'staff' && c.authorName ? `@${c.authorName} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => removeComment(c) : null} />}
                                         </div>
@@ -135,7 +137,9 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
                                 {can.edit && (
                                     <div className="mt-3 space-y-2">
                                         <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
-                                        <RichEditor minHeight={80} extraMentions={data.contacts || []} placeholder={internal || !v.visible ? tr('A note for the team only…') : tr('Write to the client — use @ to mention a contact')} value={text} onChange={setText} />
+                                        <CommentAttach value={extras} onChange={setExtras} uploadFile={(f) => { const fd = new FormData(); fd.append('file', f); return upload('/api/crm/client-requests/upload', fd) }} onError={(m) => notify('danger', m)} t={tr}>
+                                            <RichEditor minHeight={80} extraMentions={data.contacts || []} placeholder={internal || !v.visible ? tr('A note for the team only…') : tr('Write to the client — use @ to mention a contact')} value={text} onChange={setText} />
+                                        </CommentAttach>
                                         <div className="flex items-center justify-between gap-2"><label className="flex items-center gap-2 text-xs text-gray-500"><Switcher checked={internal || !v.visible} disabled={!v.visible} onChange={setInternal} />{tr('Team only')}</label><Button size="sm" variant="solid" loading={busy === 'say'} onClick={say}>{tr('Send')}</Button></div>
                                     </div>
                                 )}

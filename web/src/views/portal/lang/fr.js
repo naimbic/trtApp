@@ -406,5 +406,12 @@ export default {
     "Ask for changes": "Demander des modifications",
     "Decline": "Refuser",
     "Ask a question or tell us what you think here.": "Posez une question ou dites-nous ce que vous en pensez ici.",
-    "Back": "Retour"
+    "Back": "Retour",
+    "Attach files": "Joindre des fichiers",
+    "Add a link": "Ajouter un lien",
+    "Uploading…": "Envoi en cours…",
+    "You can also paste a screenshot or drop files here": "Vous pouvez aussi coller une capture d’écran ou déposer des fichiers ici",
+    "Name (optional)": "Nom (facultatif)",
+    "Add": "Ajouter",
+    "Enter a valid web address": "Saisissez une adresse web valide",
 }

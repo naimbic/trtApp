@@ -8,7 +8,7 @@ import { deliver, escapeHtml } from '@/lib/crm/mailer'
 import { notifyComment } from '@/lib/crm/mentionsApi'
 import { realPicture } from '@/lib/crm/pictures'
 import { cleanAttachments } from '@/lib/crm/notesCalc'
-import { UPLOAD_PREFIX, storeRequestFile } from '@/lib/crm/clientRequestsApi'
+import { UPLOAD_PREFIX, storeRequestFile, extrasIn, extrasOut, saidOf } from '@/lib/crm/clientRequestsApi'
 import { rateLimit } from '@/lib/rateLimit'
 import { STATUSES, STATUS_LABEL, STATUS_COLOR, KINDS, PRIORITIES, cleanStatus, cleanKind, cleanPriority, cleanLinks, codeOf } from '@/lib/crm/clientReportsCalc'
 
@@ -146,7 +146,7 @@ const commentOut = (c, all, { me = null, canDelete = false } = {}) => {
     const own = c.authorKind === 'staff' && !!me && c.authorId === me
     const sys = c.authorKind === 'system' ? c.body.split(':') : null
     return {
-        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own, internal: !!c.internal, canDelete: own || canDelete,
+        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own, internal: !!c.internal, canDelete: own || canDelete, ...(sys ? {} : extrasOut(c)),
         system: sys ? { from: sys[1], to: sys[2] } : null,
         replyTo: r && !sys ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,
     }
@@ -164,12 +164,13 @@ export async function addComment(clientId, id, body = {}) {
     const g = await gate('edit')
     await clientOf(g, clientId)
     const rep = await reportOf(clientId, id)
-    const text = storeRich(String(body.body || ''), 12000)
-    if (!text) throw fail('Write a message first')
+    const text = storeRich(String(body.body || ''), 12000) || ''
+    const ex = extrasIn(body)
+    if (!text && !ex.attachments.length && !ex.links.length) throw fail('Write a message first')
     const reply = oid(body.replyToId) && (await prisma.crmClientReportComment.findFirst({ where: { id: body.replyToId, reportId: id } }))
-    const row = await prisma.crmClientReportComment.create({ data: { reportId: id, authorKind: 'staff', authorId: g.staffId || undefined, authorName: g.name, body: text, internal: !!body.internal, replyToId: reply ? reply.id : null } })
+    const row = await prisma.crmClientReportComment.create({ data: { reportId: id, authorKind: 'staff', authorId: g.staffId || undefined, authorName: g.name, body: text, internal: !!body.internal, replyToId: reply ? reply.id : null, ...ex } })
     const admins = await prisma.crmCustomerAdmin.findMany({ where: { clientId }, select: { staffId: true } })
-    try { await notifyComment({ by: { staffId: g.staffId, name: g.name }, text, link: `/crm/clients/${clientId}?tab=reports&report=${id}`, subject: rep.title, recipients: [...(rep.assigneeIds || []), rep.createdBy, ...admins.map((a) => a.staffId), reply?.authorKind === 'staff' ? reply.authorId : null].filter(Boolean) }) } catch (e) { console.error('[report notify]', e.message) }
+    try { await notifyComment({ by: { staffId: g.staffId, name: g.name }, text: saidOf(text, ex), link: `/crm/clients/${clientId}?tab=reports&report=${id}`, subject: rep.title, recipients: [...(rep.assigneeIds || []), rep.createdBy, ...admins.map((a) => a.staffId), reply?.authorKind === 'staff' ? reply.authorId : null].filter(Boolean) }) } catch (e) { console.error('[report notify]', e.message) }
     const all = await prisma.crmClientReportComment.findMany({ where: { reportId: id } })
     return { comment: commentOut(row, all, { me: g.staffId, canDelete: hasCap(g.authority, 'client_reports', 'delete') }) }
 }

@@ -406,5 +406,12 @@ export default {
     "Ask for changes": "変更を依頼",
     "Decline": "却下する",
     "Ask a question or tell us what you think here.": "ご質問やご意見をこちらにお書きください。",
-    "Back": "戻る"
+    "Back": "戻る",
+    "Attach files": "ファイルを添付",
+    "Add a link": "リンクを追加",
+    "Uploading…": "アップロード中…",
+    "You can also paste a screenshot or drop files here": "スクリーンショットを貼り付けたり、ファイルをここにドロップすることもできます",
+    "Name (optional)": "名前（任意）",
+    "Add": "追加",
+    "Enter a valid web address": "有効なWebアドレスを入力してください",
 }

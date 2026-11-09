@@ -14,6 +14,7 @@ import { processUpload, putMedia, MediaError, PREFIX } from '@/lib/media'
 import { CDN_URL } from '@/lib/spaces'
 import { rateLimit } from '@/lib/rateLimit'
 import { cleanAttachments } from '@/lib/crm/notesCalc'
+import { cleanLinks } from '@/lib/crm/clientReportsCalc'
 import { STATUSES, STATUS_LABEL, STATUS_COLOR, TYPES, PRIORITIES, isOpen, cleanStatus, cleanType, cleanPriority, cleanUrl, codeOf } from '@/lib/crm/clientRequestsCalc'
 import { emailOff } from '@/lib/crm/clientEmailAccess'
 
@@ -172,12 +173,17 @@ export async function deleteRequest(clientId, id) {
 }
 
 /* ---------- the conversation ---------- */
+/** Files, screenshots and links added to a message (the same on every side: the team and the client, requests and reports). */
+export const extrasIn = (b = {}) => ({ attachments: cleanAttachments(b.attachments, UPLOAD_PREFIX), links: cleanLinks(b.links) })
+export const extrasOut = (c) => ({ attachments: Array.isArray(c.attachments) ? c.attachments : [], links: Array.isArray(c.links) ? c.links : [] })
+/** What the team and the bell read when a message carries only files. */
+export const saidOf = (text, ex) => plainText(text) || [...ex.attachments.map((a) => `📎 ${a.name}`), ...ex.links.map((l) => l.title || l.url)].join(', ')
 export const commentOut = (c, all, { me = null, canDelete = false, forClient = false } = {}) => {
     const r = c.replyToId ? all.find((x) => x.id === c.replyToId && (!forClient || !x.internal)) : null
     const own = forClient ? c.authorKind === 'client' : c.authorKind === 'staff' && !!me && c.authorId === me
     const sys = c.authorKind === 'system' ? c.body.split(':') : null
     return {
-        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own,
+        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own, ...(sys ? {} : extrasOut(c)),
         system: sys ? { from: sys[1], to: sys[2] } : null,
         replyTo: r && !sys ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,
         ...(forClient ? {} : { internal: !!c.internal, canDelete: own || canDelete }),
@@ -196,15 +202,16 @@ export async function addComment(clientId, id, body = {}) {
     const client = await clientOf(g, clientId)
     const req = oid(id) && (await prisma.crmClientRequest.findFirst({ where: { id, clientId } }))
     if (!req) throw fail('Request not found', 404)
-    const text = storeRich(String(body.body || ''), 12000)
-    if (!text) throw fail('Write a message first')
+    const text = storeRich(String(body.body || ''), 12000) || ''
+    const ex = extrasIn(body)
+    if (!text && !ex.attachments.length && !ex.links.length) throw fail('Write a message first')
     const internal = !!body.internal || !req.visible
     const reply = oid(body.replyToId) && (await prisma.crmClientRequestComment.findFirst({ where: { id: body.replyToId, requestId: id } }))
-    const row = await prisma.crmClientRequestComment.create({ data: { requestId: id, authorKind: 'staff', authorId: g.staffId || undefined, authorName: g.name, body: text, internal, replyToId: reply ? reply.id : null } })
-    try { await notifyComment({ by: { staffId: g.staffId, name: g.name }, text, link: `/crm/clients/${clientId}?tab=requests&request=${id}`, subject: req.title, recipients: [...(await teamOf(req, clientId)), reply?.authorKind === 'staff' ? reply.authorId : null] }) } catch (e) { console.error('[request notify]', e.message) }
+    const row = await prisma.crmClientRequestComment.create({ data: { requestId: id, authorKind: 'staff', authorId: g.staffId || undefined, authorName: g.name, body: text, internal, replyToId: reply ? reply.id : null, ...ex } })
+    try { await notifyComment({ by: { staffId: g.staffId, name: g.name }, text: saidOf(text, ex), link: `/crm/clients/${clientId}?tab=requests&request=${id}`, subject: req.title, recipients: [...(await teamOf(req, clientId)), reply?.authorKind === 'staff' ? reply.authorId : null] }) } catch (e) { console.error('[request notify]', e.message) }
     if (!internal) {
         const contacts = await prisma.crmContact.findMany({ where: { clientId, active: true }, select: { id: true, firstName: true, lastName: true } })
-        await tellClient(req, client, { kind: 'message', who: g.name, text: plainText(text), named: mentionedIds(plainText(text), contacts.map((c) => ({ id: c.id, name: contactName(c) }))) })
+        await tellClient(req, client, { kind: 'message', who: g.name, text: saidOf(text, ex), named: mentionedIds(plainText(text), contacts.map((c) => ({ id: c.id, name: contactName(c) }))) })
     }
     const all = await prisma.crmClientRequestComment.findMany({ where: { requestId: id } })
     return { comment: commentOut(row, all, { me: g.staffId, canDelete: hasCap(g.authority, 'client_requests', 'delete') }) }

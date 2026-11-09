@@ -6055,4 +6055,9 @@ export default {
     "The phone's push service refused the message.": "Le service de notification du téléphone a refusé le message.",
     "Client mails": "Mails clients",
     "Client files": "Fichiers clients",
+    "Attach files": "Joindre des fichiers",
+    "You can also paste a screenshot or drop files here": "Vous pouvez aussi coller une capture d’écran ou déposer des fichiers ici",
+    "Role saved, but its members still have their old permissions until you apply it to them.": "Rôle enregistré, mais ses membres gardent leurs anciennes permissions tant que vous ne l'appliquez pas.",
+    "The role is saved, but the members who already have it keep their old permissions until you apply the change to them.": "Le rôle est enregistré, mais les membres qui l'ont déjà gardent leurs anciennes permissions tant que vous ne leur appliquez pas le changement.",
+    "Apply to": "Appliquer à",
 }

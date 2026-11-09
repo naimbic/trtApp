@@ -5,6 +5,7 @@ import { storeRich, plainText } from '@/lib/crm/richText'
 import { rateLimit } from '@/lib/rateLimit'
 import { notifyNotice } from '@/lib/crm/notifyMail'
 import { STATUS_LABEL, KINDS, PRIORITIES, codeOf, isOpen } from '@/lib/crm/clientReportsCalc'
+import { storeRequestFile, extrasIn, extrasOut, saidOf } from '@/lib/crm/clientRequestsApi'
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -20,7 +21,7 @@ const commentOut = (c, all, contactId) => {
     const r = c.replyToId ? all.find((x) => x.id === c.replyToId) : null
     const sys = c.authorKind === 'system' ? c.body.split(':') : null
     return {
-        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: c.authorKind === 'client' && c.authorId === contactId,
+        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: c.authorKind === 'client' && c.authorId === contactId, ...(sys ? {} : extrasOut(c)),
         system: sys ? { from: sys[1], to: sys[2] } : null,
         replyTo: r && !sys ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,
     }
@@ -62,12 +63,13 @@ export async function commentReport(id, body = {}) {
     guard(s)
     rateLimit(`portal-report-comment:${s.contact.id}`, 60, 3600000)
     const r = await mine(s, id)
-    const text = storeRich(String(body.body || ''), 8000)
-    if (!text) throw httpError('Write a message first')
+    const text = storeRich(String(body.body || ''), 8000) || ''
+    const ex = extrasIn(body)
+    if (!text && !ex.attachments.length && !ex.links.length) throw httpError('Write a message first')
     const reply = oid(body.replyToId) && (await prisma.crmClientReportComment.findFirst({ where: { id: body.replyToId, reportId: id, internal: false } }))
     const name = who(s.contact)
-    const c = await prisma.crmClientReportComment.create({ data: { reportId: id, authorKind: 'client', authorId: s.contact.id, authorName: name, body: text, replyToId: reply ? reply.id : null } })
-    await tellTeam(r, s.client.id, `${s.client.company || name} wrote on ${codeOf(r.seq, r.kind)} “${r.title}”: ${plainText(text).slice(0, 120)}`, name)
+    const c = await prisma.crmClientReportComment.create({ data: { reportId: id, authorKind: 'client', authorId: s.contact.id, authorName: name, body: text, replyToId: reply ? reply.id : null, ...ex } })
+    await tellTeam(r, s.client.id, `${s.client.company || name} wrote on ${codeOf(r.seq, r.kind)} “${r.title}”: ${saidOf(text, ex).slice(0, 120)}`, name)
     const all = await prisma.crmClientReportComment.findMany({ where: { reportId: id, internal: false } })
     return { comment: commentOut(c, all, s.contact.id) }
 }
@@ -104,4 +106,12 @@ export async function answerReport(id, body = {}) {
     if (text) await prisma.crmClientReportComment.create({ data: { reportId: id, authorKind: 'client', authorId: s.contact.id, authorName: name, body: text } })
     await tellTeam(row, s.client.id, `${s.client.company || name}: ${STATUS_LABEL[to]} · ${codeOf(row.seq, row.kind)} “${row.title}”${text ? ` · ${plainText(text).slice(0, 100)}` : ''}`, name)
     return { success: true, status: to }
+}
+
+/** A screenshot or file for a message, from the client area. */
+export async function uploadReportFile(file) {
+    const s = await requirePortal('reports')
+    guard(s)
+    rateLimit(`portal-report-upload:${s.contact.id}`, 30, 3600000)
+    return storeRequestFile(file)
 }

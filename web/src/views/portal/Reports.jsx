@@ -5,9 +5,10 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
+import { CommentAttach, CommentFiles, EMPTY_EXTRAS, hasExtras } from '@/components/crm/CommentExtras'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
 import Skeleton from '@/components/ui/Skeleton'
-import { portal } from './api'
+import { portal, portalUpload } from './api'
 import { Empty } from './ui'
 import { useI18n } from './i18n'
 import { usePortal } from './PortalApp'
@@ -51,6 +52,8 @@ export const ReportDetail = () => {
     const [d, setD] = useState(null)
     const [error, setError] = useState('')
     const [text, setText] = useState('')
+    const [extras, setExtras] = useState(EMPTY_EXTRAS)
+    const [warn, setWarn] = useState('')
     const [busy, setBusy] = useState('')
     const [replyTo, setReplyTo] = useState(null)
     const [editingId, setEditingId] = useState(null)
@@ -60,8 +63,8 @@ export const ReportDetail = () => {
     if (!d) return <Card><Skeleton height={160} /></Card>
     const { report: r } = d
     const ro = !!me.preview
-    const act = async (body, key) => { setBusy(key); try { await portal(`/reports/${id}`, { method: 'POST', body }); setText(''); setReplyTo(null); await load() } catch (e) { setError(e.message) } finally { setBusy('') } }
-    const send = () => text.replace(/<[^>]*>/g, '').trim() && act({ action: 'comment', body: text, replyToId: replyTo?.id }, 'say')
+    const act = async (body, key) => { setBusy(key); try { await portal(`/reports/${id}`, { method: 'POST', body }); setText(''); setExtras(EMPTY_EXTRAS); setWarn(''); setReplyTo(null); await load() } catch (e) { setError(e.message) } finally { setBusy('') } }
+    const send = () => (text.replace(/<[^>]*>/g, '').trim() || hasExtras(extras)) && act({ action: 'comment', body: text, replyToId: replyTo?.id, ...extras }, 'say')
     const answer = (a) => act({ action: 'answer', answer: a, comment: text }, a)
     return (
         <div className="flex flex-col gap-4">
@@ -91,7 +94,7 @@ export const ReportDetail = () => {
                             <div className={`min-w-0 max-w-[88%] flex-1 rounded-xl p-3 text-sm ${c.mine ? 'bg-blue-50 dark:bg-blue-500/10' : 'bg-gray-50 dark:bg-gray-700/40'}`}>
                                 <div className="mb-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500"><b className="truncate">{c.mine ? t('You') : c.authorName || t('Our team')}</b><span className="ms-auto shrink-0">{date(c.createdAt, 'DD MMM HH:mm')}{c.edited ? ` · ${t('edited')}` : ''}</span></div>
                                 <ReplyQuote r={c.replyTo} />
-                                {editingId === c.id ? <CommentEdit plain initial={c.body} onCancel={() => setEditingId(null)} onSave={async (b) => { await act({ action: 'edit', commentId: c.id, body: b }, 'edit'); setEditingId(null) }} /> : <RichView mentions={false} html={c.body} />}
+                                {editingId === c.id ? <CommentEdit plain initial={c.body} onCancel={() => setEditingId(null)} onSave={async (b) => { await act({ action: 'edit', commentId: c.id, body: b }, 'edit'); setEditingId(null) }} /> : <><RichView mentions={false} html={c.body} /><CommentFiles attachments={c.attachments} links={c.links} /></>}
                             </div>
                             {!ro && editingId !== c.id && <CommentTools onReply={() => setReplyTo({ id: c.id, name: c.mine ? t('You') : c.authorName || t('Our team') })} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.mine ? () => act({ action: 'delete', commentId: c.id }, 'del') : null} />}
                         </div>
@@ -101,14 +104,17 @@ export const ReportDetail = () => {
                 {!ro ? (
                     <div className="mt-4">
                         <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
-                        <RichEditor mentions={false} images={false} minHeight={90} placeholder={t('Write to us')} value={text} onChange={setText} />
+                        {warn && <div className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{warn}</div>}
+                        <CommentAttach value={extras} onChange={setExtras} uploadFile={(f) => { const fd = new FormData(); fd.append('file', f); return portalUpload('/reports/upload', fd) }} onError={setWarn} t={t}>
+                            <RichEditor mentions={false} images={false} minHeight={90} placeholder={t('Write to us')} value={text} onChange={setText} />
+                        </CommentAttach>
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                             {r.canAnswer && <>
                                 <Button variant="solid" color="green-500" icon={<TbCheck />} loading={busy === 'approve'} onClick={() => answer('approve')}>{t('Approve')}</Button>
                                 <Button icon={<TbEdit />} loading={busy === 'changes'} onClick={() => answer('changes')}>{t('Ask for changes')}</Button>
                                 <Button variant="plain" className="text-red-500" icon={<TbX />} loading={busy === 'decline'} onClick={() => answer('decline')}>{t('Decline')}</Button>
                             </>}
-                            <Button className="ms-auto" size="sm" variant="solid" loading={busy === 'say'} disabled={!text.replace(/<[^>]*>/g, '').trim()} onClick={send}>{t('Send a message')}</Button>
+                            <Button className="ms-auto" size="sm" variant="solid" loading={busy === 'say'} disabled={!text.replace(/<[^>]*>/g, '').trim() && !hasExtras(extras)} onClick={send}>{t('Send a message')}</Button>
                         </div>
                     </div>
                 ) : <p className="mt-3 text-xs text-gray-500">{t('Preview: you cannot answer from here.')}</p>}

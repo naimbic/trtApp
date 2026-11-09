@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.217.0',
+        date: '2026-11-09',
+        title: 'Requests and Reports: files, screenshots and links in messages; Roles: clearer apply to members',
+        items: [
+            'Client area > Requests and Reports & Strategies: the client can now attach files, paste a screenshot (or drop files) and add links when writing a message. A message can be only files.',
+            'Customer page > Requests and Reports & Strategies: the team has the same tools in the Follow-up box. Files appear under the message as thumbnails and links; the team and the bell are told when a message carries only files.',
+            'Client area > New request: a screenshot can be pasted or dropped on the form, besides the Add a screenshot or a file button.',
+            'Roles: saving a role only changes the template. Members who already have the role keep their old permissions until you press "Save & apply to members". After saving a changed role, an amber notice now says so and offers "Apply to N members" at once.',
+        ],
+    },
+    {
         version: '0.216.4',
         date: '2026-11-09',
         title: 'Notes: a notification now opens the note; new rights Client mails and Client files',

@@ -48,6 +48,10 @@ model CrmClientRequestComment {
   internal   Boolean   @default(false)
   replyToId  String?   @db.ObjectId
   editedAt   DateTime?
+  /// files and screenshots added to the message: [{ url, name, size, mime, kind }]
+  attachments Json?
+  /// web addresses added to the message: [{ url, title }]
+  links      Json?
   createdAt  DateTime  @default(now())
 
   @@index([requestId])

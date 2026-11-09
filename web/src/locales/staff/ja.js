@@ -6055,4 +6055,9 @@ export default {
     "The phone's push service refused the message.": "スマートフォンのプッシュ通知サービスがメッセージを拒否しました。",
     "Client mails": "顧客のメール",
     "Client files": "顧客のファイル",
+    "Attach files": "ファイルを添付",
+    "You can also paste a screenshot or drop files here": "スクリーンショットを貼り付けたり、ファイルをここにドロップすることもできます",
+    "Role saved, but its members still have their old permissions until you apply it to them.": "ロールは保存されましたが、適用するまでメンバーは以前の権限のままです。",
+    "The role is saved, but the members who already have it keep their old permissions until you apply the change to them.": "ロールは保存されましたが、すでにこのロールを持つメンバーには、変更を適用するまで以前の権限が残ります。",
+    "Apply to": "適用先",
 }

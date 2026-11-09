@@ -406,5 +406,12 @@ export default {
     "Ask for changes": "طلب تعديلات",
     "Decline": "رفض",
     "Ask a question or tell us what you think here.": "اطرح سؤالًا أو أخبرنا برأيك هنا.",
-    "Back": "رجوع"
+    "Back": "رجوع",
+    "Attach files": "إرفاق ملفات",
+    "Add a link": "إضافة رابط",
+    "Uploading…": "جارٍ الرفع…",
+    "You can also paste a screenshot or drop files here": "يمكنك أيضًا لصق لقطة شاشة أو إفلات الملفات هنا",
+    "Name (optional)": "الاسم (اختياري)",
+    "Add": "إضافة",
+    "Enter a valid web address": "أدخل عنوان ويب صالحًا",
 }

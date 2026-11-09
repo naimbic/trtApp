@@ -6055,4 +6055,9 @@ export default {
     "The phone's push service refused the message.": "رفضت خدمة الإشعارات في الهاتف الرسالة.",
     "Client mails": "رسائل العملاء",
     "Client files": "ملفات العملاء",
+    "Attach files": "إرفاق ملفات",
+    "You can also paste a screenshot or drop files here": "يمكنك أيضًا لصق لقطة شاشة أو إفلات الملفات هنا",
+    "Role saved, but its members still have their old permissions until you apply it to them.": "تم حفظ الدور، لكن أعضاءه يحتفظون بصلاحياتهم القديمة حتى تطبّقه عليهم.",
+    "The role is saved, but the members who already have it keep their old permissions until you apply the change to them.": "تم حفظ الدور، لكن الأعضاء الذين لديهم هذا الدور يحتفظون بصلاحياتهم القديمة حتى تطبّق التغيير عليهم.",
+    "Apply to": "تطبيق على",
 }

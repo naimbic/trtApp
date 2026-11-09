@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { requirePortal } from '@/lib/portal/session'
-import { requestForClient, commentOut, tellTeam, nextSeq, storeRequestFile, UPLOAD_PREFIX } from '@/lib/crm/clientRequestsApi'
+import { requestForClient, commentOut, tellTeam, nextSeq, storeRequestFile, UPLOAD_PREFIX, extrasIn, saidOf } from '@/lib/crm/clientRequestsApi'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { emit } from '@/lib/crm/webhooks'
 import { rateLimit } from '@/lib/rateLimit'
@@ -47,18 +47,19 @@ export async function commentRequest(id, body = {}) {
     guard(s)
     const r = oid(id) && (await prisma.crmClientRequest.findFirst({ where: { id, clientId: s.client.id, ...SEEN } }))
     if (!r) throw httpError('Request not found', 404)
-    const text = storeRich(String(body.body || ''), 8000)
-    if (!text) throw httpError('Write a message first')
+    const text = storeRich(String(body.body || ''), 8000) || ''
+    const ex = extrasIn(body)
+    if (!text && !ex.attachments.length && !ex.links.length) throw httpError('Write a message first')
     const reply = oid(body.replyToId) && (await prisma.crmClientRequestComment.findFirst({ where: { id: body.replyToId, requestId: id, internal: false } }))
     const name = who(s.contact)
-    const c = await prisma.crmClientRequestComment.create({ data: { requestId: id, authorKind: 'client', authorId: s.contact.id, authorName: name, body: text, replyToId: reply ? reply.id : null } })
+    const c = await prisma.crmClientRequestComment.create({ data: { requestId: id, authorKind: 'client', authorId: s.contact.id, authorName: name, body: text, replyToId: reply ? reply.id : null, ...ex } })
     // an answer to "waiting for the client" puts the request back with the team
     if (r.status === 'waiting') {
         const row = await prisma.crmClientRequest.update({ where: { id }, data: { status: 'reviewing', statusChangedAt: new Date() } })
         await prisma.crmClientRequestComment.create({ data: { requestId: id, authorKind: 'system', authorName: name, body: 'status:waiting:reviewing' } })
         void row
     }
-    await tellTeam(r, s.client.id, `${s.client.company || name} wrote on the request ${codeOf(r.seq)} “${r.title}”: ${plainText(text).slice(0, 120)}`, name)
+    await tellTeam(r, s.client.id, `${s.client.company || name} wrote on the request ${codeOf(r.seq)} “${r.title}”: ${saidOf(text, ex).slice(0, 120)}`, name)
     const all = await prisma.crmClientRequestComment.findMany({ where: { requestId: id, internal: false } })
     return { comment: commentOut(c, all, { forClient: true }) }
 }

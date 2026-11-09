@@ -12,6 +12,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FoldSection from '@/components/crm/FoldSection'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
+import { CommentAttach, CommentFiles, EMPTY_EXTRAS, hasExtras } from '@/components/crm/CommentExtras'
 import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
 import cn from '@/utils/classNames'
 import { api, notify, upload, formatBytes } from '../kit/api'
@@ -30,6 +31,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
     const [sec, setSec] = useState('doc')
     const [comments, setComments] = useState([])
     const [text, setText] = useState('')
+    const [extras, setExtras] = useState(EMPTY_EXTRAS)
     const [internal, setInternal] = useState(false)
     const [replyTo, setReplyTo] = useState(null)
     const [editingId, setEditingId] = useState(null)
@@ -44,7 +46,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
     useEffect(() => {
         if (!report) return
         setV({ ...blank, ...report, body: report.body || '', period: report.period || '', dueDate: report.dueDate ? dayjs(report.dueDate).format('YYYY-MM-DD') : '', assigneeIds: report.assigneeIds || [], attachments: report.attachments || [], links: report.links || [] })
-        setSec(report.id ? 'talk' : 'doc'); setComments([]); setText(''); setInternal(false); setReplyTo(null); setEditingId(null); setLink({ url: '', title: '' })
+        setSec(report.id ? 'talk' : 'doc'); setComments([]); setText(''); setExtras(EMPTY_EXTRAS); setInternal(false); setReplyTo(null); setEditingId(null); setLink({ url: '', title: '' })
         if (report.id) api(`/api/crm/client-reports/${report.id}/comments?clientId=${clientId}`).then((r) => setComments(r.list)).catch(() => {})
     }, [report, clientId])
     if (!report || !v) return null
@@ -64,9 +66,9 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
     }
     const remove = async () => { setBusy('del'); try { await api(`/api/crm/client-reports/${report.id}?clientId=${clientId}`, { method: 'DELETE' }); onChanged(); onClose() } catch (e) { notify('danger', e.message) } finally { setBusy(''); setDel(false) } }
     const say = async () => {
-        if (!text.replace(/<[^>]*>/g, '').trim() && !/<img/i.test(text)) return
+        if (!text.replace(/<[^>]*>/g, '').trim() && !/<img/i.test(text) && !hasExtras(extras)) return
         setBusy('say')
-        try { const r = await api(`/api/crm/client-reports/${report.id}/comments`, { method: 'POST', body: { clientId, body: text, internal, replyToId: replyTo?.id } }); setComments((c) => [...c, r.comment]); setText(''); setReplyTo(null); onChanged() } catch (e) { notify('danger', e.message) } finally { setBusy('') }
+        try { const r = await api(`/api/crm/client-reports/${report.id}/comments`, { method: 'POST', body: { clientId, body: text, internal, replyToId: replyTo?.id, ...extras } }); setComments((c) => [...c, r.comment]); setText(''); setExtras(EMPTY_EXTRAS); setReplyTo(null); onChanged() } catch (e) { notify('danger', e.message) } finally { setBusy('') }
     }
     const task = async () => { setBusy('task'); try { const r = await api(`/api/crm/client-reports/${report.id}/task`, { method: 'POST', body: { clientId } }); notify('success', tr('Task created')); window.open(`/crm/tasks/${r.taskId}`, '_blank') } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
     const addFiles = async (files) => {
@@ -146,7 +148,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                                                 <ReplyQuote r={c.replyTo} />
                                                 {editingId === c.id
                                                     ? <CommentEdit initial={c.body} onCancel={() => setEditingId(null)} onSave={async (t) => { await api(`/api/crm/client-reports/${report.id}/comments`, { method: 'PUT', body: { clientId, commentId: c.id, body: t } }); setEditingId(null); await reload() }} />
-                                                    : <RichView html={c.body} />}
+                                                    : <><RichView html={c.body} /><CommentFiles attachments={c.attachments} links={c.links} /></>}
                                             </div>
                                             {editingId !== c.id && can.edit && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.authorName || tr('Team') }); setText((x) => x || (c.authorName ? `@${c.authorName} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? async () => { try { await api(url(`&commentId=${c.id}`), { method: 'DELETE' }); await reload(); onChanged() } catch (e) { notify('danger', e.message) } } : null} />}
                                         </div>
@@ -156,7 +158,9 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                                 {can.edit && (
                                     <div className="mt-3 space-y-2">
                                         <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
-                                        <RichEditor minHeight={80} placeholder={tr('Write a comment — use @ to mention a colleague')} value={text} onChange={setText} />
+                                        <CommentAttach value={extras} onChange={setExtras} uploadFile={(f) => { const fd = new FormData(); fd.append('file', f); return upload('/api/crm/client-reports/upload', fd) }} onError={(m) => notify('danger', m)} t={tr}>
+                                            <RichEditor minHeight={80} placeholder={tr('Write a comment — use @ to mention a colleague')} value={text} onChange={setText} />
+                                        </CommentAttach>
                                         <div className="flex items-center justify-between gap-2"><label className="flex items-center gap-2 text-xs text-gray-500"><Switcher checked={internal} onChange={setInternal} />{tr('Team only')}</label><Button size="sm" variant="solid" loading={busy === 'say'} onClick={say}>{tr('Send')}</Button></div>
                                     </div>
                                 )}

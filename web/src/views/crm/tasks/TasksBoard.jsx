@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import TaskAgenda from './TaskAgenda'
 import { useNavigate, useSearchParams } from 'react-router'
-import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbFlag, TbUserPlus, TbCalendarDue, TbNote, TbArrowRight, TbEye, TbEyeOff } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbFlag, TbUserPlus, TbCalendarDue, TbNote, TbArrowRight, TbEye, TbEyeOff, TbLoader, TbAlertTriangle, TbUserOff } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Container from '@/components/shared/Container'
@@ -18,6 +18,7 @@ import SavedViews from '@/components/crm/SavedViews'
 import NoteEditor from '../notes/NoteEditor'
 import { NOTES_EVENT, NOTE_HEX, plainOf } from '../notes/noteKit'
 import RelationSelect from '../kit/RelationSelect'
+import BulkBar, { runBulk, useSelection } from '@/components/crm/BulkBar'
 import { tr, trn } from '@/utils/t'
 import { onCreate } from '@/utils/createIntent'
 
@@ -26,6 +27,8 @@ const Plain = ({ children }) => <div>{children}</div>
 
 const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, onChanged, openId = null, onClosePopup }) => {
     useTaskStatuses()
+    const sel = useSelection()
+    const [bulkDel, setBulkDel] = useState(false)
     const nav = useNavigate()
     const [params, setParams] = useSearchParams()
     const [data, setData] = useState({ list: [], counts: {}, can: {} })
@@ -136,6 +139,7 @@ const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, on
     const remove = async (item) => { try { await api(`/api/crm/work/tasks/${item.id}`, { method: 'DELETE' }); notify('success', tr("Task deleted")); load() } catch (e) { notify('danger', e.message) } }
     const open = (id) => setDrawer((d) => ({ open: true, id: id || null, preset: null, k: d.k }))
     const close = () => { setDrawer((d) => ({ ...d, open: false, preset: null })); onClosePopup?.(); if (params.get('task')) { params.delete('task'); setParams(params, { replace: true }) } }
+    const bulk = async (action, value) => { const r = await runBulk('/api/crm/work/tasks/bulk', { ids: sel.list(), action, value }); if (r) { sel.clear(); load() } }
     const staffOptions = lookups.staff.map((s) => ({ value: s.id, label: s.name }))
 
     const Wrap = projectId || clientPage || boardOnly ? Plain : Container
@@ -207,9 +211,24 @@ const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, on
                     })]}
                 />
             ) : (
-                <TaskAgenda tasks={data.list} notes={shownNotes} onOpen={open} onOpenNote={(n) => setNoteDialog({ open: true, note: n })} />
+                <TaskAgenda tasks={data.list} notes={shownNotes} sel={data.can?.edit ? sel : undefined} onOpen={open} onOpenNote={(n) => setNoteDialog({ open: true, note: n })} />
             )}
 
+
+            {view !== 'board' && data.can?.edit && (
+                <BulkBar
+                    count={sel.count} onClear={sel.clear}
+                    actions={[
+                        { label: tr('Status'), icon: <TbLoader />, options: STATUS.filter((x) => x.active).map((x) => ({ label: x.label, color: x.color, onClick: () => bulk('status', x.value) })) },
+                        { label: tr('Priority'), icon: <TbAlertTriangle />, options: PRIORITY.map((x) => ({ label: x.label, onClick: () => bulk('priority', x.value) })) },
+                        { label: tr('Add person'), icon: <TbUserOff />, options: (lookups.staff || []).map((x) => ({ label: x.name, onClick: () => bulk('assign', x.id) })) },
+                        ...(data.can.delete ? [{ label: tr('Delete'), icon: <TbTrash />, danger: true, onClick: () => setBulkDel(true) }] : []),
+                    ]}
+                />
+            )}
+            <ConfirmDialog isOpen={bulkDel} type="danger" title={tr('Delete {n} tasks?', { n: sel.count })} confirmText={tr('Delete')} onClose={() => setBulkDel(false)} onCancel={() => setBulkDel(false)} onConfirm={() => { setBulkDel(false); bulk('delete') }}>
+                <p>{tr('Their sub-tasks and time entries are deleted too.')}</p>
+            </ConfirmDialog>
             <NoteEditor open={noteDialog.open} note={noteDialog.note} onClose={() => setNoteDialog((d) => ({ ...d, open: false }))} onSaved={loadNotes} />
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this task?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const it = del; setDel(null); remove(it) }}>
                 <p>{del?.title}</p>

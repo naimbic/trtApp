@@ -4,6 +4,7 @@ import { plainOf } from '../notes/noteKit'
 import dayjs from 'dayjs'
 import { TbNote, TbMessageCircle, TbListCheck, TbRepeat, TbAlertTriangle } from 'react-icons/tb'
 import { People, STATUS, statusOf, statusPillStyle, prioOf, isOverdue } from './shared'
+import { TickBox } from '@/components/crm/BulkBar'
 import { tr, trn } from '@/utils/t'
 
 const startOf = (d) => dayjs(d).startOf('day')
@@ -16,12 +17,12 @@ function groupKey(t) {
     return d.format('YYYY-MM-DD')
 }
 
-const Row = ({ t, onOpen }) => {
+const Row = ({ t, onOpen, selected, onSelect, picking }) => {
     const st = statusOf(t.status)
     const late = isOverdue(t)
     const done = t.status === 5
     return (
-        <button type="button" onClick={onOpen} className="group flex w-full items-center gap-4 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-left shadow-sm backdrop-blur transition hover:-translate-y-px hover:bg-white hover:shadow-md dark:border-gray-700/60 dark:bg-gray-800/70 dark:hover:bg-gray-800">
+        <div role="button" tabIndex={0} onClick={(e) => (onSelect && (picking || e.metaKey || e.ctrlKey) ? onSelect(t.id) : onOpen())} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onOpen() }} className={`rowcard group flex w-full cursor-pointer items-center gap-4 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-left shadow-sm backdrop-blur transition hover:-translate-y-px hover:bg-white hover:shadow-md dark:border-gray-700/60 dark:bg-gray-800/70 dark:hover:bg-gray-800 ${selected ? 'is-sel' : ''}`}>
             <span className="h-11 w-1 shrink-0 rounded-full" style={{ background: late ? '#ef4444' : st.color }} />
             <div className="hidden w-[84px] shrink-0 sm:block">
                 <div className={`text-sm font-extrabold tabular-nums ${late ? 'text-red-500' : ''}`}>{t.dueDate ? dayjs(t.dueDate).format('DD MMM') : '—'}</div>
@@ -29,7 +30,7 @@ const Row = ({ t, onOpen }) => {
             </div>
             <div className="min-w-0 flex-1">
                 <div className={`flex items-center gap-2 truncate text-[15px] font-bold ${done ? 'text-gray-400 line-through' : ''}`}>
-                    <span className="truncate">{t.name}</span>
+                    {onSelect && <TickBox checked={!!selected} onChange={() => onSelect(t.id)} />}<span className="truncate">{t.name}</span>
                     {late && <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-red-100 px-1.5 py-0.5 text-[11px] font-extrabold text-red-600 dark:bg-red-500/20"><TbAlertTriangle />{tr('{n} d late', { n: Math.max(1, startOf(new Date()).diff(startOf(t.dueDate), 'day')) })}</span>}
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-400">
@@ -42,7 +43,7 @@ const Row = ({ t, onOpen }) => {
             </div>
             <span className="tpill hidden shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold sm:inline-flex" style={statusPillStyle(t.status)}><i className="size-1.5 rounded-full" style={{ background: st.color }} />{st.label}</span>
             <div className="shrink-0"><People list={t.assignees} size={30} /></div>
-        </button>
+        </div>
     )
 }
 
@@ -50,7 +51,7 @@ const Row = ({ t, onOpen }) => {
  * The task list as an agenda: tasks grouped by due day (Overdue first, then Today, Tomorrow, each weekday, and No date), each one a soft
  * rounded row with its status colour on the left, the date and priority, the title with its project, counts, status and people.
  */
-const TaskAgenda = ({ tasks, notes = [], onOpen, onOpenNote }) => {
+const TaskAgenda = ({ tasks, notes = [], onOpen, onOpenNote, sel }) => {
     const groups = useMemo(() => {
         const map = new Map()
         for (const t of tasks) { const k = groupKey(t); if (!map.has(k)) map.set(k, []); map.get(k).push(t) }
@@ -91,7 +92,7 @@ const TaskAgenda = ({ tasks, notes = [], onOpen, onOpenNote }) => {
                 return (
                     <section key={key} className="mb-6 last:mb-0">
                         <h5 className="mb-2 flex items-baseline gap-2"><span className={`text-lg font-extrabold ${h.tone}`}>{h.big}</span>{h.small && <span className="text-sm font-normal text-gray-500">{h.small}</span>}<span className="text-sm font-normal text-gray-400">· {trn(list.length, 'task')}</span></h5>
-                        <div className="space-y-2">{list.map((t) => <Row key={t.id} t={t} onOpen={() => onOpen(t.id)} />)}</div>
+                        <div className="space-y-2">{list.map((t) => <Row key={t.id} t={t} onOpen={() => onOpen(t.id)} selected={sel?.has(t.id)} onSelect={sel ? sel.toggle : undefined} picking={sel?.count > 0} />)}</div>
                     </section>
                 )
             })}

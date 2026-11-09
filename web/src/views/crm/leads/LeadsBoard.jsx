@@ -179,7 +179,7 @@ const LeadsBoard = () => {
                         <TBody>
                             {list.list.map((l) => (
                                 <Tr key={l.id} className={`rowsel cursor-pointer ${sel.has(l.id) ? 'is-sel' : ''}`} onClick={(e) => (sel.count > 0 || e.metaKey || e.ctrlKey ? sel.toggle(l.id) : open(l.id))}>
-                                    <Td className="font-semibold"><TickBox checked={sel.has(l.id)} onChange={() => sel.toggle(l.id)} />{l.name}</Td><Td>{l.company || '—'}</Td><Td>{l.email || '—'}</Td><Td>{l.phone || '—'}</Td>
+                                    <Td className="font-semibold"><span className="inline-flex items-center"><TickBox checked={sel.has(l.id)} onChange={() => sel.toggle(l.id)} /><span>{l.name}</span></span></Td><Td>{l.company || '—'}</Td><Td>{l.email || '—'}</Td><Td>{l.phone || '—'}</Td>
                                     <Td><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: l.statusColor || '#94a3b8' }} />{l.status || '—'}</span></Td>
                                     <Td>{l.source || '—'}</Td><Td>{l.assignees?.length ? l.assignees.map((x) => x.name).join(', ') : '—'}</Td><Td>{dayjs(l.createdAt).format('DD MMM YYYY')}</Td>
                                 </Tr>

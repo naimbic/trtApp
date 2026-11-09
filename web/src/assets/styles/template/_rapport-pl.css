@@ -204,6 +204,6 @@
 .row-tick:hover { opacity: .75; }
 .row-tick.is-on { opacity: 1; color: #c8431f; transform: scale(1.12); }
 .rowsel:not(.is-sel):hover .row-tick { opacity: .6; }
-/* in a row the check icon sits in the top left corner of the row */
-.rowsel > td:first-child { position: relative; }
-.rowsel .row-tick { position: absolute; top: 5px; inset-inline-start: 11px; margin: 0; font-size: 17px; z-index: 1; }
+.rowcard { transition: box-shadow .22s cubic-bezier(.2, .8, .2, 1), background-color .2s ease, transform .15s; }
+.rowcard.is-sel { box-shadow: inset 6px 0 0 0 #c8431f; background-color: rgba(200, 67, 31, .09) !important; }
+[dir="rtl"] .rowcard.is-sel { box-shadow: inset -6px 0 0 0 #c8431f; }

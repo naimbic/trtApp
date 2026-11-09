@@ -6,8 +6,8 @@ export const CHANGELOG = [
         date: '2026-11-08',
         title: 'Bulk selection without checkboxes',
         items: [
-            'Task list and Leads list: a selected row gets a red 6px bar on the left that slides in, a soft red tint, and a light check icon (always visible, faint) in the top left corner of the row that turns red. The old square checkboxes are gone.',
-            'Click the check icon to select; once something is selected a click on a lead row toggles it, and Ctrl/Cmd-click selects too.',
+            'Task lists (Tasks page and project Tasks tab) and Leads list: a selected row gets a red 6px bar on the left that slides in, a soft red tint, and a light check icon (always visible, faint) just before the name or title that turns red. The old square checkboxes are gone.',
+            'The Tasks page list (Agenda) has the same selection now, with the bulk bar (status, priority, add person, delete). Click the check icon to select; once something is selected a click on a lead row toggles it, and Ctrl/Cmd-click selects too.',
         ],
     },
     {

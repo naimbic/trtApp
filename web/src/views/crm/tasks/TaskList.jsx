@@ -40,14 +40,15 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, selected,
     const who = t.assignees[0]
     return (
         <Tr ref={innerRef} {...rest} className={`rowsel ${selected ? 'is-sel' : ''} ${rest.className || ''}`}>
-            <Td className="w-[64px] text-lg"><span className="flex items-center gap-1">{dragHandle}<TickBox checked={!!selected} onChange={() => onSelect?.(t.id)} /></span></Td>
+            <Td className="w-[64px] text-lg"><span className="flex items-center gap-1">{dragHandle}</span></Td>
             <Td className="w-[40px]">
                 <button type="button" className="cursor-pointer pt-1 text-2xl" disabled={!canEdit || t.canFinish === false} title={t.canFinish === false ? tr("Only the people assigned to this task, or who created it, can change its status") : undefined} onClick={() => onToggle(t)}>
                     {done ? <TbCircleCheckFilled className="text-primary" /> : <TbCircleCheck className="hover:text-primary" />}
                 </button>
             </Td>
             <Td className="min-w-[220px]">
-                <button type="button" onClick={() => onOpen(t.id)} className={classNames('heading-text text-left font-bold hover:text-primary', done && 'line-through opacity-50')}>{t.name}</button>
+                <span className="inline-flex items-center"><TickBox checked={!!selected} onChange={() => onSelect?.(t.id)} />
+                <button type="button" onClick={() => onOpen(t.id)} className={classNames('heading-text text-left font-bold hover:text-primary', done && 'line-through opacity-50')}>{t.name}</button></span>
                 {(t.parent || t.subtasks?.total > 0) && (
                     <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-400">
                         {t.parent && <button type="button" className="truncate hover:text-primary" onClick={() => onOpen(t.parent.id)}>↳ {t.parent.name}</button>}

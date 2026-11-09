@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.215.0',
+        date: '2026-11-08',
+        title: 'Bulk selection without checkboxes',
+        items: [
+            'Task list and Leads list: a selected row gets a red 6px bar on the left that slides in, a soft red tint, and a light check icon (always visible, faint) in the top left corner of the row that turns red. The old square checkboxes are gone.',
+            'Click the check icon to select; once something is selected a click on a lead row toggles it, and Ctrl/Cmd-click selects too.',
+        ],
+    },
+    {
         version: '0.214.1',
         date: '2026-11-08',
         title: 'YouTube videos in notes',

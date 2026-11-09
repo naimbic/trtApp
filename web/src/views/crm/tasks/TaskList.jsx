@@ -39,7 +39,7 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, selected,
     const done = t.status === 5
     const who = t.assignees[0]
     return (
-        <Tr ref={innerRef} {...rest}>
+        <Tr ref={innerRef} {...rest} className={`rowsel ${selected ? 'is-sel' : ''} ${rest.className || ''}`}>
             <Td className="w-[64px] text-lg"><span className="flex items-center gap-1">{dragHandle}<TickBox checked={!!selected} onChange={() => onSelect?.(t.id)} /></span></Td>
             <Td className="w-[40px]">
                 <button type="button" className="cursor-pointer pt-1 text-2xl" disabled={!canEdit || t.canFinish === false} title={t.canFinish === false ? tr("Only the people assigned to this task, or who created it, can change its status") : undefined} onClick={() => onToggle(t)}>

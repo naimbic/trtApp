@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { TbX } from 'react-icons/tb'
+import { TbX, TbCircleCheck, TbCircleCheckFilled } from 'react-icons/tb'
 import Dropdown from '@/components/ui/Dropdown'
 import { api, notify } from '@/views/crm/kit/api'
 import { tr } from '@/utils/t'
@@ -13,9 +13,11 @@ export const useSelection = () => {
     return { ids, count: ids.size, has: (id) => ids.has(id), toggle, set, clear, list: () => [...ids] }
 }
 
-/** A small checkbox for a row or a header (stops the click from opening the row). */
+/** The light check icon that selects a row (next to its title) or, in a header, all rows. Selected: red and filled. The row itself gets the red bar (class rowsel / is-sel). */
 export const TickBox = ({ checked, onChange, label }) => (
-    <input type="checkbox" aria-label={label || tr('Select')} className="size-4 cursor-pointer rounded border-gray-300 accent-[var(--primary,#4f46e5)]" checked={checked} onChange={(e) => onChange(e.target.checked)} onClick={(e) => e.stopPropagation()} />
+    <button type="button" role="checkbox" aria-checked={!!checked} aria-label={label || tr('Select')} title={label || tr('Select')} onClick={(e) => { e.stopPropagation(); onChange(!checked) }} className={`row-tick ${checked ? 'is-on' : ''}`}>
+        {checked ? <TbCircleCheckFilled /> : <TbCircleCheck />}
+    </button>
 )
 
 /** Runs a bulk call and says what happened (how many worked, which failed and why). Returns the answer. */

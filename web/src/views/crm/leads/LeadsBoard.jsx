@@ -175,17 +175,16 @@ const LeadsBoard = () => {
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <Table>
-                        <THead><Tr><Th className="w-10"><TickBox label={tr('Select all')} checked={list.list.length > 0 && list.list.every((l) => sel.has(l.id))} onChange={(on) => sel.set(list.list.map((l) => l.id), on)} /></Th><Th>{tr("Name")}</Th><Th>{tr("Company")}</Th><Th>{tr("Email")}</Th><Th>{tr("Phone")}</Th><Th>{tr("Status")}</Th><Th>{tr("Source")}</Th><Th>{tr("Owner")}</Th><Th>{tr("Created")}</Th></Tr></THead>
+                        <THead><Tr><Th><span className="inline-flex items-center"><TickBox label={tr('Select all')} checked={list.list.length > 0 && list.list.every((l) => sel.has(l.id))} onChange={(on) => sel.set(list.list.map((l) => l.id), on)} />{tr("Name")}</span></Th><Th>{tr("Company")}</Th><Th>{tr("Email")}</Th><Th>{tr("Phone")}</Th><Th>{tr("Status")}</Th><Th>{tr("Source")}</Th><Th>{tr("Owner")}</Th><Th>{tr("Created")}</Th></Tr></THead>
                         <TBody>
                             {list.list.map((l) => (
-                                <Tr key={l.id} className="cursor-pointer" onClick={() => open(l.id)}>
-                                    <Td className="w-10"><TickBox checked={sel.has(l.id)} onChange={() => sel.toggle(l.id)} /></Td>
-                                    <Td className="font-semibold">{l.name}</Td><Td>{l.company || '—'}</Td><Td>{l.email || '—'}</Td><Td>{l.phone || '—'}</Td>
+                                <Tr key={l.id} className={`rowsel cursor-pointer ${sel.has(l.id) ? 'is-sel' : ''}`} onClick={(e) => (sel.count > 0 || e.metaKey || e.ctrlKey ? sel.toggle(l.id) : open(l.id))}>
+                                    <Td className="font-semibold"><TickBox checked={sel.has(l.id)} onChange={() => sel.toggle(l.id)} />{l.name}</Td><Td>{l.company || '—'}</Td><Td>{l.email || '—'}</Td><Td>{l.phone || '—'}</Td>
                                     <Td><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: l.statusColor || '#94a3b8' }} />{l.status || '—'}</span></Td>
                                     <Td>{l.source || '—'}</Td><Td>{l.assignees?.length ? l.assignees.map((x) => x.name).join(', ') : '—'}</Td><Td>{dayjs(l.createdAt).format('DD MMM YYYY')}</Td>
                                 </Tr>
                             ))}
-                            {!loading && !list.list.length && <Tr><Td colSpan={9} className="py-10 text-center text-gray-500">{tr("No leads match")}</Td></Tr>}
+                            {!loading && !list.list.length && <Tr><Td colSpan={8} className="py-10 text-center text-gray-500">{tr("No leads match")}</Td></Tr>}
                         </TBody>
                     </Table>
                     {list.total > list.list.length && <div className="p-3 text-center text-xs text-gray-500">{tr("Showing the latest")} {list.list.length} {tr("of")} {list.total}{tr(". Use search or filters to narrow down.")}</div>}

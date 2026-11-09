@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.216.0',
+        date: '2026-11-09',
+        title: 'Lead tasks kept with "plain lines", counts on tasks, attachments on lead mail drafts',
+        items: [
+            'Settings > Leads > "Keep lead checklist items as plain lines": turning it on no longer empties the lead\'s Tasks tab. The tasks stay in the lead and are only left out of the Tasks page.',
+            'Lead Tasks tab: each task shows small counts: checklist steps done / total, sub-tasks, comments and files (only the ones that exist).',
+            'Lead mail > New draft: three icon buttons to attach upload files, choose from the file manager, or add a link (put in the mail text). They work before the draft is saved (it is saved first).',
+        ],
+    },
+    {
         version: '0.215.2',
         date: '2026-11-09',
         title: 'Lead tasks: choosing who a task is given to works again',

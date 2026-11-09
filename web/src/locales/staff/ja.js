@@ -6049,5 +6049,7 @@ export default {
     "With a reminder": "リマインダーあり",
     "With comments": "コメントあり",
     "With links": "リンクあり",
-    "Shared with": "共有先"
+    "Shared with": "共有先",
+    "Add a link": "リンクを追加",
+    "Text to show (optional)": "表示するテキスト（任意）"
 }

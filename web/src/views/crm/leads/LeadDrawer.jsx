@@ -207,7 +207,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <Tabs value={tabV} onChange={setTabV}>
                         <Tabs.TabList>
                             <Tabs.TabNav value="profile">{tr("Profile")}</Tabs.TabNav>
-                            {(can('tasks', 'view') || detail?.checklistAsTasks === false) && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
+                            {can('tasks', 'view') && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
                             <Tabs.TabNav value="mails">{tr("Mails")}{detail.mails.length ? ` (${detail.mails.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="meetings">{tr("Meetings")}{detail.meetings.length ? ` (${detail.meetings.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
@@ -217,7 +217,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                         </Tabs.TabList>
                         <div className="pt-4">
                             <Tabs.TabContent value="profile">{profile}</Tabs.TabContent>
-                            {(can('tasks', 'view') || detail?.checklistAsTasks === false) && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} asTasks={detail?.checklistAsTasks !== false} plain={detail?.checklist || []} /></Tabs.TabContent>}
+                            {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} /></Tabs.TabContent>}
                             <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} senders={detail.senders || []} leadEmail={detail.lead?.email || ''} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
                             <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
                             <Tabs.TabContent value="files"><div className="pt-1"><AttachmentsPanel relType="lead" relId={id} canEdit={!!detail.can.edit} /></div></Tabs.TabContent>

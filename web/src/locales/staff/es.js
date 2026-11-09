@@ -6049,5 +6049,7 @@ export default {
     "With a reminder": "Con recordatorio",
     "With comments": "Con comentarios",
     "With links": "Con enlaces",
-    "Shared with": "Compartida con"
+    "Shared with": "Compartida con",
+    "Add a link": "Añadir un enlace",
+    "Text to show (optional)": "Texto a mostrar (opcional)"
 }

@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay, TbPaperclip, TbSearch } from 'react-icons/tb'
+import { TbUpload, TbPhotoSearch, TbLink, TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay, TbPaperclip, TbSearch } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -12,10 +12,11 @@ import Input from '@/components/ui/Input'
 import Segment from '@/components/ui/Segment'
 import Select from '@/components/ui/Select'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
+import MediaPicker from '@/components/crm/MediaPicker'
 import Tag from '@/components/ui/Tag'
 import Tooltip from '@/components/ui/Tooltip'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
-import { api, notify, qs, useCan } from '../kit/api'
+import { api, notify, qs, upload, useCan } from '../kit/api'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import TaskDrawer from '../tasks/TaskDrawer'
 import { People, useTaskStatuses } from '../tasks/shared'
@@ -64,7 +65,7 @@ const LeadTaskList = ({ leadId, staff, onChanged }) => {
         try { setList((await api(`/api/crm/work/tasks?${qs({ relType: 'lead', relId: leadId, done: '1' })}`)).list || []) } catch (e) { notify('danger', e.message); setList([]) }
     }, [leadId])
     useEffect(() => { load() }, [load])
-    const items = useMemo(() => (list || []).map((t) => ({ id: t.id, description: t.name, finished: t.status === 5, dueDate: t.dueDate, hours: t.hours, assignedIds: (t.assignees || []).map((x) => x.id), canFinish: t.canFinish })), [list])
+    const items = useMemo(() => (list || []).map((t) => ({ id: t.id, description: t.name, finished: t.status === 5, dueDate: t.dueDate, hours: t.hours, assignedIds: (t.assignees || []).map((x) => x.id), canFinish: t.canFinish, stats: { steps: [t.checklistDone || 0, t.checklistTotal || 0], subtasks: t.subtasks, comments: t.comments || 0, files: t.files || 0 } })), [list])
     useEffect(() => { live.current = Object.fromEntries(items.map((i) => [i.id, i.assignedIds])) }, [items])
     const changed = async () => { await load(); onChanged?.() }
     // read the task, change one thing, save it back (the same way the board menu does)
@@ -136,6 +137,49 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
     useEffect(() => { if (form && formRef.current) formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [!!form, form?.id]) // eslint-disable-line react-hooks/exhaustive-deps
     const [newCheck, setNewCheck] = useState('')
     const addCheck = () => { const t = newCheck.trim(); if (t) { set({ checks: [...(form.checks || []), { text: t, done: false }] }); setNewCheck('') } }
+    // attach to a draft: the three buttons work on a draft that is not saved yet (it is saved first)
+    const [picker, setPicker] = useState(false)
+    const [linkBox, setLinkBox] = useState(null) // { url, text }
+    const [attKey, setAttKey] = useState(0)
+    const fileInput = useRef(null)
+    const ensureDraft = async () => {
+        if (form.id) return form.id
+        const r = await api(`${base}/mails`, { method: 'POST', body: { ...form, mailId: undefined, date: new Date(form.date).toISOString(), scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null } })
+        setForm((f) => ({ ...f, id: f.id || r?.id }))
+        return r?.id
+    }
+    const uploadFiles = async (files) => {
+        const list = [...(files || [])]
+        if (fileInput.current) fileInput.current.value = ''
+        if (!list.length) return
+        try {
+            const id = await ensureDraft()
+            const fd = new FormData()
+            list.forEach((f) => fd.append('files', f)); fd.append('relType', 'leadmail'); fd.append('relId', id)
+            const r = await upload('/api/crm/media/upload', fd)
+            r.errors?.forEach((e) => notify('danger', `${e.name}: ${e.error}`))
+            if (r.saved?.length) notify('success', tr('{n} done', { n: r.saved.length }))
+            setAttKey((k) => k + 1)
+            run(async () => {}, null, () => {})
+        } catch (e) { notify('danger', e.message) }
+    }
+    const attachFromFiles = async (m) => {
+        setPicker(false)
+        try {
+            const id = await ensureDraft()
+            await api('/api/crm/media', { method: 'POST', body: { action: 'attach', mediaId: m.id, relType: 'leadmail', relId: id } })
+            notify('success', tr('File attached')); setAttKey((k) => k + 1)
+            run(async () => {}, null, () => {})
+        } catch (e) { notify('danger', e.message) }
+    }
+    const addLink = () => {
+        const raw = (linkBox?.url || '').trim()
+        if (!raw) return
+        const url = /^(https?:|mailto:)/i.test(raw) ? raw : `https://${raw}`
+        const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+        set({ body: `${form.body || ''}<p><a href="${esc(url)}">${esc((linkBox.text || '').trim() || raw)}</a></p>` })
+        setLinkBox(null)
+    }
     const [toggling, setToggling] = useState(false) // one click at a time: each one rewrites the list of checks
     const toggle = (m, i) => { if (toggling) return; setToggling(true); run(() => api(`${base}/mails/send`, { method: 'POST', body: { action: 'check', mailId: m.id, index: i, done: !m.checks[i].done } }), null).finally(() => setToggling(false)) }
     const save = () => run(() => api(`${base}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString(), scheduledAt: draft && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null } }).then((r) => { if (r?.scheduleCancelled) notify('warning', tr("The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.")); if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
@@ -197,9 +241,27 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                             </div>
                         </div>
                     )}
-                    {draft && (form.id
-                        ? <div><L>{tr("Attachments")}</L><AttachmentsPanel relType="leadmail" relId={form.id} canEdit maxMb={10} hint={tr("Up to 10 MB per file, 20 MB in all.")} /></div>
-                        : <p className="text-xs text-gray-500">{tr("Save the draft first, then you can attach files.")}</p>)}
+                    {draft && (
+                        <div>
+                            <L>{tr("Attachments")}</L>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <Tooltip title={tr("Upload files")}><Button size="sm" icon={<TbUpload />} onClick={() => fileInput.current?.click()} /></Tooltip>
+                                <Tooltip title={tr("From files")}><Button size="sm" icon={<TbPhotoSearch />} onClick={() => setPicker(true)} /></Tooltip>
+                                <Tooltip title={tr("Add a link")}><Button size="sm" icon={<TbLink />} onClick={() => setLinkBox(linkBox ? null : { url: '', text: '' })} /></Tooltip>
+                                <span className="text-xs text-gray-500">{tr("Up to 10 MB per file, 20 MB in all.")}</span>
+                                <input ref={fileInput} type="file" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
+                                <MediaPicker open={picker} kind="" onClose={() => setPicker(false)} onPick={attachFromFiles} />
+                            </div>
+                            {linkBox && (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    <Input size="sm" className="min-w-[200px] flex-1" autoFocus value={linkBox.url} placeholder="https://…" onChange={(e) => setLinkBox({ ...linkBox, url: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink() } }} />
+                                    <Input size="sm" className="min-w-[160px] flex-1" value={linkBox.text} placeholder={tr("Text to show (optional)")} onChange={(e) => setLinkBox({ ...linkBox, text: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink() } }} />
+                                    <Button size="sm" variant="solid" disabled={!linkBox.url.trim()} onClick={addLink}>{tr("Add")}</Button>
+                                </div>
+                            )}
+                            {form.id && <div className="mt-2"><AttachmentsPanel key={attKey} listOnly relType="leadmail" relId={form.id} canEdit maxMb={10} /></div>}
+                        </div>
+                    )}
                     <div className="flex flex-wrap gap-2"><Button size="sm" variant="solid" onClick={save}>{draft ? tr("Save draft") : tr("Save mail")}</Button><Button size="sm" onClick={() => setForm(null)}>{draft && form.id ? tr("Close") : tr("Cancel")}</Button></div>
                 </div>
             )}

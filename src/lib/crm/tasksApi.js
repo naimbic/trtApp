@@ -129,6 +129,8 @@ export async function listTasks(p = {}) {
     if (p.clientVisible === '1') and.push({ visibleToClient: true })
     if (p.relType) and.push({ relType: p.relType })
     if (oid(p.relId)) and.push({ relId: p.relId })
+    // Settings > Leads "keep the checklist as lines": the tasks of leads stay in the lead's own Tasks tab and are left out of the Tasks page
+    if (!oid(p.relId) && !oid(p.leadId) && !oid(p.clientId) && (await readSettings(['lead_checklist_plain'])).on('lead_checklist_plain')) and.push({ NOT: { relType: 'lead' } })
     if (p.query) and.push({ OR: [{ name: { contains: p.query, mode: 'insensitive' } }, { description: { contains: p.query, mode: 'insensitive' } }] })
     // date filters: a range on the due / start / completion date, only the late ones, or the ones without a date.
     // Days are whole days (UTC), the caller says what "today" is where it lives.

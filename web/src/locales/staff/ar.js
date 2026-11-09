@@ -6049,5 +6049,7 @@ export default {
     "With a reminder": "مع تذكير",
     "With comments": "مع تعليقات",
     "With links": "مع روابط",
-    "Shared with": "مشاركة مع"
+    "Shared with": "مشاركة مع",
+    "Add a link": "إضافة رابط",
+    "Text to show (optional)": "النص المعروض (اختياري)"
 }

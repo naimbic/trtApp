@@ -20,7 +20,7 @@ export const fileOk = (f, accept, maxMb) => {
 }
 
 /** Files attached to one record (client, invoice, contract…), stored in the Space. */
-const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = false, accept, maxMb, hint }) => {
+const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = false, accept, maxMb, hint, listOnly = false }) => {
     const [list, setList] = useState([])
     const [loading, setLoading] = useState(true)
     const [busy, setBusy] = useState(false)
@@ -66,7 +66,7 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
 
     return (
         <div>
-            {canEdit && (
+            {canEdit && !listOnly && (
                 <div
                     onDragOver={(e) => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); send(e.dataTransfer.files) }}
                     className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-dashed px-4 py-4 transition ${drag ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-600'}`}

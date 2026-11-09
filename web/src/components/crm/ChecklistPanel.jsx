@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import dayjs from 'dayjs'
-import { TbExternalLink, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck } from 'react-icons/tb'
+import { TbExternalLink, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck, TbChecklist, TbMessageCircle, TbPaperclip, TbSubtask } from 'react-icons/tb'
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
@@ -103,6 +103,19 @@ const PeoplePicker = ({ staff, value = [], onChange, onToggle, disabled }) => {
     )
 }
 
+/** Small counts on a row that is a whole task: steps done, sub-tasks, comments, files (only what exists). */
+const Stats = ({ s }) => {
+    const chip = (key, Icon, text, title) => <span key={key} title={title} className="inline-flex items-center gap-0.5 rounded-full bg-gray-100 px-1.5 py-0.5 text-[11px] font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-300"><Icon className="text-xs" />{text}</span>
+    return (
+        <span className="flex items-center gap-1">
+            {s.steps?.[1] > 0 && chip('steps', TbChecklist, `${s.steps[0]}/${s.steps[1]}`, tr('Checklist'))}
+            {s.subtasks?.total > 0 && chip('sub', TbSubtask, `${s.subtasks.done}/${s.subtasks.total}`, tr('Subtasks'))}
+            {s.comments > 0 && chip('com', TbMessageCircle, s.comments, tr('Comments'))}
+            {s.files > 0 && chip('files', TbPaperclip, s.files, tr('Files'))}
+        </span>
+    )
+}
+
 const ReminderMenu = ({ value, due, onPick, disabled }) => (
     <Dropdown placement="bottom-end" disabled={disabled || !due} renderTitle={<button type="button" disabled={disabled || !due} className={classNames('grid size-7 shrink-0 place-items-center rounded-full text-base', value != null ? 'bg-primary/10 text-primary' : 'text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700', !due && 'opacity-40')} title={due ? tr('Reminder') : tr('Set a due date first')} aria-label={tr('Reminder')}>{value != null ? <TbBell /> : <TbBellOff />}</button>}>
         {REMINDERS.map(([v, l]) => <Dropdown.Item key={String(v)} eventKey={String(v)} onClick={() => onPick(v)}><span className="flex items-center">{tr(l)}{value === v && <TbCheck className="ml-3" />}</span></Dropdown.Item>)}
@@ -171,6 +184,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
                                     : <div role={canEdit ? 'button' : undefined} tabIndex={canEdit ? 0 : undefined} onClick={canEdit ? () => setEditing({ id: c.id, text: c.description }) : undefined} onKeyDown={canEdit ? (e) => { if (e.key === 'Enter') setEditing({ id: c.id, text: c.description }) } : undefined} className={classNames('w-full break-words text-left', canEdit && 'cursor-text', c.finished && 'text-gray-400 line-through')}><Mentioned text={c.description} /></div>}
                             </div>
                             <div className="ml-auto flex items-center gap-1">
+                                {c.stats && <Stats s={c.stats} />}
                                 <HoursChip value={c.hours} disabled={!canEdit} onChange={(v) => upd(c, { hours: v })} />
                                 <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />
                                 {reminders && <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />}

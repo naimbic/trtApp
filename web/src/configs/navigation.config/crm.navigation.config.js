@@ -13,7 +13,7 @@ const col = (title, items) => ({ sub: title.toLowerCase().replace(/[^a-z]+/g, ''
 const STRUCTURE = [
     { group: 'Leads', icon: 'crmLeads', entries: ['leads', 'web-to-lead', 'lead-email-integration', 'leads-setting'] },
     { group: 'Tasks', icon: 'crmTasks', entries: [col('Work', ['tasks-board', 'my-tasks', 'team-tasks', 'timeline', 'notes', 'todos']), col('Tracking', ['time-report', 'task-timers', 'issues', 'statuses', 'checklist-templates', 'tasks-setting'])] },
-    { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'customers-setting'] },
+    { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'file-manager', 'customers-setting'] },
     { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
     { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
     { group: 'Growth & insight', icon: 'crmUtilities', entries: ['grow', 'goals', 'surveys', 'my-growth', 'reports', 'ai', 'activity-log'] },
@@ -36,7 +36,7 @@ const pool = Object.fromEntries([
     ...resources.filter((r) => r.nav !== false && !r.hidden).map((r) => ({ key: r.key, title: r.plural, path: `/crm/${r.key}`, feature: r.feature, also: r.also })),
 ].map((i) => [i.key, i]))
 // pages that live in the profile menu (top right) instead of the menu: placed there, so they are not "lost"
-const IN_PROFILE_MENU = ['reminders', 'events', 'notifications', 'file-manager']
+const IN_PROFILE_MENU = ['reminders', 'events', 'notifications']
 const placed = new Set([...IN_PROFILE_MENU, ...STRUCTURE.flatMap((g) => g.entries.flatMap((e) => (typeof e === 'string' ? [e] : e.items)))])
 // a page nobody placed still shows (at the end of Setup), so nothing is ever missing from the menu
 const lost = Object.keys(pool).filter((k) => !placed.has(k))

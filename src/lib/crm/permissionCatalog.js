@@ -85,7 +85,7 @@ export const FEATURE_HINTS = {
     invoices: 'Invoices and their payments, PDFs and reminders. Money amounts also need "Financial figures".',
     estimate_request: 'Estimate requests that come from the website or from clients.',
     leads: 'The lead board and the lead popup: profile, tasks, mails, meetings, files, comments and offers. View own = only the leads assigned to you or added by you. Edit = change any lead you can see, including its mails (write, draft and schedule), meetings and tasks; without it, only leads assigned to you or added by you.',
-    customers: 'Clients with their contacts, mails, notes, files and requests. Without View the Customers menu is hidden. View own = only the clients you look after.',
+    customers: 'Clients with their contacts, mails (Create or Edit lets a person write, draft and schedule them), notes, files and requests. Without View the Customers menu is hidden. View own = only the clients you look after.',
     dashboard: 'The Dashboard with revenue, invoices and client figures. Administrators and people who manage roles always see it; everyone else lands on the Team dashboard.',
     activity_log: 'See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.',
     finance: 'Without this, every income, total, balance and money chart shows *** (cards, lists, reports, client profiles).',

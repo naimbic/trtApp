@@ -10,7 +10,7 @@ const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const staffName = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || ''
 
-/** The client (only one the person may see) and what they may do with its mails: edit = "Edit" on Customers; changing another person's mail needs "Edit mails logged by others". */
+/** The client (only one the person may see) and what they may do with its mails: write = "Edit" or "Create" on Customers, or the clients they look after; changing another person's mail needs "Edit mails logged by others". */
 async function gate(id, { write = false } = {}) {
     const session = await requirePermission('customers', 'view')
     const authority = session.user.authority || []
@@ -19,7 +19,8 @@ async function gate(id, { write = false } = {}) {
     if (!client) throw fail('Client not found', 404)
     const staffId = await getStaffId(session)
     const admin = isCrmAdmin(authority)
-    const edit = admin || hasCap(authority, 'customers', 'edit')
+    // writing and scheduling mails: Edit or Create on Customers, or a client the person looks after (View own)
+    const edit = admin || hasCap(authority, 'customers', 'edit') || hasCap(authority, 'customers', 'create') || Object.keys(sc).length > 0
     if (write && !edit) throw fail('You are not allowed to change this client', 403)
     const a = { staffId: staffId || undefined, session, authority, admin, edit, can: (cap) => admin || hasCap(authority, 'customers', cap) }
     return { a, client }

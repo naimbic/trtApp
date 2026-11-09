@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.216.3',
+        date: '2026-11-09',
+        title: 'Customers: mails can be drafted and scheduled by more roles; File manager in the menu',
+        items: [
+            'Customers > Mails: writing, drafting and scheduling a mail now needs Customers "Create" or "Edit", or being on the account team of that client (View own). Before it needed "Edit" only, so an Editor role could not add a draft.',
+            'The File manager page is now in the main menu (Customers group) for anyone with the File manager right. It was only in the profile and settings menus.',
+        ],
+    },
+    {
         version: '0.216.2',
         date: '2026-11-09',
         title: 'Permissions: Leads > Edit can be given to a role',

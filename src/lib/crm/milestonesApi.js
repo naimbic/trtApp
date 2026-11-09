@@ -1,7 +1,7 @@
 // Project milestones: the board (every project with its milestones, progress and dates), one milestone with its tasks,
 // create / edit / delete / reorder, and "complete all tasks". Visibility follows the projects permission (View own = projects the person is in).
 import prisma from '@/lib/prisma'
-import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
+import { requirePermission, requireAnyPermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { milestoneState, percent, daysLeft } from '@/lib/crm/milestonesCalc'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
@@ -9,10 +9,12 @@ const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const nz = (v) => (v === undefined || v === null || String(v).trim() === '' ? null : String(v).trim())
 const NONE = '000000000000000000000000'
 
+// the milestone rights of Projects (Create / Edit / Delete milestones) work next to the general Create / Edit / Delete of Projects
+const ALIAS = { create: 'create_milestones', edit: 'edit_milestones', delete: 'delete_milestones' }
 async function access(cap = 'view') {
-    const session = await requirePermission('projects', cap)
+    const session = ALIAS[cap] ? await requireAnyPermission([['projects', cap], ['projects', ALIAS[cap]]]) : await requirePermission('projects', cap)
     const authority = session.user.authority || []
-    return { session, authority, scope: viewScope(authority, 'projects'), staffId: await getStaffId(session), can: (c) => hasCap(authority, 'projects', c) }
+    return { session, authority, scope: viewScope(authority, 'projects'), staffId: await getStaffId(session), can: (c) => hasCap(authority, 'projects', c) || (!!ALIAS[c] && hasCap(authority, 'projects', ALIAS[c])) }
 }
 async function visibleProjects(a) {
     if (a.scope === 'all') return {}

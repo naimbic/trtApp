@@ -1608,6 +1608,38 @@ try {
         await prisma.crmNotifState.deleteMany({ where: { staffId: { in: [nA.staffId, nB.staffId] } } })
         await prisma.crmOption.deleteMany({ where: { name: { in: [`notif_seen_${nA.staffId}`, `notif_seen_${nB.staffId}`] } } })
     }
+    {
+        // Rights added later: client mails / files, lead edit, milestone rights, staff and role edits. Each one lets in only what it says.
+        console.log('\n== Client mails, leads edit, milestones, staff and roles')
+        const X = (await prisma.crmClient.findFirst({ select: { id: true } }))?.id
+        const lead = await prisma.crmLead.create({ data: { name: 'zz perm lead', addedFrom: made.staff[0] || undefined } }); made.rows.unshift(['crmLead', lead.id])
+        const project = await prisma.crmProject.create({ data: { name: 'zz perm project', clientId: X, status: 2 } }); made.rows.push(['crmProject', project.id])
+        const U = {
+            view: await login(await makeUser('pv-view', { customers: ['view'], leads: ['view'], projects: ['view'], staff: ['view'], roles: ['view'] })),
+            cmail: await login(await makeUser('pv-cmail', { customers: ['view'], client_mails: ['create'] })),
+            ccreate: await login(await makeUser('pv-ccreate', { customers: ['view', 'create'] })),
+            ledit: await login(await makeUser('pv-ledit', { leads: ['view', 'edit'] })),
+            ms: await login(await makeUser('pv-ms', { projects: ['view', 'create_milestones'] })),
+            staffEdit: await login(await makeUser('pv-staffedit', { staff: ['view', 'edit'] })),
+        }
+        const draft = { direction: 'draft', subject: 'zz perm draft', body: '<p>hello</p>' }
+        check('Client mails: View alone cannot write or draft a mail', (await U.view('POST', `/api/crm/customers/${X}/mails`, draft)).status === 403)
+        check('Client mails: "Client mails: Create" can draft a mail without editing the client', (await U.cmail('POST', `/api/crm/customers/${X}/mails`, draft)).status === 201)
+        check('Client mails: Customers "Create" can draft a mail too', (await U.ccreate('POST', `/api/crm/customers/${X}/mails`, draft)).status === 201)
+        check('Client mails: the right never lets a person change the client itself', (await U.cmail('PATCH', `/api/crm/customers/${X}`, { company: 'zz hacked' })).status === 403)
+        await prisma.crmLeadMail.deleteMany({ where: { clientId: X, subject: 'zz perm draft' } })
+        check('Client files: without a right nobody adds a file to a client (the upload is refused)', (await U.view('POST', '/api/crm/media', { action: 'attach', relType: 'customer', relId: X, mediaId: '000000000000000000000000' })).status === 403)
+        check('Leads: View alone can see a lead but cannot write a mail on a lead of someone else (Edit is a real right now)', (await U.view('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)).status === 403)
+        check('Leads: the Edit right can write and draft mails on any lead it sees', (await U.ledit('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)).status === 201)
+        await prisma.crmLeadMail.deleteMany({ where: { leadId: lead.id } })
+        check('Milestones: View alone cannot add a milestone', (await U.view('POST', '/api/crm/milestones-board', { projectId: project.id, name: 'zz m' })).status === 403)
+        check('Milestones: "Create milestones" adds one, and nothing more (no project edit)', (await U.ms('POST', '/api/crm/milestones-board', { projectId: project.id, name: 'zz m' })).status === 201 && (await U.ms('PATCH', `/api/crm/projects/${project.id}`, { name: 'zz renamed' })).status === 403)
+        await prisma.crmMilestone.deleteMany({ where: { projectId: project.id } })
+        const me = await prisma.crmStaff.findFirst({ where: { id: made.staff[0] } })
+        check('Staff: View alone cannot activate / deactivate a member or change a role', (await U.view('PATCH', `/api/crm/team/${me.id}`, { active: false })).status === 403 && (await U.view('PATCH', '/api/crm/access/roles/000000000000000000000000', { name: 'x' })).status === 403 && (await U.view('PUT', `/api/crm/access/staff/${me.id}`, { permissions: { roles: ['edit'] } })).status === 403)
+        check('Staff: Edit on staff still cannot hand out rights that the person does not have (no Roles edit)', (await U.staffEdit('PUT', `/api/crm/access/staff/${me.id}`, { permissions: { roles: ['view', 'create', 'edit', 'delete'] } })).status === 403)
+        check('Staff: a member can never deactivate their own account', (await U.staffEdit('PATCH', `/api/crm/team/${(await prisma.crmStaff.findFirst({ where: { email: { contains: 'pv-staffedit' } } })).id}`, { active: false })).status === 400)
+    }
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

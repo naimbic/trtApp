@@ -46,6 +46,9 @@ const Team = () => {
     const navigate = useNavigate()
     const authority = useSessionUser((s) => s.user.authority) || []
     const canAdmin = authority.includes('admin') || authority.includes('crm.admin')
+    const canEditStaff = canAdmin || authority.includes('crm.staff.edit')
+    const canAddStaff = canAdmin || authority.includes('crm.staff.create')
+    const canSeeRoles = canAdmin || authority.includes('crm.roles.view') || authority.includes('crm.roles.edit')
     const canLoginAs = canAdmin || authority.includes('crm.staff.login_as')
     const canActivity = canAdmin || authority.includes('crm.activity_log.view')
     const [data, setData] = useState({ members: [], stats: {} })
@@ -60,7 +63,7 @@ const Team = () => {
     const [formError, setFormError] = useState('')
     const location = useLocation()
     const [tab, setTab] = useState(location.pathname.endsWith('/roles') ? 'roles' : 'members')
-    usePageTabs([{ key: 'members', label: tr("Members") }, { key: 'roles', label: tr("Roles & permissions") }], tab, setTab)
+    usePageTabs([{ key: 'members', label: tr("Members") }, ...(canSeeRoles ? [{ key: 'roles', label: tr("Roles & permissions") }] : [])], tab, setTab)
     const [access, setAccess] = useState({ open: false, id: null })
 
     useEffect(() => {
@@ -149,7 +152,7 @@ const Team = () => {
                     <h3>{tab === 'roles' ? tr("Roles & permissions") : tr("Team")}</h3>
                     <p className="text-sm text-gray-500">{tab === 'roles' ? tr("Choose what each role can see and do. Members get the permissions of their role.") : tr("Manage members, departments and sign-in access")}</p>
                 </div>
-                {tab === 'members' && <Button variant="solid" icon={<TbPlus />} onClick={openNew}>{tr("Add member")}</Button>}
+                {tab === 'members' && canAddStaff && <Button variant="solid" icon={<TbPlus />} onClick={openNew}>{tr("Add member")}</Button>}
             </div>
 
             {tab === 'roles' ? (
@@ -209,7 +212,7 @@ const Team = () => {
                                         <div className="flex flex-wrap items-center gap-1.5">
                                             {m.admin ? <Tag className="bg-purple-100 text-purple-700">{tr("Super Admin")}</Tag> : (
                                                 <div className="w-36">
-                                                    <Select isClearable size="sm" placeholder={tr("No role")} options={roleOptions} value={roleOptions.find((o) => o.value === m.role?.id) || null} onChange={(o) => changeRole(m, o)} menuPortalTarget={document.body} menuPosition="fixed" menuPlacement="auto" classNames={{ menu: () => 'select-menu !min-w-[210px]' }} styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} />
+                                                    <Select isClearable isDisabled={!canEditStaff} size="sm" placeholder={tr("No role")} options={roleOptions} value={roleOptions.find((o) => o.value === m.role?.id) || null} onChange={(o) => changeRole(m, o)} menuPortalTarget={document.body} menuPosition="fixed" menuPlacement="auto" classNames={{ menu: () => 'select-menu !min-w-[210px]' }} styles={{ menuPortal: (b) => ({ ...b, zIndex: 10000 }) }} />
                                                 </div>
                                             )}
                                         </div>
@@ -221,7 +224,7 @@ const Team = () => {
                                     </Td>
                                     <Td>
                                         <div className="flex items-center gap-2.5">
-                                            <Switcher checked={m.active} onChange={(checked) => toggleActive(m, checked)} />
+                                            <Switcher checked={m.active} disabled={!canEditStaff} onChange={(checked) => toggleActive(m, checked)} />
                                             <span className={`hidden 2xl:inline ${m.active ? 'text-emerald-600' : 'text-gray-400'}`}>{m.active ? tr("Active") : tr("Inactive")}</span>
                                             {!m.hasLogin && <Tooltip title={tr("No login account yet")}><Tag className="bg-amber-100 text-amber-700">{tr("No login")}</Tag></Tooltip>}
                                         </div>
@@ -229,12 +232,12 @@ const Team = () => {
                                     <Td className={`whitespace-nowrap text-gray-500 ${m.active ? '' : 'opacity-60 grayscale'}`}>{m.lastLogin ? dayjs(m.lastLogin).format('MMM D, HH:mm') : tr("Never")}{m.lastActive && <div className="text-xs text-gray-400">{tr("Active")} {dayjs(m.lastActive).format('MMM D, HH:mm')}</div>}</Td>
                                     <Td className={m.active ? undefined : 'opacity-60 grayscale'}>
                                         <div className={`flex items-center justify-end gap-0.5 ${m.active ? '' : 'pointer-events-none'}`}>
-                                            <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>
+                                            {canEditStaff && <Tooltip title={tr("Edit")}><Button size="sm" variant="plain" icon={<TbPencil />} onClick={() => openEdit(m)} /></Tooltip>}
                                             {canActivity && <Tooltip title={tr("Activity log")}><Button size="sm" variant="plain" icon={<TbHistory />} data-href={`/crm/activity/staff/${m.id}`} onClick={() => navigate(`/crm/activity/staff/${m.id}`)} /></Tooltip>}
                                             {canLoginAs && m.hasLogin && <Tooltip title={tr("Log in as this member")}><Button size="sm" variant="plain" icon={<TbUserShare />} onClick={() => loginAs(m.id).catch((e) => notify('danger', e.message))} /></Tooltip>}
-                                            <Tooltip title={tr("Permissions")}><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>
-                                            {m.hasLogin && <Tooltip title={tr("Set a password")}><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
-                                            {m.hasLogin && (
+                                            {canEditStaff && <Tooltip title={tr("Permissions")}><Button size="sm" variant="plain" icon={<TbShieldLock />} onClick={() => setAccess({ open: true, id: m.id })} /></Tooltip>}
+                                            {canEditStaff && m.hasLogin && <Tooltip title={tr("Set a password")}><Button size="sm" variant="plain" icon={<TbLockPassword />} onClick={() => setSetPw({ member: m, value: '', saving: false, error: '' })} /></Tooltip>}
+                                            {canEditStaff && m.hasLogin && (
                                                 <Dropdown placement="bottom-end" renderTitle={<EllipsisButton />}>
                                                     <Dropdown.Item eventKey="link" onClick={() => setConfirm({ member: m, kind: 'link' })}><TbLink className="mr-2 text-lg" />{tr("Reset link")}</Dropdown.Item>
                                                     <Dropdown.Item eventKey="reset" onClick={() => setConfirm({ member: m, kind: 'reset' })}><TbKey className="mr-2 text-lg" />{tr("One-time password")}</Dropdown.Item>

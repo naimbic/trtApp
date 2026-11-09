@@ -125,6 +125,8 @@ const SPLITS = [
     { mark: 'perm_migration_activity_log_v1', from: 'settings', to: 'activity_log', map: { view: ['view'] } },
     { mark: 'perm_migration_client_requests_v1', from: 'customers', to: 'client_requests', map: { view: ['view'], view_own: ['view'], edit: ['create', 'edit'], delete: ['delete'] } },
     { mark: 'perm_migration_client_reports_v1', from: 'client_requests', to: 'client_reports', map: { view: ['view'], create: ['create'], edit: ['edit'], delete: ['delete'] } },
+    // Leads got a real Edit right (it used to be given to every staff member): whoever could see all leads keeps editing them
+    { mark: 'perm_migration_leads_edit_v1', from: 'leads', to: 'leads', map: { view: ['edit'] } },
     { mark: 'perm_migration_leave_v1', from: 'tasks', to: 'leave', map: { view: ['view'], view_own: ['view_own'], create: ['create'], edit: ['edit'], delete: ['delete'] } },
 ]
 export async function splitPermissions() {

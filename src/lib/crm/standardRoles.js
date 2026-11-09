@@ -34,7 +34,7 @@ export const ROLES = withTools({
     'Project Manager': pick({
         customers: 'read', projects: 'all', tasks: 'all', issues: 'all', checklist_templates: ['create', 'delete'], tickets: 'read', goals: 'read', reports: REPORT('work', 'support'),
     }),
-    Viewer: pick(Object.fromEntries(FEATURES.filter((f) => !['staff', 'roles', 'settings', 'email_templates', 'passwords', 'activity_log', 'dashboard', 'finance', 'bulk_pdf_exporter', 'profile', ...SENSITIVE].includes(f.key)).map((f) => [f.key, 'read']))),
+    Viewer: pick(Object.fromEntries(FEATURES.filter((f) => !['staff', 'roles', 'settings', 'email_templates', 'passwords', 'activity_log', 'dashboard', 'finance', 'profile', ...SENSITIVE].includes(f.key)).map((f) => [f.key, 'read']))),
 })
 
 export const standardRolePermissions = (name) => cleanPermissions(ROLES[name])

@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.217.1',
+        date: '2026-11-09',
+        title: 'Permissions audit: Leads Edit is a real right, milestone rights work, dead rights removed',
+        items: [
+            'Leads: every staff member used to get "Edit" on leads automatically, so anyone who could see all leads could also change them and write their mails. Edit is now a real right (own leads, assigned or added by the person, are still always editable). Members who can already view all leads were given Edit so nothing changes for them; untick it on a role to take it away, then press "Save & apply to members".',
+            'Projects: "Create milestones", "Edit milestones" and "Delete milestones" now work (they did nothing before). They work next to the general Create / Edit / Delete of Projects.',
+            'Removed rights that were shown in Roles but controlled nothing: Estimate requests, Bulk PDF exporter, Edit timesheets, Edit own timesheets, Delete own timesheets.',
+            'Team page: the Add member button, the Active switch, the role picker, Edit, Permissions, password and reset buttons, and the Roles & permissions tab only show to people who have the matching right. (The server already refused the actions.)',
+            'The permissions check now also covers client mails, leads Edit, milestones, staff and roles edits (632 checks).',
+        ],
+    },
+    {
         version: '0.217.0',
         date: '2026-11-09',
         title: 'Requests and Reports: files, screenshots and links in messages; Roles: clearer apply to members',

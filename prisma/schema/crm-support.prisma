@@ -384,6 +384,8 @@ model CrmClientReportComment {
   attachments Json?
   /// web addresses added to the message: [{ url, title }]
   links      Json?
+  /// emoji reactions: { "👍": [staffId, ...] }
+  reactions  Json?
   createdAt  DateTime  @default(now())
 
   @@index([reportId])

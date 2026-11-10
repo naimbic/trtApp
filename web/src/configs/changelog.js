@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.220.0',
+        date: '2026-11-10',
+        title: 'Reports & Strategies popup: Upload, File manager, rights, and the same discussion as Ideas',
+        items: [
+            'Files and links of a report or strategy: three clear buttons, Upload, From the file manager (opens the picker, several files at once) and Add a link. Files and links can be renamed in place, opened, and removed.',
+            'Roles > Customers > "Report files & links": View, Create (upload, choose from the File manager, add a link), Edit (rename) and Delete. Choosing from the File manager also needs the File manager right. The server refuses the rest, and a person without View never sees the files.',
+            'Nothing changes today: everyone who already had Reports & Strategies rights, and every role, received the four switches. Untick the ones you want to take away, then press "Save & apply to members".',
+            'The discussion works like the one in Ideas: emoji reactions, tag a colleague on a message already sent, set a reminder on a message, reply, edit, delete, and mention the contacts of the client.',
+        ],
+    },
+    {
         version: '0.219.0',
         date: '2026-11-10',
         title: 'Task checklist: its own rights (View, Create, Edit, Delete) and a clearer layout',

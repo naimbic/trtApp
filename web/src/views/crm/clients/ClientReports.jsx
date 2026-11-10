@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbChartBar, TbCompass, TbPlus, TbSearch, TbSend, TbMessageCircle, TbChecklist, TbPaperclip, TbTrash, TbUsers, TbEye, TbEyeOff, TbLink, TbFileText } from 'react-icons/tb'
+import { TbChartBar, TbCompass, TbPlus, TbSearch, TbSend, TbMessageCircle, TbChecklist, TbPaperclip, TbTrash, TbUsers, TbEye, TbEyeOff, TbLink, TbFileText, TbUpload, TbFolderSymlink, TbExternalLink } from 'react-icons/tb'
 import Pipeline from '@/components/crm/Pipeline'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
@@ -13,9 +13,11 @@ import FoldSection from '@/components/crm/FoldSection'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
 import { CommentAttach, CommentFiles, EMPTY_EXTRAS, hasExtras } from '@/components/crm/CommentExtras'
-import { CommentTools, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
+import { CommentFoot, CommentEdit, ReplyQuote, ReplyingTo, CommentThread } from '@/components/crm/CommentParts'
 import cn from '@/utils/classNames'
-import { api, notify, upload, formatBytes } from '../kit/api'
+import MediaPicker from '@/components/crm/MediaPicker'
+import { api, notify, upload, formatBytes, useCan } from '../kit/api'
+import { plainOf } from '@/components/crm/ShareButton'
 import { SystemLine } from './ClientRequests'
 import { tr } from '@/utils/t'
 
@@ -38,8 +40,13 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
     const [busy, setBusy] = useState('')
     const [del, setDel] = useState(false)
     const [link, setLink] = useState({ url: '', title: '' })
+    const [linkOpen, setLinkOpen] = useState(false)
+    const [pick, setPick] = useState(false)
+    const can_ = useCan()
+    const canBrowse = can_('file_manager', 'view')
     const isNew = !!report && !report.id
     const can = data.can
+    const fcan = can.files || { view: true, create: true, edit: true, delete: true }
     const readOnly = isNew ? !can.create : !can.edit
     const labels = Object.fromEntries(data.statuses.map((s) => [s.key, s.name]))
     const url = (p = '') => `/api/crm/client-reports/${report.id}/comments?clientId=${clientId}${p}`
@@ -55,6 +62,8 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
     const staffOpts = data.staff.map((s) => ({ value: s.id, label: s.name }))
     const statusOpts = data.statuses.map((s) => ({ value: s.key, label: tr(s.name) }))
     const reload = () => api(url()).then((r) => setComments(r.list)).catch(() => {})
+    const react = async (c, emoji) => { try { await api(`/api/crm/client-reports/${report.id}/comments`, { method: 'POST', body: { clientId, commentId: c.id, react: emoji } }); await reload() } catch (e) { notify('danger', e.message) } }
+    const mention = async (c, sid) => { try { await api(`/api/crm/client-reports/${report.id}/comments`, { method: 'POST', body: { clientId, commentId: c.id, mention: sid } }); notify('success', tr('Colleague mentioned')) } catch (e) { notify('danger', e.message) } }
     const save = async () => {
         if (!v.title.trim()) { setSec('doc'); return notify('danger', tr('Give it a title')) }
         setBusy('save')
@@ -75,9 +84,13 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
         setBusy('file')
         try { const got = []; for (const f of files) { const fd = new FormData(); fd.append('file', f); got.push(await upload('/api/crm/client-reports/upload', fd)) } set({ attachments: [...v.attachments, ...got].slice(0, 20) }) } catch (e) { notify('danger', e.message) } finally { setBusy('') }
     }
+    const pickFile = (m) => {
+        if (v.attachments.some((x) => x.url === m.url)) return
+        set({ attachments: [...v.attachments, { url: m.url, name: m.name, mime: m.mime || '', size: m.size || 0, kind: m.kind || 'file' }].slice(0, 20) })
+    }
     const addLink = () => {
         if (!isLink(link.url.trim())) return notify('danger', tr('Enter a valid web address'))
-        set({ links: [...v.links, { url: link.url.trim(), title: link.title.trim() }].slice(0, 20) }); setLink({ url: '', title: '' })
+        set({ links: [...v.links, { url: link.url.trim(), title: link.title.trim() }].slice(0, 20) }); setLink({ url: '', title: '' }); setLinkOpen(false)
     }
     const st = data.statuses.find((s) => s.key === v.status)
     const nMsg = comments.filter((c) => !c.system).length
@@ -100,13 +113,24 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                                 <div><L>{tr('Content')}</L><RichEditor minHeight={180} value={v.body} onChange={(html) => set({ body: html })} placeholder={v.kind === 'strategy' ? tr('Goals, actions, timing and budget...') : tr('What was done, the results, what comes next...')} /></div>
                             </div>
                         </FoldSection>
-                        <FoldSection icon={<TbPaperclip />} tone="blue" title={tr('Files and links')} summary={[v.attachments.length && tr('{n} file(s)', { n: v.attachments.length }), v.links.length && tr('{n} link(s)', { n: v.links.length })].filter(Boolean).join(' · ')} open={sec === 'files'} onToggle={() => toggle('files')}>
-                            <label className="mb-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600"><TbPaperclip />{tr('Add a file')}<input type="file" multiple hidden onChange={(e) => { addFiles([...e.target.files]); e.target.value = '' }} /></label>
+                        {fcan.view && <FoldSection icon={<TbPaperclip />} tone="blue" title={tr('Files and links')} summary={[v.attachments.length && tr('{n} file(s)', { n: v.attachments.length }), v.links.length && tr('{n} link(s)', { n: v.links.length })].filter(Boolean).join(' · ')} open={sec === 'files'} onToggle={() => toggle('files')}>
+                            {!readOnly && (fcan.create || canBrowse) && (
+                                <div className="mb-3 grid gap-2 sm:grid-cols-3">
+                                    {fcan.create && <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm font-semibold text-gray-600 transition hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300"><TbUpload className="text-lg" />{busy === 'file' ? tr('Uploading…') : tr('Upload')}<input type="file" multiple hidden onChange={(e) => { addFiles([...e.target.files]); e.target.value = '' }} /></label>}
+                                    {fcan.create && canBrowse && <button type="button" onClick={() => setPick(true)} className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm font-semibold text-gray-600 transition hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300"><TbFolderSymlink className="text-lg" />{tr('From the file manager')}</button>}
+                                    {fcan.create && <button type="button" onClick={() => setLinkOpen((x) => !x)} className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm font-semibold text-gray-600 transition hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300"><TbLink className="text-lg" />{tr('Add a link')}</button>}
+                                </div>
+                            )}
+                            {!v.attachments.length && !v.links.length && <p className="py-3 text-center text-sm text-gray-400">{tr('No files or links yet.')}</p>}
                             <div className="space-y-1.5">{v.attachments.map((a) => (
                                 <div key={a.url} className="flex items-center gap-2 rounded-lg border border-gray-200 p-1.5 text-sm dark:border-gray-700">
                                     {a.kind === 'image' ? <img loading="lazy" decoding="async" src={a.url} alt="" className="size-10 shrink-0 rounded-md object-cover" /> : <TbPaperclip className="mx-2 shrink-0 text-gray-400" />}
-                                    <a href={a.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-semibold hover:underline">{a.name}</a><span className="text-xs text-gray-400">{formatBytes(a.size)}</span>
-                                    {!readOnly && <button type="button" aria-label={tr('Remove')} onClick={() => set({ attachments: v.attachments.filter((x) => x.url !== a.url) })} className="text-gray-400 hover:text-red-500"><TbTrash /></button>}
+                                    {!readOnly && fcan.edit
+                                        ? <input value={a.name} maxLength={120} aria-label={tr('Name')} onChange={(e) => set({ attachments: v.attachments.map((x) => (x.url === a.url ? { ...x, name: e.target.value } : x)) })} className="h-8 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 text-sm font-semibold outline-none hover:border-gray-200 focus:border-primary dark:hover:border-gray-600" />
+                                        : <span className="min-w-0 flex-1 truncate font-semibold">{a.name}</span>}
+                                    <span className="shrink-0 text-xs text-gray-400">{formatBytes(a.size)}</span>
+                                    <a href={a.url} target="_blank" rel="noreferrer" aria-label={tr('Open')} title={tr('Open')} className="grid size-7 shrink-0 place-items-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbExternalLink /></a>
+                                    {!readOnly && fcan.delete && <button type="button" aria-label={tr('Remove')} title={tr('Remove')} onClick={() => set({ attachments: v.attachments.filter((x) => x.url !== a.url) })} className="grid size-7 shrink-0 place-items-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"><TbTrash /></button>}
                                 </div>
                             ))}</div>
                             <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
@@ -114,20 +138,23 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                                 <div className="space-y-1.5">{v.links.map((l) => (
                                     <div key={l.url} className="flex items-center gap-2 rounded-lg border border-gray-200 p-1.5 text-sm dark:border-gray-700">
                                         <TbLink className="mx-2 shrink-0 text-gray-400" />
-                                        <a href={l.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-semibold hover:underline">{l.title || l.url}</a>
-                                        {l.title && <span className="hidden max-w-[40%] truncate text-xs text-gray-400 sm:block">{l.url}</span>}
-                                        {!readOnly && <button type="button" aria-label={tr('Remove')} onClick={() => set({ links: v.links.filter((x) => x.url !== l.url) })} className="text-gray-400 hover:text-red-500"><TbTrash /></button>}
+                                        {!readOnly && fcan.edit
+                                            ? <input value={l.title} placeholder={l.url} maxLength={120} aria-label={tr('Name')} onChange={(e) => set({ links: v.links.map((x) => (x.url === l.url ? { ...x, title: e.target.value } : x)) })} className="h-8 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 text-sm font-semibold outline-none placeholder:font-normal hover:border-gray-200 focus:border-primary dark:hover:border-gray-600" />
+                                            : <span className="min-w-0 flex-1 truncate font-semibold">{l.title || l.url}</span>}
+                                        {l.title && <span className="hidden max-w-[35%] truncate text-xs text-gray-400 sm:block">{l.url}</span>}
+                                        <a href={l.url} target="_blank" rel="noreferrer noopener" aria-label={tr('Open')} title={tr('Open')} className="grid size-7 shrink-0 place-items-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbExternalLink /></a>
+                                        {!readOnly && fcan.delete && <button type="button" aria-label={tr('Remove')} title={tr('Remove')} onClick={() => set({ links: v.links.filter((x) => x.url !== l.url) })} className="grid size-7 shrink-0 place-items-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"><TbTrash /></button>}
                                     </div>
                                 ))}</div>
-                                {!readOnly && (
+                                {!readOnly && fcan.create && linkOpen && (
                                     <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                                        <Input size="sm" placeholder="https://" value={link.url} onChange={(e) => setLink({ ...link, url: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink() } }} />
+                                        <Input size="sm" autoFocus placeholder="https://" value={link.url} onChange={(e) => setLink({ ...link, url: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink() } }} />
                                         <Input size="sm" placeholder={tr('Name (optional)')} value={link.title} onChange={(e) => setLink({ ...link, title: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink() } }} />
                                         <Button size="sm" type="button" icon={<TbPlus />} onClick={addLink}>{tr('Add link')}</Button>
                                     </div>
                                 )}
                             </div>
-                        </FoldSection>
+                        </FoldSection>}
                         <FoldSection icon={<TbUsers />} tone="violet" title={tr('Status and team')} summary={`${tr(st?.name || '')} · ${v.visible ? tr('Visible to the client') : tr('Team only')}`} open={sec === 'team'} onToggle={() => toggle('team')}>
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <div><L>{tr('Status')}</L><Select size="sm" isSearchable={false} options={statusOpts} value={statusOpts.find((o) => o.value === v.status)} onChange={(o) => set({ status: o.value })} /></div>
@@ -149,8 +176,18 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                                                 {editingId === c.id
                                                     ? <CommentEdit initial={c.body} onCancel={() => setEditingId(null)} onSave={async (t) => { await api(`/api/crm/client-reports/${report.id}/comments`, { method: 'PUT', body: { clientId, commentId: c.id, body: t } }); setEditingId(null); await reload() }} />
                                                     : <><RichView html={c.body} /><CommentFiles attachments={c.attachments} links={c.links} /></>}
+                                            {editingId !== c.id && can.edit && (
+                                                <CommentFoot
+                                                    remind={{ relType: 'customer', relId: clientId, tab: `reports&report=${report.id}`, note: plainOf(c.body).slice(0, 140) }}
+                                                    reactions={c.reactions}
+                                                    onReact={(emoji) => react(c, emoji)}
+                                                    onMention={(sid) => mention(c, sid)}
+                                                    onReply={() => { setReplyTo({ id: c.id, name: c.authorName || tr('Team') }); setText((x) => x || (c.authorName ? `@${c.authorName} ` : '')) }}
+                                                    onEdit={c.mine ? () => setEditingId(c.id) : null}
+                                                    onDelete={c.canDelete ? async () => { try { await api(url(`&commentId=${c.id}`), { method: 'DELETE' }); await reload(); onChanged() } catch (e) { notify('danger', e.message) } } : null}
+                                                />
+                                            )}
                                             </div>
-                                            {editingId !== c.id && can.edit && <CommentTools onReply={() => { setReplyTo({ id: c.id, name: c.authorName || tr('Team') }); setText((x) => x || (c.authorName ? `@${c.authorName} ` : '')) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? async () => { try { await api(url(`&commentId=${c.id}`), { method: 'DELETE' }); await reload(); onChanged() } catch (e) { notify('danger', e.message) } } : null} />}
                                         </div>
                                     )} />
                                     {!comments.length && <p className="py-2 text-center text-xs text-gray-400">{tr('Comments and status changes of this document appear here.')}</p>}
@@ -159,7 +196,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                                     <div className="mt-3 space-y-2">
                                         <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
                                         <CommentAttach value={extras} onChange={setExtras} uploadFile={(f) => { const fd = new FormData(); fd.append('file', f); return upload('/api/crm/client-reports/upload', fd) }} onError={(m) => notify('danger', m)} t={tr}>
-                                            <RichEditor minHeight={80} placeholder={tr('Write a comment — use @ to mention a colleague')} value={text} onChange={setText} />
+                                            <RichEditor minHeight={80} extraMentions={data.contacts || []} placeholder={tr('Write a comment — use @ to mention a colleague')} value={text} onChange={setText} />
                                         </CommentAttach>
                                         <div className="flex items-center justify-between gap-2"><label className="flex items-center gap-2 text-xs text-gray-500"><Switcher checked={internal} onChange={setInternal} />{tr('Team only')}</label><Button size="sm" variant="solid" loading={busy === 'say'} onClick={say}>{tr('Send')}</Button></div>
                                     </div>
@@ -175,6 +212,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                     <div className="ms-auto flex gap-2"><Button onClick={onClose}>{readOnly ? tr('Close') : tr('Cancel')}</Button>{!readOnly && <Button variant="solid" loading={busy === 'save'} onClick={save}>{isNew ? tr('Create') : tr('Save changes')}</Button>}</div>
                 </div>
             </Dialog>
+            <MediaPicker open={pick} kind="" multiple picked={v.attachments.map((x) => x.url)} onClose={() => setPick(false)} onPick={pickFile} />
             <ConfirmDialog isOpen={del} type="danger" title={tr('Delete this?')} confirmText={tr('Delete')} onClose={() => setDel(false)} onRequestClose={() => setDel(false)} onCancel={() => setDel(false)} onConfirm={remove}><p>{tr('It is removed for good.')}</p></ConfirmDialog>
         </>
     )

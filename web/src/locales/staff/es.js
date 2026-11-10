@@ -6067,4 +6067,7 @@ export default {
     "The Mails tab of a lead, for the leads the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Leads.": "La pestaña Correos de un lead, para los leads que la persona ve. Crear = escribir un borrador o registrar un correo; Editar = cambiar un correo o borrador; Enviar = enviar un borrador o programarlo; Eliminar = quitar un correo. Cambiar o quitar el correo de otra persona también requiere el derecho correspondiente en Leads.",
     "Delete this step?": "¿Eliminar este paso?",
     "Task checklist": "Checklist de tarea",
+    "From the file manager": "Desde el gestor de archivos",
+    "No files or links yet.": "Aún no hay archivos ni enlaces.",
+    "Report files & links": "Archivos y enlaces de informes",
 }

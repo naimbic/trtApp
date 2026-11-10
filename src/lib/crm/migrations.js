@@ -179,6 +179,28 @@ export async function grantMailRights() {
 }
 
 /** The task checklist gets its own rights (view, create, edit, delete): everyone who already has permissions, and every role, keeps working as before. Runs once. */
+export async function grantReportFileRights() {
+    const MARK = 'perm_migration_report_files_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    const CAPS = ['view', 'create', 'edit', 'delete']
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        const rows = await prisma.crmStaffPermission.findMany({ where: { staffId: s.id }, select: { feature: true, capability: true } })
+        if (!rows.some((r) => r.feature === 'client_reports')) continue
+        const have = new Set(rows.map((r) => `${r.feature}:${r.capability}`))
+        const add = CAPS.filter((capability) => !have.has(`client_report_files:${capability}`)).map((capability) => ({ staffId: s.id, feature: 'client_report_files', capability }))
+        if (add.length) await prisma.crmStaffPermission.createMany({ data: add })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms) || !perms.client_reports) continue
+        perms.client_report_files = [...new Set([...(perms.client_report_files || []), ...CAPS])]
+        await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
+/** The task checklist gets its own rights (view, create, edit, delete): everyone who already has permissions, and every role, keeps working as before. Runs once. */
 export async function grantChecklistRights() {
     const MARK = 'perm_migration_task_checklist_v1'
     if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return

@@ -12,6 +12,7 @@ const made = { users: [], staff: [], rows: [], extraRows: [] } // rows: [model, 
 async function makeUser(label, perms, admin = false) {
     // the mail rights (Lead mails / Client mails) are separate switches: the older checks use people who may do everything with mails, the 'pv-' checks below choose them one by one
     if (!label.startsWith('pv-') && !label.endsWith('-view') && (perms.leads || perms.customers || label.startsWith('lead-'))) perms = { lead_mails: ['create', 'edit', 'send', 'delete'], client_mails: ['create', 'edit', 'send', 'delete'], ...perms }
+    if (!label.startsWith('pv-') && perms.client_reports && !perms.client_report_files) perms = { client_report_files: ['view', 'create', 'edit', 'delete'], ...perms }
     if (!label.startsWith('pv-') && perms.tasks && !perms.task_checklist) perms = { task_checklist: ['view', 'create', 'edit', 'delete'], ...perms }
     const email = `permcheck.${label}.${crypto.randomBytes(3).toString('hex')}@test.local`
     const password = crypto.randomBytes(12).toString('base64url')
@@ -1628,6 +1629,10 @@ try {
             ledit: await login(await makeUser('pv-ledit', { leads: ['view', 'edit'] })),
             ms: await login(await makeUser('pv-ms', { projects: ['view', 'create_milestones'] })),
             staffEdit: await login(await makeUser('pv-staffedit', { staff: ['view', 'edit'] })),
+            rfNone: await login(await makeUser('pv-rfnone', { customers: ['view'], client_reports: ['view', 'create', 'edit'] })),
+            rfAdd: await login(await makeUser('pv-rfadd', { customers: ['view'], client_reports: ['view', 'create', 'edit'], client_report_files: ['view', 'create'] })),
+            rfMedia: await login(await makeUser('pv-rfmedia', { customers: ['view'], client_reports: ['view', 'create', 'edit'], client_report_files: ['view', 'create'], file_manager: ['view'] })),
+            rfFull: await login(await makeUser('pv-rffull', { customers: ['view'], client_reports: ['view', 'create', 'edit'], client_report_files: ['view', 'create', 'edit', 'delete'] })),
             tkNone: await login(await makeUser('pv-tknone', { tasks: ['view', 'create'] })),
             tkAdd: await login(await makeUser('pv-tkadd', { tasks: ['view', 'create'], task_checklist: ['view', 'create'] })),
             tkFull: await login(await makeUser('pv-tkfull', { tasks: ['view', 'create'], task_checklist: ['view', 'create', 'edit', 'delete'] })),
@@ -1642,6 +1647,24 @@ try {
         check('Client mails: with Edit and Delete the author changes and removes their own draft; an editor who is not the author cannot touch it', cf.status === 201 && (await U.cmEdit('PUT', `/api/crm/customers/${X}/mails`, { ...draft, mailId: cf.body.id, subject: 'zz other' })).status === 403 && (await U.cmFull('PUT', `/api/crm/customers/${X}/mails`, { ...draft, mailId: cf.body.id, subject: 'zz perm draft 2' })).status === 200 && (await U.cmFull('DELETE', `/api/crm/customers/${X}/mails?mailId=${cf.body.id}`)).status === 200)
         check('Client mails: the right never lets a person change the client itself', (await U.cmail('PATCH', `/api/crm/customers/${X}`, { company: 'zz hacked' })).status === 403)
         await prisma.crmLeadMail.deleteMany({ where: { clientId: X, subject: 'zz perm draft' } })
+        // report files and links: view / create / edit / delete
+        const rb = (extra) => ({ clientId: X, kind: 'report', title: 'zz report files', ...extra })
+        const mkR = async (who, extra) => { const r = await who('POST', '/api/crm/client-reports', rb(extra)); if (r.body?.id) made.rows.unshift(['crmClientReport', r.body.id]); return r }
+        check('Report files: without the files rights a report can still be written, but a link sent with it is left out', (await mkR(U.rfNone, {})).status === 201 && (await mkR(U.rfNone, { links: [{ url: 'https://example.com/a' }] })).body.report.links.length === 0)
+        const r1 = await mkR(U.rfAdd, { links: [{ url: 'https://example.com/a', title: 'A' }] })
+        check('Report files: "Create" adds a link', r1.status === 201 && r1.body.report.links.length === 1)
+        check('Report files: Create alone cannot rename or remove a link', (await U.rfAdd('PUT', `/api/crm/client-reports/${r1.body.id}`, rb({ links: [{ url: 'https://example.com/a', title: 'B' }] }))).status === 403 && (await U.rfAdd('PUT', `/api/crm/client-reports/${r1.body.id}`, rb({ links: [] }))).status === 403)
+        check('Report files: a person without View never sees the files and links, and saving the report keeps them', (await U.rfNone('GET', `/api/crm/client-reports?clientId=${X}`)).body.list.find((x) => x.id === r1.body.id)?.links.length === 0 && (await U.rfNone('PUT', `/api/crm/client-reports/${r1.body.id}`, rb({ title: 'zz report files 2', links: [] }))).status === 200 && (await prisma.crmClientReport.findUnique({ where: { id: r1.body.id } })).links.length === 1)
+        check('Report files: "Edit" renames a link; Edit alone cannot remove it', (await U.rfFull('PUT', `/api/crm/client-reports/${r1.body.id}`, rb({ links: [{ url: 'https://example.com/a', title: 'C' }] }))).status === 200)
+        check('Report files: "Delete" removes a link', (await U.rfFull('PUT', `/api/crm/client-reports/${r1.body.id}`, rb({ links: [] }))).status === 200 && (await prisma.crmClientReport.findUnique({ where: { id: r1.body.id } })).links.length === 0)
+        const med = await prisma.crmMedia.create({ data: { name: 'zz picked.pdf', isFolder: false, url: 'https://files.example.test/zz-picked.pdf', mime: 'application/pdf', kind: 'pdf', size: 1234 } }); made.rows.unshift(['crmMedia', med.id])
+        const pick = { attachments: [{ url: med.url, name: 'zz picked.pdf' }] }
+        check('Report files: a file chosen from the File manager needs the File manager right too (otherwise it is left out)', (await mkR(U.rfAdd, pick)).body.report.attachments.length === 0 && (await mkR(U.rfMedia, pick)).body.report.attachments.length === 1)
+        { const cm = await U.rfFull('POST', `/api/crm/client-reports/${r1.body.id}/comments`, { clientId: X, body: '<p>zz hello</p>' }); const cid = cm.body?.comment?.id
+          const rx = await U.rfFull('POST', `/api/crm/client-reports/${r1.body.id}/comments`, { clientId: X, commentId: cid, react: '👍' })
+          const li = await U.rfFull('GET', `/api/crm/client-reports/${r1.body.id}/comments?clientId=${X}`)
+          check('Report discussion: a colleague can react with an emoji (shown with its count) and be mentioned on a sent message', cm.status === 201 && rx.status === 200 && li.body.list.find((c) => c.id === cid)?.reactions?.[0]?.count === 1 && (await U.rfFull('POST', `/api/crm/client-reports/${r1.body.id}/comments`, { clientId: X, commentId: cid, mention: (await prisma.crmStaff.findFirst({ where: { admin: false } }))?.id })).status === 200)
+          check('Report discussion: someone who can only view cannot react', (await U.view('POST', `/api/crm/client-reports/${r1.body.id}/comments`, { clientId: X, commentId: cid, react: '👍' })).status === 403) }
         // task checklist: view / create / edit / delete
         const mkT = async (who) => { const r = await who('POST', '/api/crm/work/tasks', { name: 'zz checklist rights', status: 1 }); if (r.body?.id) made.rows.unshift(['crmTask', r.body.id]); return r.body?.id }
         const tNone = await mkT(U.tkNone), tAdd = await mkT(U.tkAdd), tFull = await mkT(U.tkFull)

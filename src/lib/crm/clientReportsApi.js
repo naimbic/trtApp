@@ -5,7 +5,7 @@ import { requirePermission, getStaffId, hasCap } from '@/lib/crm/permissions'
 import { scope as clientScope } from '@/lib/crm/clientsApi'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { deliver, escapeHtml } from '@/lib/crm/mailer'
-import { notifyComment } from '@/lib/crm/mentionsApi'
+import { notifyComment, notifyMentions } from '@/lib/crm/mentionsApi'
 import { realPicture } from '@/lib/crm/pictures'
 import { cleanAttachments } from '@/lib/crm/notesCalc'
 import { UPLOAD_PREFIX, storeRequestFile, extrasIn, extrasOut, saidOf } from '@/lib/crm/clientRequestsApi'
@@ -16,6 +16,40 @@ const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const staffName = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || ''
+
+/** Rights on the files and links of a report (Roles > Client report files): view, create, edit, delete. */
+const fileCan = (authority, cap) => hasCap(authority, 'client_report_files', cap)
+const filesCan = (authority) => ({ view: fileCan(authority, 'view'), create: fileCan(authority, 'create'), edit: fileCan(authority, 'edit'), delete: fileCan(authority, 'delete') })
+const NO_FILES = 'You do not have the right to do this with the files and links of a report'
+
+/** The files of a report: uploaded ones, or ones chosen in the file manager (looked up by their address, needs the File manager right to be added). */
+async function cleanFiles(list, existing, authority) {
+    const items = Array.isArray(list) ? list : []
+    const have = new Set((existing || []).map((a) => a.url))
+    const other = [...new Set(items.map((a) => String(a?.url ?? '')).filter((u) => u && !u.startsWith(UPLOAD_PREFIX)))]
+    const rows = other.length ? await prisma.crmMedia.findMany({ where: { url: { in: other }, isFolder: false }, select: { url: true, name: true, mime: true, size: true, kind: true } }) : []
+    const media = new Map(rows.map((r) => [r.url, r]))
+    const out = []
+    for (const a of items) {
+        const url = String(a?.url ?? '')
+        if (url.startsWith(UPLOAD_PREFIX)) out.push(...cleanAttachments([a], UPLOAD_PREFIX))
+        else if (media.has(url) && (have.has(url) || hasCap(authority, 'file_manager', 'view'))) { const m = media.get(url); out.push(...cleanAttachments([{ url, name: a.name || m.name, mime: m.mime, size: m.size, kind: m.kind }], url)) }
+    }
+    return out.filter((a, i) => out.findIndex((x) => x.url === a.url) === i).slice(0, 20)
+}
+/** What changed in the files and links, and the right each kind of change needs. */
+function filesNeed(cur, now) {
+    const needs = new Set()
+    const diff = (before, after, key, nameOf) => {
+        const b = new Map(before.map((x) => [x[key], x])), a = new Map(after.map((x) => [x[key], x]))
+        if ([...a.keys()].some((k) => !b.has(k))) needs.add('create')
+        if ([...b.keys()].some((k) => !a.has(k))) needs.add('delete')
+        if ([...a.keys()].some((k) => b.has(k) && nameOf(b.get(k)) !== nameOf(a.get(k)))) needs.add('edit')
+    }
+    diff(cur.attachments, now.attachments, 'url', (x) => x.name)
+    diff(cur.links, now.links, 'url', (x) => x.title || '')
+    return [...needs]
+}
 
 async function gate(cap) {
     const session = await requirePermission('client_reports', cap)
@@ -30,10 +64,10 @@ async function clientOf(g, clientId) {
 }
 const reportOf = async (clientId, id) => { const r = oid(id) && (await prisma.crmClientReport.findFirst({ where: { id, clientId } })); if (!r) throw fail('Not found', 404); return r }
 
-export const reportOut = (r, extra = {}) => ({
+export const reportOut = (r, extra = {}, seeFiles = true) => ({
     id: r.id, clientId: r.clientId, kind: r.kind, seq: r.seq || 0, code: codeOf(r.seq, r.kind), title: r.title, body: r.body || '', status: r.status, period: r.period || '',
     priority: r.priority || 2, visible: r.visible !== false, assigneeIds: r.assigneeIds || [], dueDate: r.dueDate,
-    attachments: Array.isArray(r.attachments) ? r.attachments : [], links: Array.isArray(r.links) ? r.links : [],
+    attachments: seeFiles && Array.isArray(r.attachments) ? r.attachments : [], links: seeFiles && Array.isArray(r.links) ? r.links : [],
     sentAt: r.sentAt, sentTo: r.sentTo || [], createdBy: r.createdBy || null, createdAt: r.createdAt, updatedAt: r.updatedAt, ...extra,
 })
 
@@ -49,11 +83,11 @@ export async function listReports(clientId) {
     if (rows.length) for (const c of await prisma.crmClientReportComment.groupBy({ by: ['reportId'], where: { reportId: { in: rows.map((r) => r.id) }, authorKind: { not: 'system' } }, _count: { _all: true } })) counts[c.reportId] = c._count._all
     return {
         client: { id: client.id, company: client.company },
-        list: rows.map((r) => reportOut(r, { comments: counts[r.id] || 0, by: staffName(staff.find((s) => s.id === r.createdBy)) })),
+        list: rows.map((r) => reportOut(r, { comments: counts[r.id] || 0, by: staffName(staff.find((s) => s.id === r.createdBy)) }, fileCan(g.authority, 'view'))),
         staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })),
         contacts: contacts.map((c) => ({ id: c.id, name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email || '', email: c.email || '', primary: !!c.isPrimary })).filter((c) => c.name),
         statuses: STATUSES.map((k) => ({ key: k, name: STATUS_LABEL[k], color: STATUS_COLOR[k] })), kinds: KINDS, priorities: PRIORITIES,
-        can: { create: hasCap(g.authority, 'client_reports', 'create'), edit: hasCap(g.authority, 'client_reports', 'edit'), delete: hasCap(g.authority, 'client_reports', 'delete') },
+        can: { create: hasCap(g.authority, 'client_reports', 'create'), edit: hasCap(g.authority, 'client_reports', 'edit'), delete: hasCap(g.authority, 'client_reports', 'delete'), files: filesCan(g.authority) },
     }
 }
 
@@ -72,15 +106,21 @@ export async function saveReport(clientId, body = {}, id = null) {
     if (body.visible !== undefined) data.visible = !!body.visible
     if (body.dueDate !== undefined) { const d = body.dueDate ? new Date(body.dueDate) : null; if (d && Number.isNaN(+d)) throw fail('The date is not valid'); data.dueDate = d }
     if (body.assigneeIds !== undefined) data.assigneeIds = [...new Set((Array.isArray(body.assigneeIds) ? body.assigneeIds : []).filter(oid))].slice(0, 20)
-    if (body.attachments !== undefined) data.attachments = cleanAttachments(body.attachments, UPLOAD_PREFIX)
-    if (body.links !== undefined) data.links = cleanLinks(body.links)
+    // files and links have their own rights; a person who cannot see them never changes them
+    const fc = filesCan(g.authority)
+    if (fc.view && (body.attachments !== undefined || body.links !== undefined)) {
+        const before = { attachments: Array.isArray(cur?.attachments) ? cur.attachments : [], links: Array.isArray(cur?.links) ? cur.links : [] }
+        const after = { attachments: body.attachments !== undefined ? await cleanFiles(body.attachments, before.attachments, g.authority) : before.attachments, links: body.links !== undefined ? cleanLinks(body.links) : before.links }
+        if (filesNeed(before, after).some((c) => !fc[c])) throw fail(NO_FILES, 403)
+        data.attachments = after.attachments; data.links = after.links
+    }
     let statusChanged = false
     if (body.status !== undefined) { const s = cleanStatus(body.status, cur?.status || 'draft'); if (!cur || s !== cur.status) { data.status = s; data.statusChangedAt = new Date(); statusChanged = !!cur } }
     const row = cur
         ? await prisma.crmClientReport.update({ where: { id }, data })
         : await prisma.crmClientReport.create({ data: { status: 'draft', ...data, clientId, seq: await nextSeq(), createdBy: g.staffId || undefined, position: 0 } })
     if (statusChanged) await afterStatus(row, cur.status, g)
-    return { success: true, id: row.id, report: reportOut(row) }
+    return { success: true, id: row.id, report: reportOut(row, {}, fc.view) }
 }
 
 async function afterStatus(row, from, g) {
@@ -135,18 +175,28 @@ export async function sendReport(clientId, id, { contactIds = [], message = '' }
 
 /* ---------- files ---------- */
 export async function uploadReportFile(file) {
-    const g = await gate('edit')
+    const g = await gate('view')
+    if (!(hasCap(g.authority, 'client_reports', 'create') || hasCap(g.authority, 'client_reports', 'edit')) || !fileCan(g.authority, 'create')) throw fail(NO_FILES, 403)
     rateLimit(`report-upload:${g.session.user.id}`, 40, 60000)
     return storeRequestFile(file)
 }
 
 /* ---------- the conversation ---------- */
-const commentOut = (c, all, { me = null, canDelete = false } = {}) => {
+const reactionsOf = (c) => (c.reactions && typeof c.reactions === 'object' && !Array.isArray(c.reactions) ? c.reactions : {})
+/** id -> name of the team members who reacted on these comments. */
+async function reactors(rows) {
+    const ids = [...new Set(rows.flatMap((c) => Object.values(reactionsOf(c)).flat()))]
+    if (!ids.length) return {}
+    const staff = await prisma.crmStaff.findMany({ where: { id: { in: ids } }, select: { id: true, firstName: true, lastName: true, email: true } })
+    return Object.fromEntries(staff.map((x) => [x.id, staffName(x)]))
+}
+const commentOut = (c, all, { me = null, canDelete = false, people = {} } = {}) => {
     const r = c.replyToId ? all.find((x) => x.id === c.replyToId) : null
     const own = c.authorKind === 'staff' && !!me && c.authorId === me
     const sys = c.authorKind === 'system' ? c.body.split(':') : null
     return {
         id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own, internal: !!c.internal, canDelete: own || canDelete, ...(sys ? {} : extrasOut(c)),
+        reactions: sys ? [] : Object.entries(reactionsOf(c)).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!me && ids.includes(me), names: ids.filter((i) => i !== me).map((i) => people[i]).filter(Boolean) })).filter((r) => r.count),
         system: sys ? { from: sys[1], to: sys[2] } : null,
         replyTo: r && !sys ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,
     }
@@ -157,7 +207,8 @@ export async function listComments(clientId, id) {
     await clientOf(g, clientId)
     await reportOf(clientId, id)
     const rows = await prisma.crmClientReportComment.findMany({ where: { reportId: id }, orderBy: { createdAt: 'asc' }, take: 400 })
-    return { list: rows.map((c) => commentOut(c, rows, { me: g.staffId, canDelete: hasCap(g.authority, 'client_reports', 'delete') })) }
+    const people = await reactors(rows)
+    return { list: rows.map((c) => commentOut(c, rows, { me: g.staffId, canDelete: hasCap(g.authority, 'client_reports', 'delete'), people })) }
 }
 
 export async function addComment(clientId, id, body = {}) {
@@ -173,6 +224,35 @@ export async function addComment(clientId, id, body = {}) {
     try { await notifyComment({ by: { staffId: g.staffId, name: g.name }, text: saidOf(text, ex), link: `/crm/clients/${clientId}?tab=reports&report=${id}`, subject: rep.title, recipients: [...(rep.assigneeIds || []), rep.createdBy, ...admins.map((a) => a.staffId), reply?.authorKind === 'staff' ? reply.authorId : null].filter(Boolean) }) } catch (e) { console.error('[report notify]', e.message) }
     const all = await prisma.crmClientReportComment.findMany({ where: { reportId: id } })
     return { comment: commentOut(row, all, { me: g.staffId, canDelete: hasCap(g.authority, 'client_reports', 'delete') }) }
+}
+
+/** An emoji on a message (again on the same emoji takes it back). */
+export async function reactComment(clientId, id, body = {}) {
+    const g = await gate('edit')
+    await clientOf(g, clientId)
+    const e = String(body.react || '').trim()
+    if (!e || e.length > 16) throw fail('Pick an emoji')
+    if (!g.staffId) throw fail('Only staff can react', 403)
+    const c = oid(body.commentId) && (await prisma.crmClientReportComment.findFirst({ where: { id: body.commentId, reportId: id } }))
+    if (!c || c.authorKind === 'system') throw fail('Message not found', 404)
+    const all = { ...reactionsOf(c) }
+    const ids = Array.isArray(all[e]) ? all[e] : []
+    const next = ids.includes(g.staffId) ? ids.filter((x) => x !== g.staffId) : [...ids, g.staffId]
+    if (next.length) all[e] = next; else delete all[e]
+    await prisma.crmClientReportComment.update({ where: { id: c.id }, data: { reactions: all } })
+    return { success: true }
+}
+
+/** Tags a colleague on a message that is already sent: they are told (the message itself is not changed). */
+export async function mentionComment(clientId, id, body = {}) {
+    const g = await gate('edit')
+    await clientOf(g, clientId)
+    const c = oid(body.commentId) && (await prisma.crmClientReportComment.findFirst({ where: { id: body.commentId, reportId: id } }))
+    if (!c || c.authorKind === 'system') throw fail('Message not found', 404)
+    const who = oid(body.mention) && (await prisma.crmStaff.findFirst({ where: { id: body.mention, active: true }, select: { id: true } }))
+    if (!who) throw fail('Choose a colleague')
+    await notifyMentions({ staffIds: [who.id], text: plainText(c.body), url: `/crm/clients/${clientId}?tab=reports&report=${id}` })
+    return { success: true }
 }
 
 export async function editComment(clientId, id, body = {}) {

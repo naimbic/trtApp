@@ -6067,4 +6067,7 @@ export default {
     "The Mails tab of a lead, for the leads the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Leads.": "تبويب الرسائل لدى العميل المحتمل، للعملاء المحتملين الذين يراهم الشخص. إنشاء = كتابة مسودة أو تسجيل رسالة؛ تعديل = تغيير رسالة أو مسودة؛ إرسال = إرسال مسودة أو جدولتها؛ حذف = إزالة رسالة. تغيير رسالة شخص آخر أو حذفها يتطلب أيضًا الصلاحية المقابلة في العملاء المحتملين.",
     "Delete this step?": "حذف هذه الخطوة؟",
     "Task checklist": "قائمة مهام المهمة",
+    "From the file manager": "من مدير الملفات",
+    "No files or links yet.": "لا توجد ملفات أو روابط بعد.",
+    "Report files & links": "ملفات وروابط التقارير",
 }

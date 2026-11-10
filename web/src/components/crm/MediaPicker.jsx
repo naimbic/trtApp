@@ -7,7 +7,7 @@ import { api, notify, qs } from '@/views/crm/kit/api'
 import { tr } from '@/utils/t'
 
 /* ---------- picking an image from the file manager ---------- */
-const MediaPicker = ({ open, onClose, onPick, kind = 'image' }) => {
+const MediaPicker = ({ open, onClose, onPick, kind = 'image', multiple = false, picked = [] }) => {
     const [onRecords, setOnRecords] = useState(false) // documents only: the files that were uploaded on tasks, leads, clients...
     const [list, setList] = useState([])
     const [q, setQ] = useState('')
@@ -27,14 +27,14 @@ const MediaPicker = ({ open, onClose, onPick, kind = 'image' }) => {
             <Input size="sm" placeholder={tr("Search files")} value={q} onChange={(e) => setQ(e.target.value)} className="mb-3" />
             <div className="grid max-h-[55vh] grid-cols-3 gap-3 overflow-y-auto sm:grid-cols-4 md:grid-cols-5">
                 {loading && !list.length ? <div className="col-span-full flex h-40 items-center justify-center"><Spinner size={28} /></div> : list.map((m) => (
-                    <button key={m.id} type="button" onClick={() => onPick(m)} className="group overflow-hidden rounded-xl border border-gray-200 text-left hover:border-primary dark:border-gray-600">
+                    <button key={m.id} type="button" onClick={() => onPick(m)} className={`group relative overflow-hidden rounded-xl border text-left hover:border-primary ${picked.includes(m.url) ? 'border-primary ring-2 ring-primary/30' : 'border-gray-200 dark:border-gray-600'}`}>
                         <span className="flex h-24 items-center justify-center bg-gray-50 dark:bg-gray-700">{m.kind === 'image' ? <img src={m.url} alt="" className="h-full w-full object-contain" loading="lazy" /> : <span className="rounded-md bg-gray-200 px-2 py-1 text-xs font-bold uppercase text-gray-500 dark:bg-gray-600">{String(m.name).split('.').pop()}</span>}</span>
                         <span className="block truncate px-2 pt-1.5 text-xs">{m.name}</span><span className="block truncate px-2 pb-1.5 text-[11px] text-gray-400">{m.recordLabel || ''}</span>
                     </button>
                 ))}
                 {!loading && !list.length && <p className="col-span-full py-10 text-center text-gray-400">{tr("Nothing here yet. Upload in the file manager first, or use Upload.")}</p>}
             </div>
-            <div className="mt-4 flex justify-end"><Button onClick={onClose}>{tr("Cancel")}</Button></div>
+            <div className="mt-4 flex items-center justify-end gap-3">{multiple && picked.length > 0 && <span className="me-auto text-sm text-gray-500">{tr("{n} file(s)", { n: picked.length })}</span>}<Button variant={multiple ? 'solid' : undefined} onClick={onClose}>{multiple ? tr("Done") : tr("Cancel")}</Button></div>
         </Dialog>
     )
 }

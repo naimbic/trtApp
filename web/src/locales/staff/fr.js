@@ -6067,4 +6067,7 @@ export default {
     "The Mails tab of a lead, for the leads the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Leads.": "L'onglet Mails d'un prospect, pour les prospects que la personne voit. Créer = écrire un brouillon ou noter un mail ; Modifier = changer un mail ou un brouillon ; Envoyer = envoyer un brouillon ou le programmer ; Supprimer = retirer un mail. Modifier ou retirer le mail de quelqu'un d'autre demande aussi le droit correspondant sur Prospects.",
     "Delete this step?": "Supprimer cette étape ?",
     "Task checklist": "Checklist de tâche",
+    "From the file manager": "Depuis le gestionnaire de fichiers",
+    "No files or links yet.": "Aucun fichier ni lien pour l'instant.",
+    "Report files & links": "Fichiers et liens des rapports",
 }

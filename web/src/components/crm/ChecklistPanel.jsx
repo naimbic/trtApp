@@ -126,7 +126,7 @@ const ReminderMenu = ({ value, due, onPick, disabled }) => (
  * The checklist of a task: tick, edit in place, give a step to someone, a due date (red when late, amber today) and a reminder,
  * drag to reorder, sort by date, hide what is done. "@" and "#" work in the text. `act(op)` sends one change to the server.
  */
-const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, empty, title, placeholder, reminders = true, sortable = true, onOpen }) => {
+const ChecklistPanel = ({ items, staff = [], canEdit = true, canCreate, canDelete, act, empty, title, placeholder, reminders = true, sortable = true, onOpen }) => {
     const [list, setList] = useState(items)
     const [text, setText] = useState('')
     const [who, setWho] = useState([])
@@ -134,6 +134,8 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
     const [hrs, setHrs] = useState(null)
     const [editing, setEditing] = useState(null) // { id, text }
     const [hideDone, setHideDone] = useState(false)
+    const [confirming, setConfirming] = useState(null) // the step whose delete waits for a second click
+    useEffect(() => { if (!confirming) return undefined; const t = setTimeout(() => setConfirming(null), 6000); return () => clearTimeout(t) }, [confirming])
     useEffect(() => setList(items), [items])
     const done = list.filter((c) => c.finished).length
     const shown = useMemo(() => list.filter((c) => !(hideDone && c.finished)), [list, hideDone])
@@ -174,30 +176,40 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canDelete, act, emp
                 {shown.map((c) => {
                     const i = list.indexOf(c)
                     return (
-                        <div key={c.id} {...rd.row(i)} className={classNames('group flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-2', rd.over === i && 'bg-primary/5')}>
-                            {sortable && <DragHandle enabled={canEdit && !hideDone} {...rd.handle(i, canEdit && !hideDone)} />}
+                        <div key={c.id} {...rd.row(i)} className={classNames('flex items-start gap-2 px-3 py-2.5 transition', rd.over === i && 'bg-primary/5', confirming === c.id && 'bg-red-50/60 dark:bg-red-500/5')}>
+                            {sortable && <span className="mt-0.5"><DragHandle enabled={canEdit && !hideDone} {...rd.handle(i, canEdit && !hideDone)} /></span>}
                             <button type="button" role="checkbox" aria-checked={c.finished} aria-label={tr('Done')} onClick={() => act({ action: 'toggle', itemId: c.id, finished: !c.finished })}
-                                className={classNames('grid size-5 shrink-0 place-items-center rounded-full border-2 text-xs transition', c.finished ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 hover:border-primary')}>{c.finished && <TbCheck />}</button>
-                            <div className="min-w-[120px] flex-1 text-sm">
+                                className={classNames('mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border-2 text-xs transition', c.finished ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 hover:border-primary')}>{c.finished && <TbCheck />}</button>
+                            <div className="min-w-0 flex-1">
                                 {editing?.id === c.id
                                     ? <input data-mention autoFocus value={editing.text} maxLength={500} onChange={(e) => setEditing({ id: c.id, text: e.target.value })} onBlur={saveText} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setEditing(null) }} className="h-8 w-full rounded-lg border border-primary bg-white px-2 text-sm outline-none dark:bg-gray-800" />
-                                    : <div role={canEdit ? 'button' : undefined} tabIndex={canEdit ? 0 : undefined} onClick={canEdit ? () => setEditing({ id: c.id, text: c.description }) : undefined} onKeyDown={canEdit ? (e) => { if (e.key === 'Enter') setEditing({ id: c.id, text: c.description }) } : undefined} className={classNames('w-full break-words text-left', canEdit && 'cursor-text', c.finished && 'text-gray-400 line-through')}><Mentioned text={c.description} /></div>}
+                                    : <div role={canEdit ? 'button' : undefined} tabIndex={canEdit ? 0 : undefined} onClick={canEdit ? () => setEditing({ id: c.id, text: c.description }) : undefined} onKeyDown={canEdit ? (e) => { if (e.key === 'Enter') setEditing({ id: c.id, text: c.description }) } : undefined} className={classNames('w-full break-words text-left text-sm font-medium leading-snug', canEdit && 'cursor-text', c.finished && 'text-gray-400 line-through')}><Mentioned text={c.description} /></div>}
+                                {/* what belongs to the step, always visible (no hidden icons): time, date, reminder, counts */}
+                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                    {c.stats && <Stats s={c.stats} />}
+                                    {(canEdit || c.hours) && <HoursChip value={c.hours} disabled={!canEdit} onChange={(v) => upd(c, { hours: v })} />}
+                                    {(canEdit || c.dueDate) && <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />}
+                                    {reminders && (canEdit || c.reminder != null) && <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />}
+                                </div>
                             </div>
-                            <div className="ml-auto flex items-center gap-1">
-                                {c.stats && <Stats s={c.stats} />}
-                                <HoursChip value={c.hours} disabled={!canEdit} onChange={(v) => upd(c, { hours: v })} />
-                                <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />
-                                {reminders && <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />}
-                                <PeoplePicker staff={staff} value={c.assignedIds || (c.assigned ? [c.assigned] : [])} disabled={!canEdit} onToggle={(id) => { const cur = c.assignedIds || []; setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: cur.includes(id) ? cur.filter((y) => y !== id) : [...cur, id] } : x))); upd(c, { toggleAssignee: id }) }} onChange={(ids) => { setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: ids } : x))); upd(c, { assignedIds: ids }) }} />
-                                {onOpen && <button type="button" aria-label={tr('Open')} title={tr('Open')} onClick={() => onOpen(c)} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 transition hover:bg-gray-100 hover:text-primary focus:opacity-100 group-hover:opacity-100 dark:hover:bg-gray-700"><TbExternalLink /></button>}
-                                {canEdit && <button type="button" aria-label={tr('Edit')} title={tr('Edit')} onClick={() => setEditing({ id: c.id, text: c.description })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-gray-100 hover:text-primary group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbPencil /></button>}
-                                {(canDelete ?? canEdit) && <button type="button" aria-label={tr('Delete')} title={tr('Delete')} onClick={() => act({ action: 'delete', itemId: c.id })} className="grid size-7 place-items-center rounded-full text-base text-gray-300 opacity-0 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 focus:opacity-100 dark:hover:bg-gray-700"><TbTrash /></button>}
-                            </div>
+                            <PeoplePicker staff={staff} value={c.assignedIds || (c.assigned ? [c.assigned] : [])} disabled={!canEdit} onToggle={(id) => { const cur = c.assignedIds || []; setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: cur.includes(id) ? cur.filter((y) => y !== id) : [...cur, id] } : x))); upd(c, { toggleAssignee: id }) }} onChange={(ids) => { setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: ids } : x))); upd(c, { assignedIds: ids }) }} />
+                            {confirming === c.id ? (
+                                <span className="flex shrink-0 items-center gap-1" role="alertdialog" aria-label={tr('Delete this step?')}>
+                                    <button type="button" autoFocus onClick={() => { setConfirming(null); act({ action: 'delete', itemId: c.id }) }} className="h-7 rounded-lg bg-red-500 px-2.5 text-xs font-bold text-white hover:bg-red-600">{tr('Delete')}</button>
+                                    <button type="button" onClick={() => setConfirming(null)} className="h-7 rounded-lg bg-gray-100 px-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200">{tr('Cancel')}</button>
+                                </span>
+                            ) : (
+                                <span className="flex shrink-0 items-center gap-0.5">
+                                    {onOpen && <button type="button" aria-label={tr('Open')} title={tr('Open')} onClick={() => onOpen(c)} className="grid size-7 place-items-center rounded-lg text-base text-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbExternalLink /></button>}
+                                    {canEdit && <button type="button" aria-label={tr('Edit')} title={tr('Edit')} onClick={() => setEditing({ id: c.id, text: c.description })} className="grid size-7 place-items-center rounded-lg text-base text-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbPencil /></button>}
+                                    {(canDelete ?? canEdit) && <button type="button" aria-label={tr('Delete')} title={tr('Delete')} onClick={() => setConfirming(c.id)} className="grid size-7 place-items-center rounded-lg text-base text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"><TbTrash /></button>}
+                                </span>
+                            )}
                         </div>
                     )
                 })}
                 {!shown.length && <div className="px-4 py-5 text-sm text-gray-400">{list.length ? tr('Everything is done.') : (empty || tr('No checklist yet. Break the task into small steps.'))}</div>}
-                {canEdit && (
+                {(canCreate ?? canEdit) && (
                     <form className="flex flex-wrap items-center gap-2 bg-gray-50/60 px-2.5 py-2 dark:bg-gray-700/20" onSubmit={(e) => { e.preventDefault(); add() }}>
                         <TbPlus className="shrink-0 text-lg text-gray-400" />
                         <input data-mention value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder={placeholder || tr('Add a step (@ to mention, # for a tag)')} className="h-8 min-w-[140px] flex-1 rounded-lg border border-transparent bg-transparent px-1 text-sm outline-none focus:border-gray-200 dark:focus:border-gray-600" />

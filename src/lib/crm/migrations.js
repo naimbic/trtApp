@@ -178,6 +178,28 @@ export async function grantMailRights() {
     await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
 }
 
+/** The task checklist gets its own rights (view, create, edit, delete): everyone who already has permissions, and every role, keeps working as before. Runs once. */
+export async function grantChecklistRights() {
+    const MARK = 'perm_migration_task_checklist_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    const CAPS = ['view', 'create', 'edit', 'delete']
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        const rows = await prisma.crmStaffPermission.findMany({ where: { staffId: s.id }, select: { feature: true, capability: true } })
+        if (!rows.length) continue
+        const have = new Set(rows.map((r) => `${r.feature}:${r.capability}`))
+        const add = CAPS.filter((capability) => !have.has(`task_checklist:${capability}`)).map((capability) => ({ staffId: s.id, feature: 'task_checklist', capability }))
+        if (add.length) await prisma.crmStaffPermission.createMany({ data: add })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms) || !Object.keys(perms).length) continue
+        perms.task_checklist = [...new Set([...(perms.task_checklist || []), ...CAPS])]
+        await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
 /**
  * The company's single bank (Bank / RIB / SWIFT in Settings → Company) becomes the first, default bank account, so the printed
  * documents do not change; more accounts can then be added and chosen per client or per document. Runs once, marker-guarded.

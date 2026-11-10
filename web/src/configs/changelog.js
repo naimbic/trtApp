@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.219.0',
+        date: '2026-11-10',
+        title: 'Task checklist: its own rights (View, Create, Edit, Delete) and a clearer layout',
+        items: [
+            'Roles > Work > "Task checklist": four switches. View shows the Checklist tab, Create adds steps, Edit changes a step (text, person, date, hours, reminder) and reorders, Delete removes one. The server refuses what is not allowed. The people of a task always see its checklist and can tick their steps.',
+            'Nothing changes today: everybody who already had permissions, and every role, received the four switches. Untick the ones you want to take away and press "Save & apply to members".',
+            'New layout: each step has its text on top and, right under it, its hours, date and reminder as small chips that are always visible. The person picker and the edit and delete buttons sit on the right, always visible too, with no empty space and no icons hidden until you hover.',
+            'Delete asks first: the trash button turns into "Delete" and "Cancel" on the same row (and goes back by itself after a few seconds), so a wrong click no longer removes a step.',
+        ],
+    },
+    {
         version: '0.218.1',
         date: '2026-11-10',
         title: 'Phone: the profile menu is now a full-screen sheet',

@@ -30,6 +30,9 @@ async function access(session) {
 
 /** Who may change a task's status (finish it, reopen it, move it on the board): its assignees, whoever created it, and people who see all tasks. */
 const mayAct = (a, t, assignees = t.assignees) => a.scope === 'all' || (!!a.staffId && (t.addedFrom === a.staffId || (assignees || []).some((x) => x.staffId === a.staffId)))
+/** Rights on the checklist of a task (Roles > Tasks > Task checklist): view, create, edit, delete. The task's own people always see it. */
+const stepCan = (a, cap, t) => hasCap(a.authority, 'task_checklist', cap) || (cap === 'view' && mayAct(a, t))
+const NO_STEP = 'You do not have the right to do this on the checklist'
 const NOT_YOURS = 'Only the people assigned to this task, or who created it, can change it'
 
 /** Everybody who may open the tasks sees all of them; changing one is limited by mayAct. */
@@ -189,7 +192,7 @@ export async function getTask(id) {
             followers: t.followers.map((x) => people[x.staffId]).filter(Boolean),
             assigneeIds: t.assignees.map((x) => x.staffId), followerIds: t.followers.map((x) => x.staffId),
         },
-        checklist: [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, assignedIds: stepPeople(c), people: stepPeople(c).map((i) => people[i]).filter(Boolean), person: people[c.assigned] || null, dueDate: c.dueDate || null, hours: c.hours ?? null, reminder: c.reminder ?? null, order: c.listOrder || 0 })),
+        checklist: !stepCan(a, 'view', t) ? [] : [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, assignedIds: stepPeople(c), people: stepPeople(c).map((i) => people[i]).filter(Boolean), person: people[c.assigned] || null, dueDate: c.dueDate || null, hours: c.hours ?? null, reminder: c.reminder ?? null, order: c.listOrder || 0 })),
         comments: t.comments.map((c) => {
             const to = c.replyToId ? t.comments.find((x) => x.id === c.replyToId) : null
             return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, clientName: c.contactId ? contactName[c.contactId] || '' : '', createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
@@ -212,7 +215,7 @@ export async function getTask(id) {
             return kids.map((k) => ({ id: k.id, name: k.name, status: k.status, dueDate: k.dueDate, priority: k.priority, assignees: k.assignees.map((x) => pm[x.staffId]).filter(Boolean), canFinish: mayAct(a, k) }))
         })(),
         milestones: t.relType === 'project' && oid(t.relId) ? (await prisma.crmMilestone.findMany({ where: { projectId: t.relId }, orderBy: { milestoneOrder: 'asc' }, select: { id: true, name: true } })) : [],
-        can: { edit: a.can('edit') && mayAct(a, t), delete: a.can('delete') && mayAct(a, t) },
+        can: { edit: a.can('edit') && mayAct(a, t), delete: a.can('delete') && mayAct(a, t), checklist: { view: stepCan(a, 'view', t), create: mayAct(a, t) && stepCan(a, 'create', t), edit: mayAct(a, t) && stepCan(a, 'edit', t), delete: mayAct(a, t) && stepCan(a, 'delete', t) } },
     }
 }
 
@@ -513,6 +516,8 @@ export async function checklist(id, op) {
         return { success: true }
     }
     if (!mayAct(a, task)) throw fail(NOT_YOURS, 403)
+    const need = { add: 'create', delete: 'delete' }[op.action] || 'edit'
+    if (!stepCan(a, need, task)) throw fail(NO_STEP, 403)
     if (op.action === 'add') {
         const description = String(op.description || '').trim().slice(0, 500)
         if (!description) throw fail('Write the item first')

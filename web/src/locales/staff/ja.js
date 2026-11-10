@@ -6065,4 +6065,6 @@ export default {
     "You are not allowed to send or schedule mails": "メールの送信・スケジュールは許可されていません",
     "The Mails tab of a client, for the clients the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Customers.": "担当者が見られる顧客のメールタブ。作成＝下書きの作成またはメールの記録、編集＝メールや下書きの変更、送信＝下書きの送信またはスケジュール、削除＝メールの削除。他の人のメールの変更・削除には、顧客の該当する権限も必要です。",
     "The Mails tab of a lead, for the leads the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Leads.": "担当者が見られるリードのメールタブ。作成＝下書きの作成またはメールの記録、編集＝メールや下書きの変更、送信＝下書きの送信またはスケジュール、削除＝メールの削除。他の人のメールの変更・削除には、リードの該当する権限も必要です。",
+    "Delete this step?": "このステップを削除しますか？",
+    "Task checklist": "タスクのチェックリスト",
 }

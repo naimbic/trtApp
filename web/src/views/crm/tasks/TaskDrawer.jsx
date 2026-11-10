@@ -148,7 +148,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     )
 
     const checklist = detail && (
-        <ChecklistPanel items={detail.checklist} staff={staff} canEdit={!!canEdit} act={(op) => act(() => post('checklist', op))} />
+        <ChecklistPanel items={detail.checklist} staff={staff} canEdit={!!(detail.can.checklist?.edit ?? canEdit)} canCreate={!!(detail.can.checklist?.create ?? canEdit)} canDelete={!!(detail.can.checklist?.delete ?? canEdit)} act={(op) => act(() => post('checklist', op))} />
     )
 
 
@@ -228,7 +228,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <Tabs value={tabV} onChange={setTabV}>
                         <Tabs.TabList className="max-w-full overflow-x-auto [&>*]:shrink-0">
                             <Tabs.TabNav value="details">{tr("Details")}</Tabs.TabNav>
-                            <Tabs.TabNav value="checklist">{tr("Checklist")}{detail.checklist.length ? ` (${detail.checklist.filter((c) => c.finished).length}/${detail.checklist.length})` : ''}</Tabs.TabNav>
+                            {detail.can.checklist?.view !== false && <Tabs.TabNav value="checklist">{tr("Checklist")}{detail.checklist.length ? ` (${detail.checklist.filter((c) => c.finished).length}/${detail.checklist.length})` : ''}</Tabs.TabNav>}
                             <Tabs.TabNav value="comments">{tr("Comments")}{detail.comments.length ? ` (${detail.comments.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
                         </Tabs.TabList>

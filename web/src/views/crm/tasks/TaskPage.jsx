@@ -160,7 +160,7 @@ const TaskPage = () => {
 
                     <div className="mt-8">
                         <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700">
-                            {TABS.map(([k, label]) => (
+                            {TABS.filter(([k]) => k !== 'checklist' || can.checklist?.view !== false).map(([k, label]) => (
                                 <button key={k} type="button" onClick={() => setTab(k)} className={classNames('-mb-px border-b-2 px-1 pb-3 text-sm font-semibold transition', tab === k ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200')}>
                                     {label}{k === 'subtasks' && subs.length > 0 && <span className="ml-1.5 text-xs opacity-70">{subs.filter((x) => x.status === 5).length}/{subs.length}</span>}{k === 'comments' && d.comments.length > 0 && <span className="ml-1.5 text-xs opacity-70">{d.comments.length}</span>}{k === 'checklist' && d.checklist.length > 0 && <span className="ml-1.5 text-xs opacity-70">{d.checklist.filter((c) => c.finished).length}/{d.checklist.length}</span>}
                                 </button>
@@ -201,7 +201,7 @@ const TaskPage = () => {
                                     {e && <form className="flex gap-2 pt-2" onSubmit={(ev) => { ev.preventDefault(); addSub() }}><Input size="sm" value={subName} placeholder={tr('Add a subtask')} onChange={(ev) => setSubName(ev.target.value)} /><Button size="sm" type="submit" icon={<TbPlus />}>{tr('Add')}</Button></form>}
                                 </div>
                             )}
-                            {tab === 'checklist' && <ChecklistPanel items={d.checklist} staff={staff} canEdit={e} act={(op) => post('checklist', op)} />}
+                            {tab === 'checklist' && can.checklist?.view !== false && <ChecklistPanel items={d.checklist} staff={staff} canEdit={can.checklist?.edit ?? e} canCreate={can.checklist?.create ?? e} canDelete={can.checklist?.delete ?? e} act={(op) => post('checklist', op)} />}
                             {tab === 'files' && <AttachmentsPanel relType="task" relId={id} canEdit={e} showClientToggle={!!t.visibleToClient} />}
                             {tab === 'time' && (
                                 <div className="space-y-4">

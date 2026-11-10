@@ -12,6 +12,7 @@ const made = { users: [], staff: [], rows: [], extraRows: [] } // rows: [model, 
 async function makeUser(label, perms, admin = false) {
     // the mail rights (Lead mails / Client mails) are separate switches: the older checks use people who may do everything with mails, the 'pv-' checks below choose them one by one
     if (!label.startsWith('pv-') && !label.endsWith('-view') && (perms.leads || perms.customers || label.startsWith('lead-'))) perms = { lead_mails: ['create', 'edit', 'send', 'delete'], client_mails: ['create', 'edit', 'send', 'delete'], ...perms }
+    if (!label.startsWith('pv-') && perms.tasks && !perms.task_checklist) perms = { task_checklist: ['view', 'create', 'edit', 'delete'], ...perms }
     const email = `permcheck.${label}.${crypto.randomBytes(3).toString('hex')}@test.local`
     const password = crypto.randomBytes(12).toString('base64url')
     const user = await prisma.user.create({ data: { name: `Check ${label}`, email, password: await bcrypt.hash(password, 10), authority: admin ? ['admin'] : ['user'], role: admin ? 'admin' : 'user', status: 'active', image: '/img/avatars/thumb-1.jpg' } })
@@ -1627,6 +1628,9 @@ try {
             ledit: await login(await makeUser('pv-ledit', { leads: ['view', 'edit'] })),
             ms: await login(await makeUser('pv-ms', { projects: ['view', 'create_milestones'] })),
             staffEdit: await login(await makeUser('pv-staffedit', { staff: ['view', 'edit'] })),
+            tkNone: await login(await makeUser('pv-tknone', { tasks: ['view', 'create'] })),
+            tkAdd: await login(await makeUser('pv-tkadd', { tasks: ['view', 'create'], task_checklist: ['view', 'create'] })),
+            tkFull: await login(await makeUser('pv-tkfull', { tasks: ['view', 'create'], task_checklist: ['view', 'create', 'edit', 'delete'] })),
         }
         const draft = { direction: 'draft', subject: 'zz perm draft', body: '<p>hello</p>' }
         check('Client mails: View alone cannot write or draft a mail', (await U.view('POST', `/api/crm/customers/${X}/mails`, draft)).status === 403)
@@ -1638,6 +1642,21 @@ try {
         check('Client mails: with Edit and Delete the author changes and removes their own draft; an editor who is not the author cannot touch it', cf.status === 201 && (await U.cmEdit('PUT', `/api/crm/customers/${X}/mails`, { ...draft, mailId: cf.body.id, subject: 'zz other' })).status === 403 && (await U.cmFull('PUT', `/api/crm/customers/${X}/mails`, { ...draft, mailId: cf.body.id, subject: 'zz perm draft 2' })).status === 200 && (await U.cmFull('DELETE', `/api/crm/customers/${X}/mails?mailId=${cf.body.id}`)).status === 200)
         check('Client mails: the right never lets a person change the client itself', (await U.cmail('PATCH', `/api/crm/customers/${X}`, { company: 'zz hacked' })).status === 403)
         await prisma.crmLeadMail.deleteMany({ where: { clientId: X, subject: 'zz perm draft' } })
+        // task checklist: view / create / edit / delete
+        const mkT = async (who) => { const r = await who('POST', '/api/crm/work/tasks', { name: 'zz checklist rights', status: 1 }); if (r.body?.id) made.rows.unshift(['crmTask', r.body.id]); return r.body?.id }
+        const tNone = await mkT(U.tkNone), tAdd = await mkT(U.tkAdd), tFull = await mkT(U.tkFull)
+        const stepOf = async (who, id) => (await who('GET', `/api/crm/work/tasks/${id}`)).body
+        check('Task checklist: the creator of a task without the checklist rights cannot add, edit or delete a step', (await U.tkNone('POST', `/api/crm/work/tasks/${tNone}/checklist`, { action: 'add', description: 'zz step' })).status === 403)
+        check('Task checklist: ...and the tab is told to hide (no View right on the checklist rights, but the creator still sees it)', (await stepOf(U.tkNone, tNone)).can.checklist.create === false)
+        check('Task checklist: "Create" adds a step', (await U.tkAdd('POST', `/api/crm/work/tasks/${tAdd}/checklist`, { action: 'add', description: 'zz step' })).status === 200)
+        const stepId = (await stepOf(U.tkAdd, tAdd)).checklist[0]?.id
+        check('Task checklist: Create alone cannot edit or reorder a step', (await U.tkAdd('POST', `/api/crm/work/tasks/${tAdd}/checklist`, { action: 'update', itemId: stepId, description: 'zz changed' })).status === 403 && (await U.tkAdd('POST', `/api/crm/work/tasks/${tAdd}/checklist`, { action: 'reorder', ids: [stepId] })).status === 403)
+        check('Task checklist: Create alone cannot delete a step', (await U.tkAdd('POST', `/api/crm/work/tasks/${tAdd}/checklist`, { action: 'delete', itemId: stepId })).status === 403)
+        check('Task checklist: the people of the task can still tick a step', (await U.tkAdd('POST', `/api/crm/work/tasks/${tAdd}/checklist`, { action: 'toggle', itemId: stepId, finished: true })).status === 200)
+        await U.tkFull('POST', `/api/crm/work/tasks/${tFull}/checklist`, { action: 'add', description: 'zz full step' })
+        const fid = (await stepOf(U.tkFull, tFull)).checklist[0]?.id
+        check('Task checklist: Edit changes a step', (await U.tkFull('POST', `/api/crm/work/tasks/${tFull}/checklist`, { action: 'update', itemId: fid, description: 'zz full changed' })).status === 200)
+        check('Task checklist: Delete removes a step', (await U.tkFull('POST', `/api/crm/work/tasks/${tFull}/checklist`, { action: 'delete', itemId: fid })).status === 200 && (await stepOf(U.tkFull, tFull)).checklist.length === 0)
         check('Client files: without a right nobody adds a file to a client (the upload is refused)', (await U.view('POST', '/api/crm/media', { action: 'attach', relType: 'customer', relId: X, mediaId: '000000000000000000000000' })).status === 403)
         check('Leads: View alone can see a lead but cannot write a mail on a lead of someone else (Edit is a real right now)', (await U.view('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)).status === 403)
         check('Leads: the Leads Edit right alone does not give the mail rights', (await U.ledit('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)).status === 403)

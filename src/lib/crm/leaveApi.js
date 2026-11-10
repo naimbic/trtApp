@@ -25,7 +25,8 @@ export async function countDays(from, to) {
     if (!from || !to || to < from) return 0
     const off = new Set((await prisma.crmDayOff.findMany({ where: { offDate: { gte: from, lte: to } }, select: { offDate: true } })).map((d) => dayStr(d.offDate)))
     // the closed days (Calendar → Closed days = Days off) count as company days off too
-    for (const c of await prisma.crmClosedDay.findMany({ where: { toDay: { gte: dayStr(from) }, fromDay: { lte: dayStr(to) } }, select: { fromDay: true, toDay: true } })) {
+    for (const c of await prisma.crmClosedDay.findMany({ where: { toDay: { gte: dayStr(from) }, fromDay: { lte: dayStr(to) } }, select: { fromDay: true, toDay: true, staffIds: true } })) {
+        if (c.staffIds?.length) continue // closed for some people only: not a day off for the company
         for (let t = +new Date(`${c.fromDay}T00:00:00Z`), n = 0; t <= +new Date(`${c.toDay}T00:00:00Z`) && n < 400; t += 86400000, n++) off.add(dayStr(new Date(t)))
     }
     let n = 0

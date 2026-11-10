@@ -6072,4 +6072,7 @@ export default {
     "Report files & links": "Archivos y enlaces de informes",
     "Search a page": "Buscar una página",
     "Nothing found": "Sin resultados",
+    "Former member": "Antiguo miembro",
+    "Who is not available for meetings": "Quién no está disponible para reuniones",
+    "The whole team (pick people to close it for them only)": "Todo el equipo (elige personas para cerrar solo para ellas)",
 }

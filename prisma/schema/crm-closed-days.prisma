@@ -4,6 +4,8 @@ model CrmClosedDay {
   fromDay   String
   toDay     String
   label     String?
+  /// empty = the whole team is closed; otherwise only these people cannot take meetings in the period
+  staffIds  String[] @db.ObjectId
   createdBy String?  @db.ObjectId
   createdAt DateTime @default(now())
 

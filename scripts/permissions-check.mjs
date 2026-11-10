@@ -1008,6 +1008,13 @@ try {
         const bd = await (await bz(kR, `?from=${encodeURIComponent(new Date(Date.now() + 18 * 86400000).toISOString())}&to=${encodeURIComponent(new Date(Date.now() + 23 * 86400000).toISOString())}`)).json()
         const blockC = (bd.data || []).find((x) => x.status === 'closed')
         check('Closed days: the busy endpoint gives that whole day as a busy block (nothing about the reason)', !!blockC && +new Date(blockC.end) - +new Date(blockC.start) === 86400000 && blockC.all_day === false && !JSON.stringify(bd).includes('zz holiday'))
+        { const who = (await prisma.crmStaff.findFirst({ where: { admin: false, active: true } }))?.id; const day2 = new Date(Date.now() + 25 * 86400000).toISOString().slice(0, 10)
+          const pc = await adm('POST', '/api/crm/calendar/closed', { fromDay: day2, label: 'zz one person', staffIds: [who] })
+          const bp = await (await bz(kR, `?from=${encodeURIComponent(new Date(Date.now() + 24 * 86400000).toISOString())}&to=${encodeURIComponent(new Date(Date.now() + 28 * 86400000).toISOString())}`)).json()
+          const mine = (bp.data || []).filter((x) => x.status === 'closed' && (x.staff_ids || []).includes(who))
+          check('Closed days: a period for one person is a busy block that carries only that person (the rest of the team stays free)', pc.status === 201 && mine.length === 1 && mine[0].staff_ids.length === 1)
+          check('Closed days: a team member that does not exist is refused', (await adm('POST', '/api/crm/calendar/closed', { fromDay: day2, staffIds: ['000000000000000000000001'] })).status === 400)
+          if (pc.body?.id) await adm('DELETE', `/api/crm/calendar/closed?id=${pc.body.id}`) }
         const bn = await (await bz(kR)).json()
         const blockN = (bn.data || []).find((x) => x.status === 'notice')
         check('Minimum notice: today and tomorrow are busy (2 days by default), the rules say so', !!blockN && Math.abs(+new Date(blockN.start) - Date.now()) < 120000 && +new Date(blockN.end) > Date.now() + 86400000 && +new Date(blockN.end) <= Date.now() + 3 * 86400000 && bn.rules?.min_notice_days === 2)

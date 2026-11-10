@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.222.0',
+        date: '2026-11-10',
+        title: 'Closed days: choose who is not available for meetings',
+        items: [
+            'When you close days (Calendar > Closed days, or Days off), a new field "Who is not available for meetings" lets you pick one or several team members. Leave it empty to close the whole team, as before.',
+            'The list shows who each closed period is for ("Whole team" or the names). The booking page (busy feed) receives a period for some people as busy time that carries only those people, so the others can still take meetings; the reason is never sent.',
+            'A period for some people is not a company day off: it does not change how leave days are counted. Existing closed days stay for the whole team.',
+        ],
+    },
+    {
         version: '0.221.0',
         date: '2026-11-10',
         title: 'Phone and tablet: the left menu is a full-screen sheet with search',

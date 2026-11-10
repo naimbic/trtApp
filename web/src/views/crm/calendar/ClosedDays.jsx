@@ -1,10 +1,11 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbCalendarOff, TbPlus, TbTrash } from 'react-icons/tb'
+import { TbCalendarOff, TbPlus, TbTrash, TbUsers } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import { api, notify } from '../kit/api'
 import { tr } from '@/utils/t'
 
@@ -15,14 +16,14 @@ const days = (r) => dayjs(r.toDay).diff(dayjs(r.fromDay), 'day') + 1
 /** The closed days (= Days off of the More menu): the same panel in the Calendar popup and on the Days off page. */
 export const ClosedDaysPanel = ({ open = true, onClose }) => {
     const [d, setD] = useState(null)
-    const [v, setV] = useState({ fromDay: '', toDay: '', label: '' })
+    const [v, setV] = useState({ fromDay: '', toDay: '', label: '', staffIds: [] })
     const [busy, setBusy] = useState(false)
     const load = useCallback(() => api('/api/crm/calendar/closed').then(setD).catch((e) => notify('danger', e.message)), [])
-    useEffect(() => { if (open) { setV({ fromDay: '', toDay: '', label: '' }); load() } }, [open, load])
+    useEffect(() => { if (open) { setV({ fromDay: '', toDay: '', label: '', staffIds: [] }); load() } }, [open, load])
     const add = async () => {
         if (!v.fromDay) return notify('warning', tr('Choose the first day'))
         setBusy(true)
-        try { await api('/api/crm/calendar/closed', { method: 'POST', body: { fromDay: v.fromDay, toDay: v.toDay || v.fromDay, label: v.label } }); setV({ fromDay: '', toDay: '', label: '' }); await load(); notify('success', tr('Days closed')) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+        try { await api('/api/crm/calendar/closed', { method: 'POST', body: { fromDay: v.fromDay, toDay: v.toDay || v.fromDay, label: v.label, staffIds: v.staffIds } }); setV({ fromDay: '', toDay: '', label: '', staffIds: [] }); await load(); notify('success', tr('Days closed')) } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const remove = async (r) => { try { await api(`/api/crm/calendar/closed?id=${r.id}`, { method: 'DELETE' }); await load() } catch (e) { notify('danger', e.message) } }
     const fill = (from, to) => setV((x) => ({ ...x, fromDay: from.format('YYYY-MM-DD'), toDay: to.format('YYYY-MM-DD') }))
@@ -34,7 +35,7 @@ export const ClosedDaysPanel = ({ open = true, onClose }) => {
             <div className="max-h-64 space-y-1.5 overflow-y-auto">
                 {(d?.list || []).map((r) => (
                     <div key={r.id} className="flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2 text-sm dark:bg-rose-500/10">
-                        <div className="min-w-0 flex-1"><div className="font-semibold">{range(r)}</div>{r.label && <div className="truncate text-xs text-gray-500">{r.label}</div>}</div>
+                        <div className="min-w-0 flex-1"><div className="font-semibold">{range(r)}</div>{r.label && <div className="truncate text-xs text-gray-500">{r.label}</div>}<div className="mt-0.5 flex flex-wrap items-center gap-1">{r.staffIds?.length ? <><TbUsers className="text-gray-400" />{r.staffIds.map((id) => <span key={id} className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:bg-gray-800">{d.staff?.find((x) => x.id === id)?.name || tr('Former member')}</span>)}</> : <span className="text-[11px] font-semibold text-rose-600">{tr('Whole team')}</span>}</div></div>
                         <span className="shrink-0 text-xs text-gray-400">{days(r)} {tr('day(s)')}</span>
                         {d.can.edit && <button type="button" aria-label={tr('Remove')} onClick={() => remove(r)} className="text-gray-400 hover:text-red-500"><TbTrash /></button>}
                     </div>
@@ -54,6 +55,8 @@ export const ClosedDaysPanel = ({ open = true, onClose }) => {
                         <div><label className="mb-1 block text-xs font-semibold text-gray-500">{tr('First day')}</label><Input size="sm" type="date" value={v.fromDay} min={d.today} onChange={(e) => setV({ ...v, fromDay: e.target.value, toDay: v.toDay && v.toDay < e.target.value ? '' : v.toDay })} /></div>
                         <div><label className="mb-1 block text-xs font-semibold text-gray-500">{tr('Last day (empty = the same day)')}</label><Input size="sm" type="date" value={v.toDay} min={v.fromDay || d.today} onChange={(e) => setV({ ...v, toDay: e.target.value })} /></div>
                     </div>
+                    <div className="mt-2"><label className="mb-1 block text-xs font-semibold text-gray-500">{tr('Who is not available for meetings')}</label>
+                        <Select isMulti isClearable size="sm" placeholder={tr('The whole team (pick people to close it for them only)')} options={(d.staff || []).map((x) => ({ value: x.id, label: x.name }))} value={(d.staff || []).filter((x) => v.staffIds.includes(x.id)).map((x) => ({ value: x.id, label: x.name }))} onChange={(o) => setV({ ...v, staffIds: (o || []).map((x) => x.value) })} /></div>
                     <div className="mt-2"><label className="mb-1 block text-xs font-semibold text-gray-500">{tr('Reason (only for the team)')}</label><Input size="sm" value={v.label} maxLength={80} placeholder={tr('Holidays, Eid, away, too busy…')} onChange={(e) => setV({ ...v, label: e.target.value })} /></div>
                     <div className="mt-3 flex justify-end"><Button size="sm" variant="solid" icon={<TbPlus />} loading={busy} onClick={add}>{tr('Close these days')}</Button></div>
                 </div>

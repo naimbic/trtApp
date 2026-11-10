@@ -52,7 +52,8 @@ export async function listClosed() {
     let can = false
     try { await closer('create'); can = true } catch { /* view only */ }
     void session
-    return { list: rows.map((r) => ({ id: r.id, fromDay: r.fromDay, toDay: r.toDay, label: r.label || '' })), can: { edit: can }, minNoticeDays, tz, today }
+    const staff = (await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true }, orderBy: { firstName: 'asc' } })).map((s) => ({ id: s.id, name: [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || '' }))
+    return { list: rows.map((r) => ({ id: r.id, fromDay: r.fromDay, toDay: r.toDay, label: r.label || '', staffIds: r.staffIds || [] })), can: { edit: can }, staff, minNoticeDays, tz, today }
 }
 
 export async function addClosed(body = {}) {
@@ -62,8 +63,11 @@ export async function addClosed(body = {}) {
     const { tz } = await bookingRules()
     if (p.toDay < todayIn(tz)) throw fail('This period is already over')
     if ((await prisma.crmClosedDay.count({ where: { toDay: { gte: todayIn(tz) } } })) >= MAX) throw fail(`At most ${MAX} closed periods at a time: remove the old ones`)
-    const row = await prisma.crmClosedDay.create({ data: { ...p, label: String(body.label || '').replace(/\s+/g, ' ').trim().slice(0, 80) || null, createdBy: (await getStaffId(session)) || undefined } })
-    return { id: row.id, fromDay: row.fromDay, toDay: row.toDay, label: row.label || '' }
+    // empty = the whole team; otherwise only these team members cannot take meetings
+    const staffIds = [...new Set((Array.isArray(body.staffIds) ? body.staffIds : []).filter(oid))].slice(0, 100)
+    if (staffIds.length && (await prisma.crmStaff.count({ where: { id: { in: staffIds } } })) !== staffIds.length) throw fail('Choose team members from the list')
+    const row = await prisma.crmClosedDay.create({ data: { ...p, staffIds, label: String(body.label || '').replace(/\s+/g, ' ').trim().slice(0, 80) || null, createdBy: (await getStaffId(session)) || undefined } })
+    return { id: row.id, fromDay: row.fromDay, toDay: row.toDay, label: row.label || '', staffIds: row.staffIds || [] }
 }
 
 export async function removeClosed(id) {
@@ -78,5 +82,9 @@ export async function closedBlocks(from, to) {
     const rules = await bookingRules()
     const { tz, minNoticeDays } = rules
     const closed = await prisma.crmClosedDay.findMany({ where: { toDay: { gte: todayIn(tz, +new Date(from) - 86400000) }, fromDay: { lte: todayIn(tz, +new Date(to) + 86400000) } }, take: MAX })
-    return { blocks: blocksFor({ closed, minNoticeDays, tz, from, to }).map((b, i) => ({ id: `closed-${i}`, start: new Date(b.start).toISOString(), end: new Date(b.end).toISOString(), all_day: false, status: b.status === 'notice' ? 'notice' : 'closed', staff_ids: [] })), rules: { min_notice_days: minNoticeDays, tz, days: rules.days, windows: rules.windows, schedule: rules.schedule, slot_minutes: rules.slotMinutes, horizon_days: rules.horizonDays } }
+    // a period for some people only: busy blocks that carry those people (like an event), the others stay free
+    const people = (list) => list.filter((c) => c.staffIds?.length)
+    const teamWide = blocksFor({ closed: closed.filter((c) => !c.staffIds?.length), minNoticeDays, tz, from, to })
+    const personal = people(closed).flatMap((c) => blocksFor({ closed: [c], minNoticeDays: 0, tz, from, to }).map((b) => ({ ...b, staff: c.staffIds })))
+    return { blocks: [...teamWide, ...personal].map((b, i) => ({ id: `closed-${i}`, start: new Date(b.start).toISOString(), end: new Date(b.end).toISOString(), all_day: false, status: b.status === 'notice' ? 'notice' : 'closed', staff_ids: b.staff || [] })), rules: { min_notice_days: minNoticeDays, tz, days: rules.days, windows: rules.windows, schedule: rules.schedule, slot_minutes: rules.slotMinutes, horizon_days: rules.horizonDays } }
 }

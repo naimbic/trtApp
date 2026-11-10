@@ -6072,4 +6072,7 @@ export default {
     "Report files & links": "レポートのファイルとリンク",
     "Search a page": "ページを検索",
     "Nothing found": "見つかりませんでした",
+    "Former member": "元メンバー",
+    "Who is not available for meetings": "ミーティングに対応できない人",
+    "The whole team (pick people to close it for them only)": "チーム全体（特定の人だけ休みにするには選択）",
 }

@@ -6070,4 +6070,6 @@ export default {
     "From the file manager": "ファイルマネージャーから",
     "No files or links yet.": "ファイルもリンクもまだありません。",
     "Report files & links": "レポートのファイルとリンク",
+    "Search a page": "ページを検索",
+    "Nothing found": "見つかりませんでした",
 }

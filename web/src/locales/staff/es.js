@@ -6070,4 +6070,6 @@ export default {
     "From the file manager": "Desde el gestor de archivos",
     "No files or links yet.": "Aún no hay archivos ni enlaces.",
     "Report files & links": "Archivos y enlaces de informes",
+    "Search a page": "Buscar una página",
+    "Nothing found": "Sin resultados",
 }

@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.221.0',
+        date: '2026-11-10',
+        title: 'Phone and tablet: the left menu is a full-screen sheet with search',
+        items: [
+            'The menu button now opens a full-screen sheet with a close (X) button, a search box ("Search a page") and a list that scrolls, the same look as the new profile menu.',
+            'Each group (Leads, Tasks, Customers…) is a tile with the number of pages it holds; tap it to open its pages. The group of the page you are on opens by itself and the current page is highlighted. Pages show their short description.',
+            'Searching lists every matching page with the group it belongs to. The period, currency and colour pickers stay at the top when the page has them.',
+        ],
+    },
+    {
         version: '0.220.2',
         date: '2026-11-10',
         title: 'Task popup: the name of the client or lead on the "Related to" header',

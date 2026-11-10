@@ -6070,4 +6070,6 @@ export default {
     "From the file manager": "من مدير الملفات",
     "No files or links yet.": "لا توجد ملفات أو روابط بعد.",
     "Report files & links": "ملفات وروابط التقارير",
+    "Search a page": "ابحث عن صفحة",
+    "Nothing found": "لا توجد نتائج",
 }

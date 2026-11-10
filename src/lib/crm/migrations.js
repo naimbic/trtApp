@@ -152,6 +152,33 @@ export async function splitPermissions() {
 }
 
 /**
+ * Mails got their own rights (Roles > Lead mails and Client mails: Create / Edit / Send / Delete). Until now everybody who worked
+ * with leads and clients could write, send and delete mails, so every member who has permissions today (and every role) is given
+ * all four, and nothing changes until somebody unticks one. Runs once, marker-guarded.
+ */
+export async function grantMailRights() {
+    const MARK = 'perm_migration_mail_rights_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    const CAPS = ['create', 'edit', 'send', 'delete']
+    const FEATURES_ = ['lead_mails', 'client_mails']
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        const rows = await prisma.crmStaffPermission.findMany({ where: { staffId: s.id }, select: { feature: true, capability: true } })
+        if (!rows.length) continue
+        const have = new Set(rows.map((r) => `${r.feature}:${r.capability}`))
+        const add = FEATURES_.flatMap((feature) => CAPS.filter((capability) => !have.has(`${feature}:${capability}`)).map((capability) => ({ staffId: s.id, feature, capability })))
+        if (add.length) await prisma.crmStaffPermission.createMany({ data: add })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms) || !Object.keys(perms).length) continue
+        for (const f of FEATURES_) perms[f] = [...new Set([...(perms[f] || []), ...CAPS])]
+        await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
+/**
  * The company's single bank (Bank / RIB / SWIFT in Settings → Company) becomes the first, default bank account, so the printed
  * documents do not change; more accounts can then be added and chosen per client or per document. Runs once, marker-guarded.
  */

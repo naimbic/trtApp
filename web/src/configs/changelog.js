@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.218.0',
+        date: '2026-11-10',
+        title: 'Mail rights for Leads and Customers: Create, Edit, Send, Delete',
+        items: [
+            'Roles > Customers & leads: two new lines, "Lead mails" and "Client mails", each with switches for Create (write a draft or log a mail), Edit (change a mail or a draft), Send (send now or schedule) and Delete. They apply to the leads and clients the person can see.',
+            'The Mails tab follows them: without Create the New draft and Log a mail buttons are hidden, without Send there is no Send now and no "Send automatically" schedule, without Edit a mail cannot be changed, without Delete it cannot be removed. The server refuses the same actions.',
+            'Changing, sending or deleting a mail written by someone else still needs the matching right on Leads or Customers ("Edit mails logged by others", Delete). A person who only follows a lead still cannot work on its mails.',
+            'Nothing changes today: every member who already has permissions (and every role) was given all four switches. Untick the ones you want to take away, then press "Save & apply to members" on the role.',
+            'The permissions check covers the new switches (637 checks).',
+        ],
+    },
+    {
         version: '0.217.1',
         date: '2026-11-09',
         title: 'Permissions audit: Leads Edit is a real right, milestone rights work, dead rights removed',

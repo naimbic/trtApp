@@ -110,7 +110,9 @@ const LeadTaskList = ({ leadId, staff, onChanged }) => {
 const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', note: '', checks: [], scheduledAt: null, subject: '', body: '' })
 
 /** Emails sent to or received from the lead, written in the editor with their date and time. Mails read by the lead mailbox land here too. */
-export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '', canEdit, run, kind = 'lead', allowDelete = true, base = `/api/crm/pipeline/leads/${leadId}` }) => {
+export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '', canEdit: canEditProp, mailRights, run, kind = 'lead', allowDelete = true, base = `/api/crm/pipeline/leads/${leadId}` }) => {
+    const mr = mailRights || { create: !!canEditProp, edit: !!canEditProp, send: !!canEditProp, delete: !!canEditProp } // Roles > Lead mails / Client mails: Create, Edit, Send, Delete
+    const canEdit = mr.create
     const [form, setForm] = useState(null) // { id?, ...fields }
     const [commenting, setCommenting] = useState(null)
     const [commentText, setCommentText] = useState('')
@@ -217,7 +219,7 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                     {draft && <p className="text-xs text-gray-500">{tr("Several addresses can be separated by commas. The date becomes the sending time when you send.")}</p>}
                     <div><L>{tr("Subject")}</L><Input size="sm" value={form.subject} onChange={(e) => set({ subject: e.target.value })} /></div>
                     <div><L>{tr("Mail")}</L><RichEditor minHeight={140} value={form.body} placeholder={tr("Paste or write the mail here")} onChange={(html) => set({ body: html })} /></div>
-                    {draft && (
+                    {draft && mr.send && (
                         <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-2.5 dark:border-sky-500/30 dark:bg-sky-500/5">
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                                 <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-sm font-semibold">
@@ -300,13 +302,13 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                             ))}</div>}
                         </div>
                     )}
-                    {m.direction === 'draft' && m.canEdit && (canEdit || !m.mine) && (() => { const left = m.checks.filter((c) => !c.done).length; return <div className="mt-2 flex items-center gap-2"><Button size="sm" variant="solid" icon={<TbSend />} disabled={left > 0} onClick={() => setSend(m)}>{tr("Send now")}</Button>{left > 0 && <span className="text-xs text-red-600">{tr("Confirm the red checks first")} ({left})</span>}</div> })()}
+                    {m.direction === 'draft' && m.canSend && (() => { const left = m.checks.filter((c) => !c.done).length; return <div className="mt-2 flex items-center gap-2"><Button size="sm" variant="solid" icon={<TbSend />} disabled={left > 0} onClick={() => setSend(m)}>{tr("Send now")}</Button>{left > 0 && <span className="text-xs text-red-600">{tr("Confirm the red checks first")} ({left})</span>}</div> })()}
                     <CommentFoot
                         remind={{ relType: kind === 'client' ? 'customer' : 'lead', relId: leadId, tab: kind === 'client' ? null : 'mails', note: `${tr('Reply')}: ${m.subject || ''}`.slice(0, 140) }}
                         onMention={(sid) => run(() => api(`${base}/mails/send`, { method: 'POST', body: { action: 'mention', mailId: m.id, staffId: sid } }), tr('Colleague mentioned'), () => {})}
                         onComment={() => { setCommenting(commenting === m.id ? null : m.id); setCommentText('') }}
                         onReply={m.direction !== 'draft' && canEdit ? () => replyTo(m) : null}
-                        onEdit={m.canEdit && (canEdit || !m.mine) ? () => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, note: m.note, checks: m.checks, scheduledAt: m.scheduledAt ? new Date(m.scheduledAt) : null, subject: m.subject, body: m.body }) : null}
+                        onEdit={m.canEdit ? () => setForm({ id: m.id, direction: m.direction, date: new Date(m.date), from: m.from, to: m.to, cc: m.cc, bcc: m.bcc, replyTo: m.replyTo, note: m.note, checks: m.checks, scheduledAt: m.scheduledAt ? new Date(m.scheduledAt) : null, subject: m.subject, body: m.body }) : null}
                         onDelete={m.canDelete && (allowDelete || m.direction === 'draft') ? () => setDel(m) : null}
                     />
                     {(m.comments || []).length > 0 && (

@@ -28,6 +28,10 @@ const isOwn = (a, lead) => !!a.staffId && (lead.assigned === a.staffId || (lead.
 /** Items (notes, mails, meetings) added by someone else can be changed only with the matching permission; the author always can. */
 const mayChangeItem = (a, by, kind) => (!!a.staffId && by === a.staffId) || a.can(`edit_others_${kind}`)
 const mayDropItem = (a, by) => (!!a.staffId && by === a.staffId) || a.can('delete')
+/** The mail rights (Roles > Lead mails): Create / Edit / Send / Delete. They come on top of seeing the lead. */
+const mailCan = (a, cap) => a.admin || hasCap(a.authority, 'lead_mails', cap)
+/** Someone who only follows a lead (not assigned, not its author, and without View all) is told about it but does not work on it. */
+const onlyFollows = (a, lead) => !!a.staffId && (lead.followerIds || []).includes(a.staffId) && !isOwn(a, lead) && a.scope !== 'all'
 const mayEdit = (a, lead) => isOwn(a, lead) || (a.can('edit') && !((lead.followerIds || []).includes(a.staffId) && a.scope !== 'all'))
 
 /** Everyone a lead is assigned to: the team list, or the single old owner. */
@@ -163,10 +167,10 @@ export async function getLead(id) {
         checklist: Array.isArray(l.checklist) ? l.checklist : [],
         tasks, proposals: proposals.map((p) => ({ id: p.id, subject: p.subject, status: p.status, total: p.total, number: p.number ?? p.legacyId, by: people[p.addedFrom]?.name || (typeof people[p.addedFrom] === 'string' ? people[p.addedFrom] : ''), currency: curNames[p.currencyId] || '', date: p.date || p.createdAt })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
-        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails'), canDelete: mayDropItem(a, m.addedFrom) })),
+        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit'), canSend: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'send'), canDelete: mayDropItem(a, m.addedFrom) && mailCan(a, 'delete') })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
         senders, currency: (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }).catch(() => null))?.name || '',
-        can: { edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
+        can: { mail: { create: mailCan(a, 'create'), edit: mailCan(a, 'edit'), send: mailCan(a, 'send'), delete: mailCan(a, 'delete') }, edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
 }
 
@@ -439,8 +443,10 @@ export async function saveMail(id, body, mailId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     const lead = await loadOne(id, a)
-    if (!mayEdit(a, lead) && !(mailId && a.can('edit_others_mails'))) throw fail('You can only edit your own leads', 403)
+    if (!mailCan(a, mailId ? 'edit' : 'create')) throw fail(mailId ? 'You are not allowed to edit mails' : 'You are not allowed to add mails', 403)
+    if (onlyFollows(a, lead) && !(mailId && a.can('edit_others_mails'))) throw fail('Only the team of this lead works on its mails', 403)
     const data = mailData(body)
+    if (data.direction === 'draft' && data.scheduledAt && !mailCan(a, 'send')) throw fail('You are not allowed to send or schedule mails', 403)
     if (mailId) {
         const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
         if (!m) throw fail('Mail not found', 404)
@@ -487,7 +493,8 @@ export async function checkDraftMail(id, mailId, index, done) {
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
-    if (!mayEdit(a, lead) && !a.can('edit_others_mails')) throw fail('You can only edit your own leads', 403)
+    if (!mailCan(a, 'edit')) throw fail('You are not allowed to edit mails', 403)
+    if (onlyFollows(a, lead) && !a.can('edit_others_mails')) throw fail('Only the team of this lead works on its mails', 403)
     const checks = Array.isArray(m.checks) ? m.checks.map((c) => ({ ...c })) : []
     if (!checks[index]) throw fail('Check not found', 404)
     checks[index].done = !!done
@@ -514,7 +521,8 @@ export async function sendDraftMail(id, mailId) {
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
-    if (!mayEdit(a, lead) && !a.can('edit_others_mails')) throw fail('You can only edit your own leads', 403)
+    if (!mailCan(a, 'send')) throw fail('You are not allowed to send mails', 403)
+    if (onlyFollows(a, lead) && !a.can('edit_others_mails')) throw fail('Only the team of this lead works on its mails', 403)
     if (!mayChangeItem(a, m.addedFrom, 'mails')) throw fail('You can only send the drafts you wrote', 403)
     return deliverDraft({ id, lead, m, a, how: '' })
 }
@@ -600,6 +608,7 @@ export async function deleteMail(id, mailId) {
     await loadOne(id, a)
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
     if (!m) throw fail('Mail not found', 404)
+    if (!mailCan(a, 'delete')) throw fail('You are not allowed to delete mails', 403)
     if (m.addedFrom !== a.staffId && !a.can('delete')) throw fail('You can only delete the mails you logged', 403)
     await prisma.crmLeadMail.delete({ where: { id: mailId } })
     await dropMailFiles([mailId])

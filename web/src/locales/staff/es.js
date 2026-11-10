@@ -6060,4 +6060,9 @@ export default {
     "Role saved, but its members still have their old permissions until you apply it to them.": "Rol guardado, pero sus miembros conservan sus permisos anteriores hasta que lo aplique.",
     "The role is saved, but the members who already have it keep their old permissions until you apply the change to them.": "El rol está guardado, pero los miembros que ya lo tienen conservan sus permisos anteriores hasta que aplique el cambio.",
     "Apply to": "Aplicar a",
+    "Lead mails": "Correos de leads",
+    "Send and schedule": "Enviar y programar",
+    "You are not allowed to send or schedule mails": "No tiene permiso para enviar o programar correos",
+    "The Mails tab of a client, for the clients the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Customers.": "La pestaña Correos de un cliente, para los clientes que la persona ve. Crear = escribir un borrador o registrar un correo; Editar = cambiar un correo o borrador; Enviar = enviar un borrador o programarlo; Eliminar = quitar un correo. Cambiar o quitar el correo de otra persona también requiere el derecho correspondiente en Clientes.",
+    "The Mails tab of a lead, for the leads the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Leads.": "La pestaña Correos de un lead, para los leads que la persona ve. Crear = escribir un borrador o registrar un correo; Editar = cambiar un correo o borrador; Enviar = enviar un borrador o programarlo; Eliminar = quitar un correo. Cambiar o quitar el correo de otra persona también requiere el derecho correspondiente en Leads.",
 }

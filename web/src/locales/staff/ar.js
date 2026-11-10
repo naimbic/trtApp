@@ -6060,4 +6060,9 @@ export default {
     "Role saved, but its members still have their old permissions until you apply it to them.": "تم حفظ الدور، لكن أعضاءه يحتفظون بصلاحياتهم القديمة حتى تطبّقه عليهم.",
     "The role is saved, but the members who already have it keep their old permissions until you apply the change to them.": "تم حفظ الدور، لكن الأعضاء الذين لديهم هذا الدور يحتفظون بصلاحياتهم القديمة حتى تطبّق التغيير عليهم.",
     "Apply to": "تطبيق على",
+    "Lead mails": "رسائل العملاء المحتملين",
+    "Send and schedule": "الإرسال والجدولة",
+    "You are not allowed to send or schedule mails": "غير مسموح لك بإرسال الرسائل أو جدولتها",
+    "The Mails tab of a client, for the clients the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Customers.": "تبويب الرسائل لدى العميل، للعملاء الذين يراهم الشخص. إنشاء = كتابة مسودة أو تسجيل رسالة؛ تعديل = تغيير رسالة أو مسودة؛ إرسال = إرسال مسودة أو جدولتها؛ حذف = إزالة رسالة. تغيير رسالة شخص آخر أو حذفها يتطلب أيضًا الصلاحية المقابلة في العملاء.",
+    "The Mails tab of a lead, for the leads the person can see. Create = write a draft or log a mail; Edit = change a mail or a draft; Send = send a draft now or schedule it; Delete = remove a mail. Changing or removing a mail written by someone else also needs the matching right on Leads.": "تبويب الرسائل لدى العميل المحتمل، للعملاء المحتملين الذين يراهم الشخص. إنشاء = كتابة مسودة أو تسجيل رسالة؛ تعديل = تغيير رسالة أو مسودة؛ إرسال = إرسال مسودة أو جدولتها؛ حذف = إزالة رسالة. تغيير رسالة شخص آخر أو حذفها يتطلب أيضًا الصلاحية المقابلة في العملاء المحتملين.",
 }

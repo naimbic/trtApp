@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
-import { scope, mayWriteClientMails } from '@/lib/crm/clientsApi'
+import { scope } from '@/lib/crm/clientsApi'
 import { notifyComment } from '@/lib/crm/mentionsApi'
 import { mailData, checkSchedule, draftFrom, senderOptions, dropMailFiles, sendDraftCore } from '@/lib/crm/leadsApi'
 
@@ -10,19 +10,19 @@ const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const staffName = (s) => [s?.firstName, s?.lastName].filter(Boolean).join(' ') || s?.email || ''
 
-/** The client (only one the person may see) and what they may do with its mails: write = "Edit" or "Create" on Customers, or the clients they look after; changing another person's mail needs "Edit mails logged by others". */
-async function gate(id, { write = false } = {}) {
-    const session = await requirePermission('customers', 'view')
+/** The client (only one the person may see) and what they may do with its mails. The mail rights (Roles > Client mails: Create / Edit / Send / Delete) come on top of seeing the client;
+ *  changing another person's mail also needs "Edit mails logged by others". `cap` is the mail right the action needs. */
+async function gate(id, { cap = null } = {}) {
+    const session = await requirePermission('customers', 'view_own')
     const authority = session.user.authority || []
     const sc = await scope(session)
     const client = oid(id) && (await prisma.crmClient.findFirst({ where: { AND: [{ id }, sc] }, select: { id: true, company: true } }))
     if (!client) throw fail('Client not found', 404)
     const staffId = await getStaffId(session)
     const admin = isCrmAdmin(authority)
-    // writing and scheduling mails: Edit or Create on Customers, "Client mails: Create", or a client the person looks after (View own)
-    const edit = mayWriteClientMails(authority, sc, admin)
-    if (write && !edit) throw fail('You are not allowed to change this client', 403)
-    const a = { staffId: staffId || undefined, session, authority, admin, edit, can: (cap) => admin || hasCap(authority, 'customers', cap) }
+    const mail = Object.fromEntries(['create', 'edit', 'send', 'delete'].map((c) => [c, admin || hasCap(authority, 'client_mails', c)]))
+    if (cap && !mail[cap]) throw fail(`You are not allowed to ${cap === 'create' ? 'add' : cap} mails`, 403)
+    const a = { staffId: staffId || undefined, session, authority, admin, mail, can: (c) => admin || hasCap(authority, 'customers', c) }
     return { a, client }
 }
 const mayChange = (a, by) => (!!a.staffId && by === a.staffId) || a.can('edit_others_mails')
@@ -45,14 +45,15 @@ export async function getClientMails(id) {
     const { commentsByMail } = await import('@/lib/crm/mailCatch')
     const mailComments = await commentsByMail(mails)
     return {
-        email, senders, can: { edit: a.edit },
-        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.edit && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) })),
+        email, senders, can: a.mail,
+        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.mail.edit && mayChange(a, m.addedFrom), canSend: a.mail.send && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) && a.mail.delete })),
     }
 }
 
 export async function saveClientMail(id, body, mailId) {
-    const { a, client } = await gate(id, { write: true })
+    const { a, client } = await gate(id, { cap: mailId ? 'edit' : 'create' })
     const data = mailData(body)
+    if (data.direction === 'draft' && data.scheduledAt && !a.mail.send) throw fail('You are not allowed to send or schedule mails', 403)
     const known = { email: await clientEmail(id) }
     if (mailId) {
         const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, clientId: id } }))
@@ -100,7 +101,7 @@ export async function mentionClientMail(id, mailId, staffId) {
 }
 
 export async function checkClientDraft(id, mailId, index, done) {
-    const { a } = await gate(id, { write: true })
+    await gate(id, { cap: 'edit' })
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, clientId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
@@ -113,7 +114,7 @@ export async function checkClientDraft(id, mailId, index, done) {
 
 /** Sends a draft of the client now (the author, or who may edit mails of others). */
 export async function sendClientDraft(id, mailId) {
-    const { a, client } = await gate(id, { write: true })
+    const { a, client } = await gate(id, { cap: 'send' })
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, clientId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
@@ -128,7 +129,7 @@ async function deliver({ client, m, a, how }) {
 }
 
 export async function deleteClientMail(id, mailId) {
-    const { a } = await gate(id, { write: true })
+    const { a } = await gate(id, { cap: 'delete' })
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, clientId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (!mayDrop(a, m.addedFrom)) throw fail('You can only delete the mails you logged', 403)

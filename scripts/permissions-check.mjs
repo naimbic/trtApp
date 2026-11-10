@@ -10,6 +10,8 @@ const BASE = process.env.BASE_URL || 'http://localhost:3000'
 const made = { users: [], staff: [], rows: [], extraRows: [] } // rows: [model, id]
 
 async function makeUser(label, perms, admin = false) {
+    // the mail rights (Lead mails / Client mails) are separate switches: the older checks use people who may do everything with mails, the 'pv-' checks below choose them one by one
+    if (!label.startsWith('pv-') && !label.endsWith('-view') && (perms.leads || perms.customers || label.startsWith('lead-'))) perms = { lead_mails: ['create', 'edit', 'send', 'delete'], client_mails: ['create', 'edit', 'send', 'delete'], ...perms }
     const email = `permcheck.${label}.${crypto.randomBytes(3).toString('hex')}@test.local`
     const password = crypto.randomBytes(12).toString('base64url')
     const user = await prisma.user.create({ data: { name: `Check ${label}`, email, password: await bcrypt.hash(password, 10), authority: admin ? ['admin'] : ['user'], role: admin ? 'admin' : 'user', status: 'active', image: '/img/avatars/thumb-1.jpg' } })
@@ -1618,6 +1620,10 @@ try {
             view: await login(await makeUser('pv-view', { customers: ['view'], leads: ['view'], projects: ['view'], staff: ['view'], roles: ['view'] })),
             cmail: await login(await makeUser('pv-cmail', { customers: ['view'], client_mails: ['create'] })),
             ccreate: await login(await makeUser('pv-ccreate', { customers: ['view', 'create'] })),
+            cmEdit: await login(await makeUser('pv-cmedit', { customers: ['view'], client_mails: ['edit'] })),
+            cmFull: await login(await makeUser('pv-cmfull', { customers: ['view'], client_mails: ['create', 'edit', 'send', 'delete'] })),
+            lmail: await login(await makeUser('pv-lmail', { leads: ['view'], lead_mails: ['create'] })),
+            lmailFull: await login(await makeUser('pv-lmailfull', { leads: ['view'], lead_mails: ['create', 'edit', 'send', 'delete'] })),
             ledit: await login(await makeUser('pv-ledit', { leads: ['view', 'edit'] })),
             ms: await login(await makeUser('pv-ms', { projects: ['view', 'create_milestones'] })),
             staffEdit: await login(await makeUser('pv-staffedit', { staff: ['view', 'edit'] })),
@@ -1625,12 +1631,21 @@ try {
         const draft = { direction: 'draft', subject: 'zz perm draft', body: '<p>hello</p>' }
         check('Client mails: View alone cannot write or draft a mail', (await U.view('POST', `/api/crm/customers/${X}/mails`, draft)).status === 403)
         check('Client mails: "Client mails: Create" can draft a mail without editing the client', (await U.cmail('POST', `/api/crm/customers/${X}/mails`, draft)).status === 201)
-        check('Client mails: Customers "Create" can draft a mail too', (await U.ccreate('POST', `/api/crm/customers/${X}/mails`, draft)).status === 201)
+        check('Client mails: Customers Create alone does not give the mail rights (they are separate switches)', (await U.ccreate('POST', `/api/crm/customers/${X}/mails`, draft)).status === 403)
+        const cm = await U.cmail('POST', `/api/crm/customers/${X}/mails`, draft)
+        check('Client mails: Create alone cannot edit, send, schedule or delete a mail', cm.status === 201 && (await U.cmail('PUT', `/api/crm/customers/${X}/mails`, { ...draft, mailId: cm.body.id, subject: 'zz perm draft 2' })).status === 403 && (await U.cmail('POST', `/api/crm/customers/${X}/mails/send`, { mailId: cm.body.id })).status === 403 && (await U.cmail('POST', `/api/crm/customers/${X}/mails`, { ...draft, scheduledAt: new Date(Date.now() + 86400000).toISOString(), to: 'a@b.co' })).status === 403 && (await U.cmail('DELETE', `/api/crm/customers/${X}/mails?mailId=${cm.body.id}`)).status === 403)
+        const cf = await U.cmFull('POST', `/api/crm/customers/${X}/mails`, draft)
+        check('Client mails: with Edit and Delete the author changes and removes their own draft; an editor who is not the author cannot touch it', cf.status === 201 && (await U.cmEdit('PUT', `/api/crm/customers/${X}/mails`, { ...draft, mailId: cf.body.id, subject: 'zz other' })).status === 403 && (await U.cmFull('PUT', `/api/crm/customers/${X}/mails`, { ...draft, mailId: cf.body.id, subject: 'zz perm draft 2' })).status === 200 && (await U.cmFull('DELETE', `/api/crm/customers/${X}/mails?mailId=${cf.body.id}`)).status === 200)
         check('Client mails: the right never lets a person change the client itself', (await U.cmail('PATCH', `/api/crm/customers/${X}`, { company: 'zz hacked' })).status === 403)
         await prisma.crmLeadMail.deleteMany({ where: { clientId: X, subject: 'zz perm draft' } })
         check('Client files: without a right nobody adds a file to a client (the upload is refused)', (await U.view('POST', '/api/crm/media', { action: 'attach', relType: 'customer', relId: X, mediaId: '000000000000000000000000' })).status === 403)
         check('Leads: View alone can see a lead but cannot write a mail on a lead of someone else (Edit is a real right now)', (await U.view('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)).status === 403)
-        check('Leads: the Edit right can write and draft mails on any lead it sees', (await U.ledit('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)).status === 201)
+        check('Leads: the Leads Edit right alone does not give the mail rights', (await U.ledit('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)).status === 403)
+        const lm = await U.lmail('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)
+        check('Lead mails: Create can draft on a lead it sees, but not edit, send, schedule or delete', lm.status === 201 && (await U.lmail('PUT', `/api/crm/pipeline/leads/${lead.id}/mails`, { ...draft, mailId: lm.body.id, subject: 'zz perm draft 2' })).status === 403 && (await U.lmail('POST', `/api/crm/pipeline/leads/${lead.id}/mails/send`, { mailId: lm.body.id })).status === 403 && (await U.lmail('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, { ...draft, to: 'a@b.co', scheduledAt: new Date(Date.now() + 86400000).toISOString() })).status === 403 && (await U.lmail('DELETE', `/api/crm/pipeline/leads/${lead.id}/mails?mailId=${lm.body.id}`)).status === 403)
+        const lf = await U.lmailFull('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)
+        check('Lead mails: with Edit and Delete the author changes and removes their own draft', lf.status === 201 && (await U.lmailFull('PUT', `/api/crm/pipeline/leads/${lead.id}/mails`, { ...draft, mailId: lf.body.id, subject: 'zz perm draft 2' })).status === 200 && (await U.lmailFull('DELETE', `/api/crm/pipeline/leads/${lead.id}/mails?mailId=${lf.body.id}`)).status === 200)
+        check('Lead mails: the detail tells the screen which of the four the person has', (await U.lmail('GET', `/api/crm/pipeline/leads/${lead.id}`)).body?.can?.mail?.create === true && (await U.lmail('GET', `/api/crm/pipeline/leads/${lead.id}`)).body?.can?.mail?.send === false)
         await prisma.crmLeadMail.deleteMany({ where: { leadId: lead.id } })
         check('Milestones: View alone cannot add a milestone', (await U.view('POST', '/api/crm/milestones-board', { projectId: project.id, name: 'zz m' })).status === 403)
         check('Milestones: "Create milestones" adds one, and nothing more (no project edit)', (await U.ms('POST', '/api/crm/milestones-board', { projectId: project.id, name: 'zz m' })).status === 201 && (await U.ms('PATCH', `/api/crm/projects/${project.id}`, { name: 'zz renamed' })).status === 403)

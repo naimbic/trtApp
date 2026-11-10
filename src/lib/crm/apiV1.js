@@ -20,7 +20,7 @@ const byNameOrId = (list, v) => { if (!v) return null; const s = String(v).trim(
 export const RESOURCES = {
     leads: {
         model: 'crmLead', read: 'leads:read', write: 'leads:write', search: ['name', 'email', 'company', 'phoneNumber'], sort: { createdAt: 'desc' },
-        out: (l, lk) => ({ id: l.id, name: l.name, email: l.email, phone: l.phoneNumber, company: l.company, title: l.title, website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, description: l.description, status: lk?.statuses.find((s) => s.id === l.statusId)?.name || null, status_id: l.statusId, source: lk?.sources.find((s) => s.id === l.sourceId)?.name || null, source_id: l.sourceId, assigned_ids: l.assignedIds || [], lost: l.lost, junk: l.junk, client_id: l.clientId, last_contact: iso(l.lastContact), created_at: iso(l.createdAt), updated_at: iso(l.updatedAt) }),
+        out: (l, lk) => ({ id: l.id, name: l.name, email: l.email, phone: l.phoneNumber, company: l.company, title: l.title, website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, description: l.description, status: lk?.statuses.find((s) => s.id === l.statusId)?.name || null, status_id: l.statusId, source: lk?.sources.find((s) => s.id === l.sourceId)?.name || null, source_id: l.sourceId, assigned_ids: l.assignedIds || [], lost: l.lost, junk: l.junk, client_id: l.clientId, last_contact: iso(l.lastContact), value: l.value, date_converted: iso(l.dateConverted), created_at: iso(l.createdAt), updated_at: iso(l.updatedAt) }),
         needsLookups: true,
         async data(body, create, lk) {
             const d = {}

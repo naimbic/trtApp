@@ -511,6 +511,7 @@ try {
         check('a resource outside the scopes of the key: 403', (await call('GET', '/clients')).status === 403 && (await call('GET', '/tickets')).status === 403)
         check('an unknown resource: 404', (await call('GET', '/passwords')).status === 404)
         check('invoices and others are read-only: writing is refused', (await call('POST', '/invoices', { total: 1 })).status === 405)
+        { const l = (await call('GET', '/leads?per_page=1')).body?.data?.[0]; check('API leads carry the deal value and the conversion date (for the ads dashboard)', !!l && 'value' in l && 'date_converted' in l && 'last_contact' in l && 'client_id' in l) }
         check('missing name: 400', (await call('POST', '/leads', { email: 'a@b.com' })).status === 400)
         check('a wrong email: 400', (await call('POST', '/leads', { name: 'zz api lead', email: 'nope' })).status === 400)
         check('an unknown status: 400', (await call('POST', '/leads', { name: 'zz api lead', status: 'No such status' })).status === 400)

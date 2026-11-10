@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.220.1',
+        date: '2026-11-10',
+        title: 'API: leads now carry the deal value and the conversion date',
+        items: [
+            'GET /api/v1/leads now also returns value (what the deal is worth) and date_converted, next to client_id and last_contact. The ads dashboard can use real won revenue per converted lead and the exact conversion date. Purely additive: nothing existing changes.',
+        ],
+    },
+    {
         version: '0.220.0',
         date: '2026-11-10',
         title: 'Reports & Strategies popup: Upload, File manager, rights, and the same discussion as Ideas',

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.218.1',
+        date: '2026-11-10',
+        title: 'Phone: the profile menu is now a full-screen sheet',
+        items: [
+            'On a phone, tapping your avatar opens a full-screen menu instead of a small dropdown: a close (X) button on top, your profile card, and a list that scrolls.',
+            'Theme, the phone app and Sign out stay pinned at the bottom, with big buttons that are easy to tap.',
+        ],
+    },
+    {
         version: '0.218.0',
         date: '2026-11-10',
         title: 'Mail rights for Leads and Customers: Create, Edit, Send, Delete',

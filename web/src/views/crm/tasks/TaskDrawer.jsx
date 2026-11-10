@@ -118,7 +118,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     <div><L>{tr("Followers")}</L><Select size={sz} isMulti isDisabled={!canEdit} options={staffOptions} value={pick(v.followerIds)} onChange={(o) => set({ followerIds: (o || []).map((x) => x.value) })} /></div>
                 </div>
             </FoldSection>
-            <FoldSection icon={<TbLink />} tone="amber" title={tr("Related to")} open={openSec.includes('link')} onToggle={() => toggleSec('link')} summary={relLabel || ''}>
+            <FoldSection icon={<TbLink />} tone="amber" title={tr("Related to")} open={openSec.includes('link')} onToggle={() => toggleSec('link')} summary={[relLabel && tr(relLabel), (detail?.task.rel?.type === v.relType && detail.task.relId === v.relId ? detail.task.rel?.label : '')].filter(Boolean).join(' · ')}>
                 <div className="grid grid-cols-2 gap-3">
                     <div><L>{tr("Related to")}</L><Select size={sz} isClearable isDisabled={!canEdit} options={REL_TYPES.map((r) => ({ value: r.value, label: r.label }))} value={REL_TYPES.filter((r) => r.value === v.relType).map((r) => ({ value: r.value, label: r.label }))[0] || null} onChange={(o) => set({ relType: o?.value || null, relId: null })} /></div>
                     <div><L>{relLabel || tr("Record")}</L>{relResource ? <RelationSelect key={v.relType} resource={relResource} value={v.relId} disabled={!canEdit} onChange={(x) => set({ relId: x || null })} /> : <Input size={sz} disabled placeholder={tr("Pick a type first")} />}</div>

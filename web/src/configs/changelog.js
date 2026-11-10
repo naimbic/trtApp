@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.220.2',
+        date: '2026-11-10',
+        title: 'Task popup: the name of the client or lead on the "Related to" header',
+        items: [
+            'In the task popup, the "Related to" section header now shows the name of the client, lead, project or ticket the task is linked to (for example "Client · Acme"), so you do not have to open the section to see it.',
+        ],
+    },
+    {
         version: '0.220.1',
         date: '2026-11-10',
         title: 'API: leads now carry the deal value and the conversion date',

@@ -6111,4 +6111,5 @@ export default {
     "Not viewed yet": "Aún no visto",
     "Last viewed": "Última vez visto",
     "Viewed": "Visto",
+    "Viewed: {when}": "Visto: {when}",
 }

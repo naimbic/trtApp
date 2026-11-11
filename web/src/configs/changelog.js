@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.230.1',
+        date: '2026-11-11',
+        title: 'Company signature on mails, new Viewed format',
+        items: [
+            'The mails sent from a lead, a customer, an invoice, a proposal and the other documents now use the signature of Settings > Email > Signature & design (the same one as in the preview), and no longer the personal signature of the person who sends them.',
+            'The view line now reads "Viewed: 12th Oct 26 - 22h34" in the Sent log and in the Mails tab of a lead or a customer.',
+        ],
+    },
+    {
         version: '0.230.0',
         date: '2026-11-11',
         title: 'Mails of invoices, proposals and other documents are tracked too',

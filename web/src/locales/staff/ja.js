@@ -6111,4 +6111,5 @@ export default {
     "Not viewed yet": "未閲覧",
     "Last viewed": "最終閲覧",
     "Viewed": "閲覧",
+    "Viewed: {when}": "閲覧: {when}",
 }

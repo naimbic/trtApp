@@ -6111,4 +6111,5 @@ export default {
     "Not viewed yet": "لم تتم المشاهدة بعد",
     "Last viewed": "آخر مشاهدة",
     "Viewed": "تمت المشاهدة",
+    "Viewed: {when}": "تمت المشاهدة: {when}",
 }

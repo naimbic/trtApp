@@ -231,8 +231,8 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
     if (badOne) fail(`"${badOne}" is not a valid email address`)
 
     const finalSubject = String(subject || '').trim() || mergeFields(template.subject, ctx.data)
-    const mine = staffId ? (await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { emailSignature: true } }))?.emailSignature : null
-    const built = await buildHtml(template.message, mine ? { ...ctx.data, email_signature: mine } : ctx.data, undefined, mine)
+    // the signature is the company one (Settings > Email > Signature & design), the same as in the preview; never the personal one of the sender
+    const built = await buildHtml(template.message, ctx.data)
     const { withTracking, ownLinksOnly } = await import('@/lib/crm/mailTrackApi')
     const { html, token } = await withTracking({ body: built, only: ownLinksOnly() }) // the invisible picture and the links to the document (Settings > Email)
     if (kind === 'purchase_order' && attachPdf === undefined) attachPdf = true

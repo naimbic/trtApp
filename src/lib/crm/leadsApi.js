@@ -584,8 +584,8 @@ export async function sendDraftCore({ m, a, fallbackTo = '' }) {
     const { deliver, escapeHtml, getOptions } = await import('@/lib/crm/mailer')
     const me = a.staffId ? await prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { firstName: true, lastName: true, email: true, emailSignature: true } }) : null
     const body = m.body || `<p>${escapeHtml(m.subject)}</p>`
-    // every mail to a lead or a customer carries the signature: the sender's own (Profile), else the company one (Settings > Email); not twice when the text already holds it
-    const sig = (me?.emailSignature || (await getOptions(['email_signature']))('email_signature') || '').trim()
+    // every mail to a lead or a customer carries the company signature (Settings > Email > Signature & design), never the personal one of the sender; not twice when the text already holds it
+    const sig = ((await getOptions(['email_signature']))('email_signature') || '').trim()
     const { SIGNATURE_CSS } = await import('@/lib/crm/mailDesign/signature')
     const signature = sig && !/class=["']sig["']/.test(body) && !body.includes(sig.slice(0, 200)) ? `<br><style>${SIGNATURE_CSS}</style><div class="sig">${sig}</div>` : ''
     const { withTracking } = await import('@/lib/crm/mailTrackApi')

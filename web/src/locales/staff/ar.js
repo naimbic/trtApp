@@ -6080,4 +6080,10 @@ export default {
     "What must they confirm? Then press Enter": "ماذا يجب أن يؤكد؟ ثم اضغط Enter",
     "Asked of you: confirm it": "طُلب منك: أكّده",
     "Only {name} can confirm this": "{name} فقط يمكنه تأكيد هذا",
+    "Lead popup tabs": "تبويبات نافذة العميل المحتمل",
+    "See the Profile tab (contact details)": "رؤية تبويب الملف (بيانات الاتصال)",
+    "See the Mails tab": "رؤية تبويب البريد",
+    "See the Meetings tab": "رؤية تبويب الاجتماعات",
+    "See the Offers tab": "رؤية تبويب العروض",
+    "See the Activity tab": "رؤية تبويب النشاط",
 }

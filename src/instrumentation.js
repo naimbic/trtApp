@@ -12,7 +12,7 @@ export async function register() {
     // each startup migration on its own: one that fails must not stop the ones after it (the bank accounts merge used to be skipped that way)
     try {
         const m = await import('@/lib/crm/migrations')
-        for (const name of ['migratePermissions', 'migrateToolPermissions', 'migrateChatPermissions', 'migrateGrowthPermission', 'migrateNotesPermission', 'cleanLeadWebsites', 'splitPermissions', 'grantMailRights', 'grantChecklistRights', 'grantReportFileRights', 'seedBankAccount', 'mergeBankAccounts', 'ensureStandardRoles', 'splitAdmins', 'seedTaskStatuses', 'taskAssignCreatorDefault', 'mergeDaysOffIntoClosedDays']) {
+        for (const name of ['migratePermissions', 'migrateToolPermissions', 'migrateChatPermissions', 'migrateGrowthPermission', 'migrateNotesPermission', 'cleanLeadWebsites', 'splitPermissions', 'grantMailRights', 'grantChecklistRights', 'grantLeadTabs', 'grantReportFileRights', 'seedBankAccount', 'mergeBankAccounts', 'ensureStandardRoles', 'splitAdmins', 'seedTaskStatuses', 'taskAssignCreatorDefault', 'mergeDaysOffIntoClosedDays']) {
             try { await m[name]() } catch (e) { console.warn(`[migrate] ${name}:`, e.message?.slice(0, 120)) }
         }
     } catch (e) { console.warn('[migrate] could not start:', e.message?.slice(0, 120)) }

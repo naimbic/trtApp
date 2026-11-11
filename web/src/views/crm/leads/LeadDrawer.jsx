@@ -45,6 +45,10 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const [replyTo, setReplyTo] = useState(null)
     const editorRef = useRef(null)
     const [detail, setDetail] = useState(null)
+    // the tabs this person may see (Roles > Lead popup tabs); a tab that is off is not shown, and the popup opens on the first one that is on
+    const tabOk = { profile: true, mails: true, meetings: true, offers: true, activity: true, ...(detail?.can?.tabs || {}) }
+    const TAB_OF = { profile: 'profile', mails: 'mails', meetings: 'meetings', related: 'offers', activity: 'activity' }
+    useEffect(() => { if (detail && TAB_OF[tabV] && !tabOk[TAB_OF[tabV]]) setTabV(tabOk.profile ? 'profile' : can('tasks', 'view') ? 'tasks' : 'notes') }, [detail, tabV]) // eslint-disable-line react-hooks/exhaustive-deps
     const [lk, setLk] = useState({ statuses: [], sources: [], countries: [] })
     const [saving, setSaving] = useState(false)
     const [confirm, setConfirm] = useState(null)
@@ -206,24 +210,24 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                     {headerBadges}
                     <Tabs value={tabV} onChange={setTabV}>
                         <Tabs.TabList>
-                            <Tabs.TabNav value="profile">{tr("Profile")}</Tabs.TabNav>
+                            {tabOk.profile && <Tabs.TabNav value="profile">{tr("Profile")}</Tabs.TabNav>}
                             {can('tasks', 'view') && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
-                            <Tabs.TabNav value="mails">{tr("Mails")}{detail.mails.length ? ` (${detail.mails.length})` : ''}</Tabs.TabNav>
-                            <Tabs.TabNav value="meetings">{tr("Meetings")}{detail.meetings.length ? ` (${detail.meetings.length})` : ''}</Tabs.TabNav>
+                            {tabOk.mails && <Tabs.TabNav value="mails">{tr("Mails")}{detail.mails.length ? ` (${detail.mails.length})` : ''}</Tabs.TabNav>}
+                            {tabOk.meetings && <Tabs.TabNav value="meetings">{tr("Meetings")}{detail.meetings.length ? ` (${detail.meetings.length})` : ''}</Tabs.TabNav>}
                             <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
                             <Tabs.TabNav value="notes">{tr("Comments")}{detail.notes.length ? ` (${detail.notes.length})` : ''}</Tabs.TabNav>
-                            <Tabs.TabNav value="related">{tr("Offers")}{detail.proposals.length ? ` (${detail.proposals.length})` : ''}</Tabs.TabNav>
-                            <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
+                            {tabOk.offers && <Tabs.TabNav value="related">{tr("Offers")}{detail.proposals.length ? ` (${detail.proposals.length})` : ''}</Tabs.TabNav>}
+                            {tabOk.activity && <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>}
                         </Tabs.TabList>
                         <div className="pt-4">
-                            <Tabs.TabContent value="profile">{profile}</Tabs.TabContent>
+                            {tabOk.profile && <Tabs.TabContent value="profile">{profile}</Tabs.TabContent>}
                             {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} /></Tabs.TabContent>}
-                            <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} senders={detail.senders || []} leadEmail={detail.lead?.email || ''} canEdit={!!detail.can.edit} mailRights={detail.can.mail} mentionable={detail.mentionable || []} run={run} /></Tabs.TabContent>
-                            <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>
+                            {tabOk.mails && <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} senders={detail.senders || []} leadEmail={detail.lead?.email || ''} canEdit={!!detail.can.edit} mailRights={detail.can.mail} mentionable={detail.mentionable || []} run={run} /></Tabs.TabContent>}
+                            {tabOk.meetings && <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>}
                             <Tabs.TabContent value="files"><div className="pt-1"><AttachmentsPanel relType="lead" relId={id} canEdit={!!detail.can.edit} /></div></Tabs.TabContent>
                             <Tabs.TabContent value="notes">{notes}</Tabs.TabContent>
-                            <Tabs.TabContent value="related">{related}</Tabs.TabContent>
-                            <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>
+                            {tabOk.offers && <Tabs.TabContent value="related">{related}</Tabs.TabContent>}
+                            {tabOk.activity && <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>}
                         </div>
                     </Tabs>
                 </>

@@ -8,6 +8,7 @@ import prisma from '@/lib/prisma'
  * linked to an INACTIVE Perfex staff member (inactive accounts must never sign in).
  */
 // Capabilities Perfex grants every active staff member without a checkbox (see permissionCatalog `auto`).
+const LEAD_TABS = ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'].map((c) => `lead_tabs.${c}`)
 const IMPLICIT = ['customers.view_own', 'payments.view_own', 'projects.view_own', 'tasks.view_own', 'leave.view_own', 'leads.view_own', 'leads.create']
 
 /** The authority strings of a staff row loaded with its permissions (the same rule as the sign-in). */
@@ -15,7 +16,7 @@ export function authorityFromStaff(staff) {
     if (!staff?.active) return []
     if (staff.admin) return ['crm.admin']
     const authority = (staff.permissions || []).filter((p) => p.feature && p.capability).map((p) => `crm.${p.feature}.${p.capability}`)
-    return [...new Set([...authority, ...IMPLICIT.map((c) => `crm.${c}`)])]
+    return [...new Set([...authority, ...IMPLICIT.map((c) => `crm.${c}`), ...((staff.permissions || []).length ? [] : LEAD_TABS.map((c) => `crm.${c}`))])]
 }
 
 export async function buildCrmAuthority(userId) {
@@ -30,7 +31,7 @@ export async function buildCrmAuthority(userId) {
         const authority = staff.permissions
             .filter((p) => p.feature && p.capability)
             .map((p) => `crm.${p.feature}.${p.capability}`)
-        return { authority: [...new Set([...authority, ...IMPLICIT.map((c) => `crm.${c}`)])], blocked: false }
+        return { authority: [...new Set([...authority, ...IMPLICIT.map((c) => `crm.${c}`), ...(staff.permissions.length ? [] : LEAD_TABS.map((c) => `crm.${c}`))])], blocked: false }
     } catch {
         return { authority: [], blocked: false }
     }

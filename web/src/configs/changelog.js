@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.224.0',
+        date: '2026-11-11',
+        title: 'Leads: rights for each tab of the lead popup (Profile, Mails, Meetings, Offers, Activity)',
+        items: [
+            'Roles > Customers & leads > "Lead popup tabs": five switches, one per tab. A person only sees the tabs that are switched on; the popup opens on the first tab they may see.',
+            'A tab that is off is empty on the server, not only hidden: its mails, meetings, offers or activity are not sent, and actions on mails and meetings are refused. Without the Profile tab the contact details (email, phone, address, website, description) are left out.',
+            'Nothing changes today: everyone who already had permissions, and every role, received the five switches, and members with no permissions at all keep every tab. Untick the ones you want to take away, then press "Save & apply to members".',
+        ],
+    },
+    {
         version: '0.223.0',
         date: '2026-11-11',
         title: 'Mails (Leads and Customers): a check can ask a colleague to confirm it',

@@ -11,7 +11,7 @@ const made = { users: [], staff: [], rows: [], extraRows: [] } // rows: [model, 
 
 async function makeUser(label, perms, admin = false) {
     // the mail rights (Lead mails / Client mails) are separate switches: the older checks use people who may do everything with mails, the 'pv-' checks below choose them one by one
-    if (!label.startsWith('pv-') && !label.endsWith('-view') && (perms.leads || perms.customers || label.startsWith('lead-'))) perms = { lead_mails: ['create', 'edit', 'send', 'delete'], client_mails: ['create', 'edit', 'send', 'delete'], ...perms }
+    if (!label.startsWith('pv-') && !label.endsWith('-view') && (perms.leads || perms.customers || label.startsWith('lead-'))) perms = { lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'], lead_mails: ['create', 'edit', 'send', 'delete'], client_mails: ['create', 'edit', 'send', 'delete'], ...perms }
     if (!label.startsWith('pv-') && perms.client_reports && !perms.client_report_files) perms = { client_report_files: ['view', 'create', 'edit', 'delete'], ...perms }
     if (!label.startsWith('pv-') && perms.tasks && !perms.task_checklist) perms = { task_checklist: ['view', 'create', 'edit', 'delete'], ...perms }
     const email = `permcheck.${label}.${crypto.randomBytes(3).toString('hex')}@test.local`
@@ -1632,8 +1632,8 @@ try {
             ccreate: await login(await makeUser('pv-ccreate', { customers: ['view', 'create'] })),
             cmEdit: await login(await makeUser('pv-cmedit', { customers: ['view'], client_mails: ['edit'] })),
             cmFull: await login(await makeUser('pv-cmfull', { customers: ['view'], client_mails: ['create', 'edit', 'send', 'delete'] })),
-            lmail: await login(await makeUser('pv-lmail', { leads: ['view'], lead_mails: ['create'] })),
-            lmailFull: await login(await makeUser('pv-lmailfull', { leads: ['view'], lead_mails: ['create', 'edit', 'send', 'delete'] })),
+            lmail: await login(await makeUser('pv-lmail', { leads: ['view'], lead_mails: ['create'], lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'] })),
+            lmailFull: await login(await makeUser('pv-lmailfull', { leads: ['view'], lead_mails: ['create', 'edit', 'send', 'delete'], lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'] })),
             ledit: await login(await makeUser('pv-ledit', { leads: ['view', 'edit'] })),
             ms: await login(await makeUser('pv-ms', { projects: ['view', 'create_milestones'] })),
             staffEdit: await login(await makeUser('pv-staffedit', { staff: ['view', 'edit'] })),
@@ -1698,7 +1698,7 @@ try {
         const lm = await U.lmail('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)
         check('Lead mails: Create can draft on a lead it sees, but not edit, send, schedule or delete', lm.status === 201 && (await U.lmail('PUT', `/api/crm/pipeline/leads/${lead.id}/mails`, { ...draft, mailId: lm.body.id, subject: 'zz perm draft 2' })).status === 403 && (await U.lmail('POST', `/api/crm/pipeline/leads/${lead.id}/mails/send`, { mailId: lm.body.id })).status === 403 && (await U.lmail('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, { ...draft, to: 'a@b.co', scheduledAt: new Date(Date.now() + 86400000).toISOString() })).status === 403 && (await U.lmail('DELETE', `/api/crm/pipeline/leads/${lead.id}/mails?mailId=${lm.body.id}`)).status === 403)
         // a check that asks a colleague to confirm it
-        { const askM = await makeUser('pv-ask', { leads: ['view'], lead_mails: ['send'] }), noM = await makeUser('pv-nosend', { leads: ['view'], lead_mails: ['create'] })
+        { const askM = await makeUser('pv-ask', { leads: ['view'], lead_mails: ['send'], lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'] }), noM = await makeUser('pv-nosend', { leads: ['view'], lead_mails: ['create'], lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'] })
           const askU = await login(askM)
           const url = `/api/crm/pipeline/leads/${lead.id}/mails`
           const bad = await U.lmailFull('POST', url, { ...draft, checks: [{ text: 'zz confirm', staffId: noM.staffId }] })
@@ -1710,6 +1710,16 @@ try {
           check('Mail checks: the colleague cannot confirm the plain checks', (await askU('POST', `${url}/send`, { action: 'check', mailId: ok.body.id, index: 1, done: true })).status === 403)
           check('Mail checks: saving the draft again keeps the colleague\'s confirmation (the editor cannot take it back or fake it)', (await U.lmailFull('PUT', url, { ...draft, mailId: ok.body.id, checks: [{ text: 'zz confirm', staffId: askM.staffId, done: false }, { text: 'zz plain' }] })).status === 200 && (await prisma.crmLeadMail.findUnique({ where: { id: ok.body.id } })).checks[0].done === true)
           if (ok.body?.id) await prisma.crmLeadMail.delete({ where: { id: ok.body.id } }).catch(() => {}) }
+        // the tabs of the lead popup
+        { const tabsOn = await login(await makeUser('pv-tabs-on', { leads: ['view'], lead_mails: ['create', 'edit', 'send', 'delete'], lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'] }))
+          const tabsOff = await login(await makeUser('pv-tabs-off', { leads: ['view'], lead_mails: ['create', 'edit', 'send', 'delete'], lead_tabs: ['tab_profile'] }))
+          const on = (await tabsOn('GET', `/api/crm/pipeline/leads/${lead.id}`)).body, off = (await tabsOff('GET', `/api/crm/pipeline/leads/${lead.id}`)).body
+          check('Lead tabs: with the tab rights the popup carries the data of every tab', on.can.tabs.mails && on.can.tabs.activity && on.can.tabs.meetings && on.can.tabs.offers && Array.isArray(on.activity))
+          check('Lead tabs: a tab that is off is empty (not only hidden): mails, meetings, offers and activity', off.can.tabs.profile === true && off.can.tabs.mails === false && off.mails.length === 0 && off.meetings.length === 0 && off.proposals.length === 0 && off.activity.length === 0 && off.can.mail.create === false)
+          check('Lead tabs: without the Mails tab even the mail rights are refused; without Meetings a meeting cannot be added', (await tabsOff('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)).status === 403 && (await tabsOff('POST', `/api/crm/pipeline/leads/${lead.id}/meetings`, { title: 'zz', start: new Date().toISOString() })).status === 403)
+          const noProfile = await login(await makeUser('pv-tabs-np', { leads: ['view'], lead_tabs: ['tab_mails'] }))
+          const np = (await noProfile('GET', `/api/crm/pipeline/leads/${lead.id}`)).body
+          check('Lead tabs: without the Profile tab the contact details are left out', np.lead.email === '' && np.lead.phone === '' && np.lead.address == null) }
         const lf = await U.lmailFull('POST', `/api/crm/pipeline/leads/${lead.id}/mails`, draft)
         check('Lead mails: with Edit and Delete the author changes and removes their own draft', lf.status === 201 && (await U.lmailFull('PUT', `/api/crm/pipeline/leads/${lead.id}/mails`, { ...draft, mailId: lf.body.id, subject: 'zz perm draft 2' })).status === 200 && (await U.lmailFull('DELETE', `/api/crm/pipeline/leads/${lead.id}/mails?mailId=${lf.body.id}`)).status === 200)
         check('Lead mails: the detail tells the screen which of the four the person has', (await U.lmail('GET', `/api/crm/pipeline/leads/${lead.id}`)).body?.can?.mail?.create === true && (await U.lmail('GET', `/api/crm/pipeline/leads/${lead.id}`)).body?.can?.mail?.send === false)

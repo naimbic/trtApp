@@ -6080,4 +6080,10 @@ export default {
     "What must they confirm? Then press Enter": "¿Qué debe confirmar? Luego pulsa Enter",
     "Asked of you: confirm it": "Te lo han pedido: confírmalo",
     "Only {name} can confirm this": "Solo {name} puede confirmar esto",
+    "Lead popup tabs": "Pestañas de la ficha del lead",
+    "See the Profile tab (contact details)": "Ver la pestaña Perfil (datos de contacto)",
+    "See the Mails tab": "Ver la pestaña Correos",
+    "See the Meetings tab": "Ver la pestaña Reuniones",
+    "See the Offers tab": "Ver la pestaña Ofertas",
+    "See the Activity tab": "Ver la pestaña Actividad",
 }

@@ -30,7 +30,10 @@ const isOwn = (a, lead) => !!a.staffId && (lead.assigned === a.staffId || (lead.
 const mayChangeItem = (a, by, kind) => (!!a.staffId && by === a.staffId) || a.can(`edit_others_${kind}`)
 const mayDropItem = (a, by) => (!!a.staffId && by === a.staffId) || a.can('delete')
 /** The mail rights (Roles > Lead mails): Create / Edit / Send / Delete. They come on top of seeing the lead. */
-const mailCan = (a, cap) => a.admin || hasCap(a.authority, 'lead_mails', cap)
+const mailCan = (a, cap) => a.admin || (tabCan(a, 'mails') && hasCap(a.authority, 'lead_mails', cap))
+/** The tabs of the lead popup a person may see (Roles > Lead popup tabs): profile, mails, meetings, offers, activity. */
+const tabCan = (a, key) => a.admin || hasCap(a.authority, 'lead_tabs', `tab_${key}`)
+const NO_TAB = 'You do not have access to this part of the lead'
 /** Someone who only follows a lead (not assigned, not its author, and without View all) is told about it but does not work on it. */
 const onlyFollows = (a, lead) => !!a.staffId && (lead.followerIds || []).includes(a.staffId) && !isOwn(a, lead) && a.scope !== 'all'
 const mayEdit = (a, lead) => isOwn(a, lead) || (a.can('edit') && !((lead.followerIds || []).includes(a.staffId) && a.scope !== 'all'))
@@ -159,7 +162,7 @@ export async function getLead(id) {
     const mailComments = await commentsByMail(mails)
     const curNames = Object.fromEntries((await prisma.crmCurrency.findMany({ where: { id: { in: [...new Set(proposals.map((p) => p.currencyId).filter(Boolean))] } }, select: { id: true, name: true } })).map((c) => [c.id, c.name]))
     const people = await staffMap([...proposals.map((p) => p.addedFrom), ...teamOf(l), ...(l.followerIds || []), l.addedFrom, ...notes.map((n) => n.addedFrom), ...notes.flatMap((n) => Object.values(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).flat()), ...mails.map((m) => m.addedFrom), ...mails.flatMap((m) => (Array.isArray(m.checks) ? m.checks : []).map((c) => c.staffId)), ...meetings.flatMap((e) => [e.userId, ...(e.attendeeIds || [])])])
-    return {
+    const out = {
         lead: { ...card(l, people, status, source), description: l.description || '', website: l.website, address: l.address, city: l.city, state: l.state, zip: l.zip, country: l.country ?? null, defaultLanguage: l.defaultLanguage, isPublic: l.isPublic, assignedId: l.assigned, assignedIds: teamOf(l), followerIds: l.followerIds || [], addedBy: people[l.addedFrom] || null, dateConverted: l.dateConverted, lastStatusChange: l.lastStatusChange, client },
         notes: notes.map((n) => ({ id: n.id, content: n.description || '', by: people[n.addedFrom] || null, date: n.dateContacted || n.createdAt, mine: !!a.staffId && n.addedFrom === a.staffId, canEdit: mayChangeItem(a, n.addedFrom, 'notes'), canDelete: mayDropItem(a, n.addedFrom), edited: +new Date(n.updatedAt) - +new Date(n.createdAt) > 2000, replyToId: n.replyToId || null,
             reactions: Object.entries(n.reactions && typeof n.reactions === 'object' ? n.reactions : {}).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!a.staffId && ids.includes(a.staffId), names: ids.filter((i) => i !== a.staffId).map((i) => people[i]?.name).filter(Boolean) })).filter((r) => r.count) })),
@@ -174,6 +177,15 @@ export async function getLead(id) {
         senders, currency: (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }).catch(() => null))?.name || '',
         can: { mail: { create: mailCan(a, 'create'), edit: mailCan(a, 'edit'), send: mailCan(a, 'send'), delete: mailCan(a, 'delete') }, edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
+    // the tabs this person may not see are left empty, not only hidden
+    const tabs = Object.fromEntries(['profile', 'mails', 'meetings', 'offers', 'activity'].map((t) => [t, tabCan(a, t)]))
+    out.can.tabs = tabs
+    if (!tabs.profile) Object.assign(out.lead, { email: '', phone: '', description: '', website: null, address: null, city: null, state: null, zip: null, country: null })
+    if (!tabs.mails) { out.mails = []; out.mentionable = []; out.senders = [] }
+    if (!tabs.meetings) out.meetings = []
+    if (!tabs.offers) out.proposals = []
+    if (!tabs.activity) out.activity = []
+    return out
 }
 
 const EDIT_FIELDS = [['name', 'Name'], ['company', 'Company'], ['title', 'Position'], ['email', 'Email'], ['phone', 'Phone'], ['website', 'Website'], ['value', 'Value'], ['probability', 'Chance of winning'], ['expectedClose', 'Expected closing date'], ['city', 'City'], ['country', 'Country'], ['address', 'Address']]
@@ -367,6 +379,7 @@ export async function mentionNote(id, noteId, staffId) {
 export async function commentMail(id, mailId, content) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
+    if (!tabCan(a, 'mails')) throw fail(NO_TAB, 403)
     const lead = await loadOne(id, a)
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id }, select: { id: true, subject: true } }))
     if (!m) throw fail('Mail not found', 404)
@@ -381,6 +394,7 @@ export async function commentMail(id, mailId, content) {
 export async function mentionMail(id, mailId, staffId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
+    if (!tabCan(a, 'mails')) throw fail(NO_TAB, 403)
     const lead = await loadOne(id, a)
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id }, select: { id: true, subject: true } }))
     if (!m) throw fail('Mail not found', 404)
@@ -631,6 +645,7 @@ export async function deleteMail(id, mailId) {
 export async function saveMeeting(id, body, eventId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
+    if (!tabCan(a, 'meetings')) throw fail(NO_TAB, 403)
     const lead = await loadOne(id, a)
     if (!mayEdit(a, lead) && !(eventId && a.can('edit_others_meetings'))) throw fail('You can only edit your own leads', 403)
     const report = body.report !== undefined ? storeRich(body.report) : undefined
@@ -655,6 +670,7 @@ export async function saveMeeting(id, body, eventId) {
 export async function deleteMeeting(id, eventId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
+    if (!tabCan(a, 'meetings')) throw fail(NO_TAB, 403)
     await loadOne(id, a)
     const ev = oid(eventId) && (await prisma.crmEvent.findFirst({ where: { id: eventId, leadId: id } }))
     if (!ev) throw fail('Meeting not found', 404)

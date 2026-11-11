@@ -6080,4 +6080,10 @@ export default {
     "What must they confirm? Then press Enter": "何を確認してもらいますか？入力後 Enter",
     "Asked of you: confirm it": "あなたへの依頼：確認してください",
     "Only {name} can confirm this": "{name} だけが確認できます",
+    "Lead popup tabs": "リードポップアップのタブ",
+    "See the Profile tab (contact details)": "プロフィールタブを見る（連絡先）",
+    "See the Mails tab": "メールタブを見る",
+    "See the Meetings tab": "ミーティングタブを見る",
+    "See the Offers tab": "オファータブを見る",
+    "See the Activity tab": "アクティビティタブを見る",
 }

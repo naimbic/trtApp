@@ -11,7 +11,7 @@ const ClientMails = ({ clientId }) => {
     useEffect(() => { load() }, [load])
     const run = async (fn, ok) => { try { await fn(); if (ok) notify('success', ok); await load() } catch (e) { notify('danger', e.message) } }
     if (!d) return <p className="py-6 text-center text-sm text-gray-400">{tr("Loading…")}</p>
-    return <LeadMails kind="client" allowDelete={false} leadId={clientId} base={`/api/crm/customers/${clientId}`} mails={d.mails} senders={d.senders} leadEmail={d.email} canEdit={d.can.create} mailRights={d.can} run={run} />
+    return <LeadMails kind="client" allowDelete={false} leadId={clientId} base={`/api/crm/customers/${clientId}`} mails={d.mails} senders={d.senders} leadEmail={d.email} canEdit={d.can.create} mailRights={d.can} mentionable={d.mentionable || []} run={run} />
 }
 
 export default ClientMails

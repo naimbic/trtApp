@@ -6075,4 +6075,9 @@ export default {
     "Former member": "元メンバー",
     "Who is not available for meetings": "ミーティングに対応できない人",
     "The whole team (pick people to close it for them only)": "チーム全体（特定の人だけ休みにするには選択）",
+    "Ask a colleague to confirm": "同僚に確認を依頼",
+    "Anyone confirms": "誰でも確認できる",
+    "What must they confirm? Then press Enter": "何を確認してもらいますか？入力後 Enter",
+    "Asked of you: confirm it": "あなたへの依頼：確認してください",
+    "Only {name} can confirm this": "{name} だけが確認できます",
 }

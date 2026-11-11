@@ -6075,4 +6075,9 @@ export default {
     "Former member": "Ancien membre",
     "Who is not available for meetings": "Qui n'est pas disponible pour les rendez-vous",
     "The whole team (pick people to close it for them only)": "Toute l'équipe (choisissez des personnes pour ne fermer que pour elles)",
+    "Ask a colleague to confirm": "Demander à un collègue de confirmer",
+    "Anyone confirms": "N'importe qui confirme",
+    "What must they confirm? Then press Enter": "Que doit-il confirmer ? Puis Entrée",
+    "Asked of you: confirm it": "Demandé à vous : confirmez-le",
+    "Only {name} can confirm this": "Seul(e) {name} peut confirmer ceci",
 }

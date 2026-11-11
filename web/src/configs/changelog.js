@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.223.0',
+        date: '2026-11-11',
+        title: 'Mails (Leads and Customers): a check can ask a colleague to confirm it',
+        items: [
+            'When you add a "check to confirm before sending" to a draft, a new list lets you choose a colleague ("Anyone confirms" by default). The check then shows their name and is marked in violet.',
+            'Only colleagues who may send mails (Lead mails / Client mails: Send) and who can open that lead or client can be chosen. They are notified, and only they can confirm that check, even without the right to edit mails. The others still confirm the plain checks.',
+            'The draft cannot be sent (or scheduled) until every check is confirmed, including the ones asked of colleagues. If the text of the draft changes, the checks are cleared and the colleague is asked again.',
+        ],
+    },
+    {
         version: '0.222.0',
         date: '2026-11-10',
         title: 'Closed days: choose who is not available for meetings',

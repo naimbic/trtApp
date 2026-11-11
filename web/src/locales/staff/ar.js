@@ -6075,4 +6075,9 @@ export default {
     "Former member": "عضو سابق",
     "Who is not available for meetings": "من غير متاح للاجتماعات",
     "The whole team (pick people to close it for them only)": "الفريق كله (اختر أشخاصًا لإغلاقها لهم فقط)",
+    "Ask a colleague to confirm": "اطلب من زميل التأكيد",
+    "Anyone confirms": "أي شخص يؤكد",
+    "What must they confirm? Then press Enter": "ماذا يجب أن يؤكد؟ ثم اضغط Enter",
+    "Asked of you: confirm it": "طُلب منك: أكّده",
+    "Only {name} can confirm this": "{name} فقط يمكنه تأكيد هذا",
 }

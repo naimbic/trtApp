@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { scope } from '@/lib/crm/clientsApi'
 import { notifyComment } from '@/lib/crm/mentionsApi'
+import { mentionable, resolveChecks, tellAsked, decorate } from '@/lib/crm/mailChecks'
 import { mailData, checkSchedule, draftFrom, senderOptions, dropMailFiles, sendDraftCore } from '@/lib/crm/leadsApi'
 
 /* The mails of a client (customer): the same as the mails of a lead (log a received or sent mail, drafts with checks, files, send now or at a date and time),
@@ -38,15 +39,15 @@ async function clientEmail(id) {
 export async function getClientMails(id) {
     const { a } = await gate(id)
     const [mails, senders, email] = await Promise.all([prisma.crmLeadMail.findMany({ where: { clientId: id }, orderBy: { date: 'desc' }, take: 200 }), senderOptions(a), clientEmail(id)])
-    const staff = await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(mails.map((m) => m.addedFrom).filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
+    const staff = await prisma.crmStaff.findMany({ where: { id: { in: [...new Set([...mails.map((m) => m.addedFrom), ...mails.flatMap((m) => (Array.isArray(m.checks) ? m.checks : []).map((c) => c.staffId))].filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true } })
     const people = Object.fromEntries(staff.map((s) => [s.id, { id: s.id, name: staffName(s), image: s.profileImage || null }]))
     const { filesByMail } = await import('@/lib/crm/mailCatch')
     const mailFiles = await filesByMail(mails)
     const { commentsByMail } = await import('@/lib/crm/mailCatch')
     const mailComments = await commentsByMail(mails)
     return {
-        email, senders, can: a.mail,
-        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: Array.isArray(m.checks) ? m.checks : [], scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.mail.edit && mayChange(a, m.addedFrom), canSend: a.mail.send && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) && a.mail.delete })),
+        email, senders, can: a.mail, mentionable: a.mail.create || a.mail.edit ? await mentionable('client', { clientId: id }) : [],
+        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: decorate(m.checks, people, { me: a.staffId, canSend: a.mail.send, canEdit: a.mail.edit && mayChange(a, m.addedFrom) }), scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.mail.edit && mayChange(a, m.addedFrom), canSend: a.mail.send && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) && a.mail.delete })),
     }
 }
 
@@ -55,9 +56,12 @@ export async function saveClientMail(id, body, mailId) {
     const data = mailData(body)
     if (data.direction === 'draft' && data.scheduledAt && !a.mail.send) throw fail('You are not allowed to send or schedule mails', 403)
     const known = { email: await clientEmail(id) }
+    const link = `/crm/clients/${id}?tab=mails`
+    const ask = `✉ ${data.subject || 'draft'} (${client.company || 'client'}): please confirm a check`
     if (mailId) {
         const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, clientId: id } }))
         if (!m) throw fail('Mail not found', 404)
+        data.checks = await resolveChecks('client', { clientId: id }, data.checks, m.checks)
         if (!mayChange(a, m.addedFrom)) throw fail('You can only edit the mails you logged', 403)
         if (data.direction === 'draft' && m.direction !== 'draft') throw fail('A mail that is already sent or received cannot go back to a draft')
         const fields = ['subject', 'fromAddress', 'toAddress', 'ccAddress', 'bccAddress', 'replyTo', 'body']
@@ -65,10 +69,13 @@ export async function saveClientMail(id, body, mailId) {
         if (changed) data.checks = data.checks.map((c) => ({ ...c, done: false })) // changing what will be sent cancels the confirmations
         const cancelled = data.direction === 'draft' ? checkSchedule(data, known, m, changed) : false
         await prisma.crmLeadMail.update({ where: { id: mailId }, data })
+        if (data.direction === 'draft') await tellAsked(m.checks, data.checks, { text: ask, url: link })
         return { success: true, id: mailId, scheduleCancelled: cancelled }
     }
+    data.checks = await resolveChecks('client', { clientId: id }, data.checks, [])
     if (data.direction === 'draft') checkSchedule(data, known, null, false)
     const m = await prisma.crmLeadMail.create({ data: { ...data, clientId: id, addedFrom: a.staffId, source: 'manual' } })
+    if (data.direction === 'draft') await tellAsked([], data.checks, { text: ask, url: link })
     if (data.direction !== 'draft') await prisma.crmActivityLog.create({ data: { description: `${data.direction === 'out' ? 'Mail sent' : 'Mail received'} logged on ${client.company || 'a client'}${data.subject ? `: ${data.subject}` : ''}`.slice(0, 400), staffId: a.staffId } }).catch(() => {})
     return { success: true, id: m.id }
 }
@@ -101,12 +108,17 @@ export async function mentionClientMail(id, mailId, staffId) {
 }
 
 export async function checkClientDraft(id, mailId, index, done) {
-    await gate(id, { cap: 'edit' })
+    const { a } = await gate(id)
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, clientId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
     const checks = Array.isArray(m.checks) ? m.checks.map((c) => ({ ...c })) : []
     if (!checks[index]) throw fail('Check not found', 404)
+    if (checks[index].staffId) {
+        // a check asked of a colleague: only that colleague confirms it, and only with the right to send mails
+        if (!a.staffId || checks[index].staffId !== a.staffId) throw fail('Only the colleague this check was asked of can confirm it', 403)
+        if (!a.mail.send) throw fail('You are not allowed to send mails', 403)
+    } else if (!a.mail.edit) throw fail('You are not allowed to edit mails', 403)
     checks[index].done = !!done
     await prisma.crmLeadMail.update({ where: { id: mailId }, data: { checks } })
     return { success: true }

@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbUpload, TbPhotoSearch, TbLink, TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay, TbPaperclip, TbSearch } from 'react-icons/tb'
+import { TbUpload, TbPhotoSearch, TbLink, TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay, TbPaperclip, TbSearch, TbAt } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -110,7 +110,7 @@ const LeadTaskList = ({ leadId, staff, onChanged }) => {
 const MAIL_EMPTY = () => ({ direction: 'in', date: new Date(), from: '', to: '', cc: '', bcc: '', replyTo: '', note: '', checks: [], scheduledAt: null, subject: '', body: '' })
 
 /** Emails sent to or received from the lead, written in the editor with their date and time. Mails read by the lead mailbox land here too. */
-export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '', canEdit: canEditProp, mailRights, run, kind = 'lead', allowDelete = true, base = `/api/crm/pipeline/leads/${leadId}` }) => {
+export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '', canEdit: canEditProp, mailRights, mentionable = [], run, kind = 'lead', allowDelete = true, base = `/api/crm/pipeline/leads/${leadId}` }) => {
     const mr = mailRights || { create: !!canEditProp, edit: !!canEditProp, send: !!canEditProp, delete: !!canEditProp } // Roles > Lead mails / Client mails: Create, Edit, Send, Delete
     const canEdit = mr.create
     const [form, setForm] = useState(null) // { id?, ...fields }
@@ -138,7 +138,8 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
     // opening the form (new draft, log a mail, edit) brings it into view, whatever the scroll position of the list
     useEffect(() => { if (form && formRef.current) formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [!!form, form?.id]) // eslint-disable-line react-hooks/exhaustive-deps
     const [newCheck, setNewCheck] = useState('')
-    const addCheck = () => { const t = newCheck.trim(); if (t) { set({ checks: [...(form.checks || []), { text: t, done: false }] }); setNewCheck('') } }
+    const [askWho, setAskWho] = useState('') // a colleague who must confirm the check (only those who may send mails)
+    const addCheck = () => { const t = newCheck.trim(); if (t) { set({ checks: [...(form.checks || []), { text: t, done: false, ...(askWho ? { staffId: askWho, person: mentionable.find((p) => p.id === askWho)?.name || '' } : {}) }] }); setNewCheck(''); setAskWho('') } }
     // attach to a draft: the three buttons work on a draft that is not saved yet (it is saved first)
     const [picker, setPicker] = useState(false)
     const [linkBox, setLinkBox] = useState(null) // { url, text }
@@ -237,9 +238,9 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                             <div>
                                 <L>{tr("Checks to confirm before sending")}</L>
                                 <div className="mb-1.5 flex flex-wrap gap-1.5">
-                                    {(form.checks || []).map((c, i) => <span key={i} className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">{c.text}<button type="button" aria-label={tr("Remove")} onClick={() => set({ checks: form.checks.filter((_, j) => j !== i) })}><TbX /></button></span>)}
+                                    {(form.checks || []).map((c, i) => <span key={i} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${c.staffId ? 'bg-violet-100 text-violet-700' : 'bg-red-100 text-red-700'}`}>{c.staffId && <TbAt />}{c.person ? <b>{c.person}</b> : null}{c.text}<button type="button" aria-label={tr("Remove")} onClick={() => set({ checks: form.checks.filter((_, j) => j !== i) })}><TbX /></button></span>)}
                                 </div>
-                                <div className="flex gap-2"><Input size="sm" value={newCheck} placeholder={tr("Add a check, then press Enter")} onChange={(e) => setNewCheck(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCheck() } }} /><Button size="sm" onClick={addCheck}>{tr("Add")}</Button></div>
+                                <div className="flex flex-wrap gap-2">{mentionable.length > 0 && <select aria-label={tr("Ask a colleague to confirm")} value={askWho} onChange={(e) => setAskWho(e.target.value)} className="h-8 max-w-[11rem] rounded-lg border border-gray-300 bg-white px-2 text-xs dark:border-gray-600 dark:bg-gray-800"><option value="">{tr("Anyone confirms")}</option>{mentionable.map((p) => <option key={p.id} value={p.id}>@ {p.name}</option>)}</select>}<Input className="min-w-[10rem] flex-1" size="sm" value={newCheck} placeholder={askWho ? tr("What must they confirm? Then press Enter") : tr("Add a check, then press Enter")} onChange={(e) => setNewCheck(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCheck() } }} /><Button size="sm" onClick={addCheck}>{tr("Add")}</Button></div>
                             </div>
                         </div>
                     )}
@@ -298,7 +299,7 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                         <div className="mt-2 space-y-1.5 rounded-lg border border-red-200 bg-red-50/60 p-2 dark:border-red-500/30 dark:bg-red-500/5">
                             {m.note && <p className="text-xs font-medium text-red-700 dark:text-red-300">{m.note}</p>}
                             {m.checks.length > 0 && <div className="flex flex-wrap gap-1.5">{m.checks.map((c, i) => (
-                                <button key={i} type="button" disabled={!m.canEdit || toggling} onClick={() => toggle(m, i)} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold transition ${c.done ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>{c.done ? <TbSquareCheck /> : <TbSquare />}{c.text}</button>
+                                <button key={i} type="button" title={c.staffId ? (c.canToggle ? tr("Asked of you: confirm it") : tr("Only {name} can confirm this", { name: c.person || '' })) : undefined} disabled={!c.canToggle || toggling} onClick={() => toggle(m, i)} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold transition ${c.done ? 'bg-emerald-100 text-emerald-700' : c.staffId ? 'bg-violet-100 text-violet-700 hover:bg-violet-200' : 'bg-red-100 text-red-700 hover:bg-red-200'} ${c.canToggle ? '' : 'cursor-default'}`}>{c.done ? <TbSquareCheck /> : <TbSquare />}{c.staffId && <><TbAt /><b>{c.person}</b></>}{c.text}</button>
                             ))}</div>}
                         </div>
                     )}

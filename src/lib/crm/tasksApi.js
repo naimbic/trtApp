@@ -370,9 +370,10 @@ export async function reorderTasks(status, ids) {
     }
     let denied = 0, blocked = 0
     for (const [i, id] of ids.filter(oid).entries()) {
-        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { status: true, dateFinished: true, addedFrom: true, assignees: { select: { staffId: true } } } })
+        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { status: true, dateFinished: true, addedFrom: true, relType: true, relId: true, assignees: { select: { staffId: true } } } })
         if (!t) continue
         if (t.status !== st && !mayAct(a, t)) { denied++; continue }
+        if (t.status !== st) { try { await closedLead(a, t.relType, t.relId) } catch { denied++; continue } } // a task of a converted lead stays where it is
         if (st === COMPLETE && t.status !== COMPLETE && (await openChildren(id))) { blocked++; continue }
         await prisma.crmTask.update({ where: { id }, data: { kanbanOrder: i, ...(t.status !== st ? { status: st, dateFinished: st === COMPLETE ? new Date() : null } : {}) } })
     }
@@ -387,9 +388,10 @@ export async function regroupTask({ id, relType, relId, ids, ...rest }) {
     const a = await access(session)
     const where = await visibleWhere(a)
     if (oid(id)) {
-        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { id: true, addedFrom: true, assignees: { select: { staffId: true } } } })
+        const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { id: true, addedFrom: true, relType: true, relId: true, assignees: { select: { staffId: true } } } })
         if (!t) throw fail('Task not found', 404)
         if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
+        await closedLead(a, t.relType, t.relId)
         if (relType === 'project' && oid(relId)) await prisma.crmTask.update({ where: { id }, data: { relType: 'project', relId } })
         else if (relType === null || relType === 'none') await prisma.crmTask.update({ where: { id }, data: { relType: null, relId: null } })
         if ('milestoneId' in rest) await prisma.crmTask.update({ where: { id }, data: { milestoneId: oid(rest.milestoneId) } })
@@ -573,6 +575,7 @@ export async function timer(id, op) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const t = await loadOne(id, a)
+    await closedLead(a, t.relType, t.relId)
     if (!a.staffId) throw fail('Your login is not linked to a staff member')
     const open = await prisma.crmTaskTimer.findFirst({ where: { taskId: id, staffId: a.staffId, endTime: null } })
     if (op.action === 'start') {
@@ -753,6 +756,7 @@ export async function bulkTasks({ ids = [], action, value } = {}) {
                 const a = await access(session)
                 const t = await loadOne(id, a)
                 if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
+                await closedLead(a, t.relType, t.relId)
                 if (action === 'priority') { if (![1, 2, 3, 4].includes(+value)) throw fail('Unknown priority'); await prisma.crmTask.update({ where: { id }, data: { priority: +value } }) }
                 else {
                     const staffId = oid(value)

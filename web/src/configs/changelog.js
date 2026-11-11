@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.228.1',
+        date: '2026-11-11',
+        title: 'Tasks of a converted lead are closed too',
+        items: [
+            'The tasks of a lead that already became a customer can no longer be moved on the Tasks board, changed in bulk (priority, assignee, status), regrouped or timed by anyone but an admin.',
+        ],
+    },
+    {
         version: '0.228.0',
         date: '2026-11-11',
         title: 'Converted leads are closed, read-only mail people are told',

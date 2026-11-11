@@ -36,7 +36,11 @@ const tabCan = (a, key) => a.admin || hasCap(a.authority, 'lead_tabs', `tab_${ke
 const NO_TAB = 'You do not have access to this part of the lead'
 /** Someone who only follows a lead (not assigned, not its author, and without View all) is told about it but does not work on it. */
 const onlyFollows = (a, lead) => !!a.staffId && (lead.followerIds || []).includes(a.staffId) && !isOwn(a, lead) && a.scope !== 'all'
-const mayEdit = (a, lead) => isOwn(a, lead) || (a.can('edit') && !((lead.followerIds || []).includes(a.staffId) && a.scope !== 'all'))
+/** A lead that already became a customer is closed: only admins change it (edit, notes, mails, meetings, tasks, files...). */
+const LOCKED = 'This lead already became a customer, only an admin can change it'
+const isClosed = (a, lead) => !!lead?.clientId && !a.admin
+const ensureOpen = (a, lead) => { if (isClosed(a, lead)) throw fail(LOCKED, 403); return lead }
+const mayEdit = (a, lead) => !isClosed(a, lead) && (isOwn(a, lead) || (a.can('edit') && !((lead.followerIds || []).includes(a.staffId) && a.scope !== 'all')))
 
 /** Everyone a lead is assigned to: the team list, or the single old owner. */
 const teamOf = (l) => (l.assignedIds?.length ? l.assignedIds : l.assigned ? [l.assigned] : [])
@@ -180,6 +184,13 @@ export async function getLead(id) {
     // the tabs this person may not see are left empty, not only hidden
     const tabs = Object.fromEntries(['profile', 'mails', 'meetings', 'offers', 'activity'].map((t) => [t, tabCan(a, t)]))
     out.can.tabs = tabs
+    // a lead that became a customer is closed for everyone but admins: nothing can be added or changed on it
+    out.can.closed = isClosed(a, l)
+    if (out.can.closed) {
+        out.can.mail = { create: false, edit: false, send: false, delete: false }
+        const shut = (x) => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, /^can[A-Z]/.test(k) ? false : v]))
+        for (const k of ['notes', 'mails', 'meetings']) out[k] = (out[k] || []).map(shut)
+    }
     if (!tabs.profile) Object.assign(out.lead, { email: '', phone: '', description: '', website: null, address: null, city: null, state: null, zip: null, country: null })
     if (!tabs.mails) { out.mails = []; out.mentionable = []; out.senders = [] }
     if (!tabs.meetings) out.meetings = []
@@ -221,7 +232,7 @@ export async function saveLead(body, id) {
     if (id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)
-        if (prev.clientId && (await readSettings(['lead_lock_after_convert_to_customer'])).on('lead_lock_after_convert_to_customer') && !a.admin) throw fail('This lead is locked because it became a client')
+        ensureOpen(a, prev)
         const team = body.assignedIds !== undefined ? [...new Set((body.assignedIds || []).map(oid).filter(Boolean))] : body.assignedId !== undefined ? [oid(body.assignedId)].filter(Boolean) : null
         if (team && JSON.stringify(team) !== JSON.stringify(teamOf(prev))) { data.assignedIds = team; data.assigned = team[0] || null; data.dateAssigned = team.length ? new Date() : null }
         if (body.followerIds !== undefined) data.followerIds = [...new Set((body.followerIds || []).map(oid).filter(Boolean))]
@@ -273,7 +284,7 @@ export async function reorderLeads(statusId, ids) {
 export async function leadChecklist(id, op = {}) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    const l = await loadOne(id, a)
+    const l = ensureOpen(a, await loadOne(id, a))
     if (!mayEdit(a, l)) throw fail('Forbidden', 403)
     let list = Array.isArray(l.checklist) ? [...l.checklist] : []
     const hours = (v) => { const n = Number(v); return !Number.isFinite(n) || n <= 0 ? null : Math.min(999, Math.round(n * 100) / 100) }
@@ -302,7 +313,7 @@ export async function leadChecklist(id, op = {}) {
 export async function flagLead(id, action) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    const l = await loadOne(id, a)
+    const l = ensureOpen(a, await loadOne(id, a))
     if (!mayEdit(a, l)) throw fail('Forbidden', 403)
     if (action === 'lost') await prisma.crmLead.update({ where: { id }, data: { lost: true, junk: false, lastLeadStatusId: l.statusId } })
     else if (action === 'junk') await prisma.crmLead.update({ where: { id }, data: { junk: true, lost: false, lastLeadStatusId: l.statusId } })
@@ -330,7 +341,7 @@ export async function convertLead(id, opts = {}) {
 export async function addNote(id, { content, date, replyToId }) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    const lead = await loadOne(id, a)
+    const lead = ensureOpen(a, await loadOne(id, a))
     const text = storeRich(content)
     if (!text) throw fail('Write the note first')
     const reply = oid(replyToId) && (await prisma.crmNote.findFirst({ where: { id: replyToId, relType: 'lead', relId: id }, select: { id: true, addedFrom: true } }))
@@ -345,7 +356,7 @@ export async function addNote(id, { content, date, replyToId }) {
 export async function reactNote(id, noteId, emoji) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    await loadOne(id, a)
+    ensureOpen(a, await loadOne(id, a))
     const e = String(emoji || '').trim()
     if (!e || e.length > 16) throw fail('Pick an emoji')
     if (!a.staffId) throw fail('Only staff can react', 403)
@@ -363,7 +374,7 @@ export async function reactNote(id, noteId, emoji) {
 export async function mentionNote(id, noteId, staffId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    await loadOne(id, a)
+    ensureOpen(a, await loadOne(id, a))
     const c = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'lead', relId: id } }))
     if (!c) throw fail('Note not found', 404)
     const who = oid(staffId) && (await prisma.crmStaff.findFirst({ where: { id: staffId, active: true }, select: { id: true, firstName: true, lastName: true, email: true } }))
@@ -380,7 +391,7 @@ export async function commentMail(id, mailId, content) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     if (!tabCan(a, 'mails')) throw fail(NO_TAB, 403)
-    const lead = await loadOne(id, a)
+    const lead = ensureOpen(a, await loadOne(id, a))
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id }, select: { id: true, subject: true } }))
     if (!m) throw fail('Mail not found', 404)
     const text = storeRich(content)
@@ -395,7 +406,7 @@ export async function mentionMail(id, mailId, staffId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     if (!tabCan(a, 'mails')) throw fail(NO_TAB, 403)
-    const lead = await loadOne(id, a)
+    const lead = ensureOpen(a, await loadOne(id, a))
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id }, select: { id: true, subject: true } }))
     if (!m) throw fail('Mail not found', 404)
     if (!oid(staffId)) throw fail('Choose a colleague')
@@ -406,7 +417,7 @@ export async function mentionMail(id, mailId, staffId) {
 export async function editNote(id, noteId, content) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    await loadOne(id, a)
+    ensureOpen(a, await loadOne(id, a))
     const n = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'lead', relId: id } }))
     if (!n) throw fail('Note not found', 404)
     if (!mayChangeItem(a, n.addedFrom, 'notes')) throw fail('You can only edit your own notes', 403)
@@ -420,7 +431,7 @@ export async function editNote(id, noteId, content) {
 export async function deleteNote(id, noteId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    await loadOne(id, a)
+    ensureOpen(a, await loadOne(id, a))
     const n = oid(noteId) && (await prisma.crmNote.findFirst({ where: { id: noteId, relType: 'lead', relId: id } }))
     if (!n) throw fail('Note not found', 404)
     if (n.addedFrom !== a.staffId && !a.can('delete')) throw fail('You can only delete your own notes', 403)
@@ -458,7 +469,7 @@ export function checkSchedule(data, lead, prev, contentChanged) {
 export async function saveMail(id, body, mailId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    const lead = await loadOne(id, a)
+    const lead = ensureOpen(a, await loadOne(id, a))
     if (!mailCan(a, mailId ? 'edit' : 'create')) throw fail(mailId ? 'You are not allowed to edit mails' : 'You are not allowed to add mails', 403)
     if (onlyFollows(a, lead) && !(mailId && a.can('edit_others_mails'))) throw fail('Only the team of this lead works on its mails', 403)
     const data = mailData(body)
@@ -509,7 +520,7 @@ export async function senderOptions(a) {
 export async function checkDraftMail(id, mailId, index, done) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    const lead = await loadOne(id, a)
+    const lead = ensureOpen(a, await loadOne(id, a))
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
@@ -542,7 +553,7 @@ export async function dropMailFiles(mailIds) {
 export async function sendDraftMail(id, mailId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    const lead = await loadOne(id, a)
+    const lead = ensureOpen(a, await loadOne(id, a))
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (m.direction !== 'draft') throw fail('This mail is not a draft')
@@ -630,7 +641,7 @@ export async function sendScheduledMails({ dry = false } = {}) {
 export async function deleteMail(id, mailId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
-    await loadOne(id, a)
+    ensureOpen(a, await loadOne(id, a))
     const m = oid(mailId) && (await prisma.crmLeadMail.findFirst({ where: { id: mailId, leadId: id } }))
     if (!m) throw fail('Mail not found', 404)
     if (!mailCan(a, 'delete')) throw fail('You are not allowed to delete mails', 403)
@@ -646,7 +657,7 @@ export async function saveMeeting(id, body, eventId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     if (!tabCan(a, 'meetings')) throw fail(NO_TAB, 403)
-    const lead = await loadOne(id, a)
+    const lead = ensureOpen(a, await loadOne(id, a))
     if (!mayEdit(a, lead) && !(eventId && a.can('edit_others_meetings'))) throw fail('You can only edit your own leads', 403)
     const report = body.report !== undefined ? storeRich(body.report) : undefined
     if (eventId) {
@@ -671,7 +682,7 @@ export async function deleteMeeting(id, eventId) {
     const session = await requirePermission('leads', 'view')
     const a = await access(session)
     if (!tabCan(a, 'meetings')) throw fail(NO_TAB, 403)
-    await loadOne(id, a)
+    ensureOpen(a, await loadOne(id, a))
     const ev = oid(eventId) && (await prisma.crmEvent.findFirst({ where: { id: eventId, leadId: id } }))
     if (!ev) throw fail('Meeting not found', 404)
     if (ev.userId !== a.staffId && !a.can('delete')) throw fail('You can only delete the meetings you added', 403)
@@ -722,7 +733,7 @@ export async function bulkLeads({ ids = [], action, value } = {}) {
                 const a = await access(session)
                 const l = await loadOne(id, a)
                 if (!mayEdit(a, l)) throw fail('You can only edit your own leads', 403)
-                if (l.clientId && (await readSettings(['lead_lock_after_convert_to_customer'])).on('lead_lock_after_convert_to_customer') && !a.admin) throw fail('This lead is locked because it became a client', 403)
+                ensureOpen(a, l)
                 const v = oid(value)
                 if (!v) throw fail('Choose a value')
                 if (action === 'status') { if (v !== l.statusId) { await prisma.crmLead.update({ where: { id }, data: { statusId: v, lastStatusChange: new Date() } }); await logStatus(id, a, l.statusId, v) } }

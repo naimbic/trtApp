@@ -21,6 +21,13 @@ const NONE = '000000000000000000000000'
 /** The codes of every task status (the five that come with the app plus the ones added in Settings). */
 async function statusCodes() { return new Set((await getTaskStatuses()).map((x) => x.value)) }
 
+/** A lead that already became a customer is closed: only admins add or change its tasks. */
+async function closedLead(a, relType, relId) {
+    if (relType !== 'lead' || !oid(relId) || a.authority.includes('crm.admin')) return
+    const l = await prisma.crmLead.findUnique({ where: { id: relId }, select: { clientId: true } })
+    if (l?.clientId) throw fail('This lead already became a customer, only an admin can change it', 403)
+}
+
 async function access(session) {
     const authority = session.user.authority || []
     const scope = viewScope(authority, 'tasks')
@@ -289,6 +296,7 @@ export async function saveTask(body, id) {
         if (!unchanged && body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date')
         if (status === COMPLETE && prev.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) } data.dateFinished = status === COMPLETE ? prev.dateFinished || new Date() : null }
     else { if (body.startDate && body.dueDate && new Date(body.dueDate) < new Date(body.startDate)) throw fail('Due date cannot be before the start date'); data.dateFinished = status === COMPLETE ? new Date() : null }
+    await closedLead(a, data.relType, data.relId); if (prev) await closedLead(a, prev.relType, prev.relId)
     const task = id
         ? await prisma.crmTask.update({ where: { id }, data })
         : await prisma.crmTask.create({ data: { ...data, addedFrom: a.staffId, startDate: data.startDate || new Date() } })
@@ -339,6 +347,7 @@ export async function moveTask(id, { status, order }) {
     const session = await requirePermission('tasks', 'edit')
     const a = await access(session)
     const t = await loadOne(id, a)
+    await closedLead(a, t.relType, t.relId)
     const st = (await statusCodes()).has(+status) ? +status : t.status
     if (!mayAct(a, t)) throw fail(NOT_YOURS, 403)
     if (st === COMPLETE && t.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) }
@@ -394,7 +403,9 @@ export async function regroupTask({ id, relType, relId, ids, ...rest }) {
 export async function deleteTask(id) {
     const session = await requirePermission('tasks', 'delete')
     const a = await access(session)
-    if (!mayAct(a, await loadOne(id, a))) throw fail(NOT_YOURS, 403)
+    const doomed = await loadOne(id, a)
+    if (!mayAct(a, doomed)) throw fail(NOT_YOURS, 403)
+    await closedLead(a, doomed.relType, doomed.relId)
     for (const tid of [...(await descendants(id)).reverse(), id]) {
         await prisma.crmTaskTimer.deleteMany({ where: { taskId: tid } })
         await prisma.crmTask.delete({ where: { id: tid } })
@@ -406,6 +417,7 @@ export async function addComment(id, content, replyToId, toClient = false) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const task = await loadOne(id, a)
+    await closedLead(a, task.relType, task.relId)
     const text = storeRich(content)
     if (!text) throw fail('Write a comment first')
     const reply = oid(replyToId) && (await prisma.crmTaskComment.findFirst({ where: { id: replyToId, taskId: id }, select: { id: true, staffId: true } }))
@@ -498,6 +510,7 @@ export async function checklist(id, op) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const task = await loadOne(id, a)
+    await closedLead(a, task.relType, task.relId)
     const mine = (item) => !!a.staffId && stepPeople(item || {}).includes(a.staffId)
     const notify = async (people, text) => {
         // each person the step is given to is told (bell), and anyone named with @ in the text

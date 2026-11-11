@@ -136,7 +136,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
 
     const notes = detail && (
         <div className="space-y-4">
-            <div className="space-y-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><RichEditor minHeight={90} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={setNote} onReady={(ed) => { editorRef.current = ed }} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note, replyToId: replyTo?.id } }).then(() => { setNote(''); setReplyTo(null) }), tr("Note added"))}>{tr("Add comment")}</Button></div>
+            {!detail.can.closed && <div className="space-y-2"><ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} /><RichEditor minHeight={90} placeholder={tr("Log a call, a meeting or a thought")} value={note} onChange={setNote} onReady={(ed) => { editorRef.current = ed }} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={() => run(() => api(`/api/crm/pipeline/leads/${id}/notes`, { method: 'POST', body: { content: note, replyToId: replyTo?.id } }).then(() => { setNote(''); setReplyTo(null) }), tr("Note added"))}>{tr("Add comment")}</Button></div>}
             <CommentThread comments={detail.notes} render={(n) => (
                 <div className="group relative flex gap-3">
                     <StaffRing id={n.by?.id} name={n.by?.name} size={30}><Avatar size={30} shape="circle" src={n.by?.image || undefined}>{initials(n.by?.name || '?')}</Avatar></StaffRing>
@@ -178,9 +178,9 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const headActions = l && (
         <>
             {detail.can.convert && <button type="button" className="rp-qv-act is-solid" onClick={() => setConfirm('convert')}><TbUserCheck />{tr("Convert to client")}</button>}
-            {!l.lost && !l.junk && <button type="button" className="rp-qv-act" onClick={() => flag('lost', tr("Marked as lost"))}><TbBan />{tr("Lost")}</button>}
-            {!l.lost && !l.junk && <button type="button" className="rp-qv-act" onClick={() => flag('junk', tr("Marked as junk"))}><TbBan />{tr("Junk")}</button>}
-            {(l.lost || l.junk) && <button type="button" className="rp-qv-act" onClick={() => flag('restore', tr("Lead restored"))}><TbArrowBackUp />{tr("Restore")}</button>}
+            {!detail.can.closed && !l.lost && !l.junk && <button type="button" className="rp-qv-act" onClick={() => flag('lost', tr("Marked as lost"))}><TbBan />{tr("Lost")}</button>}
+            {!detail.can.closed && !l.lost && !l.junk && <button type="button" className="rp-qv-act" onClick={() => flag('junk', tr("Marked as junk"))}><TbBan />{tr("Junk")}</button>}
+            {!detail.can.closed && (l.lost || l.junk) && <button type="button" className="rp-qv-act" onClick={() => flag('restore', tr("Lead restored"))}><TbArrowBackUp />{tr("Restore")}</button>}
         </>
     )
 
@@ -200,13 +200,14 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             footer={
                 <div className="flex w-full items-center gap-2">
                     {edit && detail?.can.delete && !l?.converted && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm('delete')}>{tr("Delete")}</Button>}
-                    {edit && <RemindMe relType="lead" relId={id} />}
+                    {edit && !detail?.can.closed && <RemindMe relType="lead" relId={id} />}
                     <div className="ml-auto flex gap-2"><Button onClick={onClose}>{canEdit ? tr("Cancel") : tr("Close")}</Button>{canEdit && <Button variant="solid" loading={saving} onClick={save}>{edit ? tr("Save changes") : tr("Create lead")}</Button>}</div>
                 </div>
             }
         >
             {edit && !detail ? <div className="py-10 text-center text-gray-500">{tr("Loading…")}</div> : edit ? (
                 <>
+                    {detail?.can.closed && <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">{tr("This lead already became a customer. Only an admin can change it.")}</div>}
                     {headerBadges}
                     <Tabs value={tabV} onChange={setTabV}>
                         <Tabs.TabList>
@@ -221,7 +222,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                         </Tabs.TabList>
                         <div className="pt-4">
                             {tabOk.profile && <Tabs.TabContent value="profile">{profile}</Tabs.TabContent>}
-                            {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} /></Tabs.TabContent>}
+                            {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} locked={!!detail.can.closed} /></Tabs.TabContent>}
                             {tabOk.mails && <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} senders={detail.senders || []} leadEmail={detail.lead?.email || ''} canEdit={!!detail.can.edit} mailRights={detail.can.mail} mentionable={detail.mentionable || []} run={run} /></Tabs.TabContent>}
                             {tabOk.meetings && <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>}
                             <Tabs.TabContent value="files"><div className="pt-1"><AttachmentsPanel relType="lead" relId={id} canEdit={!!detail.can.edit} /></div></Tabs.TabContent>

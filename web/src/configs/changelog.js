@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.228.0',
+        date: '2026-11-11',
+        title: 'Converted leads are closed, read-only mail people are told',
+        items: [
+            'A lead that already became a customer can now only be changed by an admin. Everyone else can still open it and read it, but cannot edit it, add comments, mails, meetings, tasks, checklist items or files, mark it lost or junk, or move it on the board. A note on top of the lead says so.',
+            'The old setting "Lock a lead after it becomes a client" is gone: the lock is always on.',
+            'New mails from a lead or a customer now notify everyone who can open the Mails tab and see the record, also the people who may only read mails (not just the ones who may send).',
+        ],
+    },
+    {
         version: '0.227.0',
         date: '2026-11-11',
         title: 'Mailbox notifications follow the mail rights',

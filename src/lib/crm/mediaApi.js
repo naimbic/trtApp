@@ -53,8 +53,9 @@ async function relAccess(ctx, relType, cap, relId) {
             leadId = mail.leadId
             drafter = mail
         }
-        const l = await prisma.crmLead.findUnique({ where: { id: leadId }, select: { assigned: true, assignedIds: true, addedFrom: true, followerIds: true, isPublic: true } })
+        const l = await prisma.crmLead.findUnique({ where: { id: leadId }, select: { assigned: true, assignedIds: true, addedFrom: true, followerIds: true, isPublic: true, clientId: true } })
         if (!l) throw new PermissionError('You do not have access to these files', 403)
+        if (l.clientId && cap !== 'view' && !ctx.admin) throw new PermissionError('This lead already became a customer, only an admin can change it', 403) // a converted lead is closed
         const me = ctx.staffId
         const viewAll = ctx.admin || hasCap(ctx.authority, 'leads', 'view')
         const mine = !!me && (l.assigned === me || (l.assignedIds || []).includes(me) || l.addedFrom === me)

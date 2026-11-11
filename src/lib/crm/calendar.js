@@ -32,6 +32,13 @@ const iso = (d) => (d ? new Date(d).toISOString() : undefined)
 /** Who may edit or delete an event: its author, the people invited to it, everybody for a public event, and those with "edit and delete events of others". */
 const canChange = (e, ctx) => !e.userId || e.userId === ctx.staffId || ctx.admin || ctx.editOthers || e.isPublic === true || (!!ctx.staffId && (e.attendeeIds || []).includes(ctx.staffId))
 
+/** An event about a lead that already became a customer is closed: only admins add, change or remove it. */
+async function closedLead(ctx, leadId) {
+    if (ctx.admin || !leadId) return
+    const l = await prisma.crmLead.findUnique({ where: { id: leadId }, select: { clientId: true } })
+    if (l?.clientId) throw Object.assign(new Error('This lead already became a customer, only an admin can change it'), { status: 403 })
+}
+
 async function context() {
     const session = await auth()
     if (!session?.user?.id) return null
@@ -269,6 +276,7 @@ export async function createCalendarEvent(body) {
     const ctx = await context()
     if (!ctx) throw Object.assign(new Error('Unauthorized'), { status: 401 })
     const data = clean(body)
+    await closedLead(ctx, data.leadId)
     const ev = await prisma.crmEvent.create({ data: { ...data, userId: ctx.staffId || undefined } })
     const out = { ...JSON.parse(JSON.stringify(ev)) }
     if (body.sendInvites) out.invited = (await invite(ev, { inviteClient: !!body.inviteClient })).sent
@@ -281,6 +289,7 @@ async function ownEvent(id) {
     const ev = await prisma.crmEvent.findUnique({ where: { id } })
     if (!ev) throw Object.assign(new Error('Not found'), { status: 404 })
     if (!canChange(ev, ctx)) throw Object.assign(new Error('Forbidden'), { status: 403 })
+    await closedLead(ctx, ev.leadId)
     return ev
 }
 

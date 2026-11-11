@@ -7,14 +7,14 @@ const scope = (a, f) => (can(a, f, 'view') ? 'all' : can(a, f, 'view_own') ? 'ow
 const P = (id, ...auth) => ({ id, auth })
 const base = { isLead: true, can, scope }
 
-test('every sender who sees leads is told, plus the team who can read mails', () => {
+test('everyone who may open the Mails tab and sees the lead is told, senders and readers alike', () => {
     const people = [
         P('boss', 'admin'),
         P('seller', 'leads.view', 'lead_tabs.tab_mails', 'lead_mails.send'),
         P('reader', 'leads.view', 'lead_tabs.tab_mails'),
         P('owner', 'leads.view_own', 'lead_tabs.tab_mails'),
     ]
-    assert.deepEqual(mailAudience({ ...base, own: ['owner'], people }).sort(), ['boss', 'owner', 'seller'])
+    assert.deepEqual(mailAudience({ ...base, own: ['owner'], people }).sort(), ['boss', 'owner', 'reader', 'seller'])
 })
 
 test('without the Mails tab right nobody is told, even the owner', () => {
@@ -22,8 +22,8 @@ test('without the Mails tab right nobody is told, even the owner', () => {
     assert.deepEqual(mailAudience({ ...base, own: ['owner'], people }), [])
 })
 
-test('a sender who only sees own leads is told only about the leads they belong to', () => {
-    const people = [P('s1', 'leads.view_own', 'lead_tabs.tab_mails', 'lead_mails.send'), P('s2', 'leads.view_own', 'lead_tabs.tab_mails', 'lead_mails.send')]
+test('a person who only sees own leads is told only about the leads they belong to', () => {
+    const people = [P('s1', 'leads.view_own', 'lead_tabs.tab_mails'), P('s2', 'leads.view_own', 'lead_tabs.tab_mails')]
     assert.deepEqual(mailAudience({ ...base, own: ['s1'], people }), ['s1'])
     assert.deepEqual(mailAudience({ ...base, own: [], isPublic: true, people }).sort(), ['s1', 's2'])
 })

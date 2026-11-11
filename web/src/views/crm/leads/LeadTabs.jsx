@@ -31,13 +31,13 @@ const when = (d) => dayjs(d).format('DD MMM YYYY, HH:mm')
  * The tasks of the lead, right in its popup, with the same panel as a task's checklist: tick, rename in place, a date, one or several
  * people, delete; "@" and "#" work in the name. The arrow opens the full task popup. Every task created here is linked to the lead.
  */
-export const LeadTasks = ({ leadId, staff, onChanged, asTasks = true, plain = [] }) => {
-    if (!asTasks) return <LeadPlainChecklist leadId={leadId} staff={staff} initial={plain} onChanged={onChanged} />
-    return <LeadTaskList leadId={leadId} staff={staff} onChanged={onChanged} />
+export const LeadTasks = ({ leadId, staff, onChanged, asTasks = true, plain = [], locked = false }) => {
+    if (!asTasks) return <LeadPlainChecklist leadId={leadId} staff={staff} initial={plain} onChanged={onChanged} locked={locked} />
+    return <LeadTaskList leadId={leadId} staff={staff} onChanged={onChanged} locked={locked} />
 }
 
 /** The lead's checklist kept as plain lines on the lead itself (Settings > Leads): no task is created for an item. */
-const LeadPlainChecklist = ({ leadId, staff, initial, onChanged }) => {
+const LeadPlainChecklist = ({ leadId, staff, initial, onChanged, locked = false }) => {
     const can = useCan()
     const [items, setItems] = useState(initial)
     useEffect(() => setItems(initial), [JSON.stringify(initial)]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -48,12 +48,12 @@ const LeadPlainChecklist = ({ leadId, staff, initial, onChanged }) => {
         } catch (e) { notify('danger', e.message) }
     }
     return (
-        <ChecklistPanel title={tr("Checklist")} items={items} staff={staff} canEdit={can('leads', 'edit')} canDelete={can('leads', 'edit')} reminders={false}
+        <ChecklistPanel title={tr("Checklist")} items={items} staff={staff} canEdit={!locked && can('leads', 'edit')} canDelete={!locked && can('leads', 'edit')} reminders={false}
             placeholder={tr("Add an item for this lead")} empty={tr("No items yet.")} act={act} />
     )
 }
 
-const LeadTaskList = ({ leadId, staff, onChanged }) => {
+const LeadTaskList = ({ leadId, staff, onChanged, locked = false }) => {
     useTaskStatuses()
     const can = useCan()
     const [list, setList] = useState(null)
@@ -98,10 +98,10 @@ const LeadTaskList = ({ leadId, staff, onChanged }) => {
     return (
         <div className="space-y-3">
             {list === null ? <p className="text-sm text-gray-500">{tr("Loading…")}</p> : (
-                <ChecklistPanel title={tr("Tasks")} items={items} staff={staff} canEdit={can('tasks', 'edit') && can('tasks', 'create')} canDelete={can('tasks', 'delete')} reminders={false}
+                <ChecklistPanel title={tr("Tasks")} items={items} staff={staff} canEdit={!locked && can('tasks', 'edit') && can('tasks', 'create')} canDelete={!locked && can('tasks', 'delete')} reminders={false}
                     placeholder={tr("Add a task for this lead (@ to mention, # for a tag)")} empty={tr("No tasks for this lead yet.")} act={act} onOpen={(i) => setPopup({ open: true, id: i.id, k: popup.k + 1 })} />
             )}
-            {can('tasks', 'create') && <Button size="sm" icon={<TbPlus />} onClick={() => setPopup({ open: true, id: null, k: popup.k + 1 })}>{tr("New task with all its details")}</Button>}
+            {!locked && can('tasks', 'create') && <Button size="sm" icon={<TbPlus />} onClick={() => setPopup({ open: true, id: null, k: popup.k + 1 })}>{tr("New task with all its details")}</Button>}
             <TaskDrawer open={popup.open} id={popup.id} staff={staff} refreshKey={popup.k} presets={{ relType: 'lead', relId: leadId }} onClose={() => setPopup((p) => ({ ...p, open: false }))} onChanged={changed} />
         </div>
     )

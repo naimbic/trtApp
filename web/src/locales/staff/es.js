@@ -6099,4 +6099,6 @@ export default {
     "Delete this closed period?": "¿Eliminar este periodo de cierre?",
     "Delete this saved view?": "¿Eliminar esta vista guardada?",
     "Remove this picture?": "¿Quitar esta foto?",
+    "This lead already became a customer. Only an admin can change it.": "Este lead ya se convirtió en cliente. Solo un administrador puede modificarlo.",
+    "This lead already became a customer, only an admin can change it": "Este lead ya se convirtió en cliente, solo un administrador puede modificarlo",
 }

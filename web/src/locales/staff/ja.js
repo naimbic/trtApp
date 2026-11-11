@@ -6099,4 +6099,6 @@ export default {
     "Delete this closed period?": "この休業期間を削除しますか？",
     "Delete this saved view?": "この保存済みビューを削除しますか？",
     "Remove this picture?": "この写真を削除しますか？",
+    "This lead already became a customer. Only an admin can change it.": "このリードはすでに顧客になりました。変更できるのは管理者のみです。",
+    "This lead already became a customer, only an admin can change it": "このリードはすでに顧客になりました。変更できるのは管理者のみです",
 }

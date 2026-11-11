@@ -378,7 +378,6 @@ export const GROUPS = {
             { title: 'Pipeline lists', desc: 'Statuses, sources and web forms are managed from the menu, Leads.', links: [['Lead statuses', '/crm/lead-statuses'], ['Lead sources', '/crm/lead-sources'], ['Web-to-lead forms', '/crm/web-to-lead']] },
             { title: 'Rules & follow-up', fields: [
                 yes('auto_assign_customer_admin_after_lead_convert', 'Make the lead owner the client admin when converted'),
-                yes('lead_lock_after_convert_to_customer', 'Lock a lead after it becomes a client'),
                 yes('lead_checklist_plain', 'Keep lead checklist items as plain lines (no task is created for each item)', { hint: 'Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.' }),
                 f('leads_kanban_limit', 'Cards per column on the board', 'number', { min: 5, default: '50' }),
                 sel('default_leads_kanban_sort', 'Default board order', [['dateadded', 'Date added'], ['leadorder', 'Manual'], ['lastcontact', 'Last contact']], { default: 'leadorder' }),

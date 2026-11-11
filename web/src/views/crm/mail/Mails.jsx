@@ -18,6 +18,7 @@ import Tag from '@/components/ui/Tag'
 import Pagination from '@/components/ui/Pagination'
 import cn from '@/utils/classNames'
 import { api, notify, useCan } from '../kit/api'
+import { viewedOn } from '@/utils/viewedOn'
 import { tr } from '@/utils/t'
 
 const { TabList, TabNav } = Tabs
@@ -296,7 +297,7 @@ const Log = () => {
             {err && <Alert showIcon type="danger" className="mb-3">{err}</Alert>}
             <div className="overflow-x-auto">
                 <Table hoverable>
-                    <THead><Tr><Th>{tr("Date")}</Th><Th>{tr("To")}</Th><Th>{tr("Subject")}</Th><Th>{tr("Template")}</Th><Th>{tr("Status")}</Th></Tr></THead>
+                    <THead><Tr><Th>{tr("Date")}</Th><Th>{tr("To")}</Th><Th>{tr("Subject")}</Th><Th>{tr("Template")}</Th><Th>{tr("Status")}</Th><Th>{tr("Viewed")}</Th></Tr></THead>
                     <TBody>
                         {d.list.map((m) => (
                             <Tr key={m.id}>
@@ -305,6 +306,7 @@ const Log = () => {
                                 <Td className="max-w-[320px] truncate">{m.subject}</Td>
                                 <Td className="text-gray-500">{m.template}</Td>
                                 <Td>{m.status === 'sent' ? <Tag className="bg-emerald-100 text-emerald-700">{tr("Sent")}</Tag> : <span title={m.error}><Tag className="bg-red-100 text-red-700">{tr("Failed")}</Tag></span>}</Td>
+                                <Td className="whitespace-nowrap text-xs">{m.status !== 'sent' || !m.track?.tracked ? <span className="text-gray-300">—</span> : m.track.opens > 0 ? <span className="font-semibold text-emerald-600" title={m.track.clicks > 0 ? `${tr("Link clicked")} · ${m.track.clicks}×` : undefined}>{viewedOn(m.track.firstOpenAt)}{m.track.opens > 1 ? ` · ${m.track.opens}×` : ''}{m.track.clicks > 0 ? ' 🔗' : ''}</span> : <span className="text-gray-400">{tr("Not viewed yet")}</span>}</Td>
                             </Tr>
                         ))}
                     </TBody>

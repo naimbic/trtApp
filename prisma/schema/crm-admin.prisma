@@ -880,10 +880,19 @@ model CrmMailLog {
   status    String   // sent | failed
   error     String?
   staffId   String?  @db.ObjectId
+  /// open / click tracking of a document mail (invoice, proposal...): the random token in its picture and links, then what was seen
+  trackToken   String?
+  openCount    Int?
+  firstOpenAt  DateTime?
+  lastOpenAt   DateTime?
+  clickCount   Int?
+  firstClickAt DateTime?
+  lastClickAt  DateTime?
   createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@index([relType, relId])
+  @@index([trackToken])
   @@map("crm_mail_log")
 }
 

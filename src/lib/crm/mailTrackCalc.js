@@ -21,11 +21,11 @@ const unesc = (s) => String(s).replace(/&amp;/g, '&')
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
 
 /** The links (http/https) of the text now go through the click address. mailto:, tel:, #anchors and our own tracking links stay as they are. */
-export function trackLinks(html, { base, token, secret }) {
+export function trackLinks(html, { base, token, secret, only = null }) {
     const own = `${base}/api/crm/public/mail/`
     return String(html || '').replace(/(<a\b[^>]*?\shref=)(["'])(https?:\/\/[^"']+)\2/gi, (m, pre, q, href) => {
         const url = unesc(href)
-        if (url.startsWith(own) || !webUrl(url)) return m
+        if (url.startsWith(own) || !webUrl(url) || (only && !only(url))) return m
         return `${pre}${q}${esc(`${own}click/${token}?u=${encodeURIComponent(url)}&s=${sign(token, url, secret)}`)}${q}`
     })
 }
@@ -34,7 +34,7 @@ export function trackLinks(html, { base, token, secret }) {
 export const pixel = ({ base, token }) => `<img src="${base}/api/crm/public/mail/open/${token}" width="1" height="1" alt="" style="border:0;width:1px;height:1px">`
 
 /** The text of the mail, ready to send: its links tracked (the signature is added after, untouched) and the picture at the end. */
-export const trackedHtml = ({ body, signature = '', base, token, secret }) => `${trackLinks(body, { base, token, secret })}${signature}${pixel({ base, token })}`
+export const trackedHtml = ({ body, signature = '', base, token, secret, only = null }) => `${trackLinks(body, { base, token, secret, only })}${signature}${pixel({ base, token })}`
 
 /**
  * A mail "opened" a few seconds after it left is almost always the mail server of the recipient (or a security scanner) fetching
@@ -43,5 +43,5 @@ export const trackedHtml = ({ body, signature = '', base, token, secret }) => `$
 export const REAL_AFTER_MS = 12000
 export const countsAsHuman = (sentAt, now = new Date(), after = REAL_AFTER_MS) => !!sentAt && +now - +new Date(sentAt) >= after
 
-/** What the Mails tab shows of a sent mail. */
-export const trackInfo = (m) => (m && m.direction === 'out' && m.trackToken ? { tracked: true, opens: m.openCount || 0, firstOpenAt: m.firstOpenAt || null, lastOpenAt: m.lastOpenAt || null, clicks: m.clickCount || 0, firstClickAt: m.firstClickAt || null, lastClickAt: m.lastClickAt || null } : { tracked: false })
+/** What the Mails tab shows of a sent mail (a mail of a lead or customer, or a row of the sent log). */
+export const trackInfo = (m) => (m && (m.direction === 'out' || m.direction === undefined) && m.trackToken ? { tracked: true, opens: m.openCount || 0, firstOpenAt: m.firstOpenAt || null, lastOpenAt: m.lastOpenAt || null, clicks: m.clickCount || 0, firstClickAt: m.firstClickAt || null, lastClickAt: m.lastClickAt || null } : { tracked: false })

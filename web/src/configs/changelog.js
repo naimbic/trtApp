@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.230.0',
+        date: '2026-11-11',
+        title: 'Mails of invoices, proposals and other documents are tracked too',
+        items: [
+            'The mails sent from an invoice, estimate, proposal, contract or purchase order now carry the invisible picture and track the link to the document. The person who sent it is told the first time it is opened and the first time the link is clicked, with a link to the document.',
+            'Mails > Sent log has a new "Viewed" column: "Viewed on 12th Nov 2026 at 12:34pm", with the number of views, a link sign when the link was clicked, or "Not viewed yet".',
+            'The Mails tab of a lead or a customer now shows the same line: "Viewed on 12th Nov 2026 at 12:34pm".',
+            'In the document mails only the links to this CRM are tracked, never the logo or the signature links. The Settings > Email switch turns all tracking off.',
+        ],
+    },
+    {
         version: '0.229.0',
         date: '2026-11-11',
         title: 'Mails to leads and customers: signature on every mail, opens and clicks',

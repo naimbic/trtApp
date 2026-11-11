@@ -54,3 +54,14 @@ test('trackInfo only for sent, tracked mails', () => {
     assert.deepEqual(trackInfo({ direction: 'out' }), { tracked: false })
     assert.equal(trackInfo({ direction: 'out', trackToken: 'x', openCount: 2 }).opens, 2)
 })
+
+test('only some links can be tracked (the document mails track our own addresses, not the logo link)', () => {
+    const only = (u) => u.startsWith('https://app.test/')
+    const out = trackLinks('<a href="https://app.test/s/inv-1">invoice</a> <a href="https://company.com">logo</a>', { base, token, secret, only })
+    assert.ok(out.includes('/mail/click/') && out.includes('href="https://company.com"'))
+})
+
+test('trackInfo works for a row of the sent log (no direction)', () => {
+    assert.equal(trackInfo({ trackToken: 'x', openCount: 1 }).opens, 1)
+    assert.deepEqual(trackInfo({ subject: 'old row' }), { tracked: false })
+})

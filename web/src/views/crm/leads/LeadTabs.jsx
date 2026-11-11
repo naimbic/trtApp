@@ -21,6 +21,7 @@ import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import TaskDrawer from '../tasks/TaskDrawer'
 import { People, useTaskStatuses } from '../tasks/shared'
 import { CommentFoot } from '@/components/crm/CommentParts'
+import { viewedOn } from '@/utils/viewedOn'
 import { tr } from '@/utils/t'
 
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
@@ -296,8 +297,8 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                     {m.direction === 'out' && m.track?.tracked && (
                         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-semibold">
                             {m.track.opens > 0
-                                ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-700" title={`${tr("First opened")} ${when(m.track.firstOpenAt)}`}><TbEye />{tr("Opened")} {m.track.opens > 1 ? `${m.track.opens}×` : ''} · {when(m.track.lastOpenAt)}</span>
-                                : <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-500 dark:bg-gray-700/50 dark:text-gray-300" title={tr("Not seen yet. Mail apps that block pictures never show an open.")}><TbEyeOff />{tr("Not opened yet")}</span>}
+                                ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-700" title={m.track.opens > 1 ? `${tr("Last viewed")} ${when(m.track.lastOpenAt)}` : undefined}><TbEye />{viewedOn(m.track.firstOpenAt)}{m.track.opens > 1 ? ` · ${m.track.opens}×` : ''}</span>
+                                : <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-500 dark:bg-gray-700/50 dark:text-gray-300" title={tr("Not seen yet. Mail apps that block pictures never show an open.")}><TbEyeOff />{tr("Not viewed yet")}</span>}
                             {m.track.clicks > 0 && <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-0.5 text-sky-700" title={`${tr("First click")} ${when(m.track.firstClickAt)}`}><TbPointer />{tr("Link clicked")} {m.track.clicks > 1 ? `${m.track.clicks}×` : ''} · {when(m.track.lastClickAt)}</span>}
                         </div>
                     )}

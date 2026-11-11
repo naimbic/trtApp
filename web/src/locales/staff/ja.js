@@ -6107,4 +6107,8 @@ export default {
     "Link clicked": "リンクをクリック",
     "Tell me when a mail to a lead or a customer is opened or a link is clicked": "リードや顧客へのメールが開かれたり、リンクがクリックされたら通知する",
     "A tiny invisible picture and tracked links are added to the mails sent from a lead or a customer. The sender (and the team of a lead) is notified the first time. Mail apps that block pictures, or load them by themselves, make an open uncertain; a click is a sure sign.": "リードや顧客から送るメールに、見えない小さな画像と追跡リンクが追加されます。最初の1回だけ送信者（リードの場合はチーム）に通知します。画像をブロックする、または自動で読み込むメールアプリでは開封が不確かになります。クリックは確実なサインです。",
+    "Viewed on {when}": "{when} に閲覧",
+    "Not viewed yet": "未閲覧",
+    "Last viewed": "最終閲覧",
+    "Viewed": "閲覧",
 }

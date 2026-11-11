@@ -232,7 +232,9 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
 
     const finalSubject = String(subject || '').trim() || mergeFields(template.subject, ctx.data)
     const mine = staffId ? (await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { emailSignature: true } }))?.emailSignature : null
-    const html = await buildHtml(template.message, mine ? { ...ctx.data, email_signature: mine } : ctx.data, undefined, mine)
+    const built = await buildHtml(template.message, mine ? { ...ctx.data, email_signature: mine } : ctx.data, undefined, mine)
+    const { withTracking, ownLinksOnly } = await import('@/lib/crm/mailTrackApi')
+    const { html, token } = await withTracking({ body: built, only: ownLinksOnly() }) // the invisible picture and the links to the document (Settings > Email)
     if (kind === 'purchase_order' && attachPdf === undefined) attachPdf = true
     if (kind === 'invoice' && attachPdf === undefined && slug === 'invoice-payment-recorded') attachPdf = (await getOptions(['attach_invoice_to_payment_receipt_email']))('attach_invoice_to_payment_receipt_email') === '1'
     let attachments
@@ -261,7 +263,7 @@ export async function sendMailCore({ kind, id, template: slug, to, cc, subject, 
     }
     const res = await deliver({ attachments, to: toAll.join(', '), cc: ccAll.join(', '), subject: finalSubject, html, fromName: template.fromName && !/^\{/.test(template.fromName) ? template.fromName : mergeFields(template.fromName, ctx.data), fromEmail: undefined })
 
-    await prisma.crmMailLog.create({ data: { to: toAll.join(', '), cc: ccAll.join(', ') || null, subject: finalSubject, template: template.slug, relType: kind, relId: id, status: res.sent ? 'sent' : 'failed', error: res.error || null, staffId: staffId || undefined } })
+    await prisma.crmMailLog.create({ data: { to: toAll.join(', '), cc: ccAll.join(', ') || null, subject: finalSubject, template: template.slug, relType: kind, relId: id, status: res.sent ? 'sent' : 'failed', error: res.error || null, staffId: staffId || undefined, ...(res.sent && token ? { trackToken: token, openCount: 0, clickCount: 0 } : {}) } })
     if (!res.sent) fail(res.error)
 
     const now = new Date()
@@ -351,7 +353,8 @@ export async function listMailLog({ pageIndex = 1, pageSize = 20, status } = {})
         prisma.crmMailLog.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (pageIndex - 1) * pageSize, take: pageSize }),
         prisma.crmMailLog.count({ where }),
     ])
-    return plain({ list, total })
+    const { trackInfo } = await import('@/lib/crm/mailTrackCalc')
+    return plain({ list: list.map(({ trackToken, openCount, firstOpenAt, lastOpenAt, clickCount, firstClickAt, lastClickAt, ...r }) => ({ ...r, track: trackInfo({ trackToken, openCount, firstOpenAt, lastOpenAt, clickCount, firstClickAt, lastClickAt }) })), total })
 }
 
 /** Template catalog for the Templates screen. */

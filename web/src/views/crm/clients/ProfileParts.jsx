@@ -15,6 +15,7 @@ import Tag from '@/components/ui/Tag'
 import cn from '@/utils/classNames'
 import { api, notify } from '../kit/api'
 import { tr, trn } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 dayjs.extend(relativeTime)
 
@@ -96,7 +97,7 @@ export const Reminders = ({ items, clientId, onChanged, canEdit }) => {
                 <div key={r.id} className="group flex items-start gap-3 rounded-xl border border-gray-200 p-3 text-sm dark:border-gray-600">
                     <TbBell className={cn('mt-0.5 shrink-0 text-lg', dayjs(r.date).isBefore(dayjs()) ? 'text-gray-400' : 'text-amber-500')} />
                     <div className="min-w-0 flex-1"><div className="font-semibold">{r.description}</div><div className="text-xs text-gray-500">{when(r.date)}{r.staff ? ` · ${r.staff}` : ''}</div></div>
-                    {canEdit && <button className="hidden text-red-500 group-hover:block [@media(hover:none)]:block" onClick={() => del(r.id)}><TbTrash /></button>}
+                    {canEdit && <button className="hidden text-red-500 group-hover:block [@media(hover:none)]:block" onClick={() => confirmDelete(tr('Delete this reminder?'), () => del(r.id))}><TbTrash /></button>}
                 </div>
             ))}
         </div>

@@ -11,6 +11,7 @@ import ShareButton from '@/components/crm/ShareButton'
 import EmojiPicker from '@/components/crm/EmojiPicker'
 import classNames from '@/utils/classNames'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 /** Reply, edit and delete icons that appear when the pointer is over a comment (the parent needs the classes "group relative"). */
 export const CommentTools = ({ onReply, onEdit, onDelete, share, inline = false }) => (
@@ -18,7 +19,7 @@ export const CommentTools = ({ onReply, onEdit, onDelete, share, inline = false 
         {share && <ShareButton url={share.url} title={share.title} text={share.text} />}
         {onReply && <button type="button" title={tr('Reply')} aria-label={tr('Reply')} onClick={onReply} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbArrowBackUp /></button>}
         {onEdit && <button type="button" title={tr('Edit')} aria-label={tr('Edit')} onClick={onEdit} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbPencil /></button>}
-        {onDelete && <button type="button" title={tr('Delete')} aria-label={tr('Delete')} onClick={onDelete} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-gray-700"><TbTrash /></button>}
+        {onDelete && <button type="button" title={tr('Delete')} aria-label={tr('Delete')} onClick={() => confirmDelete(tr('Delete this comment?'), onDelete, { text: tr('The comment is removed for everyone.') })} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-gray-700"><TbTrash /></button>}
     </div>
 )
 

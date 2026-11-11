@@ -13,6 +13,7 @@ import ImageUpload from '@/components/crm/ImageUpload'
 import { api, upload, notify } from '../kit/api'
 import { usePayMoney } from './PayrollParts'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const blank = {
     image: null, firstName: '', lastName: '', email: '', phone: '', jobTitle: '', roleId: null, departmentIds: [], admin: false, active: true,
@@ -56,7 +57,7 @@ export const DocUpload = ({ memberId, kind, label, doc, onChanged }) => {
             </div>
             <input ref={input} type="file" hidden onChange={(e) => send(e.target.files?.[0])} />
             <Button size="xs" icon={<TbUpload />} loading={busy} onClick={() => input.current?.click()}>{doc ? tr('Replace') : tr('Upload')}</Button>
-            {doc && <button type="button" className="text-gray-400 hover:text-red-500" aria-label={tr('Remove')} disabled={busy} onClick={remove}><TbTrash /></button>}
+            {doc && <button type="button" className="text-gray-400 hover:text-red-500" aria-label={tr('Remove')} disabled={busy} onClick={() => confirmDelete(tr('Remove this file?'), remove, { confirmText: tr('Remove') })}><TbTrash /></button>}
         </div>
     )
 }

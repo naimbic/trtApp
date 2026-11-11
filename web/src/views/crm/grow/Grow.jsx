@@ -18,6 +18,7 @@ import RichView from '@/components/crm/RichView'
 import cn from '@/utils/classNames'
 import { api, notify } from '../kit/api'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const { TabList, TabNav, TabContent } = Tabs
 const L = ({ children }) => <label className="mb-1 block text-xs font-semibold text-gray-500">{children}</label>
@@ -166,7 +167,7 @@ const IdeaDialog = ({ idea, lookups, onClose, onChanged }) => {
                 {idea.id && (
                     <div className="mt-5 border-t border-gray-200 pt-4 dark:border-gray-700">
                         <h6 className="mb-2">{tr("Comments")} {comments.length > 0 && <span className="text-gray-400">{comments.length}</span>}</h6>
-                        <div className="space-y-2">{comments.map((c) => <div key={c.id} className="rounded-xl bg-gray-50 p-2.5 text-sm dark:bg-gray-700/40"><div className="mb-0.5 flex items-center justify-between text-xs text-gray-500"><b className="text-gray-700 dark:text-gray-200">{c.author}</b><span className="flex items-center gap-2">{dayjs(c.createdAt).format('DD MMM, HH:mm')}<button type="button" aria-label={tr("Delete")} className="hover:text-red-500" onClick={() => api(`/api/crm/grow/ideas/${idea.id}/comments?commentId=${c.id}`, { method: 'DELETE' }).then(() => setComments((x) => x.filter((y) => y.id !== c.id))).catch((e) => notify('danger', e.message))}><TbTrash /></button></span></div><RichView html={c.body} /></div>)}</div>
+                        <div className="space-y-2">{comments.map((c) => <div key={c.id} className="rounded-xl bg-gray-50 p-2.5 text-sm dark:bg-gray-700/40"><div className="mb-0.5 flex items-center justify-between text-xs text-gray-500"><b className="text-gray-700 dark:text-gray-200">{c.author}</b><span className="flex items-center gap-2">{dayjs(c.createdAt).format('DD MMM, HH:mm')}<button type="button" aria-label={tr("Delete")} className="hover:text-red-500" onClick={() => confirmDelete(tr('Delete this comment?'), () => api(`/api/crm/grow/ideas/${idea.id}/comments?commentId=${c.id}`, { method: 'DELETE' }).then(() => setComments((x) => x.filter((y) => y.id !== c.id))).catch((e) => notify('danger', e.message)))}><TbTrash /></button></span></div><RichView html={c.body} /></div>)}</div>
                         <div className="mt-2 flex gap-2"><div className="min-w-0 flex-1"><RichEditor minHeight={60} placeholder={tr("Add a comment")} value={text} onChange={setText} /></div><Button size="sm" disabled={!text.trim()} onClick={comment}>{tr("Send")}</Button></div>
                     </div>
                 )}

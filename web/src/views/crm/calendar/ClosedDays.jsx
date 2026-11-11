@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import { api, notify } from '../kit/api'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const range = (r) => (r.fromDay === r.toDay ? dayjs(r.fromDay).format('ddd D MMM YYYY') : `${dayjs(r.fromDay).format('ddd D MMM')} → ${dayjs(r.toDay).format('ddd D MMM YYYY')}`)
 const days = (r) => dayjs(r.toDay).diff(dayjs(r.fromDay), 'day') + 1
@@ -37,7 +38,7 @@ export const ClosedDaysPanel = ({ open = true, onClose }) => {
                     <div key={r.id} className="flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2 text-sm dark:bg-rose-500/10">
                         <div className="min-w-0 flex-1"><div className="font-semibold">{range(r)}</div>{r.label && <div className="truncate text-xs text-gray-500">{r.label}</div>}<div className="mt-0.5 flex flex-wrap items-center gap-1">{r.staffIds?.length ? <><TbUsers className="text-gray-400" />{r.staffIds.map((id) => <span key={id} className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:bg-gray-800">{d.staff?.find((x) => x.id === id)?.name || tr('Former member')}</span>)}</> : <span className="text-[11px] font-semibold text-rose-600">{tr('Whole team')}</span>}</div></div>
                         <span className="shrink-0 text-xs text-gray-400">{days(r)} {tr('day(s)')}</span>
-                        {d.can.edit && <button type="button" aria-label={tr('Remove')} onClick={() => remove(r)} className="text-gray-400 hover:text-red-500"><TbTrash /></button>}
+                        {d.can.edit && <button type="button" aria-label={tr('Remove')} onClick={() => confirmDelete(tr('Delete this closed period?'), () => remove(r))} className="text-gray-400 hover:text-red-500"><TbTrash /></button>}
                     </div>
                 ))}
                 {d && !d.list.length && <p className="py-4 text-center text-sm text-gray-400">{tr('No closed day yet.')}</p>}

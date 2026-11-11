@@ -22,6 +22,7 @@ import ShareButton from '@/components/crm/ShareButton'
 import { tr } from '@/utils/t'
 import ReminderCard from '../kit/ReminderCard'
 import { CommentThread } from '@/components/crm/CommentParts'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const { TabList, TabNav } = Tabs
 const Field = ({ label, children }) => (<div><div className="mb-0.5 text-xs uppercase tracking-wide text-gray-400">{label}</div><div>{children || <span className="text-gray-400">—</span>}</div></div>)
@@ -119,7 +120,7 @@ const ContractView = () => {
                             <div className="flex flex-col gap-4">
                                 <div className="flex gap-2"><Input textArea rows={2} placeholder={tr("Write a comment…")} value={comment} onChange={(e) => setComment(e.target.value)} /><Button variant="solid" onClick={addComment}>{tr("Add")}</Button></div>
                                 {c.comments.length ? <CommentThread comments={c.comments} render={(m) => (
-                                    <div key={m.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600"><div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span>{m.staff || tr("Staff")} · {dayjs(m.createdAt).format('YYYY-MM-DD HH:mm')}</span>{can('contracts', 'edit') && <button type="button" className="text-red-500 hover:underline" onClick={() => delComment(m.id)}>{tr("Delete")}</button>}</div><p className="whitespace-pre-line text-sm">{m.content}</p></div>
+                                    <div key={m.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600"><div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span>{m.staff || tr("Staff")} · {dayjs(m.createdAt).format('YYYY-MM-DD HH:mm')}</span>{can('contracts', 'edit') && <button type="button" className="text-red-500 hover:underline" onClick={() => confirmDelete(tr('Delete this comment?'), () => delComment(m.id))}>{tr("Delete")}</button>}</div><p className="whitespace-pre-line text-sm">{m.content}</p></div>
                                 )} /> : <p className="text-gray-400">{tr("No comments yet.")}</p>}
                             </div>
                         )}

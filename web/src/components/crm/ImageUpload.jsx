@@ -5,6 +5,7 @@ import Spinner from '@/components/ui/Spinner'
 import { notify, upload, api, formatBytes } from '@/views/crm/kit/api'
 import classNames from '@/utils/classNames'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const initials = (name = '') => name.split(/\s+/).filter(Boolean).map((x) => x[0]).slice(0, 2).join('').toUpperCase() || '?'
 const GRADIENTS = ['from-emerald-400 to-teal-500', 'from-sky-400 to-indigo-500', 'from-amber-400 to-orange-500', 'from-fuchsia-400 to-purple-500', 'from-rose-400 to-red-500']
@@ -74,7 +75,7 @@ const ImageUpload = ({ url, name, shape = 'circle', size = 112, uploadUrl, canEd
                     <button type="button" onClick={() => { setMenu(false); setPicker(true) }} className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold hover:bg-primary/10 hover:text-primary dark:bg-gray-700"><TbPhotoSearch />{tr("From files")}</button>
                 </div>
             )}
-            {canEdit && url && !busy && <button type="button" onClick={remove} className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"><TbTrash />{tr("Remove")}</button>}
+            {canEdit && url && !busy && <button type="button" onClick={() => confirmDelete(tr('Remove this picture?'), remove, { confirmText: tr('Remove') })} className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"><TbTrash />{tr("Remove")}</button>}
             {hint && <span className="max-w-[180px] text-center text-[11px] text-gray-400">{hint}</span>}
             <MediaPicker open={picker} onClose={() => setPicker(false)} onPick={pick} />
             <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" className="hidden" onChange={(e) => send(e.target.files?.[0])} />

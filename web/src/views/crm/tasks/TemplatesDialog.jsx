@@ -7,6 +7,7 @@ import Select from '@/components/ui/Select'
 import { api, notify } from '../kit/api'
 import { PRIORITY } from './shared'
 import { tr, trn } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const lines = (text) => String(text || '').split('\n').map((x) => x.trim()).filter(Boolean)
 // subtasks, one per line: "Name" or "Name | 3" (due 3 days after the start)
@@ -53,7 +54,7 @@ const TemplatesDialog = ({ isOpen, onClose, onUsed, context = {} }) => {
                         <div key={t.id} className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 dark:border-gray-600">
                             <div className="min-w-0 flex-1"><div className="truncate font-bold heading-text">{t.name}</div><div className="flex gap-3 text-xs text-gray-500"><span className="inline-flex items-center gap-1"><TbListCheck />{trn(t.checklist.length, 'checklist item')}</span><span className="inline-flex items-center gap-1"><TbHierarchy2 />{trn(t.subtasks.length, 'subtask')}</span></div></div>
                             <Button size="xs" variant="solid" icon={<TbPlayerPlay />} loading={busy === t.id} onClick={() => use(t)}>{tr('Use')}</Button>
-                            <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => remove(t)} />
+                            <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => confirmDelete(tr('Delete this template?'), () => remove(t))} />
                         </div>
                     ))}
                     {!list.length && <p className="py-8 text-center text-sm text-gray-400">{tr('No template yet. Create one, or open a task and choose "Save as template".')}</p>}

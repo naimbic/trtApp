@@ -6090,4 +6090,13 @@ export default {
     "See the Profile / Overview tab (contact details)": "プロフィール／概要タブを見る（連絡先）",
     "See the Notes tab": "ノートタブを見る",
     "See the Files tab": "ファイルタブを見る",
+    "Delete this comment?": "このコメントを削除しますか？",
+    "The comment is removed for everyone.": "コメントは全員から削除されます。",
+    "Remove this file?": "このファイルを削除しますか？",
+    "Delete this template?": "このテンプレートを削除しますか？",
+    "Remove this image?": "この画像を削除しますか？",
+    "Delete this reminder?": "このリマインダーを削除しますか？",
+    "Delete this closed period?": "この休業期間を削除しますか？",
+    "Delete this saved view?": "この保存済みビューを削除しますか？",
+    "Remove this picture?": "この写真を削除しますか？",
 }

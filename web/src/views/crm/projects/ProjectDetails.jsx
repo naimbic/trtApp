@@ -24,6 +24,7 @@ import { People, initials } from '../tasks/shared'
 import { STATUS, BILLING, StatusTag, Bar, fmt, hours, useStaff } from './shared'
 import { tr, trn } from '@/utils/t'
 import { KpiCard } from '../kit/KpiCard'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const NAV = [
     { value: 'overview', label: tr("Overview"), icon: <TbFileInfo /> },
@@ -179,7 +180,7 @@ const ProjectDetails = () => {
                             <div className="space-y-2"><RichEditor minHeight={90} placeholder={tr("Write a private note for the team")} value={note} onChange={setNote} /><Button size="sm" variant="solid" disabled={!note.trim()} onClick={addNote}>{tr("Add note")}</Button></div>
                             {data.notes.map((n) => (
                                 <div key={n.id} className="rounded-lg bg-gray-100 p-3 text-sm dark:bg-gray-700/50">
-                                    <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{fmt(n.date, 'DD MMM YYYY, HH:mm')}{(n.mine || data.can.delete) && <button className="ml-2 text-red-500" onClick={() => delNote(n.id)}>{tr("delete")}</button>}</span></div>
+                                    <div className="mb-1 flex items-center justify-between text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{n.by?.name || tr("Unknown")}</span><span>{fmt(n.date, 'DD MMM YYYY, HH:mm')}{(n.mine || data.can.delete) && <button className="ml-2 text-red-500" onClick={() => confirmDelete(tr('Delete this note?'), () => delNote(n.id))}>{tr("delete")}</button>}</span></div>
                                     <RichView html={n.content} />
                                 </div>
                             ))}

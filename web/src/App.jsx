@@ -4,6 +4,7 @@ import Theme from '@/components/template/Theme'
 import Layout from '@/components/layouts'
 import { AuthProvider } from '@/auth'
 import Views from '@/views'
+import { ConfirmHost } from '@/components/crm/useConfirm'
 import appConfig from './configs/app.config'
 
 const PortalApp = lazy(() => import('@/views/portal/PortalApp'))
@@ -28,6 +29,7 @@ if (appConfig.enableMock) {
 function App() {
     return (
         <Theme>
+            <ConfirmHost />
             <BrowserRouter>
                 <Root />
             </BrowserRouter>

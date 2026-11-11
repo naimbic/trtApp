@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.226.0',
+        date: '2026-11-11',
+        title: 'Every delete asks "Are you sure?" first',
+        items: [
+            'Deleting a comment (in tasks, leads, customers, notes, contracts, estimates, proposals, issues, projects, ideas, the knowledge base and the client portal) now opens a confirmation window instead of deleting at once.',
+            'The same for notes, reminders, events, closed periods, saved views, task templates, team files and pictures that were removed with a single click.',
+            'Things that already asked (leads, customers, tasks, invoices, files, mails and so on) are unchanged.',
+        ],
+    },
+    {
         version: '0.225.0',
         date: '2026-11-11',
         title: 'Customers: rights for each tab (Overview, Mails, Notes, Files, Activity)',

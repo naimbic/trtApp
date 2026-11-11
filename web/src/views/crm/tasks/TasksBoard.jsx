@@ -21,6 +21,7 @@ import RelationSelect from '../kit/RelationSelect'
 import BulkBar, { runBulk, useSelection } from '@/components/crm/BulkBar'
 import { tr, trn } from '@/utils/t'
 import { onCreate } from '@/utils/createIntent'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const Plain = ({ children }) => <div>{children}</div>
 
@@ -182,7 +183,7 @@ const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, on
                     onMoveTo={data.can.edit ? moveTo : undefined}
                     actions={(it) => isNote(it) ? [
                         { label: tr("Make it a task"), icon: <TbArrowRight />, onClick: () => promote(it, 1) },
-                        { label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: async () => { try { await api(`/api/crm/notes/${noteOf(it).id}`, { method: 'DELETE' }); notify('success', tr("Note deleted")); loadNotes() } catch (e) { notify('danger', e.message) } } },
+                        { label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => confirmDelete(tr('Delete this note?'), async () => { try { await api(`/api/crm/notes/${noteOf(it).id}`, { method: 'DELETE' }); notify('success', tr("Note deleted")); loadNotes() } catch (e) { notify('danger', e.message) } }) },
                     ] : [
                         ...(data.can.edit ? [
                             { label: tr("Mark complete"), icon: <TbCircleCheck />, onClick: () => moveTo(it, 5) },

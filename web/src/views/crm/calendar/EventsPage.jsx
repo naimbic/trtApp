@@ -11,6 +11,7 @@ import Switcher from '@/components/ui/Switcher'
 import Tooltip from '@/components/ui/Tooltip'
 import { api, notify, qs, useCan } from '../kit/api'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 dayjs.extend(isoWeek)
 
@@ -104,7 +105,7 @@ const EventsPage = () => {
                     <Tooltip title={r.isPublic ? tr('Public: everybody sees it') : tr('Private')}><span className="flex items-center gap-1 text-xs text-gray-500"><Switcher checked={r.isPublic} disabled={!r.mine} onChange={(c) => patch(r, { isPublic: c })} />{tr('Public')}</span></Tooltip>
                     <span className="flex justify-end gap-0.5">
                         <Tooltip title={tr('Open in the calendar')}><Link to={`/calendar?event=${r.id}`} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbExternalLink /></Link></Tooltip>
-                        {r.mine && <Tooltip title={tr('Delete')}><Button size="xs" variant="plain" className="text-gray-400 hover:text-red-500" icon={<TbTrash />} onClick={() => run(() => api(`/api/crm/events/${r.id}`, { method: 'DELETE' }), tr('Deleted'))} /></Tooltip>}
+                        {r.mine && <Tooltip title={tr('Delete')}><Button size="xs" variant="plain" className="text-gray-400 hover:text-red-500" icon={<TbTrash />} onClick={() => confirmDelete(tr('Delete this event?'), () => run(() => api(`/api/crm/events/${r.id}`, { method: 'DELETE' }), tr('Deleted')))} /></Tooltip>}
                     </span>
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 ps-8 text-xs text-gray-500">

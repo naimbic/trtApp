@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { TbBookmark, TbBookmarkFilled, TbCheck, TbShare, TbTrash, TbUsers } from 'react-icons/tb'
 import { api, notify } from '@/views/crm/kit/api'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const same = (a, b) => JSON.stringify(a || {}) === JSON.stringify(b || {})
 const clean = (s) => JSON.parse(JSON.stringify(s || {}))
@@ -49,7 +50,7 @@ const SavedViews = ({ page, getState, applyState, className = '' }) => {
                                     {v.shared && <TbUsers className="shrink-0 text-xs text-gray-400" title={v.mine ? tr('Shared with the team') : `${tr('Shared by')} ${v.owner}`} />}
                                 </button>
                                 {v.mine && <button type="button" title={v.shared ? tr('Stop sharing') : tr('Share with the team')} aria-label={tr('Share with the team')} className={`grid size-7 place-items-center rounded-md ${v.shared ? 'text-primary' : 'text-gray-300 hover:text-primary'}`} onClick={() => patch(v, { shared: !v.shared })}><TbShare /></button>}
-                                {v.mine && <button type="button" title={tr('Delete')} aria-label={tr('Delete')} className="grid size-7 place-items-center rounded-md text-gray-300 hover:text-red-500" onClick={() => remove(v)}><TbTrash /></button>}
+                                {v.mine && <button type="button" title={tr('Delete')} aria-label={tr('Delete')} className="grid size-7 place-items-center rounded-md text-gray-300 hover:text-red-500" onClick={() => confirmDelete(tr('Delete this saved view?'), () => remove(v))}><TbTrash /></button>}
                             </div>
                         ))}
                         {views && !views.length && <p className="px-2 py-3 text-center text-xs text-gray-400">{tr('No saved view yet. Set the filters you like, then save them below.')}</p>}

@@ -13,6 +13,7 @@ import Select from '@/components/ui/Select'
 import { mentionDirectory } from '@/utils/mentions'
 import { api, notify } from '@/views/crm/kit/api'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 /** "Remind me": a reminder with a date AND a time on this record (a task, a lead...), only for the person who sets it. */
 const RemindMe = ({ relType, relId, size = 'sm', iconOnly = false, initialNote = '', tab = null, assignedIds = [] }) => {
@@ -51,7 +52,7 @@ const RemindMe = ({ relType, relId, size = 'sm', iconOnly = false, initialNote =
             <Dialog isOpen={open} width={460} onClose={() => setOpen(false)} onRequestClose={() => setOpen(false)}>
                 <h5 className="mb-1">{tr('Remind me about this')}</h5>
                 <p className="mb-3 text-sm text-gray-500">{iconOnly ? tr('Each person switched on is told on the bell and on their phone at that time; the email is only sent if you switch it on.') : tr('Only you are told: on the bell, on your phone, by email and on Telegram or WhatsApp (if set in your profile).')}{nh?.on !== false && nh ? ` ${tr('The CRM notifies between {from}:00 and {to}:00: a reminder that comes outside these hours is sent when they open.', { from: nh.from, to: nh.to })}` : ''}</p>
-                {pending.length > 0 && <div className="mb-3 space-y-1.5">{pending.map((r) => <div key={r.id} className="flex items-center gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-sm dark:bg-gray-700/40"><span className="font-semibold">{dayjs(r.date).format('DD MMM YYYY, HH:mm')}</span><span className="min-w-0 flex-1 truncate text-gray-500">{r.note}</span><button type="button" aria-label={tr('Delete')} onClick={() => api(`/api/crm/my-reminders?id=${r.id}`, { method: 'DELETE' }).then(load).catch((e) => notify('danger', e.message))} className="text-gray-400 hover:text-red-500"><TbTrash /></button></div>)}</div>}
+                {pending.length > 0 && <div className="mb-3 space-y-1.5">{pending.map((r) => <div key={r.id} className="flex items-center gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-sm dark:bg-gray-700/40"><span className="font-semibold">{dayjs(r.date).format('DD MMM YYYY, HH:mm')}</span><span className="min-w-0 flex-1 truncate text-gray-500">{r.note}</span><button type="button" aria-label={tr('Delete')} onClick={() => confirmDelete(tr('Delete this reminder?'), () => api(`/api/crm/my-reminders?id=${r.id}`, { method: 'DELETE' }).then(load).catch((e) => notify('danger', e.message)))} className="text-gray-400 hover:text-red-500"><TbTrash /></button></div>)}</div>}
                 <div className="space-y-3">
                     <div><label className="mb-1 block text-xs font-semibold text-gray-500">{tr('Date and time')}</label><DatePicker.DateTimepicker value={date} onChange={(d) => setDate(d || date)} /></div>
                     <div><label className="mb-1 block text-xs font-semibold text-gray-500">{tr('Note (optional)')}</label><Input textArea rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></div>

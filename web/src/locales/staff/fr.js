@@ -6090,4 +6090,13 @@ export default {
     "See the Profile / Overview tab (contact details)": "Voir l'onglet Profil / Aperçu (coordonnées)",
     "See the Notes tab": "Voir l'onglet Notes",
     "See the Files tab": "Voir l'onglet Fichiers",
+    "Delete this comment?": "Supprimer ce commentaire ?",
+    "The comment is removed for everyone.": "Le commentaire est supprimé pour tout le monde.",
+    "Remove this file?": "Retirer ce fichier ?",
+    "Delete this template?": "Supprimer ce modèle ?",
+    "Remove this image?": "Retirer cette image ?",
+    "Delete this reminder?": "Supprimer ce rappel ?",
+    "Delete this closed period?": "Supprimer cette période de fermeture ?",
+    "Delete this saved view?": "Supprimer cette vue enregistrée ?",
+    "Remove this picture?": "Retirer cette photo ?",
 }

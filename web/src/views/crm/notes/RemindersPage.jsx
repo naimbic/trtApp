@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip'
 import { api, notify } from '../kit/api'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 // My reminders in accordions by when they come: late, today, later, done. Words and time are edited in place; the tick marks one done.
 const ctl = 'h-8 w-full rounded-lg border border-transparent bg-transparent px-2 text-sm hover:border-gray-200 focus:border-primary focus:bg-white focus:outline-none dark:hover:border-gray-600 dark:focus:bg-gray-800'
@@ -66,7 +67,7 @@ const RemindersPage = () => {
                                 <div className={r.done ? 'opacity-60' : ''}><Edit value={r.note} placeholder={tr('Reminder')} onCommit={(v) => patch(r, { note: v })} /></div>
                                 <Edit type="datetime-local" value={local(r.date)} placeholder={tr('When')} onCommit={(v) => patch(r, { date: new Date(v).toISOString() })} />
                                 <span className="min-w-0 truncate text-xs">{r.link ? <Link to={r.link} className="text-primary hover:underline" title={r.relLabel}>{tr(TYPE[r.relType] || 'Record')}{r.relLabel ? ` · ${r.relLabel}` : ''}</Link> : <span className="text-gray-400">—</span>}</span>
-                                <Tooltip title={tr('Delete')}><Button size="xs" variant="plain" className="text-gray-400 hover:text-red-500" icon={<TbTrash />} onClick={() => run(() => api(`/api/crm/my-reminders/all/${r.id}`, { method: 'DELETE' }), tr('Deleted'))} /></Tooltip>
+                                <Tooltip title={tr('Delete')}><Button size="xs" variant="plain" className="text-gray-400 hover:text-red-500" icon={<TbTrash />} onClick={() => confirmDelete(tr('Delete this reminder?'), () => run(() => api(`/api/crm/my-reminders/all/${r.id}`, { method: 'DELETE' }), tr('Deleted')))} /></Tooltip>
                             </div>
                         )) : <div className="px-4 py-3 text-sm text-gray-400">{tr('Nothing here.')}</div>}
                     </AccordionCard>

@@ -10,6 +10,7 @@ import PasswordInput from '@/components/shared/PasswordInput'
 import { api, notify, upload } from '../kit/api'
 import MediaPicker from '@/components/crm/MediaPicker'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const ZONES = (typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : ['UTC', 'Africa/Casablanca', 'Europe/Paris']).map((z) => ({ value: z, label: z.replace(/_/g, ' ') }))
 
@@ -52,7 +53,7 @@ export const SettingImage = ({ field, value, canEdit, onSaved }) => {
                 <div className="flex flex-wrap gap-2">
                     <Button size="sm" icon={<TbUpload />} onClick={() => input.current?.click()} disabled={busy}>{tr("Upload")}</Button>
                     <Button size="sm" icon={<TbPhotoSearch />} onClick={() => setPicker(true)} disabled={busy}>{tr("From files")}</Button>
-                    {value && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={remove} disabled={busy}>{tr("Remove")}</Button>}
+                    {value && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => confirmDelete(tr('Remove this image?'), remove, { confirmText: tr('Remove') })} disabled={busy}>{tr("Remove")}</Button>}
                     <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" className="hidden" onChange={(e) => send(e.target.files?.[0])} />
                 </div>
             )}

@@ -6090,4 +6090,13 @@ export default {
     "See the Profile / Overview tab (contact details)": "رؤية تبويب الملف / نظرة عامة (بيانات الاتصال)",
     "See the Notes tab": "رؤية تبويب الملاحظات",
     "See the Files tab": "رؤية تبويب الملفات",
+    "Delete this comment?": "حذف هذا التعليق؟",
+    "The comment is removed for everyone.": "سيتم حذف التعليق للجميع.",
+    "Remove this file?": "إزالة هذا الملف؟",
+    "Delete this template?": "حذف هذا القالب؟",
+    "Remove this image?": "إزالة هذه الصورة؟",
+    "Delete this reminder?": "حذف هذا التذكير؟",
+    "Delete this closed period?": "حذف فترة الإغلاق هذه؟",
+    "Delete this saved view?": "حذف هذا العرض المحفوظ؟",
+    "Remove this picture?": "إزالة هذه الصورة؟",
 }

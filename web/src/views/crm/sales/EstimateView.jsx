@@ -20,6 +20,7 @@ import RichText from '../kit/RichText'
 import { plainText } from '@/lib/crm/richText'
 import ReminderCard from '../kit/ReminderCard'
 import { CommentThread } from '@/components/crm/CommentParts'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const effective = (e) => (e.status === 2 && e.expiryDate && fmtDate(e.expiryDate) < fmtDate(new Date()) ? 5 : e.status)
 
@@ -156,7 +157,7 @@ const EstimateView = () => {
                                 <div key={c.id} className="flex gap-3 py-3">
                                     <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${c.staffId ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}`}>{(c.authorName || '?').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase()}</span>
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500"><b className="text-sm text-gray-900 dark:text-gray-100">{c.authorName || tr("Client")}</b>{c.staffId ? <span className="rounded bg-emerald-100 px-1.5 text-emerald-700">{tr("Team")}</span> : <span className="rounded bg-indigo-100 px-1.5 text-indigo-700">{tr("Client")}</span>}<span>{dayjs(c.createdAt).format('DD MMM YYYY, HH:mm')}</span>{can('estimates', 'edit') && <button type="button" className="ml-auto text-red-500 hover:underline" onClick={() => delComment(c.id)}>{tr("Delete")}</button>}</div>
+                                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500"><b className="text-sm text-gray-900 dark:text-gray-100">{c.authorName || tr("Client")}</b>{c.staffId ? <span className="rounded bg-emerald-100 px-1.5 text-emerald-700">{tr("Team")}</span> : <span className="rounded bg-indigo-100 px-1.5 text-indigo-700">{tr("Client")}</span>}<span>{dayjs(c.createdAt).format('DD MMM YYYY, HH:mm')}</span>{can('estimates', 'edit') && <button type="button" className="ml-auto text-red-500 hover:underline" onClick={() => confirmDelete(tr('Delete this comment?'), () => delComment(c.id))}>{tr("Delete")}</button>}</div>
                                         <p className="mt-0.5 whitespace-pre-line text-sm">{c.content}</p>
                                     </div>
                                 </div>

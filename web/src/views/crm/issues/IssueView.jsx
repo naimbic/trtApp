@@ -18,6 +18,7 @@ import { initials } from '../tasks/shared'
 import { STATUS, PRIORITY, TYPE, StatusTag, PriorityTag, TypeLabel, eventText } from './shared'
 import { opts, pick } from './IssueDialogs'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const portal = { menuPortalTarget: document.body, menuPosition: 'fixed', styles: { menuPortal: (b) => ({ ...b, zIndex: 10000 }) } }
 const Field = ({ label, children }) => <div className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-3 py-2"><span className="text-sm text-gray-500">{label}</span><div className="min-w-0">{children}</div></div>
@@ -92,7 +93,7 @@ const IssueView = () => {
                                         <p className="my-1 text-sm"><span className="font-semibold text-gray-900 dark:text-gray-100">{f.staff?.name || tr('Someone')}</span> {eventText(f.meta)} <span className="ml-1 text-xs text-gray-400" title={dayjs(f.createdAt).format('YYYY-MM-DD HH:mm')}>{dayjs(f.createdAt).format('DD MMM, HH:mm')}</span></p>
                                     ) : (
                                         <div className="my-1">
-                                            <p className="text-sm"><span className="font-semibold text-gray-900 dark:text-gray-100">{f.staff?.name || tr('Someone')}</span> <span className="ml-1 text-xs text-gray-400">{dayjs(f.createdAt).format('DD MMM, HH:mm')}</span>{(f.mine || can.delete) && <button type="button" className="ml-2 text-xs text-gray-300 hover:text-red-500" onClick={() => delComment(f)} title={tr('Delete')}><TbTrash /></button>}</p>
+                                            <p className="text-sm"><span className="font-semibold text-gray-900 dark:text-gray-100">{f.staff?.name || tr('Someone')}</span> <span className="ml-1 text-xs text-gray-400">{dayjs(f.createdAt).format('DD MMM, HH:mm')}</span>{(f.mine || can.delete) && <button type="button" className="ml-2 text-xs text-gray-300 hover:text-red-500" onClick={() => confirmDelete(tr('Delete this comment?'), () => delComment(f))} title={tr('Delete')}><TbTrash /></button>}</p>
                                             <div className="mt-1 rounded-xl bg-gray-50 px-3 py-2 text-sm dark:bg-gray-700/40"><RichView html={f.body} /></div>
                                         </div>
                                     )}

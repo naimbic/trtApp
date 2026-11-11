@@ -23,6 +23,7 @@ import { api, notify, upload } from '../kit/api'
 import { useTicketFiles, AttachButtons, FileTray, DropHint, AttachmentList, messageForm } from '@/components/crm/TicketFiles'
 import { initials } from '../tasks/shared'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const L = ({ children }) => <label className="mb-1.5 block text-xs font-semibold uppercase text-gray-500">{children}</label>
 // legacy ticket messages are HTML from the old helpdesk: drop scripts, styles and event handlers
@@ -157,7 +158,7 @@ const TicketView = () => {
                     </Card>
                     <Card>
                         <h5 className="mb-3 flex items-center gap-2"><TbBell />{tr("My reminders")}</h5>
-                        {d.reminders.length ? <div className="space-y-1.5">{d.reminders.map((r) => { const g = remindIn(r.date); return <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-sm dark:bg-gray-700/40"><span className="min-w-0"><span className="block truncate font-semibold">{dayjs(r.date).format('DD MMM YYYY, HH:mm')}{!r.done && <span className={`ms-1 rounded-full px-1.5 py-px text-[10px] font-bold ${g.tone}`}>{g.text}</span>}</span>{r.note && <span className="block truncate text-xs text-gray-500">{r.note}</span>}{r.done && <span className="text-xs text-emerald-600">{tr("Sent")}</span>}</span><button type="button" aria-label={tr("Remove")} className="shrink-0 text-gray-400 hover:text-red-500" onClick={() => dropReminder(r.id)}><TbX /></button></div> })}</div> : <p className="text-sm text-gray-400">{tr("No reminder on this ticket.")}</p>}
+                        {d.reminders.length ? <div className="space-y-1.5">{d.reminders.map((r) => { const g = remindIn(r.date); return <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-sm dark:bg-gray-700/40"><span className="min-w-0"><span className="block truncate font-semibold">{dayjs(r.date).format('DD MMM YYYY, HH:mm')}{!r.done && <span className={`ms-1 rounded-full px-1.5 py-px text-[10px] font-bold ${g.tone}`}>{g.text}</span>}</span>{r.note && <span className="block truncate text-xs text-gray-500">{r.note}</span>}{r.done && <span className="text-xs text-emerald-600">{tr("Sent")}</span>}</span><button type="button" aria-label={tr("Remove")} className="shrink-0 text-gray-400 hover:text-red-500" onClick={() => confirmDelete(tr('Delete this reminder?'), () => dropReminder(r.id))}><TbX /></button></div> })}</div> : <p className="text-sm text-gray-400">{tr("No reminder on this ticket.")}</p>}
                     </Card>
                     {t.rating && (
                         <Card>

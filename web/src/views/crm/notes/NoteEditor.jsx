@@ -18,6 +18,7 @@ import { looksLikeHtml } from '@/lib/crm/richText'
 import { api, notify, formatBytes } from '../kit/api'
 import { COLORS, cardClass, labelOfColor, notesChanged, uploadNoteFile, videosOf } from './noteKit'
 import { tr } from '@/utils/t'
+import confirmDelete from '@/components/crm/useConfirm'
 
 const uid = () => Math.random().toString(36).slice(2, 10)
 const EMPTY = { title: '', description: '', kind: 'note', checklist: [], color: null, pinned: false, important: false, labels: [], links: [], attachments: [], sharedWith: [], remindAt: null, remindShared: false }
@@ -261,7 +262,7 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
                 )}
             </div>
             <div className="flex items-center gap-2 border-t border-gray-100 px-5 py-3 dark:border-gray-700">
-                {note && !readOnly && <Button variant="plain" className="text-red-500" disabled={busy} onClick={remove}>{tr('Delete')}</Button>}
+                {note && !readOnly && <Button variant="plain" className="text-red-500" disabled={busy} onClick={() => confirmDelete(tr('Delete this note?'), remove)}>{tr('Delete')}</Button>}
                 <div className="ms-auto flex gap-2"><Button onClick={onClose}>{readOnly ? tr('Close') : tr('Cancel')}</Button>{!readOnly && <Button variant="solid" loading={busy} onClick={save}>{tr('Save')}</Button>}</div>
             </div>
         </Dialog>

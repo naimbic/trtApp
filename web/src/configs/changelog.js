@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.232.0',
+        date: '2026-11-11',
+        title: 'AI settings: a switch and a provider for each use, and Write with AI in mails',
+        items: [
+            'Settings > AI has a new card "Where AI is used": Email writing, Grow and coaching, AI insights and chat, Client ideas, Scheduled chat messages and Catalog items. Each one has its own on/off switch, its own AI provider (Claude, ChatGPT, DeepSeek or OpenRouter, for example DeepSeek for the emails and Claude for Grow) and its own model. Left on "Default", it follows the default provider.',
+            'New "Write with AI" button in the draft of a mail to a lead or a customer: write a mail from an instruction, reply to the last mail, improve, shorten, fix the spelling, translate, and suggest a subject, with a tone and a language to choose. The result goes into the mail and Undo puts the old text back. The company signature is added at sending as before.',
+            'Settings > AI > Email writing has a box to describe how your company writes emails (tone, tutoiement, what never to promise); it is given to the AI with every request.',
+            'New permission "AI email assistant (Write with AI)" in Roles: who may use the button. Administrators, Account Managers, Editors and Sales Reps have it by default; other roles can be given it. A switched-off feature is refused by the server, not only hidden.',
+            'The text of the mail and the last mails of the lead or customer are sent to the AI company chosen for the emails: the settings say so. A person can ask at most 40 times in 10 minutes.',
+        ],
+    },
+    {
         version: '0.231.0',
         date: '2026-11-11',
         title: 'Faster dashboards, cleaner mails',

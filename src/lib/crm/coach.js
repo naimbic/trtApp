@@ -64,7 +64,7 @@ export async function deliver(staffId, text, range) {
  * who: 'all' | a staff id. Returns lines for the screen / the cron summary.
  */
 export async function runReviews({ who = 'all', range = lastMonth(Date.now(), 'UTC'), dry = false, lines = [] } = {}) {
-    const ai = await resolveAiForJob().catch(() => null)
+    const ai = await resolveAiForJob('grow').catch(() => null)
     if (!ai) { lines.push('Monthly team review: no AI key in Settings → AI'); return { sent: 0, lines } }
     const o = await getOptions(['coach_supervisors', 'default_timezone'])
     const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, admin: true, defaultLanguage: true } })
@@ -102,7 +102,7 @@ export async function coachStatus() {
     await requireSuper('view')
     const o = await getOptions(['cron_last_coach', 'default_timezone'])
     const tz = o('default_timezone') || 'UTC'
-    const ai = await resolveAiForJob().catch(() => null)
+    const ai = await resolveAiForJob('grow').catch(() => null)
     return { ready: !!ai, month: lastMonth(Date.now(), tz).label, last: o('cron_last_coach') || null }
 }
 
@@ -112,7 +112,7 @@ export async function sendNow(body = {}) {
     const session = await requireSuper(all ? 'edit' : 'view')
     const me = await getStaffId(session)
     if (!all && !me) throw fail('Only a team member has a chat to receive it', 403)
-    if (!(await resolveAiForJob().catch(() => null))) throw fail('Add an API key in Settings → AI first.')
+    if (!(await resolveAiForJob('grow').catch(() => null))) throw fail('Add an API key in Settings → AI first.')
     const tz = (await getOptions(['default_timezone']))('default_timezone') || 'UTC'
     const range = lastMonth(Date.now(), tz)
     if (all) { // one AI call per person takes minutes: it goes on after the answer, each review arrives in the chat of its person

@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { requirePermission, hasCap, getStaffId } from '@/lib/crm/permissions'
 import { seal, open } from './secret'
 import { PROVIDERS, providerIds } from './providers'
+import { AI_FEATURES, featureIds, featureOptionNames, featOn, featProvider, featModel, EMAIL_INSTRUCTIONS, readFeatures, pickFor } from './aiFeatures'
 
 const KEY = (p) => `ai_key_${p}`
 const MODEL = (p) => `ai_model_${p}`
@@ -22,7 +23,7 @@ export const audit = async (session, description) => { try { await prisma.crmAct
 /** The AI settings for the screen: which providers have a key (never the key itself), the models, the default. */
 export async function getAiSettings() {
     await requireSuper()
-    const names = ['ai_provider', 'ai_model', 'ai_system_prompt', 'ubersuggest_key', 'ubersuggest_url', 'ahrefs_key', 'openpagerank_key', ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])]
+    const names = [...featureOptionNames(), 'ai_provider', 'ai_model', 'ai_system_prompt', 'ubersuggest_key', 'ubersuggest_url', 'ahrefs_key', 'openpagerank_key', ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])]
     const o = await read(names)
     const opened = Object.fromEntries(providerIds.map((id) => [id, o[KEY(id)] ? open(o[KEY(id)]) : null]))
     const def = providerIds.includes(o.ai_provider) && opened[o.ai_provider] ? o.ai_provider : providerIds.find((id) => opened[id]) || ''
@@ -34,7 +35,9 @@ export async function getAiSettings() {
     const seoPlain = o.ubersuggest_key ? open(o.ubersuggest_key) : null
     const oprPlain = o.openpagerank_key ? open(o.openpagerank_key) : null
     const ahrefsPlain = o.ahrefs_key ? open(o.ahrefs_key) : null
-    return { providers, provider: def, model: providers.find((p) => p.id === def)?.model || '', systemPrompt: o.ai_system_prompt || '', seo: { hasKey: !!seoPlain, hint: seoPlain ? `••••${seoPlain.slice(-4)}` : null, url: o.ubersuggest_url || '', opr: { hasKey: !!oprPlain, hint: oprPlain ? `••••${oprPlain.slice(-4)}` : null }, ahrefs: { hasKey: !!ahrefsPlain, hint: ahrefsPlain ? `••••${ahrefsPlain.slice(-4)}` : null } } }
+    const feats = readFeatures(o, providerIds)
+    const features = AI_FEATURES.map((f) => ({ id: f.id, label: f.label, desc: f.desc, hasInstructions: f.extra === 'emailInstructions', ...feats[f.id] }))
+    return { features, emailInstructions: o[EMAIL_INSTRUCTIONS] || '', providers, provider: def, model: providers.find((p) => p.id === def)?.model || '', systemPrompt: o.ai_system_prompt || '', seo: { hasKey: !!seoPlain, hint: seoPlain ? `••••${seoPlain.slice(-4)}` : null, url: o.ubersuggest_url || '', opr: { hasKey: !!oprPlain, hint: oprPlain ? `••••${oprPlain.slice(-4)}` : null }, ahrefs: { hasKey: !!ahrefsPlain, hint: ahrefsPlain ? `••••${ahrefsPlain.slice(-4)}` : null } } }
 }
 
 /** body: { keys: { id: 'new key' | null (remove) }, models: { id: 'model' }, provider, model, systemPrompt } */
@@ -61,6 +64,19 @@ export async function saveAiSettings(body = {}) {
         if (v) await write(WORKSPACE(id), v); else await prisma.crmOption.deleteMany({ where: { name: WORKSPACE(id) } })
         changed.push(`${v ? 'set' : 'removed'} the ${PROVIDERS[id].label} workspace id`)
     }
+    // where AI is used: a switch, a provider and a model for each feature
+    for (const [id, c] of Object.entries(body.features || {})) {
+        if (!featureIds.includes(id)) throw bad('Unknown AI feature')
+        const label = AI_FEATURES.find((f) => f.id === id).label
+        if (c.on !== undefined) { await write(featOn(id), c.on ? '1' : '0'); changed.push(`${label} ${c.on ? 'on' : 'off'}`) }
+        if (c.provider !== undefined) {
+            if (c.provider && !providerIds.includes(c.provider)) throw bad('Unknown AI provider')
+            if (c.provider) await write(featProvider(id), c.provider); else await prisma.crmOption.deleteMany({ where: { name: featProvider(id) } })
+            changed.push(`${label} uses ${c.provider ? PROVIDERS[c.provider].label : 'the default provider'}`)
+        }
+        if (c.model !== undefined) { const m = String(c.model || '').trim().slice(0, 120); if (m) await write(featModel(id), m); else await prisma.crmOption.deleteMany({ where: { name: featModel(id) } }) }
+    }
+    if (body.emailInstructions !== undefined) { await write(EMAIL_INSTRUCTIONS, String(body.emailInstructions || '').slice(0, 3000)); changed.push('email writing instructions') }
     if (body.provider !== undefined) {
         if (body.provider && !providerIds.includes(body.provider)) throw bad('Unknown AI provider')
         await write('ai_provider', body.provider || ''); changed.push(`default provider ${body.provider || 'none'}`)
@@ -101,8 +117,13 @@ export async function saveAiSettings(body = {}) {
 }
 
 /** The key + model to use: the ones asked for, else the defaults. */
-export async function resolveAi({ provider, model } = {}) {
+export async function resolveAi({ provider, model, feature } = {}) {
     const s = await getAiSettings()
+    if (feature) { // the switch of the feature, then its own provider / model unless the caller chose one
+        const r = await resolveCore(feature)
+        if (r?.off) throw bad(`${AI_FEATURES.find((f) => f.id === feature)?.label || 'This'} is switched off in Settings → AI.`)
+        if (!provider) { if (!r) throw bad('Choose an AI provider and add its API key in Settings → AI first.'); return r }
+    }
     const id = provider || s.provider
     if (!providerIds.includes(id)) throw bad('Choose an AI provider and add its API key in Settings → AI first.')
     const raw = (await read([KEY(id)]))[KEY(id)]
@@ -113,13 +134,25 @@ export async function resolveAi({ provider, model } = {}) {
 }
 
 
-/** The key and model for a job that runs by itself (the Grow routine): no session, so no check of who asks. Returns null when no key is set. */
-export async function resolveAiForJob() {
-    const o = await read(['ai_provider', 'ai_model', 'ai_system_prompt', ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])])
+/**
+ * The key and model for one feature, read straight from the settings (no check of who asks: the caller checked): its own provider and model
+ * when it has them, else the defaults. Returns { off: true } when the feature is switched off, null when no provider has a key.
+ */
+export async function resolveCore(feature) {
+    const o = await read(['ai_provider', 'ai_model', 'ai_system_prompt', ...featureOptionNames(), ...providerIds.flatMap((p) => [KEY(p), MODEL(p), WORKSPACE(p)])])
     const opened = Object.fromEntries(providerIds.map((id) => [id, o[KEY(id)] ? open(o[KEY(id)]) : null]))
-    const id = providerIds.includes(o.ai_provider) && opened[o.ai_provider] ? o.ai_provider : providerIds.find((p) => opened[p])
-    if (!id) return null
-    const model = String((id === o.ai_provider ? o.ai_model : '') || o[MODEL(id)] || PROVIDERS[id].presets[0] || '').trim()
-    if (!model) return null
-    return { provider: id, model, apiKey: opened[id], workspaceId: o[WORKSPACE(id)] || '', systemPrompt: o.ai_system_prompt || '' }
+    const have = providerIds.filter((id) => opened[id])
+    const def = providerIds.includes(o.ai_provider) && opened[o.ai_provider] ? o.ai_provider : have[0] || ''
+    const models = Object.fromEntries(providerIds.map((id) => [id, String(o[MODEL(id)] || PROVIDERS[id].presets[0] || '').trim()]))
+    const defModel = String((def === o.ai_provider ? o.ai_model : '') || models[def] || '').trim()
+    const pick = feature ? pickFor(feature, readFeatures(o, providerIds), { provider: def, model: defModel, models, have }) : { provider: def, model: defModel }
+    if (!pick) return { off: true }
+    if (!pick.provider || !opened[pick.provider] || !pick.model) return null
+    return { provider: pick.provider, model: pick.model, apiKey: opened[pick.provider], workspaceId: o[WORKSPACE(pick.provider)] || '', systemPrompt: o.ai_system_prompt || '', instructions: o[EMAIL_INSTRUCTIONS] || '' }
+}
+
+/** The key and model for a job that runs by itself (the Grow routine): no session, so no check of who asks. Returns null when no key is set or the feature is off. */
+export async function resolveAiForJob(feature) {
+    const r = await resolveCore(feature || null)
+    return r && !r.off ? r : null
 }

@@ -5,6 +5,7 @@ import { TbUpload, TbPhotoSearch, TbLink, TbPlus, TbTrash, TbPencil, TbVideo, Tb
 import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
+import AiMailWriter from './AiMailWriter'
 import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
 import Switcher from '@/components/ui/Switcher'
@@ -220,6 +221,7 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                     ) : <button type="button" className="text-xs text-primary" onClick={() => setMore(true)}>{tr("Add Cc, Bcc or Reply to")}</button>)}
                     {draft && <p className="text-xs text-gray-500">{tr("Several addresses can be separated by commas. The date becomes the sending time when you send.")}</p>}
                     <div><L>{tr("Subject")}</L><Input size="sm" value={form.subject} onChange={(e) => set({ subject: e.target.value })} /></div>
+                    {draft && mr.create && <AiMailWriter form={form} set={set} mails={allMails} leadEmail={leadEmail} kind={kind} />}
                     <div><L>{tr("Mail")}</L><RichEditor minHeight={140} value={form.body} placeholder={tr("Paste or write the mail here")} onChange={(html) => set({ body: html })} /></div>
                     {draft && mr.send && (
                         <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-2.5 dark:border-sky-500/30 dark:bg-sky-500/5">

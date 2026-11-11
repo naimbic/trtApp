@@ -96,7 +96,7 @@ export async function suggest(body = {}) {
     await requirePermission('items', 'create')
     const prompt = String(body.prompt || '').trim().slice(0, 600)
     if (prompt.length < 3) throw fail('Describe what you sell in a few words')
-    const ai = await resolveAiForJob().catch(() => null)
+    const ai = await resolveAiForJob('items').catch(() => null)
     if (!ai) throw fail('Add an API key in Settings → AI first.')
     const groupId = oid(body.groupId)
     const [group, groups, o, cur] = await Promise.all([

@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Spinner from '@/components/ui/Spinner'
+import Switcher from '@/components/ui/Switcher'
 import { api, notify } from '../kit/api'
 import { tr } from '@/utils/t'
 
@@ -60,6 +61,51 @@ const Provider = ({ p, isDefault, onSaved }) => {
                 {p.hasKey && !isDefault && <Button size="sm" onClick={() => save({ provider: p.id, model }, tr('Default provider changed'))}>{tr('Use as default')}</Button>}
                 {p.hasKey && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => save({ keys: { [p.id]: null }, ...(isDefault ? { provider: '' } : {}) }, tr('API key removed'))}>{tr('Remove key')}</Button>}
                 {result && (result.ok ? <span className="text-sm text-emerald-600">{tr('Works')}: “{result.reply}” · {result.ms} ms</span> : <span className="text-sm text-red-500">{result.error}</span>)}
+            </div>
+        </div>
+    )
+}
+
+/** Where AI is used: a switch, a provider and a model for each feature (empty = the default provider of the page). */
+const FeaturesCard = ({ d, onSaved }) => {
+    const [busy, setBusy] = useState('')
+    const [instr, setInstr] = useState(d.emailInstructions || '')
+    const have = d.providers.filter((p) => p.hasKey)
+    const defLabel = d.providers.find((p) => p.id === d.provider)?.label
+    const save = async (body, ok) => { setBusy(ok || 'x'); try { onSaved(await api('/api/crm/ai/settings', { method: 'PUT', body })); if (ok) notify('success', ok) } catch (e) { notify('danger', e.message) } finally { setBusy('') } }
+    const change = (id, c) => save({ features: { [id]: c } })
+    const provOpts = [{ value: '', label: `${tr('Default provider')}${defLabel ? ` (${defLabel})` : ''}` }, ...have.map((p) => ({ value: p.id, label: p.label }))]
+    return (
+        <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+            <div className="mb-1 flex items-center gap-2 font-semibold"><TbBrain className="text-lg" />{tr('Where AI is used')}</div>
+            <p className="mb-3 text-sm text-gray-500">{tr('Switch each use on or off and choose which AI does it: for example DeepSeek for the emails, Claude for Grow, ChatGPT for the rest. Only the providers with a saved key can be chosen; “Default” follows the default provider above.')}</p>
+            {!have.length && <Alert showIcon type="warning" className="mb-3">{tr('Add the API key of at least one provider above first.')}</Alert>}
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                {d.features.map((f) => {
+                    const prov = d.providers.find((p) => p.id === (f.provider || d.provider))
+                    const models = [...new Set([...(prov?.presets || []), prov?.model, f.model].filter(Boolean))]
+                    return (
+                        <div key={f.id} className="py-3">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1"><div className="font-semibold heading-text">{tr(f.label)}</div><div className="text-sm text-gray-500">{tr(f.desc)}</div></div>
+                                <Switcher checked={f.on} disabled={!!busy} onChange={(on) => change(f.id, { on })} />
+                            </div>
+                            {f.on && (
+                                <div className="mt-2 grid gap-3 md:grid-cols-2">
+                                    <div><div className="mb-1 text-xs font-semibold text-gray-500">{tr('AI provider')}</div><Select size="sm" menuPortalTarget={document.body} menuPosition="fixed" isSearchable={false} options={provOpts} value={provOpts.find((o) => o.value === (f.provider || '')) || provOpts[0]} onChange={(o) => change(f.id, { provider: o?.value || '', model: '' })} /></div>
+                                    <div><div className="mb-1 text-xs font-semibold text-gray-500">{tr('Model')}</div><Select size="sm" componentAs={CreatableSelect} menuPortalTarget={document.body} menuPosition="fixed" isClearable placeholder={tr('The model of the provider')} formatCreateLabel={(v) => `${tr('Use')} “${v}”`} options={opts(models)} value={f.model ? { value: f.model, label: f.model } : null} onChange={(o) => change(f.id, { model: o?.value || '' })} /></div>
+                                </div>
+                            )}
+                            {f.on && f.hasInstructions && (
+                                <div className="mt-3">
+                                    <div className="mb-1 text-xs font-semibold text-gray-500">{tr('How your company writes emails (optional)')}</div>
+                                    <Input textArea rows={3} value={instr} placeholder={tr('For example: friendly but professional, short sentences, tutoiement in French, never promise a price.')} onChange={(e) => setInstr(e.target.value)} />
+                                    <div className="mt-2 flex flex-wrap items-center gap-3"><Button size="sm" loading={busy === tr('Saved')} disabled={instr === (d.emailInstructions || '')} onClick={() => save({ emailInstructions: instr }, tr('Saved'))}>{tr('Save')}</Button><span className="text-xs text-amber-600">{tr('The text of the mail and the last mails of the lead or customer are sent to the AI company you choose.')}</span></div>
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
             </div>
         </div>
     )
@@ -156,6 +202,7 @@ const AiSettingsPanel = () => {
         <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-500">{tr('Pick the provider you pay for, add its API key, choose the model. The analyses send totals, rates and company names to that provider; never emails, phone numbers or addresses.')}</p>
             {d.providers.map((p) => <Provider key={p.id} p={p} isDefault={d.provider === p.id} onSaved={apply} />)}
+            <FeaturesCard key={JSON.stringify(d.features) + d.emailInstructions} d={d} onSaved={apply} />
             <CoachCard />
             <SeoCard seo={d.seo || { hasKey: false }} onSaved={apply} />
             <div>

@@ -204,7 +204,7 @@ const SETTINGS_DEFAULT = { enabled: true, daily: true, weekly: true, monthly: tr
 async function readRoutine() {
     const o = await getOptions(['grow_settings', 'grow_last_daily', 'grow_last_weekly', 'grow_last_monthly'])
     let s = {}; try { s = JSON.parse(o('grow_settings', '{}')) || {} } catch { s = {} }
-    const ai = await resolveAiForJob().catch(() => null)
+    const ai = await resolveAiForJob('grow').catch(() => null)
     return { settings: { ...SETTINGS_DEFAULT, ...s }, last: { daily: o('grow_last_daily') || null, weekly: o('grow_last_weekly') || null, monthly: o('grow_last_monthly') || null }, ai: ai ? { provider: ai.provider, model: ai.model, webSearch: ai.provider === 'anthropic' } : null, stamps: { daily: stamp('daily'), weekly: stamp('weekly'), monthly: stamp('monthly') } }
 }
 
@@ -228,7 +228,7 @@ const NUM = { daily: 3, weekly: 4, monthly: 5 }
 
 /** Ideas written by the AI from the figures (and, for the Claude provider, a web search for what is new). Returns [] when the AI is off or fails. */
 export async function aiIdeas(period, figures, settings, lines = []) {
-    const ai = await resolveAiForJob().catch(() => null)
+    const ai = await resolveAiForJob('grow').catch(() => null)
     if (!ai) { lines.push('AI: no API key in Settings → AI, only the rules ran'); return [] }
     const search = settings.webSearch && ai.provider === 'anthropic' && period !== 'daily'
     const system = `You are a practical growth advisor for a small digital agency (websites, Google and Meta ads, SEO, social media, automation, AI services) that serves French- and Arabic-speaking markets. ${ai.systemPrompt ? `About the company: ${ai.systemPrompt.slice(0, 1200)}` : ''}

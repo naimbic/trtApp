@@ -181,7 +181,7 @@ export async function writeWithAi(body = {}) {
     const idea = String(body.idea || '').replace(/\s+/g, ' ').trim().slice(0, 1200)
     if (idea.length < 8) throw fail('Tell the AI what the message is about (a sentence or two)')
     rateLimit(`sched-ai:${g.staffId}`, 30, 3600000)
-    const ai = await resolveAi()
+    const ai = await resolveAi({ feature: 'messages' })
     const tone = { friendly: 'warm, friendly and encouraging', professional: 'clear and professional', short: 'very short and direct (3 or 4 lines)', motivating: 'motivating and positive' }[body.tone] || 'warm, friendly and encouraging'
     const lang = { fr: 'French', es: 'Spanish', ar: 'Arabic', ja: 'Japanese', en: 'English' }[body.lang] || 'English'
     const current = String(body.current || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1500)

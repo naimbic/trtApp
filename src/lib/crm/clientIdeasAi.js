@@ -56,7 +56,7 @@ async function gate(cap, clientId) {
 /** What the helper needs: is a key set, can it search the web. */
 export async function helperStatus(clientId) {
     await gate('view', clientId)
-    const ai = await resolveAi().catch(() => null)
+    const ai = await resolveAi({ feature: 'ideas' }).catch(() => null)
     return { ready: !!ai?.model, provider: ai ? PROVIDERS[ai.provider].label : null, model: ai?.model || null, webSearch: ai?.provider === 'anthropic' }
 }
 
@@ -64,7 +64,7 @@ export async function helperStatus(clientId) {
 export async function researchClient(clientId, body = {}) {
     const { session, client, staffId } = await gate('create', clientId)
     rateLimit(`client-ideas-ai:${session.user.id}`, 12, 3600000)
-    const ai = await resolveAi().catch((e) => { throw fail(e.message || 'Add an AI key in Settings → AI first.') })
+    const ai = await resolveAi({ feature: 'ideas' }).catch((e) => { throw fail(e.message || 'Add an AI key in Settings → AI first.') })
     if (!ai.model) throw fail('Choose an AI model in Settings → AI first.')
     const focus = FOCUS[body.focus] ? body.focus : 'mixed'
     const count = Math.min(8, Math.max(2, parseInt(body.count, 10) || 5))

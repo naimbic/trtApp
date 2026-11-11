@@ -9,7 +9,7 @@ export async function reply({ messages, provider, model, lang }) {
     const session = await requireSuper()
     const turns = cleanMessages(messages)
     rateLimit(`ai-chat:${session.user.id}`, 60, 3600000)
-    const ai = await resolveAi({ provider, model })
+    const ai = await resolveAi({ provider, model, feature: 'insights' })
     const context = await contextJson(COLLECT)
     if (context.length > 70000) throw bad('There is too much data to send in one go.')
     const t = Date.now()

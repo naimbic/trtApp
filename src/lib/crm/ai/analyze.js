@@ -37,7 +37,7 @@ export async function analyze({ kind, question, provider, model, lang }) {
     const session = await requireSuper()
     if (!COLLECT[kind]) throw bad('Unknown analysis')
     rateLimit(`ai:${session.user.id}`, 30, 3600000) // a person cannot burn the account's credit by accident
-    const ai = await resolveAi({ provider, model })
+    const ai = await resolveAi({ provider, model, feature: 'insights' })
     const data = await COLLECT[kind]()
     const { system, user } = buildPrompt({ kind, data, question, systemPrompt: ai.systemPrompt, lang })
     const t = Date.now()
@@ -56,7 +56,7 @@ export async function figures(kind) {
 export async function modelsFor(provider) {
     await requireSuper()
     if (!providerIds.includes(provider)) throw bad('Unknown AI provider')
-    const ai = await resolveAi({ provider })
+    const ai = await resolveAi({ provider, feature: 'insights' })
     return { models: await listModels({ provider, apiKey: ai.apiKey, workspaceId: ai.workspaceId }) }
 }
 
@@ -64,7 +64,7 @@ export async function modelsFor(provider) {
 export async function testConnection({ provider, model }) {
     const session = await requireSuper()
     rateLimit(`ai-test:${session.user.id}`, 20, 600000)
-    const ai = await resolveAi({ provider, model })
+    const ai = await resolveAi({ provider, model, feature: 'insights' })
     const t = Date.now()
     const out = await chat({ provider: ai.provider, apiKey: ai.apiKey, workspaceId: ai.workspaceId, model: ai.model, system: 'Reply with the single word: ready', user: 'ping', maxTokens: 20 })
     return { ok: true, provider: ai.provider, model: ai.model, reply: out.text.slice(0, 40), ms: Date.now() - t }

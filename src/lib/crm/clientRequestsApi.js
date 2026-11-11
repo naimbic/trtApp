@@ -17,6 +17,7 @@ import { cleanAttachments } from '@/lib/crm/notesCalc'
 import { cleanLinks } from '@/lib/crm/clientReportsCalc'
 import { STATUSES, STATUS_LABEL, STATUS_COLOR, TYPES, PRIORITIES, isOpen, cleanStatus, cleanType, cleanPriority, cleanUrl, codeOf } from '@/lib/crm/clientRequestsCalc'
 import { emailOff } from '@/lib/crm/clientEmailAccess'
+import { mayHear } from '@/lib/crm/hears'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -90,7 +91,7 @@ export async function tellTeam(req, clientId, text, byName) {
     const link = `/crm/clients/${clientId}?tab=requests&request=${req.id}`
     for (const staffId of await teamOf(req, clientId)) {
         const st = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { active: true } })
-        if (!st?.active) continue
+        if (!st?.active || !(await mayHear(staffId, 'client_requests'))) continue
         await prisma.crmNotification.create({ data: { toUserId: staffId, fromFullName: byName || 'Client', description: text.slice(0, 200), link, additionalData: 'client-request', isRead: false } }).catch(() => {})
         await notifyNotice(staffId, { kind: 'request', headlineKey: 'clientWrote', relType: 'customer', relId: clientId, link, note: text })
     }

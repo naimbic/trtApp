@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.227.0',
+        date: '2026-11-11',
+        title: 'Mailbox notifications follow the mail rights',
+        items: [
+            'When a lead or a customer writes by email, everyone who may SEND mails on that kind of record (Roles > Lead mails / Client mails > Send) and can see the record is now told, not only the people assigned to it. The responsible person of the mailbox and the people of the record come first.',
+            'Nobody without the Mails tab right (Lead popup tabs / Customer tabs) is told about a mail any more, and a person who only sees their own leads or customers is only told about theirs.',
+            'Messages a client writes in the client area (requests, reports, ideas) only notify team members whose role includes that feature.',
+        ],
+    },
+    {
         version: '0.226.0',
         date: '2026-11-11',
         title: 'Every delete asks "Are you sure?" first',

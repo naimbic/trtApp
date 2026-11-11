@@ -14,6 +14,7 @@ import { pushToContacts } from '@/lib/crm/push'
 import { getIdeaCategories } from '@/lib/crm/ideaCategories'
 import { FALLBACK_CATEGORY } from '@/lib/crm/ideaCategoriesCalc'
 import { emailOff } from '@/lib/crm/clientEmailAccess'
+import { mayHear } from '@/lib/crm/hears'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -315,7 +316,7 @@ export async function tellTeam(idea, clientId, text, byName) {
     const ids = await teamOf(idea, clientId)
     for (const staffId of ids) {
         const st = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { active: true } })
-        if (!st?.active) continue
+        if (!st?.active || !(await mayHear(staffId, 'client_ideas'))) continue
         await prisma.crmNotification.create({ data: { toUserId: staffId, fromFullName: byName || 'Client', description: text.slice(0, 200), link: `/crm/clients/${clientId}?tab=ideas&idea=${idea.id}`, additionalData: 'client-idea', isRead: false } }).catch(() => {})
         await notifyNotice(staffId, { kind: 'idea', headlineKey: 'ideaUpdate', relType: 'customer', relId: clientId, link: `/crm/clients/${clientId}?tab=ideas&idea=${idea.id}`, note: text })
     }

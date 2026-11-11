@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rateLimit'
 import { notifyNotice } from '@/lib/crm/notifyMail'
 import { STATUS_LABEL, KINDS, PRIORITIES, codeOf, isOpen } from '@/lib/crm/clientReportsCalc'
 import { storeRequestFile, extrasIn, extrasOut, saidOf } from '@/lib/crm/clientRequestsApi'
+import { mayHear } from '@/lib/crm/hears'
 
 const httpError = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -32,7 +33,7 @@ async function tellTeam(r, clientId, text, byName) {
     const admins = await prisma.crmCustomerAdmin.findMany({ where: { clientId }, select: { staffId: true } })
     for (const staffId of [...new Set([...(r.assigneeIds || []), r.createdBy, ...admins.map((a) => a.staffId)].filter(Boolean))]) {
         const st = await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { active: true } })
-        if (!st?.active) continue
+        if (!st?.active || !(await mayHear(staffId, 'client_reports'))) continue
         await prisma.crmNotification.create({ data: { toUserId: staffId, fromFullName: byName || 'Client', description: text.slice(0, 200), link, additionalData: 'client-report', isRead: false } }).catch(() => {})
         await notifyNotice(staffId, { kind: 'request', headlineKey: 'clientWrote', relType: 'customer', relId: clientId, link, note: text }).catch(() => {})
     }

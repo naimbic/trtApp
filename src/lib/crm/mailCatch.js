@@ -6,6 +6,9 @@ import prisma from '@/lib/prisma'
 import { processUpload, putMedia } from '@/lib/media'
 import { cleanHtml, plainText } from '@/lib/crm/richText'
 import { notifyComment } from '@/lib/crm/mentionsApi'
+import { authorityFromStaff } from '@/lib/crm/authority'
+import { hasCap, viewScope } from '@/lib/crm/permissions'
+import { mailAudience } from '@/lib/crm/mailAudienceCalc'
 
 const lower = (v) => String(v || '').trim().toLowerCase()
 const escHtml = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
@@ -119,15 +122,17 @@ async function byName(words) {
     return list.length === 1 ? list[0] : null
 }
 
-/** Who has to know and answer: the team of a lead (or the account managers of a client) and the mailbox's responsible person. */
-async function team(cfg, who) {
-    let ids = []
-    if (who.kind === 'lead') ids = [who.record.assigned, ...(who.record.assignedIds || []), ...(who.record.followerIds || []), who.record.addedFrom]
-    else ids = (await prisma.crmCustomerAdmin.findMany({ where: { clientId: who.id }, select: { staffId: true } })).map((x) => x.staffId)
-    const all = [...new Set([cfg.responsible, ...ids].filter(Boolean))]
-    const active = all.length ? await prisma.crmStaff.findMany({ where: { id: { in: all }, active: true }, select: { id: true } }) : []
-    const ok = new Set(active.map((s) => s.id))
-    return all.filter((i) => ok.has(i))
+/**
+ * Who has to know and answer: the team of a lead (or the account managers of a client), the mailbox's responsible person, and every
+ * active person who may SEND mails on that lead or client (Roles > Lead mails / Client mails > Send) and sees the record.
+ * Nobody is told about a record, or its mails, they have no right to see (the Mails tab switch and the view rights are respected).
+ */
+export async function team(cfg, who) {
+    const isLead = who.kind === 'lead'
+    const own = isLead ? [who.record.assigned, ...(who.record.assignedIds || []), ...(who.record.followerIds || []), who.record.addedFrom] : (await prisma.crmCustomerAdmin.findMany({ where: { clientId: who.id }, select: { staffId: true } })).map((x) => x.staffId)
+    const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, admin: true, active: true, permissions: true } })
+    const people = staff.map((m) => ({ id: m.id, auth: authorityFromStaff(m) }))
+    return mailAudience({ isLead, own, responsible: cfg.responsible, isPublic: !!who.record?.isPublic, people, can: hasCap, scope: viewScope })
 }
 
 /* ---------------- files ---------------- */

@@ -6086,4 +6086,8 @@ export default {
     "See the Meetings tab": "رؤية تبويب الاجتماعات",
     "See the Offers tab": "رؤية تبويب العروض",
     "See the Activity tab": "رؤية تبويب النشاط",
+    "Customer tabs": "تبويبات العميل",
+    "See the Profile / Overview tab (contact details)": "رؤية تبويب الملف / نظرة عامة (بيانات الاتصال)",
+    "See the Notes tab": "رؤية تبويب الملاحظات",
+    "See the Files tab": "رؤية تبويب الملفات",
 }

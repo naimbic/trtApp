@@ -6086,4 +6086,8 @@ export default {
     "See the Meetings tab": "Ver la pestaña Reuniones",
     "See the Offers tab": "Ver la pestaña Ofertas",
     "See the Activity tab": "Ver la pestaña Actividad",
+    "Customer tabs": "Pestañas del cliente",
+    "See the Profile / Overview tab (contact details)": "Ver la pestaña Perfil / Resumen (datos de contacto)",
+    "See the Notes tab": "Ver la pestaña Notas",
+    "See the Files tab": "Ver la pestaña Archivos",
 }

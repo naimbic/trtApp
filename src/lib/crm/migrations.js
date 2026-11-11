@@ -178,6 +178,28 @@ export async function grantMailRights() {
     await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
 }
 
+/** The tabs of a customer get their own rights: everyone who already has permissions, and every role, keeps seeing all of them. Runs once. */
+export async function grantClientTabs() {
+    const MARK = 'perm_migration_client_tabs_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    const CAPS = ['tab_profile', 'tab_mails', 'tab_notes', 'tab_files', 'tab_activity']
+    for (const s of await prisma.crmStaff.findMany({ where: { admin: false }, select: { id: true } })) {
+        const rows = await prisma.crmStaffPermission.findMany({ where: { staffId: s.id }, select: { feature: true, capability: true } })
+        if (!rows.length) continue // people without any right keep every tab through the sign-in rule
+        const have = new Set(rows.map((r) => `${r.feature}:${r.capability}`))
+        const add = CAPS.filter((capability) => !have.has(`client_tabs:${capability}`)).map((capability) => ({ staffId: s.id, feature: 'client_tabs', capability }))
+        if (add.length) await prisma.crmStaffPermission.createMany({ data: add })
+    }
+    for (const role of await prisma.crmRole.findMany()) {
+        let perms
+        try { perms = JSON.parse(role.permissionsRaw || '{}') } catch { continue }
+        if (!perms || typeof perms !== 'object' || Array.isArray(perms) || !Object.keys(perms).length) continue
+        perms.client_tabs = [...new Set([...(perms.client_tabs || []), ...CAPS])]
+        await prisma.crmRole.update({ where: { id: role.id }, data: { permissionsRaw: JSON.stringify(perms) } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
 /** The tabs of the lead popup get their own rights: everyone who already has permissions, and every role, keeps seeing all of them. Runs once. */
 export async function grantLeadTabs() {
     const MARK = 'perm_migration_lead_tabs_v1'

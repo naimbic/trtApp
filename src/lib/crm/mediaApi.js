@@ -24,6 +24,7 @@ async function who() {
 
 async function relAccess(ctx, relType, cap, relId) {
     if (!relType) return true
+    if ((relType === 'customer' || relType === 'client') && !ctx.admin && !hasCap(ctx.authority, 'client_tabs', 'tab_files')) throw new PermissionError('You do not have access to these files', 403)
     const feature = REL_FEATURE[relType]
     if (!feature) fail('Unknown record type')
     // the certificate of a learning goal: its owner, and who sees (or edits) Grow
@@ -43,6 +44,7 @@ async function relAccess(ctx, relType, cap, relId) {
             if (!mail.leadId && mail.clientId) { // the mail of a client: the client's rules (the clients the person sees; Edit to change; the author or "Edit mails logged by others" for a draft)
                 const { scope } = await import('@/lib/crm/clientsApi')
                 const seen = await prisma.crmClient.findFirst({ where: { AND: [{ id: mail.clientId }, await scope(ctx.session)] }, select: { id: true } })
+                if (!ctx.admin && !hasCap(ctx.authority, 'client_tabs', 'tab_mails')) throw new PermissionError('You do not have access to these files', 403)
                 const edit = ctx.admin || hasCap(ctx.authority, 'client_mails', 'create') || hasCap(ctx.authority, 'client_mails', 'edit') // the files of a draft follow the mail rights
                 const mine = !!ctx.staffId && mail.addedFrom === ctx.staffId
                 if (seen && (cap === 'view' || (edit && mail.direction === 'draft' && (mine || ctx.admin || hasCap(ctx.authority, 'customers', 'edit_others_mails'))))) return true

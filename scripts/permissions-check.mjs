@@ -11,7 +11,9 @@ const made = { users: [], staff: [], rows: [], extraRows: [] } // rows: [model, 
 
 async function makeUser(label, perms, admin = false) {
     // the mail rights (Lead mails / Client mails) are separate switches: the older checks use people who may do everything with mails, the 'pv-' checks below choose them one by one
-    if (!label.startsWith('pv-') && !label.endsWith('-view') && (perms.leads || perms.customers || label.startsWith('lead-'))) perms = { lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'], lead_mails: ['create', 'edit', 'send', 'delete'], client_mails: ['create', 'edit', 'send', 'delete'], ...perms }
+    if (!label.startsWith('pv-') && !label.endsWith('-view') && (perms.leads || perms.customers || label.startsWith('lead-'))) perms = { client_tabs: ['tab_profile', 'tab_mails', 'tab_notes', 'tab_files', 'tab_activity'], lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'], lead_mails: ['create', 'edit', 'send', 'delete'], client_mails: ['create', 'edit', 'send', 'delete'], ...perms }
+    if (!label.startsWith('pv-') && perms.customers && !perms.client_tabs) perms = { client_tabs: ['tab_profile', 'tab_mails', 'tab_notes', 'tab_files', 'tab_activity'], ...perms }
+    if (!label.startsWith('pv-') && perms.leads && !perms.lead_tabs) perms = { lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'], ...perms }
     if (!label.startsWith('pv-') && perms.client_reports && !perms.client_report_files) perms = { client_report_files: ['view', 'create', 'edit', 'delete'], ...perms }
     if (!label.startsWith('pv-') && perms.tasks && !perms.task_checklist) perms = { task_checklist: ['view', 'create', 'edit', 'delete'], ...perms }
     const email = `permcheck.${label}.${crypto.randomBytes(3).toString('hex')}@test.local`
@@ -1628,10 +1630,10 @@ try {
         const project = await prisma.crmProject.create({ data: { name: 'zz perm project', clientId: X, status: 2 } }); made.rows.push(['crmProject', project.id])
         const U = {
             view: await login(await makeUser('pv-view', { customers: ['view'], leads: ['view'], projects: ['view'], staff: ['view'], roles: ['view'] })),
-            cmail: await login(await makeUser('pv-cmail', { customers: ['view'], client_mails: ['create'] })),
+            cmail: await login(await makeUser('pv-cmail', { customers: ['view'], client_mails: ['create'], client_tabs: ['tab_profile', 'tab_mails', 'tab_notes', 'tab_files', 'tab_activity'] })),
             ccreate: await login(await makeUser('pv-ccreate', { customers: ['view', 'create'] })),
-            cmEdit: await login(await makeUser('pv-cmedit', { customers: ['view'], client_mails: ['edit'] })),
-            cmFull: await login(await makeUser('pv-cmfull', { customers: ['view'], client_mails: ['create', 'edit', 'send', 'delete'] })),
+            cmEdit: await login(await makeUser('pv-cmedit', { customers: ['view'], client_mails: ['edit'], client_tabs: ['tab_profile', 'tab_mails', 'tab_notes', 'tab_files', 'tab_activity'] })),
+            cmFull: await login(await makeUser('pv-cmfull', { customers: ['view'], client_mails: ['create', 'edit', 'send', 'delete'], client_tabs: ['tab_profile', 'tab_mails', 'tab_notes', 'tab_files', 'tab_activity'] })),
             lmail: await login(await makeUser('pv-lmail', { leads: ['view'], lead_mails: ['create'], lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'] })),
             lmailFull: await login(await makeUser('pv-lmailfull', { leads: ['view'], lead_mails: ['create', 'edit', 'send', 'delete'], lead_tabs: ['tab_profile', 'tab_mails', 'tab_meetings', 'tab_offers', 'tab_activity'] })),
             ledit: await login(await makeUser('pv-ledit', { leads: ['view', 'edit'] })),
@@ -1651,7 +1653,7 @@ try {
         check('Client mails: Customers Create alone does not give the mail rights (they are separate switches)', (await U.ccreate('POST', `/api/crm/customers/${X}/mails`, draft)).status === 403)
         const cm = await U.cmail('POST', `/api/crm/customers/${X}/mails`, draft)
         check('Client mails: Create alone cannot edit, send, schedule or delete a mail', cm.status === 201 && (await U.cmail('PUT', `/api/crm/customers/${X}/mails`, { ...draft, mailId: cm.body.id, subject: 'zz perm draft 2' })).status === 403 && (await U.cmail('POST', `/api/crm/customers/${X}/mails/send`, { mailId: cm.body.id })).status === 403 && (await U.cmail('POST', `/api/crm/customers/${X}/mails`, { ...draft, scheduledAt: new Date(Date.now() + 86400000).toISOString(), to: 'a@b.co' })).status === 403 && (await U.cmail('DELETE', `/api/crm/customers/${X}/mails?mailId=${cm.body.id}`)).status === 403)
-        { const cAsk = await makeUser('pv-cask', { customers: ['view'], client_mails: ['send'] }); const cAskU = await login(cAsk)
+        { const cAsk = await makeUser('pv-cask', { customers: ['view'], client_mails: ['send'], client_tabs: ['tab_profile', 'tab_mails', 'tab_notes', 'tab_files', 'tab_activity'] }); const cAskU = await login(cAsk)
           const cc = await U.cmFull('POST', `/api/crm/customers/${X}/mails`, { ...draft, checks: [{ text: 'zz client confirm', staffId: cAsk.staffId }] })
           check('Mail checks (customers): a colleague can be asked, only that colleague confirms, the author cannot', cc.status === 201 && (await U.cmFull('POST', `/api/crm/customers/${X}/mails/send`, { action: 'check', mailId: cc.body.id, index: 0, done: true })).status === 403 && (await cAskU('POST', `/api/crm/customers/${X}/mails/send`, { action: 'check', mailId: cc.body.id, index: 0, done: true })).status === 200)
           if (cc.body?.id) await prisma.crmLeadMail.delete({ where: { id: cc.body.id } }).catch(() => {}) }
@@ -1677,6 +1679,16 @@ try {
           const li = await U.rfFull('GET', `/api/crm/client-reports/${r1.body.id}/comments?clientId=${X}`)
           check('Report discussion: a colleague can react with an emoji (shown with its count) and be mentioned on a sent message', cm.status === 201 && rx.status === 200 && li.body.list.find((c) => c.id === cid)?.reactions?.[0]?.count === 1 && (await U.rfFull('POST', `/api/crm/client-reports/${r1.body.id}/comments`, { clientId: X, commentId: cid, mention: (await prisma.crmStaff.findFirst({ where: { admin: false } }))?.id })).status === 200)
           check('Report discussion: someone who can only view cannot react', (await U.view('POST', `/api/crm/client-reports/${r1.body.id}/comments`, { clientId: X, commentId: cid, react: '👍' })).status === 403) }
+        // the tabs of a customer
+        { const cOn = await login(await makeUser('pv-ctabs-on', { customers: ['view'], client_mails: ['create'], client_tabs: ['tab_profile', 'tab_mails', 'tab_notes', 'tab_files', 'tab_activity'] }))
+          const cOff = await login(await makeUser('pv-ctabs-off', { customers: ['view'], client_mails: ['create'], client_tabs: ['tab_profile'] }))
+          const dOn = (await cOn('GET', `/api/crm/customers/${X}`)).body, dOff = (await cOff('GET', `/api/crm/customers/${X}`)).body
+          check('Customer tabs: with the tab rights the detail carries every tab', dOn.tabs.mails && dOn.tabs.activity && dOn.tabs.files && dOn.tabs.notes)
+          check('Customer tabs: a tab that is off is empty: mails are refused, files and notes counts are left out', dOff.tabs.mails === false && dOff.counts.notes === 0 && dOff.counts.files === 0 && (await cOff('GET', `/api/crm/customers/${X}/mails`)).status === 403 && (await cOff('POST', `/api/crm/customers/${X}/mails`, draft)).status === 403)
+          check('Customer tabs: the files of the client are refused without the Files tab', (await cOff('GET', `/api/crm/media?relType=customer&relId=${X}`)).status === 403 && (await cOn('GET', `/api/crm/media?relType=customer&relId=${X}`)).status === 200)
+          const cNo = await login(await makeUser('pv-ctabs-np', { customers: ['view'], client_tabs: ['tab_mails'] }))
+          const dNo = (await cNo('GET', `/api/crm/customers/${X}`)).body
+          check('Customer tabs: without the Overview tab the contact details and the contacts are left out', dNo.contacts.length === 0 && dNo.phone === null && dNo.address === null && (await cNo('GET', `/api/crm/customers/${X}/profile`)).body.contacts.length === 0) }
         // task checklist: view / create / edit / delete
         const mkT = async (who) => { const r = await who('POST', '/api/crm/work/tasks', { name: 'zz checklist rights', status: 1 }); if (r.body?.id) made.rows.unshift(['crmTask', r.body.id]); return r.body?.id }
         const tNone = await mkT(U.tkNone), tAdd = await mkT(U.tkAdd), tFull = await mkT(U.tkFull)

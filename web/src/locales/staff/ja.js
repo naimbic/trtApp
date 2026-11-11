@@ -6086,4 +6086,8 @@ export default {
     "See the Meetings tab": "ミーティングタブを見る",
     "See the Offers tab": "オファータブを見る",
     "See the Activity tab": "アクティビティタブを見る",
+    "Customer tabs": "顧客のタブ",
+    "See the Profile / Overview tab (contact details)": "プロフィール／概要タブを見る（連絡先）",
+    "See the Notes tab": "ノートタブを見る",
+    "See the Files tab": "ファイルタブを見る",
 }

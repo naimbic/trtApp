@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.225.0',
+        date: '2026-11-11',
+        title: 'Customers: rights for each tab (Overview, Mails, Notes, Files, Activity)',
+        items: [
+            'Roles > Customers & leads > "Customer tabs": five switches for the tabs that had no right of their own: Overview (contact details), Mails, Notes, Files and Activity. The other tabs (invoices, projects, tickets, ideas…) still follow the rights of their feature.',
+            'A tab that is off is empty on the server, not only hidden: mails are refused, the files and notes of the client are refused, the activity timeline is not sent, and without Overview the contact details and the contacts are left out. If the tab you open is not allowed, the first allowed one opens.',
+            'Nothing changes today: everyone who already had permissions, and every role, received the five switches, and members with no permissions at all keep every tab.',
+        ],
+    },
+    {
         version: '0.224.0',
         date: '2026-11-11',
         title: 'Leads: rights for each tab of the lead popup (Profile, Mails, Meetings, Offers, Activity)',

@@ -29,6 +29,7 @@ export async function clientProfile(id, { full = false } = {}) {
     const { session, c } = await load(id)
     const authority = session.user.authority || []
     const can = (f, cap) => hasCap(authority, f, cap)
+    const seeTab = (t) => authority.includes('crm.admin') || authority.includes('admin') || hasCap(authority, 'client_tabs', `tab_${t}`)
     const padding = await numberPadding()
     const fmtProposal = await proposalNumber()
 
@@ -137,7 +138,7 @@ export async function clientProfile(id, { full = false } = {}) {
     for (const n of notes) add('note', `Note${n.addedFrom && sName[n.addedFrom] ? ` · ${sName[n.addedFrom]}` : ''}`, strip(n.description), n.dateContacted || n.createdAt)
     for (const v of viewList.slice(0, 60)) add('view', `Client opened ${v.type} ${v.label}`, v.ip ? `from ${v.ip}` : '', v.date, v.link)
     for (const x of contacts) if (x.lastLogin) add('login', `${name(x)} signed in to the client area`, x.lastIp ? `from ${x.lastIp}` : '', x.lastLogin)
-    const timeline = ev.sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, full ? 5000 : 150)
+    const timeline = !full && !seeTab('activity') ? [] : ev.sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, full ? 5000 : 150)
 
     // ---- charts for the overview (status counts only; the money series come from clientBilling)
     const countBy = (arr, fn) => arr.reduce((o, x) => { const k = fn(x); if (k) o[k] = (o[k] || 0) + 1; return o }, {})
@@ -158,7 +159,7 @@ export async function clientProfile(id, { full = false } = {}) {
         lead, journey, attention, engagement, timeline,
         charts: { invoiceStatus, docs },
         lastLogin: lastLogin ? { name: name(lastLogin), ip: lastLogin.lastIp, date: lastLogin.lastLogin } : null,
-        contacts: contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active, portal: !!x.passwordHash, access: access[x.id] })),
+        contacts: !full && !seeTab('profile') ? [] : contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active, portal: !!x.passwordHash, access: access[x.id] })),
         reminders: reminders.map((r) => ({ id: r.id, description: r.description || '', date: r.date, done: !!r.isNotified, staff: sName[r.staffId] || null })),
         stats: { openTasks: openTasks.length, openTickets: openTickets.length, overdueInvoices: overdue.length, unpaidInvoices: unpaid.length },
         can: { note: can('customers', 'edit'), reminder: can('customers', 'edit') },

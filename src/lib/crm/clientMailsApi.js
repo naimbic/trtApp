@@ -21,6 +21,7 @@ async function gate(id, { cap = null } = {}) {
     if (!client) throw fail('Client not found', 404)
     const staffId = await getStaffId(session)
     const admin = isCrmAdmin(authority)
+    if (!admin && !hasCap(authority, 'client_tabs', 'tab_mails')) throw fail('You do not have access to this part of the client', 403)
     const mail = Object.fromEntries(['create', 'edit', 'send', 'delete'].map((c) => [c, admin || hasCap(authority, 'client_mails', c)]))
     if (cap && !mail[cap]) throw fail(`You are not allowed to ${cap === 'create' ? 'add' : cap} mails`, 403)
     const a = { staffId: staffId || undefined, session, authority, admin, mail, can: (c) => admin || hasCap(authority, 'customers', c) }

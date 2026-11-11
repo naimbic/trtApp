@@ -145,6 +145,8 @@ const ClientDetail = () => {
     useEffect(() => { load(); loadProfile() }, [load, loadProfile])
     useEffect(() => { if (ticketDialog && !ticketLk.departments.length) api('/api/crm/support/tickets/lookups').then(setTicketLk).catch(() => {}) }, [ticketDialog]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    // the tabs of a customer that have a switch of their own (Roles > Customer tabs); the others follow the rights of their feature
+    const TAB_CAP = { overview: 'tab_profile', mails: 'tab_mails', notes: 'tab_notes', files: 'tab_files', activity: 'tab_activity' }
     const tabs = useMemo(() => {
         if (!c) return []
         const where = { clientId: id }
@@ -177,8 +179,9 @@ const ClientDetail = () => {
                 { key: 'files', label: tr("Files"), count: c.counts.files, iconOnly: true, icon: <TbPaperclip className="text-slate-500" /> },
                 { key: 'activity', label: tr("Activity"), iconOnly: true, icon: <TbHistory className="text-gray-500" /> },
             ]),
-        ].filter((t) => (!t.feature || can(t.feature, 'view')) && !(HIDE_WHEN_EMPTY.includes(t.key) && !t.count && t.key !== tab)) // an empty Estimates / Proposals / Projects / Files / Tickets / Notes tab is hidden (until it is the one open)
+        ].filter((t) => (!t.feature || can(t.feature, 'view')) && !(TAB_CAP[t.key] && !can('client_tabs', TAB_CAP[t.key])) && !(HIDE_WHEN_EMPTY.includes(t.key) && !t.count && t.key !== tab)) // an empty Estimates / Proposals / Projects / Files / Tickets / Notes tab is hidden (until it is the one open)
     }, [c, id, can, tab])
+    useEffect(() => { if (tabs.length && !tabs.some((t) => t.key === tab)) setTab(tabs[0].key) }, [tabs, tab]) // the tab that was asked for is not one this person may see: open the first that is
 
     const openAsClient = async (k) => {
         try {

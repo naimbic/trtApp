@@ -8,6 +8,7 @@ import {
     requirePermission,
     getStaffId,
     isCrmAdmin,
+    hasCap,
     viewScope,
 } from './permissions'
 
@@ -191,7 +192,7 @@ const taskWriteGuard = (resource, session) => {
 //  - privateField  (reminders, to-dos, events, notifications): each person sees their own, administrators see all
 //  - shareByRel    (notes, files): the author sees theirs, others only those attached to a kind of record they may open
 const REL_FEATURE = { customer: 'customers', lead: 'leads', proposal: 'proposals', estimate: 'estimates', invoice: 'invoices', credit_note: 'credit_notes', ticket: 'tickets', expense: 'expenses', contract: 'contracts', project: 'projects', task: 'tasks', subscription: 'subscriptions', staff: 'staff' }
-const relAllowed = (authority) => Object.entries(REL_FEATURE).filter(([, f]) => viewScope(authority, f) !== null).map(([t]) => t)
+const relAllowed = (authority) => Object.entries(REL_FEATURE).filter(([t, f]) => viewScope(authority, f) !== null && !(t === 'customer' && !hasCap(authority, 'client_tabs', 'tab_notes') && !authority.includes('crm.admin'))).map(([t]) => t)
 const restricted = (resource, session) => !resource.feature && (resource.privateField || resource.shareByRel) && !isCrmAdmin(session.user.authority || [])
 async function ownerFilter(resource, session) {
     const me = (await getStaffId(session)) || '__none__'

@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
-import { requirePermission, viewScope, getStaffId } from '@/lib/crm/permissions'
+import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { toBase, ALL } from '@/lib/crm/rates'
@@ -159,7 +159,8 @@ export async function getClientDetail(id) {
     const [pr, ld] = await Promise.all([prisma.crmProject.findMany({ where: { clientId: id }, select: { id: true } }), prisma.crmLead.findMany({ where: { clientId: id }, select: { id: true } })])
     const tasks = await prisma.crmTask.count({ where: { status: { not: 5 }, OR: [{ relType: 'customer', relId: id }, { relType: 'project', relId: { in: pr.map((x) => x.id) } }, { relType: 'lead', relId: { in: ld.map((x) => x.id) } }] } }).catch(() => 0)
     const money = (await moneyFor([id], true))[id] || {}
-    return {
+    const tabs = Object.fromEntries(['profile', 'mails', 'notes', 'files', 'activity'].map((t) => [t, isCrmAdmin(session.user.authority || []) || hasCap(session.user.authority || [], 'client_tabs', `tab_${t}`)]))
+    const out = {
         id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [],
         address: c.address, city: c.city, state: c.state, zip: c.zip, country: c.country, countryName: cname[c.country] || '',
         billing: { street: c.billingStreet, city: c.billingCity, state: c.billingState, zip: c.billingZip, country: c.billingCountry, countryName: cname[c.billingCountry] || '' },
@@ -171,6 +172,12 @@ export async function getClientDetail(id) {
         money,
         counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests, reports, tasks },
     }
+    // the tabs this person may not see are left empty, not only hidden
+    out.tabs = tabs
+    if (!tabs.profile) Object.assign(out, { vat: null, phone: null, website: null, address: null, city: null, state: null, zip: null, country: null, countryName: '', billing: {}, shipping: {}, contacts: [] })
+    if (!tabs.notes) out.counts.notes = 0
+    if (!tabs.files) out.counts.files = 0
+    return out
 }
 
 const fieldsFrom = (b) => {

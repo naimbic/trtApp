@@ -6086,4 +6086,8 @@ export default {
     "See the Meetings tab": "Voir l'onglet Rendez-vous",
     "See the Offers tab": "Voir l'onglet Offres",
     "See the Activity tab": "Voir l'onglet Activité",
+    "Customer tabs": "Onglets du client",
+    "See the Profile / Overview tab (contact details)": "Voir l'onglet Profil / Aperçu (coordonnées)",
+    "See the Notes tab": "Voir l'onglet Notes",
+    "See the Files tab": "Voir l'onglet Fichiers",
 }

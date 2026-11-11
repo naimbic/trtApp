@@ -3,6 +3,7 @@ import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/per
 import { scope } from '@/lib/crm/clientsApi'
 import { notifyComment } from '@/lib/crm/mentionsApi'
 import { mentionable, resolveChecks, tellAsked, decorate } from '@/lib/crm/mailChecks'
+import { trackInfo } from '@/lib/crm/mailTrackCalc'
 import { mailData, checkSchedule, draftFrom, senderOptions, dropMailFiles, sendDraftCore } from '@/lib/crm/leadsApi'
 
 /* The mails of a client (customer): the same as the mails of a lead (log a received or sent mail, drafts with checks, files, send now or at a date and time),
@@ -48,7 +49,7 @@ export async function getClientMails(id) {
     const mailComments = await commentsByMail(mails)
     return {
         email, senders, can: a.mail, mentionable: a.mail.create || a.mail.edit ? await mentionable('client', { clientId: id }) : [],
-        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: decorate(m.checks, people, { me: a.staffId, canSend: a.mail.send, canEdit: a.mail.edit && mayChange(a, m.addedFrom) }), scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.mail.edit && mayChange(a, m.addedFrom), canSend: a.mail.send && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) && a.mail.delete })),
+        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), track: trackInfo(m), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: decorate(m.checks, people, { me: a.staffId, canSend: a.mail.send, canEdit: a.mail.edit && mayChange(a, m.addedFrom) }), scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: a.mail.edit && mayChange(a, m.addedFrom), canSend: a.mail.send && mayChange(a, m.addedFrom), canDelete: mayDrop(a, m.addedFrom) && a.mail.delete })),
     }
 }
 

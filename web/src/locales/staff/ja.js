@@ -6101,4 +6101,10 @@ export default {
     "Remove this picture?": "この写真を削除しますか？",
     "This lead already became a customer. Only an admin can change it.": "このリードはすでに顧客になりました。変更できるのは管理者のみです。",
     "This lead already became a customer, only an admin can change it": "このリードはすでに顧客になりました。変更できるのは管理者のみです",
+    "First opened": "初回の開封",
+    "Not seen yet. Mail apps that block pictures never show an open.": "まだ確認されていません。画像をブロックするメールアプリでは開封が表示されません。",
+    "First click": "初回のクリック",
+    "Link clicked": "リンクをクリック",
+    "Tell me when a mail to a lead or a customer is opened or a link is clicked": "リードや顧客へのメールが開かれたり、リンクがクリックされたら通知する",
+    "A tiny invisible picture and tracked links are added to the mails sent from a lead or a customer. The sender (and the team of a lead) is notified the first time. Mail apps that block pictures, or load them by themselves, make an open uncertain; a click is a sure sign.": "リードや顧客から送るメールに、見えない小さな画像と追跡リンクが追加されます。最初の1回だけ送信者（リードの場合はチーム）に通知します。画像をブロックする、または自動で読み込むメールアプリでは開封が不確かになります。クリックは確実なサインです。",
 }

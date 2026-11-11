@@ -732,6 +732,14 @@ model CrmLeadMail {
   scheduledAt DateTime?
   /// why the last automatic send did not happen
   sendError   String?
+  /// open / click tracking of a sent mail: the random token in its picture and links, then what was seen (counts are empty on old mails)
+  trackToken  String?
+  openCount   Int?
+  firstOpenAt DateTime?
+  lastOpenAt  DateTime?
+  clickCount  Int?
+  firstClickAt DateTime?
+  lastClickAt DateTime?
   body        String?
   /// when the email was sent or received (date and time)
   date        DateTime
@@ -743,4 +751,5 @@ model CrmLeadMail {
 
   @@index([leadId, date])
   @@index([clientId, date])
+  @@index([trackToken])
 }

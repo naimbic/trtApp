@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.229.0',
+        date: '2026-11-11',
+        title: 'Mails to leads and customers: signature on every mail, opens and clicks',
+        items: [
+            'Every mail sent from a lead or a customer now carries the signature: the sender\'s own (Profile), otherwise the company signature (Settings > Email), with the same mobile-friendly design as the template mails. It is not added twice when the text already holds it.',
+            'Sent mails show "Opened" (with the number of opens and the time) and "Link clicked" in the Mails tab. A tiny invisible picture and tracked links are added to the mail; the signature links stay untouched.',
+            'The sender (and the team of a lead) is notified the first time a mail is opened and the first time a link is clicked, in the bell and on Telegram/WhatsApp when they use them.',
+            'Opens in the first seconds after sending (the recipient\'s mail server or a security scanner) are not counted. Mail apps that block pictures never show an open and Apple/Gmail can open them by themselves, so an open is a hint; a click is a sure sign.',
+            'Settings > Email has a switch to turn tracking off. Only addresses that really were in the mail can be followed (signed links).',
+        ],
+    },
+    {
         version: '0.228.3',
         date: '2026-11-11',
         title: 'Converted leads cannot be dragged on the Leads board',

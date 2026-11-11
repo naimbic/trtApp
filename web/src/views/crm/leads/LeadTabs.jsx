@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TbUpload, TbPhotoSearch, TbLink, TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay, TbPaperclip, TbSearch, TbAt } from 'react-icons/tb'
+import { TbUpload, TbPhotoSearch, TbLink, TbPlus, TbTrash, TbPencil, TbVideo, TbMapPin, TbBell, TbCalendarEvent, TbArrowDownLeft, TbArrowUpRight, TbSend, TbFileText, TbSquare, TbSquareCheck, TbX, TbClockPlay, TbPaperclip, TbSearch, TbAt, TbEye, TbEyeOff, TbPointer } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -293,6 +293,14 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                     </div>
                     {m.body && <div className="max-h-56 overflow-auto"><RichView html={m.body} /></div>}
                     {m.direction !== 'draft' && (m.files || []).length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{m.files.map((f) => <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-700"><TbPaperclip className="shrink-0" /><span className="truncate">{f.name}</span></a>)}</div>}
+                    {m.direction === 'out' && m.track?.tracked && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-semibold">
+                            {m.track.opens > 0
+                                ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-700" title={`${tr("First opened")} ${when(m.track.firstOpenAt)}`}><TbEye />{tr("Opened")} {m.track.opens > 1 ? `${m.track.opens}×` : ''} · {when(m.track.lastOpenAt)}</span>
+                                : <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-500 dark:bg-gray-700/50 dark:text-gray-300" title={tr("Not seen yet. Mail apps that block pictures never show an open.")}><TbEyeOff />{tr("Not opened yet")}</span>}
+                            {m.track.clicks > 0 && <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-0.5 text-sky-700" title={`${tr("First click")} ${when(m.track.firstClickAt)}`}><TbPointer />{tr("Link clicked")} {m.track.clicks > 1 ? `${m.track.clicks}×` : ''} · {when(m.track.lastClickAt)}</span>}
+                        </div>
+                    )}
                     {m.direction === 'draft' && m.scheduledAt && <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700"><TbClockPlay />{tr("Scheduled for")} {when(m.scheduledAt)}</div>}
                     {m.direction === 'draft' && m.sendError && <div className="mt-2 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700">{tr("Not sent automatically")}: {m.sendError}</div>}
                     {m.direction === 'draft' && (m.note || m.checks.length > 0) && (

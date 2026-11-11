@@ -8,6 +8,7 @@ import { namesOf } from '@/lib/crm/activity'
 import { emit } from '@/lib/crm/webhooks'
 import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { readSettings } from '@/lib/crm/appSettings'
+import { trackInfo } from '@/lib/crm/mailTrackCalc'
 import { LANGUAGES } from '@/lib/crm/settings/registry'
 import { cleanWebsite } from '@/lib/crm/leadMailCalc'
 import { mentionable, resolveChecks, tellAsked, decorate } from '@/lib/crm/mailChecks'
@@ -176,7 +177,7 @@ export async function getLead(id) {
         checklist: Array.isArray(l.checklist) ? l.checklist : [],
         tasks, proposals: proposals.map((p) => ({ id: p.id, subject: p.subject, status: p.status, total: p.total, number: p.number ?? p.legacyId, by: people[p.addedFrom]?.name || (typeof people[p.addedFrom] === 'string' ? people[p.addedFrom] : ''), currency: curNames[p.currencyId] || '', date: p.date || p.createdAt })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
-        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: decorate(m.checks, people, { me: a.staffId, canSend: mailCan(a, 'send'), canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit') }), scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit'), canSend: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'send'), canDelete: mayDropItem(a, m.addedFrom) && mailCan(a, 'delete') })),
+        mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), track: trackInfo(m), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: decorate(m.checks, people, { me: a.staffId, canSend: mailCan(a, 'send'), canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit') }), scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit'), canSend: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'send'), canDelete: mayDropItem(a, m.addedFrom) && mailCan(a, 'delete') })),
         meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
         mentionable: mailCan(a, 'edit') || mailCan(a, 'create') ? await mentionable('lead', l) : [],
         senders, currency: (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }).catch(() => null))?.name || '',
@@ -580,9 +581,15 @@ export async function sendDraftCore({ m, a, fallbackTo = '' }) {
     if (!from) throw fail('Choose the address to send from in the list')
     const files = await prisma.crmMedia.findMany({ where: { relType: 'leadmail', relId: mailId, isFolder: false } })
     if (files.reduce((n, f) => n + (f.size || 0), 0) > MAX_ATTACH_MB * 1024 * 1024) throw fail(`The attached files are larger than ${MAX_ATTACH_MB} MB together`)
-    const { deliver, escapeHtml } = await import('@/lib/crm/mailer')
+    const { deliver, escapeHtml, getOptions } = await import('@/lib/crm/mailer')
     const me = a.staffId ? await prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { firstName: true, lastName: true, email: true, emailSignature: true } }) : null
-    const html = `${m.body || `<p>${escapeHtml(m.subject)}</p>`}${me?.emailSignature ? `<br>${me.emailSignature}` : ''}`
+    const body = m.body || `<p>${escapeHtml(m.subject)}</p>`
+    // every mail to a lead or a customer carries the signature: the sender's own (Profile), else the company one (Settings > Email); not twice when the text already holds it
+    const sig = (me?.emailSignature || (await getOptions(['email_signature']))('email_signature') || '').trim()
+    const { SIGNATURE_CSS } = await import('@/lib/crm/mailDesign/signature')
+    const signature = sig && !/class=["']sig["']/.test(body) && !body.includes(sig.slice(0, 200)) ? `<br><style>${SIGNATURE_CSS}</style><div class="sig">${sig}</div>` : ''
+    const { withTracking } = await import('@/lib/crm/mailTrackApi')
+    const { html, token } = await withTracking({ body, signature }) // links and the invisible picture (Settings > Email), the signature stays untouched
     const own = !!me?.email && me.email.toLowerCase() === from.toLowerCase()
     const res = await deliver({
         to: to.join(', '), cc: cc.join(', '), bcc: bcc.join(', '), replyTo: reply.join(', '), subject: m.subject, html,
@@ -591,7 +598,7 @@ export async function sendDraftCore({ m, a, fallbackTo = '' }) {
     })
     if (!res.sent) throw fail(res.error || 'The email could not be sent')
     const now = new Date()
-    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { direction: 'out', date: now, fromAddress: from, scheduledAt: null, sendError: null } })
+    await prisma.crmLeadMail.update({ where: { id: mailId }, data: { direction: 'out', date: now, fromAddress: from, scheduledAt: null, sendError: null, ...(token ? { trackToken: token, openCount: 0, clickCount: 0 } : {}) } })
     // the answer is on its way: the reminders to answer this person are no longer needed
     const { dropReplyReminders } = await import('@/lib/crm/mailCatch')
     if (m.leadId) await dropReplyReminders('lead', m.leadId)

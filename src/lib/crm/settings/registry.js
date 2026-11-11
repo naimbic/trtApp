@@ -146,6 +146,7 @@ export const GROUPS = {
             { title: 'Mail server', panel: 'smtp' },
             { title: 'Sending options', fields: [
                 sel('email_protocol', 'Send with', [['smtp', 'SMTP server'], ['sendmail', 'Sendmail on the server']], { default: 'smtp' }),
+                yes('mail_tracking', 'Tell me when a mail to a lead or a customer is opened or a link is clicked', { default: '1', hint: 'A tiny invisible picture and tracked links are added to the mails sent from a lead or a customer. The sender (and the team of a lead) is notified the first time. Mail apps that block pictures, or load them by themselves, make an open uncertain; a click is a sure sign.' }),
                 f('smtp_email_charset', 'Charset', 'text', { default: 'utf-8' }),
                 f('bcc_emails', 'Copy every email to (BCC)', 'text', { hint: 'One address, or several separated by commas.', emails: true }),
                 f('lead_mail_senders', 'Other "send from" addresses (lead mails)', 'text', { hint: 'Addresses a lead mail can be sent from, besides hello@trtmaroc.com (always first, the default) and the staff member\'s own email. Your mail server must allow them. Separate several with commas.', emails: true }),

@@ -6101,4 +6101,10 @@ export default {
     "Remove this picture?": "Retirer cette photo ?",
     "This lead already became a customer. Only an admin can change it.": "Ce prospect est déjà devenu client. Seul un administrateur peut le modifier.",
     "This lead already became a customer, only an admin can change it": "Ce prospect est déjà devenu client, seul un administrateur peut le modifier",
+    "First opened": "Première ouverture",
+    "Not seen yet. Mail apps that block pictures never show an open.": "Pas encore vu. Les applications de mail qui bloquent les images n'affichent jamais d'ouverture.",
+    "First click": "Premier clic",
+    "Link clicked": "Lien cliqué",
+    "Tell me when a mail to a lead or a customer is opened or a link is clicked": "Me prévenir quand un mail à un prospect ou un client est ouvert ou qu'un lien est cliqué",
+    "A tiny invisible picture and tracked links are added to the mails sent from a lead or a customer. The sender (and the team of a lead) is notified the first time. Mail apps that block pictures, or load them by themselves, make an open uncertain; a click is a sure sign.": "Une minuscule image invisible et des liens suivis sont ajoutés aux mails envoyés depuis un prospect ou un client. L'expéditeur (et l'équipe d'un prospect) est prévenu la première fois. Les applications qui bloquent les images, ou les chargent d'elles-mêmes, rendent une ouverture incertaine ; un clic est un signe sûr.",
 }

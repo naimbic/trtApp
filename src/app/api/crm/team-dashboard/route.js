@@ -3,7 +3,7 @@ import { teamDashboard, setTeamGoals } from '@/lib/crm/teamDashboard'
 import { errorResponse } from '@/lib/crm/crud'
 
 export async function GET(request) {
-    try { return NextResponse.json(await teamDashboard({ days: request.nextUrl.searchParams.get('days') })) } catch (e) { return errorResponse(e) }
+    try { return NextResponse.json(await teamDashboard({ days: request.nextUrl.searchParams.get('days'), fresh: request.nextUrl.searchParams.get('fresh') === '1' })) } catch (e) { return errorResponse(e) }
 }
 
 // PUT { weeklyTasks, onTimeRate }: the goals (managers and administrators)

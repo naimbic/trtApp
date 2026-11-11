@@ -186,7 +186,7 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
     }
     const [toggling, setToggling] = useState(false) // one click at a time: each one rewrites the list of checks
     const toggle = (m, i) => { if (toggling) return; setToggling(true); run(() => api(`${base}/mails/send`, { method: 'POST', body: { action: 'check', mailId: m.id, index: i, done: !m.checks[i].done } }), null).finally(() => setToggling(false)) }
-    const save = () => run(() => api(`${base}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString(), scheduledAt: draft && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null } }).then((r) => { if (r?.scheduleCancelled) notify('warning', tr("The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.")); if (draft) setForm((f) => ({ ...f, id: f.id || r?.id })); else setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
+    const save = () => run(() => api(`${base}/mails`, { method: form.id ? 'PUT' : 'POST', body: { ...form, mailId: form.id, date: new Date(form.date).toISOString(), scheduledAt: draft && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null } }).then((r) => { if (r?.scheduleCancelled) notify('warning', tr("The text changed, so the checks and the schedule were cancelled. Confirm the checks, then schedule it again.")); setForm(null) }), draft ? tr("Draft saved") : tr("Mail saved"))
     // the lead is the other side of every mail: received = from the lead, sent or draft = to the lead (and a draft goes out from our own sender)
     const aim = (f, dir) => {
         const lead = leadEmail.trim()
@@ -297,7 +297,7 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
                     {m.direction === 'out' && m.track?.tracked && (
                         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-semibold">
                             {m.track.opens > 0
-                                ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-700" title={m.track.opens > 1 ? `${tr("Last viewed")} ${when(m.track.lastOpenAt)}` : undefined}><TbEye />{viewedOn(m.track.firstOpenAt)}{m.track.opens > 1 ? ` · ${m.track.opens}×` : ''}</span>
+                                ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-700" title={m.track.opens > 1 ? `${tr("Last viewed")} ${when(m.track.lastOpenAt)}` : undefined}>{m.track.opens > 1 && <b>{m.track.opens}</b>}<TbEye />{viewedOn(m.track.firstOpenAt)}</span>
                                 : <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-500 dark:bg-gray-700/50 dark:text-gray-300" title={tr("Not seen yet. Mail apps that block pictures never show an open.")}><TbEyeOff />{tr("Not viewed yet")}</span>}
                             {m.track.clicks > 0 && <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-0.5 text-sky-700" title={`${tr("First click")} ${when(m.track.firstClickAt)}`}><TbPointer />{tr("Link clicked")} {m.track.clicks > 1 ? `${m.track.clicks}×` : ''} · {when(m.track.lastClickAt)}</span>}
                         </div>

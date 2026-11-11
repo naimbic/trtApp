@@ -582,7 +582,6 @@ export async function sendDraftCore({ m, a, fallbackTo = '' }) {
     const files = await prisma.crmMedia.findMany({ where: { relType: 'leadmail', relId: mailId, isFolder: false } })
     if (files.reduce((n, f) => n + (f.size || 0), 0) > MAX_ATTACH_MB * 1024 * 1024) throw fail(`The attached files are larger than ${MAX_ATTACH_MB} MB together`)
     const { deliver, escapeHtml, getOptions } = await import('@/lib/crm/mailer')
-    const me = a.staffId ? await prisma.crmStaff.findUnique({ where: { id: a.staffId }, select: { firstName: true, lastName: true, email: true, emailSignature: true } }) : null
     const body = m.body || `<p>${escapeHtml(m.subject)}</p>`
     // every mail to a lead or a customer carries the company signature (Settings > Email > Signature & design), never the personal one of the sender; not twice when the text already holds it
     const sig = ((await getOptions(['email_signature']))('email_signature') || '').trim()
@@ -590,10 +589,9 @@ export async function sendDraftCore({ m, a, fallbackTo = '' }) {
     const signature = sig && !/class=["']sig["']/.test(body) && !body.includes(sig.slice(0, 200)) ? `<br><style>${SIGNATURE_CSS}</style><div class="sig">${sig}</div>` : ''
     const { withTracking } = await import('@/lib/crm/mailTrackApi')
     const { html, token } = await withTracking({ body, signature }) // links and the invisible picture (Settings > Email), the signature stays untouched
-    const own = !!me?.email && me.email.toLowerCase() === from.toLowerCase()
     const res = await deliver({
         to: to.join(', '), cc: cc.join(', '), bcc: bcc.join(', '), replyTo: reply.join(', '), subject: m.subject, html,
-        fromEmail: from, fromName: own && me ? staffName(me) : undefined,
+        fromEmail: from, // no personal name: the sender name is the company one of the mail settings
         attachments: files.filter((f) => f.url).map((f) => ({ filename: f.name, path: f.url })),
     })
     if (!res.sent) throw fail(res.error || 'The email could not be sent')

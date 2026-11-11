@@ -3,6 +3,7 @@ import { realPicture } from '@/lib/crm/pictures'
 import { requirePermission, viewScope, getStaffId, isCrmAdmin } from '@/lib/crm/permissions'
 import { STATUS as TASK_STATUS, PRIORITY as TASK_PRIORITY } from '@/lib/crm/tasksApi'
 import { goalPoints } from '@/lib/crm/growthRewards'
+import { swr, dropCache } from '@/lib/crm/memoCache'
 
 const NONE = '000000000000000000000000'
 const DAY = 86400000
@@ -15,10 +16,16 @@ const startOfDay = (d = new Date()) => new Date(Date.UTC(d.getUTCFullYear(), d.g
  * What the team is doing and what each person has to do: the signed-in person's tasks, leads to follow up, issues, tickets
  * and agenda, plus the team's workload, pipeline, ideas and recent activity (each part only for people who may see it).
  */
-export async function teamDashboard({ days = 30 } = {}) {
+export async function teamDashboard({ days = 30, fresh = false } = {}) {
     const session = await requirePermission(null)
-    const authority = session.user.authority || []
     const staffId = await getStaffId(session)
+    // it is asked again every minute by every open tab: the same answer is kept for 45 seconds (per person); an action of the person asks for a fresh one
+    const d = [7, 30, 90].includes(Number(days)) ? Number(days) : 30
+    return swr(`team|${staffId || session.user.id}|${d}|${(session.user.authority || []).length}`, () => buildTeam(session, staffId, d), { fresh: 45000, stale: 600000, force: !!fresh })
+}
+
+async function buildTeam(session, staffId, days) {
+    const authority = session.user.authority || []
     const admin = isCrmAdmin(authority)
     const scopes = Object.fromEntries(['tasks', 'leads', 'issues', 'tickets'].map((f) => [f, admin ? 'all' : viewScope(authority, f)]))
     const today = startOfDay(), tomorrow = new Date(+today + DAY), week = new Date(+today + 8 * DAY)
@@ -262,6 +269,7 @@ export async function teamDashboard({ days = 30 } = {}) {
 
 /** Managers (people who see all tasks) and administrators set the goals shown on the Team dashboard. */
 export async function setTeamGoals(body) {
+    dropCache('team|')
     const session = await requirePermission(null)
     const authority = session.user.authority || []
     if (!isCrmAdmin(authority) && viewScope(authority, 'tasks') !== 'all') throw Object.assign(new Error('Only managers can set the team goals'), { status: 403 })
@@ -273,6 +281,7 @@ export async function setTeamGoals(body) {
 
 /** Pin pages to the dashboard: a list of shortcut keys, kept for the person on the server, so it follows them. */
 export async function setShortcuts(body) {
+    dropCache('team|')
     const session = await requirePermission(null)
     const staffId = await getStaffId(session)
     if (!staffId) throw Object.assign(new Error('Your login is not linked to a staff member'), { status: 400 })

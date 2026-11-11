@@ -6,6 +6,7 @@ import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { toBase, ALL } from '@/lib/crm/rates'
 import { loadRates } from '@/lib/crm/ratesDb'
 import { taskStatusNames } from '@/lib/crm/taskStatuses'
+import { swr } from '@/lib/crm/memoCache'
 
 const iso = (d) => d.toISOString().slice(0, 10)
 const monthKey = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
@@ -59,6 +60,14 @@ export async function getDashboardMetrics(params = {}) {
     const authority = session.user.authority || []
     // the business dashboard is for administrators (and whoever was given it or manages roles)
     if (!(isCrmAdmin(authority) || hasCap(authority, 'dashboard', 'view') || hasCap(authority, 'roles', 'view'))) throw Object.assign(new Error('Forbidden'), { status: 403 })
+    // the figures change little in a day and take long to add up: the same answer is kept for 5 minutes (shared by everybody who sees the same parts), then renewed in the background; ?fresh=1 renews it now
+    const money = isCrmAdmin(authority) || hasCap(authority, 'finance', 'view_amounts')
+    const parts = ['invoices', 'expenses', 'customers', 'leads', 'projects', 'tasks', 'tickets', 'estimates', 'payments'].map((f) => (viewScope(authority, f) === 'all' ? 1 : 0)).join('')
+    const key = `dashboard|${money ? 1 : 0}${parts}|${params.range || '12m'}|${params.from || ''}|${params.to || ''}|${params.noPrev ? 1 : 0}`
+    return swr(key, () => buildDashboard(params, authority), { fresh: 300000, force: params.fresh === '1' })
+}
+
+async function buildDashboard(params, authority) {
     const money = isCrmAdmin(authority) || hasCap(authority, 'finance', 'view_amounts')
     // money sections are only built for people who may see financial figures
     const MONEY_SECTIONS = ['invoices', 'expenses', 'estimates', 'recent']
@@ -74,19 +83,23 @@ export async function getDashboardMetrics(params = {}) {
     const padding = await numberPadding()
     const data = { generatedAt: new Date().toISOString(), months, granularity: R.granularity, range: { key: R.key, label: R.label, from: R.fromIso, to: R.toIso }, sections: [], moneyHidden: !money }
 
-    const section = async (name, feature, fn) => {
+    // the parts are independent: they all start now and are awaited together at the end (not one after the other)
+    const jobs = []
+    const ORDER = ['invoices', 'expenses', 'clients', 'leads', 'projects', 'tasks', 'tickets', 'estimates', 'recent']
+    const section = (name, feature, fn) => {
         if (feature && !can(feature)) return
         if (MONEY_SECTIONS.includes(name) && !money) return
-        try {
-            data[name] = await fn()
-            data.sections.push(name)
-        } catch (e) {
-            data[name] = { error: String(e.message || e).slice(0, 160) }
-        }
+        jobs.push((async () => {
+            try {
+                data[name] = await fn()
+                data.sections.push(name)
+            } catch (e) {
+                data[name] = { error: String(e.message || e).slice(0, 160) }
+            }
+        })())
     }
 
-    const currencies = await prisma.crmCurrency.findMany({ orderBy: { name: 'asc' } })
-    const rt = await loadRates() // for the ALL view: every currency converted into the base one
+    const [currencies, rt] = await Promise.all([prisma.crmCurrency.findMany({ orderBy: { name: 'asc' } }), loadRates()]) // rt: for the ALL view, every currency converted into the base one
     data.ratesMissing = rt.missing
     data.currencies = currencies.map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, isDefault: c.isDefault, placement: c.placement }))
 
@@ -290,6 +303,7 @@ export async function getDashboardMetrics(params = {}) {
     })
 
     // the money waiting: the biggest unpaid / overdue invoices and open estimates, shown as coloured tiles on the Overview
+    jobs.push((async () => {
     if (money && (can('invoices') || can('estimates'))) {
         try {
             const items = []
@@ -317,15 +331,20 @@ export async function getDashboardMetrics(params = {}) {
             data.hot = top.map((x) => ({ ...x, client: names[x.clientId] || '' }))
         } catch (e) { data.hot = [] }
     }
+    })())
 
     // the same figures for the period just before, so the charts can draw it as a comparison line
+    jobs.push((async () => {
     if (!params.noPrev) {
         try {
             const len = R.until - R.from
             const pf = new Date(+R.from - len), pt = new Date(+R.from - 86400000)
-            const p = await getDashboardMetrics({ range: 'custom', from: iso(pf), to: iso(pt), noPrev: true })
+            const p = await swr(`dashboard|prev|${money ? 1 : 0}|${iso(pf)}|${iso(pt)}|${['invoices', 'expenses', 'customers', 'leads', 'projects', 'tasks', 'tickets', 'estimates', 'payments'].map((f) => (can(f) ? 1 : 0)).join('')}`, () => buildDashboard({ range: 'custom', from: iso(pf), to: iso(pt), noPrev: true }, authority), { fresh: 300000 })
             if (p) data.prev = { months: p.months, label: `${iso(pf)} → ${iso(pt)}`, invoices: p.invoices, expenses: p.expenses, clients: p.clients, leads: p.leads, projects: p.projects, tasks: p.tasks, tickets: p.tickets, estimates: p.estimates }
         } catch { /* comparison is optional */ }
     }
+    })())
+    await Promise.all(jobs)
+    data.sections.sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b))
     return data
 }

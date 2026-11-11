@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSessionUser } from '@/store/authStore'
 import { Link, useSearchParams } from 'react-router'
-import { TbSearch, TbWand } from 'react-icons/tb'
+import { TbSearch, TbWand, TbEye } from 'react-icons/tb'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Segment from '@/components/ui/Segment'
 import VisualEditor from './VisualEditor'
@@ -306,7 +306,7 @@ const Log = () => {
                                 <Td className="max-w-[320px] truncate">{m.subject}</Td>
                                 <Td className="text-gray-500">{m.template}</Td>
                                 <Td>{m.status === 'sent' ? <Tag className="bg-emerald-100 text-emerald-700">{tr("Sent")}</Tag> : <span title={m.error}><Tag className="bg-red-100 text-red-700">{tr("Failed")}</Tag></span>}</Td>
-                                <Td className="whitespace-nowrap text-xs">{m.status !== 'sent' || !m.track?.tracked ? <span className="text-gray-300">—</span> : m.track.opens > 0 ? <span className="font-semibold text-emerald-600" title={m.track.clicks > 0 ? `${tr("Link clicked")} · ${m.track.clicks}×` : undefined}>{viewedOn(m.track.firstOpenAt)}{m.track.opens > 1 ? ` · ${m.track.opens}×` : ''}{m.track.clicks > 0 ? ' 🔗' : ''}</span> : <span className="text-gray-400">{tr("Not viewed yet")}</span>}</Td>
+                                <Td className="whitespace-nowrap text-xs">{m.status !== 'sent' || !m.track?.tracked ? <span className="text-gray-300">—</span> : m.track.opens > 0 ? <span className="inline-flex items-center gap-1 font-semibold text-emerald-600" title={m.track.clicks > 0 ? `${tr("Link clicked")} · ${m.track.clicks}×` : undefined}>{m.track.opens > 1 && <b>{m.track.opens}</b>}<TbEye />{viewedOn(m.track.firstOpenAt)}{m.track.clicks > 0 ? ' 🔗' : ''}</span> : <span className="text-gray-400">{tr("Not viewed yet")}</span>}</Td>
                             </Tr>
                         ))}
                     </TBody>

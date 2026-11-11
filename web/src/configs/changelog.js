@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.231.0',
+        date: '2026-11-11',
+        title: 'Faster dashboards, cleaner mails',
+        items: [
+            'The Business dashboard and the Team dashboard are much faster: their parts are now computed at the same time instead of one after the other, the comparison with the previous period is no longer computed from scratch each time, and the figures are kept for a few minutes (5 for the business dashboard, 45 seconds for the team one) and renewed in the background. Opening the page again shows the last figures at once.',
+            'The Team dashboard asks for fresh figures right after you act (finish a task, set goals or shortcuts).',
+            'Mails to leads and customers go out with no personal sender name: the subject, the text as written and the company signature from Settings.',
+            'A mail viewed several times shows the number of views before the eye icon.',
+            'Save draft now saves the draft and closes it.',
+        ],
+    },
+    {
         version: '0.230.1',
         date: '2026-11-11',
         title: 'Company signature on mails, new Viewed format',

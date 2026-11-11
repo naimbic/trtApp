@@ -215,12 +215,9 @@ const BusinessDashboard = () => {
     useEffect(() => {
         if (!ready) return undefined
         let alive = true
-        setLoading(true)
         const qs = new URLSearchParams({ range, ...(range === 'custom' ? { from, to } : {}) })
-        fetch(`/api/crm/dashboard?${qs}`, { credentials: 'include' })
-            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(tr("Dashboard failed ({status})", { status: r.status })))))
-            .then((d) => {
-                if (!alive) return
+        const ck = `trt.dash.${qs}`
+        const apply = (d) => {
                 setData(d)
                 setError(null)
                 const used = Object.keys(d.invoices?.byCurrency || {})
@@ -235,6 +232,17 @@ const BusinessDashboard = () => {
                     if (several) setCurrency('all')
                     else { const def = d.currencies.find((c) => c.isDefault && used.includes(c.id)) || d.currencies.find((c) => used.includes(c.id)); setCurrency(def?.id || used[0] || null) }
                 }
+        }
+        // the last figures of this period show at once (this tab), the fresh ones replace them when they arrive
+        let shown = false
+        try { const c = JSON.parse(sessionStorage.getItem(ck) || 'null'); if (c?.currencies) { apply(c); shown = true } } catch { /* no saved copy */ }
+        setLoading(!shown)
+        fetch(`/api/crm/dashboard?${qs}`, { credentials: 'include' })
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(tr("Dashboard failed ({status})", { status: r.status })))))
+            .then((d) => {
+                if (!alive) return
+                apply(d)
+                try { sessionStorage.setItem(ck, JSON.stringify(d)) } catch { /* too big or blocked: no copy */ }
             })
             .catch((e) => alive && setError(e.message))
             .finally(() => alive && setLoading(false))

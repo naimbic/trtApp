@@ -37,7 +37,7 @@ const TeamDashboard = () => {
     const [d, setD] = useState(null)
     const [error, setError] = useState('')
     const [days, setDays] = useState(30)
-    const load = useCallback(() => api(`/api/crm/team-dashboard?days=${days}`).then((r) => { setD(r); setError('') }).catch((e) => setError(e.message)), [days])
+    const load = useCallback((fresh) => api(`/api/crm/team-dashboard?days=${days}${fresh === true ? '&fresh=1' : ''}`).then((r) => { setD(r); setError('') }).catch((e) => setError(e.message)), [days])
     useEffect(() => { load(); const t = setInterval(() => { if (!document.hidden) load() }, 60000); return () => clearInterval(t) }, [load])
 
     if (error && !d) return <Container><div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div></Container>
@@ -46,7 +46,7 @@ const TeamDashboard = () => {
     const { tasks, leads, issues, tickets, agenda, activity, online, can } = d
     const first = (d.me.name || '').split(' ')[0]
     const complete = async (t) => {
-        try { await api('/api/crm/work/tasks/reorder', { method: 'POST', body: { status: 5, ids: [t.id] } }); notify('success', tr('Task completed')); load() } catch (e) { notify('danger', e.message) }
+        try { await api('/api/crm/work/tasks/reorder', { method: 'POST', body: { status: 5, ids: [t.id] } }); notify('success', tr('Task completed')); load(true) } catch (e) { notify('danger', e.message) }
     }
     // due dates are whole days (UTC midnight): compare the day, not the hour
     const when = (t) => { if (!t.dueDate) return ''; const day = String(t.dueDate).slice(0, 10), now = new Date().toISOString().slice(0, 10); return day < now ? tr('Overdue') : day === now ? tr('Today') : dayjs(day).format('DD MMM') }
@@ -68,7 +68,7 @@ const TeamDashboard = () => {
                 </div>
             </div>
 
-            <Shortcuts d={d} reload={load} />
+            <Shortcuts d={d} reload={() => load(true)} />
 
             <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
                 {tasks && <StatCard icon={<TbChecklist />} label={tr('My open tasks')} value={tasks.mine.open} sub={tr('{n} done this week', { n: tasks.mine.doneWeek })} tone="blue" to="/crm/my-tasks" />}
@@ -80,7 +80,7 @@ const TeamDashboard = () => {
             </div>
 
 
-            {perf && <Performance perf={perf} days={days} setDays={setDays} leadTrend={d.leadTrend} meId={d.me.id} reload={load} />}
+            {perf && <Performance perf={perf} days={days} setDays={setDays} leadTrend={d.leadTrend} meId={d.me.id} reload={() => load(true)} />}
 
             <div className="grid gap-4 xl:grid-cols-3">
                 <div className="flex min-w-0 flex-col gap-4 xl:col-span-2">

@@ -28,6 +28,15 @@ async function closedLead(a, relType, relId) {
     if (l?.clientId) throw fail('This lead already became a customer, only an admin can change it', 403)
 }
 
+/** The ids of the converted leads among the leads these tasks belong to (nothing for an admin): their tasks cannot be moved or finished. */
+async function closedLeadIds(a, tasks) {
+    if (a.authority.includes('crm.admin')) return new Set()
+    const ids = [...new Set(tasks.filter((t) => t.relType === 'lead' && oid(t.relId)).map((t) => t.relId))]
+    if (!ids.length) return new Set()
+    return new Set((await prisma.crmLead.findMany({ where: { id: { in: ids }, clientId: { not: null } }, select: { id: true } })).map((l) => l.id))
+}
+const isShut = (set, t) => t.relType === 'lead' && set.has(t.relId)
+
 async function access(session) {
     const authority = session.user.authority || []
     const scope = viewScope(authority, 'tasks')
@@ -168,7 +177,8 @@ export async function listTasks(p = {}) {
     const counts = {}
     for (const t of tasks) counts[t.status] = (counts[t.status] || 0) + 1
     const ex = await extras(tasks)
-    return { list: tasks.map((t) => card(t, people, rels, { ...ex(t), canFinish: mayAct(a, t), assignedToMe: !!a.staffId && (t.assignees || []).some((x) => x.staffId === a.staffId) })), counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
+    const shut = await closedLeadIds(a, tasks)
+    return { list: tasks.map((t) => card(t, people, rels, { ...ex(t), canFinish: mayAct(a, t) && !isShut(shut, t), closed: isShut(shut, t), assignedToMe: !!a.staffId && (t.assignees || []).some((x) => x.staffId === a.staffId) })), counts, can: { create: a.can('create'), edit: a.can('edit'), delete: a.can('delete') } }
 }
 
 async function loadOne(id, a) {
@@ -193,7 +203,7 @@ export async function getTask(id) {
     const running = timers.find((x) => !x.endTime && x.staff?.id === a.staffId) || null
     return {
         task: {
-            ...card({ ...t, checklistItems: t.checklistItems, _count: { comments: t.comments.length } }, people, rels, { ...(await extras([t]))(t), canFinish: mayAct(a, t), assignedToMe: !!a.staffId && (t.assignees || []).some((x) => x.staffId === a.staffId) }),
+            ...card({ ...t, checklistItems: t.checklistItems, _count: { comments: t.comments.length } }, people, rels, { ...(await extras([t]))(t), canFinish: mayAct(a, t) && !isShut(await closedLeadIds(a, [t]), t), assignedToMe: !!a.staffId && (t.assignees || []).some((x) => x.staffId === a.staffId) }),
             description: t.description || '', hourlyRate: t.hourlyRate, isPublic: t.isPublic, visibleToClient: t.visibleToClient, billed: t.billed,
             recurringType: t.recurringType, repeatEvery: t.repeatEvery, totalCycles: t.totalCycles, addedBy: people[t.addedFrom] || null,
             followers: t.followers.map((x) => people[x.staffId]).filter(Boolean),
@@ -368,15 +378,16 @@ export async function reorderTasks(status, ids) {
         for (const [i, id] of list.entries()) await prisma.crmTask.updateMany({ where: { AND: [{ id }, where] }, data: { kanbanOrder: i } })
         return { success: true, denied: 0, blocked: 0 }
     }
-    let denied = 0, blocked = 0
+    let denied = 0, blocked = 0, shut = false
     for (const [i, id] of ids.filter(oid).entries()) {
         const t = await prisma.crmTask.findFirst({ where: { AND: [{ id }, where] }, select: { status: true, dateFinished: true, addedFrom: true, relType: true, relId: true, assignees: { select: { staffId: true } } } })
         if (!t) continue
         if (t.status !== st && !mayAct(a, t)) { denied++; continue }
-        if (t.status !== st) { try { await closedLead(a, t.relType, t.relId) } catch { denied++; continue } } // a task of a converted lead stays where it is
+        if (t.status !== st) { try { await closedLead(a, t.relType, t.relId) } catch { shut = true; continue } } // a task of a converted lead stays where it is
         if (st === COMPLETE && t.status !== COMPLETE && (await openChildren(id))) { blocked++; continue }
         await prisma.crmTask.update({ where: { id }, data: { kanbanOrder: i, ...(t.status !== st ? { status: st, dateFinished: st === COMPLETE ? new Date() : null } : {}) } })
     }
+    if (shut) throw fail('This lead already became a customer, only an admin can change it', 403) // the board puts the card back
     if (denied && denied === ids.filter(oid).length) throw fail(NOT_YOURS, 403)
     if (blocked && blocked === ids.filter(oid).length) throw fail('Finish the subtasks first', 409)
     return { success: true, denied, blocked }

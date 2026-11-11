@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.228.2',
+        date: '2026-11-11',
+        title: 'A task of a converted lead can no longer be dragged',
+        items: [
+            'On the Tasks board and lists, the tasks of a lead that already became a customer cannot be dragged to another column by anyone but an admin. If someone still tries, the server refuses and the card goes back, instead of looking moved until the next refresh.',
+        ],
+    },
+    {
         version: '0.228.1',
         date: '2026-11-11',
         title: 'Tasks of a converted lead are closed too',

@@ -273,6 +273,7 @@ export async function reorderLeads(statusId, ids) {
         const l = await prisma.crmLead.findFirst({ where: { AND: [{ id }, visible(a)] } })
         if (!l) continue
         const moved = l.statusId !== statusId
+        if (moved) ensureOpen(a, l) // a converted lead stays where it is (the board puts the card back)
         if (moved && !mayEdit(a, l)) continue
         await prisma.crmLead.update({ where: { id }, data: { leadOrder: i, ...(moved ? { statusId, lastStatusChange: new Date() } : {}) } })
         if (moved) await logStatus(id, a, l.statusId, statusId)

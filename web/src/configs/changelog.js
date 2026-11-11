@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.228.3',
+        date: '2026-11-11',
+        title: 'Converted leads cannot be dragged on the Leads board',
+        items: [
+            'On the Leads board, a lead that already became a customer can no longer be dragged to another stage, moved from its menu or edited from the card menu by anyone but an admin.',
+        ],
+    },
+    {
         version: '0.228.2',
         date: '2026-11-11',
         title: 'A task of a converted lead can no longer be dragged',

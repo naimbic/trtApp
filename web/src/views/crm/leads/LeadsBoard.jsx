@@ -148,11 +148,11 @@ const LeadsBoard = () => {
                     loading={loading}
                     emptyText={tr("No leads")}
                     money={(n) => `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n || 0)}${data.currency ? ` ${data.currency}` : ''}`}
-                    canDrag={() => show === ''}
+                    canDrag={(it) => show === '' && !it.closed}
                     onOpen={(it) => open(it.id)}
                     onAdd={(c) => setDrawer({ open: true, id: null, preset: { statusId: c.id }, k: 0 })}
-                    onMoveTo={show === '' ? moveTo : undefined}
-                    actions={(it) => (show === '' ? [
+                    onMoveTo={show === '' ? (it, to) => { if (it.closed) return notify('warning', tr('This lead already became a customer, only an admin can change it')); moveTo(it, to) } : undefined}
+                    actions={(it) => (show === '' && !it.closed ? [
                         { label: tr("Assign to"), icon: <TbUserPlus />, sub: staffOptions.map((m) => ({ label: m.label, checked: it.team?.some((x) => x.id === m.value), onClick: () => patch(it, (l) => ({ assignedIds: (l.assignedIds || []).includes(m.value) ? l.assignedIds.filter((x) => x !== m.value) : [...(l.assignedIds || []), m.value] }), tr("Team changed")) })) },
                         { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, color: m.color, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },
                         { label: tr("Convert to client"), icon: <TbUserCheck />, onClick: () => setAsk(it) },
@@ -165,7 +165,7 @@ const LeadsBoard = () => {
                     }}
                     columns={data.statuses.map((c) => ({
                         id: c.id, name: c.name, ...(c.id !== 'none' ? { href: `/crm/status/leads/${c.id}`, hrefTitle: tr("Open the page of this status") } : {}), color: c.color, count: c.count,
-                        items: c.leads.map((l) => ({ id: l.id, href: `/crm/leads/${l.id}`, title: l.company || l.name, sub: l.company ? l.name : '', amount: l.value || undefined, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), todo: l.doText || '', comments: l.notes || 0, label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
+                        items: c.leads.map((l) => ({ id: l.id, href: `/crm/leads/${l.id}`, title: l.company || l.name, sub: l.company ? l.name : '', amount: l.value || undefined, date: dayjs(l.lastContact || l.createdAt).format('DD MMM'), todo: l.doText || '', closed: !!l.closed, comments: l.notes || 0, label: l.source || l.email || '', labelColor: l.source ? l.sourceColor : null, source: l.sourceId, kicker: `${tr("Lead")} · ${l.company || l.name}`,
                             fields: [{ label: tr("Email"), value: l.email }, { label: tr("Phone"), value: l.phone }, { label: tr("Source"), value: l.source }, { label: tr("Owner"), value: l.assigned?.name }],
                             team: l.assignees || [],
                             people: l.assignees?.length ? <People list={l.assignees} size={26} /> : <span className="text-[11px] opacity-70">{tr("Unassigned")}</span> })),

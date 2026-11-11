@@ -50,6 +50,7 @@ async function staffMap(ids) {
     return Object.fromEntries(list.map((s) => [s.id, { id: s.id, name: staffName(s), image: realPicture(s.profileImage) }]))
 }
 
+const lk = (a, c) => ({ ...c, closed: !!c.clientId && !a.admin }) // a converted lead is closed to everyone but admins
 const card = (l, people, status, source) => ({
     id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title, doText: l.doText || '', notes: l._notes || 0,
     statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null, sourceColor: source?.color || null,
@@ -103,14 +104,14 @@ export async function listLeads(p = {}) {
         const rows = await prisma.crmLead.findMany({ where, orderBy: [{ createdAt: 'desc' }], take: Math.min(Math.max(parseInt(p.limit, 10) || 300, 1), 1000) })
         await attachNotes(rows)
         const people = await staffMap(rows.flatMap(teamOf))
-        return { list: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])), total: await prisma.crmLead.count({ where }), can, statuses: statuses.map((s) => ({ id: s.id, name: s.name, color: s.color })), sources: sources.map((s) => ({ id: s.id, name: s.name, color: s.color || null })) }
+        return { list: rows.map((l) => lk(a, card(l, people, sMap[l.statusId], srcMap[l.sourceId]))), total: await prisma.crmLead.count({ where }), can, statuses: statuses.map((s) => ({ id: s.id, name: s.name, color: s.color })), sources: sources.map((s) => ({ id: s.id, name: s.name, color: s.color || null })) }
     }
     // "load more" for one column
     if (oid(p.statusId) && p.offset) {
         const rows = await prisma.crmLead.findMany({ where: { AND: [...and, { statusId: p.statusId }] }, orderBy, skip: parseInt(p.offset, 10) || 0, take: limit })
         await attachNotes(rows)
         const people = await staffMap(rows.flatMap(teamOf))
-        return { leads: rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])) }
+        return { leads: rows.map((l) => lk(a, card(l, people, sMap[l.statusId], srcMap[l.sourceId]))) }
     }
     const cols = []
     for (const s of statuses) {
@@ -123,8 +124,8 @@ export async function listLeads(p = {}) {
     const orphans = await prisma.crmLead.findMany({ where: orphan, take: limit, orderBy })
     await attachNotes([...cols.flatMap((c) => c.rows), ...orphans])
     const people = await staffMap([...cols.flatMap((c) => c.rows), ...orphans].flatMap(teamOf))
-    const out = cols.map((c) => ({ id: c.id, name: c.name, color: c.color, count: c.count, leads: c.rows.map((l) => card(l, people, sMap[l.statusId], srcMap[l.sourceId])) }))
-    if (orphans.length) out.unshift({ id: 'none', name: 'No status', color: '#94a3b8', count: orphans.length, leads: orphans.map((l) => card(l, people, null, srcMap[l.sourceId])) })
+    const out = cols.map((c) => ({ id: c.id, name: c.name, color: c.color, count: c.count, leads: c.rows.map((l) => lk(a, card(l, people, sMap[l.statusId], srcMap[l.sourceId]))) }))
+    if (orphans.length) out.unshift({ id: 'none', name: 'No status', color: '#94a3b8', count: orphans.length, leads: orphans.map((l) => lk(a, card(l, people, null, srcMap[l.sourceId]))) })
     const totals = { lost: await prisma.crmLead.count({ where: { AND: [visible(a), { lost: true }] } }), junk: await prisma.crmLead.count({ where: { AND: [visible(a), { junk: true }] } }), converted: await prisma.crmLead.count({ where: { AND: [visible(a), { clientId: { not: null } }] } }) }
     // the money side: what the open leads are worth, what is likely to be won, what is expected this month (the filters of the page apply)
     const money = show === '' ? await prisma.crmLead.findMany({ where: { AND: [...and, { value: { gt: 0 } }] }, select: { value: true, probability: true, statusId: true, expectedClose: true, clientId: true } }) : []

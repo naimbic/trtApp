@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.233.5',
+        date: '2026-11-12',
+        title: 'Meeting defaults, rich text in meetings, files from the file manager in reports',
+        items: [
+            'A new meeting starts Confirmed, visible to everyone in the team, with a reminder 30 minutes before (all three can be changed). This is the same in the Calendar and in the Meetings tab of a lead or a customer.',
+            'The Description of a meeting and the message to the person who asked (when accepting, declining or changing a request) are now rich-text editors, not plain boxes. The formatted text is kept in the Calendar, the invitation emails and the answers sent to the person who asked.',
+            'In a report or strategy popup, the comment box has a new "From the file manager" button to attach files that were already uploaded, like the Files section.',
+        ],
+    },
+    {
         version: '0.233.4',
         date: '2026-11-12',
         title: 'Record payment starts with the assigned bank, and is green',

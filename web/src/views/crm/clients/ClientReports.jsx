@@ -42,6 +42,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
     const [link, setLink] = useState({ url: '', title: '' })
     const [linkOpen, setLinkOpen] = useState(false)
     const [pick, setPick] = useState(false)
+    const [pickC, setPickC] = useState(false) // the file manager for a comment
     const can_ = useCan()
     const canBrowse = can_('file_manager', 'view')
     const isNew = !!report && !report.id
@@ -195,7 +196,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                                 {can.edit && (
                                     <div className="mt-3 space-y-2">
                                         <ReplyingTo name={replyTo?.name} onCancel={() => setReplyTo(null)} />
-                                        <CommentAttach value={extras} onChange={setExtras} uploadFile={(f) => { const fd = new FormData(); fd.append('file', f); return upload('/api/crm/client-reports/upload', fd) }} onError={(m) => notify('danger', m)} t={tr}>
+                                        <CommentAttach value={extras} onChange={setExtras} onBrowse={canBrowse ? () => setPickC(true) : null} uploadFile={(f) => { const fd = new FormData(); fd.append('file', f); return upload('/api/crm/client-reports/upload', fd) }} onError={(m) => notify('danger', m)} t={tr}>
                                             <RichEditor minHeight={80} extraMentions={data.contacts || []} placeholder={tr('Write a comment — use @ to mention a colleague')} value={text} onChange={setText} />
                                         </CommentAttach>
                                         <div className="flex items-center justify-between gap-2"><label className="flex items-center gap-2 text-xs text-gray-500"><Switcher checked={internal} onChange={setInternal} />{tr('Team only')}</label><Button size="sm" variant="solid" loading={busy === 'say'} onClick={say}>{tr('Send')}</Button></div>
@@ -212,6 +213,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                     <div className="ms-auto flex gap-2"><Button onClick={onClose}>{readOnly ? tr('Close') : tr('Cancel')}</Button>{!readOnly && <Button variant="solid" loading={busy === 'save'} onClick={save}>{isNew ? tr('Create') : tr('Save changes')}</Button>}</div>
                 </div>
             </Dialog>
+            <MediaPicker open={pickC} kind="" multiple picked={(extras.attachments || []).map((x) => x.url)} onClose={() => setPickC(false)} onPick={(m) => setExtras((x) => (x.attachments.some((a) => a.url === m.url) ? x : { ...x, attachments: [...x.attachments, { url: m.url, name: m.name, mime: m.mime || '', size: m.size || 0, kind: m.kind || 'file' }].slice(0, 10) }))} />
             <MediaPicker open={pick} kind="" multiple picked={v.attachments.map((x) => x.url)} onClose={() => setPick(false)} onPick={pickFile} />
             <ConfirmDialog isOpen={del} type="danger" title={tr('Delete this?')} confirmText={tr('Delete')} onClose={() => setDel(false)} onRequestClose={() => setDel(false)} onCancel={() => setDel(false)} onConfirm={remove}><p>{tr('It is removed for good.')}</p></ConfirmDialog>
         </>

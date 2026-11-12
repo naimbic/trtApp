@@ -8,7 +8,7 @@ import { buildIcs } from '@/lib/crm/ics'
 import { deliver, getOptions, setOptions } from '@/lib/crm/mailer'
 import crypto from 'node:crypto'
 import { emit } from '@/lib/crm/webhooks'
-import { storeRich } from '@/lib/crm/richText'
+import { storeRich, cleanHtml } from '@/lib/crm/richText'
 
 // Calendar layers shown next to the user's own events (each gated by the matching Perfex feature).
 export const LAYERS = ['events', 'reminders', 'tasks', 'invoices', 'projects', 'estimates', 'proposals', 'contracts']
@@ -234,7 +234,7 @@ const clean = (b) => {
     if (badEmail) throw Object.assign(new Error(`"${badEmail}" is not a valid email address`), { status: 400 })
     const remind = b.reminderBefore === '' || b.reminderBefore == null ? null : Math.max(0, Math.round(Number(b.reminderBefore)))
     return {
-        title, description: b.description || null, start, end, color: NAMES.includes(b.color) ? b.color : 'blue', isPublic: b.isPublic === undefined || b.isPublic === null ? true : !!b.isPublic, // visible to the whole team unless switched off
+        title, description: storeRich(String(b.description || ''), 20000), start, end, color: NAMES.includes(b.color) ? b.color : 'blue', isPublic: b.isPublic === undefined || b.isPublic === null ? true : !!b.isPublic, // visible to the whole team unless switched off
         allDay: !!b.allDay,
         location: String(b.location || '').trim() || null,
         meetingUrl: meetingUrl || null,
@@ -266,7 +266,7 @@ export async function invite(ev, { inviteClient, update }) {
     const o = await getOptions(['companyname'])
     const when = new Date(ev.start).toLocaleString('en-GB', { dateStyle: 'full', timeStyle: ev.allDay ? undefined : 'short' })
     const esc = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])
-    const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#374151"><h2 style="margin:0 0 12px;color:#111827">${esc(ev.title)}</h2><p><strong>${esc(when)}</strong></p>${ev.location ? `<p>📍 ${esc(ev.location)}</p>` : ''}${ev.meetingUrl ? `<p><a href="${esc(ev.meetingUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Join the meeting</a></p>` : ''}${ev.description ? `<p style="white-space:pre-line">${esc(ev.description)}</p>` : ''}<p style="color:#6b7280;font-size:13px">The event is attached, open it to add it to your calendar.<br/>${esc(o('companyname'))}</p></div>`
+    const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#374151"><h2 style="margin:0 0 12px;color:#111827">${esc(ev.title)}</h2><p><strong>${esc(when)}</strong></p>${ev.location ? `<p>📍 ${esc(ev.location)}</p>` : ''}${ev.meetingUrl ? `<p><a href="${esc(ev.meetingUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Join the meeting</a></p>` : ''}${ev.description ? `<div>${cleanHtml(ev.description)}</div>` : ''}<p style="color:#6b7280;font-size:13px">The event is attached, open it to add it to your calendar.<br/>${esc(o('companyname'))}</p></div>`
     const res = await deliver({ to: [...to].join(', '), subject: `${update ? 'Updated invitation' : 'Invitation'}: ${ev.title}`, html, attachments: [{ filename: 'event.ics', content: buildIcs([ev]), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }] })
     if (!res.sent) throw Object.assign(new Error(`Event saved, but the invitation could not be sent: ${res.error}`), { status: 502 })
     return { sent: to.size }

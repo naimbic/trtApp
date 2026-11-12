@@ -69,7 +69,7 @@ const EventTip = ({ ev, timeText }) => {
             <Row icon={TbUsers}>{[...(p.attendees || []).map((a) => a.name), ...(p.attendeeEmails || [])].filter(Boolean).join(', ')}</Row>
             <Row icon={TbMapPin}>{p.location}</Row>
             <Row icon={TbVideo}>{p.meetingUrl && tr("Video meeting · click to open and join")}</Row>
-            {p.description && <div className="line-clamp-3 text-xs opacity-80">{p.description}</div>}
+            {p.description && <div className="line-clamp-3 text-xs opacity-80">{String(p.description).replace(/<\/(p|div|li)>/gi, ' ').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')}</div>}
             <Row icon={TbUser}>{p.owner && tr("Organiser: {owner}", { owner: p.owner })}</Row>
             <div className="text-xs opacity-60">{p.canEdit === false ? tr("Click to view") : tr("Click to edit")}</div>
         </div>

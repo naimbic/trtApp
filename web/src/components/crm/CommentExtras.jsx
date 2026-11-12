@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { TbPaperclip, TbLink, TbTrash, TbPlus, TbPhoto } from 'react-icons/tb'
+import { TbPaperclip, TbLink, TbTrash, TbPlus, TbPhoto, TbFolderSymlink } from 'react-icons/tb'
 
 /* Files, screenshots and links on a message (a request or a report): used by the team and by the client area.
    `t` is the translate function of the side that shows it. */
@@ -24,7 +24,7 @@ export const CommentFiles = ({ attachments = [], links = [] }) => {
 
 /** The tools to write a message with files: attach (or paste a screenshot, or drop files on the box), add a link, and what is already attached.
  *  value: { attachments, links }; uploadFile(file) -> the stored file; onError(message). */
-export const CommentAttach = ({ value, onChange, uploadFile, onError, t, disabled = false, children }) => {
+export const CommentAttach = ({ value, onChange, uploadFile, onError, t, disabled = false, onBrowse = null, children }) => { // onBrowse: opens the file manager to pick files already uploaded
     const fileRef = useRef(null)
     const [busy, setBusy] = useState(false)
     const [adding, setAdding] = useState(false)
@@ -54,6 +54,7 @@ export const CommentAttach = ({ value, onChange, uploadFile, onError, t, disable
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <input ref={fileRef} type="file" multiple hidden onChange={(e) => add(e.target.files)} />
                 <button type="button" disabled={disabled || busy} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:border-primary hover:text-primary disabled:opacity-50 dark:border-gray-600 dark:text-gray-300"><TbPaperclip className="text-base" />{busy ? t('Uploading…') : t('Attach files')}</button>
+                {onBrowse && <button type="button" disabled={disabled} onClick={onBrowse} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300"><TbFolderSymlink />{t('From the file manager')}</button>}
                 <button type="button" disabled={disabled} onClick={() => setAdding((x) => !x)} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:border-primary hover:text-primary disabled:opacity-50 dark:border-gray-600 dark:text-gray-300"><TbLink className="text-base" />{t('Add a link')}</button>
                 <span className="hidden items-center gap-1 text-[11px] text-gray-400 sm:inline-flex"><TbPhoto />{t('You can also paste a screenshot or drop files here')}</span>
             </div>

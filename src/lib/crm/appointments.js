@@ -11,6 +11,7 @@ const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const clip = (v, n) => String(v ?? '').trim().slice(0, n)
+const noteHtml = (v, n) => storeRich(String(v ?? '').trim().slice(0, n), n) || '' // the message of the team is written in the editor: formatted text, made safe
 const iso = (v) => (v ? new Date(v).toISOString() : null)
 const shape = (e) => ({ id: e.id, status: e.status || 'confirmed', title: e.title, start: iso(e.start), end: iso(e.end), meeting_url: e.meetingUrl || null, room: e.externalRef || null, source: e.source || null, guests: Array.isArray(e.guests) ? e.guests : [], decided_at: iso(e.decidedAt) })
 
@@ -89,12 +90,12 @@ async function decideCore(e, { accept, staffId, notify, message }) {
     emit(accept ? 'appointment.accepted' : 'appointment.declined', shape(row))
     const emailed = []
     if (notify !== false) {
-        const note = clip(message, 600)
+        const note = noteHtml(message, 4000)
         const when = new Date(e.start).toUTCString().replace(' GMT', ' UTC')
         for (const g of Array.isArray(e.guests) ? e.guests : []) {
             if (!g.email) continue
             const subject = accept ? `Appointment confirmed: ${e.title}` : `Appointment request: ${e.title}`
-            const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${accept ? `Your appointment is <strong>confirmed</strong> for ${escapeHtml(when)}.` : 'We are sorry, we cannot take this appointment at that time.'}</p>${accept && e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}${note ? `<p>${escapeHtml(note).replace(/\n/g, '<br>')}</p>` : ''}`
+            const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${accept ? `Your appointment is <strong>confirmed</strong> for ${escapeHtml(when)}.` : 'We are sorry, we cannot take this appointment at that time.'}</p>${accept && e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}${note ? `<p>${note}</p>` : ''}`
             const r = await deliver({ to: g.email, subject, html })
             if (r.sent) emailed.push(g.email)
         }
@@ -104,13 +105,13 @@ async function decideCore(e, { accept, staffId, notify, message }) {
 
 /** An email to the people who asked for an appointment (its guests): what changed, the time, the link, and a note from the team. Returns who was emailed. */
 export async function tellRequester(e, { kind = 'updated', message = '' } = {}) {
-    const note = clip(message, 1000)
+    const note = noteHtml(message, 4000)
     const when = new Date(e.start).toUTCString().replace(' GMT', ' UTC')
     const lines = { updated: `Your appointment <strong>${escapeHtml(e.title)}</strong> has been changed. New time: <strong>${escapeHtml(when)}</strong>.`, note: `A message about your appointment <strong>${escapeHtml(e.title)}</strong> (${escapeHtml(when)}).` }
     const sent = []
     for (const g of Array.isArray(e.guests) ? e.guests : []) {
         if (!g.email) continue
-        const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${lines[kind] || lines.note}</p>${note ? `<blockquote style="margin:8px 0;padding:6px 12px;border-left:3px solid #ccc">${escapeHtml(note).replace(/\n/g, '<br>')}</blockquote>` : ''}${e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}`
+        const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${lines[kind] || lines.note}</p>${note ? `<blockquote style="margin:8px 0;padding:6px 12px;border-left:3px solid #ccc">${note}</blockquote>` : ''}${e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}`
         const r = await deliver({ to: g.email, subject: kind === 'updated' ? `Appointment changed: ${e.title}` : `About your appointment: ${e.title}`, html })
         if (r.sent) sent.push(g.email)
     }

@@ -216,7 +216,7 @@ export async function addComment(clientId, id, body = {}) {
     await clientOf(g, clientId)
     const rep = await reportOf(clientId, id)
     const text = storeRich(String(body.body || ''), 12000) || ''
-    const ex = extrasIn(body)
+    const ex = { ...extrasIn(body), attachments: await cleanFiles(body.attachments, [], g.authority) } // files uploaded here, or picked from the file manager
     if (!text && !ex.attachments.length && !ex.links.length) throw fail('Write a message first')
     const reply = oid(body.replyToId) && (await prisma.crmClientReportComment.findFirst({ where: { id: body.replyToId, reportId: id } }))
     const row = await prisma.crmClientReportComment.create({ data: { reportId: id, authorKind: 'staff', authorId: g.staffId || undefined, authorName: g.name, body: text, internal: !!body.internal, replyToId: reply ? reply.id : null, ...ex } })

@@ -1,3 +1,4 @@
+import { plainText } from '@/lib/crm/richText'
 /** Minimal iCalendar (RFC 5545) writer, enough for Google Calendar, Apple Calendar and Outlook. */
 const esc = (s) => String(s ?? '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\;')
 const utc = (d) => new Date(d).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
@@ -9,7 +10,7 @@ export function buildIcs(events, { name = 'CRM', domain = 'crm' } = {}) {
     for (const e of events) {
         const start = new Date(e.start)
         const end = e.end ? new Date(e.end) : new Date(start.getTime() + 3600000)
-        const desc = [e.description, e.meetingUrl && `Meeting link: ${e.meetingUrl}`].filter(Boolean).join('\n\n')
+        const desc = [e.description && plainText(e.description), e.meetingUrl && `Meeting link: ${e.meetingUrl}`].filter(Boolean).join('\n\n')
         lines.push('BEGIN:VEVENT', `UID:${e.id}@${domain}`, `DTSTAMP:${utc(e.updatedAt || new Date())}`)
         if (e.allDay) lines.push(`DTSTART;VALUE=DATE:${day(start)}`, `DTEND;VALUE=DATE:${day(new Date(end.getTime() + 86400000))}`)
         else lines.push(`DTSTART:${utc(start)}`, `DTEND:${utc(end)}`)

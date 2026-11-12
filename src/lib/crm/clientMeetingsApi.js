@@ -34,11 +34,11 @@ export async function getClientMeetings(id) {
     const leads = await prisma.crmLead.findMany({ where: { clientId: id }, select: { id: true } })
     const leadIds = leads.map((l) => l.id)
     const [events, staffRows] = await Promise.all([
-        prisma.crmEvent.findMany({ where: { OR: [{ clientId: id }, ...(leadIds.length ? [{ leadId: { in: leadIds } }] : [])], NOT: { status: 'declined' } }, orderBy: { start: 'desc' }, take: 300 }),
+        prisma.crmEvent.findMany({ where: { OR: [{ clientId: id }, ...(leadIds.length ? [{ leadId: { in: leadIds } }] : [])] }, orderBy: { start: 'desc' }, take: 300 }),
         prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true }, orderBy: { firstName: 'asc' } }),
     ])
     const people = Object.fromEntries(staffRows.map((s) => [s.id, { id: s.id, name: staffName(s), image: s.profileImage || null }]))
-    const meetings = events.map((e) => {
+    const meetings = events.filter((e) => e.status !== 'declined').map((e) => { // older events have no status at all, so a database filter would drop them
         const old = !!e.leadId // a meeting held while this was still a lead: shown, not changed here
         return {
             id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '',
@@ -81,5 +81,5 @@ export async function deleteClientMeeting(id, eventId) {
 
 /** How many meetings a client has (the small number on its tab). */
 export async function countClientMeetings(id) {
-    return prisma.crmEvent.count({ where: { clientId: id, NOT: { status: 'declined' } } }).catch(() => 0)
+    return prisma.crmEvent.findMany({ where: { clientId: id }, select: { status: true } }).then((r) => r.filter((e) => e.status !== 'declined').length).catch(() => 0)
 }

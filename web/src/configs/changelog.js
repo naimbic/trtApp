@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.233.1',
+        date: '2026-11-12',
+        title: 'Older calendar meetings now show on the customer',
+        items: [
+            'Meetings created earlier in the Calendar with a customer chosen now appear in that customer Meetings tab and are counted on it (older events without a status were left out before). Meetings created in the Calendar with a lead or a customer chosen are linked to that lead or customer.',
+        ],
+    },
+    {
         version: '0.233.0',
         date: '2026-11-12',
         title: 'Meetings for customers, and customer tabs that always fit',

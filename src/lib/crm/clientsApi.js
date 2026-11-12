@@ -154,7 +154,7 @@ export async function getClientDetail(id) {
         prisma.crmClientIdea.count({ where: { clientId: id } }),
         prisma.crmClientRequest.count({ where: { clientId: id, status: { notIn: ['done', 'declined'] } } }),
         prisma.crmClientReport.count({ where: { clientId: id } }),
-        prisma.crmEvent.count({ where: { clientId: id, NOT: { status: 'declined' } } }).catch(() => 0), // meetings, booked by hand or by an email invitation
+        prisma.crmEvent.findMany({ where: { clientId: id }, select: { status: true } }).then((r) => r.filter((e) => e.status !== 'declined').length).catch(() => 0), // meetings, booked by hand or by an email invitation
     ])
     // open tasks of the client: its own, those of its projects and those of the lead it came from
     const [pr, ld] = await Promise.all([prisma.crmProject.findMany({ where: { clientId: id }, select: { id: true } }), prisma.crmLead.findMany({ where: { clientId: id }, select: { id: true } })])

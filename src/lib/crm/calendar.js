@@ -60,7 +60,7 @@ export async function getCalendarItems({ from, to, eventId }) {
 
     // own, invited-to and public events (and unowned ones)
     const events = await prisma.crmEvent.findMany({
-        where: one ? { id: one } : { start: { lt: end }, OR: [{ end: { gte: start } }, { end: null, start: { gte: start } }] },
+        where: one ? { id: one } : { start: { lt: end }, OR: [{ end: { gte: start } }, { end: null, start: { gte: start } }, { end: { isSet: false }, start: { gte: start } }] },
     })
     const staffRows = await prisma.crmStaff.findMany({ select: { id: true, firstName: true, lastName: true } })
     const staffName = Object.fromEntries(staffRows.map((x) => [x.id, `${x.firstName || ''} ${x.lastName || ''}`.trim()]))
@@ -255,7 +255,7 @@ const clean = (b) => {
 }
 
 /** Emails an .ics invitation to the staff, guests and (optionally) the client's primary contact. */
-async function invite(ev, { inviteClient, update }) {
+export async function invite(ev, { inviteClient, update }) {
     const to = new Set(ev.attendeeEmails || [])
     if (ev.attendeeIds?.length) (await prisma.crmStaff.findMany({ where: { id: { in: ev.attendeeIds } }, select: { email: true } })).forEach((x) => x.email && to.add(x.email))
     if (inviteClient && ev.clientId) {

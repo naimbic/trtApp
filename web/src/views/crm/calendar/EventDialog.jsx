@@ -120,7 +120,7 @@ const roomUrl = (name) => `${MEET_HOST}/${String(name || '').trim().toLowerCase(
 const EMPTY = { report: '', confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: true, allDay: false, location: '', meetingUrl: '', files: [], clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
-const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], saving, onSubmit, onDelete, onClose, onDecided }) => {
+const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], saving, onSubmit, onDelete, onClose, onDecided, about = null }) => { // about = { type: 'client' | 'lead', name }: opened from a client or a lead, so who it is about is fixed
     const [deciding, setDeciding] = useState('')
     const [note, setNote] = useState('') // a message for the person who asked
     const [tell, setTell] = useState(false)
@@ -151,9 +151,9 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
             location: selected.location || '',
             meetingUrl: selected.meetingUrl || '',
             files: selected.files || [],
-            clientId: selected.clientId || null,
-            leadId: selected.leadId || null,
-            aboutType: selected.leadId ? 'lead' : 'client',
+            clientId: about?.type === 'client' ? about.id : selected.clientId || null,
+            leadId: about?.type === 'lead' ? about.id : selected.leadId || null,
+            aboutType: about ? about.type : selected.leadId ? 'lead' : 'client',
             attendeeIds: selected.attendeeIds || [],
             attendeeEmails: (selected.attendeeEmails || []).join(', '),
             report: selected.report || '', confirmed: !!selected.confirmed, remindClient: !!selected.remindClient, reminderTemplate: selected.reminderTemplate || '',
@@ -192,6 +192,8 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
             sendInvites: v.sendInvites && !!hasGuests, inviteClient: v.sendInvites && v.inviteClient && v.aboutType === 'client' && !!v.clientId,
         })
     }
+
+    if (!selected) return null // opened from a lead or a client page: nothing chosen yet
 
     return (
         <Dialog isOpen={open} width={640} height="min(calc(100vh - 48px), 780px)" contentClassName="flex flex-col overflow-hidden" onClose={onClose} onRequestClose={onClose}>
@@ -237,14 +239,14 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
                         <FoldSection icon={<TbUsers />} tone="emerald" title={tr("People")} summary={peopleText} open={sec === 'people'} onToggle={() => toggle('people')}>
                     <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
                         <FormItem label={v.aboutType === 'lead' ? tr("Lead") : tr("Client")}>
-                            <div className="flex items-center gap-2">
+                            {about ? <div className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold dark:bg-gray-700">{about.name}</div> : <div className="flex items-center gap-2">
                                 <Segment size="sm" value={v.aboutType} onChange={(t) => { const x = Array.isArray(t) ? t[0] : t; if (x) set({ aboutType: x, inviteClient: false }) }}><Segment.Item value="client">{tr("Client")}</Segment.Item><Segment.Item value="lead">{tr("Lead")}</Segment.Item></Segment>
                                 <div className="min-w-0 flex-1">
                                     {v.aboutType === 'lead'
                                         ? <RelationSelect key="lead" size="sm" resource="leads" value={v.leadId} onChange={(id) => set({ leadId: id })} />
                                         : <RelationSelect key="client" size="sm" resource="clients" value={v.clientId} onChange={(id) => set({ clientId: id, inviteClient: id ? v.inviteClient : false })} />}
                                 </div>
-                            </div>
+                            </div>}
                         </FormItem>
                         <FormItem label={tr("Team members")}>
                             <Select size="sm" isMulti placeholder={tr("Add people")} options={staffOpts} value={staffOpts.filter((o) => v.attendeeIds.includes(o.value))} onChange={(o) => set({ attendeeIds: (o || []).map((x) => x.value) })} />

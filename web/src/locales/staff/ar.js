@@ -6142,4 +6142,6 @@ export default {
     "Read and change the result before sending. The signature of the company is added automatically.": "اقرأ النتيجة وعدّلها قبل الإرسال. يُضاف توقيع الشركة تلقائيًا.",
     "From an email": "من بريد إلكتروني",
     "Held as a lead": "عُقد عندما كان عميلاً محتملاً",
+    "Waiting for acceptance": "بانتظار القبول",
+    "From Meet": "من Meet",
 }

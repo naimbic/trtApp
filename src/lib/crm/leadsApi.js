@@ -2,7 +2,7 @@ import { realPicture } from '@/lib/crm/pictures'
 import { parseDay, startOfDayUtc } from '@/lib/crm/closedDays'
 import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
 import { storeRich, plainText } from '@/lib/crm/richText'
-import { cleanEvent } from '@/lib/crm/calendar'
+import { cleanEvent, invite } from '@/lib/crm/calendar'
 import prisma from '@/lib/prisma'
 import { namesOf } from '@/lib/crm/activity'
 import { emit } from '@/lib/crm/webhooks'
@@ -178,7 +178,7 @@ export async function getLead(id) {
         tasks, proposals: proposals.map((p) => ({ id: p.id, subject: p.subject, status: p.status, total: p.total, number: p.number ?? p.legacyId, by: people[p.addedFrom]?.name || (typeof people[p.addedFrom] === 'string' ? people[p.addedFrom] : ''), currency: curNames[p.currencyId] || '', date: p.date || p.createdAt })),
         followers: (l.followerIds || []).map((i) => people[i]).filter(Boolean), followerIds: l.followerIds || [],
         mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), track: trackInfo(m), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: decorate(m.checks, people, { me: a.staffId, canSend: mailCan(a, 'send'), canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit') }), scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit'), canSend: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'send'), canDelete: mayDropItem(a, m.addedFrom) && mailCan(a, 'delete') })),
-        meetings: meetings.map((e) => ({ id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
+        meetings: meetings.filter((e) => e.status !== 'declined').map((e) => ({ category: e.category || 'meeting', color: e.color || 'blue', isPublic: e.isPublic, description: e.description || '', files: Array.isArray(e.files) ? e.files : [], attendeeEmails: e.attendeeEmails || [], confirmed: !!e.confirmed, remindClient: !!e.remindClient, reminderTemplate: e.reminderTemplate || '', projectId: e.projectId || null, pending: e.status === 'draft', fromMeet: !!e.source, id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
         mentionable: mailCan(a, 'edit') || mailCan(a, 'create') ? await mentionable('lead', l) : [],
         senders, currency: (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }).catch(() => null))?.name || '',
         can: { mail: { create: mailCan(a, 'create'), edit: mailCan(a, 'edit'), send: mailCan(a, 'send'), delete: mailCan(a, 'delete') }, edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
@@ -673,12 +673,14 @@ export async function saveMeeting(id, body, eventId) {
         if (ev.userId && !mayChangeItem(a, ev.userId, 'meetings')) throw fail('You can only edit the meetings you added', 403)
         const data = cleanEvent({ title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, category: ev.category, projectId: ev.projectId, clientId: null, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, report: ev.report, ...body, leadId: id })
         if (report !== undefined) data.report = report || null
-        await prisma.crmEvent.update({ where: { id: eventId }, data: { ...data, isStartNotified: false } })
+        const up = await prisma.crmEvent.update({ where: { id: eventId }, data: { ...data, isStartNotified: false } })
+        if (body.sendInvites) await invite(up, { inviteClient: false, update: true })
         return { success: true, id: eventId }
     }
     const data = cleanEvent({ category: 'meeting', ...body, leadId: id, attendeeIds: (body.attendeeIds || []).length ? body.attendeeIds : a.staffId ? [a.staffId] : [] })
     if (report !== undefined) data.report = report || null
     const ev = await prisma.crmEvent.create({ data: { ...data, userId: a.staffId || undefined } })
+    if (body.sendInvites) await invite(ev, { inviteClient: false })
     await prisma.crmLead.update({ where: { id }, data: { lastContact: new Date() } })
     await logActivity(id, a, `Meeting added: ${data.title}`)
     try { await notifyComment({ by: { staffId: a.staffId, name: session.user.name }, text: `📅 ${data.title}`, link: `/calendar?event=${ev.id}`, subject: lead.name, recipients: [...teamOf(lead), ...(lead.followerIds || []), ...(data.attendeeIds || [])] }) } catch (e) { console.error('[meeting notify]', e.message) }

@@ -2,6 +2,23 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.233.3',
+        date: '2026-11-12',
+        title: 'Every meeting has the same fields and options, wherever it is made',
+        items: [
+            'Adding or editing a meeting from a lead or a customer now opens the same dialog as the Calendar: type (meeting, call, visit...), title, all day, dates, guests (team and external emails), meeting link and place, colour, reminder and its email template, visible to all, confirmed, notes, files and the meeting report. Who it is about is fixed to that lead or customer.',
+            'Invitations can be sent from there too, exactly as from the Calendar.',
+        ],
+    },
+    {
+        version: '0.233.2',
+        date: '2026-11-12',
+        title: 'Meet requests show on the lead and the customer before they are accepted',
+        items: [
+            'A meeting requested from the Meet app is linked to the lead or the customer with that email and shows in their Meetings tab and on the Calendar right away, marked "From Meet" and "Waiting for acceptance" until a team member accepts it. Declined requests are hidden.',
+        ],
+    },
+    {
         version: '0.233.1',
         date: '2026-11-12',
         title: 'Older calendar meetings now show on the customer',

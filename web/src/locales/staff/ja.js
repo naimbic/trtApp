@@ -6142,4 +6142,6 @@ export default {
     "Read and change the result before sending. The signature of the company is added automatically.": "送信前に結果を確認・修正してください。会社の署名は自動で追加されます。",
     "From an email": "メールから",
     "Held as a lead": "リード時の会議",
+    "Waiting for acceptance": "承認待ち",
+    "From Meet": "Meet から",
 }

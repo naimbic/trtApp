@@ -6142,4 +6142,6 @@ export default {
     "Read and change the result before sending. The signature of the company is added automatically.": "Lea y modifique el resultado antes de enviar. La firma de la empresa se añade automáticamente.",
     "From an email": "Desde un correo",
     "Held as a lead": "Celebrada cuando era un lead",
+    "Waiting for acceptance": "Pendiente de aceptación",
+    "From Meet": "Desde Meet",
 }

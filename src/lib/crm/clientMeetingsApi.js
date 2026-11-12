@@ -3,7 +3,7 @@ import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/per
 import { scope } from '@/lib/crm/clientsApi'
 import { notifyComment } from '@/lib/crm/mentionsApi'
 import { storeRich } from '@/lib/crm/richText'
-import { cleanEvent } from '@/lib/crm/calendar'
+import { cleanEvent, invite } from '@/lib/crm/calendar'
 
 /* The meetings of a client (customer): calendar events about the client, plus the report (summary) written after the meeting, so it is tracked on the
    client and shows in the Calendar. Meetings booked by an email invitation (.ics) from the client land here too (mailCatch). The meetings of the lead
@@ -41,10 +41,10 @@ export async function getClientMeetings(id) {
     const meetings = events.filter((e) => e.status !== 'declined').map((e) => { // older events have no status at all, so a database filter would drop them
         const old = !!e.leadId // a meeting held while this was still a lead: shown, not changed here
         return {
-            id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '',
+            category: e.category || 'meeting', color: e.color || 'blue', isPublic: e.isPublic, description: e.description || '', files: Array.isArray(e.files) ? e.files : [], attendeeEmails: e.attendeeEmails || [], confirmed: !!e.confirmed, remindClient: !!e.remindClient, reminderTemplate: e.reminderTemplate || '', projectId: e.projectId || null, id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '',
             reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [],
             attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId,
-            fromLead: old, source: e.source || (e.description && /^Booked by email/i.test(e.description) ? 'mail' : ''),
+            pending: e.status === 'draft', fromMeet: !!e.source, fromLead: old, source: e.source || (e.description && /^Booked by email/i.test(e.description) ? 'mail' : ''),
             canEdit: !old && mayChange(a, e.userId), canDelete: !old && mayDrop(a, e.userId),
         }
     })
@@ -60,12 +60,14 @@ export async function saveClientMeeting(id, body, eventId) {
         if (!mayChange(a, ev.userId)) throw fail('You can only edit the meetings you added', 403)
         const data = cleanEvent({ title: ev.title, start: ev.start, end: ev.end, color: ev.color, isPublic: ev.isPublic, description: ev.description, allDay: ev.allDay, location: ev.location, meetingUrl: ev.meetingUrl, category: ev.category, projectId: ev.projectId, attendeeIds: ev.attendeeIds, attendeeEmails: ev.attendeeEmails, reminderBefore: ev.reminderBefore, reminderBeforeType: ev.reminderBeforeType, report: ev.report, ...body, clientId: id, leadId: null })
         if (report !== undefined) data.report = report || null
-        await prisma.crmEvent.update({ where: { id: eventId }, data: { ...data, isStartNotified: false } })
+        const up = await prisma.crmEvent.update({ where: { id: eventId }, data: { ...data, isStartNotified: false } })
+        if (body.sendInvites) await invite(up, { inviteClient: !!body.inviteClient, update: true })
         return { success: true, id: eventId }
     }
     const data = cleanEvent({ category: 'meeting', ...body, clientId: id, leadId: null, attendeeIds: (body.attendeeIds || []).length ? body.attendeeIds : a.staffId ? [a.staffId] : [] })
     if (report !== undefined) data.report = report || null
     const ev = await prisma.crmEvent.create({ data: { ...data, userId: a.staffId || undefined } })
+    if (body.sendInvites) await invite(ev, { inviteClient: !!body.inviteClient })
     try { await notifyComment({ by: { staffId: a.staffId, name: a.session.user.name }, text: `📅 ${data.title}`, link: `/calendar?event=${ev.id}`, subject: client.company, recipients: data.attendeeIds || [] }) } catch (e) { console.error('[client meeting notify]', e.message) }
     return { success: true, id: ev.id }
 }

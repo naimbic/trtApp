@@ -12,7 +12,7 @@ const ClientMeetings = ({ clientId, clientName, onChanged }) => {
     useEffect(() => { load() }, [load])
     const run = async (fn, ok) => { try { await fn(); if (ok) notify('success', ok); await load(); onChanged?.() } catch (e) { notify('danger', e.message) } }
     if (!d) return <p className="py-6 text-center text-sm text-gray-400">{tr("Loading…")}</p>
-    return <LeadMeetings leadId={clientId} leadName={clientName} base={`/api/crm/customers/${clientId}/meetings`} meetings={d.meetings} staff={d.staff} canEdit={d.can.create} run={run} />
+    return <LeadMeetings leadId={clientId} leadName={clientName} base={`/api/crm/customers/${clientId}/meetings`} meetings={d.meetings} staff={d.staff} canEdit={d.can.create} run={run} kind="client" />
 }
 
 export default ClientMeetings

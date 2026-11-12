@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
 import AiMailWriter from './AiMailWriter'
+import EventDialog from '../calendar/EventDialog'
 import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
 import Switcher from '@/components/ui/Switcher'
@@ -350,26 +351,31 @@ export const LeadMails = ({ leadId, mails: allMails, senders = [], leadEmail = '
 }
 
 const REMIND = [['', tr("No reminder")], ['10:minutes', tr("10 minutes before")], ['30:minutes', tr("30 minutes before")], ['1:hours', tr("1 hour before")], ['1:days', tr("1 day before")]]
-const MEET_EMPTY = () => { const s = dayjs().add(1, 'hour').startOf('hour'); return { title: '', start: s.toDate(), end: s.add(1, 'hour').toDate(), link: '', location: '', reminder: '30:minutes', attendeeIds: [], report: '' } }
+const remindText = (m) => { if (m.reminderBefore == null) return ''; const r = REMIND.find(([v]) => v === `${m.reminderBefore}:${m.reminderBeforeType}`); return r ? r[1] : `${m.reminderBefore} ${tr(m.reminderBeforeType)}` }
 
-/** Meetings with the lead: a calendar event (so it shows in the Calendar, with its reminder) plus the meeting report. */
-export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run, base: root }) => {
+/** Meetings with a lead or a client: calendar events (so they show in the Calendar, with their reminder) plus the meeting report. Add and edit use the very same
+ *  dialog as the Calendar, so every meeting has the same fields and options wherever it is made. */
+export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run, base: root, kind = 'lead' }) => {
     const base = root || `/api/crm/pipeline/leads/${leadId}/meetings` // a client's meetings use the same panel with their own address
     const nav = useNavigate()
-    const [form, setForm] = useState(null)
+    const [dlg, setDlg] = useState(null)
+    const [saving, setSaving] = useState(false)
     const [del, setDel] = useState(null)
-    const set = (p) => setForm((f) => ({ ...f, ...p }))
-    const opts = staff.map((s) => ({ value: s.id, label: s.name }))
-    const save = () => {
-        const [n, unit] = (form.reminder || '').split(':')
-        const body = { eventId: form.id, title: form.title || `${tr("Meeting")} · ${leadName}`, start: new Date(form.start).toISOString(), end: form.end ? new Date(form.end).toISOString() : null, meetingUrl: form.link, location: form.location, attendeeIds: form.attendeeIds, report: form.report, reminderBefore: n === '' || n === undefined ? null : Number(n), reminderBeforeType: unit || 'minutes' }
-        return run(() => api(base, { method: form.id ? 'PUT' : 'POST', body }).then(() => setForm(null)), tr("Meeting saved"))
+    const [tpls, setTpls] = useState([])
+    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => setTpls(d.reminderTemplates || [])).catch(() => {}) }, [])
+    const submit = async (v) => {
+        setSaving(true)
+        try {
+            await api(base, { method: dlg.id ? 'PUT' : 'POST', body: { ...v, eventId: dlg.id } })
+            setDlg(null); notify('success', tr("Meeting saved")); await run(async () => {}, null)
+        } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
-    const edit = (m) => setForm({ id: m.id, title: m.title, start: new Date(m.start), end: m.end ? new Date(m.end) : null, link: m.link, location: m.location, reminder: m.reminderBefore == null ? '' : `${m.reminderBefore}:${m.reminderBeforeType}`, attendeeIds: m.attendeeIds, report: m.report })
+    const openNew = () => { const s = dayjs().add(1, 'hour').startOf('hour'); setDlg({ type: 'NEW', title: '', start: s.toDate(), end: s.add(1, 'hour').toDate(), category: 'meeting', attendeeIds: [], reminderBefore: 30, reminderBeforeType: 'minutes' }) }
+    const edit = (m) => setDlg({ type: 'EDIT', editable: true, ...m, meetingUrl: m.link, baseColor: m.color })
     const now = Date.now()
     const upcoming = meetings.filter((m) => +new Date(m.start) >= now).sort((a, b) => +new Date(a.start) - +new Date(b.start)), past = meetings.filter((m) => +new Date(m.start) < now)
     const item = (m) => {
-        const r = REMIND.find(([v]) => v === (m.reminderBefore == null ? '' : `${m.reminderBefore}:${m.reminderBeforeType}`))
+        const r = [0, remindText(m)]
         return (
             <div key={m.id} className={card}>
                 <div className="flex items-start justify-between gap-2">
@@ -382,7 +388,7 @@ export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run, 
                             {m.reminderBefore != null && r && <span className="inline-flex items-center gap-1"><TbBell />{r[1]}</span>}
                         </div>
                     </div>
-                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2"><People list={m.attendees || []} max={3} size={24} />{m.source === 'mail' && <Tag className="bg-sky-100 text-sky-700">{tr("From an email")}</Tag>}{m.fromLead && <Tag className="bg-violet-100 text-violet-700">{tr("Held as a lead")}</Tag>}{!m.report && +new Date(m.start) < now && <Tag className="bg-amber-100 text-amber-700">{tr("No report yet")}</Tag>}</div>
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2"><People list={m.attendees || []} max={3} size={24} />{m.pending && <Tag className="bg-yellow-100 text-yellow-700">{tr("Waiting for acceptance")}</Tag>}{m.fromMeet && <Tag className="bg-indigo-100 text-indigo-700">{tr("From Meet")}</Tag>}{m.source === 'mail' && <Tag className="bg-sky-100 text-sky-700">{tr("From an email")}</Tag>}{m.fromLead && <Tag className="bg-violet-100 text-violet-700">{tr("Held as a lead")}</Tag>}{!m.report && +new Date(m.start) < now && <Tag className="bg-amber-100 text-amber-700">{tr("No report yet")}</Tag>}</div>
                 </div>
                 {m.report && <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-600"><div className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-400">{tr("Meeting report")}</div><RichView html={m.report} /></div>}
                 <div className="mt-2 flex items-center gap-1">
@@ -394,26 +400,11 @@ export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run, 
     }
     return (
         <div className="space-y-4">
-            {canEdit && !form && <Button size="sm" icon={<TbPlus />} onClick={() => setForm(MEET_EMPTY())}>{tr("New meeting")}</Button>}
-            {form && (
-                <div className="space-y-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
-                    <div><L>{tr("Title")}</L><Input size="sm" value={form.title} placeholder={`${tr("Meeting")} · ${leadName}`} onChange={(e) => set({ title: e.target.value })} /></div>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div><L>{tr("Starts")}</L><DatePicker.DateTimepicker value={form.start} onChange={(d) => set({ start: d || new Date() })} /></div>
-                        <div><L>{tr("Ends")}</L><DatePicker.DateTimepicker value={form.end} onChange={(d) => set({ end: d })} /></div>
-                        <div><L>{tr("Meeting link")}</L><Input size="sm" value={form.link} placeholder="https://meet.google.com/… or Zoom, Teams" onChange={(e) => set({ link: e.target.value })} /></div>
-                        <div><L>{tr("Place")}</L><Input size="sm" value={form.location} onChange={(e) => set({ location: e.target.value })} /></div>
-                        <div><L>{tr("Reminder")}</L><Select size="sm" isSearchable={false} options={REMIND.map(([value, label]) => ({ value, label }))} value={REMIND.filter(([v]) => v === form.reminder).map(([value, label]) => ({ value, label }))[0]} onChange={(o) => set({ reminder: o.value })} /></div>
-                        <div><L>{tr("Who joins")}</L><Select size="sm" isMulti options={opts} value={opts.filter((o) => form.attendeeIds.includes(o.value))} onChange={(o) => set({ attendeeIds: (o || []).map((x) => x.value) })} /></div>
-                    </div>
-                    <div><L>{tr("Meeting report")}</L><RichEditor minHeight={120} value={form.report} placeholder={tr("What was said and decided, and what happens next")} onChange={(html) => set({ report: html })} /></div>
-                    <p className="text-xs text-gray-500">{tr("The meeting is added to the Calendar, with its reminder.")}</p>
-                    <div className="flex gap-2"><Button size="sm" variant="solid" onClick={save}>{tr("Save meeting")}</Button><Button size="sm" onClick={() => setForm(null)}>{tr("Cancel")}</Button></div>
-                </div>
-            )}
+            {canEdit && <Button size="sm" icon={<TbPlus />} onClick={openNew}>{tr("New meeting")}</Button>}
+            <EventDialog open={!!dlg} selected={dlg} staff={staff} reminderTemplates={tpls} saving={saving} about={{ type: kind, id: leadId, name: leadName }} onSubmit={submit} onDelete={() => { const m = dlg; setDlg(null); setDel(m) }} onDecided={() => setDlg(null)} onClose={() => setDlg(null)} />
             {upcoming.length > 0 && <div className="space-y-2"><h6 className="text-gray-400">{tr("Upcoming")}</h6>{upcoming.map(item)}</div>}
             {past.length > 0 && <div className="space-y-2"><h6 className="text-gray-400">{tr("Past")}</h6>{past.map(item)}</div>}
-            {!meetings.length && !form && <p className="text-sm text-gray-500">{tr("No meetings yet.")}</p>}
+            {!meetings.length && <p className="text-sm text-gray-500">{tr("No meetings yet.")}</p>}
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this meeting?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const m = del; setDel(null); run(() => api(`${base}?eventId=${m.id}`, { method: 'DELETE' }), tr("Meeting deleted")) }}>
                 <p>{del?.title}</p>
             </ConfirmDialog>

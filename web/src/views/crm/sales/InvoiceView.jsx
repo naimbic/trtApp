@@ -119,7 +119,7 @@ const InvoiceView = () => {
                     </span>
                 )}
                 <div className="ml-auto flex flex-wrap items-center gap-2">
-                    {can('payments', 'create') && !cancelled && balance > 0 && <Button size="sm" variant="solid" icon={<TbCash />} onClick={() => { setPay((p) => ({ ...p, amount: balance })); setPayOpen(true) }}>{tr("Record payment")}</Button>}
+                    {can('payments', 'create') && !cancelled && balance > 0 && <Button size="sm" variant="solid" className="!border-emerald-600 !bg-emerald-600 !text-white hover:!bg-emerald-700" icon={<TbCash />} onClick={() => { setPay((p) => ({ ...p, amount: balance })); setPayOpen(true); api(`/api/crm/sales/invoices/${id}/payments`).then((d) => d?.paymentModeId && setPay((p) => (p.paymentModeId ? p : { ...p, paymentModeId: d.paymentModeId }))).catch(() => {}) }}>{tr("Record payment")}</Button>}
                     {canEdit && st !== 6 && <Button size="sm" icon={<TbMail />} onClick={() => setMail('invoice-send-to-client')}>{tr("Send")}</Button>}
                     {st !== 6 && <Button size="sm" icon={<TbPrinter />} onClick={() => printPage(`/api/crm/sales/invoices/${id}/html?print=1`)}>{tr("Print")}</Button>}
                     <Button size="sm" icon={<TbFileTypePdf />} onClick={() => window.open(`/api/crm/sales/invoices/${id}/pdf`, '_blank')}>{tr("PDF")}</Button>
@@ -236,7 +236,7 @@ const InvoiceView = () => {
                     <div><label className="form-label mb-2 block">{tr("Transaction id")}</label><Input value={pay.transactionId} onChange={(e) => setPay({ ...pay, transactionId: e.target.value })} /></div>
                     <div><label className="form-label mb-2 block">{tr("Note")}</label><Input textArea rows={2} value={pay.note} onChange={(e) => setPay({ ...pay, note: e.target.value })} /></div>
                 </div>
-                <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setPayOpen(false)}>{tr("Cancel")}</Button><Button variant="solid" loading={busy} onClick={async () => { if (await run(() => api(`/api/crm/sales/invoices/${id}/payments`, { method: 'POST', body: pay }), tr("Payment recorded"))) setPayOpen(false) }}>{tr("Save")}</Button></div>
+                <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setPayOpen(false)}>{tr("Cancel")}</Button><Button variant="solid" className="!border-emerald-600 !bg-emerald-600 !text-white hover:!bg-emerald-700" loading={busy} onClick={async () => { if (await run(() => api(`/api/crm/sales/invoices/${id}/payments`, { method: 'POST', body: pay }), tr("Payment recorded"))) setPayOpen(false) }}>{tr("Save")}</Button></div>
             </Dialog>
 
             <ConfirmDialog isOpen={!!caution} type="warning" title={tr("This invoice is paid")} confirmText={tr("Change it anyway")} onClose={() => setCaution(null)} onCancel={() => setCaution(null)} onConfirm={() => { const fn = caution; setCaution(null); fn(true) }}>

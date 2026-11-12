@@ -240,6 +240,17 @@ export async function saveInvoice(input) {
     return { success: true, id: invoice.id }
 }
 
+/** What the Record payment dialog starts with: the bank of the invoice, else the bank assigned to its client (the payment method that carries the bank details). */
+export async function paymentDefaults(invoiceId) {
+    const session = await requirePermission('payments', 'create')
+    await assertDocVisible(session, 'invoice', invoiceId)
+    const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId }, select: { bankAccountId: true, clientId: true } })
+    if (!invoice) return { paymentModeId: null }
+    const id = invoice.bankAccountId || (await clientBank(invoice.clientId))
+    const mode = id ? await prisma.crmPaymentMode.findUnique({ where: { id }, select: { id: true } }).catch(() => null) : null
+    return { paymentModeId: mode?.id || null }
+}
+
 /** Record a payment and update the invoice status like Perfex. */
 export async function recordPayment(invoiceId, { amount, paymentModeId, paymentDate, note, transactionId } = {}) {
     const session = await requirePermission('payments', 'create')

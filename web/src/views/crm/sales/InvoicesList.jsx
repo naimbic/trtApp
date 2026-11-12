@@ -90,12 +90,13 @@ const InvoicesList = () => {
         if (!modes.length) apiCall('/api/crm/sales/lookups').then((l) => setModes(l.paymentModes || [])).catch(() => {})
         setPay({ amount: row.due || '', paymentModeId: null, paymentDate: dayjs().format('YYYY-MM-DD'), note: '', transactionId: '' })
         setPayFor(row)
+        apiCall(`/api/crm/sales/invoices/${row.id}/payments`).then((d) => d?.paymentModeId && setPay((p) => (p.paymentModeId ? p : { ...p, paymentModeId: d.paymentModeId }))).catch(() => {}) // the bank assigned to the invoice or its client
     }
     const menuItems = (r) => {
         const cancelled = r.status === 5, draft = r.status === 6, paidFinal = r.status === 2, lost = r.status === 7
         const mayChange = !paidFinal || superAdmin
         return [
-            ...(can('payments', 'create') && !cancelled && !draft && r.due > 0 ? [{ label: tr("Record payment"), icon: <TbCash />, onClick: () => openPay(r) }] : []),
+            ...(can('payments', 'create') && !cancelled && !draft && r.due > 0 ? [{ label: tr("Record payment"), icon: <TbCash className="text-emerald-600" />, onClick: () => openPay(r) }] : []),
             { label: tr("Open"), icon: <TbExternalLink />, onClick: () => navigate(`/crm/invoices/${r.id}`) },
             ...(can('invoices', 'edit') && [1, 3, 4].includes(r.status) ? [{ label: tr("Mark as lost"), icon: <TbMoodSad />, danger: true, onClick: () => setConfirm({ row: r, kind: 'lose' }) }] : []),
             ...(can('invoices', 'edit') && lost ? [{ label: tr("Restore (not lost)"), icon: <TbArrowBackUp />, onClick: () => state(r, 'unlose', tr("Invoice restored")) }] : []),
@@ -194,7 +195,7 @@ const InvoicesList = () => {
                     <div><label className="form-label mb-2 block">{tr("Transaction id")}</label><Input value={pay.transactionId} onChange={(e) => setPay({ ...pay, transactionId: e.target.value })} /></div>
                     <div><label className="form-label mb-2 block">{tr("Note")}</label><Input textArea rows={2} value={pay.note} onChange={(e) => setPay({ ...pay, note: e.target.value })} /></div>
                 </div>
-                <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setPayFor(null)}>{tr("Cancel")}</Button><Button variant="solid" loading={busy} onClick={async () => { setBusy(true); try { await apiCall(`/api/crm/sales/invoices/${payFor.id}/payments`, { method: 'POST', body: pay }); notify('success', tr("Payment recorded")); setPayFor(null); load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) } }}>{tr("Save")}</Button></div>
+                <div className="mt-6 flex justify-end gap-2"><Button onClick={() => setPayFor(null)}>{tr("Cancel")}</Button><Button variant="solid" className="!border-emerald-600 !bg-emerald-600 !text-white hover:!bg-emerald-700" loading={busy} onClick={async () => { setBusy(true); try { await apiCall(`/api/crm/sales/invoices/${payFor.id}/payments`, { method: 'POST', body: pay }); notify('success', tr("Payment recorded")); setPayFor(null); load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) } }}>{tr("Save")}</Button></div>
             </Dialog>
             <ConfirmDialog isOpen={!!caution} type="warning" title={tr("This invoice is paid")} confirmText={tr("Change it anyway")} onClose={() => setCaution(null)} onCancel={() => setCaution(null)} onConfirm={() => { const c = caution; setCaution(null); c.fn(true) }}>
                 <p>{caution?.row?.number} · {caution?.row?.client}</p>

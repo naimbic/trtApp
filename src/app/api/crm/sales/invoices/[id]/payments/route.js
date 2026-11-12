@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
-import { recordPayment } from '@/server/actions/crm/sales/invoices'
+import { recordPayment, paymentDefaults } from '@/server/actions/crm/sales/invoices'
 import { errorResponse } from '@/lib/crm/crud'
+
+export async function GET(_request, { params }) {
+    try { return NextResponse.json(await paymentDefaults((await params).id)) } catch (e) { return errorResponse(e) }
+}
 
 export async function POST(request, { params }) {
     try {

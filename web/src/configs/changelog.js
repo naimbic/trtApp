@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.233.4',
+        date: '2026-11-12',
+        title: 'Record payment starts with the assigned bank, and is green',
+        items: [
+            'Record payment (on the invoice page and in the Invoices list) now starts with the bank of the invoice, or else the bank assigned to the customer, already chosen in the Payment mode field; it can still be changed.',
+            'The Record payment button, its menu entry and its Save button are green.',
+        ],
+    },
+    {
         version: '0.233.3',
         date: '2026-11-12',
         title: 'Every meeting has the same fields and options, wherever it is made',

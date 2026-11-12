@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.233.6',
+        date: '2026-11-12',
+        title: 'Record payment: the customer bank comes first',
+        items: [
+            'Record payment now preselects the bank assigned to the customer, even when the invoice itself carries another bank; if the customer has none it uses the invoice bank, then the bank for the invoice currency, then the default bank. It can still be changed.',
+        ],
+    },
+    {
         version: '0.233.5',
         date: '2026-11-12',
         title: 'Meeting defaults, rich text in meetings, files from the file manager in reports',

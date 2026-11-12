@@ -244,11 +244,15 @@ export async function saveInvoice(input) {
 export async function paymentDefaults(invoiceId) {
     const session = await requirePermission('payments', 'create')
     await assertDocVisible(session, 'invoice', invoiceId)
-    const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId }, select: { bankAccountId: true, clientId: true } })
+    const invoice = await prisma.crmInvoice.findUnique({ where: { id: invoiceId }, select: { bankAccountId: true, clientId: true, currencyId: true } })
     if (!invoice) return { paymentModeId: null }
-    const id = invoice.bankAccountId || (await clientBank(invoice.clientId))
-    const mode = id ? await prisma.crmPaymentMode.findUnique({ where: { id }, select: { id: true } }).catch(() => null) : null
-    return { paymentModeId: mode?.id || null }
+    // the bank assigned to the customer first, then the one of the invoice, the one for its currency, then the default
+    const { bankAccounts } = await import('@/lib/crm/bankDb')
+    const { chooseBank } = await import('@/lib/crm/bank')
+    const accounts = await bankAccounts()
+    const clientAccountId = await clientBank(invoice.clientId)
+    const pick = chooseBank({ docAccountId: clientAccountId, clientAccountId: invoice.bankAccountId, currencyId: invoice.currencyId, accounts })
+    return { paymentModeId: pick?.id || null }
 }
 
 /** Record a payment and update the invoice status like Perfex. */

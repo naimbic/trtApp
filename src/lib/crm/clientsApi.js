@@ -141,7 +141,7 @@ export async function getClientDetail(id) {
     const cname = Object.fromEntries(countries.map((x) => [x.legacyId, x.shortName || x.longName]))
     const staff = await prisma.crmStaff.findMany({ where: { id: { in: c.admins.map((a) => a.staffId) } } })
     const rel = { relId: id }
-    const [invoices, estimates, proposals, contracts, projects, tickets, notes, files, mediaFiles, ideas, requests, reports] = await Promise.all([
+    const [invoices, estimates, proposals, contracts, projects, tickets, notes, files, mediaFiles, ideas, requests, reports, meetings] = await Promise.all([
         prisma.crmInvoice.count({ where: { clientId: id } }),
         prisma.crmEstimate.count({ where: { clientId: id } }),
         prisma.crmProposal.count({ where: { relType: 'customer', ...rel } }),
@@ -154,12 +154,13 @@ export async function getClientDetail(id) {
         prisma.crmClientIdea.count({ where: { clientId: id } }),
         prisma.crmClientRequest.count({ where: { clientId: id, status: { notIn: ['done', 'declined'] } } }),
         prisma.crmClientReport.count({ where: { clientId: id } }),
+        prisma.crmEvent.count({ where: { clientId: id, NOT: { status: 'declined' } } }).catch(() => 0), // meetings, booked by hand or by an email invitation
     ])
     // open tasks of the client: its own, those of its projects and those of the lead it came from
     const [pr, ld] = await Promise.all([prisma.crmProject.findMany({ where: { clientId: id }, select: { id: true } }), prisma.crmLead.findMany({ where: { clientId: id }, select: { id: true } })])
     const tasks = await prisma.crmTask.count({ where: { status: { not: 5 }, OR: [{ relType: 'customer', relId: id }, { relType: 'project', relId: { in: pr.map((x) => x.id) } }, { relType: 'lead', relId: { in: ld.map((x) => x.id) } }] } }).catch(() => 0)
     const money = (await moneyFor([id], true))[id] || {}
-    const tabs = Object.fromEntries(['profile', 'mails', 'notes', 'files', 'activity'].map((t) => [t, isCrmAdmin(session.user.authority || []) || hasCap(session.user.authority || [], 'client_tabs', `tab_${t}`)]))
+    const tabs = Object.fromEntries(['profile', 'mails', 'meetings', 'notes', 'files', 'activity'].map((t) => [t, isCrmAdmin(session.user.authority || []) || hasCap(session.user.authority || [], 'client_tabs', `tab_${t}`)]))
     const out = {
         id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [],
         address: c.address, city: c.city, state: c.state, zip: c.zip, country: c.country, countryName: cname[c.country] || '',
@@ -170,13 +171,14 @@ export async function getClientDetail(id) {
         admins: staff.map((s) => ({ id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() })),
         contacts: c.contacts.map((x) => ({ id: x.id, name: contactName(x), email: x.email, phone: x.phoneNumber, title: x.title, isPrimary: x.isPrimary, active: x.active, lastLogin: x.lastLogin })),
         money,
-        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests, reports, tasks },
+        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests, reports, tasks, meetings },
     }
     // the tabs this person may not see are left empty, not only hidden
     out.tabs = tabs
     if (!tabs.profile) Object.assign(out, { vat: null, phone: null, website: null, address: null, city: null, state: null, zip: null, country: null, countryName: '', billing: {}, shipping: {}, contacts: [] })
     if (!tabs.notes) out.counts.notes = 0
     if (!tabs.files) out.counts.files = 0
+    if (!tabs.meetings) out.counts.meetings = 0
     return out
 }
 

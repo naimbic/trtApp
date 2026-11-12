@@ -353,7 +353,8 @@ const REMIND = [['', tr("No reminder")], ['10:minutes', tr("10 minutes before")]
 const MEET_EMPTY = () => { const s = dayjs().add(1, 'hour').startOf('hour'); return { title: '', start: s.toDate(), end: s.add(1, 'hour').toDate(), link: '', location: '', reminder: '30:minutes', attendeeIds: [], report: '' } }
 
 /** Meetings with the lead: a calendar event (so it shows in the Calendar, with its reminder) plus the meeting report. */
-export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run }) => {
+export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run, base: root }) => {
+    const base = root || `/api/crm/pipeline/leads/${leadId}/meetings` // a client's meetings use the same panel with their own address
     const nav = useNavigate()
     const [form, setForm] = useState(null)
     const [del, setDel] = useState(null)
@@ -362,7 +363,7 @@ export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run }
     const save = () => {
         const [n, unit] = (form.reminder || '').split(':')
         const body = { eventId: form.id, title: form.title || `${tr("Meeting")} · ${leadName}`, start: new Date(form.start).toISOString(), end: form.end ? new Date(form.end).toISOString() : null, meetingUrl: form.link, location: form.location, attendeeIds: form.attendeeIds, report: form.report, reminderBefore: n === '' || n === undefined ? null : Number(n), reminderBeforeType: unit || 'minutes' }
-        return run(() => api(`/api/crm/pipeline/leads/${leadId}/meetings`, { method: form.id ? 'PUT' : 'POST', body }).then(() => setForm(null)), tr("Meeting saved"))
+        return run(() => api(base, { method: form.id ? 'PUT' : 'POST', body }).then(() => setForm(null)), tr("Meeting saved"))
     }
     const edit = (m) => setForm({ id: m.id, title: m.title, start: new Date(m.start), end: m.end ? new Date(m.end) : null, link: m.link, location: m.location, reminder: m.reminderBefore == null ? '' : `${m.reminderBefore}:${m.reminderBeforeType}`, attendeeIds: m.attendeeIds, report: m.report })
     const now = Date.now()
@@ -381,7 +382,7 @@ export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run }
                             {m.reminderBefore != null && r && <span className="inline-flex items-center gap-1"><TbBell />{r[1]}</span>}
                         </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2"><People list={m.attendees || []} max={3} size={24} />{!m.report && +new Date(m.start) < now && <Tag className="bg-amber-100 text-amber-700">{tr("No report yet")}</Tag>}</div>
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2"><People list={m.attendees || []} max={3} size={24} />{m.source === 'mail' && <Tag className="bg-sky-100 text-sky-700">{tr("From an email")}</Tag>}{m.fromLead && <Tag className="bg-violet-100 text-violet-700">{tr("Held as a lead")}</Tag>}{!m.report && +new Date(m.start) < now && <Tag className="bg-amber-100 text-amber-700">{tr("No report yet")}</Tag>}</div>
                 </div>
                 {m.report && <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-600"><div className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-400">{tr("Meeting report")}</div><RichView html={m.report} /></div>}
                 <div className="mt-2 flex items-center gap-1">
@@ -413,7 +414,7 @@ export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run }
             {upcoming.length > 0 && <div className="space-y-2"><h6 className="text-gray-400">{tr("Upcoming")}</h6>{upcoming.map(item)}</div>}
             {past.length > 0 && <div className="space-y-2"><h6 className="text-gray-400">{tr("Past")}</h6>{past.map(item)}</div>}
             {!meetings.length && !form && <p className="text-sm text-gray-500">{tr("No meetings yet.")}</p>}
-            <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this meeting?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const m = del; setDel(null); run(() => api(`/api/crm/pipeline/leads/${leadId}/meetings?eventId=${m.id}`, { method: 'DELETE' }), tr("Meeting deleted")) }}>
+            <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this meeting?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const m = del; setDel(null); run(() => api(`${base}?eventId=${m.id}`, { method: 'DELETE' }), tr("Meeting deleted")) }}>
                 <p>{del?.title}</p>
             </ConfirmDialog>
         </div>

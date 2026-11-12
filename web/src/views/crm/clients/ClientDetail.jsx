@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail, TbChartBar, TbChecklist, TbPaperclip, TbHistory } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail, TbChartBar, TbChecklist, TbPaperclip, TbHistory, TbCalendarEvent } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -32,6 +32,7 @@ import { tr } from '@/utils/t'
 
 import ClientRequests from './ClientRequests'
 import ClientMails from './ClientMails'
+import ClientMeetings from './ClientMeetings'
 const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -117,7 +118,7 @@ const BUBBLE = {
     invoices: 'bg-blue-100 text-blue-700 dark:bg-blue-500/25 dark:text-blue-200', ideas: 'bg-violet-100 text-violet-700 dark:bg-violet-500/25 dark:text-violet-200', contracts: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/25 dark:text-indigo-200',
     estimates: 'bg-amber-100 text-amber-700 dark:bg-amber-500/25 dark:text-amber-200', proposals: 'bg-orange-100 text-orange-700 dark:bg-orange-500/25 dark:text-orange-200', projects: 'bg-teal-100 text-teal-700 dark:bg-teal-500/25 dark:text-teal-200',
     tickets: 'bg-rose-100 text-rose-700 dark:bg-rose-500/25 dark:text-rose-200', notes: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/25 dark:text-yellow-200', files: 'bg-slate-200 text-slate-700 dark:bg-slate-500/30 dark:text-slate-200',
-    tasks: 'bg-lime-100 text-lime-700 dark:bg-lime-500/25 dark:text-lime-200', contacts: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/25 dark:text-cyan-200', requests: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/25 dark:text-fuchsia-200',
+    tasks: 'bg-lime-100 text-lime-700 dark:bg-lime-500/25 dark:text-lime-200', meetings: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-200', contacts: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/25 dark:text-cyan-200', requests: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/25 dark:text-fuchsia-200',
 }
 
 const ClientDetail = () => {
@@ -129,10 +130,10 @@ const ClientDetail = () => {
     const money = makeMoney(lookups.currencies)
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'reports', 'mails', 'tasks'].includes(t) ? t : 'overview' })
+    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks'].includes(t) ? t : 'overview' })
     const [cur, setCur] = useState(null)
     // a link from a notification (…?tab=requests&request=ID) switches the tab even when this client is already open
-    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'reports', 'mails', 'tasks'].includes(t)) setTab(t) }, [loc.search])
+    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks'].includes(t)) setTab(t) }, [loc.search])
     const [confirmDel, setConfirmDel] = useState(false)
     const [profile, setProfile] = useState(null)
     const [followUp, setFollowUp] = useState(null)
@@ -146,7 +147,7 @@ const ClientDetail = () => {
     useEffect(() => { if (ticketDialog && !ticketLk.departments.length) api('/api/crm/support/tickets/lookups').then(setTicketLk).catch(() => {}) }, [ticketDialog]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // the tabs of a customer that have a switch of their own (Roles > Customer tabs); the others follow the rights of their feature
-    const TAB_CAP = { overview: 'tab_profile', mails: 'tab_mails', notes: 'tab_notes', files: 'tab_files', activity: 'tab_activity' }
+    const TAB_CAP = { overview: 'tab_profile', mails: 'tab_mails', meetings: 'tab_meetings', notes: 'tab_notes', files: 'tab_files', activity: 'tab_activity' }
     const tabs = useMemo(() => {
         if (!c) return []
         const where = { clientId: id }
@@ -175,6 +176,7 @@ const ClientDetail = () => {
             ]),
             ...G(tr("Records"), "bg-amber-50 dark:bg-amber-500/10", [
                 { key: 'mails', label: tr("Mails"), iconOnly: true, icon: <TbMail className="text-sky-500" /> },
+                { key: 'meetings', label: tr("Meetings"), count: c.counts.meetings, icon: <TbCalendarEvent className="text-emerald-500" /> },
                 rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
                 { key: 'files', label: tr("Files"), count: c.counts.files, iconOnly: true, icon: <TbPaperclip className="text-slate-500" /> },
                 { key: 'activity', label: tr("Activity"), iconOnly: true, icon: <TbHistory className="text-gray-500" /> },
@@ -269,9 +271,9 @@ const ClientDetail = () => {
                     <ClientJourneyCard profile={profile} />
                     <Card>
                         <Tabs value={tab} onChange={setTab}>
-                            <TabList>
+                            <TabList className="client-tabs !w-full !flex-wrap !overflow-visible !rounded-2xl !gap-1">
                                 {tabs.reduce((acc, t) => { const last = acc[acc.length - 1]; if (last && last.group === (t.group || '')) last.list.push(t); else acc.push({ group: t.group || '', tint: t.tint, list: [t] }); return acc }, []).map((g) => (
-                                    <div key={g.group || 'first'} className={`flex shrink-0 items-center rounded-xl ${g.group ? `mx-1 px-1 ${g.tint || ''}` : ''}`}>
+                                    <div key={g.group || 'first'} className={`flex max-w-full flex-wrap items-center rounded-xl ${g.group ? `px-1 ${g.tint || ''}` : ''}`}>
                                         {g.group && <span className="shrink-0 pe-1 ps-2 text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">{g.group}</span>}
                                         {g.list.map((t) => (
                                             <TabNav key={t.key} value={t.key} className="!px-2.5 text-sm" title={t.iconOnly ? t.label : undefined} aria-label={t.iconOnly ? t.label : undefined}>
@@ -291,6 +293,7 @@ const ClientDetail = () => {
                                 {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}
                                 {tab === 'mails' && <ClientMails key={id} clientId={id} />}
+                                {tab === 'meetings' && <ClientMeetings key={id} clientId={id} clientName={c.company} onChanged={load} />}
                                 {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit') || can('client_files', 'create')} showClientToggle />}
                                 {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}
                             </div>

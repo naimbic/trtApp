@@ -204,13 +204,15 @@ export async function catchReply(cfg, { msg, mail }, { dry = false } = {}) {
     const inv = ics?.content ? parseIcs(Buffer.from(ics.content).toString('utf8')) : null
     if (inv && inv.method !== 'CANCEL' && inv.method !== 'REPLY') {
         const owner = cfg.responsible || null
-        const ev = await prisma.crmEvent.create({ data: { title: (inv.title || msg.subject || `Meeting with ${who.name}`).slice(0, 200), description: `Booked by email from ${msg.fromName || msg.fromAddress}`, start: inv.start, end: inv.end || new Date(+inv.start + 3600000), allDay: inv.allDay, category: 'meeting', color: 'blue', isPublic: true, userId: owner || undefined, attendeeIds: owner ? [owner] : [], location: inv.location || null, meetingUrl: inv.link || null, ...(who.kind === 'lead' ? { leadId: who.id } : { clientId: who.id }) } })
+        const title = (inv.title || msg.subject || `Meeting with ${who.name}`).slice(0, 200)
+        const same = await prisma.crmEvent.findFirst({ where: { ...(who.kind === 'lead' ? { leadId: who.id } : { clientId: who.id }), start: inv.start, title }, select: { id: true, title: true, start: true } }) // the same invitation sent again is not booked twice
+        const ev = same || await prisma.crmEvent.create({ data: { title: (inv.title || msg.subject || `Meeting with ${who.name}`).slice(0, 200), description: `Booked by email from ${msg.fromName || msg.fromAddress}`, start: inv.start, end: inv.end || new Date(+inv.start + 3600000), allDay: inv.allDay, category: 'meeting', color: 'blue', isPublic: true, userId: owner || undefined, attendeeIds: owner ? [owner] : [], location: inv.location || null, meetingUrl: inv.link || null, ...(who.kind === 'lead' ? { leadId: who.id } : { clientId: who.id }) } })
         meeting = { id: ev.id, title: ev.title, start: ev.start }
     }
 
     const plain = plainText(html).replace(/\s+/g, ' ').trim()
     const excerpt = `✉ ${meeting ? '📅 ' : ''}${msg.fromName || msg.fromAddress}: ${msg.subject || plain}`.slice(0, 160)
-    const crm = who.kind === 'lead' ? `/crm/leads/${who.id}?tab=mails` : `/crm/clients/${who.id}`
+    const crm = who.kind === 'lead' ? `/crm/leads/${who.id}?tab=${meeting ? 'meetings' : 'mails'}` : `/crm/clients/${who.id}?tab=${meeting ? 'meetings' : 'mails'}`
     if (who.kind === 'lead') {
         await prisma.crmLead.update({ where: { id: who.id }, data: { lastContact: msg.date || new Date() } }).catch(() => {})
         await prisma.crmLeadActivityLog.create({ data: { leadId: who.id, description: `Email received${kept.length ? ` with ${kept.length} file${kept.length === 1 ? '' : 's'}` : ''}${meeting ? ' and a meeting booking' : ''}: ${msg.subject || ''}`.slice(0, 300), fullName: 'Email integration', customActivity: true } }).catch(() => {})

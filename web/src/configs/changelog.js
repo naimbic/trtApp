@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.233.0',
+        date: '2026-11-12',
+        title: 'Meetings for customers, and customer tabs that always fit',
+        items: [
+            'New "Meetings" tab on every customer, the same as on a lead: add a meeting with its date, link, place, reminder and guests, and write its summary (the meeting report) afterwards so the follow-up stays on the customer. Every meeting is also on the Calendar, with its reminder.',
+            'A meeting invitation (.ics) received by email from a customer is added by itself to the customer Meetings tab and to the Calendar, and the team is told. The same invitation sent twice is not booked twice. Meetings held while the customer was still a lead are shown too, marked "Held as a lead".',
+            'New right "See the Meetings tab" in Roles > Customer tabs; everyone who already sees the Mails tab of a customer gets it.',
+            'The tabs of a customer no longer run off the screen on a phone: they wrap onto several rows so every tab is visible.',
+        ],
+    },
+    {
         version: '0.232.0',
         date: '2026-11-11',
         title: 'AI settings: a switch and a provider for each use, and Write with AI in mails',

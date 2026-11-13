@@ -20,7 +20,7 @@ const SCOPES = [['all', tr("All entries"), <TbFolders key="a" />], ['mine', tr("
 
 const AccessBadge = ({ e }) => e.access === 'team' ? <Tag className="gap-1 bg-sky-100 text-sky-700"><TbUsers className="inline" />{tr("Team")}</Tag> : e.access === 'selected' ? <Tag className="gap-1 bg-violet-100 text-violet-700"><TbUserCheck className="inline" />{e.sharedWith} {e.sharedWith === 1 ? tr("person") : tr("people")}</Tag> : <Tag className="gap-1 bg-gray-100 text-gray-600"><TbLock className="inline" />{tr("Only me")}</Tag>
 
-const EntryCard = ({ e, onOpen, api: call }) => {
+export const EntryCard = ({ e, onOpen, api: call }) => {
     const [pw, setPw] = useState(null)
     const [totp, setTotp] = useState(null)
     const timer = useRef(null)

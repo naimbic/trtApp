@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.235.0',
+        date: '2026-11-13',
+        title: 'Passwords tab on the customer page',
+        items: [
+            'Each customer now has a Passwords tab: the logins of the team Password vault that are linked to that customer (website, hosting, social accounts...). Show, copy, 2FA code and sharing work as in the vault, and every reveal is logged. Add an entry from the tab and it is linked to the customer. It shows only to people who may see the Password vault.',
+        ],
+    },
+    {
         version: '0.234.3',
         date: '2026-11-13',
         title: '@team shows as a mention in saved comments',

@@ -6170,4 +6170,7 @@ export default {
     "What is it for? (for example Gmail of the agency)": "لماذا؟ (مثلاً Gmail الوكالة)",
     "Your private place to keep memos, links, passwords and files, with reminders. It opens on the right.": "مكانك الخاص لحفظ المذكرات والروابط وكلمات المرور والملفات مع التذكيرات. يُفتح على اليمين.",
     "Custom date and time…": "تاريخ ووقت مخصصان…",
+    "Passwords": "كلمات المرور",
+    "Logins kept for this customer (website, hosting, social accounts...). Passwords are encrypted and every reveal is logged.": "بيانات الدخول المحفوظة لهذا العميل (الموقع، الاستضافة، حسابات التواصل...). كلمات المرور مشفّرة وكل عملية إظهار تُسجَّل.",
+    "No logins for this customer yet": "لا توجد بيانات دخول لهذا العميل بعد",
 }

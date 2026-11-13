@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail, TbChartBar, TbChecklist, TbPaperclip, TbHistory, TbCalendarEvent } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbCash, TbCircleCheck, TbBriefcase, TbArrowLeft , TbSparkles, TbBug, TbMail, TbChartBar, TbChecklist, TbPaperclip, TbHistory, TbCalendarEvent, TbKey } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -33,6 +33,7 @@ import { tr } from '@/utils/t'
 import ClientRequests from './ClientRequests'
 import ClientMails from './ClientMails'
 import ClientMeetings from './ClientMeetings'
+import ClientPasswords from './ClientPasswords'
 const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -130,10 +131,10 @@ const ClientDetail = () => {
     const money = makeMoney(lookups.currencies)
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks'].includes(t) ? t : 'overview' })
+    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks', 'passwords'].includes(t) ? t : 'overview' })
     const [cur, setCur] = useState(null)
     // a link from a notification (…?tab=requests&request=ID) switches the tab even when this client is already open
-    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks'].includes(t)) setTab(t) }, [loc.search])
+    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks', 'passwords'].includes(t)) setTab(t) }, [loc.search])
     const [confirmDel, setConfirmDel] = useState(false)
     const [profile, setProfile] = useState(null)
     const [followUp, setFollowUp] = useState(null)
@@ -178,6 +179,7 @@ const ClientDetail = () => {
                 { key: 'mails', label: tr("Mails"), iconOnly: true, icon: <TbMail className="text-sky-500" /> },
                 { key: 'meetings', label: tr("Meetings"), count: c.counts.meetings, icon: <TbCalendarEvent className="text-emerald-500" /> },
                 rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
+                { key: 'passwords', label: tr("Passwords"), feature: 'passwords', iconOnly: true, icon: <TbKey className="text-amber-500" /> },
                 { key: 'files', label: tr("Files"), count: c.counts.files, iconOnly: true, icon: <TbPaperclip className="text-slate-500" /> },
                 { key: 'activity', label: tr("Activity"), iconOnly: true, icon: <TbHistory className="text-gray-500" /> },
             ]),
@@ -293,6 +295,7 @@ const ClientDetail = () => {
                                 {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}
                                 {tab === 'mails' && <ClientMails key={id} clientId={id} />}
+                                {tab === 'passwords' && <ClientPasswords key={id} clientId={id} />}
                                 {tab === 'meetings' && <ClientMeetings key={id} clientId={id} clientName={c.company} onChanged={load} />}
                                 {tab === 'files' && <AttachmentsPanel relType="customer" relId={id} canEdit={can('customers', 'edit') || can('client_files', 'create')} showClientToggle />}
                                 {(() => { const t = tabs.find((x) => x.key === tab); return t?.rel ? <RelatedTab key={t.key} cfg={t.rel} onChanged={() => { load(); loadProfile() }} /> : null })()}

@@ -6170,4 +6170,7 @@ export default {
     "What is it for? (for example Gmail of the agency)": "用途は？（例：代理店の Gmail）",
     "Your private place to keep memos, links, passwords and files, with reminders. It opens on the right.": "メモ、リンク、パスワード、ファイルをリマインダー付きで保存する非公開の場所。右側に開きます。",
     "Custom date and time…": "日時を指定…",
+    "Passwords": "パスワード",
+    "Logins kept for this customer (website, hosting, social accounts...). Passwords are encrypted and every reveal is logged.": "このお客様のログイン情報（ウェブサイト、ホスティング、SNSなど）。パスワードは暗号化され、表示するたびに記録されます。",
+    "No logins for this customer yet": "このお客様のログイン情報はまだありません",
 }

@@ -1,4 +1,5 @@
 import ChatMessageTools from './ChatMessageTools'
+import MySpace from '@/components/crm/chat/MySpace'
 import { mentionDirectory } from '@/utils/mentions'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
@@ -18,7 +19,7 @@ import { useChatStatus, useMyStatus, STATUS } from '@/store/chatStatusStore'
 import { tr } from '@/utils/t'
 
 const POLL = 6000
-const TABS = [['all', tr("All")], ['group', tr("Groups")], ['direct', tr("Direct")], ['client', tr("Clients")], ['saved', tr("Saved")]]
+const TABS = [['all', tr("All")], ['group', tr("Groups")], ['direct', tr("Direct")], ['client', tr("Clients")], ['saved', tr("Saved")], ['myspace', tr("My space")]]
 const inTab = (tab, r) => tab === 'all' || (tab === 'group' ? r.kind === 'group' || r.kind === 'team' : r.kind === tab)
 const stamp = (d) => (dayjs(d).isSame(dayjs(), 'day') ? dayjs(d).format('HH:mm') : dayjs(d).isSame(dayjs(), 'year') ? dayjs(d).format('MMM D') : dayjs(d).format('YYYY-MM-DD'))
 
@@ -148,7 +149,7 @@ const ChatPage = () => {
     const [params, setParams] = useSearchParams()
     const [data, setData] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState('all')
+    const [tab, setTab] = useState(() => (new URLSearchParams(window.location.search).get('tab') === 'myspace' ? 'myspace' : 'all'))
     const [q, setQ] = useState('')
     const [dlg, setDlg] = useState(null) // 'direct' | 'group'
     const [info, setInfo] = useState(false)
@@ -195,7 +196,7 @@ const ChatPage = () => {
 
     return (
         <div className="flex h-[calc(100vh-150px)] min-h-[480px] overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-            <aside className={classNames('flex w-full shrink-0 flex-col border-gray-200 dark:border-gray-700 md:w-[340px] md:border-r', room && 'hidden md:flex')}>
+            <aside className={classNames('flex w-full shrink-0 flex-col border-gray-200 dark:border-gray-700 md:w-[340px] md:border-r', (room || tab === 'myspace') && 'hidden md:flex')}>
                 <div className="flex items-start justify-between gap-2 px-4 pt-4">
                     <div><h4>{tr("Chat")}</h4><div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500"><StatusDot status={mine} className="!border-0" />{tr("You:")} {STATUS[mine].label} · {data.people.filter((p) => p.status === 'online').length} {tr("colleagues available")}</div></div>
                     <div className="flex items-center gap-1">
@@ -212,8 +213,9 @@ const ChatPage = () => {
                 </div>
                 <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
                     {tab === 'saved' && <SavedMessages reload={reload} onOpen={(it) => { setTab('all'); open(it.roomId) }} />}
-                    {tab !== 'saved' && rows.map((r) => <Row key={r.id} r={r} active={r.id === roomId} onClick={() => open(r.id)} />)}
-                    {tab !== 'saved' && !rows.length && (
+                    {tab === 'myspace' && <div className="px-6 py-10 text-center text-sm text-gray-400"><PiUserCircleDuotone className="mx-auto mb-2 text-3xl" />{tr("Your private place to keep memos, links, passwords and files, with reminders. It opens on the right.")}</div>}
+                    {tab !== 'saved' && tab !== 'myspace' && rows.map((r) => <Row key={r.id} r={r} active={r.id === roomId} onClick={() => open(r.id)} />)}
+                    {tab !== 'saved' && tab !== 'myspace' && !rows.length && (
                         <div className="px-6 py-14 text-center text-sm text-gray-400">
                             {tab === 'client' ? <><PiBuildingsDuotone className="mx-auto mb-2 text-3xl" />{tr("Clients who write from their portal appear here.")}</> : q ? tr("No conversation matches your search.") : tab === 'group' ? tr("No group yet. Create one with New group.") : tr("Nothing here yet. Start with New chat.")}
                         </div>
@@ -221,8 +223,10 @@ const ChatPage = () => {
                 </div>
             </aside>
 
-            <section className={classNames('min-w-0 flex-1 flex-col', room ? 'flex' : 'hidden md:flex')}>
-                {room ? (
+            <section className={classNames('min-w-0 flex-1 flex-col', room || tab === 'myspace' ? 'flex' : 'hidden md:flex')}>
+                {tab === 'myspace' ? (
+                    <MySpace onBack={() => setTab('all')} openId={params.get('space') || ''} />
+                ) : room ? (
                     <div className="flex min-h-0 flex-1">
                         <div className="flex min-w-0 flex-1 flex-col">
                             <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">

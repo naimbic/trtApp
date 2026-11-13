@@ -6,7 +6,7 @@ const FULL = Object.fromEntries(FEATURES.map((f) => [f.key, f.caps.filter((c) =>
 const without = (base, drop) => Object.fromEntries(Object.entries(base).filter(([k]) => !drop.includes(k)))
 const pick = (spec) => Object.fromEntries(Object.entries(spec).map(([f, caps]) => [f, caps === 'all' ? std(f) : caps === 'edit' ? ['view', 'create', 'edit'].filter((c) => std(f).includes(c)) : caps === 'read' ? ['view'].filter((c) => std(f).includes(c)) : caps]))
 // salaries, API keys and AI keys stay with the Super Admin unless a role is given them on purpose
-const SENSITIVE = ['payroll', 'api', 'ai']
+const SENSITIVE = ['payroll', 'api', 'ai', 'my_space']
 const REPORT = (...kinds) => ['view', ...kinds.map((k) => `report_${k}`)]
 
 const TOOLS = { calendar: ['view'], chat: ['view', 'send_files', 'create_groups', 'call', 'client_chats'], chat_messages: ['react', 'bookmark', 'pin', 'edit_own', 'delete_own'], file_manager: ['view'], growth: ['view'], notes: ['view', 'share'] }

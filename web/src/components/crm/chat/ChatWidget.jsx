@@ -36,7 +36,8 @@ const Row = ({ r, onClick }) => (
     </button>
 )
 
-const TABS = [['chats', tr("Chats")], ['people', tr("People")], ['clients', tr("Clients")], ['saved', tr("Saved")]]
+const MySpace = lazy(() => import('./MySpace'))
+const TABS = [['chats', tr("Chats")], ['people', tr("People")], ['clients', tr("Clients")], ['saved', tr("Saved")], ['myspace', tr("My space")]]
 
 const ChatWidget = () => {
     const [open, setOpen] = useState(false)
@@ -120,8 +121,10 @@ const ChatWidget = () => {
                                     <button key={k} type="button" onClick={() => setTab(k)} className={classNames('flex-1 rounded-xl py-1.5 text-sm font-semibold', tab === k ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700')}>{label}{badge[k] > 0 && <span className="ml-1.5 rounded-full bg-primary px-1.5 text-xs text-white">{badge[k]}</span>}</button>
                                 ))}
                             </div>
-                            <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
-                                {tab === 'saved' ? (
+                            <div className={tab === 'myspace' ? 'min-h-0 flex-1' : 'flex-1 space-y-0.5 overflow-y-auto px-2 pb-3'}>
+                                {tab === 'myspace' ? (
+                                    <Suspense fallback={null}><MySpace compact /></Suspense>
+                                ) : tab === 'saved' ? (
                                     <SavedMessages onOpen={(it) => { const r = rooms.find((x) => x.id === it.roomId); if (r) { pick(r); setTab('chats') } else navigate(`/crm/chat?room=${it.roomId}`) }} />
                                 ) : tab === 'people' ? (
                                     data.people.map((p) => <Row key={p.id} r={{ kind: 'direct', title: p.name, image: p.image, status: p.status }} onClick={() => talkTo(p)} />)

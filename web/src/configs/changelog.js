@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.234.0',
+        date: '2026-11-13',
+        title: 'My space in the chat: a private place for memos, links, passwords and files',
+        items: [
+            'New "My space" tab in the Chat page and in the chat popup. Each person keeps there anything to check back later: notes, links, passwords and files (attach or paste a picture), with search, pin, mark as done and filters.',
+            'Each item can have a reminder (it rings like the other reminders: the bell and an email, and opens My space), and can be turned into a task or a note in one click.',
+            'My space is private: only its owner writes in it. Texts marked as password are stored encrypted and shown only when you press Show; they are never put in a reminder, a task or a note.',
+            'The Super Admin can look at anyone\'s My space (read only) from a selector at the top. New right "Chat: other people\'s My space (read only)" in Roles lets you allow other admins when you need to; it is not given to any role by default.',
+        ],
+    },
+    {
         version: '0.233.7',
         date: '2026-11-13',
         title: 'Mails and meetings of a customer go to the customer, not to a lead',

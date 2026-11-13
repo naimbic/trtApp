@@ -998,3 +998,29 @@ model CrmSavedView {
   @@index([page, ownerId])
   @@map("crm_saved_views")
 }
+
+/// "My space" of the chat: a private place for each person to keep anything for later (memos, notes, links, passwords, files), with a reminder
+/// and conversion into a task or a note. Only its owner (and the Super Admin, or whoever has "See other people's My space") can open it.
+model CrmMySpaceItem {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  staffId     String    @db.ObjectId
+  kind        String    @default("note") // note | link | password
+  title       String?
+  /// the text; stored encrypted when `secret` is on
+  body        String?
+  url         String?
+  secret      Boolean   @default(false)
+  /// [{ url, name, size, mime, kind }]
+  attachments Json?
+  pinned      Boolean   @default(false)
+  done        Boolean   @default(false)
+  remindAt    DateTime?
+  reminderId  String?   @db.ObjectId
+  /// what it was turned into: "task:<id>" or "note:<id>"
+  convertedTo String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([staffId, createdAt])
+  @@map("crm_my_space")
+}

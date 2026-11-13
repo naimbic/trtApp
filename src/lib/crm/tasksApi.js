@@ -209,7 +209,7 @@ export async function getTask(id) {
             followers: t.followers.map((x) => people[x.staffId]).filter(Boolean),
             assigneeIds: t.assignees.map((x) => x.staffId), followerIds: t.followers.map((x) => x.staffId),
         },
-        checklist: !stepCan(a, 'view', t) ? [] : [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, assignedIds: stepPeople(c), people: stepPeople(c).map((i) => people[i]).filter(Boolean), person: people[c.assigned] || null, dueDate: c.dueDate || null, hours: c.hours ?? null, reminder: c.reminder ?? null, order: c.listOrder || 0 })),
+        checklist: !stepCan(a, 'view', t) ? [] : [...t.checklistItems].sort((x, y) => (x.listOrder || 0) - (y.listOrder || 0)).map((c) => ({ id: c.id, description: c.description || '', finished: c.finished, assigned: c.assigned || null, assignedIds: stepPeople(c), people: stepPeople(c).map((i) => people[i]).filter(Boolean), person: people[c.assigned] || null, dueDate: c.dueDate || null, hours: c.hours ?? null, reminder: c.reminder ?? null, remindAt: c.remindAt || null, order: c.listOrder || 0 })),
         comments: t.comments.map((c) => {
             const to = c.replyToId ? t.comments.find((x) => x.id === c.replyToId) : null
             return { id: c.id, content: c.content || '', staff: people[c.staffId] || null, fromClient: !!c.contactId, clientName: c.contactId ? contactName[c.contactId] || '' : '', createdAt: c.createdAt, edited: +new Date(c.updatedAt) - +new Date(c.createdAt) > 2000, mine: !!a.staffId && c.staffId === a.staffId, canDelete: (!!a.staffId && c.staffId === a.staffId) || a.can('delete'),
@@ -574,6 +574,12 @@ export async function checklist(id, op) {
         if (op.dueDate !== undefined) data.dueDate = dayOrNull(op.dueDate)
         if (op.hours !== undefined) data.hours = hoursOrNull(op.hours)
         if (op.reminder !== undefined) data.reminder = op.reminder === null || op.reminder === '' ? null : REMINDERS.includes(+op.reminder) ? +op.reminder : null
+        if (op.remindAt !== undefined) { // an exact date and hour: it replaces the "before the due date" choice
+            const when = op.remindAt ? new Date(op.remindAt) : null
+            if (when && Number.isNaN(+when)) throw fail('Choose a valid date and time for the reminder')
+            data.remindAt = when
+            if (when) data.reminder = null
+        } else if (op.reminder !== undefined && data.reminder !== null) data.remindAt = null // a ready-made choice replaces the exact one
         await prisma.crmTaskChecklistItem.update({ where: { id: item.id }, data })
         if (added.length) await trackStep(task, a, `Checklist item “${data.description ?? item.description}” given to ${await namesOf(added)}`)
         if (added.length) await notify(added, data.description ?? item.description)

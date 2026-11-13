@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import { TbExternalLink, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck, TbChecklist, TbMessageCircle, TbPaperclip, TbSubtask } from 'react-icons/tb'
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
+import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
 import Mentioned from '@/components/crm/Mentioned'
 import { useRowDrag, DragHandle } from '@/components/crm/RowDrag'
@@ -116,11 +117,33 @@ const Stats = ({ s }) => {
     )
 }
 
-const ReminderMenu = ({ value, due, onPick, disabled }) => (
-    <Dropdown placement="bottom-end" disabled={disabled || !due} renderTitle={<button type="button" disabled={disabled || !due} className={classNames('grid size-7 shrink-0 place-items-center rounded-full text-base', value != null ? 'bg-primary/10 text-primary' : 'text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700', !due && 'opacity-40')} title={due ? tr('Reminder') : tr('Set a due date first')} aria-label={tr('Reminder')}>{value != null ? <TbBell /> : <TbBellOff />}</button>}>
-        {REMINDERS.map(([v, l]) => <Dropdown.Item key={String(v)} eventKey={String(v)} onClick={() => onPick(v)}><span className="flex items-center">{tr(l)}{value === v && <TbCheck className="ml-3" />}</span></Dropdown.Item>)}
-    </Dropdown>
-)
+/** The reminder of a step: ready-made times before the due date, or "Custom date and time" (any day and hour, with or without a due date). */
+const ReminderMenu = ({ value, at, due, onPick, onCustom, disabled }) => {
+    const [dlg, setDlg] = useState(false)
+    const [when, setWhen] = useState('')
+    const on = value != null || !!at
+    const local = (d) => dayjs(d).format('YYYY-MM-DDTHH:mm')
+    const open = () => { setWhen(at ? local(at) : due ? local(dayjs(due).hour(9).minute(0)) : local(dayjs().add(1, 'hour').startOf('hour'))); setDlg(true) }
+    const quick = [[tr('In 1 hour'), () => dayjs().add(1, 'hour')], [tr('Tomorrow 9:00'), () => dayjs().add(1, 'day').hour(9).minute(0)], [tr('Next week'), () => dayjs().add(7, 'day').hour(9).minute(0)]]
+    return (
+        <>
+            <Dropdown placement="bottom-end" disabled={disabled} renderTitle={<button type="button" disabled={disabled} className={classNames('inline-flex h-7 shrink-0 items-center gap-1 rounded-full text-base', at ? 'bg-primary/10 px-2 text-primary' : 'grid size-7 place-items-center', !at && (on ? 'bg-primary/10 text-primary' : 'text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'))} title={at ? dayjs(at).format('DD MMM YYYY, HH:mm') : tr('Reminder')} aria-label={tr('Reminder')}>{on ? <TbBell /> : <TbBellOff />}{at && <span className="text-[11px] font-bold">{dayjs(at).format(dayjs(at).isSame(dayjs(), 'day') ? 'HH:mm' : 'DD MMM HH:mm')}</span>}</button>}>
+                {REMINDERS.filter(([v]) => due || v === null).map(([v, l]) => <Dropdown.Item key={String(v)} eventKey={String(v)} onClick={() => onPick(v)}><span className="flex items-center">{tr(l)}{value === v && !at && <TbCheck className="ml-3" />}</span></Dropdown.Item>)}
+                <Dropdown.Item eventKey="custom" onClick={open}><span className="flex items-center">{tr('Custom date and time…')}{!!at && <TbCheck className="ml-3" />}</span></Dropdown.Item>
+            </Dropdown>
+            <Dialog isOpen={dlg} width={380} onClose={() => setDlg(false)} onRequestClose={() => setDlg(false)}>
+                <h5 className="mb-3">{tr('Reminder')}</h5>
+                <input type="datetime-local" autoFocus value={when} onChange={(e) => setWhen(e.target.value)} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm dark:border-gray-600 dark:bg-gray-800" />
+                <div className="mt-2 flex flex-wrap gap-1">{quick.map(([l, f]) => <button key={l} type="button" onClick={() => setWhen(local(f()))} className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200">{l}</button>)}</div>
+                <div className="mt-5 flex justify-end gap-2">
+                    {at && <Button size="sm" className="me-auto" onClick={() => { onCustom(null); setDlg(false) }}>{tr('Remove')}</Button>}
+                    <Button size="sm" onClick={() => setDlg(false)}>{tr('Cancel')}</Button>
+                    <Button size="sm" variant="solid" disabled={!when} onClick={() => { onCustom(new Date(when).toISOString()); setDlg(false) }}>{tr('Set')}</Button>
+                </div>
+            </Dialog>
+        </>
+    )
+}
 
 /**
  * The checklist of a task: tick, edit in place, give a step to someone, a due date (red when late, amber today) and a reminder,
@@ -189,7 +212,7 @@ const ChecklistPanel = ({ items, staff = [], canEdit = true, canCreate, canDelet
                                     {c.stats && <Stats s={c.stats} />}
                                     {(canEdit || c.hours) && <HoursChip value={c.hours} disabled={!canEdit} onChange={(v) => upd(c, { hours: v })} />}
                                     {(canEdit || c.dueDate) && <DateChip value={c.dueDate} done={c.finished} disabled={!canEdit} empty={tr('Date')} onChange={(v) => upd(c, { dueDate: v, ...(v ? {} : { reminder: null }) })} />}
-                                    {reminders && (canEdit || c.reminder != null) && <ReminderMenu value={c.reminder} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, { reminder: v })} />}
+                                    {reminders && (canEdit || c.reminder != null || c.remindAt) && <ReminderMenu value={c.reminder} at={c.remindAt} due={c.dueDate} disabled={!canEdit} onPick={(v) => upd(c, v === null ? { reminder: null, remindAt: null } : { reminder: v })} onCustom={(iso) => upd(c, { remindAt: iso })} />}
                                 </div>
                             </div>
                             <PeoplePicker staff={staff} value={c.assignedIds || (c.assigned ? [c.assigned] : [])} disabled={!canEdit} onToggle={(id) => { const cur = c.assignedIds || []; setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: cur.includes(id) ? cur.filter((y) => y !== id) : [...cur, id] } : x))); upd(c, { toggleAssignee: id }) }} onChange={(ids) => { setList((l) => l.map((x) => (x.id === c.id ? { ...x, assignedIds: ids } : x))); upd(c, { assignedIds: ids }) }} />

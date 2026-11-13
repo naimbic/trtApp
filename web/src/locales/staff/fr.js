@@ -6169,4 +6169,5 @@ export default {
     "What do you want to keep?": "Que voulez-vous garder ?",
     "What is it for? (for example Gmail of the agency)": "À quoi sert-il ? (par exemple Gmail de l'agence)",
     "Your private place to keep memos, links, passwords and files, with reminders. It opens on the right.": "Votre espace privé pour garder mémos, liens, mots de passe et fichiers, avec des rappels. Il s'ouvre à droite.",
+    "Custom date and time…": "Date et heure personnalisées…",
 }

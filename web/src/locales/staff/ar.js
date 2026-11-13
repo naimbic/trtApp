@@ -6169,4 +6169,5 @@ export default {
     "What do you want to keep?": "ماذا تريد أن تحتفظ به؟",
     "What is it for? (for example Gmail of the agency)": "لماذا؟ (مثلاً Gmail الوكالة)",
     "Your private place to keep memos, links, passwords and files, with reminders. It opens on the right.": "مكانك الخاص لحفظ المذكرات والروابط وكلمات المرور والملفات مع التذكيرات. يُفتح على اليمين.",
+    "Custom date and time…": "تاريخ ووقت مخصصان…",
 }

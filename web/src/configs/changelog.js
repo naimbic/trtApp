@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.234.1',
+        date: '2026-11-13',
+        title: 'Checklist reminder: any date and hour',
+        items: [
+            'The reminder of a checklist step in a task now has "Custom date and time…" next to 1 hour, 1 day and 2 days before: pick any day and hour (with quick choices: in 1 hour, tomorrow 9:00, next week). It needs no due date, shows its time on the bell, and rings in the notifications like the other reminders.',
+        ],
+    },
+    {
         version: '0.234.0',
         date: '2026-11-13',
         title: 'My space in the chat: a private place for memos, links, passwords and files',

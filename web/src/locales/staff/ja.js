@@ -6169,4 +6169,5 @@ export default {
     "What do you want to keep?": "何を保存しますか？",
     "What is it for? (for example Gmail of the agency)": "用途は？（例：代理店の Gmail）",
     "Your private place to keep memos, links, passwords and files, with reminders. It opens on the right.": "メモ、リンク、パスワード、ファイルをリマインダー付きで保存する非公開の場所。右側に開きます。",
+    "Custom date and time…": "日時を指定…",
 }

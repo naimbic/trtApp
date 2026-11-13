@@ -58,12 +58,12 @@ export async function notificationFeed({ days } = {}) {
         }
     }
     if (staffId) { // my checklist steps: overdue, due today, or a reminder that has come
-        const steps = await prisma.crmTaskChecklistItem.findMany({ where: { OR: [{ assigned: staffId }, { assignedIds: { has: staffId } }], finished: false, dueDate: { not: null } }, orderBy: { dueDate: 'asc' }, take: 20 })
+        const steps = await prisma.crmTaskChecklistItem.findMany({ where: { AND: [{ OR: [{ assigned: staffId }, { assignedIds: { has: staffId } }] }, { OR: [{ dueDate: { not: null } }, { remindAt: { not: null } }] }], finished: false }, orderBy: { dueDate: 'asc' }, take: 20 })
         const taskNames = Object.fromEntries((await prisma.crmTask.findMany({ where: { id: { in: [...new Set(steps.map((s) => s.taskId))] } }, select: { id: true, name: true } })).map((t) => [t.id, t.name]))
         for (const st of steps) {
-            const due = new Date(st.dueDate), dueEnd = +new Date(due.toDateString()) + DAY
-            const remindAt = st.reminder == null ? null : +due - st.reminder * 60000
-            const late = +now >= dueEnd, soon = +now >= +today && +now < dueEnd
+            const due = st.dueDate ? new Date(st.dueDate) : null, dueEnd = due ? +new Date(due.toDateString()) + DAY : 0
+            const remindAt = st.remindAt ? +new Date(st.remindAt) : st.reminder == null || !due ? null : +due - st.reminder * 60000
+            const late = !!due && +now >= dueEnd, soon = !!due && +now >= +today && +now < dueEnd
             if (late && started) add('task', 'Checklist step overdue', `${st.description} · ${taskNames[st.taskId] || ''}`, dayStart, `/crm/tasks/${st.taskId}`, 'red')
             else if (soon && started) add('task', 'Checklist step due today', `${st.description} · ${taskNames[st.taskId] || ''}`, dayStart, `/crm/tasks/${st.taskId}`, 'amber')
             else if (remindAt !== null && +now >= remindAt) add('reminder', 'Reminder: checklist step', `${st.description} · ${taskNames[st.taskId] || ''}`, new Date(remindAt), `/crm/tasks/${st.taskId}`, 'amber')

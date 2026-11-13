@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.235.2',
+        date: '2026-11-13',
+        title: 'Customer activity only for those given the Activity permission',
+        items: [
+            'The customer’s activity (Interaction history on the Overview, Document views and IP, Last seen, and the Activity tab) now shows only to people who have Customer tabs → Activity tab in their role (Roles). The same data is also no longer sent to the others.',
+        ],
+    },
+    {
         version: '0.235.1',
         date: '2026-11-13',
         title: 'Shared passwords show on the customer for the people they are shared with',

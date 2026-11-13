@@ -94,7 +94,7 @@ export const ClientInfoCard = ({ c, profile, lookups, id, can, onSaved }) => {
                         />
                     </div>
                 </Row>
-                {profile?.lastLogin && <Row label={tr("Last seen")}>{dayjs(profile.lastLogin.date).fromNow?.() || dayjs(profile.lastLogin.date).format('DD MMM YYYY')}</Row>}
+                {profile?.lastLogin && can('client_tabs', 'tab_activity') && <Row label={tr("Last seen")}>{dayjs(profile.lastLogin.date).fromNow?.() || dayjs(profile.lastLogin.date).format('DD MMM YYYY')}</Row>}
             </dl>
         </section>
     )

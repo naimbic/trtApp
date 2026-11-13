@@ -156,9 +156,9 @@ export async function clientProfile(id, { full = false } = {}) {
 
     const access = await portalAccess(c, contacts)
     return {
-        lead, journey, attention, engagement, timeline,
+        lead, journey, attention, engagement: !full && !seeTab('activity') ? null : engagement, timeline,
         charts: { invoiceStatus, docs },
-        lastLogin: lastLogin ? { name: name(lastLogin), ip: lastLogin.lastIp, date: lastLogin.lastLogin } : null,
+        lastLogin: lastLogin && (full || seeTab('activity')) ? { name: name(lastLogin), ip: lastLogin.lastIp, date: lastLogin.lastLogin } : null,
         contacts: !full && !seeTab('profile') ? [] : contacts.map((x) => ({ id: x.id, name: name(x), email: x.email, ip: x.lastIp, lastLogin: x.lastLogin, primary: x.isPrimary, active: x.active, portal: !!x.passwordHash, access: access[x.id] })),
         reminders: reminders.map((r) => ({ id: r.id, description: r.description || '', date: r.date, done: !!r.isNotified, staff: sName[r.staffId] || null })),
         stats: { openTasks: openTasks.length, openTickets: openTickets.length, overdueInvoices: overdue.length, unpaidInvoices: unpaid.length },

@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.236.0',
+        date: '2026-11-13',
+        title: 'Fewer notifications: only what is yours, and a Direct tab',
+        items: [
+            'The bell and the Notifications page now open on a new “Direct” tab: mentions, tags, comments on what you follow, and the tasks, tickets and leads given to you. “All”, “Unread” and “Read” follow.',
+            'Tickets, leads, invoices, payments, estimates, proposals and “client opened” alerts now reach only the people they belong to (assigned, sales agent, creator or follower), even for people who can see everything.',
+            'The lead popup Activity tab was already behind the “Activity tab” permission (Roles > Lead popup tabs); nothing else in the lead popup shows the activity log without it.',
+        ],
+    },
+    {
         version: '0.235.3',
         date: '2026-11-13',
         title: 'Logins added from a customer are shared with the team by default',

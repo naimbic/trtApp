@@ -11,7 +11,7 @@ import useResponsive from '@/utils/hooks/useResponsive'
 import { useNotifs } from '@/store/notifStore'
 import NotificationToggle from './NotificationToggle'
 import RemindMenu from './RemindMenu'
-import { look, kindLabel } from './notifKit'
+import { look, kindLabel, inTab as inTabOf, isDirect } from './notifKit'
 import { tr } from '@/utils/t'
 
 dayjs.extend(relativeTime)
@@ -22,7 +22,7 @@ const POLL = 60000
 /** A long title is cut at a word (the whole text stays in the tooltip). */
 export const shorten = (t, n = 62) => { const x = String(t || '').replace(/\s+/g, ' ').trim(); if (x.length <= n) return x; const cut = x.slice(0, n - 1); const sp = cut.lastIndexOf(' '); return `${(sp > n * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s,;:.\-–—]+$/, '')}…` }
 
-/** One header for every filter: Unread / Read / All, then the kinds, in a single row that slides sideways (mouse wheel, finger or trackpad). */
+/** One header for every filter: Direct (written for me) / All / Unread / Read, then the kinds, in a single row that slides sideways (mouse wheel, finger or trackpad). */
 export const NotifFilters = ({ tab, setTab, kind, setKind, counts, kinds, className }) => {
     const ref = useRef(null)
     const wheel = (e) => { const el = ref.current; if (el && Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) { el.scrollLeft += e.deltaY } }
@@ -30,7 +30,7 @@ export const NotifFilters = ({ tab, setTab, kind, setKind, counts, kinds, classN
     const chip = (on) => classNames('shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition', on ? 'bg-gray-800 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200 hover:bg-gray-100 dark:bg-transparent dark:text-gray-300 dark:ring-gray-600')
     return (
         <div ref={ref} onWheel={wheel} onClick={(e) => e.stopPropagation()} className={classNames('flex snap-x items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', className)}>
-            {[['unread', tr('Unread'), counts.unread], ['read', tr('Read'), null], ['all', tr('All'), null]].map(([k, label, n]) => <button key={k} type="button" onClick={() => { setTab(k); setKind('') }} className={classNames(pill(tab === k), 'snap-start')}>{label}{n ? <span className="ms-1.5 opacity-80">{n}</span> : null}</button>)}
+            {[['direct', tr('Direct'), counts.direct], ['all', tr('All'), null], ['unread', tr('Unread'), counts.unread], ['read', tr('Read'), null]].map(([k, label, n]) => <button key={k} type="button" onClick={() => { setTab(k); setKind('') }} className={classNames(pill(tab === k), 'snap-start')}>{label}{n ? <span className="ms-1.5 opacity-80">{n}</span> : null}</button>)}
             {Object.keys(kinds).length > 1 && <span className="mx-1 h-4 w-px shrink-0 bg-gray-200 dark:bg-gray-600" />}
             {Object.keys(kinds).length > 1 && ['', ...Object.keys(kinds)].map((k) => <button key={k || 'all'} type="button" onClick={() => setKind(k)} className={classNames(chip(kind === k), 'snap-start')}>{k ? kindLabel(k) : tr('All kinds')}{k && <span className="ms-1 opacity-70">{kinds[k]}</span>}</button>)}
         </div>
@@ -64,28 +64,29 @@ export const useOpenNotif = (after) => {
 const _Notification = ({ className }) => {
     const { larger } = useResponsive()
     const { items, counts, loaded, load, setRead, markAll } = useNotifs()
-    const [tab, setTab] = useState('unread')
+    const [tab, setTab] = useState('direct')
     const [kind, setKind] = useState('')
     const ref = useRef(null)
     useEffect(() => { load(); const t = setInterval(() => { if (!document.hidden) load() }, POLL); return () => clearInterval(t) }, [load])
     const open = useOpenNotif(() => ref.current?.handleDropdownClose?.())
-    const inTab = tab === 'unread' ? items.filter((i) => !i.read) : tab === 'read' ? items.filter((i) => i.read) : items
+    const inTab = items.filter((i) => inTabOf(tab, i))
+    const directUnread = items.filter((i) => isDirect(i) && !i.read).length
     const kinds = {}
     for (const i of inTab) kinds[i.kind] = (kinds[i.kind] || 0) + 1
     const shown = inTab.filter((i) => !kind || i.kind === kind).slice(0, 30)
 
     return (
-        <Dropdown ref={ref} renderTitle={<NotificationToggle dot={counts.unread > 0} className={className} />} menuClass="w-[460px] max-w-[calc(100vw-1rem)]" placement={larger.md ? 'bottom-end' : 'bottom'} onOpen={() => { setTab('unread'); setKind(''); load() }}>
+        <Dropdown ref={ref} renderTitle={<NotificationToggle dot={counts.unread > 0} className={className} />} menuClass="w-[460px] max-w-[calc(100vw-1rem)]" placement={larger.md ? 'bottom-end' : 'bottom'} onOpen={() => { setTab('direct'); setKind(''); load() }}>
             <Dropdown.Item variant="header">
                 <div className="flex items-center gap-1 px-2 pb-0.5">
-                    <NotifFilters tab={tab} setTab={setTab} kind={kind} setKind={setKind} counts={counts} kinds={kinds} className="min-w-0 flex-1" />
+                    <NotifFilters tab={tab} setTab={setTab} kind={kind} setKind={setKind} counts={{ ...counts, direct: directUnread }} kinds={kinds} className="min-w-0 flex-1" />
                     <button type="button" title={tr('Mark all as read')} aria-label={tr('Mark all as read')} disabled={!counts.unread} onClick={(e) => { e.stopPropagation(); markAll() }} className="mb-1 grid size-7 shrink-0 place-items-center rounded-full text-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700"><PiCheckCircleDuotone /></button>
                 </div>
             </Dropdown.Item>
             <ScrollBar className="max-h-[340px] overflow-y-auto px-1">
                 {shown.map((i) => <NotifRow key={i.id} i={i} onOpen={open} onToggle={(x) => setRead([x.id], !x.read)} />)}
                 {loaded && !shown.length && (
-                    <div className="flex h-[200px] items-center justify-center text-center"><div><PiBellRingingDuotone className="mx-auto mb-1 text-5xl text-gray-300" /><h6 className="text-sm font-semibold">{tab === 'unread' ? tr('You are all caught up') : tr('Nothing yet')}</h6><p className="mt-0.5 text-xs text-gray-500">{tr('New tickets, tasks, payments and answers show up here.')}</p></div></div>
+                    <div className="flex h-[200px] items-center justify-center text-center"><div><PiBellRingingDuotone className="mx-auto mb-1 text-5xl text-gray-300" /><h6 className="text-sm font-semibold">{tab === 'unread' || tab === 'direct' ? tr('You are all caught up') : tr('Nothing yet')}</h6><p className="mt-0.5 text-xs text-gray-500">{tr('New tickets, tasks, payments and answers show up here.')}</p></div></div>
                 )}
             </ScrollBar>
             <div className="border-t border-gray-100 px-3 py-2 text-center dark:border-gray-700"><Link to="/crm/notifications" onClick={() => ref.current?.handleDropdownClose?.()} className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"><PiCheckBold />{tr('See all notifications')}</Link></div>

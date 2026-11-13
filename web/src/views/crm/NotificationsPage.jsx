@@ -9,7 +9,7 @@ import Skeleton from '@/components/ui/Skeleton'
 import Tooltip from '@/components/ui/Tooltip'
 import RemindMenu from '@/components/template/Notification/RemindMenu'
 import { NotifFilters, useOpenNotif } from '@/components/template/Notification/Notification'
-import { look, kindLabel, recordLabel, replyTarget } from '@/components/template/Notification/notifKit'
+import { look, kindLabel, recordLabel, replyTarget, inTab as inTabOf, isDirect } from '@/components/template/Notification/notifKit'
 import { useNotifs } from '@/store/notifStore'
 import { api, notify } from './kit/api'
 import { tr } from '@/utils/t'
@@ -71,7 +71,7 @@ const Card1 = ({ i, onOpen, onToggle }) => {
 /** Everything that needs the signed-in person's attention, newest first, the last 5 days by default (change the dates); read, remind or answer from the card. */
 const NotificationsPage = () => {
     const { items, counts, loaded, load, setRead, markAll } = useNotifs()
-    const [tab, setTab] = useState('all')
+    const [tab, setTab] = useState('direct')
     const [kind, setKind] = useState('')
     const [preset, setPreset] = useState('5')
     const [from, setFrom] = useState(dayjs().subtract(4, 'day').format('YYYY-MM-DD'))
@@ -84,7 +84,8 @@ const NotificationsPage = () => {
         const a = from ? +dayjs(from).startOf('day') : 0, b = to ? +dayjs(to).endOf('day') : Infinity
         return items.filter((i) => { const t = +new Date(i.date); return t >= a && t <= b }).sort((x, y) => +new Date(y.date) - +new Date(x.date))
     }, [items, from, to])
-    const inTab = useMemo(() => inRange.filter((i) => (tab === 'unread' ? !i.read : tab === 'read' ? i.read : true)), [inRange, tab])
+    const inTab = useMemo(() => inRange.filter((i) => inTabOf(tab, i)), [inRange, tab])
+    const directUnread = useMemo(() => inRange.filter((i) => isDirect(i) && !i.read).length, [inRange])
     const kinds = useMemo(() => { const m = {}; for (const i of inTab) m[i.kind] = (m[i.kind] || 0) + 1; return m }, [inTab])
     const shown = inTab.filter((i) => !kind || i.kind === kind)
     const unreadShown = shown.filter((i) => !i.read)
@@ -109,7 +110,7 @@ const NotificationsPage = () => {
                 <span className="text-gray-400">→</span>
                 <input type="date" aria-label={tr('To')} className={box} value={to} min={from || undefined} onChange={(e) => { setTo(e.target.value); setPreset('custom') }} />
             </div>
-            <div className="mb-3"><NotifFilters tab={tab} setTab={setTab} kind={kind} setKind={setKind} counts={{ unread: unreadShown.length }} kinds={kinds} className="min-w-0" /></div>
+            <div className="mb-3"><NotifFilters tab={tab} setTab={setTab} kind={kind} setKind={setKind} counts={{ unread: inRange.filter((i) => !i.read).length, direct: directUnread }} kinds={kinds} className="min-w-0" /></div>
             {!loaded && <div className="flex flex-col gap-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} height={64} />)}</div>}
             {loaded && (
                 <Card bodyClass="p-2.5">
@@ -119,7 +120,7 @@ const NotificationsPage = () => {
                             {g.list.map((i) => <Card1 key={i.id} i={i} onOpen={open} onToggle={(x) => setRead([x.id], !x.read)} />)}
                         </div>
                     )) : (
-                        <div className="py-14 text-center"><PiBellRingingDuotone className="mx-auto mb-2 text-6xl text-gray-300" /><h6 className="font-semibold">{tab === 'unread' ? tr('You are all caught up') : tr('Nothing here for these dates')}</h6></div>
+                        <div className="py-14 text-center"><PiBellRingingDuotone className="mx-auto mb-2 text-6xl text-gray-300" /><h6 className="font-semibold">{tab === 'unread' || tab === 'direct' ? tr('You are all caught up') : tr('Nothing here for these dates')}</h6></div>
                     )}
                 </Card>
             )}

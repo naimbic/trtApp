@@ -9,6 +9,8 @@ import { tr } from '@/utils/t'
 // app (and in inputs marked data-mention) without each screen doing anything. A box opts out with data-no-mention; code boxes
 // (spellCheck off) are skipped. Choosing an item writes "@Full Name" / "#tag" into the box; colleagues are told when the text is saved.
 const TRIGGER = /(^|[\s(])([@#])([\p{L}\p{N}_.'-]*(?: [\p{L}\p{N}_.'-]*)?)$/u
+/** "@team" tells every colleague. */
+const EVERYONE = { key: '__team', label: 'team', hint: 'Everyone', insert: '@team ' }
 const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 const eligible = (el) => !!el && !el.readOnly && !el.disabled && !el.closest('[data-no-mention]') && ((el.tagName === 'TEXTAREA' && el.spellcheck !== false) || (el.tagName === 'INPUT' && el.hasAttribute('data-mention')))
 
@@ -35,7 +37,7 @@ const MentionLayer = () => {
             mentionDirectory().then((d) => {
                 const now = el.value.slice(0, el.selectionStart ?? 0)
                 if (now !== before) return
-                const pool = kind === '@' ? d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` })) : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
+                const pool = kind === '@' ? [EVERYONE, EVERYONE, ...d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` }))] : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
                 const starts = pool.filter((p) => norm(p.label).startsWith(q)), has = pool.filter((p) => !norm(p.label).startsWith(q) && norm(p.label).includes(q))
                 const items = [...starts, ...has].slice(0, 6)
                 if (!items.length) return setSt(null)

@@ -5,6 +5,8 @@ const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,
 export function mentionedIds(text, staff) {
     const t = norm(text)
     if (!t.includes('@')) return []
+    // "@team" names everybody (every colleague of the list given, which is the active staff)
+    if (/(^|[\s(])@team(?=$|[\s.,;:!?)])/.test(t)) return (staff || []).map((s) => s.id).filter(Boolean)
     const out = []
     for (const s of staff || []) {
         const n = norm(s.name)

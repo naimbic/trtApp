@@ -143,8 +143,8 @@ const MySpace = ({ compact = false, onBack = null, openId = '' }) => {
     }
 
     return (
-        <div className="flex h-full min-h-0 flex-col">
-            <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+        <div className="flex h-full min-h-0 flex-col bg-gradient-to-b from-amber-50 via-orange-50/60 to-rose-50/40 dark:from-gray-900/60 dark:via-gray-900/40 dark:to-gray-900/30">
+            <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50/70 px-4 py-3 dark:border-gray-700 dark:bg-transparent">
                 {onBack && <button type="button" className="text-xl text-gray-500 md:hidden" onClick={onBack} aria-label={tr("Back")}><TbArrowLeft /></button>}
                 <div className="min-w-0 flex-1">
                     <div className="font-bold heading-text">{ro ? tr("My space of {name}", { name: ownerOpts.find((o) => o.value === d.owner)?.label.replace(/ \(\d+\)$/, '') || '' }) : tr("My space")}</div>

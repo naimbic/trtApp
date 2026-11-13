@@ -26,7 +26,7 @@ const Mentioned = ({ text, onDark = false }) => {
     // the text between the web addresses, with the mentions and tags picked out of it
     const mentions = (seg, key) => {
         if (!needs || !dir || !seg) return seg
-        const names = dir.staff.map((s) => s.name).filter(Boolean).sort((a, b) => b.length - a.length)
+        const names = ['team', ...dir.staff.map((s) => s.name)].filter(Boolean).sort((a, b) => b.length - a.length)
         const parts = []
         const re = new RegExp(`(^|[\\s(])(@(?:${names.map(esc).join('|') || '(?!)'})|#[\\p{L}\\p{N}_-]+)(?=$|[\\s.,;:!?)])`, 'giu')
         let last = 0, m

@@ -13,3 +13,8 @@ test('an email address or a half name is not a mention', () => {
     assert.deepEqual(mentionedIds('hello @Sarah', staff), [])
     assert.deepEqual(mentionedIds('no mention here', staff), [])
 })
+
+test('@team names everybody, and only as a whole word', () => {
+    assert.deepEqual(mentionedIds('Hello @team, meeting at 3', staff), ['a', 'b', 'c'])
+    assert.deepEqual(mentionedIds('write to me@teams.com', staff), [])
+})

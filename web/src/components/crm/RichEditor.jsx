@@ -209,7 +209,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     editorRef.current = editor
     useEffect(() => { if (editor) onReady?.(editor) }, [editor]) // eslint-disable-line react-hooks/exhaustive-deps
     // the colleagues' names are known a moment after the editor opens: draw the mentions again then
-    useEffect(() => { if (!mentions) return undefined; let on = true; mentionDirectory().then((d) => { if (!on) return; namesRef.current = [...d.staff, ...extraRef.current].map((s) => s.name).filter(Boolean).sort((a, b) => b.length - a.length); editorRef.current?.view?.dispatch(editorRef.current.state.tr) }); return () => { on = false } }, [editor])
+    useEffect(() => { if (!mentions) return undefined; let on = true; mentionDirectory().then((d) => { if (!on) return; namesRef.current = ['team', ...[...d.staff, ...extraRef.current].map((s) => s.name)].filter(Boolean).sort((a, b) => b.length - a.length); editorRef.current?.view?.dispatch(editorRef.current.state.tr) }); return () => { on = false } }, [editor])
 
     const pick = (m, item) => { editor.chain().focus().deleteRange({ from: m.from, to: m.to }).insertContent(item.insert).run(); setMention(null) }
 

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.234.2',
+        date: '2026-11-13',
+        title: '@team mentions everybody, and a light My space',
+        items: [
+            'Type @team anywhere a colleague can be mentioned (notes, comments, requests, ideas, tasks...) to tell the whole team at once: it appears first in the @ list, is highlighted like a name, and every active colleague gets the notification (never the author, never twice).',
+            'My space has a soft light background to tell it apart from the conversations.',
+        ],
+    },
+    {
         version: '0.234.1',
         date: '2026-11-13',
         title: 'Checklist reminder: any date and hour',

@@ -30,7 +30,7 @@ const ClientPasswords = ({ clientId }) => {
             {!loading && !data.list.length && !error && (
                 <div className="flex flex-col items-center justify-center gap-2 py-16 text-center text-gray-500"><TbKey className="text-5xl text-gray-300" /><h5>{tr("No logins for this customer yet")}</h5>{data.can.create && <Button variant="solid" icon={<TbPlus />} onClick={() => open(null)}>{tr("Add the first entry")}</Button>}</div>
             )}
-            <EntryDrawer open={drawer.open} id={drawer.id} categories={data.categories} staff={data.staff} presets={{ clientId }} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} onCategories={load} />
+            <EntryDrawer open={drawer.open} id={drawer.id} categories={data.categories} staff={data.staff} presets={{ clientId, access: 'team' }} onClose={() => setDrawer((d) => ({ ...d, open: false }))} onChanged={load} onCategories={load} />
         </div>
     )
 }

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.235.3',
+        date: '2026-11-13',
+        title: 'Logins added from a customer are shared with the team by default',
+        items: [
+            'A login added from the customer’s Passwords tab now starts as “Whole team” (people with access to the Password vault) instead of “Only me”, so the colleagues you gave the permission can see it. You can still change it to Only me or Selected people in the entry.',
+        ],
+    },
+    {
         version: '0.235.2',
         date: '2026-11-13',
         title: 'Customer activity only for those given the Activity permission',

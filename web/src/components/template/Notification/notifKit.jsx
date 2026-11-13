@@ -16,7 +16,7 @@ export const kindLabel = (k) => ({ ticket: tr('Tickets'), task: tr('Tasks'), rem
 const DIRECT = new Set(['mention', 'comment', 'task', 'note', 'reminder', 'calendar', 'ticket', 'lead'])
 export const isDirect = (i) => DIRECT.has(i.kind)
 /** Which notifications a tab holds: Direct (written for me), All, Unread, Read. */
-export const inTab = (tab, i) => (tab === 'direct' ? isDirect(i) : tab === 'unread' ? !i.read : tab === 'read' ? !!i.read : true)
+export const inTab = (tab, i) => (tab === 'direct' ? isDirect(i) && !i.read : tab === 'unread' ? !i.read : tab === 'read' ? !!i.read : true)
 /** Icon component and classes of one notification. */
 export const look = (i) => { const [Icon, cls] = KIND[i.kind] || KIND.other; return [Icon, TONE[i.tone] && !['ticket', 'reminder', 'request', 'idea'].includes(i.kind) ? TONE[i.tone] : cls] }
 

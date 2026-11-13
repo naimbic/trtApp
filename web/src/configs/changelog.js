@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.236.1',
+        date: '2026-11-13',
+        title: 'Notifications: a read one leaves the Direct tab',
+        items: [
+            'Opening a notification marks it read and it now moves out of the Direct tab into “Read” (it stays in “All”), so Direct only holds what still needs you.',
+        ],
+    },
+    {
         version: '0.236.0',
         date: '2026-11-13',
         title: 'Fewer notifications: only what is yours, and a Direct tab',

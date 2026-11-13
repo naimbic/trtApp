@@ -42,8 +42,13 @@ export async function createAppointment(request) {
         // known people: a lead or a client contact with the same email
         let leadId = null, clientId = null
         if (emails.length) {
-            leadId = (await prisma.crmLead.findFirst({ where: { email: { in: emails, mode: 'insensitive' } }, select: { id: true } }))?.id || null
-            if (!leadId) clientId = (await prisma.crmContact.findFirst({ where: { email: { in: emails, mode: 'insensitive' } }, select: { clientId: true } }))?.clientId || null
+            // a customer wins over a lead; a lead that already became a customer is its customer
+            clientId = (await prisma.crmContact.findFirst({ where: { email: { in: emails, mode: 'insensitive' } }, select: { clientId: true } }))?.clientId || null
+            if (!clientId) {
+                const lead = await prisma.crmLead.findFirst({ where: { email: { in: emails, mode: 'insensitive' } }, select: { id: true, clientId: true } })
+                if (lead?.clientId) clientId = lead.clientId
+                else leadId = lead?.id || null
+            }
         }
         const data = { title, start, end, meetingUrl: meetingUrl || null, description, status: 'draft', source, externalRef: room, guests, attendeeEmails: emails, category: 'meeting', color: 'yellow', apiKeyId: key.id, leadId, clientId }
         const same = room ? await prisma.crmEvent.findFirst({ where: { source, externalRef: room } }) : null

@@ -219,6 +219,26 @@ export async function grantClientMeetingsTab() {
     await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
 }
 
+/** Mails and meetings that were filed under a lead although the person is already a customer (a lead that became a customer, or a duplicate lead with the same address as
+ *  a customer contact) move to the customer. Only what came in by itself (mails caught from the mailbox, meetings booked by email or from Meet). Runs once. */
+export async function moveAutoItemsToCustomers() {
+    const MARK = 'auto_items_to_customers_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK } })) return
+    const leads = await prisma.crmLead.findMany({ where: { email: { not: null } }, select: { id: true, email: true, clientId: true } })
+    const contacts = await prisma.crmContact.findMany({ where: { email: { not: null } }, select: { email: true, clientId: true } })
+    const byEmail = new Map(contacts.filter((c) => c.clientId).map((c) => [String(c.email).trim().toLowerCase(), c.clientId]))
+    let moved = 0
+    for (const l of leads) {
+        const clientId = l.clientId || byEmail.get(String(l.email).trim().toLowerCase())
+        if (!clientId) continue
+        const m = await prisma.crmLeadMail.updateMany({ where: { leadId: l.id, source: 'mailbox' }, data: { leadId: null, clientId } })
+        const e = await prisma.crmEvent.updateMany({ where: { leadId: l.id, OR: [{ source: { not: null } }, { description: { startsWith: 'Booked by email' } }] }, data: { leadId: null, clientId } })
+        moved += m.count + e.count
+    }
+    console.log(`[migrate] moveAutoItemsToCustomers: ${moved} item(s) moved to their customer`)
+    await prisma.crmOption.create({ data: { name: MARK, value: new Date().toISOString() } })
+}
+
 /** The tabs of the lead popup get their own rights: everyone who already has permissions, and every role, keeps seeing all of them. Runs once. */
 export async function grantLeadTabs() {
     const MARK = 'perm_migration_lead_tabs_v1'

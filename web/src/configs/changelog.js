@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.233.7',
+        date: '2026-11-13',
+        title: 'Mails and meetings of a customer go to the customer, not to a lead',
+        items: [
+            'An email received from someone who is already a customer (a contact of a customer, or a lead that already became a customer) is now kept on the customer, even when a lead with the same address still exists. Only a person who is still just a lead goes to the lead.',
+            'A meeting requested from the Meet app follows the same rule, so it appears in the customer Meetings tab.',
+            'Mails caught from the mailbox and meetings booked by email or from Meet that were already filed under such a lead are moved to the customer once, at the next start of the app.',
+        ],
+    },
+    {
         version: '0.233.6',
         date: '2026-11-12',
         title: 'Record payment: the customer bank comes first',

@@ -62,14 +62,20 @@ const FREE_MAIL = /^(gmail|googlemail|yahoo|ymail|hotmail|outlook|live|msn|iclou
  * the company's domain is tried (info@strasforma.com writes, the lead is contact@strasforma.com): only for company domains, never webmail,
  * and only when one lead or client matches.
  */
+async function clientWho(id, fallback = '') {
+    const client = id ? await prisma.crmClient.findUnique({ where: { id }, select: { id: true, company: true } }) : null
+    return client ? { kind: 'client', id: client.id, name: client.company || fallback, record: client } : null
+}
+
 async function exactWho(a) {
     if (!a) return null
-    const lead = await prisma.crmLead.findFirst({ where: { email: { equals: a, mode: 'insensitive' }, junk: false }, orderBy: { createdAt: 'desc' } })
-    if (lead) return { kind: 'lead', id: lead.id, name: lead.name || lead.company || a, record: lead }
+    // an existing customer wins: a contact of a client with this address, or a lead that already became a customer. Only a lead that is still a lead is a lead.
     const contact = await prisma.crmContact.findFirst({ where: { email: { equals: a, mode: 'insensitive' } }, select: { clientId: true, firstName: true, lastName: true } })
-    if (contact?.clientId) {
-        const client = await prisma.crmClient.findUnique({ where: { id: contact.clientId }, select: { id: true, company: true } })
-        if (client) return { kind: 'client', id: client.id, name: client.company || [contact.firstName, contact.lastName].filter(Boolean).join(' ') || a, record: client }
+    if (contact?.clientId) { const w = await clientWho(contact.clientId, [contact.firstName, contact.lastName].filter(Boolean).join(' ') || a); if (w) return w }
+    const lead = await prisma.crmLead.findFirst({ where: { email: { equals: a, mode: 'insensitive' }, junk: false }, orderBy: { createdAt: 'desc' } })
+    if (lead) {
+        if (lead.clientId) { const w = await clientWho(lead.clientId, lead.name || lead.company || a); if (w) return w }
+        return { kind: 'lead', id: lead.id, name: lead.name || lead.company || a, record: lead }
     }
     return null
 }
@@ -97,7 +103,7 @@ export async function whoIs(address, fromName = '', others = []) {
         return byName([label, fromName])
     }
     if (leads.length + clientIds.length !== 1) return { ambiguous: leads.length + clientIds.length } // several leads or clients on this domain: not guessed
-    if (leads.length === 1) return { kind: 'lead', id: leads[0].id, name: leads[0].name || leads[0].company || a, record: leads[0], via: 'domain' }
+    if (leads.length === 1) { if (leads[0].clientId) { const w = await clientWho(leads[0].clientId, a); if (w) return { ...w, via: 'domain' } } return { kind: 'lead', id: leads[0].id, name: leads[0].name || leads[0].company || a, record: leads[0], via: 'domain' } }
     const client = await prisma.crmClient.findUnique({ where: { id: clientIds[0] }, select: { id: true, company: true } })
     return client ? { kind: 'client', id: client.id, name: client.company || a, record: client, via: 'domain' } : null
 }
@@ -119,7 +125,9 @@ async function byName(words) {
     }
     // a lead that was converted and its client are one company
     const list = [...found.values()].filter((x) => !(x.kind === 'client' && [...found.values()].some((y) => y.kind === 'lead' && y.clientId === x.id)))
-    return list.length === 1 ? list[0] : null
+    const one = list.length === 1 ? list[0] : null
+    if (one?.kind === 'lead' && one.clientId) return (await clientWho(one.clientId, one.name)) ? { ...(await clientWho(one.clientId, one.name)), via: 'name' } : one // a converted lead is its customer
+    return one
 }
 
 /**

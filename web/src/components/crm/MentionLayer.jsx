@@ -37,7 +37,7 @@ const MentionLayer = () => {
             mentionDirectory().then((d) => {
                 const now = el.value.slice(0, el.selectionStart ?? 0)
                 if (now !== before) return
-                const pool = kind === '@' ? [EVERYONE, EVERYONE, ...d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` }))] : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
+                const pool = kind === '@' ? [EVERYONE, ...d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` }))] : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
                 const starts = pool.filter((p) => norm(p.label).startsWith(q)), has = pool.filter((p) => !norm(p.label).startsWith(q) && norm(p.label).includes(q))
                 const items = [...starts, ...has].slice(0, 6)
                 if (!items.length) return setSt(null)
@@ -95,7 +95,7 @@ export async function mentionItems(kind, q, extra = []) {
     const d = await mentionDirectory()
     const n = norm(q)
     // extra = people outside the team that can be named here (a client's contacts): [{ id, name }]
-    const pool = kind === '@' ? [...extra.map((s) => ({ key: `x-${s.id}`, label: s.name, hint: 'Client', insert: `@${s.name} ` })), ...d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` }))] : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
+    const pool = kind === '@' ? [EVERYONE, ...extra.map((s) => ({ key: `x-${s.id}`, label: s.name, hint: 'Client', insert: `@${s.name} ` })), ...d.staff.map((s) => ({ key: s.id, label: s.name, insert: `@${s.name} ` }))] : d.tags.map((t) => ({ key: t, label: t, insert: `#${t.replace(/\s+/g, '-')} ` }))
     const starts = pool.filter((p) => norm(p.label).startsWith(n)), has = pool.filter((p) => !norm(p.label).startsWith(n) && norm(p.label).includes(n))
     return [...starts, ...has].slice(0, 6)
 }

@@ -5,6 +5,7 @@ import ShareButton from '@/components/crm/ShareButton'
 import { cleanHtml } from '@/lib/crm/richText'
 import { STYLE } from '@/views/crm/kit/RichText'
 import { mentionDirectory } from '@/utils/mentions'
+import { tr } from '@/utils/t'
 import classNames from '@/utils/classNames'
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -26,7 +27,7 @@ function linkify(html) {
 
 /** Wraps "@Full Name" of colleagues and known "#tags" found in the text parts of safe HTML. */
 function decorate(html, dir) {
-    const names = dir.staff.filter((s) => s.name).sort((a, b) => b.name.length - a.name.length)
+    const names = [{ id: '', name: 'team', everyone: true }, ...dir.staff].filter((s) => s.name).sort((a, b) => b.name.length - a.name.length) // "@team" is shown as a mention too
     const byName = new Map(names.map((s) => [norm(s.name), s]))
     const tags = new Set(dir.tags.map((t) => norm(t.replace(/\s+/g, '-'))))
     const re = new RegExp(`(^|[\\s(])(@(?:${names.map((s) => esc(s.name)).join('|') || '(?!)'})|#[\\p{L}\\p{N}_-]+)(?=$|[\\s.,;:!?)]|&nbsp;)`, 'giu') // a mention followed by a non-breaking space (the one a Reply writes) still counts
@@ -35,7 +36,7 @@ function decorate(html, dir) {
         if (part.startsWith('<')) { if (/^<a\b/i.test(part)) inLink++; else if (/^<\/a>/i.test(part)) inLink = Math.max(0, inLink - 1); return part }
         if (inLink || !part) return part
         return part.replace(re, (m, pre, tok) => {
-            if (tok[0] === '@') { const p = byName.get(norm(tok.slice(1))); return p ? `${pre}<span class="mention" data-staff="${p.id}" title="Chat">${tok}</span>` : m }
+            if (tok[0] === '@') { const p = byName.get(norm(tok.slice(1))); return p ? (p.everyone ? `${pre}<span class="mention" title="${tr('Everyone')}">${tok}</span>` : `${pre}<span class="mention" data-staff="${p.id}" title="Chat">${tok}</span>`) : m }
             return tags.has(norm(tok.slice(1))) ? `${pre}<span class="hashtag">${tok}</span>` : m
         })
     }).join('')

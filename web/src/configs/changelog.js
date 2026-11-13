@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.234.3',
+        date: '2026-11-13',
+        title: '@team shows as a mention in saved comments',
+        items: [
+            'A saved comment, note or description now shows @team highlighted like a name (it was only highlighted while typing). @team is also offered in every @ list, and no longer twice.',
+        ],
+    },
+    {
         version: '0.234.2',
         date: '2026-11-13',
         title: '@team mentions everybody, and a light My space',

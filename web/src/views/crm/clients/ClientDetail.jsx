@@ -148,6 +148,8 @@ const ClientDetail = () => {
     useEffect(() => { if (ticketDialog && !ticketLk.departments.length) api('/api/crm/support/tickets/lookups').then(setTicketLk).catch(() => {}) }, [ticketDialog]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // the tabs of a customer that have a switch of their own (Roles > Customer tabs); the others follow the rights of their feature
+    const [passCount, setPassCount] = useState(0) // logins of the vault linked to this customer that this person may see
+    useEffect(() => { let on = true; api(`/api/crm/vault/entries?clientId=${id}`).then((r) => on && setPassCount(r.list?.length || 0)).catch(() => on && setPassCount(0)); return () => { on = false } }, [id, tab])
     const TAB_CAP = { overview: 'tab_profile', mails: 'tab_mails', meetings: 'tab_meetings', notes: 'tab_notes', files: 'tab_files', activity: 'tab_activity' }
     const tabs = useMemo(() => {
         if (!c) return []
@@ -179,12 +181,12 @@ const ClientDetail = () => {
                 { key: 'mails', label: tr("Mails"), iconOnly: true, icon: <TbMail className="text-sky-500" /> },
                 { key: 'meetings', label: tr("Meetings"), count: c.counts.meetings, icon: <TbCalendarEvent className="text-emerald-500" /> },
                 rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
-                { key: 'passwords', label: tr("Passwords"), feature: 'passwords', iconOnly: true, icon: <TbKey className="text-amber-500" /> },
+                { key: 'passwords', label: tr("Passwords"), count: passCount, hideNoCount: true, iconOnly: true, icon: <TbKey className="text-amber-500" /> },
                 { key: 'files', label: tr("Files"), count: c.counts.files, iconOnly: true, icon: <TbPaperclip className="text-slate-500" /> },
                 { key: 'activity', label: tr("Activity"), iconOnly: true, icon: <TbHistory className="text-gray-500" /> },
             ]),
-        ].filter((t) => (!t.feature || can(t.feature, 'view')) && !(TAB_CAP[t.key] && !can('client_tabs', TAB_CAP[t.key])) && !(HIDE_WHEN_EMPTY.includes(t.key) && !t.count && t.key !== tab)) // an empty Estimates / Proposals / Projects / Files / Tickets / Notes tab is hidden (until it is the one open)
-    }, [c, id, can, tab])
+        ].filter((t) => !(t.key === 'passwords' && !can('passwords', 'view') && !passCount && tab !== 'passwords')).filter((t) => (!t.feature || can(t.feature, 'view')) && !(TAB_CAP[t.key] && !can('client_tabs', TAB_CAP[t.key])) && !(HIDE_WHEN_EMPTY.includes(t.key) && !t.count && t.key !== tab)) // an empty Estimates / Proposals / Projects / Files / Tickets / Notes tab is hidden (until it is the one open)
+    }, [c, id, can, tab, passCount])
     useEffect(() => { if (tabs.length && !tabs.some((t) => t.key === tab)) setTab(tabs[0].key) }, [tabs, tab]) // the tab that was asked for is not one this person may see: open the first that is
 
     const openAsClient = async (k) => {

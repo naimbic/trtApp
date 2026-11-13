@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.235.1',
+        date: '2026-11-13',
+        title: 'Shared passwords show on the customer for the people they are shared with',
+        items: [
+            'A login shared with a person now shows in the customer’s Passwords tab for that person, even when their role cannot open the Password vault page (before, the tab and the login stayed hidden). They only see what was shared with them.',
+            'The logins kept on customers in the old system are moved into the Password vault, linked to their customer (their old passwords cannot be read, so enter them again).',
+        ],
+    },
+    {
         version: '0.235.0',
         date: '2026-11-13',
         title: 'Passwords tab on the customer page',

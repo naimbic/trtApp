@@ -431,3 +431,22 @@ export async function mergeDaysOffIntoClosedDays() {
     if (periods.length) await prisma.crmClosedDay.createMany({ data: periods })
     await prisma.crmDayOff.deleteMany({ where: { id: { in: rows.map((r) => r.id) } } })
 }
+
+/**
+ * One-time: the logins kept on a customer in the old system (the "Vault" of the imported data) become entries of the Password vault, linked to that customer,
+ * so they show in the customer's Passwords tab. Their passwords were encrypted with the old system's key and cannot be read here: they come over without one
+ * (the note says so). Visibility: "creator only" stays private to the creator, the others are shared with the team. Safe to run again (marker).
+ */
+export async function moveOldVaultToPasswords() {
+    const MARK_V = 'old_vault_to_passwords_v1'
+    if (await prisma.crmOption.findFirst({ where: { name: MARK_V } })) return
+    const old = await prisma.crmVaultEntry.findMany().catch(() => [])
+    for (const o of old) {
+        const title = [o.serverAddress, o.description].filter(Boolean)[0] || 'Customer login'
+        const notes = [o.description && o.description !== title ? o.description : '', o.port ? `Port: ${o.port}` : '', o.password ? 'The password was kept by the old system in a form that cannot be read here: enter it again.' : ''].filter(Boolean).join('\n')
+        const exists = await prisma.crmPasswordEntry.findFirst({ where: { clientId: o.clientId, title: String(title).slice(0, 160), username: o.username || null } })
+        if (exists) continue
+        await prisma.crmPasswordEntry.create({ data: { title: String(title).slice(0, 160), clientId: o.clientId, url: o.serverAddress && /^https?:\/\//i.test(o.serverAddress) ? o.serverAddress : null, username: o.username || null, notes: notes || null, tags: ['old system'], access: o.visibility === 1 ? 'private' : 'team', createdBy: o.creator || null, changedAt: new Date() } })
+    }
+    await prisma.crmOption.create({ data: { name: MARK_V, value: new Date().toISOString() } })
+}

@@ -1,6 +1,6 @@
 import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
-import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
+import { requirePermission, getStaffId, hasCap, isCrmAdmin, viewScope } from '@/lib/crm/permissions'
 import { seal, unseal, b32decode, totpNow } from '@/lib/crm/twoFactor'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
@@ -11,9 +11,9 @@ const ACCESS = ['private', 'team', 'selected']
 const reqIp = (r) => (r?.headers?.get('x-forwarded-for') || '').split(',')[0].trim() || null
 
 async function ctx() {
-    const session = await requirePermission('passwords', 'view')
+    const session = await requirePermission(null) // signed in is enough: what a person sees is decided per entry (the owner, selected people, the team)
     const authority = session.user.authority || []
-    return { session, authority, admin: isCrmAdmin(authority), staffId: await getStaffId(session), can: (cap) => hasCap(authority, 'passwords', cap), name: session.user.name || '' }
+    return { session, authority, page: viewScope(authority, 'passwords') !== null, admin: isCrmAdmin(authority), staffId: await getStaffId(session), can: (cap) => hasCap(authority, 'passwords', cap), name: session.user.name || '' }
 }
 
 /** what a staff member may do with an entry: see it, change it, change who shares it */
@@ -36,6 +36,7 @@ async function log(entryId, c, action, detail, request) {
 
 export async function listEntries(q = {}) {
     const c = await ctx()
+    if (!c.page && !oid(q.clientId)) throw Object.assign(new Error('Forbidden'), { status: 403 }) // the vault page needs the permission; a customer's tab shows what was shared with the person
     const [entries, cats, staff] = await Promise.all([prisma.crmPasswordEntry.findMany({ orderBy: { title: 'asc' } }), prisma.crmPasswordCategory.findMany({ orderBy: { name: 'asc' } }), staffList()])
     const visible = entries.filter((e) => rights(c, e).see)
     const clients = await prisma.crmClient.findMany({ where: { id: { in: [...new Set(visible.map((e) => e.clientId).filter(Boolean))] } }, select: { id: true, company: true } })

@@ -20,6 +20,8 @@ const NewTicketDialog = ({ open, onClose, lookups, onCreated, presets }) => {
     const set = (p) => setV((x) => ({ ...x, ...p }))
     const tf = useTicketFiles({ notify })
     useEffect(() => { if (open) { setV({ ...EMPTY, ...(presets || {}) }); setContacts([]); tf.clear() } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+    // assigned to the person who opens the ticket by default (the lookups may arrive after the dialog opens)
+    useEffect(() => { if (open && lookups?.me && !presets?.assignedId) setV((x) => (x.assignedId ? x : { ...x, assignedId: lookups.me })) }, [open, lookups?.me]) // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (!v.clientId) { setContacts([]); return }
         api(`/api/crm/support/tickets/contacts?clientId=${v.clientId}`).then((r) => { setContacts(r.list); const p = r.list.find((c) => c.primary) || r.list[0]; if (p && !v.contactId) set({ contactId: p.id }) }).catch(() => {})

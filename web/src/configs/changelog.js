@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.240.3',
+        date: '2026-11-14',
+        title: 'Ticket from a lead, and tasks and tickets start filled',
+        items: [
+            'The Offers tab of a lead now also has “New ticket”: it opens for the lead’s client (with its contact) when the lead is a client, otherwise for the lead’s email.',
+            'A new ticket is assigned to the person who opens it by default, wherever it is started.',
+            'A full new task started from a lead now opens like any new task: default status and priority, assigned to its creator and with the default followers (Settings → Tasks).',
+        ],
+    },
+    {
         version: '0.240.2',
         date: '2026-11-14',
         title: 'Project straight from a lead',

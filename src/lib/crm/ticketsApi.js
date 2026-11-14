@@ -65,7 +65,7 @@ async function lookups() {
         predefined: predefined.map((r) => ({ id: r.id, name: r.name, message: stripHtml(r.message) })),
     }
 }
-export async function ticketLookups() { await requirePermission('tickets', 'view'); return lookups() }
+export async function ticketLookups() { const session = await requirePermission('tickets', 'view'); return { ...(await lookups()), me: await getStaffId(session) } } // me: a new ticket is assigned to the person who opens it by default
 
 export async function listTickets(q = {}) {
     const session = await requirePermission('tickets', 'view')

@@ -61,6 +61,10 @@ const LeadTaskList = ({ leadId, staff, onChanged, locked = false }) => {
     const can = useCan()
     const [list, setList] = useState(null)
     const [popup, setPopup] = useState({ open: false, id: null, k: 0 })
+    // a new task from a lead starts like any new task: the default status and priority, assigned to (and followed by) its creator when Settings say so
+    const [lk, setLk] = useState(null)
+    useEffect(() => { api('/api/crm/work/tasks/lookups').then(setLk).catch(() => {}) }, [])
+    const dflt = lk?.defaults ? { status: lk.defaults.status, priority: lk.defaults.priority, billable: lk.defaults.billable, assigneeIds: lk.defaults.assignMe && lk.me ? [lk.me] : [], followerIds: [...new Set([...(lk.defaults.followMe && lk.me ? [lk.me] : []), ...(lk.defaults.followAdminIds || [])])] } : {}
     const live = useRef({}) // the people of each task as the person sees them now, so two quick clicks never overwrite each other
     const queue = useRef(Promise.resolve())
     const busy = useRef(0) // changes still being saved: the list is only re-read when none is left, so a slow answer never undoes the next click
@@ -105,7 +109,7 @@ const LeadTaskList = ({ leadId, staff, onChanged, locked = false }) => {
                     placeholder={tr("Add a task for this lead (@ to mention, # for a tag)")} empty={tr("No tasks for this lead yet.")} act={act} onOpen={(i) => setPopup({ open: true, id: i.id, k: popup.k + 1 })} />
             )}
             {!locked && can('tasks', 'create') && <Button size="sm" icon={<TbPlus />} onClick={() => setPopup({ open: true, id: null, k: popup.k + 1 })}>{tr("New task with all its details")}</Button>}
-            <TaskDrawer open={popup.open} id={popup.id} staff={staff} refreshKey={popup.k} presets={{ relType: 'lead', relId: leadId }} onClose={() => setPopup((p) => ({ ...p, open: false }))} onChanged={changed} />
+            <TaskDrawer open={popup.open} id={popup.id} staff={staff} refreshKey={popup.k} presets={{ ...dflt, relType: 'lead', relId: leadId }} onClose={() => setPopup((p) => ({ ...p, open: false }))} onChanged={changed} />
         </div>
     )
 }

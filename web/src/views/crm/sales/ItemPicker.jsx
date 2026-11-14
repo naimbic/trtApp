@@ -14,7 +14,7 @@ const ItemPicker = ({ onChange }) => {
     const [failed, setFailed] = useState(false)
     useEffect(() => { if (!memory) api('/api/crm/items-board').then((d) => { memory = d; setBoard(d) }).catch(() => setFailed(true)) }, [])
     if (failed) return <RelationSelect resource="items" value={null} onChange={onChange} />
-    const opt = (i) => ({ value: i.id, label: i.description, rate: i.rate, unit: i.unit, search: `${i.description} ${i.longDescription || ''}` })
+    const opt = (i) => ({ value: i.id, label: i.description, rate: i.rate, unit: i.unit, search: `${i.description} ${String(i.longDescription || '').replace(/<[^>]+>/g, ' ')}` })
     const groups = board ? [...board.groups.map((g) => ({ label: g.name, color: g.color, options: g.items.map(opt) })), { label: tr('No group'), color: 'slate', options: board.ungrouped.map(opt) }].filter((g) => g.options.length) : []
     const money = (n) => new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0)
     return (

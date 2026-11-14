@@ -14,7 +14,7 @@ const Btn = ({ title, onClick, children }) => (
  * so layouts built with tables and inline styles are kept exactly as designed.
  * `docKey` changes when another template is opened; `value` is only read at that moment.
  */
-const VisualEditor = ({ docKey, value, onChange, disabled, ref }) => {
+const VisualEditor = ({ docKey, value, onChange, disabled, ref, autoHeight = false }) => { // autoHeight: the box is as tall as its text instead of a fixed height
     const frame = useRef(null)
     const latest = useRef(onChange)
     latest.current = onChange
@@ -23,7 +23,8 @@ const VisualEditor = ({ docKey, value, onChange, disabled, ref }) => {
 
     const doc = () => frame.current?.contentDocument
     const run = (cmd, arg) => { doc()?.execCommand(cmd, false, arg); sync() }
-    const sync = () => { const d = doc(); if (d?.body) latest.current(d.body.innerHTML) }
+    const fit = () => { const d = doc(); if (autoHeight && d?.body && frame.current) { frame.current.style.height = '0px'; frame.current.style.height = `${Math.max(140, d.documentElement.scrollHeight)}px` } }
+    const sync = () => { const d = doc(); if (d?.body) latest.current(d.body.innerHTML); fit() }
 
     useImperativeHandle(ref, () => ({
         insert: (text) => { const d = doc(); if (!d) return; d.body.focus(); d.execCommand('insertText', false, text); sync() },
@@ -35,6 +36,7 @@ const VisualEditor = ({ docKey, value, onChange, disabled, ref }) => {
         d.designMode = disabled ? 'off' : 'on'
         d.body.addEventListener('input', sync)
         d.addEventListener('click', (e) => { if (e.target.closest?.('a')) e.preventDefault() })
+        fit()
     }
     const link = () => {
         const url = window.prompt(tr("Link address (https://…)"))
@@ -63,7 +65,7 @@ const VisualEditor = ({ docKey, value, onChange, disabled, ref }) => {
                 sandbox="allow-same-origin"
                 onLoad={onLoad}
                 srcDoc={`<!doctype html><html><body style="margin:0;padding:24px;background:#f3f4f6;font-family:sans-serif">${initial}</body></html>`}
-                className="h-[540px] w-full bg-white"
+                className={`${autoHeight ? 'block' : 'h-[540px]'} w-full bg-white`}
             />
         </div>
     )

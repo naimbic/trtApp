@@ -77,7 +77,7 @@ const resources = [
         ],
         fields: [
             { key: 'description', label: 'Name', type: 'text', required: true, section: 'General' },
-            { key: 'longDescription', label: 'Long description', type: 'textarea', section: 'General' },
+            { key: 'longDescription', label: 'Long description', type: 'textarea', editor: true, section: 'General' },
             { key: 'rate', label: 'Rate', type: 'money', required: true, section: 'Pricing' },
             { key: 'taxId', label: 'Tax 1', type: 'relation', resource: 'taxes', section: 'Pricing' },
             { key: 'tax2Id', label: 'Tax 2', type: 'relation', resource: 'taxes', section: 'Pricing' },

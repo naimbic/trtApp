@@ -14,6 +14,7 @@ import RecordDrawer from '../kit/RecordDrawer'
 import { getResource } from '@/lib/crm/resources'
 import { api, notify, useCan } from '../kit/api'
 import { savedLang, tr } from '@/utils/t'
+import { plainText } from '@/lib/crm/richText'
 
 const COLORS = {
     blue: { dot: 'bg-blue-500', tint: 'bg-blue-50 dark:bg-blue-500/10', ring: 'border-blue-200 dark:border-blue-500/30', text: 'text-blue-700 dark:text-blue-300' },
@@ -38,7 +39,7 @@ const ItemRow = ({ item, index, board, groupOptions, taxName, canEdit, canDelete
                 <span {...p.dragHandleProps} className={`flex h-7 w-6 shrink-0 items-center justify-center text-lg ${canDrag ? 'cursor-grab text-gray-400 hover:text-gray-600' : 'text-gray-200'}`} title={canDrag ? tr('Drag to reorder or to move to another group') : ''}><TbGripVertical /></span>
                 <div className="min-w-0 flex-1">
                     <button type="button" onClick={() => canEdit && onEdit(item)} className="block max-w-full truncate text-start font-semibold heading-text hover:underline">{item.description}</button>
-                    {item.longDescription && <div className="truncate text-xs text-gray-500" title={item.longDescription}>{item.longDescription}</div>}
+                    {plainText(item.longDescription) && <div className="truncate text-xs text-gray-500" title={plainText(item.longDescription)}>{plainText(item.longDescription)}</div>}
                 </div>
                 <div className="hidden w-16 shrink-0 text-xs text-gray-500 sm:block">{item.unit}</div>
                 <div className="hidden shrink-0 gap-1 md:flex">{[item.taxId, item.tax2Id].filter(Boolean).map((t, i) => <span key={i} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{taxName(t)}</span>)}</div>
@@ -81,7 +82,7 @@ const ItemsPage = () => {
     const taxById = Object.fromEntries(board.taxes.map((t) => [t.id, t]))
     const taxName = (id) => (taxById[id] ? `${taxById[id].name}${taxById[id].rate ? ` ${taxById[id].rate}%` : ''}` : '')
     const filtering = !!q.trim() || !!groupFilter
-    const match = (i) => !q.trim() || `${i.description} ${i.longDescription} ${i.unit}`.toLowerCase().includes(q.trim().toLowerCase())
+    const match = (i) => !q.trim() || `${i.description} ${plainText(i.longDescription)} ${i.unit}`.toLowerCase().includes(q.trim().toLowerCase())
     const lists = [...board.groups, { id: NONE, name: tr('No group'), color: 'slate', items: board.ungrouped, none: true }]
         .filter((g) => !groupFilter || g.id === groupFilter)
         .map((g) => ({ ...g, shown: g.items.filter(match) }))
@@ -243,7 +244,7 @@ const ItemsPage = () => {
                                 <input type="checkbox" className="mt-1" checked={ai.picked.includes(i)} onChange={() => setAi((a) => ({ ...a, picked: a.picked.includes(i) ? a.picked.filter((p) => p !== i) : [...a.picked, i] }))} />
                                 <div className="min-w-0 flex-1">
                                     <input value={x.description} onChange={(e) => setAi((a) => ({ ...a, list: a.list.map((y, j) => (j === i ? { ...y, description: e.target.value } : y)) }))} className="w-full bg-transparent font-semibold outline-none" />
-                                    <div className="text-xs text-gray-500">{x.longDescription}</div>
+                                    <div className="text-xs text-gray-500">{plainText(x.longDescription)}</div>
                                 </div>
                                 <div className="shrink-0 text-end"><input type="number" min="0" value={x.rate} onChange={(e) => setAi((a) => ({ ...a, list: a.list.map((y, j) => (j === i ? { ...y, rate: e.target.value } : y)) }))} className="w-24 rounded-md border border-gray-200 bg-transparent px-1.5 py-0.5 text-end font-bold dark:border-gray-600" /><div className="text-[11px] text-gray-400">{ai.currency} / {x.unit || tr('unit')}</div></div>
                             </label>

@@ -10,6 +10,7 @@ import Select from '@/components/ui/Select'
 import { calcDocument } from '@/lib/crm/sales/calc'
 import { api, notify } from '../kit/api'
 import LineItemsTable from './LineItemsTable'
+import { proposalText, isStartingText } from './proposalText'
 import RelationSelect from '../kit/RelationSelect'
 import Switcher from '@/components/ui/Switcher'
 import Segment from '@/components/ui/Segment'
@@ -35,10 +36,11 @@ const ProposalEditor = () => {
     const [v, setV] = useState(null)
     const base = useClientLookups()
     const visual = useRef(null)
+    const [lang, setLang] = useState('') // language of the client or lead: a new proposal's starting text is written in it
 
     // fills the "prepared for" block (and, on a new proposal, the client's currency) from the chosen client or lead
     const fill = async (relType, relId) => {
-        try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); setV((s) => ({ ...s, ...(!id && f.currencyId ? { currencyId: f.currencyId } : {}), proposalTo: f.proposalTo || s.proposalTo, email: f.email || s.email, phone: f.phone || s.phone, address: f.address || s.address, city: f.city || s.city, state: f.state || s.state, zip: f.zip || s.zip, country: f.country ?? s.country })) } catch { /* optional */ }
+        try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); if (!id && f.language) setLang(f.language); setV((s) => ({ ...s, ...(!id && f.language && isStartingText(s.content) ? { content: proposalText(f.language) } : {}), ...(!id && f.currencyId ? { currencyId: f.currencyId } : {}), proposalTo: f.proposalTo || s.proposalTo, email: f.email || s.email, phone: f.phone || s.phone, address: f.address || s.address, city: f.city || s.city, state: f.state || s.state, zip: f.zip || s.zip, country: f.country ?? s.country })) } catch { /* optional */ }
     }
 
     const fromId = params.get('from')
@@ -56,7 +58,7 @@ const ProposalEditor = () => {
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     subject: inv?.subject || '', relType: inv?.relType || (params.get('leadId') ? 'lead' : 'customer'), relId: inv?.relId || params.get('clientId') || params.get('leadId') || null,
                     proposalTo: inv?.proposalTo || '', email: inv?.email || '', phone: inv?.phone || '', address: inv?.address || '', city: inv?.city || '', state: inv?.state || '', zip: inv?.zip || '', country: inv?.country ?? null,
-                    content: inv?.content ?? '<p>Hello,</p><p>Thank you for your interest. Please find our offer below.</p><p>{proposal_items}</p><p>We look forward to working with you.</p>', allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || (!inv ? dd.me || null : null),
+                    content: inv?.content ?? proposalText(), allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || (!inv ? dd.me || null : null),
                     date: (!cloned && day(inv?.date)) || day(new Date()),
                     openTill: inv && !cloned ? day(inv.openTill) : (dueAfter > 0 ? day(dayjs().add(dueAfter, 'day')) : ''),
                     currencyId: inv?.currencyId || def?.id || null,
@@ -148,14 +150,6 @@ const ProposalEditor = () => {
                 </Card>
 
                 <Card>
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div><h4>{tr("Proposal text")}</h4><p className="text-sm text-gray-500">{tr("What the client reads. The items table goes where you put")} <code>{tr("{proposal_items}")}</code>{tr("; without it the table is added at the end.")}</p></div>
-                        <div className="flex flex-wrap gap-1.5">{['proposal_items', 'proposal_number', 'proposal_total', 'proposal_open_till', 'proposal_proposal_to', 'company_name'].map((t) => <button key={t} type="button" onClick={() => visual.current?.insert(`{${t}}`)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${t}}`}</button>)}</div>
-                    </div>
-                    <VisualEditor ref={visual} docKey={`proposal-${id || 'new'}`} value={v.content} onChange={(html) => setV((s) => ({ ...s, content: html }))} />
-                </Card>
-
-                <Card>
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <h4>{tr("Items")} <span className="text-sm font-normal text-gray-400">{tr("(optional)")}</span></h4>
                         <div className="w-72"><ItemPicker onChange={addFromCatalog} /></div>
@@ -177,6 +171,14 @@ const ProposalEditor = () => {
                             <div className="mt-1 flex justify-between border-t py-2 text-base font-semibold"><dt>{tr("Total")}</dt><dd className="tabular-nums">{money(totals.total)}</dd></div>
                         </dl>
                     </div>
+                </Card>
+
+                <Card>
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div><h4>{tr("Proposal text")}</h4><p className="text-sm text-gray-500">{tr("What the client reads. The items table goes where you put")} <code>{tr("{proposal_items}")}</code>{tr("; without it the table is added at the end.")}</p></div>
+                        <div className="flex flex-wrap gap-1.5">{['proposal_items', 'proposal_number', 'proposal_total', 'proposal_open_till', 'proposal_proposal_to', 'company_name'].map((t) => <button key={t} type="button" onClick={() => visual.current?.insert(`{${t}}`)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${t}}`}</button>)}</div>
+                    </div>
+                    <VisualEditor ref={visual} autoHeight docKey={`proposal-${id || 'new'}-${lang}`} value={v.content} onChange={(html) => setV((s) => ({ ...s, content: html }))} />
                 </Card>
 
                 <Card>

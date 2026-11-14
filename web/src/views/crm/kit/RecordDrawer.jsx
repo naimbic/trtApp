@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import RichEditor from '@/components/crm/RichEditor'
 import { TbChevronDown } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Drawer from '@/components/crm/PopupFrame'
@@ -34,6 +35,8 @@ const initValue = (f, v) => {
 }
 
 const Control = ({ f, value, onChange, disabled }) => {
+    // a long text with formatting (bold, lists, colours…): the long description of a catalogue item
+    if (f.editor) return <RichEditor compact minHeight={90} mentions={false} images={false} disabled={disabled} value={value ?? ''} onChange={onChange} />
     switch (f.type) {
         case 'textarea':
         case 'richtext':

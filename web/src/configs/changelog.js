@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.244.0',
+        date: '2026-11-14',
+        title: 'Proposal text in the language of the lead or client, under the items',
+        items: [
+            'A new proposal starts with its text written in the language of the lead or client it is for (English, French, Spanish, German, Italian, Portuguese, Dutch, Turkish, Russian, Arabic or Japanese). A text you already edited is never replaced.',
+            'On the proposal form, Proposal text is now under Items, and its box is as tall as the text instead of a tall empty area.',
+            'Catalogue items: the long description is a text editor too (bold, colour, lists…), and it arrives formatted on the line when the item is added to a document.',
+        ],
+    },
+    {
         version: '0.243.0',
         date: '2026-11-14',
         title: 'Formatted text in the long description of a line',

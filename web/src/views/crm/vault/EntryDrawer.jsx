@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { TbTrash, TbDice5, TbEye, TbEyeOff, TbLock, TbUsers, TbUserCheck } from 'react-icons/tb'
+import { TbSend, TbTrash, TbDice5, TbEye, TbEyeOff, TbLock, TbUsers, TbUserCheck } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import CreatableSelect from 'react-select/creatable'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -17,7 +17,7 @@ import { tr } from '@/utils/t'
 
 const EMPTY = { title: '', categoryId: null, clientId: null, url: '', username: '', password: '', totpSecret: '', tags: [], notes: '', expiresAt: null, access: 'private', viewerIds: [], editorIds: [] }
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
-const ACTION = { create: 'created the entry', update: 'edited', view: 'revealed the password', copy_password: 'copied the password', copy_username: 'copied the username', copy_totp: 'copied the 2FA code', open_url: 'opened the website' }
+const ACTION = { create: 'created the entry', update: 'edited', view: 'revealed the password', copy_password: 'copied the password', copy_username: 'copied the username', copy_totp: 'copied the 2FA code', open_url: 'opened the website', send_my_space: 'sent it to My space' }
 
 const EntryDrawer = ({ open, id, categories, staff, onClose, onChanged, onCategories, presets }) => {
     const [v, setV] = useState(EMPTY)
@@ -133,6 +133,7 @@ const EntryDrawer = ({ open, id, categories, staff, onClose, onChanged, onCatego
             title={edit ? (detail?.entry.title || tr("Entry")) : tr("New entry")} isOpen={open} onClose={onClose} onRequestClose={onClose} width={560}
             footer={
                 <div className="flex w-full items-center gap-2">
+                    {edit && detail?.entry.hasPassword && <Button variant="plain" icon={<TbSend />} onClick={async () => { try { await api(`/api/crm/vault/entries/${id}/my-space`, { method: 'POST' }); notify('success', tr("Sent to your password vault (My space)")) } catch (e) { notify('danger', e.message) } }}>{tr("Send to My space")}</Button>}
                     {edit && detail?.can.delete && <Button variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirm(true)}>{tr("Delete")}</Button>}
                     <div className="ml-auto flex gap-2"><Button onClick={onClose}>{canEdit ? tr("Cancel") : tr("Close")}</Button>{canEdit && <Button variant="solid" loading={saving} onClick={save}>{edit ? tr("Save changes") : tr("Add entry")}</Button>}</div>
                 </div>

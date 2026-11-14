@@ -153,6 +153,7 @@ const crmRoutes = [
     { key: 'crm.freelancers', path: '/crm/freelancers', component: lazy(() => import('@/views/crm/freelancers/FreelancersPage')), authority: [] },
     { key: 'crm.expenses', path: '/crm/expenses', component: lazy(() => import('@/views/crm/expenses/ExpensesList')), authority: [] },
     { key: 'crm.passwords', path: '/crm/passwords', component: lazy(() => import('@/views/crm/vault/PasswordVault')), authority: [] },
+    { key: 'crm.myPasswords', path: '/crm/my-passwords', component: lazy(() => import('@/views/crm/vault/MyVault')), authority: [] },
     { key: 'crm.kb', path: '/crm/knowledge-base', component: lazy(() => import('@/views/crm/kb/KbHub')), authority: [] },
     { key: 'crm.kb.manage', path: '/crm/knowledge-base/manage', component: lazy(() => import('@/views/crm/kb/KbManage')), authority: [] },
     { key: 'crm.kb.new', path: '/crm/knowledge-base/new', component: lazy(() => import('@/views/crm/kb/KbEditor')), authority: [] },

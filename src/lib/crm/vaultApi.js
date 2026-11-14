@@ -142,6 +142,19 @@ export async function revealEntry(id, request) {
     return { password, username: e.username, totp }
 }
 
+/** Copies an entry the person may see into their own My space (their personal vault) as a secret password item, sealed there too. */
+export async function sendToMySpace(id, request) {
+    const c = await ctx()
+    if (!c.staffId) throw fail('Your account has no staff profile', 403)
+    const e = await loadOne(id, c)
+    let password = ''
+    if (e.passwordEnc) { try { password = unseal(e.passwordEnc) } catch { throw fail('This password cannot be decrypted (the application key changed)', 500) } }
+    const body = [e.username && `Username: ${e.username}`, password && `Password: ${password}`, e.notes && `Notes: ${e.notes}`].filter(Boolean).join('\n')
+    const row = await prisma.crmMySpaceItem.create({ data: { staffId: c.staffId, kind: 'password', title: e.title.slice(0, 200), body: body ? seal(body) : null, url: e.url || null, secret: true } })
+    await log(id, c, 'send_my_space', '', request)
+    return { success: true, id: row.id }
+}
+
 export async function totpCode(id) {
     const c = await ctx()
     const e = await loadOne(id, c)

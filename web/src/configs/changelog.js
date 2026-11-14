@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.237.0',
+        date: '2026-11-14',
+        title: 'A personal password vault for each person',
+        items: [
+            'Each person has their own “My password vault” page in the profile menu: their own logins (name, website, username, password, notes), kept encrypted, private to them.',
+            'The Super Admin (and anyone given “See other people’s My space”) can open every person’s vault from a picker on that page, read only.',
+            'Entries of the shared Password vault have a “Send to My space” button that copies the login into your own vault; the action is logged on the entry.',
+        ],
+    },
+    {
         version: '0.236.1',
         date: '2026-11-13',
         title: 'Notifications: a read one leaves the Direct tab',

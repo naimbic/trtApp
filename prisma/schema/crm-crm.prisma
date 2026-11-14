@@ -290,6 +290,8 @@ model CrmLead {
   emailIntegrationUid            String?
   isPublic                       Boolean        @default(false)
   defaultLanguage                String?
+  /// the currency of the deal: used for its value, its proposals, and for the client it becomes (empty = the CRM's default currency)
+  currencyId                     String?        @db.ObjectId
   /// converted client (tblleads.client_id)
   clientId                       String?        @db.ObjectId
   client                         CrmClient?     @relation(fields: [clientId], references: [id])

@@ -3,6 +3,7 @@
 // people are not duplicated: the new enquiry is added to their lead (or raises a task for their account manager when they are a customer).
 import { ImapFlow } from 'imapflow'
 import { simpleParser } from 'mailparser'
+import { detectLanguage } from '@/lib/crm/detectLanguage'
 import prisma from '@/lib/prisma'
 import { requireAnyPermission } from '@/lib/crm/permissions'
 import { seal, unseal } from '@/lib/crm/twoFactor'
@@ -234,7 +235,7 @@ export async function importOne(cfg, r, dry) {
     }
     if (existing) {
         await prisma.crmNote.create({ data: { relType: 'lead', relId: existing.id, description: `New enquiry by email${msg.subject ? ` — ${msg.subject}` : ''}\n\n${lead.description || ''}`.slice(0, 5000), dateContacted: msg.date, addedFrom: null } })
-        await prisma.crmLead.update({ where: { id: existing.id }, data: { lastContact: msg.date } })
+        await prisma.crmLead.update({ where: { id: existing.id }, data: { lastContact: msg.date, ...(!existing.defaultLanguage && detectLanguage(`${msg.subject || ''} ${msg.text || ''}`) ? { defaultLanguage: detectLanguage(`${msg.subject || ''} ${msg.text || ''}`) } : {}) } })
         await logMail(existing.id, cfg, msg)
         await activity(existing.id, 'Wrote again by email (added as a note)')
         if (!existing.clientId) await followUp(cfg, existing, `Follow up: ${existing.name} wrote again`, lead.description || '')
@@ -246,6 +247,7 @@ export async function importOne(cfg, r, dry) {
         data: {
             name: lead.name, title: lead.title, company: lead.company, email: lead.email, phoneNumber: lead.phone, website: lead.website, city: lead.city, description: lead.description,
             statusId: status, sourceId: source, assigned: cfg.responsible || null, assignedIds: cfg.responsible ? [cfg.responsible] : [], dateAssigned: cfg.responsible ? new Date() : null,
+            defaultLanguage: detectLanguage(`${msg.subject || ''} ${msg.text || ''}`), // the language the lead wrote in
             lastStatusChange: new Date(), lastContact: msg.date, isPublic: !!cfg.markPublic, leadOrder: 0, lost: false, junk: false, isImportedFromEmailIntegration: true, emailIntegrationUid: String(msg.uid),
         },
     })

@@ -6192,4 +6192,6 @@ export default {
     "An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.": "Un devis est établi pour un client. Ce prospect devient un client (avec son premier contact), puis le nouveau devis s’ouvre pour lui.",
     "A contract is made for a client. This lead becomes a client (with its first contact), then the new contract opens for it.": "Un contrat est établi pour un client. Ce prospect devient un client (avec son premier contact), puis le nouveau contrat s’ouvre pour lui.",
     "A project is made for a client. This lead becomes a client (with its first contact), then the new project opens for it.": "Un projet est créé pour un client. Ce prospect devient un client (avec son premier contact), puis le nouveau projet s’ouvre pour lui.",
+    "detected": "détectée",
+    "Meeting with {name}": "Réunion avec {name}",
 }

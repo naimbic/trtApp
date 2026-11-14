@@ -18,6 +18,7 @@ import MediaPicker from '@/components/crm/MediaPicker'
 import Tag from '@/components/ui/Tag'
 import Tooltip from '@/components/ui/Tooltip'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import useMe from '@/utils/hooks/useMe'
 import { api, notify, qs, upload, useCan } from '../kit/api'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import TaskDrawer from '../tasks/TaskDrawer'
@@ -362,6 +363,7 @@ const remindText = (m) => { if (m.reminderBefore == null) return ''; const r = R
 export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run, base: root, kind = 'lead' }) => {
     const base = root || `/api/crm/pipeline/leads/${leadId}/meetings` // a client's meetings use the same panel with their own address
     const nav = useNavigate()
+    const me = useMe() // a new meeting has its creator in the team by default
     const [dlg, setDlg] = useState(null)
     const [saving, setSaving] = useState(false)
     const [del, setDel] = useState(null)
@@ -374,7 +376,7 @@ export const LeadMeetings = ({ leadId, leadName, meetings, staff, canEdit, run, 
             setDlg(null); notify('success', tr("Meeting saved")); await run(async () => {}, null)
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
-    const openNew = () => { const s = dayjs().add(1, 'hour').startOf('hour'); setDlg({ type: 'NEW', title: '', start: s.toDate(), end: s.add(1, 'hour').toDate(), category: 'meeting', attendeeIds: [], reminderBefore: 30, reminderBeforeType: 'minutes' }) }
+    const openNew = () => { const s = dayjs().add(1, 'hour').startOf('hour'); setDlg({ type: 'NEW', title: leadName ? tr("Meeting with {name}", { name: leadName }) : '', start: s.toDate(), end: s.add(1, 'hour').toDate(), category: 'meeting', attendeeIds: me?.staffId ? [me.staffId] : [], reminderBefore: 30, reminderBeforeType: 'minutes' }) }
     const edit = (m) => setDlg({ type: 'EDIT', editable: true, ...m, meetingUrl: m.link, baseColor: m.color })
     const now = Date.now()
     const upcoming = meetings.filter((m) => +new Date(m.start) >= now).sort((a, b) => +new Date(a.start) - +new Date(b.start)), past = meetings.filter((m) => +new Date(m.start) < now)

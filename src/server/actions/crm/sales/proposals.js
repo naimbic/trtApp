@@ -37,7 +37,7 @@ export async function proposalPrefill(relType, relId) {
     }
     const l = await prisma.crmLead.findUnique({ where: { id: relId } })
     if (!l) return {}
-    return { proposalTo: l.company || l.name || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', country: l.country ?? null, email: l.email || '', phone: l.phoneNumber || '' }
+    return { currencyId: l.currencyId || null, proposalTo: l.company || l.name || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', country: l.country ?? null, email: l.email || '', phone: l.phoneNumber || '' }
 }
 
 export async function getProposalDocument(id) {

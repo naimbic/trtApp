@@ -6192,4 +6192,6 @@ export default {
     "An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.": "見積書はクライアント宛てに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しい見積書を開きます。",
     "A contract is made for a client. This lead becomes a client (with its first contact), then the new contract opens for it.": "契約書はクライアント宛てに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しい契約書を開きます。",
     "A project is made for a client. This lead becomes a client (with its first contact), then the new project opens for it.": "プロジェクトはクライアント向けに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しいプロジェクトを開きます。",
+    "detected": "自動検出",
+    "Meeting with {name}": "{name}とのミーティング",
 }

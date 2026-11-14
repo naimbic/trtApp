@@ -37,6 +37,7 @@ export async function convertLeadToClient(leadId, { contactData = {}, includeLea
             address: lead.address,
             website: lead.website,
             defaultLanguage: lead.defaultLanguage,
+            ...(lead.currencyId ? { defaultCurrencyId: lead.currencyId } : {}), // the lead's currency becomes the client's: its estimates and invoices start in it
             leadId: lead.id,
             active: true,
             registrationConfirmed: true,

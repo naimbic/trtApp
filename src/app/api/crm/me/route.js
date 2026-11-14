@@ -19,6 +19,7 @@ export async function GET() {
         image: realPicture(dbUser?.image) || realPicture(staff?.profileImage),
         role: admin ? 'Super admin' : staff?.role?.name || 'Staff',
         admin,
+        staffId: staff?.id || null, // forms put the person who creates something in it by default
         loginAs: session.user.imp ? { by: session.user.imp.name || '' } : null,
         notifyHours: await notifyHours().then((c) => ({ on: c.on, from: c.from, to: c.to, workFrom: c.workFrom, workTo: c.workTo })).catch(() => null), // the reminder pickers start inside these hours
         language: codeOfLanguage(staff?.defaultLanguage), // the language the person chose in the profile or the menu: it follows them on every browser

@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.241.0',
+        date: '2026-11-14',
+        title: 'Lead currency, detected language, and meetings that start filled',
+        items: [
+            'A lead now has a Currency (Contact section, next to Language). It is used for the deal value, for a new proposal made for the lead, and it becomes the client’s currency when the lead is converted, so its estimates and invoices start in it.',
+            'The language of a lead is detected from what the lead wrote: a lead received by email gets it automatically, and on a lead with no language the detected one is offered in the form (marked “detected”) and kept when you save.',
+            'The Position field is removed from the lead form (what was already entered is kept in the data).',
+            'A new meeting started from a lead or a client is named “Meeting with …” and has the person who creates it in the team by default.',
+        ],
+    },
+    {
         version: '0.240.3',
         date: '2026-11-14',
         title: 'Ticket from a lead, and tasks and tickets start filled',

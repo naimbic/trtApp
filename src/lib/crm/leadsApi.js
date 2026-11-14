@@ -3,6 +3,7 @@ import { parseDay, startOfDayUtc } from '@/lib/crm/closedDays'
 import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { cleanEvent, invite } from '@/lib/crm/calendar'
+import { detectLanguage } from '@/lib/crm/detectLanguage'
 import prisma from '@/lib/prisma'
 import { namesOf } from '@/lib/crm/activity'
 import { emit } from '@/lib/crm/webhooks'
@@ -56,7 +57,7 @@ const card = (l, people, status, source) => ({
     id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title, doText: l.doText || '', notes: l._notes || 0,
     statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null, sourceColor: source?.color || null,
     value: l.value ?? null, probability: l.probability ?? null, winProb: l.probability ?? status?.winProbability ?? null, expectedClose: l.expectedClose || null,
-    assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId,
+    assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId, currencyId: l.currencyId || null,
 })
 
 /** Adds the number of notes to each lead (the small comment count on the cards). */
@@ -180,7 +181,9 @@ export async function getLead(id) {
         mails: mails.map((m) => ({ files: mailFiles[m.id] || [], comments: (mailComments[m.id] || []).map((c) => ({ ...c, mine: !!a.staffId && c.by?.id === a.staffId })), track: trackInfo(m), id: m.id, direction: m.direction, subject: m.subject || '', from: m.direction === 'draft' ? draftFrom(m.fromAddress, senders) : m.fromAddress || '', to: m.direction === 'draft' ? m.toAddress || l.email || '' : m.toAddress || '', cc: m.ccAddress || '', bcc: m.bccAddress || '', replyTo: m.replyTo || '', note: m.note || '', checks: decorate(m.checks, people, { me: a.staffId, canSend: mailCan(a, 'send'), canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit') }), scheduledAt: m.scheduledAt || null, sendError: m.sendError || '', body: m.body || '', date: m.date, by: people[m.addedFrom] || null, source: m.source, mine: !!a.staffId && m.addedFrom === a.staffId, canEdit: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'edit'), canSend: mayChangeItem(a, m.addedFrom, 'mails') && mailCan(a, 'send'), canDelete: mayDropItem(a, m.addedFrom) && mailCan(a, 'delete') })),
         meetings: meetings.filter((e) => e.status !== 'declined').map((e) => ({ category: e.category || 'meeting', color: e.color || 'blue', isPublic: e.isPublic, description: e.description || '', files: Array.isArray(e.files) ? e.files : [], attendeeEmails: e.attendeeEmails || [], confirmed: !!e.confirmed, remindClient: !!e.remindClient, reminderTemplate: e.reminderTemplate || '', projectId: e.projectId || null, pending: e.status === 'draft', fromMeet: !!e.source, id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, link: e.meetingUrl || '', location: e.location || '', report: e.report || '', reminderBefore: e.reminderBefore, reminderBeforeType: e.reminderBeforeType || 'minutes', attendeeIds: e.attendeeIds || [], attendees: (e.attendeeIds || []).map((i) => people[i]).filter(Boolean), by: people[e.userId] || null, mine: !!a.staffId && e.userId === a.staffId, canEdit: mayChangeItem(a, e.userId, 'meetings'), canDelete: mayDropItem(a, e.userId) })),
         mentionable: mailCan(a, 'edit') || mailCan(a, 'create') ? await mentionable('lead', l) : [],
-        senders, currency: (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }).catch(() => null))?.name || '',
+        senders, currency: ((l.currencyId && (await prisma.crmCurrency.findUnique({ where: { id: l.currencyId } }).catch(() => null))) || (await prisma.crmCurrency.findFirst({ where: { isDefault: true } }).catch(() => null)))?.name || '',
+        // no language chosen yet: the one the lead writes in (its received emails, else its description), offered as the choice in the form
+        languageGuess: l.defaultLanguage ? null : detectLanguage(mails.filter((m) => m.direction === 'in').slice(0, 5).map((m) => `${m.subject || ''} ${m.body || ''}`).join(' ').slice(0, 20000)) || detectLanguage(l.description),
         can: { mail: { create: mailCan(a, 'create'), edit: mailCan(a, 'edit'), send: mailCan(a, 'send'), delete: mailCan(a, 'delete') }, edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
     // the tabs this person may not see are left empty, not only hidden
@@ -230,7 +233,7 @@ export async function saveLead(body, id) {
     const money = (v) => { if (v === null || v === '' || v === undefined) return null; const n = Number(v); if (!Number.isFinite(n) || n < 0 || n > 1e12) throw fail('The value is not a valid amount'); return Math.round(n * 100) / 100 }
     const pct = (v) => { if (v === null || v === '' || v === undefined) return null; const n = Math.round(Number(v)); if (!Number.isFinite(n) || n < 0 || n > 100) throw fail('The chance of winning is between 0 and 100'); return n }
     const day = (v) => { if (!v) return null; const d = new Date(`${String(v).slice(0, 10)}T12:00:00.000Z`); if (Number.isNaN(+d)) throw fail('The expected closing date is not valid'); return d }
-    const data = { ...(body.value !== undefined ? { value: money(body.value) } : {}), ...(body.probability !== undefined ? { probability: pct(body.probability) } : {}), ...(body.expectedClose !== undefined ? { expectedClose: day(body.expectedClose) } : {}), ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), ...(body.country !== undefined ? { country: body.country === null || body.country === '' ? null : Number(body.country) || null } : {}), name, title: nz(body.title), company: nz(body.company), email, phoneNumber: nz(body.phone), website: cleanWebsite(body.website) || null, description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), ...(body.defaultLanguage !== undefined ? { defaultLanguage: LANGUAGES.includes(String(body.defaultLanguage || '').toLowerCase()) ? String(body.defaultLanguage).toLowerCase() : null } : {}), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
+    const data = { ...(body.value !== undefined ? { value: money(body.value) } : {}), ...(body.probability !== undefined ? { probability: pct(body.probability) } : {}), ...(body.expectedClose !== undefined ? { expectedClose: day(body.expectedClose) } : {}), ...(body.doText !== undefined ? { doText: nz(body.doText) } : {}), ...(body.country !== undefined ? { country: body.country === null || body.country === '' ? null : Number(body.country) || null } : {}), name, ...(body.title !== undefined ? { title: nz(body.title) } : {}), ...(body.currencyId !== undefined ? { currencyId: oid(body.currencyId) } : {}), company: nz(body.company), email, phoneNumber: nz(body.phone), website: cleanWebsite(body.website) || null, description: storeRich(body.description), address: nz(body.address), city: nz(body.city), state: nz(body.state), zip: nz(body.zip), sourceId: oid(body.sourceId), ...(body.defaultLanguage !== undefined ? { defaultLanguage: LANGUAGES.includes(String(body.defaultLanguage || '').toLowerCase()) ? String(body.defaultLanguage).toLowerCase() : null } : {}), isPublic: !!body.isPublic, lastContact: body.lastContact ? new Date(body.lastContact) : null }
     if (id) {
         const prev = await loadOne(id, a)
         if (!mayEdit(a, prev)) throw fail('You can only edit your own leads', 403)
@@ -722,7 +725,8 @@ export async function leadLookups() {
         prisma.crmCountry.findMany({ orderBy: { shortName: 'asc' }, select: { legacyId: true, shortName: true, longName: true, iso2: true } }),
     ])
     const countries = countryRows.filter((c) => c.legacyId != null).map((c) => ({ value: c.legacyId, label: c.shortName || c.longName || c.iso2 }))
-    return { countries, staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), statuses, sources }
+    const currencies = (await prisma.crmCurrency.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, symbol: true, isDefault: true } }).catch(() => [])).map((c) => ({ id: c.id, name: c.name, symbol: c.symbol, isDefault: !!c.isDefault }))
+    return { countries, staff: staff.map((s) => ({ id: s.id, name: staffName(s), image: realPicture(s.profileImage) })).sort((x, y) => x.name.localeCompare(y.name)), statuses, sources, currencies }
 }
 
 /**

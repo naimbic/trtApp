@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.245.0',
+        date: '2026-11-14',
+        title: 'Notes in the client language, repeating options on proposals',
+        items: [
+            'A new estimate or invoice starts with its client note and its terms (the predefined texts of the settings) in the language of the client. The texts are translated by the AI set in Settings → AI, once per language; without an AI key they stay as written. A note you already changed is never replaced.',
+            'Proposals have the Repeating options (repeat every N days, weeks, months or years, stop after a number of copies). The invoice made from the proposal takes the same options and repeats by itself.',
+        ],
+    },
+    {
         version: '0.244.0',
         date: '2026-11-14',
         title: 'Proposal text in the language of the lead or client, under the items',

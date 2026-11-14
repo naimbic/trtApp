@@ -290,6 +290,10 @@ model CrmProposal {
   pipelineOrder       Int       @default(1)
   isExpiryNotified    Boolean   @default(false)
   remindClient          Boolean?  // null / true: the expiry reminder is emailed to the client; false: never
+  // repeating: the invoice made from this proposal repeats every N (recurringType) for `cycles` copies (0 = until stopped)
+  recurring           Int?
+  recurringType       String? // day | week | month | year
+  cycles              Int?
   acceptanceFirstname String?
   acceptanceLastname  String?
   acceptanceEmail     String?

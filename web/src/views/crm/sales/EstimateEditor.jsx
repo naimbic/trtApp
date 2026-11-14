@@ -13,6 +13,7 @@ import LineItemsTable from './LineItemsTable'
 import RelationSelect from '../kit/RelationSelect'
 import { makeMoney } from '../clients/shared'
 import { NumberField } from './shared'
+import useClientNotes from './useClientNotes'
 import { tr } from '@/utils/t'
 import ReminderSwitch from '../kit/ReminderSwitch'
 import BankAccountSelect from '../kit/BankAccountSelect'
@@ -30,6 +31,7 @@ const EstimateEditor = () => {
     const [error, setError] = useState('')
     const [saving, setSaving] = useState(false)
     const [v, setV] = useState(null)
+    useClientNotes('estimate', !id, v?.clientId, setV) // the notes of a new document in the client's language
 
     const fromId = params.get('from')
     useEffect(() => {

@@ -6195,4 +6195,5 @@ export default {
     "detected": "تم الكشف",
     "Meeting with {name}": "اجتماع مع {name}",
     "Unit (hour, day, piece…): printed after the quantity": "الوحدة (ساعة، يوم، قطعة…): تُطبع بعد الكمية",
+    "The invoice made from this proposal repeats with these options.": "الفاتورة المنشأة من هذا العرض تتكرر بهذه الخيارات.",
 }

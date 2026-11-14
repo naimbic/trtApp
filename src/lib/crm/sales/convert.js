@@ -25,6 +25,7 @@ export async function createInvoiceFromDocument(kind, doc, { label, staffId = nu
         clientId: clientOf(kind, d), number, prefix, numberFormat, date: now, dueDate: dueAfter > 0 ? new Date(now.getTime() + dueAfter * 86400000) : null, currencyId: d.currencyId,
         subtotal: d.subtotal, totalTax: d.totalTax, total: d.total, discountPercent: d.discountPercent, discountTotal: d.discountTotal, discountType: d.discountType, adjustment: d.adjustment,
         clientNote: d.clientNote, terms: d.terms, adminNote: label ? `Created from ${LABEL[kind]} ${label}` : null,
+        ...(kind === 'proposal' && d.recurring > 0 ? { recurring: d.recurring, recurringType: d.recurringType || 'month', customRecurring: true, cycles: d.cycles || 0 } : {}), // a repeating proposal makes a repeating invoice
         status: 1, hash: crypto.randomUUID().replace(/-/g, ''), sent: false, addedFrom: staffId || d.saleAgentId || d.assignedId || d.addedFrom || undefined, saleAgentId: d.saleAgentId || d.assignedId || undefined, projectId: d.projectId || undefined,
     } })
     await copyLines(kind, d.id, 'invoice', inv.id)

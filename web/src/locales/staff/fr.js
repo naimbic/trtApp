@@ -6195,4 +6195,5 @@ export default {
     "detected": "détectée",
     "Meeting with {name}": "Réunion avec {name}",
     "Unit (hour, day, piece…): printed after the quantity": "Unité (heure, jour, pièce…) : imprimée après la quantité",
+    "The invoice made from this proposal repeats with these options.": "La facture créée à partir de cette proposition se répète avec ces options.",
 }

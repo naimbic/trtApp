@@ -6195,4 +6195,5 @@ export default {
     "detected": "自動検出",
     "Meeting with {name}": "{name}とのミーティング",
     "Unit (hour, day, piece…): printed after the quantity": "単位（時間、日、個など）：数量の後に印刷されます",
+    "The invoice made from this proposal repeats with these options.": "この提案書から作成される請求書は、この設定で繰り返されます。",
 }

@@ -21,6 +21,8 @@ import { NumberField } from './shared'
 import { tr } from '@/utils/t'
 import ReminderSwitch from '../kit/ReminderSwitch'
 
+const RECUR_UNITS = () => [{ value: 'day', label: tr("Days") }, { value: 'week', label: tr("Weeks") }, { value: 'month', label: tr("Months") }, { value: 'year', label: tr("Years") }]
+
 const emptyLine = () => ({ description: '', longDescription: '', qty: 1, rate: 0, unit: '', taxes: [] })
 const day = (v) => (v ? dayjs(v).format('YYYY-MM-DD') : '')
 const money2 = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -58,7 +60,7 @@ const ProposalEditor = () => {
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     subject: inv?.subject || '', relType: inv?.relType || (params.get('leadId') ? 'lead' : 'customer'), relId: inv?.relId || params.get('clientId') || params.get('leadId') || null,
                     proposalTo: inv?.proposalTo || '', email: inv?.email || '', phone: inv?.phone || '', address: inv?.address || '', city: inv?.city || '', state: inv?.state || '', zip: inv?.zip || '', country: inv?.country ?? null,
-                    content: inv?.content ?? proposalText(), allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || (!inv ? dd.me || null : null),
+                    content: inv?.content ?? proposalText(), recurring: inv?.recurring || 0, recurringType: inv?.recurringType || 'month', cycles: inv?.cycles || 0, allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || (!inv ? dd.me || null : null),
                     date: (!cloned && day(inv?.date)) || day(new Date()),
                     openTill: inv && !cloned ? day(inv.openTill) : (dueAfter > 0 ? day(dayjs().add(dueAfter, 'day')) : ''),
                     currencyId: inv?.currencyId || def?.id || null,
@@ -133,6 +135,17 @@ const ProposalEditor = () => {
                         <div><label className="form-label mb-2 block">{tr("Assigned to")}</label><Select isClearable options={(base.staff || []).map((s) => ({ value: s.id, label: s.name }))} value={(base.staff || []).filter((s) => s.id === v.assignedId).map((s) => ({ value: s.id, label: s.name }))[0] || null} onChange={(o) => set({ assignedId: o?.value || null })} /></div>
                         <div><label className="form-label mb-2 block">{tr("Proposal date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
                         <div><label className="form-label mb-2 block">{tr("Open until")}</label><Input type="date" value={v.openTill} onChange={(e) => set({ openTill: e.target.value })} /></div>
+                    </div>
+                    <div className="mt-3 grid items-end gap-3 border-t border-gray-100 pt-3 md:grid-cols-12 dark:border-gray-700">
+                        <label className="flex items-center gap-2 pb-1.5 font-semibold md:col-span-3"><Switcher checked={Number(v.recurring) > 0} onChange={(on) => set({ recurring: on ? 1 : 0 })} />{tr("Repeating")}</label>
+                        {Number(v.recurring) > 0 && (
+                            <>
+                                <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Repeat every")}</label><Input type="number" min={1} max={365} value={v.recurring} onChange={(e) => set({ recurring: e.target.value })} /></div>
+                                <div className="md:col-span-2"><Select isSearchable={false} options={RECUR_UNITS()} value={RECUR_UNITS().find((o) => o.value === v.recurringType)} onChange={(o) => set({ recurringType: o.value })} /></div>
+                                <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Stop after (copies)")}</label><Input type="number" min={0} placeholder={tr("Never")} value={v.cycles || ''} onChange={(e) => set({ cycles: e.target.value })} /></div>
+                                <p className="pb-2 text-xs text-gray-400 md:col-span-3">{tr("The invoice made from this proposal repeats with these options.")}</p>
+                            </>
+                        )}
                     </div>
                 </Card>
 

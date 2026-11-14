@@ -53,7 +53,8 @@ export async function listSpace({ owner = '', q = '' } = {}) {
     let owners = []
     if (g.canViewOthers) {
         const counts = await prisma.crmMySpaceItem.groupBy({ by: ['staffId'], _count: { _all: true } })
-        const staff = await prisma.crmStaff.findMany({ where: { id: { in: counts.map((c) => c.staffId).filter((x) => x !== g.staffId) } }, select: { id: true, firstName: true, lastName: true, email: true } })
+        // every active person (even with an empty space), and anybody else who still has items
+        const staff = await prisma.crmStaff.findMany({ where: { id: { not: g.staffId }, OR: [{ active: true }, { id: { in: counts.map((c) => c.staffId) } }] }, select: { id: true, firstName: true, lastName: true, email: true } })
         owners = staff.map((s) => ({ id: s.id, name: nameOf(s), count: counts.find((c) => c.staffId === s.id)?._count._all || 0 })).sort((a, b) => a.name.localeCompare(b.name))
     }
     return { items, readOnly: !!other, owner: target, owners, canViewOthers: g.canViewOthers }

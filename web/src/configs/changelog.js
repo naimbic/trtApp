@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.239.2',
+        date: '2026-11-14',
+        title: 'My space: the Super Admin sees every person in the list',
+        items: [
+            'The list at the top of My space (Super Admin, or people with “See other people’s My space”) now shows every team member with the number of items kept, not only the people who already kept something.',
+        ],
+    },
+    {
         version: '0.239.1',
         date: '2026-11-14',
         title: 'My space header without the privacy line',

@@ -1,6 +1,7 @@
 'use server'
 
 import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
+import { storeRich } from '@/lib/crm/richText'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -78,7 +79,7 @@ export async function savePurchaseOrder(input) {
     }
     await applyManualNumber('crmPurchaseOrder', order.id, manual.number)
     for (const [idx, it] of items.entries()) {
-        const line = await prisma.crmItemable.create({ data: { relType: REL, relId: order.id, description: String(it.description).trim(), longDescription: it.longDescription || null, qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || null, itemOrder: idx + 1 } })
+        const line = await prisma.crmItemable.create({ data: { relType: REL, relId: order.id, description: String(it.description).trim(), longDescription: storeRich(it.longDescription), qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || null, itemOrder: idx + 1 } })
         for (const t of it.taxes || []) await prisma.crmItemTax.create({ data: { itemableId: line.id, relType: REL, relId: order.id, taxName: t.name || `${t.rate}%`, taxRate: Number(t.rate) || 0 } })
     }
     await logActivity(order.id, isNew ? 'Purchase order created' : 'Purchase order updated', staffId)

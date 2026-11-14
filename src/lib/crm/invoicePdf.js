@@ -14,11 +14,14 @@ import { pdfSettings, formatMoney, paperCss, attachTotals } from '@/lib/crm/docS
 import { amountInWords } from '@/lib/crm/numberWords'
 import { companyTokenData, renderInfoFormat, clientTokenData, phpDate, COMPANY_KEYS, bankBlockHtml } from '@/lib/crm/docTokens'
 import { bankTokensFor } from '@/lib/crm/bankDb'
+import { cleanHtml } from '@/lib/crm/richText'
 
 const run = promisify(execFile)
 // Item descriptions are stored as small HTML snippets: keep basic formatting, drop everything else.
 const unescapeEntities = (h) => (/&lt;\/?[a-z]/i.test(h) ? String(h).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"') : String(h))
 const stripTags = (t) => esc(unescapeEntities(t ?? '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').trim())
+// the long description of a line: formatted text (bold, lists, colours, alignment) made safe, never a picture
+const lineLong = (h) => cleanHtml(h).replace(/<img\b[^>]*>|<audio\b[^>]*>(<\/audio>)?/gi, '')
 const safeHtml = (h) => unescapeEntities(h ?? '').replace(/<(script|style)[\s\S]*?<\/\1>/gi, '').replace(/<(?!\/?(b|strong|i|em|u|br|p|ul|ol|li|span)\b)[^>]*>/gi, '').replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi, '').replace(/\sstyle\s*=\s*("[^"]*"|'[^']*')/gi, '')
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 
@@ -143,7 +146,7 @@ async function renderInvoiceHtmlRaw(id, { hash, pdfHref } = {}) {
     const rows = items.map((it, i) => {
         const amount = round2((it.qty || 0) * (it.rate || 0))
         const taxCell = (it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'
-        return `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${/<[a-z][\s\S]*>|&lt;\/?[a-z]/i.test(it.longDescription) ? safeHtml(it.longDescription) : esc(it.longDescription).replace(/\n/g, '<br />')}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${taxCell}</td>` : ''}<td class="r">${Mi(amount)}</td></tr>`
+        return `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${taxCell}</td>` : ''}<td class="r">${Mi(amount)}</td></tr>`
     }).join('')
 
     const totalRows = [`<tr><td>${L.subtotal}</td><td>${M(invoice.subtotal)}</td></tr>`]
@@ -181,7 +184,7 @@ ${HEADER_CSS}
 .logo{text-align:right}.title{text-align:left}.title h1{margin:0;font-size:2.7em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}.status{margin-top:4px;font-weight:700;text-transform:uppercase}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}
 table{width:100%;border-collapse:collapse}.items th{background:${S.head};color:${S.headText};text-align:left;padding:8px 8px;font-size:.95em}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
-.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:.9em;margin-top:2px}
+.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:.9em;margin-top:2px}.long p{margin:0 0 2px}.long ul,.long ol{margin:2px 0;padding-left:18px}.long h2,.long h3{margin:4px 0 2px;font-size:1.05em}.long blockquote{margin:2px 0;padding-left:8px;border-left:2px solid #d1d5db}.long table{border-collapse:collapse;margin:2px 0}.long td,.long th{border:1px solid #d1d5db;padding:2px 6px;text-align:left}.long a{color:inherit}
 .tot{width:52%;margin:14px 0 0 auto}.tot td{padding:6px 8px;text-align:right}.tot td:first-child{font-weight:700}.tot tr.grand td{background:#e5e7eb;font-weight:700;font-size:1.1em}
 .words{margin:14px 0 0;text-align:left;break-inside:avoid}.tot{break-inside:avoid}.sig{margin-top:28px;text-align:right}.sig img{max-height:90px;max-width:260px}
 h4{margin:20px 0 6px;font-size:1.05em}.plain th{text-align:left;border-bottom:1px solid #111;padding:5px 6px}.plain td{padding:5px 6px}.plain .r,.plain th.r{text-align:right}
@@ -227,4 +230,4 @@ export async function renderInvoicePdf(id, { hash } = {}) {
 
 export const pdfFileName = (displayNumber) => `${String(displayNumber).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'invoice'}.pdf`
 
-export { esc, safeHtml, stripTags, money, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, STATUS_COLOR }
+export { esc, safeHtml, lineLong, stripTags, money, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, STATUS_COLOR }

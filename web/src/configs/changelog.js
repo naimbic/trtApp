@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.243.0',
+        date: '2026-11-14',
+        title: 'Formatted text in the long description of a line',
+        items: [
+            'The long description of each line of a proposal, an estimate, an invoice or a purchase order is now a text editor: bold, italic, underline, colour, highlight, lists, alignment and links. The item name above it stays a simple text.',
+            'The formatting is printed the same way on the document, its PDF and the page the client opens.',
+        ],
+    },
+    {
         version: '0.242.0',
         date: '2026-11-14',
         title: 'Unit on the lines of proposals and estimates',

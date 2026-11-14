@@ -95,7 +95,7 @@ export async function saveProposal(input) {
     }
     await applyManualNumber('crmProposal', proposal.id, manual.number)
     for (const [idx, it] of items.entries()) {
-        const line = await prisma.crmItemable.create({ data: { relType: REL, relId: proposal.id, description: String(it.description).trim(), longDescription: it.longDescription || null, qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || null, itemOrder: idx + 1 } })
+        const line = await prisma.crmItemable.create({ data: { relType: REL, relId: proposal.id, description: String(it.description).trim(), longDescription: storeRich(it.longDescription), qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || null, itemOrder: idx + 1 } })
         for (const tx of it.taxes || []) await prisma.crmItemTax.create({ data: { itemableId: line.id, relType: REL, relId: proposal.id, taxName: tx.name || `${tx.rate}%`, taxRate: Number(tx.rate) || 0 } })
     }
     await logActivity(proposal.id, isNew ? 'Proposal created' : 'Proposal updated', staffId)

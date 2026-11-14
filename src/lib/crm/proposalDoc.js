@@ -5,7 +5,7 @@ import { getOptions } from '@/lib/crm/mailer'
 import { companyImageDataUri } from '@/lib/crm/company'
 import { pdfSettings, formatMoney, attachTotals } from '@/lib/crm/docStyle'
 import { companyTokenData, COMPANY_KEYS } from '@/lib/crm/docTokens'
-import { esc, stripTags, logoDataUri, fmtDate, LABELS, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
+import { lineLong, esc, stripTags, logoDataUri, fmtDate, LABELS, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
 
 export const PROPOSAL = { OPEN: 1, DECLINED: 2, ACCEPTED: 3, SENT: 4, REVISED: 5, DRAFT: 6 }
 export const LABEL = { 1: 'Open', 2: 'Declined', 3: 'Accepted', 4: 'Sent', 5: 'Revised', 6: 'Draft' }
@@ -50,7 +50,7 @@ export function safeProposalHtml(h) {
 function itemsHtml(p, items, currency, S, L) {
     const M = (n) => formatMoney(n, currency, S), Mi = (n) => formatMoney(n, currency, S, { noSymbol: S.itemsNoSymbol })
     const totals = calcDocument({ items, discountPercent: p.discountPercent, discountFixed: p.discountPercent > 0 ? 0 : p.discountTotal, discountType: p.discountType || 'before_tax', adjustment: p.adjustment })
-    const rows = items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${safeProposalHtml(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td><td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
+    const rows = items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td><td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(p.subtotal)}</td></tr>`]
     if (p.discountTotal > 0) tr.push(`<tr><td>${L.discount}${p.discountPercent > 0 ? ` (${p.discountPercent}%)` : ''}</td><td>-${M(p.discountTotal)}</td></tr>`)
     for (const t of totals.taxes) tr.push(`<tr><td>${esc(t.name)} (${t.rate}%)</td><td>${M(t.total)}</td></tr>`)
@@ -94,7 +94,7 @@ export const PROPOSAL_CSS = `${HEADER_CSS}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}.psub{font-size:1.5em;margin:6px 0 14px}
 .pcontent{line-height:1.6}.pcontent h1,.pcontent h2,.pcontent h3{margin:18px 0 8px}.pcontent img{max-width:100%;height:auto}.pcontent table{border-collapse:collapse;margin:8px 0}.pcontent td,.pcontent th{border:1px solid #e5e7eb;padding:6px 8px}
 table.items,table.tot{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;font-size:.95em}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
-.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:.9em;margin-top:2px}
+.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:.9em;margin-top:2px}.long p{margin:0 0 2px}.long ul,.long ol{margin:2px 0;padding-left:18px}.long h2,.long h3{margin:4px 0 2px;font-size:1.05em}.long blockquote{margin:2px 0;padding-left:8px;border-left:2px solid #d1d5db}.long table{border-collapse:collapse;margin:2px 0}.long td,.long th{border:1px solid #d1d5db;padding:2px 6px;text-align:left}.long a{color:inherit}
 .tot{width:52%;margin:14px 0 0 auto;break-inside:avoid}.tot td{padding:6px 8px;text-align:right}.tot td:first-child{font-weight:700}.tot tr.grand td{background:#e5e7eb;font-weight:700;font-size:1.1em}
 .sig{margin-top:28px;text-align:right}.sig img{max-height:90px;max-width:260px}tr{page-break-inside:avoid}`
 

@@ -1,6 +1,7 @@
 'use server'
 
 import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
+import { storeRich } from '@/lib/crm/richText'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
@@ -83,7 +84,7 @@ export async function saveEstimate(input) {
     }
     await applyManualNumber('crmEstimate', estimate.id, manual.number)
     for (const [idx, it] of items.entries()) {
-        const line = await prisma.crmItemable.create({ data: { relType: REL, relId: estimate.id, description: String(it.description).trim(), longDescription: it.longDescription || null, qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || null, itemOrder: idx + 1 } })
+        const line = await prisma.crmItemable.create({ data: { relType: REL, relId: estimate.id, description: String(it.description).trim(), longDescription: storeRich(it.longDescription), qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || null, itemOrder: idx + 1 } })
         for (const t of it.taxes || []) await prisma.crmItemTax.create({ data: { itemableId: line.id, relType: REL, relId: estimate.id, taxName: t.name || `${t.rate}%`, taxRate: Number(t.rate) || 0 } })
     }
     await logActivity(estimate.id, isNew ? 'Estimate created' : 'Estimate updated', staffId)

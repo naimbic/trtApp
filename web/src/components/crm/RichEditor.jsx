@@ -118,7 +118,7 @@ const Btn = ({ on, active, title, children, disabled }) => (
  * an empty box gives ''. Old plain text is shown as paragraphs. Pictures are pasted, dropped or chosen and kept in the Space.
  * "@" suggests colleagues and "#" tags, like in every other text box.
  */
-const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = false, autoFocus = false, className, toolbar = true, onSubmit, onReady, bare = false, mentions = true, images = true, extraMentions = [] }) => {
+const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = false, autoFocus = false, className, toolbar = true, onSubmit, onReady, bare = false, mentions = true, images = true, extraMentions = [], compact = false }) => { // compact: a short toolbar (no headings, quote, code, table, emoji) for small boxes such as a document line
     const extraRef = useRef([])
     extraRef.current = extraMentions
     const submitRef = useRef(null)
@@ -239,13 +239,13 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <SwatchMenu title={tr('Text colour')} icon={<TbTextColor />} colors={TEXT_COLORS} current={editor.getAttributes('textStyle').color} onPick={(c) => editor.chain().focus().setColor(c).run()} onClear={() => editor.chain().focus().unsetColor().run()} indicator={editor.getAttributes('textStyle').color || '#dc2626'} />
                     <SwatchMenu title={tr('Highlight')} icon={<TbHighlight />} colors={MARK_COLORS} current={editor.getAttributes('highlight').color} onPick={(c) => editor.chain().focus().setHighlight({ color: c }).run()} onClear={() => editor.chain().focus().unsetHighlight().run()} indicator={editor.getAttributes('highlight').color || '#fef08a'} />
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
-                    <Btn title={tr('Heading')} active={editor.isActive('heading', { level: 2 })} on={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><TbH2 /></Btn>
-                    <Btn title={tr('Sub-heading')} active={editor.isActive('heading', { level: 3 })} on={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><TbH3 /></Btn>
+                    {!compact && <Btn title={tr('Heading')} active={editor.isActive('heading', { level: 2 })} on={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><TbH2 /></Btn>}
+                    {!compact && <Btn title={tr('Sub-heading')} active={editor.isActive('heading', { level: 3 })} on={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><TbH3 /></Btn>}
                     <Btn title={tr('Bulleted list')} active={editor.isActive('bulletList')} on={() => editor.chain().focus().toggleBulletList().run()}><TbList /></Btn>
                     <Btn title={tr('Numbered list')} active={editor.isActive('orderedList')} on={() => editor.chain().focus().toggleOrderedList().run()}><TbListNumbers /></Btn>
-                    <Btn title={tr('Quote')} active={editor.isActive('blockquote')} on={() => editor.chain().focus().toggleBlockquote().run()}><TbQuote /></Btn>
-                    <Btn title={tr('Code')} active={editor.isActive('code')} on={() => editor.chain().focus().toggleCode().run()}><TbCode /></Btn>
-                    <Btn title={tr('Table')} active={editor.isActive('table')} disabled={editor.isActive('table')} on={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TbTable /></Btn>
+                    {!compact && <Btn title={tr('Quote')} active={editor.isActive('blockquote')} on={() => editor.chain().focus().toggleBlockquote().run()}><TbQuote /></Btn>}
+                    {!compact && <Btn title={tr('Code')} active={editor.isActive('code')} on={() => editor.chain().focus().toggleCode().run()}><TbCode /></Btn>}
+                    {!compact && <Btn title={tr('Table')} active={editor.isActive('table')} disabled={editor.isActive('table')} on={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TbTable /></Btn>}
                     {editor.isActive('table') && (
                         <>
                             <Btn title={tr('Add a column')} on={() => editor.chain().focus().addColumnAfter().run()}><TbColumnInsertRight /></Btn>
@@ -261,7 +261,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
                     <Btn title={tr('Align right')} active={editor.isActive({ textAlign: 'right' })} on={() => editor.chain().focus().setTextAlign('right').run()}><TbAlignRight /></Btn>
                     <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
                     {mentions && <Btn title={tr('Mention a colleague')} on={() => editor.chain().focus().insertContent('@').run()}><TbAt /></Btn>}
-                    <EmojiPicker onPick={(e) => editor.chain().focus().insertContent(e).run()} />
+                    {!compact && <EmojiPicker onPick={(e) => editor.chain().focus().insertContent(e).run()} />}
                     <Btn title={tr('Link')} active={editor.isActive('link')} on={link}><TbLink /></Btn>
                     <Btn title={tr('Clear formatting')} on={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><TbClearFormatting /></Btn>
                     {images && <Btn title={tr('Picture, file or audio')} disabled={busy} on={() => fileRef.current?.click()}><TbPaperclip /></Btn>}

@@ -5,7 +5,7 @@ import { getOptions } from '@/lib/crm/mailer'
 import { companyImageDataUri } from '@/lib/crm/company'
 import { pdfSettings, formatMoney, paperCss, attachTotals } from '@/lib/crm/docStyle'
 import { amountInWords } from '@/lib/crm/numberWords'
-import { esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
+import { lineLong, esc, safeHtml, stripTags, logoDataUri, fmtDate, organizationInfo, customerInfo, LABELS, htmlToPdf, docHeader, HEADER_CSS } from '@/lib/crm/invoicePdf'
 import { bankTokensFor } from '@/lib/crm/bankDb'
 import { bankBlockHtml } from '@/lib/crm/docTokens'
 
@@ -17,7 +17,7 @@ const CSS = `${HEADER_CSS}
 .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.logo{text-align:right}.top img{max-width:62%;height:auto}.title{text-align:left}.title h1{margin:0;font-size:2.4em;letter-spacing:.5px;color:#111}.title .num{font-weight:700;color:#4e4e4e;font-size:1.2em}
 .cols{display:flex;gap:30px;margin-bottom:20px}.cols>.info{flex:1}.lbl{font-weight:700;margin-bottom:2px}.org{color:#424242}.dates{margin-top:12px}
 table{width:100%;border-collapse:collapse}.items th{text-align:left;padding:8px;font-size:.95em}.items td{padding:8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
-.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:.9em;margin-top:2px}
+.n{width:28px;color:#6b7280}.r{text-align:right;white-space:nowrap}.items th.r{text-align:right}.long{color:#6b7280;font-size:.9em;margin-top:2px}.long p{margin:0 0 2px}.long ul,.long ol{margin:2px 0;padding-left:18px}.long h2,.long h3{margin:4px 0 2px;font-size:1.05em}.long blockquote{margin:2px 0;padding-left:8px;border-left:2px solid #d1d5db}.long table{border-collapse:collapse;margin:2px 0}.long td,.long th{border:1px solid #d1d5db;padding:2px 6px;text-align:left}.long a{color:inherit}
 .tot{width:52%;margin:14px 0 0 auto;break-inside:avoid}.tot td{padding:6px 8px;text-align:right}.tot td:first-child{font-weight:700}.tot tr.grand td{background:#e5e7eb;font-weight:700;font-size:1.1em}
 .words{margin:14px 0 0}.sig{margin-top:28px;text-align:right}.sig img{max-height:90px;max-width:260px}h4{margin:20px 0 6px;font-size:1.05em}.block{white-space:pre-line}tr{page-break-inside:avoid}`
 
@@ -44,7 +44,7 @@ async function renderPurchaseOrderHtmlRaw(id) {
     const bank = await bankTokensFor({ docAccountId: p.bankAccountId, clientId: p.clientId, currencyId: p.currencyId })
     const org = `<div class="info org">${await organizationInfo(og, bank)}</div>`
     const bankBlock = bankBlockHtml(bank, S.lang === 'french', og('company_info_format'))
-    const rows = items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${safeHtml(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
+    const rows = items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(p.subtotal)}</td></tr>`]
     if (p.discountTotal > 0) tr.push(`<tr><td>${L.discount}${p.discountPercent > 0 ? ` (${p.discountPercent}%)` : ''}</td><td>-${M(p.discountTotal)}</td></tr>`)
     for (const t of totals.taxes) tr.push(`<tr><td>${esc(t.name)} (${t.rate}%)</td><td>${M(t.total)}</td></tr>`)

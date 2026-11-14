@@ -1,6 +1,7 @@
 'use server'
 
 import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
+import { storeRich } from '@/lib/crm/richText'
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -221,7 +222,7 @@ export async function saveInvoice(input) {
                 relType: REL,
                 relId: invoice.id,
                 description: String(it.description).trim(),
-                longDescription: it.longDescription || null,
+                longDescription: storeRich(it.longDescription),
                 qty: Number(it.qty) || 0,
                 rate: Number(it.rate) || 0,
                 unit: it.unit || null,

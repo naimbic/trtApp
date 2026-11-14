@@ -7,11 +7,13 @@ import Select from '@/components/ui/Select'
 import StrictModeDroppable from '@/components/shared/StrictModeDroppable'
 import { tr } from '@/utils/t'
 import { plainText } from '@/lib/crm/richText'
+import RichEditor from '@/components/crm/RichEditor'
 
 const money2 = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const COLS = 'grid grid-cols-[24px_minmax(0,1fr)_72px_76px_104px_minmax(0,200px)_104px_32px] items-start gap-x-2'
 let uid = 0
-// the description as typed (Enter makes a new line, nothing is trimmed while typing); old HTML descriptions are shown as plain text
+// the item name as typed (Enter makes a new line, nothing is trimmed while typing); old HTML names are shown as plain text.
+// The long description under it is formatted text (bold, lists, colours…), printed the same way on the document
 const descText = (d) => (/<[a-z][\s\S]*>|&lt;/i.test(String(d ?? '')) ? plainText(d) : String(d ?? ''))
 
 /**
@@ -56,7 +58,7 @@ const LineItemsTable = ({ items, onChange, taxOptions, newLine }) => {
                                             {(drag, snap) => (
                                                 <div ref={drag.innerRef} {...drag.draggableProps} className={`${COLS} mb-2 rounded-xl border bg-white p-2 dark:bg-gray-800 ${snap.isDragging ? 'border-primary shadow-lg' : 'border-gray-200 dark:border-gray-600'}`} style={drag.draggableProps.style}>
                                                     <span {...drag.dragHandleProps} title={tr("Drag to reorder")} className="flex h-9 cursor-grab items-center justify-center text-xl text-gray-400 hover:text-primary"><TbGripVertical /></span>
-                                                    <div className="min-w-0"><Input className="!min-h-[2.5rem] resize-none" textArea rows={Math.max(1, Math.min(6, descText(it.description).split('\n').length))} value={descText(it.description)} placeholder={tr("Description")} onChange={(e) => setLine(i, { description: e.target.value })} /><Input className="mt-1" textArea rows={Math.max(2, Math.min(8, descText(it.longDescription).split('\n').length))} value={descText(it.longDescription)} placeholder={tr("Long description (optional)")} onChange={(e) => setLine(i, { longDescription: e.target.value })} /></div>
+                                                    <div className="min-w-0"><Input className="!min-h-[2.5rem] resize-none" textArea rows={Math.max(1, Math.min(6, descText(it.description).split('\n').length))} value={descText(it.description)} placeholder={tr("Description")} onChange={(e) => setLine(i, { description: e.target.value })} /><RichEditor compact className="mt-1" minHeight={52} mentions={false} images={false} value={it.longDescription || ''} placeholder={tr("Long description (optional)")} onChange={(html) => setLine(i, { longDescription: html })} /></div>
                                                     <Input type="number" step="any" value={it.qty} onChange={(e) => setLine(i, { qty: e.target.value === '' ? '' : Number(e.target.value) })} />
                                                     <Input value={it.unit || ''} maxLength={20} placeholder={tr("Unit")} title={tr("Unit (hour, day, piece…): printed after the quantity")} onChange={(e) => setLine(i, { unit: e.target.value })} />
                                                     <Input type="number" step="0.01" value={it.rate} onChange={(e) => setLine(i, { rate: e.target.value === '' ? '' : Number(e.target.value) })} />

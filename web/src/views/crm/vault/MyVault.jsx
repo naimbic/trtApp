@@ -109,8 +109,8 @@ const MyVault = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h3>{ro ? tr('Password vault of {name}', { name: ownerOpts.find((o) => o.value === d.owner)?.label.replace(/ \(\d+\)$/, '') || '' }) : tr('My password vault')}</h3>
-                    <p className="flex items-center gap-1 text-sm text-gray-500"><TbLock className="shrink-0" />{ro ? tr('Read only. This is private to its owner.') : tr('Your own logins, kept encrypted. Only you and the Super Admin can see them.')}</p>
+                    <h3 className="flex items-center gap-2" title={ro ? tr('Read only. This is private to its owner.') : undefined}>{ro && <TbLock className="shrink-0 text-gray-500" />}{ro ? ownerOpts.find((o) => o.value === d.owner)?.label.replace(/ \(\d+\)$/, '') || '' : tr('My password vault')}</h3>
+                    {!ro && <p className="flex items-center gap-1 text-sm text-gray-500"><TbLock className="shrink-0" />{tr('Your own logins, kept encrypted. Only you and the Super Admin can see them.')}</p>}
                 </div>
                 <div className="flex items-center gap-2">
                     {d?.canViewOthers && d.owners.length > 0 && <div className="w-56"><Select size="sm" isSearchable={d.owners.length > 6} options={ownerOpts} value={ownerOpts.find((o) => o.value === (ro ? d.owner : '')) || ownerOpts[0]} onChange={(o) => setOwner(o?.value || '')} /></div>}

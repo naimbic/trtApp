@@ -6,7 +6,7 @@ import { Link } from 'react-router'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import PhoneApp from '@/components/crm/PhoneApp'
-import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiRocketLaunchDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone, PiDeviceMobileDuotone, PiAlarmDuotone, PiCalendarBlankDuotone, PiClockCountdownDuotone, PiBellDuotone, PiFolderOpenDuotone, PiKeyDuotone, PiCaretRightBold, PiXBold } from 'react-icons/pi'
+import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiRocketLaunchDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone, PiDeviceMobileDuotone, PiAlarmDuotone, PiCalendarBlankDuotone, PiClockCountdownDuotone, PiBellDuotone, PiFolderOpenDuotone, PiCaretRightBold, PiXBold } from 'react-icons/pi'
 import { useThemeStore } from '@/store/themeStore'
 import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
@@ -21,7 +21,6 @@ const SPACE = [
     { label: 'Calendar events', desc: 'Your meetings and calls by month', path: '/crm/events', icon: <PiCalendarBlankDuotone />, need: 'calendar' },
     { label: 'Scheduled messages', desc: 'Chat messages that go out later', path: '/crm/scheduled-messages', icon: <PiClockCountdownDuotone />, need: 'scheduled_messages' },
     { label: 'Notifications', desc: 'Everything that needs you', path: '/crm/notifications', icon: <PiBellDuotone /> },
-    { label: 'Team password vault', desc: 'Logins the team shares', path: '/crm/passwords?scope=team', icon: <PiKeyDuotone />, need: 'passwords' },
     { label: 'File manager', desc: 'Everything uploaded', path: '/crm/file-manager', icon: <PiFolderOpenDuotone />, need: 'file_manager' },
 ]
 const ACCOUNT = [

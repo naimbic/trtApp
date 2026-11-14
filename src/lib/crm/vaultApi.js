@@ -54,7 +54,6 @@ export async function listEntries(q = {}) {
     let list = visible
     if (q.scope === 'mine') list = list.filter((e) => rights(c, e).mine)
     else if (q.scope === 'shared') list = list.filter((e) => !rights(c, e).mine)
-    else if (q.scope === 'team') list = list.filter((e) => e.access === 'team')
     else if (q.scope === 'private') list = list.filter((e) => e.access === 'private')
     else if (q.scope === 'client') list = list.filter((e) => e.clientId)
     if (oid(q.categoryId)) list = list.filter((e) => e.categoryId === q.categoryId)
@@ -67,7 +66,7 @@ export async function listEntries(q = {}) {
             return { id: e.id, title: e.title, category: catMap[e.categoryId] ? { id: e.categoryId, name: catMap[e.categoryId].name, color: catMap[e.categoryId].color } : null, client: e.clientId ? { id: e.clientId, name: cName[e.clientId] || '' } : null, url: e.url, username: e.username, hasPassword: !!e.passwordEnc, hasTotp: !!e.totpEnc, tags: e.tags || [], access: e.access, sharedWith: e.access === 'selected' ? new Set([...e.viewerIds, ...e.editorIds]).size : null, owner: sName[e.createdBy] || '', mine: r.mine, canEdit: r.edit, updatedAt: e.changedAt || e.updatedAt, expiresAt: e.expiresAt, expired: !!e.expiresAt && new Date(e.expiresAt) < new Date() }
         }),
         categories: cats.map((x) => ({ id: x.id, name: x.name, color: x.color, count: visible.filter((e) => e.categoryId === x.id).length })),
-        counts: { all: visible.length, mine: count((e) => rights(c, e).mine), shared: count((e) => !rights(c, e).mine), private: count((e) => e.access === 'private'), team: count((e) => e.access === 'team'), client: count((e) => e.clientId), none: count((e) => !e.categoryId) },
+        counts: { all: visible.length, mine: count((e) => rights(c, e).mine), shared: count((e) => !rights(c, e).mine), private: count((e) => e.access === 'private'), client: count((e) => e.clientId), none: count((e) => !e.categoryId) },
         stats, staff, can: { create: c.can('create'), admin: c.admin },
     }
 }
@@ -141,19 +140,6 @@ export async function revealEntry(id, request) {
     await prisma.crmPasswordEntry.update({ where: { id }, data: { lastRevealedAt: new Date() } })
     await log(id, c, 'view', c.admin && !rights(c, e).mine && e.access === 'private' ? 'viewed by an administrator' : '', request)
     return { password, username: e.username, totp }
-}
-
-/** Copies an entry the person may see into their own My space as a secret password item (the text is sealed there too). */
-export async function sendToMySpace(id, request) {
-    const c = await ctx()
-    if (!c.staffId) throw fail('Your account has no staff profile', 403)
-    const e = await loadOne(id, c)
-    let password = ''
-    if (e.passwordEnc) { try { password = unseal(e.passwordEnc) } catch { throw fail('This password cannot be decrypted (the application key changed)', 500) } }
-    const body = [e.username && `Username: ${e.username}`, password && `Password: ${password}`, e.notes && `Notes: ${e.notes}`].filter(Boolean).join('\n')
-    const row = await prisma.crmMySpaceItem.create({ data: { staffId: c.staffId, kind: 'password', title: e.title.slice(0, 200), body: body ? seal(body) : null, url: e.url || null, secret: true } })
-    await log(id, c, 'send_my_space', '', request)
-    return { success: true, id: row.id }
 }
 
 export async function totpCode(id) {

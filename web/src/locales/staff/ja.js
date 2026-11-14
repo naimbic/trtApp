@@ -6173,8 +6173,4 @@ export default {
     "Passwords": "パスワード",
     "Logins kept for this customer (website, hosting, social accounts...). Passwords are encrypted and every reveal is logged.": "このお客様のログイン情報（ウェブサイト、ホスティング、SNSなど）。パスワードは暗号化され、表示するたびに記録されます。",
     "No logins for this customer yet": "このお客様のログイン情報はまだありません",
-    "Send to My space": "マイスペースに送る",
-    "Sent to your My space as a password": "パスワードとしてマイスペースに送りました",
-    "Team password vault": "チームのパスワード保管庫",
-    "Logins the team shares": "チームで共有するログイン情報",
 }

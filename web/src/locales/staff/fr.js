@@ -6173,8 +6173,4 @@ export default {
     "Passwords": "Mots de passe",
     "Logins kept for this customer (website, hosting, social accounts...). Passwords are encrypted and every reveal is logged.": "Identifiants gardés pour ce client (site web, hébergement, réseaux sociaux...). Les mots de passe sont chiffrés et chaque affichage est enregistré.",
     "No logins for this customer yet": "Aucun identifiant pour ce client pour l'instant",
-    "Send to My space": "Envoyer dans Mon espace",
-    "Sent to your My space as a password": "Envoyé dans Mon espace comme mot de passe",
-    "Team password vault": "Coffre de mots de passe de l’équipe",
-    "Logins the team shares": "Identifiants partagés par l’équipe",
 }

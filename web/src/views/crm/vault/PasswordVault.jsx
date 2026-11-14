@@ -16,7 +16,7 @@ import EntryDrawer from './EntryDrawer'
 import { COLORS, colorOf, initials, CopyButton } from './shared'
 import { tr, trn } from '@/utils/t'
 
-const SCOPES = [['all', tr("All entries"), <TbFolders key="a" />], ['mine', tr("Created by me"), <TbStar key="m" />], ['team', tr("Whole team"), <TbUsers key="t" />], ['shared', tr("Shared with me"), <TbShare key="s" />], ['private', tr("Only me"), <TbLock key="p" />], ['client', tr("Client logins"), <TbBuildingStore key="c" />]]
+const SCOPES = [['all', tr("All entries"), <TbFolders key="a" />], ['mine', tr("Created by me"), <TbStar key="m" />], ['shared', tr("Shared with me"), <TbShare key="s" />], ['private', tr("Only me"), <TbLock key="p" />], ['client', tr("Client logins"), <TbBuildingStore key="c" />]]
 
 const AccessBadge = ({ e }) => e.access === 'team' ? <Tag className="gap-1 bg-sky-100 text-sky-700"><TbUsers className="inline" />{tr("Team")}</Tag> : e.access === 'selected' ? <Tag className="gap-1 bg-violet-100 text-violet-700"><TbUserCheck className="inline" />{e.sharedWith} {e.sharedWith === 1 ? tr("person") : tr("people")}</Tag> : <Tag className="gap-1 bg-gray-100 text-gray-600"><TbLock className="inline" />{tr("Only me")}</Tag>
 
@@ -115,7 +115,7 @@ const Overview = ({ s }) => {
 
 const PasswordVault = () => {
     const [data, setData] = useState({ list: [], categories: [], counts: {}, staff: [], can: {}, stats: null })
-    const [scope, setScope] = useState(() => { const q = new URLSearchParams(window.location.search).get('scope'); return SCOPES.some(([k]) => k === q) ? q : 'all' })
+    const [scope, setScope] = useState('all')
     const [categoryId, setCategoryId] = useState(null)
     const [clientId, setClientId] = useState(null)
     const [search, setSearch] = useState('')

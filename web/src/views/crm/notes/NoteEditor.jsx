@@ -1,9 +1,10 @@
 /*! © 2026 TRT Digital — trtCRM. */
+import RelationSelect from '../kit/RelationSelect'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import useMe from '@/utils/hooks/useMe'
 import { defaultRemindAt } from '@/utils/remind'
-import { TbBellRinging, TbFileText, TbLink, TbMessageCircle, TbMicrophone, TbPalette, TbPaperclip, TbPhoto, TbPlus, TbSend, TbStar, TbStarFilled, TbPin, TbPinFilled, TbTrash, TbUsers, TbX, TbPlayerStopFilled } from 'react-icons/tb'
+import { TbBellRinging, TbFileText, TbLink, TbMessageCircle, TbMicrophone, TbPalette, TbPaperclip, TbPhoto, TbPlus, TbSend, TbStar, TbStarFilled, TbPin, TbPinFilled, TbTrash, TbUsers, TbX, TbBuilding, TbPlayerStopFilled } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -21,7 +22,7 @@ import { tr } from '@/utils/t'
 import confirmDelete from '@/components/crm/useConfirm'
 
 const uid = () => Math.random().toString(36).slice(2, 10)
-const EMPTY = { title: '', description: '', kind: 'note', checklist: [], color: null, pinned: false, important: false, labels: [], links: [], attachments: [], sharedWith: [], remindAt: null, remindShared: false }
+const EMPTY = { title: '', description: '', kind: 'note', checklist: [], color: null, pinned: false, important: false, labels: [], links: [], attachments: [], sharedWith: [], remindAt: null, remindShared: false, clientIds: [] }
 
 /** The conversation of a note: the owner and the people it is shared with write here. */
 const Comments = ({ noteId }) => {
@@ -68,6 +69,9 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
     const [fold, setFold] = useState({ content: true, look: true })
     const [staff, setStaff] = useState([])
     const [who, setWho] = useState('')
+    const [cl, setCl] = useState({}) // id -> name of the clients tagged on the note
+    // a client given by the page that opens the editor (the Tasks tab of a client): its name is looked up
+    useEffect(() => { for (const id of v.clientIds || []) if (!(id in cl)) { setCl((m) => ({ ...m, [id]: '' })); api(`/api/crm/customers/${id}`).then((c) => setCl((m) => ({ ...m, [id]: c.company || c.name || '' }))).catch(() => {}) } }, [v.clientIds]) // eslint-disable-line react-hooks/exhaustive-deps
     const [labelText, setLabelText] = useState('')
     const [linkText, setLinkText] = useState('')
     const [rec, setRec] = useState(null) // { seconds }
@@ -80,8 +84,9 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
 
     useEffect(() => {
         if (!open) return
-        setV(note ? { ...EMPTY, ...note, sharedWith: (note.sharedWith || []).map((s) => s.id), remindAt: note.remindAt ? new Date(note.remindAt) : null } : { ...EMPTY, ...(preset || {}), checklist: preset?.kind === 'list' ? [{ id: uid(), text: '', done: false }] : [] })
-        setFold({ content: true, look: true, media: !!preset?.focus, comments: !!note && !note.mine })
+        setCl(Object.fromEntries((note?.clients || []).map((c) => [c.id, c.name])))
+        setV(note ? { ...EMPTY, ...note, clientIds: (note.clients || []).map((c) => c.id), sharedWith: (note.sharedWith || []).map((s) => s.id), remindAt: note.remindAt ? new Date(note.remindAt) : null } : { ...EMPTY, ...(preset || {}), checklist: preset?.kind === 'list' ? [{ id: uid(), text: '', done: false }] : [] })
+        setFold({ content: true, look: true, clients: !!(note?.clients?.length || preset?.clientIds?.length), media: !!preset?.focus, comments: !!note && !note.mine })
         setWho(''); setLabelText(''); setLinkText('')
         mentionDirectory().then((d) => setStaff((d.staff || []).filter((s) => s.id !== d.me)))
     }, [open, note, preset])
@@ -117,7 +122,7 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
     }
     const stopRec = (cancel = false) => { const s = recRef.current; if (!s) return; s.cancelled = cancel; try { s.mr.stop() } catch { /* already stopped */ } }
 
-    const body = () => ({ title: v.title, description: v.kind === 'list' ? '' : v.description, kind: v.kind, checklist: v.kind === 'list' ? v.checklist : v.checklist.filter((c) => c.text.trim()), color: v.color, pinned: v.pinned, important: v.important, labels: [...new Set([...v.labels, ...(labelText.trim() ? [labelText.trim()] : [])])].slice(0, 10), links: v.links, attachments: v.attachments, remindAt: v.remindAt ? new Date(v.remindAt).toISOString() : null, remindShared: v.remindShared, ...(canShare ? { sharedWith: v.sharedWith } : {}) })
+    const body = () => ({ clientIds: v.clientIds || [], title: v.title, description: v.kind === 'list' ? '' : v.description, kind: v.kind, checklist: v.kind === 'list' ? v.checklist : v.checklist.filter((c) => c.text.trim()), color: v.color, pinned: v.pinned, important: v.important, labels: [...new Set([...v.labels, ...(labelText.trim() ? [labelText.trim()] : [])])].slice(0, 10), links: v.links, attachments: v.attachments, remindAt: v.remindAt ? new Date(v.remindAt).toISOString() : null, remindShared: v.remindShared, ...(canShare ? { sharedWith: v.sharedWith } : {}) })
     const save = async () => {
         setBusy(true)
         try {
@@ -175,6 +180,13 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
                     <div className="mt-3 grid gap-2">
                         {videosOf(v).map((id) => <div key={id} className="aspect-video w-full overflow-hidden rounded-xl bg-black"><iframe title="YouTube" src={`https://www.youtube-nocookie.com/embed/${id}`} loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" className="size-full border-0" /></div>)}
                     </div>
+                )}
+                {(!readOnly || (v.clientIds || []).length > 0) && (
+                    <FoldSection icon={<TbBuilding />} tone="blue" title={tr('Clients')} summary={(v.clientIds || []).map((id) => cl[id]).filter(Boolean).join(', ')} open={!!fold.clients} onToggle={() => tog('clients')}>
+                        <div className="mb-1.5 flex flex-wrap gap-1.5">{(v.clientIds || []).map((id) => <span key={id} className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700 dark:bg-sky-500/20 dark:text-sky-200">{cl[id] || tr('Client')}{!readOnly && <button type="button" aria-label={tr('Remove')} onClick={() => set({ clientIds: v.clientIds.filter((x) => x !== id) })}><TbX /></button>}</span>)}</div>
+                        {!readOnly && <RelationSelect size="sm" resource="clients" value={null} placeholder={tr('Tag a client…')} onChange={(id, o) => { if (id && !(v.clientIds || []).includes(id)) { setCl((m) => ({ ...m, [id]: o?.label || '' })); set({ clientIds: [...(v.clientIds || []), id].slice(0, 20) }) } }} />}
+                        <p className="mt-1.5 text-xs text-gray-400">{tr('The note shows on the Tasks tab of each tagged client, where the team can read it.')}</p>
+                    </FoldSection>
                 )}
                 {!readOnly && (
                     <FoldSection icon={<TbPalette />} tone="emerald" title={tr('Colour and labels')} summary={[v.color ? labelOfColor(v.color) : '', v.labels.join(', ')].filter(Boolean).join(' · ')} open={!!fold.look} onToggle={() => tog('look')}>

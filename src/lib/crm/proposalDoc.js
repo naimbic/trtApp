@@ -98,11 +98,12 @@ async function proposalDocumentHtmlRaw(p, items, currency, S, number) {
         ...Object.fromEntries(Object.entries(co).map(([k, v]) => [k, esc(v)])), companyname: esc(co.company_name),
     }
     let content = safeProposalHtml(holder && isStartingText(p.content) ? proposalText(holder) : p.content)
-    const hasItems = /\{proposal_items\}/.test(content)
+    // the items table always comes first and the whole text is printed under it: the text is never split around the table
+    content = content.replace(/<p>\s*\{proposal_items\}\s*<\/p>|\{proposal_items\}/gi, '')
     content = content.replace(/\{([a-z0-9_]+)\}/gi, (m, k) => (k in merge ? String(merge[k] ?? '') : ''))
     const infoTo = `<div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>Date: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div>`
     return `${docHeader({ logo, width: S.logoWidth * 1.5, name: co.company_name, title: T.title, num: `#${esc(number)}`, org: `<div class="info org">${org}</div>`, info: infoTo, swap: S.swap })}
-${p.subject ? `<h2 class="psub">${esc(p.subject)}</h2>` : ''}<div class="pcontent">${content}</div>${hasItems ? '' : itemsBlock}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
+${p.subject ? `<h2 class="psub">${esc(p.subject)}</h2>` : ''}${itemsBlock}<div class="pcontent" style="margin-top:18px">${content}</div>${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }
 
 export const PROPOSAL_CSS = `${HEADER_CSS}

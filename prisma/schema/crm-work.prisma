@@ -543,6 +543,8 @@ model CrmQuickNote {
   links       Json?
   /// colleagues who can see and comment on this note (mentioned or chosen)
   sharedWith  String[] @db.ObjectId
+  /// clients this note is about: it shows on the Tasks tab of each of them, for the team
+  clientIds   String[] @db.ObjectId
   /// the reminder also tells the people the note is shared with
   remindShared Boolean?
   position    Float?

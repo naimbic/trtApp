@@ -153,8 +153,8 @@ const ProposalEditor = () => {
                         <AccordionCard title={tr("Proposal text")} dot="#f59e0b" note={tr("What the client reads")} open={open.text} onToggle={() => toggle('text')}>
                             <div className="p-4">
                                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                                    <p className="text-xs text-gray-500">{tr("The items table goes where you put")} <code>{tr("{proposal_items}")}</code>{tr("; without it the table is added at the end.")}</p>
-                                    <div className="flex flex-wrap gap-1.5">{['proposal_items', 'proposal_number', 'proposal_total', 'proposal_open_till', 'proposal_proposal_to', 'company_name'].map((t) => <button key={t} type="button" onClick={() => visual.current?.insert(`{${t}}`)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${t}}`}</button>)}</div>
+                                    <p className="text-xs text-gray-500">{tr("Printed under the items table on the proposal.")}</p>
+                                    <div className="flex flex-wrap gap-1.5">{['proposal_number', 'proposal_total', 'proposal_open_till', 'proposal_proposal_to', 'company_name'].map((t) => <button key={t} type="button" onClick={() => visual.current?.insert(`{${t}}`)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${t}}`}</button>)}</div>
                                 </div>
                                 <VisualEditor ref={visual} autoHeight docKey={`proposal-${id || 'new'}-${lang}`} value={v.content} onChange={(html) => setV((s) => ({ ...s, content: html }))} />
                             </div>

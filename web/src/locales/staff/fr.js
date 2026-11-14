@@ -6201,4 +6201,7 @@ export default {
     "The items table goes where you put": "Le tableau des articles se place là où vous mettez",
     "Overdue reminder": "Rappel de retard",
     "that the ticket was opened": "que le ticket a été ouvert",
+    "Printed under the items table on the proposal.": "Imprimé sous le tableau des articles sur la proposition.",
+    "Tag a client…": "Étiqueter un client…",
+    "The note shows on the Tasks tab of each tagged client, where the team can read it.": "La note s'affiche dans l'onglet Tâches de chaque client étiqueté, où l'équipe peut la lire.",
 }

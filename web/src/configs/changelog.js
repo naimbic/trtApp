@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.251.0',
+        date: '2026-11-14',
+        title: 'Notes on the customer page; proposal text under the items',
+        items: [
+            'Notes can be tagged with one or more clients (the Clients section of a note). A tagged note shows in a Notes column on the Tasks tab of each of these customers, where the team can read it and comment.',
+            'The Tasks tab of a customer has a New note button: the note is tagged with that customer by itself.',
+            'Proposal document and PDF: the items table now always comes first and the whole text is printed under it; the text is no longer split around the table. The starting text of a new proposal was adjusted.',
+        ],
+    },
+    {
         version: '0.250.1',
         date: '2026-11-14',
         title: 'Fix: proposal PDF in the language of the lead or client, Unit column on the documents',

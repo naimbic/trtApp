@@ -25,6 +25,14 @@ async function gate(cap = 'view') {
 /** The notes this person sees: their own and the ones shared with them. Administrators see every note (as they always did). */
 const visible = (staffId, admin = false) => (admin ? {} : { OR: [{ addedFrom: staffId }, { sharedWith: { has: staffId } }] })
 /** A note this person may change: their own, or any for an administrator. */
+/** A note this person may read: the ones they see, and any note tagged with a client (it shows on that client's Tasks tab for the team). */
+const readable = (g) => (g.admin ? {} : { OR: [{ addedFrom: g.staffId }, { sharedWith: { has: g.staffId } }, { clientIds: { isEmpty: false } }] })
+/** id -> name of the clients tagged on these notes. */
+async function clientsOf(rows) {
+    const ids = [...new Set(rows.flatMap((n) => n.clientIds || []))]
+    const list = ids.length ? await prisma.crmClient.findMany({ where: { id: { in: ids } }, select: { id: true, company: true } }) : []
+    return Object.fromEntries(list.map((c) => [c.id, c.company || '']))
+}
 const changeable = (g) => (g.admin ? {} : { addedFrom: g.staffId })
 
 async function peopleOf(ids) {
@@ -32,7 +40,8 @@ async function peopleOf(ids) {
     return Object.fromEntries(rows.map((s) => [s.id, nameOf(s)]))
 }
 
-const noteOut = (n, g, who, counts) => ({
+const noteOut = (n, g, who, counts, cl = {}) => ({
+    clients: (n.clientIds || []).filter((id) => id in cl).map((id) => ({ id, name: cl[id] })),
     id: n.id, title: n.title || '', description: n.description || '', kind: n.kind || 'note', color: n.color || null,
     pinned: !!n.pinned, important: !!n.important, archived: !!n.archived,
     checklist: Array.isArray(n.checklist) ? n.checklist : [], labels: n.labels || [],
@@ -44,10 +53,11 @@ const noteOut = (n, g, who, counts) => ({
 })
 
 /** My notes and the ones shared with me: pinned first, then important. `board` = the few cards for the Tasks page. */
-export async function listNotes({ q = '', archived = false, label = '', board = false, limit = 500 } = {}) {
+export async function listNotes({ q = '', archived = false, label = '', board = false, limit = 500, clientId = '' } = {}) {
     const g = await gate()
+    // clientId: the notes tagged with this client, for everyone who sees its page
     // archived is filtered here: a filter like { archived: { not: true } } would hide the old notes that lack the field
-    let rows = (await prisma.crmQuickNote.findMany({ where: visible(g.staffId, g.admin && !board), orderBy: { updatedAt: 'desc' }, take: 1000 })).filter((n) => (board || !archived ? !n.archived : !!n.archived))
+    let rows = (await prisma.crmQuickNote.findMany({ where: oid(clientId) ? { clientIds: { has: oid(clientId) } } : visible(g.staffId, g.admin && !board), orderBy: { updatedAt: 'desc' }, take: 1000 })).filter((n) => (board || !archived ? !n.archived : !!n.archived))
     const needle = String(q || '').trim().toLowerCase()
     if (needle) rows = rows.filter((n) => `${n.title} ${plainText(n.description || '')} ${(n.labels || []).join(' ')} ${(Array.isArray(n.checklist) ? n.checklist : []).map((c) => c.text).join(' ')}`.toLowerCase().includes(needle))
     if (label) rows = rows.filter((n) => (n.labels || []).some((l) => l.toLowerCase() === String(label).toLowerCase()))
@@ -62,15 +72,16 @@ export async function listNotes({ q = '', archived = false, label = '', board = 
     ])
     const counts = Object.fromEntries(comments.map((c) => [c.noteId, c._count._all]))
     const labels = [...new Set(all.flatMap((n) => n.labels || []))].sort((a, b) => a.localeCompare(b))
-    return { list: rows.map((n) => noteOut(n, g, who, counts)), labels, can: { share: g.canShare }, colors: COLORS }
+    const cl = await clientsOf(rows)
+    return { list: rows.map((n) => noteOut(n, g, who, counts, cl)), labels, can: { share: g.canShare }, colors: COLORS }
 }
 
 export async function getNote(id) {
     const g = await gate()
-    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...visible(g.staffId, g.admin) } }))
+    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...readable(g) } }))
     if (!n) throw fail('Note not found', 404)
     const who = await peopleOf([...new Set([n.addedFrom, ...(n.sharedWith || [])].filter(Boolean))])
-    return { note: noteOut(n, g, who, { [n.id]: await prisma.crmQuickNoteComment.count({ where: { noteId: n.id } }) }) }
+    return { note: noteOut(n, g, who, { [n.id]: await prisma.crmQuickNoteComment.count({ where: { noteId: n.id } }) }, await clientsOf([n])) }
 }
 
 /** Colleagues the note can be shared with (the mention list). */
@@ -104,6 +115,8 @@ export async function saveNote(body = {}, id = null) {
     if (has('labels')) data.labels = cleanLabels(body.labels)
     if (has('links')) data.links = cleanLinks(body.links)
     if (has('attachments')) data.attachments = cleanAttachments(body.attachments, UPLOAD_PREFIX)
+    // the clients the note is about (it shows on their Tasks tab)
+    if (has('clientIds')) { const ids = [...new Set((Array.isArray(body.clientIds) ? body.clientIds : []).map(oid).filter(Boolean))].slice(0, 20); data.clientIds = ids.length ? (await prisma.crmClient.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((c) => c.id) : [] }
     if (has('remindAt')) { const d = body.remindAt ? new Date(body.remindAt) : null; if (d && Number.isNaN(+d)) throw fail('The reminder date is not valid'); data.remindAt = d }
     // sharing: the people chosen, plus the colleagues named with @ in the text
     let shared = cur?.sharedWith || []
@@ -126,7 +139,7 @@ export async function saveNote(body = {}, id = null) {
     const fresh = (row.sharedWith || []).filter((x) => !(cur?.sharedWith || []).includes(x))
     if (fresh.length) await tellShared(g, row, fresh)
     const who = await peopleOf([...new Set([row.addedFrom, ...(row.sharedWith || [])].filter(Boolean))])
-    return { note: noteOut(row, g, who, { [row.id]: await prisma.crmQuickNoteComment.count({ where: { noteId: row.id } }) }) }
+    return { note: noteOut(row, g, who, { [row.id]: await prisma.crmQuickNoteComment.count({ where: { noteId: row.id } }) }, await clientsOf([row])) }
 }
 
 export async function deleteNote(id) {
@@ -165,7 +178,7 @@ const commentOut = (c, all, g, ownerId) => {
     return { id: c.id, authorName: c.authorName || '', body: c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine, canDelete: mine || ownerId === g.staffId || g.admin, replyTo: r ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null }
 }
 async function noteFor(g, id) {
-    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...visible(g.staffId, g.admin) } }))
+    const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...readable(g) } }))
     if (!n) throw fail('Note not found', 404)
     return n
 }

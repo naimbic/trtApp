@@ -6201,4 +6201,7 @@ export default {
     "The items table goes where you put": "明細表は次を置いた場所に入ります:",
     "Overdue reminder": "支払期限超過のリマインダー",
     "that the ticket was opened": "チケットが開かれたことを",
+    "Printed under the items table on the proposal.": "提案書では明細表の下に印刷されます。",
+    "Tag a client…": "顧客をタグ付け…",
+    "The note shows on the Tasks tab of each tagged client, where the team can read it.": "このメモはタグ付けした各顧客の「タスク」タブに表示され、チームが読めます。",
 }

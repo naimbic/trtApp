@@ -51,8 +51,9 @@ const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, on
     const [drawer, setDrawer] = useState({ open: !!openId, id: openId, preset: null, k: 0 })
     const [notes, setNotes] = useState([]) // quick notes: only a title and a description, shown beside the tasks
     const [noteDialog, setNoteDialog] = useState({ open: false, note: null })
-    const notesOn = !projectId && !clientPage && !boardOnly
-    const loadNotes = useCallback(() => { if (notesOn) api('/api/crm/notes?board=1&limit=10').then((d) => setNotes(d.list || [])).catch(() => {}) }, [notesOn])
+    const notesOn = !projectId && !boardOnly // on a client's page: the notes tagged with that client
+    const loadNotes = useCallback(() => { if (notesOn) api(clientPage ? `/api/crm/notes?clientId=${clientPage}&limit=50` : '/api/crm/notes?board=1&limit=10').then((d) => setNotes(d.list || [])).catch(() => {}) }, [notesOn, clientPage])
+    const notePreset = useMemo(() => (clientPage ? { clientIds: [clientPage] } : undefined), [clientPage]) // a note written on a client's page is tagged with that client
     useEffect(() => { loadNotes() }, [loadNotes])
     useEffect(() => { window.addEventListener(NOTES_EVENT, loadNotes); return () => window.removeEventListener(NOTES_EVENT, loadNotes) }, [loadNotes])
     const shownNotes = useMemo(() => { const q = query.trim().toLowerCase(); return notes.filter((n) => !q || `${n.title} ${plainOf(n.description)}`.toLowerCase().includes(q)) }, [notes, query])
@@ -230,7 +231,7 @@ const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, on
             <ConfirmDialog isOpen={bulkDel} type="danger" title={tr('Delete {n} tasks?', { n: sel.count })} confirmText={tr('Delete')} onClose={() => setBulkDel(false)} onCancel={() => setBulkDel(false)} onConfirm={() => { setBulkDel(false); bulk('delete') }}>
                 <p>{tr('Their sub-tasks and time entries are deleted too.')}</p>
             </ConfirmDialog>
-            <NoteEditor open={noteDialog.open} note={noteDialog.note} onClose={() => setNoteDialog((d) => ({ ...d, open: false }))} onSaved={loadNotes} />
+            <NoteEditor open={noteDialog.open} note={noteDialog.note} preset={notePreset} onClose={() => setNoteDialog((d) => ({ ...d, open: false }))} onSaved={loadNotes} />
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this task?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const it = del; setDel(null); remove(it) }}>
                 <p>{del?.title}</p>
             </ConfirmDialog>

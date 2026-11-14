@@ -6201,4 +6201,7 @@ export default {
     "The items table goes where you put": "يوضع جدول البنود حيث تضع",
     "Overdue reminder": "تذكير بالتأخر في السداد",
     "that the ticket was opened": "بأن التذكرة قد فُتحت",
+    "Printed under the items table on the proposal.": "يُطبع تحت جدول البنود في العرض.",
+    "Tag a client…": "وسم عميل…",
+    "The note shows on the Tasks tab of each tagged client, where the team can read it.": "تظهر الملاحظة في تبويب المهام لكل عميل موسوم، حيث يمكن للفريق قراءتها.",
 }

@@ -6190,4 +6190,5 @@ export default {
     "Convert and continue": "変換して続ける",
     "An invoice is made for a client. This lead becomes a client (with its first contact), then the new invoice opens for it.": "請求書はクライアント宛てに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しい請求書を開きます。",
     "An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.": "見積書はクライアント宛てに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しい見積書を開きます。",
+    "A contract is made for a client. This lead becomes a client (with its first contact), then the new contract opens for it.": "契約書はクライアント宛てに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しい契約書を開きます。",
 }

@@ -6190,4 +6190,5 @@ export default {
     "Convert and continue": "Convertir et continuer",
     "An invoice is made for a client. This lead becomes a client (with its first contact), then the new invoice opens for it.": "Une facture est établie pour un client. Ce prospect devient un client (avec son premier contact), puis la nouvelle facture s’ouvre pour lui.",
     "An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.": "Un devis est établi pour un client. Ce prospect devient un client (avec son premier contact), puis le nouveau devis s’ouvre pour lui.",
+    "A contract is made for a client. This lead becomes a client (with its first contact), then the new contract opens for it.": "Un contrat est établi pour un client. Ce prospect devient un client (avec son premier contact), puis le nouveau contrat s’ouvre pour lui.",
 }

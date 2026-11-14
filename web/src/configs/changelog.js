@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.240.1',
+        date: '2026-11-14',
+        title: 'Contract straight from a lead',
+        items: [
+            'The Offers tab of a lead now also has “New contract”. As for estimates and invoices, a lead that is not a client yet is turned into a client first (after asking), then the new contract opens with that client chosen.',
+        ],
+    },
+    {
         version: '0.240.0',
         date: '2026-11-14',
         title: 'Estimate and invoice straight from a lead',

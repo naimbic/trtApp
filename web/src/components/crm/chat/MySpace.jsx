@@ -169,7 +169,7 @@ const MySpace = ({ compact = false, onBack = null, openId = '' }) => {
                     <div className="font-bold heading-text">{ro ? tr("My space of {name}", { name: ownerOpts.find((o) => o.value === d.owner)?.label.replace(/ \(\d+\)$/, '') || '' }) : tr("My space")}</div>
                     {ro && <div className="flex items-center gap-1 text-xs text-gray-500"><TbLock className="shrink-0" />{tr("Read only. This is private to its owner.")}</div>}
                 </div>
-                {d?.canViewOthers && d.owners.length > 0 && <div className="w-48 shrink-0"><Select size="sm" isSearchable={d.owners.length > 6} options={ownerOpts} value={ownerOpts.find((o) => o.value === (ro ? d.owner : '')) || ownerOpts[0]} onChange={(o) => setOwner(o?.value || '')} /></div>}
+                {d?.canViewOthers && d.owners.length > 0 && <div className="w-48 shrink-0"><Select size="sm" isSearchable={d.owners.length > 6} styles={{ menuPortal: (b) => ({ ...b, zIndex: 100010 }) }} options={ownerOpts} value={ownerOpts.find((o) => o.value === (ro ? d.owner : '')) || ownerOpts[0]} onChange={(o) => setOwner(o?.value || '')} /></div>}
             </div>
             <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
                 {!ro && !adding && !edit && <button type="button" onClick={() => setAdding(true)} className="flex w-full items-center gap-2 rounded-2xl border border-dashed border-gray-300 px-4 py-3 text-left text-sm text-gray-500 transition hover:border-primary hover:text-primary dark:border-gray-600"><TbPlus className="text-lg" />{tr("Keep a note, a link, a password, a file…")}</button>}

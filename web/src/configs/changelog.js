@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.239.3',
+        date: '2026-11-14',
+        title: 'My space in the chat popup: the list of people opens',
+        items: [
+            'In the chat popup, the list at the top of My space opened behind the popup, so clicking it showed nothing. It now opens on top and you can pick a person.',
+        ],
+    },
+    {
         version: '0.239.2',
         date: '2026-11-14',
         title: 'My space: the Super Admin sees every person in the list',

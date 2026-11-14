@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.246.0',
+        date: '2026-11-14',
+        title: 'Proposal form in folding sections; text in the language the lead writes in',
+        items: [
+            'The proposal form is now five folding sections: Proposal, Prepared for, Items, Proposal text and Options. The fields are regrouped on fewer rows, and Prepared for and Options start folded with a summary on their header.',
+            'Fix: the proposal text stayed in English for a lead whose language was only detected (shown in the lead form but not saved yet). The text now follows the detected language too, from the emails or the description of the lead.',
+            'A saved proposal whose text is still the untouched starting text switches to the language of its lead or client when you open it for editing.',
+        ],
+    },
+    {
         version: '0.245.0',
         date: '2026-11-14',
         title: 'Notes in the client language, repeating options on proposals',

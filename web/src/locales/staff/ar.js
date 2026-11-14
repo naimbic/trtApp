@@ -6196,4 +6196,7 @@ export default {
     "Meeting with {name}": "اجتماع مع {name}",
     "Unit (hour, day, piece…): printed after the quantity": "الوحدة (ساعة، يوم، قطعة…): تُطبع بعد الكمية",
     "The invoice made from this proposal repeats with these options.": "الفاتورة المنشأة من هذا العرض تتكرر بهذه الخيارات.",
+    "What the client reads": "ما يقرؤه العميل",
+    "Expiry reminder": "تذكير بانتهاء الصلاحية",
+    "The items table goes where you put": "يوضع جدول البنود حيث تضع",
 }

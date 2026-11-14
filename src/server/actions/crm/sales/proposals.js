@@ -1,6 +1,7 @@
 'use server'
 
 import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
+import { detectLanguage } from '@/lib/crm/detectLanguage'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -37,7 +38,13 @@ export async function proposalPrefill(relType, relId) {
     }
     const l = await prisma.crmLead.findUnique({ where: { id: relId } })
     if (!l) return {}
-    return { language: l.defaultLanguage || '', currencyId: l.currencyId || null, proposalTo: l.company || l.name || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', country: l.country ?? null, email: l.email || '', phone: l.phoneNumber || '' }
+    // no language chosen on the lead yet: the one it writes in (its received emails, else its description), as the lead form offers
+    let language = l.defaultLanguage || ''
+    if (!language) {
+        const mails = await prisma.crmLeadMail.findMany({ where: { leadId: l.id, direction: 'in' }, orderBy: { date: 'desc' }, take: 5, select: { subject: true, body: true } }).catch(() => [])
+        language = detectLanguage(mails.map((m) => `${m.subject || ''} ${m.body || ''}`).join(' ').slice(0, 20000)) || detectLanguage(l.description) || ''
+    }
+    return { language, currencyId: l.currencyId || null, proposalTo: l.company || l.name || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', country: l.country ?? null, email: l.email || '', phone: l.phoneNumber || '' }
 }
 
 export async function getProposalDocument(id) {

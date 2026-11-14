@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
-import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -20,6 +19,7 @@ import { makeMoney } from '../clients/shared'
 import { NumberField } from './shared'
 import { tr } from '@/utils/t'
 import ReminderSwitch from '../kit/ReminderSwitch'
+import AccordionCard from '@/components/crm/AccordionCard'
 
 const RECUR_UNITS = () => [{ value: 'day', label: tr("Days") }, { value: 'week', label: tr("Weeks") }, { value: 'month', label: tr("Months") }, { value: 'year', label: tr("Years") }]
 
@@ -38,13 +38,16 @@ const ProposalEditor = () => {
     const [v, setV] = useState(null)
     const base = useClientLookups()
     const visual = useRef(null)
+    const [open, setOpen] = useState({ main: true, to: !!id, items: true, text: true, opts: false }) // folding sections; "Prepared for" is filled by itself on a new proposal, so it starts folded
+    const toggle = (k) => setOpen((o) => ({ ...o, [k]: !o[k] }))
     const [lang, setLang] = useState('') // language of the client or lead: a new proposal's starting text is written in it
 
     // fills the "prepared for" block (and, on a new proposal, the client's currency) from the chosen client or lead
     const fill = async (relType, relId) => {
-        try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); if (!id && f.language) setLang(f.language); setV((s) => ({ ...s, ...(!id && f.language && isStartingText(s.content) ? { content: proposalText(f.language) } : {}), ...(!id && f.currencyId ? { currencyId: f.currencyId } : {}), proposalTo: f.proposalTo || s.proposalTo, email: f.email || s.email, phone: f.phone || s.phone, address: f.address || s.address, city: f.city || s.city, state: f.state || s.state, zip: f.zip || s.zip, country: f.country ?? s.country })) } catch { /* optional */ }
+        try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); if (f.language) setLang(f.language); setV((s) => ({ ...s, ...(f.language && isStartingText(s.content) ? { content: proposalText(f.language) } : {}), ...(!id && f.currencyId ? { currencyId: f.currencyId } : {}), proposalTo: f.proposalTo || s.proposalTo, email: f.email || s.email, phone: f.phone || s.phone, address: f.address || s.address, city: f.city || s.city, state: f.state || s.state, zip: f.zip || s.zip, country: f.country ?? s.country })) } catch { /* optional */ }
     }
 
+    const langOf = async (relType, relId) => { try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); if (!f.language) return; setLang(f.language); setV((s) => (s && isStartingText(s.content) ? { ...s, content: proposalText(f.language) } : s)) } catch { /* optional */ } }
     const fromId = params.get('from')
     useEffect(() => {
         Promise.all([api('/api/crm/sales/lookups').then(async (l) => ({ ...l, defaults: { ...(l.defaults || {}), ...(await api('/api/crm/sales/proposals/defaults')) } })), id || fromId ? api(`/api/crm/sales/proposals/${id || fromId}`) : null])
@@ -71,6 +74,7 @@ const ProposalEditor = () => {
                                         items: d?.items?.length ? d.items.map(({ id: _i, ...line }) => line) : [baseLine()],
                 })
                 // a new proposal from a client's page or a lead: the "prepared for" block (and the client's currency) is filled at once
+                if (inv && id) langOf(inv.relType, inv.relId) // an untouched starting text follows the language of who it is for
                 if (!inv && params.get('clientId')) fill('customer', params.get('clientId'))
                 else if (!inv && params.get('leadId')) fill('lead', params.get('leadId'))
             })
@@ -104,7 +108,7 @@ const ProposalEditor = () => {
     const submit = async () => {
         if (!v.subject.trim()) return setError(tr("Give the proposal a subject"))
         if (!v.relId) return setError(tr("Choose the client or lead this proposal is for"))
-        if (!v.proposalTo.trim()) return setError(tr("Who is the proposal for?"))
+        if (!v.proposalTo.trim()) { setOpen((o) => ({ ...o, to: true })); return setError(tr("Who is the proposal for?")) }
         setSaving(true)
         setError('')
         try {
@@ -122,21 +126,70 @@ const ProposalEditor = () => {
         <Container>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3>{id ? tr("Edit proposal {v1}", { v1: doc?.proposal?.displayNumber || '' }) : tr("New proposal")}</h3><NumberField value={v?.number} onChange={(n) => set({ number: n })} /></div>
             {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
-            <div className="flex flex-col gap-4">
-                <Card>
-                    <div className="grid gap-4 md:grid-cols-4">
-                        <div className="md:col-span-4"><label className="form-label mb-2 block">{tr("Subject *")}</label><Input value={v.subject} placeholder={tr("e.g. Website redesign")} onChange={(e) => set({ subject: e.target.value })} /></div>
-                        <div className="md:col-span-2">
-                            <label className="form-label mb-2 block">{tr("Made for *")}</label>
-                            <div className="mb-2"><Segment size="sm" value={v.relType} onChange={(t) => t && set({ relType: t, relId: null })}><Segment.Item value="customer">{tr("Client")}</Segment.Item><Segment.Item value="lead">{tr("Lead")}</Segment.Item></Segment></div>
+            <div className="flex flex-col gap-3">
+                {/* folding sections: the essentials open, the rest one click away */}
+                <AccordionCard title={tr("Proposal")} dot="#3b82f6" note={v.subject || undefined} open={open.main} onToggle={() => toggle('main')}>
+                    <div className="grid gap-3 p-4 md:grid-cols-12">
+                        <div className="md:col-span-6"><label className="form-label mb-1 block">{tr("Subject *")}</label><Input value={v.subject} placeholder={tr("e.g. Website redesign")} onChange={(e) => set({ subject: e.target.value })} /></div>
+                        <div className="md:col-span-6">
+                            <div className="mb-1 flex items-center justify-between gap-2"><label className="form-label">{tr("Made for *")}</label><Segment size="sm" value={v.relType} onChange={(t) => t && set({ relType: t, relId: null })}><Segment.Item value="customer">{tr("Client")}</Segment.Item><Segment.Item value="lead">{tr("Lead")}</Segment.Item></Segment></div>
                             <RelationSelect key={v.relType} resource={v.relType === 'lead' ? 'leads' : 'clients'} value={v.relId} onChange={(rid) => { set({ relId: rid }); if (rid) fill(v.relType, rid) }} />
                         </div>
-                        <div><label className="form-label mb-2 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("Assigned to")}</label><Select isClearable options={(base.staff || []).map((s) => ({ value: s.id, label: s.name }))} value={(base.staff || []).filter((s) => s.id === v.assignedId).map((s) => ({ value: s.id, label: s.name }))[0] || null} onChange={(o) => set({ assignedId: o?.value || null })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("Proposal date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("Open until")}</label><Input type="date" value={v.openTill} onChange={(e) => set({ openTill: e.target.value })} /></div>
+                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Currency")}</label><Select options={lookups.currencies.map((c) => ({ value: c.id, label: c.name }))} value={lookups.currencies.filter((c) => c.id === v.currencyId).map((c) => ({ value: c.id, label: c.name }))[0] || null} onChange={(o) => set({ currencyId: o?.value || null })} /></div>
+                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Assigned to")}</label><Select isClearable options={(base.staff || []).map((s) => ({ value: s.id, label: s.name }))} value={(base.staff || []).filter((s) => s.id === v.assignedId).map((s) => ({ value: s.id, label: s.name }))[0] || null} onChange={(o) => set({ assignedId: o?.value || null })} /></div>
+                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Proposal date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
+                        <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Open until")}</label><Input type="date" value={v.openTill} onChange={(e) => set({ openTill: e.target.value })} /></div>
                     </div>
-                    <div className="mt-3 grid items-end gap-3 border-t border-gray-100 pt-3 md:grid-cols-12 dark:border-gray-700">
+                </AccordionCard>
+
+                <AccordionCard title={tr("Prepared for")} dot="#8b5cf6" note={[v.proposalTo, v.email].filter(Boolean).join(" · ") || tr("Filled from the client or lead; edit freely")} open={open.to} onToggle={() => toggle('to')}>
+                    <div className="grid gap-3 p-4 md:grid-cols-12">
+                        <div className="md:col-span-4"><label className="form-label mb-1 block">{tr("Name / company *")}</label><Input value={v.proposalTo} onChange={(e) => set({ proposalTo: e.target.value })} /></div>
+                        <div className="md:col-span-4"><label className="form-label mb-1 block">{tr("Email")}</label><Input type="email" value={v.email} onChange={(e) => set({ email: e.target.value })} /></div>
+                        <div className="md:col-span-4"><label className="form-label mb-1 block">{tr("Phone")}</label><Input value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
+                        <div className="md:col-span-4"><label className="form-label mb-1 block">{tr("Address")}</label><Input value={v.address} onChange={(e) => set({ address: e.target.value })} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("City")}</label><Input value={v.city} onChange={(e) => set({ city: e.target.value })} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("State")}</label><Input value={v.state} onChange={(e) => set({ state: e.target.value })} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("ZIP")}</label><Input value={v.zip} onChange={(e) => set({ zip: e.target.value })} /></div>
+                        <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Country")}</label><Select isClearable options={base.countries || []} value={(base.countries || []).find((o) => o.value === v.country) || null} onChange={(o) => set({ country: o ? o.value : null })} /></div>
+                    </div>
+                </AccordionCard>
+
+                <AccordionCard title={tr("Items")} dot="#10b981" count={v.items.filter((i) => String(i.description || '').trim()).length} note={money(totals.total)} open={open.items} onToggle={() => toggle('items')}>
+                    <div className="p-4">
+                        <div className="mb-3 flex justify-end"><div className="w-72"><ItemPicker onChange={addFromCatalog} /></div></div>
+                        <LineItemsTable items={v.items} onChange={(items) => set({ items })} taxOptions={taxOptions} newLine={newLine} />
+                    <div className="mt-4 grid gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-2 content-start gap-3 md:grid-cols-4">
+                            <div><label className="form-label mb-1 block">{tr("Discount %")}</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
+                            <div><label className="form-label mb-1 block">{tr("Fixed discount")}</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
+                            <div><label className="form-label mb-1 block">{tr("Discount applies")}</label><Select options={[{ value: 'before_tax', label: tr("Before tax") }, { value: 'after_tax', label: tr("After tax") }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? tr("After tax") : tr("Before tax") }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
+                            <div><label className="form-label mb-1 block">{tr("Adjustment")}</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
+                        </div>
+                        <dl className="ml-auto w-full max-w-sm text-sm">
+                            <div className="flex justify-between py-1"><dt>{tr("Sub total")}</dt><dd className="tabular-nums">{money(totals.subtotal)}</dd></div>
+                            {totals.discountTotal > 0 && <div className="flex justify-between py-1"><dt>{tr("Discount")}</dt><dd className="tabular-nums">-{money(totals.discountTotal)}</dd></div>}
+                            {totals.taxes.map((t) => <div key={`${t.name}|${t.rate}`} className="flex justify-between py-1"><dt>{t.name} ({t.rate}%)</dt><dd className="tabular-nums">{money(t.total)}</dd></div>)}
+                            {Number(v.adjustment) !== 0 && <div className="flex justify-between py-1"><dt>{tr("Adjustment")}</dt><dd className="tabular-nums">{money(v.adjustment)}</dd></div>}
+                            <div className="mt-1 flex justify-between border-t py-2 text-base font-semibold"><dt>{tr("Total")}</dt><dd className="tabular-nums">{money(totals.total)}</dd></div>
+                        </dl>
+                    </div>
+                    </div>
+                </AccordionCard>
+
+                <AccordionCard title={tr("Proposal text")} dot="#f59e0b" note={tr("What the client reads")} open={open.text} onToggle={() => toggle('text')}>
+                    <div className="p-4">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs text-gray-500">{tr("The items table goes where you put")} <code>{tr("{proposal_items}")}</code>{tr("; without it the table is added at the end.")}</p>
+                            <div className="flex flex-wrap gap-1.5">{['proposal_items', 'proposal_number', 'proposal_total', 'proposal_open_till', 'proposal_proposal_to', 'company_name'].map((t) => <button key={t} type="button" onClick={() => visual.current?.insert(`{${t}}`)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${t}}`}</button>)}</div>
+                        </div>
+                        <VisualEditor ref={visual} autoHeight docKey={`proposal-${id || 'new'}-${lang}`} value={v.content} onChange={(html) => setV((s) => ({ ...s, content: html }))} />
+                    </div>
+                </AccordionCard>
+
+                <AccordionCard title={tr("Options")} dot="#6b7280" note={[Number(v.recurring) > 0 && tr("Repeating"), v.allowComments && tr("Allow comments"), v.remindClient !== false && tr("Expiry reminder")].filter(Boolean).join(" · ") || undefined} open={open.opts} onToggle={() => toggle('opts')}>
+                    <div className="flex flex-col gap-3 p-4">
+                    <div className="grid items-end gap-3 md:grid-cols-12">
                         <label className="flex items-center gap-2 pb-1.5 font-semibold md:col-span-3"><Switcher checked={Number(v.recurring) > 0} onChange={(on) => set({ recurring: on ? 1 : 0 })} />{tr("Repeating")}</label>
                         {Number(v.recurring) > 0 && (
                             <>
@@ -147,60 +200,10 @@ const ProposalEditor = () => {
                             </>
                         )}
                     </div>
-                </Card>
-
-                <Card>
-                    <div className="mb-3 flex items-center justify-between"><h4>{tr("Prepared for")}</h4><span className="text-xs text-gray-400">{tr("Filled from the client or lead; edit freely")}</span></div>
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <div><label className="form-label mb-2 block">{tr("Name / company *")}</label><Input value={v.proposalTo} onChange={(e) => set({ proposalTo: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("Email")}</label><Input type="email" value={v.email} onChange={(e) => set({ email: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("Phone")}</label><Input value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
-                        <div className="md:col-span-3"><label className="form-label mb-2 block">{tr("Address")}</label><Input value={v.address} onChange={(e) => set({ address: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("City")}</label><Input value={v.city} onChange={(e) => set({ city: e.target.value })} /></div>
-                        <div><label className="form-label mb-2 block">{tr("State")}</label><Input value={v.state} onChange={(e) => set({ state: e.target.value })} /></div>
-                        <div className="grid grid-cols-2 gap-4"><div><label className="form-label mb-2 block">{tr("ZIP")}</label><Input value={v.zip} onChange={(e) => set({ zip: e.target.value })} /></div><div><label className="form-label mb-2 block">{tr("Country")}</label><Select isClearable options={base.countries || []} value={(base.countries || []).find((o) => o.value === v.country) || null} onChange={(o) => set({ country: o ? o.value : null })} /></div></div>
+                        <div className="border-t border-gray-100 pt-3 dark:border-gray-700"><div className="flex items-center justify-between gap-4"><div><div className="font-semibold">{tr("Allow comments")}</div><div className="text-sm text-gray-500">{tr("The client can write comments on the public proposal page")}</div></div><Switcher checked={v.allowComments} onChange={(c) => set({ allowComments: c })} /></div></div>
+                        <div className="border-t border-gray-100 pt-3 dark:border-gray-700"><ReminderSwitch checked={v.remindClient !== false} onChange={(c) => set({ remindClient: c })} title={tr("Send expiry reminders to the client")} hint={tr("Shortly before the proposal closes, the client receives a reminder email.")} /></div>
                     </div>
-                </Card>
-
-                <Card>
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <h4>{tr("Items")} <span className="text-sm font-normal text-gray-400">{tr("(optional)")}</span></h4>
-                        <div className="w-72"><ItemPicker onChange={addFromCatalog} /></div>
-                    </div>
-                    <LineItemsTable items={v.items} onChange={(items) => set({ items })} taxOptions={taxOptions} newLine={newLine} />
-
-                    <div className="mt-6 grid gap-6 md:grid-cols-2">
-                        <div className="grid grid-cols-2 content-start gap-4">
-                            <div><label className="form-label mb-2 block">{tr("Discount %")}</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
-                            <div><label className="form-label mb-2 block">{tr("Fixed discount")}</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
-                            <div><label className="form-label mb-2 block">{tr("Discount applies")}</label><Select options={[{ value: 'before_tax', label: tr("Before tax") }, { value: 'after_tax', label: tr("After tax") }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? tr("After tax") : tr("Before tax") }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
-                            <div><label className="form-label mb-2 block">{tr("Adjustment")}</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
-                        </div>
-                        <dl className="ml-auto w-full max-w-sm text-sm">
-                            <div className="flex justify-between py-1"><dt>{tr("Sub total")}</dt><dd className="tabular-nums">{money(totals.subtotal)}</dd></div>
-                            {totals.discountTotal > 0 && <div className="flex justify-between py-1"><dt>{tr("Discount")}</dt><dd className="tabular-nums">-{money(totals.discountTotal)}</dd></div>}
-                            {totals.taxes.map((t) => <div key={`${t.name}|${t.rate}`} className="flex justify-between py-1"><dt>{t.name} ({t.rate}%)</dt><dd className="tabular-nums">{money(t.total)}</dd></div>)}
-                            {Number(v.adjustment) !== 0 && <div className="flex justify-between py-1"><dt>{tr("Adjustment")}</dt><dd className="tabular-nums">{money(v.adjustment)}</dd></div>}
-                            <div className="mt-1 flex justify-between border-t py-2 text-base font-semibold"><dt>{tr("Total")}</dt><dd className="tabular-nums">{money(totals.total)}</dd></div>
-                        </dl>
-                    </div>
-                </Card>
-
-                <Card>
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div><h4>{tr("Proposal text")}</h4><p className="text-sm text-gray-500">{tr("What the client reads. The items table goes where you put")} <code>{tr("{proposal_items}")}</code>{tr("; without it the table is added at the end.")}</p></div>
-                        <div className="flex flex-wrap gap-1.5">{['proposal_items', 'proposal_number', 'proposal_total', 'proposal_open_till', 'proposal_proposal_to', 'company_name'].map((t) => <button key={t} type="button" onClick={() => visual.current?.insert(`{${t}}`)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary dark:bg-gray-700">{`{${t}}`}</button>)}</div>
-                    </div>
-                    <VisualEditor ref={visual} autoHeight docKey={`proposal-${id || 'new'}-${lang}`} value={v.content} onChange={(html) => setV((s) => ({ ...s, content: html }))} />
-                </Card>
-
-                <Card>
-                    <div className="flex items-center justify-between gap-4"><div><div className="font-semibold">{tr("Allow comments")}</div><div className="text-sm text-gray-500">{tr("The client can write comments on the public proposal page")}</div></div><Switcher checked={v.allowComments} onChange={(c) => set({ allowComments: c })} /></div>
-                </Card>
-
-                <Card>
-                    <ReminderSwitch checked={v.remindClient !== false} onChange={(c) => set({ remindClient: c })} title={tr("Send expiry reminders to the client")} hint={tr("Shortly before the proposal closes, the client receives a reminder email.")} />
-                </Card>
+                </AccordionCard>
 
                 <div className="flex justify-end gap-2">
                     <Button onClick={() => navigate(id ? `/crm/proposals/${id}` : '/crm/proposals')}>{tr("Cancel")}</Button>

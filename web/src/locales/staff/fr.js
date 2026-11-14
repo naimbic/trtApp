@@ -6196,4 +6196,7 @@ export default {
     "Meeting with {name}": "Réunion avec {name}",
     "Unit (hour, day, piece…): printed after the quantity": "Unité (heure, jour, pièce…) : imprimée après la quantité",
     "The invoice made from this proposal repeats with these options.": "La facture créée à partir de cette proposition se répète avec ces options.",
+    "What the client reads": "Ce que lit le client",
+    "Expiry reminder": "Rappel d'expiration",
+    "The items table goes where you put": "Le tableau des articles se place là où vous mettez",
 }

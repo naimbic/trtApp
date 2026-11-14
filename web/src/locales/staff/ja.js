@@ -6196,4 +6196,7 @@ export default {
     "Meeting with {name}": "{name}とのミーティング",
     "Unit (hour, day, piece…): printed after the quantity": "単位（時間、日、個など）：数量の後に印刷されます",
     "The invoice made from this proposal repeats with these options.": "この提案書から作成される請求書は、この設定で繰り返されます。",
+    "What the client reads": "顧客が読む内容",
+    "Expiry reminder": "期限のリマインダー",
+    "The items table goes where you put": "明細表は次を置いた場所に入ります:",
 }

@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.249.0',
+        date: '2026-11-14',
+        title: 'Purchase order and contract forms: the same layout as the other sales forms',
+        items: [
+            'Purchase order form: the items and the notes wide on the left; on the right the client, the currency, the dates and the bank account in one card, then Discount with its switch at the top right.',
+            'Contract form: the subject and the contract text wide on the left; on the right the client, the type, the dates and the value in one card, then the internal description, Expiry reminder and Hide from the client with their switch at the top right, and How it works folded.',
+        ],
+    },
+    {
         version: '0.248.0',
         date: '2026-11-14',
         title: 'Estimate and invoice forms: the same layout as the proposal form',

@@ -18,14 +18,14 @@ export const PAGE_FORMATS = ['A4-PORTRAIT', 'A4-LANDSCAPE', 'A5-PORTRAIT', 'LETT
 export const PDF_FONTS = [['freesans', 'Sans-serif (clean)'], ['helvetica', 'Helvetica'], ['dejavusans', 'DejaVu Sans'], ['times', 'Serif (Times)'], ['courier', 'Monospace']]
 
 // Reusable blocks for Invoice / Estimate / Proposal / Purchase order / Credit note numbering
-const numbering = (name, prefixKey, prefixDefault, nextKey, formatKey, resetKey, delKey, decKey) => ({
+const numbering = (name, prefixKey, prefixDefault, nextKey, formatKey, resetKey, delKey, decKey, resetDefault = 'never') => ({
     title: 'Numbering',
     desc: `How ${name} numbers look and count.`,
     fields: [
         f(prefixKey, 'Prefix', 'text', { ph: prefixDefault, hint: 'Shown before the number, for example "FA -"', max: 20 }),
         sel(formatKey, 'Number format', NUMBER_FORMATS, { default: '1' }),
         f(nextKey, 'Next number', 'number', { min: 1, hint: 'The number given to the next one. Change it to start again from 1.' }),
-        sel(resetKey, 'Start again from 1', RESET, { default: 'never', hint: 'Applied automatically when a new one is created.' }),
+        sel(resetKey, 'Start again from 1', RESET, { default: resetDefault, hint: 'Applied automatically when a new one is created.' }),
         yes(delKey, 'Allow deleting only the last one', { hint: 'Prevents holes in the numbering.' }),
         yes(decKey, 'Take the number back when the last one is deleted', { hint: 'The next number goes back by one (only when the deleted one was the last).' }),
     ],
@@ -230,7 +230,7 @@ export const GROUPS = {
     invoices: {
         label: 'Invoices', icon: 'TbFileInvoice', desc: 'Numbering, defaults and what clients see',
         cards: [
-            numbering('invoice', 'invoice_prefix', 'FA -', 'next_invoice_number', 'invoice_number_format', 'invoice_number_reset', 'delete_only_on_last_invoice', 'invoice_number_decrement_on_delete'),
+            numbering('invoice', 'invoice_prefix', 'FA -', 'next_invoice_number', 'invoice_number_format', 'invoice_number_reset', 'delete_only_on_last_invoice', 'invoice_number_decrement_on_delete', 'yearly'),
             { title: 'Existing invoices', desc: 'Save the numbering above first. Then give every invoice the same prefix and number format, so they all read alike (for example FA - 101 - 10 - 2026). The numbers themselves do not change.', panel: 'invoiceFormatApply' },
             { title: 'Defaults for new invoices', fields: [
                 f('invoice_due_after', 'Due after (days)', 'number', { min: 0, max: 365, default: '7', hint: 'The due date a new invoice starts with: the day it is created plus these days.' }),

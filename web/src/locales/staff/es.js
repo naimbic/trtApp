@@ -6184,4 +6184,5 @@ export default {
     "This person has no saved logins.": "Esta persona no tiene accesos guardados.",
     "Add your own logins here, or use “Send to My space” on an entry of the shared Password vault.": "Añade aquí tus accesos, o usa «Enviar a Mi espacio» en una entrada de la bóveda compartida.",
     "Edit entry": "Editar entrada",
+    "Invoice status": "Estado de la factura",
 }

@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
  */
 const REAL = 1_000_000_000
 export const KINDS = {
-    invoice: { model: 'crmInvoice', label: 'invoice', prefix: 'invoice_prefix', defPrefix: 'FA -', defFormat: '4', format: 'invoice_number_format', next: 'next_invoice_number', reset: 'invoice_number_reset', onlyLast: 'delete_only_on_last_invoice', decrement: 'invoice_number_decrement_on_delete' },
+    invoice: { model: 'crmInvoice', label: 'invoice', prefix: 'invoice_prefix', defPrefix: 'FA -', defFormat: '4', defReset: 'yearly', format: 'invoice_number_format', next: 'next_invoice_number', reset: 'invoice_number_reset', onlyLast: 'delete_only_on_last_invoice', decrement: 'invoice_number_decrement_on_delete' },
     purchase_order: { model: 'crmPurchaseOrder', label: 'purchase order', prefix: 'purchase_order_prefix', defPrefix: 'BC-', format: 'purchase_order_number_format', next: 'next_purchase_order_number', reset: 'purchase_order_number_reset', onlyLast: 'delete_only_on_last_purchase_order', decrement: 'purchase_order_number_decrement_on_delete' },
     estimate: { model: 'crmEstimate', label: 'estimate', prefix: 'estimate_prefix', defPrefix: 'EST-', format: 'estimate_number_format', next: 'next_estimate_number', reset: 'estimate_number_reset', onlyLast: 'delete_only_on_last_estimate', decrement: 'estimate_number_decrement_on_delete' },
 }
@@ -32,7 +32,7 @@ async function highest(k, period) {
 /** The number, prefix and format a new document gets. Also moves the "next number" setting forward. */
 export async function allocateNumber(kind, date) {
     const k = KINDS[kind]
-    const rule = await opt(k.reset, 'never')
+    const rule = await opt(k.reset, k.defReset || 'never')
     const period = periodOf(rule, date)
     let number
     if (period) number = (await highest(k, period)) + 1
@@ -48,7 +48,7 @@ export async function allocateNumber(kind, date) {
 export async function checkDeletable(kind, doc) {
     const k = KINDS[kind]
     if ((await opt(k.onlyLast, '0')) !== '1' || doc.number >= REAL) return null
-    const period = periodOf(await opt(k.reset, 'never'), doc.date)
+    const period = periodOf(await opt(k.reset, k.defReset || 'never'), doc.date)
     if (doc.number < (await highest(k, period))) return `Only the last ${k.label} can be deleted (Settings → Billing).`
     return null
 }
@@ -86,10 +86,19 @@ export async function manualNumber(model, input, authority) {
     const n = Number(raw)
     if (!Number.isInteger(n) || n < 1 || n >= REAL) return { problem: 'The number must be a whole number above 0' }
     const hasPrefix = !!COUNTER[model] // proposals have no prefix
-    const cur = input.id ? await prisma[model].findUnique({ where: { id: input.id }, select: hasPrefix ? { number: true, prefix: true } : { number: true } }) : null
+    const cur = input.id ? await prisma[model].findUnique({ where: { id: input.id }, select: hasPrefix ? { number: true, prefix: true, date: true, numberFormat: true } : { number: true, date: true } }) : null
     if (cur && cur.number === n) return { number: null }
-    const clash = await prisma[model].findFirst({ where: { number: n, ...(input.id ? { id: { not: input.id } } : {}), ...(cur && hasPrefix ? { prefix: cur.prefix } : {}) }, select: { id: true } })
-    if (clash) return { problem: `The number ${n} is already used by another document` }
+    // the same number in another year is not a clash when numbering restarts every year (or the number on paper carries the year): 1 of 2027 is not 1 of 2017
+    let period = null
+    if (hasPrefix) {
+        const k = KINDS[COUNTER[model]]
+        const rule = await opt(k.reset, k.defReset || 'never')
+        const fmt = Number(cur?.numberFormat ?? (await opt(k.format, k.defFormat || '1'))) || 1
+        const when = input.date || cur?.date || new Date()
+        period = periodOf(rule === 'never' ? (fmt === 4 ? 'monthly' : fmt === 2 || fmt === 3 ? 'yearly' : 'never') : rule, when)
+    }
+    const clash = await prisma[model].findFirst({ where: { number: n, ...(input.id ? { id: { not: input.id } } : {}), ...(cur && hasPrefix ? { prefix: cur.prefix } : {}), ...(period ? { date: { gte: period[0], lt: period[1] } } : {}) }, select: { id: true } })
+    if (clash) return { problem: `The number ${n} is already used by another document${period ? ' in the same period' : ''}` }
     return { number: n }
 }
 

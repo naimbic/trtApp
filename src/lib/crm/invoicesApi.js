@@ -122,9 +122,13 @@ export async function listPayments({ query = '', modeId, clientId, from, to, pag
     ])
     const mode = Object.fromEntries(modes.map((m) => [m.id, m.name]))
     const cname = Object.fromEntries(clients.map((c) => [c.id, c.company]))
+    // a paid invoice: the day of its last payment (over all its payments, not only the ones the filters keep)
+    const paidIds = invoices.filter((i) => i.status === 2).map((i) => i.id)
+    const lastPaid = {}
+    if (paidIds.length) for (const x of await prisma.crmPayment.findMany({ where: { invoiceId: { in: paidIds } }, select: { invoiceId: true, paymentDate: true } })) if (x.paymentDate && (!lastPaid[x.invoiceId] || x.paymentDate > lastPaid[x.invoiceId])) lastPaid[x.invoiceId] = x.paymentDate
     let rows = payments.map((p) => {
         const i = byId[p.invoiceId]
-        return { id: p.id, amount: p.amount, paymentDate: p.paymentDate, modeId: p.paymentModeId, mode: mode[p.paymentModeId] || p.paymentMethod || '', transactionId: p.transactionId || '', note: p.note || '', invoiceId: p.invoiceId, invoiceNumber: i ? docNumberOf(i, padding) : '', clientId: i?.clientId || null, client: cname[i?.clientId] || '', currencyId: i?.currencyId || null }
+        return { id: p.id, amount: p.amount, paymentDate: p.paymentDate, modeId: p.paymentModeId, mode: mode[p.paymentModeId] || p.paymentMethod || '', transactionId: p.transactionId || '', note: p.note || '', invoiceId: p.invoiceId, invoiceNumber: i ? docNumberOf(i, padding) : '', invoiceStatus: i?.status ?? null, paidDate: i?.status === 2 ? lastPaid[i.id] || null : null, clientId: i?.clientId || null, client: cname[i?.clientId] || '', currencyId: i?.currencyId || null }
     })
     const sumBy = (list) => { const t = {}; list.forEach((r) => (t[r.currencyId || 'none'] = round2((t[r.currencyId || 'none'] || 0) + r.amount))); return t }
     const rt = await loadRates()

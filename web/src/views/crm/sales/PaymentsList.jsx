@@ -20,7 +20,7 @@ import cn from '@/utils/classNames'
 import { api, notify, qs, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { useClientLookups, makeMoney } from '../clients/shared'
-import { fmtDate } from './shared'
+import { fmtDate, StatusTag } from './shared'
 import { InvoiceHead, DocChart, shortMoney, sumOf } from './InvoiceInsights'
 import { useDocMenu } from './DocMenu'
 import { useSessionUser } from '@/store/authStore'
@@ -114,7 +114,7 @@ const PaymentsList = () => {
                 {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
                 <div className="overflow-x-auto">
                     <Table hoverable>
-                        <THead><Tr>{th('paymentDate', tr("Date"))}{th('invoiceNumber', tr("Invoice"))}{th('client', tr("Client"))}{th('mode', tr("Payment mode"))}<Th>{tr("Transaction")}</Th>{th('amount', tr("Amount"), true)}{can('payments', 'delete') && <Th />}{doc.head}</Tr></THead>
+                        <THead><Tr>{th('paymentDate', tr("Date"))}{th('invoiceNumber', tr("Invoice"))}{th('client', tr("Client"))}{th('mode', tr("Payment mode"))}<Th>{tr("Transaction")}</Th><Th>{tr("Invoice status")}</Th>{th('amount', tr("Amount"), true)}{can('payments', 'delete') && <Th />}{doc.head}</Tr></THead>
                         <TBody>
                             {data.list.map((p) => (
                                 <Tr key={p.id} className="cursor-pointer" data-href={`/crm/invoices/${p.invoiceId}`} onClick={() => navigate(`/crm/invoices/${p.invoiceId}`)}>
@@ -123,6 +123,7 @@ const PaymentsList = () => {
                                     <Td className="max-w-[240px] truncate">{p.client}</Td>
                                     <Td>{p.mode}</Td>
                                     <Td className="max-w-[160px] truncate text-gray-500">{p.transactionId}</Td>
+                                    <Td className="whitespace-nowrap">{p.invoiceStatus != null && <StatusTag status={p.invoiceStatus} />}{p.invoiceStatus === 2 && p.paidDate && <span className="ml-1.5 text-xs text-gray-500" title={tr("Paid on")}>{fmtDate(p.paidDate)}</span>}</Td>
                                     <Td className="text-right tabular-nums">{money(p.amount, p.currencyId)}</Td>
                                     {doc.cell(p)}
                                 </Tr>

@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.238.0',
+        date: '2026-11-14',
+        title: 'Invoice numbers per year, and paid date in Payments',
+        items: [
+            'Typing an invoice number now only clashes with a document of the same year: number 1 of 2027 is no longer refused because a number 1 exists in 2017 (when numbering restarts every year, or the number on paper carries the year).',
+            'Invoice numbering now restarts from 1 every 1 January by default (Settings > Billing > Invoices > “Start again from 1”): the first invoice of 2027 gets 001-01-2027. If this setting was saved as “Never” it is kept as it is.',
+            'The Payments list has an “Invoice status” column, with the paid date next to “Paid”.',
+        ],
+    },
+    {
         version: '0.237.1',
         date: '2026-11-14',
         title: 'Paid date next to “Paid” on invoices',

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.239.4',
+        date: '2026-11-14',
+        title: 'My space: a lock and the name when looking at someone else',
+        items: [
+            'When you open another person’s My space, the header shows only a lock and their name instead of two lines of text.',
+        ],
+    },
+    {
         version: '0.239.3',
         date: '2026-11-14',
         title: 'My space in the chat popup: the list of people opens',

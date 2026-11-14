@@ -166,8 +166,7 @@ const MySpace = ({ compact = false, onBack = null, openId = '' }) => {
             <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50/70 px-4 py-3 dark:border-gray-700 dark:bg-transparent">
                 {onBack && <button type="button" className="text-xl text-gray-500 md:hidden" onClick={onBack} aria-label={tr("Back")}><TbArrowLeft /></button>}
                 <div className="min-w-0 flex-1">
-                    <div className="font-bold heading-text">{ro ? tr("My space of {name}", { name: ownerOpts.find((o) => o.value === d.owner)?.label.replace(/ \(\d+\)$/, '') || '' }) : tr("My space")}</div>
-                    {ro && <div className="flex items-center gap-1 text-xs text-gray-500"><TbLock className="shrink-0" />{tr("Read only. This is private to its owner.")}</div>}
+                    <div className="flex items-center gap-1.5 font-bold heading-text" title={ro ? tr("Read only. This is private to its owner.") : undefined}>{ro && <TbLock className="shrink-0 text-gray-500" />}<span className="truncate">{ro ? ownerOpts.find((o) => o.value === d.owner)?.label.replace(/ \(\d+\)$/, '') || '' : tr("My space")}</span></div>
                 </div>
                 {d?.canViewOthers && d.owners.length > 0 && <div className="w-48 shrink-0"><Select size="sm" isSearchable={d.owners.length > 6} styles={{ menuPortal: (b) => ({ ...b, zIndex: 100010 }) }} options={ownerOpts} value={ownerOpts.find((o) => o.value === (ro ? d.owner : '')) || ownerOpts[0]} onChange={(o) => setOwner(o?.value || '')} /></div>}
             </div>

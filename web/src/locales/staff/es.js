@@ -6194,4 +6194,5 @@ export default {
     "A project is made for a client. This lead becomes a client (with its first contact), then the new project opens for it.": "Un proyecto se crea para un cliente. Este prospecto pasa a ser cliente (con su primer contacto) y luego se abre el nuevo proyecto para él.",
     "detected": "detectado",
     "Meeting with {name}": "Reunión con {name}",
+    "Unit (hour, day, piece…): printed after the quantity": "Unidad (hora, día, pieza…): se imprime después de la cantidad",
 }

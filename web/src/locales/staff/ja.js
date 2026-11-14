@@ -6194,4 +6194,5 @@ export default {
     "A project is made for a client. This lead becomes a client (with its first contact), then the new project opens for it.": "プロジェクトはクライアント向けに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しいプロジェクトを開きます。",
     "detected": "自動検出",
     "Meeting with {name}": "{name}とのミーティング",
+    "Unit (hour, day, piece…): printed after the quantity": "単位（時間、日、個など）：数量の後に印刷されます",
 }

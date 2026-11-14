@@ -6194,4 +6194,5 @@ export default {
     "A project is made for a client. This lead becomes a client (with its first contact), then the new project opens for it.": "يُنشأ المشروع لعميل. يصبح هذا العميل المحتمل عميلاً (مع أول جهة اتصال له)، ثم يُفتح المشروع الجديد له.",
     "detected": "تم الكشف",
     "Meeting with {name}": "اجتماع مع {name}",
+    "Unit (hour, day, piece…): printed after the quantity": "الوحدة (ساعة، يوم، قطعة…): تُطبع بعد الكمية",
 }

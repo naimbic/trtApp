@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.242.0',
+        date: '2026-11-14',
+        title: 'Unit on the lines of proposals and estimates',
+        items: [
+            'Each line of a proposal, an estimate, an invoice or a purchase order now has a Unit box (hour, day, piece…) between Qty and Rate. The unit is printed after the quantity on the document, as before for lines taken from the catalogue.',
+        ],
+    },
+    {
         version: '0.241.0',
         date: '2026-11-14',
         title: 'Lead currency, detected language, and meetings that start filled',

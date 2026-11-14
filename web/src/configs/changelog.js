@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.237.1',
+        date: '2026-11-14',
+        title: 'Paid date next to “Paid” on invoices',
+        items: [
+            'In the Status column of the invoice lists (Sales > Invoices and the customer Invoices tab), a paid invoice now shows the day it was paid next to “Paid” (the date of its last payment).',
+        ],
+    },
+    {
         version: '0.237.0',
         date: '2026-11-14',
         title: 'A personal password vault for each person',

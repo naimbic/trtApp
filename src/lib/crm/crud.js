@@ -204,6 +204,16 @@ async function ownerFilter(resource, session) {
 const SECRET = { 'lead-email-integration': ['password', 'passwordEnc'] }
 const hideSecrets = (resource, rows) => { for (const k of SECRET[resource.key] || []) for (const r of rows) delete r[k] }
 
+/** A paid invoice shows the day it was paid: the date of its last payment (the lists show it next to the status). */
+async function attachPaidDate(rows) {
+    const paid = rows.filter((r) => r.status === 2)
+    if (!paid.length) return
+    const pays = await prisma.crmPayment.findMany({ where: { invoiceId: { in: paid.map((r) => r.id) } }, select: { invoiceId: true, paymentDate: true } })
+    const last = {}
+    for (const p of pays) if (p.paymentDate && (!last[p.invoiceId] || p.paymentDate > last[p.invoiceId])) last[p.invoiceId] = p.paymentDate
+    for (const r of paid) r.paidDate = last[r.id] || null
+}
+
 export async function listRecords(key, params = {}) {
     const resource = resolveResource(key)
     if (resource.key === 'task-statuses') await (await import('@/lib/crm/taskStatuses')).ensureTaskStatuses()
@@ -223,6 +233,7 @@ export async function listRecords(key, params = {}) {
     ])
     await attachRelations(resource, rows)
     await attachUsage(resource, rows)
+    if (resource.key === 'invoices') await attachPaidDate(rows)
     hideSecrets(resource, rows)
     return { list: rows, total, pageIndex: page, pageSize: size }
 }

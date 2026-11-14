@@ -46,7 +46,9 @@ export function renderCell(col, row, resource) {
             if (v === null || v === undefined) return ''
             const color = resource?.statusColors?.[v] ?? resource?.statusColors?.[String(v)]
             const label = optionLabel(col, v)
-            return color || col.badge ? <Tag className={TAG[color] || TAG.gray}>{label}</Tag> : label
+            const tag = color || col.badge ? <Tag className={TAG[color] || TAG.gray}>{label}</Tag> : label
+            // a paid invoice: the day it was paid, next to the status
+            return resource?.key === 'invoices' && col.key === 'status' && Number(v) === 2 && row.paidDate ? <span className="inline-flex items-center gap-1.5 whitespace-nowrap">{tag}<span className="text-xs text-gray-500">{dayjs(row.paidDate).format('YYYY-MM-DD')}</span></span> : tag
         }
         case 'money':
             return <span className="tabular-nums">{money(v)}</span>

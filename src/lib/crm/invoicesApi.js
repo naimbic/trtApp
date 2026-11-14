@@ -43,7 +43,8 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     const padding = await numberPadding()
     const payments = await prisma.crmPayment.findMany({ where: { invoiceId: { in: invoices.map((i) => i.id) } }, select: { invoiceId: true, amount: true, paymentDate: true } })
     const paid = {}
-    payments.forEach((p) => (paid[p.invoiceId] = round2((paid[p.invoiceId] || 0) + (p.amount || 0))))
+    const lastPaid = {}
+    payments.forEach((p) => { paid[p.invoiceId] = round2((paid[p.invoiceId] || 0) + (p.amount || 0)); if (p.paymentDate && (!lastPaid[p.invoiceId] || p.paymentDate > lastPaid[p.invoiceId])) lastPaid[p.invoiceId] = p.paymentDate })
     const clients = await prisma.crmClient.findMany({ where: { id: { in: [...new Set(invoices.map((i) => i.clientId).filter(Boolean))] } }, select: { id: true, company: true } })
     const cname = Object.fromEntries(clients.map((c) => [c.id, c.company]))
     const today = day(new Date())
@@ -51,7 +52,7 @@ export async function listInvoices({ query = '', status, clientId, currencyId, f
     let rows = invoices.map((i) => {
         const p = paid[i.id] || 0
         const st = effective(i, p, today)
-        return { id: i.id, number: docNumberOf(i, padding), numberRaw: i.number, clientId: i.clientId, client: cname[i.clientId] || '', date: i.date, dueDate: i.dueDate, total: i.total, paid: p, due: i.status === 5 || i.status === 6 ? 0 : round2(Math.max(i.total - p, 0)), currencyId: i.currencyId, status: st, statusLabel: STATUS_LABEL[st], sent: i.sent, recurring: i.recurring > 0 }
+        return { id: i.id, number: docNumberOf(i, padding), numberRaw: i.number, clientId: i.clientId, client: cname[i.clientId] || '', date: i.date, dueDate: i.dueDate, total: i.total, paid: p, due: i.status === 5 || i.status === 6 ? 0 : round2(Math.max(i.total - p, 0)), currencyId: i.currencyId, status: st, statusLabel: STATUS_LABEL[st], paidDate: st === 2 ? lastPaid[i.id] || null : null, sent: i.sent, recurring: i.recurring > 0 }
     })
 
     // stats ignore the status filter so the cards stay meaningful

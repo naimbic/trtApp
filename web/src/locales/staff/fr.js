@@ -6200,4 +6200,5 @@ export default {
     "Expiry reminder": "Rappel d'expiration",
     "The items table goes where you put": "Le tableau des articles se place là où vous mettez",
     "Overdue reminder": "Rappel de retard",
+    "that the ticket was opened": "que le ticket a été ouvert",
 }

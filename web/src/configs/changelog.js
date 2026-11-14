@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.250.0',
+        date: '2026-11-14',
+        title: 'New project and New ticket: the same layout as the sales forms',
+        items: [
+            'New project: the name and the description wide on the left; the client, the status, the billing, the dates and the team in a card on the right.',
+            'New ticket: the subject and the message wide on the left; on the right the client and contact, then the department, priority and assignee, and Email the client with its switch at the top right.',
+        ],
+    },
+    {
         version: '0.249.0',
         date: '2026-11-14',
         title: 'Purchase order and contract forms: the same layout as the other sales forms',

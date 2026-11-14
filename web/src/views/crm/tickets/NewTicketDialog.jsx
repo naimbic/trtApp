@@ -5,13 +5,14 @@ import Input from '@/components/ui/Input'
 import RichEditor from '@/components/crm/RichEditor'
 import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
+import AccordionCard from '@/components/crm/AccordionCard'
 import { notify, api, upload } from '../kit/api'
 import { useTicketFiles, AttachButtons, FileTray, DropHint, messageForm } from '@/components/crm/TicketFiles'
 import RelationSelect from '../kit/RelationSelect'
 import { tr } from '@/utils/t'
 
 const EMPTY = { clientId: null, contactId: null, email: '', subject: '', message: '', departmentId: null, priorityId: null, assignedId: null, notifyClient: false }
-const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
+const L = ({ children }) => <label className="form-label mb-1 block">{children}</label>
 
 const NewTicketDialog = ({ open, onClose, lookups, onCreated, presets }) => {
     const [v, setV] = useState(EMPTY)
@@ -39,21 +40,26 @@ const NewTicketDialog = ({ open, onClose, lookups, onCreated, presets }) => {
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
     }
     return (
-        <Dialog isOpen={open} width={680} onClose={onClose} onRequestClose={onClose}>
+        <Dialog isOpen={open} width={960} onClose={onClose} onRequestClose={onClose}>
             <h4>{tr("New ticket")}</h4>
-            <div className="mt-4 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <div><L>{tr("Client")}</L><RelationSelect resource="clients" value={v.clientId} onChange={(x) => set({ clientId: x || null, contactId: null })} /></div>
-                    <div><L>{tr("Contact")}</L>{v.clientId ? <Select isClearable options={co} value={co.find((o) => o.value === v.contactId) || null} onChange={(o) => set({ contactId: o?.value || null })} /> : <Input placeholder={tr("Email (no client)")} value={v.email} onChange={(e) => set({ email: e.target.value })} />}</div>
+            {/* same layout as the sales forms: the subject and the message wide on the left, the settings in small cards on the right (switch at the top right). One column on small screens */}
+            <div className="mt-4 grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="flex min-w-0 flex-col gap-3">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"><L>{tr("Subject")}</L><Input className="text-base font-semibold" value={v.subject} onChange={(e) => set({ subject: e.target.value })} /></div>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"><div className="relative" {...tf.dropProps}><DropHint tf={tf} /><L>{tr("Message")}</L><div onPaste={tf.onPaste}><RichEditor minHeight={220} images={false} mentions={false} placeholder={tr("Describe the problem. Paste a screenshot (Ctrl+V) or drop files here.")} value={v.message} onChange={(h) => set({ message: h })} /></div><FileTray tf={tf} /><div className="mt-2"><AttachButtons tf={tf} size="sm" /></div></div></div>
                 </div>
-                <div><L>{tr("Subject")}</L><Input value={v.subject} onChange={(e) => set({ subject: e.target.value })} /></div>
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <div><L>{tr("Department")}</L><Select isClearable options={opt(lookups.departments)} value={pick(lookups.departments, v.departmentId)} onChange={(o) => set({ departmentId: o?.value || null })} /></div>
-                    <div><L>{tr("Priority")}</L><Select isClearable options={opt(lookups.priorities)} value={pick(lookups.priorities, v.priorityId)} onChange={(o) => set({ priorityId: o?.value || null })} placeholder={tr("Medium")} /></div>
-                    <div><L>{tr("Assign to")}</L><Select isClearable options={opt(lookups.staff)} value={pick(lookups.staff, v.assignedId)} onChange={(o) => set({ assignedId: o?.value || null })} /></div>
+                <div className="flex min-w-0 flex-col gap-2">
+                    <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="w-full"><L>{tr("Client")}</L><RelationSelect resource="clients" value={v.clientId} onChange={(x) => set({ clientId: x || null, contactId: null })} /></div>
+                        <div className="w-full"><L>{tr("Contact")}</L>{v.clientId ? <Select isClearable options={co} value={co.find((o) => o.value === v.contactId) || null} onChange={(o) => set({ contactId: o?.value || null })} /> : <Input placeholder={tr("Email (no client)")} value={v.email} onChange={(e) => set({ email: e.target.value })} />}</div>
+                    </div>
+                    <div className="flex flex-wrap items-end gap-2 rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="w-full"><L>{tr("Department")}</L><Select isClearable options={opt(lookups.departments)} value={pick(lookups.departments, v.departmentId)} onChange={(o) => set({ departmentId: o?.value || null })} /></div>
+                        <div className="min-w-[110px] flex-1"><L>{tr("Priority")}</L><Select isClearable options={opt(lookups.priorities)} value={pick(lookups.priorities, v.priorityId)} onChange={(o) => set({ priorityId: o?.value || null })} placeholder={tr("Medium")} /></div>
+                        <div className="min-w-[130px] flex-1"><L>{tr("Assign to")}</L><Select isClearable options={opt(lookups.staff)} value={pick(lookups.staff, v.assignedId)} onChange={(o) => set({ assignedId: o?.value || null })} /></div>
+                    </div>
+                    <AccordionCard title={tr("Email the client")} dot="#6b7280" note={tr("that the ticket was opened")} right={<Switcher checked={v.notifyClient} onChange={(c) => set({ notifyClient: c })} />} />
                 </div>
-                <div className="relative" {...tf.dropProps}><DropHint tf={tf} /><L>{tr("Message")}</L><div onPaste={tf.onPaste}><RichEditor minHeight={150} images={false} mentions={false} placeholder={tr("Describe the problem. Paste a screenshot (Ctrl+V) or drop files here.")} value={v.message} onChange={(h) => set({ message: h })} /></div><FileTray tf={tf} /><div className="mt-2"><AttachButtons tf={tf} size="sm" /></div></div>
-                <label className="flex items-center gap-2 text-sm"><Switcher checked={v.notifyClient} onChange={(c) => set({ notifyClient: c })} />{tr("Email the client that the ticket was opened")}</label>
             </div>
             <div className="mt-6 flex justify-end gap-2"><Button onClick={onClose}>{tr("Cancel")}</Button><Button variant="solid" loading={saving} disabled={!v.subject.trim() || (!v.message.trim() && !tf.items.length) || (!v.clientId && !v.email.trim())} onClick={save}>{tr("Create ticket")}</Button></div>
         </Dialog>

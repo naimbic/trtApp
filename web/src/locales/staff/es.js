@@ -6200,4 +6200,5 @@ export default {
     "Expiry reminder": "Recordatorio de vencimiento",
     "The items table goes where you put": "La tabla de artículos va donde ponga",
     "Overdue reminder": "Recordatorio de vencimiento de pago",
+    "that the ticket was opened": "de que se abrió el ticket",
 }

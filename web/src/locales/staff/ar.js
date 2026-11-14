@@ -6200,4 +6200,5 @@ export default {
     "Expiry reminder": "تذكير بانتهاء الصلاحية",
     "The items table goes where you put": "يوضع جدول البنود حيث تضع",
     "Overdue reminder": "تذكير بالتأخر في السداد",
+    "that the ticket was opened": "بأن التذكرة قد فُتحت",
 }

@@ -6200,4 +6200,5 @@ export default {
     "Expiry reminder": "期限のリマインダー",
     "The items table goes where you put": "明細表は次を置いた場所に入ります:",
     "Overdue reminder": "支払期限超過のリマインダー",
+    "that the ticket was opened": "チケットが開かれたことを",
 }

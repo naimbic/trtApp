@@ -6199,4 +6199,5 @@ export default {
     "What the client reads": "ما يقرؤه العميل",
     "Expiry reminder": "تذكير بانتهاء الصلاحية",
     "The items table goes where you put": "يوضع جدول البنود حيث تضع",
+    "Overdue reminder": "تذكير بالتأخر في السداد",
 }

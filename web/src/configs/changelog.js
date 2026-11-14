@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.248.0',
+        date: '2026-11-14',
+        title: 'Estimate and invoice forms: the same layout as the proposal form',
+        items: [
+            'The estimate and invoice forms now have the items and the notes wide on the left, and small cards on the right: the client, the dates, the currency and the bank account, then Discount, Recurring invoice (invoices) and the reminder.',
+            'Discount, Recurring invoice and the reminder each have their switch at the top right of their card; the fields of Discount and Recurring invoice show only when the switch is on.',
+        ],
+    },
+    {
         version: '0.247.0',
         date: '2026-11-14',
         title: 'Proposal form: content on the left, settings on the right',

@@ -6199,4 +6199,5 @@ export default {
     "What the client reads": "Ce que lit le client",
     "Expiry reminder": "Rappel d'expiration",
     "The items table goes where you put": "Le tableau des articles se place là où vous mettez",
+    "Overdue reminder": "Rappel de retard",
 }

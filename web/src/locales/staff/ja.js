@@ -6186,4 +6186,8 @@ export default {
     "Edit entry": "項目を編集",
     "Invoice status": "請求書のステータス",
     "Write a message to yourself…": "自分宛てにメッセージを書く…",
+    "Convert to a client first?": "先にクライアントに変換しますか？",
+    "Convert and continue": "変換して続ける",
+    "An invoice is made for a client. This lead becomes a client (with its first contact), then the new invoice opens for it.": "請求書はクライアント宛てに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しい請求書を開きます。",
+    "An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.": "見積書はクライアント宛てに作成します。このリードをクライアント（最初の連絡先付き）に変換してから、新しい見積書を開きます。",
 }

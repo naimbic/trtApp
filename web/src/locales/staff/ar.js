@@ -6186,4 +6186,8 @@ export default {
     "Edit entry": "تعديل الإدخال",
     "Invoice status": "حالة الفاتورة",
     "Write a message to yourself…": "اكتب رسالة لنفسك…",
+    "Convert to a client first?": "التحويل إلى عميل أولاً؟",
+    "Convert and continue": "تحويل ومتابعة",
+    "An invoice is made for a client. This lead becomes a client (with its first contact), then the new invoice opens for it.": "تُنشأ الفاتورة لعميل. يصبح هذا العميل المحتمل عميلاً (مع أول جهة اتصال له)، ثم تُفتح الفاتورة الجديدة له.",
+    "An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.": "يُنشأ عرض السعر لعميل. يصبح هذا العميل المحتمل عميلاً (مع أول جهة اتصال له)، ثم يُفتح عرض السعر الجديد له.",
 }

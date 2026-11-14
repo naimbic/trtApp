@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.240.0',
+        date: '2026-11-14',
+        title: 'Estimate and invoice straight from a lead',
+        items: [
+            'The Offers tab of a lead now has “New estimate” and “New invoice” next to “New proposal”.',
+            'Estimates and invoices are made for clients: if the lead is not a client yet, the CRM asks, turns it into a client (with its first contact) and opens the new document with that client and its currency filled.',
+            'If the lead is already a client, the new document opens for that client at once.',
+        ],
+    },
+    {
         version: '0.239.6',
         date: '2026-11-14',
         title: 'New proposal from a lead or a client: the fields are filled',

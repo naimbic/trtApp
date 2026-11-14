@@ -6186,4 +6186,8 @@ export default {
     "Edit entry": "Editar entrada",
     "Invoice status": "Estado de la factura",
     "Write a message to yourself…": "Escríbete un mensaje…",
+    "Convert to a client first?": "¿Convertir primero en cliente?",
+    "Convert and continue": "Convertir y continuar",
+    "An invoice is made for a client. This lead becomes a client (with its first contact), then the new invoice opens for it.": "Una factura se hace para un cliente. Este prospecto pasa a ser cliente (con su primer contacto) y luego se abre la nueva factura para él.",
+    "An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.": "Un presupuesto se hace para un cliente. Este prospecto pasa a ser cliente (con su primer contacto) y luego se abre el nuevo presupuesto para él.",
 }

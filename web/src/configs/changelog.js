@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.247.0',
+        date: '2026-11-14',
+        title: 'Proposal form: content on the left, settings on the right',
+        items: [
+            'The proposal form has a new layout: the subject, the items and the proposal text stay wide on the left; on the right, small cards hold who it is made for, the dates, Prepared for, Discount, Repeating, Allow comments and Expiry reminder. On a small screen everything is in one column.',
+            'Discount, Repeating, Allow comments and Expiry reminder each have their switch at the top right of their card; the fields of Discount and Repeating show only when the switch is on.',
+            'On every document (proposal, estimate, invoice, purchase order) the long description editor of a line is now as wide as the line.',
+        ],
+    },
+    {
         version: '0.246.1',
         date: '2026-11-14',
         title: 'Proposal form: Repeating and Discount switches in the top section',

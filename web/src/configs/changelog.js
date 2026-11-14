@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.239.6',
+        date: '2026-11-14',
+        title: 'New proposal from a lead or a client: the fields are filled',
+        items: [
+            'A proposal started from a lead (or from a client’s page) now opens with the company name, email, phone, address, city and country already filled from that lead or client.',
+            'A new proposal is assigned to the person who creates it by default.',
+            'Fixed the error that stopped this filling from working when the page opened.',
+        ],
+    },
+    {
         version: '0.239.5',
         date: '2026-11-14',
         title: 'My password vault: a lock and the name when looking at someone else',

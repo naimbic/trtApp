@@ -19,11 +19,11 @@ const fail = (message) => ({ success: false, message })
 const logActivity = (id, description, staffId) => prisma.crmSalesActivity.create({ data: { relType: REL, relId: id, description, staffId: staffId || undefined, date: new Date() } }).catch(() => {})
 
 export async function getProposalDefaults() {
-    await requirePermission('proposals', 'view')
+    const session = await requirePermission('proposals', 'view')
     const rows = await prisma.crmOption.findMany({ where: { name: { in: ['proposal_due_after', 'default_tax'] } } })
     const o = Object.fromEntries(rows.map((r) => [r.name, r.value]))
     const taxes = [...String(o.default_tax || '').matchAll(/s:\d+:"([^"]*)"/g)].map((m) => { const [name, rate] = m[1].split('|'); return { name, rate: Number(rate) } })
-    return { openFor: o.proposal_due_after ?? '', taxes }
+    return { openFor: o.proposal_due_after ?? '', taxes, me: await getStaffId(session) } // me: a new proposal is assigned to the person who creates it
 }
 
 /** Fills the "prepared for" block from a client or a lead. */

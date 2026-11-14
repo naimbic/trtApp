@@ -36,6 +36,11 @@ const ProposalEditor = () => {
     const base = useClientLookups()
     const visual = useRef(null)
 
+    // fills the "prepared for" block (and, on a new proposal, the client's currency) from the chosen client or lead
+    const fill = async (relType, relId) => {
+        try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); setV((s) => ({ ...s, ...(!id && f.currencyId ? { currencyId: f.currencyId } : {}), proposalTo: f.proposalTo || s.proposalTo, email: f.email || s.email, phone: f.phone || s.phone, address: f.address || s.address, city: f.city || s.city, state: f.state || s.state, zip: f.zip || s.zip, country: f.country ?? s.country })) } catch { /* optional */ }
+    }
+
     const fromId = params.get('from')
     useEffect(() => {
         Promise.all([api('/api/crm/sales/lookups').then(async (l) => ({ ...l, defaults: { ...(l.defaults || {}), ...(await api('/api/crm/sales/proposals/defaults')) } })), id || fromId ? api(`/api/crm/sales/proposals/${id || fromId}`) : null])
@@ -51,7 +56,7 @@ const ProposalEditor = () => {
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     subject: inv?.subject || '', relType: inv?.relType || (params.get('leadId') ? 'lead' : 'customer'), relId: inv?.relId || params.get('clientId') || params.get('leadId') || null,
                     proposalTo: inv?.proposalTo || '', email: inv?.email || '', phone: inv?.phone || '', address: inv?.address || '', city: inv?.city || '', state: inv?.state || '', zip: inv?.zip || '', country: inv?.country ?? null,
-                    content: inv?.content ?? '<p>Hello,</p><p>Thank you for your interest. Please find our offer below.</p><p>{proposal_items}</p><p>We look forward to working with you.</p>', allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || null,
+                    content: inv?.content ?? '<p>Hello,</p><p>Thank you for your interest. Please find our offer below.</p><p>{proposal_items}</p><p>We look forward to working with you.</p>', allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || (!inv ? dd.me || null : null),
                     date: (!cloned && day(inv?.date)) || day(new Date()),
                     openTill: inv && !cloned ? day(inv.openTill) : (dueAfter > 0 ? day(dayjs().add(dueAfter, 'day')) : ''),
                     currencyId: inv?.currencyId || def?.id || null,
@@ -61,7 +66,9 @@ const ProposalEditor = () => {
                     adjustment: inv?.adjustment || 0,
                                         items: d?.items?.length ? d.items.map(({ id: _i, ...line }) => line) : [baseLine()],
                 })
-                if (!inv && params.get('clientId')) fill('customer', params.get('clientId')) // a new proposal from a client's page: its currency too
+                // a new proposal from a client's page or a lead: the "prepared for" block (and the client's currency) is filled at once
+                if (!inv && params.get('clientId')) fill('customer', params.get('clientId'))
+                else if (!inv && params.get('leadId')) fill('lead', params.get('leadId'))
             })
             .catch((e) => setError(e.message))
     }, [id, fromId, params])
@@ -77,10 +84,6 @@ const ProposalEditor = () => {
     const newLine = () => ({ ...emptyLine(), taxes: (lookups.defaults?.taxes || []).filter((t) => lookups.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
     const set = (patch) => setV((s) => ({ ...s, ...patch }))
     const num = (key) => (e) => set({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
-
-    const fill = async (relType, relId) => {
-        try { const f = await api(`/api/crm/sales/proposals/prefill?relType=${relType}&relId=${relId}`); setV((s) => ({ ...s, ...(!id && f.currencyId ? { currencyId: f.currencyId } : {}), proposalTo: f.proposalTo || s.proposalTo, email: f.email || s.email, phone: f.phone || s.phone, address: f.address || s.address, city: f.city || s.city, state: f.state || s.state, zip: f.zip || s.zip, country: f.country ?? s.country })) } catch { /* optional */ }
-    }
 
     const addFromCatalog = async (itemId) => {
         if (!itemId) return

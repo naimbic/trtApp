@@ -6191,4 +6191,5 @@ export default {
     "An invoice is made for a client. This lead becomes a client (with its first contact), then the new invoice opens for it.": "Una factura se hace para un cliente. Este prospecto pasa a ser cliente (con su primer contacto) y luego se abre la nueva factura para él.",
     "An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.": "Un presupuesto se hace para un cliente. Este prospecto pasa a ser cliente (con su primer contacto) y luego se abre el nuevo presupuesto para él.",
     "A contract is made for a client. This lead becomes a client (with its first contact), then the new contract opens for it.": "Un contrato se hace para un cliente. Este prospecto pasa a ser cliente (con su primer contacto) y luego se abre el nuevo contrato para él.",
+    "A project is made for a client. This lead becomes a client (with its first contact), then the new project opens for it.": "Un proyecto se crea para un cliente. Este prospecto pasa a ser cliente (con su primer contacto) y luego se abre el nuevo proyecto para él.",
 }

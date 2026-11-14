@@ -9,7 +9,7 @@ import StaffRing from '@/components/crm/StaffRing'
 import Avatar from '@/components/ui/Avatar'
 import { initials } from '../tasks/shared'
 import { Link, useNavigate } from 'react-router'
-import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText, TbUsers, TbAddressBook, TbMapPin, TbTarget, TbFileInvoice, TbReceipt, TbWriting } from 'react-icons/tb'
+import { TbTrash, TbUserCheck, TbBan, TbArrowBackUp, TbFileText, TbUsers, TbAddressBook, TbMapPin, TbTarget, TbFileInvoice, TbReceipt, TbWriting, TbBriefcase } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Drawer from '@/components/crm/PopupFrame'
 import DuplicateWarning from '@/components/crm/DuplicateWarning'
@@ -26,6 +26,7 @@ import { api, notify } from '../kit/api'
 import { People } from '../tasks/shared'
 import { LeadTasks, LeadMails, LeadMeetings } from './LeadTabs'
 import ActivityFeed from '@/components/crm/ActivityFeed'
+import ProjectDialog from '../projects/ProjectDialog'
 import { useCan } from '../kit/api'
 import { tr } from '@/utils/t'
 import useTabParam from '@/utils/useTabParam'
@@ -53,7 +54,8 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const [saving, setSaving] = useState(false)
     const [confirm, setConfirm] = useState(null)
     const [withNotes, setWithNotes] = useState(true)
-    const [docFor, setDocFor] = useState(null) // 'estimates' | 'invoices' | 'contracts': asked from a lead that is not a client yet
+    const [projFor, setProjFor] = useState(null) // the client a new project is being created for (the lead's client)
+    const [docFor, setDocFor] = useState(null) // 'estimates' | 'invoices' | 'contracts' | 'projects': asked from a lead that is not a client yet
     const [note, setNote] = useState('')
     const [openSec, setOpenSec] = useState(['team', 'contact'])
     const toggleSec = (k) => setOpenSec((o) => (o.includes(k) ? o.filter((x) => x !== k) : [...o, k]))
@@ -159,9 +161,9 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const related = detail && (
         <div className="space-y-6">
             <div>
-                <div className="mb-2 flex items-center justify-between"><h6>{tr("Proposals")}</h6><div className="flex flex-wrap justify-end gap-1.5"><Button size="xs" icon={<TbFileText />} data-href={`/crm/proposals/new?leadId=${id}`} onClick={() => nav(`/crm/proposals/new?leadId=${id}`)}>{tr("New proposal")}</Button>
+                <div className="mb-3 flex flex-col gap-2"><h6>{tr("Proposals")}</h6><div className="flex flex-wrap gap-1.5"><Button size="xs" icon={<TbFileText />} data-href={`/crm/proposals/new?leadId=${id}`} onClick={() => nav(`/crm/proposals/new?leadId=${id}`)}>{tr("New proposal")}</Button>
                     {/* an estimate, an invoice or a contract is made for a client: a lead not converted yet becomes one first (asked before) */}
-                    {[['estimates', tr("New estimate"), <TbReceipt key="e" />], ['invoices', tr("New invoice"), <TbFileInvoice key="i" />], ['contracts', tr("New contract"), <TbWriting key="c" />]].filter(([k]) => can(k, 'create') && (l.clientId || detail.can.convert)).map(([k, label, icon]) => <Button key={k} size="xs" icon={icon} onClick={() => (l.clientId ? (onClose(), nav(`/crm/${k}/new?clientId=${l.clientId}`)) : setDocFor(k))}>{label}</Button>)}</div></div>
+                    {[['estimates', tr("New estimate"), <TbReceipt key="e" />], ['invoices', tr("New invoice"), <TbFileInvoice key="i" />], ['contracts', tr("New contract"), <TbWriting key="c" />], ['projects', tr("New project"), <TbBriefcase key="p" />]].filter(([k]) => can(k, 'create') && (l.clientId || detail.can.convert)).map(([k, label, icon]) => <Button key={k} size="xs" icon={icon} onClick={() => (!l.clientId ? setDocFor(k) : k === 'projects' ? setProjFor(l.clientId) : (onClose(), nav(`/crm/${k}/new?clientId=${l.clientId}`)))}>{label}</Button>)}</div></div>
                 <div className="space-y-2">{detail.proposals.map((p) => (
                     <Link key={p.id} to={`/crm/proposals/${p.id}`} className="block rounded-xl border border-gray-200/80 bg-gray-50/70 p-3 transition hover:border-primary/40 hover:bg-white dark:border-gray-700 dark:bg-gray-800/60">
                         <div className="flex items-start justify-between gap-2"><span className="min-w-0 truncate text-sm font-semibold">{p.subject || tr("Proposal {number}", { number: p.number })}</span><Tag>{PROPOSAL[p.status] || p.status}</Tag></div>
@@ -239,8 +241,9 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
             <ConfirmDialog isOpen={confirm === 'delete'} type="danger" title={tr("Delete this lead?")} confirmText={tr("Delete")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={() => { setConfirm(null); run(() => api(`/api/crm/pipeline/leads/${id}`, { method: 'DELETE' }), tr("Lead deleted"), onClose) }}>
                 <p>{tr("The lead, its notes and its activity are removed for good.")}</p>
             </ConfirmDialog>
-            <ConfirmDialog isOpen={!!docFor} type="info" title={tr("Convert to a client first?")} confirmText={tr("Convert and continue")} onClose={() => setDocFor(null)} onCancel={() => setDocFor(null)} onConfirm={() => { const k = docFor; setDocFor(null); run(() => api(`/api/crm/pipeline/leads/${id}/convert`, { method: 'POST', body: { includeNotes: withNotes } }), tr("Client created"), (r) => { onClose(); nav(`/crm/${k}/new?clientId=${r.clientId}`) }) }}>
-                <p>{docFor === 'contracts' ? tr("A contract is made for a client. This lead becomes a client (with its first contact), then the new contract opens for it.") : docFor === 'invoices' ? tr("An invoice is made for a client. This lead becomes a client (with its first contact), then the new invoice opens for it.") : tr("An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.")}</p>
+            <ProjectDialog open={!!projFor} onClose={() => setProjFor(null)} presets={{ clientId: projFor, name: l?.company || l?.name || '' }} onCreated={(pid) => { setProjFor(null); onClose(); nav(`/crm/projects/${pid}`) }} />
+            <ConfirmDialog isOpen={!!docFor} type="info" title={tr("Convert to a client first?")} confirmText={tr("Convert and continue")} onClose={() => setDocFor(null)} onCancel={() => setDocFor(null)} onConfirm={() => { const k = docFor; setDocFor(null); run(() => api(`/api/crm/pipeline/leads/${id}/convert`, { method: 'POST', body: { includeNotes: withNotes } }), tr("Client created"), (r) => { if (k === 'projects') { load(); setProjFor(r.clientId) } else { onClose(); nav(`/crm/${k}/new?clientId=${r.clientId}`) } }) }}>
+                <p>{docFor === 'projects' ? tr("A project is made for a client. This lead becomes a client (with its first contact), then the new project opens for it.") : docFor === 'contracts' ? tr("A contract is made for a client. This lead becomes a client (with its first contact), then the new contract opens for it.") : docFor === 'invoices' ? tr("An invoice is made for a client. This lead becomes a client (with its first contact), then the new invoice opens for it.") : tr("An estimate is made for a client. This lead becomes a client (with its first contact), then the new estimate opens for it.")}</p>
                 <label className="mt-3 flex items-center gap-2 text-sm"><Switcher checked={withNotes} onChange={setWithNotes} />{tr("Copy the lead notes to the client")}</label>
             </ConfirmDialog>
             <ConfirmDialog isOpen={confirm === 'convert'} type="info" title={tr("Convert to a client?")} confirmText={tr("Convert")} onClose={() => setConfirm(null)} onCancel={() => setConfirm(null)} onConfirm={() => { setConfirm(null); run(() => api(`/api/crm/pipeline/leads/${id}/convert`, { method: 'POST', body: { includeNotes: withNotes } }), tr("Client created"), (r) => { onClose(); nav(`/crm/clients/${r.clientId}`) }) }}>

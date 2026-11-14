@@ -20,6 +20,8 @@ const ProjectDialog = ({ open, onClose, onCreated, presets }) => {
     const [saving, setSaving] = useState(false)
     const set = (p) => setV((x) => ({ ...x, ...p }))
     useEffect(() => { if (open) setV({ ...EMPTY, ...(presets || {}) }) }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+    // the person who creates the project is in its team by default (remove them in the Team box if not wanted)
+    useEffect(() => { if (open && !presets?.memberIds) api('/api/crm/work/tasks/lookups').then((l) => l.me && setV((x) => (x.memberIds.length ? x : { ...x, memberIds: [l.me] }))).catch(() => {}) }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
     const opts = staff.map((s) => ({ value: s.id, label: s.name }))
     const save = async () => {
         setSaving(true)

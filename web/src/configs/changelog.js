@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.240.2',
+        date: '2026-11-14',
+        title: 'Project straight from a lead',
+        items: [
+            'The Offers tab of a lead now also has “New project”. A lead that is not a client yet is turned into a client first (after asking), then the project form opens with the client and the name already filled.',
+            'A new project has the person who creates it in its team by default.',
+        ],
+    },
+    {
         version: '0.240.1',
         date: '2026-11-14',
         title: 'Contract straight from a lead',

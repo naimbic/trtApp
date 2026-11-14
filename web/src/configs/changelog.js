@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.246.1',
+        date: '2026-11-14',
+        title: 'Proposal form: Repeating and Discount switches in the top section',
+        items: [
+            'Repeating and Discount are now two switches in the top section of the proposal form. Their fields show only when the switch is on; switching Discount off removes the discount. Adjustment stays next to the totals.',
+        ],
+    },
+    {
         version: '0.246.0',
         date: '2026-11-14',
         title: 'Proposal form in folding sections; text in the language the lead writes in',

@@ -39,6 +39,7 @@ const ProposalEditor = () => {
     const base = useClientLookups()
     const visual = useRef(null)
     const [open, setOpen] = useState({ main: true, to: !!id, items: true, text: true, opts: false }) // folding sections; "Prepared for" is filled by itself on a new proposal, so it starts folded
+    const [disc, setDisc] = useState(null) // the Discount switch; until it is touched it is on when the proposal has a discount
     const toggle = (k) => setOpen((o) => ({ ...o, [k]: !o[k] }))
     const [lang, setLang] = useState('') // language of the client or lead: a new proposal's starting text is written in it
 
@@ -91,6 +92,7 @@ const ProposalEditor = () => {
     const money = (n) => makeMoney(lookups.currencies)(n, v.currencyId)
     const newLine = () => ({ ...emptyLine(), taxes: (lookups.defaults?.taxes || []).filter((t) => lookups.taxes.some((x) => x.name === t.name && Number(x.rate) === t.rate)) })
     const set = (patch) => setV((s) => ({ ...s, ...patch }))
+    const discOn = disc ?? (Number(v.discountPercent) > 0 || Number(v.discountFixed) > 0)
     const num = (key) => (e) => set({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
 
     const addFromCatalog = async (itemId) => {
@@ -140,6 +142,27 @@ const ProposalEditor = () => {
                         <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Proposal date")}</label><Input type="date" value={v.date} onChange={(e) => set({ date: e.target.value })} /></div>
                         <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Open until")}</label><Input type="date" value={v.openTill} onChange={(e) => set({ openTill: e.target.value })} /></div>
                     </div>
+                    <div className="grid items-end gap-3 border-t border-gray-100 px-4 py-3 md:grid-cols-12 dark:border-gray-700">
+                        <label className="flex items-center gap-2 pb-1.5 font-semibold md:col-span-3"><Switcher checked={Number(v.recurring) > 0} onChange={(on) => set({ recurring: on ? 1 : 0 })} />{tr("Repeating")}</label>
+                        {Number(v.recurring) > 0 && (
+                            <>
+                                <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Repeat every")}</label><Input type="number" min={1} max={365} value={v.recurring} onChange={(e) => set({ recurring: e.target.value })} /></div>
+                                <div className="md:col-span-2"><Select isSearchable={false} options={RECUR_UNITS()} value={RECUR_UNITS().find((o) => o.value === v.recurringType)} onChange={(o) => set({ recurringType: o.value })} /></div>
+                                <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Stop after (copies)")}</label><Input type="number" min={0} placeholder={tr("Never")} value={v.cycles || ''} onChange={(e) => set({ cycles: e.target.value })} /></div>
+                                <p className="pb-2 text-xs text-gray-400 md:col-span-3">{tr("The invoice made from this proposal repeats with these options.")}</p>
+                            </>
+                        )}
+                    </div>
+                    <div className="grid items-end gap-3 border-t border-gray-100 px-4 py-3 md:grid-cols-12 dark:border-gray-700">
+                        <label className="flex items-center gap-2 pb-1.5 font-semibold md:col-span-3"><Switcher checked={discOn} onChange={(on) => { setDisc(on); if (!on) set({ discountPercent: 0, discountFixed: 0 }) }} />{tr("Discount")}</label>
+                        {discOn && (
+                            <>
+                                <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Discount %")}</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
+                                <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Fixed discount")}</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
+                                <div className="md:col-span-3"><label className="form-label mb-1 block">{tr("Discount applies")}</label><Select options={[{ value: 'before_tax', label: tr("Before tax") }, { value: 'after_tax', label: tr("After tax") }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? tr("After tax") : tr("Before tax") }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
+                            </>
+                        )}
+                    </div>
                 </AccordionCard>
 
                 <AccordionCard title={tr("Prepared for")} dot="#8b5cf6" note={[v.proposalTo, v.email].filter(Boolean).join(" · ") || tr("Filled from the client or lead; edit freely")} open={open.to} onToggle={() => toggle('to')}>
@@ -161,9 +184,6 @@ const ProposalEditor = () => {
                         <LineItemsTable items={v.items} onChange={(items) => set({ items })} taxOptions={taxOptions} newLine={newLine} />
                     <div className="mt-4 grid gap-6 md:grid-cols-2">
                         <div className="grid grid-cols-2 content-start gap-3 md:grid-cols-4">
-                            <div><label className="form-label mb-1 block">{tr("Discount %")}</label><Input type="number" step="any" value={v.discountPercent} onChange={num('discountPercent')} /></div>
-                            <div><label className="form-label mb-1 block">{tr("Fixed discount")}</label><Input type="number" step="0.01" value={v.discountFixed} disabled={Number(v.discountPercent) > 0} onChange={num('discountFixed')} /></div>
-                            <div><label className="form-label mb-1 block">{tr("Discount applies")}</label><Select options={[{ value: 'before_tax', label: tr("Before tax") }, { value: 'after_tax', label: tr("After tax") }]} value={{ value: v.discountType, label: v.discountType === 'after_tax' ? tr("After tax") : tr("Before tax") }} onChange={(o) => set({ discountType: o?.value || 'before_tax' })} /></div>
                             <div><label className="form-label mb-1 block">{tr("Adjustment")}</label><Input type="number" step="0.01" value={v.adjustment} onChange={num('adjustment')} /></div>
                         </div>
                         <dl className="ml-auto w-full max-w-sm text-sm">
@@ -187,20 +207,9 @@ const ProposalEditor = () => {
                     </div>
                 </AccordionCard>
 
-                <AccordionCard title={tr("Options")} dot="#6b7280" note={[Number(v.recurring) > 0 && tr("Repeating"), v.allowComments && tr("Allow comments"), v.remindClient !== false && tr("Expiry reminder")].filter(Boolean).join(" · ") || undefined} open={open.opts} onToggle={() => toggle('opts')}>
+                <AccordionCard title={tr("Options")} dot="#6b7280" note={[v.allowComments && tr("Allow comments"), v.remindClient !== false && tr("Expiry reminder")].filter(Boolean).join(" · ") || undefined} open={open.opts} onToggle={() => toggle('opts')}>
                     <div className="flex flex-col gap-3 p-4">
-                    <div className="grid items-end gap-3 md:grid-cols-12">
-                        <label className="flex items-center gap-2 pb-1.5 font-semibold md:col-span-3"><Switcher checked={Number(v.recurring) > 0} onChange={(on) => set({ recurring: on ? 1 : 0 })} />{tr("Repeating")}</label>
-                        {Number(v.recurring) > 0 && (
-                            <>
-                                <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Repeat every")}</label><Input type="number" min={1} max={365} value={v.recurring} onChange={(e) => set({ recurring: e.target.value })} /></div>
-                                <div className="md:col-span-2"><Select isSearchable={false} options={RECUR_UNITS()} value={RECUR_UNITS().find((o) => o.value === v.recurringType)} onChange={(o) => set({ recurringType: o.value })} /></div>
-                                <div className="md:col-span-2"><label className="form-label mb-1 block">{tr("Stop after (copies)")}</label><Input type="number" min={0} placeholder={tr("Never")} value={v.cycles || ''} onChange={(e) => set({ cycles: e.target.value })} /></div>
-                                <p className="pb-2 text-xs text-gray-400 md:col-span-3">{tr("The invoice made from this proposal repeats with these options.")}</p>
-                            </>
-                        )}
-                    </div>
-                        <div className="border-t border-gray-100 pt-3 dark:border-gray-700"><div className="flex items-center justify-between gap-4"><div><div className="font-semibold">{tr("Allow comments")}</div><div className="text-sm text-gray-500">{tr("The client can write comments on the public proposal page")}</div></div><Switcher checked={v.allowComments} onChange={(c) => set({ allowComments: c })} /></div></div>
+                        <div><div className="flex items-center justify-between gap-4"><div><div className="font-semibold">{tr("Allow comments")}</div><div className="text-sm text-gray-500">{tr("The client can write comments on the public proposal page")}</div></div><Switcher checked={v.allowComments} onChange={(c) => set({ allowComments: c })} /></div></div>
                         <div className="border-t border-gray-100 pt-3 dark:border-gray-700"><ReminderSwitch checked={v.remindClient !== false} onChange={(c) => set({ remindClient: c })} title={tr("Send expiry reminders to the client")} hint={tr("Shortly before the proposal closes, the client receives a reminder email.")} /></div>
                     </div>
                 </AccordionCard>

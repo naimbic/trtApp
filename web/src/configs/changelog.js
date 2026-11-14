@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.250.1',
+        date: '2026-11-14',
+        title: 'Fix: proposal PDF in the language of the lead or client, Unit column on the documents',
+        items: [
+            'Fix: the proposal PDF and the page the client opens stayed in English while the form showed the text in French. The document now uses the language of the lead or client for its starting text and for its labels (French or English labels), also for proposals saved before.',
+            'Proposals, estimates, invoices and purchase orders print a Unit column of their own next to the quantity when at least one line has a unit.',
+            'Fix: the proposal document showed "Invoice date" next to its date.',
+        ],
+    },
+    {
         version: '0.250.0',
         date: '2026-11-14',
         title: 'New project and New ticket: the same layout as the sales forms',

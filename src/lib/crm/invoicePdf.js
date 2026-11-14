@@ -26,8 +26,8 @@ const safeHtml = (h) => unescapeEntities(h ?? '').replace(/<(script|style)[\s\S]
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 
 const LABELS = {
-    french: { invoice: 'FACTURE', billTo: 'Facturé à', date: 'Date de facture', due: "Date d'échéance", item: 'Désignation', qty: 'Qté', rate: 'Prix unitaire', tax: 'Taxe', amount: 'Montant', subtotal: 'Sous-total', discount: 'Remise', adjustment: 'Ajustement', total: 'Total', paid: 'Total payé', due2: 'Montant dû', payments: 'Paiements reçus', no: 'N°', mode: 'Mode', pdate: 'Date', pamount: 'Montant', pay: 'Détails de paiement', note: 'Note', terms: 'Conditions générales', vat: 'N° TVA', page: 'Page', status: { 1: 'Impayée', 2: 'Payée', 3: 'Partiellement payée', 4: 'En retard', 5: 'Annulée', 6: 'Brouillon' } },
-    english: { invoice: 'INVOICE', billTo: 'Bill to', date: 'Invoice date', due: 'Due date', item: 'Item', qty: 'Qty', rate: 'Rate', tax: 'Tax', amount: 'Amount', subtotal: 'Subtotal', discount: 'Discount', adjustment: 'Adjustment', total: 'Total', paid: 'Total paid', due2: 'Amount due', payments: 'Payments received', no: 'No.', mode: 'Mode', pdate: 'Date', pamount: 'Amount', pay: 'Payment details', note: 'Note', terms: 'Terms & conditions', vat: 'VAT number', page: 'Page', status: { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft' } },
+    french: { invoice: 'FACTURE', billTo: 'Facturé à', date: 'Date de facture', due: "Date d'échéance", item: 'Désignation', qty: 'Qté', unit: 'Unité', rate: 'Prix unitaire', tax: 'Taxe', amount: 'Montant', subtotal: 'Sous-total', discount: 'Remise', adjustment: 'Ajustement', total: 'Total', paid: 'Total payé', due2: 'Montant dû', payments: 'Paiements reçus', no: 'N°', mode: 'Mode', pdate: 'Date', pamount: 'Montant', pay: 'Détails de paiement', note: 'Note', terms: 'Conditions générales', vat: 'N° TVA', page: 'Page', status: { 1: 'Impayée', 2: 'Payée', 3: 'Partiellement payée', 4: 'En retard', 5: 'Annulée', 6: 'Brouillon' } },
+    english: { invoice: 'INVOICE', billTo: 'Bill to', date: 'Invoice date', due: 'Due date', item: 'Item', qty: 'Qty', unit: 'Unit', rate: 'Rate', tax: 'Tax', amount: 'Amount', subtotal: 'Subtotal', discount: 'Discount', adjustment: 'Adjustment', total: 'Total', paid: 'Total paid', due2: 'Amount due', payments: 'Payments received', no: 'No.', mode: 'Mode', pdate: 'Date', pamount: 'Amount', pay: 'Payment details', note: 'Note', terms: 'Terms & conditions', vat: 'VAT number', page: 'Page', status: { 1: 'Unpaid', 2: 'Paid', 3: 'Partially paid', 4: 'Overdue', 5: 'Cancelled', 6: 'Draft' } },
 }
 const STATUS_COLOR = { 1: '#d97706', 2: '#059669', 3: '#2563eb', 4: '#dc2626', 5: '#6b7280', 6: '#6b7280' }
 
@@ -146,7 +146,7 @@ async function renderInvoiceHtmlRaw(id, { hash, pdfHref } = {}) {
     const rows = items.map((it, i) => {
         const amount = round2((it.qty || 0) * (it.rate || 0))
         const taxCell = (it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'
-        return `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${taxCell}</td>` : ''}<td class="r">${Mi(amount)}</td></tr>`
+        return `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}</td>${items.some((x) => x.unit) ? `<td class="r">${esc(it.unit || '')}</td>` : ''}<td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${taxCell}</td>` : ''}<td class="r">${Mi(amount)}</td></tr>`
     }).join('')
 
     const totalRows = [`<tr><td>${L.subtotal}</td><td>${M(invoice.subtotal)}</td></tr>`]
@@ -193,7 +193,7 @@ ${pub ? PUBLIC_CSS : ''}
 ${paperCss()}
 </style></head><body${pub ? ' class="pub"' : ''}>
 ${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}${stampHtml(invoice.status, fr)}${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: L.invoice, num: `#${esc(invoice.displayNumber)}`, status, org: orgBlock, info: infoBlock, swap: S.swap })}
-<div class="sc"><table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table></div>
+<div class="sc"><table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th>${items.some((x) => x.unit) ? `<th class="r">${L.unit || 'Unit'}</th>` : ''}<th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table></div>
 <table class="tot">${totalRows.join('')}</table>
 ${words}${payTable}${modesBlock}${bankBlock}
 ${invoice.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(invoice.clientNote)}</div>` : ''}

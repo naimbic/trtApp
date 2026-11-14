@@ -1,4 +1,6 @@
 import prisma from '@/lib/prisma'
+import { detectLanguage } from '@/lib/crm/detectLanguage'
+import { proposalText, isStartingText } from '@/lib/crm/proposalText'
 import { calcDocument, round2 } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import { getOptions } from '@/lib/crm/mailer'
@@ -31,6 +33,17 @@ export async function nextProposalNumber() {
 export const effectiveStatus = (p) => (p.openTill && [PROPOSAL.OPEN, PROPOSAL.SENT, PROPOSAL.REVISED].includes(p.status) && new Date(p.openTill) < new Date(new Date().toDateString()) ? 7 : p.status)
 export const EXPIRED = 7
 
+/** The language of the client or lead a proposal is for: the one chosen on its form, else (lead) the one it writes in (its received emails, then its description). '' when unknown. */
+export async function proposalLanguage(relType, relId) {
+    if (!/^[0-9a-f]{24}$/i.test(relId || '')) return ''
+    if (relType === 'customer') return String((await prisma.crmClient.findUnique({ where: { id: relId }, select: { defaultLanguage: true } }).catch(() => null))?.defaultLanguage || '').toLowerCase()
+    const l = await prisma.crmLead.findUnique({ where: { id: relId }, select: { defaultLanguage: true, description: true } }).catch(() => null)
+    if (!l) return ''
+    if (l.defaultLanguage) return String(l.defaultLanguage).toLowerCase()
+    const mails = await prisma.crmLeadMail.findMany({ where: { leadId: relId, direction: 'in' }, orderBy: { date: 'desc' }, take: 5, select: { subject: true, body: true } }).catch(() => [])
+    return detectLanguage(mails.map((m) => `${m.subject || ''} ${m.body || ''}`).join(' ').slice(0, 20000)) || detectLanguage(l.description) || ''
+}
+
 export async function loadItems(id) {
     const lines = await prisma.crmItemable.findMany({ where: { relType: 'proposal', relId: id }, orderBy: { itemOrder: 'asc' }, include: { taxes: true } })
     return lines.map((l) => ({ id: l.id, description: l.description, longDescription: l.longDescription || '', qty: l.qty, rate: l.rate, unit: l.unit || '', taxes: l.taxes.map((t) => ({ name: t.taxName, rate: t.taxRate })) }))
@@ -50,13 +63,13 @@ export function safeProposalHtml(h) {
 function itemsHtml(p, items, currency, S, L) {
     const M = (n) => formatMoney(n, currency, S), Mi = (n) => formatMoney(n, currency, S, { noSymbol: S.itemsNoSymbol })
     const totals = calcDocument({ items, discountPercent: p.discountPercent, discountFixed: p.discountPercent > 0 ? 0 : p.discountTotal, discountType: p.discountType || 'before_tax', adjustment: p.adjustment })
-    const rows = items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td><td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
+    const rows = items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}</td>${items.some((x) => x.unit) ? `<td class="r">${esc(it.unit || '')}</td>` : ''}<td class="r">${Mi(it.rate)}</td><td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(p.subtotal)}</td></tr>`]
     if (p.discountTotal > 0) tr.push(`<tr><td>${L.discount}${p.discountPercent > 0 ? ` (${p.discountPercent}%)` : ''}</td><td>-${M(p.discountTotal)}</td></tr>`)
     for (const t of totals.taxes) tr.push(`<tr><td>${esc(t.name)} (${t.rate}%)</td><td>${M(t.total)}</td></tr>`)
     if (Number(p.adjustment)) tr.push(`<tr><td>${L.adjustment}</td><td>${M(p.adjustment)}</td></tr>`)
     tr.push(`<tr class="grand"><td>${L.total}</td><td>${M(p.total)}</td></tr>`)
-    return `<table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th><th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table><table class="tot">${tr.join('')}</table>`
+    return `<table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th>${items.some((x) => x.unit) ? `<th class="r">${L.unit || 'Unit'}</th>` : ''}<th class="r">${L.rate}</th><th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table><table class="tot">${tr.join('')}</table>`
 }
 
 const TXT = { french: { title: 'OFFRE DE PRIX', to: 'À l’attention de', openTill: 'Valable jusqu’au', subject: 'Objet' }, english: { title: 'PROPOSAL', to: 'Prepared for', openTill: 'Open until', subject: 'Subject' } }
@@ -64,7 +77,10 @@ const TXT = { french: { title: 'OFFRE DE PRIX', to: 'À l’attention de', openT
 /** The proposal document body (staff view, PDF and public page). */
 export const proposalDocumentHtml = async (p, items, currency, S, number) => attachTotals(await proposalDocumentHtmlRaw(p, items, currency, S, number))
 async function proposalDocumentHtmlRaw(p, items, currency, S, number) {
-    const L = LABELS[S.lang], T = TXT[S.lang]
+    // the labels and an untouched starting text are in the language of the client or lead the proposal is for (French or English labels; the company language otherwise)
+    const holder = await proposalLanguage(p.relType, p.relId)
+    const lang = LABELS[holder] && TXT[holder] ? holder : S.lang
+    const L = LABELS[lang], T = TXT[lang]
     const og = await getOptions([...COMPANY_KEYS, 'company_logo', 'company_info_format', 'invoice_company_name'])
     const D = (x) => fmtDate(x, S.dateFormat, S.timezone)
     const countryName = p.country ? (await prisma.crmCountry.findFirst({ where: { legacyId: p.country }, select: { shortName: true } }))?.shortName || '' : ''
@@ -81,10 +97,10 @@ async function proposalDocumentHtmlRaw(p, items, currency, S, number) {
         proposal_country: esc(countryName), proposal_email: esc(p.email || ''), proposal_phone: esc(p.phone || ''), proposal_date: D(p.date), proposal_assigned: '',
         ...Object.fromEntries(Object.entries(co).map(([k, v]) => [k, esc(v)])), companyname: esc(co.company_name),
     }
-    let content = safeProposalHtml(p.content)
+    let content = safeProposalHtml(holder && isStartingText(p.content) ? proposalText(holder) : p.content)
     const hasItems = /\{proposal_items\}/.test(content)
     content = content.replace(/\{([a-z0-9_]+)\}/gi, (m, k) => (k in merge ? String(merge[k] ?? '') : ''))
-    const infoTo = `<div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>${L.date}: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div>`
+    const infoTo = `<div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>Date: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div>`
     return `${docHeader({ logo, width: S.logoWidth * 1.5, name: co.company_name, title: T.title, num: `#${esc(number)}`, org: `<div class="info org">${org}</div>`, info: infoTo, swap: S.swap })}
 ${p.subject ? `<h2 class="psub">${esc(p.subject)}</h2>` : ''}<div class="pcontent">${content}</div>${hasItems ? '' : itemsBlock}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }

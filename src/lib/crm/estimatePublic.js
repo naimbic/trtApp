@@ -70,7 +70,7 @@ async function documentHtmlRaw(d, lang, S) {
     const bank = await bankTokensFor({ docAccountId: e.bankAccountId, clientId: e.clientId, currencyId: e.currencyId })
     const org = `<div class="info org">${await organizationInfo(og, bank)}</div>`
     const bankBlock = bankBlockHtml(bank, lang === 'french', og('company_info_format'))
-    const rows = d.items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}${it.unit ? ` ${esc(it.unit)}` : ''}</td><td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
+    const rows = d.items.map((it, i) => `<tr><td class="n">${i + 1}</td><td><strong>${stripTags(it.description)}</strong>${it.longDescription ? `<div class="long">${lineLong(it.longDescription)}</div>` : ''}</td><td class="r">${it.qty}</td>${d.items.some((x) => x.unit) ? `<td class="r">${esc(it.unit || '')}</td>` : ''}<td class="r">${Mi(it.rate)}</td>${S.perItemTax ? `<td class="r">${(it.taxes || []).map((t) => (S.hideTaxName ? `${t.rate}%` : `${esc(t.name)} ${t.rate}%`)).join('<br />') || '—'}</td>` : ''}<td class="r">${Mi(round2((it.qty || 0) * (it.rate || 0)))}</td></tr>`).join('')
     const tr = [`<tr><td>${L.subtotal}</td><td>${M(e.subtotal)}</td></tr>`]
     if (e.discountTotal > 0) tr.push(`<tr><td>${L.discount}${e.discountPercent > 0 ? ` (${e.discountPercent}%)` : ''}</td><td>-${M(e.discountTotal)}</td></tr>`)
     for (const t of totals.taxes) tr.push(`<tr><td>${esc(t.name)} (${t.rate}%)</td><td>${M(t.total)}</td></tr>`)
@@ -78,7 +78,7 @@ async function documentHtmlRaw(d, lang, S) {
     tr.push(`<tr class="grand"><td>${L.total}</td><td>${M(e.total)}</td></tr>`)
     const words = S.words.on ? `<p class="words"><strong>${lang === 'french' ? 'Arrêté le présent devis à la somme de' : 'Total in words'} :</strong> ${esc(amountInWords(e.total, { lang, currency: d.currency?.name, lowercase: S.words.lower }))}</p>` : ''
     return `${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: T.estimate, num: `#${esc(d.number)}`, org, info, swap: S.swap })}
-<table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th><th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
+<table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th>${d.items.some((x) => x.unit) ? `<th class="r">${L.unit || 'Unit'}</th>` : ''}<th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>
 ${words}${bankBlock}${e.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNote)}</div>` : ''}${e.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(e.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }

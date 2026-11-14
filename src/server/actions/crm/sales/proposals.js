@@ -1,7 +1,6 @@
 'use server'
 
 import { clientCurrency } from '@/lib/crm/sales/clientCurrency'
-import { detectLanguage } from '@/lib/crm/detectLanguage'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
@@ -10,7 +9,7 @@ import { calcDocument, formatDocumentNumber } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import { manualNumber, applyManualNumber } from '@/lib/crm/sales/docNumbering'
 import { createInvoiceFromDocument, createEstimateFromProposal } from '@/lib/crm/sales/convert'
-import { displayNumber, loadItems, nextProposalNumber } from '@/lib/crm/proposalDoc'
+import { displayNumber, loadItems, nextProposalNumber, proposalLanguage } from '@/lib/crm/proposalDoc'
 import { storeRich, plainText } from '@/lib/crm/richText'
 import { notifyComment } from '@/lib/crm/mentionsApi'
 
@@ -34,16 +33,11 @@ export async function proposalPrefill(relType, relId) {
         const c = await prisma.crmClient.findUnique({ where: { id: relId } })
         if (!c) return {}
         const ct = await prisma.crmContact.findFirst({ where: { clientId: c.id, active: true }, orderBy: { isPrimary: 'desc' } })
-        return { language: c.defaultLanguage || '', currencyId: c.defaultCurrencyId || null, proposalTo: c.company || '', address: c.billingStreet || c.address || '', city: c.billingCity || c.city || '', state: c.billingState || c.state || '', zip: c.billingZip || c.zip || '', country: c.billingCountry ?? c.country ?? null, email: ct?.email || '', phone: ct?.phoneNumber || c.phoneNumber || '' }
+        return { language: String(c.defaultLanguage || '').toLowerCase(), currencyId: c.defaultCurrencyId || null, proposalTo: c.company || '', address: c.billingStreet || c.address || '', city: c.billingCity || c.city || '', state: c.billingState || c.state || '', zip: c.billingZip || c.zip || '', country: c.billingCountry ?? c.country ?? null, email: ct?.email || '', phone: ct?.phoneNumber || c.phoneNumber || '' }
     }
     const l = await prisma.crmLead.findUnique({ where: { id: relId } })
     if (!l) return {}
-    // no language chosen on the lead yet: the one it writes in (its received emails, else its description), as the lead form offers
-    let language = l.defaultLanguage || ''
-    if (!language) {
-        const mails = await prisma.crmLeadMail.findMany({ where: { leadId: l.id, direction: 'in' }, orderBy: { date: 'desc' }, take: 5, select: { subject: true, body: true } }).catch(() => [])
-        language = detectLanguage(mails.map((m) => `${m.subject || ''} ${m.body || ''}`).join(' ').slice(0, 20000)) || detectLanguage(l.description) || ''
-    }
+    const language = await proposalLanguage('lead', l.id)
     return { language, currencyId: l.currencyId || null, proposalTo: l.company || l.name || '', address: l.address || '', city: l.city || '', state: l.state || '', zip: l.zip || '', country: l.country ?? null, email: l.email || '', phone: l.phoneNumber || '' }
 }
 

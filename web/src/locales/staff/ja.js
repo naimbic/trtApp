@@ -6185,4 +6185,5 @@ export default {
     "Add your own logins here, or use “Send to My space” on an entry of the shared Password vault.": "ここにログイン情報を追加するか、共有パスワード保管庫の項目で「マイスペースに送る」を使ってください。",
     "Edit entry": "項目を編集",
     "Invoice status": "請求書のステータス",
+    "Write a message to yourself…": "自分宛てにメッセージを書く…",
 }

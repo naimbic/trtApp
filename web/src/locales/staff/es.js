@@ -6185,4 +6185,5 @@ export default {
     "Add your own logins here, or use “Send to My space” on an entry of the shared Password vault.": "Añade aquí tus accesos, o usa «Enviar a Mi espacio» en una entrada de la bóveda compartida.",
     "Edit entry": "Editar entrada",
     "Invoice status": "Estado de la factura",
+    "Write a message to yourself…": "Escríbete un mensaje…",
 }

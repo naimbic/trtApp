@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.239.0',
+        date: '2026-11-14',
+        title: 'Send messages to yourself in My space',
+        items: [
+            'My space now has a message box at the bottom, like a chat with yourself: write anything and press Enter (or the send button) to keep it. Shift+Enter makes a new line.',
+            'Files can be attached or pasted into the message box. The “Keep a note, a link, a password, a file…” form stays for passwords, links, titles and reminders.',
+        ],
+    },
+    {
         version: '0.238.0',
         date: '2026-11-14',
         title: 'Invoice numbers per year, and paid date in Payments',

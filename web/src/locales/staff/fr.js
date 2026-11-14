@@ -6185,4 +6185,5 @@ export default {
     "Add your own logins here, or use “Send to My space” on an entry of the shared Password vault.": "Ajoutez vos identifiants ici, ou utilisez « Envoyer dans Mon espace » sur une entrée du coffre partagé.",
     "Edit entry": "Modifier l’entrée",
     "Invoice status": "Statut de la facture",
+    "Write a message to yourself…": "Écrivez-vous un message…",
 }

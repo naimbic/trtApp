@@ -6185,4 +6185,5 @@ export default {
     "Add your own logins here, or use “Send to My space” on an entry of the shared Password vault.": "أضف بيانات دخولك هنا، أو استخدم «إرسال إلى مساحتي» على إدخال من الخزنة المشتركة.",
     "Edit entry": "تعديل الإدخال",
     "Invoice status": "حالة الفاتورة",
+    "Write a message to yourself…": "اكتب رسالة لنفسك…",
 }

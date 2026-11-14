@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbArrowLeft, TbBell, TbBellOff, TbCheck, TbChecklist, TbCopy, TbEye, TbEyeOff, TbLink, TbLock, TbNote, TbPaperclip, TbPencil, TbPin, TbPinFilled, TbPlus, TbSearch, TbTrash, TbX, TbSquareRoundedCheck, TbNotes } from 'react-icons/tb'
+import { TbArrowLeft, TbBell, TbBellOff, TbCheck, TbChecklist, TbCopy, TbEye, TbEyeOff, TbLink, TbLock, TbNote, TbPaperclip, TbPencil, TbPin, TbPinFilled, TbPlus, TbSearch, TbTrash, TbX, TbSquareRoundedCheck, TbNotes, TbSend } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import { api, notify, upload } from '@/views/crm/kit/api'
@@ -65,6 +65,12 @@ const MySpace = ({ compact = false, onBack = null, openId = '' }) => {
     const [saving, setSaving] = useState(false)
     const [shown, setShown] = useState({}) // revealed secrets: id -> text
     const [remind, setRemind] = useState(null) // { id, value }
+    const [msg, setMsg] = useState('') // the message bar: write and send, like a chat with yourself
+    const [files, setFiles] = useState([])
+    const [sending, setSending] = useState(false)
+    const [upBusy, setUpBusy] = useState(false)
+    const msgFile = useRef(null)
+    const listRef = useRef(null)
     const load = useCallback(() => api(`${BASE}?owner=${owner}&q=${encodeURIComponent(q)}`).then(setD).catch((e) => { notify('danger', e.message); setD({ items: [], owners: [], readOnly: false, canViewOthers: false }) }), [owner, q])
     useEffect(() => { const t = setTimeout(load, q ? 250 : 0); return () => clearTimeout(t) }, [load, q])
     useEffect(() => { setShown({}); setEdit(null); setAdding(false) }, [owner])
@@ -76,6 +82,19 @@ const MySpace = ({ compact = false, onBack = null, openId = '' }) => {
             await api(BASE, { method: edit?.id ? 'PUT' : 'POST', body: edit?.id ? { id: edit.id, ...v } : v })
             setAdding(false); setEdit(null); setShown({}); notify('success', edit?.id ? tr("Saved") : tr("Kept in My space")); await load()
         } catch (e) { notify('danger', e.message) } finally { setSaving(false) }
+    }
+    const addMsgFiles = async (list) => {
+        setUpBusy(true)
+        try { const got = []; for (const f of list) { const fd = new FormData(); fd.append('file', f); got.push(await upload('/api/crm/chat/upload', fd)) } setFiles((x) => [...x, ...got].slice(0, 10)) } catch (e) { notify('danger', e.message) } finally { setUpBusy(false); if (msgFile.current) msgFile.current.value = '' }
+    }
+    const send = async () => {
+        if (sending || upBusy || (!msg.trim() && !files.length)) return
+        setSending(true)
+        try {
+            await api(BASE, { method: 'POST', body: { kind: 'note', body: msg, attachments: files } })
+            setMsg(''); setFiles([]); setQ(''); setFilter('all'); await load()
+            listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+        } catch (e) { notify('danger', e.message) } finally { setSending(false) }
     }
     const patch = (it, body, ok) => run(() => api(BASE, { method: 'PUT', body: { id: it.id, ...body } }), ok)
     const reveal = async (it) => {
@@ -152,7 +171,7 @@ const MySpace = ({ compact = false, onBack = null, openId = '' }) => {
                 </div>
                 {d?.canViewOthers && d.owners.length > 0 && <div className="w-48 shrink-0"><Select size="sm" isSearchable={d.owners.length > 6} options={ownerOpts} value={ownerOpts.find((o) => o.value === (ro ? d.owner : '')) || ownerOpts[0]} onChange={(o) => setOwner(o?.value || '')} /></div>}
             </div>
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+            <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
                 {!ro && !adding && !edit && <button type="button" onClick={() => setAdding(true)} className="flex w-full items-center gap-2 rounded-2xl border border-dashed border-gray-300 px-4 py-3 text-left text-sm text-gray-500 transition hover:border-primary hover:text-primary dark:border-gray-600"><TbPlus className="text-lg" />{tr("Keep a note, a link, a password, a file…")}</button>}
                 {!ro && adding && <Editor compact={compact} saving={saving} onSave={save} onCancel={() => setAdding(false)} />}
                 {edit && <Editor compact={compact} init={edit} saving={saving} onSave={save} onCancel={() => setEdit(null)} />}
@@ -162,6 +181,17 @@ const MySpace = ({ compact = false, onBack = null, openId = '' }) => {
                 </div>
                 {!d ? <p className="py-8 text-center text-sm text-gray-400">{tr("Loading…")}</p> : items.length ? items.map(card) : <p className="px-6 py-10 text-center text-sm text-gray-400">{q || filter !== 'all' ? tr("Nothing matches.") : ro ? tr("This space is empty.") : tr("Nothing here yet. Keep anything you want to check back later: a memo, a link, a password, a file. Add a reminder, or turn it into a task or a note.")}</p>}
             </div>
+            {!ro && (
+                <div className="border-t border-amber-100 bg-white/80 p-3 dark:border-gray-700 dark:bg-gray-900/60" onPaste={(e) => { const f = [...(e.clipboardData?.files || [])]; if (f.length) { e.preventDefault(); addMsgFiles(f) } }}>
+                    {files.length > 0 && <div className="mb-2 flex flex-wrap gap-1.5">{files.map((a) => <span key={a.url} className="inline-flex max-w-[220px] items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700"><TbPaperclip className="shrink-0 text-gray-400" /><span className="truncate">{a.name}</span><button type="button" aria-label={tr("Remove")} onClick={() => setFiles((x) => x.filter((y) => y.url !== a.url))} className="text-gray-400 hover:text-red-500"><TbX /></button></span>)}</div>}
+                    <div className="flex items-end gap-2">
+                        <input ref={msgFile} type="file" multiple hidden onChange={(e) => addMsgFiles([...e.target.files])} />
+                        <button type="button" disabled={upBusy} title={tr("Attach")} aria-label={tr("Attach")} onClick={() => msgFile.current?.click()} className="grid size-10 shrink-0 place-items-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-primary disabled:opacity-50 dark:hover:bg-gray-700"><TbPaperclip /></button>
+                        <textarea className={`${field} max-h-40 min-h-[40px] flex-1 resize-none !rounded-2xl`} rows={Math.min(5, Math.max(1, msg.split('\n').length))} placeholder={upBusy ? tr("Uploading…") : tr("Write a message to yourself…")} value={msg} onChange={(e) => setMsg(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() } }} />
+                        <button type="button" disabled={sending || upBusy || (!msg.trim() && !files.length)} title={tr("Send")} aria-label={tr("Send")} onClick={send} className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-xl text-white transition hover:opacity-90 disabled:opacity-40"><TbSend /></button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

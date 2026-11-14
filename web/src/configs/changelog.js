@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.237.0',
+        date: '2026-11-14',
+        title: 'Team password vault in your menu, and send to My space',
+        items: [
+            'The profile menu has a new “Team password vault” line that opens the vault on the entries shared with the whole team (a new “Whole team” filter).',
+            'Any vault entry you can see has a “Send to My space” button: it copies the login into your My space as a password item (kept encrypted, the original stays in the vault and the action is logged).',
+        ],
+    },
+    {
         version: '0.236.1',
         date: '2026-11-13',
         title: 'Notifications: a read one leaves the Direct tab',

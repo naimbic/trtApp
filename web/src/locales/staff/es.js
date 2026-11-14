@@ -6173,4 +6173,8 @@ export default {
     "Passwords": "Contraseñas",
     "Logins kept for this customer (website, hosting, social accounts...). Passwords are encrypted and every reveal is logged.": "Accesos guardados para este cliente (sitio web, hosting, redes sociales...). Las contraseñas están cifradas y cada vez que se muestran queda registrado.",
     "No logins for this customer yet": "Aún no hay accesos para este cliente",
+    "Send to My space": "Enviar a Mi espacio",
+    "Sent to your My space as a password": "Enviado a Mi espacio como contraseña",
+    "Team password vault": "Bóveda de contraseñas del equipo",
+    "Logins the team shares": "Accesos que comparte el equipo",
 }

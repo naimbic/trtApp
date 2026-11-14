@@ -6173,4 +6173,8 @@ export default {
     "Passwords": "كلمات المرور",
     "Logins kept for this customer (website, hosting, social accounts...). Passwords are encrypted and every reveal is logged.": "بيانات الدخول المحفوظة لهذا العميل (الموقع، الاستضافة، حسابات التواصل...). كلمات المرور مشفّرة وكل عملية إظهار تُسجَّل.",
     "No logins for this customer yet": "لا توجد بيانات دخول لهذا العميل بعد",
+    "Send to My space": "إرسال إلى مساحتي",
+    "Sent to your My space as a password": "تم الإرسال إلى مساحتي ككلمة مرور",
+    "Team password vault": "خزنة كلمات مرور الفريق",
+    "Logins the team shares": "بيانات الدخول التي يشاركها الفريق",
 }

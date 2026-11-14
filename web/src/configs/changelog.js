@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.239.1',
+        date: '2026-11-14',
+        title: 'My space header without the privacy line',
+        items: [
+            'The line “Private: only you and the Super Admin can see it.” is removed from the top of My space.',
+        ],
+    },
+    {
         version: '0.239.0',
         date: '2026-11-14',
         title: 'Send messages to yourself in My space',

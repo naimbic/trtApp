@@ -63,7 +63,7 @@ const ProposalEditor = () => {
                 setV({ number: cloned ? '' : inv?.number ?? '',
                     subject: inv?.subject || '', relType: inv?.relType || (params.get('leadId') ? 'lead' : 'customer'), relId: inv?.relId || params.get('clientId') || params.get('leadId') || null,
                     proposalTo: inv?.proposalTo || '', email: inv?.email || '', phone: inv?.phone || '', address: inv?.address || '', city: inv?.city || '', state: inv?.state || '', zip: inv?.zip || '', country: inv?.country ?? null,
-                    content: inv?.content ?? proposalText(), recurring: inv?.recurring || 0, recurringType: inv?.recurringType || 'month', cycles: inv?.cycles || 0, allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || (!inv ? dd.me || null : null),
+                    content: inv?.content ?? proposalText(), hideText: !!inv?.hideText, recurring: inv?.recurring || 0, recurringType: inv?.recurringType || 'month', cycles: inv?.cycles || 0, allowComments: inv ? inv.allowComments !== false : true, remindClient: inv ? inv.remindClient !== false : true, assignedId: inv?.assignedId || (!inv ? dd.me || null : null),
                     date: (!cloned && day(inv?.date)) || day(new Date()),
                     openTill: inv && !cloned ? day(inv.openTill) : (dueAfter > 0 ? day(dayjs().add(dueAfter, 'day')) : ''),
                     currencyId: inv?.currencyId || def?.id || null,
@@ -150,7 +150,7 @@ const ProposalEditor = () => {
                             </div>
                         </AccordionCard>
 
-                        <AccordionCard title={tr("Proposal text")} dot="#f59e0b" note={tr("What the client reads")} open={open.text} onToggle={() => toggle('text')}>
+                        <AccordionCard title={tr("Proposal text")} dot="#f59e0b" note={tr("What the client reads")} open={open.text} onToggle={() => toggle('text')} right={<label className="flex items-center gap-2 text-xs text-gray-500" title={tr("Printed on the document, its PDF and the client page")}>{tr("On the document")}<Switcher checked={!v.hideText} onChange={(c) => set({ hideText: !c })} /></label>}>
                             <div className="p-4">
                                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                                     <p className="text-xs text-gray-500">{tr("Printed under the items table on the proposal.")}</p>

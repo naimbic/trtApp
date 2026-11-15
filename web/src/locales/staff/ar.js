@@ -6204,4 +6204,6 @@ export default {
     "Printed under the items table on the proposal.": "يُطبع تحت جدول البنود في العرض.",
     "Tag a client…": "وسم عميل…",
     "The note shows on the Tasks tab of each tagged client, where the team can read it.": "تظهر الملاحظة في تبويب المهام لكل عميل موسوم، حيث يمكن للفريق قراءتها.",
+    "On the document": "على المستند",
+    "Printed on the document, its PDF and the client page": "يُطبع على المستند وملف PDF وصفحة العميل",
 }

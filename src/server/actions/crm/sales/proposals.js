@@ -79,6 +79,7 @@ export async function saveProposal(input) {
         subtotal: totals.subtotal, totalTax: totals.totalTax, total: totals.total, discountPercent: Number(input.discountPercent) || 0, discountTotal: totals.discountTotal, discountType, adjustment: Number(input.adjustment) || 0,
         allowComments: input.allowComments !== false, assignedId: input.assignedId || null,
         ...(input.remindClient !== undefined ? { remindClient: input.remindClient !== false } : {}),
+        ...(input.hideText !== undefined ? { hideText: !!input.hideText } : {}),
         // repeating: kept on the proposal and given to the invoice made from it
         ...(input.recurring !== undefined ? (() => { const n = Math.max(0, Math.min(Math.floor(Number(input.recurring)) || 0, 365)); return { recurring: n, recurringType: n ? (['day', 'week', 'month', 'year'].includes(input.recurringType) ? input.recurringType : 'month') : null, cycles: n ? Math.max(0, Math.floor(Number(input.cycles)) || 0) : 0 } })() : {}),
     }

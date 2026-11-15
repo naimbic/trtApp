@@ -6204,4 +6204,6 @@ export default {
     "Printed under the items table on the proposal.": "Imprimé sous le tableau des articles sur la proposition.",
     "Tag a client…": "Étiqueter un client…",
     "The note shows on the Tasks tab of each tagged client, where the team can read it.": "La note s'affiche dans l'onglet Tâches de chaque client étiqueté, où l'équipe peut la lire.",
+    "On the document": "Sur le document",
+    "Printed on the document, its PDF and the client page": "Imprimé sur le document, son PDF et la page du client",
 }

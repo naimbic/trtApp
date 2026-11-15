@@ -60,7 +60,7 @@ const EstimateEditor = () => {
                     discountType: inv?.discountType || 'before_tax',
                     adjustment: inv?.adjustment || 0,
                     clientNote: inv ? inv.clientNote || '' : dd.clientNote || '', adminNote: inv?.adminNote || '', terms: inv ? inv.terms || '' : dd.terms || '',
-                    remindClient: inv ? inv.remindClient !== false : true,
+                    hideText: !!inv?.hideText, remindClient: inv ? inv.remindClient !== false : true,
                     items: d?.items?.length ? d.items.map(({ id: _i, ...line }) => line) : [baseLine()],
                 })
             })
@@ -132,7 +132,7 @@ const EstimateEditor = () => {
                             </div>
                         </AccordionCard>
 
-                        <AccordionCard title={tr("Notes")} dot="#f59e0b" note={[v.clientNote && tr("Client note"), v.terms && tr("Terms & conditions"), v.adminNote && tr("Admin note (internal)")].filter(Boolean).join(" · ") || undefined} open={open.notes} onToggle={() => toggle('notes')}>
+                        <AccordionCard title={tr("Notes")} dot="#f59e0b" note={[v.clientNote && tr("Client note"), v.terms && tr("Terms & conditions"), v.adminNote && tr("Admin note (internal)")].filter(Boolean).join(" · ") || undefined} open={open.notes} onToggle={() => toggle('notes')} right={<label className="flex items-center gap-2 text-xs text-gray-500" title={tr("Printed on the document, its PDF and the client page")}>{tr("On the document")}<Switcher checked={!v.hideText} onChange={(c) => set({ hideText: !c })} /></label>}>
                             <div className="flex flex-wrap gap-3 p-4">
                                 <div className="min-w-[240px] flex-1"><label className="form-label mb-1 block">{tr("Client note")}</label><Input textArea rows={4} value={v.clientNote} onChange={(e) => set({ clientNote: e.target.value })} /></div>
                                 <div className="min-w-[240px] flex-1"><label className="form-label mb-1 block">{tr("Terms & conditions")}</label><Input textArea rows={4} value={v.terms} onChange={(e) => set({ terms: e.target.value })} /></div>

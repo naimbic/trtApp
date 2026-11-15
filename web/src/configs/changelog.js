@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.252.0',
+        date: '2026-11-14',
+        title: 'Show or hide the text on proposals, estimates and invoices',
+        items: [
+            'A new "On the document" switch at the top right of the Notes section (estimates and invoices) and of the Proposal text section (proposals). Switched off, the client note and the terms, or the proposal text, are not printed on the document, its PDF and the page the client opens.',
+            'On estimates and invoices the client note and the terms are printed under the items table, as on proposals.',
+        ],
+    },
+    {
         version: '0.251.0',
         date: '2026-11-14',
         title: 'Notes on the customer page; proposal text under the items',

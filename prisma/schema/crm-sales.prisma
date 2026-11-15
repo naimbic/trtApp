@@ -114,6 +114,8 @@ model CrmInvoice {
   discountPercent        Float     @default(0)
   discountTotal          Float     @default(0)
   discountType           String? // before_tax | after_tax | ''
+  /// true: the text (client note and terms, or the proposal text) is not printed on the document, its PDF and the client page
+  hideText               Boolean?
   recurring              Int       @default(0) // repeat every N (recurring_type units)
   recurringType          String? // day | week | month | year
   customRecurring        Boolean   @default(false)
@@ -229,6 +231,8 @@ model CrmEstimate {
   pipelineOrder         Int       @default(1)
   isExpiryNotified      Boolean   @default(false)
   remindClient          Boolean?  // null / true: the expiry reminder is emailed to the client; false: never
+  /// true: the text (client note and terms, or the proposal text) is not printed on the document, its PDF and the client page
+  hideText               Boolean?
   acceptanceFirstname   String?
   acceptanceLastname    String?
   acceptanceEmail       String?
@@ -290,6 +294,8 @@ model CrmProposal {
   pipelineOrder       Int       @default(1)
   isExpiryNotified    Boolean   @default(false)
   remindClient          Boolean?  // null / true: the expiry reminder is emailed to the client; false: never
+  /// true: the text (client note and terms, or the proposal text) is not printed on the document, its PDF and the client page
+  hideText               Boolean?
   // repeating: the invoice made from this proposal repeats every N (recurringType) for `cycles` copies (0 = until stopped)
   recurring           Int?
   recurringType       String? // day | week | month | year

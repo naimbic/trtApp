@@ -66,6 +66,7 @@ export async function saveEstimate(input) {
         subtotal: totals.subtotal, totalTax: totals.totalTax, total: totals.total, discountPercent: Number(input.discountPercent) || 0, discountTotal: totals.discountTotal, discountType,
         adjustment: Number(input.adjustment) || 0, clientNote: input.clientNote || null, adminNote: input.adminNote || null, terms: input.terms || null, referenceNo: input.referenceNo || null,
         ...(input.remindClient !== undefined ? { remindClient: input.remindClient !== false } : {}),
+        ...(input.hideText !== undefined ? { hideText: !!input.hideText } : {}),
     }
     const manual = await manualNumber('crmEstimate', input, session.user.authority || [])
     if (manual.problem) return fail(manual.problem)

@@ -179,6 +179,7 @@ export async function saveInvoice(input) {
         terms: input.terms || null,
         // "send reminders to the client" (default on) is kept as the Perfex flag that cancels the overdue ones
         ...(input.remindClient !== undefined ? { cancelOverdueReminders: input.remindClient === false } : {}),
+        ...(input.hideText !== undefined ? { hideText: !!input.hideText } : {}),
         // recurring: repeat every N days / weeks / months / years, for a number of cycles (0 = until stopped)
         ...(input.recurring !== undefined && !input.isRecurringCopy ? (() => {
             const n = Math.max(0, Math.min(Math.floor(Number(input.recurring)) || 0, 365))

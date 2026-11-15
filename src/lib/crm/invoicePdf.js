@@ -196,8 +196,8 @@ ${bar}${pub ? `<div class="wrap">${banner}<div class="card">` : ''}${stampHtml(i
 <div class="sc"><table class="items"><thead><tr><th class="n">#</th><th>${L.item}</th><th class="r">${L.qty}</th>${items.some((x) => x.unit) ? `<th class="r">${L.unit || 'Unit'}</th>` : ''}<th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table></div>
 <table class="tot">${totalRows.join('')}</table>
 ${words}${payTable}${modesBlock}${bankBlock}
-${invoice.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(invoice.clientNote)}</div>` : ''}
-${invoice.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(invoice.terms)}</div>` : ''}
+${invoice.clientNote && !invoice.hideText ? `<h4>${L.note}</h4><div class="block">${esc(invoice.clientNote)}</div>` : ''}
+${invoice.terms && !invoice.hideText ? `<h4>${L.terms}</h4><div class="block">${safeHtml(invoice.terms)}</div>` : ''}
 ${sig}
 ${pub ? '</div></div>' : ''}</body></html>`
 }

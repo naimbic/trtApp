@@ -103,7 +103,7 @@ async function proposalDocumentHtmlRaw(p, items, currency, S, number) {
     content = content.replace(/\{([a-z0-9_]+)\}/gi, (m, k) => (k in merge ? String(merge[k] ?? '') : ''))
     const infoTo = `<div class="info"><div class="lbl">${T.to}</div>${to}<div class="dates"><div>Date: <strong>${D(p.date)}</strong></div>${p.openTill ? `<div>${T.openTill}: <strong>${D(p.openTill)}</strong></div>` : ''}</div></div>`
     return `${docHeader({ logo, width: S.logoWidth * 1.5, name: co.company_name, title: T.title, num: `#${esc(number)}`, org: `<div class="info org">${org}</div>`, info: infoTo, swap: S.swap })}
-${p.subject ? `<h2 class="psub">${esc(p.subject)}</h2>` : ''}${itemsBlock}<div class="pcontent" style="margin-top:18px">${content}</div>${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
+${p.subject ? `<h2 class="psub">${esc(p.subject)}</h2>` : ''}${itemsBlock}${p.hideText ? '' : `<div class="pcontent" style="margin-top:18px">${content}</div>`}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }
 
 export const PROPOSAL_CSS = `${HEADER_CSS}

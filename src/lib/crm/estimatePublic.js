@@ -80,7 +80,7 @@ async function documentHtmlRaw(d, lang, S) {
     return `${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: T.estimate, num: `#${esc(d.number)}`, org, info, swap: S.swap })}
 <table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th>${d.items.some((x) => x.unit) ? `<th class="r">${L.unit || 'Unit'}</th>` : ''}<th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>
-${words}${bankBlock}${e.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNote)}</div>` : ''}${e.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(e.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
+${words}${bankBlock}${e.clientNote && !e.hideText ? `<h4>${L.note}</h4><div class="block">${esc(e.clientNote)}</div>` : ''}${e.terms && !e.hideText ? `<h4>${L.terms}</h4><div class="block">${safeHtml(e.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
 }
 
 const langOf = async () => ((await getOptions(['active_language']))('active_language') === 'french' ? 'french' : 'english')

@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.252.1',
+        date: '2026-11-15',
+        title: 'Purchase orders: show or hide the notes on the document',
+        items: [
+            'The Notes section of the purchase order form has the same "On the document" switch as estimates and invoices. Switched off, the client note and the terms are not printed on the purchase order and its PDF.',
+        ],
+    },
+    {
         version: '0.252.0',
         date: '2026-11-14',
         title: 'Show or hide the text on proposals, estimates and invoices',

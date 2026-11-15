@@ -705,6 +705,8 @@ model CrmPurchaseOrder {
   clientNote       String?
   adminNote        String?
   terms            String?
+  /// true: the client note and the terms are not printed on the document and its PDF
+  hideText         Boolean?
   estimateId       String?   @db.ObjectId
   invoiceId        String?   @db.ObjectId
   invoicedDate     DateTime?

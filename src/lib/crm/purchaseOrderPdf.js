@@ -54,7 +54,7 @@ async function renderPurchaseOrderHtmlRaw(id) {
     const body = `${docHeader({ logo, width: S.logoWidth * 1.5, name: og('companyname'), title: T.title, num: `#${esc(number)}`, org, info, swap: S.swap })}
 <table class="items"><thead><tr style="background:${S.head};color:${S.headText}"><th class="n" style="color:${S.headText}">#</th><th>${L.item}</th><th class="r">${L.qty}</th>${items.some((x) => x.unit) ? `<th class="r">${L.unit || 'Unit'}</th>` : ''}<th class="r">${L.rate}</th>${S.perItemTax ? `<th class="r">${L.tax}</th>` : ''}<th class="r">${L.amount}</th></tr></thead><tbody>${rows}</tbody></table>
 <table class="tot">${tr.join('')}</table>
-${words}${bankBlock}${p.clientNote ? `<h4>${L.note}</h4><div class="block">${esc(p.clientNote)}</div>` : ''}${p.terms ? `<h4>${L.terms}</h4><div class="block">${safeHtml(p.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
+${words}${bankBlock}${p.clientNote && !p.hideText ? `<h4>${L.note}</h4><div class="block">${esc(p.clientNote)}</div>` : ''}${p.terms && !p.hideText ? `<h4>${L.terms}</h4><div class="block">${safeHtml(p.terms)}</div>` : ''}${signature ? `<div class="sig"><img src="${signature}" alt=""></div>` : ''}`
     return { number, html: `<!doctype html><html><head><meta charset="utf-8"><title>${esc(number)}</title><style>${S.pageCss()}${S.baseCss()}${CSS}${paperCss()}</style></head><body>${body}</body></html>` }
 }
 

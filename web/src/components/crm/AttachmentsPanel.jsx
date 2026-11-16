@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
-import { TbTrash, TbUpload, TbExternalLink, TbPhotoSearch } from 'react-icons/tb'
+import { TbTrash, TbUpload, TbExternalLink, TbPhotoSearch, TbLink } from 'react-icons/tb'
+import Input from '@/components/ui/Input'
 import MediaPicker from '@/components/crm/MediaPicker'
 import Button from '@/components/ui/Button'
 import Switcher from '@/components/ui/Switcher'
@@ -27,6 +28,7 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
     const [drag, setDrag] = useState(false)
     const [del, setDel] = useState(null)
     const [picker, setPicker] = useState(false)
+    const [link, setLink] = useState(null) // the "Link" form: { url, name }
     const input = useRef(null)
 
     const load = useCallback(async () => {
@@ -56,6 +58,10 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
         setPicker(false); setBusy(true)
         try { await api('/api/crm/media', { method: 'POST', body: { action: 'attach', mediaId: m.id, relType, relId } }); notify('success', tr("File attached")); load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
+    const addLink = async () => {
+        setBusy(true)
+        try { await api('/api/crm/media', { method: 'POST', body: { action: 'link', relType, relId, url: /^https?:\/\//i.test(link.url.trim()) ? link.url.trim() : `https://${link.url.trim()}`, name: link.name } }); notify('success', tr("Link added")); setLink(null); load() } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
+    }
     const toggle = async (f, v) => {
         setList((l) => l.map((x) => (x.id === f.id ? { ...x, visibleToClient: v } : x)))
         try { await api('/api/crm/media', { method: 'POST', body: { action: 'setVisibility', id: f.id, visibleToClient: v } }) } catch (e) { notify('danger', e.message); load() }
@@ -72,8 +78,18 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
                     className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-dashed px-4 py-4 transition ${drag ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-600'}`}
                 >
                     <div className="text-sm text-gray-500">{hint || tr("Drop files here or choose them. Images are optimised to WebP automatically. PDF, Office, CSV, ZIP… up to 50 MB.")}</div>
-                    <Button size="sm" icon={busy ? <Spinner size={16} /> : <TbUpload />} disabled={busy} onClick={() => input.current?.click()}>{busy ? tr("Uploading…") : tr("Upload files")}</Button>
-                    <Button size="sm" icon={<TbPhotoSearch />} disabled={busy} onClick={() => setPicker(true)}>{tr("From files")}</Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button size="sm" icon={busy ? <Spinner size={16} /> : <TbUpload />} disabled={busy} title={tr("Upload files")} onClick={() => input.current?.click()}>{busy ? tr("Uploading…") : tr("Upload")}</Button>
+                        <Button size="sm" icon={<TbPhotoSearch />} disabled={busy} title={tr("From files")} onClick={() => setPicker(true)}>{tr("Select")}</Button>
+                        <Button size="sm" icon={<TbLink />} disabled={busy} onClick={() => setLink(link ? null : { url: '', name: '' })}>{tr("Link")}</Button>
+                    </div>
+                    {link && (
+                        <div className="flex w-full flex-wrap items-center gap-2">
+                            <div className="min-w-[220px] flex-[2]"><Input size="sm" autoFocus value={link.url} placeholder={tr("Link address (https://…)")} onChange={(e) => setLink({ ...link, url: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter' && link.url.trim()) addLink() }} /></div>
+                            <div className="min-w-[140px] flex-1"><Input size="sm" value={link.name} placeholder={tr("Name (optional)")} onChange={(e) => setLink({ ...link, name: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter' && link.url.trim()) addLink() }} /></div>
+                            <Button size="sm" variant="solid" disabled={busy || !link.url.trim()} onClick={addLink}>{tr("Add")}</Button>
+                        </div>
+                    )}
                     <input ref={input} type="file" multiple accept={accept} className="hidden" onChange={(e) => send(e.target.files)} />
                     <MediaPicker open={picker} kind="" onClose={() => setPicker(false)} onPick={attach} />
                 </div>
@@ -85,10 +101,10 @@ const AttachmentsPanel = ({ relType, relId, canEdit = true, showClientToggle = f
                             {f.kind === 'image' ? <img src={f.url} alt="" className="h-10 w-10 rounded-lg object-cover" loading="lazy" /> : <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-700"><FileIcon kind={f.kind} className="text-2xl" /></span>}
                             <div className="min-w-0 flex-1">
                                 <a href={f.url} target="_blank" rel="noreferrer" className="block truncate text-sm font-semibold hover:underline">{f.name}</a>
-                                <div className="text-xs text-gray-400">{formatBytes(f.size)} · {f.uploaderName || '—'} · {dayjs(f.createdAt).format('DD MMM YYYY')}</div>
+                                <div className="text-xs text-gray-400">{f.kind === 'link' ? tr("Link") : formatBytes(f.size)} · {f.uploaderName || '—'} · {dayjs(f.createdAt).format('DD MMM YYYY')}</div>
                             </div>
                             {showClientToggle && canEdit && <label className="hidden items-center gap-1.5 text-xs text-gray-500 sm:flex"><Switcher checked={f.visibleToClient} onChange={(v) => toggle(f, v)} />{tr("Client can see")}</label>}
-                            <ShareButton url={f.url} title={f.name} text={f.name} file={{ url: f.url, name: f.name, type: f.mime || f.mimeType }} className="text-lg text-gray-400 transition hover:text-primary" />
+                            <ShareButton url={f.url} title={f.name} text={f.name} file={f.kind === 'link' ? undefined : { url: f.url, name: f.name, type: f.mime || f.mimeType }} className="text-lg text-gray-400 transition hover:text-primary" />
                             <a href={f.url} target="_blank" rel="noreferrer" className="text-lg text-gray-400 hover:text-primary" title={tr("Open")}><TbExternalLink /></a>
                             {canEdit && <button type="button" onClick={() => setDel(f)} className="text-lg text-gray-400 hover:text-red-500" title={tr("Delete")}><TbTrash /></button>}
                         </div>

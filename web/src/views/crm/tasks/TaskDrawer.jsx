@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RemindMe from '@/components/crm/RemindMe'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import RichView from '@/components/crm/RichView'
@@ -230,12 +231,14 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             <Tabs.TabNav value="details">{tr("Details")}</Tabs.TabNav>
                             {detail.can.checklist?.view !== false && <Tabs.TabNav value="checklist">{tr("Checklist")}{detail.checklist.length ? ` (${detail.checklist.filter((c) => c.finished).length}/${detail.checklist.length})` : ''}</Tabs.TabNav>}
                             <Tabs.TabNav value="comments">{tr("Comments")}{detail.comments.length ? ` (${detail.comments.length})` : ''}</Tabs.TabNav>
+                            <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
                             <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
                         </Tabs.TabList>
                         <div className="pt-4">
                             <Tabs.TabContent value="details">{details}</Tabs.TabContent>
                             <Tabs.TabContent value="checklist">{checklist}</Tabs.TabContent>
                             <Tabs.TabContent value="comments">{comments}</Tabs.TabContent>
+                            <Tabs.TabContent value="files">{tabV === 'files' && <AttachmentsPanel relType="task" relId={id} canEdit={!!canEdit} showClientToggle={!!v.visibleToClient} />}</Tabs.TabContent>
                             <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>
                         </div>
                     </Tabs>

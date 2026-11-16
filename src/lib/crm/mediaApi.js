@@ -216,6 +216,20 @@ export async function mediaAction(body) {
         const row = await prisma.crmMedia.create({ data: { name: src.name, key: src.key, url: src.url, mime: src.mime, kind: src.kind, size: src.size, originalSize: src.originalSize, width: src.width, height: src.height, purpose: 'attachment', parentId: null, relType, relId, visibleToClient: !!body.visibleToClient, uploadedBy: ctx.staffId || undefined, uploaderName: ctx.name } })
         return plain(shape(row))
     }
+    if (action === 'link') {
+        // a web link kept with the files of a record (a Drive or Figma file, a page…): nothing is stored in the Space
+        const relType = body.relType, relId = body.relId
+        if (!relType || !OID.test(relId || '')) fail('relType and relId are required')
+        await relAccess(ctx, relType, 'edit', relId)
+        const url = String(body.url || '').trim().slice(0, 2000)
+        let host = ''
+        try { const u = new URL(url); if (!/^https?:$/.test(u.protocol)) throw new Error('scheme'); host = u.hostname.replace(/^www\./, '') } catch { fail('Enter a full link, starting with https://') }
+        const name = String(body.name || '').replace(/\s+/g, ' ').trim().slice(0, 120) || host
+        const row = await prisma.crmMedia.create({ data: { name, key: null, url, mime: 'text/uri-list', kind: 'link', size: 0, purpose: 'attachment', parentId: null, relType, relId, visibleToClient: !!body.visibleToClient, uploadedBy: ctx.staffId || undefined, uploaderName: ctx.name } })
+        if (relType === 'lead') await logLead(relId, ctx.staffId, `Link added: ${row.name}`)
+        else if (relType === 'task') await logTask(relId, ctx.staffId, 'file', `Link added: ${row.name}`)
+        return plain(shape(row))
+    }
     const id = body.id
     if (!OID.test(id || '')) fail('Invalid item')
     const item = await prisma.crmMedia.findUnique({ where: { id } })

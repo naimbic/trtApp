@@ -6206,4 +6206,5 @@ export default {
     "The note shows on the Tasks tab of each tagged client, where the team can read it.": "La nota se muestra en la pestaña Tareas de cada cliente etiquetado, donde el equipo puede leerla.",
     "On the document": "En el documento",
     "Printed on the document, its PDF and the client page": "Se imprime en el documento, su PDF y la página del cliente",
+    "Link added": "Enlace añadido",
 }

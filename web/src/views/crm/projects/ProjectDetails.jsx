@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -149,6 +150,7 @@ const ProjectDetails = () => {
                     {tab === 'files' && (
                         <div>
                             <h5 className="mb-4">{tr("Files")}</h5>
+                            <div className="mb-5"><AttachmentsPanel relType="project" relId={id} canEdit={!!data.can.edit} showClientToggle /></div>
                             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 {data.files.map((f) => (
                                     <div key={f.id} className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-4 dark:border-transparent dark:bg-gray-800">
@@ -157,7 +159,7 @@ const ProjectDetails = () => {
                                     </div>
                                 ))}
                             </div>
-                            {!data.files.length && <p className="text-gray-500">{tr("No files were attached to this project.")}</p>}
+                            
                             {data.files.length > 0 && <p className="mt-4 text-xs text-gray-500">{tr("Files from the old Perfex are listed by name; their contents stayed on the old server and are not in the File manager.")}</p>}
                         </div>
                     )}

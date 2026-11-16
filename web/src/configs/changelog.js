@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.253.0',
+        date: '2026-11-16',
+        title: 'Files: Upload, Select or Link everywhere; Files tab in the task popup',
+        items: [
+            'Everywhere files are attached to a record (clients, leads, tasks, projects, contracts, proposals, estimates, invoices, purchase orders, expenses, issues) there are now three buttons: Upload (from your computer), Select (a file already in the file manager) and Link (a web address such as a Drive or Figma file, with an optional name).',
+            'The task popup has a Files tab, with the same three buttons.',
+            'The project page can now receive files (Upload, Select, Link) above the list of its old files.',
+        ],
+    },
+    {
         version: '0.252.1',
         date: '2026-11-15',
         title: 'Purchase orders: show or hide the notes on the document',

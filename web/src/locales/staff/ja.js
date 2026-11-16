@@ -6206,4 +6206,5 @@ export default {
     "The note shows on the Tasks tab of each tagged client, where the team can read it.": "このメモはタグ付けした各顧客の「タスク」タブに表示され、チームが読めます。",
     "On the document": "書類に表示",
     "Printed on the document, its PDF and the client page": "書類、そのPDF、顧客ページに印刷されます",
+    "Link added": "リンクを追加しました",
 }

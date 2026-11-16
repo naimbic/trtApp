@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import GivePoints from '@/components/crm/GivePoints'
 import TaskAgenda from './TaskAgenda'
 import { useNavigate, useSearchParams } from 'react-router'
 import { TbPlus, TbSearch, TbLayoutKanban, TbList, TbCircleCheck, TbTrash, TbFlag, TbUserPlus, TbCalendarDue, TbNote, TbArrowRight, TbEye, TbEyeOff, TbLoader, TbAlertTriangle, TbUserOff } from 'react-icons/tb'
@@ -207,7 +208,7 @@ const TasksBoard = ({ projectId = null, clientPage = null, boardOnly = false, on
                             id: s.value, name: s.label, href: `/crm/status/tasks/${s.value}`, hrefTitle: tr("Open the page of this status"), color: s.color, count: all.length,
                             items: all.slice(0, limit).map((t) => ({ id: t.id, href: `/crm/tasks/${t.id}`, canFinish: t.canFinish, title: t.name, sub: t.rel?.label, subHref: t.rel?.href, date: fmtDate(t.dueDate), overdue: isOverdue(t), label: prioOf(t.priority).label, labelPill: ['#6b7280', '#2563eb', '#ea580c', '#dc2626'][(t.priority || 1) - 1], priority: t.priority, badge: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : null, kicker: `${tr("Task")}${t.rel?.label ? ` · ${t.rel.label}` : ''}${t.visibleToClient ? ` · 👁 ${tr("Client")}` : ''}`,
                                 fields: [{ label: tr("Priority"), value: prioOf(t.priority).label }, { label: tr("Due"), value: fmtDate(t.dueDate) }, { label: tr("Related to"), value: t.rel?.label }, { label: tr("Checklist"), value: t.checklistTotal > 0 ? `${t.checklistDone}/${t.checklistTotal}` : '' }],
-                                team: t.assignees, comments: t.comments || 0, people: <People list={t.assignees} size={26} /> })),
+                                team: t.assignees, comments: t.comments || 0, people: <span className="flex items-center gap-1" onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}><GivePoints people={t.assignees} relType="task" relId={t.id} link={`/crm/tasks/${t.id}`} reason={`${tr('Task')}: ${t.name || ''}`.slice(0, 120)} /><People list={t.assignees} size={26} /></span> })),
                             more: limit && all.length > limit ? { left: all.length - limit, onClick: () => setMore((m) => ({ ...m, [s.value]: true })) } : null,
                         }
                     })]}

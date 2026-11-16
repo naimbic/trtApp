@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.257.1',
+        date: '2026-11-16',
+        title: 'Points: the star on the task board cards',
+        items: [
+            'Each card of the task board (Kanban) now has the star next to the people assigned, with the same quick menu: +1, +5, +10, +20, other amount, remove.',
+        ],
+    },
+    {
         version: '0.257.0',
         date: '2026-11-16',
         title: 'Points: a star with a quick menu on comments, tasks, ideas, articles, tickets and issues',

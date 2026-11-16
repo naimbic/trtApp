@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.259.2',
+        date: '2026-11-16',
+        title: 'Profile card shows above the chat bubble',
+        items: [
+            'Fixed: in the chat bubble the profile card opened behind the chat window; it now shows on top of it (and on top of any popup).',
+            'The People tab of the chat bubble shows the card on each colleague too.',
+        ],
+    },
+    {
         version: '0.259.1',
         date: '2026-11-16',
         title: 'Profile card in chat and in the account menu',

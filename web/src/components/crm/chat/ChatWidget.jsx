@@ -128,7 +128,7 @@ const ChatWidget = () => {
                                 ) : tab === 'saved' ? (
                                     <SavedMessages onOpen={(it) => { const r = rooms.find((x) => x.id === it.roomId); if (r) { pick(r); setTab('chats') } else navigate(`/crm/chat?room=${it.roomId}`) }} />
                                 ) : tab === 'people' ? (
-                                    data.people.map((p) => <Row key={p.id} r={{ kind: 'direct', title: p.name, image: p.image, status: p.status }} onClick={() => talkTo(p)} />)
+                                    data.people.map((p) => <Row key={p.id} r={{ kind: 'direct', staffId: p.id, title: p.name, image: p.image, status: p.status }} onClick={() => talkTo(p)} />)
                                 ) : (
                                     <>
                                         {shown.map((r) => <Row key={r.id} r={r} onClick={() => pick(r)} />)}

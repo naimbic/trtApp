@@ -108,7 +108,7 @@ export const ProfileTip = ({ id, name, person, score, placement = 'top', childre
             <span ref={refs.setReference} {...getReferenceProps()} className="tooltip-wrapper inline-flex">{children}</span>
             {open && (
                 <FloatingPortal>
-                    <div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 100003 }} {...getFloatingProps()} onClick={stop} onMouseDown={stop} onPointerDown={stop}>
+                    <div ref={refs.setFloating} data-menu-above style={floatingStyles /* data-menu-above: the stylesheet puts it over the chat bubble and every popup */} {...getFloatingProps()} onClick={stop} onMouseDown={stop} onPointerDown={stop}>
                         <div role={id ? 'link' : undefined} tabIndex={id ? 0 : undefined} onClick={go} onKeyDown={(e) => { if (e.key === 'Enter') go(e) }} className={`profile-tip group/card rounded-2xl border border-white/70 bg-white/70 p-3.5 shadow-[0_18px_50px_-12px_rgba(15,23,42,0.35)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150 transition dark:border-white/10 dark:bg-gray-900/70 dark:ring-white/5 ${id ? 'cursor-pointer hover:ring-primary/40' : ''}`}>
                             <ProfileCard name={name} person={person} score={score} link={!!id} />
                         </div>

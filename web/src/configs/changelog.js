@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.255.0',
+        date: '2026-11-16',
+        title: 'Permissions for every Activity (history) of the CRM',
+        items: [
+            'Roles & permissions has a new group, Activity, with one switch per part: tasks, projects, sales documents (invoices, estimates, proposals, purchase orders), issues and the dashboards.',
+            'Without the switch the Activity tab or box is hidden and the server sends no history. On an issue the comments stay, only the history of changes is hidden.',
+            'Nobody has these switches until you give them to a role or a member; administrators always see everything. The Activity tab of customers and of leads keeps its own switches (Customer tabs, Lead popup tabs), and the Activity log keeps its own.',
+        ],
+    },
+    {
         version: '0.254.0',
         date: '2026-11-16',
         title: 'Messages: Select a file from the file manager, or add a link',

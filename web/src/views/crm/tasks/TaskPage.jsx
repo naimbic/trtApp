@@ -18,7 +18,7 @@ import Select from '@/components/ui/Select'
 import Tag from '@/components/ui/Tag'
 import Timeline from '@/components/ui/Timeline'
 import classNames from '@/utils/classNames'
-import { api, notify } from '../kit/api'
+import { api, notify, useCan } from '../kit/api'
 import { STATUS, PRIORITY, statusOf, statusPillStyle, prioOf, initials, duration, useTaskStatuses } from './shared'
 import { tr } from '@/utils/t'
 import useTabParam from '@/utils/useTabParam'
@@ -40,6 +40,7 @@ const TABS = [['comments', tr('Comments'), <TbMessage key="c" />], ['subtasks', 
 /** One task, laid out like the template's issue page: properties, description, tabs, and the activity panel on the right. */
 const TaskPage = () => {
     useTaskStatuses()
+    const seeActivity = useCan()('activity_tabs', 'act_tasks') // Roles > Activity
     const { id } = useParams()
     const nav = useNavigate()
     const [d, setD] = useState(null)
@@ -100,7 +101,7 @@ const TaskPage = () => {
 
     return (
         <AdaptiveCard>
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className={`grid gap-8 ${seeActivity ? 'lg:grid-cols-[minmax(0,1fr)_340px]' : ''}`}>
                 <div className="min-w-0">
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                         <Button size="xs" variant="plain" icon={<TbArrowLeft className="rtl:rotate-180" />} onClick={back} />
@@ -217,7 +218,7 @@ const TaskPage = () => {
                     </div>
                 </div>
 
-                <aside className="lg:border-l lg:border-gray-200 lg:pl-8 lg:dark:border-gray-700 rtl:lg:border-l-0 rtl:lg:border-r rtl:lg:pl-0 rtl:lg:pr-8">
+                {seeActivity && <aside className="lg:border-l lg:border-gray-200 lg:pl-8 lg:dark:border-gray-700 rtl:lg:border-l-0 rtl:lg:border-r rtl:lg:pl-0 rtl:lg:pr-8">
                     <h5 className="mb-6">{tr('Activity')}</h5>
                     <Timeline>
                         {d.activity.map((a, i) => (
@@ -231,7 +232,7 @@ const TaskPage = () => {
                             </Timeline.Item>
                         ))}
                     </Timeline>
-                </aside>
+                </aside>}
             </div>
 
             <ConfirmDialog isOpen={confirmDel} type="danger" title={tr('Delete this task?')} confirmText={tr('Delete')} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>

@@ -63,7 +63,7 @@ export async function getDashboardMetrics(params = {}) {
     // the figures change little in a day and take long to add up: the same answer is kept for 5 minutes (shared by everybody who sees the same parts), then renewed in the background; ?fresh=1 renews it now
     const money = isCrmAdmin(authority) || hasCap(authority, 'finance', 'view_amounts')
     const parts = ['invoices', 'expenses', 'customers', 'leads', 'projects', 'tasks', 'tickets', 'estimates', 'payments'].map((f) => (viewScope(authority, f) === 'all' ? 1 : 0)).join('')
-    const key = `dashboard|${money ? 1 : 0}${parts}|${params.range || '12m'}|${params.from || ''}|${params.to || ''}|${params.noPrev ? 1 : 0}`
+    const key = `dashboard|${money ? 1 : 0}${parts}${hasCap(authority, 'activity_tabs', 'act_dashboard') ? 'a' : ''}|${params.range || '12m'}|${params.from || ''}|${params.to || ''}|${params.noPrev ? 1 : 0}`
     return swr(key, () => buildDashboard(params, authority), { fresh: 300000, force: params.fresh === '1' })
 }
 
@@ -287,7 +287,7 @@ async function buildDashboard(params, authority) {
     await section('recent', 'payments', async () => {
         const [payments, activity] = await Promise.all([
             prisma.crmPayment.findMany({ where: { paymentDate: { gte: since, lt: until } }, orderBy: { paymentDate: 'desc' }, take: 8, include: { invoice: { select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true, currencyId: true } } } }),
-            prisma.crmSalesActivity.findMany({ orderBy: { date: 'desc' }, take: 8 }),
+            hasCap(authority, 'activity_tabs', 'act_dashboard') ? prisma.crmSalesActivity.findMany({ orderBy: { date: 'desc' }, take: 8 }) : [],
         ])
         return {
             payments: payments.map((p) => ({

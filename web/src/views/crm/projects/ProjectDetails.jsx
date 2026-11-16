@@ -95,7 +95,7 @@ const ProjectDetails = () => {
             <div className="flex flex-col gap-6 xl:flex-row xl:gap-12">
                 <div className="xl:w-[250px] xl:shrink-0">
                     <div className="flex gap-2 overflow-x-auto xl:flex-col">
-                        {NAV.map((n) => (
+                        {NAV.filter((n) => n.value !== 'activity' || can('activity_tabs', 'act_projects')).map((n) => (
                             <button key={n.value} onClick={() => setTab(n.value)} className={cn('flex w-full items-center gap-2 whitespace-nowrap rounded-full border-2 border-transparent px-3.5 py-2.5 font-semibold text-gray-900 transition-colors dark:text-white', tab === n.value ? 'border-primary' : 'hover:bg-gray-100 dark:hover:bg-gray-800')}>
                                 <span className="text-xl">{n.icon}</span><span>{n.label}</span>
                                 {n.value === 'tasks' && stats.tasksTotal > 0 && <span className="ml-auto text-xs text-gray-500">{stats.tasksDone}/{stats.tasksTotal}</span>}

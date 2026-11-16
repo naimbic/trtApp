@@ -5,7 +5,7 @@ import { storeRich } from '@/lib/crm/richText'
 import crypto from 'node:crypto'
 import prisma from '@/lib/prisma'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
-import { requirePermission, getStaffId } from '@/lib/crm/permissions'
+import { requirePermission, getStaffId, seeActivity } from '@/lib/crm/permissions'
 import { calcDocument, formatDocumentNumber } from '@/lib/crm/sales/calc'
 import { numberPadding } from '@/lib/crm/numbering'
 import { allocateNumber, checkDeletable, afterDelete, manualNumber, applyManualNumber } from '@/lib/crm/sales/docNumbering'
@@ -38,7 +38,7 @@ export async function getPurchaseOrderDocument(id) {
         loadLines(id),
         p.clientId ? prisma.crmClient.findUnique({ where: { id: p.clientId }, select: { id: true, company: true } }) : null,
         p.currencyId ? prisma.crmCurrency.findUnique({ where: { id: p.currencyId } }) : null,
-        prisma.crmSalesActivity.findMany({ where: { relType: REL, relId: id }, orderBy: { date: 'desc' }, take: 50 }),
+        seeActivity(session, 'act_sales') ? prisma.crmSalesActivity.findMany({ where: { relType: REL, relId: id }, orderBy: { date: 'desc' }, take: 50 }) : [],
         p.invoiceId ? prisma.crmInvoice.findUnique({ where: { id: p.invoiceId }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true } }) : null,
         p.estimateId ? prisma.crmEstimate.findUnique({ where: { id: p.estimateId }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true } }) : null,
     ])

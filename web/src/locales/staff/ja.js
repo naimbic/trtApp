@@ -6210,4 +6210,10 @@ export default {
     "Select from the files": "ファイルから選択",
     "Could not read this file": "このファイルを読み込めませんでした",
     "A link cannot be attached here": "ここにはリンクを添付できません",
+    "Activity (history)": "アクティビティ（履歴）",
+    "Activity on tasks": "タスクのアクティビティ",
+    "Activity on projects": "プロジェクトのアクティビティ",
+    "Activity on sales documents": "販売書類のアクティビティ",
+    "History of changes on issues": "課題の変更履歴",
+    "Activity on the dashboards": "ダッシュボードのアクティビティ",
 }

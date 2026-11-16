@@ -6210,4 +6210,10 @@ export default {
     "Select from the files": "Sélectionner parmi les fichiers",
     "Could not read this file": "Impossible de lire ce fichier",
     "A link cannot be attached here": "Un lien ne peut pas être joint ici",
+    "Activity (history)": "Activité (historique)",
+    "Activity on tasks": "Activité des tâches",
+    "Activity on projects": "Activité des projets",
+    "Activity on sales documents": "Activité des documents de vente",
+    "History of changes on issues": "Historique des modifications des problèmes",
+    "Activity on the dashboards": "Activité des tableaux de bord",
 }

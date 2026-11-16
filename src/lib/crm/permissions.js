@@ -28,6 +28,9 @@ export const hasCap = (authority = [], feature, cap) => {
     return false
 }
 
+/** May this person see the Activity (history) of a part of the CRM? cap: act_tasks | act_projects | act_sales | act_issues | act_dashboard (Roles > Activity). */
+export const seeActivity = (sessionOrAuthority, cap) => hasCap(Array.isArray(sessionOrAuthority) ? sessionOrAuthority : sessionOrAuthority?.user?.authority || [], 'activity_tabs', cap)
+
 /** 'all' | 'own' | null — what a user may see for a feature. */
 export const viewScope = (authority = [], feature) => {
     if (hasCap(authority, feature, 'view')) return 'all'

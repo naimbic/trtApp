@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { realPicture } from '@/lib/crm/pictures'
 import { storeRich } from '@/lib/crm/richText'
-import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
+import { requirePermission, viewScope, getStaffId, hasCap, isCrmAdmin, seeActivity } from '@/lib/crm/permissions'
 
 export const STATUS = { open: 'Open', in_progress: 'In progress', in_review: 'In review', resolved: 'Resolved', closed: 'Closed' }
 export const PRIORITY = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' }
@@ -93,7 +93,8 @@ export async function getIssue(id) {
     if (!oid(id)) throw fail('Issue not found', 404)
     const i = await prisma.crmIssue.findFirst({ where: { AND: [{ id }, visible(a)] } })
     if (!i) throw fail('Issue not found', 404)
-    const feed = await prisma.crmIssueComment.findMany({ where: { issueId: id }, orderBy: { createdAt: 'asc' } })
+    const actOk = seeActivity(a.authority || a.session, 'act_issues') // Roles > Activity: without it only the comments are sent, not the history of changes
+    const feed = await prisma.crmIssueComment.findMany({ where: { issueId: id, ...(actOk ? {} : { kind: 'comment' }) }, orderBy: { createdAt: 'asc' } })
     const ppl = await people([...(i.assigneeIds || []), i.reporterId, ...feed.map((c) => c.staffId)].filter(Boolean))
     const plats = await platformMap()
     return {

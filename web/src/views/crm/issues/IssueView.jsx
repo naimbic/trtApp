@@ -13,7 +13,7 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Timeline from '@/components/ui/Timeline'
-import { api, notify } from '../kit/api'
+import { api, notify, useCan } from '../kit/api'
 import { initials } from '../tasks/shared'
 import { STATUS, PRIORITY, TYPE, StatusTag, PriorityTag, TypeLabel, eventText } from './shared'
 import { opts, pick } from './IssueDialogs'
@@ -25,6 +25,7 @@ const Field = ({ label, children }) => <div className="grid grid-cols-[110px_min
 const Who = ({ p, size = 24 }) => (p ? <span className="inline-flex items-center gap-2"><Avatar size={size} shape="circle" src={p.image || undefined}>{initials(p.name)}</Avatar><span className="truncate text-sm">{p.name}</span></span> : <span className="text-gray-300">—</span>)
 
 const IssueView = () => {
+    const seeActivity = useCan()('activity_tabs', 'act_issues') // Roles > Activity: without it only the comments show
     const { id } = useParams()
     const nav = useNavigate()
     const [d, setD] = useState(null)
@@ -85,7 +86,7 @@ const IssueView = () => {
                     <Card><h5 className="mb-3">{tr('Files')}</h5><AttachmentsPanel relType="issue" relId={id} canEdit={can.edit} /></Card>
 
                     <Card>
-                        <h5 className="mb-4 flex flex-wrap items-center gap-2"><TbHistory />{tr('Activity')}</h5>
+                        <h5 className="mb-4 flex flex-wrap items-center gap-2"><TbHistory />{seeActivity ? tr('Activity') : tr('Comments')}</h5>
                         <Timeline>
                             {feed.map((f) => (
                                 <Timeline.Item key={f.id} media={<Avatar size={25} shape="circle" src={f.staff?.image || undefined}>{initials(f.staff?.name || '?')}</Avatar>}>

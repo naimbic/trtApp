@@ -33,6 +33,7 @@ const greet = () => { const h = new Date().getHours(); return h < 12 ? tr('Good 
 
 /** Home for the whole team: what I have to do today, who is doing what, what needs a follow-up. */
 const TeamDashboard = () => {
+    const seeActivity = useCan()('activity_tabs', 'act_dashboard') // Roles > Activity
     const nav = useNavigate()
     const [d, setD] = useState(null)
     const [error, setError] = useState('')
@@ -174,7 +175,7 @@ const TeamDashboard = () => {
                         </Panel>
                     )}
 
-                    <Panel title={tr('Team activity')} subtitle={tr('The last 7 days')}>
+                    {seeActivity && <Panel title={tr('Team activity')} subtitle={tr('The last 7 days')}>
                         {activity.length ? (
                             <ul className="flex flex-col gap-3.5">
                                 {activity.map((a, i) => (
@@ -189,7 +190,7 @@ const TeamDashboard = () => {
                                 ))}
                             </ul>
                         ) : <Empty>{tr('No activity yet.')}</Empty>}
-                    </Panel>
+                    </Panel>}
 
                     {online?.length > 0 && (
                         <Panel title={tr('Online now')} subtitle={tr('Colleagues using the CRM right now')} action={<TbUsers className="text-xl text-gray-400" />}>

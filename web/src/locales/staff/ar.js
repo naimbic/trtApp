@@ -6210,4 +6210,10 @@ export default {
     "Select from the files": "اختيار من الملفات",
     "Could not read this file": "تعذرت قراءة هذا الملف",
     "A link cannot be attached here": "لا يمكن إرفاق رابط هنا",
+    "Activity (history)": "النشاط (السجل)",
+    "Activity on tasks": "نشاط المهام",
+    "Activity on projects": "نشاط المشاريع",
+    "Activity on sales documents": "نشاط مستندات المبيعات",
+    "History of changes on issues": "سجل تغييرات المشكلات",
+    "Activity on the dashboards": "نشاط لوحات المعلومات",
 }

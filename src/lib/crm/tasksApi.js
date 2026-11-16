@@ -8,7 +8,7 @@ import { emit } from '@/lib/crm/webhooks'
 import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
 import { notifyNotice } from '@/lib/crm/notifyMail'
 import { storeRich, plainText } from '@/lib/crm/richText'
-import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
+import { requirePermission, viewScope, getStaffId, hasCap, seeActivity } from '@/lib/crm/permissions'
 
 export const STATUS = { 1: 'Not started', 4: 'In progress', 3: 'Testing', 2: 'Awaiting feedback', 5: 'Complete' }
 export const PRIORITY = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }
@@ -192,7 +192,8 @@ export async function getTask(id) {
     const session = await requirePermission('tasks', 'view')
     const a = await access(session)
     const t = await loadOne(id, a)
-    const logs = await prisma.crmTaskActivity.findMany({ where: { taskId: id }, orderBy: { createdAt: 'desc' }, take: 120 })
+    const actOk = seeActivity(a.authority, 'act_tasks') // Roles > Activity: without it the history is not sent
+    const logs = actOk ? await prisma.crmTaskActivity.findMany({ where: { taskId: id }, orderBy: { createdAt: 'desc' }, take: 120 }) : []
     const ids = [...logs.map((l) => l.staffId).filter(Boolean), ...t.assignees.map((x) => x.staffId), ...t.followers.map((x) => x.staffId), ...t.comments.map((c) => c.staffId).filter(Boolean), ...t.comments.flatMap((c) => Object.values(c.reactions && typeof c.reactions === 'object' ? c.reactions : {}).flat()), ...t.timers.map((x) => x.staffId).filter(Boolean), ...t.checklistItems.flatMap(stepPeople), t.addedFrom].filter(Boolean)
     const people = await staffMap(ids)
     const cIds = [...new Set(t.comments.map((c) => c.contactId).filter(Boolean))]
@@ -219,7 +220,7 @@ export async function getTask(id) {
         }),
         timers, running, totalSeconds: timers.reduce((s, x) => s + x.seconds, 0),
         // what happened on the task, newest first (for the activity panel)
-        activity: [
+        activity: !actOk ? [] : [
             ...logs.map((l) => ({ type: l.kind, staff: people[l.staffId] || null, at: l.createdAt, text: l.text })),
             ...(logs.some((l) => l.kind === 'created') ? [] : [{ type: 'created', staff: people[t.addedFrom] || null, at: t.createdAt, text: 'Task created' }]),
             ...t.comments.map((c) => ({ type: 'comment', staff: people[c.staffId] || null, at: c.createdAt, text: (c.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) })),

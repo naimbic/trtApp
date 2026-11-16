@@ -19,7 +19,7 @@ import DatePicker from '@/components/ui/DatePicker'
 import Tabs from '@/components/ui/Tabs'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import dayjs from 'dayjs'
-import { api, notify } from '../kit/api'
+import { api, notify, useCan } from '../kit/api'
 import RelationSelect from '../kit/RelationSelect'
 import { STATUS, PRIORITY, REL_TYPES, People, initials, useTaskStatuses } from './shared'
 import Avatar from '@/components/ui/Avatar'
@@ -35,7 +35,9 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     useTaskStatuses()
     const [v, setV] = useState(EMPTY)
     const [detail, setDetail] = useState(null)
+    const seeActivity = useCan()('activity_tabs', 'act_tasks') // Roles > Activity
     const [tabV, setTabV] = useTabParam(['details', 'checklist', 'comments', 'activity'], 'details')
+    useEffect(() => { if (tabV === 'activity' && !seeActivity) setTabV('details') }, [tabV, seeActivity]) // eslint-disable-line react-hooks/exhaustive-deps
     const [saving, setSaving] = useState(false)
     const [confirmDel, setConfirmDel] = useState(false)
     const [comment, setComment] = useState('')
@@ -232,14 +234,14 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             {detail.can.checklist?.view !== false && <Tabs.TabNav value="checklist">{tr("Checklist")}{detail.checklist.length ? ` (${detail.checklist.filter((c) => c.finished).length}/${detail.checklist.length})` : ''}</Tabs.TabNav>}
                             <Tabs.TabNav value="comments">{tr("Comments")}{detail.comments.length ? ` (${detail.comments.length})` : ''}</Tabs.TabNav>
                             <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
-                            <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>
+                            {seeActivity && <Tabs.TabNav value="activity">{tr("Activity")}</Tabs.TabNav>}
                         </Tabs.TabList>
                         <div className="pt-4">
                             <Tabs.TabContent value="details">{details}</Tabs.TabContent>
                             <Tabs.TabContent value="checklist">{checklist}</Tabs.TabContent>
                             <Tabs.TabContent value="comments">{comments}</Tabs.TabContent>
                             <Tabs.TabContent value="files">{tabV === 'files' && <AttachmentsPanel relType="task" relId={id} canEdit={!!canEdit} showClientToggle={!!v.visibleToClient} />}</Tabs.TabContent>
-                            <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>
+                            {seeActivity && <Tabs.TabContent value="activity">{activity}</Tabs.TabContent>}
                         </div>
                     </Tabs>
                 </>

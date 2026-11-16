@@ -202,8 +202,8 @@ const ProjectsHome = () => {
                         </div>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             <div className="order-1 md:col-span-1"><CurrentTasks data={data.currentTasks} /></div>
-                            <div className="order-2 md:col-span-1 xl:order-3"><RecentActivity data={data.recentActivity} /></div>
-                            <div className="order-3 md:col-span-2 xl:order-2 xl:col-span-1"><TaskOverview data={data.taskOverview} /></div>
+                            {can('activity_tabs', 'act_projects') && <div className="order-2 md:col-span-1 xl:order-3"><RecentActivity data={data.recentActivity} /></div>}
+                            <div className={can('activity_tabs', 'act_projects') ? 'order-3 md:col-span-2 xl:order-2 xl:col-span-1' : 'order-3 md:col-span-1 xl:col-span-2'}><TaskOverview data={data.taskOverview} /></div>
                         </div>
                     </div>
                 )}

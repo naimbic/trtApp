@@ -31,6 +31,11 @@ export const EXTRA_LABELS = {
     tab_meetings: 'See the Meetings tab',
     tab_offers: 'See the Offers tab',
     tab_activity: 'See the Activity tab',
+    act_tasks: 'Activity on tasks',
+    act_projects: 'Activity on projects',
+    act_sales: 'Activity on sales documents',
+    act_issues: 'History of changes on issues',
+    act_dashboard: 'Activity on the dashboards',
     send_files: 'Send files, pictures and voice messages',
     create_groups: 'Create group chats',
     call: 'Make calls',
@@ -95,6 +100,7 @@ export const FEATURE_HINTS = {
     leads: 'The lead board and the lead popup: profile, tasks, mails, meetings, files, comments and offers. View own = only the leads assigned to you or added by you. Edit = change any lead you can see, including its mails (write, draft and schedule), meetings and tasks; without it, only leads assigned to you or added by you.',
     customers: 'Clients with their contacts, mails (Create or Edit lets a person write, draft and schedule them), notes, files and requests. Without View the Customers menu is hidden. View own = only the clients you look after.',
     dashboard: 'The Dashboard with revenue, invoices and client figures. Administrators and people who manage roles always see it; everyone else lands on the Team dashboard.',
+    activity_tabs: 'Who sees the Activity (the history of what was done and by whom) in each part of the CRM. Switched off = the tab or box is hidden and the server sends nothing. Nobody has it until you give it; administrators always see everything. Sales documents = invoices, estimates, proposals and purchase orders. Dashboards = Recent activity and Team activity. The Activity tab of customers and of leads is under Customer tabs and Lead popup tabs.',
     activity_log: 'See what team members and clients did (sign-ins, documents, tasks, emails). Normally for administrators only.',
     finance: 'Without this, every income, total, balance and money chart shows *** (cards, lists, reports, client profiles).',
     departments: 'The Departments list (ticket departments and the people in them): see, add, edit and delete departments. Setup items such as currencies, taxes and ticket statuses stay under Settings.',
@@ -167,6 +173,12 @@ export const PERMISSION_GROUPS = [
         group: 'Team',
         features: [
             { key: 'dashboard', label: 'Business dashboard', caps: ['view'] },
+        ],
+    },
+    {
+        group: 'Activity',
+        features: [
+            { key: 'activity_tabs', label: 'Activity (history)', caps: ['act_tasks', 'act_projects', 'act_sales', 'act_issues', 'act_dashboard'], auto: {} },
             { key: 'activity_log', label: 'Activity log', caps: ['view'] },
         ],
     },

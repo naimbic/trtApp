@@ -1,6 +1,6 @@
 import { realPicture } from '@/lib/crm/pictures'
 import prisma from '@/lib/prisma'
-import { requirePermission, viewScope, getStaffId, hasCap } from '@/lib/crm/permissions'
+import { requirePermission, viewScope, getStaffId, hasCap, seeActivity } from '@/lib/crm/permissions'
 import { storeRich } from '@/lib/crm/richText'
 import { notifyNewMentions } from '@/lib/crm/mentionsApi'
 
@@ -107,7 +107,7 @@ export async function getProject(id) {
         prisma.crmProjectFile.findMany({ where: { projectId: id }, orderBy: { createdAt: 'desc' } }),
         prisma.crmProjectDiscussion.findMany({ where: { projectId: id }, orderBy: { createdAt: 'desc' } }),
         prisma.crmProjectNote.findMany({ where: { projectId: id }, orderBy: { createdAt: 'desc' } }),
-        prisma.crmProjectActivity.findMany({ where: { projectId: id }, orderBy: { createdAt: 'desc' }, take: 150 }),
+        seeActivity(a.authority, 'act_projects') ? prisma.crmProjectActivity.findMany({ where: { projectId: id }, orderBy: { createdAt: 'desc' }, take: 150 }) : [],
         prisma.crmMilestone.findMany({ where: { projectId: id }, orderBy: { milestoneOrder: 'asc' } }),
         p.clientId ? prisma.crmClient.findUnique({ where: { id: p.clientId }, select: { id: true, company: true } }) : null,
     ])
@@ -270,7 +270,7 @@ export async function projectDashboard() {
     const open = await prisma.crmTask.count({ where: { AND: [tw, { status: { not: 5 } }] } })
 
     // recent activity across projects
-    const acts = ids.length ? await prisma.crmProjectActivity.findMany({ where: { projectId: { in: ids } }, orderBy: { createdAt: 'desc' }, take: 14 }) : []
+    const acts = ids.length && seeActivity(a.authority, 'act_projects') ? await prisma.crmProjectActivity.findMany({ where: { projectId: { in: ids } }, orderBy: { createdAt: 'desc' }, take: 14 }) : []
     const people = await staffMap(acts.map((x) => x.staffId))
     const pName = Object.fromEntries(projects.map((p) => [p.id, p.name]))
     const recentActivity = acts.map((x) => ({ id: x.id, projectId: x.projectId, project: pName[x.projectId] || '', by: people[x.staffId]?.name || x.fullName || 'System', image: people[x.staffId]?.image || null, text: readable(x.descriptionKey, x.additionalData), date: x.createdAt }))

@@ -5,7 +5,7 @@ import { storeRich } from '@/lib/crm/richText'
 import prisma from '@/lib/prisma'
 import { readSettings } from '@/lib/crm/appSettings'
 import { assertDocVisible, requireAnySalesView } from '@/lib/crm/docAccess'
-import { requirePermission, getStaffId, viewScope } from '@/lib/crm/permissions'
+import { requirePermission, getStaffId, viewScope, seeActivity } from '@/lib/crm/permissions'
 import { calcDocument, round2, formatDocumentNumber, invoiceStatusFromPayments, INVOICE_STATUS } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { allocateNumber, checkDeletable, afterDelete, ensureRealNumber, manualNumber, applyManualNumber } from '@/lib/crm/sales/docNumbering'
@@ -96,7 +96,7 @@ export async function getInvoiceDocument(id) {
         prisma.crmPayment.findMany({ where: { invoiceId: id }, orderBy: { paymentDate: 'desc' } }),
         invoice.clientId ? prisma.crmClient.findUnique({ where: { id: invoice.clientId }, select: { id: true, company: true } }) : null,
         invoice.currencyId ? prisma.crmCurrency.findUnique({ where: { id: invoice.currencyId } }) : null,
-        prisma.crmSalesActivity.findMany({ where: { relType: REL, relId: id }, orderBy: { date: 'desc' }, take: 50 }),
+        seeActivity(session, 'act_sales') ? prisma.crmSalesActivity.findMany({ where: { relType: REL, relId: id }, orderBy: { date: 'desc' }, take: 50 }) : [],
     ])
     const paid = round2(payments.reduce((s, p) => s + (p.amount || 0), 0))
     // a copy made by a recurring invoice points back to it; the recurring invoice itself points to its latest copy

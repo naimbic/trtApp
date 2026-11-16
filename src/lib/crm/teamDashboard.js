@@ -21,7 +21,7 @@ export async function teamDashboard({ days = 30, fresh = false } = {}) {
     const staffId = await getStaffId(session)
     // it is asked again every minute by every open tab: the same answer is kept for 45 seconds (per person); an action of the person asks for a fresh one
     const d = [7, 30, 90].includes(Number(days)) ? Number(days) : 30
-    return swr(`team|${staffId || session.user.id}|${d}|${(session.user.authority || []).length}`, () => buildTeam(session, staffId, d), { fresh: 45000, stale: 600000, force: !!fresh })
+    return swr(`team|${staffId || session.user.id}|${d}|${(session.user.authority || []).length}${(session.user.authority || []).includes('crm.activity_tabs.act_dashboard') ? 'a' : ''}`, () => buildTeam(session, staffId, d), { fresh: 45000, stale: 600000, force: !!fresh })
 }
 
 async function buildTeam(session, staffId, days) {
@@ -162,7 +162,8 @@ async function buildTeam(session, staffId, days) {
         const iss = rows.length ? Object.fromEntries((await prisma.crmIssue.findMany({ where: { id: { in: rows.map((r) => r.issueId) } }, select: { id: true, number: true, title: true } })).map((i) => [i.id, i])) : {}
         for (const r of rows) if (iss[r.issueId]) feed.push({ type: 'issue', at: r.createdAt, staff: sm[r.staffId] || null, text: `#${iss[r.issueId].number} ${iss[r.issueId].title}`, link: `/crm/issues/${r.issueId}` })
     }
-    out.activity = feed.sort((a, b) => +new Date(b.at) - +new Date(a.at)).slice(0, 12)
+    // Roles > Activity: the team activity is for administrators and people given it
+    out.activity = !(admin || authority.includes('crm.activity_tabs.act_dashboard')) ? [] : feed.sort((a, b) => +new Date(b.at) - +new Date(a.at)).slice(0, 12)
 
 
     /* ---- performance: how much gets done, how fast and how reliably ---- */

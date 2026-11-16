@@ -6271,4 +6271,7 @@ export default {
     "Points for {name}": "نقاط لـ {name}",
     "Other amount…": "مبلغ آخر…",
     "Remove points…": "إزالة نقاط…",
+    "Score · last {d} days": "النتيجة · آخر {d} يومًا",
+    "Nothing to measure yet": "لا يوجد ما يُقاس بعد",
+    "{n} open task(s)": "{n} مهمة مفتوحة",
 }

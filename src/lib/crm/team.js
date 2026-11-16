@@ -8,6 +8,8 @@ import { createAuthToken, signOutEverywhere } from '@/lib/crm/authTokens'
 import { webBaseUrl } from '@/lib/crm/account'
 import { sendMail, isMailConfigured } from '@/lib/mail'
 import { staffScores } from '@/lib/crm/staffScore'
+import { pointsByStaff } from '@/lib/crm/pointsApi'
+import { hasCap } from '@/lib/crm/permissions'
 import { extras } from '@/lib/crm/memberFields'
 import { processUpload, putMedia, deleteMedia, keyFromUrl } from '@/lib/media'
 import { lastActiveMap, onlineStatus } from '@/lib/crm/workHours'
@@ -98,6 +100,22 @@ export async function listScores() {
     await requirePermission('staff', 'view')
     const ids = (await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true } })).map((s) => s.id)
     return { scores: await staffScores(ids) }
+}
+
+/**
+ * The small profile card shown over a member's picture, for everyone signed in: name, job, picture, points (month, total, rank of the month).
+ * The score is added only for people allowed to see the team.
+ */
+export async function listCards() {
+    const session = await requirePermission(null)
+    const staff = await prisma.crmStaff.findMany({ where: { active: true }, select: { id: true, firstName: true, lastName: true, email: true, profileImage: true, jobTitle: true } })
+    const ids = staff.map((s) => s.id)
+    const seeScores = hasCap(session.user.authority || [], 'staff', 'view')
+    const [points, scores, online] = await Promise.all([pointsByStaff().catch(() => ({})), seeScores ? staffScores(ids) : {}, onlineStatus(ids).catch(() => ({}))])
+    const ranked = ids.filter((id) => (points[id]?.month || 0) > 0).sort((a, b) => points[b].month - points[a].month)
+    const people = {}
+    for (const s of staff) people[s.id] = { name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.email || '', image: realPicture(s.profileImage), jobTitle: s.jobTitle || '', online: !!online[s.id]?.online, points: { month: points[s.id]?.month || 0, total: points[s.id]?.total || 0, rank: ranked.indexOf(s.id) + 1 || null } }
+    return { people, scores }
 }
 
 /** One member with their score and what they are working on (the staff profile page). */

@@ -6271,4 +6271,7 @@ export default {
     "Points for {name}": "Points pour {name}",
     "Other amount…": "Autre montant…",
     "Remove points…": "Retirer des points…",
+    "Score · last {d} days": "Score · {d} derniers jours",
+    "Nothing to measure yet": "Rien à mesurer pour l'instant",
+    "{n} open task(s)": "{n} tâche(s) ouverte(s)",
 }

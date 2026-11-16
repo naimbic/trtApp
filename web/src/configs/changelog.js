@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.258.0',
+        date: '2026-11-16',
+        title: 'A real profile card on team pictures, with points',
+        items: [
+            'Hovering a team member\'s picture now shows a clear card on a blurred glass background instead of one line of text: picture, name, job and an online dot.',
+            'Points on the card: the points of this month, the rank of the month and the total. Everyone sees these.',
+            'For people allowed to see the team: the score of the last 30 days with a bar for tasks completed, finished on time and time tracked, plus the open and late tasks.',
+        ],
+    },
+    {
         version: '0.257.1',
         date: '2026-11-16',
         title: 'Points: the star on the task board cards',

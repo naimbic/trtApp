@@ -6271,4 +6271,7 @@ export default {
     "Points for {name}": "{name} へのポイント",
     "Other amount…": "その他の数…",
     "Remove points…": "ポイントを減らす…",
+    "Score · last {d} days": "スコア · 過去{d}日間",
+    "Nothing to measure yet": "まだ測定するものがありません",
+    "{n} open task(s)": "未完了タスク {n} 件",
 }

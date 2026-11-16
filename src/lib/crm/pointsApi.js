@@ -159,3 +159,15 @@ export async function awardTaskOnTime(taskId) {
         }
     } catch (e) { console.error('[points] task in time', e?.message) }
 }
+
+/** id -> { month, total } of the points of every member (the profile card on the avatars). */
+export async function pointsByStaff() {
+    const [all, month] = await Promise.all([
+        prisma.crmPoint.groupBy({ by: ['staffId'], _sum: { points: true } }),
+        prisma.crmPoint.groupBy({ by: ['staffId'], where: { createdAt: { gte: monthStart() } }, _sum: { points: true } }),
+    ])
+    const out = {}
+    for (const r of all) out[r.staffId] = { total: r._sum.points || 0, month: 0 }
+    for (const r of month) (out[r.staffId] ||= { total: 0, month: 0 }).month = r._sum.points || 0
+    return out
+}

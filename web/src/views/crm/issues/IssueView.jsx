@@ -17,6 +17,7 @@ import { api, notify, useCan } from '../kit/api'
 import { initials } from '../tasks/shared'
 import { STATUS, PRIORITY, TYPE, StatusTag, PriorityTag, TypeLabel, eventText } from './shared'
 import { opts, pick } from './IssueDialogs'
+import GivePoints from '@/components/crm/GivePoints'
 import { tr } from '@/utils/t'
 import confirmDelete from '@/components/crm/useConfirm'
 
@@ -68,7 +69,7 @@ const IssueView = () => {
                     {titleEdit !== null ? (
                         <div className="mt-1 flex items-center gap-2"><Input autoFocus value={titleEdit} maxLength={200} onChange={(ev) => setTitleEdit(ev.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter' && titleEdit.trim()) { save({ title: titleEdit }); setTitleEdit(null) } if (ev.key === 'Escape') setTitleEdit(null) }} /><Button size="sm" variant="solid" icon={<TbCheck />} disabled={!titleEdit.trim()} onClick={() => { save({ title: titleEdit }); setTitleEdit(null) }} /><Button size="sm" icon={<TbX />} onClick={() => setTitleEdit(null)} /></div>
                     ) : (
-                        <h3 className="group mt-1 flex items-center gap-2 break-words">{issue.title}{e && <button type="button" className="text-base text-gray-300 hover:text-primary" title={tr('Rename')} onClick={() => setTitleEdit(issue.title)}><TbPencil /></button>}</h3>
+                        <h3 className="group mt-1 flex items-center gap-2 break-words">{issue.title}{e && <button type="button" className="text-base text-gray-300 hover:text-primary" title={tr('Rename')} onClick={() => setTitleEdit(issue.title)}><TbPencil /></button>}<GivePoints people={issue.assignees || []} relType="issue" relId={issue.id} link={`/crm/issues/${issue.id}`} reason={`${tr('Issue')}: ${issue.title || ''}`.slice(0, 120)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-gray-500 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-gray-700" /></h3>
                     )}
                 </div>
                 {can.delete && <Button size="sm" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDel(true)}>{tr('Delete')}</Button>}
@@ -94,7 +95,7 @@ const IssueView = () => {
                                         <p className="my-1 text-sm"><span className="font-semibold text-gray-900 dark:text-gray-100">{f.staff?.name || tr('Someone')}</span> {eventText(f.meta)} <span className="ml-1 text-xs text-gray-400" title={dayjs(f.createdAt).format('YYYY-MM-DD HH:mm')}>{dayjs(f.createdAt).format('DD MMM, HH:mm')}</span></p>
                                     ) : (
                                         <div className="my-1">
-                                            <p className="text-sm"><span className="font-semibold text-gray-900 dark:text-gray-100">{f.staff?.name || tr('Someone')}</span> <span className="ml-1 text-xs text-gray-400">{dayjs(f.createdAt).format('DD MMM, HH:mm')}</span>{(f.mine || can.delete) && <button type="button" className="ml-2 text-xs text-gray-300 hover:text-red-500" onClick={() => confirmDelete(tr('Delete this comment?'), () => delComment(f))} title={tr('Delete')}><TbTrash /></button>}</p>
+                                            <p className="text-sm"><span className="font-semibold text-gray-900 dark:text-gray-100">{f.staff?.name || tr('Someone')}</span> <span className="ml-1 text-xs text-gray-400">{dayjs(f.createdAt).format('DD MMM, HH:mm')}</span>{f.staff?.id && <span className="ml-1 inline-flex align-middle"><GivePoints people={[f.staff]} relType="issue_comment" relId={f.id} link={`/crm/issues/${issue.id}`} reason={String(f.body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)} /></span>}{(f.mine || can.delete) && <button type="button" className="ml-2 text-xs text-gray-300 hover:text-red-500" onClick={() => confirmDelete(tr('Delete this comment?'), () => delComment(f))} title={tr('Delete')}><TbTrash /></button>}</p>
                                             <div className="mt-1 rounded-xl bg-gray-50 px-3 py-2 text-sm dark:bg-gray-700/40"><RichView html={f.body} /></div>
                                         </div>
                                     )}

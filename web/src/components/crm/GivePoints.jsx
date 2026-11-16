@@ -1,23 +1,25 @@
-import { useEffect, useState } from 'react'
-import { TbStar, TbMinus, TbPlus } from 'react-icons/tb'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { TbStar, TbMinus, TbPlus, TbPencil } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import cn from '@/utils/classNames'
 import { api, notify, useCan } from '@/views/crm/kit/api'
 import useMe from '@/utils/hooks/useMe'
+import { mentionDirectory } from '@/utils/mentions'
 import { tr } from '@/utils/t'
 
 const QUICK = [1, 5, 10, 20]
 
 /** The popup: how many points, to whom (when several people are possible) and why. `manage` also allows removing points. */
-export const GivePointsDialog = ({ open, onClose, people = [], reason = '', relType, relId, link, manage, onGiven }) => {
-    const [n, setN] = useState(5)
-    const [minus, setMinus] = useState(false)
+export const GivePointsDialog = ({ open, onClose, people = [], reason = '', relType, relId, link, manage, onGiven, startMinus = false, startN = 5 }) => {
+    const [n, setN] = useState(startN)
+    const [minus, setMinus] = useState(startMinus)
     const [why, setWhy] = useState('')
     const [to, setTo] = useState([])
     const [busy, setBusy] = useState(false)
-    useEffect(() => { if (open) { setN(5); setMinus(false); setWhy(reason || ''); setTo(people.length === 1 ? [people[0].id] : []) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { if (open) { setN(startN); setMinus(startMinus); setWhy(reason || ''); setTo(people.length === 1 ? [people[0].id] : []) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
     const save = async () => {
         if (!to.length) return notify('warning', tr('Choose who gets the points'))
         setBusy(true)
@@ -60,18 +62,63 @@ export const GivePointsDialog = ({ open, onClose, people = [], reason = '', relT
  * The star button that rewards somebody for a message, a comment, a task… Shown only to people allowed to give points, and never for one's own work.
  * people: [{ id, name }] (the staff who did the thing). relType / relId / link say what is rewarded; reason pre-fills the "for what".
  */
-const GivePoints = ({ people = [], reason, relType, relId, link, className, label, onGiven }) => {
+const GivePoints = ({ people = [], anyone = false, reason, relType, relId, link, className, label, onGiven }) => {
     const can = useCan()
     const meId = useMe()?.staffId
-    const [open, setOpen] = useState(false)
+    const [pos, setPos] = useState(null) // the small menu under the star
+    const [dialog, setDialog] = useState(null) // { minus, n }: the full popup
+    const [busy, setBusy] = useState(false)
+    const btn = useRef(null)
+    const [all, setAll] = useState(null) // the whole team, when nobody in particular is known (`anyone`)
     const manage = can('points', 'manage_points')
+    const known = people.filter((p) => p?.id)
+    const open_ = !!(pos || dialog)
+    useEffect(() => { if (open_ && anyone && !known.length && !all) mentionDirectory().then((d) => setAll(d.staff || [])) }, [open_]) // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        if (!pos) return undefined
+        const away = (e) => { if (!btn.current?.contains(e.target) && !e.target.closest?.('[data-points-menu]')) setPos(null) }
+        const esc = (e) => { if (e.key === 'Escape') setPos(null) }
+        const gone = () => setPos(null)
+        document.addEventListener('pointerdown', away, true)
+        document.addEventListener('keydown', esc)
+        window.addEventListener('scroll', gone, true)
+        return () => { document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', esc); window.removeEventListener('scroll', gone, true) }
+    }, [pos])
     if (!(can('points', 'give') || manage)) return null
-    const list = people.filter((p) => p?.id && (manage || p.id !== meId))
-    if (!list.length) return null
+    const pickAny = anyone && !known.length
+    const list = (pickAny ? all || [] : known).filter((p) => p?.id && (manage || p.id !== meId))
+    if (!list.length && !pickAny) return null
+    const toggle = (e) => {
+        e.stopPropagation(); e.preventDefault()
+        if (pos) return setPos(null)
+        const r = btn.current.getBoundingClientRect()
+        const w = 208, h = manage ? 150 : 112
+        setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - w - 8)), top: r.bottom + h + 12 > window.innerHeight ? r.top - h - 6 : r.bottom + 6 })
+    }
+    // one person: the points go at once; several people: the popup asks who
+    const quick = async (q) => {
+        if (list.length !== 1) { setPos(null); return setDialog({ minus: false, n: q }) }
+        setBusy(true)
+        try {
+            await api('/api/crm/points', { method: 'POST', body: { staffIds: [list[0].id], points: q, reason, relType, relId, link } })
+            notify('success', tr('+{n} points for {name}', { n: q, name: list[0].name || '' }))
+            onGiven?.()
+        } catch (e) { notify('danger', e.message) } finally { setBusy(false); setPos(null) }
+    }
+    const row = 'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
     return (
         <>
-            <button type="button" title={tr('Give points')} aria-label={tr('Give points')} onClick={(e) => { e.stopPropagation(); setOpen(true) }} className={className || 'grid size-6 place-items-center rounded-md text-gray-500 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-gray-700'}><TbStar />{label && <span className="ml-1">{label}</span>}</button>
-            {open && <GivePointsDialog open onClose={() => setOpen(false)} people={list} reason={reason} relType={relType} relId={relId} link={link} manage={manage} onGiven={onGiven} />}
+            <button ref={btn} type="button" title={tr('Give points')} aria-label={tr('Give points')} aria-haspopup="menu" aria-expanded={!!pos} onClick={toggle} className={cn(className || 'grid size-6 place-items-center rounded-md text-gray-500 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-gray-700', pos && 'text-amber-500')}><TbStar />{label && <span className="ml-1">{label}</span>}</button>
+            {pos && createPortal(
+                <div data-points-menu role="menu" onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', left: pos.left, top: pos.top, zIndex: 100002, width: 208 }} className="rounded-xl border border-gray-200 bg-white p-2 shadow-2xl dark:border-gray-600 dark:bg-gray-800">
+                    <p className="mb-1.5 truncate px-1 text-xs font-semibold text-gray-500">{list.length === 1 ? tr('Points for {name}', { name: list[0].name || '' }) : tr('Give points')}</p>
+                    <div className="mb-1 grid grid-cols-4 gap-1">
+                        {QUICK.map((q) => <button key={q} type="button" role="menuitem" disabled={busy} onClick={() => quick(q)} className="h-8 rounded-lg border border-amber-200 bg-amber-50 text-sm font-bold text-amber-700 transition hover:border-amber-400 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">+{q}</button>)}
+                    </div>
+                    <button type="button" role="menuitem" className={row} onClick={() => { setPos(null); setDialog({ minus: false, n: 5 }) }}><TbPencil className="text-gray-400" />{tr('Other amount…')}</button>
+                    {manage && <button type="button" role="menuitem" className={cn(row, 'text-red-600')} onClick={() => { setPos(null); setDialog({ minus: true, n: 5 }) }}><TbMinus />{tr('Remove points…')}</button>}
+                </div>, document.body)}
+            {dialog && (!pickAny || all) && <GivePointsDialog open onClose={() => setDialog(null)} people={list} reason={reason} relType={relType} relId={relId} link={link} manage={manage} startMinus={dialog.minus} startN={dialog.n} onGiven={onGiven} />}
         </>
     )
 }

@@ -6267,4 +6267,8 @@ export default {
     "You already gave points for this": "لقد منحت نقاطًا لهذا من قبل",
     "These points were already paid": "هذه النقاط دُفعت من قبل",
     "That is too many points": "عدد النقاط كبير جدًا",
+    "+{n} points for {name}": "+{n} نقاط لـ {name}",
+    "Points for {name}": "نقاط لـ {name}",
+    "Other amount…": "مبلغ آخر…",
+    "Remove points…": "إزالة نقاط…",
 }

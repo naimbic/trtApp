@@ -48,7 +48,7 @@ const Comments = ({ noteId }) => {
                         {edit === c.id
                             ? <CommentEdit initial={c.body} onCancel={() => setEdit(null)} onSave={async (b) => { try { await api(`/api/crm/notes/${noteId}/comments`, { method: 'PUT', body: { commentId: c.id, body: b } }); setEdit(null); load() } catch (e) { notify('danger', e.message) } }} />
                             : <div className="mt-0.5">{looksLikeHtml(c.body) ? <RichView html={c.body} /> : <p className="whitespace-pre-line">{c.body}</p>}</div>}
-                        {edit !== c.id && <CommentTools onReply={() => setReply(c)} onEdit={c.mine ? () => setEdit(c.id) : undefined} onDelete={c.canDelete ? async () => { try { await api(`/api/crm/notes/${noteId}/comments?commentId=${c.id}`, { method: 'DELETE' }); load(); notesChanged() } catch (e) { notify('danger', e.message) } } : undefined} />}
+                        {edit !== c.id && <CommentTools award={c.authorId ? { people: [{ id: c.authorId, name: c.authorName }], relType: 'note_comment', relId: c.id, link: '/crm/notes', reason: String(c.body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) } : null} onReply={() => setReply(c)} onEdit={c.mine ? () => setEdit(c.id) : undefined} onDelete={c.canDelete ? async () => { try { await api(`/api/crm/notes/${noteId}/comments?commentId=${c.id}`, { method: 'DELETE' }); load(); notesChanged() } catch (e) { notify('danger', e.message) } } : undefined} />}
                     </div>
                 )} />
                 {list && !list.length && <p className="py-2 text-center text-xs text-gray-400">{tr('No comments yet.')}</p>}

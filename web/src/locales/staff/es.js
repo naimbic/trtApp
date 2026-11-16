@@ -6267,4 +6267,8 @@ export default {
     "You already gave points for this": "Ya diste puntos por esto",
     "These points were already paid": "Estos puntos ya se pagaron",
     "That is too many points": "Son demasiados puntos",
+    "+{n} points for {name}": "+{n} puntos para {name}",
+    "Points for {name}": "Puntos para {name}",
+    "Other amount…": "Otra cantidad…",
+    "Remove points…": "Quitar puntos…",
 }

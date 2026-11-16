@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.257.0',
+        date: '2026-11-16',
+        title: 'Points: a star with a quick menu on comments, tasks, ideas, articles, tickets and issues',
+        items: [
+            'The star now opens a small menu: +1, +5, +10 or +20 points in one click, "Other amount…" to write a note, and "Remove points…" for managers of the points.',
+            'New places for the star: every task row of the task lists, client ideas and their discussion, client reports and their discussion, client requests, comments on notes, replies of the team on tickets, issues and their comments, and help-center articles.',
+            'Help-center articles now remember who wrote them, so the points go to the author; on older articles you choose the person.',
+        ],
+    },
+    {
         version: '0.256.0',
         date: '2026-11-16',
         title: 'Points: reward good work, paid with the salary as a prime',

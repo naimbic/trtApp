@@ -175,7 +175,7 @@ export async function uploadNoteFile(file, voice = false) {
 const commentOut = (c, all, g, ownerId) => {
     const r = c.replyToId ? all.find((x) => x.id === c.replyToId) : null
     const mine = !!c.authorId && c.authorId === g.staffId
-    return { id: c.id, authorName: c.authorName || '', body: c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine, canDelete: mine || ownerId === g.staffId || g.admin, replyTo: r ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null }
+    return { id: c.id, authorId: c.authorId || null, authorName: c.authorName || '', body: c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine, canDelete: mine || ownerId === g.staffId || g.admin, replyTo: r ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null }
 }
 async function noteFor(g, id) {
     const n = oid(id) && (await prisma.crmQuickNote.findFirst({ where: { id, ...readable(g) } }))

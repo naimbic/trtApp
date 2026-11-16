@@ -1,4 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. */
+import GivePoints from '@/components/crm/GivePoints'
 import { useMemo } from 'react'
 import { plainOf } from '../notes/noteKit'
 import dayjs from 'dayjs'
@@ -42,7 +43,7 @@ const Row = ({ t, onOpen, selected, onSelect, picking }) => {
                 </div>
             </div>
             <span className="tpill hidden shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold sm:inline-flex" style={statusPillStyle(t.status)}><i className="size-1.5 rounded-full" style={{ background: st.color }} />{st.label}</span>
-            <div className="shrink-0"><People list={t.assignees} size={30} /></div>
+            <div className="flex shrink-0 items-center gap-1.5"><span className="opacity-0 transition focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"><GivePoints people={t.assignees} relType="task" relId={t.id} link={`/crm/tasks/${t.id}`} reason={`${tr('Task')}: ${t.name || ''}`.slice(0, 120)} className="grid size-8 place-items-center rounded-full text-lg text-gray-500 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-gray-700" /></span><People list={t.assignees} size={30} /></div>
         </div>
     )
 }

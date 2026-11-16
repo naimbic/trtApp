@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import GivePoints from '@/components/crm/GivePoints'
 import StaffRing from '@/components/crm/StaffRing'
 import { Link, useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
@@ -39,7 +40,7 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, selected,
     const done = t.status === 5
     const who = t.assignees[0]
     return (
-        <Tr ref={innerRef} {...rest} className={`rowsel ${selected ? 'is-sel' : ''} ${rest.className || ''}`}>
+        <Tr ref={innerRef} {...rest} className={`group/row rowsel ${selected ? 'is-sel' : ''} ${rest.className || ''}`}>
             <Td className="w-[64px] text-lg"><span className="flex items-center gap-1">{dragHandle}</span></Td>
             <Td className="w-[40px]">
                 <button type="button" className="cursor-pointer pt-1 text-2xl" disabled={!canEdit || t.canFinish === false} title={t.canFinish === false ? tr("Only the people assigned to this task, or who created it, can change its status") : undefined} onClick={() => onToggle(t)}>
@@ -65,6 +66,7 @@ const TaskRow = ({ t, dragHandle, onToggle, onOpen, canEdit, innerRef, selected,
                         <StaffRing id={who.id} name={who.name} size={28}><Avatar size={28} shape="circle" src={who.image || undefined}>{initials(who.name)}</Avatar></StaffRing>
                         <span className="heading-text truncate font-bold">{who.name}</span>
                         {t.assignees.length > 1 && <span className="text-xs text-gray-400">+{t.assignees.length - 1}</span>}
+                        <span className="ml-auto opacity-0 transition focus-within:opacity-100 group-hover/row:opacity-100 [@media(hover:none)]:opacity-100"><GivePoints people={t.assignees} relType="task" relId={t.id} link={`/crm/tasks/${t.id}`} reason={`${tr('Task')}: ${t.name || ''}`.slice(0, 120)} /></span>
                     </div>
                 ) : '-'}
             </Td>

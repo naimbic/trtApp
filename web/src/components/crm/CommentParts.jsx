@@ -15,9 +15,10 @@ import confirmDelete from '@/components/crm/useConfirm'
 import GivePoints from '@/components/crm/GivePoints'
 
 /** Reply, edit and delete icons that appear when the pointer is over a comment (the parent needs the classes "group relative"). */
-export const CommentTools = ({ onReply, onEdit, onDelete, share, inline = false }) => (
+export const CommentTools = ({ onReply, onEdit, onDelete, share, award, inline = false }) => (
     <div className={inline ? 'flex gap-0.5' : 'absolute right-1.5 top-1.5 flex gap-0.5 rounded-lg bg-white/90 p-0.5 opacity-0 shadow-sm transition focus-within:opacity-100 group-hover:opacity-100 dark:bg-gray-800/90'}>
         {share && <ShareButton url={share.url} title={share.title} text={share.text} />}
+        {award && <GivePoints {...award} />}
         {onReply && <button type="button" title={tr('Reply')} aria-label={tr('Reply')} onClick={onReply} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbArrowBackUp /></button>}
         {onEdit && <button type="button" title={tr('Edit')} aria-label={tr('Edit')} onClick={onEdit} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700"><TbPencil /></button>}
         {onDelete && <button type="button" title={tr('Delete')} aria-label={tr('Delete')} onClick={() => confirmDelete(tr('Delete this comment?'), onDelete, { text: tr('The comment is removed for everyone.') })} className="grid size-6 place-items-center rounded-md text-gray-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-gray-700"><TbTrash /></button>}

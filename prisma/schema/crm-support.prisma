@@ -248,6 +248,8 @@ model CrmKnowledgeBaseArticle {
   pinned       Boolean               @default(false)
   /// staff who starred it as a favorite (each person has their own)
   favoriteOf   String[]              @db.ObjectId
+  /// the member who wrote the article (empty on old articles)
+  authorId     String?               @db.ObjectId
   feedback     CrmKnowledgeBaseArticleFeedback[]
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt

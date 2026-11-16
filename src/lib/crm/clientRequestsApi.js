@@ -184,7 +184,7 @@ export const commentOut = (c, all, { me = null, canDelete = false, forClient = f
     const own = forClient ? c.authorKind === 'client' : c.authorKind === 'staff' && !!me && c.authorId === me
     const sys = c.authorKind === 'system' ? c.body.split(':') : null
     return {
-        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own, ...(sys ? {} : extrasOut(c)),
+        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own, ...(!forClient && c.authorKind === 'staff' ? { authorId: c.authorId || null } : {}), ...(sys ? {} : extrasOut(c)),
         system: sys ? { from: sys[1], to: sys[2] } : null,
         replyTo: r && !sys ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,
         ...(forClient ? {} : { internal: !!c.internal, canDelete: own || canDelete }),

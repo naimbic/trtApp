@@ -20,6 +20,7 @@ import MediaPicker from '@/components/crm/MediaPicker'
 import { api, notify, upload, formatBytes, useCan } from '../kit/api'
 import { plainOf } from '@/components/crm/ShareButton'
 import { SystemLine } from './ClientRequests'
+import GivePoints from '@/components/crm/GivePoints'
 import { tr } from '@/utils/t'
 
 const KIND_ICON = { report: <TbChartBar />, strategy: <TbCompass /> }
@@ -102,6 +103,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                 <div className="mb-3 flex shrink-0 flex-wrap items-center gap-2 pr-10">
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-xl text-lg', KIND_TONE[v.kind])}>{KIND_ICON[v.kind]}</span>
                     <h5 className="mr-auto">{isNew ? (v.kind === 'strategy' ? tr('New strategy') : tr('New report')) : <>{report.code} <span className="font-normal text-gray-500">· {tr(data.kinds[v.kind])}</span></>}</h5>
+                    {!isNew && <GivePoints people={[...new Set([report.createdBy, ...(report.assigneeIds || [])].filter(Boolean))].map((sid) => ({ id: sid, name: data.staff.find((s) => s.id === sid)?.name || '' }))} relType="report" relId={report.id} link={`/crm/clients/${clientId}?tab=reports&report=${report.id}`} reason={`${report.code || ''} ${report.title || ''}`.trim().slice(0, 120)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-gray-500 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-gray-700" />}
                     <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-white" style={{ background: st?.color }}>{tr(st?.name || '')}</span>
                 </div>
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
@@ -181,6 +183,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                                                     : <><RichView html={c.body} /><CommentFiles attachments={c.attachments} links={c.links} /></>}
                                             {editingId !== c.id && can.edit && (
                                                 <CommentFoot
+                                                    award={c.authorId ? { people: [{ id: c.authorId, name: c.authorName }], relType: 'report_comment', relId: c.id, link: `/crm/clients/${clientId}?tab=reports&report=${report.id}`, reason: plainOf(c.body).slice(0, 120) } : null}
                                                     remind={{ relType: 'customer', relId: clientId, tab: `reports&report=${report.id}`, note: plainOf(c.body).slice(0, 140) }}
                                                     reactions={c.reactions}
                                                     onReact={(emoji) => react(c, emoji)}

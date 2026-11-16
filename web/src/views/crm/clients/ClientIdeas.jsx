@@ -19,6 +19,7 @@ import cn from '@/utils/classNames'
 import { Link } from 'react-router'
 import { api, notify } from '../kit/api'
 import { useLocaleStore } from '@/store/localeStore'
+import GivePoints from '@/components/crm/GivePoints'
 import { tr } from '@/utils/t'
 
 const L = ({ children }) => <label className="mb-1 block text-xs font-semibold text-gray-500">{children}</label>
@@ -123,6 +124,7 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
                 <div className="mb-3 flex shrink-0 flex-wrap items-center gap-2 pr-10">
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500 text-lg text-white"><TbBulb /></span>
                     <h5 className="mr-auto">{isNew ? tr("New idea") : tr("Idea")}</h5>
+                    {!isNew && <GivePoints people={[...new Set([idea.addedFrom, ...(idea.assigneeIds || [])].filter(Boolean))].map((sid) => ({ id: sid, name: data.staff.find((s) => s.id === sid)?.name || '' }))} relType="idea" relId={idea.id} link={`/crm/clients/${clientId}?tab=ideas&idea=${idea.id}`} reason={`${tr('Idea')}: ${idea.title || ''}`.slice(0, 120)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-gray-500 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-gray-700" />}
                     <span className={cn('flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold text-white', STATUS[v.status]?.[1])}>{tr(STATUS[v.status]?.[0])}</span>
                 </div>
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
@@ -180,6 +182,7 @@ const IdeaDialog = ({ idea, data, clientId, onClose, onChanged }) => {
                                                     : <RichView html={c.body} />}
                                                 {editingId !== c.id && can.edit && (
                                                     <CommentFoot
+                                                        award={c.authorId ? { people: [{ id: c.authorId, name: c.authorName }], relType: 'idea_comment', relId: c.id, link: `/crm/clients/${clientId}?tab=ideas&idea=${idea.id}`, reason: plainOf(c.body).slice(0, 120) } : null}
                                                         remind={{ relType: 'customer', relId: clientId, tab: `ideas&idea=${idea.id}`, note: plainOf(c.body).slice(0, 140) }}
                                                         reactions={c.reactions}
                                                         onReact={(emoji) => react(c, emoji)}

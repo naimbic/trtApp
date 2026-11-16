@@ -6267,4 +6267,8 @@ export default {
     "You already gave points for this": "これにはすでにポイントを付与しました",
     "These points were already paid": "このポイントはすでに支払い済みです",
     "That is too many points": "ポイントが多すぎます",
+    "+{n} points for {name}": "{name} に +{n} ポイント",
+    "Points for {name}": "{name} へのポイント",
+    "Other amount…": "その他の数…",
+    "Remove points…": "ポイントを減らす…",
 }

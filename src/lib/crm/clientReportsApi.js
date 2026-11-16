@@ -195,7 +195,7 @@ const commentOut = (c, all, { me = null, canDelete = false, people = {} } = {}) 
     const own = c.authorKind === 'staff' && !!me && c.authorId === me
     const sys = c.authorKind === 'system' ? c.body.split(':') : null
     return {
-        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own, internal: !!c.internal, canDelete: own || canDelete, ...(sys ? {} : extrasOut(c)),
+        id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: sys ? '' : c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own, authorId: c.authorKind === 'staff' ? c.authorId || null : null, internal: !!c.internal, canDelete: own || canDelete, ...(sys ? {} : extrasOut(c)),
         reactions: sys ? [] : Object.entries(reactionsOf(c)).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!me && ids.includes(me), names: ids.filter((i) => i !== me).map((i) => people[i]).filter(Boolean) })).filter((r) => r.count),
         system: sys ? { from: sys[1], to: sys[2] } : null,
         replyTo: r && !sys ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,

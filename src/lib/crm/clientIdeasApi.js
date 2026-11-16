@@ -42,7 +42,7 @@ async function clientOf(g, clientId) {
 
 const shape = (i, extra = {}) => ({
     id: i.id, clientId: i.clientId, title: i.title, body: i.body || '', category: i.category, status: i.status, visible: !!i.visible, priority: i.priority, impact: i.impact, effort: i.effort,
-    gain: i.gain || '', price: i.price ?? null, offer: i.offer || null, totals: i.offer ? offerTotals(i.offer) : null, currencyId: i.currencyId || null, dueDate: i.dueDate, source: i.source, sources: i.sources || [], tags: i.tags || [], assigneeIds: i.assigneeIds || [],
+    gain: i.gain || '', price: i.price ?? null, offer: i.offer || null, totals: i.offer ? offerTotals(i.offer) : null, currencyId: i.currencyId || null, dueDate: i.dueDate, source: i.source, sources: i.sources || [], tags: i.tags || [], assigneeIds: i.assigneeIds || [], addedFrom: i.addedFrom || null,
     answer: i.answer || null, answeredAt: i.answeredAt, answeredBy: i.answeredBy || null, position: i.position, taskId: i.taskId || null, proposedAt: i.proposedAt, createdAt: i.createdAt, updatedAt: i.updatedAt, ...extra,
 })
 
@@ -182,7 +182,7 @@ export const commentOut = (c, all, { me = null, canDelete = false, forClient = f
     return {
         id: c.id, authorKind: c.authorKind, authorName: c.authorName || '', body: c.body, createdAt: c.createdAt, edited: !!c.editedAt, mine: own,
         replyTo: r ? { id: r.id, name: r.authorName || '', text: plainText(r.body).replace(/\s+/g, ' ').slice(0, 120) } : null,
-        ...(forClient ? {} : { internal: !!c.internal, canDelete: own || canDelete, reactions: Object.entries(reactionsOf(c)).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!me && ids.includes(me), names: ids.filter((i) => i !== me).map((i) => people[i]).filter(Boolean) })).filter((r) => r.count) }),
+        ...(forClient ? {} : { authorId: c.authorKind === 'staff' ? c.authorId || null : null, internal: !!c.internal, canDelete: own || canDelete, reactions: Object.entries(reactionsOf(c)).map(([emoji, ids]) => ({ emoji, count: ids.length, mine: !!me && ids.includes(me), names: ids.filter((i) => i !== me).map((i) => people[i]).filter(Boolean) })).filter((r) => r.count) }),
     }
 }
 

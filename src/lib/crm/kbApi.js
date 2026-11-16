@@ -96,7 +96,7 @@ export async function getArticle(id, { raw = false } = {}) {
     const comments = await listComments(id, c)
     return {
         comments,
-        article: { id: a.id, subject: a.subject, pinned: !!a.pinned, favorite: !!c.staffId && (a.favoriteOf || []).includes(c.staffId), groupId: a.groupId, group: group ? { id: group.id, name: group.name, color: group.color } : null, html: raw ? a.description || '' : body.html, active: a.active, staffOnly: a.staffArticle, minutes: readingTime(a.description), views: v[id] || 0, helpful: f[id]?.yes || 0, notHelpful: f[id]?.no || 0, createdAt: a.createdAt, updatedAt: a.updatedAt },
+        article: { id: a.id, subject: a.subject, pinned: !!a.pinned, favorite: !!c.staffId && (a.favoriteOf || []).includes(c.staffId), groupId: a.groupId, group: group ? { id: group.id, name: group.name, color: group.color } : null, html: raw ? a.description || '' : body.html, active: a.active, staffOnly: a.staffArticle, minutes: readingTime(a.description), views: v[id] || 0, helpful: f[id]?.yes || 0, notHelpful: f[id]?.no || 0, createdAt: a.createdAt, updatedAt: a.updatedAt, author: a.authorId ? (await staffNames([a.authorId]))[a.authorId] || null : null },
         toc: body.toc, related: related.map((r) => ({ id: r.id, subject: r.subject })), can: { edit: c.can('edit'), delete: c.can('delete'), comment: !!c.staffId },
     }
 }
@@ -115,7 +115,7 @@ export async function saveArticle(body, id) {
         return { success: true, id }
     }
     const last = await prisma.crmKnowledgeBaseArticle.findFirst({ orderBy: { articleOrder: 'desc' }, select: { articleOrder: true } })
-    const a = await prisma.crmKnowledgeBaseArticle.create({ data: { ...data, articleOrder: (last?.articleOrder || 0) + 1 } })
+    const a = await prisma.crmKnowledgeBaseArticle.create({ data: { ...data, authorId: c.staffId || undefined, articleOrder: (last?.articleOrder || 0) + 1 } })
     await notifyNewMentions({ by: { staffId: c.staffId, name: c.session.user.name }, text: data.description, prev: '', link: `/crm/knowledge-base/article/${a.id}`, subject })
     return { success: true, id: a.id }
 }

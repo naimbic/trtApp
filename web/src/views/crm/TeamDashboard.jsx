@@ -142,7 +142,7 @@ const TeamDashboard = () => {
                                 <DonutChart data={leads.team.byStatus} height={230} title={tr('Open leads')} />
                             </Panel>
                             <Panel title={tr('Leads by owner')} subtitle={tr('{n} without an owner', { n: leads.team.unassigned })}>
-                                {leads.team.byOwner.length ? <ul className="divide-y divide-gray-100 dark:divide-gray-700">{leads.team.byOwner.map((o, i) => <li key={i} className="flex items-center gap-3 py-2.5 text-sm"><Avatar size={28} shape="circle" src={o.person?.image || undefined}>{o.person ? initials(o.person.name) : '?'}</Avatar><Who id={o.person?.id} person={o.person} className="flex-1 truncate font-semibold">{o.person?.name || tr('Unassigned')}</Who><b>{o.n}</b></li>)}</ul> : <Empty>{tr('No lead yet.')}</Empty>}
+                                {leads.team.byOwner.length ? <ul className="divide-y divide-gray-100 dark:divide-gray-700">{leads.team.byOwner.map((o, i) => <li key={i} className="flex items-center gap-3 py-2.5 text-sm"><StaffRing id={o.person?.id} name={o.person?.name} size={28}><Avatar size={28} shape="circle" src={o.person?.image || undefined}>{o.person ? initials(o.person.name) : '?'}</Avatar></StaffRing><Who id={o.person?.id} person={o.person} className="flex-1 truncate font-semibold">{o.person?.name || tr('Unassigned')}</Who><b>{o.n}</b></li>)}</ul> : <Empty>{tr('No lead yet.')}</Empty>}
                             </Panel>
                         </div>
                     )}

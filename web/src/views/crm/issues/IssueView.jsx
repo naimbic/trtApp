@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
 import { useNavigate, useParams } from 'react-router'
@@ -23,7 +24,7 @@ import confirmDelete from '@/components/crm/useConfirm'
 
 const portal = { menuPortalTarget: document.body, menuPosition: 'fixed', styles: { menuPortal: (b) => ({ ...b, zIndex: 10000 }) } }
 const Field = ({ label, children }) => <div className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-3 py-2"><span className="text-sm text-gray-500">{label}</span><div className="min-w-0">{children}</div></div>
-const Who = ({ p, size = 24 }) => (p ? <span className="inline-flex items-center gap-2"><Avatar size={size} shape="circle" src={p.image || undefined}>{initials(p.name)}</Avatar><span className="truncate text-sm">{p.name}</span></span> : <span className="text-gray-300">—</span>)
+const Who = ({ p, size = 24 }) => (p ? <span className="inline-flex items-center gap-2"><StaffTip id={p.id} name={p.name}><Avatar size={size} shape="circle" src={p.image || undefined}>{initials(p.name)}</Avatar></StaffTip><span className="truncate text-sm">{p.name}</span></span> : <span className="text-gray-300">—</span>)
 
 const IssueView = () => {
     const seeActivity = useCan()('activity_tabs', 'act_issues') // Roles > Activity: without it only the comments show
@@ -90,7 +91,7 @@ const IssueView = () => {
                         <h5 className="mb-4 flex flex-wrap items-center gap-2"><TbHistory />{seeActivity ? tr('Activity') : tr('Comments')}</h5>
                         <Timeline>
                             {feed.map((f) => (
-                                <Timeline.Item key={f.id} media={<Avatar size={25} shape="circle" src={f.staff?.image || undefined}>{initials(f.staff?.name || '?')}</Avatar>}>
+                                <Timeline.Item key={f.id} media={<StaffTip id={f.staff?.id} name={f.staff?.name}><Avatar size={25} shape="circle" src={f.staff?.image || undefined}>{initials(f.staff?.name || '?')}</Avatar></StaffTip>}>
                                     {f.kind === 'event' ? (
                                         <p className="my-1 text-sm"><span className="font-semibold text-gray-900 dark:text-gray-100">{f.staff?.name || tr('Someone')}</span> {eventText(f.meta)} <span className="ml-1 text-xs text-gray-400" title={dayjs(f.createdAt).format('YYYY-MM-DD HH:mm')}>{dayjs(f.createdAt).format('DD MMM, HH:mm')}</span></p>
                                     ) : (

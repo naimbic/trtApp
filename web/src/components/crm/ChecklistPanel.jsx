@@ -1,5 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import { createPortal } from 'react-dom'
 import dayjs from 'dayjs'
 import { TbExternalLink, TbTrash, TbPencil, TbX, TbPlus, TbCalendar, TbBell, TbBellOff, TbUserPlus, TbSortAscending, TbEyeOff, TbEye, TbCheck, TbChecklist, TbMessageCircle, TbPaperclip, TbSubtask } from 'react-icons/tb'
@@ -66,7 +67,7 @@ const DateChip = ({ value, done, onChange, disabled, empty }) => {
     )
 }
 
-const Person = ({ p, size = 24 }) => <Avatar size={size} shape="circle" src={p.image || undefined} title={p.name} className="ring-2 ring-white dark:ring-gray-800">{ini(p.name)}</Avatar>
+const Person = ({ p, size = 24 }) => <StaffTip id={p.id} name={p.name}><Avatar size={size} shape="circle" src={p.image || undefined} className="ring-2 ring-white dark:ring-gray-800">{ini(p.name)}</Avatar></StaffTip>
 
 /** Give a step to one or several team members: a button with their faces opens a list that stays open while you tick people. */
 const PeoplePicker = ({ staff, value = [], onChange, onToggle, disabled }) => {

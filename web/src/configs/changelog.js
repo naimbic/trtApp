@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.259.0',
+        date: '2026-11-16',
+        title: 'Notifications grouped and shorter, profile card you can click',
+        items: [
+            'Notifications are grouped: a mention, comments and steps on the same task, lead, ticket or project are now one line with a counter; open it to see each one. Reading or opening the group reads them all.',
+            'Shorter wording: the person first as "Chaymae.C", then what they did and on what ("Chaymae.C commented · task name"), with the comment itself underneath. The name is no longer repeated.',
+            'The profile card on team pictures can be clicked: move the mouse onto it (it no longer closes on the way) and click to open the full profile.',
+            'The card replaces the plain black name tooltip on more team pictures: avatar groups on tasks and projects, checklist people, calendar, activity, points, leave, tickets, issues, project team and the team list.',
+        ],
+    },
+    {
         version: '0.258.0',
         date: '2026-11-16',
         title: 'A real profile card on team pictures, with points',

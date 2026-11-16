@@ -1,5 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import dayjs from 'dayjs'
 import { TbCheck, TbChevronDown, TbChevronLeft, TbChevronRight, TbPlus, TbTrash, TbX } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
@@ -38,7 +39,7 @@ const Cell = ({ value, type = 'text', disabled, placeholder, onCommit, className
 
 const Who = ({ p }) => (
     <span className="flex min-w-0 items-center gap-2">
-        <Avatar size={24} shape="circle" src={p.image || undefined}>{(p.name || '?').slice(0, 1)}</Avatar>
+        <StaffTip id={p.id} name={p.name}><Avatar size={24} shape="circle" src={p.image || undefined}>{(p.name || '?').slice(0, 1)}</Avatar></StaffTip>
         <span className="truncate text-sm font-semibold">{p.name}</span>
     </span>
 )

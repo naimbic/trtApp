@@ -4,7 +4,7 @@ import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
 import { plainOf } from '@/components/crm/ShareButton'
 import { CommentFoot, CommentThread, startReply, CommentEdit, ReplyQuote, ReplyingTo } from '@/components/crm/CommentParts'
-import StaffRing from '@/components/crm/StaffRing'
+import StaffRing, { StaffTip } from '@/components/crm/StaffRing'
 import { Link, useNavigate, useParams } from 'react-router'
 import dayjs from 'dayjs'
 import { TbHierarchy2, TbBookmark, TbArrowLeft, TbTag, TbUser, TbCircleDashed, TbCalendarDue, TbFlag, TbBriefcase, TbCalendar, TbTrash, TbPencil, TbPlayerPlay, TbPlayerStop, TbCheck, TbX, TbMessage, TbFile, TbClock, TbPlus, TbListCheck } from 'react-icons/tb'
@@ -224,7 +224,7 @@ const TaskPage = () => {
                     <h5 className="mb-6">{tr('Activity')}</h5>
                     <Timeline>
                         {d.activity.map((a, i) => (
-                            <Timeline.Item key={`${a.type}${i}`} media={<Avatar size={25} shape="circle" src={a.staff?.image || undefined} className="bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-100">{a.staff ? initials(a.staff.name) : activityIcon[a.type]}</Avatar>}>
+                            <Timeline.Item key={`${a.type}${i}`} media={<StaffTip id={a.staff?.id} name={a.staff?.name}><Avatar size={25} shape="circle" src={a.staff?.image || undefined} className="bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-100">{a.staff ? initials(a.staff.name) : activityIcon[a.type]}</Avatar></StaffTip>}>
                                 <div className="mt-0.5">
                                     <div className="text-sm font-semibold heading-text">{a.staff?.name || tr('Someone')}</div>
                                     <div className="text-xs text-gray-400">{dayjs(a.at).format('DD MMM, HH:mm')}</div>

@@ -12,15 +12,29 @@ const reminderBase = (r) => ({ my_space: `/crm/chat?tab=myspace&space=${r.relId}
 const STORED_KIND = { leave: 'team', mention: 'mention', 'note-reminder': 'reminder', 'proposal-expired': 'reminder', 'ticket-reminder': 'reminder', 'event-reminder': 'reminder', appointment: 'calendar', 'recap-task': 'task', 'note-shared': 'note', 'client-request': 'request', 'client-idea': 'idea', 'record-reminder': 'reminder', 'signup-request': 'team', growth: 'grow', 'grow-task': 'grow', 'grow-ideas': 'grow', 'grow-assigned': 'grow' }
 const kindOfStored = (d) => (String(d || '').startsWith('comment|') ? 'comment' : String(d || '').startsWith('assign|') ? 'task' : STORED_KIND[d] || 'other')
 const TONE_OF = { reminder: 'amber', mention: 'amber', request: 'purple', idea: 'blue', note: 'blue', team: 'amber', grow: 'green', calendar: 'blue' }
-/** The words of a stored notification: who did what. */
+/** The words of a stored notification: who did what. `act` names what a colleague did (the app writes it short: "Chaymae.C commented"), `subject` the record it was done on. */
 function storedWords(m, kind) {
     const from = m.fromFullName || ''
     const d = String(m.additionalData || '')
-    if (d === 'mention') return [`${from || 'A colleague'} mentioned you`, m.description]
-    if (kind === 'comment') return [`${from || 'A colleague'} commented on “${d.slice(8)}”`, m.description]
-    if (d.startsWith('assign|')) return [`${from || 'A colleague'} gave you a checklist step on “${d.slice(7)}”`, m.description]
-    if (d === 'note-shared') return [`${from || 'A colleague'} ${m.description || 'shared a note with you'}`, '']
-    return [m.description || 'Notification', from && !/^(Grow|Appointments|⏰ Reminder)$/.test(from) ? from : '']
+    if (d === 'mention') return [`${from || 'A colleague'} mentioned you`, m.description, 'mention', '']
+    if (kind === 'comment') return [`${from || 'A colleague'} commented on “${d.slice(8)}”`, m.description, 'comment', d.slice(8)]
+    if (d.startsWith('assign|')) return [`${from || 'A colleague'} gave you a checklist step on “${d.slice(7)}”`, m.description, 'step', d.slice(7)]
+    if (d === 'note-shared') return [`${from || 'A colleague'} ${m.description || 'shared a note with you'}`, String(m.description || '').replace(/^shared a note with you:?\s*/i, ''), 'note', '']
+    return [m.description || 'Notification', from && !/^(Grow|Appointments|⏰ Reminder)$/.test(from) ? from : '', '', '']
+}
+/** The record a link opens: { type, id } for a task, lead, ticket or project. */
+const recordOf = (link) => {
+    const m = /^\/crm\/(tasks-board|tasks|leads|tickets|projects)(?:\/([a-f0-9]{24}))?(?:\?.*?\btask=([a-f0-9]{24}))?/i.exec(String(link || ''))
+    const id = m && (m[2] || m[3])
+    return id ? { type: m[1].startsWith('tasks') ? 'task' : m[1].slice(0, -1), id } : null
+}
+/** Names every item after the record it is about (the task, lead, ticket or project its link opens), so the app can put them together. */
+async function nameRecords(feed) {
+    const want = { task: new Set(), lead: new Set(), ticket: new Set(), project: new Set() }
+    for (const x of feed) { const r = recordOf(x.link); if (r) { x.rec = `${r.type}:${r.id}`; want[r.type].add(r.id) } }
+    const get = async (type, model, field) => (want[type].size ? (await prisma[model].findMany({ where: { id: { in: [...want[type]] } }, select: { id: true, [field]: true } }).catch(() => [])).map((r) => [`${type}:${r.id}`, r[field] || '']) : [])
+    const names = Object.fromEntries([...(await get('task', 'crmTask', 'name')), ...(await get('lead', 'crmLead', 'name')), ...(await get('ticket', 'crmTicket', 'subject')), ...(await get('project', 'crmProject', 'name'))])
+    for (const x of feed) if (x.rec && names[x.rec]) x.subject = names[x.rec]
 }
 const strip = (h) => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 
@@ -53,8 +67,8 @@ export async function notificationFeed({ days } = {}) {
         const ms = await prisma.crmNotification.findMany({ where: { toUserId: staffId, OR: [{ isRead: false }, { createdAt: { gte: since(back) } }] }, orderBy: { createdAt: 'desc' }, take: back > 14 ? 600 : 120 })
         for (const m of ms) {
             const kind = kindOfStored(m.additionalData)
-            const [title, detail] = storedWords(m, kind)
-            stored.push({ id: `n:${m.id}`, kind, tone: TONE_OF[kind] || 'blue', title, detail: detail || '', date: m.createdAt, link: m.link || null, read: !!m.isRead, from: m.fromFullName || '' })
+            const [title, detail, act, subject] = storedWords(m, kind)
+            stored.push({ id: `n:${m.id}`, kind, tone: TONE_OF[kind] || 'blue', title, detail: detail || '', date: m.createdAt, link: m.link || null, read: !!m.isRead, from: m.fromFullName || '', act, subject })
         }
     }
     if (staffId) { // my checklist steps: overdue, due today, or a reminder that has come
@@ -129,6 +143,7 @@ export async function notificationFeed({ days } = {}) {
     const state = Object.fromEntries(states.map((x) => [x.key, x.read]))
     const feed = [...items.map((x) => ({ ...x, read: x.id in state ? state[x.id] : +new Date(x.date) <= seen })), ...stored]
         .sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, back > 14 ? 700 : 150)
+    await nameRecords(feed)
     const unread = feed.filter((x) => !x.read)
     const byKind = {}
     for (const x of unread) byKind[x.kind] = (byKind[x.kind] || 0) + 1

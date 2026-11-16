@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import FileSourceButtons, { linkHtml } from '@/components/crm/FileSourceButtons'
 import useMe from '@/utils/hooks/useMe'
 import { defaultRemindAt } from '@/utils/remind'
@@ -108,7 +109,7 @@ const TicketView = () => {
                 <div className="min-w-0 flex-1 space-y-4">
                     {thread.map((m) => (
                         <div key={m.id} className={cn('flex gap-3', m.staff && 'flex-row-reverse')}>
-                            <Avatar size={36} shape="circle" src={m.staff?.image || undefined} className={m.staff ? 'bg-primary text-white' : ''}>{initials(m.name)}</Avatar>
+                            <StaffTip id={m.staff?.id} name={m.name}><Avatar size={36} shape="circle" src={m.staff?.image || undefined} className={m.staff ? 'bg-primary text-white' : ''}>{initials(m.name)}</Avatar></StaffTip>
                             <div className={cn('group max-w-[88%] rounded-2xl p-4', m.internal ? 'rounded-tr-sm border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : m.staff ? 'rounded-tr-sm bg-primary/10 dark:bg-primary/20' : 'rounded-tl-sm bg-gray-100 dark:bg-gray-700/50')}>
                                 <div className="mb-2 flex items-center justify-between gap-4 text-xs text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}{m.staff ? tr(" · team") : ''}{m.first ? tr(" · opened the ticket") : ''}{m.auto && <span className="ms-2 inline-flex items-center gap-1 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-gray-600"><TbRobot />{tr("automatic message")}</span>}{m.internal && <span className="ml-2 inline-flex items-center gap-1 text-amber-700 dark:text-amber-300"><TbLock />{tr("internal note, only your team sees this")}</span>}</span><span className="flex items-center gap-2">{dayjs(m.date).format('DD MMM YYYY, HH:mm')}{m.staff?.id && !m.auto && <GivePoints people={[{ id: m.staff.id, name: m.staff.name || m.name }]} relType={m.first ? 'ticket' : 'ticket_reply'} relId={m.first ? id : m.id} link={`/crm/tickets/${id}`} reason={`${tr('Ticket')}: ${t.subject || ''}`.slice(0, 120)} />}{!m.first && d.can.delete && <button className="hidden text-red-500 group-hover:inline [@media(hover:none)]:inline" title={tr("Delete reply")} onClick={() => setConfirm({ type: 'reply', id: m.id })}><TbTrash /></button>}</span></div>
                                 <div className="prose prose-sm max-w-none break-words dark:prose-invert [&_img]:max-w-full" dangerouslySetInnerHTML={{ __html: clean(m.html) }} />

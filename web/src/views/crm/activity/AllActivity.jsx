@@ -1,5 +1,6 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import { useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import { TbActivity, TbUsers, TbBuilding, TbExternalLink } from 'react-icons/tb'
@@ -99,7 +100,7 @@ const AllActivity = () => {
                                     </div>
                                     {e.client?.name && <button type="button" className="hidden max-w-[110px] shrink-0 items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 hover:text-primary sm:inline-flex dark:bg-gray-700" onClick={() => setClientId(e.client.id)}><TbBuilding className="shrink-0" /><span className="truncate">{e.client.name}</span></button>}
                                     <button type="button" className="inline-flex shrink-0 items-center gap-1.5 text-xs text-gray-500 hover:text-primary" onClick={() => e.who?.id && setStaffId(e.who.id)}>
-                                        <Avatar size={20} shape="circle" src={e.who?.image || undefined} title={e.who?.name}>{e.who?.image ? null : (e.who?.name || '?').slice(0, 1).toUpperCase()}</Avatar>
+                                        <StaffTip id={e.who?.id} name={e.who?.name}><Avatar size={20} shape="circle" src={e.who?.image || undefined}>{e.who?.image ? null : (e.who?.name || '?').slice(0, 1).toUpperCase()}</Avatar></StaffTip>
                                         <span className="hidden max-w-[90px] truncate 2xl:inline">{e.who?.name || tr('Client or system')}</span>
                                     </button>
                                     {e.link ? <button type="button" onClick={() => navigate(e.link)} className="shrink-0 text-gray-400 hover:text-primary" title={tr('Open')}><TbExternalLink /></button> : <span className="w-4 shrink-0" />}

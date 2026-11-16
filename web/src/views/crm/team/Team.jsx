@@ -10,6 +10,7 @@ import Card from '@/components/ui/Card'
 import Avatar from '@/components/ui/Avatar'
 import PersonActions from '@/components/crm/PersonActions'
 import ScoreRing from '@/components/crm/ScoreRing'
+import { StaffTip } from '@/components/crm/StaffRing'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Segment from '@/components/ui/Segment'
@@ -200,7 +201,7 @@ const Team = () => {
                                 <Tr key={m.id} className="group">
                                     <Td className={m.active ? undefined : 'opacity-60 grayscale'}>
                                         <div className="flex items-center gap-3">
-                                            <ScoreRing score={m.score} size={44}><Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar></ScoreRing>
+                                            <StaffTip id={m.id} name={m.name}><ScoreRing tip={false} score={m.score} size={44}><Avatar shape="circle" size={36} {...(m.image ? { src: m.image } : {})}>{m.image ? null : initials(m)}</Avatar></ScoreRing></StaffTip>
                                             <div className="min-w-0">
                                                 <Link to={`/crm/staff/${m.id}`} className="block font-semibold text-primary hover:underline">{m.name}</Link>
                                                 <PersonActions person={m} />

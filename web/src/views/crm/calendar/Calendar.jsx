@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import { useNavigate, useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
@@ -309,7 +310,7 @@ const Calendar = () => {
         if (!list.length) return null
         return (
             <span className="sch-faces" aria-hidden="true">
-                {list.slice(0, max).map((m) => (m.image ? <img loading="lazy" decoding="async" key={m.id} src={m.image} alt="" title={m.name} /> : <span key={m.id} className="sch-faces__i" title={m.name}>{initialsOf(m.name)}</span>))}
+                {list.slice(0, max).map((m) => <StaffTip key={m.id} id={m.id} name={m.name}>{m.image ? <img loading="lazy" decoding="async" src={m.image} alt="" /> : <span className="sch-faces__i">{initialsOf(m.name)}</span>}</StaffTip>)}
                 {list.length > max && <span className="sch-faces__i sch-faces__more">+{list.length - max}</span>}
             </span>
         )

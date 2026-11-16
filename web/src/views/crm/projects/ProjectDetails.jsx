@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -127,8 +128,8 @@ const ProjectDetails = () => {
                                     <h5>{tr("Client information")}</h5>
                                     <div className="mt-6 flex flex-col gap-4">
                                         <Row label={tr("Client")}>{p.client ? <Link className="hover:text-primary" to={`/crm/clients/${p.client.id}`}>{p.client.company}</Link> : '—'}</Row>
-                                        <div className="flex flex-col gap-3"><div className="font-semibold heading-text">{tr("Project manager:")}</div>{p.addedBy ? <div className="flex items-center gap-2"><Avatar size={25} shape="circle" src={p.addedBy.image || undefined}>{initials(p.addedBy.name)}</Avatar><span className="font-semibold">{p.addedBy.name}</span></div> : '—'}</div>
-                                        <div className="flex flex-col gap-3"><div className="font-semibold heading-text">{tr("Team:")}</div>{p.members.length ? p.members.map((m) => <div key={m.id} className="flex items-center gap-2"><Avatar size={25} shape="circle" src={m.image || undefined}>{initials(m.name)}</Avatar><span className="font-semibold">{m.name}</span></div>) : <span className="text-gray-500">{tr("Nobody yet")}</span>}</div>
+                                        <div className="flex flex-col gap-3"><div className="font-semibold heading-text">{tr("Project manager:")}</div>{p.addedBy ? <div className="flex items-center gap-2"><StaffTip id={p.addedBy.id} name={p.addedBy.name}><Avatar size={25} shape="circle" src={p.addedBy.image || undefined}>{initials(p.addedBy.name)}</Avatar></StaffTip><span className="font-semibold">{p.addedBy.name}</span></div> : '—'}</div>
+                                        <div className="flex flex-col gap-3"><div className="font-semibold heading-text">{tr("Team:")}</div>{p.members.length ? p.members.map((m) => <div key={m.id} className="flex items-center gap-2"><StaffTip id={m.id} name={m.name}><Avatar size={25} shape="circle" src={m.image || undefined}>{initials(m.name)}</Avatar></StaffTip><span className="font-semibold">{m.name}</span></div>) : <span className="text-gray-500">{tr("Nobody yet")}</span>}</div>
                                     </div>
                                 </Card>
                                 <Card bordered={false} className="mt-6 bg-gray-100 shadow-none dark:bg-gray-800">

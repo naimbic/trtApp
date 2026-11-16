@@ -1,8 +1,12 @@
 import { useMemo } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import Tooltip from '@/components/ui/Tooltip'
 import Avatar from '@/components/ui/Avatar'
 import acronym from '@/utils/acronym'
 import useRandomBgColor from '@/utils/hooks/useRandomBgColor'
+
+/** A team member (has an id) gets the profile card; anyone else the plain name. */
+const Wrap = ({ elm, name, children }) => (elm.id ? <StaffTip id={elm.id} name={name}>{children}</StaffTip> : <Tooltip wrapperClass="flex" title={name}>{children}</Tooltip>)
 
 const UsersAvatarGroup = (props) => {
     const {
@@ -42,10 +46,10 @@ const UsersAvatarGroup = (props) => {
             {...rest}
         >
             {users.map((elm, index) => (
-                <Tooltip
+                <Wrap
                     key={elm[nameKey] + index}
-                    wrapperClass="flex"
-                    title={elm[nameKey]}
+                    elm={elm}
+                    name={elm[nameKey]}
                 >
                     <Avatar
                         {...defaultAvatarProps}
@@ -57,7 +61,7 @@ const UsersAvatarGroup = (props) => {
                     >
                         {acronym(elm.name)}
                     </Avatar>
-                </Tooltip>
+                </Wrap>
             ))}
         </Avatar.Group>
     )

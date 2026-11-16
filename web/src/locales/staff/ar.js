@@ -6274,4 +6274,10 @@ export default {
     "Score · last {d} days": "النتيجة · آخر {d} يومًا",
     "Nothing to measure yet": "لا يوجد ما يُقاس بعد",
     "{n} open task(s)": "{n} مهمة مفتوحة",
+    "mentioned you": "ذكرك",
+    "gave you a step": "أسند إليك خطوة",
+    "shared a note": "شارك ملاحظة",
+    "A colleague": "زميل",
+    "Open profile": "فتح الملف الشخصي",
+    "Show each one": "عرض كل واحدة",
 }

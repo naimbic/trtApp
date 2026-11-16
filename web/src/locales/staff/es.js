@@ -6274,4 +6274,10 @@ export default {
     "Score · last {d} days": "Puntuación · últimos {d} días",
     "Nothing to measure yet": "Nada que medir todavía",
     "{n} open task(s)": "{n} tarea(s) abierta(s)",
+    "mentioned you": "te mencionó",
+    "gave you a step": "te dio un paso",
+    "shared a note": "compartió una nota",
+    "A colleague": "Un colega",
+    "Open profile": "Abrir el perfil",
+    "Show each one": "Ver cada una",
 }

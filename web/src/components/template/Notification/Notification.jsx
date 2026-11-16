@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { PiBellRingingDuotone, PiCheckCircleDuotone, PiEnvelopeSimpleOpenDuotone, PiEnvelopeSimpleDuotone, PiCheckBold } from 'react-icons/pi'
+import { PiBellRingingDuotone, PiCheckCircleDuotone, PiEnvelopeSimpleOpenDuotone, PiEnvelopeSimpleDuotone, PiCheckBold, PiCaretDownBold } from 'react-icons/pi'
 import classNames from 'classnames'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import Dropdown from '@/components/ui/Dropdown'
@@ -11,7 +11,7 @@ import useResponsive from '@/utils/hooks/useResponsive'
 import { useNotifs } from '@/store/notifStore'
 import NotificationToggle from './NotificationToggle'
 import RemindMenu from './RemindMenu'
-import { look, kindLabel, inTab as inTabOf, isDirect } from './notifKit'
+import { look, kindLabel, inTab as inTabOf, isDirect, words, sentence, summary, groupNotifs } from './notifKit'
 import { tr } from '@/utils/t'
 
 dayjs.extend(relativeTime)
@@ -37,19 +37,43 @@ export const NotifFilters = ({ tab, setTab, kind, setKind, counts, kinds, classN
     )
 }
 
-export const NotifRow = ({ i, onOpen, onToggle }) => {
+/** One line of the bell: everything that happened on one task, lead, ticket... Who (short) did what, on what, the words, when. Several things on the same record are one line that opens to show each. */
+export const NotifRow = ({ g, onOpen, onToggle }) => {
+    const [more, setMore] = useState(false)
+    const i = g.head
     const [Icon, cls] = look(i)
-    const title = tr(i.title)
+    const w = words(i)
+    const many = g.items.length > 1
+    const btn = 'grid size-7 shrink-0 place-items-center rounded-full text-base text-gray-400 transition hover:bg-white hover:text-primary dark:hover:bg-gray-600'
     return (
-        <div role="button" tabIndex={0} onClick={() => onOpen(i)} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(i) }} title={`${title}${i.detail ? ` — ${i.detail}` : ''}`} className={classNames('group relative my-1 flex cursor-pointer items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition', i.read ? 'bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/30 dark:hover:bg-gray-700/60' : 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20')}>
-            <span className={classNames('flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg', cls)}><Icon /></span>
-            <div className="min-w-0 flex-1">
-                <div className={classNames('truncate text-[13px] leading-tight', i.read ? 'font-medium text-gray-600 dark:text-gray-300' : 'font-bold heading-text')}>{shorten(title, 46)}</div>
-                <div className="flex items-center gap-1.5 text-[11px] leading-tight text-gray-400"><span className="min-w-0 flex-1 truncate">{i.from ? `${i.from} · ` : ''}{shorten(i.detail, 52)}</span><span className="shrink-0">{dayjs(i.date).fromNow(true)}</span></div>
+        <div className={classNames('my-1 rounded-xl transition', g.read ? 'bg-gray-50 dark:bg-gray-700/30' : 'bg-primary/5 dark:bg-primary/10')}>
+            <div role="button" tabIndex={0} onClick={() => onOpen(i, g.items)} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(i, g.items) }} title={many ? g.items.map(sentence).join('\n') : sentence(i)} className={classNames('group relative flex cursor-pointer items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition', g.read ? 'hover:bg-gray-100 dark:hover:bg-gray-700/60' : 'hover:bg-primary/10 dark:hover:bg-primary/20')}>
+                <span className={classNames('relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg', cls)}><Icon />{many && <span className="absolute -end-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-gray-800">{g.items.length}</span>}</span>
+                <div className="min-w-0 flex-1">
+                    <div className={classNames('truncate text-[13px] leading-tight', g.read ? 'font-medium text-gray-600 dark:text-gray-300' : 'font-bold heading-text')}>
+                        {many
+                            ? <>{g.record && <span className="font-semibold text-gray-400">{g.record} · </span>}{g.subject || w.did}</>
+                            : <>{w.who && <span className="text-primary">{w.who} </span>}{w.did}{w.what && <span className="font-medium text-gray-500 dark:text-gray-400"> · {w.what}</span>}</>}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] leading-tight text-gray-400"><span className="min-w-0 flex-1 truncate">{many ? summary(g) : shorten(w.text, 70)}</span><span className="shrink-0">{dayjs(g.date).fromNow(true)}</span></div>
+                </div>
+                {many && <button type="button" title={more ? tr('Hide') : tr('Show each one')} aria-label={more ? tr('Hide') : tr('Show each one')} aria-expanded={more} onClick={(e) => { e.stopPropagation(); setMore((x) => !x) }} className={btn}><PiCaretDownBold className={classNames('text-sm transition', more && 'rotate-180')} /></button>}
+                <RemindMenu i={i} stop className={classNames(btn, 'cursor-pointer')} />
+                <button type="button" title={g.read ? tr('Mark as unread') : tr('Mark as read')} aria-label={g.read ? tr('Mark as unread') : tr('Mark as read')} onClick={(e) => { e.stopPropagation(); onToggle(g) }} className={btn}>{g.read ? <PiEnvelopeSimpleDuotone /> : <PiEnvelopeSimpleOpenDuotone />}</button>
+                {!g.read && <span className="size-2 shrink-0 rounded-full bg-primary" />}
             </div>
-            <RemindMenu i={i} stop className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-base text-gray-400 transition hover:bg-white hover:text-primary dark:hover:bg-gray-600" />
-            <button type="button" title={i.read ? tr('Mark as unread') : tr('Mark as read')} aria-label={i.read ? tr('Mark as unread') : tr('Mark as read')} onClick={(e) => { e.stopPropagation(); onToggle(i) }} className="grid size-7 shrink-0 place-items-center rounded-full text-base text-gray-400 transition hover:bg-white hover:text-primary dark:hover:bg-gray-600">{i.read ? <PiEnvelopeSimpleDuotone /> : <PiEnvelopeSimpleOpenDuotone />}</button>
-            {!i.read && <span className="size-2 shrink-0 rounded-full bg-primary" />}
+            {many && more && (
+                <div className="pb-1.5 pe-2 ps-[46px]">
+                    {g.items.map((x) => { const v = words(x); return (
+                        <button key={x.id} type="button" onClick={() => onOpen(x)} title={sentence(x)} className="flex w-full items-center gap-1.5 rounded-lg px-1.5 py-1 text-start text-[12px] leading-tight hover:bg-white dark:hover:bg-gray-600/60">
+                            <span className={classNames('size-1.5 shrink-0 rounded-full', x.read ? 'bg-gray-300 dark:bg-gray-600' : 'bg-primary')} />
+                            <span className={classNames('shrink-0', x.read ? 'text-gray-500' : 'font-semibold heading-text')}>{v.who && <span className="text-primary">{v.who} </span>}{v.did}</span>
+                            <span className="min-w-0 flex-1 truncate text-gray-400">{v.text}</span>
+                            <span className="shrink-0 text-[11px] text-gray-400">{dayjs(x.date).fromNow(true)}</span>
+                        </button>
+                    ) })}
+                </div>
+            )}
         </div>
     )
 }
@@ -58,7 +82,7 @@ export const NotifRow = ({ i, onOpen, onToggle }) => {
 export const useOpenNotif = (after) => {
     const navigate = useNavigate()
     const setRead = useNotifs((s) => s.setRead)
-    return (i) => { if (!i.read) setRead([i.id], true); after?.(); if (i.link) navigate(i.link) }
+    return (i, all) => { const ids = (all || [i]).filter((x) => !x.read).map((x) => x.id); if (ids.length) setRead(ids, true); after?.(); if (i.link) navigate(i.link) }
 }
 
 const _Notification = ({ className }) => {
@@ -73,7 +97,7 @@ const _Notification = ({ className }) => {
     const directUnread = items.filter((i) => isDirect(i) && !i.read).length
     const kinds = {}
     for (const i of inTab) kinds[i.kind] = (kinds[i.kind] || 0) + 1
-    const shown = inTab.filter((i) => !kind || i.kind === kind).slice(0, 30)
+    const shown = groupNotifs(inTab.filter((i) => !kind || i.kind === kind)).slice(0, 30)
 
     return (
         <Dropdown ref={ref} renderTitle={<NotificationToggle dot={counts.unread > 0} className={className} />} menuClass="w-[460px] max-w-[calc(100vw-1rem)]" placement={larger.md ? 'bottom-end' : 'bottom'} onOpen={() => { setTab('direct'); setKind(''); load() }}>
@@ -84,7 +108,7 @@ const _Notification = ({ className }) => {
                 </div>
             </Dropdown.Item>
             <ScrollBar className="max-h-[340px] overflow-y-auto px-1">
-                {shown.map((i) => <NotifRow key={i.id} i={i} onOpen={open} onToggle={(x) => setRead([x.id], !x.read)} />)}
+                {shown.map((g) => <NotifRow key={g.key} g={g} onOpen={open} onToggle={(x) => setRead(x.items.map((y) => y.id), !x.read)} />)}
                 {loaded && !shown.length && (
                     <div className="flex h-[200px] items-center justify-center text-center"><div><PiBellRingingDuotone className="mx-auto mb-1 text-5xl text-gray-300" /><h6 className="text-sm font-semibold">{tab === 'unread' || tab === 'direct' ? tr('You are all caught up') : tr('Nothing yet')}</h6><p className="mt-0.5 text-xs text-gray-500">{tr('New tickets, tasks, payments and answers show up here.')}</p></div></div>
                 )}

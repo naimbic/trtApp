@@ -9,7 +9,7 @@ import Skeleton from '@/components/ui/Skeleton'
 import Tooltip from '@/components/ui/Tooltip'
 import RemindMenu from '@/components/template/Notification/RemindMenu'
 import { NotifFilters, useOpenNotif } from '@/components/template/Notification/Notification'
-import { look, kindLabel, recordLabel, replyTarget, inTab as inTabOf, isDirect } from '@/components/template/Notification/notifKit'
+import { look, kindLabel, recordLabel, replyTarget, inTab as inTabOf, isDirect, words, sentence, groupNotifs } from '@/components/template/Notification/notifKit'
 import { useNotifs } from '@/store/notifStore'
 import { api, notify } from './kit/api'
 import { tr } from '@/utils/t'
@@ -19,7 +19,10 @@ const box = 'h-8 rounded-lg border border-gray-200 bg-white px-2 text-sm dark:bo
 const PRESETS = [['today', 'Today', 0], ['5', 'Last 5 days', 4], ['14', '14 days', 13], ['30', '30 days', 29]]
 
 /** One notification as a card: what happened, the detail, who and about what, when; read, remind and answer without opening it. */
-const Card1 = ({ i, onOpen, onToggle }) => {
+const Card1 = ({ g, onOpen, onToggle }) => {
+    const i = g.head
+    const many = g.items.length > 1
+    const w = words(i)
     const [Icon, cls] = look(i)
     const [reply, setReply] = useState(null) // text being written
     const [busy, setBusy] = useState(false)
@@ -33,29 +36,47 @@ const Card1 = ({ i, onOpen, onToggle }) => {
             if (target.type === 'task') await api(`/api/crm/work/tasks/${target.id}/comments`, { method: 'POST', body: { content: reply.trim() } })
             else if (target.type === 'ticket') await api(`/api/crm/support/tickets/${target.id}/reply`, { method: 'POST', body: { message: reply.trim(), internal } })
             else await api(`/api/crm/pipeline/leads/${target.id}/notes`, { method: 'POST', body: { content: reply.trim() } })
-            notify('success', target.type === 'ticket' ? (internal ? tr('Note added') : tr('Reply sent to the client')) : tr('Comment sent')); setReply(null); if (!i.read) onToggle(i)
+            notify('success', target.type === 'ticket' ? (internal ? tr('Note added') : tr('Reply sent to the client')) : tr('Comment sent')); setReply(null); if (!g.read) onToggle(g)
         } catch (e) { notify('danger', e.message) } finally { setBusy(false) }
     }
     const act = 'grid size-8 place-items-center rounded-lg text-lg text-gray-500 transition hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-700'
     return (
-        <div className={`my-1 rounded-xl border px-3 py-2.5 transition ${i.read ? 'border-transparent bg-transparent' : 'border-primary/20 bg-primary/[0.04]'} hover:border-gray-200 dark:hover:border-gray-600`}>
+        <div className={`my-1 rounded-xl border px-3 py-2.5 transition ${g.read ? 'border-transparent bg-transparent' : 'border-primary/20 bg-primary/[0.04]'} hover:border-gray-200 dark:hover:border-gray-600`}>
             <div className="flex flex-wrap items-start gap-x-3 gap-y-1 sm:flex-nowrap">
                 <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl ${cls}`}><Icon /></span>
-                <button type="button" onClick={() => onOpen(i)} className="min-w-0 flex-1 basis-0 text-start">
-                    <div className={`text-sm leading-snug ${i.read ? 'font-medium text-gray-600 dark:text-gray-300' : 'font-bold heading-text'}`}>{!i.read && <span className="me-1.5 inline-block size-2 rounded-full bg-primary align-middle" />}{tr(i.title)}</div>
-                    {i.detail && <div className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-gray-500">{i.detail}</div>}
+                <div className="min-w-0 flex-1 basis-0">
+                    <button type="button" onClick={() => onOpen(i, g.items)} title={sentence(i)} className="block w-full text-start">
+                        <div className={`text-sm leading-snug ${g.read ? 'font-medium text-gray-600 dark:text-gray-300' : 'font-bold heading-text'}`}>
+                            {!g.read && <span className="me-1.5 inline-block size-2 rounded-full bg-primary align-middle" />}
+                            {many
+                                ? <>{g.subject || w.did}<span className="ms-2 rounded-full bg-primary/10 px-1.5 py-0.5 align-middle text-[11px] font-bold text-primary">{g.items.length}</span></>
+                                : <>{w.who && <span className="text-primary">{w.who} </span>}{w.did}{w.what && <span className="font-medium text-gray-500 dark:text-gray-400"> · {w.what}</span>}</>}
+                        </div>
+                        {!many && w.text && <div className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-gray-500">{w.text}</div>}
+                    </button>
+                    {many && (
+                        <div className="mt-1 flex flex-col">
+                            {g.items.map((x) => { const v = words(x); return (
+                                <button key={x.id} type="button" onClick={() => onOpen(x)} title={sentence(x)} className="flex w-full items-baseline gap-1.5 rounded-md px-1 py-0.5 text-start text-[13px] leading-snug hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <span className={`size-1.5 shrink-0 self-center rounded-full ${x.read ? 'bg-gray-300 dark:bg-gray-600' : 'bg-primary'}`} />
+                                    <span className={`shrink-0 ${x.read ? 'text-gray-500' : 'font-semibold heading-text'}`}>{v.who && <span className="text-primary">{v.who} </span>}{v.did}</span>
+                                    <span className="min-w-0 flex-1 truncate text-gray-500">{v.text}</span>
+                                    <span className="shrink-0 text-[11px] text-gray-400" title={dayjs(x.date).format('dddd D MMMM YYYY, HH:mm')}>{dayjs(x.date).format('HH:mm')}</span>
+                                </button>
+                            ) })}
+                        </div>
+                    )}
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-400">
                         <span className="rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{kindLabel(i.kind)}</span>
                         {record && <span className="rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{record}</span>}
-                        {i.from && <span>{tr('from')} <b className="font-semibold text-gray-500">{i.from}</b></span>}
                         <span title={dayjs(i.date).format('dddd D MMMM YYYY, HH:mm')}>{dayjs(i.date).format('ddd D MMM, HH:mm')} · {dayjs(i.date).fromNow()}</span>
                     </div>
-                </button>
+                </div>
                 <div className="flex w-full shrink-0 items-center gap-0.5 ps-12 sm:w-auto sm:ps-0">
-                    <Tooltip title={i.read ? tr('Mark as unread') : tr('Mark as read')}><button type="button" aria-label={i.read ? tr('Mark as unread') : tr('Mark as read')} className={act} onClick={() => onToggle(i)}>{i.read ? <TbMail /> : <TbMailOpened />}</button></Tooltip>
+                    <Tooltip title={g.read ? tr('Mark as unread') : tr('Mark as read')}><button type="button" aria-label={g.read ? tr('Mark as unread') : tr('Mark as read')} className={act} onClick={() => onToggle(g)}>{g.read ? <TbMail /> : <TbMailOpened />}</button></Tooltip>
                     <RemindMenu i={i} className={act} />
                     {target && <Tooltip title={tr('Reply')}><button type="button" aria-label={tr('Reply')} className={act} onClick={() => setReply((r) => (r === null ? '' : null))}><TbArrowBackUp /></button></Tooltip>}
-                    {i.link && <Tooltip title={tr('Open')}><button type="button" aria-label={tr('Open')} className={act} onClick={() => onOpen(i)}><TbArrowUpRight /></button></Tooltip>}
+                    {i.link && <Tooltip title={tr('Open')}><button type="button" aria-label={tr('Open')} className={act} onClick={() => onOpen(i, g.items)}><TbArrowUpRight /></button></Tooltip>}
                 </div>
             </div>
             {reply !== null && (
@@ -89,7 +110,7 @@ const NotificationsPage = () => {
     const kinds = useMemo(() => { const m = {}; for (const i of inTab) m[i.kind] = (m[i.kind] || 0) + 1; return m }, [inTab])
     const shown = inTab.filter((i) => !kind || i.kind === kind)
     const unreadShown = shown.filter((i) => !i.read)
-    const groups = useMemo(() => { const g = []; for (const i of shown) { const k = day(i.date); const last = g[g.length - 1]; if (last && last.k === k) last.list.push(i); else g.push({ k, list: [i] }) } return g }, [shown])
+    const groups = useMemo(() => { const g = []; for (const i of shown) { const k = day(i.date); const last = g[g.length - 1]; if (last && last.k === k) last.list.push(i); else g.push({ k, list: [i] }) } return g.map((d) => ({ k: d.k, list: groupNotifs(d.list) })) }, [shown]) // within a day, what happened on the same record is one card
     useEffect(() => { if (kind && !kinds[kind]) setKind('') }, [kinds, kind])
     const chip = (on) => `rounded-full px-3 py-1 text-xs font-semibold transition ${on ? 'bg-gray-800 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'}`
 
@@ -117,7 +138,7 @@ const NotificationsPage = () => {
                     {groups.length ? groups.map((g) => (
                         <div key={g.k}>
                             <div className="px-3 pb-0.5 pt-2 text-[11px] font-bold uppercase tracking-wide text-gray-400">{g.k}</div>
-                            {g.list.map((i) => <Card1 key={i.id} i={i} onOpen={open} onToggle={(x) => setRead([x.id], !x.read)} />)}
+                            {g.list.map((x) => <Card1 key={x.key} g={x} onOpen={open} onToggle={(y) => setRead(y.items.map((z) => z.id), !y.read)} />)}
                         </div>
                     )) : (
                         <div className="py-14 text-center"><PiBellRingingDuotone className="mx-auto mb-2 text-6xl text-gray-300" /><h6 className="font-semibold">{tab === 'unread' || tab === 'direct' ? tr('You are all caught up') : tr('Nothing here for these dates')}</h6></div>

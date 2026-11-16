@@ -1,7 +1,8 @@
 /*! © 2026 TRT Digital — trtCRM. */
 import { useEffect, useState } from 'react'
-import { useFloating, autoUpdate, offset, flip, shift, useHover, useFocus, useDismiss, useRole, useInteractions, FloatingPortal } from '@floating-ui/react'
-import { TbStar, TbTrophy, TbChecklist, TbAlertTriangle } from 'react-icons/tb'
+import { useNavigate } from 'react-router'
+import { useFloating, autoUpdate, offset, flip, shift, useHover, useFocus, useDismiss, useRole, useInteractions, safePolygon, FloatingPortal } from '@floating-ui/react'
+import { TbStar, TbTrophy, TbChecklist, TbAlertTriangle, TbArrowUpRight } from 'react-icons/tb'
 import ScoreRing, { toneOf } from './ScoreRing'
 import { api } from '@/views/crm/kit/api'
 import { tr } from '@/utils/t'
@@ -42,7 +43,7 @@ const Bar = ({ label, value }) => value === null || value === undefined ? null :
 )
 
 /** What the card says about one member: who they are, their points and (for people allowed to see it) their score. */
-export const ProfileCard = ({ name, person, score: s }) => {
+export const ProfileCard = ({ name, person, score: s, link }) => {
     const p = person?.points
     const parts = s?.parts || {}
     const c = s?.counts
@@ -56,10 +57,11 @@ export const ProfileCard = ({ name, person, score: s }) => {
                         : <span className="grid size-11 place-items-center rounded-full bg-primary text-sm font-bold text-white ring-2 ring-white/80 dark:ring-white/10">{initials(person?.name || name)}</span>}
                     {person?.online && <span title={tr('Online')} className="absolute bottom-0 end-0 size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900" />}
                 </span>
-                <div className="min-w-0">
-                    <div className="truncate text-sm font-extrabold text-gray-900 dark:text-white">{person?.name || name}</div>
+                <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-extrabold text-gray-900 group-hover/card:text-primary dark:text-white">{person?.name || name}</div>
                     <div className="truncate text-xs text-gray-500 dark:text-gray-400">{person?.jobTitle || (person?.online ? tr('Online') : tr('Team member'))}</div>
                 </div>
+                {link && <span title={tr('Open profile')} className="grid size-7 shrink-0 place-items-center rounded-full bg-gray-900/5 text-base text-gray-500 transition group-hover/card:bg-primary group-hover/card:text-white dark:bg-white/10 dark:text-gray-300"><TbArrowUpRight /></span>}
             </div>
             {(p || has) && (
                 <div className="mt-3 flex gap-1.5">
@@ -93,25 +95,35 @@ export const ProfileCard = ({ name, person, score: s }) => {
     )
 }
 
-/** Shows the profile card over whatever is inside (a picture), on hover or keyboard focus. */
-export const ProfileTip = ({ name, person, score, children }) => {
+/** Shows the profile card over whatever is inside (a picture), on hover or keyboard focus. The mouse can travel onto the card; a click on it opens the member's profile. */
+export const ProfileTip = ({ id, name, person, score, children }) => {
     const [open, setOpen] = useState(false)
-    const { refs, floatingStyles, context } = useFloating({ open, onOpenChange: setOpen, placement: 'top', whileElementsMounted: autoUpdate, middleware: [offset(10), flip({ fallbackAxisSideDirection: 'start' }), shift({ padding: 8 })] })
-    const { getReferenceProps, getFloatingProps } = useInteractions([useHover(context, { move: false, delay: { open: 180, close: 60 } }), useFocus(context), useDismiss(context), useRole(context, { role: 'tooltip' })])
+    const navigate = useNavigate()
+    const { refs, floatingStyles, context } = useFloating({ open, onOpenChange: setOpen, placement: 'top', whileElementsMounted: autoUpdate, middleware: [offset(8), flip({ fallbackAxisSideDirection: 'start' }), shift({ padding: 8 })] })
+    const { getReferenceProps, getFloatingProps } = useInteractions([useHover(context, { move: false, delay: { open: 180, close: 120 }, handleClose: safePolygon({ buffer: 2 }) }), useFocus(context), useDismiss(context), useRole(context, { role: 'dialog' })])
+    const stop = (e) => e.stopPropagation() // the card lives inside rows and cards that react to clicks and drags themselves
+    const go = (e) => { e.stopPropagation(); e.preventDefault(); if (id) { setOpen(false); navigate(`/crm/staff/${id}`) } }
     return (
         <>
             <span ref={refs.setReference} {...getReferenceProps()} className="tooltip-wrapper inline-flex">{children}</span>
             {open && (
                 <FloatingPortal>
-                    <div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 100003 }} {...getFloatingProps()} className="pointer-events-none">
-                        <div className="profile-tip rounded-2xl border border-white/70 bg-white/70 p-3.5 shadow-[0_18px_50px_-12px_rgba(15,23,42,0.35)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-gray-900/70 dark:ring-white/5">
-                            <ProfileCard name={name} person={person} score={score} />
+                    <div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 100003 }} {...getFloatingProps()} onClick={stop} onMouseDown={stop} onPointerDown={stop}>
+                        <div role={id ? 'link' : undefined} tabIndex={id ? 0 : undefined} onClick={go} onKeyDown={(e) => { if (e.key === 'Enter') go(e) }} className={`profile-tip group/card rounded-2xl border border-white/70 bg-white/70 p-3.5 shadow-[0_18px_50px_-12px_rgba(15,23,42,0.35)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150 transition dark:border-white/10 dark:bg-gray-900/70 dark:ring-white/5 ${id ? 'cursor-pointer hover:ring-primary/40' : ''}`}>
+                            <ProfileCard name={name} person={person} score={score} link={!!id} />
                         </div>
                     </div>
                 </FloatingPortal>
             )}
         </>
     )
+}
+
+/** The profile card on any picture of a team member (no score ring): `id` is the member. Without an id the picture is shown as it is. */
+export const StaffTip = ({ id, name, children }) => {
+    const { people, scores } = useCards()
+    if (!id) return children
+    return <ProfileTip id={id} name={name} person={people[id]} score={scores[id]}>{children}</ProfileTip>
 }
 
 /**
@@ -124,7 +136,7 @@ const StaffRing = ({ id, name, size = 28, children }) => {
     const person = id ? people[id] : null
     if (!s && !person && !name) return children
     const w = size >= 40 ? 3 : 2
-    return <ProfileTip name={name} person={person} score={s}>{s ? <ScoreRing tip={false} score={s} size={size + 2 * (w + 1)} width={w}>{children}</ScoreRing> : <span className="inline-flex">{children}</span>}</ProfileTip>
+    return <ProfileTip id={id} name={name} person={person} score={s}>{s ? <ScoreRing tip={false} score={s} size={size + 2 * (w + 1)} width={w}>{children}</ScoreRing> : <span className="inline-flex">{children}</span>}</ProfileTip>
 }
 
 export default StaffRing

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import { Link } from 'react-router'
 import { TbStar, TbTrophy, TbCash, TbCalendarStats, TbTrash, TbSettings, TbChecklist, TbMessage, TbBulb, TbPlus } from 'react-icons/tb'
 import dayjs from 'dayjs'
@@ -77,7 +78,7 @@ const PointsPage = () => {
                         <ol className="space-y-1.5">{d.board.map((r, i) => (
                             <li key={r.id} className={cn('flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm', r.id === me.staffId ? 'bg-primary/10' : 'bg-gray-50 dark:bg-gray-700/40')}>
                                 <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold', i === 0 ? 'bg-amber-400 text-white' : i === 1 ? 'bg-gray-300 text-gray-700' : i === 2 ? 'bg-orange-300 text-white' : 'bg-gray-100 text-gray-500')}>{i + 1}</span>
-                                <Avatar size={26} shape="circle" src={r.image || undefined}>{initials(r.name)}</Avatar>
+                                <StaffTip id={r.id} name={r.name}><Avatar size={26} shape="circle" src={r.image || undefined}>{initials(r.name)}</Avatar></StaffTip>
                                 <span className="min-w-0 flex-1 truncate font-medium">{r.name}</span>
                                 <span className="hidden text-xs text-gray-400 xl:inline">{tr('total')} {num(r.total)}</span>
                                 <Pts n={r.month} />
@@ -117,7 +118,7 @@ const PointsPage = () => {
                     {toPay.length ? (
                         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{toPay.map((r) => (
                             <div key={r.id} className="flex items-center gap-2.5 rounded-xl bg-emerald-50 px-3 py-2 text-sm dark:bg-emerald-500/10">
-                                <Avatar size={28} shape="circle" src={r.image || undefined}>{initials(r.name)}</Avatar>
+                                <StaffTip id={r.staffId || r.id} name={r.name}><Avatar size={28} shape="circle" src={r.image || undefined}>{initials(r.name)}</Avatar></StaffTip>
                                 <span className="min-w-0 flex-1 truncate font-medium">{r.name}</span>
                                 <span className="text-xs text-gray-500">{num(r.unpaid)} {tr('points')}</span>
                                 <b className="shrink-0 text-emerald-700 dark:text-emerald-300">{cash(r.money, currency)}</b>

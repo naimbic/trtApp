@@ -25,7 +25,42 @@ const RECORDS = { tasks: 'Task', 'tasks-board': 'Task', leads: 'Lead', clients: 
 export const recordLabel = (link) => { const m = /^\/(?:crm\/)?([a-z-]+)/i.exec(String(link || '')); return m && RECORDS[m[1]] ? tr(RECORDS[m[1]]) : '' }
 /** { type: 'task' | 'lead' | 'ticket', id } when a person can answer on the record right from the notification. */
 export const replyTarget = (link) => {
-    const m = /^\/crm\/(tasks|tasks-board|leads|tickets)(?:\/([a-f0-9]{24}))?(?:\?.*?\btask=([a-f0-9]{24}))?/i.exec(String(link || ''))
+    const m = /^\/crm\/(tasks-board|tasks|leads|tickets)(?:\/([a-f0-9]{24}))?(?:\?.*?\btask=([a-f0-9]{24}))?/i.exec(String(link || ''))
     const id = m && (m[2] || m[3])
     return id ? { type: m[1] === 'leads' ? 'lead' : m[1] === 'tickets' ? 'ticket' : 'task', id } : null
+}
+
+/** "Chaymae Choubou" → "Chaymae.C": enough to know who, short enough for one line. */
+export const shortName = (n) => { const p = String(n || '').trim().split(/\s+/).filter(Boolean); return p.length > 1 ? `${p[0]}.${p[1][0].toUpperCase()}` : p[0] || '' }
+const ACT = { mention: 'mentioned you', comment: 'commented', step: 'gave you a step', note: 'shared a note' }
+/** One notification in a few words: who (short), what they did, on what (the record), and the text itself. */
+export const words = (i) => {
+    const what = i.subject || ''
+    if (i.act) return { who: shortName(i.from) || tr('A colleague'), did: tr(ACT[i.act]), what, text: i.detail || '' }
+    return { who: '', did: tr(i.title), what: what && what !== i.detail && !String(i.detail || '').includes(what) ? what : '', text: i.detail || '' }
+}
+/** The same in one sentence, for a tooltip. */
+export const sentence = (i) => { const w = words(i); return [`${w.who ? `${w.who} ` : ''}${w.did}`, w.what && `${recordLabel(i.link) || ''} “${w.what}”`.trim(), w.text].filter(Boolean).join(' — ') }
+/**
+ * Puts together what happened on the same task, lead, ticket... (a mention, two comments and a step on one task are one line).
+ * Returns groups newest first: { key, items, head (the newest), date, read, unread, subject, record }.
+ */
+export const groupNotifs = (list) => {
+    const by = new Map()
+    for (const i of list) {
+        const key = i.rec || (i.link ? `l:${String(i.link).split('?')[0]}|${i.kind}` : `i:${i.id}`)
+        const g = by.get(key)
+        if (g) g.items.push(i); else by.set(key, { key, items: [i] })
+    }
+    return [...by.values()].map((g) => {
+        g.items.sort((a, b) => +new Date(b.date) - +new Date(a.date))
+        const head = g.items[0]
+        return { ...g, head, date: head.date, unread: g.items.filter((x) => !x.read).length, read: g.items.every((x) => x.read), subject: g.items.find((x) => x.subject)?.subject || '', record: recordLabel(head.link) }
+    }).sort((a, b) => +new Date(b.date) - +new Date(a.date))
+}
+/** What happened in a group, counted: "Chaymae.C commented ×2, mentioned you · Naim.A commented". */
+export const summary = (g) => {
+    const who = new Map()
+    for (const i of g.items) { const w = words(i); const m = who.get(w.who) || new Map(); m.set(w.did, (m.get(w.did) || 0) + 1); who.set(w.who, m) }
+    return [...who].map(([name, m]) => `${name ? `${name} ` : ''}${[...m].map(([did, n]) => (n > 1 ? `${did} ×${n}` : did)).join(', ')}`).join(' · ')
 }

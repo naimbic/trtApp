@@ -6274,4 +6274,10 @@ export default {
     "Score · last {d} days": "スコア · 過去{d}日間",
     "Nothing to measure yet": "まだ測定するものがありません",
     "{n} open task(s)": "未完了タスク {n} 件",
+    "mentioned you": "があなたをメンション",
+    "gave you a step": "がステップを割り当て",
+    "shared a note": "がメモを共有",
+    "A colleague": "同僚",
+    "Open profile": "プロフィールを開く",
+    "Show each one": "それぞれ表示",
 }

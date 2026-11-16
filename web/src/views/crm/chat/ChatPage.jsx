@@ -1,4 +1,5 @@
 import ChatMessageTools from './ChatMessageTools'
+import { StaffTip } from '@/components/crm/StaffRing'
 import MySpace from '@/components/crm/chat/MySpace'
 import { mentionDirectory } from '@/utils/mentions'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -29,7 +30,7 @@ const Face = ({ r, size = 44 }) => {
         <div className="relative shrink-0">
             {group
                 ? <div style={{ width: size, height: size }} className={classNames('flex items-center justify-center rounded-full text-xl', r.kind === 'team' ? 'bg-primary/10 text-primary' : 'bg-violet-100 text-violet-600 dark:bg-violet-500/20')}>{r.kind === 'team' ? <PiUsersThreeDuotone /> : <PiChatsCircleDuotone />}</div>
-                : <Avatar size={size} shape="circle" src={r.image || undefined} icon={r.image ? undefined : <PiUserCircleDuotone />} />}
+                : <StaffTip id={r.staffId} name={r.title}><Avatar size={size} shape="circle" src={r.image || undefined} icon={r.image ? undefined : <PiUserCircleDuotone />} /></StaffTip>}
             {!group && <StatusDot status={r.status} className="absolute -bottom-0.5 -right-0.5" />}
         </div>
     )
@@ -66,7 +67,7 @@ const NewChatDialog = ({ open, mode, people, onClose, onDirect, onGroup }) => {
                     const on = sel.includes(p.id)
                     return (
                         <button key={p.id} type="button" onClick={() => (group ? setSel((s) => (on ? s.filter((x) => x !== p.id) : [...s, p.id])) : onDirect(p))} className={classNames('flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700', on && 'bg-primary/10')}>
-                            <Face r={{ kind: 'direct', image: p.image, status: p.status }} size={36} />
+                            <Face r={{ kind: 'direct', staffId: p.id, title: p.name, image: p.image, status: p.status }} size={36} />
                             <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{p.name}</span><span className="text-xs text-gray-500">{STATUS[p.status || 'offline'].label}</span></span>
                             {group && <span className={classNames('flex h-5 w-5 items-center justify-center rounded-md border text-xs', on ? 'border-primary bg-primary text-white' : 'border-gray-300')}>{on && <PiCheckBold />}</span>}
                         </button>
@@ -121,7 +122,7 @@ const InfoPanel = ({ room, data, theirStatus, onClose, reload, onLeft }) => {
                     <div className="space-y-0.5">
                         {members.map((s) => (
                             <div key={s.id} className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5">
-                                <Face r={{ kind: 'direct', image: s.image, status: s.id === me.id ? (useChatStatus.getState().away ? 'away' : useChatStatus.getState().state) : s.status }} size={32} />
+                                <Face r={{ kind: 'direct', staffId: s.id, title: s.name, image: s.image, status: s.id === me.id ? (useChatStatus.getState().away ? 'away' : useChatStatus.getState().state) : s.status }} size={32} />
                                 <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{s.name}{s.id === me.id && <span className="ml-1 font-normal text-gray-400">{tr("(you)")}</span>}</div><div className="text-[11px] text-gray-400">{s.id === room.createdBy ? tr("Creator") : STATUS[(s.id === me.id ? (useChatStatus.getState().away ? 'away' : useChatStatus.getState().state) : s.status) || 'offline'].label}</div></div>
                                 {room.kind === 'group' && owner && s.id !== me.id && <button type="button" title={tr("Remove")} className="text-gray-300 opacity-0 hover:text-red-500 group-hover:opacity-100" onClick={() => run(() => patch(`/rooms/${room.id}`, { remove: [s.id] }))}><PiXBold /></button>}
                             </div>

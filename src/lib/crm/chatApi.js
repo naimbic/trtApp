@@ -189,7 +189,7 @@ export async function listRooms() {
     const sMap = Object.fromEntries(staff.map((s) => [s.id, { id: s.id, name: staffName(s), image: realPicture(s.profileImage), status: st(`staff:${s.id}`) }]))
     const out = [
         { id: team.id, kind: 'team', title: 'Team', subtitle: `${staff.filter((s) => st(`staff:${s.id}`) === 'online').length} online`, lastMessage: team.lastMessage, lastAt: team.lastMessageAt, unread: unread[team.id] },
-        ...direct.map((r) => { const other = sMap[r.staffIds.find((i) => i !== c.staffId)] || { name: 'Former colleague' }; return { id: r.id, kind: 'direct', title: other.name, image: other.image, status: other.status || 'offline', lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
+        ...direct.map((r) => { const other = sMap[r.staffIds.find((i) => i !== c.staffId)] || { name: 'Former colleague' }; return { id: r.id, kind: 'direct', staffId: other.id || null, title: other.name, image: other.image, status: other.status || 'offline', lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
         ...groups.map((r) => ({ id: r.id, kind: 'group', title: r.name || 'Group', subtitle: `${r.staffIds.length} members`, members: r.staffIds, createdBy: r.createdBy, lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] })),
         ...clients.map((r) => { const p = cMap[r.contactId]; return { id: r.id, kind: 'client', title: p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email : 'Client', subtitle: coMap[r.clientId] || '', image: realPicture(p?.profileImage), status: st(`contact:${r.contactId}`), lastMessage: r.lastMessage, lastAt: r.lastMessageAt, unread: unread[r.id] } }),
     ]

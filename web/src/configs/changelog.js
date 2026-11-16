@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.259.1',
+        date: '2026-11-16',
+        title: 'Profile card in chat and in the account menu',
+        items: [
+            'Chat: hovering a colleague\'s picture (private conversations, the new-chat list, group members, the chat bubble) shows the profile card; click it to open the profile. Client and group conversations are unchanged.',
+            'Account menu: your own picture shows your card (points, rank, score), beside the menu.',
+        ],
+    },
+    {
         version: '0.259.0',
         date: '2026-11-16',
         title: 'Notifications grouped and shorter, profile card you can click',

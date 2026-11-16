@@ -96,10 +96,10 @@ export const ProfileCard = ({ name, person, score: s, link }) => {
 }
 
 /** Shows the profile card over whatever is inside (a picture), on hover or keyboard focus. The mouse can travel onto the card; a click on it opens the member's profile. */
-export const ProfileTip = ({ id, name, person, score, children }) => {
+export const ProfileTip = ({ id, name, person, score, placement = 'top', children }) => {
     const [open, setOpen] = useState(false)
     const navigate = useNavigate()
-    const { refs, floatingStyles, context } = useFloating({ open, onOpenChange: setOpen, placement: 'top', whileElementsMounted: autoUpdate, middleware: [offset(8), flip({ fallbackAxisSideDirection: 'start' }), shift({ padding: 8 })] })
+    const { refs, floatingStyles, context } = useFloating({ open, onOpenChange: setOpen, placement, whileElementsMounted: autoUpdate, middleware: [offset(8), flip({ fallbackAxisSideDirection: 'start' }), shift({ padding: 8 })] })
     const { getReferenceProps, getFloatingProps } = useInteractions([useHover(context, { move: false, delay: { open: 180, close: 120 }, handleClose: safePolygon({ buffer: 2 }) }), useFocus(context), useDismiss(context), useRole(context, { role: 'dialog' })])
     const stop = (e) => e.stopPropagation() // the card lives inside rows and cards that react to clicks and drags themselves
     const go = (e) => { e.stopPropagation(); e.preventDefault(); if (id) { setOpen(false); navigate(`/crm/staff/${id}`) } }
@@ -120,10 +120,10 @@ export const ProfileTip = ({ id, name, person, score, children }) => {
 }
 
 /** The profile card on any picture of a team member (no score ring): `id` is the member. Without an id the picture is shown as it is. */
-export const StaffTip = ({ id, name, children }) => {
+export const StaffTip = ({ id, name, placement, children }) => {
     const { people, scores } = useCards()
     if (!id) return children
-    return <ProfileTip id={id} name={name} person={people[id]} score={scores[id]}>{children}</ProfileTip>
+    return <ProfileTip id={id} name={name} placement={placement} person={people[id]} score={scores[id]}>{children}</ProfileTip>
 }
 
 /**

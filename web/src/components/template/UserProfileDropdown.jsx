@@ -1,4 +1,5 @@
 import Avatar from '@/components/ui/Avatar'
+import { StaffTip } from '@/components/crm/StaffRing'
 import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useSessionUser } from '@/store/authStore'
@@ -143,7 +144,7 @@ const _UserDropdown = ({ className }) => {
             <Dropdown.Item variant="header">
                 <div className="flex items-center gap-1 px-2 py-2">
                     <Link to="/account/profile" onClick={close} className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1.5 transition hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <Avatar size={44} {...avatarProps} />
+                        <StaffTip id={me?.staffId} name={me?.name} placement="left-start"><Avatar size={44} {...avatarProps} /></StaffTip>
                         <span className="min-w-0 flex-1 leading-tight">
                             <span className="block truncate font-bold text-gray-900 dark:text-gray-100">{me?.name || userName || tr('Anonymous')}</span>
                             <span className="block truncate text-xs text-gray-500">{me?.email || email || tr('No email available')}</span>

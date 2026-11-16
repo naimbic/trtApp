@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router'
+import { StaffTip } from '@/components/crm/StaffRing'
 import Avatar from '@/components/ui/Avatar'
 import Tooltip from '@/components/ui/Tooltip'
 import { PiSignOutDuotone, PiUserDuotone } from 'react-icons/pi'
@@ -28,9 +29,7 @@ const SideNavFooter = ({ collapsed }) => {
     if (collapsed) {
         return (
             <div className="flex flex-col items-center gap-2 border-t border-gray-200 py-3 dark:border-gray-700">
-                <Tooltip title={`${name}${role ? ` · ${role}` : ''}`} placement="right">
-                    <Link to="/account/profile"><Avatar size={34} {...avatar} /></Link>
-                </Tooltip>
+                <StaffTip id={me?.staffId} name={name} placement="right-end"><Link to="/account/profile"><Avatar size={34} {...avatar} /></Link></StaffTip>
                 <Tooltip title={tr("Sign out")} placement="right">
                     <button type="button" onClick={() => signOut()} className="flex h-8 w-8 items-center justify-center rounded-lg text-xl text-gray-500 hover:bg-gray-100 hover:text-red-500 dark:hover:bg-gray-700"><PiSignOutDuotone /></button>
                 </Tooltip>
@@ -42,7 +41,7 @@ const SideNavFooter = ({ collapsed }) => {
         <div className="border-t border-gray-200 p-3 dark:border-gray-700">
             <div className="flex items-center gap-3 rounded-xl p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <Link to="/account/profile" className="flex min-w-0 flex-1 items-center gap-3">
-                    <Avatar size={38} {...avatar} />
+                    <StaffTip id={me?.staffId} name={name}><Avatar size={38} {...avatar} /></StaffTip>
                     <div className="min-w-0 leading-tight">
                         <div className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{name}</div>
                         <div className={classNames('truncate text-xs', me?.admin ? 'text-primary' : 'text-gray-500')}>{role || ' '}</div>

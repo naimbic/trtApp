@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { StaffTip } from '@/components/crm/StaffRing'
 import { useLocation, useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import { PiChatCircleDotsFill, PiXBold, PiCaretLeftBold, PiUsersThreeDuotone, PiUserCircleDuotone, PiBuildingsDuotone, PiBellSimpleDuotone, PiBellSimpleSlashDuotone, PiPhoneCallDuotone, PiChatsCircleDuotone, PiArrowsOutSimpleDuotone } from 'react-icons/pi'
@@ -20,7 +21,7 @@ const post = chatPost
 
 const Face = ({ r }) => (
     <div className="relative shrink-0">
-        {r.kind === 'team' || r.kind === 'group' ? <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xl text-primary">{r.kind === 'group' ? <PiChatsCircleDuotone /> : <PiUsersThreeDuotone />}</div> : <Avatar size={40} shape="circle" src={r.image || undefined} icon={r.image ? undefined : <PiUserCircleDuotone />} />}
+        {r.kind === 'team' || r.kind === 'group' ? <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xl text-primary">{r.kind === 'group' ? <PiChatsCircleDuotone /> : <PiUsersThreeDuotone />}</div> : <StaffTip id={r.staffId} name={r.title}><Avatar size={40} shape="circle" src={r.image || undefined} icon={r.image ? undefined : <PiUserCircleDuotone />} /></StaffTip>}
         {r.kind !== 'team' && r.kind !== 'group' && <StatusDot status={r.status} className="absolute -bottom-0.5 -right-0.5" />}
     </div>
 )

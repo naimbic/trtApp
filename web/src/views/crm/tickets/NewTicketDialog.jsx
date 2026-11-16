@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import FileSourceButtons, { linkHtml } from '@/components/crm/FileSourceButtons'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -46,7 +47,7 @@ const NewTicketDialog = ({ open, onClose, lookups, onCreated, presets }) => {
             <div className="mt-4 grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_300px]">
                 <div className="flex min-w-0 flex-col gap-3">
                     <div className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"><L>{tr("Subject")}</L><Input className="text-base font-semibold" value={v.subject} onChange={(e) => set({ subject: e.target.value })} /></div>
-                    <div className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"><div className="relative" {...tf.dropProps}><DropHint tf={tf} /><L>{tr("Message")}</L><div onPaste={tf.onPaste}><RichEditor minHeight={220} images={false} mentions={false} placeholder={tr("Describe the problem. Paste a screenshot (Ctrl+V) or drop files here.")} value={v.message} onChange={(h) => set({ message: h })} /></div><FileTray tf={tf} /><div className="mt-2"><AttachButtons tf={tf} size="sm" /></div></div></div>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"><div className="relative" {...tf.dropProps}><DropHint tf={tf} /><L>{tr("Message")}</L><div onPaste={tf.onPaste}><RichEditor minHeight={220} images={false} mentions={false} placeholder={tr("Describe the problem. Paste a screenshot (Ctrl+V) or drop files here.")} value={v.message} onChange={(h) => set({ message: h })} /></div><FileTray tf={tf} /><div className="mt-2"><span className="inline-flex items-center gap-1.5"><AttachButtons tf={tf} size="sm" /><FileSourceButtons onFiles={tf.add} onLink={(url, name) => setV((x) => ({ ...x, message: `${x.message || ''}${linkHtml(url, name)}` }))} /></span></div></div></div>
                 </div>
                 <div className="flex min-w-0 flex-col gap-2">
                     <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">

@@ -6207,4 +6207,7 @@ export default {
     "On the document": "En el documento",
     "Printed on the document, its PDF and the client page": "Se imprime en el documento, su PDF y la página del cliente",
     "Link added": "Enlace añadido",
+    "Select from the files": "Seleccionar de los archivos",
+    "Could not read this file": "No se pudo leer este archivo",
+    "A link cannot be attached here": "Aquí no se puede adjuntar un enlace",
 }

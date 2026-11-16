@@ -1,4 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. */
+import FileSourceButtons from '@/components/crm/FileSourceButtons'
 import RelationSelect from '../kit/RelationSelect'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
@@ -210,6 +211,7 @@ const NoteEditor = ({ open, note, preset, canShare = true, onClose, onSaved }) =
                                     ? <><span className="flex items-center gap-1.5 text-xs font-semibold text-red-500"><span className="size-2 animate-pulse rounded-full bg-red-500" />{Math.floor(rec.seconds / 60)}:{String(rec.seconds % 60).padStart(2, '0')}</span><Button size="xs" variant="solid" icon={<TbPlayerStopFilled />} onClick={() => stopRec(false)}>{tr('Stop and add')}</Button><Button size="xs" onClick={() => stopRec(true)}>{tr('Cancel')}</Button></>
                                     : <Button size="xs" icon={<TbMicrophone />} disabled={busy} onClick={startRec}>{tr('Record a voice note')}</Button>}
                                 <Button size="xs" icon={<TbPaperclip />} disabled={busy} onClick={() => fileRef.current?.click()}>{tr('File')}</Button>
+                                <FileSourceButtons disabled={busy} onFiles={addFiles} onLink={(url, name) => setV((x) => ({ ...x, links: [...(x.links || []), { url, title: name }].slice(0, 10) }))} />
                             </div>
                         )}
                         <div className="space-y-2">

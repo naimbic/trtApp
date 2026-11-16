@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import FileSourceButtons, { linkHtml } from '@/components/crm/FileSourceButtons'
 import useMe from '@/utils/hooks/useMe'
 import { defaultRemindAt } from '@/utils/remind'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -128,6 +129,7 @@ const TicketView = () => {
                                 <FileTray tf={tf} />
                                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                                     <AttachButtons tf={tf} />
+                                    <FileSourceButtons onFiles={tf.add} onLink={(url, name) => setReply((r) => `${r || ''}${linkHtml(url, name)}`)} />
                                     {!internal && <div className="w-48"><Select size="sm" isClearable placeholder={tr("Status: Answered")} options={opt(lk.statuses)} value={pick(lk.statuses, replyStatus)} onChange={(o) => setReplyStatus(o?.value || null)} /></div>}
                                     <label className="flex items-center gap-2 text-sm"><Switcher checked={internal} onChange={setInternal} />{tr("Internal note")}</label>
                                     {!internal && <label className="flex items-center gap-2 text-sm"><Switcher checked={notify_} onChange={setNotify} />{tr("Email the client")}</label>}

@@ -1,4 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. */
+import FileSourceButtons from '@/components/crm/FileSourceButtons'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { TbBug, TbPlug, TbAdjustments, TbHelpCircle, TbDots, TbPlus, TbSearch, TbMessageCircle, TbChecklist, TbPaperclip, TbTrash, TbUsers, TbExternalLink, TbFlag, TbPhoto, TbArrowsExchange, TbEye, TbEyeOff } from 'react-icons/tb'
@@ -98,7 +99,7 @@ const RequestDialog = ({ request, data, clientId, onClose, onChanged }) => {
                             </div>
                         </FoldSection>
                         <FoldSection icon={<TbPhoto />} tone="blue" title={tr('Screenshots and files')} summary={v.attachments.length ? tr('{n} attached', { n: v.attachments.length }) : ''} open={sec === 'files'} onToggle={() => toggle('files')}>
-                            <label className="mb-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600"><TbPaperclip />{tr('Add a screenshot or a file')}<input type="file" multiple hidden onChange={(e) => { addFiles([...e.target.files]); e.target.value = '' }} /></label>
+                            <label className="mb-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600"><TbPaperclip />{tr('Add a screenshot or a file')}<input type="file" multiple hidden onChange={(e) => { addFiles([...e.target.files]); e.target.value = '' }} /></label><FileSourceButtons className="mb-2 ml-2 align-middle" onFiles={addFiles} />
                             <div className="space-y-1.5">{v.attachments.map((a) => (
                                 <div key={a.url} className="flex items-center gap-2 rounded-lg border border-gray-200 p-1.5 text-sm dark:border-gray-700">
                                     {a.kind === 'image' ? <img loading="lazy" decoding="async" src={a.url} alt="" className="size-10 shrink-0 rounded-md object-cover" /> : <TbPaperclip className="mx-2 shrink-0 text-gray-400" />}

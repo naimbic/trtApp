@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import FileSourceButtons, { linkHtml } from '@/components/crm/FileSourceButtons'
 import Mentioned from '@/components/crm/Mentioned'
 import RichEditor from '@/components/crm/RichEditor'
 import RichView from '@/components/crm/RichView'
@@ -290,6 +291,7 @@ const ChatThread = ({ load, send, upload, onData, showSender = false, empty = tr
                 )}
                 <div className="flex items-end gap-2 p-3">
                     {upload && <button type="button" onClick={() => fileInput.current?.click()} disabled={busy} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title={tr("Attach a file or picture")}><PiPaperclipDuotone /></button>}
+                    {upload && <FileSourceButtons disabled={busy} btnClass="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-gray-700" onFiles={(files) => sendFile(files[0])} onLink={(url, name) => (rich ? setHtml((h) => `${h || ''}${linkHtml(url, name)}`) : setText((x) => `${x ? `${x} ` : ''}${url}`))} />}
                     <EmojiPicker onPick={addEmoji} className="!size-9 shrink-0 !rounded-xl !text-xl" />
                     {rich ? (
                         <>

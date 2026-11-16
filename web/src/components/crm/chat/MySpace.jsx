@@ -1,4 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
+import FileSourceButtons from '@/components/crm/FileSourceButtons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { TbArrowLeft, TbBell, TbBellOff, TbCheck, TbChecklist, TbCopy, TbEye, TbEyeOff, TbLink, TbLock, TbNote, TbPaperclip, TbPencil, TbPin, TbPinFilled, TbPlus, TbSearch, TbTrash, TbX, TbSquareRoundedCheck, TbNotes, TbSend } from 'react-icons/tb'
@@ -44,6 +45,7 @@ const Editor = ({ init, onSave, onCancel, saving, compact }) => {
             <div className="flex flex-wrap items-center gap-2">
                 <input ref={fileRef} type="file" multiple hidden onChange={(e) => addFiles([...e.target.files])} />
                 <button type="button" disabled={busy} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300"><TbPaperclip />{busy ? tr("Uploading…") : tr("Attach")}</button>
+                <FileSourceButtons disabled={busy} onFiles={addFiles} />
                 <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300"><TbBell />{tr("Remind me")}<input type="datetime-local" className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800" value={v.remindAt} onChange={(e) => set({ remindAt: e.target.value })} /></label>
                 <span className="ms-auto flex gap-2">{onCancel && <Button size="sm" onClick={onCancel}>{tr("Cancel")}</Button>}<Button size="sm" variant="solid" loading={saving} icon={init?.id ? <TbCheck /> : <TbPlus />} onClick={submit}>{init?.id ? tr("Save") : tr("Add")}</Button></span>
             </div>
@@ -186,6 +188,7 @@ const MySpace = ({ compact = false, onBack = null, openId = '' }) => {
                     <div className="flex items-end gap-2">
                         <input ref={msgFile} type="file" multiple hidden onChange={(e) => addMsgFiles([...e.target.files])} />
                         <button type="button" disabled={upBusy} title={tr("Attach")} aria-label={tr("Attach")} onClick={() => msgFile.current?.click()} className="grid size-10 shrink-0 place-items-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-primary disabled:opacity-50 dark:hover:bg-gray-700"><TbPaperclip /></button>
+                        <FileSourceButtons disabled={upBusy} btnClass="grid size-10 shrink-0 place-items-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-primary disabled:opacity-50 dark:hover:bg-gray-700" onFiles={addMsgFiles} />
                         <textarea className={`${field} max-h-40 min-h-[40px] flex-1 resize-none !rounded-2xl`} rows={Math.min(5, Math.max(1, msg.split('\n').length))} placeholder={upBusy ? tr("Uploading…") : tr("Write a message to yourself…")} value={msg} onChange={(e) => setMsg(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() } }} />
                         <button type="button" disabled={sending || upBusy || (!msg.trim() && !files.length)} title={tr("Send")} aria-label={tr("Send")} onClick={send} className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-xl text-white transition hover:opacity-90 disabled:opacity-40"><TbSend /></button>
                     </div>

@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.254.0',
+        date: '2026-11-16',
+        title: 'Messages: Select a file from the file manager, or add a link',
+        items: [
+            'Beside the attach button of a message there are two new buttons: Select (a file already in the file manager or uploaded on a record is attached again, without downloading it first) and Link (a web address with an optional name).',
+            'Where: ticket replies and new tickets, the team chat, notes, My space, meetings and events, client requests and client reports. Lead emails and comments already had these options.',
+            'The client area keeps upload only: clients have no file manager.',
+        ],
+    },
+    {
         version: '0.253.0',
         date: '2026-11-16',
         title: 'Files: Upload, Select or Link everywhere; Files tab in the task popup',

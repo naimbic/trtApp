@@ -6207,4 +6207,7 @@ export default {
     "On the document": "على المستند",
     "Printed on the document, its PDF and the client page": "يُطبع على المستند وملف PDF وصفحة العميل",
     "Link added": "تمت إضافة الرابط",
+    "Select from the files": "اختيار من الملفات",
+    "Could not read this file": "تعذرت قراءة هذا الملف",
+    "A link cannot be attached here": "لا يمكن إرفاق رابط هنا",
 }

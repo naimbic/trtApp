@@ -193,6 +193,15 @@ async function descendants(id) {
     return { ids, keys }
 }
 
+/** A stored file this person may open (file manager, or a record they can see): used to send it again as an attachment of a message. */
+export async function mediaFile(id) {
+    const ctx = await who()
+    const m = OID.test(id || '') ? await prisma.crmMedia.findFirst({ where: { id, isFolder: false } }) : null
+    if (!m || !m.key || !m.url) fail('File not found', 404)
+    if (m.relType) { await relAccess(ctx, m.relType, 'view', m.relId); if (!(await ownRecord(ctx, m))) fail('You do not have access to this file', 403) }
+    return { url: m.url, name: m.name, mime: m.mime || 'application/octet-stream', size: m.size || 0 }
+}
+
 export async function mediaAction(body) {
     const ctx = await who()
     const { action } = body

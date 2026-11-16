@@ -1,4 +1,5 @@
 /*! © 2026 TRT Digital — trtCRM. */
+import FileSourceButtons from '@/components/crm/FileSourceButtons'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { TbChartBar, TbCompass, TbPlus, TbSearch, TbSend, TbMessageCircle, TbChecklist, TbPaperclip, TbTrash, TbUsers, TbEye, TbEyeOff, TbLink, TbFileText, TbUpload, TbFolderSymlink, TbExternalLink } from 'react-icons/tb'
@@ -118,6 +119,7 @@ const ReportDialog = ({ report, data, clientId, onClose, onChanged, onSend }) =>
                             {!readOnly && (fcan.create || canBrowse) && (
                                 <div className="mb-3 grid gap-2 sm:grid-cols-3">
                                     {fcan.create && <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm font-semibold text-gray-600 transition hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300"><TbUpload className="text-lg" />{busy === 'file' ? tr('Uploading…') : tr('Upload')}<input type="file" multiple hidden onChange={(e) => { addFiles([...e.target.files]); e.target.value = '' }} /></label>}
+                                    {fcan.create && <FileSourceButtons className="justify-center" onFiles={addFiles} />}
                                     {fcan.create && canBrowse && <button type="button" onClick={() => setPick(true)} className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm font-semibold text-gray-600 transition hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300"><TbFolderSymlink className="text-lg" />{tr('From the file manager')}</button>}
                                     {fcan.create && <button type="button" onClick={() => setLinkOpen((x) => !x)} className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 px-3 py-3 text-sm font-semibold text-gray-600 transition hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300"><TbLink className="text-lg" />{tr('Add a link')}</button>}
                                 </div>

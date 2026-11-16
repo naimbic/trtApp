@@ -6207,4 +6207,7 @@ export default {
     "On the document": "書類に表示",
     "Printed on the document, its PDF and the client page": "書類、そのPDF、顧客ページに印刷されます",
     "Link added": "リンクを追加しました",
+    "Select from the files": "ファイルから選択",
+    "Could not read this file": "このファイルを読み込めませんでした",
+    "A link cannot be attached here": "ここにはリンクを添付できません",
 }

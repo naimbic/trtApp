@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import FileSourceButtons from '@/components/crm/FileSourceButtons'
 import dayjs from 'dayjs'
 import { components } from 'react-select'
 import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand, TbNotes, TbNotebook, TbPaperclip, TbFile, TbLink, TbX, TbPlus } from 'react-icons/tb'
@@ -99,6 +100,7 @@ const EventFiles = ({ files = [], onChange, readOnly }) => {
             {!readOnly && (
                 <div className="flex flex-wrap items-center gap-2">
                     <Button type="button" size="sm" icon={<TbPaperclip />} loading={busy} onClick={() => ref.current?.click()}>{tr('Add a file')}</Button>
+                    <FileSourceButtons disabled={busy} onFiles={upload} />
                     <input ref={ref} type="file" multiple className="hidden" onChange={(e) => { upload([...e.target.files]); e.target.value = '' }} />
                     <div className="flex min-w-[12rem] flex-1 gap-1.5">
                         <Input size="sm" prefix={<TbLink />} placeholder={tr('…or paste a link')} value={link} onChange={(e) => setLink(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }} />

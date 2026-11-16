@@ -16,7 +16,7 @@ const STRUCTURE = [
     { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'file-manager', 'customers-setting'] },
     { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
     { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
-    { group: 'Growth & insight', icon: 'crmUtilities', entries: ['grow', 'goals', 'surveys', 'my-growth', 'reports', 'ai', 'activity-log'] },
+    { group: 'Growth & insight', icon: 'crmUtilities', entries: ['grow', 'goals', 'surveys', 'my-growth', 'points', 'reports', 'ai', 'activity-log'] },
     { group: 'Support & Help', icon: 'crmSupport', entries: ['tickets', 'help-center', 'kb-manage', 'support-setting'] },
     { group: 'Team', icon: 'crmAdministration', entries: ['staff', 'roles', 'announcements', 'scheduled-messages', 'team-setting'] },
     { group: 'Time & pay', icon: 'crmAdministration', entries: ['work-hours', 'timesheets', 'leave-requests', 'days-off', 'payroll'] },

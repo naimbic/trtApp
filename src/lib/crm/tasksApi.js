@@ -4,6 +4,7 @@ import { getTaskStatuses, defaultTaskStatus } from '@/lib/crm/taskStatuses'
 import { readSettings } from '@/lib/crm/appSettings'
 import prisma from '@/lib/prisma'
 import { logTask, logLead, namesOf } from '@/lib/crm/activity'
+import { awardTaskOnTime } from '@/lib/crm/pointsApi'
 import { emit } from '@/lib/crm/webhooks'
 import { notifyComment, notifyNewMentions, notifyMentions } from '@/lib/crm/mentionsApi'
 import { notifyNotice } from '@/lib/crm/notifyMail'
@@ -327,6 +328,7 @@ export async function saveTask(body, id) {
     const followers = id ? body.followerIds : await withAdmins(withCreator(Array.isArray(body.followerIds) ? body.followerIds : [], S?.on('new_task_auto_follower_current_member')))
     if (Array.isArray(assignees)) await sync('crmTaskAssigned', assignees, { assignedFrom: a.staffId })
     await trackTask({ task, prev, a, assigneeIds: Array.isArray(assignees) ? assignees : null })
+    if (task.status === COMPLETE && prev?.status !== COMPLETE) await awardTaskOnTime(task.id) // points for a task finished in time
     if (Array.isArray(followers)) await sync('crmTaskFollower', followers)
     if (Array.isArray(body.tags)) {
         const want = [...new Set(body.tags.map((x) => String(x || '').trim().slice(0, 40)).filter(Boolean))].slice(0, 12)
@@ -364,6 +366,7 @@ export async function moveTask(id, { status, order }) {
     if (st === COMPLETE && t.status !== COMPLETE) { const n = await openChildren(id); if (n) throw fail(FINISH_SUBTASKS(n), 409) }
     await prisma.crmTask.update({ where: { id }, data: { status: st, kanbanOrder: Number.isFinite(+order) ? Math.round(+order) : t.kanbanOrder, dateFinished: st === COMPLETE ? t.dateFinished || new Date() : null } })
     if (st !== t.status) await trackTask({ task: { ...t, status: st }, prev: t, a })
+    if (st === COMPLETE && t.status !== COMPLETE) await awardTaskOnTime(id)
     return { success: true }
 }
 
@@ -387,6 +390,7 @@ export async function reorderTasks(status, ids) {
         if (t.status !== st) { try { await closedLead(a, t.relType, t.relId) } catch { shut = true; continue } } // a task of a converted lead stays where it is
         if (st === COMPLETE && t.status !== COMPLETE && (await openChildren(id))) { blocked++; continue }
         await prisma.crmTask.update({ where: { id }, data: { kanbanOrder: i, ...(t.status !== st ? { status: st, dateFinished: st === COMPLETE ? new Date() : null } : {}) } })
+        if (st === COMPLETE && t.status !== COMPLETE) await awardTaskOnTime(id)
     }
     if (shut) throw fail('This lead already became a customer, only an admin can change it', 403) // the board puts the card back
     if (denied && denied === ids.filter(oid).length) throw fail(NOT_YOURS, 403)

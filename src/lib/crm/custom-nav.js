@@ -26,6 +26,7 @@ export const customNavItems = [
     { group: 'Knowledge Base', key: 'help-center', title: 'Help center', path: '/crm/knowledge-base', feature: 'knowledge_base' },
     { group: 'Knowledge Base', key: 'kb-manage', title: 'Manage articles', path: '/crm/knowledge-base/manage', feature: 'knowledge_base' },
     { group: 'Utilities', key: 'scheduled-messages', title: 'Scheduled messages', path: '/crm/scheduled-messages', feature: 'scheduled_messages' },
+    { group: 'Utilities', key: 'points', title: 'Points', path: '/crm/points', feature: null },
     { group: 'Utilities', key: 'my-growth', title: 'My growth', path: '/crm/my-growth', feature: 'growth' },
     { group: 'Utilities', key: 'grow', title: 'Grow', path: '/crm/grow', feature: 'grow' },
     { group: 'Setup', key: 'api', title: 'API and webhooks', path: '/crm/api', feature: 'api' },

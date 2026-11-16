@@ -263,3 +263,26 @@ model CrmTrophy {
   @@unique([staffId, key])
   @@map("crm_trophies")
 }
+
+/// Points a team member earned (or lost) for good work: given by hand on a message, a comment, a task, or by the rules (a task finished in time).
+/// Points turn into money (Settings of the Points page) and are paid with the salary as a prime; paidAt marks the ones already paid.
+model CrmPoint {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  staffId   String    @db.ObjectId
+  points    Int
+  kind      String    @default("manual") // manual | task_on_time
+  reason    String?
+  relType   String? // chat | comment | task | lead | ...
+  relId     String?
+  link      String?
+  givenById String?   @db.ObjectId
+  givenBy   String?
+  paymentId String?   @db.ObjectId
+  paidAt    DateTime?
+  value     Float? // money for one point when it was paid
+  createdAt DateTime  @default(now())
+
+  @@index([staffId, paidAt])
+  @@index([relType, relId])
+  @@map("crm_points")
+}

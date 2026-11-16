@@ -19,6 +19,7 @@ import Tag from '@/components/ui/Tag'
 import Timeline from '@/components/ui/Timeline'
 import classNames from '@/utils/classNames'
 import { api, notify, useCan } from '../kit/api'
+import GivePoints from '@/components/crm/GivePoints'
 import { STATUS, PRIORITY, statusOf, statusPillStyle, prioOf, initials, duration, useTaskStatuses } from './shared'
 import { tr } from '@/utils/t'
 import useTabParam from '@/utils/useTabParam'
@@ -111,6 +112,7 @@ const TaskPage = () => {
                         <div className="ml-auto flex gap-2">
                             {e && <Button size="xs" variant="plain" icon={<TbBookmark />} onClick={keepAsTemplate}>{tr('Save as template')}</Button>}
                             {t.rel?.type === 'project' && <Button size="xs" data-href={`/crm/projects/${t.relId}/board`} onClick={() => nav(`/crm/projects/${t.relId}/board`)}>{tr('Scrum board')}</Button>}
+                            <GivePoints people={t.assignees || []} relType="task" relId={id} link={`/crm/tasks/${id}`} reason={`${tr('Task')}: ${t.name || ''}`.slice(0, 120)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-gray-500 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-gray-700" />
                             {can.delete && <Button size="xs" variant="plain" className="text-red-500" icon={<TbTrash />} onClick={() => setConfirmDel(true)} />}
                         </div>
                     </div>
@@ -180,7 +182,7 @@ const TaskPage = () => {
                                                 {editingId === c.id
                                                     ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
                                                     : <RichView className="mt-1 text-sm" html={c.content} />}
-                                                {editingId !== c.id && <CommentFoot remind={{ relType: 'task', relId: id, tab: 'comments', assignedIds: t.assigneeIds || [], note: plainOf(c.content).slice(0, 140) }} onMention={(sid) => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, mention: sid } }).then(() => { notify('success', tr('Colleague mentioned')); return load() }).catch((er) => notify('danger', er.message))} reactions={c.reactions} onReact={(emoji) => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, react: emoji } }).then(load).catch((er) => notify('danger', er.message))} share={{ url: `/crm/tasks/${id}`, title: t.name, text: `${c.staff?.name ? `${c.staff.name}: ` : ''}${plainOf(c.content)}` }} onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); startReply(editorRef.current, c.staff?.name) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => delComment(c) : null} />}
+                                                {editingId !== c.id && <CommentFoot award={c.staff?.id ? { people: [c.staff], relType: 'task_comment', relId: c.id, link: `/crm/tasks/${id}`, reason: plainOf(c.content).slice(0, 120) } : null} remind={{ relType: 'task', relId: id, tab: 'comments', assignedIds: t.assigneeIds || [], note: plainOf(c.content).slice(0, 140) }} onMention={(sid) => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, mention: sid } }).then(() => { notify('success', tr('Colleague mentioned')); return load() }).catch((er) => notify('danger', er.message))} reactions={c.reactions} onReact={(emoji) => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, react: emoji } }).then(load).catch((er) => notify('danger', er.message))} share={{ url: `/crm/tasks/${id}`, title: t.name, text: `${c.staff?.name ? `${c.staff.name}: ` : ''}${plainOf(c.content)}` }} onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); startReply(editorRef.current, c.staff?.name) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => delComment(c) : null} />}
                                             </div>
                                         </div>
                                     )} />

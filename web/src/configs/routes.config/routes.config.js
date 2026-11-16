@@ -162,6 +162,7 @@ const crmRoutes = [
     { key: 'crm.reports', path: '/crm/reports', component: lazy(() => import('@/views/crm/reports/Reports')), authority: [] },
     { key: 'crm.tasks', path: '/crm/tasks', component: lazy(() => import('@/views/crm/tasks/TasksBoard')), authority: [] },
     { key: 'crm.grow', path: '/crm/grow', component: lazy(() => import('@/views/crm/grow/Grow')), authority: [] },
+    { key: 'crm.points', path: '/crm/points', component: lazy(() => import('@/views/crm/points/PointsPage')), authority: [] },
     { key: 'crm.my-growth', path: '/crm/my-growth', component: lazy(() => import('@/views/crm/grow/MyGrowth')), authority: [] },
     { key: 'crm.scheduled-messages', path: '/crm/scheduled-messages', component: lazy(() => import('@/views/crm/chat/ScheduledMessages')), authority: [] },
     { key: 'crm.api', path: '/crm/api', component: lazy(() => import('@/views/crm/api/ApiPage')), authority: ['admin', 'crm.admin'] },

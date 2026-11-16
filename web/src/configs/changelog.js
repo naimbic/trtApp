@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.256.0',
+        date: '2026-11-16',
+        title: 'Points: reward good work, paid with the salary as a prime',
+        items: [
+            'New page Points (More → Growth & insight): everyone sees their points, what they are worth, their rank of the month and how to earn more.',
+            'A star button gives points for a chat message, a comment on a task, a note on a lead, a help-center comment, or a whole task (to the people it is assigned to). The person is told at once, with the reason.',
+            'By itself: a task finished on or before its due date gives points to the people it is assigned to (5 by default, once per task).',
+            'Managers of the points can also remove points (with a reason), delete an entry, and set the rules: the money for one point, the points for a task in time, the most given at once and the monthly limit per person.',
+            'Payroll: when you record a salary, the Prime field is filled with the money of the points waiting, and saving marks those points as paid.',
+            'Nobody rewards themselves or the same thing twice. Giving points is a permission (Roles → Tools → Points), off until you give it; the super administrator always can.',
+        ],
+    },
+    {
         version: '0.255.0',
         date: '2026-11-16',
         title: 'Permissions for every Activity (history) of the CRM',

@@ -85,6 +85,8 @@ export async function addPayment(body) {
     if (data.kind === 'salary' && Number.isFinite(prime) && prime > 0) {
         const bonus = await prisma.crmStaffPayment.create({ data: { staffId: body.staffId, ...data, kind: 'bonus', amount: prime, note: data.note || null } })
         await syncPaymentExpense(bonus).catch(() => {})
+        // the prime pays the points of the member: they are marked as paid with this payment
+        if (body.payPoints) { const { markPointsPaid } = await import('@/lib/crm/pointsApi'); await markPointsPaid(body.staffId, bonus.id).catch(() => {}) }
     }
     return shapePayment(row)
 }

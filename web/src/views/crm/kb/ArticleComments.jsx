@@ -48,6 +48,7 @@ const ArticleComments = ({ articleId, subject, comments, canComment, onChange })
                             </div>
                             {editing !== n.id && canComment && (
                                 <CommentFoot
+                                    award={n.by?.id ? { people: [n.by], relType: 'kb_comment', relId: n.id, reason: plainOf(n.content).slice(0, 120) } : null}
                                     remind={{ relType: 'kb_article', relId: articleId, note: plainOf(n.content).slice(0, 140) }}
                                     reactions={n.reactions}
                                     onReact={(emoji) => run(() => api(url, { method: 'POST', body: { noteId: n.id, react: emoji } }))}

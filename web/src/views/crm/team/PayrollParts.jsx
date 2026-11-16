@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import Switcher from '@/components/ui/Switcher'
 import { api, notify } from '../kit/api'
 import { useClientLookups, makeMoney } from '../clients/shared'
 import { tr } from '@/utils/t'
@@ -68,6 +69,14 @@ export const PaymentDialog = ({ open, onClose, staffId, name, preset, edit, rib,
         setV(edit ? { month: edit.month, kind: edit.kind, amount: edit.amount, currencyId: edit.currencyId || defaultId, paidDate: dayjs(edit.paidDate).format('YYYY-MM-DD'), method: edit.method, note: edit.note }
             : { month: dayjs().format('YYYY-MM'), kind: 'salary', amount: '', currencyId: defaultId, paidDate: dayjs().format('YYYY-MM-DD'), method: '', note: '', prime: '', ...(preset || {}) })
     }, [open, edit, preset, defaultId])
+    // the points of the member waiting to be paid: they fill the Prime field of a new salary payment
+    const [pts, setPts] = useState(null)
+    useEffect(() => {
+        if (!open || edit || !staffId) { setPts(null); return }
+        let live = true
+        api(`/api/crm/points/unpaid?staffId=${staffId}`).then((r) => { if (!live) return; setPts(r); if (r.amount > 0) setV((x) => (x.prime === '' || x.prime === undefined ? { ...x, prime: r.amount, payPoints: true } : x)) }).catch(() => {})
+        return () => { live = false }
+    }, [open, edit, staffId])
     const kinds = Object.keys(KIND_LABEL).map((k) => ({ value: k, label: KIND_LABEL[k]() }))
     const save = async () => {
         setBusy(true)
@@ -88,6 +97,7 @@ export const PaymentDialog = ({ open, onClose, staffId, name, preset, edit, rib,
                 <Field label={tr('Amount')}><Input type="number" min="0" step="0.01" autoFocus value={v.amount ?? ''} onChange={(e) => setV({ ...v, amount: e.target.value })} /></Field>
                 <Field label={tr('Currency')}><Select options={options} value={options.find((o) => o.value === v.currencyId) || null} onChange={(o) => setV({ ...v, currencyId: o?.value || null })} /></Field>
                 {!edit && v.kind === 'salary' && <Field label={tr('Prime (bonus)')}><Input type="number" min="0" step="0.01" placeholder="0" value={v.prime ?? ''} onChange={(e) => setV({ ...v, prime: e.target.value })} /></Field>}
+                {!edit && v.kind === 'salary' && pts?.points > 0 && <div className="col-span-2 -mt-1 flex items-center justify-between gap-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"><span>⭐ {tr('{n} points waiting = {amount}. Paying the prime marks them as paid.', { n: pts.points, amount: pts.amount })}</span><Switcher checked={!!v.payPoints} onChange={(c) => setV({ ...v, payPoints: c, prime: c ? pts.amount : '' })} /></div>}
                 <Field label={tr('Paid on')}><Input type="date" value={v.paidDate || ''} onChange={(e) => setV({ ...v, paidDate: e.target.value })} /></Field>
                 <Field label={tr('Method')}><Input placeholder={tr('Transfer, cash, cheque…')} value={v.method || ''} onChange={(e) => setV({ ...v, method: e.target.value })} /></Field>
                 <div className="col-span-2"><Field label={tr('Note')}><Input value={v.note || ''} onChange={(e) => setV({ ...v, note: e.target.value })} /></Field></div>

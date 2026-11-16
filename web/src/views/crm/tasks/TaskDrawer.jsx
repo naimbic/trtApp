@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AttachmentsPanel from '@/components/crm/AttachmentsPanel'
 import RemindMe from '@/components/crm/RemindMe'
+import GivePoints from '@/components/crm/GivePoints'
 import ChecklistPanel from '@/components/crm/ChecklistPanel'
 import RichView from '@/components/crm/RichView'
 import RichEditor from '@/components/crm/RichEditor'
@@ -174,7 +175,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                                 ? <CommentEdit initial={c.content} onCancel={() => setEditingId(null)} onSave={async (text) => { await api(`/api/crm/work/tasks/${id}/comments`, { method: 'PUT', body: { commentId: c.id, content: text } }); setEditingId(null); await load() }} />
                                 : <RichView html={c.content} />}
                         </div>
-                        {editingId !== c.id && <CommentFoot remind={{ relType: 'task', relId: id, tab: 'comments', assignedIds: detail?.task?.assigneeIds || [], note: plainOf(c.content).slice(0, 140) }} onMention={(sid) => act(() => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, mention: sid } }), tr('Colleague mentioned'))} reactions={c.reactions} onReact={(emoji) => act(() => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, react: emoji } }))} share={{ url: `/crm/tasks/${id}`, title: detail?.task.name, text: `${c.staff?.name ? `${c.staff.name}: ` : ''}${plainOf(c.content)}` }} onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); startReply(editorRef.current, c.staff?.name) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' })) : null} />}
+                        {editingId !== c.id && <CommentFoot award={c.staff?.id ? { people: [c.staff], relType: 'task_comment', relId: c.id, link: `/crm/tasks/${id}`, reason: plainOf(c.content).slice(0, 120) } : null} remind={{ relType: 'task', relId: id, tab: 'comments', assignedIds: detail?.task?.assigneeIds || [], note: plainOf(c.content).slice(0, 140) }} onMention={(sid) => act(() => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, mention: sid } }), tr('Colleague mentioned'))} reactions={c.reactions} onReact={(emoji) => act(() => api(`/api/crm/work/tasks/${id}/comments`, { method: 'POST', body: { commentId: c.id, react: emoji } }))} share={{ url: `/crm/tasks/${id}`, title: detail?.task.name, text: `${c.staff?.name ? `${c.staff.name}: ` : ''}${plainOf(c.content)}` }} onReply={() => { setReplyTo({ id: c.id, name: c.staff?.name || tr('Client') }); startReply(editorRef.current, c.staff?.name) }} onEdit={c.mine ? () => setEditingId(c.id) : null} onDelete={c.canDelete ? () => act(() => api(`/api/crm/work/tasks/${id}/comments?commentId=${c.id}`, { method: 'DELETE' })) : null} />}
                     </div>
                 </div>
             )} />
@@ -212,6 +213,7 @@ const TaskDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                 <div className="flex w-full items-center gap-2">
                     {edit && detail?.can.delete && <Button variant="plain" className="text-red-500" onClick={() => setConfirmDel(true)}>{tr("Delete")}</Button>}
                     {edit && <RemindMe relType="task" relId={id} />}
+                    {edit && detail?.task && <GivePoints people={detail.task.assignees || []} relType="task" relId={id} link={`/crm/tasks/${id}`} reason={`${tr('Task')}: ${detail.task.name || ''}`.slice(0, 120)} className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-gray-700" />}
                     <div className="ml-auto flex gap-2">
                         <Button onClick={onClose}>{canEdit ? tr("Cancel") : tr("Close")}</Button>
                         {awaitingMe && <Button className="!bg-emerald-500 !text-white hover:!bg-emerald-600" icon={<TbChecks />} loading={saving} onClick={complete}>{tr("Mark as complete")}</Button>}

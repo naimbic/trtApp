@@ -113,7 +113,9 @@ export async function notificationFeed({ days } = {}) {
     const mineDoc = staffId ? { OR: [{ saleAgentId: staffId }, { addedFrom: staffId }] } : NONE
     if (can('payments') || can('invoices')) {
         const inv = await prisma.crmInvoice.findMany({ where: { AND: [{ status: 4 }, mineDoc] }, select: { id: true, number: true, prefix: true, numberFormat: true, date: true, status: true } })
-        if (inv.length && started) add('invoice', `${inv.length} invoice${inv.length === 1 ? ' is' : 's are'} overdue`, inv.slice(0, 3).map((i) => docNumberOf(i, padding)).join(', ') + (inv.length > 3 ? '…' : ''), dayStart, '/crm/invoices', 'red')
+        // said once a week (Monday morning), not every morning
+        const wd = (today.getDay() + 6) % 7, monday = new Date(+dayStart - (wd === 0 && !started ? 7 : wd) * DAY)
+        if (inv.length) add('invoice', `${inv.length} invoice${inv.length === 1 ? ' is' : 's are'} overdue`, inv.slice(0, 3).map((i) => docNumberOf(i, padding)).join(', ') + (inv.length > 3 ? '…' : ''), monday, '/crm/invoices', 'red')
         const myInv = (await prisma.crmInvoice.findMany({ where: mineDoc, select: { id: true } })).map((i) => i.id)
         const pays = myInv.length ? await prisma.crmPayment.findMany({ where: { AND: [{ invoiceId: { in: myInv } }, { OR: [{ paymentDate: { gte: since(7) } }, { createdAt: { gte: since(7) } }] }] }, orderBy: { createdAt: 'desc' }, take: 6 }) : []
         if (pays.length) {

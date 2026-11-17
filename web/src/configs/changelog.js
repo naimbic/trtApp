@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.259.4',
+        date: '2026-11-17',
+        title: 'Overdue invoices notify once a week',
+        items: [
+            'The "invoices are overdue" notification came back every morning; it now comes once a week, on Monday morning.',
+        ],
+    },
+    {
         version: '0.259.3',
         date: '2026-11-17',
         title: 'Late tasks no longer notify every day',

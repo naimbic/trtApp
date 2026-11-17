@@ -303,6 +303,9 @@ export async function updateCalendarEvent(id, body) {
     const data = clean({ ...current, ...body })
     // a new time or a new reminder: the reminder is due again
     const moved = +new Date(data.start) !== +new Date(ev.start) || data.reminderBefore !== ev.reminderBefore || data.reminderBeforeType !== ev.reminderBeforeType
+    // a new date or time: what was confirmed has to be confirmed again
+    const retimed = +new Date(data.start) !== +new Date(ev.start) || +new Date(data.end || 0) !== +new Date(ev.end || 0)
+    if (retimed && ev.confirmed) data.confirmed = false
     const updated = await prisma.crmEvent.update({ where: { id }, data: { ...data, ...(moved ? { reminderSentAt: null } : {}) } })
     let told = []
     if (updated.source && body.notifyRequester) told = await (await import('@/lib/crm/appointments')).tellRequester(updated, { kind: 'updated', message: body.requesterMessage })

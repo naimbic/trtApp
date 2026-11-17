@@ -163,7 +163,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], booki
             attendeeEmails: (selected.attendeeEmails || []).join(', '),
             report: selected.report || '', confirmed: selected.type === 'EDIT' ? !!selected.confirmed : selected.confirmed !== false, // a new meeting starts confirmed (green), switch it off for one that is not sure yet
              remindClient: !!selected.remindClient, reminderTemplate: selected.reminderTemplate || '',
-            reminderBefore: selected.reminderBefore ?? (selected.type === 'EDIT' ? '' : 30), // a new meeting reminds 30 minutes before unless changed
+            reminderBefore: selected.reminderBefore ?? (selected.type === 'EDIT' && !selected.source ? '' : 30), // a new meeting, and a booking, remind 30 minutes before unless changed
             reminderBeforeType: selected.reminderBeforeType || 'minutes',
         })
     }, [selected])

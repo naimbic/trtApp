@@ -57,7 +57,7 @@ export async function createAppointment(request) {
             if (same.status !== 'draft') { log(200); return { data: shape(same), created: false, note: `This request is already ${same.status}` } }
             row = await prisma.crmEvent.update({ where: { id: same.id }, data })
         } else {
-            row = await prisma.crmEvent.create({ data: { ...data, isPublic: false } }); created = true
+            row = await prisma.crmEvent.create({ data: { ...data, isPublic: false, reminderBefore: 30, reminderBeforeType: 'minutes' } }); created = true // a booking reminds 30 minutes before unless changed
             const picked = String((await getOptions(['appointment_staff']))('appointment_staff') || '').split(',').filter((x) => /^[a-f0-9]{24}$/i.test(x)) // Settings → Calendar: who takes the appointments (empty = every administrator)
             const admins = await prisma.crmStaff.findMany({ where: picked.length ? { active: true, id: { in: picked } } : { active: true, admin: true }, select: { id: true } })
             const who = guests.map((g) => g.name || g.email).filter(Boolean).join(', ')
@@ -106,7 +106,7 @@ export async function canDecideBookings(authority, staffId) {
 async function decideCore(e, { accept, staffId, notify, message, template }) {
     const status = accept ? 'confirmed' : 'declined'
     if (e.status === status) return { row: e, emailed: [], same: true }
-    const row = await prisma.crmEvent.update({ where: { id: e.id }, data: { status, decidedBy: staffId || null, decidedAt: new Date(), ...(accept ? { userId: staffId || e.userId, color: 'blue', confirmed: true } : {}) } })
+    const row = await prisma.crmEvent.update({ where: { id: e.id }, data: { status, decidedBy: staffId || null, decidedAt: new Date(), ...(accept ? { userId: staffId || e.userId, color: 'blue', confirmed: true, ...(e.reminderBefore == null ? { reminderBefore: 30, reminderBeforeType: 'minutes' } : {}) } : {}) } })
     emit(accept ? 'appointment.accepted' : 'appointment.declined', shape(row))
     const emailed = []
     if (notify !== false) {

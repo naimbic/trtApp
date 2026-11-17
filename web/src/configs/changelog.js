@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.260.1',
+        date: '2026-11-17',
+        title: 'Bookings remind 30 minutes before; a new date or time needs confirming again',
+        items: [
+            'A meeting booking now has "Reminder before" set to 30 minutes when it arrives and when it is accepted (it was empty). You can still change or empty it.',
+            'Changing the date or the time of a confirmed event turns "Confirmed" off, so it is confirmed again for the new time.',
+        ],
+    },
+    {
         version: '0.260.0',
         date: '2026-11-17',
         title: 'Meeting bookings: email templates, who can accept, reminders by email',

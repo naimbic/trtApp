@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.260.3',
+        date: '2026-11-17',
+        title: 'Invoice numbers follow the "Next number" of Settings',
+        items: [
+            'When numbering starts again every year or every month, a new invoice took "the highest number of the period + 1" and ignored the Next number shown in Settings → Billing. One high number in the year (typed by hand or imported) pulled every following invoice up to it: 1000 instead of 112. The Next number is now the one used. Same for estimates and purchase orders.',
+            'A number already used in the period is skipped, a new year or month still starts again from 1, and an invoice dated in another year continues that year without touching the setting.',
+            'Correcting the number of the last invoice downwards (1000 to 112) brings the Next number back with it (113).',
+        ],
+    },
+    {
         version: '0.260.2',
         date: '2026-11-17',
         title: 'Clients and Projects cards: full rows on every screen',

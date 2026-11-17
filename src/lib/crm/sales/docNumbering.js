@@ -29,18 +29,31 @@ async function highest(k, period) {
     return row?.number || 0
 }
 
-/** The number, prefix and format a new document gets. Also moves the "next number" setting forward. */
+const keyOf = (period) => period[0].toISOString().slice(0, 7)
+
+/** The number, prefix and format a new document gets. Also moves the "next number" setting forward.
+ *  With a restart rule (every year / every month) the "Next number" of Settings still counts inside the running period: the number is the one
+ *  written there, not "the highest number of the period + 1" (one stray high number, typed by hand or imported, used to pull every following
+ *  document up to it). A new period starts again after the highest number already used in it (normally from 1); a document dated in another
+ *  period continues that period and leaves the setting alone. A number already taken in the period is skipped. */
 export async function allocateNumber(kind, date) {
     const k = KINDS[kind]
     const rule = await opt(k.reset, k.defReset || 'never')
     const period = periodOf(rule, date)
+    const next = Number(await opt(k.next, '0')) || 0
     let number
-    if (period) number = (await highest(k, period)) + 1
-    else {
-        const next = Number(await opt(k.next, '0')) || 0
-        number = next > 0 ? next : (await highest(k, null)) + 1
-    }
-    await setOpt(k.next, number + 1)
+    let keep = true // move the setting forward
+    if (period) {
+        const key = keyOf(period), nowKey = keyOf(periodOf(rule, new Date()))
+        // which period the "next number" belongs to: the one we wrote it for, or today's when somebody typed it in Settings (or it was never tracked)
+        const [autoKey, autoNum] = String(await opt(`${k.next}_auto`, '')).split(':')
+        const nextKey = next > 0 && String(next) !== autoNum ? nowKey : autoKey
+        number = next > 0 && nextKey === key ? next : (await highest(k, period)) + 1
+        for (let i = 0; i < 500 && await prisma[k.model].findFirst({ where: { number, date: { gte: period[0], lt: period[1] } }, select: { id: true } }); i++) number++
+        keep = key === nowKey || nextKey === key
+        if (keep) await setOpt(`${k.next}_auto`, `${key}:${number + 1}`)
+    } else number = next > 0 ? next : (await highest(k, null)) + 1
+    if (keep) await setOpt(k.next, number + 1)
     return { number, prefix: await opt(k.prefix, k.defPrefix), numberFormat: Number(await opt(k.format, k.defFormat || '1')) || 1 }
 }
 
@@ -102,13 +115,19 @@ export async function manualNumber(model, input, authority) {
     return { number: n }
 }
 
-/** Writes the number chosen with manualNumber and keeps the "next number" setting ahead of it. */
+/** Writes the number chosen with manualNumber and keeps the "next number" setting right: ahead of a higher number, and back down when the
+ *  last document is given a lower number (a wrong 1000 corrected to 112 makes the next one 113, not 1001). */
 export async function applyManualNumber(model, id, number) {
     if (!number) return
-    await prisma[model].update({ where: { id }, data: { number } })
     const kind = COUNTER[model]
-    if (kind) {
-        const next = Number(await opt(KINDS[kind].next, '0')) || 0
-        if (number >= next) await setOpt(KINDS[kind].next, number + 1)
+    const before = kind ? await prisma[model].findUnique({ where: { id }, select: { number: true, date: true } }) : null
+    await prisma[model].update({ where: { id }, data: { number } })
+    if (!kind) return
+    const k = KINDS[kind]
+    const next = Number(await opt(k.next, '0')) || 0
+    if (number >= next) await setOpt(k.next, number + 1)
+    else if (before && before.number + 1 === next) {
+        const top = await highest(k, periodOf(await opt(k.reset, k.defReset || 'never'), before.date))
+        if (top + 1 < next) await setOpt(k.next, top + 1)
     }
 }

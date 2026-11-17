@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.260.2',
+        date: '2026-11-17',
+        title: 'Clients and Projects cards: full rows on every screen',
+        items: [
+            'The cards view showed 12 cards per page whatever the screen, so a wide screen with 5 columns ended with a half-empty row. A page now holds whole rows: 15 cards on 5 columns, 18 on 6, 12 on 4 and less.',
+        ],
+    },
+    {
         version: '0.260.1',
         date: '2026-11-17',
         title: 'Bookings remind 30 minutes before; a new date or time needs confirming again',

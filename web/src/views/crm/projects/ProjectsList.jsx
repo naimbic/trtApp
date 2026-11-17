@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { TbBriefcase, TbChecklist, TbClock, TbPlus, TbSearch, TbLayoutGrid, TbTable, TbDots, TbExternalLink, TbLayoutKanban, TbPencil, TbStar, TbStarFilled, TbTrash, TbCalendar, TbCalendarEvent, TbCoins, TbUser } from 'react-icons/tb'
+import useGridPageSize from '../kit/useGridPageSize'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -50,7 +51,9 @@ const ProjectsList = () => {
     const [menu, setMenu] = useState(null)
     const [del, setDel] = useState(null)
     const [dialog, setDialog] = useState(false)
-    const pageSize = view === 'grid' ? 12 : 15
+    const [gridRef, gridSize] = useGridPageSize() // whole rows of cards, whatever the width of the screen
+    const pageSize = view === 'grid' ? gridSize || 12 : 15
+    useEffect(() => { setPage(1) }, [gridSize])
 
     useEffect(() => { const t = setTimeout(() => { setQuery(search.trim()); setPage(1) }, 300); return () => clearTimeout(t) }, [search])
     const load = useCallback(async () => {
@@ -156,7 +159,7 @@ const ProjectsList = () => {
 
             {view === 'grid' ? (
                 <div className="rp-cx">
-                    <div className="cx-grid">{rows.map((p, i) => card(p, i))}</div>
+                    <div className="cx-grid" ref={gridRef}>{rows.map((p, i) => card(p, i))}</div>
                     {loading && !rows.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
                     {!loading && !rows.length && <div className="py-10 text-center text-gray-400">{tr("No projects found")}</div>}
                 </div>

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import dayjs from 'dayjs'
 import { TbBuilding, TbCircleCheck, TbCoins, TbPlus, TbSearch, TbLayoutGrid, TbTable, TbDownload, TbDots, TbExternalLink, TbPencil, TbHistory, TbFileInvoice, TbMail, TbPhone, TbPower, TbTrash, TbMapPin, TbPin, TbPinFilled, TbStar, TbStarFilled } from 'react-icons/tb'
+import useGridPageSize from '../kit/useGridPageSize'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -53,11 +54,14 @@ const ClientsList = () => {
     const [error, setError] = useState('')
     const [menu, setMenu] = useState(null)
     const [del, setDel] = useState(null)
-    const pageSize = view === 'grid' ? 12 : 15
+    const [gridRef, gridSize] = useGridPageSize() // whole rows of cards, whatever the width of the screen
+    const pageSize = view === 'grid' ? gridSize : 15
+    useEffect(() => { setPage(1) }, [gridSize])
 
     useEffect(() => { const t = setTimeout(() => { setQuery(search.trim()); setPage(1) }, 300); return () => clearTimeout(t) }, [search])
     const [key, order] = SORTS[sortKey]
     const load = useCallback(async () => {
+        if (!pageSize) return // the card grid is not measured yet
         setLoading(true)
         try {
             setData(await api(`/api/crm/customers?${qs({ query, status, groupId, favorites: favOnly ? '1' : '', pageIndex: page, pageSize, sortKey: key, order })}`))
@@ -173,7 +177,7 @@ const ClientsList = () => {
 
             {view === 'grid' ? (
                 <div className="rp-cx">
-                    <div className="cx-grid">{data.list.map((c, i) => card(c, i))}</div>
+                    <div className="cx-grid" ref={gridRef}>{data.list.map((c, i) => card(c, i))}</div>
                     {loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("Loading…")}</div>}
                     {!loading && !data.list.length && <div className="py-10 text-center text-gray-400">{tr("No clients found")}</div>}
                 </div>
@@ -206,8 +210,8 @@ const ClientsList = () => {
                 </AdaptiveCard>
             )}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <span className="text-sm text-gray-500">{data.total ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
-                <Pagination total={data.total} pageSize={pageSize} currentPage={page} onChange={setPage} />
+                <span className="text-sm text-gray-500">{data.total && pageSize ? tr("{v1}–{v2} of {total}", { v1: (page - 1) * pageSize + 1, v2: Math.min(page * pageSize, data.total), total: data.total }) : ''}</span>
+                <Pagination total={data.total} pageSize={pageSize || 12} currentPage={page} onChange={setPage} />
             </div>
 
             {menu && <RowMenu anchor={menu.el} items={items(menu.row)} onClose={() => setMenu(null)} />}

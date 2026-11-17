@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.259.3',
+        date: '2026-11-17',
+        title: 'Late tasks no longer notify every day',
+        items: [
+            'Fixed: a late task (or checklist step) sent a new "overdue" notification every morning until it was done, which was heavy for repeating tasks. It now notifies once, the morning after the due date, then only once a week while it stays late.',
+        ],
+    },
+    {
         version: '0.259.2',
         date: '2026-11-16',
         title: 'Profile card shows above the chat bubble',

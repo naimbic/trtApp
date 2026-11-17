@@ -56,6 +56,14 @@ export async function notificationFeed({ days } = {}) {
     const NONE = { id: '000000000000000000000000' } // matches nothing
     const items = [], stored = []
     // every item has a stable key (what it is about and when), so "read" survives the next refresh
+    // "overdue" is said once, the morning after the due date, then again once a week while it stays late (not every morning)
+    const lateSince = (due) => {
+        const first = +new Date(new Date(due).toDateString()) + DAY, shift = +dayStart - +today
+        let n = Math.floor((+today - first) / (7 * DAY))
+        if (n < 0) return null
+        if (first + n * 7 * DAY === +today && !started) n-- // today's turn has not started yet
+        return n < 0 ? null : new Date(first + n * 7 * DAY + shift)
+    }
     const add = (kind, title, detail, date, link, tone = 'blue') => date && items.push({ id: `d:${kind}|${link || title}|${title}|${+new Date(date)}`.slice(0, 280), kind, tone, title, detail: detail || '', date, link })
 
     if (can('tickets')) {
@@ -78,7 +86,7 @@ export async function notificationFeed({ days } = {}) {
             const due = st.dueDate ? new Date(st.dueDate) : null, dueEnd = due ? +new Date(due.toDateString()) + DAY : 0
             const remindAt = st.remindAt ? +new Date(st.remindAt) : st.reminder == null || !due ? null : +due - st.reminder * 60000
             const late = !!due && +now >= dueEnd, soon = !!due && +now >= +today && +now < dueEnd
-            if (late && started) add('task', 'Checklist step overdue', `${st.description} · ${taskNames[st.taskId] || ''}`, dayStart, `/crm/tasks/${st.taskId}`, 'red')
+            if (late) add('task', 'Checklist step overdue', `${st.description} · ${taskNames[st.taskId] || ''}`, lateSince(due), `/crm/tasks/${st.taskId}`, 'red')
             else if (soon && started) add('task', 'Checklist step due today', `${st.description} · ${taskNames[st.taskId] || ''}`, dayStart, `/crm/tasks/${st.taskId}`, 'amber')
             else if (remindAt !== null && +now >= remindAt) add('reminder', 'Reminder: checklist step', `${st.description} · ${taskNames[st.taskId] || ''}`, new Date(remindAt), `/crm/tasks/${st.taskId}`, 'amber')
         }
@@ -91,7 +99,8 @@ export async function notificationFeed({ days } = {}) {
             const when = Object.fromEntries(mine.map((m) => [m.taskId, m.createdAt]))
             for (const t of tasks) {
                 if (when[t.id] >= since(7)) add('task', 'A task was assigned to you', t.name, when[t.id], `/crm/tasks-board?task=${t.id}`, 'blue')
-                if (started && t.dueDate && new Date(t.dueDate) <= new Date(+today + DAY)) add('task', new Date(t.dueDate) < today ? 'Task overdue' : 'Task due today', t.name, dayStart, `/crm/tasks-board?task=${t.id}`, 'red')
+                if (t.dueDate && new Date(t.dueDate) < today) add('task', 'Task overdue', t.name, lateSince(t.dueDate), `/crm/tasks-board?task=${t.id}`, 'red')
+                else if (started && t.dueDate && new Date(t.dueDate) <= new Date(+today + DAY)) add('task', 'Task due today', t.name, dayStart, `/crm/tasks-board?task=${t.id}`, 'red')
             }
         }
     }

@@ -88,6 +88,7 @@ export function buildMessage(slug, language) {
         h += `</table>`
     }
     if (spec.extras.quote) h += `<div style="margin:6px 0 22px;padding:14px 16px;background-color:#f9fafb;border-left:4px solid ${accent};border-radius:6px;font-family:${FONT};font-size:14px;line-height:1.6;color:#374151;">{${spec.extras.quote}}</div>`
+    if (spec.extras.block) h += `{${spec.extras.block}}` // a ready-made piece (a note from the team), or nothing
     if (spec.extras.code) h += `<div class="code" style="margin:6px 0 22px;padding:18px;text-align:center;background-color:#f9fafb;border:1px dashed ${accent};border-radius:10px;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:30px;font-weight:700;letter-spacing:8px;color:#111827;">{${spec.extras.code}}</div>`
     if (spec.link && btnLabel) {
         h += `<table role="presentation" class="btn" border="0" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;"><tr><td style="border-radius:9px;background-color:${accent};"><a href="{${spec.link}}" target="_blank" style="display:inline-block;padding:13px 28px;font-family:${FONT};font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:9px;">${btnLabel}</a></td></tr></table>`

@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.260.0',
+        date: '2026-11-17',
+        title: 'Meeting bookings: email templates, who can accept, reminders by email',
+        items: [
+            'Accepting a booking: choose the email the person receives (date, time and link · what to prepare · short). It carries the date, the time, the meeting link and your message. More can be added in Settings → Email templates with a name starting with booking-.',
+            'New permission in Roles → Calendar: "Accept or refuse appointment requests". Administrators and the people chosen in Settings → Calendar always can; everybody else sees the request but not the buttons.',
+            'Event reminders now also go by email to the team members of the event (switch "Event reminders" in your profile), besides the bell and Telegram / WhatsApp. The client, the lead and the guests still get theirs when that option is on.',
+            'Invitation switch: it sends one email when you save and then goes back to off, which looked like it was not saved. The event now shows when the invitation was sent and to how many people, and the switch says "send again".',
+            'Dates and times in these emails use the company time zone instead of UTC.',
+            'Fixed: the Spanish, Japanese and Arabic meeting reminders showed "\\n" instead of a new line.',
+        ],
+    },
+    {
         version: '0.259.4',
         date: '2026-11-17',
         title: 'Overdue invoices notify once a week',

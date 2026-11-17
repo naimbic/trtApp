@@ -1,11 +1,11 @@
 import prisma from '@/lib/prisma'
 import { authenticate } from '@/lib/crm/apiKeys'
-import { requirePermission, getStaffId } from '@/lib/crm/permissions'
+import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { storeRich } from '@/lib/crm/richText'
 import { emit } from '@/lib/crm/webhooks'
 import { deliver, escapeHtml } from '@/lib/crm/mailer'
 import { notifyNotice } from '@/lib/crm/notifyMail'
-import { getOptions } from '@/lib/crm/mailer'
+import { getOptions, sendTemplate } from '@/lib/crm/mailer'
 
 const fail = (m, status = 400) => Object.assign(new Error(m), { status })
 const oid = (v) => (/^[a-f0-9]{24}$/i.test(String(v || '')) ? String(v) : null)
@@ -86,9 +86,24 @@ export async function getAppointment(request, id) {
     return { data: shape(e) }
 }
 
+/** The ready-made emails sent when a request is accepted (more can be made in Settings → Email templates with a name starting with booking-). */
+export const BOOKING_TEMPLATES = [
+    { slug: 'booking-confirmed', label: 'Confirmed: date, time and link' },
+    { slug: 'booking-confirmed-prepare', label: 'Confirmed: what to prepare' },
+    { slug: 'booking-confirmed-short', label: 'Confirmed: short' },
+]
+const bookingSlug = (v) => (/^booking-[a-z0-9-]{1,60}$/.test(String(v || '')) && v !== 'booking-confirmed-nolink' ? String(v) : 'booking-confirmed')
+
+/** Who answers the appointment requests: administrators, the people chosen in Settings → Calendar, and the roles with "Accept or refuse appointment requests". */
+export async function canDecideBookings(authority, staffId) {
+    if (isCrmAdmin(authority) || hasCap(authority, 'calendar', 'decide_bookings')) return true
+    const picked = String((await getOptions(['appointment_staff']))('appointment_staff') || '').split(',')
+    return !!staffId && picked.includes(staffId)
+}
+
 /** Accepting or refusing, for a person (staffId) or for a program acting on behalf of a team member. Accepting makes it a normal confirmed event owned by that
  *  person; both tell the person who asked (unless notify is false). The same answer twice is not an error. */
-async function decideCore(e, { accept, staffId, notify, message }) {
+async function decideCore(e, { accept, staffId, notify, message, template }) {
     const status = accept ? 'confirmed' : 'declined'
     if (e.status === status) return { row: e, emailed: [], same: true }
     const row = await prisma.crmEvent.update({ where: { id: e.id }, data: { status, decidedBy: staffId || null, decidedAt: new Date(), ...(accept ? { userId: staffId || e.userId, color: 'blue', confirmed: true } : {}) } })
@@ -96,9 +111,18 @@ async function decideCore(e, { accept, staffId, notify, message }) {
     const emailed = []
     if (notify !== false) {
         const note = noteHtml(message, 4000)
-        const when = new Date(e.start).toUTCString().replace(' GMT', ' UTC')
+        const { eventMailData } = await import('@/lib/crm/eventReminders')
+        const facts = await eventMailData(e)
+        const when = `${facts.event_date}, ${facts.event_time}`
+        const slug = e.meetingUrl ? bookingSlug(template) : 'booking-confirmed-nolink'
+        const block = note ? `<div style="margin:6px 0 22px;padding:14px 16px;background-color:#f9fafb;border-left:4px solid #2563eb;border-radius:6px;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#374151;">${note}</div>` : ''
         for (const g of Array.isArray(e.guests) ? e.guests : []) {
             if (!g.email) continue
+            if (accept) { // the chosen template, with the date, the time, the link and the note of the team
+                const t = await sendTemplate({ slug, to: g.email, data: { ...facts, team_message: block, contact_firstname: g.name || '', guest_name: g.name || '' }, relType: 'event', relId: e.id }).catch((x) => ({ sent: false, error: x.message }))
+                if (t.sent) { emailed.push(g.email); continue }
+                if (t.skipped) continue
+            }
             const subject = accept ? `Appointment confirmed: ${e.title}` : `Appointment request: ${e.title}`
             const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${accept ? `Your appointment is <strong>confirmed</strong> for ${escapeHtml(when)}.` : 'We are sorry, we cannot take this appointment at that time.'}</p>${accept && e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}${note ? `<p>${note}</p>` : ''}`
             const r = await deliver({ to: g.email, subject, html })
@@ -127,14 +151,15 @@ const decisionOf = (d) => (['accept', 'accepted'].includes(d) ? true : ['decline
 
 /** A team member accepts or declines a request in the CRM. */
 export async function decideAppointment(id, body = {}) {
-    const session = await requirePermission('calendar', 'edit')
+    const session = await requirePermission('calendar', 'view')
     const staffId = await getStaffId(session)
+    if (!(await canDecideBookings(session.user.authority || [], staffId))) throw fail('You are not allowed to accept or refuse appointment requests', 403)
     const e = oid(id) && (await prisma.crmEvent.findUnique({ where: { id } }))
     if (!e) throw fail('Event not found', 404)
     const accept = decisionOf(body.decision)
     if (accept === null) throw fail('Unknown decision')
     if (e.status !== 'draft') throw fail(`This request is already ${e.status}`, 409)
-    const r = await decideCore(e, { accept, staffId, notify: body.notify, message: body.message })
+    const r = await decideCore(e, { accept, staffId, notify: body.notify, message: body.message, template: body.template })
     return { success: true, status: r.row.status, emailed: r.emailed }
 }
 
@@ -156,7 +181,7 @@ export async function decideByKey(request, id) {
         const staffId = oid(b.staff_id)
         if (accept && !staffId) throw fail('staff_id (the team member who accepts) is required to accept')
         if (staffId && !(await prisma.crmStaff.findFirst({ where: { id: staffId, active: true }, select: { id: true } }))) throw fail('staff_id is not an active team member', 400)
-        const r = await decideCore(e, { accept, staffId, notify: b.notify, message: b.message })
+        const r = await decideCore(e, { accept, staffId, notify: b.notify, message: b.message, template: b.template })
         log(200)
         return { data: shape(r.row), emailed: r.emailed, changed: !r.same }
     } catch (x) { log(x.status || 500); throw x }

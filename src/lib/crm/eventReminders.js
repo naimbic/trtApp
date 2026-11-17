@@ -1,9 +1,19 @@
 import prisma from '@/lib/prisma'
 import { sendTemplate } from '@/lib/crm/mailer'
-import { notifyNotice } from '@/lib/crm/notifyMail'
+import { notifyNotice, sendStaffMail } from '@/lib/crm/notifyMail'
+import { getOptions } from '@/lib/crm/mailer'
 
 const UNIT = { minutes: 60000, hours: 3600000, days: 86400000, weeks: 7 * 86400000 }
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
+/** The fields an email about an event can use: title, date and time (in the company's time zone, named), place, link, description. */
+export async function eventMailData(e) {
+    const tz = (await getOptions(['default_timezone']))('default_timezone') || 'UTC'
+    const when = new Date(e.start)
+    const fmt = (o) => { try { return new Intl.DateTimeFormat('en-GB', { timeZone: tz, ...o }).format(when) } catch { return new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', ...o }).format(when) } }
+    const zone = tz === 'UTC' ? 'UTC' : (fmt({ timeZoneName: 'short' }).split(' ').pop() || tz)
+    return { event_title: e.title, event_date: fmt({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), event_time: e.allDay ? 'all day' : `${fmt({ hour: '2-digit', minute: '2-digit', hour12: false })} (${zone})`, event_location: e.location || '', meeting_link: e.meetingUrl || '', event_description: e.description || '' }
+}
 
 /** The reminder of a calendar event, at the time chosen ("30 minutes before"): the team members of the event are told on the bell and on Telegram / WhatsApp, and,
  *  when "remind the client too" is on, the client's contact, the lead and the guests get the chosen email template. Sent once: it is claimed before anything goes out. */
@@ -22,10 +32,17 @@ export async function eventRemindersJob({ lines, dry }) {
         const inText = mins >= 1440 ? `${Math.round(mins / 1440)} day(s)` : mins >= 60 ? `${Math.round(mins / 60)} h` : `${mins} min`
         // the team
         const staffIds = [...new Set([e.userId, ...(e.attendeeIds || [])].filter(Boolean))]
-        const staff = staffIds.length ? await prisma.crmStaff.findMany({ where: { id: { in: staffIds }, active: true }, select: { id: true } }) : []
+        const staff = staffIds.length ? await prisma.crmStaff.findMany({ where: { id: { in: staffIds }, active: true }, select: { id: true, preferences: true } }) : []
+        const facts = await eventMailData(e)
+        let teamMailed = 0
         for (const s of staff) {
             await prisma.crmNotification.create({ data: { toUserId: s.id, fromFullName: '⏰ Reminder', description: `In ${inText}: ${e.title}`.slice(0, 200), link: `/calendar?event=${e.id}`, additionalData: 'event-reminder', isRead: false } }).catch(() => {})
             notifyNotice(s.id, { kind: 'calendar', headlineKey: 'startsIn', vars: { when: inText }, title: e.title, link: `/calendar?event=${e.id}`, rows: [[e.meetingUrl ? 'Link' : '', e.meetingUrl || ''], [e.location ? '📍' : '', e.location || '']].filter(([k]) => k) })
+            // by email too, unless the person switched "Event reminders" off in their profile
+            if (s.preferences?.notify?.eventReminder !== false) {
+                const r = await sendStaffMail({ staffId: s.id, introKey: 'none', title: e.title, link: `/calendar?event=${e.id}`, note: [`${facts.event_date} · ${facts.event_time}`, e.location ? `📍 ${e.location}` : '', e.meetingUrl || ''].filter(Boolean).join('\n'), subject: `⏰ In ${inText}: ${e.title}`, slug: 'event-reminder-to-staff' }).catch((x) => ({ sent: false, error: x.message }))
+                if (r.sent) teamMailed++
+            }
         }
         // the client, the lead and the guests
         let mailed = 0
@@ -34,9 +51,9 @@ export async function eventRemindersJob({ lines, dry }) {
             if (e.clientId) for (const c of await prisma.crmContact.findMany({ where: { clientId: e.clientId, email: { not: null } }, orderBy: { isPrimary: 'desc' }, select: { email: true, isPrimary: true } }).then((l) => (l.some((x) => x.isPrimary) ? l.filter((x) => x.isPrimary) : l.slice(0, 2)))) to.add(String(c.email).trim().toLowerCase())
             if (e.leadId) { const l = await prisma.crmLead.findUnique({ where: { id: e.leadId }, select: { email: true } }); if (l?.email) to.add(String(l.email).trim().toLowerCase()) }
             const slug = e.meetingUrl ? e.reminderTemplate || 'event-reminder' : 'event-reminder-nolink'
-            const data = { event_title: e.title, event_date: when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), event_time: when.toISOString().slice(11, 16) + ' UTC', event_location: e.location || '', meeting_link: e.meetingUrl || '', event_description: e.description || '' }
+            const data = facts
             for (const addr of [...to].filter((x) => EMAIL.test(x))) { const r = await sendTemplate({ slug, to: addr, data, relType: 'event', relId: e.id }); if (r.sent) mailed++; else lines.push(`! Reminder of “${e.title}” to ${addr}: ${r.error}`) }
         }
-        lines.push(`Reminder of the event “${e.title}” sent (${staff.length} team${e.remindClient ? `, ${mailed} email(s) to the client side` : ''})`)
+        lines.push(`Reminder of the event “${e.title}” sent (${staff.length} team, ${teamMailed} by email${e.remindClient ? `, ${mailed} email(s) to the client side` : ''})`)
     }
 }

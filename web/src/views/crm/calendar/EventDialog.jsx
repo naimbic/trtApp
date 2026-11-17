@@ -123,13 +123,15 @@ const roomUrl = (name) => `${MEET_HOST}/${String(name || '').trim().toLowerCase(
 const EMPTY = { report: '', confirmed: false, remindClient: false, reminderTemplate: '', category: 'meeting', projectId: null, title: '', description: '', start: null, end: null, color: 'blue', isPublic: true, allDay: false, location: '', meetingUrl: '', files: [], clientId: null, leadId: null, aboutType: 'client', attendeeIds: [], attendeeEmails: '', reminderBefore: '', reminderBeforeType: 'minutes', sendInvites: false, inviteClient: false }
 
 /** props: open, selected {type:'NEW'|'EDIT', ...event}, staff [{id,name}], saving, onSubmit(values), onDelete(), onClose() */
-const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], saving, onSubmit, onDelete, onClose, onDecided, about = null }) => { // about = { type: 'client' | 'lead', name }: opened from a client or a lead, so who it is about is fixed
+const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], bookingTemplates = [], saving, onSubmit, onDelete, onClose, onDecided, about = null }) => { // about = { type: 'client' | 'lead', name }: opened from a client or a lead, so who it is about is fixed
     const [deciding, setDeciding] = useState('')
     const [note, setNote] = useState('') // a message for the person who asked
     const [tell, setTell] = useState(false)
+    const [bookTpl, setBookTpl] = useState('booking-confirmed') // the email the person gets when the request is accepted
+    const bookOpts = (bookingTemplates.length ? bookingTemplates : [{ slug: 'booking-confirmed', label: 'Confirmed: date, time and link' }]).map((t) => ({ value: t.slug, label: tr(t.label) }))
     const decide = async (decision) => {
         setDeciding(decision)
-        try { const r = await callApi(`/api/crm/calendar/${selected.id}/decision`, { method: 'POST', body: { decision, message: said(note) } }); notify('success', decision === 'accept' ? `${tr("Appointment accepted")}${r.emailed?.length ? ` · ${tr("confirmation sent")}` : ''}` : tr("Appointment declined")); onDecided?.() } catch (e) { notify('danger', e.message) } finally { setDeciding('') }
+        try { const r = await callApi(`/api/crm/calendar/${selected.id}/decision`, { method: 'POST', body: { decision, message: said(note), template: bookTpl } }); notify('success', decision === 'accept' ? `${tr("Appointment accepted")}${r.emailed?.length ? ` · ${tr("confirmation sent")}` : ''}` : tr("Appointment declined")); onDecided?.() } catch (e) { notify('danger', e.message) } finally { setDeciding('') }
     }
     const [v, setV] = useState(EMPTY)
     const [sec, setSec] = useState('event') // the open section: one at a time
@@ -139,7 +141,7 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
 
     useEffect(() => {
         if (!selected) return
-        setError(''); setSec('event'); setNote(''); setTell(false)
+        setError(''); setSec('event'); setNote(''); setTell(false); setBookTpl('booking-confirmed')
         setV({
             ...EMPTY,
             title: selected.title || '',
@@ -212,8 +214,12 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
                     <div className="mb-1 font-semibold text-amber-800 dark:text-amber-300">⏳ {tr("Appointment request: waiting for you")}{selected.source ? <span className="ms-2 text-xs font-normal opacity-70">{selected.source}</span> : null}</div>
                     {(selected.guests || []).map((g, i) => <div key={i} className="text-gray-700 dark:text-gray-200">{[g.name, g.email, g.phone].filter(Boolean).join(' · ')}</div>)}
                     <p className="mt-1 text-xs text-gray-500">{tr("Nobody is invited and no reminder goes out until you accept. The person who asked is told by email.")}</p>
+                    {selected.canDecide === false ? <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-xs font-semibold text-amber-800 dark:bg-white/5 dark:text-amber-300">{tr("Only the people in charge of appointments can accept or refuse this request.")}</p> : <>
+                    <div className="mt-2 flex flex-wrap items-center gap-2"><span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{tr("Email when accepted")}</span><div className="w-64 max-w-full"><Select size="sm" isSearchable={false} options={bookOpts} value={bookOpts.find((o) => o.value === bookTpl) || bookOpts[0]} onChange={(o) => setBookTpl(o.value)} /></div></div>
+                    <p className="mt-1 text-xs text-gray-500">{selected.meetingUrl ? tr("The email carries the date, the time and the meeting link. Your message below is added to it.") : tr("The email carries the date and the time (this request has no meeting link). Your message below is added to it.")}</p>
                     <div className="mt-2"><RichEditor minHeight={80} value={note} onChange={setNote} placeholder={tr("A message for the person who asked (optional): why, another time, what to prepare…")} /></div>
                     <div className="mt-2 flex gap-2"><Button size="sm" variant="solid" loading={deciding === 'accept'} onClick={() => decide('accept')}>{tr("Accept")}</Button><Button size="sm" loading={deciding === 'decline'} onClick={() => decide('decline')}>{tr("Decline")}</Button></div>
+                    </>}
                 </div>
             )}
             {edit && selected.source && selected.status !== 'draft' && (selected.guests || []).some((g) => g.email) && !readOnly && (
@@ -259,7 +265,8 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], savin
                     <FormItem label={tr("Other guests (emails)")}><Input placeholder={tr("name@company.com, other@…")} value={v.attendeeEmails} onChange={(e) => set({ attendeeEmails: e.target.value })} /></FormItem>
                     {hasGuests && !readOnly && (
                         <div className="mb-2 rounded-xl border border-gray-200 p-3 dark:border-gray-600">
-                            <div className="flex items-center gap-2 text-sm"><Switcher checked={v.sendInvites} onChange={(c) => set({ sendInvites: c })} /><TbCalendarPlus className="text-lg" /> {tr("Email an invitation with the calendar file to guests")}</div>
+                            <div className="flex items-center gap-2 text-sm"><Switcher checked={v.sendInvites} onChange={(c) => set({ sendInvites: c })} /><TbCalendarPlus className="text-lg" /> {selected.invitedAt ? tr("Email the invitation again (updated) when saving") : tr("Email an invitation with the calendar file to guests when saving")}</div>
+                            <p className="mt-1.5 text-xs text-gray-500">{selected.invitedAt ? `✓ ${tr("Invitation sent on {d} to {n} people", { d: dayjs(selected.invitedAt).format('DD MMM YYYY, HH:mm'), n: selected.invitedCount || 0 })}. ` : ''}{tr("This sends one email each time you save with it on; it then goes back to off so nobody is emailed twice by mistake.")}</p>
                             {v.sendInvites && v.aboutType === 'client' && v.clientId && <div className="mt-2 flex items-center gap-2 text-sm"><Switcher checked={v.inviteClient} onChange={(c) => set({ inviteClient: c })} /> {tr("Also invite the client's main contact")}</div>}
                         </div>
                     )}

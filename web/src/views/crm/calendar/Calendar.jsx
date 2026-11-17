@@ -124,6 +124,7 @@ const Calendar = () => {
     const [saving, setSaving] = useState(false)
     const [staff, setStaff] = useState([])
     const [reminderTemplates, setReminderTemplates] = useState([])
+    const [bookingTemplates, setBookingTemplates] = useState([])
     const [selectedDay, setSelectedDay] = useState(dayOf(new Date()))
     const [menu, setMenu] = useState(null) // { it, el }
     const [addMenu, setAddMenu] = useState(null) // { day, time?, el }: the + on a day box or on the hovered hour
@@ -155,7 +156,7 @@ const Calendar = () => {
     const [confirmDel, setConfirmDel] = useState(false)
     const range = useRef(null)
     const seq = useRef(0)
-    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => { setStaff((d.staff || []).filter((m) => m.active !== false)); setReminderTemplates(d.reminderTemplates || []) }).catch(() => {}) }, [])
+    useEffect(() => { api('/api/crm/calendar/lookups').then((d) => { setStaff((d.staff || []).filter((m) => m.active !== false)); setReminderTemplates(d.reminderTemplates || []); setBookingTemplates(d.bookingTemplates || []) }).catch(() => {}) }, [])
 
     const load = useCallback(async (r = range.current) => {
         if (!r) return
@@ -227,7 +228,7 @@ const Calendar = () => {
                 type: 'EDIT', id: p.rawId, title: p.rawTitle, description: p.description, start: p.rawStart, end: p.rawEnd, allDay: p.allDay,
                 eventColor: p.eventColor, baseColor: p.baseColor, isPublic: p.isPublic, location: p.location, meetingUrl: p.meetingUrl, files: p.files, clientId: p.clientId, leadId: p.leadId,
                 category: p.category, projectId: p.projectId, attendeeIds: p.attendeeIds, attendeeEmails: p.attendeeEmails, reminderBefore: p.reminderBefore, reminderBeforeType: p.reminderBeforeType,
-                editable: p.canEdit, owner: p.owner, status: p.status, source: p.source, guests: p.guests, report: p.report, confirmed: p.confirmed, remindClient: p.remindClient, reminderTemplate: p.reminderTemplate,
+                editable: p.canEdit, owner: p.owner, status: p.status, source: p.source, guests: p.guests, report: p.report, confirmed: p.confirmed, remindClient: p.remindClient, reminderTemplate: p.reminderTemplate, canDecide: p.canDecide, invitedAt: p.invitedAt, invitedCount: p.invitedCount,
             },
         })
     }
@@ -422,7 +423,7 @@ const Calendar = () => {
                 selected={dialog.selected}
                 saving={saving}
                 onSubmit={submit}
-                onDelete={() => setConfirmDel(true)} staff={staff} reminderTemplates={reminderTemplates}
+                onDelete={() => setConfirmDel(true)} staff={staff} reminderTemplates={reminderTemplates} bookingTemplates={bookingTemplates}
                 onDecided={() => { setDialog((d) => ({ ...d, open: false })); load() }}
                 onClose={() => { setDialog((d) => ({ ...d, open: false })); if (params.get('event')) { const r = new URLSearchParams(params); r.delete('event'); setParams(r, { replace: true }) } }}
             />

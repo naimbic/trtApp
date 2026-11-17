@@ -44,7 +44,7 @@ async function context() {
     if (!session?.user?.id) return null
     const authority = session.user.authority || []
     if (!hasCap(authority, 'calendar', 'view')) throw Object.assign(new Error('You do not have access to the calendar'), { status: 403 })
-    return { session, authority, staffId: await getStaffId(session), admin: isCrmAdmin(authority), seeAll: hasCap(authority, 'calendar', 'view_all_events'), editOthers: hasCap(authority, 'calendar', 'edit_others_events'), can: (f) => viewScope(authority, f) === 'all' }
+    return { session, authority, staffId: await getStaffId(session), admin: isCrmAdmin(authority), seeAll: hasCap(authority, 'calendar', 'view_all_events'), editOthers: hasCap(authority, 'calendar', 'edit_others_events'), decide: await (await import('@/lib/crm/appointments')).canDecideBookings(authority, await getStaffId(session)), can: (f) => viewScope(authority, f) === 'all' }
 }
 
 /** Everything that belongs on the calendar between `from` and `to` (ISO dates). */
@@ -84,6 +84,8 @@ export async function getCalendarItems({ from, to, eventId }) {
             title: draft ? `⏳ ${e.title}` : e.title,
             status: e.status || 'confirmed',
             source: e.source || null,
+            canDecide: draft ? !!ctx.decide : undefined,
+            invitedAt: e.invitedAt || null, invitedCount: e.invitedCount || 0,
             guests: Array.isArray(e.guests) ? e.guests : [],
             start: e.allDay ? iso(e.start).slice(0, 10) : iso(e.start),
             end: e.allDay ? (e.end ? iso(new Date(new Date(e.end).getTime() + 86400000)).slice(0, 10) : undefined) : iso(e.end),
@@ -269,7 +271,9 @@ export async function invite(ev, { inviteClient, update }) {
     const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#374151"><h2 style="margin:0 0 12px;color:#111827">${esc(ev.title)}</h2><p><strong>${esc(when)}</strong></p>${ev.location ? `<p>📍 ${esc(ev.location)}</p>` : ''}${ev.meetingUrl ? `<p><a href="${esc(ev.meetingUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Join the meeting</a></p>` : ''}${ev.description ? `<div>${cleanHtml(ev.description)}</div>` : ''}<p style="color:#6b7280;font-size:13px">The event is attached, open it to add it to your calendar.<br/>${esc(o('companyname'))}</p></div>`
     const res = await deliver({ to: [...to].join(', '), subject: `${update ? 'Updated invitation' : 'Invitation'}: ${ev.title}`, html, attachments: [{ filename: 'event.ics', content: buildIcs([ev]), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }] })
     if (!res.sent) throw Object.assign(new Error(`Event saved, but the invitation could not be sent: ${res.error}`), { status: 502 })
-    return { sent: to.size }
+    const invitedAt = new Date()
+    await prisma.crmEvent.update({ where: { id: ev.id }, data: { invitedAt, invitedCount: to.size } }).catch(() => {})
+    return { sent: to.size, invitedAt }
 }
 
 export async function createCalendarEvent(body) {
@@ -279,7 +283,7 @@ export async function createCalendarEvent(body) {
     await closedLead(ctx, data.leadId)
     const ev = await prisma.crmEvent.create({ data: { ...data, userId: ctx.staffId || undefined } })
     const out = { ...JSON.parse(JSON.stringify(ev)) }
-    if (body.sendInvites) out.invited = (await invite(ev, { inviteClient: !!body.inviteClient })).sent
+    if (body.sendInvites) { const r = await invite(ev, { inviteClient: !!body.inviteClient }); out.invited = r.sent; if (r.invitedAt) { out.invitedAt = r.invitedAt; out.invitedCount = r.sent } }
     return out
 }
 
@@ -304,7 +308,7 @@ export async function updateCalendarEvent(id, body) {
     if (updated.source && body.notifyRequester) told = await (await import('@/lib/crm/appointments')).tellRequester(updated, { kind: 'updated', message: body.requesterMessage })
     if (updated.source) emit('appointment.updated', { id: updated.id, status: updated.status || 'confirmed', title: updated.title, start: updated.start, end: updated.end, meeting_url: updated.meetingUrl || null, room: updated.externalRef || null, source: updated.source })
     const out = { ...JSON.parse(JSON.stringify(updated)), requesterEmailed: told }
-    if (body.sendInvites) out.invited = (await invite(updated, { inviteClient: !!body.inviteClient, update: true })).sent
+    if (body.sendInvites) { const r = await invite(updated, { inviteClient: !!body.inviteClient, update: true }); out.invited = r.sent; if (r.invitedAt) { out.invitedAt = r.invitedAt; out.invitedCount = r.sent } }
     return out
 }
 
@@ -323,7 +327,11 @@ export async function calendarLookups() {
     const mine = await prisma.crmEmailTemplate.findMany({ where: { slug: { startsWith: 'event-' }, active: true }, select: { slug: true, name: true } })
     const known = new Set(REMINDER_TEMPLATES.map((t) => t.slug))
     const reminderTemplates = [...REMINDER_TEMPLATES, ...[...new Map(mine.filter((t) => !known.has(t.slug) && t.slug !== 'event-reminder-nolink').map((t) => [t.slug, { slug: t.slug, label: t.name || t.slug }])).values()]]
-    return { reminderTemplates, staff: staff.map((x) => ({ id: x.id, name: `${x.firstName || ''} ${x.lastName || ''}`.trim() || x.email, email: x.email, image: realPicture(x.profileImage) })), me: ctx.staffId }
+    const { BOOKING_TEMPLATES } = await import('@/lib/crm/appointments')
+    const own = await prisma.crmEmailTemplate.findMany({ where: { slug: { startsWith: 'booking-' }, active: true }, select: { slug: true, name: true } })
+    const knownB = new Set(BOOKING_TEMPLATES.map((t) => t.slug))
+    const bookingTemplates = [...BOOKING_TEMPLATES, ...[...new Map(own.filter((t) => !knownB.has(t.slug) && t.slug !== 'booking-confirmed-nolink').map((t) => [t.slug, { slug: t.slug, label: t.name || t.slug }])).values()]]
+    return { reminderTemplates, bookingTemplates, staff: staff.map((x) => ({ id: x.id, name: `${x.firstName || ''} ${x.lastName || ''}`.trim() || x.email, email: x.email, image: realPicture(x.profileImage) })), me: ctx.staffId }
 }
 
 /** One event as .ics (download / "add to calendar"). */

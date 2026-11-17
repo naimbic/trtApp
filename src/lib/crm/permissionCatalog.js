@@ -54,6 +54,7 @@ export const EXTRA_LABELS = {
     view_all_events: "See every event, private ones included",
     decide: 'Accept or refuse leave requests',
     close_days: "Close days for appointments (holidays, out of office)",
+    decide_bookings: "Accept or refuse appointment requests (bookings)",
     edit_others_events: "Edit and delete events of others",
     create_milestones: 'Create milestones',
     edit_milestones: 'Edit milestones',
@@ -208,7 +209,7 @@ export const PERMISSION_GROUPS = [
     {
         group: 'Tools',
         features: [
-            { key: 'calendar', label: 'Calendar', caps: ['view', 'view_all_events', 'edit_others_events', 'close_days'], auto: { create: 'Anyone who can open the Calendar adds events', edit: 'Everyone edits their own events, the events they are invited to and public events', delete: 'Everyone deletes their own events, the events they are invited to and public events' } },
+            { key: 'calendar', label: 'Calendar', caps: ['view', 'view_all_events', 'edit_others_events', 'close_days', 'decide_bookings'], auto: { create: 'Anyone who can open the Calendar adds events', edit: 'Everyone edits their own events, the events they are invited to and public events', delete: 'Everyone deletes their own events, the events they are invited to and public events' } },
             { key: 'chat', label: 'Team chat', caps: ['view', 'send_files', 'create_groups', 'call', 'client_chats'], auto: {} },
             { key: 'chat_messages', label: 'Chat messages', caps: ['react', 'bookmark', 'pin', 'edit_own', 'delete_own', 'delete_others'], auto: {} },
             { key: 'notes', label: 'Notes (Keep-style memos)', caps: ['view', 'share'], auto: { create: 'Anyone who can open Notes writes notes', edit: 'Everyone edits their own notes', delete: 'Everyone deletes their own notes' } },

@@ -331,6 +331,21 @@ D('event-reminder-nolink', 'c', 'info', '', [['Date', 'Date', 'event_date'], ['T
   ['Reminder: {event_title}', 'Your meeting is coming up', 'This is a friendly reminder of our meeting {event_title} on {event_date} at {event_time}.\nIf you need to move it, just reply to this email.', ''],
   ['Rappel : {event_title}', 'Votre rendez-vous approche', 'Petit rappel de notre rendez-vous {event_title} le {event_date} à {event_time}.\nSi vous devez le déplacer, répondez simplement à cet e-mail.', ''])
 
+/* ---------- Appointment requests (bookings) accepted ---------- */
+const BOOK_ROWS = [['Date', 'Date', 'event_date'], ['Time', 'Heure', 'event_time']]
+D('booking-confirmed', 'c', 'info', 'meeting_link', BOOK_ROWS, { block: 'team_message' },
+  ['Appointment confirmed: {event_title}', 'Your appointment is confirmed', 'Good news: your appointment {event_title} is confirmed for {event_date} at {event_time}.\nUse the button to join at that time. If you need to move it, just reply to this email.', 'Join the meeting'],
+  ['Rendez-vous confirmé : {event_title}', 'Votre rendez-vous est confirmé', 'Bonne nouvelle : votre rendez-vous {event_title} est confirmé pour le {event_date} à {event_time}.\nUtilisez le bouton pour le rejoindre à ce moment-là. Si vous devez le déplacer, répondez simplement à cet e-mail.', 'Rejoindre la réunion'])
+D('booking-confirmed-prepare', 'c', 'info', 'meeting_link', BOOK_ROWS, { block: 'team_message' },
+  ['Appointment confirmed: {event_title} (what to prepare)', 'Your appointment is confirmed', 'Your appointment {event_title} is confirmed for {event_date} at {event_time}.\nTo make the most of it, please have your questions, your goals and any useful document ready.\nIf you need to move it, reply to this email.', 'Join the meeting'],
+  ['Rendez-vous confirmé : {event_title} (à préparer)', 'Votre rendez-vous est confirmé', 'Votre rendez-vous {event_title} est confirmé pour le {event_date} à {event_time}.\nPour en profiter pleinement, merci de préparer vos questions, vos objectifs et tout document utile.\nSi vous devez le déplacer, répondez à cet e-mail.', 'Rejoindre la réunion'])
+D('booking-confirmed-short', 'c', 'info', 'meeting_link', [], { block: 'team_message' },
+  ['Confirmed: {event_title}, {event_date} at {event_time}', 'See you soon', 'Your appointment is confirmed: {event_date} at {event_time}.', 'Join the meeting'],
+  ['Confirmé : {event_title}, le {event_date} à {event_time}', 'À très bientôt', 'Votre rendez-vous est confirmé : le {event_date} à {event_time}.', 'Rejoindre la réunion'])
+D('booking-confirmed-nolink', 'c', 'info', '', BOOK_ROWS, { block: 'team_message' },
+  ['Appointment confirmed: {event_title}', 'Your appointment is confirmed', 'Good news: your appointment {event_title} is confirmed for {event_date} at {event_time}.\nIf you need to move it, just reply to this email.', ''],
+  ['Rendez-vous confirmé : {event_title}', 'Votre rendez-vous est confirmé', 'Bonne nouvelle : votre rendez-vous {event_title} est confirmé pour le {event_date} à {event_time}.\nSi vous devez le déplacer, répondez simplement à cet e-mail.', ''])
+
 /* ---------- Client ideas ---------- */
 D('client-idea-proposed', 'c', 'info', 'idea_link', [['Idea', 'Idée', 'idea_title'], ['What you gain', 'Ce que vous gagnez', 'idea_gain']], null,
   ['A new idea for {client_company}: {idea_title}', 'We have an idea for you', 'We looked at your activity and prepared an idea that could help {client_company}.\nOpen it to see the details, ask a question, or tell us if you are interested.', 'See the idea'],

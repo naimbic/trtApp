@@ -535,6 +535,9 @@ model CrmEvent {
   remindClient       Boolean   @default(false)
   reminderTemplate   String?
   reminderSentAt     DateTime?
+  /// when the invitation (with the calendar file) was last emailed, and to how many people
+  invitedAt          DateTime?
+  invitedCount       Int?
   decidedBy          String?   @db.ObjectId
   decidedAt          DateTime?
   createdAt          DateTime  @default(now())

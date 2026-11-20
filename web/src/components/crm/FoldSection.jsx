@@ -6,6 +6,7 @@ const TONES = {
     emerald: { box: 'border-emerald-200 dark:border-emerald-500/30', head: 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20', badge: 'bg-emerald-500 text-white' },
     amber: { box: 'border-amber-200 dark:border-amber-500/30', head: 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20', badge: 'bg-amber-500 text-white' },
     rose: { box: 'border-rose-200 dark:border-rose-500/30', head: 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20', badge: 'bg-rose-500 text-white' },
+    sky: { box: 'border-sky-200 dark:border-sky-500/30', head: 'bg-sky-50 hover:bg-sky-100 dark:bg-sky-500/10 dark:hover:bg-sky-500/20', badge: 'bg-sky-500 text-white' },
     violet: { box: 'border-violet-200 dark:border-violet-500/30', head: 'bg-violet-50 hover:bg-violet-100 dark:bg-violet-500/10 dark:hover:bg-violet-500/20', badge: 'bg-violet-500 text-white' },
 }
 

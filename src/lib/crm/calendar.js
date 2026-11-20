@@ -5,7 +5,7 @@ import { viewScope, hasCap, isCrmAdmin, getStaffId } from '@/lib/crm/permissions
 import { round2 } from '@/lib/crm/sales/calc'
 import { numberPadding, docNumberOf } from '@/lib/crm/numbering'
 import { buildIcs } from '@/lib/crm/ics'
-import { deliver, getOptions, setOptions } from '@/lib/crm/mailer'
+import { deliverLogged, getOptions, setOptions } from '@/lib/crm/mailer'
 import crypto from 'node:crypto'
 import { emit } from '@/lib/crm/webhooks'
 import { storeRich, cleanHtml } from '@/lib/crm/richText'
@@ -257,7 +257,7 @@ const clean = (b) => {
 }
 
 /** Emails an .ics invitation to the staff, guests and (optionally) the client's primary contact. */
-export async function invite(ev, { inviteClient, update }) {
+export async function invite(ev, { inviteClient, update, staffId = null }) {
     const to = new Set(ev.attendeeEmails || [])
     if (ev.attendeeIds?.length) (await prisma.crmStaff.findMany({ where: { id: { in: ev.attendeeIds } }, select: { email: true } })).forEach((x) => x.email && to.add(x.email))
     if (inviteClient && ev.clientId) {
@@ -269,7 +269,7 @@ export async function invite(ev, { inviteClient, update }) {
     const when = new Date(ev.start).toLocaleString('en-GB', { dateStyle: 'full', timeStyle: ev.allDay ? undefined : 'short' })
     const esc = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])
     const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#374151"><h2 style="margin:0 0 12px;color:#111827">${esc(ev.title)}</h2><p><strong>${esc(when)}</strong></p>${ev.location ? `<p>📍 ${esc(ev.location)}</p>` : ''}${ev.meetingUrl ? `<p><a href="${esc(ev.meetingUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Join the meeting</a></p>` : ''}${ev.description ? `<div>${cleanHtml(ev.description)}</div>` : ''}<p style="color:#6b7280;font-size:13px">The event is attached, open it to add it to your calendar.<br/>${esc(o('companyname'))}</p></div>`
-    const res = await deliver({ to: [...to].join(', '), subject: `${update ? 'Updated invitation' : 'Invitation'}: ${ev.title}`, html, attachments: [{ filename: 'event.ics', content: buildIcs([ev]), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }] })
+    const res = await deliverLogged({ relType: 'event', relId: ev.id, staffId, template: 'event-invitation', to: [...to].join(', '), subject: `${update ? 'Updated invitation' : 'Invitation'}: ${ev.title}`, html, attachments: [{ filename: 'event.ics', content: buildIcs([ev]), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }] })
     if (!res.sent) throw Object.assign(new Error(`Event saved, but the invitation could not be sent: ${res.error}`), { status: 502 })
     const invitedAt = new Date()
     await prisma.crmEvent.update({ where: { id: ev.id }, data: { invitedAt, invitedCount: to.size } }).catch(() => {})
@@ -283,8 +283,22 @@ export async function createCalendarEvent(body) {
     await closedLead(ctx, data.leadId)
     const ev = await prisma.crmEvent.create({ data: { ...data, userId: ctx.staffId || undefined } })
     const out = { ...JSON.parse(JSON.stringify(ev)) }
-    if (body.sendInvites) { const r = await invite(ev, { inviteClient: !!body.inviteClient }); out.invited = r.sent; if (r.invitedAt) { out.invitedAt = r.invitedAt; out.invitedCount = r.sent } }
+    if (body.sendInvites) { const r = await invite(ev, { inviteClient: !!body.inviteClient, staffId: ctx.staffId }); out.invited = r.sent; if (r.invitedAt) { out.invitedAt = r.invitedAt; out.invitedCount = r.sent } }
     return out
+}
+
+/** The emails sent about one event (answer to a booking, invitation, reminders, changes): to whom, when, the text, and whether it was opened or a link clicked. */
+export async function eventMails(id) {
+    const ctx = await context()
+    if (!ctx) throw Object.assign(new Error('Unauthorized'), { status: 401 })
+    const ev = /^[a-f0-9]{24}$/i.test(String(id || '')) && (await prisma.crmEvent.findUnique({ where: { id }, select: { userId: true, isPublic: true, attendeeIds: true, status: true } }))
+    if (!ev) throw Object.assign(new Error('Not found'), { status: 404 })
+    if (!(canChange(ev, ctx) || ctx.seeAll || (ev.status === 'draft' && ctx.decide))) throw Object.assign(new Error('Forbidden'), { status: 403 })
+    const rows = await prisma.crmMailLog.findMany({ where: { relType: 'event', relId: id }, orderBy: { createdAt: 'desc' }, take: 50 })
+    const staff = await prisma.crmStaff.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.staffId).filter(Boolean))] } }, select: { id: true, firstName: true, lastName: true } })
+    const by = Object.fromEntries(staff.map((x) => [x.id, `${x.firstName || ''} ${x.lastName || ''}`.trim()]))
+    const { trackInfo } = await import('@/lib/crm/mailTrackCalc')
+    return { mails: JSON.parse(JSON.stringify(rows.map((r) => ({ id: r.id, to: r.to, subject: r.subject, template: r.template, status: r.status, error: r.error, date: r.createdAt, by: by[r.staffId] || '', body: r.body || '', track: trackInfo(r) })))) }
 }
 
 async function ownEvent(id) {
@@ -307,11 +321,12 @@ export async function updateCalendarEvent(id, body) {
     const retimed = +new Date(data.start) !== +new Date(ev.start) || +new Date(data.end || 0) !== +new Date(ev.end || 0)
     if (retimed && ev.confirmed) data.confirmed = false
     const updated = await prisma.crmEvent.update({ where: { id }, data: { ...data, ...(moved ? { reminderSentAt: null } : {}) } })
+    const me = (await context())?.staffId || null // who sends the mails below (shown in the Mail section of the event)
     let told = []
-    if (updated.source && body.notifyRequester) told = await (await import('@/lib/crm/appointments')).tellRequester(updated, { kind: 'updated', message: body.requesterMessage })
+    if (updated.source && body.notifyRequester) told = await (await import('@/lib/crm/appointments')).tellRequester(updated, { kind: 'updated', message: body.requesterMessage, staffId: me })
     if (updated.source) emit('appointment.updated', { id: updated.id, status: updated.status || 'confirmed', title: updated.title, start: updated.start, end: updated.end, meeting_url: updated.meetingUrl || null, room: updated.externalRef || null, source: updated.source })
     const out = { ...JSON.parse(JSON.stringify(updated)), requesterEmailed: told }
-    if (body.sendInvites) { const r = await invite(updated, { inviteClient: !!body.inviteClient, update: true }); out.invited = r.sent; if (r.invitedAt) { out.invitedAt = r.invitedAt; out.invitedCount = r.sent } }
+    if (body.sendInvites) { const r = await invite(updated, { inviteClient: !!body.inviteClient, update: true, staffId: me }); out.invited = r.sent; if (r.invitedAt) { out.invitedAt = r.invitedAt; out.invitedCount = r.sent } }
     return out
 }
 

@@ -23,7 +23,11 @@ async function tell(m, kind, isLog = false) {
     try {
         const ids = new Set([m.addedFrom, m.staffId].filter(Boolean))
         let link, subject = m.subject || ''
-        if (isLog) { link = DOC_PATH[m.relType] && m.relId ? `/crm/${DOC_PATH[m.relType]}/${m.relId}` : '/crm/mails?tab=log' }
+        if (isLog && m.relType === 'event' && m.relId) { // a mail of a calendar event: its organiser and the person who answered the request
+            const ev = await prisma.crmEvent.findUnique({ where: { id: m.relId }, select: { userId: true, decidedBy: true } }).catch(() => null)
+            for (const i of [ev?.userId, ev?.decidedBy]) if (i) ids.add(i)
+            link = `/calendar?event=${m.relId}`
+        } else if (isLog) { link = DOC_PATH[m.relType] && m.relId ? `/crm/${DOC_PATH[m.relType]}/${m.relId}` : '/crm/mails?tab=log' }
         else {
             if (m.leadId) { const l = await prisma.crmLead.findUnique({ where: { id: m.leadId }, select: { assigned: true, assignedIds: true } }); for (const i of [l?.assigned, ...(l?.assignedIds || [])]) if (i) ids.add(i) }
             link = m.leadId ? `/crm/leads/${m.leadId}?tab=mails` : `/crm/customers/${m.clientId}?tab=mails`

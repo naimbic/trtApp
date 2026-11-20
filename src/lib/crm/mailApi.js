@@ -354,7 +354,7 @@ export async function listMailLog({ pageIndex = 1, pageSize = 20, status } = {})
         prisma.crmMailLog.count({ where }),
     ])
     const { trackInfo } = await import('@/lib/crm/mailTrackCalc')
-    return plain({ list: list.map(({ trackToken, openCount, firstOpenAt, lastOpenAt, clickCount, firstClickAt, lastClickAt, ...r }) => ({ ...r, track: trackInfo({ trackToken, openCount, firstOpenAt, lastOpenAt, clickCount, firstClickAt, lastClickAt }) })), total })
+    return plain({ list: list.map(({ body, trackToken, openCount, firstOpenAt, lastOpenAt, clickCount, firstClickAt, lastClickAt, ...r }) => ({ ...r, track: trackInfo({ trackToken, openCount, firstOpenAt, lastOpenAt, clickCount, firstClickAt, lastClickAt }) })), total })
 }
 
 /** Template catalog for the Templates screen. */

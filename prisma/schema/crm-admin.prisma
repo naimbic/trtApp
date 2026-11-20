@@ -883,6 +883,8 @@ model CrmMailLog {
   status    String   // sent | failed
   error     String?
   staffId   String?  @db.ObjectId
+  /// the text of the mail as it was sent, kept for the mails of a calendar event (shown in the event)
+  body      String?
   /// open / click tracking of a document mail (invoice, proposal...): the random token in its picture and links, then what was seen
   trackToken   String?
   openCount    Int?

@@ -6292,4 +6292,10 @@ export default {
     "Confirmed: what to prepare": "確定:準備するもの",
     "Confirmed: short": "確定:短文",
     "Accept or refuse appointment requests (bookings)": "予約依頼を承認または辞退する",
+    "No email was sent about this event yet": "この予定に関するメールはまだ送信されていません",
+    "Not sent": "未送信",
+    "Hide the email": "メールを隠す",
+    "Read the email": "メールを読む",
+    "No email sent yet": "送信済みメールなし",
+    "{n} sent": "{n} 件送信",
 }

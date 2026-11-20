@@ -6292,4 +6292,10 @@ export default {
     "Confirmed: what to prepare": "Confirmada: qué preparar",
     "Confirmed: short": "Confirmada: breve",
     "Accept or refuse appointment requests (bookings)": "Aceptar o rechazar las solicitudes de cita (reservas)",
+    "No email was sent about this event yet": "Todavía no se ha enviado ningún correo sobre este evento",
+    "Not sent": "No enviado",
+    "Hide the email": "Ocultar el correo",
+    "Read the email": "Leer el correo",
+    "No email sent yet": "Ningún correo enviado",
+    "{n} sent": "{n} enviado(s)",
 }

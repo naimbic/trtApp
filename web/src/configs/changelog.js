@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.261.0',
+        date: '2026-11-20',
+        title: 'Events show the emails sent about them',
+        items: [
+            'The event popup has a new Mail section: every email sent about the event (the answer to a booked meeting, the change of time, the invitation, the reminders to the client), with who it went to, when and who sent it.',
+            'Each email shows whether the person opened it and whether a link was clicked (the meeting link for example), like the Mails tab of a lead or a client. "Read the email" shows the text that was sent.',
+            'The organiser and the person who accepted the booking get the bell notification the first time the email is opened or its link is clicked; it opens the event.',
+            'Emails sent before this version appear in the list without their text and without the opened / clicked marks.',
+        ],
+    },
+    {
         version: '0.260.3',
         date: '2026-11-17',
         title: 'Invoice numbers follow the "Next number" of Settings',

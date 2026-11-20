@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import FileSourceButtons from '@/components/crm/FileSourceButtons'
 import dayjs from 'dayjs'
 import { components } from 'react-select'
-import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand, TbNotes, TbNotebook, TbPaperclip, TbFile, TbLink, TbX, TbPlus } from 'react-icons/tb'
+import { TbBrandGoogle, TbCalendar, TbCalendarPlus, TbChecks, TbDownload, TbFlag, TbBell, TbMapPin, TbPhone, TbUsers, TbVideo, TbWand, TbNotes, TbNotebook, TbPaperclip, TbFile, TbLink, TbX, TbPlus, TbMail, TbEye, TbEyeOff, TbPointer, TbChevronDown } from 'react-icons/tb'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -17,8 +17,40 @@ import DateTimeRange from './DateTimeRange'
 import Segment from '@/components/ui/Segment'
 import { api as callApi, notify } from '../kit/api'
 import { tr } from '@/utils/t'
+import { viewedOn } from '@/utils/viewedOn'
 
 const { Control } = components
+
+const mailWhen = (d) => dayjs(d).format('DD MMM YYYY, HH:mm')
+/** The emails sent about the event (answer to the booking, invitation, reminders): to whom and when, whether it was opened, whether a link was clicked, and the text. */
+const EventMails = ({ mails }) => {
+    const [shown, setShown] = useState('')
+    if (!mails.length) return <p className="py-2 text-center text-sm text-gray-400">{tr("No email was sent about this event yet")}</p>
+    return (
+        <div className="space-y-2">
+            {mails.map((m) => (
+                <div key={m.id} className="rounded-xl border border-gray-200 p-3 dark:border-gray-600">
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2"><span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${m.status === 'sent' ? 'bg-sky-100 text-sky-700' : 'bg-red-100 text-red-700'}`}>{m.status === 'sent' ? tr("Sent") : tr("Not sent")}</span><span className="truncate text-sm font-semibold heading-text">{m.subject || tr("(no subject)")}</span></div>
+                            <div className="mt-0.5 break-words text-xs text-gray-500">{[`${tr("To")} ${m.to}`, m.by && tr("by {name}", { name: m.by })].filter(Boolean).join(' · ')}</div>
+                        </div>
+                        <div className="shrink-0 text-end text-xs text-gray-500">{mailWhen(m.date)}</div>
+                    </div>
+                    {m.status !== 'sent' && m.error && <div className="mt-2 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700">{m.error}</div>}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-semibold">
+                        {m.status === 'sent' && m.track?.tracked && (m.track.opens > 0
+                            ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-700" title={m.track.opens > 1 ? `${tr("Last viewed")} ${mailWhen(m.track.lastOpenAt)}` : undefined}>{m.track.opens > 1 && <b>{m.track.opens}</b>}<TbEye />{viewedOn(m.track.firstOpenAt)}</span>
+                            : <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-500 dark:bg-gray-700/50 dark:text-gray-300" title={tr("Not seen yet. Mail apps that block pictures never show an open.")}><TbEyeOff />{tr("Not viewed yet")}</span>)}
+                        {m.status === 'sent' && m.track?.tracked && m.track.clicks > 0 && <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-0.5 text-sky-700" title={`${tr("First click")} ${mailWhen(m.track.firstClickAt)}`}><TbPointer />{tr("Link clicked")} {m.track.clicks > 1 ? `${m.track.clicks}×` : ''} · {mailWhen(m.track.lastClickAt)}</span>}
+                        {m.body && <button type="button" onClick={() => setShown((x) => (x === m.id ? '' : m.id))} className="ms-auto inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200">{shown === m.id ? tr("Hide the email") : tr("Read the email")}<TbChevronDown className={`transition-transform ${shown === m.id ? 'rotate-180' : ''}`} /></button>}
+                    </div>
+                    {shown === m.id && <iframe title={m.subject || tr("Email")} sandbox="" srcDoc={`<body style="margin:14px;font-family:Arial,sans-serif">${m.body}</body>`} className="mt-2 h-72 w-full rounded-lg border border-gray-200 bg-white dark:border-gray-600" />}
+                </div>
+            ))}
+        </div>
+    )
+}
 
 export const COLORS = [
     { value: 'red', label: tr("red"), color: 'bg-red-400' },
@@ -136,6 +168,15 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], booki
     const [v, setV] = useState(EMPTY)
     const [sec, setSec] = useState('event') // the open section: one at a time
     const toggle = (k) => setSec((x) => (x === k ? '' : k))
+    const [mails, setMails] = useState([]) // the emails sent about this event
+    const mailId = open && selected?.type === 'EDIT' ? selected.id : ''
+    useEffect(() => {
+        setMails([])
+        if (!mailId) return
+        let on = true
+        callApi(`/api/crm/calendar/${mailId}`).then((d) => { if (on) setMails(d.mails || []) }).catch(() => {})
+        return () => { on = false }
+    }, [mailId, selected?.status])
     const [room, setRoom] = useState('')
     const [error, setError] = useState('')
 
@@ -175,6 +216,8 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], booki
     const dateText = v.start ? `${dayjs(v.start).format(v.allDay ? 'DD MMM' : 'DD MMM, HH:mm')}${v.end && !v.allDay ? ` → ${dayjs(v.end).format('HH:mm')}` : ''}` : tr("No date yet")
     const peopleText = [v.attendeeIds.length ? `${v.attendeeIds.length} ${tr("team")}` : '', v.attendeeEmails.trim() ? tr("guests") : '', v.clientId ? tr("Client") : v.leadId ? tr("Lead") : ''].filter(Boolean).join(' · ') || tr("Nobody yet")
     const meetText = v.meetingUrl ? v.meetingUrl.replace(/^https?:\/\//, '') : v.location || tr("No link")
+    const sentMails = mails.filter((m) => m.status === 'sent')
+    const mailText = !mails.length ? tr("No email sent yet") : [tr("{n} sent", { n: sentMails.length }), sentMails.some((m) => m.track?.opens > 0) ? tr("Viewed") : sentMails.some((m) => m.track?.tracked) ? tr("Not viewed yet") : '', sentMails.some((m) => m.track?.clicks > 0) ? tr("Link clicked") : ''].filter(Boolean).join(' · ')
     const detailsText = [v.reminderBefore !== '' ? `${tr("Reminder")} ${v.reminderBefore} ${tr(v.reminderBeforeType)}` : '', v.isPublic ? tr("Visible to all") : '', v.confirmed ? tr("Confirmed") : '', v.description ? tr("Notes") : ''].filter(Boolean).join(' · ') || tr("Colour, reminder, notes")
     const hasWho = !!(v.clientId || v.leadId || v.attendeeEmails.trim())
     const tplOpts = (reminderTemplates.length ? reminderTemplates : [{ slug: 'event-reminder', label: 'Meeting reminder' }]).map((t) => ({ value: t.slug, label: tr(t.label) }))
@@ -317,6 +360,11 @@ const EventDialog = ({ open, selected, staff = [], reminderTemplates = [], booki
                     )}
                     <FormItem className="!mb-1" label={tr("Description")}><RichEditor minHeight={90} placeholder={tr("Agenda, notes…")} value={v.description} onChange={(html) => set({ description: html })} /></FormItem>
                         </FoldSection>
+                        {edit && (
+                            <FoldSection icon={<TbMail />} tone="sky" title={tr("Mail")} summary={mailText} open={sec === 'mail'} onToggle={() => toggle('mail')}>
+                                <EventMails mails={mails} />
+                            </FoldSection>
+                        )}
                         {edit && (
                             <FoldSection icon={<TbNotebook />} tone="rose" title={tr("Meeting minutes")} summary={v.report ? tr("Written: open to read or change") : tr("Nothing yet: Meet saves its recap here")} open={sec === 'minutes'} onToggle={() => toggle('minutes')}>
                                 <RichEditor minHeight={110} disabled={readOnly} value={v.report} onChange={(html) => setV((x) => ({ ...x, report: html }))} placeholder={tr("What was said, decided and who does what")} />

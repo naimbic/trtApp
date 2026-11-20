@@ -145,15 +145,28 @@ export async function testConnection(fromEmail) {
 
 export { escapeHtml }
 
+/** One email about a record, sent and written in the sent log. With keep (the mails of a calendar event) the text is kept and opens / link clicks are followed. */
+export async function deliverLogged({ to, subject, html, template = null, relType = null, relId = null, staffId = null, attachments, keep = relType === 'event' }) {
+    let out = html, token = null
+    if (keep) { const { withTracking } = await import('@/lib/crm/mailTrackApi'); ({ html: out, token } = await withTracking({ body: html })) }
+    const res = await deliver({ to, subject, html: out, attachments })
+    await prisma.crmMailLog.create({ data: { to: Array.isArray(to) ? to.join(', ') : to, subject, template, relType, relId: relId || undefined, status: res.sent ? 'sent' : 'failed', error: res.error || null, staffId: staffId || undefined, ...(keep ? { body: html } : {}), ...(res.sent && token ? { trackToken: token, openCount: 0, clickCount: 0 } : {}) } }).catch(() => {})
+    return res
+}
+
 /** Sends an email template to explicit addresses (staff or clients) with merge data. Logged in the sent log. */
-export async function sendTemplate({ slug, to, data = {}, relType = null, relId = null }) {
+export async function sendTemplate({ slug, to, data = {}, relType = null, relId = null, staffId = null }) {
     const t = await findTemplate(slug, await companyLanguage())
     if (!t || t.active === false) return { sent: false, error: `Email template "${slug}" is missing or turned off` }
     const full = { ...(await baseData()), ...data }
     const subject = mergeFields(t.subject, full)
     // the person may have chosen to be notified only on Telegram / WhatsApp (sign-in and password emails always go)
-    const res = (await emailAllowed(Array.isArray(to) ? to[0] : to, slug)) ? await deliver({ to, subject, html: await buildHtml(t.message, full) }) : { sent: false, error: 'The recipient chose not to receive email notifications', skipped: true }
-    await prisma.crmMailLog.create({ data: { to, subject, template: slug, relType, relId: relId || undefined, status: res.sent ? 'sent' : 'failed', error: res.error || null } }).catch(() => {})
+    let res
+    if (await emailAllowed(Array.isArray(to) ? to[0] : to, slug)) res = await deliverLogged({ to, subject, html: await buildHtml(t.message, full), template: slug, relType, relId, staffId })
+    else {
+        res = { sent: false, error: 'The recipient chose not to receive email notifications', skipped: true }
+        await prisma.crmMailLog.create({ data: { to, subject, template: slug, relType, relId: relId || undefined, status: 'failed', error: res.error } }).catch(() => {})
+    }
     await notifyChannels({ email: Array.isArray(to) ? to[0] : to, subject, data: full, relType, relId }) // the same message by Telegram / WhatsApp, for people who switched it on
     return res
 }

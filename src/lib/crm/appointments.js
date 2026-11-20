@@ -3,7 +3,7 @@ import { authenticate } from '@/lib/crm/apiKeys'
 import { requirePermission, getStaffId, hasCap, isCrmAdmin } from '@/lib/crm/permissions'
 import { storeRich } from '@/lib/crm/richText'
 import { emit } from '@/lib/crm/webhooks'
-import { deliver, escapeHtml } from '@/lib/crm/mailer'
+import { deliverLogged, escapeHtml } from '@/lib/crm/mailer'
 import { notifyNotice } from '@/lib/crm/notifyMail'
 import { getOptions, sendTemplate } from '@/lib/crm/mailer'
 
@@ -119,13 +119,13 @@ async function decideCore(e, { accept, staffId, notify, message, template }) {
         for (const g of Array.isArray(e.guests) ? e.guests : []) {
             if (!g.email) continue
             if (accept) { // the chosen template, with the date, the time, the link and the note of the team
-                const t = await sendTemplate({ slug, to: g.email, data: { ...facts, team_message: block, contact_firstname: g.name || '', guest_name: g.name || '' }, relType: 'event', relId: e.id }).catch((x) => ({ sent: false, error: x.message }))
+                const t = await sendTemplate({ slug, to: g.email, data: { ...facts, team_message: block, contact_firstname: g.name || '', guest_name: g.name || '' }, relType: 'event', relId: e.id, staffId }).catch((x) => ({ sent: false, error: x.message }))
                 if (t.sent) { emailed.push(g.email); continue }
                 if (t.skipped) continue
             }
             const subject = accept ? `Appointment confirmed: ${e.title}` : `Appointment request: ${e.title}`
             const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${accept ? `Your appointment is <strong>confirmed</strong> for ${escapeHtml(when)}.` : 'We are sorry, we cannot take this appointment at that time.'}</p>${accept && e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}${note ? `<p>${note}</p>` : ''}`
-            const r = await deliver({ to: g.email, subject, html })
+            const r = await deliverLogged({ to: g.email, subject, html, relType: 'event', relId: e.id, staffId })
             if (r.sent) emailed.push(g.email)
         }
     }
@@ -133,7 +133,7 @@ async function decideCore(e, { accept, staffId, notify, message, template }) {
 }
 
 /** An email to the people who asked for an appointment (its guests): what changed, the time, the link, and a note from the team. Returns who was emailed. */
-export async function tellRequester(e, { kind = 'updated', message = '' } = {}) {
+export async function tellRequester(e, { kind = 'updated', message = '', staffId = null } = {}) {
     const note = noteHtml(message, 4000)
     const when = new Date(e.start).toUTCString().replace(' GMT', ' UTC')
     const lines = { updated: `Your appointment <strong>${escapeHtml(e.title)}</strong> has been changed. New time: <strong>${escapeHtml(when)}</strong>.`, note: `A message about your appointment <strong>${escapeHtml(e.title)}</strong> (${escapeHtml(when)}).` }
@@ -141,7 +141,7 @@ export async function tellRequester(e, { kind = 'updated', message = '' } = {}) 
     for (const g of Array.isArray(e.guests) ? e.guests : []) {
         if (!g.email) continue
         const html = `<p>Hello ${escapeHtml(g.name || '')},</p><p>${lines[kind] || lines.note}</p>${note ? `<blockquote style="margin:8px 0;padding:6px 12px;border-left:3px solid #ccc">${note}</blockquote>` : ''}${e.meetingUrl ? `<p>Join here: <a href="${escapeHtml(e.meetingUrl)}">${escapeHtml(e.meetingUrl)}</a></p>` : ''}`
-        const r = await deliver({ to: g.email, subject: kind === 'updated' ? `Appointment changed: ${e.title}` : `About your appointment: ${e.title}`, html })
+        const r = await deliverLogged({ to: g.email, subject: kind === 'updated' ? `Appointment changed: ${e.title}` : `About your appointment: ${e.title}`, html, relType: 'event', relId: e.id, staffId })
         if (r.sent) sent.push(g.email)
     }
     return sent

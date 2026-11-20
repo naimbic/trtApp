@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.262.0',
+        date: '2026-11-20',
+        title: 'Booked meetings find their client or lead by company domain',
+        items: [
+            'A booking request from an email nobody has in the CRM is now linked to the client or the lead of the same company: sara@atlas.ma goes to the client whose contact is omar@atlas.ma, or whose website is atlas.ma. The same for leads. A client wins over a lead.',
+            'Public mailboxes (Gmail, Outlook, Yahoo, iCloud…) are never matched by domain, only by the exact email.',
+            'Booked meetings already on the calendar without a client or a lead are linked the same way the next time the calendar is opened.',
+            'In the Mail section of an event, the text of the latest email is shown straight away; "Hide the email" folds it.',
+        ],
+    },
+    {
         version: '0.261.0',
         date: '2026-11-20',
         title: 'Events show the emails sent about them',

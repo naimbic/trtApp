@@ -62,6 +62,13 @@ export async function getCalendarItems({ from, to, eventId }) {
     const events = await prisma.crmEvent.findMany({
         where: one ? { id: one } : { start: { lt: end }, OR: [{ end: { gte: start } }, { end: null, start: { gte: start } }, { end: { isSet: false }, start: { gte: start } }] },
     })
+    // booked meetings that nobody is linked to yet: the client or the lead with the same email or the same company domain (a few per load)
+    for (const e of events.filter((x) => x.source && !x.clientId && !x.leadId && (x.attendeeEmails || []).length).slice(0, 5)) {
+        try {
+            const w = await (await import('@/lib/crm/appointments')).whoByEmails(e.attendeeEmails)
+            if (w.clientId || w.leadId) { await prisma.crmEvent.update({ where: { id: e.id }, data: { clientId: w.clientId, leadId: w.leadId } }); e.clientId = w.clientId; e.leadId = w.leadId }
+        } catch (x) { console.error('[booking link]', x.message) }
+    }
     const staffRows = await prisma.crmStaff.findMany({ select: { id: true, firstName: true, lastName: true } })
     const staffName = Object.fromEntries(staffRows.map((x) => [x.id, `${x.firstName || ''} ${x.lastName || ''}`.trim()]))
     const clientIds = [...new Set(events.map((e) => e.clientId).filter(Boolean))]

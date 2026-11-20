@@ -15,6 +15,30 @@ const noteHtml = (v, n) => storeRich(String(v ?? '').trim().slice(0, n), n) || '
 const iso = (v) => (v ? new Date(v).toISOString() : null)
 const shape = (e) => ({ id: e.id, status: e.status || 'confirmed', title: e.title, start: iso(e.start), end: iso(e.end), meeting_url: e.meetingUrl || null, room: e.externalRef || null, source: e.source || null, guests: Array.isArray(e.guests) ? e.guests : [], decided_at: iso(e.decidedAt) })
 
+/** The client or the lead behind the people who ask for an appointment: first the same email (a contact of a client, then a lead), and when nobody has
+ *  that email, the same company domain (sara@atlas.ma when omar@atlas.ma is a contact, or the website of the client / lead is atlas.ma).
+ *  Public mailboxes (Gmail, Outlook...) never match by domain. A client wins over a lead; a lead that became a client is its client. */
+export async function whoByEmails(emails) {
+    const list = [...new Set((emails || []).map((e) => String(e || '').trim().toLowerCase()).filter(Boolean))]
+    if (!list.length) return { leadId: null, clientId: null, by: null }
+    const ofLead = (l) => (l?.clientId ? { clientId: l.clientId, leadId: null } : { clientId: null, leadId: l.id })
+    const contact = await prisma.crmContact.findFirst({ where: { email: { in: list, mode: 'insensitive' } }, select: { clientId: true } })
+    if (contact?.clientId) return { clientId: contact.clientId, leadId: null, by: 'email' }
+    const lead = await prisma.crmLead.findFirst({ where: { email: { in: list, mode: 'insensitive' } }, select: { id: true, clientId: true } })
+    if (lead) return { ...ofLead(lead), by: 'email' }
+    const { companyDomain, siteDomain, sameDomain } = await import('@/lib/crm/domainMatch')
+    for (const d of [...new Set(list.map(companyDomain).filter(Boolean))]) {
+        const c = await prisma.crmContact.findFirst({ where: { email: { endsWith: `@${d}`, mode: 'insensitive' } }, select: { clientId: true } })
+        if (c?.clientId) return { clientId: c.clientId, leadId: null, by: 'domain' }
+        const site = (await prisma.crmClient.findMany({ where: { website: { contains: d, mode: 'insensitive' } }, select: { id: true, website: true }, take: 20 })).find((x) => sameDomain(siteDomain(x.website), d))
+        if (site) return { clientId: site.id, leadId: null, by: 'domain' }
+        const l = (await prisma.crmLead.findFirst({ where: { email: { endsWith: `@${d}`, mode: 'insensitive' } }, orderBy: { createdAt: 'desc' }, select: { id: true, clientId: true } }))
+            || (await prisma.crmLead.findMany({ where: { website: { contains: d, mode: 'insensitive' } }, orderBy: { createdAt: 'desc' }, select: { id: true, clientId: true, website: true }, take: 20 })).find((x) => sameDomain(siteDomain(x.website), d))
+        if (l) return { ...ofLead(l), by: 'domain' }
+    }
+    return { leadId: null, clientId: null, by: null }
+}
+
 /** A request for an appointment from another program (the Meet booking page): it lands on the calendar as a DRAFT that nobody is invited to
  *  until a team member accepts it. The same room is never recorded twice: a second call updates the request while it is still a draft. */
 export async function createAppointment(request) {
@@ -39,17 +63,7 @@ export async function createAppointment(request) {
         for (const g of guests) if (g.email && !EMAIL.test(g.email)) throw fail(`"${g.email}" is not a valid email address`)
         const emails = [...new Set(guests.map((g) => g.email).filter(Boolean))]
         const description = storeRich(String(b.description ?? '').replace(/\n/g, '<br>'), 5000) || null
-        // known people: a lead or a client contact with the same email
-        let leadId = null, clientId = null
-        if (emails.length) {
-            // a customer wins over a lead; a lead that already became a customer is its customer
-            clientId = (await prisma.crmContact.findFirst({ where: { email: { in: emails, mode: 'insensitive' } }, select: { clientId: true } }))?.clientId || null
-            if (!clientId) {
-                const lead = await prisma.crmLead.findFirst({ where: { email: { in: emails, mode: 'insensitive' } }, select: { id: true, clientId: true } })
-                if (lead?.clientId) clientId = lead.clientId
-                else leadId = lead?.id || null
-            }
-        }
+        const { leadId, clientId } = await whoByEmails(emails) // a known client or lead: the same email, or the same company domain
         const data = { title, start, end, meetingUrl: meetingUrl || null, description, status: 'draft', source, externalRef: room, guests, attendeeEmails: emails, category: 'meeting', color: 'yellow', apiKeyId: key.id, leadId, clientId }
         const same = room ? await prisma.crmEvent.findFirst({ where: { source, externalRef: room } }) : null
         let row, created = false

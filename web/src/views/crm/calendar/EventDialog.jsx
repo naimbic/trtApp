@@ -24,7 +24,9 @@ const { Control } = components
 const mailWhen = (d) => dayjs(d).format('DD MMM YYYY, HH:mm')
 /** The emails sent about the event (answer to the booking, invitation, reminders): to whom and when, whether it was opened, whether a link was clicked, and the text. */
 const EventMails = ({ mails }) => {
-    const [shown, setShown] = useState('')
+    const [shown, setShown] = useState(null) // the mail whose text is open: the latest one with a text unless another is chosen
+    const first = mails.find((m) => m.body)?.id || ''
+    const open = shown === null ? first : shown
     if (!mails.length) return <p className="py-2 text-center text-sm text-gray-400">{tr("No email was sent about this event yet")}</p>
     return (
         <div className="space-y-2">
@@ -43,9 +45,9 @@ const EventMails = ({ mails }) => {
                             ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-700" title={m.track.opens > 1 ? `${tr("Last viewed")} ${mailWhen(m.track.lastOpenAt)}` : undefined}>{m.track.opens > 1 && <b>{m.track.opens}</b>}<TbEye />{viewedOn(m.track.firstOpenAt)}</span>
                             : <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-500 dark:bg-gray-700/50 dark:text-gray-300" title={tr("Not seen yet. Mail apps that block pictures never show an open.")}><TbEyeOff />{tr("Not viewed yet")}</span>)}
                         {m.status === 'sent' && m.track?.tracked && m.track.clicks > 0 && <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-0.5 text-sky-700" title={`${tr("First click")} ${mailWhen(m.track.firstClickAt)}`}><TbPointer />{tr("Link clicked")} {m.track.clicks > 1 ? `${m.track.clicks}×` : ''} · {mailWhen(m.track.lastClickAt)}</span>}
-                        {m.body && <button type="button" onClick={() => setShown((x) => (x === m.id ? '' : m.id))} className="ms-auto inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200">{shown === m.id ? tr("Hide the email") : tr("Read the email")}<TbChevronDown className={`transition-transform ${shown === m.id ? 'rotate-180' : ''}`} /></button>}
+                        {m.body && <button type="button" onClick={() => setShown(open === m.id ? '' : m.id)} className="ms-auto inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200">{open === m.id ? tr("Hide the email") : tr("Read the email")}<TbChevronDown className={`transition-transform ${open === m.id ? 'rotate-180' : ''}`} /></button>}
                     </div>
-                    {shown === m.id && <iframe title={m.subject || tr("Email")} sandbox="" srcDoc={`<body style="margin:14px;font-family:Arial,sans-serif">${m.body}</body>`} className="mt-2 h-72 w-full rounded-lg border border-gray-200 bg-white dark:border-gray-600" />}
+                    {open === m.id && <iframe title={m.subject || tr("Email")} sandbox="" srcDoc={`<body style="margin:14px;font-family:Arial,sans-serif">${m.body}</body>`} className="mt-2 h-72 w-full rounded-lg border border-gray-200 bg-white dark:border-gray-600" />}
                 </div>
             ))}
         </div>

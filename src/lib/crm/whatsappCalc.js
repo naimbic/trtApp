@@ -75,3 +75,45 @@ export function failedStatuses(payload) {
     }
     return out
 }
+
+/** The last 9 digits of a phone number: the same person whether it was typed +212 6 12 34 56 78, 00212612345678 or 0612345678. '' when it is not a phone. */
+export function phoneTail(raw) {
+    const d = String(raw || '').replace(/[^0-9]/g, '')
+    return d.length < 8 ? '' : d.slice(-9)
+}
+
+const KINDS = ['text', 'image', 'audio', 'video', 'document', 'location', 'sticker', 'contacts', 'button', 'interactive', 'reaction']
+/** The messages people wrote to the company number in a webhook payload: [{ from, id, at, kind, text, name }]. */
+export function incomingMessages(payload) {
+    const out = []
+    for (const entry of payload?.entry || []) for (const ch of entry.changes || []) {
+        const v = ch.value || {}
+        const names = Object.fromEntries((v.contacts || []).map((c) => [c.wa_id, c.profile?.name || '']))
+        for (const m of v.messages || []) {
+            if (!m?.from || !m.id || m.type === 'reaction') continue
+            const kind = KINDS.includes(m.type) ? m.type : 'other'
+            const media = m[m.type] || {}
+            const text = m.type === 'text' ? m.text?.body || '' : m.type === 'button' ? m.button?.text || '' : m.type === 'interactive' ? m.interactive?.button_reply?.title || m.interactive?.list_reply?.title || '' : m.type === 'location' ? [media.name, media.address, media.latitude != null ? `${media.latitude}, ${media.longitude}` : ''].filter(Boolean).join(' · ') : media.caption || media.filename || ''
+            out.push({ from: String(m.from), id: String(m.id), at: Number(m.timestamp) ? Number(m.timestamp) * 1000 : Date.now(), kind, text: String(text).slice(0, 4000), name: names[m.from] || '' })
+        }
+    }
+    return out
+}
+
+/** What became of the messages we sent, in a webhook payload: [{ id, status: sent | delivered | read | failed, error }]. */
+export function deliveryStatuses(payload) {
+    const out = []
+    for (const entry of payload?.entry || []) for (const ch of entry.changes || []) for (const st of ch.value?.statuses || []) {
+        if (!st?.id || !['sent', 'delivered', 'read', 'failed'].includes(st.status)) continue
+        const e = (st.errors || [])[0]
+        out.push({ id: String(st.id), status: st.status, error: e ? explainWhatsapp({ code: e.code, message: e.title || e.message, error_data: e.error_data }) : '' })
+    }
+    return out
+}
+
+/** A status never goes backwards: "read" is not replaced by a late "delivered". */
+const RANK = { failed: 0, sent: 1, delivered: 2, read: 3 }
+export const statusMoves = (from, to) => to === 'failed' ? from !== 'read' && from !== 'delivered' : (RANK[to] || 0) > (RANK[from] || 0)
+
+/** WhatsApp lets a business write a free text only during the 24 hours after the last message of the person; after that, an approved template. */
+export const windowOpen = (lastInAt, now = Date.now()) => !!lastInAt && +now - +new Date(lastInAt) < 24 * 3600 * 1000

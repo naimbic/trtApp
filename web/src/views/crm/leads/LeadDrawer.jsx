@@ -25,6 +25,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { api, notify } from '../kit/api'
 import { People } from '../tasks/shared'
 import { LeadTasks, LeadMails, LeadMeetings } from './LeadTabs'
+import LeadWhatsapp from './LeadWhatsapp'
 import ActivityFeed from '@/components/crm/ActivityFeed'
 import NewTicketDialog from '../tickets/NewTicketDialog'
 import ProjectDialog from '../projects/ProjectDialog'
@@ -42,13 +43,13 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const nav = useNavigate()
     const can = useCan()
     const [v, setV] = useState(EMPTY)
-    const [tabV, setTabV] = useTabParam(['profile', 'tasks', 'mails', 'meetings', 'files', 'notes', 'related', 'activity'], 'profile')
+    const [tabV, setTabV] = useTabParam(['profile', 'tasks', 'mails', 'whatsapp', 'meetings', 'files', 'notes', 'related', 'activity'], 'profile')
     const [editingNote, setEditingNote] = useState(null)
     const [replyTo, setReplyTo] = useState(null)
     const editorRef = useRef(null)
     const [detail, setDetail] = useState(null)
     // the tabs this person may see (Roles > Lead popup tabs); a tab that is off is not shown, and the popup opens on the first one that is on
-    const tabOk = { profile: true, mails: true, meetings: true, offers: true, activity: true, ...(detail?.can?.tabs || {}) }
+    const tabOk = { profile: true, mails: true, whatsapp: false, meetings: true, offers: true, activity: true, ...(detail?.can?.tabs || {}) }
     const TAB_OF = { profile: 'profile', mails: 'mails', meetings: 'meetings', related: 'offers', activity: 'activity' }
     useEffect(() => { if (detail && TAB_OF[tabV] && !tabOk[TAB_OF[tabV]]) setTabV(tabOk.profile ? 'profile' : can('tasks', 'view') ? 'tasks' : 'notes') }, [detail, tabV]) // eslint-disable-line react-hooks/exhaustive-deps
     const [lk, setLk] = useState({ statuses: [], sources: [], countries: [] })
@@ -226,6 +227,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             {tabOk.profile && <Tabs.TabNav value="profile">{tr("Profile")}</Tabs.TabNav>}
                             {can('tasks', 'view') && <Tabs.TabNav value="tasks">{tr("Tasks")}</Tabs.TabNav>}
                             {tabOk.mails && <Tabs.TabNav value="mails">{tr("Mails")}{detail.mails.length ? ` (${detail.mails.length})` : ''}</Tabs.TabNav>}
+                            {tabOk.whatsapp && <Tabs.TabNav value="whatsapp">{tr("WhatsApp")}</Tabs.TabNav>}
                             {tabOk.meetings && <Tabs.TabNav value="meetings">{tr("Meetings")}{detail.meetings.length ? ` (${detail.meetings.length})` : ''}</Tabs.TabNav>}
                             <Tabs.TabNav value="files">{tr("Files")}</Tabs.TabNav>
                             <Tabs.TabNav value="notes">{tr("Comments")}{detail.notes.length ? ` (${detail.notes.length})` : ''}</Tabs.TabNav>
@@ -236,6 +238,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
                             {tabOk.profile && <Tabs.TabContent value="profile">{profile}</Tabs.TabContent>}
                             {can('tasks', 'view') && <Tabs.TabContent value="tasks"><LeadTasks leadId={id} staff={staff} onChanged={onChanged} locked={!!detail.can.closed} /></Tabs.TabContent>}
                             {tabOk.mails && <Tabs.TabContent value="mails"><LeadMails leadId={id} mails={detail.mails} senders={detail.senders || []} leadEmail={detail.lead?.email || ''} canEdit={!!detail.can.edit} mailRights={detail.can.mail} mentionable={detail.mentionable || []} run={run} /></Tabs.TabContent>}
+                            {tabOk.whatsapp && <Tabs.TabContent value="whatsapp">{tabV === 'whatsapp' && <LeadWhatsapp leadId={id} />}</Tabs.TabContent>}
                             {tabOk.meetings && <Tabs.TabContent value="meetings"><LeadMeetings leadId={id} leadName={l.name} meetings={detail.meetings} staff={staff} canEdit={!!detail.can.edit} run={run} /></Tabs.TabContent>}
                             <Tabs.TabContent value="files"><div className="pt-1"><AttachmentsPanel relType="lead" relId={id} canEdit={!!detail.can.edit} /></div></Tabs.TabContent>
                             <Tabs.TabContent value="notes">{notes}</Tabs.TabContent>

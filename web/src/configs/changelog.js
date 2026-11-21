@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.264.0',
+        date: '2026-11-21',
+        title: 'Leads: a WhatsApp tab to read and answer',
+        items: [
+            'The lead popup has a new WhatsApp tab: what the lead wrote to the company WhatsApp Business number and what the team answered, as a conversation, with the hour, who answered, and the sent / delivered / read marks.',
+            'Answer from the tab. During the 24 hours after the lead\'s last message the answer goes as a normal WhatsApp message; after that WhatsApp only accepts an approved template, so the text goes inside the template chosen in Settings → WhatsApp & Telegram. The tab says which of the two applies.',
+            'A message finds its lead by the phone number, however it was typed (+212 6 12…, 00212…, 06 12…). The people the lead is assigned to are notified of each new message.',
+            'To receive messages, the webhook of the WhatsApp app at Meta must be subscribed to the "messages" field (Meta for Developers → WhatsApp → Configuration → Webhook: the address and verify token shown in Settings → WhatsApp & Telegram).',
+            'Roles: "See the WhatsApp tab" (Lead popup tabs) and "Lead WhatsApp: Send". Administrators have both; give them to the roles that should use the tab.',
+            'Pictures, voice notes and files sent by the lead are listed with their caption; their content is opened in WhatsApp.',
+        ],
+    },
+    {
         version: '0.263.0',
         date: '2026-11-21',
         title: 'Lead tasks get reminders; a permission for lead statuses',

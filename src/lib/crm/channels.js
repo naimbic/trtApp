@@ -13,6 +13,9 @@ async function settings() {
     return { telegram: o.telegram_enabled === '1' && !!o.telegram_bot_token, token: o.telegram_bot_token || '', whatsapp: o.whatsapp_enabled === '1' && !!o.whatsapp_phone_number_id && !!o.whatsapp_access_token, phoneId: o.whatsapp_phone_number_id || '', waToken: o.whatsapp_access_token || '', template: o.whatsapp_template || '', lang: o.whatsapp_template_lang || 'en', vars: o.whatsapp_template_vars === undefined || o.whatsapp_template_vars === '' ? 1 : Number(o.whatsapp_template_vars) || 0 }
 }
 
+/** Is the WhatsApp Business number set up, and is there a template for the messages outside the 24 hour window. */
+export async function whatsappSetup() { const c = await settings(); return { ready: c.whatsapp, template: !!c.template } }
+
 const post = async (url, body, headers = {}) => {
     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(15000) })
     const json = await res.json().catch(() => ({}))
@@ -67,7 +70,8 @@ export async function testOwnChannel(staffId, channel) {
 }
 
 /** WhatsApp Cloud API: a template message when a template name is set (needed outside the 24 hour window), else a plain text. */
-export async function sendWhatsapp(number, text, s) {
+/** `opts.plain` sends a free text whatever the template setting (a reply inside the 24 hour window). The answer carries the id WhatsApp gave the message. */
+export async function sendWhatsapp(number, text, s, opts = {}) {
     const c = s || (await settings())
     if (!c.whatsapp) return { sent: false, error: 'WhatsApp is not set up (Settings → WhatsApp & Telegram)' }
     const n = normalizeWhatsappNumber(number)
@@ -76,11 +80,11 @@ export async function sendWhatsapp(number, text, s) {
     // a template body has the number of variables the account says (the connection check reads it): none = no parameters, more = the text in the first, a dash in the others
     const flat = String(text).replace(/\s*\n+\s*/g, ' · ').slice(0, 900)
     const params = Array.from({ length: Math.min(c.vars, 10) }, (_, i) => ({ type: 'text', text: i === 0 ? flat : '-' }))
-    const message = c.template
+    const message = c.template && !opts.plain
         ? { type: 'template', template: { name: c.template, language: { code: c.lang }, ...(params.length ? { components: [{ type: 'body', parameters: params }] } : {}) } }
         : { type: 'text', text: { body: String(text).slice(0, 3900), preview_url: true } }
     const r = await post(`https://graph.facebook.com/v20.0/${c.phoneId}/messages`, { messaging_product: 'whatsapp', to, ...message }, { Authorization: `Bearer ${c.waToken}` })
-    return r.ok ? { sent: true } : { sent: false, error: explainWhatsapp(r.json?.error) }
+    return r.ok ? { sent: true, id: r.json?.messages?.[0]?.id || null, mode: message.type } : { sent: false, error: explainWhatsapp(r.json?.error) }
 }
 
 const linkOf = (data = {}) => {

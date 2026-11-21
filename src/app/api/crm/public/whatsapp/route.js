@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic'
 const safe = (a, b) => { const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || '')); return x.length > 0 && x.length === y.length && crypto.timingSafeEqual(x, y) }
 
 // The webhook Meta calls (Meta for Developers → WhatsApp → Configuration → Webhook: this address + the verify token shown in Settings).
-// It is NOT needed to send messages; it tells the CRM when a message could not be delivered afterwards, and the administrators see why.
+// It is NOT needed to send messages; it tells the CRM when a message could not be delivered afterwards (the administrators see why),
+// and it brings in what leads write to the number: subscribe the webhook to the "messages" field for the WhatsApp tab of a lead.
 export async function GET(request) {
     const q = request.nextUrl.searchParams
     const o = await getOptions(['whatsapp_verify_token'])
@@ -32,5 +33,7 @@ export async function POST(request) {
         await setOptions({ whatsapp_failures: JSON.stringify(list) })
         await alertAdmins({ key: 'whatsapp-failed', title: 'A WhatsApp message was not delivered', text: `${failed[0].to ? `To ${failed[0].to}: ` : ''}${list[0].why}`, everyMinutes: 120 })
     }
+    // the messages leads wrote to the number, and the delivered / read marks of our answers (the WhatsApp tab of a lead)
+    try { await (await import('@/lib/crm/leadWhatsappApi')).recordWhatsappWebhook(payload) } catch (e) { console.error('[whatsapp webhook]', e.message) }
     return NextResponse.json({ ok: true })
 }

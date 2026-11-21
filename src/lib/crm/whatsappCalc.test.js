@@ -65,3 +65,21 @@ test('failed deliveries are picked out of a webhook payload', () => {
     assert.equal(f[0].code, 131047)
     assert.equal(f[0].to, '212600000000')
 })
+
+test('whatsapp tab: phone tail, incoming messages, delivery marks, the 24 hour window', async () => {
+    const { phoneTail, incomingMessages, deliveryStatuses, statusMoves, windowOpen } = await import('./whatsappCalc.js')
+    assert.equal(phoneTail('+212 6 12 34 56 78'), '612345678')
+    assert.equal(phoneTail('00212612345678'), '612345678')
+    assert.equal(phoneTail('0612345678'), '612345678')
+    assert.equal(phoneTail('12'), '')
+    const payload = { entry: [{ changes: [{ value: { contacts: [{ wa_id: '212612345678', profile: { name: 'Nora' } }], messages: [{ from: '212612345678', id: 'wamid.A', timestamp: '1700000000', type: 'text', text: { body: 'Hello' } }, { from: '212612345678', id: 'wamid.B', timestamp: '1700000001', type: 'image', image: { caption: 'the plan' } }, { from: '212612345678', id: 'wamid.C', type: 'reaction' }], statuses: [{ id: 'wamid.X', status: 'read' }, { id: 'wamid.Y', status: 'failed', errors: [{ code: 131047, title: 'Re-engagement message' }] }] } }] }] }
+    const inc = incomingMessages(payload)
+    assert.equal(inc.length, 2)
+    assert.deepEqual({ from: inc[0].from, id: inc[0].id, kind: inc[0].kind, text: inc[0].text, name: inc[0].name, at: inc[0].at }, { from: '212612345678', id: 'wamid.A', kind: 'text', text: 'Hello', name: 'Nora', at: 1700000000000 })
+    assert.equal(inc[1].kind, 'image'); assert.equal(inc[1].text, 'the plan')
+    const st = deliveryStatuses(payload)
+    assert.equal(st.length, 2); assert.equal(st[0].status, 'read'); assert.ok(st[1].error)
+    assert.ok(statusMoves('sent', 'delivered')); assert.ok(statusMoves('delivered', 'read')); assert.ok(!statusMoves('read', 'delivered')); assert.ok(statusMoves('sent', 'failed')); assert.ok(!statusMoves('read', 'failed'))
+    const now = Date.now()
+    assert.ok(windowOpen(new Date(now - 3600e3), now)); assert.ok(!windowOpen(new Date(now - 25 * 3600e3), now)); assert.ok(!windowOpen(null, now))
+})

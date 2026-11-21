@@ -755,3 +755,35 @@ model CrmLeadMail {
   @@index([clientId, date])
   @@index([trackToken])
 }
+
+/// One WhatsApp message exchanged with a lead (or a client contact) through the WhatsApp Business number of the company.
+model CrmLeadWhatsapp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// set when the number was known when the message came in or went out; a message of an unknown number is found again by `tail`
+  leadId    String?  @db.ObjectId
+  clientId  String?  @db.ObjectId
+  /// in = received, out = sent by the team
+  direction String
+  /// the number of the other person: digits with the country code
+  number    String
+  /// the last 9 digits of the number: how a message finds its lead whatever way the phone was typed
+  tail      String
+  /// the WhatsApp name of the person (received messages)
+  name      String?
+  body      String?
+  /// text | template | image | audio | video | document | location | other
+  kind      String   @default("text")
+  /// the id WhatsApp gave the message (delivery and read marks come back with it)
+  waId      String?
+  /// sent | delivered | read | failed (sent messages) · received
+  status    String   @default("sent")
+  error     String?
+  staffId   String?  @db.ObjectId
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([leadId, date])
+  @@index([tail, date])
+  @@index([waId])
+  @@map("crm_lead_whatsapp")
+}

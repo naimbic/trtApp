@@ -187,7 +187,7 @@ export async function getLead(id) {
         can: { mail: { create: mailCan(a, 'create'), edit: mailCan(a, 'edit'), send: mailCan(a, 'send'), delete: mailCan(a, 'delete') }, edit: mayEdit(a, l), delete: a.can('delete'), convert: hasCap(a.authority, 'customers', 'create') && !l.clientId },
     }
     // the tabs this person may not see are left empty, not only hidden
-    const tabs = Object.fromEntries(['profile', 'mails', 'meetings', 'offers', 'activity'].map((t) => [t, tabCan(a, t)]))
+    const tabs = Object.fromEntries(['profile', 'mails', 'whatsapp', 'meetings', 'offers', 'activity'].map((t) => [t, tabCan(a, t)]))
     out.can.tabs = tabs
     // a lead that became a customer is closed for everyone but admins: nothing can be added or changed on it
     out.can.closed = isClosed(a, l)
@@ -757,4 +757,15 @@ export async function bulkLeads({ ids = [], action, value } = {}) {
         } catch (e) { out.failed.push({ id, error: e.message }) }
     }
     return out
+}
+
+/** The lead for its WhatsApp tab: the person sees the lead and the tab; to send, the lead is open, the person is of its team and has the Send right. */
+export async function leadForWhatsapp(id, { send = false } = {}) {
+    const session = await requirePermission('leads', 'view')
+    const a = await access(session)
+    const lead = await loadOne(id, a)
+    if (!tabCan(a, 'whatsapp')) throw fail('You are not allowed to see the WhatsApp messages of leads', 403)
+    const maySend = (a.admin || hasCap(a.authority, 'lead_whatsapp', 'send')) && !isClosed(a, lead) && !onlyFollows(a, lead)
+    if (send && !maySend) throw fail('You are not allowed to send WhatsApp messages to this lead', 403)
+    return { lead, staffId: a.staffId, maySend }
 }

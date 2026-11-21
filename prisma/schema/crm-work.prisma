@@ -201,6 +201,10 @@ model CrmTask {
   dueDate            DateTime?
   /// time the task takes, in hours (1, 2.5...)
   hours              Float?
+  /// reminder for the people of the task, like a checklist step: minutes before the due date (0 = at the due time), empty = none
+  reminder           Int?
+  /// an exact date and hour chosen by hand; when set it replaces `reminder` (and needs no due date)
+  remindAt           DateTime?
   dateFinished       DateTime?
   addedFrom          String?   @db.ObjectId
   isAddedFromContact Boolean   @default(false)

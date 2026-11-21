@@ -2,6 +2,17 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.263.0',
+        date: '2026-11-21',
+        title: 'Lead tasks get reminders; a permission for lead statuses',
+        items: [
+            'Lead > Tasks: each task now has the bell of a checklist step. Choose "At the due time", "1 hour before", "1 day before", "2 days before", or any date and hour. The people the task is given to get it in their notifications.',
+            'The reminder is kept on the task itself, so it follows the task everywhere.',
+            'Roles: new permission "Lead statuses and sources" (Customers & leads) with Create, Edit and Delete. Give it to a role and its people can manage the lead statuses and sources in Settings > Lists > Leads without the Settings permission.',
+            'Nothing changes for people who have Settings: they can still change these lists.',
+        ],
+    },
+    {
         version: '0.262.0',
         date: '2026-11-20',
         title: 'Booked meetings find their client or lead by company domain',

@@ -32,6 +32,7 @@ const ListBlock = ({ resource, open, onToggle, can }) => {
     const [seen, setSeen] = useState(open)
     useEffect(() => { if (open) setSeen(true) }, [open])
     const wf = resource.writeFeature || resource.feature
+    const may = (cap) => can(wf, cap) || (!!resource.writeAlso && can(resource.writeAlso, cap)) // its own permission, or the wider one (Settings)
     const Icon = ICONS[resource.key] || TbSettings
     return (
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800" data-list={resource.key}>
@@ -42,11 +43,11 @@ const ListBlock = ({ resource, open, onToggle, can }) => {
                 {count !== null && <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-bold tabular-nums text-gray-600 dark:bg-gray-700 dark:text-gray-300">{count}</span>}
                 <TbChevronDown className={`shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
-            {can(wf, 'create') && <button type="button" aria-label={tr('Add')} title={tr('Add')} onClick={() => { setAdd((n) => n + 1); if (!open) onToggle() }} className="me-3 ms-1 grid size-8 shrink-0 place-items-center rounded-full bg-white text-lg text-gray-600 shadow-sm transition hover:bg-primary hover:text-white dark:bg-gray-700 dark:text-gray-200"><TbPlus /></button>}
+            {may('create') && <button type="button" aria-label={tr('Add')} title={tr('Add')} onClick={() => { setAdd((n) => n + 1); if (!open) onToggle() }} className="me-3 ms-1 grid size-8 shrink-0 place-items-center rounded-full bg-white text-lg text-gray-600 shadow-sm transition hover:bg-primary hover:text-white dark:bg-gray-700 dark:text-gray-200"><TbPlus /></button>}
             </div>
             {seen && (
                 <div className={open ? 'border-t border-gray-100 p-3 dark:border-gray-700' : 'hidden'}>
-                    <LookupManager resource={resource} canCreate={can(wf, 'create')} canEdit={can(wf, 'edit')} canDelete={can(wf, 'delete')} onCount={setCount} addSignal={add} />
+                    <LookupManager resource={resource} canCreate={may('create')} canEdit={may('edit')} canDelete={may('delete')} onCount={setCount} addSignal={add} />
                 </div>
             )}
         </div>

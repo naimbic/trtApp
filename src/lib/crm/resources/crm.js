@@ -305,7 +305,7 @@ const resources = [
         plural: 'Lead sources',
         group: 'Leads',
         icon: 'TbBroadcast',
-        feature: 'leads', writeFeature: 'settings',
+        feature: 'leads', writeFeature: 'lead_statuses', writeAlso: 'settings', // its own permission (Roles > Lead statuses and sources); Settings still covers it
         titleField: 'name',
         search: ['name'],
         defaultSort: { sourceOrder: 'asc' },
@@ -331,7 +331,7 @@ const resources = [
         plural: 'Lead statuses',
         group: 'Leads',
         icon: 'TbListDetails',
-        feature: 'leads', writeFeature: 'settings',
+        feature: 'leads', writeFeature: 'lead_statuses', writeAlso: 'settings', // its own permission (Roles > Lead statuses and sources); Settings still covers it
         titleField: 'name',
         search: ['name'],
         defaultSort: { statusOrder: 'asc' },

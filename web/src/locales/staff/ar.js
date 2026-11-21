@@ -6298,4 +6298,6 @@ export default {
     "Read the email": "قراءة البريد",
     "No email sent yet": "لم يُرسل أي بريد بعد",
     "{n} sent": "تم إرسال {n}",
+    "Reminder: task": "تذكير: مهمة",
+    "The lists of lead statuses (the columns of the lead board) and lead sources, in Settings > Lists > Leads. Create = add a status or a source; Edit = rename, recolour, reorder and choose the default one; Delete = remove one nobody uses. Everybody who sees leads sees the lists; people with Settings can always change them.": "قوائم حالات العملاء المحتملين (أعمدة لوحة العملاء المحتملين) والمصادر، في الإعدادات > القوائم > العملاء المحتملون. إنشاء = إضافة حالة أو مصدر؛ تعديل = إعادة التسمية وتغيير اللون والترتيب واختيار الافتراضي؛ حذف = إزالة ما لا يستخدمه أحد. كل من يرى العملاء المحتملين يرى القوائم؛ ومن لديهم الإعدادات يمكنهم تغييرها دائمًا.",
 }

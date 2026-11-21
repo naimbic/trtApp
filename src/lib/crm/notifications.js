@@ -95,12 +95,15 @@ export async function notificationFeed({ days } = {}) {
         const mine = await prisma.crmTaskAssigned.findMany({ where: { staffId }, select: { taskId: true, createdAt: true } })
         const ids = mine.map((m) => m.taskId)
         if (ids.length) {
-            const tasks = await prisma.crmTask.findMany({ where: { id: { in: ids }, status: { not: 5 } }, select: { id: true, name: true, dueDate: true } })
+            const tasks = await prisma.crmTask.findMany({ where: { id: { in: ids }, status: { not: 5 } }, select: { id: true, name: true, dueDate: true, reminder: true, remindAt: true } })
             const when = Object.fromEntries(mine.map((m) => [m.taskId, m.createdAt]))
             for (const t of tasks) {
                 if (when[t.id] >= since(7)) add('task', 'A task was assigned to you', t.name, when[t.id], `/crm/tasks-board?task=${t.id}`, 'blue')
                 if (t.dueDate && new Date(t.dueDate) < today) add('task', 'Task overdue', t.name, lateSince(t.dueDate), `/crm/tasks-board?task=${t.id}`, 'red')
                 else if (started && t.dueDate && new Date(t.dueDate) <= new Date(+today + DAY)) add('task', 'Task due today', t.name, dayStart, `/crm/tasks-board?task=${t.id}`, 'red')
+                // the reminder set on the task (an exact date and hour, or some time before the due date)
+                const remindAt = t.remindAt ? +new Date(t.remindAt) : t.reminder == null || !t.dueDate ? null : +new Date(t.dueDate) - t.reminder * 60000
+                if (remindAt !== null && +now >= remindAt && remindAt >= +since(14)) add('reminder', 'Reminder: task', t.name, new Date(remindAt), `/crm/tasks-board?task=${t.id}`, 'amber')
             }
         }
     }

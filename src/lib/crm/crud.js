@@ -305,11 +305,19 @@ async function onlyOne(resource, row) {
     if (k && row[k] === true) await delegate(resource).updateMany({ where: { id: { not: row.id } }, data: { [k]: false } })
 }
 
+/** The right to change a list: its own permission, or (writeAlso) the wider one that always covered it, like Settings for the lead statuses. */
+async function requireWrite(resource, cap) {
+    try { return await requirePermission(resource.writeFeature || resource.feature, cap) } catch (e) {
+        if (e.status === 403 && resource.writeAlso) return requirePermission(resource.writeAlso, cap)
+        throw e
+    }
+}
+
 export async function createRecord(key, body) {
     const resource = resolveResource(key)
     if (resource.key === 'task-statuses') await (await import('@/lib/crm/taskStatuses')).ensureTaskStatuses()
     if (resource.readOnly) throw new PermissionError('Read only', 405)
-    const session = await requirePermission(resource.writeFeature || resource.feature, 'create')
+    const session = await requireWrite(resource, 'create')
     rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const data = buildData(resource, body)
@@ -329,7 +337,7 @@ export async function createRecord(key, body) {
 export async function updateRecord(key, id, body) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
-    const session = await requirePermission(resource.writeFeature || resource.feature, 'edit')
+    const session = await requireWrite(resource, 'edit')
     rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const current = await getRecord(key, id) // enforces view_own scope
@@ -345,7 +353,7 @@ export async function updateRecord(key, id, body) {
 export async function deleteRecord(key, id) {
     const resource = resolveResource(key)
     if (resource.readOnly) throw new PermissionError('Read only', 405)
-    const session = await requirePermission(resource.writeFeature || resource.feature, 'delete')
+    const session = await requireWrite(resource, 'delete')
     rateLimit(`write:${session.user.id}`, 300, 60000) // 300 changes a minute is far above any person
     taskWriteGuard(resource, session)
     const row = await getRecord(key, id)

@@ -6298,4 +6298,6 @@ export default {
     "Read the email": "メールを読む",
     "No email sent yet": "送信済みメールなし",
     "{n} sent": "{n} 件送信",
+    "Reminder: task": "リマインダー：タスク",
+    "The lists of lead statuses (the columns of the lead board) and lead sources, in Settings > Lists > Leads. Create = add a status or a source; Edit = rename, recolour, reorder and choose the default one; Delete = remove one nobody uses. Everybody who sees leads sees the lists; people with Settings can always change them.": "リードのステータス（リードボードの列）とソースのリスト（設定 > リスト > リード）。作成 = ステータスやソースを追加、編集 = 名前・色・順序の変更と既定の選択、削除 = 使われていないものを削除。リードを見られる人は全員リストを見られます。設定の権限がある人はいつでも変更できます。",
 }

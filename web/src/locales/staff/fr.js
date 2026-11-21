@@ -6298,4 +6298,6 @@ export default {
     "Read the email": "Lire l'e-mail",
     "No email sent yet": "Aucun e-mail envoyé",
     "{n} sent": "{n} envoyé(s)",
+    "Reminder: task": "Rappel : tâche",
+    "The lists of lead statuses (the columns of the lead board) and lead sources, in Settings > Lists > Leads. Create = add a status or a source; Edit = rename, recolour, reorder and choose the default one; Delete = remove one nobody uses. Everybody who sees leads sees the lists; people with Settings can always change them.": "Les listes des statuts de prospects (les colonnes du tableau des prospects) et des sources, dans Paramètres > Listes > Prospects. Créer = ajouter un statut ou une source ; Modifier = renommer, changer la couleur, réordonner et choisir celui par défaut ; Supprimer = retirer un élément que personne n'utilise. Tous ceux qui voient les prospects voient les listes ; les personnes ayant Paramètres peuvent toujours les modifier.",
 }

@@ -118,7 +118,7 @@ function card(t, people, rels, extra = {}) {
     const rel = t.relType && t.relId ? rels[`${t.relType}:${t.relId}`] : null
     return {
         id: t.id, name: t.name, status: t.status, statusLabel: STATUS[t.status] || '', priority: t.priority, priorityLabel: PRIORITY[t.priority] || '',
-        startDate: t.startDate, dueDate: t.dueDate, hours: t.hours ?? null, dateFinished: t.dateFinished, relType: t.relType, relId: t.relId, parentId: t.parentId || null,
+        startDate: t.startDate, dueDate: t.dueDate, hours: t.hours ?? null, reminder: t.reminder ?? null, remindAt: t.remindAt || null, dateFinished: t.dateFinished, relType: t.relType, relId: t.relId, parentId: t.parentId || null,
         rel: rel ? { type: t.relType, ...rel } : t.relType ? { type: t.relType, label: t.relType } : null,
         assignees: (t.assignees || []).map((x) => people[x.staffId]).filter(Boolean),
         checklistDone: (t.checklistItems || []).filter((c) => c.finished).length, checklistTotal: (t.checklistItems || []).length,
@@ -288,6 +288,16 @@ export async function saveTask(body, id) {
         isPublic: !!body.isPublic, billable: body.billable === undefined && S ? S.on('task_biillable_checked_on_creation') : !!body.billable, visibleToClient: !!body.visibleToClient, hourlyRate: Number(body.hourlyRate) || 0,
         recurring: !!body.recurring, recurringType: body.recurring ? body.recurringType || 'month' : null, repeatEvery: body.recurring ? Math.max(parseInt(body.repeatEvery, 10) || 1, 1) : 0, totalCycles: body.recurring ? Math.max(parseInt(body.totalCycles, 10) || 0, 0) : 0,
     }
+    // the reminder of the task (the same choices as a checklist step): only touched when it is sent
+    if (body.reminder !== undefined) data.reminder = body.reminder === null || body.reminder === '' ? null : [0, 60, 1440, 2880].includes(+body.reminder) ? +body.reminder : null
+    if (body.remindAt !== undefined) {
+        const when = body.remindAt ? new Date(body.remindAt) : null
+        if (when && Number.isNaN(+when)) throw fail('Choose a valid date and time for the reminder')
+        data.remindAt = when
+        if (when && body.reminder === undefined) data.reminder = null
+    }
+    if (data.reminder != null && body.remindAt === undefined) data.remindAt = null // a ready-made choice replaces the exact one
+    if (data.reminder != null && !data.dueDate) data.reminder = null // "before the due date" needs a due date
     // a subtask: its parent must exist and cannot be the task itself or one of its own subtasks
     if (body.parentId !== undefined) {
         const pid = oid(body.parentId)

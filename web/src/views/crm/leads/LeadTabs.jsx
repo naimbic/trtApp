@@ -73,7 +73,7 @@ const LeadTaskList = ({ leadId, staff, onChanged, locked = false }) => {
         try { setList((await api(`/api/crm/work/tasks?${qs({ relType: 'lead', relId: leadId, done: '1' })}`)).list || []) } catch (e) { notify('danger', e.message); setList([]) }
     }, [leadId])
     useEffect(() => { load() }, [load])
-    const items = useMemo(() => (list || []).map((t) => ({ id: t.id, description: t.name, finished: t.status === 5, dueDate: t.dueDate, hours: t.hours, assignedIds: (t.assignees || []).map((x) => x.id), canFinish: t.canFinish, stats: { steps: [t.checklistDone || 0, t.checklistTotal || 0], subtasks: t.subtasks, comments: t.comments || 0, files: t.files || 0 } })), [list])
+    const items = useMemo(() => (list || []).map((t) => ({ id: t.id, description: t.name, finished: t.status === 5, dueDate: t.dueDate, hours: t.hours, reminder: t.reminder ?? null, remindAt: t.remindAt || null, assignedIds: (t.assignees || []).map((x) => x.id), canFinish: t.canFinish, stats: { steps: [t.checklistDone || 0, t.checklistTotal || 0], subtasks: t.subtasks, comments: t.comments || 0, files: t.files || 0 } })), [list])
     useEffect(() => { live.current = Object.fromEntries(items.map((i) => [i.id, i.assignedIds])) }, [items])
     const changed = async () => { await load(); onChanged?.() }
     // read the task, change one thing, save it back (the same way the board menu does)
@@ -96,6 +96,8 @@ const LeadTaskList = ({ leadId, staff, onChanged, locked = false }) => {
                 if (op.description !== undefined) change.name = op.description
                 if (op.hours !== undefined) change.hours = op.hours
                 if (op.dueDate !== undefined) change.dueDate = op.dueDate ? dayjs(op.dueDate).format('YYYY-MM-DD') : null
+                if (op.reminder !== undefined) { change.reminder = op.reminder; if (op.reminder !== null && op.remindAt === undefined) change.remindAt = null } // a ready-made choice replaces the exact date
+                if (op.remindAt !== undefined) { change.remindAt = op.remindAt; if (op.remindAt && op.reminder === undefined) change.reminder = null }
                 if (op.assignedIds) { live.current[op.itemId] = op.assignedIds; change.assigneeIds = op.assignedIds }
                 if (op.toggleAssignee) { const cur = live.current[op.itemId] || []; const next = cur.includes(op.toggleAssignee) ? cur.filter((x) => x !== op.toggleAssignee) : [...cur, op.toggleAssignee]; live.current[op.itemId] = next; change.assigneeIds = next }
                 await patch(op.itemId, change)
@@ -106,7 +108,7 @@ const LeadTaskList = ({ leadId, staff, onChanged, locked = false }) => {
     return (
         <div className="space-y-3">
             {list === null ? <p className="text-sm text-gray-500">{tr("Loading…")}</p> : (
-                <ChecklistPanel title={tr("Tasks")} items={items} staff={staff} canEdit={!locked && can('tasks', 'edit') && can('tasks', 'create')} canDelete={!locked && can('tasks', 'delete')} reminders={false}
+                <ChecklistPanel title={tr("Tasks")} items={items} staff={staff} canEdit={!locked && can('tasks', 'edit') && can('tasks', 'create')} canDelete={!locked && can('tasks', 'delete')}
                     placeholder={tr("Add a task for this lead (@ to mention, # for a tag)")} empty={tr("No tasks for this lead yet.")} act={act} onOpen={(i) => setPopup({ open: true, id: i.id, k: popup.k + 1 })} />
             )}
             {!locked && can('tasks', 'create') && <Button size="sm" icon={<TbPlus />} onClick={() => setPopup({ open: true, id: null, k: popup.k + 1 })}>{tr("New task with all its details")}</Button>}

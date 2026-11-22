@@ -1,9 +1,12 @@
+import { needSession } from '@/lib/needSession'
 import { NextResponse } from 'next/server'
 
 const BASE_PATH =
     'https://storage.googleapis.com/www.themenate.net/markdown/ecme-next'
 
 export async function GET(request) {
+    const denied = await needSession()
+    if (denied) return denied
     const mdPath = request.nextUrl.searchParams.get('mdPath')
     const mdName = request.nextUrl.searchParams.get('mdName')
     const mdPrefixPath = request.nextUrl.searchParams.get('mdPrefixPath')

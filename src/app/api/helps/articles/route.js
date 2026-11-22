@@ -1,8 +1,11 @@
+import { needSession } from '@/lib/needSession'
 import { NextResponse } from 'next/server'
 import { articleListData, articleList } from '@/mock/data/helpCenterData'
 import wildCardSearch from '@/utils/wildCardSearch'
 
 export async function GET(request) {
+    const denied = await needSession()
+    if (denied) return denied
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('query')
     const topic = searchParams.get('topic')
@@ -28,6 +31,8 @@ export async function GET(request) {
 }
 
 export async function DELETE(request) {
+    const denied = await needSession()
+    if (denied) return denied
     const { articleIds } = await request.json()
 
     const data = articleList.getList()

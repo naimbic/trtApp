@@ -2,6 +2,20 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.265.0',
+        date: '2026-11-22',
+        title: 'Security review: closed gaps and updated packages',
+        items: [
+            'A page of another website can no longer make a signed-in person\'s browser change something in the CRM: every change asked from a foreign website is refused and written in the server log.',
+            'Someone who is not signed in can send at most 60 changes per minute from one address (sign-in tries, public forms, comments on shared documents). The sites, the API keys and WhatsApp keep their own limits.',
+            'The old addresses left from the first version of the app (old customers, invoices, products, statistics, demo pages) now check the session a second time, inside each address, and the full list of redirects needs a signed-in person.',
+            'The old upload address refuses pages and scripts (HTML, SVG, PHP…) and only accepts a plain folder name.',
+            'The temporary sign-in diagnostic address is removed.',
+            'Web server: hidden files (.env, .git…) are never served, the pages cannot be framed or re-based by another site, and the "HTTPS only" rule now covers subdomains.',
+            'Packages with known security problems were updated (the image library and about 30 others), and two unused packages were removed.',
+        ],
+    },
+    {
         version: '0.264.0',
         date: '2026-11-21',
         title: 'Leads: a WhatsApp tab to read and answer',

@@ -7,6 +7,8 @@ import {
 } from '@/configs/routes.config'
 import { REDIRECT_URL_KEY } from '@/constants/app.constant'
 import appConfig from '@/configs/app.config'
+import { rateLimit, clientIp } from '@/lib/rateLimit'
+import { crossSiteWrite, countsAsAnonymousWrite } from '@/lib/requestShield'
 
 const { auth } = NextAuth(authConfig)
 
@@ -17,9 +19,42 @@ const DEMO_API = /^\/api\/(ai|customers|invoices|products|projects|pricing|redir
 
 const apiAuthPrefix = `${appConfig.apiPrefix}/auth`
 
+// The request shield: two protections that do not depend on each address remembering them.
+const OWN_ORIGINS = [process.env.AUTH_URL, process.env.NEXTAUTH_URL, process.env.APP_URL, 'https://trtmaroc.com'].filter(Boolean)
+const ANON_WRITES_PER_MINUTE = 60
+const refuse = (status, error, extra) => Response.json({ error }, { status, headers: { 'Cache-Control': 'no-store', ...extra } })
+
+function shield(req) {
+    const path = req.nextUrl.pathname
+    if (!path.startsWith(appConfig.apiPrefix)) return null
+    const h = req.headers
+    const method = req.method
+    const hasKey = !!(h.get('authorization') || h.get('x-api-key') || h.get('x-trt-key'))
+    const ip = clientIp(req)
+    // a page of another website may not make a signed-in person's browser change things here
+    if (crossSiteWrite({ method, path, origin: h.get('origin'), host: h.get('x-forwarded-host') || h.get('host'), allowed: OWN_ORIGINS, hasKey })) {
+        console.warn(`[security] cross-site ${method} ${path} refused, from ${h.get('origin')} (${ip})`)
+        return refuse(403, 'This request came from another website and was refused')
+    }
+    // someone who is not signed in cannot flood the server with changes
+    const signedIn = !!req.auth || /trtportal=/.test(h.get('cookie') || '')
+    if (countsAsAnonymousWrite({ method, path, signedIn })) {
+        try {
+            rateLimit(`anon:${ip}`, ANON_WRITES_PER_MINUTE, 60000)
+        } catch (e) {
+            console.warn(`[security] too many requests without a session: ${method} ${path} (${ip})`)
+            return refuse(429, e.message, { 'Retry-After': String(e.retryAfter || 60) })
+        }
+    }
+    return null
+}
+
 export default auth((req) => {
     const { nextUrl } = req
     const isSignedIn = !!req.auth
+
+    const blocked = shield(req)
+    if (blocked) return blocked
 
     const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix)
     const isApiRoute = nextUrl.pathname.startsWith(appConfig.apiPrefix)

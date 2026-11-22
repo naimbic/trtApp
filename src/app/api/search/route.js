@@ -1,8 +1,11 @@
+import { needSession } from '@/lib/needSession'
 import { NextResponse } from 'next/server'
 import { searchQueryPoolData } from '@/mock/data/commonData'
 import wildCardSearch from '@/utils/wildCardSearch'
 
 export async function GET(request) {
+    const denied = await needSession()
+    if (denied) return denied
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('query')
 

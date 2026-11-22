@@ -1,7 +1,10 @@
+import { needSession } from '@/lib/needSession'
 import { NextResponse } from 'next/server'
 import { projectListData, projectDetailsData } from '@/mock/data/projectsData'
 
 export async function GET(_, { params }) {
+    const denied = await needSession()
+    if (denied) return denied
     const id = (await params).id
 
     try {

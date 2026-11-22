@@ -1,9 +1,12 @@
+import { needSession } from '@/lib/needSession'
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { createNotification } from '@/lib/notify'
 
 export async function GET(request, { params }) {
+    const denied = await needSession()
+    if (denied) return denied
     try {
         const { id } = await params
         const invoice = await prisma.invoice.findUnique({

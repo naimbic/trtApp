@@ -17,6 +17,8 @@ export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url)
         const activeOnly = searchParams.get('active')
+        // the sites read their active redirects without a session; the full list (hits, switched-off ones) is for signed-in people
+        if (activeOnly !== 'true' && !(await auth())?.user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401, headers })
 
         const where = activeOnly === 'true' ? { active: true } : {}
 

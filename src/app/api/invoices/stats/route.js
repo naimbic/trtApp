@@ -1,3 +1,4 @@
+import { needSession } from '@/lib/needSession'
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
@@ -117,6 +118,8 @@ function calcChange(current, previous) {
 }
 
 export async function GET(request) {
+    const denied = await needSession()
+    if (denied) return denied
     try {
         const period = request.nextUrl.searchParams.get('period') || ''
         const dateStart = getDateRange(period)

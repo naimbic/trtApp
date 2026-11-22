@@ -1,9 +1,12 @@
+import { needSession } from '@/lib/needSession'
 import { NextResponse } from 'next/server'
 import uniqueId from 'lodash/uniqueId'
 import dayjs from 'dayjs'
 import sleep from '@/utils/sleep'
 
 export async function POST(req) {
+    const denied = await needSession()
+    if (denied) return denied
     const { prompt } = await req.json()
 
     const userPrompt = prompt.toLocaleLowerCase()

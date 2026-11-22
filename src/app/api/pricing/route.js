@@ -1,3 +1,4 @@
+import { needSession } from '@/lib/needSession'
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
@@ -53,6 +54,8 @@ const DEFAULT_PLANS = [
 ]
 
 export async function GET() {
+    const denied = await needSession()
+    if (denied) return denied
     try {
         let plans = await prisma.pricingPlan.findMany({
             orderBy: { order: 'asc' },

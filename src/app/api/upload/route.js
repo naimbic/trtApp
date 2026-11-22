@@ -16,7 +16,10 @@ const BLOCKED_EXTENSIONS = new Set([
     'psc2', 'reg', 'inf', 'lnk', 'sct', 'shb', 'shs', 'cpl', 'hta',
     'dll', 'sys', 'drv', 'ocx', 'cgi', 'bin', 'app', 'action',
     'command', 'workflow', 'sh', 'bash', 'csh', 'ksh', 'out', 'run',
+    // pages and scripts a browser would run when the file is opened from the storage address
+    'html', 'htm', 'xhtml', 'shtml', 'svg', 'svgz', 'xml', 'xsl', 'mjs', 'php', 'phtml', 'jsp', 'asp', 'aspx', 'py', 'pl', 'rb', 'jar', 'apk', 'dmg', 'swf',
 ])
+const RISKY_TYPES = /html|svg|xml|javascript|ecmascript|x-sh|x-php/i
 
 // Resize limits per folder
 const SIZE_PRESETS = {
@@ -47,7 +50,7 @@ export async function POST(request) {
 
         const formData = await request.formData()
         const file = formData.get('file')
-        const folder = formData.get('folder') || 'uploads'
+        const folder = String(formData.get('folder') || 'uploads').replace(/[^a-z0-9_-]/gi, '').slice(0, 40) || 'uploads' // one plain folder name, never a path
         const quality = parseInt(formData.get('quality') || '80', 10)
         const saveToDb = formData.get('saveToDb') === 'true'
         const parentFolder = formData.get('parentFolder') || null
@@ -62,7 +65,7 @@ export async function POST(request) {
 
         // Block dangerous file types
         const fileExt = file.name.split('.').pop()?.toLowerCase() || ''
-        if (BLOCKED_EXTENSIONS.has(fileExt)) {
+        if (typeof file === 'string' || BLOCKED_EXTENSIONS.has(fileExt) || !/^[a-z0-9]{1,8}$/.test(fileExt) || RISKY_TYPES.test(file.type || '')) {
             return NextResponse.json({ error: 'File type not allowed' }, { status: 400 })
         }
 

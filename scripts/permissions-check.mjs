@@ -601,6 +601,9 @@ try {
         // the routine
         const prevSettings = await prisma.crmOption.findUnique({ where: { name: 'grow_settings' } })
         check('routine settings can be changed with Edit (and an unknown language is refused)', (await e('PUT', '/api/crm/grow/routine', { ai: false, lang: 'fr' })).status === 200 && (await e('PUT', '/api/crm/grow/routine', { lang: 'xx' })).status === 400)
+        // what the routine already wrote before this run is put aside, or it would find nothing new to write
+        const heldIdeas = await prisma.crmGrowIdea.findMany({ where: { source: 'rule', createdAt: { lt: t0 }, fingerprint: { startsWith: 'rule:' } }, select: { id: true, fingerprint: true } })
+        for (const h of heldIdeas) await prisma.crmGrowIdea.update({ where: { id: h.id }, data: { fingerprint: `held:${h.fingerprint}` } })
         const r1 = await e('POST', '/api/crm/grow/routine', { period: 'monthly' })
         check('running the monthly routine writes the standing advice (in French as chosen) from the rules', r1.status === 200 && r1.body?.created >= 3, `${r1.status} ${JSON.stringify(r1.body).slice(0, 160)}`)
         const monthly = await prisma.crmGrowIdea.findMany({ where: { source: 'rule', createdAt: { gte: t0 } } })
@@ -619,6 +622,7 @@ try {
         const rt = await v('GET', '/api/crm/grow/routine')
         check('the routine page data gives the settings, the last runs and whether the AI is available', rt.status === 200 && rt.body?.settings?.lang === 'fr' && rt.body?.settings?.ai === false && 'stamps' in rt.body)
         await prisma.crmGrowIdea.deleteMany({ where: { createdAt: { gte: t0 } } })
+        for (const h of heldIdeas) await prisma.crmGrowIdea.update({ where: { id: h.id }, data: { fingerprint: h.fingerprint } }).catch(() => {})
         await prisma.crmNotification.deleteMany({ where: { additionalData: { in: ['grow-ideas', 'grow-assigned', 'grow-task'] }, createdAt: { gte: t0 } } })
         if (prevSettings) await prisma.crmOption.update({ where: { name: 'grow_settings' }, data: { value: prevSettings.value } }); else await prisma.crmOption.deleteMany({ where: { name: 'grow_settings' } })
         await prisma.crmOption.deleteMany({ where: { name: { in: ['grow_last_daily', 'grow_last_weekly', 'grow_last_monthly'] } } })
@@ -1567,6 +1571,8 @@ try {
         check('Requests (client area): the contact signs in and sees the requests shown to it', pw.status === 200 && lg.status === 200 && ((await P('GET', '/requests')).body?.list || []).some((r) => r.id === RID))
         const hid = await A('POST', '/api/crm/client-requests', { clientId: X, title: 'zz request hidden', visible: false })
         check('Requests (client area): a team-only request is not shown, nor reachable', !((await P('GET', '/requests')).body?.list || []).some((r) => r.id === hid.body?.request?.id) && (await P('GET', `/requests/${hid.body?.request?.id}`)).status === 404)
+        // a request written by the client is told to the people in charge of that client: put one there for the check
+        const inCharge = await prisma.crmCustomerAdmin.create({ data: { clientId: X, staffId: rA.staffId, dateAssigned: new Date() } }); made.extraRows.unshift(['crmCustomerAdmin', inCharge.id])
         const sent = await P('POST', '/requests', { title: 'zz request from client', type: 'integration', body: '<p>Please add <b>our</b> tracking</p>', url: 'https://kafaratplus.example/page', priority: 4 })
         const CID = sent.body?.request?.id
         check('Requests (client area): the client sends a request, the team is told', sent.status === 201 && sent.body.request.mine === true && !!(await prisma.crmNotification.findFirst({ where: { additionalData: 'client-request', description: { contains: 'zz request from client' } } })))
@@ -1754,6 +1760,8 @@ try {
         await prisma[model].delete({ where: { id } }).catch(() => {})
     }
     await prisma.crmActivityLog.deleteMany({ where: { staffId: { in: made.staff }, description: { contains: 'login as' } } }).catch(() => {})
+    // Grow ideas put aside by the routine check get their mark back even when the run stopped half-way
+    for (const h of await prisma.crmGrowIdea.findMany({ where: { fingerprint: { startsWith: 'held:rule:' } }, select: { id: true, fingerprint: true } }).catch(() => [])) await prisma.crmGrowIdea.update({ where: { id: h.id }, data: { fingerprint: h.fingerprint.slice(5) } }).catch(() => {})
     await prisma.crmStaffPermission.deleteMany({ where: { staffId: { in: made.staff } } }).catch(() => {})
     await prisma.crmStaff.deleteMany({ where: { id: { in: made.staff } } }).catch(() => {})
     await prisma.user.deleteMany({ where: { id: { in: made.users } } }).catch(() => {})

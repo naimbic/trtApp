@@ -2,6 +2,14 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.266.1',
+        date: '2026-11-22',
+        title: 'Client requests: administrators are told when nobody is in charge of the client',
+        items: [
+            'When a client sends or answers a request and no team member is in charge of that client (and nobody is assigned to the request), the administrators now get the notification. Before, nobody was told.',
+        ],
+    },
+    {
         version: '0.266.0',
         date: '2026-11-22',
         title: 'Security log page, script rules for the browser, and the last package warnings fixed',

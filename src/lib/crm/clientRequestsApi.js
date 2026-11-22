@@ -82,10 +82,12 @@ function clean(b, existing = null) {
     return out
 }
 
-/** Who in the team hears about it: the people of the request and the administrators of the client. */
+/** Who in the team hears about it: the people of the request and the people in charge of the client. When that is nobody, the administrators, so a client's request is never left unseen. */
 export async function teamOf(req, clientId) {
     const admins = await prisma.crmCustomerAdmin.findMany({ where: { clientId }, select: { staffId: true } })
-    return [...new Set([...(req.assigneeIds || []), ...(req.source === 'staff' && req.createdById ? [req.createdById] : []), ...admins.map((a) => a.staffId)].filter(Boolean))]
+    const people = [...new Set([...(req.assigneeIds || []), ...(req.source === 'staff' && req.createdById ? [req.createdById] : []), ...admins.map((a) => a.staffId)].filter(Boolean))]
+    if (people.length) return people
+    return (await prisma.crmStaff.findMany({ where: { admin: true, active: true }, select: { id: true } })).map((s) => s.id)
 }
 export async function tellTeam(req, clientId, text, byName) {
     const link = `/crm/clients/${clientId}?tab=requests&request=${req.id}`

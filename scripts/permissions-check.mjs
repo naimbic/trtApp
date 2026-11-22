@@ -1571,10 +1571,14 @@ try {
         check('Requests (client area): the contact signs in and sees the requests shown to it', pw.status === 200 && lg.status === 200 && ((await P('GET', '/requests')).body?.list || []).some((r) => r.id === RID))
         const hid = await A('POST', '/api/crm/client-requests', { clientId: X, title: 'zz request hidden', visible: false })
         check('Requests (client area): a team-only request is not shown, nor reachable', !((await P('GET', '/requests')).body?.list || []).some((r) => r.id === hid.body?.request?.id) && (await P('GET', `/requests/${hid.body?.request?.id}`)).status === 404)
-        // a request written by the client is told to the people in charge of that client: put one there for the check
-        const inCharge = await prisma.crmCustomerAdmin.create({ data: { clientId: X, staffId: rA.staffId, dateAssigned: new Date() } }); made.extraRows.unshift(['crmCustomerAdmin', inCharge.id])
+        // nobody is in charge of this client for the check: the administrators are told instead
+        const heldAdmins = await prisma.crmCustomerAdmin.findMany({ where: { clientId: X } })
+        await prisma.crmCustomerAdmin.deleteMany({ where: { clientId: X } })
         const sent = await P('POST', '/requests', { title: 'zz request from client', type: 'integration', body: '<p>Please add <b>our</b> tracking</p>', url: 'https://kafaratplus.example/page', priority: 4 })
         const CID = sent.body?.request?.id
+        const adminStaff = (await prisma.crmStaff.findFirst({ where: { email: { startsWith: 'permcheck.req-admin.' } }, orderBy: { id: 'desc' }, select: { id: true } }))?.id
+        check('Requests (client area): with nobody in charge of the client, the administrators are told', !!adminStaff && !!(await prisma.crmNotification.findFirst({ where: { toUserId: adminStaff, additionalData: 'client-request', description: { contains: 'zz request from client' } } })))
+        for (const h of heldAdmins) await prisma.crmCustomerAdmin.create({ data: { clientId: h.clientId, staffId: h.staffId, dateAssigned: h.dateAssigned } }).catch(() => {})
         check('Requests (client area): the client sends a request, the team is told', sent.status === 201 && sent.body.request.mine === true && !!(await prisma.crmNotification.findFirst({ where: { additionalData: 'client-request', description: { contains: 'zz request from client' } } })))
         check('Requests (client area): the team sees it as coming from the client', ((await A('GET', `/api/crm/client-requests?clientId=${X}`)).body?.list || []).some((r) => r.id === CID && r.source === 'client' && r.status === 'new'))
         const cm = await P('POST', `/requests/${CID}`, { action: 'comment', body: '<p>Any news?</p>' })

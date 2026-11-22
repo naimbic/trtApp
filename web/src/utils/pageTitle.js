@@ -8,7 +8,7 @@ const STATIC = {
     'account/profile': 'My profile', 'account/security': 'Security',
     'crm/settings': 'Settings', 'crm/company': 'Company', 'crm/staff': 'Team', 'crm/roles': 'Roles & permissions', 'crm/chat': 'Chat',
     'crm/tasks-board': 'Tasks board', 'crm/my-tasks': 'My tasks', 'crm/team-tasks': 'Team tasks', 'crm/scrum-board': 'Scrum board', 'crm/tasks': 'Tasks',
-    'crm/all-activity': 'Activity log', 'crm/activity': 'Activity log', 'crm/leave-requests': 'Leave requests', 'crm/days-off': 'Days off', 'crm/work-hours': 'Work hours',
+    'crm/all-activity': 'Activity log', 'crm/security-log': 'Security log', 'crm/activity': 'Activity log', 'crm/leave-requests': 'Leave requests', 'crm/days-off': 'Days off', 'crm/work-hours': 'Work hours',
     'crm/knowledge-base': 'Help center', 'crm/scheduled-messages': 'Scheduled messages', 'crm/time-report': 'Time report', 'crm/timeline': 'Timeline',
     'crm/lead-email-integration': 'Lead emails', 'crm/file-manager': 'Files', 'crm/my-growth': 'My growth', 'crm/grow': 'Grow', 'crm/ai': 'AI',
     'crm/api': 'Sign-in & API', 'crm/status': 'Statuses', 'crm/statuses': 'Statuses', 'crm/projects': 'Projects', 'crm/customers-setting': 'Customers setting',

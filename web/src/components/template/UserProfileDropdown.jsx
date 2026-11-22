@@ -7,7 +7,7 @@ import { Link } from 'react-router'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import PhoneApp from '@/components/crm/PhoneApp'
-import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiRocketLaunchDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone, PiDeviceMobileDuotone, PiAlarmDuotone, PiCalendarBlankDuotone, PiClockCountdownDuotone, PiBellDuotone, PiFolderOpenDuotone, PiKeyDuotone, PiCaretRightBold, PiXBold } from 'react-icons/pi'
+import { PiUserDuotone, PiSignOutDuotone, PiShieldCheckDuotone, PiUsersThreeDuotone, PiEnvelopeSimpleDuotone, PiRocketLaunchDuotone, PiMoonDuotone, PiSunDuotone, PiPulseDuotone, PiShieldWarningDuotone, PiDeviceMobileDuotone, PiAlarmDuotone, PiCalendarBlankDuotone, PiClockCountdownDuotone, PiBellDuotone, PiFolderOpenDuotone, PiKeyDuotone, PiCaretRightBold, PiXBold } from 'react-icons/pi'
 import { useThemeStore } from '@/store/themeStore'
 import useMe from '@/utils/hooks/useMe'
 import { useAuth } from '@/auth'
@@ -30,6 +30,7 @@ const ACCOUNT = [
     { label: 'My growth', desc: 'Your goals, primes and trophies', path: '/crm/my-growth', icon: <PiRocketLaunchDuotone />, need: 'growth' },
     { label: 'Team & roles', desc: 'Accounts and what each role can do', path: '/team', icon: <PiUsersThreeDuotone />, any: ['staff', 'roles'] },
     { label: 'Mail settings', desc: 'Mail server and templates', path: '/crm/mails?tab=settings', icon: <PiEnvelopeSimpleDuotone />, adminOnly: true },
+    { label: 'Security log', desc: 'Refused requests and wrong passwords', path: '/crm/security-log', icon: <PiShieldWarningDuotone />, adminOnly: true },
 ]
 
 const _UserDropdown = ({ className }) => {

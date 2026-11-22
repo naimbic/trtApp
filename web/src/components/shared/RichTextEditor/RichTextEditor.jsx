@@ -30,6 +30,7 @@ const RichTextEditor = (props) => {
     const editor = customEditor
         ? customEditor
         : useEditor({
+              shouldRerenderOnTransaction: true,
               extensions: [
                   StarterKit.configure({
                       bulletList: {

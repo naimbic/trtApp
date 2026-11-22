@@ -24,7 +24,22 @@ const OWN_ORIGINS = [process.env.AUTH_URL, process.env.NEXTAUTH_URL, process.env
 const ANON_WRITES_PER_MINUTE = 60
 const refuse = (status, error, extra) => Response.json({ error }, { status, headers: { 'Cache-Control': 'no-store', ...extra } })
 
-function shield(req) {
+// What the shield refuses is kept for the Security log page. This code cannot reach the database itself, so it tells
+// the server's own address, signed with a key only the server knows; one note a minute for each kind and visitor.
+const noted = new Map()
+let shieldKey = null
+const keyOfShield = () => (shieldKey ||= crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || ''}:shield`)).then((b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('')))
+function note(ev, event) {
+    const k = `${event.kind}:${event.ip}`
+    const now = Date.now()
+    if (now - (noted.get(k) || 0) < 60000) return
+    if (noted.size > 5000) noted.clear()
+    noted.set(k, now)
+    const send = keyOfShield().then((key) => fetch(`http://127.0.0.1:${process.env.PORT || 3000}/api/crm/security/record`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-shield-key': key }, body: JSON.stringify(event) })).catch(() => {})
+    ev?.waitUntil?.(send)
+}
+
+function shield(req, ev) {
     const path = req.nextUrl.pathname
     if (!path.startsWith(appConfig.apiPrefix)) return null
     const h = req.headers
@@ -34,6 +49,7 @@ function shield(req) {
     // a page of another website may not make a signed-in person's browser change things here
     if (crossSiteWrite({ method, path, origin: h.get('origin'), host: h.get('x-forwarded-host') || h.get('host'), allowed: OWN_ORIGINS, hasKey })) {
         console.warn(`[security] cross-site ${method} ${path} refused, from ${h.get('origin')} (${ip})`)
+        note(ev, { kind: 'cross_site', ip, method, path, detail: h.get('origin') })
         return refuse(403, 'This request came from another website and was refused')
     }
     // someone who is not signed in cannot flood the server with changes
@@ -43,17 +59,18 @@ function shield(req) {
             rateLimit(`anon:${ip}`, ANON_WRITES_PER_MINUTE, 60000)
         } catch (e) {
             console.warn(`[security] too many requests without a session: ${method} ${path} (${ip})`)
+            note(ev, { kind: 'flood', ip, method, path })
             return refuse(429, e.message, { 'Retry-After': String(e.retryAfter || 60) })
         }
     }
     return null
 }
 
-export default auth((req) => {
+export default auth((req, ev) => {
     const { nextUrl } = req
     const isSignedIn = !!req.auth
 
-    const blocked = shield(req)
+    const blocked = shield(req, ev)
     if (blocked) return blocked
 
     const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix)

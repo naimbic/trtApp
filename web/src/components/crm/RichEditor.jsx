@@ -5,12 +5,12 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
-import Table from '@tiptap/extension-table'
+import { Table } from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableHeader from '@tiptap/extension-table-header'
 import TableCell from '@tiptap/extension-table-cell'
 import Placeholder from '@tiptap/extension-placeholder'
-import TextStyle from '@tiptap/extension-text-style'
+import { TextStyle } from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
 import TextAlign from '@tiptap/extension-text-align'
@@ -150,8 +150,9 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     }, [])
 
     const editor = useEditor({
+        shouldRerenderOnTransaction: true, // the toolbar shows what is active at the caret
         extensions: [
-            StarterKit.configure({ heading: { levels: [2, 3] } }),
+            StarterKit.configure({ heading: { levels: [2, 3] }, link: false, underline: false }), // link and underline are set up below with our own options
             Underline,
             TextStyle,
             Color,
@@ -216,7 +217,7 @@ const RichEditor = ({ value, onChange, placeholder, minHeight = 110, disabled = 
     // the parent changed the value (cleared after sending, or another record opened)
     useEffect(() => {
         if (!editor) return
-        if ((value ?? '') !== (last.current ?? '')) { editor.commands.setContent(cleanHtml(value), false); last.current = value ?? '' }
+        if ((value ?? '') !== (last.current ?? '')) { editor.commands.setContent(cleanHtml(value), { emitUpdate: false }); last.current = value ?? '' }
     }, [value, editor])
     useEffect(() => { editor?.setEditable(!disabled) }, [disabled, editor])
 

@@ -32,7 +32,8 @@ async function login(u) {
     const hdr = () => Object.entries(jar).map(([k, v]) => `${k}=${v}`).join('; ')
     let r = await fetch(`${BASE}/api/auth/csrf`); take(r)
     const { csrfToken } = await r.json()
-    r = await fetch(`${BASE}/api/auth/callback/credentials`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: hdr() }, body: new URLSearchParams({ csrfToken, email: u.email, password: u.password, redirect: 'false', json: 'true' }) })
+    // each test person signs in from an address of their own: the server allows 60 changes a minute to people who are not signed in yet
+    r = await fetch(`${BASE}/api/auth/callback/credentials`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: hdr(), 'x-forwarded-for': `198.51.100.${1 + Math.floor(Math.random() * 250)}` }, body: new URLSearchParams({ csrfToken, email: u.email, password: u.password, redirect: 'false', json: 'true' }) })
     take(r)
     const s = await (await fetch(`${BASE}/api/auth/session`, { headers: { cookie: hdr() } })).json()
     if (!s?.user) throw new Error(`sign-in failed for ${u.email}`)
@@ -1744,6 +1745,8 @@ try {
         check('Staff: Edit on staff still cannot hand out rights that the person does not have (no Roles edit)', (await U.staffEdit('PUT', `/api/crm/access/staff/${me.id}`, { permissions: { roles: ['view', 'create', 'edit', 'delete'] } })).status === 403)
         check('Staff: a member can never deactivate their own account', (await U.staffEdit('PATCH', `/api/crm/team/${(await prisma.crmStaff.findFirst({ where: { email: { contains: 'pv-staffedit' } } })).id}`, { active: false })).status === 400)
     }
+    check('non-admin: security log refused', (await plain('GET', '/api/crm/security/events')).status === 403)
+    check('nobody outside the server can write in the security log', (await plain('POST', '/api/crm/security/record', { kind: 'flood', ip: '1.2.3.4' })).status === 404)
     check('non-admin: cannot edit roles', (await plain('PUT', '/api/roles', { action: 'delete', roleId: 'x' })).status === 403)
 } catch (e) { console.log('ERROR', e.message) } finally {
     for (const [model, id] of [...made.rows, ...made.extraRows]) {

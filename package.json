@@ -36,9 +36,9 @@
     "@tanstack/match-sorter-utils": "^8.19.4",
     "@tanstack/react-table": "^8.20.5",
     "@tanstack/react-virtual": "^3.11.2",
-    "@tiptap/pm": "^2.10.4",
-    "@tiptap/react": "^2.10.4",
-    "@tiptap/starter-kit": "^2.10.4",
+    "@tiptap/pm": "^3.35.0",
+    "@tiptap/react": "^3.35.0",
+    "@tiptap/starter-kit": "^3.35.0",
     "@visx/pattern": "^3.13.0-alpha.0",
     "apexcharts": "^5.10.4",
     "axios": "^1.7.7",
@@ -61,7 +61,7 @@
     "next": "^16.2.1",
     "next-auth": "^5.0.0-beta.25",
     "next-intl": "^4.7.0",
-    "nodemailer": "^7.0.13",
+    "nodemailer": "^10.6.1",
     "prisma": "^6.9.0",
     "qrcode": "^1.5.4",
     "react": "19.2.3",
@@ -114,7 +114,16 @@
     },
     "react-syntax-highlighter": {
       "prismjs": "1.30.0"
-    }
+    },
+    "postcss-selector-parser": "^7.2.1",
+    "next-auth": {
+      "nodemailer": "$nodemailer"
+    },
+    "@auth/core": {
+      "nodemailer": "$nodemailer"
+    },
+    "deepmerge-ts": "^8.0.2",
+    "effect": "^3.22.5"
   },
   "prisma": {
     "schema": "prisma/schema"

@@ -10,6 +10,8 @@ const CustomConfig = () => {
     const [content, setcontent] = useState('Hello World')
 
     const editor = useEditor({
+        immediatelyRender: false, // rendered on the server first
+        shouldRerenderOnTransaction: true,
         extensions: [Paragraph, Text, Heading, Document],
         editorProps: {
             attributes: {

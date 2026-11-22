@@ -31,6 +31,8 @@ const RichTextEditor = (props) => {
         ? customEditor
         : // eslint-disable-next-line react-hooks/rules-of-hooks
           useEditor({
+              immediatelyRender: false, // rendered on the server first
+              shouldRerenderOnTransaction: true,
               extensions: [
                   StarterKit.configure({
                       bulletList: {

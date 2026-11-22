@@ -127,6 +127,8 @@ const IssueBody = () => {
     }
 
     const editor = useEditor({
+        immediatelyRender: false, // rendered on the server first
+        shouldRerenderOnTransaction: true,
         extensions: [
             StarterKit.configure({
                 bulletList: {

@@ -44,3 +44,17 @@ model CrmTwoFactor {
 
   @@map("auth_two_factor")
 }
+
+/// Something the server refused or found suspicious: a request from another website, a flood, a wrong password (kept 30 days).
+model CrmSecurityEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  kind      String
+  ip        String?
+  method    String?
+  path      String?
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("crm_security_events")
+}

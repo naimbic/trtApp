@@ -162,6 +162,6 @@ export const CommentThread = ({ comments = [], render, days = 5, step = 10 }) =>
 /** Puts "@Name " (with the space) in an empty writing box and leaves the cursor after it, so typing can start at once. */
 export const startReply = (editor, name) => {
     if (!editor || editor.isDestroyed) return
-    if (editor.isEmpty && name) editor.commands.setContent(`<p>@${String(name).replace(/[<>&]/g, '')}&nbsp;</p>`, true)
+    if (editor.isEmpty && name) editor.commands.setContent(`<p>@${String(name).replace(/[<>&]/g, '')}&nbsp;</p>`, { emitUpdate: true })
     editor.commands.focus('end')
 }

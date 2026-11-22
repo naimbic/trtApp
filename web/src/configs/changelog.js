@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.266.0',
+        date: '2026-11-22',
+        title: 'Security log page, script rules for the browser, and the last package warnings fixed',
+        items: [
+            'New page "Security log" (profile menu, administrators only): requests refused because they came from another website, floods from people who are not signed in, wrong passwords and locked accounts, by day, with the address they came from. Kept 30 days.',
+            'The app\'s pages now only run the app\'s own script files: a script written into a page or loaded from another website does not run.',
+            'The mail library, the text editor and the database tool\'s helpers were moved to their fixed versions, and the unused Firebase package was removed. The package check now reports no known security problem in the app or its server.',
+        ],
+    },
+    {
         version: '0.265.0',
         date: '2026-11-22',
         title: 'Security review: closed gaps and updated packages',

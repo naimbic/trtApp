@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { recordSecurity } from '@/lib/crm/securityLog'
 
 export const MAX_ATTEMPTS = 5
 export const WINDOW_MS = 15 * 60 * 1000
@@ -22,6 +23,7 @@ export async function recordFailure(email, ip) {
     const count = fresh ? 1 : row.count + 1
     const data = { count, firstAt: fresh ? now : row.firstAt, lastIp: ip || null, lockedUntil: count >= MAX_ATTEMPTS ? new Date(now.getTime() + LOCK_MS) : null }
     await prisma.loginAttempt.upsert({ where: { key }, create: { key, ...data }, update: data })
+    await recordSecurity({ kind: count >= MAX_ATTEMPTS ? 'login_locked' : 'login_failed', ip, detail: key })
 }
 
 export async function clearFailures(email) {

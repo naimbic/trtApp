@@ -19,13 +19,15 @@ import SavedViews from '@/components/crm/SavedViews'
 import BulkBar, { TickBox, runBulk, useSelection } from '@/components/crm/BulkBar'
 import { onCreate } from '@/utils/createIntent'
 import { tr, trn } from '@/utils/t'
+import { ENDS, useLeadEnds } from './ends'
 
 const { Tr, Th, Td, THead, TBody } = Table
-const SHOW = [['', tr("Active")], ['lost', tr("Lost")], ['junk', tr("Junk")], ['converted', tr("Converted")]]
 
 const LeadsBoard = () => {
     const nav = useNavigate()
     const { id: routeId } = useParams()
+    const ends = useLeadEnds()
+    const SHOW = [['', tr("Active")], ...ENDS.map((k) => [k, ends[k]]), ['converted', tr("Converted")]]
     const [data, setData] = useState({ statuses: [], can: {}, sources: [], totals: {} })
     const [list, setList] = useState({ list: [], total: 0 })
     const [staff, setStaff] = useState([])
@@ -157,7 +159,7 @@ const LeadsBoard = () => {
                         { label: tr("Source"), icon: <TbPlug />, sub: sourceOptions.map((m) => ({ label: m.label, color: m.color, checked: it.source === m.value, onClick: () => patch(it, { sourceId: m.value }, tr("Source changed")) })) },
                         { label: tr("Convert to client"), icon: <TbUserCheck />, onClick: () => setAsk(it) },
                         
-                        { label: tr("Mark lost"), icon: <TbBan />, after: true, danger: true, onClick: () => flag(it, 'lost', tr("Marked as lost")) },
+                        { label: tr("Close as"), icon: <TbBan />, after: true, danger: true, sub: ENDS.map((k) => ({ label: ends[k], onClick: () => flag(it, k, tr("Marked as {name}", { name: ends[k] })) })) },
                         { label: tr("Delete"), icon: <TbTrash />, after: true, danger: true, onClick: () => setDelAsk(it) },
                     ] : [])}
                     onMove={({ from, to, index, fromIndex }) => {
@@ -197,7 +199,7 @@ const LeadsBoard = () => {
                     { label: tr('Status'), icon: <TbListDetails />, options: data.statuses.filter((c) => c.id !== 'none').map((c) => ({ label: c.name, color: c.color, onClick: () => bulk('status', c.id) })) },
                     { label: tr('Source'), icon: <TbPlug />, options: sourceOptions.map((o) => ({ label: o.label, color: o.color, onClick: () => bulk('source', o.value) })) },
                     { label: tr('Add owner'), icon: <TbUserPlus />, options: staffOptions.map((o) => ({ label: o.label, onClick: () => bulk('assign', o.value) })) },
-                    { label: show === '' ? tr('Mark lost') : tr('Restore'), icon: <TbBan />, onClick: () => bulk(show === '' ? 'lost' : 'restore') },
+                    show === '' ? { label: tr('Close as'), icon: <TbBan />, options: ENDS.map((k) => ({ label: ends[k], onClick: () => bulk(k) })) } : { label: tr('Restore'), icon: <TbBan />, onClick: () => bulk('restore') },
                     { label: tr('Delete'), icon: <TbTrash />, danger: true, onClick: () => setBulkDel(true) },
                 ]}
             />

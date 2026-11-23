@@ -6330,4 +6330,11 @@ export default {
     "Too many wrong passwords: sign-in is locked for 15 minutes": "パスワードの間違いが多すぎます：サインインは15分間ロックされます",
     "Nothing suspicious in this period": "この期間に不審な動きはありません",
     "Refused requests and wrong passwords": "拒否されたリクエストと間違ったパスワード",
+    "Close as": "終了理由",
+    "Marked as {name}": "{name} に設定しました",
+    "Closed leads": "終了したリード",
+    "The three ways a lead ends without becoming a client. They stay above the board, next to Active; here you choose their names.": "リードが顧客にならずに終わる3つの形です。ボードの上、「アクティブ」の横に表示されます。ここで名前を決めます。",
+    "Name of Lost": "「失注」の名前",
+    "Name of Junk": "「不要」の名前",
+    "Name of Refused": "「辞退」の名前",
 }

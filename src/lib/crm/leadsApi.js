@@ -57,7 +57,7 @@ const card = (l, people, status, source) => ({
     id: l.id, name: l.name, company: l.company, email: l.email, phone: l.phoneNumber, title: l.title, doText: l.doText || '', notes: l._notes || 0,
     statusId: l.statusId, status: status?.name || null, statusColor: status?.color || null, sourceId: l.sourceId, source: source?.name || null, sourceColor: source?.color || null,
     value: l.value ?? null, probability: l.probability ?? null, winProb: l.probability ?? status?.winProbability ?? null, expectedClose: l.expectedClose || null,
-    assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, converted: !!l.clientId, clientId: l.clientId, currencyId: l.currencyId || null,
+    assigned: people[teamOf(l)[0]] || null, assignees: teamOf(l).map((i) => people[i]).filter(Boolean), lastContact: l.lastContact, createdAt: l.createdAt, lost: l.lost, junk: l.junk, refused: !!l.refused, converted: !!l.clientId, clientId: l.clientId, currencyId: l.currencyId || null,
 })
 
 /** Adds the number of notes to each lead (the small comment count on the cards). */
@@ -86,7 +86,7 @@ export async function listLeads(p = {}) {
     const orderBy = sort === 'dateadded' ? [{ createdAt: dir || 'desc' }] : sort === 'lastcontact' ? [{ lastContact: dir || 'desc' }] : [{ leadOrder: dir || 'asc' }, { createdAt: 'desc' }]
     const and = [visible(a)]
     const show = p.show || ''
-    if (show === 'lost') and.push({ lost: true }); else if (show === 'junk') and.push({ junk: true }); else if (show === 'converted') and.push({ clientId: { not: null } }); else and.push({ lost: false, junk: false })
+    if (show === 'lost') and.push({ lost: true }); else if (show === 'junk') and.push({ junk: true }); else if (show === 'refused') and.push({ refused: true }); else if (show === 'converted') and.push({ clientId: { not: null } }); else and.push({ lost: false, junk: false, OR: [{ refused: false }, { refused: { isSet: false } }] }) // refused is absent on older leads
     if (oid(p.assigned)) and.push({ OR: [{ assigned: p.assigned }, { assignedIds: { has: p.assigned } }] })
     if (oid(p.sourceId)) and.push({ sourceId: p.sourceId })
     if (p.mine === '1' && a.staffId) and.push({ OR: [{ assigned: a.staffId }, { assignedIds: { has: a.staffId } }] })
@@ -128,7 +128,7 @@ export async function listLeads(p = {}) {
     const people = await staffMap([...cols.flatMap((c) => c.rows), ...orphans].flatMap(teamOf))
     const out = cols.map((c) => ({ id: c.id, name: c.name, color: c.color, count: c.count, leads: c.rows.map((l) => lk(a, card(l, people, sMap[l.statusId], srcMap[l.sourceId]))) }))
     if (orphans.length) out.unshift({ id: 'none', name: 'No status', color: '#94a3b8', count: orphans.length, leads: orphans.map((l) => lk(a, card(l, people, null, srcMap[l.sourceId]))) })
-    const totals = { lost: await prisma.crmLead.count({ where: { AND: [visible(a), { lost: true }] } }), junk: await prisma.crmLead.count({ where: { AND: [visible(a), { junk: true }] } }), converted: await prisma.crmLead.count({ where: { AND: [visible(a), { clientId: { not: null } }] } }) }
+    const totals = { lost: await prisma.crmLead.count({ where: { AND: [visible(a), { lost: true }] } }), junk: await prisma.crmLead.count({ where: { AND: [visible(a), { junk: true }] } }), refused: await prisma.crmLead.count({ where: { AND: [visible(a), { refused: true }] } }), converted: await prisma.crmLead.count({ where: { AND: [visible(a), { clientId: { not: null } }] } }) }
     // the money side: what the open leads are worth, what is likely to be won, what is expected this month (the filters of the page apply)
     const money = show === '' ? await prisma.crmLead.findMany({ where: { AND: [...and, { value: { gt: 0 } }] }, select: { value: true, probability: true, statusId: true, expectedClose: true, clientId: true } }) : []
     const pos = Object.fromEntries(statuses.map((s, i) => [s.id, Math.round(((i + 1) / (statuses.length + 1)) * 100)])) // a status without its own chance: its place in the pipeline
@@ -321,9 +321,10 @@ export async function flagLead(id, action) {
     const a = await access(session)
     const l = ensureOpen(a, await loadOne(id, a))
     if (!mayEdit(a, l)) throw fail('Forbidden', 403)
-    if (action === 'lost') await prisma.crmLead.update({ where: { id }, data: { lost: true, junk: false, lastLeadStatusId: l.statusId } })
-    else if (action === 'junk') await prisma.crmLead.update({ where: { id }, data: { junk: true, lost: false, lastLeadStatusId: l.statusId } })
-    else if (action === 'restore') await prisma.crmLead.update({ where: { id }, data: { junk: false, lost: false, ...(l.lastLeadStatusId ? { statusId: l.lastLeadStatusId } : {}) } })
+    if (action === 'lost') await prisma.crmLead.update({ where: { id }, data: { lost: true, junk: false, refused: false, lastLeadStatusId: l.statusId } })
+    else if (action === 'junk') await prisma.crmLead.update({ where: { id }, data: { junk: true, lost: false, refused: false, lastLeadStatusId: l.statusId } })
+    else if (action === 'refused') await prisma.crmLead.update({ where: { id }, data: { refused: true, lost: false, junk: false, lastLeadStatusId: l.statusId } })
+    else if (action === 'restore') await prisma.crmLead.update({ where: { id }, data: { junk: false, lost: false, refused: false, ...(l.lastLeadStatusId ? { statusId: l.lastLeadStatusId } : {}) } })
     else throw fail('Unknown action')
     await logActivity(id, a, action === 'restore' ? 'Lead restored' : `Marked as ${action}`)
     return { success: true }
@@ -730,7 +731,7 @@ export async function leadLookups() {
 }
 
 /**
- * One action on several leads at once (the Leads list): status, source, add a person, lost / junk / restore, delete. Each lead goes through the
+ * One action on several leads at once (the Leads list): status, source, add a person, lost / junk / refused / restore, delete. Each lead goes through the
  * same permission rules as when it is changed alone; the answer says how many worked and which did not (and why).
  */
 export async function bulkLeads({ ids = [], action, value } = {}) {
@@ -739,7 +740,7 @@ export async function bulkLeads({ ids = [], action, value } = {}) {
     const out = { done: 0, failed: [] }
     for (const id of list) {
         try {
-            if (['lost', 'junk', 'restore'].includes(action)) await flagLead(id, action)
+            if (['lost', 'junk', 'refused', 'restore'].includes(action)) await flagLead(id, action)
             else if (action === 'delete') await deleteLead(id)
             else if (['status', 'source', 'assign'].includes(action)) {
                 const session = await requirePermission('leads', 'view')

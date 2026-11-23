@@ -71,6 +71,7 @@ export async function convertLeadToClient(leadId, { contactData = {}, includeLea
             clientId: client.id,
             dateConverted: now,
             junk: false,
+            refused: false,
             lost: false,
             ...(customerStatus ? { statusId: customerStatus.id, lastStatusChange: now } : {}),
         },

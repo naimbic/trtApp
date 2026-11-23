@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.267.0',
+        date: '2026-11-23',
+        title: 'Leads: new Refused status, and the names of Lost, Junk and Refused can be changed',
+        items: [
+            'A lead can now be closed as Refused, next to Lost and Junk. It has its own tab above the board (with its count), its own button on the lead, and it is in the menu of a card and in the actions on several leads at once.',
+            'The names of Lost, Junk and Refused can be changed in Settings, Leads, Closed leads. They stay above the board, next to Active.',
+            'A refused lead leaves the board, the dashboards and the reminders of open leads, like a lost one. Restore puts it back in its last status.',
+        ],
+    },
+    {
         version: '0.266.1',
         date: '2026-11-22',
         title: 'Client requests: administrators are told when nobody is in charge of the client',

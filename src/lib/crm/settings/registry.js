@@ -377,6 +377,11 @@ export const GROUPS = {
         label: 'Leads', icon: 'TbFilter', desc: 'Statuses, sources and follow-up',
         cards: [
             { title: 'Pipeline lists', desc: 'Statuses, sources and web forms are managed from the menu, Leads.', links: [['Lead statuses', '/crm/lead-statuses'], ['Lead sources', '/crm/lead-sources'], ['Web-to-lead forms', '/crm/web-to-lead']] },
+            { title: 'Closed leads', desc: 'The three ways a lead ends without becoming a client. They stay above the board, next to Active; here you choose their names.', fields: [
+                f('lead_lost_label', 'Name of Lost', 'text', { default: 'Lost', max: 30 }),
+                f('lead_junk_label', 'Name of Junk', 'text', { default: 'Junk', max: 30 }),
+                f('lead_refused_label', 'Name of Refused', 'text', { default: 'Refused', max: 30 }),
+            ] },
             { title: 'Rules & follow-up', fields: [
                 yes('auto_assign_customer_admin_after_lead_convert', 'Make the lead owner the client admin when converted'),
                 yes('lead_checklist_plain', 'Keep lead checklist items as plain lines (no task is created for each item)', { hint: 'Off: every item added in the Tasks tab of a lead becomes a real task, linked to the lead, that shows on the task board. On: items stay in the lead only.' }),

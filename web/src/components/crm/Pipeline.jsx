@@ -75,7 +75,7 @@ const TileMenu = ({ anchor, columns, item, col, actions, onMoveTo, onClose }) =>
                         {list.filter((a) => !a.after).map((a, i) => <button key={i} type="button" role="menuitem" className={cn('rp-tm-row', a.danger && 'is-danger')} onClick={() => (a.sub ? setSub({ title: a.label, list: a.sub }) : run(a.onClick))}>{a.icon}<span>{a.label}</span>{a.sub && <TbChevronRight className="rp-tm-go" />}</button>)}
                         {onMoveTo && <button type="button" role="menuitem" className="rp-tm-row" onClick={() => setSub({ title: tr('Move to…'), list: columns.map((c) => ({ label: c.name, color: colourOf(c)[0], checked: String(c.id) === String(col.id), onClick: () => onMoveTo(item, c.id) })) })}><TbArrowUpRight /><span>{tr('Move to…')}</span><TbChevronRight className="rp-tm-go" /></button>}
                         {list.some((a) => a.after) && <hr />}
-                        {list.filter((a) => a.after).map((a, i) => <button key={i} type="button" role="menuitem" className={cn('rp-tm-row', a.danger && 'is-danger')} onClick={() => run(a.onClick)}>{a.icon}<span>{a.label}</span></button>)}
+                        {list.filter((a) => a.after).map((a, i) => <button key={i} type="button" role="menuitem" className={cn('rp-tm-row', a.danger && 'is-danger')} onClick={() => (a.sub ? setSub({ title: a.label, list: a.sub }) : run(a.onClick))}>{a.icon}<span>{a.label}</span>{a.sub && <TbChevronRight className="rp-tm-go" />}</button>)}
                     </motion.div>
                 ) : (
                     <motion.div key="sub" initial={reduce ? false : { opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 14 }} transition={{ duration: 0.14 }}>

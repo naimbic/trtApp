@@ -307,6 +307,18 @@ try {
     check('the follower now sees the lead (and its mails and meetings)', (await lb('GET', `/api/crm/pipeline/leads/${LID}`)).body?.mails?.length === 1)
     { const m1 = await lb('POST', `/api/crm/pipeline/leads/${LID}/mails`, { subject: 'x' }), m2 = await lb('POST', `/api/crm/pipeline/leads/${LID}/meetings`, { title: 'x', start: start.toISOString() }); check('...but a follower cannot log mails or add meetings (only the team can)', m1.status === 403 && m2.status === 403, `${m1.status} ${JSON.stringify(m1.body).slice(0, 70)} / ${m2.status} ${JSON.stringify(m2.body).slice(0, 70)}`) }
     check('...and a third person still sees nothing', (await lc('GET', `/api/crm/pipeline/leads/${LID}`)).status === 404)
+    { // Refused: the third way a lead ends, next to lost and junk
+        check('a stranger cannot mark the lead as refused', (await lc('POST', `/api/crm/pipeline/leads/${LID}/flag`, { action: 'refused' })).status === 404)
+        const inList = async (show) => ((await la('GET', `/api/crm/pipeline/leads?view=list&show=${show}`)).body?.list || []).some((x) => x.id === LID)
+        check('a new lead (and every older lead, which has no refused mark) is in the active list', await inList(''))
+        const rf = await la('POST', `/api/crm/pipeline/leads/${LID}/flag`, { action: 'refused' })
+        check('the owner marks the lead as refused: it leaves the active list and sits under Refused', rf.status === 200 && !(await inList('')) && (await inList('refused')) && (await la('GET', `/api/crm/pipeline/leads/${LID}`)).body?.lead?.refused === true)
+        check('the board counts the refused leads', ((await la('GET', '/api/crm/pipeline/leads')).body?.totals?.refused || 0) >= 1)
+        await la('POST', `/api/crm/pipeline/leads/${LID}/flag`, { action: 'lost' })
+        check('a refused lead marked lost is lost only', (await inList('lost')) && !(await inList('refused')))
+        await la('POST', `/api/crm/pipeline/leads/${LID}/flag`, { action: 'refused' })
+        check('restore puts a refused lead back among the active ones', (await la('POST', `/api/crm/pipeline/leads/${LID}/flag`, { action: 'restore' })).status === 200 && (await inList('')) && !(await inList('refused')))
+    }
     {
         const dr = await la('POST', `/api/crm/pipeline/leads/${LID}/mails`, { direction: 'draft', subject: 'Draft hello', to: 'nobody@test.local', body: '<p>Later</p>', date: new Date(Date.now() + 86400000).toISOString() })
         check('save a draft mail (planned date allowed)', dr.status === 201 && !!dr.body?.id, String(dr.status))

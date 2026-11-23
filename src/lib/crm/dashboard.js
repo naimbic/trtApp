@@ -227,11 +227,11 @@ async function buildDashboard(params, authority) {
 
     await section('leads', 'leads', async () => {
         const [leads, statuses] = await Promise.all([
-            prisma.crmLead.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { statusId: true, lost: true, junk: true, clientId: true, createdAt: true } }),
+            prisma.crmLead.findMany({ where: { createdAt: { gte: since, lt: until } }, select: { statusId: true, lost: true, junk: true, refused: true, clientId: true, createdAt: true } }),
             prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' } }),
         ])
         const name = Object.fromEntries(statuses.map((s) => [s.id, s.name]))
-        const open = leads.filter((l) => !l.lost && !l.junk && !l.clientId)
+        const open = leads.filter((l) => !l.lost && !l.junk && !l.refused && !l.clientId)
         const byStatus = count(open, (l) => name[l.statusId] || 'No status')
         return {
             total: leads.length,

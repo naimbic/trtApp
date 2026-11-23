@@ -284,6 +284,8 @@ model CrmLead {
   dateConverted                  DateTime?
   lost                           Boolean        @default(false)
   junk                           Boolean        @default(false)
+  /// the lead said no (third way a lead ends, next to lost and junk); absent on older leads
+  refused                        Boolean?
   /// last status id before lost/junk (plain FK to tblleads_status)
   lastLeadStatusId               String?        @db.ObjectId
   isImportedFromEmailIntegration Boolean        @default(false)
@@ -310,6 +312,7 @@ model CrmLead {
   @@index([email])
   @@index([lost])
   @@index([junk])
+  @@index([refused])
   @@map("crm_leads")
 }
 

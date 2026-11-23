@@ -6330,4 +6330,11 @@ export default {
     "Too many wrong passwords: sign-in is locked for 15 minutes": "كلمات مرور خاطئة كثيرة: الدخول مقفل لمدة 15 دقيقة",
     "Nothing suspicious in this period": "لا شيء مشبوه في هذه الفترة",
     "Refused requests and wrong passwords": "الطلبات المرفوضة وكلمات المرور الخاطئة",
+    "Close as": "إغلاق كـ",
+    "Marked as {name}": "تم التعليم كـ {name}",
+    "Closed leads": "العملاء المحتملون المغلقون",
+    "The three ways a lead ends without becoming a client. They stay above the board, next to Active; here you choose their names.": "الطرق الثلاث التي ينتهي بها العميل المحتمل دون أن يصبح عميلاً. تبقى أعلى اللوحة بجانب «نشط»؛ هنا تختار أسماءها.",
+    "Name of Lost": "اسم «مفقود»",
+    "Name of Junk": "اسم «غير مهم»",
+    "Name of Refused": "اسم «مرفوض»",
 }

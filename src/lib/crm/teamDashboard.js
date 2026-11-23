@@ -75,11 +75,11 @@ async function buildTeam(session, staffId, days) {
 
     /* ---- leads ---- */
     if (scopes.leads) {
-        const active = { lost: false, junk: false, clientId: null }
+        const active = { lost: false, junk: false, OR: [{ refused: false }, { refused: { isSet: false } }], clientId: null }
         const where = scopes.leads === 'all' ? {} : staffId ? { OR: [{ assigned: staffId }, { addedFrom: staffId }] } : { id: NONE }
         const [statuses, rows] = await Promise.all([
             prisma.crmLeadStatus.findMany({ orderBy: { statusOrder: 'asc' } }),
-            prisma.crmLead.findMany({ where: { AND: [where, { lost: false, junk: false }] }, select: { id: true, name: true, company: true, statusId: true, assigned: true, lastContact: true, createdAt: true, clientId: true, dateAssigned: true }, orderBy: { createdAt: 'desc' }, take: 2000 }),
+            prisma.crmLead.findMany({ where: { AND: [where, { lost: false, junk: false, OR: [{ refused: false }, { refused: { isSet: false } }] }] }, select: { id: true, name: true, company: true, statusId: true, assigned: true, lastContact: true, createdAt: true, clientId: true, dateAssigned: true }, orderBy: { createdAt: 'desc' }, take: 2000 }),
         ])
         void active
         const sn = Object.fromEntries(statuses.map((s) => [s.id, { name: s.name, color: s.color || null }]))

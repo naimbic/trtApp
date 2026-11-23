@@ -6330,4 +6330,11 @@ export default {
     "Too many wrong passwords: sign-in is locked for 15 minutes": "Trop de mots de passe incorrects : la connexion est verrouillée pendant 15 minutes",
     "Nothing suspicious in this period": "Rien de suspect sur cette période",
     "Refused requests and wrong passwords": "Requêtes refusées et mots de passe incorrects",
+    "Close as": "Clôturer comme",
+    "Marked as {name}": "Marqué comme {name}",
+    "Closed leads": "Prospects clôturés",
+    "The three ways a lead ends without becoming a client. They stay above the board, next to Active; here you choose their names.": "Les trois façons dont un prospect se termine sans devenir client. Elles restent au-dessus du tableau, à côté de Actifs ; vous choisissez ici leurs noms.",
+    "Name of Lost": "Nom de « Perdu »",
+    "Name of Junk": "Nom de « Indésirable »",
+    "Name of Refused": "Nom de « Refusé »",
 }

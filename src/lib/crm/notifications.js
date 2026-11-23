@@ -138,7 +138,7 @@ export async function notificationFeed({ days } = {}) {
     }
     if (can('leads')) {
         const scope = staffId ? { OR: [{ assigned: staffId }, { assignedIds: { has: staffId } }, { followerIds: { has: staffId } }] } : NONE // only the leads given to me or that I follow
-        const ls = await prisma.crmLead.findMany({ where: { AND: [scope, { createdAt: { gte: since(3) }, lost: false, junk: false }] }, orderBy: { createdAt: 'desc' }, take: 6 })
+        const ls = await prisma.crmLead.findMany({ where: { AND: [scope, { createdAt: { gte: since(3) }, lost: false, junk: false, OR: [{ refused: false }, { refused: { isSet: false } }] }] }, orderBy: { createdAt: 'desc' }, take: 6 })
         for (const l of ls) add('lead', 'New lead', [l.name, l.company].filter(Boolean).join(' · '), l.createdAt, `/crm/leads/${l.id}`, 'blue')
     }
     if (can('invoices') || can('estimates') || can('proposals')) {

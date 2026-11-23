@@ -12,7 +12,7 @@ const bump = (o, k, by = 1) => { o[k] = (o[k] || 0) + by }
 
 export async function leadsData() {
     const [leads, statuses, sources, staff] = await Promise.all([
-        prisma.crmLead.findMany({ select: { createdAt: true, statusId: true, sourceId: true, assigned: true, lost: true, junk: true, clientId: true, dateConverted: true, lastContact: true }, take: 50000 }),
+        prisma.crmLead.findMany({ select: { createdAt: true, statusId: true, sourceId: true, assigned: true, lost: true, junk: true, refused: true, clientId: true, dateConverted: true, lastContact: true }, take: 50000 }),
         prisma.crmLeadStatus.findMany({ select: { id: true, name: true } }),
         prisma.crmLeadSource.findMany({ select: { id: true, name: true } }),
         prisma.crmStaff.findMany({ select: { id: true, firstName: true, lastName: true, email: true } }),
@@ -20,7 +20,7 @@ export async function leadsData() {
     const st = Object.fromEntries(statuses.map((s) => [s.id, s.name])), so = Object.fromEntries(sources.map((s) => [s.id, s.name])), sf = Object.fromEntries(staff.map((s) => [s.id, person(s)]))
     const now = Date.now()
     const converted = leads.filter((l) => l.clientId), lost = leads.filter((l) => l.lost), junk = leads.filter((l) => l.junk)
-    const open = leads.filter((l) => !l.clientId && !l.lost && !l.junk)
+    const open = leads.filter((l) => !l.clientId && !l.lost && !l.junk && !l.refused)
     const byStatus = {}, bySource = {}, byOwner = {}
     for (const l of open) bump(byStatus, st[l.statusId] || 'No status')
     for (const l of leads.filter((x) => !x.junk)) { const k = so[l.sourceId] || 'No source'; (bySource[k] ||= { total: 0, converted: 0, lost: 0 }).total++; if (l.clientId) bySource[k].converted++; if (l.lost) bySource[k].lost++ }

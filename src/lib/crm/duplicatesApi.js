@@ -17,10 +17,10 @@ export async function findDuplicates({ email, phone, company, leadId, clientId }
     if (probe.email) lw.push({ email: { equals: probe.email, mode: 'insensitive' } })
     if (probe.company) lw.push({ company: { contains: String(company).trim().split(/\s+/)[0], mode: 'insensitive' } })
     if (probe.phone) lw.push({ phoneNumber: { not: null } })
-    const leads = await prisma.crmLead.findMany({ where: { OR: lw, ...(oid(leadId) ? { id: { not: leadId } } : {}) }, select: { id: true, name: true, company: true, email: true, phoneNumber: true, lost: true, junk: true, clientId: true }, take: probe.phone ? 4000 : 300 })
+    const leads = await prisma.crmLead.findMany({ where: { OR: lw, ...(oid(leadId) ? { id: { not: leadId } } : {}) }, select: { id: true, name: true, company: true, email: true, phoneNumber: true, lost: true, junk: true, refused: true, clientId: true }, take: probe.phone ? 4000 : 300 })
     for (const l of leads) {
         const why = reasons({ email, phone, company }, { email: l.email, phone: l.phoneNumber, company: l.company })
-        if (why.length) out.push({ type: 'lead', id: l.id, title: l.company || l.name, sub: l.company ? l.name : '', why, link: `/crm/leads/${l.id}`, note: l.clientId ? 'Already a client' : l.lost ? 'Lost' : l.junk ? 'Junk' : '' })
+        if (why.length) out.push({ type: 'lead', id: l.id, title: l.company || l.name, sub: l.company ? l.name : '', why, link: `/crm/leads/${l.id}`, note: l.clientId ? 'Already a client' : l.lost ? 'Lost' : l.junk ? 'Junk' : l.refused ? 'Refused' : '' })
     }
     // clients and their contacts (only for people who may see clients)
     if (viewScope(authority, 'customers')) {

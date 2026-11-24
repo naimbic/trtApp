@@ -337,6 +337,18 @@ model CrmProposalComment {
   @@map("crm_proposal_comments")
 }
 
+/// A family of contract types (SEO, Web, Social Ads...): the types are grouped by it in the pickers and on the Contracts page.
+model CrmContractCategory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  color     String?
+  sortOrder Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("crm_contract_categories")
+}
+
 model CrmContractType {
   id        String        @id @default(auto()) @map("_id") @db.ObjectId
   legacyId  Int?
@@ -351,6 +363,9 @@ model CrmContractType {
   description String?
   /// a new contract of this type ends this many months after it starts (empty = no end date)
   defaultMonths Int?
+  /// its category (CrmContractCategory) and its short code (SEO-PERF)
+  categoryId String? @db.ObjectId
+  code       String?
   contracts CrmContract[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt

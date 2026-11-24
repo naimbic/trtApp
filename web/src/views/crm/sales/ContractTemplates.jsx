@@ -15,6 +15,7 @@ import confirmDelete from '@/components/crm/useConfirm'
 import { api, notify, useCan } from '../kit/api'
 import { InvoiceHead } from './InvoiceInsights'
 import ContractText from './contractText'
+import { typeOptions } from './contractTypes'
 import { tr, trn } from '@/utils/t'
 
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
@@ -121,6 +122,7 @@ export const ContractTemplateEditor = () => {
     const navigate = useNavigate()
     const can = useCan()
     const [types, setTypes] = useState([])
+    const [cats, setCats] = useState([])
     const [v, setV] = useState(null)
     const [error, setError] = useState('')
     const [saving, setSaving] = useState(false)
@@ -130,6 +132,7 @@ export const ContractTemplateEditor = () => {
     useEffect(() => {
         Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id ? api(`${URL}?id=${id}`) : null]).then(([l, t]) => {
             setTypes(l.stats?.types || [])
+            setCats(l.stats?.categories || [])
             setV(t ? { name: t.name, description: t.description, content: t.content, typeId: t.typeId, active: t.active } : { name: '', description: '', content: '', typeId: null, active: true })
         }).catch((e) => setError(e.message))
     }, [id])
@@ -142,7 +145,7 @@ export const ContractTemplateEditor = () => {
         } catch (e) { setError(e.message); window.scrollTo({ top: 0, behavior: 'smooth' }) } finally { setSaving(false) }
     }
     if (!v) return <Container><div className="py-16 text-center text-gray-400">{error || tr("Loading…")}</div></Container>
-    const typeOpts = types.filter((t) => t.active !== false || t.id === v.typeId).map((t) => ({ value: t.id, label: t.name }))
+    const { options: typeOpts, flat: typeFlat } = typeOptions(types, cats, v.typeId)
 
     return (
         <div className="flex h-full w-full flex-col justify-between">
@@ -155,13 +158,13 @@ export const ContractTemplateEditor = () => {
                         <AccordionCard title={tr("Template text")} dot="#f59e0b" note={tr("What every contract made from it starts with")} open onToggle={() => {}}>
                             <div className="p-4">
                                 <p className="mb-2 text-xs text-gray-500">{tr("Write the text once. Merge fields are replaced by the client, the dates and the value of each contract. The letterhead, the two parties and the signatures are added by the contract itself.")}</p>
-                                <ContractText value={v.content} disabled={!mayEdit} onChange={(html) => set({ content: html })} />
+                                <ContractText value={v.content} disabled={!mayEdit} subject={v.name} type={types.find((t) => t.id === v.typeId)?.name} onChange={(html) => set({ content: html })} />
                             </div>
                         </AccordionCard>
                     </div>
                     <div className="flex min-w-0 flex-col gap-2 lg:sticky lg:top-24">
                         <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
-                            <div><L>{tr("Contract type")}</L><Select isClearable isDisabled={!mayEdit} placeholder={tr("Not set by the template")} options={typeOpts} value={typeOpts.find((o) => o.value === v.typeId) || null} onChange={(o) => set({ typeId: o?.value || null })} /></div>
+                            <div><L>{tr("Contract type")}</L><Select isClearable isDisabled={!mayEdit} placeholder={tr("Not set by the template")} options={typeOpts} value={typeFlat.find((o) => o.value === v.typeId) || null} onChange={(o) => set({ typeId: o?.value || null })} /></div>
                             <div><L>{tr("What it is for")}</L><Input textArea rows={3} disabled={!mayEdit} value={v.description} placeholder={tr("A line to recognise it in the list")} onChange={(e) => set({ description: e.target.value })} /></div>
                         </div>
                         <AccordionCard title={tr("Offered for new contracts")} dot="#6b7280" right={<Switcher disabled={!mayEdit} checked={v.active} onChange={(c) => set({ active: c })} />} />

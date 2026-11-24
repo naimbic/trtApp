@@ -7,6 +7,7 @@ export const AI_FEATURES = [
     { id: 'ideas', label: 'Client ideas', desc: 'The ideas written for a client.' },
     { id: 'messages', label: 'Scheduled chat messages', desc: 'The messages written by AI for the team chat.' },
     { id: 'items', label: 'Catalog items', desc: 'The descriptions written for the items you sell.' },
+    { id: 'contracts', label: 'Contract texts', desc: 'The "Write with AI" button above the text of a contract and of a contract template: write, improve and translate it, with the merge fields.' },
 ]
 export const featureIds = AI_FEATURES.map((f) => f.id)
 

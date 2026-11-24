@@ -2,6 +2,19 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.269.0',
+        date: '2026-11-24',
+        title: 'Contracts: write the text with AI, and contract types grouped in categories',
+        items: [
+            'Write with AI: above the text of a contract and of a contract template (also on a new one), say what the contract is about and the AI writes it, with the merge fields for the client, the dates and the value. It can also improve or translate the text that is there. Undo puts the old text back.',
+            'The AI leaves out the letterhead, the two parties and the signatures, which the contract adds itself. Its text is a draft to read and have checked.',
+            'Settings, AI has a new line, Contract texts: switch it on or off and choose its provider and model. It is for the people who may create or edit contracts.',
+            'Contract types now have a category and a short code (for example SEO-PERF). The Categories button on Contracts adds, renames and deletes categories.',
+            '"Add the agency catalogue" in that box creates the 9 categories and 67 types of the agency in one press (SEO, IA, Google Ads et SEA, Autres régies, Social Ads, Réseaux sociaux et contenu, Web, Data, Conseil). What is already there is kept.',
+            'Type pickers show the types under their category, and the Contracts page can be filtered by category. With a long list of types, only those that have contracts are listed until you choose a category or a type.',
+        ],
+    },
+    {
         version: '0.268.0',
         date: '2026-11-24',
         title: 'Contracts: templates, the full editor and a letterhead layout with both signatures; colours for closed leads and Refused in the reports',

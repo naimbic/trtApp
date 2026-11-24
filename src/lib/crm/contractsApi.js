@@ -40,6 +40,8 @@ export async function listContracts({ query = '', state, clientId, typeId, from,
         prisma.crmClient.findMany({ select: { id: true, company: true } }),
         prisma.crmContractType.findMany({ orderBy: [{ typeOrder: 'asc' }, { name: 'asc' }] }),
     ])
+    const cats = await prisma.crmContractCategory.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] })
+    const catName = Object.fromEntries(cats.map((c) => [c.id, c.name]))
     const cname = Object.fromEntries(clients.map((c) => [c.id, c.company]))
     const tname = Object.fromEntries(types.map((t) => [t.id, t.name]))
     const today = day(new Date())
@@ -69,7 +71,7 @@ export async function listContracts({ query = '', state, clientId, typeId, from,
     list.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1)
     const size = Math.min(Math.max(parseInt(pageSize, 10) || 15, 1), 500)
-    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name, color: t.color ? colorName(t.color) : colorName(autoColor(t.name)), order: t.typeOrder ?? null, isDefault: !!t.isDefault, active: t.isActive !== false, months: t.defaultMonths || null })) } }
+    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name, color: t.color ? colorName(t.color) : colorName(autoColor(t.name)), order: t.typeOrder ?? null, isDefault: !!t.isDefault, active: t.isActive !== false, months: t.defaultMonths || null, code: t.code || '', categoryId: catName[t.categoryId] ? t.categoryId : null, category: catName[t.categoryId] || '' })), categories: cats.map((c) => ({ id: c.id, name: c.name, types: types.filter((t) => t.categoryId === c.id).length })) } }
 }
 
 export async function getContract(id) {
@@ -189,7 +191,18 @@ export async function saveContractType(body = {}, id = null) {
     if (!name) throw trouble('Name the contract type')
     if (await prisma.crmContractType.findFirst({ where: { name: { equals: name, mode: 'insensitive' }, ...(id ? { NOT: { id } } : {}) } })) throw trouble('That contract type already exists')
     const months = body.defaultMonths === '' || body.defaultMonths == null ? null : Math.max(0, Math.min(600, parseInt(body.defaultMonths, 10) || 0)) || null
-    const data = { name, color: colorName(body.color || autoColor(name)), defaultMonths: months, ...(body.isActive !== undefined ? { isActive: !!body.isActive } : {}) }
+    // the short code (SEO-PERF) and the category: only touched when the form sends them
+    const extra = {}
+    if (body.code !== undefined) {
+        const code = String(body.code || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 20)
+        if (code && (await prisma.crmContractType.findFirst({ where: { code, ...(id ? { NOT: { id } } : {}) }, select: { id: true } }))) throw trouble('Another contract type already has that code')
+        extra.code = code || null
+    }
+    if (body.categoryId !== undefined) {
+        if (body.categoryId && !(oid(body.categoryId) && (await prisma.crmContractCategory.findUnique({ where: { id: body.categoryId }, select: { id: true } })))) throw trouble('Category not found', 404)
+        extra.categoryId = body.categoryId || null
+    }
+    const data = { name, color: colorName(body.color || autoColor(name)), defaultMonths: months, ...extra, ...(body.isActive !== undefined ? { isActive: !!body.isActive } : {}) }
     if (id) {
         if (!oid(id) || !(await prisma.crmContractType.findUnique({ where: { id }, select: { id: true } }))) throw trouble('Contract type not found', 404)
         if (body.isDefault === true) await prisma.crmContractType.updateMany({ where: { NOT: { id } }, data: { isDefault: false } })

@@ -13,6 +13,7 @@ import { api, notify, useCan } from '../kit/api'
 import { useSessionUser } from '@/store/authStore'
 import RelationSelect from '../kit/RelationSelect'
 import ContractText from './contractText'
+import { typeOptions } from './contractTypes'
 import confirmDelete from '@/components/crm/useConfirm'
 import { tr } from '@/utils/t'
 
@@ -28,6 +29,7 @@ const ContractEditor = () => {
     const navigate = useNavigate()
     const can = useCan()
     const [types, setTypes] = useState([])
+    const [cats, setCats] = useState([])
     const [templates, setTemplates] = useState([])
     const [tplId, setTplId] = useState(null)
     const [v, setV] = useState(null)
@@ -51,6 +53,7 @@ const ContractEditor = () => {
             setWasLocked(!cloned && !!c?.locked)
             const tl = l.stats?.types || []
             setTypes(tl)
+            setCats(l.stats?.categories || [])
             // the type that is the default (and its length) is already chosen on a new contract
             const def = !c ? tl.find((t) => t.id === (t0?.typeId || params.get('typeId'))) || tl.find((t) => t.isDefault) : null
             setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: cloned ? day(new Date()) : day(c.dateStart), dateEnd: cloned ? (c.dateStart && c.dateEnd ? day(new Date(Date.now() + (new Date(c.dateEnd) - new Date(c.dateStart)))) : '') : day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: cloned ? false : c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: def?.id || null, projectId: null, dateStart: day(new Date()), dateEnd: def?.months ? addMonths(day(new Date()), def.months) : '', value: '', description: '', content: t0?.content || '', hidden: false, remindClient: true, signed: false })
@@ -82,7 +85,7 @@ const ContractEditor = () => {
     }
     if (!v) return <Container><div className="py-16 text-center text-gray-400">{error || tr("Loading…")}</div></Container>
     const tplOpts = templates.map((t) => ({ value: t.id, label: t.type ? `${t.name} · ${t.type}` : t.name }))
-    const typeOpts = types.filter((t) => t.active !== false || t.id === v.typeId).map((t) => ({ value: t.id, label: t.name }))
+    const { options: typeOpts, flat: typeFlat } = typeOptions(types, cats, v.typeId)
     // choosing a type with a length fills the end date (counted from the start date) when it is empty or was filled by a type before
     const chooseType = (o) => {
         const t = types.find((x) => x.id === o?.value)
@@ -113,7 +116,7 @@ const ContractEditor = () => {
                                     </div>
                                 )}
                                 <p className="mb-2 text-xs text-gray-500">{tr("Write the contract. Merge fields are replaced when the client opens it or you print the PDF.")}</p>
-                                <ContractText value={v.content} disabled={!!v.signed} onChange={(html) => !v.signed && set({ content: html })} />
+                                <ContractText value={v.content} disabled={!!v.signed} subject={v.subject} type={types.find((t) => t.id === v.typeId)?.name} onChange={(html) => !v.signed && set({ content: html })} />
                             </div>
                         </AccordionCard>
                     </div>
@@ -121,7 +124,7 @@ const ContractEditor = () => {
                     <div className="flex min-w-0 flex-col gap-2 lg:sticky lg:top-24">
                         <div className="flex flex-wrap items-end gap-2 rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
                             <div className="w-full"><L>{tr("Client")}</L><RelationSelect resource="clients" value={v.clientId} onChange={(x) => set({ clientId: x || null })} /></div>
-                            <div className="w-full"><L>{tr("Contract type")}</L><Select isClearable options={typeOpts} value={typeOpts.find((o) => o.value === v.typeId) || null} onChange={chooseType} /></div>
+                            <div className="w-full"><L>{tr("Contract type")}</L><Select isClearable options={typeOpts} value={typeFlat.find((o) => o.value === v.typeId) || null} onChange={chooseType} /></div>
                             <div className="min-w-[130px] flex-1"><L>{tr("Start date")}</L><Input type="date" value={v.dateStart} onChange={(e) => { const m = types.find((x) => x.id === v.typeId)?.months; set({ dateStart: e.target.value, ...(m && e.target.value && (!v.dateEnd || v.dateEnd === addMonths(v.dateStart, m)) ? { dateEnd: addMonths(e.target.value, m) } : {}) }) }} /></div>
                             <div className="min-w-[130px] flex-1" title={tr("End date (empty = no end)")}><L>{tr("End date")}</L><Input type="date" value={v.dateEnd} onChange={(e) => set({ dateEnd: e.target.value })} /></div>
                             <div className="w-full"><L>{tr("Contract value")}</L><Input type="number" step="0.01" min={0} value={v.value} onChange={(e) => set({ value: e.target.value })} /></div>

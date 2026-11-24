@@ -6403,4 +6403,11 @@ export default {
     "Write the text first, then ask the AI to work on it.": "اكتب النص أولاً ثم اطلب من الذكاء الاصطناعي العمل عليه.",
     "AI for contracts is switched off in Settings → AI.": "الذكاء الاصطناعي للعقود معطّل في الإعدادات ← الذكاء الاصطناعي.",
     "Another contract type already has that code": "نوع عقد آخر يحمل هذا الرمز",
+    "A category can sit under a broader one: Acquisition › SEO.": "يمكن وضع الفئة تحت فئة أوسع: Acquisition › SEO.",
+    "Broad category": "فئة عامة",
+    "Under…": "تحت…",
+    "Its contract types are kept, without a category. The categories under it become broad ones.": "تبقى أنواع عقودها دون فئة. الفئات التي تحتها تصبح فئات عامة.",
+    "9 categories and 67 types, from SEO to Conseil, under 4 broad categories (Acquisition, Contenu, Production web, Data et conseil). What you already have is kept.": "9 فئات و67 نوعاً، من SEO إلى Conseil، تحت 4 فئات عامة (Acquisition، Contenu، Production web، Data et conseil). ما لديك يبقى كما هو.",
+    "Choose a broad category: this one is already under another": "اختر فئة عامة: هذه موجودة تحت فئة أخرى",
+    "This category has others under it: move them first": "هذه الفئة تحتها فئات أخرى: انقلها أولاً",
 }

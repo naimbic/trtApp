@@ -6403,4 +6403,11 @@ export default {
     "Write the text first, then ask the AI to work on it.": "先に本文を書いてから、AIに依頼してください。",
     "AI for contracts is switched off in Settings → AI.": "契約用のAIは「設定 → AI」でオフになっています。",
     "Another contract type already has that code": "そのコードは別の契約種別で使われています",
+    "A category can sit under a broader one: Acquisition › SEO.": "カテゴリはより広いカテゴリの下に置けます：Acquisition › SEO。",
+    "Broad category": "大カテゴリ",
+    "Under…": "上位カテゴリ…",
+    "Its contract types are kept, without a category. The categories under it become broad ones.": "この中の契約種別はカテゴリなしで残ります。配下のカテゴリは大カテゴリになります。",
+    "9 categories and 67 types, from SEO to Conseil, under 4 broad categories (Acquisition, Contenu, Production web, Data et conseil). What you already have is kept.": "SEOからConseilまで9カテゴリ・67種類を、4つの大カテゴリ（Acquisition、Contenu、Production web、Data et conseil）の下に追加します。すでにあるものはそのまま残ります。",
+    "Choose a broad category: this one is already under another": "大カテゴリを選んでください。これはすでに別のカテゴリの下にあります",
+    "This category has others under it: move them first": "このカテゴリには配下のカテゴリがあります。先に移動してください",
 }

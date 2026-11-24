@@ -6403,4 +6403,11 @@ export default {
     "Write the text first, then ask the AI to work on it.": "Escriba primero el texto y luego pida a la IA que lo trabaje.",
     "AI for contracts is switched off in Settings → AI.": "La IA para contratos está desactivada en Ajustes → IA.",
     "Another contract type already has that code": "Otro tipo de contrato ya tiene ese código",
+    "A category can sit under a broader one: Acquisition › SEO.": "Una categoría puede ir bajo otra más amplia: Acquisition › SEO.",
+    "Broad category": "Categoría amplia",
+    "Under…": "Bajo…",
+    "Its contract types are kept, without a category. The categories under it become broad ones.": "Sus tipos de contrato se conservan, sin categoría. Las categorías que tiene debajo pasan a ser amplias.",
+    "9 categories and 67 types, from SEO to Conseil, under 4 broad categories (Acquisition, Contenu, Production web, Data et conseil). What you already have is kept.": "9 categorías y 67 tipos, de SEO a Conseil, bajo 4 categorías amplias (Acquisition, Contenu, Production web, Data et conseil). Lo que ya tiene se conserva.",
+    "Choose a broad category: this one is already under another": "Elija una categoría amplia: esta ya está bajo otra",
+    "This category has others under it: move them first": "Esta categoría tiene otras debajo: muévalas primero",
 }

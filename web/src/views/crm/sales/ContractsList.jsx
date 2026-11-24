@@ -23,7 +23,7 @@ import { notify } from '../kit/api'
 import { tr } from '@/utils/t'
 import Dialog from '@/components/ui/Dialog'
 import confirmDelete from '@/components/crm/useConfirm'
-import { typeOptions, typeLabel } from './contractTypes'
+import { typeOptions, typeLabel, treeOf } from './contractTypes'
 
 export const STATE = {
     active: { label: tr("Active"), cls: 'bg-emerald-100 text-emerald-700' },
@@ -50,6 +50,7 @@ const ContractsList = () => {
     const [catId, setCatId] = useState(null)
     const [catDlg, setCatDlg] = useState(false)
     const [newCat, setNewCat] = useState('')
+    const [newParent, setNewParent] = useState(null)
     const [catBusy, setCatBusy] = useState(false)
     const [delGroup, setDelGroup] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -75,18 +76,21 @@ const ContractsList = () => {
 
     const st = data.stats
     const cats = st.categories || []
-    const { options: typeOpts, flat: typeFlat } = typeOptions((st.types || []).filter((t) => !catId || t.categoryId === catId), cats)
-    const catOptions = cats.map((c) => ({ value: c.id, label: c.name }))
+    const inCat = (t) => !catId || t.categoryId === catId || t.parentCategoryId === catId // a broad category holds the types of the ones under it
+    const { options: typeOpts, flat: typeFlat } = typeOptions((st.types || []).filter(inCat), cats)
+    const catOptions = treeOf(cats).map((c) => ({ value: c.id, label: c.path || c.name }))
+    const broadOptions = cats.filter((c) => !c.parentId).map((c) => ({ value: c.id, label: c.name }))
     const CATS = '/api/crm/sales/contracts/categories'
     const catCall = async (run, ok) => { setCatBusy(true); try { const r = await run(); if (ok) notify('success', typeof ok === 'function' ? ok(r) : ok); await load(); return r } catch (e) { notify('danger', e.message); return null } finally { setCatBusy(false) } }
-    const addCat = async () => { if (newCat.trim() && await catCall(() => api(CATS, { method: 'POST', body: { name: newCat.trim() } }))) setNewCat('') }
+    const addCat = async () => { if (newCat.trim() && await catCall(() => api(CATS, { method: 'POST', body: { name: newCat.trim(), parentId: newParent } }))) setNewCat('') }
+    const moveCat = (c, parentId) => catCall(() => api(CATS, { method: 'PUT', body: { id: c.id, name: c.name, parentId } }))
     const renameCat = (c, name) => { if (name.trim() && name.trim() !== c.name) catCall(() => api(CATS, { method: 'PUT', body: { id: c.id, name: name.trim() } })) }
-    const removeCat = (c) => confirmDelete(tr("Delete this category?"), () => catCall(() => api(`${CATS}?id=${c.id}`, { method: 'DELETE' }), tr("Category deleted")), { text: tr("Its contract types are kept, without a category.") })
-    const addCatalogue = () => catCall(() => api(CATS, { method: 'POST', body: { catalogue: true } }), (r) => (r.types || r.categories ? tr("{c} categories and {t} types added", { c: r.categories, t: r.types }) : tr("The whole list is already there")))
+    const removeCat = (c) => confirmDelete(tr("Delete this category?"), () => catCall(() => api(`${CATS}?id=${c.id}`, { method: 'DELETE' }), tr("Category deleted")), { text: tr("Its contract types are kept, without a category. The categories under it become broad ones.") })
+    const addCatalogue = () => catCall(() => api(CATS, { method: 'POST', body: { catalogue: true } }), (r) => (r.types || r.categories || r.placed ? tr("{c} categories and {t} types added", { c: r.categories, t: r.types }) : tr("The whole list is already there")))
 
     // the groups: one per contract type (and the contracts without a type), in the order of the types
     const many = (st.types || []).length > 12 // a long catalogue: only the types that have contracts are listed, unless a category or a type is chosen
-    const groups = [...(st.types || []).filter((t) => !catId || t.categoryId === catId).map((t) => ({ id: t.id, name: typeLabel(t), color: colorOf(t.color), items: data.list.filter((c) => c.typeId === t.id), sub: (() => { const v = data.list.filter((c) => c.typeId === t.id).reduce((n, c) => n + (c.value || 0), 0); return [t.category, v ? money(v, baseCur, { decimals: 0 }) : ''].filter(Boolean).join(' · ') })() })), { id: NONE, name: tr('No type'), color: 'slate', locked: true, items: data.list.filter((c) => !c.typeId || !(st.types || []).some((t) => t.id === c.typeId)) }]
+    const groups = [...(st.types || []).filter(inCat).map((t) => ({ id: t.id, name: typeLabel(t), color: colorOf(t.color), items: data.list.filter((c) => c.typeId === t.id), sub: (() => { const v = data.list.filter((c) => c.typeId === t.id).reduce((n, c) => n + (c.value || 0), 0); return [t.categoryPath || t.category, v ? money(v, baseCur, { decimals: 0 }) : ''].filter(Boolean).join(' · ') })() })), { id: NONE, name: tr('No type'), color: 'slate', locked: true, items: data.list.filter((c) => !c.typeId || !(st.types || []).some((t) => t.id === c.typeId)) }]
         .filter((g) => !g.locked || (g.items.length && !catId))
         .filter((g) => g.locked || !many || g.items.length || catId || typeId)
         .filter((g) => !typeId || g.id === typeId)
@@ -170,23 +174,25 @@ const ContractsList = () => {
             <ConfirmDialog isOpen={!!delGroup} type="danger" title={tr("Delete this contract type?")} confirmText={tr("Delete")} onClose={() => setDelGroup(null)} onCancel={() => setDelGroup(null)} onConfirm={removeType}>
                 <p>{delGroup?.name}</p><p className="text-sm text-gray-500">{delGroup?.items?.length ? tr("It still has contracts in this period: move them first.") : tr("A type that still has contracts cannot be deleted.")}</p>
             </ConfirmDialog>
-            <Dialog isOpen={catDlg} width={520} onClose={() => setCatDlg(false)} onRequestClose={() => setCatDlg(false)}>
+            <Dialog isOpen={catDlg} width={640} onClose={() => setCatDlg(false)} onRequestClose={() => setCatDlg(false)}>
                 <h5 className="mb-1">{tr("Categories of contract types")}</h5>
-                <p className="mb-4 text-sm text-gray-500">{tr("A category gathers contract types (SEO, Web, Social Ads…). The types are grouped by it in the pickers and you can filter the contracts by it.")}</p>
+                <p className="mb-4 text-sm text-gray-500">{tr("A category gathers contract types (SEO, Web, Social Ads…). The types are grouped by it in the pickers and you can filter the contracts by it.")} {tr("A category can sit under a broader one: Acquisition › SEO.")}</p>
                 <div className="flex max-h-[46vh] flex-col gap-2 overflow-y-auto pe-1">
-                    {cats.map((c) => (
-                        <div key={c.id} className="flex items-center gap-2">
-                            <Input size="sm" defaultValue={c.name} disabled={!can('contracts', 'edit')} onBlur={(e) => renameCat(c, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur() }} />
+                    {treeOf(cats).map((c) => (
+                        <div key={c.id} className={`flex items-center gap-2 ${c.parentId ? 'ps-5' : ''}`}>
+                            <Input size="sm" className={c.parentId ? '' : 'font-bold'} defaultValue={c.name} disabled={!can('contracts', 'edit')} onBlur={(e) => renameCat(c, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur() }} />
+                            {/* the broader category above it; one that has others under it stays broad */}
+                            <div className="w-40 shrink-0"><Select size="sm" isClearable isDisabled={!can('contracts', 'edit') || c.children > 0} placeholder={c.children > 0 ? tr("Broad category") : tr("Under…")} options={broadOptions.filter((o) => o.value !== c.id)} value={broadOptions.find((o) => o.value === c.parentId) || null} onChange={(o) => moveCat(c, o ? o.value : null)} menuPortalTarget={document.body} styles={{ menuPortal: (b) => ({ ...b, zIndex: 100000 }) }} /></div>
                             <span className="w-20 shrink-0 text-end text-xs text-gray-500">{tr("{n} types", { n: c.types })}</span>
                             {can('contracts', 'delete') && <button type="button" className="grid size-8 shrink-0 place-items-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500" aria-label={tr("Delete")} onClick={() => removeCat(c)}><TbTrash /></button>}
                         </div>
                     ))}
                     {!cats.length && <p className="py-4 text-center text-sm text-gray-400">{tr("No category yet")}</p>}
                 </div>
-                <div className="mt-3 flex gap-2"><Input size="sm" value={newCat} placeholder={tr("New category")} onChange={(e) => setNewCat(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addCat() }} /><Button size="sm" variant="solid" icon={<TbPlus />} disabled={!newCat.trim() || catBusy} onClick={addCat}>{tr("Add")}</Button></div>
+                <div className="mt-3 flex gap-2"><Input size="sm" value={newCat} placeholder={tr("New category")} onChange={(e) => setNewCat(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addCat() }} /><div className="w-40 shrink-0"><Select size="sm" isClearable placeholder={tr("Under…")} options={broadOptions} value={broadOptions.find((o) => o.value === newParent) || null} onChange={(o) => setNewParent(o ? o.value : null)} menuPortalTarget={document.body} styles={{ menuPortal: (b) => ({ ...b, zIndex: 100000 }) }} /></div><Button size="sm" variant="solid" icon={<TbPlus />} disabled={!newCat.trim() || catBusy} onClick={addCat}>{tr("Add")}</Button></div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
                     <Button size="sm" icon={<TbSparkles />} loading={catBusy} onClick={addCatalogue}>{tr("Add the agency catalogue")}</Button>
-                    <span className="text-xs text-gray-500">{tr("9 categories and 67 types, from SEO to Conseil. What you already have is kept.")}</span>
+                    <span className="text-xs text-gray-500">{tr("9 categories and 67 types, from SEO to Conseil, under 4 broad categories (Acquisition, Contenu, Production web, Data et conseil). What you already have is kept.")}</span>
                 </div>
                 <div className="mt-5 flex justify-end"><Button onClick={() => setCatDlg(false)}>{tr("Close")}</Button></div>
             </Dialog>

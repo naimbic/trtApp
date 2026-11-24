@@ -42,6 +42,9 @@ export async function listContracts({ query = '', state, clientId, typeId, from,
     ])
     const cats = await prisma.crmContractCategory.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] })
     const catName = Object.fromEntries(cats.map((c) => [c.id, c.name]))
+    // a category under a broader one reads "Acquisition › SEO"
+    const catPath = Object.fromEntries(cats.map((c) => [c.id, catName[c.parentId] && c.parentId !== c.id ? `${catName[c.parentId]} › ${c.name}` : c.name]))
+    const kids = (id) => cats.filter((c) => c.parentId === id).map((c) => c.id)
     const cname = Object.fromEntries(clients.map((c) => [c.id, c.company]))
     const tname = Object.fromEntries(types.map((t) => [t.id, t.name]))
     const today = day(new Date())
@@ -71,7 +74,7 @@ export async function listContracts({ query = '', state, clientId, typeId, from,
     list.sort((a, b) => (keyFn(a) > keyFn(b) ? dir : keyFn(a) < keyFn(b) ? -dir : 0))
     const page = Math.max(parseInt(pageIndex, 10) || 1, 1)
     const size = Math.min(Math.max(parseInt(pageSize, 10) || 15, 1), 500)
-    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name, color: t.color ? colorName(t.color) : colorName(autoColor(t.name)), order: t.typeOrder ?? null, isDefault: !!t.isDefault, active: t.isActive !== false, months: t.defaultMonths || null, code: t.code || '', categoryId: catName[t.categoryId] ? t.categoryId : null, category: catName[t.categoryId] || '' })), categories: cats.map((c) => ({ id: c.id, name: c.name, types: types.filter((t) => t.categoryId === c.id).length })) } }
+    return { list: list.slice((page - 1) * size, page * size), total: list.length, pageIndex: page, pageSize: size, stats: { series: series.all, counts, activeValue: Math.round(activeValue * 100) / 100, unsigned, types: types.map((t) => ({ id: t.id, name: t.name, color: t.color ? colorName(t.color) : colorName(autoColor(t.name)), order: t.typeOrder ?? null, isDefault: !!t.isDefault, active: t.isActive !== false, months: t.defaultMonths || null, code: t.code || '', categoryId: catName[t.categoryId] ? t.categoryId : null, category: catName[t.categoryId] || '', categoryPath: catPath[t.categoryId] || '', parentCategoryId: cats.find((c) => c.id === t.categoryId)?.parentId || null })), categories: cats.map((c) => ({ id: c.id, name: c.name, path: catPath[c.id], parentId: catName[c.parentId] && c.parentId !== c.id ? c.parentId : null, children: kids(c.id).length, types: types.filter((t) => t.categoryId === c.id || kids(c.id).includes(t.categoryId)).length })) } }
 }
 
 export async function getContract(id) {

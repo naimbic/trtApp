@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.270.0',
+        date: '2026-11-24',
+        title: 'Contract types: broad categories above the categories (Acquisition › SEO)',
+        items: [
+            'A category of contract types can now sit under a broader one, for example Acquisition › SEO. In the Categories box of Contracts, choose for each category the broad one it goes under, or leave it empty to make it a broad one.',
+            'Type pickers and the Contracts page write the full path (Acquisition › SEO). Filtering the contracts by a broad category shows the types of every category under it.',
+            '"Add the agency catalogue" now also creates four broad categories and places the nine under them: Acquisition (SEO, IA, Google Ads et SEA, Autres régies, Social Ads), Contenu (Réseaux sociaux et contenu), Production web (Web), Data et conseil (Data, Conseil). Press it again if you had already added the catalogue: nothing is duplicated.',
+        ],
+    },
+    {
         version: '0.269.0',
         date: '2026-11-24',
         title: 'Contracts: write the text with AI, and contract types grouped in categories',

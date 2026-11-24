@@ -10,7 +10,7 @@ import { api, notify } from '../kit/api'
 import { tr } from '@/utils/t'
 
 /** The merge fields of a contract: replaced by the real values when the client opens it or the PDF is printed. */
-export const TOKENS = ['contract_subject', 'contract_datestart', 'contract_dateend', 'contract_contract_value', 'contract_type', 'contract_id', 'contract_today', 'client_company', 'client_street', 'client_city', 'client_vat_number', 'company_name', 'address', 'vat_number_with_label']
+export const TOKENS = ['contract_subject', 'contract_datestart', 'contract_dateend', 'contract_contract_value', 'contract_type', 'contract_id', 'contract_today', 'client_company', 'client_street', 'client_city', 'client_vat_number', 'client_manager', 'company_name', 'address', 'vat_number_with_label']
 const LANGS = ['', 'French', 'English', 'Arabic', 'Spanish', 'Japanese', 'German', 'Italian', 'Portuguese']
 const hasText = (h) => !!String(h || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
 

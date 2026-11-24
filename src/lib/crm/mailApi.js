@@ -165,7 +165,7 @@ async function loadContext(kind, id) {
     const lead = recipients.find((r) => r.checked) || recipients[0]
     const [first = '', ...rest] = (lead?.name || '').split(' ')
     Object.assign(data, base, bank || {}, {
-        client_company: client?.company || doc.proposalTo || '', client_phonenumber: client?.phoneNumber || '', client_vat_number: client?.vat || '',
+        client_company: client?.company || doc.proposalTo || '', client_phonenumber: client?.phoneNumber || '', client_vat_number: client?.vat || '', client_manager: client?.gerant || '',
         contact_firstname: first, contact_lastname: rest.join(' '), contact_email: lead?.email || '',
     })
     // the language of the person who receives it (the lead's or the client's, set on their record), else the company's

@@ -22,7 +22,7 @@ import BankAccountSelect from '../kit/BankAccountSelect'
 export const EMAIL_KINDS = [['invoices', 'Invoices'], ['estimates', 'Estimates'], ['proposals', 'Proposals'], ['contracts', 'Contracts'], ['credit_notes', 'Credit notes'], ['projects', 'Projects'], ['tasks', 'Tasks shared with the client'], ['support', 'Support tickets'], ['ideas', 'Ideas'], ['requests', 'Requests']]
 const PORTAL_KINDS = 9
 const addr = { street: '', city: '', state: '', zip: '', country: null }
-const blank = { diffBilling: false, logoUrl: null, industry: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, portalHidden: [], emailHidden: [], active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
+const blank = { diffBilling: false, logoUrl: null, industry: '', gerant: '', company: '', vat: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: null, language: '', currencyId: null, bankAccountId: null, portalHidden: [], emailHidden: [], active: true, groupIds: [], adminIds: [], billing: { ...addr }, shipping: { ...addr }, contact: { firstName: '', lastName: '', email: '', phone: '', title: '' } }
 
 const norm = (x) => String(x ?? '').trim().toLowerCase()
 const sameAddress = (a, b) => ['street', 'city', 'state', 'zip'].every((k) => norm(a?.[k]) === norm(b?.[k])) && String(a?.country ?? '') === String(b?.country ?? '')
@@ -63,12 +63,13 @@ const ClientForm = () => {
             const bil = { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }
             // a billing address that is empty or the same as the address above is just "the same": its fields stay hidden
             const differs = (x, ref) => !sameAddress(x, ref) && !isBlankAddress(x)
-            setV({ ...blank, diffBilling: differs(bil, main), logoUrl: c.logoUrl || null, industry: c.industry || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [], currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
+            setV({ ...blank, diffBilling: differs(bil, main), logoUrl: c.logoUrl || null, industry: c.industry || '', gerant: c.gerant || '', company: c.company || '', vat: c.vat || '', phone: c.phone || '', website: c.website || '', address: c.address || '', city: c.city || '', state: c.state || '', zip: c.zip || '', country: c.country ?? null, language: c.language || '', bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [], currencyId: c.currencyId || null, active: c.active, groupIds: c.groups.map((g) => g.id), adminIds: c.admins.map((a) => a.id), billing: { street: c.billing.street || '', city: c.billing.city || '', state: c.billing.state || '', zip: c.billing.zip || '', country: c.billing.country ?? null }, shipping: { street: c.shipping.street || '', city: c.shipping.city || '', state: c.shipping.state || '', zip: c.shipping.zip || '', country: c.shipping.country ?? null } })
         }).catch((e) => setError(e.message)).finally(() => setLoading(false))
     }, [id])
 
     const save = async () => {
-        if (!v.company.trim()) return setError(tr("Company name is required"))
+        const failed = (msg) => { setError(msg); notify('danger', msg); setOpenSec((o) => (o.includes('company') ? o : [...o, 'company'])); window.scrollTo({ top: 0, behavior: 'smooth' }); document.querySelector('main')?.scrollTo?.({ top: 0, behavior: 'smooth' }) } // the reason is said where the person is looking, not only at the top of a long form
+        if (!v.company.trim()) return failed(tr("Company name is required"))
         setSaving(true)
         setError('')
         try {
@@ -84,7 +85,7 @@ const ClientForm = () => {
             notify('success', id ? tr("Client saved") : tr("Client created"))
             navigate(`/crm/clients/${res.id}`)
         } catch (e) {
-            setError(e.message)
+            failed(e.message)
             setSaving(false)
         }
     }
@@ -111,6 +112,7 @@ const ClientForm = () => {
                                 <FormItem label={tr("VAT / ICE")}><Input value={v.vat} onChange={(e) => set({ vat: e.target.value })} /></FormItem>
                                 <FormItem label={tr("Phone")}><Input value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></FormItem>
                                 <FormItem label={tr("Website")}><Input type="url" value={v.website} onChange={(e) => set({ website: e.target.value })} /></FormItem>
+                                <FormItem label={tr("Gérant")}><Input placeholder={tr("The legal manager of the company")} value={v.gerant} onChange={(e) => set({ gerant: e.target.value })} /></FormItem>
                                 <FormItem label={tr("Industry")}><Input placeholder={tr("e.g. Real estate, Retail…")} value={v.industry} onChange={(e) => set({ industry: e.target.value })} /></FormItem>
 </div>
                     </FoldSection>

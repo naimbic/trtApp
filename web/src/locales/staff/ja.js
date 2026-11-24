@@ -6421,4 +6421,9 @@ export default {
     "Reopen the client": "顧客を再開",
     "No report written": "報告は書かれていません",
     "Choose lost, junk or refused": "失注・無効・拒否のいずれかを選んでください",
+    "Gérant": "代表者",
+    "The legal manager of the company": "会社の法定代表者",
+    "Earlier closings ({n})": "過去のクローズ（{n}）",
+    "Follow-up notes": "フォローアップのメモ",
+    "Clients closed in this period": "この期間にクローズした顧客",
 }

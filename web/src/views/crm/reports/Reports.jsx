@@ -20,7 +20,7 @@ import classNames from '@/utils/classNames'
 import { api, qs } from '../kit/api'
 import { tr, trn } from '@/utils/t'
 import { KpiCard } from '../kit/KpiCard'
-import { useLeadEnds, useEndColors } from '../leads/ends'
+import { ENDS, useLeadEnds, useEndColors } from '../leads/ends'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const TABS = { sales: tr("Sales"), profit: tr("Profit & expenses"), leads: tr("Leads"), support: tr("Support"), work: tr("Work & time") }
@@ -229,10 +229,17 @@ const Leads = ({ d }) => {
                 <TopList title={tr("Owners")} icon={<TbUsersGroup />} rows={d.byOwner.slice(0, 5).map((o) => ({ name: o.name, sub: tr("{converted} became clients", { converted: o.converted }), badge: o.total }))} />
                 <Split title={tr("Where the leads are")} rows={d.byStatus.map((x) => ({ name: x.name, value: x.total }))} />
             </>}
-            bottom={
+            bottom={<div className="flex flex-col gap-4">
+                {d.closed && (
+                    <TableCard title={`${tr("Clients closed in this period")} · ${d.closed.total}`} head={[[tr("Client")], [tr("Status")], [tr("Report: why?")], [tr("By")], [tr("Date")]]} empty={!d.closed.list.length} csvName="closed-clients" csvRows={d.closed.list.map((c) => [c.company, c.status, c.reason, c.by, dayjs(c.date).format('YYYY-MM-DD')])}
+                        rows={<>
+                            {d.closed.total > 0 && <Tr><Td colSpan={5}><div className="flex flex-wrap gap-2 text-xs font-bold">{ENDS.filter((k) => d.closed[k] > 0).map((k) => <span key={k} className="rounded-full px-2.5 py-1" style={endColors[k].tag}>{ends[k]} · {d.closed[k]}</span>)}</div></Td></Tr>}
+                            {d.closed.list.map((c) => <Tr key={c.id}><Td><Link className="font-semibold hover:text-primary" to={`/crm/clients/${c.id}`}>{c.company || '—'}</Link></Td><Td><span className="rounded-full px-2 py-0.5 text-xs font-bold" style={endColors[c.status]?.tag}>{ends[c.status] || c.status}</span></Td><Td className="max-w-[420px] whitespace-pre-wrap break-words text-sm">{c.reason || <span className="text-gray-400">—</span>}</Td><Td>{c.by || '—'}</Td><Td className="whitespace-nowrap">{dayjs(c.date).format('DD MMM YYYY')}</Td></Tr>)}
+                        </>} />
+                )}
                 <TableCard title={tr("Latest leads")} head={[[tr("Lead")], [tr("Source")], [tr("Status")], [tr("Owner")], [tr("Created")]]} empty={!d.recent.length}
                     rows={d.recent.map((l) => <Tr key={l.id}><Td><Link className="font-semibold hover:text-primary" to={`/crm/leads/${l.id}`}>{l.name}</Link>{l.company && <div className="text-xs text-gray-500">{l.company}</div>}</Td><Td>{l.source}</Td><Td>{l.converted ? <span className="font-semibold text-emerald-600">{tr("Client")}</span> : l.status}</Td><Td>{l.owner}</Td><Td className="whitespace-nowrap">{dayjs(l.date).format('DD MMM YYYY')}</Td></Tr>)} />
-            }
+            </div>}
         />
     )
 }

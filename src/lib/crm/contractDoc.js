@@ -41,7 +41,7 @@ export async function contractDocumentHtml(c, client, type, S) {
         contract_id: esc(contractNumber(c)), contract_subject: esc(c.subject || ''), contract_description: esc(c.description || ''), contract_datestart: D(c.dateStart), contract_dateend: c.dateEnd ? D(c.dateEnd) : '',
         contract_contract_value: value, contract_value: value, contract_type: esc(type?.name || ''), contract_today: D(new Date()),
         ...Object.fromEntries(Object.entries(co).map(([k, v]) => [k, esc(v)])), companyname: esc(co.company_name),
-        ...Object.fromEntries(Object.entries(ct).map(([k, v]) => [`client_${k}`, esc(v)])), client_company: esc(ct.company_name), customer_company: esc(ct.company_name),
+        ...Object.fromEntries(Object.entries(ct).map(([k, v]) => [`client_${k}`, esc(v)])), client_company: esc(ct.company_name), client_manager: esc(client?.gerant || ''), customer_company: esc(ct.company_name),
     }
     const content = safeHtml(c.content).replace(/\{([a-z0-9_]+)\}/gi, (m, k) => (k in merge ? String(merge[k] ?? '') : ''))
     const period = `${T.from} <strong>${D(c.dateStart)}</strong> ${c.dateEnd ? `${T.to} <strong>${D(c.dateEnd)}</strong>` : `· ${T.open}`}`

@@ -54,6 +54,19 @@ export const ClientProfileCard = ({ c, profile, cur, id, can, a }) => {
                     {canEdit && <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold"><button type="button" className="inline-flex items-center gap-1 text-primary hover:underline" onClick={a.end}><TbPencil />{tr("Change")}</button><button type="button" className="inline-flex items-center gap-1 text-primary hover:underline" onClick={a.reopen}><TbRotate />{tr("Reopen the client")}</button></div>}
                 </div>
             )}
+            {(c.endLog || []).filter((e) => e.reopenedAt).length > 0 && (
+                <details className="mt-3 rounded-xl px-3 py-2 text-start text-sm" style={{ background: 'var(--rp-well)' }}>
+                    <summary className="cursor-pointer text-xs font-bold text-gray-600 dark:text-gray-300">{tr("Earlier closings ({n})", { n: c.endLog.filter((e) => e.reopenedAt).length })}</summary>
+                    <ul className="mt-2 space-y-2">
+                        {c.endLog.filter((e) => e.reopenedAt).map((e, i) => (
+                            <li key={i} className="border-s-2 ps-2.5" style={{ borderColor: endColors[e.status]?.color }}>
+                                <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500"><ClientEndTag status={e.status} /><span>{dayjs(e.at).format('D MMM YYYY')} → {dayjs(e.reopenedAt).format('D MMM YYYY')}{e.by ? ` · ${e.by}` : ''}</span></div>
+                                {e.reason && <p className="mt-1 whitespace-pre-wrap break-words text-gray-800 dark:text-gray-100">{e.reason}</p>}
+                            </li>
+                        ))}
+                    </ul>
+                </details>
+            )}
             <div className="pt-acts">
                 {canEdit && <button type="button" className="pt-act" onClick={a.followUp}><TbBell />{tr("Follow up")}</button>}
                 {primary?.email && <a className="pt-act" href={`mailto:${primary.email}`}><TbMail />{tr("Email")}</a>}
@@ -91,6 +104,7 @@ export const ClientInfoCard = ({ c, profile, lookups, id, can, onSaved }) => {
                 <Row label={tr("Website")}>{site && <a className="hover:underline" href={site} target="_blank" rel="noreferrer">{c.website.replace(/^https?:\/\//, '')}</a>}</Row>
                 <Row label={tr("Phone")}>{c.phone}</Row>
                 <Row label={tr("VAT / ICE")}>{c.vat}</Row>
+                <Row label={tr("Gérant")}>{c.gerant}</Row>
                 <Row label={tr("Industry")}>{c.industry}</Row>
                 <Row label={tr("Currency")}>{lookups.currencies.find((x) => x.id === c.currencyId)?.name}</Row>
                 <Row label={tr("Language")}>{c.language}</Row>

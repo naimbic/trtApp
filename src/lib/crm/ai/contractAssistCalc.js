@@ -17,6 +17,7 @@ export const MERGE_FIELDS = {
     client_street: 'the street address of the client',
     client_city: 'the city of the client',
     client_vat_number: 'the VAT number of the client',
+    client_manager: 'the legal manager (gérant) of the client, who signs for it',
     company_name: 'the name of our company (the provider)',
     address: 'the address of our company',
     vat_number_with_label: 'the VAT number of our company, with its label',

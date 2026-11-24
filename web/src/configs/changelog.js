@@ -2,6 +2,18 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.272.0',
+        date: '2026-11-24',
+        title: 'Clients: Gérant field, history of closing reports, closed clients in Reports, note cards on the client page',
+        items: [
+            'Clients have a new Gérant field (the legal manager of the company), in the Company part of the edit page and on the Detailed information card. Contracts can print it with the merge field {client_manager}.',
+            'Every closing of a client (Lost, Junk, Refused) is now kept with its report, its date and who wrote it. After a client is reopened, its page lists them under "Earlier closings", and the interaction history shows each closing and reopening.',
+            'Reports, Leads now has "Clients closed in this period": how many were lost, junk or refused, and the list with each report, which can be exported.',
+            'The Notes tab of a client now shows the same note cards as the Notes and Tasks pages (colours, checklists, pictures, reminders), for the notes tagged with this client. A note written there is tagged with the client. Older follow-up notes stay listed underneath.',
+            'Fixed: when a client could not be saved from its edit page, the reason was written only at the top of the page, so it looked as if nothing happened and the bank account, the managers and the other fields kept their old values. The reason now also appears as a message and the page goes back to the top. A client that never had a VAT / ICE number can be edited even when that number is compulsory.',
+        ],
+    },
+    {
         version: '0.271.0',
         date: '2026-11-24',
         title: 'Clients can be closed as Lost, Junk or Refused with a report; Contracts open on All time',

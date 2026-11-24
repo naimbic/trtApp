@@ -1307,7 +1307,17 @@ try {
         const seen = (await eView('GET', `/api/crm/customers/${cl.id}`)).body
         const inList = async (status) => ((await eView('GET', `/api/crm/customers?status=${status}&query=permcheck%20closed&pageSize=50`)).body?.list || []).some((x) => x.id === cl.id)
         check('Close a client: Edit closes it with the report, it becomes inactive and is listed under Closed only', done.status === 200 && seen?.end?.status === 'refused' && seen?.end?.reason === 'permcheck: too expensive' && seen?.active === false && (await inList('closed')) && !(await inList('active')) && !(await inList('inactive')))
+        const hist = async () => (await eView('GET', `/api/crm/customers/${cl.id}`)).body?.endLog || []
+        await eEdit('POST', u, { status: 'refused', reason: 'permcheck: corrected report' })
+        check('Close a client: correcting the report while closed keeps one line in the history', (await hist()).length === 1 && (await hist())[0]?.reason === 'permcheck: corrected report')
         check('Close a client: reopening makes it a normal active client again', (await eEdit('POST', u, { status: '' })).status === 200 && (await (async () => { const b = (await eView('GET', `/api/crm/customers/${cl.id}`)).body; return b?.end === null && b?.active === true })()) && (await inList('active')))
+        await eEdit('POST', u, { status: 'lost', reason: 'permcheck: second time' })
+        const h2 = await hist()
+        check('Close a client: the history keeps every closing with its report, newest first, and the reopening date', h2.length === 2 && h2[0].status === 'lost' && h2[0].reason === 'permcheck: second time' && !h2[0].reopenedAt && h2[1].status === 'refused' && !!h2[1].reopenedAt)
+        check('Close a client: switching it back on from the edit page also closes the history line', (await eEdit('PATCH', `/api/crm/customers/${cl.id}`, { active: true })).status === 200 && !!(await hist())[0]?.reopenedAt)
+        const g = await eEdit('PATCH', `/api/crm/customers/${cl.id}`, { gerant: 'permcheck Gérant', vat: '', adminIds: [] })
+        const gb = (await eView('GET', `/api/crm/customers/${cl.id}`)).body
+        check('Client: the Gérant is saved with Edit and refused with View only; the managers can be emptied', g.status === 200 && gb?.gerant === 'permcheck Gérant' && gb?.admins?.length === 0 && (await eView('PATCH', `/api/crm/customers/${cl.id}`, { gerant: 'x' })).status === 403)
     }
     {
         // Grow ideas: writing or editing an idea is not deciding it; only an administrator (or "Accept or refuse ideas") accepts, refuses or moves it

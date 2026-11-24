@@ -6421,4 +6421,9 @@ export default {
     "Reopen the client": "إعادة فتح العميل",
     "No report written": "لم يُكتب أي تقرير",
     "Choose lost, junk or refused": "اختر مفقود أو غير مرغوب أو مرفوض",
+    "Gérant": "المسيّر",
+    "The legal manager of the company": "الممثل القانوني للشركة",
+    "Earlier closings ({n})": "الإغلاقات السابقة ({n})",
+    "Follow-up notes": "ملاحظات المتابعة",
+    "Clients closed in this period": "العملاء المغلقون في هذه الفترة",
 }

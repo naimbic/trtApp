@@ -55,6 +55,10 @@ model CrmClient {
   endReason             String?
   endAt                 DateTime?
   endBy                 String?  @db.ObjectId // tblstaff.id of who closed it
+  /// every closing of this client, oldest first: { status, reason, at, by, byName, reopenedAt }
+  endLog                Json[]
+  /// the legal manager of the company (gérant), printed on contracts with {client_manager}
+  gerant                String?
 
   contacts              CrmContact[]
   groupLinks            CrmCustomerGroupLink[]

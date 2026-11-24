@@ -6421,4 +6421,9 @@ export default {
     "Reopen the client": "Reabrir el cliente",
     "No report written": "Sin informe escrito",
     "Choose lost, junk or refused": "Elija perdido, no deseado o rechazado",
+    "Gérant": "Gerente",
+    "The legal manager of the company": "El representante legal de la empresa",
+    "Earlier closings ({n})": "Cierres anteriores ({n})",
+    "Follow-up notes": "Notas de seguimiento",
+    "Clients closed in this period": "Clientes cerrados en este periodo",
 }

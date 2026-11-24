@@ -35,6 +35,7 @@ import ClientMails from './ClientMails'
 import ClientMeetings from './ClientMeetings'
 import ClientPasswords from './ClientPasswords'
 import ClientEndDialog, { saveClientEnd } from './ClientEnd'
+import ClientNotes from './ClientNotes'
 const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -114,7 +115,7 @@ const PaymentsTab = ({ id, money }) => {
     )
 }
 
-const HIDE_WHEN_EMPTY = ['estimates', 'proposals', 'projects', 'files', 'tickets', 'notes']
+const HIDE_WHEN_EMPTY = ['estimates', 'proposals', 'projects', 'files', 'tickets']
 // each tab has its own colour for its count, so they are told apart at a glance
 const BUBBLE = {
     invoices: 'bg-blue-100 text-blue-700 dark:bg-blue-500/25 dark:text-blue-200', ideas: 'bg-violet-100 text-violet-700 dark:bg-violet-500/25 dark:text-violet-200', contracts: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/25 dark:text-indigo-200',
@@ -132,10 +133,10 @@ const ClientDetail = () => {
     const money = makeMoney(lookups.currencies)
     const [c, setC] = useState(null)
     const [error, setError] = useState('')
-    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks', 'passwords'].includes(t) ? t : 'overview' })
+    const [tab, setTab] = useState(() => { const t = new URLSearchParams(window.location.search).get('tab'); return ['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks', 'passwords', 'notes'].includes(t) ? t : 'overview' })
     const [cur, setCur] = useState(null)
     // a link from a notification (…?tab=requests&request=ID) switches the tab even when this client is already open
-    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks', 'passwords'].includes(t)) setTab(t) }, [loc.search])
+    useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks', 'passwords', 'notes'].includes(t)) setTab(t) }, [loc.search])
     const [confirmDel, setConfirmDel] = useState(false)
     const [endDlg, setEndDlg] = useState(false) // close the client as lost, junk or refused
     const [profile, setProfile] = useState(null)
@@ -182,7 +183,7 @@ const ClientDetail = () => {
             ...G(tr("Records"), "bg-amber-50 dark:bg-amber-500/10", [
                 { key: 'mails', label: tr("Mails"), iconOnly: true, icon: <TbMail className="text-sky-500" /> },
                 { key: 'meetings', label: tr("Meetings"), count: c.counts.meetings, icon: <TbCalendarEvent className="text-emerald-500" /> },
-                rel('notes', tr("Notes"), c.counts.notes, undefined, { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') }),
+                { key: 'notes', label: tr("Notes"), count: c.counts.notes, oldRel: { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') } },
                 { key: 'passwords', label: tr("Passwords"), count: passCount, hideNoCount: true, iconOnly: true, icon: <TbKey className="text-amber-500" /> },
                 { key: 'files', label: tr("Files"), count: c.counts.files, iconOnly: true, icon: <TbPaperclip className="text-slate-500" /> },
                 { key: 'activity', label: tr("Activity"), iconOnly: true, icon: <TbHistory className="text-gray-500" /> },
@@ -297,6 +298,12 @@ const ClientDetail = () => {
                                 {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
                                 {tab === 'payments' && <PaymentsTab id={id} money={money} />}
                                 {tab === 'tasks' && <TasksBoard key={id} clientPage={id} />}
+                                {tab === 'notes' && (() => { const t = tabs.find((x) => x.key === 'notes'); const cards = can('notes', 'view'); return (
+                                    <>
+                                        {cards && <ClientNotes clientId={id} onChanged={load} />}
+                                        {t && (!cards || c.counts.oldNotes > 0) && <div className={cards ? 'mt-8' : ''}>{cards && <h6 className="mb-3">{tr("Follow-up notes")}</h6>}<RelatedTab key="notes-old" cfg={t.oldRel} onChanged={() => { load(); loadProfile() }} /></div>}
+                                    </>
+                                ) })()}
                                 {tab === 'reports' && <ClientReports key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('report') || ''} />}
                                 {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}

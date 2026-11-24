@@ -24,6 +24,10 @@ export async function scope(session) {
 export const CLIENT_ENDS = ['lost', 'junk', 'refused']
 const OPEN = { OR: [{ endStatus: null }, { endStatus: { isSet: false } }] } // not closed (older clients do not have the field at all)
 
+const logOf = (c) => (Array.isArray(c?.endLog) ? c.endLog.filter((e) => e && typeof e === 'object' && CLIENT_ENDS.includes(e.status)) : [])
+/** The history with its last closing marked as reopened (when it is still open). */
+const reopenedLog = (c) => { const log = logOf(c); const last = log[log.length - 1]; if (last && !last.reopenedAt) log[log.length - 1] = { ...last, reopenedAt: new Date().toISOString() }; return log }
+
 const contactName = (c) => (c ? [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email || '' : '')
 
 /** Per-client money summary per currency, from invoices (draft/cancelled ignored) and their payments. */
@@ -166,25 +170,27 @@ export async function getClientDetail(id) {
     const [pr, ld] = await Promise.all([prisma.crmProject.findMany({ where: { clientId: id }, select: { id: true } }), prisma.crmLead.findMany({ where: { clientId: id }, select: { id: true } })])
     const tasks = await prisma.crmTask.count({ where: { status: { not: 5 }, OR: [{ relType: 'customer', relId: id }, { relType: 'project', relId: { in: pr.map((x) => x.id) } }, { relType: 'lead', relId: { in: ld.map((x) => x.id) } }] } }).catch(() => 0)
     const money = (await moneyFor([id], true))[id] || {}
+    const quickNotes = await prisma.crmQuickNote.findMany({ where: { clientIds: { has: id } }, select: { archived: true } }).then((r) => r.filter((n) => !n.archived).length).catch(() => 0) // the notes of the Notes page tagged with this client
     const endBy = c.endStatus && c.endBy ? await prisma.crmStaff.findUnique({ where: { id: c.endBy }, select: { firstName: true, lastName: true } }).catch(() => null) : null
     const tabs = Object.fromEntries(['profile', 'mails', 'meetings', 'notes', 'files', 'activity'].map((t) => [t, isCrmAdmin(session.user.authority || []) || hasCap(session.user.authority || [], 'client_tabs', `tab_${t}`)]))
     const out = {
-        id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [],
+        id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, gerant: c.gerant || '', active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [],
         address: c.address, city: c.city, state: c.state, zip: c.zip, country: c.country, countryName: cname[c.country] || '',
         billing: { street: c.billingStreet, city: c.billingCity, state: c.billingState, zip: c.billingZip, country: c.billingCountry, countryName: cname[c.billingCountry] || '' },
         shipping: { street: c.shippingStreet, city: c.shippingCity, state: c.shippingState, zip: c.shippingZip, country: c.shippingCountry, countryName: cname[c.shippingCountry] || '' },
         showPrimaryContact: c.showPrimaryContact, createdAt: c.createdAt,
+        endLog: logOf(c).map((e) => ({ status: e.status, reason: e.reason || '', at: e.at, by: e.byName || '', reopenedAt: e.reopenedAt || null })).reverse(), // newest first
         end: CLIENT_ENDS.includes(c.endStatus) ? { status: c.endStatus, reason: c.endReason || '', at: c.endAt, by: endBy ? `${endBy.firstName || ''} ${endBy.lastName || ''}`.trim() : '' } : null,
         groups: c.groupLinks.map((l) => ({ id: l.groupId, name: l.group?.name || '' })),
         admins: staff.map((s) => ({ id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() })),
         contacts: c.contacts.map((x) => ({ id: x.id, name: contactName(x), email: x.email, phone: x.phoneNumber, title: x.title, isPrimary: x.isPrimary, active: x.active, lastLogin: x.lastLogin })),
         money,
-        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes, files: files + mediaFiles, ideas, requests, reports, tasks, meetings },
+        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes: notes + quickNotes, oldNotes: notes, files: files + mediaFiles, ideas, requests, reports, tasks, meetings },
     }
     // the tabs this person may not see are left empty, not only hidden
     out.tabs = tabs
-    if (!tabs.profile) Object.assign(out, { vat: null, phone: null, website: null, address: null, city: null, state: null, zip: null, country: null, countryName: '', billing: {}, shipping: {}, contacts: [] })
-    if (!tabs.notes) out.counts.notes = 0
+    if (!tabs.profile) Object.assign(out, { gerant: '', vat: null, phone: null, website: null, address: null, city: null, state: null, zip: null, country: null, countryName: '', billing: {}, shipping: {}, contacts: [] })
+    if (!tabs.notes) { out.counts.notes = 0; out.counts.oldNotes = 0 }
     if (!tabs.files) out.counts.files = 0
     if (!tabs.meetings) out.counts.meetings = 0
     return out
@@ -198,6 +204,7 @@ const fieldsFrom = (b) => {
     set('phoneNumber', b.phone === undefined ? undefined : str(b.phone))
     set('website', b.website === undefined ? undefined : str(b.website))
     set('industry', b.industry === undefined ? undefined : str(b.industry))
+    set('gerant', b.gerant === undefined ? undefined : str(b.gerant))
     set('address', b.address === undefined ? undefined : str(b.address))
     set('city', b.city === undefined ? undefined : str(b.city))
     set('state', b.state === undefined ? undefined : str(b.state))
@@ -252,9 +259,11 @@ export async function createClient(body) {
 export async function updateClient(id, body) {
     const session = await requirePermission('customers', 'edit')
     const sc = await scope(session)
-    if (!(await prisma.crmClient.findFirst({ where: { AND: [{ id }, sc] }, select: { id: true } }))) throw httpError('Client not found', 404)
-    if (body.vat !== undefined) await requireVat(body.vat)
+    const cur = await prisma.crmClient.findFirst({ where: { AND: [{ id }, sc] }, select: { id: true, vat: true, endStatus: true, endLog: true } })
+    if (!cur) throw httpError('Client not found', 404)
+    if (body.vat !== undefined && str(cur.vat)) await requireVat(body.vat) // a compulsory number cannot be removed; a client that never had one can still be edited
     const data = fieldsFrom(body)
+    if (data.active === true && cur.endStatus) data.endLog = reopenedLog(cur) // switched back on: the closing is kept in the history as reopened
     if (Object.keys(data).length) await prisma.crmClient.update({ where: { id }, data })
     if (Array.isArray(body.groupIds)) await setGroups(id, body.groupIds)
     if (Array.isArray(body.adminIds)) await setAdmins(id, body.adminIds)
@@ -265,12 +274,22 @@ export async function updateClient(id, body) {
 export async function closeClient(id, body = {}) {
     const session = await requirePermission('customers', 'edit')
     const sc = await scope(session)
-    if (!/^[a-f0-9]{24}$/i.test(String(id)) || !(await prisma.crmClient.findFirst({ where: { AND: [{ id }, sc] }, select: { id: true } }))) throw httpError('Client not found', 404)
+    const cur = /^[a-f0-9]{24}$/i.test(String(id)) ? await prisma.crmClient.findFirst({ where: { AND: [{ id }, sc] }, select: { id: true, endStatus: true, endAt: true, endLog: true } }) : null
+    if (!cur) throw httpError('Client not found', 404)
     const status = String(body.status || '')
-    if (!status) { await prisma.crmClient.update({ where: { id }, data: { active: true, endStatus: null, endReason: null, endAt: null, endBy: null } }); return { id, end: null } }
+    if (!status) { await prisma.crmClient.update({ where: { id }, data: { active: true, endStatus: null, endReason: null, endAt: null, endBy: null, endLog: reopenedLog(cur) } }); return { id, end: null } }
     if (!CLIENT_ENDS.includes(status)) throw httpError('Choose lost, junk or refused')
     const reason = String(body.reason || '').trim().slice(0, 4000) || null
-    const data = { active: false, endStatus: status, endReason: reason, endAt: new Date(), endBy: (await getStaffId(session)) || null }
+    const staffId = (await getStaffId(session)) || null
+    const st = staffId ? await prisma.crmStaff.findUnique({ where: { id: staffId }, select: { firstName: true, lastName: true } }).catch(() => null) : null
+    const byName = (st ? `${st.firstName || ''} ${st.lastName || ''}`.trim() : '') || session.user.name || ''
+    // still closed: the report is corrected (same line of the history); otherwise a new closing is added
+    const log = logOf(cur), last = log[log.length - 1]
+    const again = CLIENT_ENDS.includes(cur.endStatus) && last && !last.reopenedAt
+    const at = again ? cur.endAt || new Date() : new Date()
+    const entry = { status, reason: reason || '', at: new Date(at).toISOString(), by: staffId, byName }
+    if (again) log[log.length - 1] = entry; else log.push(entry)
+    const data = { active: false, endStatus: status, endReason: reason, endAt: at, endBy: staffId, endLog: log.slice(-50) }
     await prisma.crmClient.update({ where: { id }, data })
     return { id, end: { status, reason: reason || '', at: data.endAt } }
 }

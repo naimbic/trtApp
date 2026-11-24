@@ -1297,6 +1297,19 @@ try {
         check('Client mails: log a received mail; only the author (or the right) deletes it', (await (async () => { const r = await cEdit('POST', base, { direction: 'in', subject: 'permcheck received', body: '<p>hi</p>' }); if (r.body?.id) made.rows.unshift(['crmLeadMail', r.body.id]); return r.status === 201 && (await cEdit2('DELETE', `${base}?mailId=${r.body.id}`)).status === 403 && (await cEdit('DELETE', `${base}?mailId=${r.body.id}`)).status === 200 })()))
     }
     {
+        // Close a client as lost, junk or refused with the report of why: Customers > Edit; View only reads it
+        const cl = await prisma.crmClient.create({ data: { company: 'permcheck closed client' } })
+        made.rows.unshift(['crmClient', cl.id])
+        const eNone = await login(await makeUser('ce-none', {})), eView = await login(await makeUser('ce-view', { customers: ['view'] })), eEdit = await login(await makeUser('ce-edit', { customers: ['view', 'edit'] })), eOwn = await login(await makeUser('ce-own', { customers: ['view_own', 'edit'] }))
+        const u = `/api/crm/customers/${cl.id}/close`
+        check('Close a client: refused without Customers > Edit, and for a client the person does not see', (await eNone('POST', u, { status: 'lost' })).status === 403 && (await eView('POST', u, { status: 'lost' })).status === 403 && (await eOwn('POST', u, { status: 'lost' })).status === 404 && (await eEdit('POST', u, { status: 'gone' })).status === 400)
+        const done = await eEdit('POST', u, { status: 'refused', reason: 'permcheck: too expensive' })
+        const seen = (await eView('GET', `/api/crm/customers/${cl.id}`)).body
+        const inList = async (status) => ((await eView('GET', `/api/crm/customers?status=${status}&query=permcheck%20closed&pageSize=50`)).body?.list || []).some((x) => x.id === cl.id)
+        check('Close a client: Edit closes it with the report, it becomes inactive and is listed under Closed only', done.status === 200 && seen?.end?.status === 'refused' && seen?.end?.reason === 'permcheck: too expensive' && seen?.active === false && (await inList('closed')) && !(await inList('active')) && !(await inList('inactive')))
+        check('Close a client: reopening makes it a normal active client again', (await eEdit('POST', u, { status: '' })).status === 200 && (await (async () => { const b = (await eView('GET', `/api/crm/customers/${cl.id}`)).body; return b?.end === null && b?.active === true })()) && (await inList('active')))
+    }
+    {
         // Grow ideas: writing or editing an idea is not deciding it; only an administrator (or "Accept or refuse ideas") accepts, refuses or moves it
         const gEd = await login(await makeUser('grow-idea-editor', { grow: ['view', 'create', 'edit'], growth: ['view'], tasks: ['view', 'create'] })), gAp = await login(await makeUser('grow-approve', { grow: ['view', 'create', 'edit', 'approve'] })), gAdm = await login(await makeUser('grow-admin', {}, true))
         const direct = await gEd('POST', '/api/crm/grow/ideas', { title: 'permcheck idea accepted', status: 'accepted' })

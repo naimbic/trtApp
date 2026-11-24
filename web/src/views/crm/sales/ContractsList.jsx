@@ -45,7 +45,7 @@ const ContractsList = () => {
     const [typeId, setTypeId] = useState(null)
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
-    const [period, setPeriod] = useState({ preset: 'month', from: '', to: '' }) // this month by default: the contracts that start in it
+    const [period, setPeriod] = useState({ preset: 'all', from: '', to: '' }) // every contract by default
     const [groupDlg, setGroupDlg] = useState(null)
     const [catId, setCatId] = useState(null)
     const [catDlg, setCatDlg] = useState(false)
@@ -126,7 +126,7 @@ const ContractsList = () => {
             {data.stats.series && <DocChart title={tr("Contract value over time")} sumLabel={tr("started in the last 12 months")} sum={sumOf(data.stats.series, 'value')} series={data.stats.series} money={(v) => money(v, baseCur, { decimals: 0 })} moneyShort={shortMoney(lookups.currencies, baseCur)} cfg={[{ key: 'value', name: tr("Contract value"), tone: 'tomato' }, { key: 'signed', name: tr("Signed"), tone: 'pine', dashed: true }]} />}
 
             <AdaptiveCard>
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><PeriodPicker value={period} onChange={setPeriod} /><div className="flex flex-wrap gap-2">{can('contracts', 'create') && <Button size="sm" icon={<TbCategory />} onClick={() => setCatDlg(true)}>{tr("Categories")}</Button>}{can('contracts', 'create') && <Button size="sm" icon={<TbFolderPlus />} onClick={() => setGroupDlg({ name: '', color: 'blue', defaultMonths: '', isActive: true, code: '', categoryId: catId || null })}>{tr("New type")}</Button>}</div></div>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><PeriodPicker allFirst value={period} onChange={setPeriod} /><div className="flex flex-wrap gap-2">{can('contracts', 'create') && <Button size="sm" icon={<TbCategory />} onClick={() => setCatDlg(true)}>{tr("Categories")}</Button>}{can('contracts', 'create') && <Button size="sm" icon={<TbFolderPlus />} onClick={() => setGroupDlg({ name: '', color: 'blue', defaultMonths: '', isActive: true, code: '', categoryId: catId || null })}>{tr("New type")}</Button>}</div></div>
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     {cats.length > 0 && <div className="w-48"><Select size="sm" isClearable placeholder={tr("All categories")} options={catOptions} value={catOptions.find((o) => o.value === catId) || null} onChange={(o) => { setCatId(o ? o.value : null); setTypeId(null) }} /></div>}
                     <div className="w-60"><Select size="sm" isClearable placeholder={tr("All types")} options={typeOpts} value={typeFlat.find((o) => o.value === typeId) || null} onChange={(o) => setTypeId(o ? o.value : null)} /></div>

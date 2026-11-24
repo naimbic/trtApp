@@ -20,6 +20,10 @@ export async function scope(session) {
     return { id: { in: ids.length ? ids : ['000000000000000000000000'] } }
 }
 
+/** The ways a client ends: the same three as a lead (their names and colours are set in Settings, Leads). */
+export const CLIENT_ENDS = ['lost', 'junk', 'refused']
+const OPEN = { OR: [{ endStatus: null }, { endStatus: { isSet: false } }] } // not closed (older clients do not have the field at all)
+
 const contactName = (c) => (c ? [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email || '' : '')
 
 /** Per-client money summary per currency, from invoices (draft/cancelled ignored) and their payments. */
@@ -83,7 +87,9 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
     const markOf = Object.fromEntries(marks.map((m) => [m.clientId, m]))
     if (favorites === '1') and.push({ id: { in: marks.filter((m) => m.favorite).map((m) => m.clientId) } })
     if (status === 'active') and.push({ active: true })
-    if (status === 'inactive') and.push({ active: false })
+    if (status === 'inactive') and.push({ active: false }, OPEN)
+    if (status === 'closed') and.push({ endStatus: { in: CLIENT_ENDS } })
+    if (CLIENT_ENDS.includes(status)) and.push({ endStatus: status })
     if (query) {
         const contactMatches = await prisma.crmContact.findMany({ where: { OR: ['firstName', 'lastName', 'email', 'phoneNumber'].map((f) => ({ [f]: { contains: query, mode: 'insensitive' } })) }, select: { clientId: true }, take: 500 })
         and.push({ OR: [...['company', 'vat', 'phoneNumber', 'city', 'website'].map((f) => ({ [f]: { contains: query, mode: 'insensitive' } })), { id: { in: [...new Set(contactMatches.map((c) => c.clientId))] } }] })
@@ -102,7 +108,7 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
     const pageIds = ordered.slice((page - 1) * size, page * size)
     const [found, all] = await Promise.all([
         pageIds.length ? prisma.crmClient.findMany({ where: { id: { in: pageIds } }, include: { contacts: true, groupLinks: { include: { group: true } } } }) : [],
-        prisma.crmClient.findMany({ where: sc, select: { id: true, active: true, createdAt: true } }),
+        prisma.crmClient.findMany({ where: sc, select: { id: true, active: true, createdAt: true, endStatus: true } }),
     ])
     const total = ids.length
     const rows = pageIds.map((i) => found.find((r) => r.id === i)).filter(Boolean)
@@ -119,7 +125,7 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
         list: rows.map((c) => {
             const primary = c.contacts.find((x) => x.isPrimary) || c.contacts[0]
             return {
-                id: c.id, company: c.company || '(no name)', vat: c.vat, phone: c.phoneNumber, city: c.city, website: c.website, logoUrl: c.logoUrl, active: c.active, createdAt: c.createdAt,
+                id: c.id, company: c.company || '(no name)', vat: c.vat, phone: c.phoneNumber, city: c.city, website: c.website, logoUrl: c.logoUrl, active: c.active, createdAt: c.createdAt, endStatus: CLIENT_ENDS.includes(c.endStatus) ? c.endStatus : null, endReason: c.endReason || '',
                 primaryContact: primary ? { name: contactName(primary), email: primary.email, phone: primary.phoneNumber } : null,
                 contactsCount: c.contacts.length,
                 groups: c.groupLinks.map((l) => ({ id: l.groupId, name: l.group?.name || '' })),
@@ -128,7 +134,7 @@ export async function listClients({ query = '', pageIndex = 1, pageSize = 10, so
             }
         }),
         total, pageIndex: page, pageSize: size,
-        stats: { total: all.length, active: all.filter((a) => a.active).length, inactive: all.filter((a) => !a.active).length, contacts: contactCount, activeContacts, newThisWeek: all.filter((a) => a.createdAt >= weekAgo).length, outstanding: owed, overdue: late, baseCurrencyId },
+        stats: { total: all.length, active: all.filter((a) => a.active).length, inactive: all.filter((a) => !a.active && !a.endStatus).length, closed: all.filter((a) => a.endStatus).length, contacts: contactCount, activeContacts, newThisWeek: all.filter((a) => a.createdAt >= weekAgo).length, outstanding: owed, overdue: late, baseCurrencyId },
     }
 }
 
@@ -160,6 +166,7 @@ export async function getClientDetail(id) {
     const [pr, ld] = await Promise.all([prisma.crmProject.findMany({ where: { clientId: id }, select: { id: true } }), prisma.crmLead.findMany({ where: { clientId: id }, select: { id: true } })])
     const tasks = await prisma.crmTask.count({ where: { status: { not: 5 }, OR: [{ relType: 'customer', relId: id }, { relType: 'project', relId: { in: pr.map((x) => x.id) } }, { relType: 'lead', relId: { in: ld.map((x) => x.id) } }] } }).catch(() => 0)
     const money = (await moneyFor([id], true))[id] || {}
+    const endBy = c.endStatus && c.endBy ? await prisma.crmStaff.findUnique({ where: { id: c.endBy }, select: { firstName: true, lastName: true } }).catch(() => null) : null
     const tabs = Object.fromEntries(['profile', 'mails', 'meetings', 'notes', 'files', 'activity'].map((t) => [t, isCrmAdmin(session.user.authority || []) || hasCap(session.user.authority || [], 'client_tabs', `tab_${t}`)]))
     const out = {
         id: c.id, company: c.company, vat: c.vat, phone: c.phoneNumber, website: c.website, logoUrl: c.logoUrl, industry: c.industry, active: c.active, language: c.defaultLanguage, currencyId: c.defaultCurrencyId, bankAccountId: c.bankAccountId || null, portalHidden: c.portalHidden || [], emailHidden: c.emailHidden || [],
@@ -167,6 +174,7 @@ export async function getClientDetail(id) {
         billing: { street: c.billingStreet, city: c.billingCity, state: c.billingState, zip: c.billingZip, country: c.billingCountry, countryName: cname[c.billingCountry] || '' },
         shipping: { street: c.shippingStreet, city: c.shippingCity, state: c.shippingState, zip: c.shippingZip, country: c.shippingCountry, countryName: cname[c.shippingCountry] || '' },
         showPrimaryContact: c.showPrimaryContact, createdAt: c.createdAt,
+        end: CLIENT_ENDS.includes(c.endStatus) ? { status: c.endStatus, reason: c.endReason || '', at: c.endAt, by: endBy ? `${endBy.firstName || ''} ${endBy.lastName || ''}`.trim() : '' } : null,
         groups: c.groupLinks.map((l) => ({ id: l.groupId, name: l.group?.name || '' })),
         admins: staff.map((s) => ({ id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() })),
         contacts: c.contacts.map((x) => ({ id: x.id, name: contactName(x), email: x.email, phone: x.phoneNumber, title: x.title, isPrimary: x.isPrimary, active: x.active, lastLogin: x.lastLogin })),
@@ -198,7 +206,7 @@ const fieldsFrom = (b) => {
     set('defaultLanguage', b.language === undefined ? undefined : str(b.language))
     set('defaultCurrencyId', b.currencyId === undefined ? undefined : b.currencyId || null)
     set('bankAccountId', b.bankAccountId === undefined ? undefined : b.bankAccountId || null)
-    if (b.active !== undefined) d.active = !!b.active
+    if (b.active !== undefined) { d.active = !!b.active; if (d.active) Object.assign(d, { endStatus: null, endReason: null, endAt: null, endBy: null }) } // a client switched back on is no longer lost, junk or refused
     if (Array.isArray(b.portalHidden)) d.portalHidden = b.portalHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'projects', 'support', 'ideas', 'requests', 'reports'].includes(x))
     if (Array.isArray(b.emailHidden)) d.emailHidden = b.emailHidden.filter((x) => ['invoices', 'estimates', 'proposals', 'contracts', 'credit_notes', 'projects', 'tasks', 'support', 'ideas', 'requests'].includes(x))
     for (const [k, p] of [['billing', 'billing'], ['shipping', 'shipping']]) {
@@ -251,6 +259,20 @@ export async function updateClient(id, body) {
     if (Array.isArray(body.groupIds)) await setGroups(id, body.groupIds)
     if (Array.isArray(body.adminIds)) await setAdmins(id, body.adminIds)
     return { id }
+}
+
+/** Close a client as lost, junk or refused, with the report of why (it also becomes inactive); an empty status reopens it. */
+export async function closeClient(id, body = {}) {
+    const session = await requirePermission('customers', 'edit')
+    const sc = await scope(session)
+    if (!/^[a-f0-9]{24}$/i.test(String(id)) || !(await prisma.crmClient.findFirst({ where: { AND: [{ id }, sc] }, select: { id: true } }))) throw httpError('Client not found', 404)
+    const status = String(body.status || '')
+    if (!status) { await prisma.crmClient.update({ where: { id }, data: { active: true, endStatus: null, endReason: null, endAt: null, endBy: null } }); return { id, end: null } }
+    if (!CLIENT_ENDS.includes(status)) throw httpError('Choose lost, junk or refused')
+    const reason = String(body.reason || '').trim().slice(0, 4000) || null
+    const data = { active: false, endStatus: status, endReason: reason, endAt: new Date(), endBy: (await getStaffId(session)) || null }
+    await prisma.crmClient.update({ where: { id }, data })
+    return { id, end: { status, reason: reason || '', at: data.endAt } }
 }
 
 /** Refuses when the client still owns business records (Perfex would cascade-delete them). */

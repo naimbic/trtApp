@@ -34,6 +34,7 @@ import ClientRequests from './ClientRequests'
 import ClientMails from './ClientMails'
 import ClientMeetings from './ClientMeetings'
 import ClientPasswords from './ClientPasswords'
+import ClientEndDialog, { saveClientEnd } from './ClientEnd'
 const { TabList, TabNav } = Tabs
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -136,6 +137,7 @@ const ClientDetail = () => {
     // a link from a notification (…?tab=requests&request=ID) switches the tab even when this client is already open
     useEffect(() => { const t = new URLSearchParams(loc.search).get('tab'); if (['ideas', 'requests', 'reports', 'mails', 'meetings', 'tasks', 'passwords'].includes(t)) setTab(t) }, [loc.search])
     const [confirmDel, setConfirmDel] = useState(false)
+    const [endDlg, setEndDlg] = useState(false) // close the client as lost, junk or refused
     const [profile, setProfile] = useState(null)
     const [followUp, setFollowUp] = useState(null)
     const [ticketDialog, setTicketDialog] = useState(false)
@@ -247,6 +249,8 @@ const ClientDetail = () => {
         ticket: () => setTicketDialog(true),
         project: () => setProjectDialog(true),
         remove: () => setConfirmDel(true),
+        end: () => setEndDlg(true),
+        reopen: async () => { try { await saveClientEnd(id, ''); notify('success', tr("{name} reopened", { name: c.company })); load(); loadProfile() } catch (e) { notify('danger', e.message) } },
         openAsClient, invite,
         setPassword: (k) => { setPwFor(k); setPw('') }, unlock,
         addContact: () => setContactDrawer({ open: true, id: null }),
@@ -311,6 +315,7 @@ const ClientDetail = () => {
             <FollowUpDialog key={followUp || 'none'} open={!!followUp} initialType={followUp || 'note'} clientId={id} onClose={() => setFollowUp(null)} onSaved={() => { loadProfile(); load() }} />
             <NewTicketDialog open={ticketDialog} onClose={() => setTicketDialog(false)} lookups={ticketLk} presets={{ clientId: id }} onCreated={(tid) => navigate(`/crm/tickets/${tid}`)} />
             <ProjectDialog open={projectDialog} onClose={() => setProjectDialog(false)} presets={{ clientId: id }} onCreated={(pid) => navigate(`/crm/projects/${pid}`)} />
+            <ClientEndDialog client={endDlg ? { id, company: c.company, endStatus: c.end?.status, endReason: c.end?.reason } : null} onClose={() => setEndDlg(false)} onSaved={() => { load(); loadProfile() }} />
             <ConfirmDialog isOpen={confirmDel} type="danger" title={tr("Delete this client?")} confirmText={tr("Delete")} onClose={() => setConfirmDel(false)} onRequestClose={() => setConfirmDel(false)} onCancel={() => setConfirmDel(false)} onConfirm={remove}>
                 <p>{c.company} {tr("and its contacts will be removed. Clients that still have invoices, estimates, contracts, projects or tickets cannot be deleted — deactivate them instead.")}</p>
             </ConfirmDialog>

@@ -50,6 +50,11 @@ model CrmClient {
   registrationConfirmed Boolean  @default(true)
   /// tblstaff.id (admin domain)
   addedFrom             String?  @db.ObjectId
+  /// a client we no longer work with: 'lost', 'junk' or 'refused' (empty = a normal client), with the report of why
+  endStatus             String?
+  endReason             String?
+  endAt                 DateTime?
+  endBy                 String?  @db.ObjectId // tblstaff.id of who closed it
 
   contacts              CrmContact[]
   groupLinks            CrmCustomerGroupLink[]

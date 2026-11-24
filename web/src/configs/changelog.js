@@ -2,6 +2,16 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.271.0',
+        date: '2026-11-24',
+        title: 'Clients can be closed as Lost, Junk or Refused with a report; Contracts open on All time',
+        items: [
+            'A client can now be marked as Lost, Junk or Refused, with a report of why. Open the "…" menu of a client (on its card in the list, or on its page) and choose "Lost, junk or refused…". The client becomes inactive and its page shows the report, the date and who wrote it.',
+            'The Clients list has a new "Closed" filter, the card of a closed client carries its coloured label, and the export has the status and the report. "Reopen the client" makes it a normal active client again. Names and colours are the ones of Settings, Leads. Closing and reopening need the right to edit clients.',
+            'Contracts now open on All time, and the period buttons read All time, This year, This month, Last month, Custom.',
+        ],
+    },
+    {
         version: '0.270.0',
         date: '2026-11-24',
         title: 'Contract types: broad categories above the categories (Acquisition › SEO)',

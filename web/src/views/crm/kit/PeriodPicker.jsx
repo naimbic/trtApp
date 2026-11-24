@@ -4,6 +4,8 @@ import Segment from '@/components/ui/Segment'
 import Input from '@/components/ui/Input'
 import { tr } from '@/utils/t'
 
+/** The same choices with All time first: for the lists that open on everything (contracts). */
+const ALL_FIRST = ['all', 'year', 'month', 'lastmonth', 'custom']
 export const PERIODS = [['month', tr('This month')], ['lastmonth', tr('Last month')], ['year', tr('This year')], ['all', tr('All time')], ['custom', tr('Custom')]]
 
 /** The period as { from, to } (YYYY-MM-DD, or '' for no limit) for a preset or a custom range. */
@@ -16,10 +18,10 @@ export function periodRange(p) {
     return { from: '', to: '' }
 }
 
-/** Choose the period of a list: this month (by default), last month, this year, all time, or two dates. */
-const PeriodPicker = ({ value, onChange }) => (
+/** Choose the period of a list: this month (by default), last month, this year, all time, or two dates. `allFirst` puts All time first, then this year. */
+const PeriodPicker = ({ value, onChange, allFirst = false }) => (
     <div className="flex flex-wrap items-center gap-2">
-        <Segment size="sm" value={value.preset} onChange={(v) => onChange({ ...value, preset: Array.isArray(v) ? v[0] || value.preset : v || value.preset })}>{PERIODS.map(([k, l]) => <Segment.Item key={k} value={k}>{l}</Segment.Item>)}</Segment>
+        <Segment size="sm" value={value.preset} onChange={(v) => onChange({ ...value, preset: Array.isArray(v) ? v[0] || value.preset : v || value.preset })}>{(allFirst ? ALL_FIRST.map((k) => PERIODS.find((x) => x[0] === k)) : PERIODS).map(([k, l]) => <Segment.Item key={k} value={k}>{l}</Segment.Item>)}</Segment>
         {value.preset === 'custom' && (
             <div className="flex items-center gap-1.5">
                 <Input size="sm" type="date" className="w-36" value={value.from || ''} onChange={(e) => onChange({ ...value, from: e.target.value })} />

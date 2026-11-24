@@ -124,6 +124,7 @@ export async function clientProfile(id, { full = false } = {}) {
         for (const n of leadNotes) add('note', `Lead note${n.addedFrom && sName[n.addedFrom] ? ` · ${sName[n.addedFrom]}` : ''}`, strip(n.description), n.dateContacted || n.createdAt)
         if (leadRow.dateConverted) add('converted', 'Converted to client', leadRow.dateConverted && `${lead.daysToConvert} day${lead.daysToConvert === 1 ? '' : 's'} after the lead was created`, leadRow.dateConverted)
     } else add('client', 'Client created', '', c.createdAt)
+    if (c.endStatus && c.endAt) add('client', `Client marked as ${c.endStatus}`, strip(c.endReason || ''), c.endAt)
     for (const i of invoices) {
         if (i.status !== 6) add('invoice', `Invoice ${invLabel[i.id]} created`, `${i.total.toFixed(2)}`, i.date || i.createdAt, `/crm/invoices/${i.id}`)
         if (i.dateSend) add('mail', `Invoice ${invLabel[i.id]} sent`, '', i.dateSend, `/crm/invoices/${i.id}`)

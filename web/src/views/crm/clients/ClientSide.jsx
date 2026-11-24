@@ -1,7 +1,7 @@
 /*! © 2026 TRT Digital — trtCRM. The Rapport look is built on the licensed Rapport component (© 2026 Hasib / OVERSHOOT), used under licence. */
 import { Link } from 'react-router'
 import dayjs from 'dayjs'
-import { TbPlus, TbHistory, TbPencil, TbTrash, TbFileInvoice, TbMail, TbPhone, TbFileText, TbPresentation, TbLifebuoy, TbBriefcase, TbNotes, TbBell, TbBrandWhatsapp, TbTargetArrow, TbLogin, TbCheck, TbKey, TbLink, TbExternalLink } from 'react-icons/tb'
+import { TbPlus, TbHistory, TbPencil, TbTrash, TbFileInvoice, TbMail, TbPhone, TbFileText, TbPresentation, TbLifebuoy, TbBriefcase, TbNotes, TbBell, TbBrandWhatsapp, TbTargetArrow, TbLogin, TbCheck, TbKey, TbLink, TbExternalLink, TbBan, TbRotate } from 'react-icons/tb'
 import Button from '@/components/ui/Button'
 import Dropdown from '@/components/ui/Dropdown'
 import EllipsisButton from '@/components/shared/EllipsisButton'
@@ -14,6 +14,8 @@ import cn from '@/utils/classNames'
 import { useMemo, useState } from 'react'
 import Segment from '@/components/ui/Segment'
 import { GROUPS, local } from '../activity/ActivityPage'
+import { ClientEndTag } from './ClientEnd'
+import { useEndColors } from '../leads/ends'
 import { tr, trn } from '@/utils/t'
 
 
@@ -31,6 +33,7 @@ export const ClientProfileCard = ({ c, profile, cur, id, can, a }) => {
     const share = m && m.invoiced > 0 ? Math.round((m.paid / m.invoiced) * 100) : null
     const lead = profile?.lead
     const canEdit = can('customers', 'edit')
+    const endColors = useEndColors()
     return (
         <section className="pt-card pt-prof">
             <div className="pt-ring" style={{ '--p': share ?? 0 }}>
@@ -40,10 +43,17 @@ export const ClientProfileCard = ({ c, profile, cur, id, can, a }) => {
             <h2 className="pt-name">{c.company}</h2>
             <p className="pt-role">{[c.industry, [c.city, c.countryName].filter(Boolean).join(', ')].filter(Boolean).join(' · ') || ' '}</p>
             <div className="mt-2 flex flex-wrap justify-center gap-1.5">
-                <Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? tr("Active") : tr("Inactive")}</Tag>
+                {c.end ? <ClientEndTag status={c.end.status} /> : <Tag className={c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}>{c.active ? tr("Active") : tr("Inactive")}</Tag>}
                 {c.groups.map((g) => <Tag key={g.id}>{g.name}</Tag>)}
                 {lead && <Tag className="gap-1 bg-blue-50 text-blue-700"><TbTargetArrow className="inline" /> {tr("From lead")}{lead.daysToConvert !== null ? ` · ${lead.daysToConvert}d` : ''}</Tag>}
             </div>
+            {c.end && (
+                <div className="mt-3 rounded-xl border-s-4 px-3 py-2.5 text-start text-sm" style={{ borderColor: endColors[c.end.status].color, background: endColors[c.end.status].tag.background }}>
+                    <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-gray-600 dark:text-gray-300"><span>{tr("Report: why?")}</span><span className="font-semibold">{[c.end.at && dayjs(c.end.at).format('D MMM YYYY'), c.end.by].filter(Boolean).join(' · ')}</span></div>
+                    <p className="whitespace-pre-wrap break-words text-gray-800 dark:text-gray-100">{c.end.reason || <span className="text-gray-500">{tr("No report written")}</span>}</p>
+                    {canEdit && <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold"><button type="button" className="inline-flex items-center gap-1 text-primary hover:underline" onClick={a.end}><TbPencil />{tr("Change")}</button><button type="button" className="inline-flex items-center gap-1 text-primary hover:underline" onClick={a.reopen}><TbRotate />{tr("Reopen the client")}</button></div>}
+                </div>
+            )}
             <div className="pt-acts">
                 {canEdit && <button type="button" className="pt-act" onClick={a.followUp}><TbBell />{tr("Follow up")}</button>}
                 {primary?.email && <a className="pt-act" href={`mailto:${primary.email}`}><TbMail />{tr("Email")}</a>}
@@ -59,9 +69,11 @@ export const ClientProfileCard = ({ c, profile, cur, id, can, a }) => {
                 {phone && <Act icon={<TbBrandWhatsapp />} label={tr("WhatsApp")} onClick={() => window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`, '_blank', 'noopener')} />}
                 {can('activity_log', 'view') && <Act icon={<TbHistory />} label={tr("Activity log")} onClick={a.activity} />}
                 {canEdit && <Act icon={<TbPencil />} label={tr("Edit client")} onClick={a.edit} />}
-                {can('customers', 'delete') && (
+                {(canEdit || can('customers', 'delete')) && (
                     <Dropdown placement="bottom-end" renderTitle={<EllipsisButton />}>
-                        <Dropdown.Item eventKey="delete" onClick={a.remove}><span className="flex items-center text-red-500"><TbTrash className="mr-2 text-lg" />{tr("Delete client")}</span></Dropdown.Item>
+                        {canEdit && <Dropdown.Item eventKey="end" onClick={a.end}><span className="flex items-center"><TbBan className="mr-2 text-lg" />{c.end ? tr("Change the closing report") : tr("Lost, junk or refused…")}</span></Dropdown.Item>}
+                        {canEdit && c.end && <Dropdown.Item eventKey="reopen" onClick={a.reopen}><span className="flex items-center"><TbRotate className="mr-2 text-lg" />{tr("Reopen the client")}</span></Dropdown.Item>}
+                        {can('customers', 'delete') && <Dropdown.Item eventKey="delete" onClick={a.remove}><span className="flex items-center text-red-500"><TbTrash className="mr-2 text-lg" />{tr("Delete client")}</span></Dropdown.Item>}
                     </Dropdown>
                 )}
             </div>

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import dayjs from 'dayjs'
-import { TbBuilding, TbCircleCheck, TbCoins, TbPlus, TbSearch, TbLayoutGrid, TbTable, TbDownload, TbDots, TbExternalLink, TbPencil, TbHistory, TbFileInvoice, TbMail, TbPhone, TbPower, TbTrash, TbMapPin, TbPin, TbPinFilled, TbStar, TbStarFilled } from 'react-icons/tb'
+import { TbBuilding, TbCircleCheck, TbCoins, TbPlus, TbSearch, TbLayoutGrid, TbTable, TbDownload, TbDots, TbExternalLink, TbPencil, TbHistory, TbFileInvoice, TbMail, TbPhone, TbPower, TbTrash, TbMapPin, TbPin, TbPinFilled, TbStar, TbStarFilled, TbBan, TbRotate } from 'react-icons/tb'
 import useGridPageSize from '../kit/useGridPageSize'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
@@ -20,6 +20,7 @@ import cn from '@/utils/classNames'
 import { api, notify, qs, useCan } from '../kit/api'
 import { InvoiceHead } from '../sales/InvoiceInsights'
 import { useClientLookups, makeMoney } from './shared'
+import ClientEndDialog, { ClientEndTag, saveClientEnd } from './ClientEnd'
 import { tr } from '@/utils/t'
 
 const { Tr, Th, Td, THead, TBody } = Table
@@ -54,6 +55,7 @@ const ClientsList = () => {
     const [error, setError] = useState('')
     const [menu, setMenu] = useState(null)
     const [del, setDel] = useState(null)
+    const [endOf, setEndOf] = useState(null) // the client being closed as lost, junk or refused
     const [gridRef, gridSize] = useGridPageSize() // whole rows of cards, whatever the width of the screen
     const pageSize = view === 'grid' ? gridSize : 15
     useEffect(() => { setPage(1) }, [gridSize])
@@ -87,12 +89,13 @@ const ClientsList = () => {
             notify('danger', e.message)
         }
     }
+    const reopen = async (c) => { try { await saveClientEnd(c.id, ''); notify('success', tr("{name} reopened", { name: c.company })); load() } catch (e) { notify('danger', e.message) } }
     const remove = async (c) => { try { await api(`/api/crm/customers/${c.id}`, { method: 'DELETE' }); notify('success', tr("Client deleted")); load() } catch (e) { notify('danger', e.message) } }
     const exportCsv = async () => {
         try {
             const all = await api(`/api/crm/customers?${qs({ query, status, groupId, pageIndex: 1, pageSize: 200, sortKey: key, order })}`)
             const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
-            const rows = [[tr("Company"), tr("Contact"), tr("Email"), tr("Phone"), tr("City"), tr("Groups"), tr("Active")], ...all.list.map((c) => [c.company, c.primaryContact?.name, c.primaryContact?.email, c.phone || c.primaryContact?.phone, c.city, c.groups.map((g) => g.name).join(' / '), c.active ? tr("Yes") : tr("No")])]
+            const rows = [[tr("Company"), tr("Contact"), tr("Email"), tr("Phone"), tr("City"), tr("Groups"), tr("Active"), tr("Closed"), tr("Report: why?")], ...all.list.map((c) => [c.company, c.primaryContact?.name, c.primaryContact?.email, c.phone || c.primaryContact?.phone, c.city, c.groups.map((g) => g.name).join(' / '), c.active ? tr("Yes") : tr("No"), c.endStatus || '', c.endReason || ''])]
             const url = URL.createObjectURL(new Blob([`﻿${rows.map((r) => r.map(esc).join(',')).join('\n')}`], { type: 'text/csv;charset=utf-8' }))
             const a = document.createElement('a'); a.href = url; a.download = `clients-${dayjs().format('YYYY-MM-DD')}.csv`; a.click(); URL.revokeObjectURL(url)
         } catch (e) { notify('danger', e.message) }
@@ -105,7 +108,9 @@ const ClientsList = () => {
         ...(c.primaryContact?.email ? [{ label: tr("Send an email"), icon: <TbMail />, onClick: () => { window.location.href = `mailto:${c.primaryContact.email}` } }] : []),
         ...((c.phone || c.primaryContact?.phone) ? [{ label: tr("Call"), icon: <TbPhone />, onClick: () => { window.location.href = `tel:${c.phone || c.primaryContact.phone}` } }] : []),
         ...(can('activity_log', 'view') ? [{ label: tr("Activity log"), icon: <TbHistory />, onClick: () => navigate(`/crm/activity/client/${c.id}`) }] : []),
-        ...(can('customers', 'edit') ? [{ label: c.active ? tr("Deactivate") : tr("Activate"), icon: <TbPower />, after: true, onClick: () => toggle(c, !c.active) }] : []),
+        ...(can('customers', 'edit') && !c.endStatus ? [{ label: c.active ? tr("Deactivate") : tr("Activate"), icon: <TbPower />, after: true, onClick: () => toggle(c, !c.active) }] : []),
+        ...(can('customers', 'edit') ? [{ label: c.endStatus ? tr("Change the closing report") : tr("Lost, junk or refused…"), icon: <TbBan />, after: true, onClick: () => setEndOf(c) }] : []),
+        ...(can('customers', 'edit') && c.endStatus ? [{ label: tr("Reopen the client"), icon: <TbRotate />, after: true, onClick: () => reopen(c) }] : []),
         ...(can('customers', 'delete') ? [{ label: tr("Delete"), icon: <TbTrash />, danger: true, after: true, onClick: () => setDel(c) }] : []),
     ]
     const dots = (c) => (
@@ -125,7 +130,7 @@ const ClientsList = () => {
             <article key={c.id} className="cx-card" style={{ '--i': Math.min(i, 12) }} data-href={`/crm/clients/${c.id}`} onClick={() => navigate(`/crm/clients/${c.id}`)} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/crm/clients/${c.id}`) }}>
                 <header className="cx-card__top">
                     {c.logoUrl ? <img className="cx-logo" src={c.logoUrl} alt="" loading="lazy" /> : <span className={`cx-logo cx-logo--${toneOf(c.company)}`}>{initials(c.company)}</span>}
-                    <span className="cx-card__tools" onClick={(e) => e.stopPropagation()}>{!c.active && <span className="cx-off">{tr("Inactive")}</span>}<button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-gray-100 dark:hover:bg-gray-700 ${c.pinned ? 'text-primary' : 'text-gray-400'}`} title={c.pinned ? tr("Unpin") : tr("Pin to the top")} aria-label={c.pinned ? tr("Unpin") : tr("Pin to the top")} aria-pressed={!!c.pinned} onClick={() => mark(c, { pinned: !c.pinned })}>{c.pinned ? <TbPinFilled /> : <TbPin />}</button><button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-gray-100 dark:hover:bg-gray-700 ${c.favorite ? 'text-amber-500' : 'text-gray-400'}`} title={c.favorite ? tr("Remove from favorites") : tr("Add to favorites")} aria-label={c.favorite ? tr("Remove from favorites") : tr("Add to favorites")} aria-pressed={!!c.favorite} onClick={() => mark(c, { favorite: !c.favorite })}>{c.favorite ? <TbStarFilled /> : <TbStar />}</button>{dots(c)}</span>
+                    <span className="cx-card__tools" onClick={(e) => e.stopPropagation()}>{c.endStatus ? <span title={c.endReason || undefined}><ClientEndTag status={c.endStatus} /></span> : !c.active && <span className="cx-off">{tr("Inactive")}</span>}<button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-gray-100 dark:hover:bg-gray-700 ${c.pinned ? 'text-primary' : 'text-gray-400'}`} title={c.pinned ? tr("Unpin") : tr("Pin to the top")} aria-label={c.pinned ? tr("Unpin") : tr("Pin to the top")} aria-pressed={!!c.pinned} onClick={() => mark(c, { pinned: !c.pinned })}>{c.pinned ? <TbPinFilled /> : <TbPin />}</button><button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-gray-100 dark:hover:bg-gray-700 ${c.favorite ? 'text-amber-500' : 'text-gray-400'}`} title={c.favorite ? tr("Remove from favorites") : tr("Add to favorites")} aria-label={c.favorite ? tr("Remove from favorites") : tr("Add to favorites")} aria-pressed={!!c.favorite} onClick={() => mark(c, { favorite: !c.favorite })}>{c.favorite ? <TbStarFilled /> : <TbStar />}</button>{dots(c)}</span>
                 </header>
                 <h3 className="cx-card__name" title={c.company}>{c.company}</h3>
                 <p className="cx-card__role">{primary?.name || tr("No contact yet")}{c.city ? <><span> · </span><TbMapPin className="cx-pin" />{c.city}</> : null}</p>
@@ -161,7 +166,7 @@ const ClientsList = () => {
             <div className="cx-tools">
                 <Input className="cx-search" size="sm" prefix={<TbSearch className="text-lg" />} placeholder={tr("Search company, contact, phone, VAT…")} value={search} onChange={(e) => setSearch(e.target.value)} />
                 <Segment size="sm" value={status} onChange={(v) => { if (v) { setStatus(v); setPage(1) } }}>
-                    <Segment.Item value="all">{tr("All")}</Segment.Item><Segment.Item value="active">{tr("Active")}</Segment.Item><Segment.Item value="inactive">{tr("Inactive")}</Segment.Item>
+                    <Segment.Item value="all">{tr("All")}</Segment.Item><Segment.Item value="active">{tr("Active")}</Segment.Item><Segment.Item value="inactive">{tr("Inactive")}</Segment.Item><Segment.Item value="closed">{tr("Closed")}{s.closed ? ` · ${s.closed}` : ''}</Segment.Item>
                 </Segment>
                 <div className="w-44"><Select size="sm" isClearable placeholder={tr("All groups")} options={groupOptions} value={groupOptions.find((o) => o.value === groupId) || null} onChange={(o) => { setGroupId(o ? o.value : null); setPage(1) }} /></div>
                 <button type="button" className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition ${favOnly ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300'}`} aria-pressed={favOnly} onClick={() => { setFavOnly((v) => !v); setPage(1) }}>{favOnly ? <TbStarFilled /> : <TbStar />}{tr("Favorites")}</button>
@@ -197,7 +202,7 @@ const ClientsList = () => {
                                             {Object.entries(c.money).filter(([, m]) => m.outstanding > 0).map(([cid, m]) => <div key={cid} className={m.overdue > 0 ? 'text-red-500' : ''}>{money(m.outstanding, cid, { decimals: 0 })}</div>)}
                                             {!Object.values(c.money).some((m) => m.outstanding > 0) && <span className="text-gray-400">—</span>}
                                         </Td>
-                                        <Td onClick={(e) => e.stopPropagation()}>{can('customers', 'edit') ? <Switcher checked={c.active} onChange={(v) => toggle(c, v)} /> : <Tag>{c.active ? tr("Yes") : tr("No")}</Tag>}</Td>
+                                        <Td onClick={(e) => e.stopPropagation()}>{c.endStatus ? <span title={c.endReason || undefined}><ClientEndTag status={c.endStatus} /></span> : can('customers', 'edit') ? <Switcher checked={c.active} onChange={(v) => toggle(c, v)} /> : <Tag>{c.active ? tr("Yes") : tr("No")}</Tag>}</Td>
                                         <Td className="whitespace-nowrap text-gray-500">{dayjs(c.createdAt).format('YYYY-MM-DD')}</Td>
                                         <Td className="text-right" onClick={(e) => e.stopPropagation()}>{dots(c)}</Td>
                                     </Tr>
@@ -215,6 +220,7 @@ const ClientsList = () => {
             </div>
 
             {menu && <RowMenu anchor={menu.el} items={items(menu.row)} onClose={() => setMenu(null)} />}
+            <ClientEndDialog client={endOf} onClose={() => setEndOf(null)} onSaved={load} />
             <ConfirmDialog isOpen={!!del} type="danger" title={tr("Delete this client?")} confirmText={tr("Delete")} onClose={() => setDel(null)} onCancel={() => setDel(null)} onConfirm={() => { const c = del; setDel(null); remove(c) }}>
                 <p>{del?.company}</p>
             </ConfirmDialog>

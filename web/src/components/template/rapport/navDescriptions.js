@@ -49,6 +49,7 @@ export const NAV_DESC = {
     estimates: 'Quotes sent to clients',
     proposals: 'Offers with a full pitch',
     contracts: 'Agreements to sign',
+    'contract-templates': 'Ready texts for new contracts',
     'purchase-orders': 'Orders to suppliers',
     'credit-notes': 'Refunds and corrections',
     subscriptions: 'Recurring billing',

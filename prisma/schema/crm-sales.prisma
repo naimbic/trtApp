@@ -358,6 +358,23 @@ model CrmContractType {
   @@map("crm_contract_types")
 }
 
+/// A ready text for new contracts (Contracts, Templates): the wording with merge fields, and optionally the type it sets.
+model CrmContractTemplate {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  description    String?
+  content        String?
+  contractTypeId String?  @db.ObjectId
+  /// off: not offered when writing a contract
+  isActive       Boolean?
+  sortOrder      Int?
+  addedFrom      String?  @db.ObjectId
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("crm_contract_templates")
+}
+
 /// tblcontracts. createdAt <- dateadded
 model CrmContract {
   id                  String             @id @default(auto()) @map("_id") @db.ObjectId

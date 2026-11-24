@@ -31,7 +31,7 @@ import NewTicketDialog from '../tickets/NewTicketDialog'
 import ProjectDialog from '../projects/ProjectDialog'
 import { useCan } from '../kit/api'
 import { tr } from '@/utils/t'
-import { ENDS, END_TONE, useLeadEnds } from './ends'
+import { ENDS, useEndColors, useLeadEnds } from './ends'
 import useTabParam from '@/utils/useTabParam'
 
 const LEAD_LANGUAGES = [['english', 'English'], ['french', 'Français'], ['arabic', 'العربية'], ['spanish', 'Español'], ['german', 'Deutsch'], ['italian', 'Italiano'], ['portuguese', 'Português'], ['dutch', 'Nederlands'], ['turkish', 'Türkçe'], ['russian', 'Русский'], ['japanese', '日本語']].map(([value, label]) => ({ value, label }))
@@ -95,6 +95,7 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const flag = (action, ok) => run(() => api(`/api/crm/pipeline/leads/${id}/flag`, { method: 'POST', body: { action } }), ok)
     const l = detail?.lead
     const ends = useLeadEnds()
+    const endColors = useEndColors()
     const ended = !!l && ENDS.some((k) => l[k])
 
     const names = (ids) => staff.filter((x) => (ids || []).includes(x.id)).map((x) => x.name)
@@ -194,14 +195,14 @@ const LeadDrawer = ({ open, id, staff, presets, stage, refreshKey, onClose, onCh
     const headActions = l && (
         <>
             {detail.can.convert && <button type="button" className="rp-qv-act is-solid" onClick={() => setConfirm('convert')}><TbUserCheck />{tr("Convert to client")}</button>}
-            {!detail.can.closed && !ended && ENDS.map((k) => <button key={k} type="button" className="rp-qv-act" onClick={() => flag(k, tr("Marked as {name}", { name: ends[k] }))}><TbBan />{ends[k]}</button>)}
+            {!detail.can.closed && !ended && ENDS.map((k) => <button key={k} type="button" className="rp-qv-act" onClick={() => flag(k, tr("Marked as {name}", { name: ends[k] }))}><TbBan style={{ color: endColors[k].color }} />{ends[k]}</button>)}
             {!detail.can.closed && ended && <button type="button" className="rp-qv-act" onClick={() => flag('restore', tr("Lead restored"))}><TbArrowBackUp />{tr("Restore")}</button>}
         </>
     )
 
     const headerBadges = l && (ended || l.client) && (
         <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
-            {ENDS.filter((k) => l[k]).map((k) => <Tag key={k} className={END_TONE[k]}>{ends[k]}</Tag>)}
+            {ENDS.filter((k) => l[k]).map((k) => <Tag key={k} className="border-transparent" style={endColors[k].tag}>{ends[k]}</Tag>)}
             {l.client && <Link className="text-primary hover:underline" to={`/crm/clients/${l.client.id}`}>{tr("→ client")} {l.client.company}</Link>}
         </div>
     )

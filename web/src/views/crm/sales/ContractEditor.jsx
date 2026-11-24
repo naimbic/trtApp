@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import dayjs from 'dayjs'
 import Container from '@/components/shared/Container'
@@ -8,14 +8,16 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Switcher from '@/components/ui/Switcher'
-import { TbArrowNarrowLeft } from 'react-icons/tb'
-import { api, notify } from '../kit/api'
+import { TbArrowNarrowLeft, TbTemplate, TbDeviceFloppy } from 'react-icons/tb'
+import { api, notify, useCan } from '../kit/api'
 import { useSessionUser } from '@/store/authStore'
 import RelationSelect from '../kit/RelationSelect'
-import VisualEditor from '../mail/VisualEditor'
+import ContractText from './contractText'
+import confirmDelete from '@/components/crm/useConfirm'
 import { tr } from '@/utils/t'
 
-const TOKENS = ['contract_subject', 'contract_datestart', 'contract_dateend', 'contract_contract_value', 'contract_type', 'contract_id', 'contract_today', 'client_company', 'client_street', 'client_city', 'client_vat_number', 'company_name', 'address', 'vat_number_with_label']
+const TEMPLATES = '/api/crm/sales/contracts/templates'
+const hasText = (h) => !!String(h || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
 const L = ({ children }) => <label className="form-label mb-2 block">{children}</label>
 const addMonths = (d, n) => { const x = new Date(`${d}T00:00:00`); x.setMonth(x.getMonth() + Number(n)); x.setDate(x.getDate() - 1); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}` }
 const day = (d) => (d ? dayjs(d).format('YYYY-MM-DD') : '')
@@ -24,8 +26,10 @@ const ContractEditor = () => {
     const { id } = useParams()
     const [params] = useSearchParams()
     const navigate = useNavigate()
-    const visual = useRef(null)
+    const can = useCan()
     const [types, setTypes] = useState([])
+    const [templates, setTemplates] = useState([])
+    const [tplId, setTplId] = useState(null)
     const [v, setV] = useState(null)
     const [open, setOpen] = useState({ text: true, desc: false, how: false }) // folding sections of the form
     const toggle = (k) => setOpen((o) => ({ ...o, [k]: !o[k] }))
@@ -37,18 +41,37 @@ const ContractEditor = () => {
     const set = (p) => setV((x) => ({ ...x, ...p }))
 
     const fromId = params.get('from')
+    const startTpl = !id && !fromId ? params.get('template') : null // a new contract opened from a template
     useEffect(() => {
-        Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id || fromId ? api(`/api/crm/sales/contracts/${id || fromId}`) : null]).then(([l, c]) => {
+        Promise.all([api('/api/crm/sales/contracts?pageSize=1'), id || fromId ? api(`/api/crm/sales/contracts/${id || fromId}`) : null, api(TEMPLATES).catch(() => ({ list: [] })), startTpl ? api(`${TEMPLATES}?id=${startTpl}`).catch(() => null) : null]).then(([l, c, tp, t0]) => {
+            setTemplates((tp.list || []).filter((t) => t.active))
+            if (t0) setTplId(t0.id)
             const cloned = !id && !!c // a duplicate: the wording of another contract as a new, unsigned one that starts today
             if (id && c?.locked && !superAdmin) { notify('warning', tr("A signed contract cannot be edited")); navigate(`/crm/contracts/${id}`, { replace: true }); return }
             setWasLocked(!cloned && !!c?.locked)
             const tl = l.stats?.types || []
             setTypes(tl)
             // the type that is the default (and its length) is already chosen on a new contract
-            const def = !c ? tl.find((t) => t.isDefault) : null
-            setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: cloned ? day(new Date()) : day(c.dateStart), dateEnd: cloned ? (c.dateStart && c.dateEnd ? day(new Date(Date.now() + (new Date(c.dateEnd) - new Date(c.dateStart)))) : '') : day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: cloned ? false : c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: def?.id || null, projectId: null, dateStart: day(new Date()), dateEnd: def?.months ? addMonths(day(new Date()), def.months) : '', value: '', description: '', content: '', hidden: false, remindClient: true, signed: false })
+            const def = !c ? tl.find((t) => t.id === (t0?.typeId || params.get('typeId'))) || tl.find((t) => t.isDefault) : null
+            setV(c ? { subject: c.subject || '', clientId: c.clientId, typeId: c.typeId, projectId: c.projectId, dateStart: cloned ? day(new Date()) : day(c.dateStart), dateEnd: cloned ? (c.dateStart && c.dateEnd ? day(new Date(Date.now() + (new Date(c.dateEnd) - new Date(c.dateStart)))) : '') : day(c.dateEnd), value: c.value ?? '', description: c.description || '', content: c.content || '', hidden: !!c.hidden, remindClient: c.remindClient !== false, signed: cloned ? false : c.signed || c.markedAsSigned } : { subject: '', clientId: params.get('clientId'), typeId: def?.id || null, projectId: null, dateStart: day(new Date()), dateEnd: def?.months ? addMonths(day(new Date()), def.months) : '', value: '', description: '', content: t0?.content || '', hidden: false, remindClient: true, signed: false })
         }).catch((e) => setError(e.message))
-    }, [id, fromId]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [id, fromId, startTpl]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // choosing a template puts its text in the contract (and its type, when the template sets one); a text already written is only replaced after a yes
+    const useTemplate = async (o) => {
+        if (!o) return setTplId(null)
+        try {
+            const t = await api(`${TEMPLATES}?id=${o.value}`)
+            const apply = () => { setTplId(t.id); const ty = types.find((x) => x.id === t.typeId); set({ content: t.content, ...(ty ? { typeId: ty.id, ...(ty.months && v.dateStart && !v.dateEnd ? { dateEnd: addMonths(v.dateStart, ty.months) } : {}) } : {}) }) }
+            if (hasText(v.content)) confirmDelete(tr("Replace the text with this template?"), apply, { text: tr("What is written now is replaced by the text of the template."), confirmText: tr("Replace"), type: 'warning' })
+            else apply()
+        } catch (e) { notify('danger', e.message) }
+    }
+    const saveAsTemplate = async () => {
+        const name = window.prompt(tr("Name of the new template"), v.subject || '')
+        if (!name?.trim()) return
+        try { await api(TEMPLATES, { method: 'POST', body: { name: name.trim(), content: v.content, typeId: v.typeId } }); notify('success', tr("Saved as a template")); const tp = await api(TEMPLATES); setTemplates((tp.list || []).filter((t) => t.active)) } catch (e) { notify('danger', e.message) }
+    }
 
     const save = async () => {
         setSaving(true); setError('')
@@ -58,6 +81,7 @@ const ContractEditor = () => {
         } catch (e) { setError(e.message); window.scrollTo({ top: 0, behavior: 'smooth' }) } finally { setSaving(false) }
     }
     if (!v) return <Container><div className="py-16 text-center text-gray-400">{error || tr("Loading…")}</div></Container>
+    const tplOpts = templates.map((t) => ({ value: t.id, label: t.type ? `${t.name} · ${t.type}` : t.name }))
     const typeOpts = types.filter((t) => t.active !== false || t.id === v.typeId).map((t) => ({ value: t.id, label: t.name }))
     // choosing a type with a length fills the end date (counted from the start date) when it is empty or was filled by a type before
     const chooseType = (o) => {
@@ -80,9 +104,16 @@ const ContractEditor = () => {
 
                         <AccordionCard title={tr("Contract text")} dot="#f59e0b" note={tr("What the client reads")} open={open.text} onToggle={() => toggle('text')}>
                             <div className="p-4">
+                                {!v.signed && (
+                                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-amber-50 p-2.5 dark:bg-amber-500/10">
+                                        <TbTemplate className="shrink-0 text-xl text-amber-600" />
+                                        <div className="min-w-[220px] flex-1"><Select size="sm" isClearable placeholder={templates.length ? tr("Start from a template") : tr("No template yet")} isDisabled={!templates.length} options={tplOpts} value={tplOpts.find((o) => o.value === tplId) || null} onChange={useTemplate} /></div>
+                                        {can('contracts', 'create') && hasText(v.content) && <Button size="sm" icon={<TbDeviceFloppy />} onClick={saveAsTemplate}>{tr("Save as a template")}</Button>}
+                                        <Button size="sm" variant="plain" data-href="/crm/contracts/templates" onClick={() => window.open('/crm/contracts/templates', '_blank')}>{tr("Manage templates")}</Button>
+                                    </div>
+                                )}
                                 <p className="mb-2 text-xs text-gray-500">{tr("Write the contract. Merge fields are replaced when the client opens it or you print the PDF.")}</p>
-                                <div className="mb-3 flex flex-wrap gap-1.5">{TOKENS.map((t) => <button key={t} type="button" disabled={v.signed} onClick={() => visual.current?.insert(`{${t}}`)} className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs hover:bg-primary/10 hover:text-primary disabled:opacity-50 dark:bg-gray-700">{`{${t}}`}</button>)}</div>
-                                <VisualEditor ref={visual} docKey={`contract-${id || 'new'}`} value={v.content} onChange={(html) => !v.signed && set({ content: html })} />
+                                <ContractText value={v.content} disabled={!!v.signed} onChange={(html) => !v.signed && set({ content: html })} />
                             </div>
                         </AccordionCard>
                     </div>

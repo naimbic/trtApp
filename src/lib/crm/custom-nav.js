@@ -12,6 +12,7 @@ export const customNavItems = [
     { group: 'Tasks', key: 'tasks-board', title: 'Tasks board', path: '/crm/tasks-board', feature: 'tasks' },
     { group: 'Administration', key: 'payroll', title: 'Payroll', path: '/crm/payroll', feature: 'payroll' },
     { group: 'Administration', key: 'work-hours', title: 'Work hours', path: '/crm/work-hours', feature: 'staff', also: ['work_hours'] },
+    { group: 'Sales', key: 'contract-templates', title: 'Contract templates', path: '/crm/contracts/templates', feature: 'contracts' },
     { group: 'Sales', key: 'freelancers', title: 'Freelancers', path: '/crm/freelancers', feature: 'freelancers' },
     { group: 'Sales', key: 'sales-setting', title: 'Sales setting', path: '/crm/lists?area=sales', feature: 'settings' },
     { group: 'Customers', key: 'customers-setting', title: 'Customers setting', path: '/crm/lists?area=customers', feature: 'customers' },

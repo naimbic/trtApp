@@ -38,7 +38,9 @@ export async function contractPdf(id, hash, staff = false) {
     const d = await loadContractDoc(id, hash, staff)
     if (!d) return null
     const S = await pdfSettings('contract')
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}${S.baseCss()}${CONTRACT_CSS}${paperCss()}</style></head><body>${await contractHtml(d, S)}</body></html>`
+    // the foot of every printed page: whose contract it is (next to the page number, when Settings shows it)
+    const foot = `${(await getOptions(['companyname']))('companyname')} · ${d.contract.subject || ''} ${d.number}`.replace(/["\\\n\r<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 110)
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.number)}</title><style>${S.pageCss()}@page{@bottom-left{content:"${foot}";font-size:7.5pt;color:#8a8a8a}}${S.baseCss()}${CONTRACT_CSS}${paperCss()}</style></head><body>${await contractHtml(d, S)}</body></html>`
     return { pdf: await htmlToPdf(html), name: `contract-${(d.contract.subject || d.number).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}.pdf` }
 }
 

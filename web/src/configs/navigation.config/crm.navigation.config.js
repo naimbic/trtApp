@@ -14,7 +14,7 @@ const STRUCTURE = [
     { group: 'Leads', icon: 'crmLeads', entries: ['leads', 'web-to-lead', 'lead-email-integration', 'leads-setting'] },
     { group: 'Tasks', icon: 'crmTasks', entries: [col('Work', ['tasks-board', 'my-tasks', 'team-tasks', 'timeline', 'notes', 'todos']), col('Tracking', ['time-report', 'task-timers', 'issues', 'statuses', 'checklist-templates', 'tasks-setting'])] },
     { group: 'Customers', icon: 'crmCustomers', entries: ['clients', 'contacts', 'passwords', 'file-manager', 'customers-setting'] },
-    { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
+    { group: 'Sales', icon: 'crmSales', entries: [col('Documents', ['invoices', 'estimates', 'proposals', 'contracts', 'contract-templates', 'purchase-orders']), col('Money & catalog', ['payments', 'expenses', 'credit-notes', 'subscriptions', 'items', 'freelancers', 'sales-setting'])] },
     { group: 'Projects', icon: 'crmProjects', entries: ['projects', 'scrum-board', 'milestones'] },
     { group: 'Growth & insight', icon: 'crmUtilities', entries: ['grow', 'goals', 'surveys', 'my-growth', 'points', 'reports', 'ai', 'activity-log'] },
     { group: 'Support & Help', icon: 'crmSupport', entries: ['tickets', 'help-center', 'kb-manage', 'support-setting'] },

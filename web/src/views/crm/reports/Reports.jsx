@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { usePageRange, useRegisterCurrency } from '@/store/pageFilterStore'
 import { useDashFilters, accentHex } from '@/store/dashFilterStore'
-import { TbDownload, TbCash, TbReceipt2, TbTrendingUp, TbAlertTriangle, TbUsersGroup, TbTargetArrow, TbClock, TbLifebuoy, TbChecklist, TbHourglass, TbScale, TbPercentage } from 'react-icons/tb'
+import { TbDownload, TbCash, TbReceipt2, TbTrendingUp, TbAlertTriangle, TbUsersGroup, TbTargetArrow, TbClock, TbLifebuoy, TbChecklist, TbHourglass, TbScale, TbPercentage, TbBan } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import Chart from '@/components/shared/Chart'
 import Container from '@/components/shared/Container'
@@ -20,6 +20,7 @@ import classNames from '@/utils/classNames'
 import { api, qs } from '../kit/api'
 import { tr, trn } from '@/utils/t'
 import { KpiCard } from '../kit/KpiCard'
+import { useLeadEnds, useEndColors } from '../leads/ends'
 
 const { Tr, Th, Td, THead, TBody } = Table
 const TABS = { sales: tr("Sales"), profit: tr("Profit & expenses"), leads: tr("Leads"), support: tr("Support"), work: tr("Work & time") }
@@ -71,7 +72,7 @@ const Overview = ({ d, tiles }) => {
     return (
         <Card>
             <div className="flex items-center justify-between"><h4>{tr("Overview")}</h4><span className="text-sm text-gray-500">{d.range.label}</span></div>
-            <div className="mt-4 grid grid-cols-1 gap-4 rounded-2xl bg-gray-100 p-3 md:grid-cols-3 dark:bg-gray-700">
+            <div className={`mt-4 grid grid-cols-1 gap-4 rounded-2xl bg-gray-100 p-3 dark:bg-gray-700 ${tiles.length > 3 ? 'sm:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'}`}>
                 {tiles.map((x, i) => <Tile key={x.title} {...x} active={sel === i} onClick={() => setSel(i)} compare="vs the period before" />)}
             </div>
             <Chart type="line" height={380}
@@ -212,15 +213,17 @@ const Profit = ({ d }) => {
 
 const Leads = ({ d }) => {
     const s = d.stats, p = d.prev || {}
+    const ends = useLeadEnds(), endColors = useEndColors()
     const tiles = [
         { title: tr("New leads"), value: s.total, icon: <TbTargetArrow />, iconClass: 'bg-sky-200', g: growth(s.total, p.total), series: d.series.created, prevSeries: d.prevSeries?.created, color: '#3b82f6', fmt: String },
         { title: tr("Became clients"), value: s.converted, icon: <TbUsersGroup />, iconClass: 'bg-emerald-200', g: growth(s.converted, p.converted), series: d.series.converted, prevSeries: d.prevSeries?.converted, color: '#10b981', fmt: String },
-        { title: tr("Lost"), value: s.lost, icon: <TbAlertTriangle />, iconClass: 'bg-orange-200', g: growth(s.lost, p.lost), series: d.series.lost, prevSeries: d.prevSeries?.lost, color: '#f97316', fmt: String },
+        { title: ends.lost, value: s.lost, icon: <TbAlertTriangle />, iconClass: 'bg-orange-200', g: growth(s.lost, p.lost), series: d.series.lost, prevSeries: d.prevSeries?.lost, color: endColors.lost.color, fmt: String },
+        { title: ends.refused, value: s.refused || 0, icon: <TbBan />, iconClass: 'bg-slate-200', g: growth(s.refused || 0, p.refused || 0), series: d.series.refused || [], prevSeries: d.prevSeries?.refused, color: endColors.refused.color, fmt: String },
     ]
-    const rate = (rows) => rows.slice(0, 6).map((r) => <Tr key={r.name}><Td className="font-semibold">{r.name}</Td><Td className="text-right tabular-nums">{r.total}</Td><Td className="text-right tabular-nums">{r.converted}</Td><Td className="text-right tabular-nums">{r.lost}</Td><Td className="text-right font-semibold tabular-nums">{r.rate}%</Td></Tr>)
+    const rate = (rows) => rows.slice(0, 6).map((r) => <Tr key={r.name}><Td className="font-semibold">{r.name}</Td><Td className="text-right tabular-nums">{r.total}</Td><Td className="text-right tabular-nums">{r.converted}</Td><Td className="text-right tabular-nums">{r.lost}</Td><Td className="text-right tabular-nums">{r.refused || 0}</Td><Td className="text-right font-semibold tabular-nums">{r.rate}%</Td></Tr>)
     return (
         <Dash d={d} tiles={tiles}
-            left={<TableCard title={tr("By source")} head={[[tr("Source")], [tr("Leads"), 1], [tr("Clients"), 1], [tr("Lost"), 1], [tr("Rate"), 1]]} empty={!d.bySource.length} csvName="leads-by-source" csvRows={d.bySource.map((r) => [r.name, r.total, r.converted, r.lost, r.rate])} rows={rate(d.bySource)} />}
+            left={<TableCard title={tr("By source")} head={[[tr("Source")], [tr("Leads"), 1], [tr("Clients"), 1], [ends.lost, 1], [ends.refused, 1], [tr("Rate"), 1]]} empty={!d.bySource.length} csvName="leads-by-source" csvRows={d.bySource.map((r) => [r.name, r.total, r.converted, r.lost, r.refused || 0, r.rate])} rows={rate(d.bySource)} />}
             right={<>
                 <Target title={tr("Conversion")} percent={s.rate} big={`${s.rate}%`} small="of new leads" hint={s.avgDays === null ? tr("No conversion in this period") : tr("Average {avgDays} days to convert", { avgDays: s.avgDays })} />
                 <TopList title={tr("Owners")} icon={<TbUsersGroup />} rows={d.byOwner.slice(0, 5).map((o) => ({ name: o.name, sub: tr("{converted} became clients", { converted: o.converted }), badge: o.total }))} />

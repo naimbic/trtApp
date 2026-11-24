@@ -2,6 +2,20 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.268.0',
+        date: '2026-11-24',
+        title: 'Contracts: templates, the full editor and a letterhead layout with both signatures; colours for closed leads and Refused in the reports',
+        items: [
+            'Contract templates: a new page (Sales, Contract templates, or the Templates button on Contracts) keeps your ready contract texts. Add, change, duplicate, switch off or delete them; "Add the examples" puts three starting texts there (service agreement, maintenance, confidentiality) for you to adapt.',
+            'A new contract starts from a template in one choice: its text (and its type) is filled in, with the merge fields for the client, the dates and the value. Any contract text can also be saved as a template.',
+            'The contract text now uses the full editor of the other pages: headings, colours, highlight, lists, tables, pictures, alignment, undo and redo.',
+            'The contract is laid out like a letter: a letterhead with your logo and details and the title of the contract, then the two parties and the text, and at the foot the signatures of both sides next to each other. Yours (the signature and stamp picture of the invoices) is added once the client has signed.',
+            'The printed PDF carries your company name and the contract at the foot of every page.',
+            'Leads: Lost, Junk and Refused each have a colour you choose in Settings, Leads, Closed leads; it shows on their tabs and labels.',
+            'Reports, Leads: Refused has its own figure and curve, and its own column by source. Lost and Refused carry the names you gave them.',
+        ],
+    },
+    {
         version: '0.267.0',
         date: '2026-11-23',
         title: 'Leads: new Refused status, and the names of Lost, Junk and Refused can be changed',

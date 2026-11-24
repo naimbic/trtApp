@@ -136,15 +136,15 @@ export async function runReport(kind, params = {}, opts = {}) {
         const sName = Object.fromEntries(sources.map((s) => [s.id, s.name])), stName = Object.fromEntries(statuses.map((s) => [s.id, s.name])), fName = Object.fromEntries(staff.map((s) => [s.id, [s.firstName, s.lastName].filter(Boolean).join(' ')]))
         // the import links leads and clients from the client side (client.leadId), so check both directions
         const fromLeads = new Set((await prisma.crmClient.findMany({ where: { leadId: { not: null } }, select: { leadId: true } })).map((c) => c.leadId))
-        const conv = (l) => !!(l.clientId || l.dateConverted || fromLeads.has(l.id)), created = B.blank(), converted = B.blank(), lostS = B.blank()
-        for (const l of leads) { const k = B.key(l.createdAt); if (k in created) { created[k]++; if (l.lost) lostS[k]++ } }
+        const conv = (l) => !!(l.clientId || l.dateConverted || fromLeads.has(l.id)), created = B.blank(), converted = B.blank(), lostS = B.blank(), refusedS = B.blank()
+        for (const l of leads) { const k = B.key(l.createdAt); if (k in created) { created[k]++; if (l.lost) lostS[k]++; if (l.refused) refusedS[k]++ } }
         for (const l of leads.filter(conv)) { const k = B.key(l.dateConverted || l.createdAt); if (k in converted) converted[k]++ }
-        const group = (f, names) => { const m = {}; for (const l of leads) { const k = f(l) || 'none'; const g = (m[k] ||= { name: names[k] || (k === 'none' ? 'Not set' : '—'), total: 0, converted: 0, lost: 0 }); g.total++; if (conv(l)) g.converted++; if (l.lost) g.lost++ } return Object.values(m).map((g) => ({ ...g, rate: g.total ? Math.round((g.converted / g.total) * 100) : 0 })).sort((a, b) => b.total - a.total) }
+        const group = (f, names) => { const m = {}; for (const l of leads) { const k = f(l) || 'none'; const g = (m[k] ||= { name: names[k] || (k === 'none' ? 'Not set' : '—'), total: 0, converted: 0, lost: 0, refused: 0 }); g.total++; if (conv(l)) g.converted++; if (l.lost) g.lost++; if (l.refused) g.refused++ } return Object.values(m).map((g) => ({ ...g, rate: g.total ? Math.round((g.converted / g.total) * 100) : 0 })).sort((a, b) => b.total - a.total) }
         const days = leads.filter((l) => conv(l) && l.dateConverted).map((l) => Math.max(0, (new Date(l.dateConverted) - new Date(l.createdAt)) / DAY))
         Object.assign(out, {
-            stats: { total: leads.length, converted: leads.filter(conv).length, rate: leads.length ? Math.round((leads.filter(conv).length / leads.length) * 100) : 0, lost: leads.filter((l) => l.lost).length, junk: leads.filter((l) => l.junk).length, avgDays: days.length ? Math.round(days.reduce((s, d) => s + d, 0) / days.length) : null },
-            series: { created: B.keys.map((k) => created[k]), converted: B.keys.map((k) => converted[k]), lost: B.keys.map((k) => lostS[k]) },
-            recent: [...leads].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 8).map((l) => ({ id: l.id, name: l.name, company: l.company || '', source: sName[l.sourceId] || '—', status: stName[l.statusId] || (l.lost ? 'Lost' : l.junk ? 'Junk' : '—'), owner: fName[l.assigned] || '—', date: l.createdAt, converted: conv(l) })),
+            stats: { total: leads.length, converted: leads.filter(conv).length, rate: leads.length ? Math.round((leads.filter(conv).length / leads.length) * 100) : 0, lost: leads.filter((l) => l.lost).length, junk: leads.filter((l) => l.junk).length, refused: leads.filter((l) => l.refused).length, avgDays: days.length ? Math.round(days.reduce((s, d) => s + d, 0) / days.length) : null },
+            series: { created: B.keys.map((k) => created[k]), converted: B.keys.map((k) => converted[k]), lost: B.keys.map((k) => lostS[k]), refused: B.keys.map((k) => refusedS[k]) },
+            recent: [...leads].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 8).map((l) => ({ id: l.id, name: l.name, company: l.company || '', source: sName[l.sourceId] || '—', status: stName[l.statusId] || (l.lost ? 'Lost' : l.junk ? 'Junk' : l.refused ? 'Refused' : '—'), owner: fName[l.assigned] || '—', date: l.createdAt, converted: conv(l) })),
             bySource: group((l) => l.sourceId, sName), byStatus: group((l) => l.statusId, stName), byOwner: group((l) => l.assigned, fName),
         })
     } else if (kind === 'support') {

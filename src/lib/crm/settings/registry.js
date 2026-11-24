@@ -377,10 +377,13 @@ export const GROUPS = {
         label: 'Leads', icon: 'TbFilter', desc: 'Statuses, sources and follow-up',
         cards: [
             { title: 'Pipeline lists', desc: 'Statuses, sources and web forms are managed from the menu, Leads.', links: [['Lead statuses', '/crm/lead-statuses'], ['Lead sources', '/crm/lead-sources'], ['Web-to-lead forms', '/crm/web-to-lead']] },
-            { title: 'Closed leads', desc: 'The three ways a lead ends without becoming a client. They stay above the board, next to Active; here you choose their names.', fields: [
+            { title: 'Closed leads', desc: 'The three ways a lead ends without becoming a client. They stay above the board, next to Active; here you choose their names and colours.', fields: [
                 f('lead_lost_label', 'Name of Lost', 'text', { default: 'Lost', max: 30 }),
                 f('lead_junk_label', 'Name of Junk', 'text', { default: 'Junk', max: 30 }),
                 f('lead_refused_label', 'Name of Refused', 'text', { default: 'Refused', max: 30 }),
+                f('lead_lost_color', 'Colour of Lost', 'color', { default: '#dc2626' }),
+                f('lead_junk_color', 'Colour of Junk', 'color', { default: '#d97706' }),
+                f('lead_refused_color', 'Colour of Refused', 'color', { default: '#475569' }),
             ] },
             { title: 'Rules & follow-up', fields: [
                 yes('auto_assign_customer_admin_after_lead_convert', 'Make the lead owner the client admin when converted'),

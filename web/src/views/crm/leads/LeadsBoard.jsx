@@ -19,7 +19,7 @@ import SavedViews from '@/components/crm/SavedViews'
 import BulkBar, { TickBox, runBulk, useSelection } from '@/components/crm/BulkBar'
 import { onCreate } from '@/utils/createIntent'
 import { tr, trn } from '@/utils/t'
-import { ENDS, useLeadEnds } from './ends'
+import { ENDS, useEndColors, useLeadEnds } from './ends'
 
 const { Tr, Th, Td, THead, TBody } = Table
 
@@ -27,6 +27,7 @@ const LeadsBoard = () => {
     const nav = useNavigate()
     const { id: routeId } = useParams()
     const ends = useLeadEnds()
+    const endColors = useEndColors()
     const SHOW = [['', tr("Active")], ...ENDS.map((k) => [k, ends[k]]), ['converted', tr("Converted")]]
     const [data, setData] = useState({ statuses: [], can: {}, sources: [], totals: {} })
     const [list, setList] = useState({ list: [], total: 0 })
@@ -140,7 +141,7 @@ const LeadsBoard = () => {
                 <div className="w-48"><Select size="sm" isClearable placeholder={tr("Any source")} options={sourceOptions} value={sourceOptions.find((o) => o.value === sourceId) || null} onChange={(o) => setSourceId(o?.value || null)} /></div>
                 <label className="flex items-center gap-2 text-sm"><Switcher checked={mine} onChange={(c) => { setMine(c); if (c) setAssigned(null) }} />{tr("My leads")}</label>
                 <SavedViews className="ml-auto" page="leads" getState={() => ({ search, assigned, sourceId, mine, show })} applyState={(v) => { setSearch(v.search || ''); setAssigned(v.assigned || null); setSourceId(v.sourceId || null); setMine(!!v.mine); setShow(v.show || '') }} />
-                <Segment size="sm" value={show} onChange={(v) => setShow(Array.isArray(v) ? v[0] ?? '' : v ?? '')}>{SHOW.map(([v, l]) => <Segment.Item key={v || 'active'} value={v}>{l}{v && data.totals?.[v] ? ` (${data.totals[v]})` : ''}</Segment.Item>)}</Segment>
+                <Segment size="sm" value={show} onChange={(v) => setShow(Array.isArray(v) ? v[0] ?? '' : v ?? '')}>{SHOW.map(([v, l]) => <Segment.Item key={v || 'active'} value={v}>{endColors[v] && <i className="me-1.5 inline-block size-2 rounded-full align-middle" style={{ background: endColors[v].color }} />}{l}{v && data.totals?.[v] ? ` (${data.totals[v]})` : ''}</Segment.Item>)}</Segment>
             </div>
 
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}

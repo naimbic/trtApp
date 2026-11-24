@@ -25,7 +25,7 @@ export default {
     'nav.timesheets': <PiCalendarCheckDuotone />, 'nav.leave-requests': <PiAirplaneTiltDuotone />, 'nav.days-off': <PiCalendarXDuotone />,
     'nav.checklist-templates': <PiListChecksDuotone />, 'nav.task-statuses': <PiListChecksDuotone />,
     'nav.invoices': <PiReceiptDuotone />, 'nav.payments': <PiMoneyDuotone />, 'nav.estimates': <PiFileTextDuotone />,
-    'nav.proposals': <PiFilePlusDuotone />, 'nav.purchase-orders': <PiShoppingBagDuotone />, 'nav.contracts': <PiSignatureDuotone />,
+    'nav.proposals': <PiFilePlusDuotone />, 'nav.purchase-orders': <PiShoppingBagDuotone />, 'nav.contracts': <PiSignatureDuotone />, 'nav.contract-templates': <PiFileMagnifyingGlassDuotone />,
     'nav.contract-types': <PiFileMagnifyingGlassDuotone />, 'nav.credit-notes': <PiNoteDuotone />, 'nav.subscriptions': <PiRepeatDuotone />,
     'nav.items': <PiPackageDuotone />, 'nav.item-groups': <PiStackDuotone />, 'nav.expenses': <PiWalletDuotone />, 'nav.freelancers': <PiHandCoinsDuotone />,
     'nav.expense-categories': <PiTagDuotone />,

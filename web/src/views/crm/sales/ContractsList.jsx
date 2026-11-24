@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { StatTile, TileGrid, StatusPills } from '@/components/crm/ListHeader'
 import { TbFileCertificate, TbClockExclamation, TbCoins, TbSignature } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
-import { TbPlus, TbSearch, TbFolderPlus } from 'react-icons/tb'
+import { TbPlus, TbSearch, TbFolderPlus, TbTemplate } from 'react-icons/tb'
 import Container from '@/components/shared/Container'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Button from '@/components/ui/Button'
@@ -89,7 +89,7 @@ const ContractsList = () => {
         <Container>
             <InvoiceHead
                 title={tr("Contracts")}
-                action={can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/contracts/new'} onClick={() => navigate('/crm/contracts/new')}>{tr("New contract")}</Button>}
+                action={<div className="flex flex-wrap gap-2"><Button icon={<TbTemplate />} data-href={'/crm/contracts/templates'} onClick={() => navigate('/crm/contracts/templates')}>{tr("Templates")}</Button>{can('contracts', 'create') && <Button variant="solid" icon={<TbPlus />} data-href={'/crm/contracts/new'} onClick={() => navigate('/crm/contracts/new')}>{tr("New contract")}</Button>}</div>}
                 stats={[
                     { icon: <TbFileCertificate />, label: tr("Active"), value: String(data.stats.counts?.active ?? 0), badge: (data.stats.counts?.expiring ?? 0) ? <span className="badge badge--butter">{tr("{n} expiring", { n: data.stats.counts.expiring })}</span> : null },
                     { icon: <TbCoins />, label: tr("Value of live contracts"), value: money(data.stats.activeValue, baseCur, { decimals: 0 }) },

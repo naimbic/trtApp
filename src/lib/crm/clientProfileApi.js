@@ -138,6 +138,11 @@ export async function clientProfile(id, { full = false } = {}) {
     for (const pr of projects) add('project', `Project “${pr.name}” started`, '', pr.createdAt, `/crm/projects/${pr.id}`)
     for (const t of tickets) { add('ticket', `Ticket #${t.legacyId} opened`, t.subject || '', t.createdAt, `/crm/tickets/${t.id}`) }
     for (const t of tasks) { add('task', `Task: ${t.name}`, t.status === 5 ? 'completed' : t.dueDate ? `due ${t.dueDate.toISOString().slice(0, 10)}` : '', t.dateFinished || t.createdAt, `/crm/tasks-board?task=${t.id}`) }
+    // the note cards about this client (Notes tab) are part of the story too
+    const cards = await prisma.crmQuickNote.findMany({ where: { clientIds: { has: id } }, select: { title: true, description: true, addedFrom: true, archived: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 200 }).catch(() => [])
+    const cardStaff = [...new Set(cards.map((n) => n.addedFrom).filter((x) => x && !sName[x]))]
+    if (cardStaff.length) for (const st of await prisma.crmStaff.findMany({ where: { id: { in: cardStaff } }, select: { id: true, firstName: true, lastName: true, email: true } })) sName[st.id] = name(st)
+    for (const n of cards) if (!n.archived) add('note', `Note${n.addedFrom && sName[n.addedFrom] ? ` · ${sName[n.addedFrom]}` : ''}`, [n.title, strip(n.description).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')].filter(Boolean).join(' — '), n.createdAt)
     for (const n of notes) add('note', `Note${n.addedFrom && sName[n.addedFrom] ? ` · ${sName[n.addedFrom]}` : ''}`, strip(n.description), n.dateContacted || n.createdAt)
     for (const v of viewList.slice(0, 60)) add('view', `Client opened ${v.type} ${v.label}`, v.ip ? `from ${v.ip}` : '', v.date, v.link)
     for (const x of contacts) if (x.lastLogin) add('login', `${name(x)} signed in to the client area`, x.lastIp ? `from ${x.lastIp}` : '', x.lastLogin)
@@ -176,7 +181,9 @@ export async function addFollowUp(id, body) {
     const text = String(body.description || '').trim().slice(0, 2000)
     if (!text) throw fail('Write something first')
     if (body.type === 'note') {
-        await prisma.crmNote.create({ data: { relType: 'customer', relId: id, description: text, dateContacted: body.date ? new Date(body.date) : new Date(), addedFrom: staffId } })
+        // a note card (the Notes tab of the client and the Notes page), no longer an old follow-up note
+        const last = await prisma.crmQuickNote.findFirst({ where: { addedFrom: staffId || undefined }, orderBy: { position: 'desc' }, select: { position: true } })
+        await prisma.crmQuickNote.create({ data: { title: '', kind: 'note', description: `<p>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r?\n/g, '<br>')}</p>`, labels: [], clientIds: [id], addedFrom: staffId || undefined, position: (last?.position || 0) + 1 } })
     } else if (body.type === 'reminder') {
         const d = new Date(body.date)
         if (!body.date || Number.isNaN(+d)) throw fail('Pick the date of the reminder')

@@ -183,7 +183,7 @@ const ClientDetail = () => {
             ...G(tr("Records"), "bg-amber-50 dark:bg-amber-500/10", [
                 { key: 'mails', label: tr("Mails"), iconOnly: true, icon: <TbMail className="text-sky-500" /> },
                 { key: 'meetings', label: tr("Meetings"), count: c.counts.meetings, icon: <TbCalendarEvent className="text-emerald-500" /> },
-                { key: 'notes', label: tr("Notes"), count: c.counts.notes, oldRel: { resource: 'notes', where: { relType: 'customer', relId: id }, initial: { relType: 'customer', relId: id }, hide: ['relType', 'relId'], columns: getResource('notes').columns.filter((x) => x.key !== 'relType') } },
+                { key: 'notes', label: tr("Notes"), count: c.counts.notes, feature: 'notes' },
                 { key: 'passwords', label: tr("Passwords"), count: passCount, hideNoCount: true, iconOnly: true, icon: <TbKey className="text-amber-500" /> },
                 { key: 'files', label: tr("Files"), count: c.counts.files, iconOnly: true, icon: <TbPaperclip className="text-slate-500" /> },
                 { key: 'activity', label: tr("Activity"), iconOnly: true, icon: <TbHistory className="text-gray-500" /> },
@@ -298,12 +298,7 @@ const ClientDetail = () => {
                                 {tab === 'activity' && (profile ? <Timeline items={profile.timeline} /> : <p className="py-10 text-center text-gray-400">{tr("Loading…")}</p>)}
                                 {tab === 'payments' && <PaymentsTab id={id} money={money} />}
                                 {tab === 'tasks' && <TasksBoard key={id} clientPage={id} />}
-                                {tab === 'notes' && (() => { const t = tabs.find((x) => x.key === 'notes'); const cards = can('notes', 'view'); return (
-                                    <>
-                                        {cards && <ClientNotes clientId={id} onChanged={load} />}
-                                        {t && (!cards || c.counts.oldNotes > 0) && <div className={cards ? 'mt-8' : ''}>{cards && <h6 className="mb-3">{tr("Follow-up notes")}</h6>}<RelatedTab key="notes-old" cfg={t.oldRel} onChanged={() => { load(); loadProfile() }} /></div>}
-                                    </>
-                                ) })()}
+                                {tab === 'notes' && <ClientNotes clientId={id} onChanged={load} />}
                                 {tab === 'reports' && <ClientReports key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('report') || ''} />}
                                 {tab === 'requests' && <ClientRequests key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('request') || ''} />}
                                 {tab === 'ideas' && <ClientIdeas key={id} clientId={id} openId={new URLSearchParams(window.location.search).get('idea') || ''} />}

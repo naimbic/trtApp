@@ -185,12 +185,12 @@ export async function getClientDetail(id) {
         admins: staff.map((s) => ({ id: s.id, name: `${s.firstName || ''} ${s.lastName || ''}`.trim() })),
         contacts: c.contacts.map((x) => ({ id: x.id, name: contactName(x), email: x.email, phone: x.phoneNumber, title: x.title, isPrimary: x.isPrimary, active: x.active, lastLogin: x.lastLogin })),
         money,
-        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes: notes + quickNotes, oldNotes: notes, files: files + mediaFiles, ideas, requests, reports, tasks, meetings },
+        counts: { contacts: c.contacts.length, invoices, estimates, proposals, contracts, projects, tickets, notes: quickNotes, files: files + mediaFiles, ideas, requests, reports, tasks, meetings },
     }
     // the tabs this person may not see are left empty, not only hidden
     out.tabs = tabs
     if (!tabs.profile) Object.assign(out, { gerant: '', vat: null, phone: null, website: null, address: null, city: null, state: null, zip: null, country: null, countryName: '', billing: {}, shipping: {}, contacts: [] })
-    if (!tabs.notes) { out.counts.notes = 0; out.counts.oldNotes = 0 }
+    if (!tabs.notes) out.counts.notes = 0
     if (!tabs.files) out.counts.files = 0
     if (!tabs.meetings) out.counts.meetings = 0
     return out

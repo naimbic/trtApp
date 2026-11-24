@@ -2,6 +2,15 @@
 // shown in the sidebar footer. Format: MAJOR.MINOR.PATCH (new feature = minor, fix = patch).
 export const CHANGELOG = [
     {
+        version: '0.272.1',
+        date: '2026-11-24',
+        title: 'Client page: the Notes tab shows only the note cards',
+        items: [
+            'The old "Follow-up notes" table and its popup are removed from the Notes tab of a client. Only the note cards remain.',
+            'A note written from "Follow up" on a client is now saved as a note card of this client, and shows in its interaction history.',
+        ],
+    },
+    {
         version: '0.272.0',
         date: '2026-11-24',
         title: 'Clients: Gérant field, history of closing reports, closed clients in Reports, note cards on the client page',
